@@ -18,8 +18,7 @@
 ##   $OctopusAzureEnvironment = "..."
 ##   $OctopusDisableAzureCLI = "..."
 ##   $OctopusAzureExtensionsDirectory = "..." 
-##   $OctopusUseOidc = "..."
-##   $OctopusAzureAccessToken = "..."
+##   OctopusOpenIdJwt = "..."
 
 $ErrorActionPreference = "Stop"
 
@@ -87,13 +86,13 @@ function Initialize-AzureRmContext {
         exit 2
     }
 
-    If ([System.Convert]::ToBoolean($OctopusUseOidc)) {
-            Write-Verbose "AzureRM Modules: Authenticating with OpenID Connect Access Token"
+    If (![string]::IsNullOrEmpty($OctopusOpenIdJwt)) {
+            Write-Verbose "AzureRM Modules: Authenticating with OpenID Connect Federated Token"
 
             # Force any output generated to be verbose in Octopus logs.
             Write-Host "##octopus[stdout-verbose]"
             [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-            Login-AzureRmAccount -Environment $AzureEnvironment -ApplicationId $OctopusAzureADClientId -Tenant $OctopusAzureADTenantId -Subscription $OctopusAzureSubscriptionId -FederatedToken $OctopusAzureAccessToken
+            Login-AzureRmAccount -Environment $AzureEnvironment -ApplicationId $OctopusAzureADClientId -Tenant $OctopusAzureADTenantId -Subscription $OctopusAzureSubscriptionId -FederatedToken $OctopusOpenIdJwt
             Write-Host "##octopus[stdout-default]"
     }
     else {
@@ -137,11 +136,11 @@ function Initialize-AzContext {
         exit 2
     }
 
-    If ([System.Convert]::ToBoolean($OctopusUseOidc)) {
-        Write-Verbose "Az Modules: Authenticating with OpenID Connect AccessToken"
+    If (![string]::IsNullOrEmpty($OctopusOpenIdJwt)) {
+        Write-Verbose "Az Modules: Authenticating with OpenID Connect Federated Token"
         # Force any output generated to be verbose in Octopus logs.
         Write-Host "##octopus[stdout-verbose]"
-        Connect-AzAccount -Environment $AzureEnvironment -ApplicationId $OctopusAzureADClientId -Tenant $OctopusAzureADTenantId -Subscription $OctopusAzureSubscriptionId -FederatedToken $OctopusAzureAccessToken
+        Connect-AzAccount -Environment $AzureEnvironment -ApplicationId $OctopusAzureADClientId -Tenant $OctopusAzureADTenantId -Subscription $OctopusAzureSubscriptionId -FederatedToken $OctopusOpenIdJwt
         Write-Host "##octopus[stdout-default]"
     }
     else {
@@ -221,11 +220,11 @@ Execute-WithRetry{
 
                     $loginArgs = @();
 
-                    If ([System.Convert]::ToBoolean($OctopusUseOidc)) {
+                    If (![string]::IsNullOrEmpty($OctopusOpenIdJwt)) {
                         # Use the full argument because of https://github.com/Azure/azure-cli/issues/12105
                         $loginArgs += @("--username=$(ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADClientId)))");
                         $loginArgs += @("--tenant=$(ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADTenantId)))");
-                        $loginArgs += @("--federated-token=$(ConvertTo-QuotedString($OctopusAzureAccessToken))");
+                        $loginArgs += @("--federated-token=$(ConvertTo-QuotedString($OctopusOpenIdJwt))");
 
                         Write-Host "az login --service-principal $loginArgs"
                         az login --service-principal $loginArgs

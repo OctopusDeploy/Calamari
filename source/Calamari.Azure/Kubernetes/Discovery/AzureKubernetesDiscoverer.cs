@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading;
+using Calamari.CloudAccounts;
 using Calamari.Common.Features.Discovery;
 using Calamari.Common.Plumbing.Logging;
 using Microsoft.Rest.Azure;
@@ -11,7 +12,7 @@ using Newtonsoft.Json.Linq;
 
 namespace Calamari.Azure.Kubernetes.Discovery
 {
-    using AzureTargetDiscoveryContext = TargetDiscoveryContext<AccountAuthenticationDetails<ServicePrincipalAccount>>;
+    using AzureTargetDiscoveryContext = TargetDiscoveryContext<AccountAuthenticationDetails<AzureServicePrincipalAccount>>;
 
     public class AzureKubernetesDiscoverer : KubernetesDiscovererBase
     {
@@ -29,25 +30,10 @@ namespace Calamari.Azure.Kubernetes.Discovery
 
         public override IEnumerable<KubernetesCluster> DiscoverClusters(string contextJson)
         {
-            var accountType = JToken.Parse(contextJson).SelectToken("Authentication").SelectToken("Type").ToString();
-
-            IAzureAccount account;
-            string accountId;
-            if (accountType == "AzureOidc")
-            {
-                if (!TryGetDiscoveryContext<AccountAuthenticationDetails<AzureOidcAccount>>(contextJson, out var oidcAuthenticationDetails, out _))
-                    return Enumerable.Empty<KubernetesCluster>();
-                accountId = oidcAuthenticationDetails.AccountId;
-                account = oidcAuthenticationDetails.AccountDetails;
-            }
-            else
-            {
-                if (!TryGetDiscoveryContext<AccountAuthenticationDetails<ServicePrincipalAccount>>(contextJson, out var servicePrincipalAuthenticationDetails, out _))
-                    return Enumerable.Empty<KubernetesCluster>();
-                accountId = servicePrincipalAuthenticationDetails.AccountId;
-                account = servicePrincipalAuthenticationDetails.AccountDetails;
-            }
-
+            if (!TryGetDiscoveryContext<AccountAuthenticationDetails<AzureServicePrincipalAccount>>(contextJson, out var authenticationDetails, out _))
+                return Enumerable.Empty<KubernetesCluster>();
+            
+            var account = authenticationDetails.AccountDetails;
             Log.Verbose("Looking for Kubernetes clusters in Azure using:");
             Log.Verbose($"  Subscription ID: {account.SubscriptionNumber}");
             Log.Verbose($"  Tenant ID: {account.TenantId}");
@@ -75,7 +61,7 @@ namespace Calamari.Azure.Kubernetes.Discovery
                                                                                                 $"aks/{account.SubscriptionNumber}/{c.ResourceGroupName}/{c.Name}",
                                                                                                 c.Name,
                                                                                                 c.ResourceGroupName,
-                                                                                                accountId,
+                                                                                                authenticationDetails.AccountId,
                                                                                                 c.Tags.ToTargetTags())));
                 }
                 catch (CloudException ex)

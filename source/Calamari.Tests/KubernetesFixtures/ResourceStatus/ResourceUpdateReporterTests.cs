@@ -113,5 +113,31 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                     new KeyValuePair<string, string>("checkCount", "1"),
                 });
         }
+        
+        [Test]
+        public void ClusterScopedResourcesAreIgnored()
+        {
+            var variables = new CalamariVariables();
+            var log = new InMemoryLog();
+            
+            var reporter = new ResourceUpdateReporter(variables, log);
+            
+            var newStatuses = ResourceFactory
+                .FromListJson(TestFileLoader.Load("one-deployment-and-one-namespace.json"), new Options())
+                .ToDictionary(resource => resource.Uid, resource => resource);
+            
+            reporter.ReportUpdatedResources(new Dictionary<string, Resource>(), newStatuses, 1);
+            
+            var serviceMessages = log.ServiceMessages
+                .Where(message => message.Name == SpecialVariables.KubernetesResourceStatusServiceMessageName)
+                .ToList();
+
+            serviceMessages.Should().ContainSingle().Which.Properties
+                .Should().Contain(new KeyValuePair<string, string>[]
+                {
+                    new KeyValuePair<string, string>("name", "app"),
+                    new KeyValuePair<string, string>("checkCount", "1"),
+                });
+        }
     }
 }

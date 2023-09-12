@@ -7,7 +7,7 @@ Octopus_Azure_ADTenantId=$(get_octopusvariable "Octopus.Action.Azure.TenantId")
 Octopus_Azure_SubscriptionId=$(get_octopusvariable "Octopus.Action.Azure.SubscriptionId")
 Octopus_Azure_OctopusUseOidc=$(get_octopusvariable "OctopusUseOidc")
 Octopus_Azure_OctopusUseServicePrincipal=$(get_octopusvariable "OctopusUseServicePrincipal")
-Octopus_Azure_AccessToken=$(get_octopusvariable "OctopusAzureAccessToken")
+Octopus_Open_Id_Jwt=$(get_octopusvariable "OctopusOpenIdJwt")
 
 function check_app_exists {
 	command -v $1 > /dev/null 2>&1
@@ -49,7 +49,7 @@ function setup_context {
           echo "Azure CLI: Authenticating with OpenID Connect Access Token"
           loginArgs+=("--username=$Octopus_Azure_ADClientId")
           loginArgs+=("--tenant=$Octopus_Azure_ADTenantId")
-          loginArgs+=("--federated-token=$Octopus_Azure_AccessToken")
+          loginArgs+=("--federated-token=$Octopus_Open_Id_Jwt")
           echo az login --service-principal "${loginArgs[@]}"
           az login --service-principal "${loginArgs[@]}"
         else

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Calamari.AzureWebApp.Util;
@@ -39,7 +40,9 @@ namespace Calamari.AzureWebApp.Integration.Websites.Publishing
                                                                                account.ClientId,
                                                                                account.GetCredentials,
                                                                                account.ResourceManagementEndpointBaseUri,
-                                                                               account.ActiveDirectoryEndpointBaseUri)
+                                                                               account.ActiveDirectoryEndpointBaseUri,
+                                                                               account.AzureEnvironment,
+                                                                               CancellationToken.None)
                 : await AzureServicePrincipalAccountExtensions.GetAuthorizationToken(account.TenantId,
                                                                                      account.ClientId,
                                                                                      account.GetCredentials,
@@ -52,7 +55,7 @@ namespace Calamari.AzureWebApp.Integration.Websites.Publishing
                 SubscriptionId = account.SubscriptionNumber,
                 BaseUri = baseUri,
             })
-            using (var webSiteClient = new WebSiteManagementClient(new Uri(account.ResourceManagementEndpointBaseUri), new TokenCredentials(token)) { SubscriptionId = account.SubscriptionNumber })
+            using (var webSiteClient = new WebSiteManagementClient(new TokenCredentials(token)) { SubscriptionId = account.SubscriptionNumber })
             {
                 webSiteClient.SetRetryPolicy(new RetryPolicy(new HttpStatusCodeErrorDetectionStrategy(), 3));
                 resourcesClient.HttpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);

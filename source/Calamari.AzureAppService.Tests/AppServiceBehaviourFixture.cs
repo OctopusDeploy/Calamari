@@ -75,6 +75,29 @@ namespace Calamari.AzureAppService.Tests
             }
 
             [Test]
+            public async Task CanDeployWebAppZip_WithAsyncDeploymentAndPolling()
+            {
+                var packageInfo = PrepareZipPackage();
+
+                await CommandTestBuilder.CreateAsync<DeployAzureAppServiceCommand, Program>()
+                                        .WithArrange(context =>
+                                                     {
+                                                         context.WithPackage(packageInfo.packagePath, packageInfo.packageName, packageInfo.packageVersion);
+                                                         AddVariables(context);
+
+                                                         var existingFeatureToggles = context.Variables.GetStrings(KnownVariables.EnabledFeatureToggles);
+                                                         context.Variables.SetStrings(KnownVariables.EnabledFeatureToggles,
+                                                                                      existingFeatureToggles.Concat(new[]
+                                                                                      {
+                                                                                          FeatureToggle.AsynchronousAzureZipDeployFeatureToggle.ToString()
+                                                                                      }));
+                                                     })
+                                        .Execute();
+
+                await AssertContent(WebSiteResource.Data.DefaultHostName, $"Hello {greeting}");
+            }
+
+            [Test]
             public async Task CanDeployWebAppZip_ToDeploymentSlot()
             {
                 const string slotName = "stage";
@@ -112,44 +135,37 @@ namespace Calamari.AzureAppService.Tests
             [Test]
             public async Task CanDeployNugetPackage()
             {
-                (string packagePath, string packageName, string packageVersion) packageinfo;
-                greeting = "nuget";
-
-                var tempPath = TemporaryDirectory.Create();
-                new DirectoryInfo(tempPath.DirectoryPath).CreateSubdirectory("AzureZipDeployPackage");
-
-                var doc = new XDocument(new XElement("package",
-                                                     new XAttribute("xmlns", @"http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd"),
-                                                     new XElement("metadata",
-                                                                  new XElement("id", "AzureZipDeployPackage"),
-                                                                  new XElement("version", "1.0.0"),
-                                                                  new XElement("title", "AzureZipDeployPackage"),
-                                                                  new XElement("authors", "Chris Thomas"),
-                                                                  new XElement("description", "Test Package used to test nuget package deployments")
-                                                                 )
-                                                    ));
-
-                await Task.Run(() => File.WriteAllText(
-                                                       Path.Combine($"{tempPath.DirectoryPath}/AzureZipDeployPackage", "index.html"),
-                                                       "Hello #{Greeting}"));
-
-                using (var writer = new XmlTextWriter(
-                                                      Path.Combine($"{tempPath.DirectoryPath}/AzureZipDeployPackage", "AzureZipDeployPackage.nuspec"),
-                                                      Encoding.UTF8))
-                {
-                    doc.Save(writer);
-                }
-
-                packageinfo.packagePath = $"{tempPath.DirectoryPath}/AzureZipDeployPackage.1.0.0.nupkg";
-                packageinfo.packageVersion = "1.0.0";
-                packageinfo.packageName = "AzureZipDeployPackage";
-                ZipFile.CreateFromDirectory($"{tempPath.DirectoryPath}/AzureZipDeployPackage", packageinfo.packagePath);
+                var packageInfo = await PrepareNugetPackage();
 
                 await CommandTestBuilder.CreateAsync<DeployAzureAppServiceCommand, Program>()
                                         .WithArrange(context =>
                                                      {
-                                                         context.WithPackage(packageinfo.packagePath, packageinfo.packageName, packageinfo.packageVersion);
+                                                         context.WithPackage(packageInfo.packagePath, packageInfo.packageName, packageInfo.packageVersion);
                                                          AddVariables(context);
+                                                     })
+                                        .Execute();
+
+                //await new AzureAppServiceBehaviour(new InMemoryLog()).Execute(runningContext);
+                await AssertContent(WebSiteResource.Data.DefaultHostName, $"Hello {greeting}");
+            }
+
+            [Test]
+            public async Task CanDeployNugetPackage_WithAsyncDeploymentAndPolling()
+            {
+                var packageInfo = await PrepareNugetPackage();
+
+                await CommandTestBuilder.CreateAsync<DeployAzureAppServiceCommand, Program>()
+                                        .WithArrange(context =>
+                                                     {
+                                                         context.WithPackage(packageInfo.packagePath, packageInfo.packageName, packageInfo.packageVersion);
+                                                         AddVariables(context);
+
+                                                         var existingFeatureToggles = context.Variables.GetStrings(KnownVariables.EnabledFeatureToggles);
+                                                         context.Variables.SetStrings(KnownVariables.EnabledFeatureToggles,
+                                                                                      existingFeatureToggles.Concat(new[]
+                                                                                      {
+                                                                                          FeatureToggle.AsynchronousAzureZipDeployFeatureToggle.ToString()
+                                                                                      }));
                                                      })
                                         .Execute();
 
@@ -262,6 +278,45 @@ namespace Calamari.AzureAppService.Tests
                 return packageinfo;
             }
 
+
+            async Task<(string packagePath, string packageName, string packageVersion)> PrepareNugetPackage()
+            {
+                (string packagePath, string packageName, string packageVersion) packageinfo;
+                greeting = "nuget";
+
+                var tempPath = TemporaryDirectory.Create();
+                new DirectoryInfo(tempPath.DirectoryPath).CreateSubdirectory("AzureZipDeployPackage");
+
+                var doc = new XDocument(new XElement("package",
+                                                     new XAttribute("xmlns", @"http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd"),
+                                                     new XElement("metadata",
+                                                                  new XElement("id", "AzureZipDeployPackage"),
+                                                                  new XElement("version", "1.0.0"),
+                                                                  new XElement("title", "AzureZipDeployPackage"),
+                                                                  new XElement("authors", "Chris Thomas"),
+                                                                  new XElement("description", "Test Package used to test nuget package deployments")
+                                                                 )
+                                                    ));
+
+                await Task.Run(() => File.WriteAllText(
+                                                       Path.Combine($"{tempPath.DirectoryPath}/AzureZipDeployPackage", "index.html"),
+                                                       "Hello #{Greeting}"));
+
+                using (var writer = new XmlTextWriter(
+                                                      Path.Combine($"{tempPath.DirectoryPath}/AzureZipDeployPackage", "AzureZipDeployPackage.nuspec"),
+                                                      Encoding.UTF8))
+                {
+                    doc.Save(writer);
+                }
+
+                packageinfo.packagePath = $"{tempPath.DirectoryPath}/AzureZipDeployPackage.1.0.0.nupkg";
+                packageinfo.packageVersion = "1.0.0";
+                packageinfo.packageName = "AzureZipDeployPackage";
+                ZipFile.CreateFromDirectory($"{tempPath.DirectoryPath}/AzureZipDeployPackage", packageinfo.packagePath);
+                return packageinfo;
+            }
+
+
             private static (string packagePath, string packageName, string packageVersion) PrepareFunctionAppZipPackage()
             {
                 (string packagePath, string packageName, string packageVersion) packageInfo;
@@ -283,7 +338,7 @@ namespace Calamari.AzureAppService.Tests
                 context.Variables.Add(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.SubstituteInFiles);
                 context.Variables.Add(PackageVariables.SubstituteInFilesTargets, "index.html");
                 context.Variables.Add(SpecialVariables.Action.Azure.DeploymentType, "ZipDeploy");
-                
+
                 //set the feature toggle so we get the new code
                 context.Variables.Add(KnownVariables.EnabledFeatureToggles, FeatureToggle.ModernAzureAppServiceSdkFeatureToggle.ToString());
             }
@@ -291,10 +346,10 @@ namespace Calamari.AzureAppService.Tests
 
         [TestFixture]
         public class WhenUsingALinuxAppService : AppServiceIntegrationTest
-        {        
+        {
             // For some reason we are having issues creating these linux resources on Standard in EastUS
             protected override string DefaultResourceGroupLocation => "westus2";
-            
+
             protected override async Task ConfigureTestResources(ResourceGroupResource resourceGroup)
             {
                 var storageAccountName = ResourceGroupName.Replace("-", "").Substring(0, 20);
@@ -311,9 +366,9 @@ namespace Calamari.AzureAppService.Tests
 
                 var keys = await storageAccountResponse
                                  .Value
-                                                       .GetKeysAsync()
-                                                       .ToListAsync();
-                
+                                 .GetKeysAsync()
+                                 .ToListAsync();
+
                 var linuxAppServicePlan = await resourceGroup.GetAppServicePlans()
                                                              .CreateOrUpdateAsync(WaitUntil.Completed,
                                                                                   $"{resourceGroup.Data.Name}-linux-asp",
@@ -329,27 +384,26 @@ namespace Calamari.AzureAppService.Tests
                                                                                   });
 
                 var linuxWebSiteResponse = await resourceGroup.GetWebSites()
-                                                         .CreateOrUpdateAsync(WaitUntil.Completed,
-                                                                              $"{resourceGroup.Data.Name}-linux",
-                                                                              new WebSiteData(resourceGroup.Data.Location)
-                                                                              {
-                                                                                  AppServicePlanId = linuxAppServicePlan.Value.Id,
-                                                                                  Kind = "functionapp,linux",
-                                                                                  IsReserved = true,
-                                                                                  SiteConfig = new SiteConfigProperties
-                                                                                  {
-                                                                                      IsAlwaysOn = true,
-                                                                                      LinuxFxVersion = "DOTNET|6.0",
-                                                                                      Use32BitWorkerProcess = true,
-                                                                                      AppSettings = new List<AppServiceNameValuePair>
-                                                                                      {
-                                                                                          new AppServiceNameValuePair{Name = "FUNCTIONS_WORKER_RUNTIME", Value = "dotnet"},
-                                                                                          new AppServiceNameValuePair{Name = "FUNCTIONS_EXTENSION_VERSION", Value = "~4"},
-                                                                                          new AppServiceNameValuePair{Name = "AzureWebJobsStorage", Value = $"DefaultEndpointsProtocol=https;AccountName={storageAccountName};AccountKey={keys.First().Value};EndpointSuffix=core.windows.net"},
-                                                                                          
-                                                                                      }
-                                                                                  }
-                                                                              });
+                                                              .CreateOrUpdateAsync(WaitUntil.Completed,
+                                                                                   $"{resourceGroup.Data.Name}-linux",
+                                                                                   new WebSiteData(resourceGroup.Data.Location)
+                                                                                   {
+                                                                                       AppServicePlanId = linuxAppServicePlan.Value.Id,
+                                                                                       Kind = "functionapp,linux",
+                                                                                       IsReserved = true,
+                                                                                       SiteConfig = new SiteConfigProperties
+                                                                                       {
+                                                                                           IsAlwaysOn = true,
+                                                                                           LinuxFxVersion = "DOTNET|6.0",
+                                                                                           Use32BitWorkerProcess = true,
+                                                                                           AppSettings = new List<AppServiceNameValuePair>
+                                                                                           {
+                                                                                               new AppServiceNameValuePair { Name = "FUNCTIONS_WORKER_RUNTIME", Value = "dotnet" },
+                                                                                               new AppServiceNameValuePair { Name = "FUNCTIONS_EXTENSION_VERSION", Value = "~4" },
+                                                                                               new AppServiceNameValuePair { Name = "AzureWebJobsStorage", Value = $"DefaultEndpointsProtocol=https;AccountName={storageAccountName};AccountKey={keys.First().Value};EndpointSuffix=core.windows.net" },
+                                                                                           }
+                                                                                       }
+                                                                                   });
                 WebSiteResource = linuxWebSiteResponse.Value;
             }
 
@@ -409,6 +463,40 @@ namespace Calamari.AzureAppService.Tests
                                     secondsBetweenRetries: 10);
             }
 
+
+            [Test]
+            public async Task CanDeployZip_ToLinuxFunctionApp_WithAsyncDeploymentAndPolling()
+            {
+                // Arrange
+                var packageInfo = PrepareZipPackage();
+
+                // Act
+                await CommandTestBuilder.CreateAsync<DeployAzureAppServiceCommand, Program>()
+                                        .WithArrange(context =>
+                                                     {
+                                                         context.WithPackage(packageInfo.packagePath, packageInfo.packageName, packageInfo.packageVersion);
+                                                         AddVariables(context);
+
+                                                         var existingFeatureToggles = context.Variables.GetStrings(KnownVariables.EnabledFeatureToggles);
+                                                         context.Variables.SetStrings(KnownVariables.EnabledFeatureToggles,
+                                                                                      existingFeatureToggles.Concat(new[]
+                                                                                      {
+                                                                                          FeatureToggle.AsynchronousAzureZipDeployFeatureToggle.ToString()
+                                                                                      }));
+                                                     })
+                                        .Execute();
+
+                // Assert
+                await DoWithRetries(10,
+                                    async () =>
+                                    {
+                                        await AssertContent(WebSiteResource.Data.DefaultHostName,
+                                                            rootPath: $"api/HttpExample?name={greeting}",
+                                                            actualText: $"Hello, {greeting}");
+                                    },
+                                    secondsBetweenRetries: 10);
+            }
+
             private static (string packagePath, string packageName, string packageVersion) PrepareZipPackage()
             {
                 // Looks like there's some file locking issues if multiple tests try to copy from the same file when running in parallel.
@@ -434,7 +522,7 @@ namespace Calamari.AzureAppService.Tests
             {
                 AddAzureVariables(context);
                 context.Variables.Add(SpecialVariables.Action.Azure.DeploymentType, "ZipDeploy");
-                
+
                 //set the feature toggle so we get the new code
                 context.Variables.Add(KnownVariables.EnabledFeatureToggles, FeatureToggle.ModernAzureAppServiceSdkFeatureToggle.ToString());
             }

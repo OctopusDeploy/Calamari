@@ -1,0 +1,63 @@
+{
+  "kind": "List",
+  "apiVersion": "v1",
+  "metadata": {},
+  "items": [
+    {
+      "apiVersion": "v1",
+      "kind": "Namespace",
+      "metadata": {
+        "creationTimestamp": "2023-08-31T01:19:33Z",
+        "labels": {
+          "kubernetes.io/metadata.name": "my-namespace"
+        },
+        "name": "my-namespace",
+        "resourceVersion": "10414202",
+        "uid": "8bef1152-20fb-4900-b171-3d0836bcef73"
+      },
+      "spec": {
+        "finalizers": [
+          "kubernetes"
+        ]
+      },
+      "status": {
+        "phase": "Active"
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "labels": {
+          "app": "app"
+        },
+        "name": "app",
+        "namespace": "default"
+      },
+      "spec": {
+        "replicas": 1,
+        "selector": {
+          "matchLabels": {
+            "app": "app"
+          }
+        },
+        "strategy": {},
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "app"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "image": "nginx",
+                "name": "nginx"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

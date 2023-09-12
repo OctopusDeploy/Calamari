@@ -76,10 +76,9 @@ namespace Calamari.AzureScripting
                     }
                     else
                     {
-                        variables.Set("OctopusUseOidc", variables.Get(SpecialVariables.Account.AccountType) == "AzureOidc" ? bool.TrueString : bool.FalseString);
-                        variables.Set("OctopusAzureAccessToken", variables.Get(AccountVariables.Jwt));
+                        variables.Set("OctopusOpenIdJwt", variables.Get(AccountVariables.Jwt));
                     }
-                    
+
                     return NextWrapper!.ExecuteScript(new Script(contextScriptFile.FilePath), scriptSyntax, commandLineRunner, environmentVars);
                 }
 

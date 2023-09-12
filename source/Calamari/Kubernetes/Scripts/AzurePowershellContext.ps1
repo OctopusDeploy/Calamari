@@ -8,7 +8,8 @@ $OctopusAzureADTenantId = $OctopusParameters["Octopus.Action.Azure.TenantId"]
 $OctopusAzureADClientId = $OctopusParameters["Octopus.Action.Azure.ClientId"]
 $OctopusAzureADPassword = $OctopusParameters["Octopus.Action.Azure.Password"]
 $OctopusAzureEnvironment = $OctopusParameters["Octopus.Action.Azure.Environment"]
-$OctopusAzureAccessToken = $OctopusParameters["Octopus.Action.Azure.AzureAccessToken"]
+$OctopusOpenIdJwt = $OctopusParameters["Octopus.OpenIdConnect.Jwt"]
+$OctopusUseOidc = ![string]::IsNullOrEmpty($OctopusOpenIdJwt)
 
 if ($null -eq $OctopusAzureEnvironment)
 {
@@ -50,13 +51,12 @@ function Initialize-AzureRmContext
     }
 
     If ([System.Convert]::ToBoolean($OctopusUseOidc)) {
-            Write-Verbose "AzureRM Modules: Authenticating with OpenID Connect Access Token"
-        
-            $accessToken = ConvertTo-SecureString $OctopusAzureAccessToken -AsPlainText -Force
+            Write-Verbose "AzureRM Modules: Authenticating with OpenID Connect Federated Token"
+
             # Force any output generated to be verbose in Octopus logs.
             Write-Host "##octopus[stdout-verbose]"
             [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-            Login-AzureRmAccount -Environment $AzureEnvironment -ApplicationId $OctopusAzureADClientId -Tenant $OctopusAzureADTenantId -Subscription $OctopusAzureSubscriptionId -FederatedToken $OctopusAzureAccessToken
+            Login-AzureRmAccount -Environment $AzureEnvironment -ApplicationId $OctopusAzureADClientId -Tenant $OctopusAzureADTenantId -Subscription $OctopusAzureSubscriptionId -FederatedToken $OctopusOpenIdJwt
             Write-Host "##octopus[stdout-default]"
     }
     else {
@@ -102,11 +102,10 @@ function Initialize-AzContext
     }
 
     If ([System.Convert]::ToBoolean($OctopusUseOidc)) {
-        Write-Verbose "Az Modules: Authenticating with OpenID Connect AccessToken"
-        $accessToken = ConvertTo-SecureString $OctopusAzureAccessToken -AsPlainText -Force
+        Write-Verbose "Az Modules: Authenticating with OpenID Connect FederatedToken"
         # Force any output generated to be verbose in Octopus logs.
         Write-Host "##octopus[stdout-verbose]"
-        Connect-AzAccount -Environment $AzureEnvironment -ApplicationId $OctopusAzureADClientId -Tenant $OctopusAzureADTenantId -Subscription $OctopusAzureSubscriptionId -FederatedToken $OctopusAzureAccessToken
+        Connect-AzAccount -Environment $AzureEnvironment -ApplicationId $OctopusAzureADClientId -Tenant $OctopusAzureADTenantId -Subscription $OctopusAzureSubscriptionId -FederatedToken $OctopusOpenIdJwt
         Write-Host "##octopus[stdout-default]"
     }
     else {

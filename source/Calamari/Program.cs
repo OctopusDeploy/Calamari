@@ -26,6 +26,7 @@ using IContainer = Autofac.IContainer;
 #if !NET40
 using Calamari.Aws.Deployment;
 using Calamari.Azure;
+using Calamari.Azure.Kubernetes.Discovery;
 using Calamari.Kubernetes.Commands.Executors;
 #endif
 
@@ -122,7 +123,7 @@ namespace Calamari
             //Calamari.Aws
             yield return typeof(AwsSpecialVariables).Assembly;
             //Calamari.Azure, this includes AzureOidcAccount
-            yield return typeof(ServicePrincipalAccount).Assembly;
+            yield return typeof(AzureKubernetesDiscoverer).Assembly;
 #else
                 return Enumerable.Empty<Assembly>();
 #endif

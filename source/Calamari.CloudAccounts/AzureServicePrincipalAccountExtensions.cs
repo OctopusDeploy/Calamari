@@ -1,8 +1,13 @@
 ﻿using System;
+using System.Net;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Calamari.Common.Plumbing.Logging;
+using Microsoft.Azure.Management.Fluent;
+using Microsoft.Azure.Management.ResourceManager.Fluent;
 using Microsoft.Identity.Client;
 using Microsoft.Rest;
+using AzureEnvironmentEnum = Microsoft.Azure.Management.ResourceManager.Fluent.AzureEnvironment;
 
 namespace Calamari.CloudAccounts
 {

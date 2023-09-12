@@ -1,7 +1,7 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Calamari.Common.Plumbing.Logging;
-using Calamari.Common.Plumbing.Variables;
 using Microsoft.Identity.Client;
 using Microsoft.Rest;
 
@@ -9,51 +9,32 @@ namespace Calamari.CloudAccounts
 {
     public static class AzureOidcAccountExtensions
     {
-        public static async Task<ServiceClientCredentials> Credentials(this AzureOidcAccount account)
+        public static async Task<ServiceClientCredentials> Credentials(this AzureOidcAccount account, CancellationToken cancellationToken)
         {
-            return new TokenCredentials(await GetAuthorizationToken(account));
+            return new TokenCredentials(await GetAuthorizationToken(account, cancellationToken));
+        }
+        
+        public static Task<string> GetAuthorizationToken(this AzureOidcAccount account, CancellationToken cancellationToken)
+        {
+            return GetAuthorizationToken(account.TenantId, account.ClientId, account.GetCredentials,
+                                                   account.ResourceManagementEndpointBaseUri, account.ActiveDirectoryEndpointBaseUri, account.AzureEnvironment, cancellationToken);
         }
 
-        public static Task<string> GetAuthorizationToken(this AzureOidcAccount account)
-        {
-            return GetAuthorizationToken(account.TenantId,
-                                         account.ClientId,
-                                         account.GetCredentials,
-                                         account.ResourceManagementEndpointBaseUri,
-                                         account.ActiveDirectoryEndpointBaseUri);
-        }
-
-        public static async Task<string> GetAuthorizationToken(string tenantId,
-                                                               string applicationId,
-                                                               string token,
-                                                               string managementEndPoint,
-                                                               string activeDirectoryEndPoint)
+        public static async Task<string> GetAuthorizationToken(string tenantId, string applicationId, string token, string managementEndPoint, string activeDirectoryEndPoint, string aureEnvironment, CancellationToken cancellationToken)
         {
             var authContext = GetOidcContextUri(activeDirectoryEndPoint, tenantId);
             Log.Verbose($"Authentication Context: {authContext}");
 
-            var builder = ConfidentialClientApplicationBuilder.Create(applicationId)
-                                                              .WithClientAssertion(token);
-
-            var inTest = activeDirectoryEndPoint.Contains("localhost");
-            
-            if (inTest)
-            {
-                builder = builder.WithInstanceDiscoveryMetadata(new Uri($"{activeDirectoryEndPoint}/discovery"))
-                                 .WithAuthority(authContext, false);
-            }
-            else
-            {
-                builder = builder.WithAuthority(authContext);
-            }
-
-            var app = builder.Build();
+            var app = ConfidentialClientApplicationBuilder.Create(applicationId)
+                                                          .WithClientAssertion(token)
+                                                          .WithAuthority(authContext)
+                                                          .Build();
 
             var result = await app.AcquireTokenForClient(
                                                          // Default values set on a per cloud basis on AzureOidcAccount, if managementEndPoint is set on the account /.default is required.
-                                                         new[] { managementEndPoint })
+                                                         new[] { managementEndPoint == DefaultVariables.ResourceManagementEndpoint ? AzureOidcAccount.GetDefaultScope(aureEnvironment) : managementEndPoint.EndsWith(".default") ? managementEndPoint : $"{managementEndPoint}/.default" })
                                   .WithTenantId(tenantId)
-                                  .ExecuteAsync()
+                                  .ExecuteAsync(cancellationToken)
                                   .ConfigureAwait(false);
             return result.AccessToken;
         }
@@ -64,7 +45,6 @@ namespace Calamari.CloudAccounts
             {
                 return $"{activeDirectoryEndPoint}/{tenantId}/v2.0";
             }
-
             return $"{activeDirectoryEndPoint}{tenantId}/v2.0";
         }
     }
