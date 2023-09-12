@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Calamari.Common.Plumbing.Logging;
 using Microsoft.Identity.Client;
 using Microsoft.Rest;
+using Newtonsoft.Json;
 
 namespace Calamari.CloudAccounts
 {
@@ -22,6 +23,12 @@ namespace Calamari.CloudAccounts
 
         public static async Task<string> GetAuthorizationToken(string tenantId, string applicationId, string token, string managementEndPoint, string activeDirectoryEndPoint, string aureEnvironment, CancellationToken cancellationToken)
         {
+            Log.Info($"tenantId: {tenantId}");
+            Log.Info($"applicationId: {applicationId}");
+            Log.Info($"token: {token}");
+            Log.Info($"managementEndPoint: {managementEndPoint}");
+            Log.Info($"aureEnvironment: {aureEnvironment}");
+            
             var authContext = GetOidcContextUri(activeDirectoryEndPoint, tenantId);
             Log.Verbose($"Authentication Context: {authContext}");
             
@@ -46,6 +53,9 @@ namespace Calamari.CloudAccounts
                                   .WithTenantId(tenantId)
                                   .ExecuteAsync(cancellationToken)
                                   .ConfigureAwait(false);
+            
+            Log.Info($"auth result: {JsonConvert.SerializeObject(result)}");
+            
             return result.AccessToken;
         }
 
