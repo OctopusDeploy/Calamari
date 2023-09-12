@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure.ResourceManager;
@@ -17,8 +16,6 @@ using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Common.Plumbing.Variables;
 using Newtonsoft.Json;
-using JsonException = System.Text.Json.JsonException;
-using JsonSerializer = System.Text.Json.JsonSerializer;
 
 #nullable enable
 namespace Calamari.AzureAppService.Behaviors
@@ -143,16 +140,11 @@ namespace Calamari.AzureAppService.Behaviors
                 return null;
             }
 
-            var options = new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            };
-
             try
             {
-                return JsonSerializer
-                    .Deserialize<TargetDiscoveryContext<AccountAuthenticationDetails<AzureServicePrincipalAccount>>>(
-                        json, options);
+                return JsonConvert
+                    .DeserializeObject<TargetDiscoveryContext<AccountAuthenticationDetails<AzureServicePrincipalAccount>>>(
+                        json);
             }
             catch (JsonException ex)
             {
@@ -196,7 +188,7 @@ namespace Calamari.AzureAppService.Behaviors
                 $"Resources {typeCondition} project name, type, tags, resourceGroup");
 
             var response = await tenant.GetResourcesAsync(query, CancellationToken.None);
-            return JsonConvert.DeserializeObject<AzureResource[]>(response.Value.Data.ToString());
+            return JsonConvert.DeserializeObject<AzureResource[]>(response.Value.Data.ToString())!;
         }
     }
 }
