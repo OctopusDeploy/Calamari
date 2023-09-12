@@ -15,7 +15,7 @@ namespace Calamari.CloudAccounts
     {
         public static async Task<ServiceClientCredentials> Credentials(this AzureServicePrincipalAccount account)
         {
-            return new TokenCredentials(await GetAuthorizationToken(account));
+            return new TokenCredentials(await account.GetAuthorizationToken());
         }
 
         public static Task<string> GetAuthorizationToken(this AzureServicePrincipalAccount account)

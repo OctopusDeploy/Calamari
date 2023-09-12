@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using Calamari.CloudAccounts;
 using FluentAssertions;
@@ -99,7 +100,7 @@ namespace Calamari.Tests.Oidc
                                                    "https://management-url/.default",
                                                    server.Url);
 
-                var token = await account.GetAuthorizationToken();
+                var token = await account.GetAuthorizationToken(CancellationToken.None);
 
                 token.Should().Be("access-123");
             }
