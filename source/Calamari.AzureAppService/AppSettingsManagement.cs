@@ -98,7 +98,7 @@ namespace Calamari.AzureAppService
 
             var results = await client.GetStringAsync(targetUrl);
 
-            var output = JsonConvert.DeserializeObject<appSettingNamesRoot>(results).properties.appSettingNames ??
+            var output = JsonConvert.DeserializeObject<appSettingNamesRoot>(results)?.properties.appSettingNames ??
                          new List<string>();
 
             return output;

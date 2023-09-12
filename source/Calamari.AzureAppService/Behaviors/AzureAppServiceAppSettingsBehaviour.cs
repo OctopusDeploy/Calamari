@@ -64,8 +64,8 @@ namespace Calamari.AzureAppService.Behaviors
             {
                 var appSettingsJson = variables.Get(SpecialVariables.Action.Azure.AppSettings, "");
                 Log.Verbose($"Updating application settings:\n{appSettingsJson}");
-                var appSettings = JsonConvert.DeserializeObject<AppSetting[]>(appSettingsJson);
-                await PublishAppSettings(armClient, account, targetSite, appSettings);
+                var appSettings = JsonConvert.DeserializeObject<AppSetting[]>(appSettingsJson!);
+                await PublishAppSettings(armClient, account, targetSite, appSettings!);
                 Log.Info("Updated application settings");
             }
 
@@ -74,8 +74,8 @@ namespace Calamari.AzureAppService.Behaviors
             {
                 var connectionStringsJson = variables.Get(SpecialVariables.Action.Azure.ConnectionStrings, "");
                 Log.Verbose($"Updating connection strings:\n{connectionStringsJson}");
-                var connectionStrings = JsonConvert.DeserializeObject<ConnectionStringSetting[]>(connectionStringsJson);
-                await PublishConnectionStrings(armClient, targetSite, connectionStrings);
+                var connectionStrings = JsonConvert.DeserializeObject<ConnectionStringSetting[]>(connectionStringsJson!);
+                await PublishConnectionStrings(armClient, targetSite, connectionStrings!);
                 Log.Info("Updated connection strings");
             }
         }
