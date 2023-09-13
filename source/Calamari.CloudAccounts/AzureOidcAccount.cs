@@ -1,8 +1,6 @@
 using System;
-using System.Net;
 using System.Net.Http;
 using System.Threading;
-using System.Threading.Tasks;
 using Calamari.Common.Plumbing.Variables;
 using Microsoft.Azure.Management.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Authentication;
@@ -92,10 +90,10 @@ namespace Calamari.CloudAccounts
             // to ensure the Azure API uses the appropriate web proxy
             var client = new HttpClient(new HttpClientHandler {Proxy = NetWebRequest.DefaultWebProxy});
 
-            return Microsoft.Azure.Management.Fluent.Azure.Configure()
-                            .WithHttpClient(client)
-                            .Authenticate(credentials)
-                            .WithSubscription(SubscriptionNumber);
+            return Azure.Configure()
+                        .WithHttpClient(client)
+                        .Authenticate(credentials)
+                        .WithSubscription(SubscriptionNumber);
         }
     }
 }
