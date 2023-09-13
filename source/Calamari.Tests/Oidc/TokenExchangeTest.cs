@@ -4,6 +4,8 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Calamari.CloudAccounts;
+using Calamari.Common.Plumbing.Variables;
+using Calamari.Testing.Helpers;
 using FluentAssertions;
 using NUnit.Framework;
 using WireMock.RequestBuilders;
@@ -13,8 +15,11 @@ using WireMock.Server;
 namespace Calamari.Tests.Oidc
 {
     [TestFixture]
+    [Category(TestCategory.CompatibleOS.OnlyWindows)]
     public class TokenExchangeTest
     {
+        const string TestAccessToken = "access-token-123";
+        
         [Test]
         public async Task ShouldGetAccessToken()
         {
@@ -36,7 +41,7 @@ namespace Calamari.Tests.Oidc
                                            {
                                                token_type = "Bearer",
                                                expires_in = 3599,
-                                               access_token = "access-123"
+                                               access_token = TestAccessToken
                                            })
                                   );
 
@@ -62,18 +67,23 @@ namespace Calamari.Tests.Oidc
                                                }
                                            }));
 
-                var account = new AzureOidcAccount(
-                                                   "1111-111111111111-11111111",
-                                                   "client-xxx",
-                                                   "tenant-xxx",
-                                                   "this shouldn't be needed",
-                                                   "fake-env",
-                                                   "https://management-url/.default",
-                                                   server.Url);
+                var variables = new CalamariVariables
+                {
+                    {AccountVariables.SubscriptionId, new Guid().ToString()},
+                    {AccountVariables.ClientId, "client-xxx"},
+                    {AccountVariables.TenantId, "tenant-xxx"},
+                    {AccountVariables.Jwt, "not needed"},
+                    {AccountVariables.Environment, "fake env"},
+                    {AccountVariables.ResourceManagementEndPoint, "https://management-url/.default"},
+                    {AccountVariables.ActiveDirectoryEndPoint, server.Url},
+                    {AccountVariables.InstanceDiscoveryUri, $"{server.Url}/discovery"},
+                };
+
+                var account = new AzureOidcAccount(variables);
 
                 var token = await account.GetAuthorizationToken(CancellationToken.None);
 
-                token.Should().Be("access-123");
+                token.Should().Be(TestAccessToken);
             }
         }
     }

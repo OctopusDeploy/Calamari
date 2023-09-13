@@ -16,21 +16,28 @@ namespace Calamari.CloudAccounts
         
         public static Task<string> GetAuthorizationToken(this AzureOidcAccount account, CancellationToken cancellationToken)
         {
-            return GetAuthorizationToken(account.TenantId, account.ClientId, account.GetCredentials,
-                                                   account.ResourceManagementEndpointBaseUri, account.ActiveDirectoryEndpointBaseUri, account.AzureEnvironment, cancellationToken);
+            return GetAuthorizationToken(
+                                         account.TenantId,
+                                         account.ClientId,
+                                         account.GetCredentials,
+                                         account.ResourceManagementEndpointBaseUri,
+                                         account.ActiveDirectoryEndpointBaseUri,
+                                         account.AzureEnvironment,
+                                         account.InstanceDiscoveryUri,
+                                         cancellationToken);
         }
 
-        public static async Task<string> GetAuthorizationToken(string tenantId, string applicationId, string token, string managementEndPoint, string activeDirectoryEndPoint, string aureEnvironment, CancellationToken cancellationToken)
+        public static async Task<string> GetAuthorizationToken(string tenantId, string applicationId, string token, string managementEndPoint, string activeDirectoryEndPoint, string aureEnvironment, string instanceDiscoveryUri, CancellationToken cancellationToken)
         {
             var authContext = GetOidcContextUri(activeDirectoryEndPoint, tenantId);
             Log.Verbose($"Authentication Context: {authContext}");
             
             var builder = ConfidentialClientApplicationBuilder.Create(applicationId)
                                                               .WithClientAssertion(token);
-
-            if (activeDirectoryEndPoint.Contains("localhost"))
+            
+            if (!string.IsNullOrEmpty(instanceDiscoveryUri))
             {
-                builder = builder.WithInstanceDiscoveryMetadata(new Uri($"{activeDirectoryEndPoint}/discovery"))
+                builder = builder.WithInstanceDiscoveryMetadata(new Uri(instanceDiscoveryUri))
                                  .WithAuthority(authContext, false);
             }
             else

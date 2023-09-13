@@ -43,6 +43,7 @@ namespace Calamari.CloudAccounts
             AzureEnvironment = variables.Get(AccountVariables.Environment);
             ResourceManagementEndpointBaseUri = variables.Get(AccountVariables.ResourceManagementEndPoint, DefaultVariables.ResourceManagementEndpoint);
             ActiveDirectoryEndpointBaseUri = variables.Get(AccountVariables.ActiveDirectoryEndPoint, DefaultVariables.OidcAuthContextUri);
+            InstanceDiscoveryUri = variables.Get(AccountVariables.InstanceDiscoveryUri);
         }
 
         public AccountType AccountType => AccountType.AzureOidc;
@@ -54,6 +55,7 @@ namespace Calamari.CloudAccounts
         public string AzureEnvironment { get; }
         public string ResourceManagementEndpointBaseUri { get; }
         public string ActiveDirectoryEndpointBaseUri { get; }
+        public string InstanceDiscoveryUri { get; }
 
         internal static string GetDefaultScope(string environmentName)
         {
