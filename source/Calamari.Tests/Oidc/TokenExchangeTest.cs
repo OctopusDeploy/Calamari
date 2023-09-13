@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Calamari.CloudAccounts;
@@ -14,33 +13,12 @@ using WireMock.Server;
 namespace Calamari.Tests.Oidc
 {
     [TestFixture]
-    public class SimpleTest
+    public class TokenExchangeTest
     {
-        [Test]
-        public async Task SanityTest()
-        {
-            using (var server = WireMockServer.Start(port: 8443, ssl: true))
-            {
-                server.Given(Request.Create().WithPath("/test").UsingGet())
-                      .RespondWith(
-                                   Response.Create()
-                                           .WithStatusCode(200)
-                                           .WithBody("ok")
-                                  );
-
-                using (var client = HttpClientFactory.Create())
-                {
-                    var response = await client.GetAsync($"{server.Url}/test");
-                    var body = await response.Content.ReadAsStringAsync();
-                    body.Should().Be("ok");
-                }
-            }
-        }
-
         [Test]
         public async Task ShouldGetAccessToken()
         {
-            using (var server = WireMockServer.Start(port: 443, ssl: true))
+            using (var server = WireMockServer.Start(ssl: true))
             {
                 server.Given(
                              Request.Create()
@@ -83,13 +61,6 @@ namespace Calamari.Tests.Oidc
                                                    }
                                                }
                                            }));
-
-                // using (var client = HttpClientFactory.Create())
-                // {
-                //     var response = await client.GetAsync($"{server.Url}/discovery");
-                //     var body = await response.Content.ReadAsStringAsync();
-                //     body.Should().Be("ok");
-                // }
 
                 var account = new AzureOidcAccount(
                                                    "1111-111111111111-11111111",
