@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Calamari.AzureAppService.Azure;
 using Calamari.AzureAppService.Json;
+using Calamari.CloudAccounts;
 using Calamari.Common.Commands;
 using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Logging;
@@ -14,6 +15,8 @@ using Microsoft.Azure.Management.WebSites;
 using Microsoft.Azure.Management.WebSites.Models;
 using Microsoft.Rest;
 using Newtonsoft.Json;
+using Octopus.CoreUtilities.Extensions;
+using AccountVariables = Calamari.AzureAppService.Azure.AccountVariables;
 
 namespace Calamari.AzureAppService.Behaviors
 {
@@ -39,7 +42,8 @@ namespace Calamari.AzureAppService.Behaviors
             Log.Verbose("Starting App Settings Deploy");
             var variables = context.Variables;
 
-            var principalAccount = ServicePrincipalAccount.CreateFromKnownVariables(variables);
+            var hasJwt = !variables.Get(AccountVariables.Jwt).IsNullOrEmpty();
+            var account = hasJwt ? (IAzureAccount)new AzureOidcAccount(variables) : new AzureServicePrincipalAccount(variables);
 
             var webAppName = variables.Get(SpecialVariables.Action.Azure.WebAppName);
             var slotName = variables.Get(SpecialVariables.Action.Azure.WebAppSlot);
@@ -52,15 +56,15 @@ namespace Calamari.AzureAppService.Behaviors
             if (resourceGroupName == null)
                 throw new Exception("resource group name must be specified");
 
-            var targetSite = new AzureTargetSite(principalAccount.SubscriptionNumber, resourceGroupName, webAppName, slotName);
+            var targetSite = new AzureTargetSite(account.SubscriptionNumber, resourceGroupName, webAppName, slotName);
 
-            string token = await Auth.GetAuthTokenAsync(principalAccount);
+            string token = await Auth.GetAuthTokenAsync(account);
 
-            var webAppClient = new WebSiteManagementClient(new Uri(principalAccount.ResourceManagementEndpointBaseUri),
+            var webAppClient = new WebSiteManagementClient(new Uri(account.ResourceManagementEndpointBaseUri),
                                                            new TokenCredentials(token))
             {
-                SubscriptionId = principalAccount.SubscriptionNumber,
-                HttpClient = { BaseAddress = new Uri(principalAccount.ResourceManagementEndpointBaseUri) }
+                SubscriptionId = account.SubscriptionNumber,
+                HttpClient = { BaseAddress = new Uri(account.ResourceManagementEndpointBaseUri) }
             };
 
             // If app settings are specified
@@ -68,8 +72,8 @@ namespace Calamari.AzureAppService.Behaviors
             {
                 var appSettingsJson = variables.Get(SpecialVariables.Action.Azure.AppSettings, "");
                 Log.Verbose($"Updating application settings:\n{appSettingsJson}");
-                var appSettings = JsonConvert.DeserializeObject<AppSetting[]>(appSettingsJson);
-                await PublishAppSettings(webAppClient, targetSite, appSettings, token);
+                var appSettings = JsonConvert.DeserializeObject<AppSetting[]>(appSettingsJson!);
+                await PublishAppSettings(webAppClient, targetSite, appSettings!, token);
                 Log.Info("Updated application settings");
             }
 
@@ -78,8 +82,8 @@ namespace Calamari.AzureAppService.Behaviors
             {
                 var connectionStringsJson = variables.Get(SpecialVariables.Action.Azure.ConnectionStrings, "");
                 Log.Verbose($"Updating connection strings:\n{connectionStringsJson}");
-                var connectionStrings = JsonConvert.DeserializeObject<LegacyConnectionStringSetting[]>(connectionStringsJson);
-                await PublishConnectionStrings(webAppClient, targetSite, connectionStrings);
+                var connectionStrings = JsonConvert.DeserializeObject<LegacyConnectionStringSetting[]>(connectionStringsJson!);
+                await PublishConnectionStrings(webAppClient, targetSite, connectionStrings!);
                 Log.Info("Updated connection strings");
             }
         }
@@ -134,7 +138,7 @@ namespace Calamari.AzureAppService.Behaviors
                                .Select(setting => setting.Name)
                                .ToArray();
 
-            if (!slotSettings.Any())
+            if (!Enumerable.Any(slotSettings))
                 return;
 
             await AppSettingsManagement.PutSlotSettingsListAsync(webAppClient,

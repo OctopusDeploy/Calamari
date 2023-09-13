@@ -94,7 +94,7 @@ namespace Calamari.AzureAppService.Tests
             Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleProxyHost, originalProxyHost);
             Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleProxyPort, originalProxyPort);
         }
-        
+
         static async Task<(IAzure azure, IResourceGroup resourceGroup, IWebApp webApp)> SetUpAzureWebApp()
         {
             var resourceGroupName = SdkContext.RandomResourceName(nameof(LegacyAzureWebAppHealthCheckActionHandlerFixtures), 60);

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using Calamari.Azure;
+using Calamari.CloudAccounts;
 using Calamari.Common.Features.Discovery;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.ServiceMessages;
@@ -171,24 +172,24 @@ namespace Calamari.Tests.KubernetesFixtures
                 "WorkerPool-1",
                 setHealthCheckContainer ? new FeedImage("MyImage:with-tag", "Feeds-123") : null);
 
-            var account = new ServicePrincipalAccount(
-                ExternalVariables.Get(ExternalVariable.AzureSubscriptionId),
-                ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId),
-                ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId),
-                ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword),
-                null,
-                null,
-                null);
+            var account = new AzureServicePrincipalAccount(
+                                                           ExternalVariables.Get(ExternalVariable.AzureSubscriptionId),
+                                                           ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId),
+                                                           ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId),
+                                                           ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword),
+                                                           null,
+                                                           null,
+                                                           null);
 
             var authenticationDetails =
-                new AccountAuthenticationDetails<ServicePrincipalAccount>(
-                    "Azure",
-                    "Accounts-1",
-                    account);
+                new AccountAuthenticationDetails<AzureServicePrincipalAccount>(
+                                                                               "Azure",
+                                                                               "Accounts-1",
+                                                                               account);
 
             var targetDiscoveryContext =
-                new TargetDiscoveryContext<AccountAuthenticationDetails<ServicePrincipalAccount>>(scope,
-                    authenticationDetails);
+                new TargetDiscoveryContext<AccountAuthenticationDetails<AzureServicePrincipalAccount>>(scope,
+                                                                                                       authenticationDetails);
 
             ExecuteDiscoveryCommandAndVerifyResult(targetDiscoveryContext);
 

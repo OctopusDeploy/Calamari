@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Calamari.AzureWebApp.Util;
+using Calamari.CloudAccounts;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Logging;
 using Microsoft.Azure.Management.ResourceManager;
@@ -25,7 +27,7 @@ namespace Calamari.AzureWebApp.Integration.Websites.Publishing
             this.log = log;
         }
 
-        public async Task<WebDeployPublishSettings> GetPublishProperties(AzureServicePrincipalAccount account, string resourceGroupName, AzureTargetSite azureTargetSite)
+        public async Task<WebDeployPublishSettings> GetPublishProperties(IAzureAccount account, string resourceGroupName, AzureTargetSite azureTargetSite)
         {
             if (account.ResourceManagementEndpointBaseUri != DefaultVariables.ResourceManagementEndpoint)
                 log.InfoFormat("Using override for resource management endpoint - {0}", account.ResourceManagementEndpointBaseUri);
@@ -33,14 +35,27 @@ namespace Calamari.AzureWebApp.Integration.Websites.Publishing
             if (account.ActiveDirectoryEndpointBaseUri != DefaultVariables.ActiveDirectoryEndpoint)
                 log.InfoFormat("Using override for Azure Active Directory endpoint - {0}", account.ActiveDirectoryEndpointBaseUri);
 
-            var token = await ServicePrincipal.GetAuthorizationToken(account.TenantId, account.ClientId, account.Password, account.ResourceManagementEndpointBaseUri, account.ActiveDirectoryEndpointBaseUri);
+            var token = account.AccountType == AccountType.AzureOidc
+                ? await AzureOidcAccountExtensions.GetAuthorizationToken(account.TenantId,
+                                                                               account.ClientId,
+                                                                               account.GetCredentials,
+                                                                               account.ResourceManagementEndpointBaseUri,
+                                                                               account.ActiveDirectoryEndpointBaseUri,
+                                                                               account.AzureEnvironment,
+                                                                               CancellationToken.None)
+                : await AzureServicePrincipalAccountExtensions.GetAuthorizationToken(account.TenantId,
+                                                                                     account.ClientId,
+                                                                                     account.GetCredentials,
+                                                                                     account.ResourceManagementEndpointBaseUri,
+                                                                                     account.ActiveDirectoryEndpointBaseUri);
             var baseUri = new Uri(account.ResourceManagementEndpointBaseUri);
-            using (var resourcesClient = new ResourceManagementClient(new TokenCredentials(token))
-			{
+
+            using (var resourcesClient = new ResourceManagementClient(new TokenCredentials(token)) 
+            {
                 SubscriptionId = account.SubscriptionNumber,
                 BaseUri = baseUri,
             })
-            using (var webSiteClient = new WebSiteManagementClient(new Uri(account.ResourceManagementEndpointBaseUri), new TokenCredentials(token)) { SubscriptionId = account.SubscriptionNumber })
+            using (var webSiteClient = new WebSiteManagementClient(new TokenCredentials(token)) { SubscriptionId = account.SubscriptionNumber })
             {
                 webSiteClient.SetRetryPolicy(new RetryPolicy(new HttpStatusCodeErrorDetectionStrategy(), 3));
                 resourcesClient.HttpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
@@ -76,12 +91,15 @@ namespace Calamari.AzureWebApp.Integration.Websites.Publishing
                 return await GetWebDeployPublishProfile(webSiteClient, resourceGroupName, matchingSite.Name, azureTargetSite.HasSlot ? azureTargetSite.Slot : null);
             }
         }
+
         async Task<WebDeployPublishSettings> GetWebDeployPublishProfile(WebSiteManagementClient webSiteClient, string resourceGroupName, string site, string slot = null)
         {
-            var options = new CsmPublishingProfileOptions {Format = "WebDeploy"};
+            var options = new CsmPublishingProfileOptions { Format = "WebDeploy" };
             var stream = await (slot == null
                 ? webSiteClient.WebApps.ListPublishingProfileXmlWithSecretsAsync(resourceGroupName, site, options)
-                : webSiteClient.WebApps.ListPublishingProfileXmlWithSecretsSlotAsync(resourceGroupName, site, options,
+                : webSiteClient.WebApps.ListPublishingProfileXmlWithSecretsSlotAsync(resourceGroupName,
+                    site,
+                    options,
                     slot)
             );
             string text;
@@ -94,7 +112,8 @@ namespace Calamari.AzureWebApp.Integration.Websites.Publishing
 
             var profile = (from el in document.Descendants("publishProfile")
                 where string.Compare(el.Attribute("publishMethod")?.Value, "MSDeploy", StringComparison.OrdinalIgnoreCase) == 0
-                select new {
+                select new
+                {
                     PublishUrl = $"https://{el.Attribute("publishUrl")?.Value}",
                     Username = el.Attribute("userName")?.Value,
                     Password = el.Attribute("userPWD")?.Value,
@@ -108,7 +127,8 @@ namespace Calamari.AzureWebApp.Integration.Websites.Publishing
 
             return new WebDeployPublishSettings(profile.Site, new SitePublishProfile(profile.Username, profile.Password, new Uri(profile.PublishUrl)));
         }
-        async Task<Site> FindSiteByNameWithRetry(AzureServicePrincipalAccount account, AzureTargetSite azureTargetSite,
+
+        async Task<Site> FindSiteByNameWithRetry(IAzureAccount account, AzureTargetSite azureTargetSite,
             WebSiteManagementClient webSiteClient)
         {
             Site matchingSite = null;
@@ -157,7 +177,8 @@ namespace Calamari.AzureWebApp.Integration.Websites.Publishing
 
             return matchingSite;
         }
-        string GetSiteNotFoundExceptionMessage(AzureServicePrincipalAccount account, AzureTargetSite azureTargetSite, string resourceGroupName = null)
+
+        string GetSiteNotFoundExceptionMessage(IAzureAccount account, AzureTargetSite azureTargetSite, string resourceGroupName = null)
         {
             var hasResourceGroup = !string.IsNullOrWhiteSpace(resourceGroupName);
             var sb = new StringBuilder($"Could not find Azure WebSite '{azureTargetSite.Site}'");
@@ -166,6 +187,7 @@ namespace Calamari.AzureWebApp.Integration.Websites.Publishing
             sb.Append(hasResourceGroup ? string.Empty : " Please supply a Resource Group name.");
             return sb.ToString();
         }
+
         void logFoundSites(List<Site> sites)
         {
             if (sites.Any())
@@ -177,6 +199,7 @@ namespace Calamari.AzureWebApp.Integration.Websites.Publishing
                 }
             }
         }
+
         void logSite(Site site)
         {
             if (site != null)

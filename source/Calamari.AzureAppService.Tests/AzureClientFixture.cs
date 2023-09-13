@@ -2,6 +2,7 @@
 using Azure.ResourceManager;
 using Calamari.AzureAppService;
 using Calamari.AzureAppService.Azure;
+using Calamari.CloudAccounts;
 using NUnit.Framework;
 
 namespace Calamari.AzureAppService.Tests
@@ -46,15 +47,15 @@ namespace Calamari.AzureAppService.Tests
             Assert.AreEqual(new Uri(expectedManagementEndpoint), armClientOptions.Environment.Value.Endpoint);
         }
 
-        private ServicePrincipalAccount GetAccountFor(string azureCloud)
+        private AzureServicePrincipalAccount GetAccountFor(string azureCloud)
         {
-            return new ServicePrincipalAccount("123-456-789",
-                "clientId",
-                "tenantId",
-                "p@ssw0rd",
-                azureCloud,
-                null,
-                null);
+            return new AzureServicePrincipalAccount("123-456-789",
+                                                    "clientId",
+                                                    "tenantId",
+                                                    "p@ssw0rd",
+                                                    azureCloud,
+                                                    null,
+                                                    null);
         }
     }
 }

@@ -28,5 +28,10 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Calamari.Scripting\Calamari.Scripting.csproj" />
+        <ProjectReference Include="..\Calamari.CloudAccounts\Calamari.CloudAccounts.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Identity.Client" Version="4.48.1" />
     </ItemGroup>
 </Project>

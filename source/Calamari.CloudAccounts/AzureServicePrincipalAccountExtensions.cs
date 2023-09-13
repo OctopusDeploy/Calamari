@@ -1,11 +1,29 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Net;
+using System.Net.Http;
+using System.Threading.Tasks;
 using Calamari.Common.Plumbing.Logging;
+using Microsoft.Azure.Management.Fluent;
+using Microsoft.Azure.Management.ResourceManager.Fluent;
 using Microsoft.Identity.Client;
+using Microsoft.Rest;
+using AzureEnvironmentEnum = Microsoft.Azure.Management.ResourceManager.Fluent.AzureEnvironment;
 
-namespace Calamari.AzureWebApp
+namespace Calamari.CloudAccounts
 {
-    static class ServicePrincipal
+    public static class AzureServicePrincipalAccountExtensions
     {
+        public static async Task<ServiceClientCredentials> Credentials(this AzureServicePrincipalAccount account)
+        {
+            return new TokenCredentials(await GetAuthorizationToken(account));
+        }
+
+        public static Task<string> GetAuthorizationToken(this AzureServicePrincipalAccount account)
+        {
+            return GetAuthorizationToken(account.TenantId, account.ClientId, account.GetCredentials,
+                                                                                account.ResourceManagementEndpointBaseUri, account.ActiveDirectoryEndpointBaseUri);
+        }
+
         public static async Task<string> GetAuthorizationToken(string tenantId, string applicationId, string password, string managementEndPoint, string activeDirectoryEndPoint)
         { 
             var authContext = GetContextUri(activeDirectoryEndPoint, tenantId);

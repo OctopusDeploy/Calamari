@@ -1,9 +1,10 @@
 ﻿using System;
 
-namespace Calamari.AzureResourceGroup
+namespace Calamari.CloudAccounts
 {
-    public static class AzureAccountVariables
+    public static class AccountVariables
     {
+        public static readonly string Environment = "Octopus.Action.Azure.Environment";
         public static readonly string SubscriptionId = "Octopus.Action.Azure.SubscriptionId";
         public static readonly string ClientId = "Octopus.Action.Azure.ClientId";
         public static readonly string TenantId = "Octopus.Action.Azure.TenantId";

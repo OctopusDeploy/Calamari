@@ -1,12 +1,15 @@
 ﻿#nullable enable
 
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Threading;
 using System.Threading.Tasks;
 using Calamari.AzureAppService.Azure;
+using Calamari.CloudAccounts;
 using Calamari.Common.Commands;
 using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Extensions;
@@ -15,6 +18,8 @@ using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Variables;
 using Microsoft.Azure.Management.AppService.Fluent;
 using Microsoft.Rest;
+using Octopus.CoreUtilities.Extensions;
+using AccountVariables = Calamari.AzureAppService.Azure.AccountVariables;
 using WebSiteManagementClient = Microsoft.Azure.Management.WebSites.WebSiteManagementClient;
 
 namespace Calamari.AzureAppService.Behaviors
@@ -38,11 +43,13 @@ namespace Calamari.AzureAppService.Behaviors
             Log.Verbose("Starting Azure App Service deployment.");
 
             var variables = context.Variables;
-            var servicePrincipal = ServicePrincipalAccount.CreateFromKnownVariables(variables);
-            Log.Verbose($"Using Azure Tenant '{servicePrincipal.TenantId}'");
-            Log.Verbose($"Using Azure Subscription '{servicePrincipal.SubscriptionNumber}'");
-            Log.Verbose($"Using Azure ServicePrincipal AppId/ClientId '{servicePrincipal.ClientId}'");
-            Log.Verbose($"Using Azure Cloud '{servicePrincipal.AzureEnvironment}'");
+            
+            var hasJwt = !variables.Get(AccountVariables.Jwt).IsNullOrEmpty();
+            var account = hasJwt ? (IAzureAccount)new AzureOidcAccount(variables) : new AzureServicePrincipalAccount(variables);
+            Log.Verbose($"Using Azure Tenant '{account.TenantId}'");
+            Log.Verbose($"Using Azure Subscription '{account.SubscriptionNumber}'");
+            Log.Verbose($"Using Azure ServicePrincipal AppId/ClientId '{account.ClientId}'");
+            Log.Verbose($"Using Azure Cloud '{account.AzureEnvironment}'");
 
             string? resourceGroupName = variables.Get(SpecialVariables.Action.Azure.ResourceGroupName);
             if (resourceGroupName == null)
@@ -59,8 +66,8 @@ namespace Calamari.AzureAppService.Behaviors
                             ? "No Deployment Slot specified"
                             : $"Using Deployment Slot '{slotName}'");
 
-            var azureClient = servicePrincipal.CreateAzureClient();
-            var targetSite = new AzureTargetSite(servicePrincipal.SubscriptionNumber, resourceGroupName, webAppName, slotName);
+            var azureClient = account.CreateAzureClient();
+            var targetSite = new AzureTargetSite(account.SubscriptionNumber, resourceGroupName, webAppName, slotName);
 
             Log.Verbose($"Checking existence of Resource Group '{resourceGroupName}'.");
             if (!(await azureClient.ResourceGroups.ContainAsync(resourceGroupName)))
@@ -128,15 +135,15 @@ namespace Calamari.AzureAppService.Behaviors
                 await slotCreateTask;
 
             Log.Verbose($"Retrieving publishing profile for App Service to determine correct deployment endpoint.");
-            var publishingProfile = await PublishingProfile.GetPublishingProfile(targetSite, servicePrincipal);
+            var publishingProfile = await PublishingProfile.GetPublishingProfile(targetSite, account);
             Log.Verbose($"Using deployment endpoint '{publishingProfile.PublishUrl}' from publishing profile.");
 
-            string? credential = await Auth.GetBasicAuthCreds(servicePrincipal, targetSite);
-            string token = await Auth.GetAuthTokenAsync(servicePrincipal);
+            string? credential = await Auth.GetBasicAuthCreds(account, targetSite);
+            string token = await Auth.GetAuthTokenAsync(account);
 
-            var webAppClient = new WebSiteManagementClient(new Uri(servicePrincipal.ResourceManagementEndpointBaseUri),
+            var webAppClient = new WebSiteManagementClient(new Uri(account.ResourceManagementEndpointBaseUri),
                                                            new TokenCredentials(token))
-                { SubscriptionId = servicePrincipal.SubscriptionNumber };
+                { SubscriptionId = account.SubscriptionNumber };
 
             var httpClient = webAppClient.HttpClient;
             httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", credential);

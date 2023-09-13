@@ -15,7 +15,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Azure.Identity" Version="1.2.3" />
+    <PackageReference Include="Azure.Identity" Version="1.10.0" />
     <PackageReference Include="Azure.ResourceManager.Resources" Version="1.0.0-preview.2" />
     <PackageReference Include="Azure.ResourceManager.Storage" Version="1.1.1" />
     <PackageReference Include="Microsoft.Azure.Management.Storage" Version="24.0.0" />

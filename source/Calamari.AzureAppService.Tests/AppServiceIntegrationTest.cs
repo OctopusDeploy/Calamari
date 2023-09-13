@@ -10,10 +10,12 @@ using Azure.ResourceManager.AppService;
 using Azure.ResourceManager.AppService.Models;
 using Azure.ResourceManager.Resources;
 using Calamari.AzureAppService.Azure;
+using Calamari.CloudAccounts;
 using Calamari.Testing;
 using FluentAssertions;
 using NUnit.Framework;
 using Octostache;
+using AccountVariables = Calamari.AzureAppService.Azure.AccountVariables;
 
 namespace Calamari.AzureAppService.Tests
 {
@@ -53,13 +55,13 @@ namespace Calamari.AzureAppService.Tests
             SubscriptionId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionId);
             ResourceGroupLocation = Environment.GetEnvironmentVariable("AZURE_NEW_RESOURCE_REGION") ?? DefaultResourceGroupLocation;
 
-            var servicePrincipalAccount = new ServicePrincipalAccount(SubscriptionId,
-                                                                      ClientId,
-                                                                      TenantId,
-                                                                      ClientSecret,
-                                                                      "AzureGlobalCloud",
-                                                                      resourceManagementEndpointBaseUri,
-                                                                      activeDirectoryEndpointBaseUri);
+            var servicePrincipalAccount = new AzureServicePrincipalAccount(SubscriptionId,
+                                                                           ClientId,
+                                                                           TenantId,
+                                                                           ClientSecret,
+                                                                           "AzureGlobalCloud",
+                                                                           resourceManagementEndpointBaseUri,
+                                                                           activeDirectoryEndpointBaseUri);
 
             ArmClient = servicePrincipalAccount.CreateArmClient(retryOptions =>
                                                                 {

@@ -1,6 +1,12 @@
-﻿using Calamari.Common.FeatureToggles;
+﻿using System.Threading.Tasks;
+using Calamari.Common.FeatureToggles;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes.Integration;
+using Octopus.CoreUtilities.Extensions;
+#if !NET40
+using Microsoft.Identity.Client;
+#endif
 
 namespace Calamari.Kubernetes.Authentication
 {
@@ -44,7 +50,16 @@ namespace Calamari.Kubernetes.Authentication
                 var tenantId = deploymentVariables.Get("Octopus.Action.Azure.TenantId");
                 var clientId = deploymentVariables.Get("Octopus.Action.Azure.ClientId");
                 var password = deploymentVariables.Get("Octopus.Action.Azure.Password");
-                azureCli.ConfigureAzAccount(subscriptionId, tenantId, clientId, password, azEnvironment);
+                var jwt = deploymentVariables.Get("Octopus.OpenIdConnect.Jwt");
+
+                var isOidc = !jwt.IsNullOrEmpty();
+#if !NET40
+                var credential = isOidc ? jwt : password;
+#else
+                var credential = password;
+#endif
+
+                azureCli.ConfigureAzAccount(subscriptionId, tenantId, clientId, credential, azEnvironment, isOidc);
 
                 var azureResourceGroup = deploymentVariables.Get("Octopus.Action.Kubernetes.AksClusterResourceGroup");
                 var azureCluster = deploymentVariables.Get(SpecialVariables.AksClusterName);
@@ -57,6 +72,25 @@ namespace Calamari.Kubernetes.Authentication
             }
 
             return true;
+        }
+
+        static string GetDefaultScope(string environmentName)
+        {
+            switch (environmentName)
+            {
+
+                case "AzureChinaCloud":
+                    return "https://management.chinacloudapi.cn/.default";
+                case "AzureGermanCloud":
+                    return "https://management.microsoftazure.de/.default";
+                case "AzureUSGovernment":
+                    return "https://management.usgovcloudapi.net/.default";
+                case "AzureGlobalCloud":
+                case "AzureCloud":
+                default:
+                    // The double slash is intentional for public cloud.
+                    return "https://management.azure.com//.default";
+            }
         }
     }
 }

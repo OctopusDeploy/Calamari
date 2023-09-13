@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure.ResourceManager;
 using Azure.ResourceManager.ResourceGraph;
 using Azure.ResourceManager.ResourceGraph.Models;
 using Calamari.AzureAppService.Azure;
+using Calamari.CloudAccounts;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Discovery;
 using Calamari.Common.Plumbing.Logging;
@@ -15,8 +16,6 @@ using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Common.Plumbing.Variables;
 using Newtonsoft.Json;
-using JsonException = System.Text.Json.JsonException;
-using JsonSerializer = System.Text.Json.JsonSerializer;
 
 #nullable enable
 namespace Calamari.AzureAppService.Behaviors
@@ -109,7 +108,7 @@ namespace Calamari.AzureAppService.Behaviors
 
         private void WriteTargetCreationServiceMessage(
             AzureResource resource,
-            TargetDiscoveryContext<AccountAuthenticationDetails<ServicePrincipalAccount>> context,
+            TargetDiscoveryContext<AccountAuthenticationDetails<AzureServicePrincipalAccount>> context,
             TargetMatchResult matchResult)
         {
             var resourceName = resource.Name;
@@ -130,7 +129,7 @@ namespace Calamari.AzureAppService.Behaviors
                     slotName));
         }
 
-        private TargetDiscoveryContext<AccountAuthenticationDetails<ServicePrincipalAccount>>? GetTargetDiscoveryContext(
+        private TargetDiscoveryContext<AccountAuthenticationDetails<AzureServicePrincipalAccount>>? GetTargetDiscoveryContext(
             IVariables variables)
         {
             const string contextVariableName = "Octopus.TargetDiscovery.Context";
@@ -141,16 +140,11 @@ namespace Calamari.AzureAppService.Behaviors
                 return null;
             }
 
-            var options = new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            };
-
             try
             {
-                return JsonSerializer
-                    .Deserialize<TargetDiscoveryContext<AccountAuthenticationDetails<ServicePrincipalAccount>>>(
-                        json, options);
+                return JsonConvert
+                    .DeserializeObject<TargetDiscoveryContext<AccountAuthenticationDetails<AzureServicePrincipalAccount>>>(
+                        json);
             }
             catch (JsonException ex)
             {
@@ -194,7 +188,7 @@ namespace Calamari.AzureAppService.Behaviors
                 $"Resources {typeCondition} project name, type, tags, resourceGroup");
 
             var response = await tenant.GetResourcesAsync(query, CancellationToken.None);
-            return JsonConvert.DeserializeObject<AzureResource[]>(response.Value.Data.ToString());
+            return JsonConvert.DeserializeObject<AzureResource[]>(response.Value.Data.ToString())!;
         }
     }
 }

@@ -18,6 +18,7 @@
 ##   $OctopusAzureEnvironment = "..."
 ##   $OctopusDisableAzureCLI = "..."
 ##   $OctopusAzureExtensionsDirectory = "..." 
+##   OctopusOpenIdJwt = "..."
 
 $ErrorActionPreference = "Stop"
 
@@ -73,11 +74,6 @@ function Get-RunningInPowershellCore {
 }
 
 function Initialize-AzureRmContext {
-    
-    # Authenticate via Service Principal
-    $securePassword = ConvertTo-SecureString $OctopusAzureADPassword -AsPlainText -Force
-    $creds = New-Object System.Management.Automation.PSCredential ($OctopusAzureADClientId, $securePassword)
-
     # Turn off context autosave, as this will make all authentication occur in memory, and isolate each session from the context changes in other sessions
     Write-Host "##octopus[stdout-verbose]"
     Disable-AzureRMContextAutosave -Scope Process
@@ -90,21 +86,31 @@ function Initialize-AzureRmContext {
         exit 2
     }
 
-    Write-Verbose "AzureRM Modules: Authenticating with Service Principal"
+    If (![string]::IsNullOrEmpty($OctopusOpenIdJwt)) {
+            Write-Verbose "AzureRM Modules: Authenticating with OpenID Connect Federated Token"
 
-    # Force any output generated to be verbose in Octopus logs.
-    Write-Host "##octopus[stdout-verbose]"
-    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-    Login-AzureRmAccount -Credential $creds -TenantId $OctopusAzureADTenantId -SubscriptionId $OctopusAzureSubscriptionId -Environment $AzureEnvironment -ServicePrincipal
-    Write-Host "##octopus[stdout-default]"
+            # Force any output generated to be verbose in Octopus logs.
+            Write-Host "##octopus[stdout-verbose]"
+            [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+            Login-AzureRmAccount -Environment $AzureEnvironment -ApplicationId $OctopusAzureADClientId -Tenant $OctopusAzureADTenantId -Subscription $OctopusAzureSubscriptionId -FederatedToken $OctopusOpenIdJwt
+            Write-Host "##octopus[stdout-default]"
+    }
+    else {
+        # Authenticate via Service Principal
+        $securePassword = ConvertTo-SecureString $OctopusAzureADPassword -AsPlainText -Force
+        $creds = New-Object System.Management.Automation.PSCredential ($OctopusAzureADClientId, $securePassword)
+
+        Write-Verbose "AzureRM Modules: Authenticating with Service Principal"
+
+        # Force any output generated to be verbose in Octopus logs.
+        Write-Host "##octopus[stdout-verbose]"
+        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+        Login-AzureRmAccount -Credential $creds -TenantId $OctopusAzureADTenantId -SubscriptionId $OctopusAzureSubscriptionId -Environment $AzureEnvironment -ServicePrincipal
+        Write-Host "##octopus[stdout-default]"
+    }
 }
 
 function Initialize-AzContext {
-    
-    # Authenticate via Service Principal
-    $securePassword = ConvertTo-SecureString $OctopusAzureADPassword -AsPlainText -Force
-    $creds = New-Object System.Management.Automation.PSCredential ($OctopusAzureADClientId, $securePassword)
-    
     $tempWarningPreference = $WarningPreference
     $WarningPreference = 'SilentlyContinue'
     if (-Not(Get-Command "Disable-AzureRMContextAutosave" -errorAction SilentlyContinue))
@@ -130,18 +136,31 @@ function Initialize-AzContext {
         exit 2
     }
 
-    Write-Verbose "Az Modules: Authenticating with Service Principal"
+    If (![string]::IsNullOrEmpty($OctopusOpenIdJwt)) {
+        Write-Verbose "Az Modules: Authenticating with OpenID Connect Federated Token"
+        # Force any output generated to be verbose in Octopus logs.
+        Write-Host "##octopus[stdout-verbose]"
+        Connect-AzAccount -Environment $AzureEnvironment -ApplicationId $OctopusAzureADClientId -Tenant $OctopusAzureADTenantId -Subscription $OctopusAzureSubscriptionId -FederatedToken $OctopusOpenIdJwt
+        Write-Host "##octopus[stdout-default]"
+    }
+    else {
+        # Authenticate via Service Principal
+        $securePassword = ConvertTo-SecureString $OctopusAzureADPassword -AsPlainText -Force
+        $creds = New-Object System.Management.Automation.PSCredential ($OctopusAzureADClientId, $securePassword)
 
-    # Force any output generated to be verbose in Octopus logs.
-    Write-Host "##octopus[stdout-verbose]"
-    Connect-AzAccount -Credential $creds -TenantId $OctopusAzureADTenantId -SubscriptionId $OctopusAzureSubscriptionId -Environment $AzureEnvironment -ServicePrincipal
-    Write-Host "##octopus[stdout-default]"
+        Write-Verbose "Az Modules: Authenticating with Service Principal"
+
+        # Force any output generated to be verbose in Octopus logs.
+        Write-Host "##octopus[stdout-verbose]"
+        Connect-AzAccount -Credential $creds -TenantId $OctopusAzureADTenantId -SubscriptionId $OctopusAzureSubscriptionId -Environment $AzureEnvironment -ServicePrincipal
+        Write-Host "##octopus[stdout-default]"
+    }
 }
 
 Execute-WithRetry{
     pushd $env:OctopusCalamariWorkingDirectory
     try {
-        If ([System.Convert]::ToBoolean($OctopusUseServicePrincipal)) {
+        If ([System.Convert]::ToBoolean($OctopusAzSpOrOidc)) {
 
             # Depending on which version of Powershell we are running under will change which module context we want to initialize.            
             #   Powershell Core: Check Az then AzureRM (provide a warning and do nothing if AzureRM is installed)
@@ -200,13 +219,26 @@ Execute-WithRetry{
                     Write-Host "Azure CLI: Authenticating with Service Principal"
 
                     $loginArgs = @();
-                    # Use the full argument because of https://github.com/Azure/azure-cli/issues/12105
-                    $loginArgs += @("--username=$(ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADClientId)))");
-                    $loginArgs += @("--password=$(ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADPassword)))");
-                    $loginArgs += @("--tenant=$(ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADTenantId)))");
-                    
-                    Write-Host "az login --service-principal $loginArgs"
-                    az login --service-principal $loginArgs
+
+                    If (![string]::IsNullOrEmpty($OctopusOpenIdJwt)) {
+                        # Use the full argument because of https://github.com/Azure/azure-cli/issues/12105
+                        $loginArgs += @("--username=$(ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADClientId)))");
+                        $loginArgs += @("--tenant=$(ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADTenantId)))");
+                        $loginArgs += @("--federated-token=$(ConvertTo-QuotedString($OctopusOpenIdJwt))");
+
+                        Write-Host "az login --service-principal $loginArgs"
+                        az login --service-principal $loginArgs
+                    }
+                    else {
+                        # Use the full argument because of https://github.com/Azure/azure-cli/issues/12105
+                        $loginArgs += @("--username=$(ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADClientId)))");
+                        $loginArgs += @("--password=$(ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADPassword)))");
+                        $loginArgs += @("--tenant=$(ConvertTo-QuotedString(ConvertTo-ConsoleEscapedArgument($OctopusAzureADTenantId)))");
+
+                        Write-Host "az login --service-principal $loginArgs"
+                        az login --service-principal $loginArgs
+                    }
+
                     Write-Host "Azure CLI: Setting active subscription to $OctopusAzureSubscriptionId"
                     az account set --subscription $OctopusAzureSubscriptionId
 
@@ -247,7 +279,7 @@ try {
     Invoke-Expression ". `"$OctopusAzureTargetScript`" $OctopusAzureTargetScriptParameters"
 } catch {
     # Warn if FIPS 140 compliance required when using Service Management SDK
-    if ([System.Security.Cryptography.CryptoConfig]::AllowOnlyFipsAlgorithms -and ![System.Convert]::ToBoolean($OctopusUseServicePrincipal)) {
+    if ([System.Security.Cryptography.CryptoConfig]::AllowOnlyFipsAlgorithms -and ![System.Convert]::ToBoolean($OctopusAzSpOrOidc)) {
         Write-Warning "The Azure Service Management SDK is not FIPS 140 compliant. http://g.octopushq.com/FIPS"
     }
 

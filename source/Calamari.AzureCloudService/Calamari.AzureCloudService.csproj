@@ -16,7 +16,7 @@
     <PackageReference Include="Microsoft.WindowsAzure.Management.Storage" Version="6.0.1" />
     <PackageReference Include="Microsoft.Bcl.Async" Version="1.0.168" />
     <PackageReference Include="Octopus.Dependencies.AzureBinaries" Version="2.9.0" />
-    <PackageReference Include="WindowsAzure.Storage" Version="4.3.0" />
+    <PackageReference Include="WindowsAzure.Storage" Version="9.3.3" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Scripts\*" />

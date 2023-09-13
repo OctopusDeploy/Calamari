@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Calamari.AzureAppService.Azure;
+using Calamari.CloudAccounts;
 using Microsoft.Azure.Management.AppService.Fluent;
 using Microsoft.Azure.Management.AppService.Fluent.Models;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Authentication;
@@ -26,7 +27,7 @@ namespace Calamari.AzureAppService
         public string GetBasicAuthCredentials()
             => Convert.ToBase64String(Encoding.ASCII.GetBytes($"{Username}:{Password}"));
         
-        public static async Task<PublishingProfile> GetPublishingProfile(AzureTargetSite targetSite, ServicePrincipalAccount account)
+        public static async Task<PublishingProfile> GetPublishingProfile(AzureTargetSite targetSite, IAzureAccount account)
         {
             string mgmtEndpoint = account.ResourceManagementEndpointBaseUri;
             var token = new TokenCredentials(await Auth.GetAuthTokenAsync(account));

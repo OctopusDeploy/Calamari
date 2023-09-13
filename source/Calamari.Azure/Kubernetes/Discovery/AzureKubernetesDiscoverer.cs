@@ -2,13 +2,17 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Threading;
+using Calamari.CloudAccounts;
 using Calamari.Common.Features.Discovery;
 using Calamari.Common.Plumbing.Logging;
 using Microsoft.Rest.Azure;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Calamari.Azure.Kubernetes.Discovery
 {
-    using AzureTargetDiscoveryContext = TargetDiscoveryContext<AccountAuthenticationDetails<ServicePrincipalAccount>>;
+    using AzureTargetDiscoveryContext = TargetDiscoveryContext<AccountAuthenticationDetails<AzureServicePrincipalAccount>>;
 
     public class AzureKubernetesDiscoverer : KubernetesDiscovererBase
     {
@@ -26,9 +30,9 @@ namespace Calamari.Azure.Kubernetes.Discovery
 
         public override IEnumerable<KubernetesCluster> DiscoverClusters(string contextJson)
         {
-            if (!TryGetDiscoveryContext<AccountAuthenticationDetails<ServicePrincipalAccount>>(contextJson, out var authenticationDetails, out _))
+            if (!TryGetDiscoveryContext<AccountAuthenticationDetails<AzureServicePrincipalAccount>>(contextJson, out var authenticationDetails, out _))
                 return Enumerable.Empty<KubernetesCluster>();
-
+            
             var account = authenticationDetails.AccountDetails;
             Log.Verbose("Looking for Kubernetes clusters in Azure using:");
             Log.Verbose($"  Subscription ID: {account.SubscriptionNumber}");
