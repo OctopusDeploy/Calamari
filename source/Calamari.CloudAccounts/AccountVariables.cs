@@ -12,6 +12,5 @@ namespace Calamari.CloudAccounts
         public static readonly string Jwt = "Octopus.OpenIdConnect.Jwt";
         public static readonly string ResourceManagementEndPoint = "Octopus.Action.Azure.ResourceManagementEndPoint";
         public static readonly string ActiveDirectoryEndPoint = "Octopus.Action.Azure.ActiveDirectoryEndPoint";
-        public static readonly string InstanceDiscoveryUri = "Octopus.OpenIdConnect.InstanceDiscoveryUri";
     }
 }
