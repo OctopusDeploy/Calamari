@@ -7,7 +7,6 @@
 ##
 ##   $OctopusAzureTargetScript = "..."
 ##   $OctopusAzureTargetScriptParameters = "..."
-##   $OctopusUseServicePrincipal = "false"
 ##   $OctopusAzureSubscriptionId = "..."
 ##   $OctopusAzureStorageAccountName = "..."
 ##   $OctopusAzureCertificateFileName = "..."
@@ -160,7 +159,7 @@ function Initialize-AzContext {
 Execute-WithRetry{
     pushd $env:OctopusCalamariWorkingDirectory
     try {
-        If ([System.Convert]::ToBoolean($OctopusAzSpOrOidc)) {
+        If ([System.Convert]::ToBoolean($OctopusAzureServicePrincipalOrOidc )) {
 
             # Depending on which version of Powershell we are running under will change which module context we want to initialize.            
             #   Powershell Core: Check Az then AzureRM (provide a warning and do nothing if AzureRM is installed)
@@ -279,7 +278,7 @@ try {
     Invoke-Expression ". `"$OctopusAzureTargetScript`" $OctopusAzureTargetScriptParameters"
 } catch {
     # Warn if FIPS 140 compliance required when using Service Management SDK
-    if ([System.Security.Cryptography.CryptoConfig]::AllowOnlyFipsAlgorithms -and ![System.Convert]::ToBoolean($OctopusAzSpOrOidc)) {
+    if ([System.Security.Cryptography.CryptoConfig]::AllowOnlyFipsAlgorithms -and ![System.Convert]::ToBoolean($OctopusAzureServicePrincipalOrOidc)) {
         Write-Warning "The Azure Service Management SDK is not FIPS 140 compliant. http://g.octopushq.com/FIPS"
     }
 

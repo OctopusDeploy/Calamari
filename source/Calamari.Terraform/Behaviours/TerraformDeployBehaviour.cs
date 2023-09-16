@@ -138,16 +138,35 @@ namespace Calamari.Terraform.Behaviours
             var subscriptionId = variables.Get($"{account}.SubscriptionNumber")?.Trim() ?? variables.Get(AzureAccountVariables.SubscriptionId)?.Trim();
             var clientId = variables.Get($"{account}.Client")?.Trim() ?? variables.Get(AzureAccountVariables.ClientId)?.Trim();
             var clientSecret = variables.Get($"{account}.Password")?.Trim() ?? variables.Get(AzureAccountVariables.Password)?.Trim();
+            var oidcToken = variables.Get($"{account}.OpenIdConnect.Jwt")?.Trim() ?? variables.Get(AzureAccountVariables.OpenIDJwt)?.Trim();
             var tenantId = variables.Get($"{account}.TenantId")?.Trim() ?? variables.Get(AzureAccountVariables.TenantId)?.Trim();
 
             var env = new Dictionary<string, string>
             {
                 { "ARM_SUBSCRIPTION_ID", subscriptionId },
                 { "ARM_CLIENT_ID", clientId },
-                { "ARM_CLIENT_SECRET", clientSecret },
                 { "ARM_TENANT_ID", tenantId },
                 { "ARM_ENVIRONMENT", environmentName }
             };
+
+            if (!string.IsNullOrEmpty(oidcToken))
+            {
+                // https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/guides/service_principal_oidc
+                // Docs mention support for Oidc accounts from 3.7.0 this fails for service principal accounts,
+                // but is fixed in 3.22 (This is to be mentioned in docs)
+                // These versions can be supported by running the "az login ... --federated-token" command from the cli
+                // We stick to the terraform auth to avoid polluting the local az cli login context.
+                // Additional issues 
+                // https://github.com/hashicorp/terraform-provider-azurerm/issues/22034
+                // https://github.com/hashicorp/terraform-provider-azurerm/issues/20546
+                env.Add("ARM_OIDC_TOKEN", oidcToken);
+                env.Add("ARM_USE_OIDC", "true");
+                
+            }
+            else
+            {
+                env.Add("ARM_CLIENT_SECRET", clientSecret);
+            }
 
             return env;
         }
