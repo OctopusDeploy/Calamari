@@ -32,7 +32,7 @@ namespace Calamari.CloudAccounts
 
             var result = await app.AcquireTokenForClient(
                                                          // Default values set on a per cloud basis on AzureOidcAccount, if managementEndPoint is set on the account /.default is required.
-                                                         new[] { managementEndPoint == DefaultVariables.ResourceManagementEndpoint ? AzureOidcAccount.GetDefaultScope(aureEnvironment) : managementEndPoint.EndsWith(".default") ? managementEndPoint : $"{managementEndPoint}/.default" })
+                                                         new[] { managementEndPoint == DefaultVariables.ResourceManagementEndpoint || string.IsNullOrEmpty(managementEndPoint) ? AzureOidcAccount.GetDefaultScope(aureEnvironment) : managementEndPoint.EndsWith(".default") ? managementEndPoint : $"{managementEndPoint}/.default" })
                                   .WithTenantId(tenantId)
                                   .ExecuteAsync(cancellationToken)
                                   .ConfigureAwait(false);
