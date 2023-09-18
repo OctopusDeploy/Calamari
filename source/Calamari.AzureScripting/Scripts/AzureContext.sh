@@ -5,8 +5,6 @@ Octopus_Azure_ADClientId=$(get_octopusvariable "Octopus.Action.Azure.ClientId")
 Octopus_Azure_ADPassword=$(get_octopusvariable "Octopus.Action.Azure.Password")
 Octopus_Azure_ADTenantId=$(get_octopusvariable "Octopus.Action.Azure.TenantId")
 Octopus_Azure_SubscriptionId=$(get_octopusvariable "Octopus.Action.Azure.SubscriptionId")
-Octopus_Azure_OctopusUseOidc=$(get_octopusvariable "OctopusUseOidc")
-Octopus_Azure_OctopusUseServicePrincipal=$(get_octopusvariable "OctopusUseServicePrincipal")
 Octopus_Open_Id_Jwt=$(get_octopusvariable "OctopusOpenIdJwt")
 
 function check_app_exists {
@@ -44,7 +42,7 @@ function setup_context {
         loginArgs=()
         # Use the full argument because of https://github.com/Azure/azure-cli/issues/12105
 
-        if [ $Octopus_Azure_OctopusUseOidc ]
+        if [ -n $Octopus_Open_Id_Jwt ]
         then
           echo "Azure CLI: Authenticating with OpenID Connect Access Token"
           loginArgs+=("--username=$Octopus_Azure_ADClientId")
