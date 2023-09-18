@@ -12,8 +12,6 @@ using Newtonsoft.Json.Linq;
 
 namespace Calamari.Azure.Kubernetes.Discovery
 {
-    using AzureTargetDiscoveryContext = TargetDiscoveryContext<AccountAuthenticationDetails<AzureServicePrincipalAccount>>;
-
     public class AzureKubernetesDiscoverer : KubernetesDiscovererBase
     {
         public AzureKubernetesDiscoverer(ILog log) : base(log)
@@ -30,10 +28,34 @@ namespace Calamari.Azure.Kubernetes.Discovery
 
         public override IEnumerable<KubernetesCluster> DiscoverClusters(string contextJson)
         {
-            if (!TryGetDiscoveryContext<AccountAuthenticationDetails<AzureServicePrincipalAccount>>(contextJson, out var authenticationDetails, out _))
-                return Enumerable.Empty<KubernetesCluster>();
-            
-            var account = authenticationDetails.AccountDetails;
+            string accountType = string.Empty;
+            try
+            {
+                accountType = JToken.Parse(contextJson).SelectToken("authentication").SelectToken("authenticationMethod").ToString();
+            }
+            catch (Exception e)
+            {
+                Log.Warn("Could not read authentication method of target discovery context.");
+            }
+
+            IAzureAccount account;
+            string accountId;
+
+            if (accountType == "AzureOidc")
+            {
+                if (!TryGetDiscoveryContext<AccountAuthenticationDetails<AzureOidcAccount>>(contextJson, out var oidcAuthenticationDetails, out _))
+                    return Enumerable.Empty<KubernetesCluster>();
+                accountId = oidcAuthenticationDetails.AccountId;
+                account = oidcAuthenticationDetails.AccountDetails;
+            }
+            else
+            {
+                if (!TryGetDiscoveryContext<AccountAuthenticationDetails<AzureServicePrincipalAccount>>(contextJson, out var servicePrincipalAuthenticationDetails, out _))
+                    return Enumerable.Empty<KubernetesCluster>();
+                accountId = servicePrincipalAuthenticationDetails.AccountId;
+                account = servicePrincipalAuthenticationDetails.AccountDetails;
+            }
+ 
             Log.Verbose("Looking for Kubernetes clusters in Azure using:");
             Log.Verbose($"  Subscription ID: {account.SubscriptionNumber}");
             Log.Verbose($"  Tenant ID: {account.TenantId}");
@@ -61,7 +83,7 @@ namespace Calamari.Azure.Kubernetes.Discovery
                                                                                                 $"aks/{account.SubscriptionNumber}/{c.ResourceGroupName}/{c.Name}",
                                                                                                 c.Name,
                                                                                                 c.ResourceGroupName,
-                                                                                                authenticationDetails.AccountId,
+                                                                                                accountId,
                                                                                                 c.Tags.ToTargetTags())));
                 }
                 catch (CloudException ex)

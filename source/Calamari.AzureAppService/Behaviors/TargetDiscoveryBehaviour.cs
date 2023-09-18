@@ -42,7 +42,47 @@ namespace Calamari.AzureAppService.Behaviors
 
         public async Task Execute(RunningDeployment runningDeployment)
         {
-            var targetDiscoveryContext = GetTargetDiscoveryContext(runningDeployment.Variables);
+            const string contextVariableName = "Octopus.TargetDiscovery.Context";
+            var json = runningDeployment.Variables.Get(contextVariableName);
+            if (string.IsNullOrEmpty(json))
+            {
+                Log.Warn($"Could not find target discovery context in variable {contextVariableName}.");
+                Log.Warn("Aborting target discovery.");
+                return;
+            }
+
+            TargetDiscoveryContext<AccountAuthenticationDetails<IAzureAccount>>? targetDiscoveryContext = null;
+            try
+            {
+                var jsonObj = JsonConvert.DeserializeObject<dynamic>(json!);
+                string authenticationMethod = jsonObj!.authentication.authenticationMethod;
+                if (authenticationMethod == "AzureOidc")
+                {
+                    var tempContext = GetTargetDiscoveryContext<AzureOidcAccount>(json!);
+                    if (tempContext?.Authentication != null)
+                    {
+                        var accountAuthentication = tempContext.Authentication;
+                        var accountDetails = new AccountAuthenticationDetails<IAzureAccount>(accountAuthentication.Type, accountAuthentication.AccountId, accountAuthentication.AccountDetails);
+                        targetDiscoveryContext = new TargetDiscoveryContext<AccountAuthenticationDetails<IAzureAccount>>(tempContext.Scope, accountDetails);
+                    }
+                }
+                else
+                {
+                    var tempContext = GetTargetDiscoveryContext<AzureServicePrincipalAccount>(json!);
+                    if (tempContext?.Authentication != null)
+                    {
+                        var accountAuthentication = tempContext.Authentication;
+                        var accountDetails = new AccountAuthenticationDetails<IAzureAccount>(accountAuthentication.Type, accountAuthentication.AccountId, accountAuthentication.AccountDetails);
+                        targetDiscoveryContext = new TargetDiscoveryContext<AccountAuthenticationDetails<IAzureAccount>>(tempContext.Scope, accountDetails);
+                    }
+                }
+            }
+            catch (JsonException ex)
+            {
+                Log.Warn($"Could not read authentication method from target discovery context, {contextVariableName} is in wrong format: {ex.Message}");
+                return;
+            }
+            
             if (targetDiscoveryContext?.Authentication == null || targetDiscoveryContext.Scope == null)
             {
                 Log.Warn("Aborting target discovery.");
@@ -108,7 +148,7 @@ namespace Calamari.AzureAppService.Behaviors
 
         private void WriteTargetCreationServiceMessage(
             AzureResource resource,
-            TargetDiscoveryContext<AccountAuthenticationDetails<AzureServicePrincipalAccount>> context,
+            TargetDiscoveryContext<AccountAuthenticationDetails<IAzureAccount>> context,
             TargetMatchResult matchResult)
         {
             var resourceName = resource.Name;
@@ -129,22 +169,14 @@ namespace Calamari.AzureAppService.Behaviors
                     slotName));
         }
 
-        private TargetDiscoveryContext<AccountAuthenticationDetails<AzureServicePrincipalAccount>>? GetTargetDiscoveryContext(
-            IVariables variables)
+        private TargetDiscoveryContext<AccountAuthenticationDetails<T>>? GetTargetDiscoveryContext<T>(
+            string json) where T : IAzureAccount
         {
             const string contextVariableName = "Octopus.TargetDiscovery.Context";
-            var json = variables.Get(contextVariableName);
-            if (json == null)
-            {
-                Log.Warn($"Could not find target discovery context in variable {contextVariableName}.");
-                return null;
-            }
-
             try
             {
                 return JsonConvert
-                    .DeserializeObject<TargetDiscoveryContext<AccountAuthenticationDetails<AzureServicePrincipalAccount>>>(
-                        json);
+                    .DeserializeObject<TargetDiscoveryContext<AccountAuthenticationDetails<T>>>(json);
             }
             catch (JsonException ex)
             {
