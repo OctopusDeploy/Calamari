@@ -29,12 +29,13 @@ namespace Calamari.CloudAccounts
         readonly string accessKey;
         readonly string secretKey;
         readonly string roleArn;
+        readonly string sessionDuration;
+        readonly string oidcJwt;
         readonly string assumeRole;
         readonly string assumeRoleArn;
         readonly string assumeRoleExternalId;
         readonly string assumeRoleSession;
         readonly string assumeRoleDurationSeconds;
-        readonly string sessionDuration;
 
         public static async Task<AwsEnvironmentGeneration> Create(ILog log, IVariables variables, Func<Task<bool>> verifyLogin = null)
         {
@@ -97,6 +98,7 @@ namespace Calamari.CloudAccounts
                       variables.Get("Octopus.Action.Amazon.RoleArn")?.Trim();
             sessionDuration = variables.Get($"{account}.SessionDuration")?.Trim() ??
                               variables.Get("Octopus.Action.Amazon.SessionDuration")?.Trim();
+            oidcJwt = variables.Get("Octopus.OpenIdConnect.Jwt")?.Trim();
             
             assumeRole = variables.Get("Octopus.Action.Aws.AssumeRole")?.Trim();
             assumeRoleArn = variables.Get("Octopus.Action.Aws.AssumedRoleArn")?.Trim();
@@ -189,7 +191,8 @@ namespace Calamari.CloudAccounts
                     {
                         RoleArn = roleArn,
                         DurationSeconds = int.TryParse(sessionDuration, out var seconds) ? seconds : 3600,
-                        RoleSessionName = $"{roleArn}_{Guid.NewGuid()}"
+                        RoleSessionName = $"Calamari_{Guid.NewGuid()}",
+                        WebIdentityToken = oidcJwt
                     });
 
                     EnvironmentVars["AWS_ACCESS_KEY_ID"] = assumeRoleWithWebIdentityResponse.Credentials.AccessKeyId;
@@ -204,9 +207,11 @@ namespace Calamari.CloudAccounts
 
                     return true;
                 }
-                catch
+                catch (Exception ex)
                 {
                     // catch the exception and fallback to returning false
+                    throw new Exception("AWS-LOGIN-ERROR-0005.1: Failed to verify the credentials. "
+                                        + $"Error: {ex}");
                 }
             }
             
