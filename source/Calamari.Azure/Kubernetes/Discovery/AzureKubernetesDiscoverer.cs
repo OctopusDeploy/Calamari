@@ -2,12 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using System.Threading;
 using Calamari.CloudAccounts;
 using Calamari.Common.Features.Discovery;
 using Calamari.Common.Plumbing.Logging;
 using Microsoft.Rest.Azure;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace Calamari.Azure.Kubernetes.Discovery
@@ -28,34 +26,15 @@ namespace Calamari.Azure.Kubernetes.Discovery
 
         public override IEnumerable<KubernetesCluster> DiscoverClusters(string contextJson)
         {
-            string accountType = string.Empty;
-            try
-            {
-                accountType = JToken.Parse(contextJson).SelectToken("authentication").SelectToken("authenticationMethod").ToString();
-            }
-            catch (Exception e)
-            {
-                Log.Warn("Could not read authentication method of target discovery context.");
-            }
+            if (!TryGetAccountType(contextJson, out string accountType))
+                return Enumerable.Empty<KubernetesCluster>();
 
-            IAzureAccount account;
-            string accountId;
+            if (!TryGetAccountKubernetesClusters(contextJson,
+                                                 accountType,
+                                                 out var account,
+                                                 out var accountId))
+                return Enumerable.Empty<KubernetesCluster>();
 
-            if (accountType == "AzureOidc")
-            {
-                if (!TryGetDiscoveryContext<AccountAuthenticationDetails<AzureOidcAccount>>(contextJson, out var oidcAuthenticationDetails, out _))
-                    return Enumerable.Empty<KubernetesCluster>();
-                accountId = oidcAuthenticationDetails.AccountId;
-                account = oidcAuthenticationDetails.AccountDetails;
-            }
-            else
-            {
-                if (!TryGetDiscoveryContext<AccountAuthenticationDetails<AzureServicePrincipalAccount>>(contextJson, out var servicePrincipalAuthenticationDetails, out _))
-                    return Enumerable.Empty<KubernetesCluster>();
-                accountId = servicePrincipalAuthenticationDetails.AccountId;
-                account = servicePrincipalAuthenticationDetails.AccountDetails;
-            }
- 
             Log.Verbose("Looking for Kubernetes clusters in Azure using:");
             Log.Verbose($"  Subscription ID: {account.SubscriptionNumber}");
             Log.Verbose($"  Tenant ID: {account.TenantId}");
@@ -100,6 +79,54 @@ namespace Calamari.Azure.Kubernetes.Discovery
             }
 
             return discoveredClusters;
+        }
+
+        bool TryGetAccountKubernetesClusters(string contextJson,
+                                             string accountType,
+                                             out IAzureAccount account,
+                                             out string accountId)
+        {
+            if (accountType == "AzureOidc")
+            {
+                if (!TryGetDiscoveryContext<AccountAuthenticationDetails<AzureOidcAccount>>(contextJson, out var oidcAuthenticationDetails, out _))
+                {
+                    account = null;
+                    accountId = null;
+                    return false;
+                }
+
+                accountId = oidcAuthenticationDetails.AccountId;
+                account = oidcAuthenticationDetails.AccountDetails;
+            }
+            else
+            {
+                if (!TryGetDiscoveryContext<AccountAuthenticationDetails<AzureServicePrincipalAccount>>(contextJson, out var servicePrincipalAuthenticationDetails, out _))
+                {
+                    account = null;
+                    accountId = null;
+                    return false;
+                }
+
+                accountId = servicePrincipalAuthenticationDetails.AccountId;
+                account = servicePrincipalAuthenticationDetails.AccountDetails;
+            }
+
+            return true;
+        }
+
+        bool TryGetAccountType(string contextJson, out string accountType)
+        {
+            try
+            {
+                accountType = JToken.Parse(contextJson).SelectToken("authentication").SelectToken("authenticationMethod").ToString();
+                return true;
+            }
+            catch (Exception e)
+            {
+                Log.Warn("Could not read authentication method of target discovery context.");
+                accountType = null;
+                return false;
+            }
         }
     }
 }
