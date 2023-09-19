@@ -49,12 +49,12 @@ namespace Calamari.AzureAppService.Behaviors
                 return;
             }
 
-            if (!TryGetAuthenticationMethod(json, contextVariableName, out string? authenticationMethod))
+            if (!TryGetAuthenticationMethod(json!, contextVariableName, out string? authenticationMethod))
                 return;
 
             TargetDiscoveryContext<AccountAuthenticationDetails<IAzureAccount>>? targetDiscoveryContext = authenticationMethod == "AzureOidc"
-                ? GetTargetDiscoveryContext<AzureOidcAccount>(json)
-                : GetTargetDiscoveryContext<AzureServicePrincipalAccount>(json);
+                ? GetTargetDiscoveryContext<AzureOidcAccount>(json!)
+                : GetTargetDiscoveryContext<AzureServicePrincipalAccount>(json!);
             
             if (targetDiscoveryContext?.Authentication == null || targetDiscoveryContext.Scope == null)
             {
