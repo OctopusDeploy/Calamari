@@ -125,13 +125,13 @@ namespace Calamari.AzureAppService.Behaviors
         {
             try
             {
-                var jsonObj = JsonConvert.DeserializeObject<dynamic>(json);
-                authenticationMethod = jsonObj!.authentication.authenticationMethod;
+                var targetDiscoveryContext = JsonConvert.DeserializeObject<TargetDiscoveryContext<AccountAuthenticationDetails<dynamic>>>(json);
+                authenticationMethod = targetDiscoveryContext?.Authentication?.AuthenticationMethod ?? throw new Exception("AuthenticationMethod is null");
                 return true;
             }
             catch (JsonException ex)
             {
-                Log.Warn($"Could not read authentication method from target discovery context, {contextVariableName} is in wrong format: {ex.Message}");
+                Log.Warn($"Could not read authentication method from target discovery context, {contextVariableName} is in wrong format, {ex.Message}");
                 Log.Warn("Aborting target discovery.");
                 authenticationMethod = null;
                 return false;

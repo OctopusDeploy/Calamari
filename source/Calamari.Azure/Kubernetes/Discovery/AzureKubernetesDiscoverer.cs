@@ -6,7 +6,7 @@ using Calamari.CloudAccounts;
 using Calamari.Common.Features.Discovery;
 using Calamari.Common.Plumbing.Logging;
 using Microsoft.Rest.Azure;
-using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
 
 namespace Calamari.Azure.Kubernetes.Discovery
 {
@@ -118,7 +118,8 @@ namespace Calamari.Azure.Kubernetes.Discovery
         {
             try
             {
-                accountType = JToken.Parse(contextJson).SelectToken("authentication").SelectToken("authenticationMethod").ToString();
+                var targetDiscoveryContext = JsonConvert.DeserializeObject<TargetDiscoveryContext<AccountAuthenticationDetails<dynamic>>>(contextJson);
+                accountType = targetDiscoveryContext?.Authentication?.AuthenticationMethod ?? throw new Exception("AuthenticationMethod is null");
                 return true;
             }
             catch (Exception e)
