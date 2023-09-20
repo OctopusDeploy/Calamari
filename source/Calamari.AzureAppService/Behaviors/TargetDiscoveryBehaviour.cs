@@ -58,6 +58,7 @@ namespace Calamari.AzureAppService.Behaviors
             
             if (targetDiscoveryContext?.Authentication == null || targetDiscoveryContext.Scope == null)
             {
+                Log.Warn($"Target discovery context from variable {contextVariableName} is in wrong format");
                 Log.Warn("Aborting target discovery.");
                 return;
             }
@@ -131,6 +132,7 @@ namespace Calamari.AzureAppService.Behaviors
             catch (JsonException ex)
             {
                 Log.Warn($"Could not read authentication method from target discovery context, {contextVariableName} is in wrong format: {ex.Message}");
+                Log.Warn("Aborting target discovery.");
                 authenticationMethod = null;
                 return false;
             }
