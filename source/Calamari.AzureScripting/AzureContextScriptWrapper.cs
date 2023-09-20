@@ -65,13 +65,12 @@ namespace Calamari.AzureScripting
             {
                 if (variables.Get(SpecialVariables.Account.AccountType) == "AzureServicePrincipal" || variables.Get(SpecialVariables.Account.AccountType) == "AzureOidc")
                 {
-                    SetOutputVariable("OctopusAzSpOrOidc", bool.TrueString);
+                    SetOutputVariable("OctopusAzureServicePrincipalOrOidc ", bool.TrueString);
                     SetOutputVariable("OctopusAzureADTenantId", variables.Get(SpecialVariables.Action.Azure.TenantId)!);
                     SetOutputVariable("OctopusAzureADClientId", variables.Get(SpecialVariables.Action.Azure.ClientId)!);
 
                     if (variables.Get(SpecialVariables.Account.AccountType) == "AzureServicePrincipal")
                     {
-                        variables.Set("OctopusUseServicePrincipal", bool.TrueString);
                         variables.Set("OctopusAzureADPassword", variables.Get(SpecialVariables.Action.Azure.Password));
                     }
                     else
@@ -83,8 +82,7 @@ namespace Calamari.AzureScripting
                 }
 
                 //otherwise use management certificate
-                SetOutputVariable("OctopusUseServicePrincipal", false.ToString());
-                SetOutputVariable("OctopusAzSpOrOidc", false.ToString());
+                SetOutputVariable("OctopusAzureServicePrincipalOrOidc", false.ToString());
                 using (new TemporaryFile(CreateAzureCertificate(workingDirectory)))
                 {
                     return NextWrapper!.ExecuteScript(new Script(contextScriptFile.FilePath), scriptSyntax, commandLineRunner, environmentVars);
