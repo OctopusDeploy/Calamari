@@ -75,6 +75,7 @@ namespace Calamari.AzureAppService.Tests
             };
 
             await CreateOrUpdateTestWebApp(tags);
+            var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromMinutes(15));
 
             await Eventually.ShouldEventually(async () =>
                                               {
@@ -92,7 +93,7 @@ namespace Calamari.AzureAppService.Tests
                                                   log.StandardOut.Should().Contain(serviceMessageString);
                                               },
                                               log,
-                                              CancellationToken.None);
+                                              cancellationTokenSource.Token);
         }
 
         [Test]
@@ -145,6 +146,7 @@ namespace Calamari.AzureAppService.Tests
             };
 
             await CreateOrUpdateTestWebAppSlots(WebSiteResource, tags);
+            var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromMinutes(15));
 
             await Eventually.ShouldEventually(async () =>
                                               {
@@ -172,7 +174,7 @@ namespace Calamari.AzureAppService.Tests
                                                   }
                                               },
                                               log,
-                                              CancellationToken.None);
+                                              cancellationTokenSource.Token);
         }
 
         [Test]
@@ -194,6 +196,7 @@ namespace Calamari.AzureAppService.Tests
 
             var webSiteResource =await CreateOrUpdateTestWebApp(tags);
             await CreateOrUpdateTestWebAppSlots(webSiteResource,tags);
+            var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromMinutes(15));
 
             await Eventually.ShouldEventually(async () =>
                                               {
@@ -221,7 +224,7 @@ namespace Calamari.AzureAppService.Tests
                                                   }
                                               },
                                               log,
-                                              CancellationToken.None);
+                                              cancellationTokenSource.Token);
         }
 
         [Test]
@@ -247,6 +250,7 @@ namespace Calamari.AzureAppService.Tests
 
             var webSiteResource = await CreateOrUpdateTestWebApp(webAppTags);
             await CreateOrUpdateTestWebAppSlots(webSiteResource, slotTags);
+            var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromMinutes(15));
 
             await Eventually.ShouldEventually(async () =>
                                               {
@@ -280,7 +284,7 @@ namespace Calamari.AzureAppService.Tests
                                                   }
                                               },
                                               log,
-                                              CancellationToken.None);
+                                              cancellationTokenSource.Token);
         }
 
         private async Task<WebSiteResource> CreateOrUpdateTestWebApp(IDictionary<string, string> tags = null)
@@ -336,6 +340,7 @@ namespace Calamari.AzureAppService.Tests
     ""authentication"": {{
         ""type"": ""{Type}"",
         ""accountId"": ""{AccountId}"",
+        ""authenticationMethod"": ""ServicePrincipal"",
         ""accountDetails"": {{
             ""subscriptionNumber"": ""{SubscriptionId}"",
             ""clientId"": ""{ClientId}"",

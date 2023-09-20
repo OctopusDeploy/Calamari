@@ -60,7 +60,7 @@ namespace Calamari.AzureAppService.Tests
             await sut.Execute(context);
 
             // Assert
-            log.StandardOut.Should().Contain(line => line.Contains("Could not read authentication method from target discovery context, Octopus.TargetDiscovery.Context is in wrong format: Unexpected character encountered while parsing value: b. Path '', line 0, position 0."));
+            log.StandardOut.Should().Contain(line => line.Contains("Could not read authentication method from target discovery context, Octopus.TargetDiscovery.Context is in wrong format, Unexpected character encountered while parsing value: b. Path '', line 0, position 0."));
             log.StandardOut.Should().Contain(line => line.Contains("Aborting target discovery."));
         }
 
