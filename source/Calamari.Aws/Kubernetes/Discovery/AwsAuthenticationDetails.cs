@@ -21,6 +21,7 @@ namespace Calamari.Aws.Kubernetes.Discovery
             {
                 try
                 {
+                    
                     credentials = new BasicAWSCredentials(Credentials.Account.AccessKey, Credentials.Account.SecretKey);
                 }
                 // Catching a generic Exception because AWS SDK throws undocumented exceptions.

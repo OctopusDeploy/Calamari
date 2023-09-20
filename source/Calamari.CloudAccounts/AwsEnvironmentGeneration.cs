@@ -28,6 +28,9 @@ namespace Calamari.CloudAccounts
         readonly string region;
         readonly string accessKey;
         readonly string secretKey;
+        readonly string roleArn;
+        readonly string sessionDuration;
+        readonly string oidcJwt;
         readonly string assumeRole;
         readonly string assumeRoleArn;
         readonly string assumeRoleExternalId;
@@ -90,6 +93,13 @@ namespace Calamari.CloudAccounts
                         // The lack of any keys means we rely on an EC2 instance role.
                         variables.Get("Octopus.Action.Amazon.AccessKey")?.Trim();
             secretKey = variables.Get(account + ".SecretKey")?.Trim() ?? variables.Get("Octopus.Action.Amazon.SecretKey")?.Trim();
+            
+            roleArn = variables.Get($"{account}.RoleArn")?.Trim() ??
+                      variables.Get("Octopus.Action.Amazon.RoleArn")?.Trim();
+            sessionDuration = variables.Get($"{account}.SessionDuration")?.Trim() ??
+                              variables.Get("Octopus.Action.Amazon.SessionDuration")?.Trim();
+            oidcJwt = variables.Get("Octopus.OpenIdConnect.Jwt")?.Trim();
+            
             assumeRole = variables.Get("Octopus.Action.Aws.AssumeRole")?.Trim();
             assumeRoleArn = variables.Get("Octopus.Action.Aws.AssumedRoleArn")?.Trim();
             assumeRoleExternalId = variables.Get("Octopus.Action.Aws.AssumeRoleExternalId")?.Trim();
@@ -171,6 +181,40 @@ namespace Calamari.CloudAccounts
                 return true;
             }
 
+            if (!string.IsNullOrEmpty(roleArn))
+            {
+                
+                try
+                {
+                    var client = new AmazonSecurityTokenServiceClient(new AnonymousAWSCredentials());
+                    var assumeRoleWithWebIdentityResponse = await client.AssumeRoleWithWebIdentityAsync(new AssumeRoleWithWebIdentityRequest
+                    {
+                        RoleArn = roleArn,
+                        DurationSeconds = int.TryParse(sessionDuration, out var seconds) ? seconds : 3600,
+                        RoleSessionName = $"Calamari_{Guid.NewGuid()}",
+                        WebIdentityToken = oidcJwt
+                    });
+
+                    EnvironmentVars["AWS_ACCESS_KEY_ID"] = assumeRoleWithWebIdentityResponse.Credentials.AccessKeyId;
+                    EnvironmentVars["AWS_SECRET_ACCESS_KEY"] = assumeRoleWithWebIdentityResponse.Credentials.SecretAccessKey;
+                    EnvironmentVars["AWS_SESSION_TOKEN"] = assumeRoleWithWebIdentityResponse.Credentials.SessionToken;
+                    if (!await verifyLogin())
+                    {
+                        throw new Exception("AWS-LOGIN-ERROR-0005: Failed to verify the credentials. "
+                                            + "Please check the Role ARN assigned to the Amazon Web Services Account associated with this step. "
+                                            + $"For more information visit {log.FormatLink("https://oc.to/U4WA8x")}");
+                    }
+
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    // catch the exception and fallback to returning false
+                    throw new Exception("AWS-LOGIN-ERROR-0005.1: Failed to verify the credentials. "
+                                        + $"Error: {ex}");
+                }
+            }
+            
             return false;
         }
 
