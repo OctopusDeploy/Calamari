@@ -170,7 +170,7 @@ namespace Calamari.AzureAppService.Behaviors
                 if (context?.Authentication != null)
                 {
                     var accountAuthentication = context.Authentication;
-                    var accountDetails = new AccountAuthenticationDetails<IAzureAccount>(accountAuthentication.Type, accountAuthentication.AccountId, accountAuthentication.AccountDetails);
+                    var accountDetails = new AccountAuthenticationDetails<IAzureAccount>(accountAuthentication.Type, accountAuthentication.AccountId, accountAuthentication.AuthenticationMethod, accountAuthentication.AccountDetails);
                     var targetDiscoveryContext = new TargetDiscoveryContext<AccountAuthenticationDetails<IAzureAccount>>(context.Scope, accountDetails);
                     return targetDiscoveryContext;
                 }
