@@ -24,6 +24,7 @@ namespace Calamari.AzureAppService.Tests
         private readonly string appName = Guid.NewGuid().ToString();
         private readonly List<string> slotNames = new List<string> { "blue", "green" };
         private static readonly string Type = "Azure";
+        private static readonly string AuthenticationMethod = "ServicePrincipal";
         private static readonly string AccountId = "Accounts-1";
         private static readonly string Role = "my-azure-app-role";
         private static readonly string EnvironmentName = "dev";
@@ -340,7 +341,7 @@ namespace Calamari.AzureAppService.Tests
     ""authentication"": {{
         ""type"": ""{Type}"",
         ""accountId"": ""{AccountId}"",
-        ""authenticationMethod"": ""ServicePrincipal"",
+        ""authenticationMethod"": ""{AuthenticationMethod}"",
         ""accountDetails"": {{
             ""subscriptionNumber"": ""{SubscriptionId}"",
             ""clientId"": ""{ClientId}"",
