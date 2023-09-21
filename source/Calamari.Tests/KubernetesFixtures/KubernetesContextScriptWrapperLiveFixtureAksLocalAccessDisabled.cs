@@ -106,6 +106,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 new AccountAuthenticationDetails<AzureServicePrincipalAccount>(
                                                                                "Azure",
                                                                                "Accounts-1",
+                                                                               "ServicePrincipal",
                                                                                account);
 
             var targetDiscoveryContext =

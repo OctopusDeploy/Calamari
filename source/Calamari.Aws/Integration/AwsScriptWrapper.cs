@@ -26,6 +26,7 @@ namespace Calamari.Aws.Integration
             var awsAccountVariable = variables.Get(AwsSpecialVariables.Authentication.AwsAccountVariable);
             var useAwsInstanceRole = variables.Get(AwsSpecialVariables.Authentication.UseInstanceRole);
             return accountType == "AmazonWebServicesAccount" ||
+                accountType == "AmazonWebServicesOidcAccount" ||
                 !awsAccountVariable.IsNullOrEmpty() ||
                 string.Equals(useAwsInstanceRole, bool.TrueString, StringComparison.InvariantCultureIgnoreCase);
         }

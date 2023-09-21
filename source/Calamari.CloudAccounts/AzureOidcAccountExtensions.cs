@@ -29,7 +29,7 @@ namespace Calamari.CloudAccounts
 
         static async Task<string> GetAuthorizationToken(string tenantId, string applicationId, string token, string managementEndPoint, string activeDirectoryEndPoint, string aureEnvironment, string instanceDiscoveryUri, CancellationToken cancellationToken)
         {
-            var authContext = GetOidcContextUri(activeDirectoryEndPoint, tenantId);
+            var authContext = GetOidcContextUri(string.IsNullOrEmpty(activeDirectoryEndPoint) ? "https://login.microsoftonline.com/" : activeDirectoryEndPoint, tenantId);
             Log.Verbose($"Authentication Context: {authContext}");
             
             var builder = ConfidentialClientApplicationBuilder.Create(applicationId).WithClientAssertion(token);
@@ -47,7 +47,7 @@ namespace Calamari.CloudAccounts
             var app = builder.Build();
 
             // Default values set on a per cloud basis on AzureOidcAccount, if managementEndPoint is set on the account /.default is required.
-            var scope = managementEndPoint == DefaultVariables.ResourceManagementEndpoint
+            var scope = managementEndPoint == DefaultVariables.ResourceManagementEndpoint || string.IsNullOrEmpty(managementEndPoint)
                 ? AzureOidcAccount.GetDefaultScope(aureEnvironment)
                 : managementEndPoint.EndsWith(".default")
                     ? managementEndPoint

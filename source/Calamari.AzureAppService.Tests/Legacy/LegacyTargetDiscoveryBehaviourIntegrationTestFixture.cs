@@ -39,6 +39,7 @@ namespace Calamari.AzureAppService.Tests
         private string appName = Guid.NewGuid().ToString();
         private List<string> slotNames = new List<string> { "blue", "green" };
         private static readonly string Type = "Azure";
+        private static readonly string AuthenticationMethod = "ServicePrincipal";
         private static readonly string AccountId = "Accounts-1";
         private static readonly string Role = "my-azure-app-role";
         private static readonly string EnvironmentName = "dev";
@@ -120,6 +121,7 @@ namespace Calamari.AzureAppService.Tests
             };
 
             await CreateOrUpdateTestWebApp(tags);
+            var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromMinutes(15));
 
             await Eventually.ShouldEventually(async () =>
             {
@@ -130,7 +132,7 @@ namespace Calamari.AzureAppService.Tests
                 var serviceMessageToCreateWebAppTarget = TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(resourceGroupName, appName, AccountId, Role, null, null);
                 var serviceMessageString = serviceMessageToCreateWebAppTarget.ToString();
                 log.StandardOut.Should().Contain(serviceMessageString);
-            }, log, CancellationToken.None);
+            }, log, cancellationTokenSource.Token);
         }
 
         [Test]
@@ -178,6 +180,7 @@ namespace Calamari.AzureAppService.Tests
             };
 
             await CreateOrUpdateTestWebAppSlots(tags);
+            var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromMinutes(15));
 
             await Eventually.ShouldEventually(async () =>
             {
@@ -193,7 +196,7 @@ namespace Calamari.AzureAppService.Tests
                     var serviceMessageToCreateTargetForSlot = TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(resourceGroupName, appName, AccountId, Role, null, slotName);
                     log.StandardOut.Should().Contain(serviceMessageToCreateTargetForSlot.ToString());
                 }
-            }, log, CancellationToken.None);
+            }, log, cancellationTokenSource.Token);
         }
 
         [Test]
@@ -215,6 +218,7 @@ namespace Calamari.AzureAppService.Tests
 
             await CreateOrUpdateTestWebApp(tags);
             await CreateOrUpdateTestWebAppSlots(tags);
+            var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromMinutes(15));
 
             await Eventually.ShouldEventually(async () =>
             {
@@ -230,7 +234,7 @@ namespace Calamari.AzureAppService.Tests
                     var serviceMessageToCreateTargetForSlot = TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(resourceGroupName, appName, AccountId, Role, null, slotName);
                     log.StandardOut.Should().Contain(serviceMessageToCreateTargetForSlot.ToString());
                 }
-            }, log, CancellationToken.None);
+            }, log, cancellationTokenSource.Token);
         }
 
         [Test]
@@ -256,6 +260,7 @@ namespace Calamari.AzureAppService.Tests
 
             await CreateOrUpdateTestWebApp(webAppTags);
             await CreateOrUpdateTestWebAppSlots(slotTags);
+            var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromMinutes(15));
 
             await Eventually.ShouldEventually(async () =>
             {
@@ -277,7 +282,7 @@ namespace Calamari.AzureAppService.Tests
                     log.StandardOut.Should().NotContain(serviceMessageToCreateTargetForSlot.ToString(),
                         "A target should not be created for the web app slot as the tags directly on the slot do not match, even though when combined with the web app tags they do");
                 }
-            }, log, CancellationToken.None);
+            }, log, cancellationTokenSource.Token);
         }
 
         private async Task CreateOrUpdateTestWebApp(Dictionary<string, string> tags = null)
@@ -313,6 +318,7 @@ namespace Calamari.AzureAppService.Tests
     ""authentication"": {{
         ""type"": ""{Type}"",
         ""accountId"": ""{AccountId}"",
+        ""authenticationMethod"": ""{AuthenticationMethod}"",
         ""accountDetails"": {{
             ""subscriptionNumber"": ""{subscriptionId}"",
             ""clientId"": ""{clientId}"",

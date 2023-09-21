@@ -9,14 +9,17 @@ namespace Calamari.Common.Features.Discovery
     {
         [JsonConstructor]
         public AccountAuthenticationDetails
-            (string type, string accountId, TAccountDetails accountDetails)
+            (string type, string accountId, string authenticationMethod, TAccountDetails accountDetails)
         {
             Type = type;
             AccountId = accountId;
+            AuthenticationMethod = authenticationMethod;
             AccountDetails = accountDetails;
         }
 
         public string Type { get; set; }
+
+        public string AuthenticationMethod { get; }
 
         public string AccountId { get; set; }
 

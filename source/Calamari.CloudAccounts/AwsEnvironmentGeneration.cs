@@ -22,6 +22,7 @@ namespace Calamari.CloudAccounts
         const string RoleUri = "http://169.254.169.254/latest/meta-data/iam/security-credentials/";
         const string MetadataHeaderToken = "X-aws-ec2-metadata-token";
         const string MetadataHeaderTTL = "X-aws-ec2-metadata-token-ttl-seconds";
+        private const string DefaultSessionName = "OctopusAwsAuthentication";
 
         readonly ILog log;
         readonly Func<Task<bool>> verifyLogin;
@@ -31,7 +32,6 @@ namespace Calamari.CloudAccounts
         readonly string roleArn;
         readonly string sessionDuration;
         readonly string oidcJwt;
-        readonly string serviceEndpoint;
         readonly string assumeRole;
         readonly string assumeRoleArn;
         readonly string assumeRoleExternalId;
@@ -100,7 +100,6 @@ namespace Calamari.CloudAccounts
             sessionDuration = variables.Get($"{account}.SessionDuration")?.Trim() ??
                               variables.Get("Octopus.Action.Amazon.SessionDuration")?.Trim();
             oidcJwt = variables.Get("Octopus.OpenIdConnect.Jwt")?.Trim();
-            serviceEndpoint = variables.Get("Octopus.OpenIdConnect.ServiceEndpoint")?.Trim();
             
             assumeRole = variables.Get("Octopus.Action.Aws.AssumeRole")?.Trim();
             assumeRoleArn = variables.Get("Octopus.Action.Aws.AssumedRoleArn")?.Trim();
@@ -183,29 +182,16 @@ namespace Calamari.CloudAccounts
                 return true;
             }
 
-            if (!string.IsNullOrEmpty(roleArn))
+            if (!string.IsNullOrEmpty(oidcJwt))
             {
                 try
                 {
-                    AmazonSecurityTokenServiceClient client;
-
-                    if (string.IsNullOrEmpty(serviceEndpoint))
-                    {
-                        client = new AmazonSecurityTokenServiceClient(new AnonymousAWSCredentials());
-                    }
-                    else
-                    {
-                        client = new AmazonSecurityTokenServiceClient(new AnonymousAWSCredentials(), new AmazonSecurityTokenServiceConfig
-                        {
-                            ServiceURL = serviceEndpoint
-                        });
-                    }
-                    
+                    var client = new AmazonSecurityTokenServiceClient(new AnonymousAWSCredentials());
                     var assumeRoleWithWebIdentityResponse = await client.AssumeRoleWithWebIdentityAsync(new AssumeRoleWithWebIdentityRequest
                     {
                         RoleArn = roleArn,
                         DurationSeconds = int.TryParse(sessionDuration, out var seconds) ? seconds : 3600,
-                        RoleSessionName = $"Calamari_{Guid.NewGuid()}",
+                        RoleSessionName = DefaultSessionName,
                         WebIdentityToken = oidcJwt
                     });
 
@@ -224,7 +210,7 @@ namespace Calamari.CloudAccounts
                 catch (Exception ex)
                 {
                     // catch the exception and fallback to returning false
-                    throw new Exception("AWS-LOGIN-ERROR-0005.1: Failed to verify the credentials. "
+                    throw new Exception("AWS-LOGIN-ERROR-0005.1: Failed to verify OIDC credentials. "
                                         + $"Error: {ex}");
                 }
             }
