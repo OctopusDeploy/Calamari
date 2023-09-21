@@ -182,9 +182,8 @@ namespace Calamari.CloudAccounts
                 return true;
             }
 
-            if (!string.IsNullOrEmpty(roleArn))
+            if (!string.IsNullOrEmpty(oidcJwt))
             {
-                
                 try
                 {
                     var client = new AmazonSecurityTokenServiceClient(new AnonymousAWSCredentials());
@@ -211,7 +210,7 @@ namespace Calamari.CloudAccounts
                 catch (Exception ex)
                 {
                     // catch the exception and fallback to returning false
-                    throw new Exception("AWS-LOGIN-ERROR-0005.1: Failed to verify the credentials. "
+                    throw new Exception("AWS-LOGIN-ERROR-0005.1: Failed to verify OIDC credentials. "
                                         + $"Error: {ex}");
                 }
             }
