@@ -20,7 +20,7 @@
     <ApplicationManifest>Calamari.exe.manifest</ApplicationManifest>
   </PropertyGroup>
   <PropertyGroup Condition="!$([MSBuild]::IsOSUnixLike())">
-    <TargetFrameworks>net40;net452;net6.0</TargetFrameworks>
+    <TargetFrameworks>net40;net452;net461;net6.0</TargetFrameworks>
   </PropertyGroup>
   <PropertyGroup Condition="$([MSBuild]::IsOSUnixLike())">
     <TargetFramework>net6.0</TargetFramework>

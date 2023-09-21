@@ -1,10 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup Condition="!$([MSBuild]::IsOSUnixLike())">
-        <TargetFrameworks>net452;netstandard2.1;net40</TargetFrameworks>
+        <TargetFrameworks>net6.0;net461;net452;netstandard2.1;net40</TargetFrameworks>
     </PropertyGroup>
     <PropertyGroup Condition="$([MSBuild]::IsOSUnixLike())">
-        <TargetFramework>netstandard2.1</TargetFramework>
+        <TargetFrameworks>netstandard2.1;net6.0;net461</TargetFrameworks>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(TargetFramework)' == 'net40' ">
@@ -42,7 +42,7 @@
         <Reference Include="System.Web" />
     </ItemGroup>
 
-    <ItemGroup Condition="'$(TargetFramework)' == 'net452'">
+    <ItemGroup Condition="'$(TargetFramework)' == 'net452' OR '$(TargetFramework)' == 'net6.0' OR '$(TargetFramework)' == 'net461'">
         <PackageReference Include="Autofac" Version="4.8.0" />
         <PackageReference Include="Polly" Version="5.4.0" />
         <PackageReference Include="System.Diagnostics.Tracing" Version="4.3.0" />
@@ -67,8 +67,15 @@
         <PackageReference Include="XPath2" Version="1.0.12" />
         <PackageReference Include="YamlDotNet" Version="8.1.2" />
         <PackageReference Include="System.ValueTuple" Version="4.4.0" />
-        <PackageReference Include="SharpCompress" Version="0.28.2" />
     </ItemGroup>
+
+    <ItemGroup Condition="'$(TargetFramework)' == 'net40' OR '$(TargetFramework)' == 'net452'">
+        <PackageReference Include="SharpCompress" Version="0.24.0" />
+    </ItemGroup>
+    <ItemGroup Condition="'$(TargetFramework)' == 'net6.0' OR '$(TargetFramework)' == 'net461' OR '$(TargetFramework)' == 'netstandard2.1'">
+        <PackageReference Include="SharpCompress" Version="0.30.1" />
+    </ItemGroup>
+    
     <ItemGroup>
       <EmbeddedResource Include="Features\Scripting\Bash\Bootstrap.sh" />
       <EmbeddedResource Include="Features\Scripting\FSharp\Bootstrap.fsx" />
@@ -78,5 +85,4 @@
       <EmbeddedResource Include="Features\Scripting\WindowsPowerShell\Bootstrap.ps1" />
       <EmbeddedResource Include="Features\Scripting\WindowsPowerShell\DebugBootstrap.ps1" />
     </ItemGroup>
-
 </Project>
