@@ -22,6 +22,7 @@ namespace Calamari.CloudAccounts
         const string RoleUri = "http://169.254.169.254/latest/meta-data/iam/security-credentials/";
         const string MetadataHeaderToken = "X-aws-ec2-metadata-token";
         const string MetadataHeaderTTL = "X-aws-ec2-metadata-token-ttl-seconds";
+        private const string DefaultSessionName = "OctopusAwsAuthentication";
 
         readonly ILog log;
         readonly Func<Task<bool>> verifyLogin;
@@ -191,7 +192,7 @@ namespace Calamari.CloudAccounts
                     {
                         RoleArn = roleArn,
                         DurationSeconds = int.TryParse(sessionDuration, out var seconds) ? seconds : 3600,
-                        RoleSessionName = $"Calamari_{Guid.NewGuid()}",
+                        RoleSessionName = DefaultSessionName,
                         WebIdentityToken = oidcJwt
                     });
 

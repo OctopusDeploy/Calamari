@@ -115,8 +115,7 @@ namespace Calamari.Kubernetes.Commands
                     new StructuredConfigurationVariablesBehaviour(structuredConfigVariablesService, PackageDirectoryName))
             };
 
-            if (variables.Get(Deployment.SpecialVariables.Account.AccountType) == "AmazonWebServicesAccount"
-                || variables.Get(Deployment.SpecialVariables.Account.AccountType) == "AmazonWebServicesOidcAccount")
+            if (variables.Get(Deployment.SpecialVariables.Account.AccountType) == "AmazonWebServicesAccount")
             {
                 conventions.Add(new AwsAuthConvention(log, variables));
             }
