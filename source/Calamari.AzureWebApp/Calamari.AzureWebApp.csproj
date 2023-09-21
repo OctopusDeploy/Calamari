@@ -6,6 +6,7 @@
     <IsPackable>false</IsPackable>
     <OutputType>Exe</OutputType>
     <TargetFramework>net452</TargetFramework>
+    <NoWarn>DE0003</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
