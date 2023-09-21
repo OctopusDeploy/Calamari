@@ -36,18 +36,8 @@ namespace Calamari.AzureWebApp.Integration.Websites.Publishing
                 log.InfoFormat("Using override for Azure Active Directory endpoint - {0}", account.ActiveDirectoryEndpointBaseUri);
 
             var token = account.AccountType == AccountType.AzureOidc
-                ? await AzureOidcAccountExtensions.GetAuthorizationToken(account.TenantId,
-                                                                               account.ClientId,
-                                                                               account.GetCredentials,
-                                                                               account.ResourceManagementEndpointBaseUri,
-                                                                               account.ActiveDirectoryEndpointBaseUri,
-                                                                               account.AzureEnvironment,
-                                                                               CancellationToken.None)
-                : await AzureServicePrincipalAccountExtensions.GetAuthorizationToken(account.TenantId,
-                                                                                     account.ClientId,
-                                                                                     account.GetCredentials,
-                                                                                     account.ResourceManagementEndpointBaseUri,
-                                                                                     account.ActiveDirectoryEndpointBaseUri);
+                ? await (account as AzureOidcAccount).GetAuthorizationToken(CancellationToken.None)
+                : await (account as AzureServicePrincipalAccount).GetAuthorizationToken();
             var baseUri = new Uri(account.ResourceManagementEndpointBaseUri);
 
             using (var resourcesClient = new ResourceManagementClient(new TokenCredentials(token)) 

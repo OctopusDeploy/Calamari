@@ -31,6 +31,7 @@ namespace Calamari.CloudAccounts
         readonly string roleArn;
         readonly string sessionDuration;
         readonly string oidcJwt;
+        readonly string serviceEndpoint;
         readonly string assumeRole;
         readonly string assumeRoleArn;
         readonly string assumeRoleExternalId;
@@ -99,6 +100,7 @@ namespace Calamari.CloudAccounts
             sessionDuration = variables.Get($"{account}.SessionDuration")?.Trim() ??
                               variables.Get("Octopus.Action.Amazon.SessionDuration")?.Trim();
             oidcJwt = variables.Get("Octopus.OpenIdConnect.Jwt")?.Trim();
+            serviceEndpoint = variables.Get("Octopus.OpenIdConnect.ServiceEndpoint")?.Trim();
             
             assumeRole = variables.Get("Octopus.Action.Aws.AssumeRole")?.Trim();
             assumeRoleArn = variables.Get("Octopus.Action.Aws.AssumedRoleArn")?.Trim();
@@ -183,10 +185,22 @@ namespace Calamari.CloudAccounts
 
             if (!string.IsNullOrEmpty(roleArn))
             {
-                
                 try
                 {
-                    var client = new AmazonSecurityTokenServiceClient(new AnonymousAWSCredentials());
+                    AmazonSecurityTokenServiceClient client;
+
+                    if (string.IsNullOrEmpty(serviceEndpoint))
+                    {
+                        client = new AmazonSecurityTokenServiceClient(new AnonymousAWSCredentials());
+                    }
+                    else
+                    {
+                        client = new AmazonSecurityTokenServiceClient(new AnonymousAWSCredentials(), new AmazonSecurityTokenServiceConfig
+                        {
+                            ServiceURL = serviceEndpoint
+                        });
+                    }
+                    
                     var assumeRoleWithWebIdentityResponse = await client.AssumeRoleWithWebIdentityAsync(new AssumeRoleWithWebIdentityRequest
                     {
                         RoleArn = roleArn,

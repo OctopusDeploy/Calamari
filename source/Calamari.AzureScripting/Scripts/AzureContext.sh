@@ -44,7 +44,7 @@ function setup_context {
 
         if [ -n $Octopus_Open_Id_Jwt ]
         then
-          echo "Azure CLI: Authenticating with OpenID Connect Access Token"
+          echo "Azure CLI: Authenticating with OpenID Connect Federated Token"
           loginArgs+=("--username=$Octopus_Azure_ADClientId")
           loginArgs+=("--tenant=$Octopus_Azure_ADTenantId")
           loginArgs+=("--federated-token=$Octopus_Open_Id_Jwt")
