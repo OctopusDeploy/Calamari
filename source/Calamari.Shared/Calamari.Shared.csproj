@@ -65,7 +65,7 @@
     <PackageReference Include="SharpCompress" Version="0.30.1" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net40' OR '$(TargetFramework)' == 'net452'">
-    <PackageReference Include="SharpCompress" Version="0.26.0" />
+    <PackageReference Include="SharpCompress" Version="0.24.0" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
     <PackageReference Include="NuGet.Commands" Version="3.5.0" />
