@@ -57,8 +57,14 @@ namespace Calamari.CloudAccounts
                                   .WithTenantId(tenantId)
                                   .ExecuteAsync(cancellationToken)
                                   .ConfigureAwait(false);
-            
-            return result.AccessToken;
+
+            var accessToken = result.AccessToken;
+            if (string.IsNullOrEmpty(accessToken))
+            {
+                throw new Exception("Could not get access token");
+            }
+
+            return accessToken;
         }
 
         static string GetOidcContextUri(string activeDirectoryEndPoint, string tenantId)
