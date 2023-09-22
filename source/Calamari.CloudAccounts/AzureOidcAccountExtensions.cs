@@ -61,7 +61,7 @@ namespace Calamari.CloudAccounts
             var accessToken = result.AccessToken;
             if (string.IsNullOrEmpty(accessToken))
             {
-                throw new Exception("Could not get access token");
+                throw new Exception("Failed to get access token");
             }
 
             return accessToken;
