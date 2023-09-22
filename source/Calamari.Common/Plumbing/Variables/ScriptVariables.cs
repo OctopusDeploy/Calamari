@@ -12,6 +12,8 @@ namespace Calamari.Common.Plumbing.Variables
         public static readonly string ScriptParameters = "Octopus.Action.Script.ScriptParameters";
         public static readonly string ScriptSource = "Octopus.Action.Script.ScriptSource";
 
+        public static readonly string UseDotnetScript = "Octopus.Action.Script.CSharp.UseDotnetScript";
+
         public static class ScriptSourceOptions
         {
             public const string Package = "Package";
