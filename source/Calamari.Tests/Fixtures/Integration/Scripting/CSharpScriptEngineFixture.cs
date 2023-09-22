@@ -19,7 +19,7 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
             using (var scriptFile = new TemporaryFile(Path.ChangeExtension(Path.GetTempFileName(), "cs")))
             {
                 var variables = GetVariables();
-                variables.Add(ScriptVariables.UseDotnetScript, "true");
+                variables.Add(ScriptVariables.UseDotnetScript, bool.TrueString);
                 File.WriteAllText(scriptFile.FilePath, "System.Console.WriteLine(Octopus.Parameters[\"mysecrect\"]);");
                 var result = ExecuteScript(new DotnetScriptExecutor(), scriptFile.FilePath, variables);
                 result.AssertOutput("KingKong");

@@ -15,7 +15,7 @@ namespace Calamari.Tests.Fixtures.DotnetScript
     {
         protected override CalamariResult RunScript()
         {
-            return RunScript("Proxy.csx", new Dictionary<string, string>() {{ ScriptVariables.UseDotnetScript, "true" }}).result;
+            return RunScript("Proxy.csx", new Dictionary<string, string>() {{ ScriptVariables.UseDotnetScript, bool.TrueString }}).result;
         }
 
         [Test]

@@ -67,7 +67,7 @@ namespace Calamari.Common.Features.Scripting
         /// </returns>
         IScriptWrapper BuildWrapperChain(ScriptSyntax scriptSyntax, IVariables variables)
         {
-            bool.TryParse(variables.Get(ScriptVariables.UseDotnetScript, "false"), out bool useDotnetScript);
+            bool.TryParse(variables.Get(ScriptVariables.UseDotnetScript, bool.FalseString), out bool useDotnetScript);
             // get the type of script
             return scriptWrapperHooks
                 .Where(hook => hook.IsEnabled(scriptSyntax))

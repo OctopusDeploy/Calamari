@@ -13,7 +13,7 @@ namespace Calamari.Tests.Fixtures.DotnetScript
     [Category(TestCategory.ScriptingSupport.DotnetScript)]
     public class DotnetScriptFixture : CalamariFixture
     {
-        static readonly Dictionary<string, string> RunWithDotnetScriptVariable = new Dictionary<string, string>() { { ScriptVariables.UseDotnetScript, "true" } };
+        static readonly Dictionary<string, string> RunWithDotnetScriptVariable = new Dictionary<string, string>() { { ScriptVariables.UseDotnetScript, bool.TrueString } };
         
         [Test, RequiresDotNetCore]
         public void ShouldPrintEncodedVariable()
@@ -62,7 +62,7 @@ namespace Calamari.Tests.Fixtures.DotnetScript
                 ["Variable3"] = "GHI",
                 ["Foo_bar"] = "Hello",
                 ["Host"] = "Never",
-                [ScriptVariables.UseDotnetScript] = "true"
+                [ScriptVariables.UseDotnetScript] = bool.TrueString
             });
 
             output.AssertSuccess();
@@ -76,7 +76,7 @@ namespace Calamari.Tests.Fixtures.DotnetScript
             var (output, _) = RunScript("Hello.csx", new Dictionary<string, string>()
             {
                 ["Name"] = "NameToEncrypt",
-                [ScriptVariables.UseDotnetScript] = "true"
+                [ScriptVariables.UseDotnetScript] = bool.TrueString
             }, sensitiveVariablesPassword: "5XETGOgqYR2bRhlfhDruEg==");
 
             output.AssertSuccess();
@@ -89,7 +89,7 @@ namespace Calamari.Tests.Fixtures.DotnetScript
             var (output, _) = RunScript("Parameters.csx", new Dictionary<string, string>()
             {
                 [SpecialVariables.Action.Script.ScriptParameters] = "-- \"Para meter0\" Parameter1",
-                [ScriptVariables.UseDotnetScript] = "true"
+                [ScriptVariables.UseDotnetScript] = bool.TrueString
             });
 
             output.AssertSuccess();
@@ -102,7 +102,7 @@ namespace Calamari.Tests.Fixtures.DotnetScript
             var (output, _) = RunScript("Parameters.csx", new Dictionary<string, string>()
             {
                 [SpecialVariables.Action.Script.ScriptParameters] = "Parameter0 Parameter1",
-                [ScriptVariables.UseDotnetScript] = "true"
+                [ScriptVariables.UseDotnetScript] = bool.TrueString
             });
 
             output.AssertSuccess();
