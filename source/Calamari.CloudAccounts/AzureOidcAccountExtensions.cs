@@ -58,11 +58,6 @@ namespace Calamari.CloudAccounts
                                   .ExecuteAsync(cancellationToken)
                                   .ConfigureAwait(false);
 
-            if (string.IsNullOrEmpty(result.AccessToken))
-            {
-                throw new Exception("Failed to get access token");
-            }
-
             return result.AccessToken;
         }
 
