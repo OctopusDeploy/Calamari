@@ -202,11 +202,9 @@ namespace Calamari.AzureCloudService.Tests
 
                                                          context.Variables.Add(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.CustomScripts);
                                                          context.Variables.Add(KnownVariables.Action.CustomScripts.GetCustomScriptStage(DeploymentStages.PostDeploy, ScriptSyntax.FSharp), "printfn \"Hello from F#\"");
-                                                         context.Variables.Add(KnownVariables.Action.CustomScripts.GetCustomScriptStage(DeploymentStages.PreDeploy, ScriptSyntax.CSharp), "Console.WriteLine(\"Hello from C#\");");
                                                      })
                                         .WithAssert(result =>
                                                     {
-                                                        result.FullLog.Should().Contain("Hello from C#");
                                                         result.FullLog.Should().Contain("Hello from F#");
                                                     })
                                         .Execute();

@@ -67,7 +67,7 @@ namespace Calamari.Tests.Fixtures.DotnetScript
 
             output.AssertSuccess();
             output.AssertOutput("Hello Paul");
-            //output.AssertProcessNameAndId("dotnet-script");
+            output.AssertOutput("This is dotnet script");
         }
 
         [Test, RequiresDotNetCore]
