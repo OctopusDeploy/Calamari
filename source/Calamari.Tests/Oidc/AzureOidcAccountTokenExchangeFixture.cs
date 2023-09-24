@@ -1,5 +1,8 @@
 using System;
+using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 using Calamari.CloudAccounts;
@@ -14,22 +17,38 @@ using WireMock.Settings;
 
 namespace Calamari.Tests.Oidc
 {
-    public class Tests
+    [TestFixture]
+    [Category(TestCategory.CompatibleOS.OnlyWindows)]
+    public class AzureOidcAccountTokenExchangeFixture
     {
         const string TestAccessToken = "access-token-123";
+        
+        string CertLocation => Path.GetFullPath("Oidc/Certificates/Windows/localhost.pfx");
+
+        [OneTimeSetUp]
+        public void SetUp()
+        {
+            var store = new X509Store(StoreName.Root, StoreLocation.CurrentUser);
+            try
+            {
+                store.Open(OpenFlags.ReadWrite);
+                store.Add(new X509Certificate2(CertLocation, "password"));
+            }
+            finally
+            {
+                store.Close();
+            }
+        }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyWindows)]
         public async Task ShouldGetAccessToken()
         {
-            var certLocation = "./Certificates/Windows/localhost.pfx";
-
             using (var server = WireMockServer.Start(new WireMockServerSettings
                    {
                        UseSSL = true,
                        CertificateSettings = new WireMockCertificateSettings
                        {
-                           X509StoreLocation = certLocation
+                           X509StoreLocation = CertLocation
                        }
                    }))
             {
