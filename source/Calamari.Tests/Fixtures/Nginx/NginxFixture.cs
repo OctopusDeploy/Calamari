@@ -215,9 +215,10 @@ namespace Calamari.Tests.Fixtures.Nginx
             
             var nginxConfigFilePath = Path.Combine(tempDirectory, "conf", $"{virtualServerName}.conf");
             this.Assent(File.ReadAllText(nginxConfigFilePath), AssentConfiguration.Default);
-
+#if NETCORE
             var sslCertFilePath = Path.Combine(tempDirectory, "ssl", subjectName);
             this.Assent(File.ReadAllText(Path.Combine(sslCertFilePath, $"{subjectName}.crt")), AssentConfiguration.Default, $"{nameof(SetupReverseProxyWithSslUsingCertificateVariableSite)}.crt");
+#endif
         }
 
         [Test]
@@ -299,6 +300,7 @@ namespace Calamari.Tests.Fixtures.Nginx
 
         (string, string, string) GetCertificateDetails(X509Certificate2Collection certificateCollection)
         {
+#if NETCORE
             var certificate = certificateCollection.First();
             var certificatePem = new string(PemEncoding.Write("CERTIFICATE", certificate.RawData));
             var key = (AsymmetricAlgorithm)certificate.GetRSAPrivateKey() ?? certificate.GetECDsaPrivateKey();
@@ -315,6 +317,9 @@ namespace Calamari.Tests.Fixtures.Nginx
             }
 
             return (certificatePem, certificatePrivateKeyPem, certificateChainPem);
+#else
+            return ("", "", "");
+#endif
         }
     }
 }
