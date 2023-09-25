@@ -123,16 +123,16 @@ namespace Calamari.Testing.Helpers
         public record struct Timing(TimeSpan MinDelay, TimeSpan MaxDelay, Backoff Backoff)
         {
             /// <summary>
-            /// Default timing behaviour which is 1 second retry, with exponential backoff (double each time) up to 5 seconds
+            /// Default timing behaviour which is 5 second retry, with exponential backoff (double each time) up to 20 seconds
             /// </summary>
-            public static Timing Default { get; } = new(TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(5), Backoff.Exponential);
+            public static Timing Default { get; } = new(TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(20), Backoff.Exponential);
 
             /// <summary>
             /// Timing behaviour with no delay between retries
             /// </summary>
             public static Timing NoDelay { get; } = new(TimeSpan.Zero, TimeSpan.Zero, Backoff.None);
 
-            public static Timing Fast { get; } = new(TimeSpan.FromSeconds(0.25), TimeSpan.FromSeconds(2), Backoff.Linear);
+            public static Timing Fast { get; } = new(TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(5), Backoff.Linear);
         }
     }
 }
