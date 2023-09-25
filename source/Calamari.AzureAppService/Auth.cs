@@ -24,12 +24,14 @@ namespace Calamari.AzureAppService
         }
 
         public static async Task<string> GetAuthTokenAsync(string tenantId, string applicationId, string password, string managementEndPoint, string activeDirectoryEndPoint)
-        { 
+        {
+            var authClientFactory = new AuthHttpClientFactory();
             var authContext = GetContextUri(activeDirectoryEndPoint, tenantId);
 
             var app = ConfidentialClientApplicationBuilder.Create(applicationId)
                                                           .WithClientSecret(password)
                                                           .WithAuthority(authContext)
+                                                          .WithHttpClientFactory(authClientFactory)
                                                           .Build();
 
             var result = await app.AcquireTokenForClient(

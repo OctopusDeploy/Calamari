@@ -8,7 +8,7 @@
     <OutputType>Exe</OutputType>
     <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
     <LangVersion>8.0</LangVersion>
-    <NoWarn>NU5104</NoWarn>
+    <NoWarn>NU5104;DE0003</NoWarn>
   </PropertyGroup>
   <PropertyGroup Condition="!$([MSBuild]::IsOSUnixLike())">
     <TargetFrameworks>net461;net6.0</TargetFrameworks>
