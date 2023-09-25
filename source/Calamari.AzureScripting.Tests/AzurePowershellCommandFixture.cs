@@ -11,12 +11,8 @@ using Calamari.Testing.Tools;
 namespace Calamari.AzureScripting.Tests
 {
     [TestFixture]
-    class AzurePowerShellCommandFixture
+    class AzurePowerShellCommandFixture : AzureScriptingFixtureBase 
     {
-        string? clientId;
-        string? clientSecret;
-        string? tenantId;
-        string? subscriptionId;
         
         static IDeploymentTool AzureCLI = new InPathDeploymentTool("Octopus.Dependencies.AzureCLI", "AzureCLI\\wbin");
         static IDeploymentTool AzureCmdlets = new BoostrapperModuleDeploymentTool("Octopus.Dependencies.AzureCmdlets",
@@ -26,15 +22,6 @@ namespace Calamari.AzureScripting.Tests
                                                                                              "Powershell\\Azure\\5.3.0",
                                                                                              "Powershell",
                                                                                          });
-
-        [OneTimeSetUp]
-        public void Setup()
-        {
-            clientId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId);
-            clientSecret = ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword);
-            tenantId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId);
-            subscriptionId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionId);
-        }
 
         [Test]
         [WindowsTest]
@@ -106,10 +93,10 @@ az group list";
         void AddDefaults(CommandTestBuilderContext context)
         {
             context.Variables.Add(SpecialVariables.Account.AccountType, "AzureServicePrincipal");
-            context.Variables.Add(SpecialVariables.Action.Azure.SubscriptionId, subscriptionId);
-            context.Variables.Add(SpecialVariables.Action.Azure.TenantId, tenantId);
-            context.Variables.Add(SpecialVariables.Action.Azure.ClientId, clientId);
-            context.Variables.Add(SpecialVariables.Action.Azure.Password, clientSecret);
+            context.Variables.Add(SpecialVariables.Action.Azure.SubscriptionId, SubscriptionId);
+            context.Variables.Add(SpecialVariables.Action.Azure.TenantId, TenantId);
+            context.Variables.Add(SpecialVariables.Action.Azure.ClientId, ClientId);
+            context.Variables.Add(SpecialVariables.Action.Azure.Password, ClientSecret);
             context.WithTool(AzureCLI);
             context.WithTool(AzureCmdlets);
         }
