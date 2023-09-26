@@ -319,7 +319,7 @@ namespace Calamari.Tests.Fixtures.Nginx
 
             return (certificatePem, certificatePrivateKeyPem, certificateChainPem);
 #else
-            return ("", "", "");
+            return (string.Empty, string.Empty, string.Empty);
 #endif
         }
     }
