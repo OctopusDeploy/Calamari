@@ -188,10 +188,7 @@ namespace Calamari.Tests.Fixtures.Nginx
         [Test]
         public void SetupReverseProxyWithSslUsingCertificateVariableSite()
         {
-            var chainCertFilePath = TestEnvironment.GetTestPath("Helpers", "Certificates", "SampleCertificateFiles", "3-cert-chain.pfx");
-            var collection = new X509Certificate2Collection();
-            collection.Import(chainCertFilePath, "hello world", X509KeyStorageFlags.PersistKeySet);
-            var (certificatePem, certificatePrivateKeyPem, certificateChainPem) = GetCertificateDetails(collection);
+            var (certificatePem, certificatePrivateKeyPem, certificateChainPem) = GetCertificateDetails();
 
             var locations =
                 JsonConvert.DeserializeObject<IEnumerable<Location>>(
@@ -298,9 +295,13 @@ namespace Calamari.Tests.Fixtures.Nginx
             Assert.IsTrue(Directory.GetFiles(Path.Combine(tempDirectory, "conf"))[0].EndsWith($"{nginxServer.VirtualServerName}.conf"));
         }
 
-        (string, string, string) GetCertificateDetails(X509Certificate2Collection certificateCollection)
+        (string, string, string) GetCertificateDetails()
         {
 #if NETCORE
+            var chainCertFilePath = TestEnvironment.GetTestPath("Helpers", "Certificates", "SampleCertificateFiles", "3-cert-chain.pfx");
+            var certificateCollection = new X509Certificate2Collection();
+            certificateCollection.Import(chainCertFilePath, "hello world", X509KeyStorageFlags.PersistKeySet);
+
             var certificate = certificateCollection.First();
             var certificatePem = new string(PemEncoding.Write("CERTIFICATE", certificate.RawData));
             var key = (AsymmetricAlgorithm)certificate.GetRSAPrivateKey() ?? certificate.GetECDsaPrivateKey();
