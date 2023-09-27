@@ -591,8 +591,6 @@ namespace Calamari.Tests.AWS
                                                       ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3SecretKey));
 
             var config = new AmazonS3Config { AllowAutoRedirect = true, RegionEndpoint = RegionEndpoint.GetBySystemName(region) };
-
-            var config = new AmazonS3Config {AllowAutoRedirect = true, RegionEndpoint = RegionEndpoint.GetBySystemName(region)};
             
             using (var client = new AmazonS3Client(credentials, config))
             {
