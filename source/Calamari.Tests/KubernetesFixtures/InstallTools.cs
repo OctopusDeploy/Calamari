@@ -37,7 +37,8 @@ namespace Calamari.Tests.KubernetesFixtures
         public string TerraformExecutable { get; private set; }
         public string KubectlExecutable { get; private set; }
         public string AwsAuthenticatorExecutable { get; private set; }
-        public string AwsCliExecutable { get; private set; }
+        public string AwsCliExecutable { get; private set; } 
+        public string KubeloginExecutable { get; private set; }
         public string GcloudExecutable { get; private set; }
 
         public async Task Install()
@@ -365,6 +366,32 @@ namespace Calamari.Tests.KubernetesFixtures
             return $"https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/{GetGcloudZipFileName(currentVersion)}";
         }
 
+        static string GetKubeloginDownloadLink(string currentVersion)
+        {
+            if (CalamariEnvironment.IsRunningOnNix)
+            {
+                return $"https://github.com/Azure/kubelogin/releases/download/{currentVersion}/kubelogin-linux-amd64.zip";
+            }
+
+            return $"https://github.com/Azure/kubelogin/releases/download/{currentVersion}/kubelogin-win-amd64.zip";
+        }
+
+        public string GetKubeloginZipFileName()
+        {
+            if (CalamariEnvironment.IsRunningOnWindows)
+            {
+                return $"kubelogin.zip";
+            }
+
+            return $"kubelogin-linux-amd64.zip";
+        }
+
+        static string GetKubeloginExecutablePath(string extractPath)
+        {
+            var executableName = CalamariEnvironment.IsRunningOnWindows ? "kubelogin.exe" : "kubelogin";
+            return Path.Combine(extractPath, "bin", CalamariEnvironment.IsRunningOnWindows ? "windows_amd64" : "linux_amd64", executableName);
+        }
+
         static string GetGcloudZipFileName(string currentVersion)
         {
             if (CalamariEnvironment.IsRunningOnNix)
@@ -464,6 +491,12 @@ namespace Calamari.Tests.KubernetesFixtures
                 {
                     path = GetAwsCliExecutablePath(destinationDirectoryName);
                 }
+
+                if (toolName == "kubelogin")
+                {
+                    path = GetKubeloginExecutablePath(destinationDirectoryName);
+                }
+
                 if (path == null || !File.Exists(path))
                 {
                     return null;
