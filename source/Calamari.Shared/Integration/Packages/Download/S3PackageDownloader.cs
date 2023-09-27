@@ -64,6 +64,7 @@ namespace Calamari.Integration.Packages.Download
             }
 
             var cacheDirectory = PackageDownloaderUtils.GetPackageRoot(feedId);
+            fileSystem.EnsureDirectoryExists(cacheDirectory);
 
             if (!forcePackageDownload)
             {
