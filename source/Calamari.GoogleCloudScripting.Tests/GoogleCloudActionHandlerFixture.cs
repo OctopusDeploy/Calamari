@@ -59,9 +59,16 @@ namespace Calamari.GoogleCloudScripting.Tests
                     // 448 requires python 3.8 and up, currently 3.5 is available on Teamcity agents
                     // This is intended as a temporary workaround
                     // https://build.octopushq.com/test/-1383742321497021969?currentProjectId=OctopusDeploy_Calamari_CalamariGoogleCloudScriptingTests_NetcoreTesting&expandTestHistoryChartSection=true
-                    if (result.TimeCreated.HasValue && result.TimeCreated.Value < new DateTime(2023, 09, 24));
+                    if (result.TimeCreated.HasValue && DateTime.Compare(DateTime.Parse(result.TimeCreatedRaw), new DateTime(2023, 09, 24)) < 0);
                     {
-                        Console.WriteLine($"File name: {result.Name}, Time Created: {result.TimeCreated}, Time Created Raw:{result.TimeCreatedRaw}");
+                        var tw = Console.Out;
+                        var sw = new StreamWriter(Console.OpenStandardOutput());
+                        sw.AutoFlush = true;
+                        Console.SetOut(sw);
+
+                        Console.WriteLine($"File name: {result.Name}, Time Created: {result.TimeCreated}, Time Created Raw:{result.TimeCreatedRaw}, Converted DateTime: {DateTime.Parse(result.TimeCreatedRaw).ToString()}");
+
+                        Console.SetOut(tw);
                         listOfFilesSortedByCreatedDate.Add(result.TimeCreated.Value, result);
                     }
                 }
