@@ -55,7 +55,11 @@ namespace Calamari.GoogleCloudScripting.Tests
 
                 foreach (var result in results)
                 {
-                    if (result.TimeCreated.HasValue)
+                    // Checking date time less than to fetch gcloud versions earlier than 448.
+                    // 448 requires python 3.8 and up, currently 3.5 is available on Teamcity agents
+                    // This is intended as a temporary workaround
+                    // https://build.octopushq.com/test/-1383742321497021969?currentProjectId=OctopusDeploy_Calamari_CalamariGoogleCloudScriptingTests_NetcoreTesting&expandTestHistoryChartSection=true
+                    if (result.TimeCreated.HasValue && result.TimeCreated.Value < new DateTime(2023, 09, 24));
                     {
                         listOfFilesSortedByCreatedDate.Add(result.TimeCreated.Value, result);
                     }
