@@ -61,6 +61,7 @@ namespace Calamari.GoogleCloudScripting.Tests
                     // https://build.octopushq.com/test/-1383742321497021969?currentProjectId=OctopusDeploy_Calamari_CalamariGoogleCloudScriptingTests_NetcoreTesting&expandTestHistoryChartSection=true
                     if (result.TimeCreated.HasValue && result.TimeCreated.Value < new DateTime(2023, 09, 24));
                     {
+                        Console.WriteLine($"File name: {result.Name}, Time Created: {result.TimeCreated}, Time Created Raw:{result.TimeCreatedRaw}");
                         listOfFilesSortedByCreatedDate.Add(result.TimeCreated.Value, result);
                     }
                 }
