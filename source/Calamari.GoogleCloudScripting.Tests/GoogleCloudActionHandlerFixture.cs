@@ -55,25 +55,18 @@ namespace Calamari.GoogleCloudScripting.Tests
 
                 foreach (var result in results)
                 {
-                    // Checking date time less than to fetch gcloud versions earlier than 448.
-                    // 448 requires python 3.8 and up, currently 3.5 is available on Teamcity agents
-                    // This is intended as a temporary workaround
-                    // https://build.octopushq.com/test/-1383742321497021969?currentProjectId=OctopusDeploy_Calamari_CalamariGoogleCloudScriptingTests_NetcoreTesting&expandTestHistoryChartSection=true
-                    if (result.TimeCreated.HasValue && DateTime.Compare(DateTime.Parse(result.TimeCreatedRaw), new DateTime(2023, 09, 24)) < 0);
+                    if (result.TimeCreated.HasValue);
                     {
-                        var tw = Console.Out;
-                        var sw = new StreamWriter(Console.OpenStandardOutput());
-                        sw.AutoFlush = true;
-                        Console.SetOut(sw);
-
-                        Console.WriteLine($"File name: {result.Name}, Time Created: {result.TimeCreated}, Time Created Raw:{result.TimeCreatedRaw}, Converted DateTime: {DateTime.Parse(result.TimeCreatedRaw).ToString()}");
-
-                        Console.SetOut(tw);
                         listOfFilesSortedByCreatedDate.Add(result.TimeCreated.Value, result);
                     }
                 }
-
-                foreach (var file in listOfFilesSortedByCreatedDate.Where(file => file.Value.Name.EndsWith(postfix)))
+                
+                // Checking date time less than to fetch gcloud versions earlier than 448.
+                // 448 requires python 3.8 and up, currently 3.5 is available on Teamcity agents
+                // This is intended as a temporary workaround
+                // https://build.octopushq.com/test/-1383742321497021969?currentProjectId=OctopusDeploy_Calamari_CalamariGoogleCloudScriptingTests_NetcoreTesting&expandTestHistoryChartSection=true
+                var dateBeforeGcloud448 = new DateTime(2023, 09, 20);
+                foreach (var file in listOfFilesSortedByCreatedDate.Where(file => file.Value.Name.EndsWith(postfix) && file.Key.CompareTo(dateBeforeGcloud448) == -1))
                 {
                     return file.Value;
                 }
