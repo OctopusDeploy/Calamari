@@ -53,20 +53,21 @@ namespace Calamari.GoogleCloudScripting.Tests
                 var results = client.ListObjects("cloud-sdk-release", "google-cloud-sdk-");
                 var listOfFilesSortedByCreatedDate = new SortedList<DateTime, GoogleStorageObject>(Comparer<DateTime>.Create((a, b) => b.CompareTo(a)));
 
-                foreach (var result in results)
-                {
-                    if (result.TimeCreated.HasValue);
-                    {
-                        listOfFilesSortedByCreatedDate.Add(result.TimeCreated.Value, result);
-                    }
-                }
-                
                 // Checking date time less than to fetch gcloud versions earlier than 448.
                 // 448 requires python 3.8 and up, currently 3.5 is available on Teamcity agents
                 // This is intended as a temporary workaround
                 // https://build.octopushq.com/test/-1383742321497021969?currentProjectId=OctopusDeploy_Calamari_CalamariGoogleCloudScriptingTests_NetcoreTesting&expandTestHistoryChartSection=true
                 var dateBeforeGcloud448 = new DateTime(2023, 09, 20);
-                foreach (var file in listOfFilesSortedByCreatedDate.Where(file => file.Value.Name.EndsWith(postfix) && file.Key.CompareTo(dateBeforeGcloud448) == -1))
+
+                foreach (var result in results)
+                {
+                    if (result.TimeCreated.HasValue && result.TimeCreated.Value.CompareTo(dateBeforeGcloud448) == -1)
+                    {
+                        listOfFilesSortedByCreatedDate.Add(result.TimeCreated.Value, result);
+                    }
+                }
+
+                foreach (var file in listOfFilesSortedByCreatedDate.Where(file => file.Value.Name.EndsWith(postfix)))
                 {
                     return file.Value;
                 }
