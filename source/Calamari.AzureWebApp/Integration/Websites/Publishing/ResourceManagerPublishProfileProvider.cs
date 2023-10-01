@@ -55,7 +55,7 @@ namespace Calamari.AzureWebApp.Integration.Websites.Publishing
                 SubscriptionId = account.SubscriptionNumber,
                 BaseUri = baseUri,
             })
-            using (var webSiteClient = new WebSiteManagementClient(new TokenCredentials(token)) { SubscriptionId = account.SubscriptionNumber })
+            using (var webSiteClient = new WebSiteManagementClient(new Uri(account.ResourceManagementEndpointBaseUri), new TokenCredentials(token)) { SubscriptionId = account.SubscriptionNumber })
             {
                 webSiteClient.SetRetryPolicy(new RetryPolicy(new HttpStatusCodeErrorDetectionStrategy(), 3));
                 resourcesClient.HttpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
