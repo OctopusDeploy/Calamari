@@ -13,6 +13,7 @@ using Nuke.Common.CI.TeamCity;
 using Nuke.Common.IO;
 using Nuke.Common.ProjectModel;
 using Nuke.Common.Tooling;
+using Nuke.Common.Tools.Docker;
 using Nuke.Common.Tools.DotNet;
 using Nuke.Common.Tools.GitVersion;
 using Nuke.Common.Tools.NuGet;
@@ -58,6 +59,15 @@ namespace Calamari.Build
 
         [Parameter("Set Calamari Version on OctopusServer")]
         readonly bool SetOctopusServerVersion;
+        
+        [Parameter(Name = "OCTOPUS_DOCKER_REGISTRY_HOSTNAME")] 
+        public static string OctopusDockerRegistryHostname = null!;
+        
+        [Parameter(Name = "OCTOPUS_DOCKER_REGISTRY_USERNAME")] 
+        public static string OctopusDockerRegistryUsername = null!;
+        
+        [Secret] [Parameter(Name = "OCTOPUS_DOCKER_REGISTRY_PASSWORD")] 
+        public static string OctopusDockerRegistryPassword = null!;
 
         [Parameter] 
         readonly string? AzureKeyVaultUrl;
@@ -170,8 +180,8 @@ namespace Calamari.Build
                                         .SetNoRestore(true)
                                         .SetVersion(NugetVersion.Value)
                                         .SetInformationalVersion(GitVersionInfo?.InformationalVersion));
-                  });
-
+                  });   
+        
         Target CalamariConsolidationTests =>
             _ => _.DependsOn(Compile)
                   .OnlyWhenStatic(() => !IsLocalBuild)
@@ -180,6 +190,29 @@ namespace Calamari.Build
                                 DotNetTest(_ => _
                                                 .SetProjectFile(ConsolidateCalamariPackagesProject)
                                                 .SetConfiguration(Configuration)
+                                                .SetFilter("Category=ThisDoesNotExist")
+                                                .EnableNoBuild());
+                            });
+
+        Target CalamariConsolidationTestsInDocker =>
+            _ => _.DependsOn(Compile)
+                  .OnlyWhenStatic(() => !IsLocalBuild)
+                  .DockerRun(settings => settings
+                     .SetImage("docker.packages.octopushq.com/octopusdeploy/dependency-scanner/ci-environment")
+                     .SetServer(OctopusDockerRegistryHostname)
+                     .SetUsername(OctopusDockerRegistryUsername)
+                     .SetPassword(OctopusDockerRegistryPassword)
+                     .EnableBuildCaching()
+                     .EnablePullImage()
+                     .SetPlatform("linux")
+                     .SetDotNetRuntime("linux-x64")
+                     .AddVolume($"{Environment.GetEnvironmentVariable("TEMP")}:{Environment.GetEnvironmentVariable("TEMP")}"))           
+                  .Executes(() =>
+                            {
+                                DotNetTest(_ => _
+                                                .SetProjectFile(ConsolidateCalamariPackagesProject)
+                                                .SetConfiguration(Configuration)
+                                                .SetFilter("Category=Docker")
                                                 .EnableNoBuild());
                             });
 
@@ -433,6 +466,7 @@ namespace Calamari.Build
 
         Target PackageConsolidatedCalamariZip =>
             _ => _.DependsOn(CalamariConsolidationTests)
+                  .DependsOn(CalamariConsolidationTestsInDocker)
                   .DependsOn(PackBinaries)
                   .Executes(() =>
                             {

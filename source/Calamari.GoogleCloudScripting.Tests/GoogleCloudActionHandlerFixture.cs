@@ -177,6 +177,7 @@ namespace Calamari.GoogleCloudScripting.Tests
         }
 
         [Test]
+        [Category("Docker")]
         public async Task ExecuteAnInlineScript()
         {
             var psScript = $"{cliPath} info";
