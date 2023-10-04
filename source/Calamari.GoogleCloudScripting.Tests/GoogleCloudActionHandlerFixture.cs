@@ -171,6 +171,7 @@ namespace Calamari.GoogleCloudScripting.Tests
         }
 
         [Test]
+        [Ignore("Agents need to have their version of Python updated. Ultimately we should move this to use a docker container.  See https://octopusdeploy.slack.com/archives/C01HH8T16G3/p1695967518947159")]
         public async Task ExecuteAnInlineScript()
         {
             var psScript = $"{cliPath} info";
