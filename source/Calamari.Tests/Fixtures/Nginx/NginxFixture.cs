@@ -162,7 +162,7 @@ namespace Calamari.Tests.Fixtures.Nginx
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
+        [Category(TestCategory.CompatibleOS.OnlyNix)]
         public void SetupReverseProxyWithSslSite()
         {
             var locations =
