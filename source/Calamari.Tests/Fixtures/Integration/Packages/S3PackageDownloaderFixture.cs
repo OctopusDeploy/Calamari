@@ -10,17 +10,17 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Integration.Packages.Download;
 using Calamari.Testing;
-using Calamari.Testing.Helpers;
+using Calamari.Testing.Requirements;
 using Calamari.Tests.AWS;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NUnit.Framework;
 using Octopus.Versioning;
-using InMemoryLog = Calamari.Testing.Helpers.InMemoryLog;
 using TestEnvironment = Calamari.Testing.Helpers.TestEnvironment;
 
 namespace Calamari.Tests.Fixtures.Integration.Packages
 {
+    [RequiresNonMono]
     [TestFixture]
     public class S3PackageDownloaderFixture : CalamariFixture
     {
@@ -96,8 +96,8 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
                                                      version,
                                                      "s3-feed",
                                                      new Uri("http://please-ignore.com"),
-                                                     ExternalVariables.Get(ExternalVariable.AwsAcessKey),
-                                                     ExternalVariables.Get(ExternalVariable.AwsSecretKey),
+                                                     ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3AccessKey),
+                                                     ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3SecretKey),
                                                      true,
                                                      3,
                                                      TimeSpan.FromSeconds(3));
@@ -109,8 +109,8 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         protected async Task Validate(Func<AmazonS3Client, Task> execute)
         {
             var credentials = new BasicAWSCredentials(
-                                                      ExternalVariables.Get(ExternalVariable.AwsAcessKey),
-                                                      ExternalVariables.Get(ExternalVariable.AwsSecretKey));
+                                                      ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3AccessKey),
+                                                      ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3SecretKey));
 
             var config = new AmazonS3Config {AllowAutoRedirect = true, RegionEndpoint = RegionEndpoint.GetBySystemName(region)};
             
