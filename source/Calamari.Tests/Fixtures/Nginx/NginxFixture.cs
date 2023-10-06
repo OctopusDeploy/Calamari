@@ -5,6 +5,7 @@ using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using Assent;
 using Calamari.Common.Commands;
+using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
@@ -213,8 +214,12 @@ namespace Calamari.Tests.Fixtures.Nginx
             var nginxConfigFilePath = Path.Combine(tempDirectory, "conf", $"{virtualServerName}.conf");
             this.Assent(File.ReadAllText(nginxConfigFilePath), AssentConfiguration.Default);
 #if NETCORE
-            var sslCertFilePath = Path.Combine(tempDirectory, "ssl", subjectName);
-            this.Assent(File.ReadAllText(Path.Combine(sslCertFilePath, $"{subjectName}.crt")), AssentConfiguration.Default, $"{nameof(SetupReverseProxyWithSslUsingCertificateVariableSite)}.crt");
+            if (!CalamariEnvironment.IsRunningOnMac)
+            {
+                var sslCertFilePath = Path.Combine(tempDirectory, "ssl", subjectName);
+                this.Assent(File.ReadAllText(Path.Combine(sslCertFilePath, $"{subjectName}.crt")),
+                    AssentConfiguration.Default, $"{nameof(SetupReverseProxyWithSslUsingCertificateVariableSite)}.crt");
+            }
 #endif
         }
 
@@ -297,27 +302,33 @@ namespace Calamari.Tests.Fixtures.Nginx
 
         (string, string, string) GetCertificateDetails()
         {
-#if (NETCORE && !MACOS)
-            var chainCertFilePath = TestEnvironment.GetTestPath("Helpers", "Certificates", "SampleCertificateFiles", "3-cert-chain.pfx");
-            var certificateCollection = new X509Certificate2Collection();
-            certificateCollection.Import(chainCertFilePath, "hello world", X509KeyStorageFlags.PersistKeySet);
-
-            var certificate = certificateCollection.First();
-            var certificatePem = new string(PemEncoding.Write("CERTIFICATE", certificate.RawData));
-            var key = (AsymmetricAlgorithm)certificate.GetRSAPrivateKey() ?? certificate.GetECDsaPrivateKey();
-            var privateKeyBytes = key.ExportPkcs8PrivateKey();
-            var certificatePrivateKeyPem = new string(PemEncoding.Write("PRIVATE KEY", privateKeyBytes));
-
-            string certificateChainPem = null;
-            foreach (var cert in certificateCollection.Skip(1))
+#if NETCORE
+            if (!CalamariEnvironment.IsRunningOnMac)
             {
-                // if the cert has no extension or the cert has a basic constraints extension,
-                // and the certificate authority is true then this is a chain certificate
-                certificateChainPem += $@"{new string(PemEncoding.Write("CERTIFICATE", cert.RawData))}
+                var chainCertFilePath = TestEnvironment.GetTestPath("Helpers", "Certificates", "SampleCertificateFiles",
+                    "3-cert-chain.pfx");
+                var certificateCollection = new X509Certificate2Collection();
+                certificateCollection.Import(chainCertFilePath, "hello world", X509KeyStorageFlags.PersistKeySet);
+
+                var certificate = certificateCollection.First();
+                var certificatePem = new string(PemEncoding.Write("CERTIFICATE", certificate.RawData));
+                var key = (AsymmetricAlgorithm)certificate.GetRSAPrivateKey() ?? certificate.GetECDsaPrivateKey();
+                var privateKeyBytes = key.ExportPkcs8PrivateKey();
+                var certificatePrivateKeyPem = new string(PemEncoding.Write("PRIVATE KEY", privateKeyBytes));
+
+                string certificateChainPem = null;
+                foreach (var cert in certificateCollection.Skip(1))
+                {
+                    // if the cert has no extension or the cert has a basic constraints extension,
+                    // and the certificate authority is true then this is a chain certificate
+                    certificateChainPem += $@"{new string(PemEncoding.Write("CERTIFICATE", cert.RawData))}
 ";
+                }
+
+                return (certificatePem, certificatePrivateKeyPem, certificateChainPem);
             }
 
-            return (certificatePem, certificatePrivateKeyPem, certificateChainPem);
+            return (string.Empty, string.Empty, string.Empty);
 #else
             return (string.Empty, string.Empty, string.Empty);
 #endif
