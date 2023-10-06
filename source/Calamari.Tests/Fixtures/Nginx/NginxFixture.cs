@@ -162,7 +162,7 @@ namespace Calamari.Tests.Fixtures.Nginx
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyNix)]
+        [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
         public void SetupReverseProxyWithSslSite()
         {
             var locations =
@@ -297,7 +297,7 @@ namespace Calamari.Tests.Fixtures.Nginx
 
         (string, string, string) GetCertificateDetails()
         {
-#if NETCORE
+#if (NETCORE && !MACOS)
             var chainCertFilePath = TestEnvironment.GetTestPath("Helpers", "Certificates", "SampleCertificateFiles", "3-cert-chain.pfx");
             var certificateCollection = new X509Certificate2Collection();
             certificateCollection.Import(chainCertFilePath, "hello world", X509KeyStorageFlags.PersistKeySet);
