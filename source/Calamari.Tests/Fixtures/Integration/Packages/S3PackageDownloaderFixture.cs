@@ -95,7 +95,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             var package = downloader.DownloadPackage(packageId,
                                                      version,
                                                      "s3-feed",
-                                                     new Uri("http://please-ignore.com"),
+                                                     new Uri("https://please-ignore.com"),
                                                      ExternalVariables.Get(ExternalVariable.AwsAcessKey),
                                                      ExternalVariables.Get(ExternalVariable.AwsSecretKey),
                                                      true,
