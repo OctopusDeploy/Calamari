@@ -81,7 +81,9 @@ namespace Calamari.Deployment.PackageRetention.Model
                 using (AcquireSemaphore())
                 {
                     journalRepository.Load();
-                    var packagesToRemove = retentionAlgorithm.GetPackagesToRemove(journalRepository.GetAllJournalEntries());
+                    var journalEntriesCanBeRemoved = journalRepository.GetAllJournalEntries()
+                                                                      .Where(entry => !entry.HasLock());
+                    var packagesToRemove = retentionAlgorithm.GetPackagesToRemove(journalEntriesCanBeRemoved);
                     foreach (var package in packagesToRemove)
                     {
                         if (string.IsNullOrWhiteSpace(package.Path.Value) || !fileSystem.FileExists(package.Path.Value))
