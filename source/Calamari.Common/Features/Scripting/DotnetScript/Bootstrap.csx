@@ -10,116 +10,111 @@ using System.Diagnostics;
 using System.Security.Principal;
 using System.Linq;
 
-public static class Octopus
+public static OctopusParametersDictionary Parameters { get; private set; }
+
+InitializeDefaultProxy();
+
+public static void Initialize(string password)
 {
-    public static OctopusParametersDictionary Parameters { get; private set; }
-
-    static Octopus()
+    if (Parameters != null)
     {
-        InitializeDefaultProxy();
+        throw new Exception("Octopus can only be initialized once.");
+    }
+    Parameters = new OctopusParametersDictionary(password);
+    LogEnvironmentInformation();
+}
+
+static void LogEnvironmentInformation()
+{
+    if (Parameters.ContainsKey("Octopus.Action.Script.SuppressEnvironmentLogging") && Parameters["Octopus.Action.Script.SuppressEnvironmentLogging"] == "True")
+        return;
+
+    var environmentInformationStamp = $"Dotnet-Script Environment Information:{Environment.NewLine}" +
+        $"  {string.Join($"{Environment.NewLine}  ", SafelyGetEnvironmentInformation())}";
+
+    Console.WriteLine("##octopus[stdout-verbose]");
+    Console.WriteLine(environmentInformationStamp);
+    Console.WriteLine("##octopus[stdout-default]");
+}
+
+#region Logging Helpers
+
+static string[] SafelyGetEnvironmentInformation()
+{
+    var envVars = GetEnvironmentVars()
+        .Concat(GetPathVars())
+        .Concat(GetProcessVars());
+    return envVars.ToArray();
+}
+
+private static string SafelyGet(Func<string> thingToGet)
+{
+    try
+    {
+        return thingToGet.Invoke();
+    }
+    catch (Exception)
+    {
+        return "Unable to retrieve environment information.";
+    }
+}
+
+static IEnumerable<string> GetEnvironmentVars()
+{
+    yield return SafelyGet(() => $"OperatingSystem: {Environment.OSVersion}");
+    yield return SafelyGet(() => $"OsBitVersion: {(Environment.Is64BitOperatingSystem ? "x64" : "x86")}");
+    yield return SafelyGet(() => $"Is64BitProcess: {Environment.Is64BitProcess}");
+    yield return SafelyGet(() => $"CurrentUser: {WindowsIdentity.GetCurrent().Name}");
+    yield return SafelyGet(() => $"MachineName: {Environment.MachineName}");
+    yield return SafelyGet(() => $"ProcessorCount: {Environment.ProcessorCount}");
+}
+
+static IEnumerable<string> GetPathVars()
+{
+    yield return SafelyGet(() => $"CurrentDirectory: {Directory.GetCurrentDirectory()}");
+    yield return SafelyGet(() => $"TempDirectory: {Path.GetTempPath()}");
+}
+
+static IEnumerable<string> GetProcessVars()
+{
+    yield return SafelyGet(() => {
+        var process = Process.GetCurrentProcess();
+        return $"HostProcess: {process.ProcessName} ({process.Id})";
+    });
+}
+
+#endregion
+
+public class OctopusParametersDictionary : System.Collections.Generic.Dictionary<string, string>
+{
+    private byte[] Key { get; set; }
+
+    public OctopusParametersDictionary(string key) : base(System.StringComparer.OrdinalIgnoreCase)
+    {
+        Key = Convert.FromBase64String(key);
+        /*{{VariableDeclarations}}*/
     }
 
-    public static void Initialize(string password)
+    public string DecryptString(string encrypted, string iv)
     {
-        if (Parameters != null)
+        using (var algorithm = Aes.Create())
         {
-            throw new Exception("Octopus can only be initialized once.");
-        }
-        Parameters = new OctopusParametersDictionary(password);
-        LogEnvironmentInformation();
-    }
-
-    static void LogEnvironmentInformation()
-    {
-        if (Parameters.ContainsKey("Octopus.Action.Script.SuppressEnvironmentLogging") && Parameters["Octopus.Action.Script.SuppressEnvironmentLogging"] == "True")
-            return;
-
-        var environmentInformationStamp = $"Dotnet-Script Environment Information:{Environment.NewLine}" +
-            $"  {string.Join($"{Environment.NewLine}  ", SafelyGetEnvironmentInformation())}";
-
-        Console.WriteLine("##octopus[stdout-verbose]");
-        Console.WriteLine(environmentInformationStamp);
-        Console.WriteLine("##octopus[stdout-default]");
-    }
-
-    #region Logging Helpers
-
-    static string[] SafelyGetEnvironmentInformation()
-    {
-        var envVars = GetEnvironmentVars()
-            .Concat(GetPathVars())
-            .Concat(GetProcessVars());
-        return envVars.ToArray();
-    }
-
-    private static string SafelyGet(Func<string> thingToGet)
-    {
-        try
-        {
-            return thingToGet.Invoke();
-        }
-        catch (Exception)
-        {
-            return "Unable to retrieve environment information.";
-        }
-    }
-
-    static IEnumerable<string> GetEnvironmentVars()
-    {
-        yield return SafelyGet(() => $"OperatingSystem: {Environment.OSVersion}");
-        yield return SafelyGet(() => $"OsBitVersion: {(Environment.Is64BitOperatingSystem ? "x64" : "x86")}");
-        yield return SafelyGet(() => $"Is64BitProcess: {Environment.Is64BitProcess}");
-        yield return SafelyGet(() => $"CurrentUser: {WindowsIdentity.GetCurrent().Name}");
-        yield return SafelyGet(() => $"MachineName: {Environment.MachineName}");
-        yield return SafelyGet(() => $"ProcessorCount: {Environment.ProcessorCount}");
-    }
-
-    static IEnumerable<string> GetPathVars()
-    {
-        yield return SafelyGet(() => $"CurrentDirectory: {Directory.GetCurrentDirectory()}");
-        yield return SafelyGet(() => $"TempDirectory: {Path.GetTempPath()}");
-    }
-
-    static IEnumerable<string> GetProcessVars()
-    {
-        yield return SafelyGet(() => {
-            var process = Process.GetCurrentProcess();
-            return $"HostProcess: {process.ProcessName} ({process.Id})";
-        });
-    }
-
-    #endregion
-
-    public class OctopusParametersDictionary : System.Collections.Generic.Dictionary<string, string>
-    {
-        private byte[] Key { get; set; }
-
-        public OctopusParametersDictionary(string key) : base(System.StringComparer.OrdinalIgnoreCase)
-        {
-            Key = Convert.FromBase64String(key);
-            /*{{VariableDeclarations}}*/
-        }
-
-        public string DecryptString(string encrypted, string iv)
-        {
-            using (var algorithm = Aes.Create())
+            algorithm.Mode = CipherMode.CBC;
+            algorithm.Padding = PaddingMode.PKCS7;
+            algorithm.KeySize = 128;
+            algorithm.BlockSize = 128;
+            algorithm.Key = Key;
+            algorithm.IV = Convert.FromBase64String(iv);
+            using (var dec = algorithm.CreateDecryptor())
+            using (var ms = new MemoryStream(Convert.FromBase64String(encrypted)))
+            using (var cs = new CryptoStream(ms, dec, CryptoStreamMode.Read))
+            using (var sr = new StreamReader(cs, Encoding.UTF8))
             {
-                algorithm.Mode = CipherMode.CBC;
-                algorithm.Padding = PaddingMode.PKCS7;
-                algorithm.KeySize = 128;
-                algorithm.BlockSize = 128;
-                algorithm.Key = Key;
-                algorithm.IV = Convert.FromBase64String(iv);
-                using (var dec = algorithm.CreateDecryptor())
-                using (var ms = new MemoryStream(Convert.FromBase64String(encrypted)))
-                using (var cs = new CryptoStream(ms, dec, CryptoStreamMode.Read))
-                using (var sr = new StreamReader(cs, Encoding.UTF8))
-                {
-                    return sr.ReadToEnd();
-                }
+                return sr.ReadToEnd();
             }
         }
     }
+}
 
     private static string EncodeServiceMessageValue(string value)
     {
@@ -250,4 +245,4 @@ public class ScriptArgsEnv {
 
 var Env = new ScriptArgsEnv(Args);
 
-Octopus.Initialize(Args[Args.Count - 1]);
+Initialize(Args[Args.Count - 1]);
