@@ -10,23 +10,23 @@ using System.Diagnostics;
 using System.Security.Principal;
 using System.Linq;
 
-public static OctopusParametersDictionary Parameters { get; private set; }
+public static OctopusParametersDictionary OctopusParameters { get; private set; }
 
 InitializeDefaultProxy();
 
 public static void Initialize(string password)
 {
-    if (Parameters != null)
+    if (OctopusParameters != null)
     {
         throw new Exception("Octopus can only be initialized once.");
     }
-    Parameters = new OctopusParametersDictionary(password);
+    OctopusParameters = new OctopusParametersDictionary(password);
     LogEnvironmentInformation();
 }
 
 static void LogEnvironmentInformation()
 {
-    if (Parameters.ContainsKey("Octopus.Action.Script.SuppressEnvironmentLogging") && Parameters["Octopus.Action.Script.SuppressEnvironmentLogging"] == "True")
+    if (OctopusParameters.ContainsKey("Octopus.Action.Script.SuppressEnvironmentLogging") && OctopusParameters["Octopus.Action.Script.SuppressEnvironmentLogging"] == "True")
         return;
 
     var environmentInformationStamp = $"Dotnet-Script Environment Information:{Environment.NewLine}" +
@@ -116,121 +116,120 @@ public class OctopusParametersDictionary : System.Collections.Generic.Dictionary
     }
 }
 
-    private static string EncodeServiceMessageValue(string value)
+private static string EncodeServiceMessageValue(string value)
+{
+    var valueBytes = System.Text.Encoding.UTF8.GetBytes(value);
+    return Convert.ToBase64String(valueBytes);
+}
+
+public static void FailStep(string message = null)
+{
+    if (message != null)
     {
-        var valueBytes = System.Text.Encoding.UTF8.GetBytes(value);
-        return Convert.ToBase64String(valueBytes);
+        message = EncodeServiceMessageValue(message);
+        Console.WriteLine("##octopus[resultMessage message='{0}']", message);
     }
+    Environment.Exit(-1);
+}
 
-    public static void FailStep(string message = null)
-    {
-        if (message != null)
-        {
-            message = EncodeServiceMessageValue(message);
-            Console.WriteLine("##octopus[resultMessage message='{0}']", message);
-        }
-        Environment.Exit(-1);
-    }
+public static void SetVariable(string name, string value, bool sensitive = false)
+{
+    name = EncodeServiceMessageValue(name);
+    value = EncodeServiceMessageValue(value);
 
-    public static void SetVariable(string name, string value, bool sensitive = false)
-    {
-        name = EncodeServiceMessageValue(name);
-        value = EncodeServiceMessageValue(value);
+    OctopusParameters[name] = value;
 
-        Parameters[name] = value;
-
-        if (sensitive) {
-            Console.WriteLine("##octopus[setVariable name='{0}' value='{1}' sensitive='{2}']", name, value, EncodeServiceMessageValue("True"));
-        } else {
+    if (sensitive) {
+        Console.WriteLine("##octopus[setVariable name='{0}' value='{1}' sensitive='{2}']", name, value, EncodeServiceMessageValue("True"));
+    } else {
         Console.WriteLine("##octopus[setVariable name='{0}' value='{1}']", name, value);
     }
-    }
+}
 
-    public static void CreateArtifact(string path, string fileName = null)
+public static void CreateArtifact(string path, string fileName = null)
+{
+    if (fileName == null)
     {
-        if (fileName == null)
-        {
-            fileName = System.IO.Path.GetFileName(path);
-        }
-
-        var serviceFileName = EncodeServiceMessageValue(fileName);
-
-        var length = System.IO.File.Exists(path) ? new System.IO.FileInfo(path).Length.ToString() : "0";
-        length = EncodeServiceMessageValue(length);
-
-        path = System.IO.Path.GetFullPath(path);
-        var servicepath = EncodeServiceMessageValue(path);
-
-        Console.WriteLine("##octopus[stdout-verbose]");
-        Console.WriteLine("Artifact {0} will be collected from {1} after this step completes", fileName, path);
-        Console.WriteLine("##octopus[stdout-default]");
-        Console.WriteLine("##octopus[createArtifact path='{0}' name='{1}' length='{2}']", servicepath, serviceFileName, length);
+        fileName = System.IO.Path.GetFileName(path);
     }
+
+    var serviceFileName = EncodeServiceMessageValue(fileName);
+
+    var length = System.IO.File.Exists(path) ? new System.IO.FileInfo(path).Length.ToString() : "0";
+    length = EncodeServiceMessageValue(length);
+
+    path = System.IO.Path.GetFullPath(path);
+    var servicepath = EncodeServiceMessageValue(path);
+
+    Console.WriteLine("##octopus[stdout-verbose]");
+    Console.WriteLine("Artifact {0} will be collected from {1} after this step completes", fileName, path);
+    Console.WriteLine("##octopus[stdout-default]");
+    Console.WriteLine("##octopus[createArtifact path='{0}' name='{1}' length='{2}']", servicepath, serviceFileName, length);
+}
     
-    public static void UpdateProgress(int percentage, string message = "")
-    {
-        Console.WriteLine("##octopus[progress percentage='{0}' message='{1}']", EncodeServiceMessageValue(percentage.ToString()), EncodeServiceMessageValue(message));
-    }
+public static void UpdateProgress(int percentage, string message = "")
+{
+    Console.WriteLine("##octopus[progress percentage='{0}' message='{1}']", EncodeServiceMessageValue(percentage.ToString()), EncodeServiceMessageValue(message));
+}
     
-    public static void WriteVerbose(string message)
-    {
-        Console.WriteLine("##octopus[stdout-verbose]");
-        Console.WriteLine(message);
-        Console.WriteLine("##octopus[stdout-default]");
-    }
+public static void WriteVerbose(string message)
+{
+    Console.WriteLine("##octopus[stdout-verbose]");
+    Console.WriteLine(message);
+    Console.WriteLine("##octopus[stdout-default]");
+}
     
-    public static void WriteHighlight(string message)
-    {
-        Console.WriteLine("##octopus[stdout-highlight]");
-        Console.WriteLine(message);
-        Console.WriteLine("##octopus[stdout-default]");
-    }
+public static void WriteHighlight(string message)
+{
+    Console.WriteLine("##octopus[stdout-highlight]");
+    Console.WriteLine(message);
+    Console.WriteLine("##octopus[stdout-default]");
+}
     
-    public static void WriteWait(string message)
-    {
-        Console.WriteLine("##octopus[stdout-wait]");
-        Console.WriteLine(message);
-        Console.WriteLine("##octopus[stdout-default]");
-    }
+public static void WriteWait(string message)
+{
+    Console.WriteLine("##octopus[stdout-wait]");
+    Console.WriteLine(message);
+    Console.WriteLine("##octopus[stdout-default]");
+}
     
-    public static void WriteWarning(string message)
-    {
-        Console.WriteLine("##octopus[stdout-warning]");
-        Console.WriteLine(message);
-        Console.WriteLine("##octopus[stdout-default]");
-    }
+public static void WriteWarning(string message)
+{
+    Console.WriteLine("##octopus[stdout-warning]");
+    Console.WriteLine(message);
+    Console.WriteLine("##octopus[stdout-default]");
+}
 
-    public static void InitializeDefaultProxy()
-    {
-        var proxyUsername = Environment.GetEnvironmentVariable("TentacleProxyUsername");
-        var proxyPassword = Environment.GetEnvironmentVariable("TentacleProxyPassword");
-        var proxyHost = Environment.GetEnvironmentVariable("TentacleProxyHost");
-        var proxyPortText = Environment.GetEnvironmentVariable("TentacleProxyPort");
-        int proxyPort;
-        int.TryParse(proxyPortText, out proxyPort);
+public static void InitializeDefaultProxy()
+{
+    var proxyUsername = Environment.GetEnvironmentVariable("TentacleProxyUsername");
+    var proxyPassword = Environment.GetEnvironmentVariable("TentacleProxyPassword");
+    var proxyHost = Environment.GetEnvironmentVariable("TentacleProxyHost");
+    var proxyPortText = Environment.GetEnvironmentVariable("TentacleProxyPort");
+    int proxyPort;
+    int.TryParse(proxyPortText, out proxyPort);
 
-		var useDefaultProxyText = Environment.GetEnvironmentVariable("TentacleUseDefaultProxy");
-		bool useDefaultProxy;
-		bool.TryParse(useDefaultProxyText, out useDefaultProxy);
+	var useDefaultProxyText = Environment.GetEnvironmentVariable("TentacleUseDefaultProxy");
+	bool useDefaultProxy;
+	bool.TryParse(useDefaultProxyText, out useDefaultProxy);
 
-        var useCustomProxy = !string.IsNullOrWhiteSpace(proxyHost);
-        var bypassProxy = !useCustomProxy && !useDefaultProxy;
+    var useCustomProxy = !string.IsNullOrWhiteSpace(proxyHost);
+    var bypassProxy = !useCustomProxy && !useDefaultProxy;
         
-        var proxy = useCustomProxy
-            ? new WebProxy(new UriBuilder("http", proxyHost, proxyPort).Uri)
-            : useDefaultProxy ? WebRequest.GetSystemWebProxy() : new WebProxy();
+    var proxy = useCustomProxy
+        ? new WebProxy(new UriBuilder("http", proxyHost, proxyPort).Uri)
+        : useDefaultProxy ? WebRequest.GetSystemWebProxy() : new WebProxy();
 
-        var useDefaultCredentials = string.IsNullOrWhiteSpace(proxyUsername);
+    var useDefaultCredentials = string.IsNullOrWhiteSpace(proxyUsername);
 
-        if (!bypassProxy)
-            proxy.Credentials = useDefaultCredentials
-                ? useCustomProxy
-                    ? new NetworkCredential()
-                    : CredentialCache.DefaultNetworkCredentials
-                : new NetworkCredential(proxyUsername, proxyPassword);
+    if (!bypassProxy)
+        proxy.Credentials = useDefaultCredentials
+            ? useCustomProxy
+                ? new NetworkCredential()
+                : CredentialCache.DefaultNetworkCredentials
+            : new NetworkCredential(proxyUsername, proxyPassword);
 
-        WebRequest.DefaultWebProxy = proxy;
-    }
+    WebRequest.DefaultWebProxy = proxy;
 }
 
 public class ScriptArgsEnv {
