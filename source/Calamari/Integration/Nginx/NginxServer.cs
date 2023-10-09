@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
@@ -50,7 +51,7 @@ namespace Calamari.Integration.Nginx
             return this;
         }
 
-        public NginxServer WithServerBindings(IEnumerable<Binding> bindings, IDictionary<string, (string SubjectCommonName, string CertificatePem, string PrivateKeyPem)> certificates, string customSslCertRoot = null)
+        public NginxServer WithServerBindings(IEnumerable<Binding> bindings, IDictionary<string, (string SubjectCommonName, string CertificatePem, string PrivateKeyPem, string ChainPem)> certificates, string customSslCertRoot = null)
         {
             foreach (var binding in bindings)
             {
@@ -80,7 +81,7 @@ namespace Calamari.Integration.Nginx
                         var certificateTempRootPath = Path.Combine(TempSslRootDirectory, sanitizedSubjectCommonName);
                         SslCerts.Add(
                             Path.Combine(certificateTempRootPath, certificateFileName),
-                            certificate.CertificatePem);
+                            GetCertificateWithChainIfPresent(certificate.CertificatePem, certificate.ChainPem));
                         SslCerts.Add(
                             Path.Combine(certificateTempRootPath, certificateKeyFileName),
                             certificate.PrivateKeyPem);
@@ -116,6 +117,10 @@ namespace Calamari.Integration.Nginx
             }
 
             return this;
+
+            string GetCertificateWithChainIfPresent(string certificatePem, string chainPem)
+                => $@"{certificatePem}
+{(!string.IsNullOrEmpty(chainPem) ? chainPem : "")}";
         }
 
         public NginxServer WithHostName(string serverHostName)

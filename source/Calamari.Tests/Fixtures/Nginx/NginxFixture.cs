@@ -1,20 +1,23 @@
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using Assent;
 using Calamari.Common.Commands;
+using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Features;
-using Calamari.Integration.FileSystem;
 using Calamari.Integration.Nginx;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Helpers;
+using FluentAssertions;
 using Newtonsoft.Json;
 using NSubstitute;
 using NUnit.Framework;
+using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Tests.Fixtures.Nginx
 {
@@ -62,7 +65,7 @@ namespace Calamari.Tests.Fixtures.Nginx
             nginxServer
                 .WithVirtualServerName(virtualServerName)
                 .WithServerBindings(JsonConvert.DeserializeObject<IEnumerable<Binding>>(httpOnlyBinding),
-                    new Dictionary<string, (string, string, string)>())
+                    new Dictionary<string, (string, string, string, string)>())
                 .WithRootLocation(locations.First());
 
             nginxServer.BuildConfiguration();
@@ -84,7 +87,7 @@ namespace Calamari.Tests.Fixtures.Nginx
             nginxServer
                 .WithVirtualServerName(virtualServerName)
                 .WithServerBindings(JsonConvert.DeserializeObject<IEnumerable<Binding>>(httpOnlyBinding),
-                    new Dictionary<string, (string, string, string)>())
+                    new Dictionary<string, (string, string, string, string)>())
                 .WithRootLocation(locations.First());
 
             nginxServer.BuildConfiguration();
@@ -106,7 +109,7 @@ namespace Calamari.Tests.Fixtures.Nginx
             nginxServer
                 .WithVirtualServerName(virtualServerName)
                 .WithServerBindings(JsonConvert.DeserializeObject<IEnumerable<Binding>>(httpOnlyBinding),
-                    new Dictionary<string, (string, string, string)>())
+                    new Dictionary<string, (string, string, string, string)>())
                 .WithRootLocation(locations.First());
 
             nginxServer.BuildConfiguration();
@@ -131,7 +134,7 @@ namespace Calamari.Tests.Fixtures.Nginx
             nginxServer
                 .WithVirtualServerName(virtualServerName)
                 .WithServerBindings(JsonConvert.DeserializeObject<IEnumerable<Binding>>(httpOnlyBinding),
-                    new Dictionary<string, (string, string, string)>())
+                    new Dictionary<string, (string, string, string, string)>())
                 .WithRootLocation(rootLocation)
                 .WithAdditionalLocations(new []{apiLocation});
 
@@ -173,7 +176,7 @@ namespace Calamari.Tests.Fixtures.Nginx
             nginxServer
                 .WithVirtualServerName(virtualServerName)
                 .WithServerBindings(JsonConvert.DeserializeObject<IEnumerable<Binding>>(httpAndHttpsBindings),
-                    new Dictionary<string, (string, string, string)>())
+                    new Dictionary<string, (string, string, string, string)>())
                 .WithRootLocation(locations.First());
 
             nginxServer.BuildConfiguration();
@@ -186,14 +189,17 @@ namespace Calamari.Tests.Fixtures.Nginx
         [Test]
         public void SetupReverseProxyWithSslUsingCertificateVariableSite()
         {
+            var (certificatePem, certificatePrivateKeyPem, certificateChainPem) = GetCertificateDetails();
+
             var locations =
                 JsonConvert.DeserializeObject<IEnumerable<Location>>(
                     "[{\"path\":\"/\",\"directives\":\"\",\"headers\":\"\",\"reverseProxy\":\"True\",\"reverseProxyUrl\":\"http://localhost:5000\",\"reverseProxyHeaders\":\"{\\\"Upgrade\\\":\\\"$http_upgrade\\\",\\\"Connection\\\":\\\"keep-alive\\\",\\\"Host\\\":\\\"$host\\\",\\\"X-Forwarded-For\\\":\\\"$proxy_add_x_forwarded_for\\\",\\\"X-Forwarded-Proto\\\":\\\"$scheme\\\"}\",\"reverseProxyDirectives\":\"{\\\"proxy_http_version\\\":\\\"1.1\\\",\\\"proxy_cache_bypass\\\":\\\"$http_upgrade\\\"}\"}]"
                 );
-            
+
+            var subjectName = "www.nginxsamplewebapp.com";
             var virtualServerName = "HttpsReverseProxy";
-            var certificates = new Dictionary<string, (string, string, string)>{
-                {"NginxSampleWebAppCertificate", ("www.nginxsamplewebapp.com", "", "")}
+            var certificates = new Dictionary<string, (string, string, string, string)>{
+                {"NginxSampleWebAppCertificate", (subjectName, certificatePem, certificatePrivateKeyPem, certificateChainPem)}
             };
 
             nginxServer
@@ -207,6 +213,14 @@ namespace Calamari.Tests.Fixtures.Nginx
             
             var nginxConfigFilePath = Path.Combine(tempDirectory, "conf", $"{virtualServerName}.conf");
             this.Assent(File.ReadAllText(nginxConfigFilePath), AssentConfiguration.Default);
+#if NETCORE
+            if (!CalamariEnvironment.IsRunningOnMac)
+            {
+                var sslCertFilePath = Path.Combine(tempDirectory, "ssl", subjectName);
+                this.Assent(File.ReadAllText(Path.Combine(sslCertFilePath, $"{subjectName}.crt")),
+                    AssentConfiguration.Default, $"{nameof(SetupReverseProxyWithSslUsingCertificateVariableSite)}.crt");
+            }
+#endif
         }
 
         [Test]
@@ -268,7 +282,7 @@ namespace Calamari.Tests.Fixtures.Nginx
             nginxServer
                 .WithVirtualServerName(virtualServerName)
                 .WithServerBindings(JsonConvert.DeserializeObject<IEnumerable<Binding>>(httpOnlyBinding),
-                    new Dictionary<string, (string, string, string)>())
+                    new Dictionary<string, (string, string, string, string)>())
                 .WithRootLocation(rootLocation)
                 .WithAdditionalLocations(additionalLocations);
 
@@ -284,6 +298,40 @@ namespace Calamari.Tests.Fixtures.Nginx
             Assert.IsTrue(Directory.GetDirectories(Path.Combine(tempDirectory, "conf")).Length == 1);
             // Ensure the filename matches the expected format.
             Assert.IsTrue(Directory.GetFiles(Path.Combine(tempDirectory, "conf"))[0].EndsWith($"{nginxServer.VirtualServerName}.conf"));
+        }
+
+        (string, string, string) GetCertificateDetails()
+        {
+#if NETCORE
+            if (!CalamariEnvironment.IsRunningOnMac)
+            {
+                var chainCertFilePath = TestEnvironment.GetTestPath("Helpers", "Certificates", "SampleCertificateFiles",
+                    "3-cert-chain.pfx");
+                var certificateCollection = new X509Certificate2Collection();
+                certificateCollection.Import(chainCertFilePath, "hello world", X509KeyStorageFlags.PersistKeySet);
+
+                var certificate = certificateCollection.First();
+                var certificatePem = new string(PemEncoding.Write("CERTIFICATE", certificate.RawData));
+                var key = (AsymmetricAlgorithm)certificate.GetRSAPrivateKey() ?? certificate.GetECDsaPrivateKey();
+                var privateKeyBytes = key.ExportPkcs8PrivateKey();
+                var certificatePrivateKeyPem = new string(PemEncoding.Write("PRIVATE KEY", privateKeyBytes));
+
+                string certificateChainPem = null;
+                foreach (var cert in certificateCollection.Skip(1))
+                {
+                    // if the cert has no extension or the cert has a basic constraints extension,
+                    // and the certificate authority is true then this is a chain certificate
+                    certificateChainPem += $@"{new string(PemEncoding.Write("CERTIFICATE", cert.RawData))}
+";
+                }
+
+                return (certificatePem, certificatePrivateKeyPem, certificateChainPem);
+            }
+
+            return (string.Empty, string.Empty, string.Empty);
+#else
+            return (string.Empty, string.Empty, string.Empty);
+#endif
         }
     }
 }
