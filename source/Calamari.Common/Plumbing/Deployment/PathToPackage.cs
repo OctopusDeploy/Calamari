@@ -15,5 +15,7 @@ namespace Calamari.Common.Plumbing.Deployment
         {
             return pathToPackage?.path;
         }
+
+        public override string ToString() => path;
     }
 }
