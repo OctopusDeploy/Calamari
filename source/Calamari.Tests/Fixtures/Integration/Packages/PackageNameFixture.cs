@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using Calamari.Common.Features.Packages;
 using Calamari.Integration.Packages;
+using FluentAssertions;
 using NUnit.Framework;
 using Octopus.Versioning;
 using Octopus.Versioning.Semver;
@@ -96,6 +97,20 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         {
             Assert.Throws<Exception>(() => PackageName.FromFile("blah/pkg@1.0.0%2BCAT@XXXYYYZZZ.jar"));
         }
+
+        [Test]
+        [TestCase("packageId", "packageId")]
+        [TestCase("", "")]
+        [TestCase("packageId-with-hyphen", "packageId-with-hyphen")]
+        [TestCase("folder/packageId-with-hyphen", "packageId-with-hyphen")]
+        [TestCase("folder/packageId", "packageId")]
+        [TestCase("folder/subfolder/packageId", "packageId")]
+        public void ExtractPackageNameFromPathedPackageId(string actual, string expected)
+        {
+            PackageName.ExtractPackageNameFromPathedPackageId(actual).Should().Be(expected);
+        }
+        
+        
 
         static IEnumerable<object> PackageNameTestCases()
         {
