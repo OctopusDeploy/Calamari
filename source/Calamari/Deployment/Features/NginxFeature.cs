@@ -68,9 +68,9 @@ namespace Calamari.Deployment.Features
             nginxServer.SaveConfiguration(tempDirectory);
         }
 
-        IDictionary<string, (string SubjectCommonName, string CertificatePem, string PrivateKeyPem)> GetSslCertificates(IEnumerable<Binding> enabledBindings, IVariables variables)
+        IDictionary<string, (string SubjectCommonName, string CertificatePem, string PrivateKeyPem, string ChainPem)> GetSslCertificates(IEnumerable<Binding> enabledBindings, IVariables variables)
         {
-            var sslCertsForEnabledBindings = new Dictionary<string, (string, string, string)>();
+            var sslCertsForEnabledBindings = new Dictionary<string, (string subjectCommonName, string certificatePem, string privateKeyPem, string chainPem)>();
             foreach (var httpsBinding in enabledBindings.Where(b =>
                 string.Equals("https", b.Protocol, StringComparison.OrdinalIgnoreCase) &&
                 !string.IsNullOrEmpty(b.CertificateVariable)
@@ -80,7 +80,8 @@ namespace Calamari.Deployment.Features
                 var subjectCommonName = variables.Get($"{certificateVariable}.SubjectCommonName");
                 var certificatePem = variables.Get($"{certificateVariable}.CertificatePem");
                 var privateKeyPem = variables.Get($"{certificateVariable}.PrivateKeyPem");
-                sslCertsForEnabledBindings.Add(certificateVariable, (subjectCommonName, certificatePem, privateKeyPem));
+                var chainPem = variables.Get($"{certificateVariable}.ChainPem");
+                sslCertsForEnabledBindings.Add(certificateVariable, (subjectCommonName, certificatePem, privateKeyPem, chainPem));
             }
 
             return sslCertsForEnabledBindings;
