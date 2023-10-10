@@ -32,6 +32,7 @@ namespace Calamari.Deployment.PackageRetention.Caching
 
         public IEnumerable<PackageIdentity> GetPackagesToRemove(IEnumerable<JournalEntry> journalEntries)
         {
+            var journalEntriesCanBeRemoved = journalEntries.Where(entry => !entry.HasLock());
             if (!fileSystem.GetDiskFreeSpace(packageUtils.RootDirectory, out var totalNumberOfFreeBytes) || !fileSystem.GetDiskTotalSpace(packageUtils.RootDirectory, out var totalNumberOfBytes))
             {
                 log.Info("Unable to determine disk space. Skipping free space package retention.");
@@ -49,7 +50,7 @@ namespace Calamari.Deployment.PackageRetention.Caching
             var spaceToFree = (desiredSpaceInBytes - totalNumberOfFreeBytes) * (100 + FreeSpacePercentBuffer) / 100;
             log.VerboseFormat("Cleaning {0} space from the package cache.", spaceToFree.ToFileSizeString());
             ulong spaceFreed = 0L;
-            var orderedJournalEntries = sortJournalEntries.Sort(journalEntries);
+            var orderedJournalEntries = sortJournalEntries.Sort(journalEntriesCanBeRemoved);
             return orderedJournalEntries.TakeWhile(entry =>
                                                    {
                                                        var moreToClean = spaceFreed < spaceToFree;
