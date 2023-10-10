@@ -1,4 +1,4 @@
 ﻿using System;
 
-Console.WriteLine("Hello " + Octopus.Parameters["Name"]);
+Console.WriteLine("Hello " + OctopusParameters["Name"]);
 Console.WriteLine("This is dotnet script");
