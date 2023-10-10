@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Calamari.AzureAppService.Azure;
 using Calamari.Common.Commands;
@@ -115,35 +116,57 @@ namespace Calamari.AzureAppService.Behaviors
              * https://github.com/OctopusDeploy/Calamari/tree/master/source/Calamari.Common/Features/Behaviours
              */
             var uploadPath = string.Empty;
-            if (substitutionFeatures.Any(featureName => context.Variables.IsFeatureEnabled(featureName)))
-                uploadPath = (await Archive.PackageArchive(context.StagingDirectory, context.CurrentDirectory)).FullName;
-            else
-                uploadPath = (await Archive.ConvertToAzureSupportedFile(packageFileInfo)).FullName;
+            bool uploadFileNeedsCleaning = false;
+            try
+            {
+                if (substitutionFeatures.Any(featureName => context.Variables.IsFeatureEnabled(featureName)))
+                {
+                    uploadPath = (await Archive.PackageArchive(context.StagingDirectory, context.CurrentDirectory)).FullName;
+                    uploadFileNeedsCleaning = false;
+                }
+                else
+                {
+                    var uploadFile = await Archive.ConvertToAzureSupportedFile(packageFileInfo); 
+                    uploadPath = uploadFile.FullName;
+                    uploadFileNeedsCleaning = uploadFile.Extension != packageFileInfo.Extension; // did the file get changed
+                }
 
-            if (uploadPath == null)
-                throw new Exception("Package File Path must be specified");
+                if (string.IsNullOrWhiteSpace(uploadPath))
+                {
+                    throw new Exception("Package File Path must be specified");
+                }
 
-            // need to ensure slot is created as slot creds may be used
-            if (targetSite.HasSlot)
-                await slotCreateTask;
+                // need to ensure slot is created as slot creds may be used
+                if (targetSite.HasSlot)
+                    await slotCreateTask;
 
-            Log.Verbose($"Retrieving publishing profile for App Service to determine correct deployment endpoint.");
-            var publishingProfile = await PublishingProfile.GetPublishingProfile(targetSite, servicePrincipal);
-            Log.Verbose($"Using deployment endpoint '{publishingProfile.PublishUrl}' from publishing profile.");
-            
-            string? credential = await Auth.GetBasicAuthCreds(servicePrincipal, targetSite);
-            string token = await Auth.GetAuthTokenAsync(servicePrincipal);
+                Log.Verbose($"Retrieving publishing profile for App Service to determine correct deployment endpoint.");
+                var publishingProfile = await PublishingProfile.GetPublishingProfile(targetSite, servicePrincipal);
+                Log.Verbose($"Using deployment endpoint '{publishingProfile.PublishUrl}' from publishing profile.");
 
-            var webAppClient = new WebSiteManagementClient(new Uri(servicePrincipal.ResourceManagementEndpointBaseUri),
-                    new TokenCredentials(token))
-                {SubscriptionId = servicePrincipal.SubscriptionNumber};
+                string? credential = await Auth.GetBasicAuthCreds(servicePrincipal, targetSite);
+                string token = await Auth.GetAuthTokenAsync(servicePrincipal);
 
-            var httpClient = webAppClient.HttpClient;
-            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", credential);
+                var webAppClient = new WebSiteManagementClient(new Uri(servicePrincipal.ResourceManagementEndpointBaseUri),
+                                                               new TokenCredentials(token))
+                {
+                    SubscriptionId = servicePrincipal.SubscriptionNumber
+                };
 
-            Log.Info($"Uploading package to {targetSite.SiteAndSlot}");
+                var httpClient = webAppClient.HttpClient;
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", credential);
 
-            await UploadZipAsync(publishingProfile, httpClient, uploadPath, targetSite.ScmSiteAndSlot);
+                Log.Info($"Uploading package to {targetSite.SiteAndSlot}");
+
+                await UploadZipAsync(publishingProfile, httpClient, uploadPath, targetSite.ScmSiteAndSlot);
+            }
+            finally
+            {
+                if (uploadFileNeedsCleaning)
+                {
+                    CleanupUploadFile(uploadPath);
+                }
+            }
         }
 
         private async Task<IDeploymentSlot> FindOrCreateSlot(IWebApp client, TargetSite site)
@@ -193,6 +216,14 @@ namespace Calamari.AzureAppService.Behaviors
                 throw new Exception($"Zip upload to {zipUploadUrl} failed with HTTP Status '{response.StatusCode} {response.ReasonPhrase}'.");
 
             Log.Verbose("Finished deploying");
+        }
+        
+        void CleanupUploadFile(string? uploadPath)
+        {
+            if (File.Exists(uploadPath))
+            {
+                File.Delete(uploadPath!);    
+            }
         }
     }
 }
