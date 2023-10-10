@@ -75,7 +75,7 @@ namespace Calamari.AzureResourceGroup
             Func<Task<IResourceManagementClient>> createArmClient = async () =>
                                                               {
                                                                   var token = new TokenCredentials(await ServicePrincipal.GetAuthorizationToken(tenantId, clientId, password, resourceManagementEndpoint, activeDirectoryEndPoint));
-                                                                  var resourcesClient = new ResourceManagementClient(token)
+                                                                  var resourcesClient = new ResourceManagementClient(token, AuthHttpClientFactory.ProxyClientHandler())
                                                                   {
                                                                       SubscriptionId = subscriptionId,
                                                                       BaseUri = new Uri(resourceManagementEndpoint),
