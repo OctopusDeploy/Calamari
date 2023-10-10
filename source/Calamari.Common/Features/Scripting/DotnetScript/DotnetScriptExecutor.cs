@@ -20,16 +20,13 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
             var configurationFile = DotnetScriptBootstrapper.PrepareConfigurationFile(workingDirectory, variables);
             var (bootstrapFile, otherTemporaryFiles) = DotnetScriptBootstrapper.PrepareBootstrapFile(script.File, configurationFile, workingDirectory, variables);
             var arguments = DotnetScriptBootstrapper.FormatCommandArguments(bootstrapFile, script.Parameters);
-            var cli = new CommandLineInvocation(executable, arguments)
-            {
-                WorkingDirectory = workingDirectory,
-                EnvironmentVars = environmentVars
-            };
+            var cli = CalamariEnvironment.IsRunningOnWindows 
+                ? new CommandLineInvocation(executable, arguments) 
+                : new CommandLineInvocation("dotnet", $"\"{executable}\"", arguments);
+            cli.WorkingDirectory = workingDirectory;
+            cli.EnvironmentVars = environmentVars;
 
-            yield return new ScriptExecution(
-                                             cli,
-                                             otherTemporaryFiles.Concat(new[] { bootstrapFile, configurationFile })
-                                            );
+            yield return new ScriptExecution(cli, otherTemporaryFiles.Concat(new[] { bootstrapFile, configurationFile }));
         }
     }
 }

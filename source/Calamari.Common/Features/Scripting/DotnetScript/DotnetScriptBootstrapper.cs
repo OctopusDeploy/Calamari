@@ -33,7 +33,7 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
             if (ScriptingEnvironment.IsNetFramework())
                 throw new CommandException("dotnet-script requires .NET Core 6 or later");
 
-            var exeName = $"dotnet-script.exe";
+            var exeName = $"dotnet-script.{(CalamariEnvironment.IsRunningOnWindows ? "cmd" : "dll")}";
             var myPath = typeof(DotnetScriptExecutor).Assembly.Location;
             var parent = Path.GetDirectoryName(myPath);
             var executable = Path.GetFullPath(Path.Combine(parent, "dotnet-script", exeName));
