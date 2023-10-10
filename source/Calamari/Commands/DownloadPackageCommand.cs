@@ -147,7 +147,10 @@ namespace Calamari.Commands
             Guard.NotNullOrWhiteSpace(packageId, "No package ID was specified. Please pass --packageId YourPackage");
             Guard.NotNullOrWhiteSpace(packageVersion, "No package version was specified. Please pass --packageVersion 1.0.0.0");
             Guard.NotNullOrWhiteSpace(feedId, "No feed ID was specified. Please pass --feedId feed-id");
-            Guard.NotNullOrWhiteSpace(feedUri, "No feed URI was specified. Please pass --feedUri https://url/to/nuget/feed");
+            if (feedType != FeedType.S3)
+            {
+                Guard.NotNullOrWhiteSpace(feedUri, "No feed URI was specified. Please pass --feedUri https://url/to/nuget/feed");
+            }
 
             version = VersionFactory.TryCreateVersion(packageVersion, versionFormat);
             if (version == null)
@@ -155,7 +158,11 @@ namespace Calamari.Commands
                 throw new CommandException($"Package version '{packageVersion}' specified is not a valid {versionFormat.ToString()} version string");
             }
 
-            if (!Uri.TryCreate(feedUri, UriKind.Absolute, out uri))
+            if (feedType == FeedType.S3)
+            {
+                uri = null;
+            }
+            else if (!Uri.TryCreate(feedUri, UriKind.Absolute, out uri))
                 throw new CommandException($"URI specified '{feedUri}' is not a valid URI");
 
             if (!String.IsNullOrWhiteSpace(feedUsername) && String.IsNullOrWhiteSpace(feedPassword))

@@ -64,6 +64,7 @@ namespace Calamari.Integration.Packages.Download
             }
 
             var cacheDirectory = PackageDownloaderUtils.GetPackageRoot(feedId);
+            fileSystem.EnsureDirectoryExists(cacheDirectory);
 
             if (!forcePackageDownload)
             {
@@ -87,7 +88,8 @@ namespace Calamari.Integration.Packages.Download
                     using (var s3Client = GetS3Client(feedUsername, feedPassword, region))
                     {
                         bool fileExists = false;
-                        string fileName = "";
+                        string fileName = string.Empty;
+                        string knownExtension = string.Empty;
                         for (int i = 0; i < knownFileExtensions.Length && !fileExists; i++)
                         {
                             fileName = BuildFileName(prefix, version.ToString(), knownFileExtensions[i]);
@@ -98,12 +100,16 @@ namespace Calamari.Integration.Packages.Download
                                          .GetAwaiter()
                                          .GetResult();
 #endif
+                            if (fileExists)
+                            {
+                                knownExtension = knownFileExtensions[i];
+                            }
                         }
 
                         if (!fileExists)
                             throw new Exception($"Unable to download package {packageId} {version}: file not found");
 
-                        var localDownloadName = Path.Combine(cacheDirectory, PackageName.ToCachedFileName(packageId, version, "." + Path.GetExtension(fileName)));
+                        var localDownloadName = Path.Combine(cacheDirectory, PackageName.ToCachedFileName(packageId, version, knownExtension));
 
 #if NET40
                         var response = s3Client.GetObject(bucketName, fileName);

@@ -10,13 +10,18 @@ namespace Calamari.AzureResourceGroup
 
         static AuthHttpClientFactory()
         {
-            var proxyHttpClientHandler = new HttpClientHandler
+            var proxyHttpClientHandler = ProxyClientHandler();
+
+            _httpClient = new HttpClient(proxyHttpClientHandler);
+        }
+
+        public static HttpClientHandler ProxyClientHandler()
+        {
+            return new HttpClientHandler
             {
                 Proxy = WebRequest.DefaultWebProxy,
                 UseProxy = true,
             };
-
-            _httpClient = new HttpClient(proxyHttpClientHandler);
         }
 
         public HttpClient GetHttpClient()
