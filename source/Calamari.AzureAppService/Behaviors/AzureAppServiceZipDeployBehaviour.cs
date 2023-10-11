@@ -142,7 +142,9 @@ namespace Calamari.AzureAppService.Behaviors
                 }
 
                 if (uploadPath == null)
+                {
                     throw new Exception("Package File Path must be specified");
+                }
 
                 // need to ensure slot is created as slot creds may be used
                 if (targetSite.HasSlot && slotCreateTask != null)
