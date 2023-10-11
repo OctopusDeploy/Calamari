@@ -346,17 +346,19 @@ namespace Calamari.Kubernetes.Conventions
         void CheckHelmToolVersion(string customHelmExecutable, HelmVersion selectedVersion)
         {
             log.Verbose($"Helm version selected: {selectedVersion}");
-
             StringBuilder stdout = new StringBuilder();
             var result = SilentProcessRunner.ExecuteCommand(customHelmExecutable ?? "helm", "version --client --short", Environment.CurrentDirectory, output => stdout.Append(output), error => { });
 
+            
             if (result.ExitCode != 0)
                 log.Warn("Unable to retrieve the Helm tool version");
 
             var toolVersion = HelmVersionParser.ParseVersion(stdout.ToString());
+            
             if (!toolVersion.HasValue)
                 log.Warn("Unable to parse the Helm tool version text: " + stdout);
 
+            log.Verbose($"Helm version reported: {toolVersion}");
             if (toolVersion.Value != selectedVersion)
                 log.Warn($"The Helm tool version '{toolVersion.Value}' ('{stdout}') doesn't match the Helm version selected '{selectedVersion}'");
         }
