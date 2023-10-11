@@ -16,8 +16,12 @@ namespace Calamari.CloudAccounts
 
         public static Task<string> GetAuthorizationToken(this AzureServicePrincipalAccount account)
         {
-            return GetAuthorizationToken(account.TenantId, account.ClientId, account.GetCredentials,
-                                                                                account.ResourceManagementEndpointBaseUri, account.ActiveDirectoryEndpointBaseUri);
+            return GetAuthorizationToken(
+                                         account.TenantId, 
+                                         account.ClientId, 
+                                         account.GetCredentials,
+                                         account.ResourceManagementEndpointBaseUri, 
+                                         account.ActiveDirectoryEndpointBaseUri);
         }
 
         public static async Task<string> GetAuthorizationToken(string tenantId, string applicationId, string password, string managementEndPoint, string activeDirectoryEndPoint)

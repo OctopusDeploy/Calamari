@@ -1,8 +1,6 @@
 using System;
-using System.Net;
 using System.Net.Http;
 using System.Threading;
-using System.Threading.Tasks;
 using Calamari.Common.Plumbing.Variables;
 using Microsoft.Azure.Management.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Authentication;
@@ -43,6 +41,7 @@ namespace Calamari.CloudAccounts
             AzureEnvironment = variables.Get(AccountVariables.Environment);
             ResourceManagementEndpointBaseUri = variables.Get(AccountVariables.ResourceManagementEndPoint, DefaultVariables.ResourceManagementEndpoint);
             ActiveDirectoryEndpointBaseUri = variables.Get(AccountVariables.ActiveDirectoryEndPoint, DefaultVariables.OidcAuthContextUri);
+            InstanceDiscoveryUri = variables.Get(AccountVariables.InstanceDiscoveryUri);
         }
 
         public AccountType AccountType => AccountType.AzureOidc;
@@ -54,6 +53,7 @@ namespace Calamari.CloudAccounts
         public string AzureEnvironment { get; }
         public string ResourceManagementEndpointBaseUri { get; }
         public string ActiveDirectoryEndpointBaseUri { get; }
+        public string InstanceDiscoveryUri { get; }
 
         internal static string GetDefaultScope(string environmentName)
         {
@@ -90,10 +90,10 @@ namespace Calamari.CloudAccounts
             // to ensure the Azure API uses the appropriate web proxy
             var client = new HttpClient(new HttpClientHandler {Proxy = NetWebRequest.DefaultWebProxy});
 
-            return Microsoft.Azure.Management.Fluent.Azure.Configure()
-                            .WithHttpClient(client)
-                            .Authenticate(credentials)
-                            .WithSubscription(SubscriptionNumber);
+            return Azure.Configure()
+                        .WithHttpClient(client)
+                        .Authenticate(credentials)
+                        .WithSubscription(SubscriptionNumber);
         }
     }
 }

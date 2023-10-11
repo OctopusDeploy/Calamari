@@ -49,7 +49,7 @@ namespace Calamari.Kubernetes.Integration
 
             if (isOidc)
             {
-                log.Verbose("Azure CLI: Authenticating with OpenID Connect Access Token");
+                log.Verbose("Azure CLI: Authenticating with OpenID Connect Federated Token");
                 ExecuteCommandAndLogOutput(new CommandLineInvocation(ExecutableLocation,
                                                                      "login",
                                                                      "--service-principal",
