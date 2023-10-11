@@ -16,6 +16,7 @@ using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.Conventions;
 using Calamari.Util;
 using Newtonsoft.Json;
+using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Kubernetes.Conventions
 {
@@ -278,7 +279,7 @@ namespace Calamari.Kubernetes.Conventions
                 }
             }
             
-            if (!files.Any())
+            if (!files.Any() && errors.Any())
             {
                 throw new CommandException(string.Join(Environment.NewLine, errors));
             }
