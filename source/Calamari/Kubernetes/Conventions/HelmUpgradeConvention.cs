@@ -278,7 +278,7 @@ namespace Calamari.Kubernetes.Conventions
                 }
             }
             
-            if (!files.Any())
+            if (!files.Any() && errors.Any())
             {
                 throw new CommandException(string.Join(Environment.NewLine, errors));
             }
