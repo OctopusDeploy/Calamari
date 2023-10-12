@@ -81,8 +81,7 @@ namespace Calamari.AzureResourceGroup
                                                                   var token = !jwt.IsNullOrEmpty()
                                                                       ? await new AzureOidcAccount(variables).Credentials(CancellationToken.None)
                                                                       : await new AzureServicePrincipalAccount(variables).Credentials();
-                                                                  
-                                                                  var resourcesClient = new ResourceManagementClient(token)
+                                                                  var resourcesClient = new ResourceManagementClient(token, AuthHttpClientFactory.ProxyClientHandler())
                                                                   {
                                                                       SubscriptionId = subscriptionId,
                                                                       BaseUri = new Uri(resourceManagementEndpoint),

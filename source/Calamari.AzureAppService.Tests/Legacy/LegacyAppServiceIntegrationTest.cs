@@ -67,7 +67,17 @@ namespace Calamari.AzureAppService.Tests
 
             resourceGroupClient = resourcesClient.ResourceGroups;
 
-            var resourceGroup = new ResourceGroup(resourceGroupLocation);
+            var resourceGroup = new ResourceGroup(resourceGroupLocation)
+            {
+                Tags =
+                {
+                    // give them an expiry of 14 days so if the tests fail to clean them up
+                    // they will be automatically cleaned up by the Sandbox cleanup process
+                    // We keep them for 14 days just in case we need to do debugging/investigation
+                    ["LifetimeInDays"] = "14"
+                }
+            };
+            
             resourceGroup = await resourceGroupClient.CreateOrUpdateAsync(resourceGroupName, resourceGroup);
 
             webMgmtClient = new WebSiteManagementClient(new TokenCredentials(authToken))
