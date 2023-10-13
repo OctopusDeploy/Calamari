@@ -42,7 +42,7 @@ function setup_context {
         loginArgs=()
         # Use the full argument because of https://github.com/Azure/azure-cli/issues/12105
 
-        if [ -n $Octopus_Open_Id_Jwt ]
+        if [ -n "$Octopus_Open_Id_Jwt" ]
         then
           echo "Azure CLI: Authenticating with OpenID Connect Access Token"
           loginArgs+=("--username=$Octopus_Azure_ADClientId")

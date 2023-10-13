@@ -22,12 +22,15 @@ namespace Calamari.CloudAccounts
 
         public static async Task<string> GetAuthorizationToken(string tenantId, string applicationId, string token, string managementEndPoint, string activeDirectoryEndPoint, string aureEnvironment, CancellationToken cancellationToken)
         {
+            var authClientFactory = new AuthHttpClientFactory();
+
             var authContext = GetOidcContextUri(string.IsNullOrEmpty(activeDirectoryEndPoint) ? "https://login.microsoftonline.com/" : activeDirectoryEndPoint, tenantId);
             Log.Verbose($"Authentication Context: {authContext}");
 
             var app = ConfidentialClientApplicationBuilder.Create(applicationId)
                                                           .WithClientAssertion(token)
                                                           .WithAuthority(authContext)
+                                                          .WithHttpClientFactory(authClientFactory)
                                                           .Build();
 
             var result = await app.AcquireTokenForClient(

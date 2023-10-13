@@ -1,10 +1,6 @@
 ﻿using System;
-using System.Net;
-using System.Net.Http;
 using System.Threading.Tasks;
 using Calamari.Common.Plumbing.Logging;
-using Microsoft.Azure.Management.Fluent;
-using Microsoft.Azure.Management.ResourceManager.Fluent;
 using Microsoft.Identity.Client;
 using Microsoft.Rest;
 using AzureEnvironmentEnum = Microsoft.Azure.Management.ResourceManager.Fluent.AzureEnvironment;
@@ -25,13 +21,16 @@ namespace Calamari.CloudAccounts
         }
 
         public static async Task<string> GetAuthorizationToken(string tenantId, string applicationId, string password, string managementEndPoint, string activeDirectoryEndPoint)
-        { 
+        {
+            var authClientFactory = new AuthHttpClientFactory();
+
             var authContext = GetContextUri(activeDirectoryEndPoint, tenantId);
             Log.Verbose($"Authentication Context: {authContext}");
 
             var app = ConfidentialClientApplicationBuilder.Create(applicationId)
                                                           .WithClientSecret(password)
                                                           .WithAuthority(authContext)
+                                                          .WithHttpClientFactory(authClientFactory)
                                                           .Build();
 
             var result = await app.AcquireTokenForClient(
