@@ -126,33 +126,55 @@ namespace Calamari.AzureAppService.Behaviors
              * https://github.com/OctopusDeploy/Calamari/tree/master/source/Calamari.Common/Features/Behaviours
              */
             var uploadPath = string.Empty;
-            if (substitutionFeatures.Any(featureName => context.Variables.IsFeatureEnabled(featureName)))
-                uploadPath = (await packageProvider.PackageArchive(context.StagingDirectory, context.CurrentDirectory)).FullName;
-            else
-                uploadPath = (await packageProvider.ConvertToAzureSupportedFile(packageFileInfo)).FullName;
-
-            if (uploadPath == null)
-                throw new Exception("Package File Path must be specified");
-
-            // need to ensure slot is created as slot creds may be used
-            if (targetSite.HasSlot && slotCreateTask != null)
-                await slotCreateTask;
-
-            Log.Verbose($"Retrieving publishing profile for App Service to determine correct deployment endpoint.");
-            using var publishingProfileXmlStream = await armClient.GetPublishingProfileXmlWithSecrets(targetSite);
-            var publishingProfile = await PublishingProfile.ParseXml(publishingProfileXmlStream);
-
-            Log.Verbose($"Using deployment endpoint '{publishingProfile.PublishUrl}' from publishing profile.");
-
-            Log.Info($"Uploading package to {targetSite.SiteAndSlot}");
-
-            if (packageProvider.SupportsAsynchronousDeployment && FeatureToggle.AsynchronousAzureZipDeployFeatureToggle.IsEnabled(context.Variables))
+            bool uploadFileNeedsCleaning = false;
+            try
             {
-                await UploadZipAndPollAsync(publishingProfile, uploadPath, targetSite.ScmSiteAndSlot, packageProvider);
+                if (substitutionFeatures.Any(featureName => context.Variables.IsFeatureEnabled(featureName)))
+                {
+                    uploadPath = (await packageProvider.PackageArchive(context.StagingDirectory, context.CurrentDirectory)).FullName;
+                    uploadFileNeedsCleaning = false;
+                }
+                else
+                {
+                    var uploadFile = await packageProvider.ConvertToAzureSupportedFile(packageFileInfo);
+                    uploadPath = uploadFile.FullName;
+                    uploadFileNeedsCleaning = packageFileInfo.Extension != uploadFile.Extension;
+                }
+
+                if (uploadPath == null)
+                {
+                    throw new Exception("Package File Path must be specified");
+                }
+
+                // need to ensure slot is created as slot creds may be used
+                if (targetSite.HasSlot && slotCreateTask != null)
+                {
+                    await slotCreateTask;
+                }
+
+                Log.Verbose($"Retrieving publishing profile for App Service to determine correct deployment endpoint.");
+                using var publishingProfileXmlStream = await armClient.GetPublishingProfileXmlWithSecrets(targetSite);
+                var publishingProfile = await PublishingProfile.ParseXml(publishingProfileXmlStream);
+
+                Log.Verbose($"Using deployment endpoint '{publishingProfile.PublishUrl}' from publishing profile.");
+
+                Log.Info($"Uploading package to {targetSite.SiteAndSlot}");
+
+                if (packageProvider.SupportsAsynchronousDeployment && FeatureToggle.AsynchronousAzureZipDeployFeatureToggle.IsEnabled(context.Variables))
+                {
+                    await UploadZipAndPollAsync(publishingProfile, uploadPath, targetSite.ScmSiteAndSlot, packageProvider);
+                }
+                else
+                {
+                    await UploadZipAsync(publishingProfile, uploadPath, targetSite.ScmSiteAndSlot, packageProvider);
+                }
             }
-            else
+            finally
             {
-                await UploadZipAsync(publishingProfile, uploadPath, targetSite.ScmSiteAndSlot, packageProvider);
+                if (uploadFileNeedsCleaning)
+                {
+                    CleanupUploadFile(uploadPath);
+                }
             }
         }
 
@@ -327,6 +349,14 @@ namespace Calamari.AzureAppService.Behaviors
                 throw new Exception($"Zip deployment check failed with HTTP Status {(int)result.FinalHandledResult.StatusCode} '{result.FinalHandledResult.ReasonPhrase}'.");
 
             Log.Verbose("Finished zip deployment");
+        }
+        
+        void CleanupUploadFile(string? uploadPath)
+        {
+            if (File.Exists(uploadPath))
+            {
+                File.Delete(uploadPath!);    
+            }
         }
     }
 }

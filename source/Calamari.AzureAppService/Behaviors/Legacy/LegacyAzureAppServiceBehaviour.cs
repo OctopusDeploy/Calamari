@@ -122,35 +122,58 @@ namespace Calamari.AzureAppService.Behaviors
              * https://github.com/OctopusDeploy/Calamari/tree/master/source/Calamari.Common/Features/Behaviours
              */
             var uploadPath = string.Empty;
-            if (substitutionFeatures.Any(featureName => context.Variables.IsFeatureEnabled(featureName)))
-                uploadPath = (await Archive.PackageArchive(context.StagingDirectory, context.CurrentDirectory)).FullName;
-            else
-                uploadPath = (await Archive.ConvertToAzureSupportedFile(packageFileInfo)).FullName;
+            bool uploadFileNeedsCleaning = false;
+            try
+            {
+                if (substitutionFeatures.Any(featureName => context.Variables.IsFeatureEnabled(featureName)))
+                {
+                    uploadPath = (await Archive.PackageArchive(context.StagingDirectory, context.CurrentDirectory)).FullName;
+                }
+                else
+                {
+                    var uploadFile = await Archive.ConvertToAzureSupportedFile(packageFileInfo);
+                    uploadPath = uploadFile.FullName;
+                    uploadFileNeedsCleaning = packageFileInfo.Extension != uploadFile.Extension;
+                }
 
-            if (uploadPath == null)
-                throw new Exception("Package File Path must be specified");
+                if (uploadPath == null)
+                {
+                    throw new Exception("Package File Path must be specified");
+                }
 
-            // need to ensure slot is created as slot creds may be used
-            if (targetSite.HasSlot)
-                await slotCreateTask;
+                // need to ensure slot is created as slot creds may be used
+                if (targetSite.HasSlot)
+                {
+                    await slotCreateTask;
+                }
 
-            Log.Verbose($"Retrieving publishing profile for App Service to determine correct deployment endpoint.");
-            var publishingProfile = await PublishingProfile.GetPublishingProfile(targetSite, account);
-            Log.Verbose($"Using deployment endpoint '{publishingProfile.PublishUrl}' from publishing profile.");
+                Log.Verbose($"Retrieving publishing profile for App Service to determine correct deployment endpoint.");
+                var publishingProfile = await PublishingProfile.GetPublishingProfile(targetSite, account);
+                Log.Verbose($"Using deployment endpoint '{publishingProfile.PublishUrl}' from publishing profile.");
 
-            string? credential = await Auth.GetBasicAuthCreds(account, targetSite);
-            string token = await Auth.GetAuthTokenAsync(account);
+                string? credential = await Auth.GetBasicAuthCreds(account, targetSite);
+                string token = await Auth.GetAuthTokenAsync(account);
 
-            var webAppClient = new WebSiteManagementClient(new Uri(account.ResourceManagementEndpointBaseUri),
-                                                           new TokenCredentials(token))
-                { SubscriptionId = account.SubscriptionNumber };
+                var webAppClient = new WebSiteManagementClient(new Uri(account.ResourceManagementEndpointBaseUri),
+                                                               new TokenCredentials(token))
+                {
+                    SubscriptionId = account.SubscriptionNumber
+                };
 
-            var httpClient = webAppClient.HttpClient;
-            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", credential);
+                var httpClient = webAppClient.HttpClient;
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", credential);
 
-            Log.Info($"Uploading package to {targetSite.SiteAndSlot}");
+                Log.Info($"Uploading package to {targetSite.SiteAndSlot}");
 
-            await UploadZipAsync(publishingProfile, httpClient, uploadPath, targetSite.ScmSiteAndSlot);
+                await UploadZipAsync(publishingProfile, httpClient, uploadPath, targetSite.ScmSiteAndSlot);
+            }
+            finally
+            {
+                if (uploadFileNeedsCleaning)
+                {
+                    CleanupUploadFile(uploadPath);
+                }
+            }
         }
 
         private async Task<IDeploymentSlot> FindOrCreateSlot(IWebApp client, AzureTargetSite site)
@@ -216,6 +239,14 @@ namespace Calamari.AzureAppService.Behaviors
                 throw new Exception($"Zip upload to {zipUploadUrl} failed with HTTP Status '{response.StatusCode} {response.ReasonPhrase}'.");
 
             Log.Verbose("Finished deploying");
+        }
+        
+        void CleanupUploadFile(string? uploadPath)
+        {
+            if (File.Exists(uploadPath))
+            {
+                File.Delete(uploadPath!);    
+            }
         }
     }
 }
