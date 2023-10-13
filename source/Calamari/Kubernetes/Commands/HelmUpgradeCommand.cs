@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -6,7 +6,6 @@ using Calamari.Commands;
 using Calamari.Commands.Support;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Behaviours;
-using Calamari.Common.Features.Deployment;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
@@ -102,7 +101,8 @@ namespace Calamari.Kubernetes.Commands
             var packageReferenceNames = variables.GetIndexes(PackageVariables.PackageCollection);
             foreach (var packageReferenceName in packageReferenceNames)
             {
-                yield return Path.Combine(PackageDirectory(packageReferenceName), "values.yaml");
+                var prn = PackageName.ExtractPackageNameFromPathedPackageId(packageReferenceName);
+                yield return Path.Combine(PackageDirectory(prn), "values.yaml");
             }
         }
 
@@ -114,7 +114,8 @@ namespace Calamari.Kubernetes.Commands
             var packageReferenceNames = variables.GetIndexes(PackageVariables.PackageCollection);
             foreach (var packageReferenceName in packageReferenceNames)
             {
-                var paths = variables.GetPaths(SpecialVariables.Helm.Packages.ValuesFilePath(packageReferenceName));
+                var prn = PackageName.ExtractPackageNameFromPathedPackageId(packageReferenceName);
+                var paths = variables.GetPaths(SpecialVariables.Helm.Packages.ValuesFilePath(prn));
 
                 foreach (var path in paths)
                 {
