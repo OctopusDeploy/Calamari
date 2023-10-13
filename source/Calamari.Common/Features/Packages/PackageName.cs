@@ -46,6 +46,14 @@ namespace Calamari.Common.Features.Packages
                 .Distinct()
                 .ToArray();
         }
+        
+        /// <summary>
+        /// The PackageId could be supplied as a path within a Feed, e.g a Helm OCI feed allows a feed pointing at the root, but packages can be stored with paths:
+        /// e.g
+        /// - package1.tgz
+        /// - folder/package2.tgz - the package id for this package would be folder/package2
+        /// </summary>
+        public static string ExtractPackageNameFromPathedPackageId(string packageId) => packageId.Contains("/") ? packageId.Split(new[]{'/'}, StringSplitOptions.RemoveEmptyEntries).Last() : packageId;
 
         /// <summary>
         /// Old school parser for those file not yet sourced directly from the cache.

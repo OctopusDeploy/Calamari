@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using Calamari.Common.Commands;
+using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
@@ -240,40 +241,49 @@ namespace Calamari.Kubernetes.Conventions
         {
             var variables = deployment.Variables;
             var packageReferenceNames = variables.GetIndexes(PackageVariables.PackageCollection);
+
+            List<string> files = new List<string>();
+            List<string> errors = new List<string>();
+
             foreach (var packageReferenceName in packageReferenceNames)
             {
-                var sanitizedPackageReferenceName = fileSystem.RemoveInvalidFileNameChars(packageReferenceName);
-                var paths = variables.GetPaths(SpecialVariables.Helm.Packages.ValuesFilePath(packageReferenceName));
-
-                foreach (var providedPath in paths)
+                var sanitizedPackageReferenceName = PackageName.ExtractPackageNameFromPathedPackageId(fileSystem.RemoveInvalidFileNameChars(packageReferenceName));
+                var valuesPaths = variables.GetPaths(SpecialVariables.Helm.Packages.ValuesFilePath(sanitizedPackageReferenceName));
+                foreach (var valuePath in valuesPaths)
                 {
-                    var packageId = variables.Get(PackageVariables.IndexedPackageId(packageReferenceName));
+                    var packageId = PackageName.ExtractPackageNameFromPathedPackageId(variables.Get(PackageVariables.IndexedPackageId(packageReferenceName)));
                     var version = variables.Get(PackageVariables.IndexedPackageVersion(packageReferenceName));
-                    var relativePath = Path.Combine(sanitizedPackageReferenceName, providedPath);
+                    var relativePath = Path.Combine(sanitizedPackageReferenceName, valuePath);
                     var globMode = GlobModeRetriever.GetFromVariables(variables);
-                    var files = fileSystem.EnumerateFilesWithGlob(deployment.CurrentDirectory, globMode, relativePath).ToList();
+                    var currentFiles = fileSystem.EnumerateFilesWithGlob(deployment.CurrentDirectory, globMode, relativePath).ToList();
 
-                    if (!files.Any() && string.IsNullOrEmpty(packageReferenceName)) // Chart archives have chart name root directory
+                    if (!currentFiles.Any() && string.IsNullOrEmpty(packageReferenceName)) // Chart archives have chart name root directory
                     {
-                        log.Verbose($"Unable to find values files at path `{providedPath}`. " +
-                                    $"Chart package contains root directory with chart name, so looking for values in there.");
-                        var chartRelativePath = Path.Combine(fileSystem.RemoveInvalidFileNameChars(packageId), relativePath);
-                        files = fileSystem.EnumerateFilesWithGlob(deployment.CurrentDirectory, globMode, chartRelativePath).ToList();
+                        log.Verbose($"Unable to find values files at path `{valuePath}`. Chart package contains root directory with chart name, so looking for values in there.");
+                        var chartRelativePath = Path.Combine(packageId, relativePath);
+                        currentFiles = fileSystem.EnumerateFilesWithGlob(deployment.CurrentDirectory, globMode, chartRelativePath).ToList();
                     }
 
-                    if (!files.Any())
+                    if (!currentFiles.Any())
                     {
-                        throw new CommandException($"Unable to find file `{providedPath}` for package {packageId} v{version}");
+                        errors.Add($"Unable to find file `{valuePath}` for package {packageId} v{version}");
                     }
 
-                    foreach (var file in files)
+                    foreach (var file in currentFiles)
                     {
                         var relative = file.Substring(Path.Combine(deployment.CurrentDirectory, sanitizedPackageReferenceName).Length);
                         log.Info($"Including values file `{relative}` from package {packageId} v{version}");
-                        yield return Path.GetFullPath(file);
+                        files.AddRange(currentFiles);
                     }
                 }
             }
+            
+            if (!files.Any() && errors.Any())
+            {
+                throw new CommandException(string.Join(Environment.NewLine, errors));
+            }
+
+            return files;
         }
 
         string GetChartLocation(RunningDeployment deployment)
