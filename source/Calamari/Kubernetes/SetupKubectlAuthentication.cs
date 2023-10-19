@@ -50,11 +50,21 @@ namespace Calamari.Kubernetes
                 environmentVars[proxyVariable.Key] = proxyVariable.Value;
             }
 
-            var kubeConfig = CreateKubectlConfig();
+            //make sure Kubectl exists and can be run
             if (!kubectl.TrySetKubectl())
             {
                 return errorResult;
             }
+
+            //if we are running inside a kubernetes cluster, then we can rely on using the service account inside the pod for authentication
+            if (variables.Get("Octopus.Target.Kubernetes.UseServiceAccountAuth") == bool.TrueString ||
+                Environment.GetEnvironmentVariable("OCTOPUS__TARGET__KUBERNETES__USESERVICEACCOUNTAUTH") == bool.TrueString)
+            {
+                log.Info("Running inside Kubernetes cluster, using pod service account for authentication");
+                return new CommandResult(string.Empty, 0);
+            }
+
+            var kubeConfig = CreateKubectlConfig();
 
             var @namespace = variables.Get(SpecialVariables.Namespace);
             if (string.IsNullOrEmpty(@namespace))
@@ -71,7 +81,7 @@ namespace Calamari.Kubernetes
             if (!CreateNamespace(@namespace))
             {
                 log.Verbose("Could not create namespace. Continuing on, as it may not be working directly with the target.");
-            };
+            }
 
             var outputKubeConfig = variables.GetFlag(SpecialVariables.OutputKubeConfig);
             if (outputKubeConfig)
