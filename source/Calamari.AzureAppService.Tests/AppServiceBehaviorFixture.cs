@@ -309,7 +309,7 @@ namespace Calamari.AzureAppService.Tests
         {
             protected override async Task ConfigureTestResources(ResourceGroup resourceGroup)
             {
-                var storageClient = new StorageManagementClient(new TokenCredentials(authToken))
+                var storageClient = new StorageManagementClient(new TokenCredentials(authToken), AuthHttpClientFactory.ProxyClientHandler())
                 {
                     SubscriptionId = subscriptionId
                 };

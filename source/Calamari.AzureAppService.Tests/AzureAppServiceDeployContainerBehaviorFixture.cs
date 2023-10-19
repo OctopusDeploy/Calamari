@@ -68,7 +68,7 @@ namespace Calamari.AzureAppService.Tests
             var resourceGroup = new ResourceGroup(resourceGroupLocation);
             resourceGroup = await resourceGroupClient.CreateOrUpdateAsync(resourceGroupName, resourceGroup);
 
-            webMgmtClient = new WebSiteManagementClient(new TokenCredentials(authToken))
+            webMgmtClient = new WebSiteManagementClient(new TokenCredentials(authToken), AuthHttpClientFactory.ProxyClientHandler())
             {
                 SubscriptionId = subscriptionId,
                 HttpClient = { BaseAddress = new Uri(DefaultVariables.ResourceManagementEndpoint) },

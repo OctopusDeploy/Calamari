@@ -35,12 +35,14 @@ namespace Calamari.AzureAppService
                     new AzureKnownEnvironment(account.AzureEnvironment).AsAzureSDKEnvironment())
                 .WithDefaultSubscription(account.SubscriptionNumber);
 
+            var proxyClient = new AuthHttpClientFactory().GetHttpClient();
             var restClient = RestClient
                 .Configure()
                 .WithBaseUri(mgmtEndpoint)
                 .WithEnvironment(new AzureKnownEnvironment(account.AzureEnvironment).AsAzureSDKEnvironment())
                 .WithLogLevel(HttpLoggingDelegatingHandler.Level.Basic)
                 .WithCredentials(azureCredentials)
+                .WithHttpClient(proxyClient)
                 .Build();
 
             var webAppClient = new WebSiteManagementClient(restClient)

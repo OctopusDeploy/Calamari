@@ -132,7 +132,8 @@ namespace Calamari.AzureCloudService
 
         async Task<string> GetStorageAccountPrimaryKey(SubscriptionCloudCredentials credentials, string storageAccountName,string serviceManagementEndpoint)
         {
-            using var cloudClient = new StorageManagementClient(credentials, new Uri(serviceManagementEndpoint));
+            var httpClientProxy = new AuthHttpClientFactory().GetHttpClient();
+            using var cloudClient = new StorageManagementClient(credentials, new Uri(serviceManagementEndpoint), httpClientProxy);
             var getKeysResponse = await cloudClient.StorageAccounts.GetKeysAsync(storageAccountName);
 
             if (getKeysResponse.StatusCode != HttpStatusCode.OK)

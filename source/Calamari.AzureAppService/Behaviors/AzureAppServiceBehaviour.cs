@@ -146,9 +146,10 @@ namespace Calamari.AzureAppService.Behaviors
 
                 string? credential = await Auth.GetBasicAuthCreds(servicePrincipal, targetSite);
                 string token = await Auth.GetAuthTokenAsync(servicePrincipal);
-
+                
                 var webAppClient = new WebSiteManagementClient(new Uri(servicePrincipal.ResourceManagementEndpointBaseUri),
-                                                               new TokenCredentials(token))
+                                                               new TokenCredentials(token),
+                                                               AuthHttpClientFactory.ProxyClientHandler())
                 {
                     SubscriptionId = servicePrincipal.SubscriptionNumber
                 };

@@ -19,9 +19,10 @@ namespace Calamari.AzureCloudService.Tests
             var subscriptionId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionId);
             var certificate = ExternalVariables.Get(ExternalVariable.AzureSubscriptionCertificate);
             var serviceName = $"{nameof(HealthCheckCommandFixture)}-{Guid.NewGuid().ToString("N").Substring(0, 12)}";
+            var httpClientProxy = new AuthHttpClientFactory().GetHttpClient();
 
             using var managementCertificate = CreateManagementCertificate(certificate);
-            using var client = new ComputeManagementClient(new CertificateCloudCredentials(subscriptionId, managementCertificate));
+            using var client = new ComputeManagementClient(new CertificateCloudCredentials(subscriptionId, managementCertificate), httpClientProxy);
             try
             {
                 await client.HostedServices.CreateAsync(new HostedServiceCreateParameters(serviceName, "test") { Location = "West US" });

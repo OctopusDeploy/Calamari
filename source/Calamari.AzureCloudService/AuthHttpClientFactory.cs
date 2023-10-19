@@ -1,10 +1,10 @@
+using System;
 using System.Net;
 using System.Net.Http;
-using Microsoft.Identity.Client;
 
-namespace Calamari.AzureWebApp
+namespace Calamari.AzureCloudService
 {
-    public class AuthHttpClientFactory : IMsalHttpClientFactory
+    public class AuthHttpClientFactory
     {
         static readonly HttpClient _httpClient;
 

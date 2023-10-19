@@ -50,7 +50,8 @@ namespace Calamari.AzureAppService.Behaviors
             var token = await Auth.GetAuthTokenAsync(principalAccount);
 
             var webAppClient = new WebSiteManagementClient(new Uri(principalAccount.ResourceManagementEndpointBaseUri),
-                    new TokenCredentials(token))
+                    new TokenCredentials(token),
+                    AuthHttpClientFactory.ProxyClientHandler())
                 {SubscriptionId = principalAccount.SubscriptionNumber};
 
             Log.Info($"Updating web app to use image {image} from registry {registryHost}");
