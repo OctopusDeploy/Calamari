@@ -61,7 +61,7 @@ namespace Calamari.AzureAppService
             var document = XDocument.Parse(await streamReader.ReadToEndAsync());
 
             var profile = (from el in document.Descendants("publishProfile")
-                where string.Compare(el.Attribute("publishMethod")?.Value, "MSDeploy",
+                where string.Compare(el.Attribute("publishMethod")?.Value, "ZipDeploy",
                     StringComparison.OrdinalIgnoreCase) == 0
                 select new PublishingProfile
                 {
