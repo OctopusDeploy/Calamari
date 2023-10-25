@@ -246,13 +246,14 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
         }
 
         [Test]
-        [TestCase(@"*.txt", new [] {"r.txt"}, 1)]
-        [TestCase(@"*.config", new [] {"root.config"}, 1)]
-        [TestCase(@"Config/*.config", new [] {"c.config"}, 1)]
-        [TestCase(@"Config/Feature1/*.config", new [] {"f1-a.config", "f1-b.config", "f1-c.config"}, 3)]
-        [TestCase(@"Config/Feature2/*.config", new [] {"f2.config"}, 1)]
-        [TestCase(@"Config/Feature2/Feature2-SubFolder/*.config", new[] {"f2-sub.config"}, 1)]
-        public void EnumerateFiles(string pattern, string[] expectedFilesMatchName, int expectedQty)
+        [TestCase(new[] { @"*.txt" }, new [] {"r.txt"}, 1)]
+        [TestCase(new[] { @"*.config" }, new [] {"root.config"}, 1)]
+        [TestCase(new[] { @"*.config", @"*.txt", @"*" }, new [] {"root.config", "r.txt"}, 2)]
+        [TestCase(new[] { @"Config/*.config"}, new [] {"c.config"}, 1)]
+        [TestCase(new[] { @"Config/Feature1/*.config"}, new [] {"f1-a.config", "f1-b.config", "f1-c.config"}, 3)]
+        [TestCase(new[] { @"Config/Feature2/*.config"}, new [] {"f2.config"}, 1)]
+        [TestCase(new[] { @"Config/Feature2/Feature2-SubFolder/*.config"}, new[] {"f2-sub.config"}, 1)]
+        public void EnumerateFiles(string[] pattern, string[] expectedFilesMatchName, int expectedQty)
         {
             var content = "file-content" + Environment.NewLine;
 
@@ -292,13 +293,14 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
         }
 
         [Test]
-        [TestCase(@"*.txt", new [] {"r.txt", "f1.txt", "f2.txt", "f2-sub.txt"}, 4)]
-        [TestCase(@"*.config", new [] { "root.config", "c.config", "f1-a.config", "f1-b.config", "f1-c.config", "f2.config", "f2-sub.config"}, 7)]
-        [TestCase(@"Config/*.config",  new [] { "c.config", "f1-a.config", "f1-b.config", "f1-c.config", "f2.config", "f2-sub.config"}, 6)]
-        [TestCase(@"Config/Feature1/*.config",new[] {"f1-a.config", "f1-b.config", "f1-c.config"}, 3)]
-        [TestCase(@"Config/Feature2/*.config", new[] {"f2.config", "f2-sub.config"}, 2)]
-        [TestCase(@"Config/Feature2/Feature2-SubFolder/*.config",new[] {"f2-sub.config"}, 1)]
-        public void EnumerateFilesRecursively(string pattern, string[] expectedFilesMatchNameWithRecursion, int expectedQty)
+        [TestCase(new [] { @"*.txt" }, new [] {"r.txt", "f1.txt", "f2.txt", "f2-sub.txt"}, 4)]
+        [TestCase(new [] { @"*.config" }, new [] { "root.config", "c.config", "f1-a.config", "f1-b.config", "f1-c.config", "f2.config", "f2-sub.config"}, 7)]
+        [TestCase(new [] { @"*.config" , "*.txt", "*" }, new [] { "r.txt", "f1.txt", "f2.txt", "f2-sub.txt", "root.config", "c.config", "f1-a.config", "f1-b.config", "f1-c.config", "f2.config", "f2-sub.config"}, 11)]
+        [TestCase(new [] { @"Config/*.config" }, new [] { "c.config", "f1-a.config", "f1-b.config", "f1-c.config", "f2.config", "f2-sub.config"}, 6)]
+        [TestCase(new [] { @"Config/Feature1/*.config" }, new[] {"f1-a.config", "f1-b.config", "f1-c.config"}, 3)]
+        [TestCase(new [] { @"Config/Feature2/*.config" }, new[] {"f2.config", "f2-sub.config"}, 2)]
+        [TestCase(new [] { @"Config/Feature2/Feature2-SubFolder/*.config" },new[] {"f2-sub.config"}, 1)]
+        public void EnumerateFilesRecursively(string[] patterns, string[] expectedFilesMatchNameWithRecursion, int expectedQty)
         {
             var content = "file-content" + Environment.NewLine;
 
@@ -326,16 +328,16 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
             writeFile(configPath, Path.Combine("Feature2", "Feature2-SubFolder"), "f2-sub.config");
             writeFile(configPath, Path.Combine("Feature2", "Feature2-SubFolder"), "f2-sub.txt");
 
-            var resultWithRecursion = fileSystem.EnumerateFilesRecursively(rootPath, pattern).ToList();
+            var resultWithRecursion = fileSystem.EnumerateFilesRecursively(rootPath, patterns).ToList();
 
             resultWithRecursion.Should()
                                .HaveCount(expectedQty,
-                                          $"{pattern} should have found {expectedQty}, but found {resultWithRecursion.Count}");
+                                          $"{patterns} should have found {expectedQty}, but found {resultWithRecursion.Count}");
             
             foreach (var expectedFileName in expectedFilesMatchNameWithRecursion)
             {
                 resultWithRecursion.Should()
-                                   .Contain(r => Path.GetFileName(r) == expectedFileName, $"{pattern} should have found {expectedFileName}, but didn't");
+                                   .Contain(r => Path.GetFileName(r) == expectedFileName, $"{patterns} should have found {expectedFileName}, but didn't");
             }
         }
 
