@@ -7,6 +7,7 @@ using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.FileSystem.GlobExpressions;
 using Calamari.Testing.Helpers;
+using Calamari.Testing.Requirements;
 using FluentAssertions;
 using NUnit.Framework;
 
@@ -292,7 +293,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
             }
         }
 
-        [Test]
+        [Test, RequiresNonMono]
         [TestCase(new [] { @"*.txt" }, new [] {"r.txt", "f1.txt", "f2.txt", "f2-sub.txt"}, 4)]
         [TestCase(new [] { @"*.config" }, new [] { "root.config", "c.config", "f1-a.config", "f1-b.config", "f1-c.config", "f2.config", "f2-sub.config"}, 7)]
         [TestCase(new [] { @"*.config" , "*.txt", "*" }, new [] { "r.txt", "f1.txt", "f2.txt", "f2-sub.txt", "root.config", "c.config", "f1-a.config", "f1-b.config", "f1-c.config", "f2.config", "f2-sub.config"}, 11)]
