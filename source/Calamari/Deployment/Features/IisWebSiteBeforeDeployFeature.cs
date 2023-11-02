@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Deployment;
@@ -57,10 +58,15 @@ namespace Calamari.Deployment.Features
                 storeName = AddCertificateToLocalMachineStore(variables, certificateVariable);
             }
 
-            Log.SetOutputVariable(SpecialVariables.Action.IisWebSite.Output.CertificateStoreName, storeName, variables);
+            var storeNamesVariable = variables.Get(SpecialVariables.Action.IisWebSite.Output.CertificateStoreName, "") ?? "";
+            if (storeNamesVariable.Split(',').Contains(storeName))
+                return;
+
+            storeNamesVariable = string.Join(",", storeNamesVariable, storeName);
+            Log.SetOutputVariable(SpecialVariables.Action.IisWebSite.Output.CertificateStoreName, storeNamesVariable, variables);
         }
 
-        static string FindCertificateInLocalMachineStore(string thumbprint)
+        public static string FindCertificateInLocalMachineStore(string thumbprint)
         {
             foreach (var storeName in WindowsX509CertificateStore.GetStoreNames(StoreLocation.LocalMachine))
             {

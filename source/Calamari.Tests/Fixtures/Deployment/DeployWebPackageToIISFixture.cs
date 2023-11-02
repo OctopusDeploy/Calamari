@@ -7,6 +7,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Deployment;
 using Calamari.Integration.Iis;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Deployment.Packages;
@@ -477,7 +478,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
         [Test]
         [Category(TestCategory.CompatibleOS.OnlyWindows)]
-        public void ShouldCreateHttpsBindingUsingCertificatePassedAsThumbprint()
+        public void ShouldCreateHttpsBindingUsing_SingleCertificatePassedAsThumbprint()
         {
             Variables["Octopus.Action.IISWebSite.DeploymentType"] = "webSite";
             Variables["Octopus.Action.IISWebSite.CreateOrUpdateWebSite"] = "True";
@@ -508,6 +509,56 @@ namespace Calamari.Tests.Fixtures.Deployment
             Assert.AreEqual("https", binding.Protocol);
             Assert.AreEqual(SampleCertificate.CapiWithPrivateKey.Thumbprint, BitConverter.ToString(binding.CertificateHash).Replace("-", ""));
             Assert.IsTrue(binding.CertificateStoreName.Equals("My", StringComparison.OrdinalIgnoreCase), $"Expected: 'My'. Received: '{binding.CertificateStoreName}'");
+
+            Assert.AreEqual(ObjectState.Started, website.State);
+        }
+
+        [Test]
+        [Category(TestCategory.CompatibleOS.OnlyWindows)]
+        public void ShouldCreateHttpsBindingUsing_MultipleCertificates_InMultipleStores_PassedAsThumbprint()
+        {
+            Variables["Octopus.Action.IISWebSite.DeploymentType"] = "webSite";
+            Variables["Octopus.Action.IISWebSite.CreateOrUpdateWebSite"] = "True";
+
+            Variables["Octopus.Action.IISWebSite.Bindings"] =
+                $"[{{\"protocol\":\"https\",\"port\":1083,\"host\":\"\",\"thumbprint\":\"{SampleCertificate.CapiWithPrivateKey.Thumbprint}\",\"requireSni\":false,\"enabled\":true}}, "
+                + $"{{\"protocol\":\"https\",\"port\":1084,\"host\":\"\",\"thumbprint\":\"{SampleCertificate.CngWithPrivateKey.Thumbprint}\",\"requireSni\":false,\"enabled\":true}}]";
+
+            Variables["Octopus.Action.IISWebSite.EnableAnonymousAuthentication"] = "True";
+            Variables["Octopus.Action.IISWebSite.EnableBasicAuthentication"] = "False";
+            Variables["Octopus.Action.IISWebSite.EnableWindowsAuthentication"] = "False";
+            Variables["Octopus.Action.IISWebSite.WebSiteName"] = uniqueValue;
+
+            Variables["Octopus.Action.IISWebSite.ApplicationPoolName"] = uniqueValue;
+            Variables["Octopus.Action.IISWebSite.ApplicationPoolFrameworkVersion"] = "v4.0";
+            Variables["Octopus.Action.IISWebSite.ApplicationPoolIdentityType"] = "ApplicationPoolIdentity";
+
+            Variables[KnownVariables.Package.EnabledFeatures] = "Octopus.Features.IISWebSite";
+
+            SampleCertificate.CapiWithPrivateKey.EnsureCertificateIsInStore(StoreName.My, StoreLocation.LocalMachine);
+            SampleCertificate.CngWithPrivateKey.EnsureCertificateIsInStore(StoreName.CertificateAuthority, StoreLocation.LocalMachine);
+
+            var result = DeployPackage(packageV1.FilePath);
+
+            result.AssertSuccess();
+
+            var website = GetWebSite(uniqueValue);
+            var binding = website.Bindings;
+
+            var capiBinding = binding.First();
+            var cngBinding = binding.Skip(1).First();
+
+            Assert.AreEqual(1083, capiBinding.EndPoint.Port);
+            Assert.AreEqual(1084, cngBinding.EndPoint.Port);
+
+            Assert.AreEqual("https", capiBinding.Protocol);
+            Assert.AreEqual("https", cngBinding.Protocol);
+            
+            Assert.AreEqual(SampleCertificate.CapiWithPrivateKey.Thumbprint, BitConverter.ToString(capiBinding.CertificateHash).Replace("-", ""));
+            Assert.AreEqual(SampleCertificate.CngWithPrivateKey.Thumbprint, BitConverter.ToString(cngBinding.CertificateHash).Replace("-", ""));
+
+            Assert.IsTrue(capiBinding.CertificateStoreName.Equals("My", StringComparison.OrdinalIgnoreCase), $"Expected: 'My'. Received: '{capiBinding.CertificateStoreName}'");
+            Assert.IsTrue(cngBinding.CertificateStoreName.Equals("CA", StringComparison.OrdinalIgnoreCase), $"Expected: 'CA'. Received: '{cngBinding.CertificateStoreName}'");
 
             Assert.AreEqual(ObjectState.Started, website.State);
         }
