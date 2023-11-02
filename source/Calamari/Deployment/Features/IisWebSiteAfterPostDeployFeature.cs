@@ -41,11 +41,13 @@ namespace Calamari.Deployment.Features
 
                 var thumbprint = variables.Get($"{certificateVariable}.{CertificateVariables.Properties.Thumbprint}");
                 var privateKeyAccess = CreatePrivateKeyAccessForApplicationPoolAccount(variables);
+ 
+                var storeName = IisWebSiteBeforeDeployFeature.FindCertificateInLocalMachineStore(thumbprint);
 
-                // The store-name variable was set by IisWebSiteBeforePostDeploy
-                var storeName = variables.Get(SpecialVariables.Action.IisWebSite.Output.CertificateStoreName);
-                WindowsX509CertificateStore.AddPrivateKeyAccessRules(thumbprint, StoreLocation.LocalMachine, storeName,
-                    new List<PrivateKeyAccessRule> {privateKeyAccess});
+                WindowsX509CertificateStore.AddPrivateKeyAccessRules(thumbprint,
+                                                                     StoreLocation.LocalMachine,
+                                                                     storeName,
+                                                                     new List<PrivateKeyAccessRule> { privateKeyAccess });
             }
         }
 
@@ -54,18 +56,18 @@ namespace Calamari.Deployment.Features
             var applicationPoolIdentityTypeValue = variables.Get(SpecialVariables.Action.IisWebSite.ApplicationPoolIdentityType);
 
             ApplicationPoolIdentityType appPoolIdentityType;
-            if(!Enum.TryParse(applicationPoolIdentityTypeValue, out appPoolIdentityType))
+            if (!Enum.TryParse(applicationPoolIdentityTypeValue, out appPoolIdentityType))
             {
                 throw new CommandException($"Unexpected value for '{SpecialVariables.Action.IisWebSite.ApplicationPoolIdentityType}': '{applicationPoolIdentityTypeValue}'");
             }
 
             return new PrivateKeyAccessRule(
-                GetIdentityForApplicationPoolIdentity(appPoolIdentityType, variables),
-                PrivateKeyAccess.FullControl);
+                                            GetIdentityForApplicationPoolIdentity(appPoolIdentityType, variables),
+                                            PrivateKeyAccess.FullControl);
         }
 
         static IdentityReference GetIdentityForApplicationPoolIdentity(ApplicationPoolIdentityType applicationPoolIdentityType,
-            IVariables variables)
+                                                                       IVariables variables)
         {
             switch (applicationPoolIdentityType)
             {
@@ -97,6 +99,5 @@ namespace Calamari.Deployment.Features
             return Regex.Replace(username, "\\.\\\\(.*)", "$1", RegexOptions.None);
         }
 #endif
-
     }
 }
