@@ -18,6 +18,8 @@ namespace Calamari.Kubernetes
 {
     public class SetupKubectlAuthentication
     {
+        private const string KubernetesTentacleTargetTypeId = "KubernetesTentacle";
+
         readonly IVariables variables;
         readonly ILog log;
         readonly ICommandLineRunner commandLineRunner;
@@ -57,8 +59,7 @@ namespace Calamari.Kubernetes
             }
 
             //if we are running inside a kubernetes cluster, then we can rely on using the service account inside the pod for authentication
-            if (variables.Get("Octopus.Target.Kubernetes.UseServiceAccountAuth") == bool.TrueString ||
-                Environment.GetEnvironmentVariable("OCTOPUS__TARGET__KUBERNETES__USESERVICEACCOUNTAUTH") == bool.TrueString)
+            if (variables.Get("Octopus.Machine.DeploymentTargetType") == KubernetesTentacleTargetTypeId)
             {
                 log.Info("Running inside Kubernetes cluster, using pod service account for authentication");
                 return new CommandResult(string.Empty, 0);
