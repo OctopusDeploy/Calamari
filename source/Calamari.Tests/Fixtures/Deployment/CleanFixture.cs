@@ -5,6 +5,7 @@ using System.Xml.Linq;
 using Calamari.Common.Features.Deployment.Journal;
 using Calamari.Common.Features.Processes.Semaphores;
 using Calamari.Common.Plumbing.Commands;
+using Calamari.Common.Plumbing.Deployment.Journal;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Integration.FileSystem;
@@ -19,7 +20,7 @@ namespace Calamari.Tests.Fixtures.Deployment
     {
         CalamariResult result;
         ICalamariFileSystem fileSystem;
-        IDeploymentJournal deploymentJournal;
+        DeploymentJournal deploymentJournal;
         IVariables variables;
         string tentacleDirectory;
         string packagesDirectory;

@@ -24,7 +24,7 @@ namespace Calamari.AzureAppService
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns></returns>
         public static async Task<StringDictionary> ListApplicationSettingsAsync(this IWebAppsOperations operations,
-            TargetSite targetSite, CancellationToken cancellationToken = default)
+            AzureTargetSite targetSite, CancellationToken cancellationToken = default)
         {
             StringDictionary body;
             if (targetSite.HasSlot)
@@ -46,7 +46,7 @@ namespace Calamari.AzureAppService
         }
 
         public static async Task<StringDictionary> UpdateApplicationSettingsAsync(this IWebAppsOperations operations,
-            TargetSite targetSite, StringDictionary appSettings, CancellationToken cancellationToken = default)
+            AzureTargetSite targetSite, StringDictionary appSettings, CancellationToken cancellationToken = default)
         {
             if (targetSite.HasSlot)
             {
@@ -65,7 +65,7 @@ namespace Calamari.AzureAppService
             }
         }
 
-        public static async Task RestartAsync(this IWebAppsOperations operations, TargetSite targetSite,
+        public static async Task RestartAsync(this IWebAppsOperations operations, AzureTargetSite targetSite,
             bool? softRestart = null, bool? synchronous = null, CancellationToken cancellationToken = default)
         {
             if (targetSite.HasSlot)
@@ -82,7 +82,7 @@ namespace Calamari.AzureAppService
         }
 
         public static async Task<SiteConfigResource> GetConfigurationAsync(this IWebAppsOperations operations,
-            TargetSite targetSite, CancellationToken cancellationToken = default)
+            AzureTargetSite targetSite, CancellationToken cancellationToken = default)
         {
             if (targetSite.HasSlot)
             {
@@ -95,7 +95,7 @@ namespace Calamari.AzureAppService
                 targetSite.Site, cancellationToken: cancellationToken)).Body;
         }
 
-        public static async Task UpdateConfigurationAsync(this IWebAppsOperations operations, TargetSite targetSite,
+        public static async Task UpdateConfigurationAsync(this IWebAppsOperations operations, AzureTargetSite targetSite,
             SiteConfigResource config, CancellationToken cancellationToken = default)
         {
             if (targetSite.HasSlot)
@@ -110,7 +110,7 @@ namespace Calamari.AzureAppService
             }
         }
 
-        public static async Task<ConnectionStringDictionary> ListConnectionStringsAsync(this IWebAppsOperations operations, TargetSite targetSite,
+        public static async Task<ConnectionStringDictionary> ListConnectionStringsAsync(this IWebAppsOperations operations, AzureTargetSite targetSite,
             CancellationToken cancellationToken = default)
         {
             ConnectionStringDictionary body;
@@ -130,7 +130,7 @@ namespace Calamari.AzureAppService
             return body;
         }
 
-        public static async Task UpdateConnectionStringsAsync(this IWebAppsOperations operations, TargetSite targetSite,
+        public static async Task UpdateConnectionStringsAsync(this IWebAppsOperations operations, AzureTargetSite targetSite,
             ConnectionStringDictionary connectionStringDictionary, CancellationToken cancellationToken = default)
         {
             if (targetSite.HasSlot)

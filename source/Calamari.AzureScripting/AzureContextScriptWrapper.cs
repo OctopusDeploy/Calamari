@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using Calamari.CloudAccounts;
 using Calamari.Common.Features.EmbeddedResources;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
@@ -62,17 +63,26 @@ namespace Calamari.AzureScripting
             using (new TemporaryFile(Path.Combine(workingDirectory, "AzureProfile.json")))
             using (var contextScriptFile = new TemporaryFile(CreateContextScriptFile(workingDirectory, scriptSyntax)))
             {
-                if (variables.Get(SpecialVariables.Account.AccountType) == "AzureServicePrincipal")
+                if (variables.Get(SpecialVariables.Account.AccountType) == "AzureServicePrincipal" || variables.Get(SpecialVariables.Account.AccountType) == "AzureOidc")
                 {
-                    SetOutputVariable("OctopusUseServicePrincipal", bool.TrueString);
+                    SetOutputVariable("OctopusAzureServicePrincipalOrOidc ", bool.TrueString);
                     SetOutputVariable("OctopusAzureADTenantId", variables.Get(SpecialVariables.Action.Azure.TenantId)!);
                     SetOutputVariable("OctopusAzureADClientId", variables.Get(SpecialVariables.Action.Azure.ClientId)!);
-                    variables.Set("OctopusAzureADPassword", variables.Get(SpecialVariables.Action.Azure.Password));
+
+                    if (variables.Get(SpecialVariables.Account.AccountType) == "AzureServicePrincipal")
+                    {
+                        variables.Set("OctopusAzureADPassword", variables.Get(SpecialVariables.Action.Azure.Password));
+                    }
+                    else
+                    {
+                        variables.Set("OctopusOpenIdJwt", variables.Get(AccountVariables.Jwt));
+                    }
+
                     return NextWrapper!.ExecuteScript(new Script(contextScriptFile.FilePath), scriptSyntax, commandLineRunner, environmentVars);
                 }
 
                 //otherwise use management certificate
-                SetOutputVariable("OctopusUseServicePrincipal", false.ToString());
+                SetOutputVariable("OctopusAzureServicePrincipalOrOidc", false.ToString());
                 using (new TemporaryFile(CreateAzureCertificate(workingDirectory)))
                 {
                     return NextWrapper!.ExecuteScript(new Script(contextScriptFile.FilePath), scriptSyntax, commandLineRunner, environmentVars);

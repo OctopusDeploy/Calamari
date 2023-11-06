@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting.Bash;
+using Calamari.Common.Features.Scripting.DotnetScript;
 using Calamari.Common.Features.Scripting.FSharp;
 using Calamari.Common.Features.Scripting.Python;
 using Calamari.Common.Features.Scripting.ScriptCS;
@@ -66,6 +67,7 @@ namespace Calamari.Common.Features.Scripting
         /// </returns>
         IScriptWrapper BuildWrapperChain(ScriptSyntax scriptSyntax, IVariables variables)
         {
+            bool.TryParse(variables.Get(ScriptVariables.UseDotnetScript, bool.FalseString), out bool useDotnetScript);
             // get the type of script
             return scriptWrapperHooks
                 .Where(hook => hook.IsEnabled(scriptSyntax))
@@ -77,7 +79,7 @@ namespace Calamari.Common.Features.Scripting
                 .OrderByDescending(hook => hook.Priority)
                 .Aggregate(
                     // The last wrapper is always the TerminalScriptWrapper
-                    new TerminalScriptWrapper(GetScriptExecutor(scriptSyntax), variables),
+                    new TerminalScriptWrapper(GetScriptExecutor(scriptSyntax, useDotnetScript), variables),
                     (IScriptWrapper current, IScriptWrapper next) =>
                     {
                         // the next wrapper is pointed to the current one
@@ -91,14 +93,14 @@ namespace Calamari.Common.Features.Scripting
                     });
         }
 
-        IScriptExecutor GetScriptExecutor(ScriptSyntax scriptSyntax)
+        IScriptExecutor GetScriptExecutor(ScriptSyntax scriptSyntax, bool runDotnetScript = false)
         {
             switch (scriptSyntax)
             {
                 case ScriptSyntax.PowerShell:
                     return new PowerShellScriptExecutor();
                 case ScriptSyntax.CSharp:
-                    return new ScriptCSScriptExecutor();
+                    return runDotnetScript ? (IScriptExecutor) new DotnetScriptExecutor() : new ScriptCSScriptExecutor();
                 case ScriptSyntax.Bash:
                     return new BashScriptExecutor();
                 case ScriptSyntax.FSharp:

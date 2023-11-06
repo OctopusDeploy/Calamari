@@ -8,6 +8,7 @@ namespace Calamari.AzureAppService
 {
     class NugetPackageProvider : IPackageProvider
     {
+        public bool SupportsAsynchronousDeployment => true;
         public string UploadUrlPath => @"/api/zipdeploy";
 
         public async Task<FileInfo> PackageArchive(string sourceDirectory, string targetDirectory)
@@ -25,7 +26,7 @@ namespace Calamari.AzureAppService
         public async Task<FileInfo> ConvertToAzureSupportedFile(FileInfo sourceFile)
         {
             var newFilePath = sourceFile.FullName.Replace(".nupkg", ".zip");
-            await Task.Run(() => File.Move(sourceFile.FullName, newFilePath));
+            await Task.Run(() => File.Copy(sourceFile.FullName, newFilePath));
             return new FileInfo(newFilePath);
         }
     }

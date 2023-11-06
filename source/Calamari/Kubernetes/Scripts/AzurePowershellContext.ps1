@@ -8,6 +8,8 @@ $OctopusAzureADTenantId = $OctopusParameters["Octopus.Action.Azure.TenantId"]
 $OctopusAzureADClientId = $OctopusParameters["Octopus.Action.Azure.ClientId"]
 $OctopusAzureADPassword = $OctopusParameters["Octopus.Action.Azure.Password"]
 $OctopusAzureEnvironment = $OctopusParameters["Octopus.Action.Azure.Environment"]
+$OctopusOpenIdJwt = $OctopusParameters["Octopus.OpenIdConnect.Jwt"]
+$OctopusUseOidc = ![string]::IsNullOrEmpty($OctopusOpenIdJwt)
 
 if ($null -eq $OctopusAzureEnvironment)
 {
@@ -36,10 +38,6 @@ function Get-RunningInPowershellCore
 
 function Initialize-AzureRmContext
 {
-    # Authenticate via Service Principal
-    $securePassword = ConvertTo-SecureString $OctopusAzureADPassword -AsPlainText -Force
-    $creds = New-Object System.Management.Automation.PSCredential ($OctopusAzureADClientId, $securePassword)
-
     # Turn off context autosave, as this will make all authentication occur in memory, and isolate each session from the context changes in other sessions
     Write-Host "##octopus[stdout-verbose]"
     Disable-AzureRMContextAutosave -Scope Process
@@ -52,20 +50,32 @@ function Initialize-AzureRmContext
         exit 2
     }
 
-    Write-Verbose "AzureRM Modules: Authenticating with Service Principal"
+    If ([System.Convert]::ToBoolean($OctopusUseOidc)) {
+            Write-Verbose "AzureRM Modules: Authenticating with OpenID Connect Federated Token"
 
-    # Force any output generated to be verbose in Octopus logs.
-    Write-Host "##octopus[stdout-verbose]"
-    Login-AzureRmAccount -Credential $creds -TenantId $OctopusAzureADTenantId -SubscriptionId $OctopusAzureSubscriptionId -Environment $AzureEnvironment -ServicePrincipal
-    Write-Host "##octopus[stdout-default]"
+            # Force any output generated to be verbose in Octopus logs.
+            Write-Host "##octopus[stdout-verbose]"
+            [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+            Login-AzureRmAccount -Environment $AzureEnvironment -ApplicationId $OctopusAzureADClientId -Tenant $OctopusAzureADTenantId -Subscription $OctopusAzureSubscriptionId -FederatedToken $OctopusOpenIdJwt
+            Write-Host "##octopus[stdout-default]"
+    }
+    else {
+        # Authenticate via Service Principal
+        $securePassword = ConvertTo-SecureString $OctopusAzureADPassword -AsPlainText -Force
+        $creds = New-Object System.Management.Automation.PSCredential ($OctopusAzureADClientId, $securePassword)
+
+        Write-Verbose "AzureRM Modules: Authenticating with Service Principal"
+
+        # Force any output generated to be verbose in Octopus logs.
+        Write-Host "##octopus[stdout-verbose]"
+        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+        Login-AzureRmAccount -Credential $creds -TenantId $OctopusAzureADTenantId -SubscriptionId $OctopusAzureSubscriptionId -Environment $AzureEnvironment -ServicePrincipal
+        Write-Host "##octopus[stdout-default]"
+    }
 }
 
 function Initialize-AzContext
 {
-    # Authenticate via Service Principal
-    $securePassword = ConvertTo-SecureString $OctopusAzureADPassword -AsPlainText -Force
-    $creds = New-Object System.Management.Automation.PSCredential ($OctopusAzureADClientId, $securePassword)
-
     $tempWarningPreference = $WarningPreference
     $WarningPreference = 'SilentlyContinue'
     if (-Not(Get-Command "Disable-AzureRMContextAutosave" -errorAction SilentlyContinue))
@@ -91,12 +101,25 @@ function Initialize-AzContext
         exit 2
     }
 
-    Write-Verbose "Az Modules: Authenticating with Service Principal"
+    If ([System.Convert]::ToBoolean($OctopusUseOidc)) {
+        Write-Verbose "Az Modules: Authenticating with OpenID Connect FederatedToken"
+        # Force any output generated to be verbose in Octopus logs.
+        Write-Host "##octopus[stdout-verbose]"
+        Connect-AzAccount -Environment $AzureEnvironment -ApplicationId $OctopusAzureADClientId -Tenant $OctopusAzureADTenantId -Subscription $OctopusAzureSubscriptionId -FederatedToken $OctopusOpenIdJwt
+        Write-Host "##octopus[stdout-default]"
+    }
+    else {
+        # Authenticate via Service Principal
+        $securePassword = ConvertTo-SecureString $OctopusAzureADPassword -AsPlainText -Force
+        $creds = New-Object System.Management.Automation.PSCredential ($OctopusAzureADClientId, $securePassword)
 
-    # Force any output generated to be verbose in Octopus logs.
-    Write-Host "##octopus[stdout-verbose]"
-    Connect-AzAccount -Credential $creds -TenantId $OctopusAzureADTenantId -SubscriptionId $OctopusAzureSubscriptionId -Environment $AzureEnvironment -ServicePrincipal
-    Write-Host "##octopus[stdout-default]"
+        Write-Verbose "Az Modules: Authenticating with Service Principal"
+
+        # Force any output generated to be verbose in Octopus logs.
+        Write-Host "##octopus[stdout-verbose]"
+        Connect-AzAccount -Credential $creds -TenantId $OctopusAzureADTenantId -SubscriptionId $OctopusAzureSubscriptionId -Environment $AzureEnvironment -ServicePrincipal
+        Write-Host "##octopus[stdout-default]"
+    }
 }
 
 function ConnectAzAccount

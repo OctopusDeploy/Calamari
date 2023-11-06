@@ -2,14 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using Calamari.CloudAccounts;
 using Calamari.Common.Features.Discovery;
 using Calamari.Common.Plumbing.Logging;
 using Microsoft.Rest.Azure;
+using Newtonsoft.Json;
 
 namespace Calamari.Azure.Kubernetes.Discovery
 {
-    using AzureTargetDiscoveryContext = TargetDiscoveryContext<AccountAuthenticationDetails<ServicePrincipalAccount>>;
-
     public class AzureKubernetesDiscoverer : KubernetesDiscovererBase
     {
         public AzureKubernetesDiscoverer(ILog log) : base(log)
@@ -26,10 +26,15 @@ namespace Calamari.Azure.Kubernetes.Discovery
 
         public override IEnumerable<KubernetesCluster> DiscoverClusters(string contextJson)
         {
-            if (!TryGetDiscoveryContext<AccountAuthenticationDetails<ServicePrincipalAccount>>(contextJson, out var authenticationDetails, out _))
+            if (!TryGetAccountType(contextJson, out string accountType))
                 return Enumerable.Empty<KubernetesCluster>();
 
-            var account = authenticationDetails.AccountDetails;
+            if (!TryGetAccountKubernetesClusters(contextJson,
+                                                 accountType,
+                                                 out var account,
+                                                 out var accountId))
+                return Enumerable.Empty<KubernetesCluster>();
+
             Log.Verbose("Looking for Kubernetes clusters in Azure using:");
             Log.Verbose($"  Subscription ID: {account.SubscriptionNumber}");
             Log.Verbose($"  Tenant ID: {account.TenantId}");
@@ -57,7 +62,7 @@ namespace Calamari.Azure.Kubernetes.Discovery
                                                                                                 $"aks/{account.SubscriptionNumber}/{c.ResourceGroupName}/{c.Name}",
                                                                                                 c.Name,
                                                                                                 c.ResourceGroupName,
-                                                                                                authenticationDetails.AccountId,
+                                                                                                accountId,
                                                                                                 c.Tags.ToTargetTags())));
                 }
                 catch (CloudException ex)
@@ -74,6 +79,55 @@ namespace Calamari.Azure.Kubernetes.Discovery
             }
 
             return discoveredClusters;
+        }
+
+        bool TryGetAccountKubernetesClusters(string contextJson,
+                                             string accountType,
+                                             out IAzureAccount account,
+                                             out string accountId)
+        {
+            if (accountType == "AzureOidc")
+            {
+                if (!TryGetDiscoveryContext<AccountAuthenticationDetails<AzureOidcAccount>>(contextJson, out var oidcAuthenticationDetails, out _))
+                {
+                    account = null;
+                    accountId = null;
+                    return false;
+                }
+
+                accountId = oidcAuthenticationDetails.AccountId;
+                account = oidcAuthenticationDetails.AccountDetails;
+            }
+            else
+            {
+                if (!TryGetDiscoveryContext<AccountAuthenticationDetails<AzureServicePrincipalAccount>>(contextJson, out var servicePrincipalAuthenticationDetails, out _))
+                {
+                    account = null;
+                    accountId = null;
+                    return false;
+                }
+
+                accountId = servicePrincipalAuthenticationDetails.AccountId;
+                account = servicePrincipalAuthenticationDetails.AccountDetails;
+            }
+
+            return true;
+        }
+
+        bool TryGetAccountType(string contextJson, out string accountType)
+        {
+            try
+            {
+                var targetDiscoveryContext = JsonConvert.DeserializeObject<TargetDiscoveryContext<AccountAuthenticationDetails<dynamic>>>(contextJson);
+                accountType = targetDiscoveryContext?.Authentication?.AuthenticationMethod ?? throw new Exception("AuthenticationMethod is null");
+                return true;
+            }
+            catch (Exception e)
+            {
+                Log.Warn("Could not read authentication method of target discovery context.");
+                accountType = null;
+                return false;
+            }
         }
     }
 }

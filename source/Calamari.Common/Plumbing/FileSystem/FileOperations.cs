@@ -138,7 +138,7 @@ namespace Calamari.Common.Plumbing.FileSystem
             return searchPatterns.Length == 0
                 ? Directory.EnumerateFiles(parentDirectoryPath, "*", searchOption)
                 : searchPatterns.SelectMany(pattern =>
-                    Directory.EnumerateFiles(parentDirectoryPath, pattern, searchOption));
+                    Directory.EnumerateFiles(parentDirectoryPath, pattern, searchOption)).Distinct();
         }
 
         public IEnumerable<string> GetFiles(string path, string searchPattern)
@@ -253,10 +253,12 @@ namespace Calamari.Common.Plumbing.FileSystem
             SearchOption searchOption,
             string[] searchPatterns)
         {
+            // Note we aren't using Alphaleonis.Win32.Filesystem.Directory.EnumerateFiles which handles long file paths due to performance issues.
+            var parentDirectoryInfo = new DirectoryInfo(parentDirectoryPath);
+
             return searchPatterns.Length == 0
-                ? Alphaleonis.Win32.Filesystem.Directory.EnumerateFiles(parentDirectoryPath, "*", searchOption)
-                : searchPatterns.SelectMany(pattern =>
-                    Alphaleonis.Win32.Filesystem.Directory.EnumerateFiles(parentDirectoryPath, pattern, searchOption));
+                ? parentDirectoryInfo.GetFiles("*", searchOption).Select(fi => fi.FullName)
+                : searchPatterns.SelectMany(pattern => parentDirectoryInfo.GetFiles(pattern, searchOption).Select(fi => fi.FullName)).Distinct();
         }
 
         public IEnumerable<string> GetFiles(string path, string searchPattern)

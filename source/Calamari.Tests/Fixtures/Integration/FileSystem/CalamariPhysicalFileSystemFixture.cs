@@ -7,6 +7,7 @@ using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.FileSystem.GlobExpressions;
 using Calamari.Testing.Helpers;
+using Calamari.Testing.Requirements;
 using FluentAssertions;
 using NUnit.Framework;
 
@@ -216,6 +217,129 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
             var results = fileSystem.EnumerateFilesWithGlob(rootPath, GlobMode.GroupExpansionMode, "*", "**").ToList();
 
             results.Should().HaveCount(1);
+        }
+
+        [TestCase(@"*")]
+        [TestCase(@"**")]
+        [TestCase(@"Dir/*")]
+        [TestCase(@"Dir/**")]
+        public void EnumerateFilesShouldNotReturnDirectories(string pattern)
+        {
+            Directory.CreateDirectory(Path.Combine(rootPath, "Dir"));
+            Directory.CreateDirectory(Path.Combine(rootPath, "Dir", "Sub"));
+            File.WriteAllText(Path.Combine(rootPath, "Dir", "File"), "");
+            File.WriteAllText(Path.Combine(rootPath, "Dir", "Sub", "File"), "");
+
+            var results = fileSystem.EnumerateFiles(rootPath, pattern).ToArray();
+
+            if (results.Length > 0)
+                results.Should().OnlyContain(f => f.EndsWith("File"));
+        }
+
+        [Test]
+        public void EnumerateFilesWithShouldNotReturnTheSameFileTwice()
+        {
+            File.WriteAllText(Path.Combine(rootPath, "File"), "");
+
+            var results = fileSystem.EnumerateFiles(rootPath, "*", "**").ToList();
+
+            results.Should().HaveCount(1);
+        }
+
+        [Test]
+        [TestCase(new[] { @"*.txt" }, new [] {"r.txt"}, 1)]
+        [TestCase(new[] { @"*.config" }, new [] {"root.config"}, 1)]
+        [TestCase(new[] { @"*.config", @"*.txt", @"*" }, new [] {"root.config", "r.txt"}, 2)]
+        [TestCase(new[] { @"Config/*.config"}, new [] {"c.config"}, 1)]
+        [TestCase(new[] { @"Config/Feature1/*.config"}, new [] {"f1-a.config", "f1-b.config", "f1-c.config"}, 3)]
+        [TestCase(new[] { @"Config/Feature2/*.config"}, new [] {"f2.config"}, 1)]
+        [TestCase(new[] { @"Config/Feature2/Feature2-SubFolder/*.config"}, new[] {"f2-sub.config"}, 1)]
+        public void EnumerateFiles(string[] pattern, string[] expectedFilesMatchName, int expectedQty)
+        {
+            var content = "file-content" + Environment.NewLine;
+
+            var configPath = Path.Combine(rootPath, "Config");
+
+            Directory.CreateDirectory(configPath);
+            Directory.CreateDirectory(Path.Combine(configPath, "Feature1"));
+            Directory.CreateDirectory(Path.Combine(configPath, "Feature2"));
+            Directory.CreateDirectory(Path.Combine(configPath, "Feature2", "Feature2-SubFolder"));
+
+            Action<string, string, string> writeFile = (p1, p2, p3) =>
+                fileSystem.OverwriteFile(p3 == null ? Path.Combine(p1, p2) : Path.Combine(p1, p2, p3), content);
+
+            // NOTE: create all the files in *every case*, and TestCases help supply the assert expectations
+            writeFile(rootPath, "root.config", null);
+            writeFile(rootPath, "r.txt", null);
+            writeFile(configPath, "c.config", null);
+
+            writeFile(configPath, "Feature1", "f1.txt");
+            writeFile(configPath, "Feature1", "f1-a.config");
+            writeFile(configPath, "Feature1", "f1-b.config");
+            writeFile(configPath, "Feature1", "f1-c.config");
+            writeFile(configPath, "Feature2", "f2.config");
+            writeFile(configPath, "Feature1", "f2.txt");
+            writeFile(configPath, Path.Combine("Feature2", "Feature2-SubFolder"), "f2-sub.config");
+            writeFile(configPath, Path.Combine("Feature2", "Feature2-SubFolder"), "f2-sub.txt");
+
+            var resultWithoutRecursion = fileSystem.EnumerateFiles(rootPath, pattern).ToList();
+
+            resultWithoutRecursion.Should()
+                                  .HaveCount(expectedQty, $"{pattern} should have found {expectedQty}, but found {resultWithoutRecursion.Count}");
+            foreach (var expectedFileName in expectedFilesMatchName)
+            {
+                resultWithoutRecursion.Should()
+                                      .Contain(r => Path.GetFileName(r) == expectedFileName, $"{pattern} should have found {expectedFileName}, but didn't");
+            }
+        }
+
+        [Test, RequiresNonMono]
+        [TestCase(new [] { @"*.txt" }, new [] {"r.txt", "f1.txt", "f2.txt", "f2-sub.txt"}, 4)]
+        [TestCase(new [] { @"*.config" }, new [] { "root.config", "c.config", "f1-a.config", "f1-b.config", "f1-c.config", "f2.config", "f2-sub.config"}, 7)]
+        [TestCase(new [] { @"*.config" , "*.txt", "*" }, new [] { "r.txt", "f1.txt", "f2.txt", "f2-sub.txt", "root.config", "c.config", "f1-a.config", "f1-b.config", "f1-c.config", "f2.config", "f2-sub.config"}, 11)]
+        [TestCase(new [] { @"Config/*.config" }, new [] { "c.config", "f1-a.config", "f1-b.config", "f1-c.config", "f2.config", "f2-sub.config"}, 6)]
+        [TestCase(new [] { @"Config/Feature1/*.config" }, new[] {"f1-a.config", "f1-b.config", "f1-c.config"}, 3)]
+        [TestCase(new [] { @"Config/Feature2/*.config" }, new[] {"f2.config", "f2-sub.config"}, 2)]
+        [TestCase(new [] { @"Config/Feature2/Feature2-SubFolder/*.config" },new[] {"f2-sub.config"}, 1)]
+        public void EnumerateFilesRecursively(string[] patterns, string[] expectedFilesMatchNameWithRecursion, int expectedQty)
+        {
+            var content = "file-content" + Environment.NewLine;
+
+            var configPath = Path.Combine(rootPath, "Config");
+
+            Directory.CreateDirectory(configPath);
+            Directory.CreateDirectory(Path.Combine(configPath, "Feature1"));
+            Directory.CreateDirectory(Path.Combine(configPath, "Feature2"));
+            Directory.CreateDirectory(Path.Combine(configPath, "Feature2", "Feature2-SubFolder"));
+
+            Action<string, string, string> writeFile = (p1, p2, p3) =>
+                fileSystem.OverwriteFile(p3 == null ? Path.Combine(p1, p2) : Path.Combine(p1, p2, p3), content);
+
+            // NOTE: create all the files in *every case*, and TestCases help supply the assert expectations
+            writeFile(rootPath, "root.config", null);
+            writeFile(rootPath, "r.txt", null);
+            writeFile(configPath, "c.config", null);
+
+            writeFile(configPath, "Feature1", "f1.txt");
+            writeFile(configPath, "Feature1", "f1-a.config");
+            writeFile(configPath, "Feature1", "f1-b.config");
+            writeFile(configPath, "Feature1", "f1-c.config");
+            writeFile(configPath, "Feature2", "f2.config");
+            writeFile(configPath, "Feature1", "f2.txt");
+            writeFile(configPath, Path.Combine("Feature2", "Feature2-SubFolder"), "f2-sub.config");
+            writeFile(configPath, Path.Combine("Feature2", "Feature2-SubFolder"), "f2-sub.txt");
+
+            var resultWithRecursion = fileSystem.EnumerateFilesRecursively(rootPath, patterns).ToList();
+
+            resultWithRecursion.Should()
+                               .HaveCount(expectedQty,
+                                          $"{patterns} should have found {expectedQty}, but found {resultWithRecursion.Count}");
+            
+            foreach (var expectedFileName in expectedFilesMatchNameWithRecursion)
+            {
+                resultWithRecursion.Should()
+                                   .Contain(r => Path.GetFileName(r) == expectedFileName, $"{patterns} should have found {expectedFileName}, but didn't");
+            }
         }
 
 

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Calamari.Deployment;
 using Calamari.Testing.Helpers;
@@ -63,6 +63,7 @@ namespace Calamari.Tests.Fixtures.ScriptCS
 
             output.AssertSuccess();
             output.AssertOutput("Hello Paul");
+            output.AssertOutput("This is ScriptCS");
             output.AssertProcessNameAndId("scriptcs");
         }
 

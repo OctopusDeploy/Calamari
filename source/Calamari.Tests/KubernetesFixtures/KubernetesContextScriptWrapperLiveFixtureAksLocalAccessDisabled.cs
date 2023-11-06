@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Calamari.Azure;
+using Calamari.CloudAccounts;
 using Calamari.Common.Features.Discovery;
 using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Deployment;
@@ -92,7 +93,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 "WorkerPool-1",
                 setHealthCheckContainer ? new FeedImage("MyImage:with-tag", "Feeds-123") : null);
 
-            var account = new ServicePrincipalAccount(
+            var account = new AzureServicePrincipalAccount(
                 ExternalVariables.Get(ExternalVariable.AzureSubscriptionId),
                 ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId),
                 ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId),
@@ -102,14 +103,15 @@ namespace Calamari.Tests.KubernetesFixtures
                 null);
 
             var authenticationDetails =
-                new AccountAuthenticationDetails<ServicePrincipalAccount>(
-                    "Azure",
-                    "Accounts-1",
-                    account);
+                new AccountAuthenticationDetails<AzureServicePrincipalAccount>(
+                                                                               "Azure",
+                                                                               "Accounts-1",
+                                                                               "ServicePrincipal",
+                                                                               account);
 
             var targetDiscoveryContext =
-                new TargetDiscoveryContext<AccountAuthenticationDetails<ServicePrincipalAccount>>(scope,
-                    authenticationDetails);
+                new TargetDiscoveryContext<AccountAuthenticationDetails<AzureServicePrincipalAccount>>(scope,
+                                                                                                       authenticationDetails);
 
             ExecuteDiscoveryCommandAndVerifyResult(targetDiscoveryContext);
 

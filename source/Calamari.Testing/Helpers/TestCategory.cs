@@ -8,6 +8,8 @@ namespace Calamari.Testing.Helpers
         {
             public const string FSharp = "fsharp";
 
+            public const string DotnetScript = "dotnet-script";
+            
             public const string ScriptCS = "scriptcs";
         }
 

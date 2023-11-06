@@ -5,8 +5,11 @@ using Azure;
 using Azure.ResourceManager.AppService;
 using Azure.ResourceManager.Resources;
 using Calamari.AzureAppService.Azure;
+using Calamari.CloudAccounts;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Pipeline;
+using Octopus.CoreUtilities.Extensions;
+using AccountVariables = Calamari.AzureAppService.Azure.AccountVariables;
 
 namespace Calamari.AzureAppService
 {
@@ -19,7 +22,7 @@ namespace Calamari.AzureAppService
         }
     }
 
-    class HealthCheckBehaviour: IDeployBehaviour
+    class HealthCheckBehaviour : IDeployBehaviour
     {
         public bool IsEnabled(RunningDeployment context)
         {
@@ -28,7 +31,8 @@ namespace Calamari.AzureAppService
 
         public Task Execute(RunningDeployment context)
         {
-            var account = ServicePrincipalAccount.CreateFromKnownVariables(context.Variables);
+            var hasJwt = !context.Variables.Get(AccountVariables.Jwt).IsNullOrEmpty();
+            var account = hasJwt ? (IAzureAccount)new AzureOidcAccount(context.Variables) : new AzureServicePrincipalAccount(context.Variables);
 
             var resourceGroupName = context.Variables.Get(SpecialVariables.Action.Azure.ResourceGroupName);
             var webAppName = context.Variables.Get(SpecialVariables.Action.Azure.WebAppName);
@@ -36,21 +40,15 @@ namespace Calamari.AzureAppService
             return ConfirmWebAppExists(account, resourceGroupName, webAppName);
         }
 
-        private async Task ConfirmWebAppExists(ServicePrincipalAccount servicePrincipal, string resourceGroupName, string siteAndSlotName)
+        private async Task ConfirmWebAppExists(IAzureAccount azureAccount, string resourceGroupName, string siteAndSlotName)
         {
-            var client = servicePrincipal.CreateArmClient();
-            var subscription = await client.GetDefaultSubscriptionAsync();
-            var resourceGroups = subscription.GetResourceGroups();
+            var client = azureAccount.CreateArmClient();
 
-            try
-            {
-                ResourceGroupResource resourceGroup = await resourceGroups.GetAsync(resourceGroupName);
-                _ = await resourceGroup.GetWebSiteAsync(siteAndSlotName);
-            }
-            catch (RequestFailedException rfe) when (rfe.Status == 404)
-            {
-                throw new Exception($"Could not find site {siteAndSlotName} in resource group {resourceGroupName}, using Service Principal with subscription {servicePrincipal.SubscriptionNumber}", rfe);
-            }
+            var resourceGroupResource = client.GetResourceGroupResource(ResourceGroupResource.CreateResourceIdentifier(azureAccount.SubscriptionNumber, resourceGroupName));
+
+            //if the website doesn't exist, throw
+            if (!await resourceGroupResource.GetWebSites().ExistsAsync(siteAndSlotName))
+                throw new Exception($"Could not find site {siteAndSlotName} in resource group {resourceGroupName}, using Service Principal with subscription {azureAccount.SubscriptionNumber}");
         }
     }
 }

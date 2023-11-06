@@ -26,7 +26,7 @@ namespace Calamari.Common.Features.Deployment.Journal
 
         string? JournalPath => variables.Get(TentacleVariables.Agent.JournalPath);
 
-        public void AddJournalEntry(JournalEntry entry)
+        internal void AddJournalEntry(JournalEntry entry)
         {
             using (semaphore.Acquire(SemaphoreName, "Another process is using the deployment journal"))
             {

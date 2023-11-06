@@ -34,7 +34,7 @@ namespace Calamari.AzureAppService.Tests
             // Arrange
             var variables = new CalamariVariables();
             var context = new RunningDeployment(variables);
-            context.Variables.Add("Octopus.TargetDiscovery.Context", "bogus json");
+            context.Variables.Add("Octopus.TargetDiscovery.Context", @"{ authentication: { authenticationMethod: ""ServicePrincipal""}}");
             var log = new InMemoryLog();
             var sut = new TargetDiscoveryBehaviour(log);
 
@@ -43,6 +43,24 @@ namespace Calamari.AzureAppService.Tests
 
             // Assert
             log.StandardOut.Should().Contain(line => line.Contains("Target discovery context from variable Octopus.TargetDiscovery.Context is in wrong format"));
+            log.StandardOut.Should().Contain(line => line.Contains("Aborting target discovery."));
+        }
+
+        [Test]
+        public async Task Exectute_LogsError_WhenContextIsInIncorrectFormat_AuthenticationMethod()
+        {
+            // Arrange
+            var variables = new CalamariVariables();
+            var context = new RunningDeployment(variables);
+            context.Variables.Add("Octopus.TargetDiscovery.Context", "bogus json");
+            var log = new InMemoryLog();
+            var sut = new TargetDiscoveryBehaviour(log);
+
+            // Act
+            await sut.Execute(context);
+
+            // Assert
+            log.StandardOut.Should().Contain(line => line.Contains("Could not read authentication method from target discovery context, Octopus.TargetDiscovery.Context is in wrong format, Unexpected character encountered while parsing value: b. Path '', line 0, position 0."));
             log.StandardOut.Should().Contain(line => line.Contains("Aborting target discovery."));
         }
 

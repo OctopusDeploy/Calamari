@@ -142,7 +142,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
         [Test]
         [Category(TestCategory.ScriptingSupport.FSharp)]
-        [Category(TestCategory.ScriptingSupport.ScriptCS)]
+        [Category(TestCategory.ScriptingSupport.DotnetScript)]
         [RequiresMonoVersion423OrAbove] //Bug in mono < 4.2.3 https://bugzilla.xamarin.com/show_bug.cgi?id=19426
         public void ShouldInvokeDeployFailedOnError()
         {
@@ -287,6 +287,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
+        [RequiresNonMono]
         public void ShouldDeployInParallel()
         {
             var locker = new object();

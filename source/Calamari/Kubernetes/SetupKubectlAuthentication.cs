@@ -95,8 +95,9 @@ namespace Calamari.Kubernetes
 
             var isUsingGoogleCloudAuth = accountType == "GoogleCloudAccount" || useVmServiceAccount;
             var isUsingAzureServicePrincipalAuth = accountType == "AzureServicePrincipal";
+            var isUsingAzureOidc = accountType == "AzureOidc";
 
-            if (!isUsingAzureServicePrincipalAuth && !isUsingGoogleCloudAuth && string.IsNullOrEmpty(clusterUrl))
+            if (!isUsingAzureServicePrincipalAuth && !isUsingAzureOidc && !isUsingGoogleCloudAuth && string.IsNullOrEmpty(clusterUrl))
             {
                 log.Error("Kubernetes cluster URL is missing");
                 return false;
@@ -146,7 +147,7 @@ namespace Calamari.Kubernetes
                 }
             }
 
-            if (isUsingAzureServicePrincipalAuth)
+            if (isUsingAzureServicePrincipalAuth || isUsingAzureOidc)
             {
                 var azureCli = new AzureCli(log, commandLineRunner, workingDirectory, environmentVars);
                 var kubeloginCli = new KubeLogin(log, commandLineRunner, workingDirectory, environmentVars);

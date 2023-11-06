@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -10,8 +10,8 @@ namespace Calamari.Common.Features.Scripting.ScriptCS
     public class ScriptCSScriptExecutor : ScriptExecutor
     {
         protected override IEnumerable<ScriptExecution> PrepareExecution(Script script,
-            IVariables variables,
-            Dictionary<string, string>? environmentVars = null)
+                                                                         IVariables variables,
+                                                                         Dictionary<string, string>? environmentVars = null)
         {
             var workingDirectory = Path.GetDirectoryName(script.File);
             var executable = ScriptCSBootstrapper.FindExecutable();
@@ -20,13 +20,13 @@ namespace Calamari.Common.Features.Scripting.ScriptCS
             var arguments = ScriptCSBootstrapper.FormatCommandArguments(bootstrapFile, script.Parameters);
 
             yield return new ScriptExecution(
-                new CommandLineInvocation(executable, arguments)
-                {
-                    WorkingDirectory = workingDirectory,
-                    EnvironmentVars = environmentVars
-                },
-                otherTemporaryFiles.Concat(new[] { bootstrapFile, configurationFile })
-            );
+                                             new CommandLineInvocation(executable, arguments)
+                                             {
+                                                 WorkingDirectory = workingDirectory,
+                                                 EnvironmentVars = environmentVars
+                                             },
+                                             otherTemporaryFiles.Concat(new[] { bootstrapFile, configurationFile })
+                                            );
         }
     }
 }

@@ -1,9 +1,11 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Calamari.AzureAppService.Azure;
+using Calamari.CloudAccounts;
 using Microsoft.Azure.Management.AppService.Fluent;
 using Microsoft.Azure.Management.AppService.Fluent.Models;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Authentication;
@@ -22,8 +24,10 @@ namespace Calamari.AzureAppService
 
         public string PublishUrl { get; set; }
         
-        public static async Task<PublishingProfile> GetPublishingProfile(TargetSite targetSite,
-            ServicePrincipalAccount account)
+        public string GetBasicAuthCredentials()
+            => Convert.ToBase64String(Encoding.ASCII.GetBytes($"{Username}:{Password}"));
+        
+        public static async Task<PublishingProfile> GetPublishingProfile(AzureTargetSite targetSite, IAzureAccount account)
         {
             string mgmtEndpoint = account.ResourceManagementEndpointBaseUri;
             var token = new TokenCredentials(await Auth.GetAuthTokenAsync(account));
@@ -57,19 +61,26 @@ namespace Calamari.AzureAppService
                     targetSite.Site,
                     options);
 
-            using var streamReader = new StreamReader(publishProfileStream);
+            return await ParseXml(publishProfileStream);
+        }
+        
+        public static async Task<PublishingProfile> ParseXml(Stream publishingProfileXmlStream)
+        {
+            using var streamReader = new StreamReader(publishingProfileXmlStream);
             var document = XDocument.Parse(await streamReader.ReadToEndAsync());
 
             var profile = (from el in document.Descendants("publishProfile")
-                where string.Compare(el.Attribute("publishMethod")?.Value, "MSDeploy",
-                    StringComparison.OrdinalIgnoreCase) == 0
-                select new PublishingProfile
-                {
-                    PublishUrl = $"https://{el.Attribute("publishUrl")?.Value}",
-                    Username = el.Attribute("userName")?.Value,
-                    Password = el.Attribute("userPWD")?.Value,
-                    Site = el.Attribute("msdeploySite")?.Value
-                }).FirstOrDefault();
+                           where string.Compare(el.Attribute("publishMethod")?.Value,
+                                                "MSDeploy",
+                                                StringComparison.OrdinalIgnoreCase)
+                                 == 0
+                           select new PublishingProfile
+                           {
+                               PublishUrl = $"https://{el.Attribute("publishUrl")?.Value}",
+                               Username = el.Attribute("userName")?.Value,
+                               Password = el.Attribute("userPWD")?.Value,
+                               Site = el.Attribute("msdeploySite")?.Value
+                           }).FirstOrDefault();
 
             if (profile == null) throw new Exception("Failed to retrieve publishing profile.");
 
