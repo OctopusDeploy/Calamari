@@ -52,13 +52,14 @@ namespace Calamari.Kubernetes
                 environmentVars[proxyVariable.Key] = proxyVariable.Value;
             }
 
-            //make sure Kubectl exists and can be run
+            // Make sure Kubectl exists and can be run
             if (!kubectl.TrySetKubectl())
             {
                 return errorResult;
             }
 
-            //if we are running inside a kubernetes cluster, then we can rely on using the service account inside the pod for authentication
+            // If we are running on a Kubernetes Tentacle Target,
+            // then we can rely on using the service account inside the pod for authentication.
             if (variables.Get("Octopus.Machine.DeploymentTargetType") == KubernetesTentacleTargetTypeId)
             {
                 log.Info("Running inside Kubernetes cluster, using pod service account for authentication");
