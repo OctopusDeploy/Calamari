@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Calamari.AzureAppService.Azure;
 using Calamari.AzureAppService.Json;
@@ -18,16 +19,19 @@ using Newtonsoft.Json;
 using Octopus.CoreUtilities.Extensions;
 using AccountVariables = Calamari.AzureAppService.Azure.AccountVariables;
 
-namespace Calamari.AzureAppService.Behaviors
+namespace Calamari.AzureAppService.Behaviors.Legacy
 {
     class LegacyAzureAppServiceSettingsBehaviour : IDeployBehaviour
     {
-        private ILog Log { get; }
+        readonly IAzureAuthTokenService azureAuthTokenService;
 
-        public LegacyAzureAppServiceSettingsBehaviour(ILog log)
+        public LegacyAzureAppServiceSettingsBehaviour(IAzureAuthTokenService azureAuthTokenService, ILog log)
         {
+            this.azureAuthTokenService = azureAuthTokenService;
             Log = log;
         }
+        
+        ILog Log { get; }
 
         public bool IsEnabled(RunningDeployment context)
         {
@@ -58,7 +62,7 @@ namespace Calamari.AzureAppService.Behaviors
 
             var targetSite = new AzureTargetSite(account.SubscriptionNumber, resourceGroupName, webAppName, slotName);
 
-            string token = await Auth.GetAuthTokenAsync(account);
+            string token = await azureAuthTokenService.GetAuthorizationToken(account, CancellationToken.None);
 
             var webAppClient = new WebSiteManagementClient(new Uri(account.ResourceManagementEndpointBaseUri),
                                                            new TokenCredentials(token))

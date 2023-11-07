@@ -30,11 +30,13 @@ namespace Calamari.AzureAppService.Behaviors
 {
     internal class AzureAppServiceZipDeployBehaviour : IDeployBehaviour
     {
+        readonly IPublishingProfileService publishingProfileService;
         static readonly TimeSpan PollingTimeout = TimeSpan.FromMinutes(3);
         static readonly TimeoutPolicy<HttpResponseMessage> AsyncZipDeployTimeoutPolicy = Policy.TimeoutAsync<HttpResponseMessage>(PollingTimeout, TimeoutStrategy.Optimistic);
 
-        public AzureAppServiceZipDeployBehaviour(ILog log)
+        public AzureAppServiceZipDeployBehaviour(IPublishingProfileService publishingProfileService, ILog log)
         {
+            this.publishingProfileService = publishingProfileService;
             Log = log;
         }
 
@@ -140,7 +142,7 @@ namespace Calamari.AzureAppService.Behaviors
 
             Log.Verbose($"Retrieving publishing profile for App Service to determine correct deployment endpoint.");
             using var publishingProfileXmlStream = await armClient.GetPublishingProfileXmlWithSecrets(targetSite);
-            var publishingProfile = await PublishingProfile.ParseXml(publishingProfileXmlStream);
+            var publishingProfile = await publishingProfileService.GetPublishingProfileFromXml(publishingProfileXmlStream);
 
             Log.Verbose($"Using deployment endpoint '{publishingProfile.PublishUrl}' from publishing profile.");
 

@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Calamari.AzureAppService.Azure;
+using Calamari.CloudAccounts;
 using Calamari.Common.Commands;
 using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 
-namespace Calamari.AzureAppService.Behaviors
+namespace Calamari.AzureAppService.Behaviors.Legacy
 {
     public class LegacyAppDeployBehaviour : IDeployBehaviour
     {
@@ -15,11 +16,16 @@ namespace Calamari.AzureAppService.Behaviors
 
         ILog Log { get; }
 
-        public LegacyAppDeployBehaviour(ILog log)
+        public LegacyAppDeployBehaviour(
+            IAzureClientFactory azureClientFactory,
+            IPublishingProfileService publishingProfileService,
+            IBasicAuthService basicAuthService,
+            IAzureAuthTokenService azureAuthTokenService,
+            ILog log)
         {
             Log = log;
-            containerBehaviour = new LegacyAzureAppServiceDeployContainerBehavior(log);
-            appServiceBehaviour = new LegacyAzureAppServiceBehaviour(log);
+            containerBehaviour = new LegacyAzureAppServiceDeployContainerBehavior(azureAuthTokenService, log);
+            appServiceBehaviour = new LegacyAzureAppServiceBehaviour(azureClientFactory, publishingProfileService, basicAuthService, azureAuthTokenService, log);
         }
 
         public bool IsEnabled(RunningDeployment context) => !FeatureToggle.ModernAzureAppServiceSdkFeatureToggle.IsEnabled(context.Variables);

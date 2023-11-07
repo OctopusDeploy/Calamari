@@ -1,7 +1,13 @@
-﻿using Azure.Identity;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using Azure.Identity;
 using Azure.ResourceManager.Resources;
 using Azure.ResourceManager.Resources.Models;
+using Calamari.AzureAppService.Azure;
 using Calamari.AzureAppService.Behaviors;
+using Calamari.CloudAccounts;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Discovery;
 using Calamari.Common.Plumbing.Variables;
@@ -12,16 +18,10 @@ using Microsoft.Azure.Management.WebSites;
 using Microsoft.Azure.Management.WebSites.Models;
 using Microsoft.Rest;
 using NUnit.Framework;
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-using Calamari.AzureAppService.Azure;
-using Calamari.CloudAccounts;
 using Polly.Retry;
 using AccountVariables = Calamari.AzureAppService.Azure.AccountVariables;
 
-namespace Calamari.AzureAppService.Tests
+namespace Calamari.AzureAppService.Tests.Legacy
 {
     [TestFixture]
     public class LegacyTargetDiscoveryBehaviourIntegrationTestFixture
@@ -65,7 +65,16 @@ namespace Calamari.AzureAppService.Tests
             subscriptionId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionId);
             var resourceGroupLocation = Environment.GetEnvironmentVariable("AZURE_NEW_RESOURCE_REGION") ?? "eastus";
 
-            authToken = await AzureServicePrincipalAccountExtensions.GetAuthorizationToken(tenantId, clientId, clientSecret, resourceManagementEndpointBaseUri, activeDirectoryEndpointBaseUri);
+            var account = new AzureServicePrincipalAccount(
+                                                           subscriptionId,
+                                                           clientId,
+                                                           tenantId,
+                                                           clientSecret,
+                                                           "",
+                                                           resourceManagementEndpointBaseUri,
+                                                           activeDirectoryEndpointBaseUri);
+
+            authToken = await new AzureAuthTokenService().GetAuthorizationToken(account, CancellationToken.None);
 
             var resourcesClient = new ResourcesManagementClient(subscriptionId,
                 new ClientSecretCredential(tenantId, clientId, clientSecret));

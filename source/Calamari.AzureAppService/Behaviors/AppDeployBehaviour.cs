@@ -15,11 +15,11 @@ namespace Calamari.AzureAppService.Behaviors
 
         ILog Log { get; }
 
-        public AppDeployBehaviour(ILog log)
+        public AppDeployBehaviour(IPublishingProfileService publishingProfileService, ILog log)
         {
             Log = log;
             containerBehaviour = new AzureAppServiceContainerDeployBehaviour(log);
-            zipDeployBehaviour = new AzureAppServiceZipDeployBehaviour(log);
+            zipDeployBehaviour = new AzureAppServiceZipDeployBehaviour(publishingProfileService, log);
         }
 
         public bool IsEnabled(RunningDeployment context) => FeatureToggle.ModernAzureAppServiceSdkFeatureToggle.IsEnabled(context.Variables);

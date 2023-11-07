@@ -23,12 +23,18 @@ namespace Calamari.AzureResourceGroup
     {
         readonly TemplateService templateService;
         readonly IResourceGroupTemplateNormalizer parameterNormalizer;
+        readonly IAzureAuthTokenService azureAuthTokenService;
         readonly ILog log;
 
-        public DeployAzureResourceGroupBehaviour(TemplateService templateService, IResourceGroupTemplateNormalizer parameterNormalizer, ILog log)
+        public DeployAzureResourceGroupBehaviour(
+            TemplateService templateService,
+            IResourceGroupTemplateNormalizer parameterNormalizer,
+            IAzureAuthTokenService azureAuthTokenService,
+            ILog log)
         {
             this.templateService = templateService;
             this.parameterNormalizer = parameterNormalizer;
+            this.azureAuthTokenService = azureAuthTokenService;
             this.log = log;
         }
 
@@ -79,8 +85,8 @@ namespace Calamari.AzureResourceGroup
             Func<Task<IResourceManagementClient>> createArmClient = async () =>
                                                               {
                                                                   var token = !jwt.IsNullOrEmpty()
-                                                                      ? await new AzureOidcAccount(variables).Credentials(CancellationToken.None)
-                                                                      : await new AzureServicePrincipalAccount(variables).Credentials();
+                                                                      ? await azureAuthTokenService.GetCredentials(new AzureOidcAccount(variables), CancellationToken.None)
+                                                                      : await azureAuthTokenService.GetCredentials(new AzureServicePrincipalAccount(variables), CancellationToken.None);
                                                                   
                                                                   var resourcesClient = new ResourceManagementClient(token)
                                                                   {

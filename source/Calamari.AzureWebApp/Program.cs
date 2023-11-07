@@ -21,6 +21,7 @@ namespace Calamari.AzureWebApp
         {
             base.ConfigureContainer(builder, options);
             builder.RegisterType<ResourceManagerPublishProfileProvider>().SingleInstance();
+            builder.RegisterType<AzureWebSiteManagementClientFactory>().As<IAzureWebSiteManagementClientFactory>().InstancePerDependency();
         }
 
         protected override IEnumerable<Assembly> GetProgramAssembliesToRegister()

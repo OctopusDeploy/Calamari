@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Calamari.CloudAccounts;
 using Calamari.Common.Commands;
@@ -11,9 +12,10 @@ namespace Calamari.AzureWebApp
 {
     class LogAzureWebAppDetailsBehaviour : IDeployBehaviour
     {
+        readonly IAzureWebSiteManagementClientFactory azureWebSiteManagementClientFactory;
         readonly ILog log;
 
-        Dictionary<string, string> portalLinks = new Dictionary<string, string>
+        readonly Dictionary<string, string> portalLinks = new Dictionary<string, string>
         {
             { "AzureGlobalCloud", "portal.azure.com" },
             { "AzureChinaCloud", "portal.azure.cn" },
@@ -21,8 +23,9 @@ namespace Calamari.AzureWebApp
             { "AzureGermanCloud", "portal.microsoftazure.de" }
         };
 
-        public LogAzureWebAppDetailsBehaviour(ILog log)
+        public LogAzureWebAppDetailsBehaviour(IAzureWebSiteManagementClientFactory azureWebSiteManagementClientFactory, ILog log)
         {
+            this.azureWebSiteManagementClientFactory = azureWebSiteManagementClientFactory;
             this.log = log;
         }
 
@@ -40,18 +43,18 @@ namespace Calamari.AzureWebApp
                 var siteAndSlotName = variables.Get(SpecialVariables.Action.Azure.WebAppName);
                 var azureEnvironment = variables.Get(SpecialVariables.Action.Azure.Environment);
 
-                WebSiteManagementClient client;
+                IAzureAccount account;
                 var hasJwt = !variables.Get(AzureAccountVariables.Jwt).IsNullOrEmpty();
                 if (hasJwt)
                 {
-                    var account = new AzureOidcAccount(variables);
-                    client = await account.CreateWebSiteManagementClient();
+                    account = new AzureOidcAccount(variables);
                 }
                 else
                 {
-                    var account = new AzureServicePrincipalAccount(variables);
-                    client = await account.CreateWebSiteManagementClient();
+                    account = new AzureServicePrincipalAccount(variables);
                 }
+
+                var client = await azureWebSiteManagementClientFactory.CreateWebSiteManagementClient(account, CancellationToken.None);
 
                 var site = await client.WebApps.GetAsync(resourceGroupName, siteAndSlotName);
                 if (site != null)
