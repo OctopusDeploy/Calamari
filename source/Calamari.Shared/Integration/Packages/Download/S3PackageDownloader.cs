@@ -75,7 +75,7 @@ namespace Calamari.Integration.Packages.Download
             fileSystem.EnsureDirectoryExists(cacheDirectory);
 
             Log.VerboseFormat($"Checking package cache for package {packageId} v{version.ToString()}");
-            var downloaded = CheckFileDownloaded(packageId, version, forcePackageDownload, cacheDirectory, knownFileExtensions);
+            var downloaded = GetFileFromCache(packageId, version, forcePackageDownload, cacheDirectory, knownFileExtensions);
             if (downloaded != null)
             {
                 return downloaded;
@@ -108,10 +108,11 @@ namespace Calamari.Integration.Packages.Download
                         var fullFileName = !foundFilePath.IsNullOrEmpty() ? foundFilePath : throw new Exception($"Unable to download package {packageId} {version}: file not found");
 
                         var knownExtension = knownFileExtensions.FirstOrDefault(extension => fullFileName.EndsWith(extension))
+                                             ?? Path.GetExtension(fullFileName)
                                              ?? Extension;
 
                         // Now we know the extension check for the package in the local cache
-                        downloaded = CheckFileDownloaded(packageId, version, forcePackageDownload, cacheDirectory, new string[] { knownExtension });
+                        downloaded = GetFileFromCache(packageId, version, forcePackageDownload, cacheDirectory, new string[] { knownExtension });
                         if (downloaded != null)
                         {
                             return downloaded;
@@ -155,7 +156,7 @@ namespace Calamari.Integration.Packages.Download
             return string.IsNullOrEmpty(feedUsername) ? new AmazonS3Client(config) : new AmazonS3Client(new BasicAWSCredentials(feedUsername, feedPassword), config);
         }
 
-        PackagePhysicalFileMetadata? CheckFileDownloaded(string packageId,
+        PackagePhysicalFileMetadata? GetFileFromCache(string packageId,
                                                          IVersion version,
                                                          bool forcePackageDownload,
                                                          string cacheDirectory,
