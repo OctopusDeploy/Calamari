@@ -74,14 +74,10 @@ namespace Calamari.Integration.Packages.Download
             var cacheDirectory = PackageDownloaderUtils.GetPackageRoot(feedId);
             fileSystem.EnsureDirectoryExists(cacheDirectory);
 
-            if (!forcePackageDownload)
+            var downloaded = CheckFileDownloaded(packageId, version, forcePackageDownload, cacheDirectory, knownFileExtensions);
+            if (downloaded != null)
             {
-                var downloaded = SourceFromCache(packageId, version, cacheDirectory);
-                if (downloaded != null)
-                {
-                    Log.VerboseFormat("Package was found in cache. No need to download. Using file: '{0}'", downloaded.FullFilePath);
-                    return downloaded;
-                }
+                return downloaded;
             }
 
             int retry = 0;
@@ -113,6 +109,13 @@ namespace Calamari.Integration.Packages.Download
                         var knownExtension = knownFileExtensions.FirstOrDefault(extension => fullFileName.EndsWith(extension))
                                              ?? Path.GetExtension(foundFilePath)
                                              ?? Extension;
+
+                        // Now we know the extension check for the package in the local cache
+                        downloaded = CheckFileDownloaded(packageId, version, forcePackageDownload, cacheDirectory, new string[] { knownExtension });
+                        if (downloaded != null)
+                        {
+                            return downloaded;
+                        }
 
                         var localDownloadName = Path.Combine(cacheDirectory, PackageName.ToCachedFileName(packageId, version, knownExtension));
 
@@ -152,6 +155,21 @@ namespace Calamari.Integration.Packages.Download
             return string.IsNullOrEmpty(feedUsername) ? new AmazonS3Client(config) : new AmazonS3Client(new BasicAWSCredentials(feedUsername, feedPassword), config);
         }
 
+        PackagePhysicalFileMetadata? CheckFileDownloaded(string packageId,
+                                                         IVersion version,
+                                                         bool forcePackageDownload,
+                                                         string cacheDirectory,
+                                                         string[] fileExtensions)
+        {
+            if (forcePackageDownload)
+                return null;
+            var downloaded = SourceFromCache(packageId, version, cacheDirectory, fileExtensions);
+            if (downloaded == null)
+                return null;
+            Log.VerboseFormat("Package was found in cache. No need to download. Using file: '{0}'", downloaded.FullFilePath);
+            return downloaded;
+        }
+
         string GetBucketsRegion(string? feedUsername, string? feedPassword, string bucketName)
         {
             using (var s3Client = GetS3Client(feedUsername, feedPassword))
@@ -177,11 +195,11 @@ namespace Calamari.Integration.Packages.Download
             }
         }
 
-        PackagePhysicalFileMetadata? SourceFromCache(string packageId, IVersion version, string cacheDirectory)
+        PackagePhysicalFileMetadata? SourceFromCache(string packageId, IVersion version, string cacheDirectory, string[] knownExtensions)
         {
             Log.VerboseFormat($"Checking package cache for package {packageId} v{version.ToString()}");
 
-            var files = fileSystem.EnumerateFilesRecursively(cacheDirectory, PackageName.ToSearchPatterns(packageId, version, knownFileExtensions));
+            var files = fileSystem.EnumerateFilesRecursively(cacheDirectory, PackageName.ToSearchPatterns(packageId, version, knownExtensions));
 
             foreach (var file in files)
             {
