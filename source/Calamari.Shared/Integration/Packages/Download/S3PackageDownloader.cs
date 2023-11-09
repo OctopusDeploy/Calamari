@@ -17,7 +17,11 @@ namespace Calamari.Integration.Packages.Download
 {
     public class S3PackageDownloader : IPackageDownloader
     {
-        static string[] knownFileExtensions = { ".zip", ".tar.gz", ".tar.bz2", ".tar.gz", ".tgz", ".tar.bz" };
+        const string Extension = ".zip";
+
+        // first item will be used as the default extension before checking for others
+        static string[] knownFileExtensions = { ".", // try to find a singular file without extension first
+            ".zip", ".tar.gz", ".tar.bz2", ".tar.gz", ".tgz", ".tar.bz" };
 
         const char BucketFileSeparator = '/';
         readonly ILog log;
@@ -87,35 +91,35 @@ namespace Calamari.Integration.Packages.Download
 
                     using (var s3Client = GetS3Client(feedUsername, feedPassword, region))
                     {
-                        bool fileExists = false;
-                        string fileName = string.Empty;
-                        string knownExtension = string.Empty;
-                        for (int i = 0; i < knownFileExtensions.Length && !fileExists; i++)
+                        string? foundFilePath = null;
+                        for (int i = 0; i < knownFileExtensions.Length && foundFilePath == null; i++)
                         {
-                            fileName = BuildFileName(prefix, version.ToString(), knownFileExtensions[i]);
-                            fileExists = FileExistsInBucket(s3Client, bucketName, fileName, CancellationToken.None)
+                            var fileName = BuildFileName(prefix, version.ToString(), knownFileExtensions[i]);
+                            foundFilePath = FindSingleFileInTheBucket(s3Client, bucketName, fileName, CancellationToken.None)
 #if NET40
                                 .Result;
 #else
                                          .GetAwaiter()
                                          .GetResult();
 #endif
-                            if (fileExists)
-                            {
-                                knownExtension = knownFileExtensions[i];
-                            }
                         }
 
-                        if (!fileExists)
+                        var fullFileName = "";
+                        if (foundFilePath != null)
+                        {
+                            fullFileName = foundFilePath;
+                        }
+
+                        if (fullFileName.IsNullOrEmpty())
                             throw new Exception($"Unable to download package {packageId} {version}: file not found");
 
-                        var localDownloadName = Path.Combine(cacheDirectory, PackageName.ToCachedFileName(packageId, version, knownExtension));
+                        var localDownloadName = Path.Combine(cacheDirectory, PackageName.ToCachedFileName(packageId, version, Extension));
 
 #if NET40
-                        var response = s3Client.GetObject(bucketName, fileName);
+                        var response = s3Client.GetObject(bucketName, fullFileName);
                         response.WriteResponseStreamToFile(localDownloadName);
 #else
-                        var response = s3Client.GetObjectAsync(bucketName, fileName).GetAwaiter().GetResult();
+                        var response = s3Client.GetObjectAsync(bucketName, fullFileName).GetAwaiter().GetResult();
                         response.WriteResponseStreamToFileAsync(localDownloadName, false, CancellationToken.None).GetAwaiter().GetResult();
 #endif
                         var packagePhysicalFileMetadata = PackagePhysicalFileMetadata.Build(localDownloadName);
@@ -195,7 +199,7 @@ namespace Calamari.Integration.Packages.Download
             return null;
         }
 
-        async Task<bool> FileExistsInBucket(AmazonS3Client client, string bucketName, string prefix, CancellationToken cancellationToken)
+        async Task<string?> FindSingleFileInTheBucket(AmazonS3Client client, string bucketName, string prefix, CancellationToken cancellationToken)
         {
             var request = new ListObjectsRequest
             {
@@ -208,7 +212,7 @@ namespace Calamari.Integration.Packages.Download
 #else
             var response = await client.ListObjectsAsync(request, cancellationToken);
 #endif
-            return response.S3Objects.Any();
+            return response.S3Objects.Count == 1 ? response.S3Objects[0].Key : null;
         }
     }
 }
