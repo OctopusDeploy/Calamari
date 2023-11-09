@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Amazon;
@@ -20,8 +21,11 @@ namespace Calamari.Integration.Packages.Download
         const string Extension = ".zip";
 
         // first item will be used as the default extension before checking for others
-        static string[] knownFileExtensions = { ".", // try to find a singular file without extension first
-            ".zip", ".tar.gz", ".tar.bz2", ".tar.gz", ".tgz", ".tar.bz" };
+        static string[] knownFileExtensions =
+        {
+            ".", // try to find a singular file without extension first
+            ".zip", ".tar.gz", ".tar.bz2", ".tar.gz", ".tgz", ".tar.bz"
+        };
 
         const char BucketFileSeparator = '/';
         readonly ILog log;
@@ -99,21 +103,18 @@ namespace Calamari.Integration.Packages.Download
 #if NET40
                                 .Result;
 #else
-                                         .GetAwaiter()
-                                         .GetResult();
+                                            .GetAwaiter()
+                                            .GetResult();
 #endif
                         }
 
-                        var fullFileName = "";
-                        if (foundFilePath != null)
-                        {
-                            fullFileName = foundFilePath;
-                        }
+                        var fullFileName = !foundFilePath.IsNullOrEmpty() ? foundFilePath : throw new Exception($"Unable to download package {packageId} {version}: file not found");
 
-                        if (fullFileName.IsNullOrEmpty())
-                            throw new Exception($"Unable to download package {packageId} {version}: file not found");
+                        var knownExtension = knownFileExtensions.FirstOrDefault(extension => fullFileName.EndsWith(extension))
+                                             ?? Path.GetExtension(foundFilePath)
+                                             ?? Extension;
 
-                        var localDownloadName = Path.Combine(cacheDirectory, PackageName.ToCachedFileName(packageId, version, Extension));
+                        var localDownloadName = Path.Combine(cacheDirectory, PackageName.ToCachedFileName(packageId, version, knownExtension));
 
 #if NET40
                         var response = s3Client.GetObject(bucketName, fullFileName);
@@ -147,7 +148,7 @@ namespace Calamari.Integration.Packages.Download
                 AllowAutoRedirect = true,
                 RegionEndpoint = RegionEndpoint.GetBySystemName(endpoint)
             };
-            
+
             return string.IsNullOrEmpty(feedUsername) ? new AmazonS3Client(config) : new AmazonS3Client(new BasicAWSCredentials(feedUsername, feedPassword), config);
         }
 
@@ -158,7 +159,7 @@ namespace Calamari.Integration.Packages.Download
 #if NET40
                 var region = s3Client.GetBucketLocation(bucketName);
 #else
-                 var region = s3Client.GetBucketLocationAsync(bucketName, CancellationToken.None).GetAwaiter().GetResult();
+                var region = s3Client.GetBucketLocationAsync(bucketName, CancellationToken.None).GetAwaiter().GetResult();
 #endif
 
                 string regionString = region.Location.Value;
@@ -171,12 +172,12 @@ namespace Calamari.Integration.Packages.Download
                 {
                     regionString = "eu-west-1";
                 }
-                
+
                 return regionString;
             }
         }
 
-    PackagePhysicalFileMetadata? SourceFromCache(string packageId, IVersion version, string cacheDirectory)
+        PackagePhysicalFileMetadata? SourceFromCache(string packageId, IVersion version, string cacheDirectory)
         {
             Log.VerboseFormat($"Checking package cache for package {packageId} v{version.ToString()}");
 
