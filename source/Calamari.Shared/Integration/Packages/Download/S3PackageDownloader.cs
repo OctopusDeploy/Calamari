@@ -74,6 +74,7 @@ namespace Calamari.Integration.Packages.Download
             var cacheDirectory = PackageDownloaderUtils.GetPackageRoot(feedId);
             fileSystem.EnsureDirectoryExists(cacheDirectory);
 
+            Log.VerboseFormat($"Checking package cache for package {packageId} v{version.ToString()}");
             var downloaded = CheckFileDownloaded(packageId, version, forcePackageDownload, cacheDirectory, knownFileExtensions);
             if (downloaded != null)
             {
@@ -107,7 +108,6 @@ namespace Calamari.Integration.Packages.Download
                         var fullFileName = !foundFilePath.IsNullOrEmpty() ? foundFilePath : throw new Exception($"Unable to download package {packageId} {version}: file not found");
 
                         var knownExtension = knownFileExtensions.FirstOrDefault(extension => fullFileName.EndsWith(extension))
-                                             ?? Path.GetExtension(foundFilePath)
                                              ?? Extension;
 
                         // Now we know the extension check for the package in the local cache
@@ -197,8 +197,6 @@ namespace Calamari.Integration.Packages.Download
 
         PackagePhysicalFileMetadata? SourceFromCache(string packageId, IVersion version, string cacheDirectory, string[] knownExtensions)
         {
-            Log.VerboseFormat($"Checking package cache for package {packageId} v{version.ToString()}");
-
             var files = fileSystem.EnumerateFilesRecursively(cacheDirectory, PackageName.ToSearchPatterns(packageId, version, knownExtensions));
 
             foreach (var file in files)
