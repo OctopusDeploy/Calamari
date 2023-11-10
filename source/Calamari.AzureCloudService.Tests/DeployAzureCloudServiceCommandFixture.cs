@@ -35,7 +35,8 @@ namespace Calamari.AzureCloudService.Tests
             subscriptionId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionId);
             managementCertificate = CreateManagementCertificate(certificate);
             subscriptionCloudCredentials = new CertificateCloudCredentials(subscriptionId, managementCertificate);
-            storageClient = new StorageManagementClient(subscriptionCloudCredentials);
+            var httpClientProxy = new AuthHttpClientFactory().GetHttpClient();
+            storageClient = new StorageManagementClient(subscriptionCloudCredentials, httpClientProxy);
             pathToPackage = TestEnvironment.GetTestPath("Packages", "Octopus.Sample.AzureCloudService.6.0.0.nupkg");
 
             await storageClient.StorageAccounts.CreateAsync(new StorageAccountCreateParameters(storageName, "test")
@@ -59,8 +60,9 @@ namespace Calamari.AzureCloudService.Tests
         {
             var serviceName = $"{nameof(DeployAzureCloudServiceCommandFixture)}-{Guid.NewGuid().ToString("N").Substring(0, 12)}";
             var deploymentSlot = DeploymentSlot.Staging;
+            var httpClientProxy = new AuthHttpClientFactory().GetHttpClient();
 
-            using var client = new ComputeManagementClient(subscriptionCloudCredentials);
+            using var client = new ComputeManagementClient(subscriptionCloudCredentials, httpClientProxy);
             try
             {
                 await client.HostedServices.CreateAsync(new HostedServiceCreateParameters(serviceName, "test") { Location = "West US" });
@@ -110,8 +112,9 @@ namespace Calamari.AzureCloudService.Tests
         public async Task Deploy_Package_To_Stage_And_Swap()
         {
             var serviceName = $"{nameof(DeployAzureCloudServiceCommandFixture)}-{Guid.NewGuid().ToString("N").Substring(0, 12)}";
-
-            using var client = new ComputeManagementClient(subscriptionCloudCredentials);
+            var httpClientProxy = new AuthHttpClientFactory().GetHttpClient();
+            using var client = new ComputeManagementClient(subscriptionCloudCredentials, httpClientProxy);
+            
             try
             {
                 await client.HostedServices.CreateAsync(new HostedServiceCreateParameters(serviceName, "test") { Location = "West US" });
@@ -169,8 +172,8 @@ namespace Calamari.AzureCloudService.Tests
         {
             var serviceName = $"{nameof(DeployAzureCloudServiceCommandFixture)}-{Guid.NewGuid().ToString("N").Substring(0, 12)}";
             var deploymentSlot = DeploymentSlot.Staging;
-
-            using var client = new ComputeManagementClient(subscriptionCloudCredentials);
+            var httpClientProxy = new AuthHttpClientFactory().GetHttpClient();
+            using var client = new ComputeManagementClient(subscriptionCloudCredentials, httpClientProxy);
             try
             {
                 await client.HostedServices.CreateAsync(new HostedServiceCreateParameters(serviceName, "test") { Location = "West US" });

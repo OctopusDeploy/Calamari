@@ -33,7 +33,7 @@ namespace Calamari.AzureAppService.Behaviors
             
             var principalAccount = ServicePrincipalAccount.CreateFromKnownVariables(variables);
             var token = await Auth.GetAuthTokenAsync(principalAccount);
-            var webAppClient = new WebSiteManagementClient(new Uri(principalAccount.ResourceManagementEndpointBaseUri), new TokenCredentials(token))
+            var webAppClient = new WebSiteManagementClient(new Uri(principalAccount.ResourceManagementEndpointBaseUri), new TokenCredentials(token), AuthHttpClientFactory.ProxyClientHandler())
                 {SubscriptionId = principalAccount.SubscriptionNumber};
             
             Log.Info("Performing soft restart of web app");

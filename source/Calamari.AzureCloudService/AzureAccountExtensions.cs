@@ -14,10 +14,11 @@ namespace Calamari.AzureCloudService
 
         public static ComputeManagementClient CreateComputeManagementClient(this AzureAccount account, X509Certificate2 certificate)
         {
+            var httpClientProxy = new AuthHttpClientFactory().GetHttpClient();
             var credentials = account.Credentials(certificate);
             return string.IsNullOrWhiteSpace(account.ServiceManagementEndpointBaseUri)
-                ? new ComputeManagementClient(credentials)
-                : new ComputeManagementClient(credentials, new Uri(account.ServiceManagementEndpointBaseUri));
+                ? new ComputeManagementClient(credentials, httpClientProxy)
+                : new ComputeManagementClient(credentials, new Uri(account.ServiceManagementEndpointBaseUri), httpClientProxy);
         }
     }
 }

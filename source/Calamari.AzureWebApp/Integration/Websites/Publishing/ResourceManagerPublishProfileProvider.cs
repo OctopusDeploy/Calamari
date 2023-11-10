@@ -35,12 +35,12 @@ namespace Calamari.AzureWebApp.Integration.Websites.Publishing
 
             var token = await ServicePrincipal.GetAuthorizationToken(account.TenantId, account.ClientId, account.Password, account.ResourceManagementEndpointBaseUri, account.ActiveDirectoryEndpointBaseUri);
             var baseUri = new Uri(account.ResourceManagementEndpointBaseUri);
-            using (var resourcesClient = new ResourceManagementClient(new TokenCredentials(token))
+            using (var resourcesClient = new ResourceManagementClient(new TokenCredentials(token), AuthHttpClientFactory.ProxyClientHandler())
 			{
                 SubscriptionId = account.SubscriptionNumber,
                 BaseUri = baseUri,
             })
-            using (var webSiteClient = new WebSiteManagementClient(new Uri(account.ResourceManagementEndpointBaseUri), new TokenCredentials(token)) { SubscriptionId = account.SubscriptionNumber })
+            using (var webSiteClient = new WebSiteManagementClient(new Uri(account.ResourceManagementEndpointBaseUri), new TokenCredentials(token), AuthHttpClientFactory.ProxyClientHandler()) { SubscriptionId = account.SubscriptionNumber })
             {
                 webSiteClient.SetRetryPolicy(new RetryPolicy(new HttpStatusCodeErrorDetectionStrategy(), 3));
                 resourcesClient.HttpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);

@@ -56,7 +56,8 @@ namespace Calamari.AzureAppService.Behaviors
             string token = await Auth.GetAuthTokenAsync(principalAccount);
 
             var webAppClient = new WebSiteManagementClient(new Uri(principalAccount.ResourceManagementEndpointBaseUri),
-                new TokenCredentials(token))
+                new TokenCredentials(token),
+                AuthHttpClientFactory.ProxyClientHandler())
             {
                 SubscriptionId = principalAccount.SubscriptionNumber,
                 HttpClient = {BaseAddress = new Uri(principalAccount.ResourceManagementEndpointBaseUri)}
