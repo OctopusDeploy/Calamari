@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Amazon;
@@ -17,7 +18,14 @@ namespace Calamari.Integration.Packages.Download
 {
     public class S3PackageDownloader : IPackageDownloader
     {
-        static string[] knownFileExtensions = { ".zip", ".tar.gz", ".tar.bz2", ".tar.gz", ".tgz", ".tar.bz" };
+        const string Extension = ".zip";
+
+        // first item will be used as the default extension before checking for others
+        static string[] knownFileExtensions =
+        {
+            ".", // try to find a singular file without extension first
+            ".zip", ".tar.gz", ".tar.bz2", ".tar.gz", ".tgz", ".tar.bz"
+        };
 
         const char BucketFileSeparator = '/';
         readonly ILog log;
@@ -66,14 +74,11 @@ namespace Calamari.Integration.Packages.Download
             var cacheDirectory = PackageDownloaderUtils.GetPackageRoot(feedId);
             fileSystem.EnsureDirectoryExists(cacheDirectory);
 
-            if (!forcePackageDownload)
+            Log.VerboseFormat($"Checking package cache for package {packageId} v{version.ToString()}");
+            var downloaded = GetFileFromCache(packageId, version, forcePackageDownload, cacheDirectory, knownFileExtensions);
+            if (downloaded != null)
             {
-                var downloaded = SourceFromCache(packageId, version, cacheDirectory);
-                if (downloaded != null)
-                {
-                    Log.VerboseFormat("Package was found in cache. No need to download. Using file: '{0}'", downloaded.FullFilePath);
-                    return downloaded;
-                }
+                return downloaded;
             }
 
             int retry = 0;
@@ -87,35 +92,39 @@ namespace Calamari.Integration.Packages.Download
 
                     using (var s3Client = GetS3Client(feedUsername, feedPassword, region))
                     {
-                        bool fileExists = false;
-                        string fileName = string.Empty;
-                        string knownExtension = string.Empty;
-                        for (int i = 0; i < knownFileExtensions.Length && !fileExists; i++)
+                        string? foundFilePath = null;
+                        for (int i = 0; i < knownFileExtensions.Length && foundFilePath == null; i++)
                         {
-                            fileName = BuildFileName(prefix, version.ToString(), knownFileExtensions[i]);
-                            fileExists = FileExistsInBucket(s3Client, bucketName, fileName, CancellationToken.None)
+                            var fileName = BuildFileName(prefix, version.ToString(), knownFileExtensions[i]);
+                            foundFilePath = FindSingleFileInTheBucket(s3Client, bucketName, fileName, CancellationToken.None)
 #if NET40
                                 .Result;
 #else
-                                         .GetAwaiter()
-                                         .GetResult();
+                                            .GetAwaiter()
+                                            .GetResult();
 #endif
-                            if (fileExists)
-                            {
-                                knownExtension = knownFileExtensions[i];
-                            }
                         }
 
-                        if (!fileExists)
-                            throw new Exception($"Unable to download package {packageId} {version}: file not found");
+                        var fullFileName = !foundFilePath.IsNullOrEmpty() ? foundFilePath : throw new Exception($"Unable to download package {packageId} {version}: file not found");
+
+                        var knownExtension = knownFileExtensions.FirstOrDefault(extension => fullFileName.EndsWith(extension))
+                                             ?? Path.GetExtension(fullFileName)
+                                             ?? Extension;
+
+                        // Now we know the extension check for the package in the local cache
+                        downloaded = GetFileFromCache(packageId, version, forcePackageDownload, cacheDirectory, new string[] { knownExtension });
+                        if (downloaded != null)
+                        {
+                            return downloaded;
+                        }
 
                         var localDownloadName = Path.Combine(cacheDirectory, PackageName.ToCachedFileName(packageId, version, knownExtension));
 
 #if NET40
-                        var response = s3Client.GetObject(bucketName, fileName);
+                        var response = s3Client.GetObject(bucketName, fullFileName);
                         response.WriteResponseStreamToFile(localDownloadName);
 #else
-                        var response = s3Client.GetObjectAsync(bucketName, fileName).GetAwaiter().GetResult();
+                        var response = s3Client.GetObjectAsync(bucketName, fullFileName).GetAwaiter().GetResult();
                         response.WriteResponseStreamToFileAsync(localDownloadName, false, CancellationToken.None).GetAwaiter().GetResult();
 #endif
                         var packagePhysicalFileMetadata = PackagePhysicalFileMetadata.Build(localDownloadName);
@@ -143,8 +152,23 @@ namespace Calamari.Integration.Packages.Download
                 AllowAutoRedirect = true,
                 RegionEndpoint = RegionEndpoint.GetBySystemName(endpoint)
             };
-            
+
             return string.IsNullOrEmpty(feedUsername) ? new AmazonS3Client(config) : new AmazonS3Client(new BasicAWSCredentials(feedUsername, feedPassword), config);
+        }
+
+        PackagePhysicalFileMetadata? GetFileFromCache(string packageId,
+                                                         IVersion version,
+                                                         bool forcePackageDownload,
+                                                         string cacheDirectory,
+                                                         string[] fileExtensions)
+        {
+            if (forcePackageDownload)
+                return null;
+            var downloaded = SourceFromCache(packageId, version, cacheDirectory, fileExtensions);
+            if (downloaded == null)
+                return null;
+            Log.VerboseFormat("Package was found in cache. No need to download. Using file: '{0}'", downloaded.FullFilePath);
+            return downloaded;
         }
 
         string GetBucketsRegion(string? feedUsername, string? feedPassword, string bucketName)
@@ -154,7 +178,7 @@ namespace Calamari.Integration.Packages.Download
 #if NET40
                 var region = s3Client.GetBucketLocation(bucketName);
 #else
-                 var region = s3Client.GetBucketLocationAsync(bucketName, CancellationToken.None).GetAwaiter().GetResult();
+                var region = s3Client.GetBucketLocationAsync(bucketName, CancellationToken.None).GetAwaiter().GetResult();
 #endif
 
                 string regionString = region.Location.Value;
@@ -167,16 +191,14 @@ namespace Calamari.Integration.Packages.Download
                 {
                     regionString = "eu-west-1";
                 }
-                
+
                 return regionString;
             }
         }
 
-    PackagePhysicalFileMetadata? SourceFromCache(string packageId, IVersion version, string cacheDirectory)
+        PackagePhysicalFileMetadata? SourceFromCache(string packageId, IVersion version, string cacheDirectory, string[] knownExtensions)
         {
-            Log.VerboseFormat($"Checking package cache for package {packageId} v{version.ToString()}");
-
-            var files = fileSystem.EnumerateFilesRecursively(cacheDirectory, PackageName.ToSearchPatterns(packageId, version, knownFileExtensions));
+            var files = fileSystem.EnumerateFilesRecursively(cacheDirectory, PackageName.ToSearchPatterns(packageId, version, knownExtensions));
 
             foreach (var file in files)
             {
@@ -195,7 +217,7 @@ namespace Calamari.Integration.Packages.Download
             return null;
         }
 
-        async Task<bool> FileExistsInBucket(AmazonS3Client client, string bucketName, string prefix, CancellationToken cancellationToken)
+        async Task<string?> FindSingleFileInTheBucket(AmazonS3Client client, string bucketName, string prefix, CancellationToken cancellationToken)
         {
             var request = new ListObjectsRequest
             {
@@ -208,7 +230,7 @@ namespace Calamari.Integration.Packages.Download
 #else
             var response = await client.ListObjectsAsync(request, cancellationToken);
 #endif
-            return response.S3Objects.Any();
+            return response.S3Objects.Count == 1 ? response.S3Objects[0].Key : null;
         }
     }
 }
