@@ -1,5 +1,4 @@
 using System;
-using System.Threading;
 using System.Threading.Tasks;
 using Calamari.AzureAppService.Azure;
 using Calamari.CloudAccounts;
@@ -12,16 +11,14 @@ using Microsoft.Rest;
 using Octopus.CoreUtilities.Extensions;
 using AccountVariables = Calamari.AzureAppService.Azure.AccountVariables;
 
-namespace Calamari.AzureAppService.Behaviors.Legacy
+namespace Calamari.AzureAppService.Behaviors
 {
     public class LegacyRestartAzureWebAppBehaviour : IDeployBehaviour
     {
-        readonly IAzureAuthTokenService azureAuthTokenService;
         ILog Log { get; }
 
-        public LegacyRestartAzureWebAppBehaviour(IAzureAuthTokenService azureAuthTokenService, ILog log)
+        public LegacyRestartAzureWebAppBehaviour(ILog log)
         {
-            this.azureAuthTokenService = azureAuthTokenService;
             Log = log;
         }
 
@@ -37,7 +34,7 @@ namespace Calamari.AzureAppService.Behaviors.Legacy
             var hasJwt = !variables.Get(AccountVariables.Jwt).IsNullOrEmpty();
             var account = hasJwt ? (IAzureAccount)new AzureOidcAccount(variables) : new AzureServicePrincipalAccount(variables);
 
-            var token = await azureAuthTokenService.GetAuthorizationToken(account, CancellationToken.None);
+            var token = await Auth.GetAuthTokenAsync(account);
             var webAppClient = new WebSiteManagementClient(new Uri(account.ResourceManagementEndpointBaseUri), new TokenCredentials(token))
                 {SubscriptionId = account.SubscriptionNumber};
 

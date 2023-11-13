@@ -1,13 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net.Http;
-using System.Threading;
+using System.Text;
 using System.Threading.Tasks;
 using Azure.Identity;
 using Azure.ResourceManager.Resources;
 using Azure.ResourceManager.Resources.Models;
+using Calamari.AzureAppService;
 using Calamari.AzureAppService.Azure;
 using Calamari.AzureAppService.Behaviors;
+using Calamari.AzureAppService.Json;
 using Calamari.CloudAccounts;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Variables;
@@ -16,12 +19,15 @@ using Calamari.Testing.Helpers;
 using FluentAssertions;
 using Microsoft.Azure.Management.WebSites;
 using Microsoft.Azure.Management.WebSites.Models;
+using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using Microsoft.Rest;
+using Newtonsoft.Json;
 using NUnit.Framework;
+using Octostache;
 using Polly.Retry;
 using AccountVariables = Calamari.AzureAppService.Azure.AccountVariables;
 
-namespace Calamari.AzureAppService.Tests.Legacy
+namespace Calamari.AzureAppService.Tests
 {
     [TestFixture]
     public class LegacyAzureAppServiceDeployContainerBehaviorFixture
@@ -54,22 +60,8 @@ namespace Calamari.AzureAppService.Tests.Legacy
 
             // For some reason we are having issues creating these linux resources on Standard in EastUS
             var resourceGroupLocation = Environment.GetEnvironmentVariable("AZURE_NEW_RESOURCE_REGION") ?? "westus2";
-            
-            var resourceManagementEndpointBaseUri =
-                Environment.GetEnvironmentVariable(AccountVariables.ResourceManagementEndPoint) ?? DefaultVariables.ResourceManagementEndpoint;
-            var activeDirectoryEndpointBaseUri =
-                Environment.GetEnvironmentVariable(AccountVariables.ActiveDirectoryEndPoint) ?? DefaultVariables.ActiveDirectoryEndpoint;
 
-            var account = new AzureServicePrincipalAccount(
-                                                           subscriptionId,
-                                                           clientId,
-                                                           tenantId,
-                                                           clientSecret,
-                                                           "",
-                                                           resourceManagementEndpointBaseUri,
-                                                           activeDirectoryEndpointBaseUri);
-
-            authToken = await new AzureAuthTokenService().GetAuthorizationToken(account, CancellationToken.None);
+            authToken = await GetAuthToken(tenantId, clientId, clientSecret);
 
             var resourcesClient = new ResourcesManagementClient(subscriptionId,
                                                                 new ClientSecretCredential(tenantId, clientId, clientSecret));
@@ -141,7 +133,7 @@ namespace Calamari.AzureAppService.Tests.Legacy
 
             var runningContext = new RunningDeployment("", newVariables);
 
-            await new LegacyAzureAppServiceDeployContainerBehavior(new AzureAuthTokenService(), new InMemoryLog()).Execute(runningContext);
+            await new LegacyAzureAppServiceDeployContainerBehavior(new InMemoryLog()).Execute(runningContext);
 
             var targetSite = new AzureTargetSite(subscriptionId, resourceGroupName, site.Name);
             await AssertDeploySuccessAsync(targetSite);
@@ -162,7 +154,7 @@ namespace Calamari.AzureAppService.Tests.Legacy
 
             var runningContext = new RunningDeployment("", newVariables);
 
-            await new LegacyAzureAppServiceDeployContainerBehavior(new AzureAuthTokenService(), new InMemoryLog()).Execute(runningContext);
+            await new LegacyAzureAppServiceDeployContainerBehavior(new InMemoryLog()).Execute(runningContext);
 
             var targetSite = new AzureTargetSite(subscriptionId, resourceGroupName, site.Name, slotName);
             await AssertDeploySuccessAsync(targetSite);
@@ -211,6 +203,20 @@ namespace Calamari.AzureAppService.Tests.Legacy
             vars.Add(SpecialVariables.Action.Package.PackageVersion, "latest");
             vars.Add(SpecialVariables.Action.Azure.DeploymentType, "Container");
             //vars.Add(SpecialVariables.Action.Azure.ContainerSettings, BuildContainerConfigJson());
+        }
+
+        private async Task<string> GetAuthToken(string tenantId, string applicationId, string password)
+        {
+            var resourceManagementEndpointBaseUri =
+                Environment.GetEnvironmentVariable(AccountVariables.ResourceManagementEndPoint) ?? DefaultVariables.ResourceManagementEndpoint;
+            var activeDirectoryEndpointBaseUri =
+                Environment.GetEnvironmentVariable(AccountVariables.ActiveDirectoryEndPoint) ?? DefaultVariables.ActiveDirectoryEndpoint;
+
+            return await AzureServicePrincipalAccountExtensions.GetAuthorizationToken(tenantId,
+                                                                                       applicationId,
+                                                                                       password,
+                                                                                       resourceManagementEndpointBaseUri,
+                                                                                       activeDirectoryEndpointBaseUri);
         }
     }
 }

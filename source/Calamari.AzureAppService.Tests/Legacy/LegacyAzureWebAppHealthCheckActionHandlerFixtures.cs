@@ -13,7 +13,7 @@ using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
 using NUnit.Framework;
 using OperatingSystem = Microsoft.Azure.Management.AppService.Fluent.OperatingSystem;
 
-namespace Calamari.AzureAppService.Tests.Legacy
+namespace Calamari.AzureAppService.Tests
 {
     [TestFixture]
     [NonParallelizable]

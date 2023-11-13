@@ -21,10 +21,13 @@ using Microsoft.Azure.Management.WebSites;
 using Microsoft.Azure.Management.WebSites.Models;
 using Microsoft.Rest;
 using NUnit.Framework;
+using Polly;
+using Polly.Retry;
 using FileShare = System.IO.FileShare;
 using Sku = Microsoft.Azure.Management.Storage.Models.Sku;
+using StorageManagementClient = Microsoft.Azure.Management.Storage.StorageManagementClient;
 
-namespace Calamari.AzureAppService.Tests.Legacy
+namespace Calamari.AzureAppService.Tests
 {
     public class LegacyAppServiceBehaviorFixture
     {

@@ -20,12 +20,10 @@ namespace Calamari.AzureWebApp.Integration.Websites.Publishing
 {
     class ResourceManagerPublishProfileProvider
     {
-        readonly IAzureAuthTokenService azureAuthTokenService;
         readonly ILog log;
 
-        public ResourceManagerPublishProfileProvider(IAzureAuthTokenService azureAuthTokenService, ILog log)
+        public ResourceManagerPublishProfileProvider(ILog log)
         {
-            this.azureAuthTokenService = azureAuthTokenService;
             this.log = log;
         }
 
@@ -37,7 +35,9 @@ namespace Calamari.AzureWebApp.Integration.Websites.Publishing
             if (account.ActiveDirectoryEndpointBaseUri != DefaultVariables.ActiveDirectoryEndpoint)
                 log.InfoFormat("Using override for Azure Active Directory endpoint - {0}", account.ActiveDirectoryEndpointBaseUri);
 
-            var token = await azureAuthTokenService.GetAuthorizationToken(account, CancellationToken.None);
+            var token = account.AccountType == AccountType.AzureOidc
+                ? await (account as AzureOidcAccount).GetAuthorizationToken(CancellationToken.None)
+                : await (account as AzureServicePrincipalAccount).GetAuthorizationToken();
             var baseUri = new Uri(account.ResourceManagementEndpointBaseUri);
 
             using (var resourcesClient = new ResourceManagementClient(new TokenCredentials(token)) 

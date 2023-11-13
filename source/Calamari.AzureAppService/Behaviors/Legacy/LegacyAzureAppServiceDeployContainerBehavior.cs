@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Threading;
 using System.Threading.Tasks;
 using Calamari.AzureAppService.Azure;
 using Calamari.CloudAccounts;
@@ -16,11 +15,9 @@ namespace Calamari.AzureAppService.Behaviors
 {
     class LegacyAzureAppServiceDeployContainerBehavior : IDeployBehaviour
     {
-        readonly IAzureAuthTokenService azureAuthTokenService;
         private ILog Log { get; }
-        public LegacyAzureAppServiceDeployContainerBehavior(IAzureAuthTokenService azureAuthTokenService, ILog log)
+        public LegacyAzureAppServiceDeployContainerBehavior(ILog log)
         {
-            this.azureAuthTokenService = azureAuthTokenService;
             Log = log;
         }
 
@@ -42,7 +39,7 @@ namespace Calamari.AzureAppService.Behaviors
             var regUsername = variables.Get(SpecialVariables.Action.Package.Feed.Username);
             var regPwd = variables.Get(SpecialVariables.Action.Package.Feed.Password);
 
-            var token = await azureAuthTokenService.GetAuthorizationToken(account, CancellationToken.None);
+            var token = await Auth.GetAuthTokenAsync(account);
 
             var webAppClient = new WebSiteManagementClient(new Uri(account.ResourceManagementEndpointBaseUri),
                     new TokenCredentials(token))

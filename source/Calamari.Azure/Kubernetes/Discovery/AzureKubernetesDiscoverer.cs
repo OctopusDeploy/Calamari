@@ -12,11 +12,8 @@ namespace Calamari.Azure.Kubernetes.Discovery
 {
     public class AzureKubernetesDiscoverer : KubernetesDiscovererBase
     {
-        readonly IAzureClientFactory azureClientFactory;
-
-        public AzureKubernetesDiscoverer(IAzureClientFactory azureClientFactory, ILog log) : base(log)
+        public AzureKubernetesDiscoverer(ILog log) : base(log)
         {
-            this.azureClientFactory = azureClientFactory;
         }
 
         /// <remarks>
@@ -42,7 +39,7 @@ namespace Calamari.Azure.Kubernetes.Discovery
             Log.Verbose($"  Subscription ID: {account.SubscriptionNumber}");
             Log.Verbose($"  Tenant ID: {account.TenantId}");
             Log.Verbose($"  Client ID: {account.ClientId}");
-            var azureClient = azureClientFactory.CreateAzureClientFromAccount(account);
+            var azureClient = account.CreateAzureClient();
 
             var discoveredClusters = new List<KubernetesCluster>();
 

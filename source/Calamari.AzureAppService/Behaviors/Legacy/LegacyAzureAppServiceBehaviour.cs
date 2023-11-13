@@ -1,6 +1,7 @@
 ﻿#nullable enable
 
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -21,26 +22,12 @@ using Octopus.CoreUtilities.Extensions;
 using AccountVariables = Calamari.AzureAppService.Azure.AccountVariables;
 using WebSiteManagementClient = Microsoft.Azure.Management.WebSites.WebSiteManagementClient;
 
-namespace Calamari.AzureAppService.Behaviors.Legacy
+namespace Calamari.AzureAppService.Behaviors
 {
     internal class LegacyAzureAppServiceBehaviour : IDeployBehaviour
     {
-        readonly IAzureClientFactory azureClientFactory;
-        readonly IPublishingProfileService publishingProfileService;
-        readonly IBasicAuthService basicAuthService;
-        readonly IAzureAuthTokenService azureAuthTokenService;
-
-        public LegacyAzureAppServiceBehaviour(
-            IAzureClientFactory azureClientFactory,
-            IPublishingProfileService publishingProfileService,
-            IBasicAuthService basicAuthService,
-            IAzureAuthTokenService azureAuthTokenService,
-            ILog log)
+        public LegacyAzureAppServiceBehaviour(ILog log)
         {
-            this.azureClientFactory = azureClientFactory;
-            this.publishingProfileService = publishingProfileService;
-            this.basicAuthService = basicAuthService;
-            this.azureAuthTokenService = azureAuthTokenService;
             Log = log;
             Archive = new ZipPackageProvider();
         }
@@ -79,7 +66,7 @@ namespace Calamari.AzureAppService.Behaviors.Legacy
                             ? "No Deployment Slot specified"
                             : $"Using Deployment Slot '{slotName}'");
 
-            var azureClient = azureClientFactory.CreateAzureClientFromAccount(account);
+            var azureClient = account.CreateAzureClient();
             var targetSite = new AzureTargetSite(account.SubscriptionNumber, resourceGroupName, webAppName, slotName);
 
             Log.Verbose($"Checking existence of Resource Group '{resourceGroupName}'.");
@@ -148,11 +135,11 @@ namespace Calamari.AzureAppService.Behaviors.Legacy
                 await slotCreateTask;
 
             Log.Verbose($"Retrieving publishing profile for App Service to determine correct deployment endpoint.");
-            var publishingProfile = await publishingProfileService.GetPublishingProfile(targetSite, account);
+            var publishingProfile = await PublishingProfile.GetPublishingProfile(targetSite, account);
             Log.Verbose($"Using deployment endpoint '{publishingProfile.PublishUrl}' from publishing profile.");
 
-            string? credential = await basicAuthService.GetBasicAuthCreds(account, targetSite, CancellationToken.None);
-            string token = await azureAuthTokenService.GetAuthorizationToken(account, CancellationToken.None);
+            string? credential = await Auth.GetBasicAuthCreds(account, targetSite);
+            string token = await Auth.GetAuthTokenAsync(account);
 
             var webAppClient = new WebSiteManagementClient(new Uri(account.ResourceManagementEndpointBaseUri),
                                                            new TokenCredentials(token))
