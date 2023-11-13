@@ -115,6 +115,7 @@
     <None Remove="Integration\Scripting\FSharp\Bootstrap.fsx" />
     <None Remove="Integration\Scripting\ScriptCS\Bootstrap.csx" />
     <None Remove="Integration\Scripting\DotnetScript\Bootstrap.csx" />
+    <None Remove="Integration\Scripting\DotnetScript\ClassBootstrap.csx" />
     <None Remove="Integration\Scripting\Python\Configuration.py" />
     <None Remove="Integration\Scripting\Python\InstallDependencies.py" />
     <None Remove="Integration\Scripting\WindowsPowerShell\Bootstrap.ps1" />
