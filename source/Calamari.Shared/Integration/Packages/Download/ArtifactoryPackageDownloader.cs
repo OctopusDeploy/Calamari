@@ -6,16 +6,14 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
-using System.Threading.Tasks;
-using System.Web;
+using System.Text.RegularExpressions;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Packages;
-using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
-using Calamari.Integration.Packages.NuGet;
+using Calamari.Common.Plumbing.Variables;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using NuGet;
 using Octopus.CoreUtilities.Extensions;
 using Octopus.Versioning;
 using HttpClient = System.Net.Http.HttpClient;
@@ -30,12 +28,14 @@ namespace Calamari.Integration.Packages.Download
         readonly ILog log;
         readonly ICalamariFileSystem fileSystem;
         readonly HttpClient client;
+        readonly IVariables variables;
 
-        public ArtifactoryPackageDownloader(ILog log, ICalamariFileSystem fileSystem)
+        public ArtifactoryPackageDownloader(ILog log, ICalamariFileSystem fileSystem, IVariables variables)
         {
             this.fileSystem = fileSystem;
             this.log = log;
             client = new HttpClient(new HttpClientHandler { AutomaticDecompression = DecompressionMethods.None });
+            this.variables = variables;
         }
 
         public PackagePhysicalFileMetadata DownloadPackage(string packageId,
@@ -101,21 +101,6 @@ namespace Calamari.Integration.Packages.Download
             Log.Info("Downloading package {0} v{1} from feed: '{2}'", packageId, version, feedUri);
             Log.VerboseFormat("Downloaded package will be stored in: '{0}'", cacheDirectory);
 
-            var packagePathTokens = packageId.Split('/');
-            var packagePath = packagePathTokens.Length > 0 ? Path.Combine(packagePathTokens.Take(packagePathTokens.Length - 1).ToArray()) : "";
-            var packageName = packagePathTokens.Last();
-
-            var packageFileName = GetPackageFileName(feedUri,
-                                                     packagePath,
-                                                     packageName,
-                                                     version,
-                                                     feedCredentials);
-            var extension = PackageName.TryMatchTarExtensions(packageFileName, out var fileName, out var ext)
-                ? ext
-                : Path.GetExtension(packageFileName);
-
-            var cachedFileName = PackageName.ToCachedFileName(packageId, version, extension);
-
             var tempDirectory = fileSystem.CreateTemporaryDirectory();
             using (new TemporaryDirectory(tempDirectory))
             {
@@ -124,13 +109,15 @@ namespace Calamari.Integration.Packages.Download
                 {
                     Directory.CreateDirectory(stagingDir);
                 }
-
+                
+                var (downloadUri, fileExtension) = GetDownloadPackagePath(feedUri, packageId, version, feedCredentials);
+                
+                var cachedFileName = PackageName.ToCachedFileName(packageId, version, fileExtension);
                 var downloadPath = Path.Combine(Path.Combine(stagingDir, cachedFileName));
 
                 using (var fileStream = fileSystem.OpenFile(downloadPath, FileAccess.Write))
                 {
-                    var packagePathWithTrailingSlash = packagePath.IsNullOrEmpty() ? "" : $"{packagePath}/";
-                    using var response = Get(new Uri($"{feedUri}artifactory/{packagePathWithTrailingSlash}/{packageFileName}"), feedCredentials);
+                    using var response = DownloadPackage(downloadUri, feedCredentials);
                     if (!response.IsSuccessStatusCode)
                     {
                         throw new CommandException(
@@ -138,7 +125,7 @@ namespace Calamari.Integration.Packages.Download
                     }
 
 #if NET40
-            response.Content.CopyToAsync(fileStream).Wait();
+                    response.Content.CopyToAsync(fileStream).Wait();
 #else
                     response.Content.CopyToAsync(fileStream).GetAwaiter().GetResult();
 #endif
@@ -151,53 +138,68 @@ namespace Calamari.Integration.Packages.Download
             }
         }
 
-        string GetPackageFileName(Uri feedUri,
-                                  string packagePath,
-                                  string packageName,
-                                  IVersion version,
-                                  ICredentials feedCredentials)
+        private (string downloadUrl, string fileExtension) GetDownloadPackagePath(Uri url, string packageId, IVersion version, ICredentials credentials)
         {
-            // e.g. https: //packages.octopushq.com/artifactory/api/storage/helm
-            var extension = "";
-            using var response = Get(new Uri($"{feedUri}artifactory/api/storage/{packagePath}"), feedCredentials);
-            if (!response.IsSuccessStatusCode)
-            {
-                throw new CommandException(
-                                           $"Failed to download artifact (Status Code {(int)response.StatusCode}). Reason: {response.ReasonPhrase}");
-            }
+            var layoutRegex = variables.Get("ArtifactoryGenericFeed.Regex");
+            var repository = variables.Get("ArtifactoryGenericFeed.Repository");
 
-            var respJson = "";
+            var artifactId = packageId.Split('/').Last();
+            var path = packageId.Substring(0, packageId.LastIndexOf('/'));
+            var regex = string.IsNullOrEmpty(layoutRegex) ? new Regex("(?<orgPath>.+?)/(?<module>[^/]+)/(?<module>\\2)-(?<baseRev>[^/]+?)\\.(?<ext>(?:(?!\\d))[^\\-/]+|7z)", RegexOptions.Compiled) : new Regex(layoutRegex, RegexOptions.Compiled);
+
+            var contentString = $"items.find({{\"repo\":{{\"$eq\":\"{repository}\"}}, \"$and\":[{{\"name\": {{\"$match\":\"*{artifactId}*\"}}}}, {{\"path\": {{\"$eq\":\"{path}\"}}}}]}}).include(\"repo\", \"path\", \"name\")";
+            HttpContent content = new StringContent(contentString, Encoding.UTF8);
+
+            var response = Post(new Uri(url, "artifactory/api/search/aql"), content, credentials);
+
 #if NET40
-            respJson = response.Content.ReadAsStringAsync().Result;
+            var allPackagesRaw = response.Content.ReadAsStringAsync().Result;
 #else
-            respJson = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var allPackagesRaw = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
 #endif
-            var packages = GetRepoChildren(respJson);
-            var matchingPackages = packages
-                                   .Where(p => p.Contains(packageName))
-                                   .Where(p => p.Contains(version.ToString()))
-                                   .ToList();
-            if (matchingPackages.Count != 1)
+
+            var allPackagesJson = JsonConvert.DeserializeObject<JObject>(allPackagesRaw);
+            var packagesCollection = allPackagesJson["results"].ToArray();
+
+            foreach (var packageToken in packagesCollection)
             {
-                throw new Exception($"Expected one package to match {packageName} with version {version} but found {matchingPackages.Count}. Matching packages {string.Join(",", matchingPackages)}");
+                var matches = regex.Match(packageToken["path"].Value<string>());
+                if (!matches.Success) continue;
+                if (matches.Groups["baseRev"].Value.Equals(version.ToString()) && matches.Groups["module"].Value.Equals(artifactId))
+                {
+                    var downloadUri = packageToken["downloadUri"].ToString();
+                    var extensionGroup = matches.Groups["ext"].ToString();
+                    var isTarFile = PackageName.TryMatchTarExtensions(downloadUri, out var _, out var tarExt);
+                    return (downloadUri, isTarFile ? tarExt : !string.IsNullOrWhiteSpace(extensionGroup) ? $".{extensionGroup}"
+                        : Path.GetExtension(downloadUri) ?? "" );
+                }
             }
 
-            return matchingPackages.FirstOrDefault();
+            throw new Exception($"Could not find a package matching the feed regex: {layoutRegex} with version: {version.ToString()} and packageId: {packageId} in repository {repository}");
         }
 
-        List<string> GetRepoChildren(string json)
+        private HttpResponseMessage DownloadPackage(string downloadUri, ICredentials credentials)
         {
-            var childrenArrayObject = JObject.Parse(json).SelectToken("children");
-            var children = ((JArray)childrenArrayObject)
-                           .Where(t => t.SelectToken("folder").ToString() == "False")
-                           .Select(t => t.SelectToken("uri").ToString());
-
-            return children.ToList();
+            var response = Get(new Uri(downloadUri), credentials);
+            return response;
         }
-
+        
         HttpResponseMessage Get(Uri url, ICredentials credentials, Action<HttpRequestMessage>? customAcceptHeader = null)
         {
             var request = new HttpRequestMessage(HttpMethod.Get, url);
+            return Request(request, url, credentials, customAcceptHeader);
+        }
+
+        HttpResponseMessage Post(Uri url, HttpContent content, ICredentials credentials, Action<HttpRequestMessage>? customAcceptHeader = null)
+        {
+            var request = new HttpRequestMessage(HttpMethod.Post, url);
+            request.Content = content;
+            return Request(request, url, credentials, customAcceptHeader);
+        }
+
+
+        HttpResponseMessage Request(HttpRequestMessage request, Uri url, ICredentials credentials, Action<HttpRequestMessage>? customAcceptHeader = null)
+        {
             try
             {
                 var networkCredential = credentials.GetCredential(url, "Basic");
@@ -362,7 +364,7 @@ namespace Calamari.Integration.Packages.Download
         static ICredentials GetFeedCredentials(string? feedUsername, string? feedPassword)
         {
             ICredentials credentials = CredentialCache.DefaultNetworkCredentials;
-            if (!String.IsNullOrWhiteSpace(feedUsername))
+            if (!String.IsNullOrWhiteSpace(feedPassword))
             {
                 credentials = new NetworkCredential(feedUsername, feedPassword);
             }
