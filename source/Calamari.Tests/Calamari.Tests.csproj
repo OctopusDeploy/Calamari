@@ -11,6 +11,7 @@
     <StartupObject />
     <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
     <TargetFrameworks>net462;net6.0</TargetFrameworks>
+    <ApplicationManifest>Calamari.Tests.dll.manifest</ApplicationManifest>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net6.0' ">
     <DefineConstants>$(DefineConstants);NETCORE;AWS;AZURE_CORE;JAVA_SUPPORT</DefineConstants>
