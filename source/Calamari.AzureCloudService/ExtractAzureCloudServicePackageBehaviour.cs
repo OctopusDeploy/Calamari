@@ -49,7 +49,7 @@ namespace Calamari.AzureCloudService
 
             log.SetOutputVariable(SpecialVariables.Action.Azure.PackageExtractionPath, context.CurrentDirectory, context.Variables);
 
-            return this.CompletedTask();
+            return Task.CompletedTask;
         }
 
         void ExtractContents(Package package, PackageDefinition manifest, string contentNamePrefix, string workingDirectory)

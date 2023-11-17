@@ -44,7 +44,7 @@ namespace Calamari.Terraform.Behaviours
                                    "-json")
                    .ExitCode
                 != 0)
-                return this.CompletedTask();
+                return Task.CompletedTask;
 
             foreach (var (name, token) in OutputVariables(result))
             {
@@ -64,7 +64,7 @@ namespace Calamari.Terraform.Behaviours
                              $"Saving {(isSensitive ? "sensitive " : string.Empty)}variable 'Octopus.Action[{deployment.Variables["Octopus.Action.StepName"]}].Output.TerraformValueOutputs[\"{name}\"]' with the value only of '{value}'");
             }
 
-            return this.CompletedTask();
+            return Task.CompletedTask;
         }
 
         IEnumerable<(string, JToken)> OutputVariables(string result)

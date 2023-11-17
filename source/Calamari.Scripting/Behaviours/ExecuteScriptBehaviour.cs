@@ -44,7 +44,7 @@ namespace Calamari.Scripting
 
             Log.SetOutputVariable(SpecialVariables.Action.Script.ExitCode, exitCode.ToString(), variables);
 
-            return this.CompletedTask();
+            return Task.CompletedTask;
         }
     }
 }

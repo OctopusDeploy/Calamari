@@ -50,7 +50,7 @@ namespace Calamari.Scripting
                 File.WriteAllBytes(scriptFile, scriptBytes);
             }
 
-            return this.CompletedTask();
+            return Task.CompletedTask;
         }
 
         bool TryGetScriptFromVariables([NotNullWhen(true)]

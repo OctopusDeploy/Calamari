@@ -28,7 +28,7 @@ namespace Calamari.Scripting
         {
             substituteInFiles.Substitute(context.CurrentDirectory, ScriptFileTargetFactory(context).ToList());
 
-            return this.CompletedTask();
+            return Task.CompletedTask;
         }
 
         IEnumerable<string> ScriptFileTargetFactory(RunningDeployment context)
