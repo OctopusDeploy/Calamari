@@ -6,6 +6,7 @@ using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Plumbing;
+using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
@@ -152,7 +153,7 @@ namespace Calamari.Commands
                 Guard.NotNullOrWhiteSpace(feedUri, "No feed URI was specified. Please pass --feedUri https://url/to/nuget/feed");
             }
 
-            version = VersionFactory.TryCreateVersion(packageVersion, versionFormat);
+            version = VersionFactory.TryCreateVersion(versionFormat == VersionFormat.Semver ? packageVersion.SanitiseVersionString() : this.packageVersion, versionFormat);
             if (version == null)
             {
                 throw new CommandException($"Package version '{packageVersion}' specified is not a valid {versionFormat.ToString()} version string");

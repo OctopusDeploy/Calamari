@@ -2,6 +2,7 @@
 using Calamari.Commands.Support;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
+using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Octopus.Versioning;
@@ -46,7 +47,7 @@ namespace Calamari.Commands
             try
             {
                 Options.Parse(commandLineArguments);
-                packageVersion = VersionFactory.TryCreateVersion(rawVersionString, versionFormat);
+                packageVersion = VersionFactory.TryCreateVersion(versionFormat == VersionFormat.Semver ? rawVersionString.SanitiseVersionString() : rawVersionString, versionFormat);
                 RegisterPackageUse();
             }
             catch (Exception ex)

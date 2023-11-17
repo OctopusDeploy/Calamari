@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Calamari.Common.Features.Packages.NuGet;
+using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
 using Octopus.Versioning;
 
@@ -23,7 +24,7 @@ namespace Calamari.Integration.Packages.NuGet
             var package = (from path in GetPackageLookupPaths(packageId, version, feedUri)
                 let pkg = new LocalNuGetPackage(path)
                 where pkg.Metadata.Id.Equals(packageId, StringComparison.OrdinalIgnoreCase) &&
-                      VersionFactory.CreateSemanticVersion(pkg.Metadata.Version.ToString()).Equals(version)
+                      VersionFactory.CreateSemanticVersion(pkg.Metadata.Version.ToString().SanitiseVersionString()).Equals(version)
                 select path
                ).FirstOrDefault();
 
@@ -78,7 +79,7 @@ namespace Calamari.Integration.Packages.NuGet
             // When matching by pattern, we will always have a version token. Packages without versions would be matched early on by the version-less path resolver
             // when doing an exact match.
             return name.Length > packageId.Length &&
-                   (VersionFactory.TryCreateSemanticVersion(name.Substring(packageId.Length + 1))?.Equals(version) ?? false);
+                   (VersionFactory.TryCreateSemanticVersion(name.Substring(packageId.Length + 1).SanitiseVersionString())?.Equals(version) ?? false);
         }
 
         static IEnumerable<string> GetPackageFiles(Uri feedUri, string filter)

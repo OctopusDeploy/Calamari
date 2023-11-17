@@ -75,5 +75,10 @@ namespace Calamari.Common.Plumbing.Extensions
                                   ?.Key
                    ?? LineEnding.Dos;
         }
+
+        public static string SanitiseVersionString(this string version)
+        {
+            return version.StartsWith("v") ? version.Substring(1) : version;
+        }
     }
 }
