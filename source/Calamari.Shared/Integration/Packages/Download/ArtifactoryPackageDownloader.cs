@@ -163,11 +163,11 @@ namespace Calamari.Integration.Packages.Download
 
             foreach (var packageToken in packagesCollection)
             {
-                var matches = regex.Match(packageToken["path"].Value<string>());
+                var matches = regex.Match($"{packageToken["path"].ToString()}/{packageToken["name"].ToString()}");
                 if (!matches.Success) continue;
                 if (matches.Groups["baseRev"].Value.Equals(version.ToString()) && matches.Groups["module"].Value.Equals(artifactId))
                 {
-                    var downloadUri = $"{url}/artifactory/{repository}/{packageToken["path"]}/{packageToken["name"].ToString()}";
+                    var downloadUri = $"{url.ToString().TrimEnd('/')}/artifactory/{repository}/{packageToken["path"]}/{packageToken["name"].ToString()}";
                     var extensionGroup = matches.Groups["ext"].ToString();
                     var isTarFile = PackageName.TryMatchTarExtensions(downloadUri, out var _, out var tarExt);
                     return (downloadUri, isTarFile ? tarExt : !string.IsNullOrWhiteSpace(extensionGroup) ? $".{extensionGroup}"
