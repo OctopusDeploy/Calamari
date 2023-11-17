@@ -288,7 +288,7 @@ namespace Calamari.Integration.Packages.NuGet
             if (json.TryGetValue("version", out versionToken) &&
                 versionToken.Type == JTokenType.String)
             {
-                var version = VersionFactory.TryCreateSemanticVersion(((string)versionToken).SanitiseVersionString());
+                var version = VersionFactory.TryCreateSemanticVersion(((string)versionToken).SanitiseSemVerString());
                 if (version != null && version.Major == 3)
                 {
                     return true;
