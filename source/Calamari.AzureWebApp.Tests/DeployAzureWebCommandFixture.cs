@@ -365,7 +365,7 @@ az --version
 az group list";
             File.WriteAllText(Path.Combine(tempPath.DirectoryPath, "PreDeploy.ps1"), psScript);
             
-            // This should be references from Sashimi.Server.Contracts, since Calamari.AzureWebApp is a net461 project this cannot be included.
+            // This should be references from Sashimi.Server.Contracts, since Calamari.AzureWebApp is a net462 project this cannot be included.
             var AccountType = "Octopus.Account.AccountType";
 
             await CommandTestBuilder.CreateAsync<DeployAzureWebCommand, Program>()
