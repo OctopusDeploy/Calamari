@@ -127,8 +127,7 @@ namespace Calamari.Integration.Packages.NuGet
         {
             const string expectedTimespanFormat = "c";
             
-            // Equal to Timeout.InfiniteTimeSpan, which isn't available in net40
-            var defaultTimeout = new TimeSpan(0, 0, 0, 0, -1);
+            var defaultTimeout = Timeout.InfiniteTimeSpan;
             
             var rawTimeout = variables.Get(KnownVariables.NugetHttpTimeout);
             if (string.IsNullOrWhiteSpace(rawTimeout))

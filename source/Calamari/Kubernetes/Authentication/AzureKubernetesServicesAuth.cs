@@ -48,11 +48,8 @@ namespace Calamari.Kubernetes.Authentication
                 var jwt = deploymentVariables.Get(Deployment.SpecialVariables.Action.Azure.Jwt);
 
                 var isOidc = !jwt.IsNullOrEmpty();
-#if !NET40
+
                 var credential = isOidc ? jwt : password;
-#else
-                var credential = password;
-#endif
 
                 azureCli.ConfigureAzAccount(subscriptionId, tenantId, clientId, credential, azEnvironment, isOidc);
 
