@@ -25,23 +25,19 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <PropertyGroup Condition="!$([MSBuild]::IsOSUnixLike())">
-    <TargetFrameworks>net452;netstandard2.1;net40</TargetFrameworks>
+    <TargetFrameworks>net462;netstandard2.1</TargetFrameworks>
   </PropertyGroup>
   <PropertyGroup Condition="$([MSBuild]::IsOSUnixLike())">
     <TargetFramework>netstandard2.1</TargetFramework>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(TargetFramework)' == 'net40' ">
-    <DefineConstants>$(DefineConstants);USE_NUGET_V2_LIBS;USE_OCTODIFF_EXE;WINDOWS_CERTIFICATE_STORE_SUPPORT</DefineConstants>
-    <PlatformTarget>anycpu</PlatformTarget>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(TargetFramework)' == 'net452' ">
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'net462' ">
     <DefineConstants>$(DefineConstants);USE_NUGET_V2_LIBS;SUPPORTS_POLLY;USE_OCTODIFF_EXE;WINDOWS_CERTIFICATE_STORE_SUPPORT</DefineConstants>
     <PlatformTarget>anycpu</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(TargetFramework)' == 'netstandard2.1' ">
     <DefineConstants>$(DefineConstants);USE_NUGET_V3_LIBS;SUPPORTS_POLLY</DefineConstants>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(TargetFramework)' == 'net40' OR '$(TargetFramework)' == 'net452' ">
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net462' ">
     <NoWarn>CS8600;CS8601;CS8602;CS8603;CS8604;DE0003;DE0004</NoWarn>
   </PropertyGroup>
 
@@ -76,7 +72,7 @@
     <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="4.5.0" />
     <PackageReference Include="Polly" Version="5.4.0" />
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)' == 'net40' OR '$(TargetFramework)' == 'net452' ">
+  <ItemGroup Condition="'$(TargetFramework)' == 'net462' ">
     <PackageReference Include="BouncyCastle" Version="1.8.1-octopus" />
     <PackageReference Include="MarkdownSharp" Version="1.13.0.0" />
     <PackageReference Include="Microsoft.Net.Http" Version="2.2.29" />
@@ -100,10 +96,7 @@
     <Reference Include="System" />
     <Reference Include="System.Security" />
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)' == 'net40'">
-    <Reference Include="System.Web" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)' == 'net452'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
     <PackageReference Include="System.Diagnostics.Tracing" Version="4.3.0" />
     <PackageReference Include="Polly" Version="5.4.0" />
   </ItemGroup>
