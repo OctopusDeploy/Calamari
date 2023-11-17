@@ -153,7 +153,7 @@ namespace Calamari.Commands
                 Guard.NotNullOrWhiteSpace(feedUri, "No feed URI was specified. Please pass --feedUri https://url/to/nuget/feed");
             }
 
-            version = VersionFactory.TryCreateVersion(versionFormat == VersionFormat.Semver ? packageVersion.SanitiseVersionString() : this.packageVersion, versionFormat);
+            version = VersionFactory.TryCreateVersion(versionFormat == VersionFormat.Semver ? packageVersion.SanitiseSemVerString() : this.packageVersion, versionFormat);
             if (version == null)
             {
                 throw new CommandException($"Package version '{packageVersion}' specified is not a valid {versionFormat.ToString()} version string");

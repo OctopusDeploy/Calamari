@@ -56,7 +56,7 @@ namespace Calamari.Integration.Packages.Download.Helm
                 if (value == null)
                     return null;
 
-                var version = SemVerFactory.TryCreateVersion(value.SanitiseVersionString());
+                var version = SemVerFactory.TryCreateVersion(value.SanitiseSemVerString());
                 if (version == null)
                     return null;
 

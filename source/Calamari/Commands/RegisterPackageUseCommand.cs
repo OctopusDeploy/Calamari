@@ -47,7 +47,7 @@ namespace Calamari.Commands
             try
             {
                 Options.Parse(commandLineArguments);
-                packageVersion = VersionFactory.TryCreateVersion(versionFormat == VersionFormat.Semver ? rawVersionString.SanitiseVersionString() : rawVersionString, versionFormat);
+                packageVersion = VersionFactory.TryCreateVersion(versionFormat == VersionFormat.Semver ? rawVersionString.SanitiseSemVerString() : rawVersionString, versionFormat);
                 RegisterPackageUse();
             }
             catch (Exception ex)

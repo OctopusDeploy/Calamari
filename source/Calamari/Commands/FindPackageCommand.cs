@@ -50,7 +50,7 @@ namespace Calamari.Commands
             Guard.NotNullOrWhiteSpace(rawPackageVersion, "No package version was specified. Please pass --packageVersion 1.0.0.0");
             Guard.NotNullOrWhiteSpace(packageHash, "No package hash was specified. Please pass --packageHash YourPackageHash");
 
-            var version = VersionFactory.TryCreateVersion(versionFormat == VersionFormat.Semver ? rawPackageVersion.SanitiseVersionString() : rawPackageVersion, versionFormat);
+            var version = VersionFactory.TryCreateVersion(versionFormat == VersionFormat.Semver ? rawPackageVersion.SanitiseSemVerString() : rawPackageVersion, versionFormat);
             if (version == null)
                 throw new CommandException($"Package version '{rawPackageVersion}' is not a valid {versionFormat} version string. Please pass --packageVersionFormat with a different version type.");
 
