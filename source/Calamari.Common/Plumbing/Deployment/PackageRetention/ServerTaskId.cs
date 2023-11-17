@@ -1,12 +1,11 @@
 ﻿using System;
-using System.ComponentModel;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Deployment.PackageRetention;
 using Newtonsoft.Json;
+using Octopus.TinyTypes;
 
 namespace Calamari.Common.Plumbing.Deployment.PackageRetention
 {
-    public class ServerTaskId : CaseInsensitiveTinyType
+    public class ServerTaskId : CaseInsensitiveStringTinyType
     {
         [JsonConstructor]
         public ServerTaskId(string value) : base(value)
