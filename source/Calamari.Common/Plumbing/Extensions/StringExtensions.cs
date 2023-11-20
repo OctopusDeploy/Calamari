@@ -75,5 +75,19 @@ namespace Calamari.Common.Plumbing.Extensions
                                   ?.Key
                    ?? LineEnding.Dos;
         }
+
+        /// <remarks>
+        /// This method is required as we are using an old version of Octopus.Versioning
+        /// and can't update because it's no longer compatible with net framework versions
+        /// less than net461.
+        ///
+        /// We call this method before passing any strings into Version Factories for the
+        /// referenced version of Octopus.Versioning. Once we update to 4.6.2, we can update
+        /// Octopus.Versioning to a min version of 5.1.796 and then remove this extension method.
+        /// </remarks>
+        public static string SanitiseSemVerString(this string version)
+        {
+            return version.StartsWith("v") ? version.Substring(1) : version;
+        }
     }
 }
