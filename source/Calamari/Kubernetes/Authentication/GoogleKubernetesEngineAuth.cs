@@ -11,7 +11,7 @@ namespace Calamari.Kubernetes.Authentication
     {
         readonly GCloud gcloudCli;
         readonly GkeGcloudAuthPlugin authPluginCli;
-        readonly Kubectl kubectlCli;
+        readonly IKubectl kubectlCli;
         readonly IVariables deploymentVariables;
         readonly ILog log;
 
@@ -22,7 +22,7 @@ namespace Calamari.Kubernetes.Authentication
         /// <param name="authPluginCli"></param>
         /// <param name="kubectlCli"></param>
         /// <param name="deploymentVariables"></param>
-        public GoogleKubernetesEngineAuth(GCloud gcloudCli,GkeGcloudAuthPlugin authPluginCli, Kubectl kubectlCli, IVariables deploymentVariables, ILog log)
+        public GoogleKubernetesEngineAuth(GCloud gcloudCli,GkeGcloudAuthPlugin authPluginCli, IKubectl kubectlCli, IVariables deploymentVariables, ILog log)
         {
             this.gcloudCli = gcloudCli;
             this.authPluginCli = authPluginCli;

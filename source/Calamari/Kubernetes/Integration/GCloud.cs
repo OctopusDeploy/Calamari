@@ -78,7 +78,7 @@ namespace Calamari.Kubernetes.Integration
                 environmentVars.Add("CLOUDSDK_AUTH_IMPERSONATE_SERVICE_ACCOUNT", impersonationEmails);
         }
 
-        public void ConfigureGkeKubeCtlAuthentication(Kubectl kubectlCli,
+        public void ConfigureGkeKubeCtlAuthentication(IKubectl kubectlCli,
                                                       string gkeClusterName,
                                                       string region,
                                                       string zone,

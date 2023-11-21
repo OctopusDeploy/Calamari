@@ -13,7 +13,7 @@ namespace Calamari.Kubernetes.Authentication
     public class AzureKubernetesServicesAuth
     {
         readonly AzureCli azureCli;
-        readonly Kubectl kubectlCli;
+        readonly IKubectl kubectlCli;
         readonly KubeLogin kubeLogin;
         readonly IVariables deploymentVariables;
 
@@ -24,7 +24,7 @@ namespace Calamari.Kubernetes.Authentication
         /// <param name="kubectlCli"></param>
         /// <param name="KubeLogin"></param>
         /// <param name="deploymentVariables"></param>
-        public AzureKubernetesServicesAuth(AzureCli azureCli, Kubectl kubectlCli, KubeLogin kubeloginCli, IVariables deploymentVariables)
+        public AzureKubernetesServicesAuth(AzureCli azureCli, IKubectl kubectlCli, KubeLogin kubeloginCli, IVariables deploymentVariables)
         {
             this.azureCli = azureCli;
             this.kubectlCli = kubectlCli;

@@ -18,12 +18,13 @@ namespace Calamari.Kubernetes
 {
     public class SetupKubectlAuthentication
     {
-        private const string KubernetesTentacleTargetTypeId = "KubernetesTentacle";
+        public const string KubernetesTentacleTargetTypeId = "KubernetesTentacle";
+        public const string SkippingAuthenticationMessage = "Running inside Kubernetes cluster, using pod service account for authentication";
 
         readonly IVariables variables;
         readonly ILog log;
         readonly ICommandLineRunner commandLineRunner;
-        private readonly Kubectl kubectl;
+        readonly IKubectl kubectl;
         readonly Dictionary<string, string> environmentVars;
         readonly string workingDirectory;
         string aws;
@@ -31,7 +32,7 @@ namespace Calamari.Kubernetes
         public SetupKubectlAuthentication(IVariables variables,
             ILog log,
             ICommandLineRunner commandLineRunner,
-            Kubectl kubectl,
+            IKubectl kubectl,
             Dictionary<string, string> environmentVars,
             string workingDirectory)
         {
@@ -47,7 +48,7 @@ namespace Calamari.Kubernetes
         {
             var errorResult = new CommandResult(string.Empty, 1);
 
-            foreach (var proxyVariable in ProxyEnvironmentVariablesGenerator.GenerateProxyEnvironmentVariables())
+            foreach (var proxyVariable in GenerateProxyEnvironmentVariables())
             {
                 environmentVars[proxyVariable.Key] = proxyVariable.Value;
             }
@@ -60,9 +61,9 @@ namespace Calamari.Kubernetes
 
             // If we are running on a Kubernetes Tentacle Target,
             // then we can rely on using the service account inside the pod for authentication.
-            if (variables.Get("Octopus.Machine.DeploymentTargetType") == KubernetesTentacleTargetTypeId)
+            if (variables.Get(MachineVariables.DeploymentTargetType) == KubernetesTentacleTargetTypeId)
             {
-                log.Info("Running inside Kubernetes cluster, using pod service account for authentication");
+                log.Info(SkippingAuthenticationMessage);
                 return new CommandResult(string.Empty, 0);
             }
 
@@ -561,6 +562,14 @@ namespace Calamari.Kubernetes
             return result.ExitCode == 0
                 ? captureCommandOutput.InfoLogs.ToArray()
                 : Enumerable.Empty<string>();
+        }
+
+        /// <remarks>
+        /// Seam for testing.
+        /// </remarks>
+        protected virtual IEnumerable<EnvironmentVariable> GenerateProxyEnvironmentVariables()
+        {
+            return ProxyEnvironmentVariablesGenerator.GenerateProxyEnvironmentVariables();
         }
     }
 }
