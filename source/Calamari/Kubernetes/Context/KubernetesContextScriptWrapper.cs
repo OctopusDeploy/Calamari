@@ -12,7 +12,7 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes.Integration;
 
-namespace Calamari.Kubernetes
+namespace Calamari.Kubernetes.Context
 {
     public class KubernetesContextScriptWrapper : IScriptWrapper
     {
@@ -63,7 +63,7 @@ namespace Calamari.Kubernetes
                                                                             fileSystem,
                                                                             environmentVars,
                                                                             workingDirectory);
-            var accountType = variables.Get("Octopus.Account.AccountType");
+            var accountType = variables.Get(Deployment.SpecialVariables.Account.AccountType);
 
             try
             {

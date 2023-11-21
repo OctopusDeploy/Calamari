@@ -4,6 +4,7 @@ using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Deployment.Conventions;
+using Calamari.Kubernetes.Context;
 using Calamari.Kubernetes.Integration;
 
 namespace Calamari.Kubernetes.Conventions
@@ -36,7 +37,7 @@ namespace Calamari.Kubernetes.Conventions
                 deployment.EnvironmentVariables,
                 deployment.CurrentDirectory);
 
-            var accountType = deployment.Variables.Get("Octopus.Account.AccountType");
+            var accountType = deployment.Variables.Get(Deployment.SpecialVariables.Account.AccountType);
 
             setupKubectlAuthentication.Execute(accountType);
         }

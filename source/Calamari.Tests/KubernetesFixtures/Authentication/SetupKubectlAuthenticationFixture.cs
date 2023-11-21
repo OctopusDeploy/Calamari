@@ -12,6 +12,7 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes;
 using Calamari.Kubernetes.Authentication;
+using Calamari.Kubernetes.Context;
 using Calamari.Kubernetes.Integration;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
