@@ -344,7 +344,7 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set($"{account}.JsonKey", Convert.ToBase64String(Encoding.UTF8.GetBytes(jsonKey)));
             variables.Set("Octopus.Action.GoogleCloud.Project", "gke-project");
             var wrapper = CreateWrapper();
-            Assert.Throws<ArgumentException>(() => TestScriptInReadOnlyMode(wrapper));
+            TestScriptInReadOnlyMode(wrapper).AssertFailure();
         }
 
         [Test]
