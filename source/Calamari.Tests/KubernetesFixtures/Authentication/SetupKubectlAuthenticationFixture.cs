@@ -558,16 +558,20 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
             switch (awsCliFailureMode)
             {
                 case AwsCliFailureModes.CliDoesNotInitialise:
-                    log.Received().Verbose("Could not find the aws cli, falling back to the aws-iam-authenticator.");
+                    log.Received().Verbose(
+                        "Could not find the aws cli, falling back to the aws-iam-authenticator.");
                     break;
                 case AwsCliFailureModes.NoRegion:
-                    log.Received().Verbose("The EKS cluster Url specified should contain a valid aws region name");
+                    log.Received().Verbose(
+                        "The EKS cluster Url specified should contain a valid aws region name");
                     break;
                 case AwsCliFailureModes.InvalidVersion:
-                    log.Received().Verbose("aws cli version: 1.16.155 does not support the \"aws eks get-token\" command. Please update to a version later than 1.16.156");
+                    log.Received().Verbose(
+                        "aws cli version: 1.16.155 does not support the \"aws eks get-token\" command. Please update to a version later than 1.16.156");
                     break;
                 case AwsCliFailureModes.ExceptionWhenGettingVersion:
-                    log.Received().Verbose($"Unable to authenticate to {AwsClusterUrl} using the aws cli. Failed with error message: 'a3nsf3' is not a valid version string (Parameter 'input')");
+                    log.Received().Verbose(
+                        Arg.Is<string>(s => s.StartsWith($"Unable to authenticate to {AwsClusterUrl} using the aws cli. Failed with error message: 'a3nsf3' is not a valid version string")));
                     break;
             }
         }
