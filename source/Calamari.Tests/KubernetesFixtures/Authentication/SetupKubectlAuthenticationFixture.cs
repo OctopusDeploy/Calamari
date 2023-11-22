@@ -711,4 +711,15 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
             public (string Executable, string Arguments) this[int index] => invocations[index];
         }
     }
+
+    // This extension method only exists in .net6.0
+    #if NETFX
+    public static class MiscExtensions
+    {
+        public static IEnumerable<T> TakeLast<T>(this IEnumerable<T> source, int N)
+        {
+            return source.Skip(Math.Max(0, source.Count() - N));
+        }
+    }
+    #endif
 }
