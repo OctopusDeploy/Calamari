@@ -11,9 +11,12 @@ namespace Calamari.Kubernetes.Integration
 {
     public class GCloud : CommandLineTool
     {
-        public GCloud(ILog log, ICommandLineRunner commandLineRunner, string workingDirectory, Dictionary<string, string> environmentVars)
+        private readonly ICalamariFileSystem fileSystem;
+
+        public GCloud(ILog log, ICommandLineRunner commandLineRunner, ICalamariFileSystem fileSystem, string workingDirectory, Dictionary<string, string> environmentVars)
             : base(log, commandLineRunner, workingDirectory, environmentVars)
         {
+            this.fileSystem = fileSystem;
         }
 
         public bool TrySetGcloud()
@@ -33,7 +36,7 @@ namespace Calamari.Kubernetes.Integration
             return true;
         }
 
-        public void ConfigureGcloudAccount(string project, string region, string zone, string jsonKey, bool useVmServiceAccount, string impersonationEmails)
+        public bool TryConfigureGcloudAccount(string project, string region, string zone, string jsonKey, bool useVmServiceAccount, string impersonationEmails)
         {
             if (!string.IsNullOrEmpty(project))
             {
@@ -55,14 +58,14 @@ namespace Calamari.Kubernetes.Integration
                 if (jsonKey == null)
                 {
                     log.Error("Failed to authenticate with gcloud. Key file is empty.");
-                    return;
+                    return false;
                 }
 
                 log.Verbose("Authenticating to gcloud with key file");
                 var bytes = Convert.FromBase64String(jsonKey);
                 using (var keyFile = new TemporaryFile(Path.Combine(workingDirectory, "gcpJsonKey.json")))
                 {
-                    File.WriteAllBytes(keyFile.FilePath, bytes);
+                    fileSystem.WriteAllBytes(keyFile.FilePath, bytes);
                     var result = ExecuteCommandAndLogOutput(new CommandLineInvocation(ExecutableLocation, "auth", "activate-service-account", $"--key-file=\"{keyFile.FilePath}\""));
                     result.VerifySuccess();
                 }
@@ -76,9 +79,11 @@ namespace Calamari.Kubernetes.Integration
 
             if (!string.IsNullOrEmpty(impersonationEmails))
                 environmentVars.Add("CLOUDSDK_AUTH_IMPERSONATE_SERVICE_ACCOUNT", impersonationEmails);
+
+            return true;
         }
 
-        public void ConfigureGkeKubeCtlAuthentication(Kubectl kubectlCli,
+        public bool TryConfigureGkeKubeCtlAuthentication(IKubectl kubectlCli,
                                                       string gkeClusterName,
                                                       string region,
                                                       string zone,
@@ -110,12 +115,15 @@ namespace Calamari.Kubernetes.Integration
             }
             else
             {
-                throw new ArgumentException("Either zone or region must be defined.");
+                log.Error("Either zone or region must be defined");
+                return false;
             }
 
             var result = ExecuteCommandAndLogOutput(new CommandLineInvocation(ExecutableLocation, arguments.ToArray()));
             result.VerifySuccess();
             kubectlCli.ExecuteCommandAndAssertSuccess("config", "set-context", "--current", $"--namespace={@namespace}");
+
+            return true;
         }
     }
 }

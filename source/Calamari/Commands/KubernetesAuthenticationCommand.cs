@@ -13,11 +13,11 @@ namespace Calamari.Commands
     [Command("authenticate-to-kubernetes")]
     public class KubernetesAuthenticationCommand: Command<KubernetesAuthenticationCommandInput>
     {
-        private readonly ILog log;
-        private readonly IVariables variables;
-        private readonly ICalamariFileSystem fileSystem;
-        private readonly ICommandLineRunner commandLineRunner;
-        private readonly Kubectl kubectl;
+        readonly ILog log;
+        readonly IVariables variables;
+        readonly ICalamariFileSystem fileSystem;
+        readonly ICommandLineRunner commandLineRunner;
+        readonly Kubectl kubectl;
 
         public KubernetesAuthenticationCommand(
             ILog log,
@@ -46,6 +46,7 @@ namespace Calamari.Commands
                 log,
                 commandLineRunner,
                 kubectl,
+                fileSystem,
                 environmentVars,
                 runningDeployment.CurrentDirectory);
             var accountType = variables.Get("Octopus.Account.AccountType");

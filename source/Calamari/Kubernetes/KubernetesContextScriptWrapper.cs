@@ -59,6 +59,7 @@ namespace Calamari.Kubernetes
                                                                             log,
                                                                             commandLineRunner,
                                                                             kubectl,
+                                                                            fileSystem,
                                                                             environmentVars,
                                                                             workingDirectory);
             var accountType = variables.Get("Octopus.Account.AccountType");

@@ -130,6 +130,23 @@ namespace Calamari.Deployment
                 public static readonly string ConnectionEndpoint = "Octopus.Action.ServiceFabric.ConnectionEndpoint";
             }
 
+            public static class GoogleCloud
+            {
+                public const string UseVmServiceAccount = "Octopus.Action.GoogleCloud.UseVMServiceAccount";
+                public const string ImpersonateServiceAccount = "Octopus.Action.GoogleCloud.ImpersonateServiceAccount";
+                public const string ServiceAccountEmails = "Octopus.Action.GoogleCloud.ServiceAccountEmails";
+                public const string Project = "Octopus.Action.GoogleCloud.Project";
+                public const string Region = "Octopus.Action.GoogleCloud.Region";
+                public const string Zone = "Octopus.Action.GoogleCloud.Zone";
+            }
+
+            public static class GoogleCloudAccount
+            {
+                public const string Variable = "Octopus.Action.GoogleCloudAccount.Variable";
+                public const string JsonKey = "Octopus.Action.GoogleCloudAccount.JsonKey";
+                public static string JsonKeyFromAccount(string? accountVariable) => $"{accountVariable}.JsonKey";
+            }
+
             public static class Aws
             {
                 public static readonly string CloudFormationStackName = "Octopus.Action.Aws.CloudFormationStackName";
@@ -151,6 +168,7 @@ namespace Calamari.Deployment
                 public static readonly string ClientId = "Octopus.Action.Azure.ClientId";
                 public static readonly string TenantId = "Octopus.Action.Azure.TenantId";
                 public static readonly string Password = "Octopus.Action.Azure.Password";
+                public static readonly string Jwt = "Octopus.OpenIdConnect.Jwt";
                 public static readonly string CertificateBytes = "Octopus.Action.Azure.CertificateBytes";
                 public static readonly string CertificateThumbprint = "Octopus.Action.Azure.CertificateThumbprint";
 

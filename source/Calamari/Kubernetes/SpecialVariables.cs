@@ -1,10 +1,14 @@
-﻿namespace Calamari.Kubernetes
+﻿using System;
+
+namespace Calamari.Kubernetes
 {
     public static class SpecialVariables
     {
         public const string ActionId = "Octopus.Action.Id";
         public const string ClusterUrl = "Octopus.Action.Kubernetes.ClusterUrl";
         public const string AksClusterName = "Octopus.Action.Kubernetes.AksClusterName";
+        public const string AksClusterResourceGroup = "Octopus.Action.Kubernetes.AksClusterResourceGroup";
+        public const string AksAdminLogin = "Octopus.Action.Kubernetes.AksAdminLogin";
         public const string EksClusterName = "Octopus.Action.Kubernetes.EksClusterName";
         public const string GkeClusterName = "Octopus.Action.Kubernetes.GkeClusterName";
         public const string GkeUseClusterInternalIp = "Octopus.Action.Kubernetes.GkeUseClusterInternalIp";
@@ -19,7 +23,13 @@
         public const string GroupedYamlDirectories = "Octopus.Action.KubernetesContainers.YamlDirectories";
         public const string Timeout = "Octopus.Action.Kubernetes.DeploymentTimeout";
         public const string WaitForJobs = "Octopus.Action.Kubernetes.WaitForJobs";
-        
+        public const string ClientCertificate = "Octopus.Action.Kubernetes.ClientCertificate";
+        public const string CertificateAuthorityPath = "Octopus.Action.Kubernetes.CertificateAuthorityPath";
+        public const string PodServiceAccountTokenPath = "Octopus.Action.Kubernetes.PodServiceAccountTokenPath";
+        public static string CertificatePem(string clientCertificate) => $"{clientCertificate}.CertificatePem";
+        public static string PrivateKeyPem(string clientCertificate) => $"{clientCertificate}.PrivateKeyPem";
+        public const string CertificateAuthority = "Octopus.Action.Kubernetes.CertificateAuthority";
+
         public const string KubeConfig = "Octopus.KubeConfig.Path";
         public const string KustomizeManifest = "Octopus.Kustomize.Manifest.Path";
             
