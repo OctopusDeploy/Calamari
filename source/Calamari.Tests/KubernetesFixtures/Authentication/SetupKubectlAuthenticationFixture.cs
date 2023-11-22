@@ -23,7 +23,7 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
     [TestFixture]
     public class SetupKubectlAuthenticationFixture
     {
-        private readonly string workingDirectory = Path.Join("working", "directory");
+        private readonly string workingDirectory = Path.Combine("working", "directory");
         private const string ClusterUrl = "https://my-cool-cluster.com";
         private const string Namespace = "my-cool-namespace";
         private const string ClientCert = "my-cool-client-cert";
@@ -344,9 +344,9 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
                     $"login --service-principal --federated-token \"{AzureJwt}\" --username=\"{AzureClientId}\" --tenant=\"{AzureTenantId}\"" :
                     $"login --service-principal --username=\"{AzureClientId}\" --password=\"{AzurePassword}\" --tenant=\"{AzureTenantId}\""),
                 ("az", $"account set --subscription {AzureSubscriptionId}"),
-                ("az", $"aks get-credentials --resource-group {AksClusterResourceGroup} --name {AksClusterName} --file \"{Path.Join(workingDirectory, "kubectl-octo.yml")}\" --overwrite-existing --admin"),
+                ("az", $"aks get-credentials --resource-group {AksClusterResourceGroup} --name {AksClusterName} --file \"{Path.Combine(workingDirectory, "kubectl-octo.yml")}\" --overwrite-existing --admin"),
                 ("kubectl", $"config set-context {AksClusterName}-admin --namespace={Namespace}"),
-                ("kubelogin", $"convert-kubeconfig -l azurecli --kubeconfig \"{Path.Join(workingDirectory, "kubectl-octo.yml")}\""),
+                ("kubelogin", $"convert-kubeconfig -l azurecli --kubeconfig \"{Path.Combine(workingDirectory, "kubectl-octo.yml")}\""),
                 ("kubectl", $"get namespace {Namespace} --request-timeout=1m"),
             }, opts => opts.WithStrictOrdering());
         }
@@ -409,9 +409,9 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
 
             if (!useVmServiceAccount)
             {
-                expectedInvocations.Add(("gcloud", $"auth activate-service-account --key-file=\"{Path.Join(workingDirectory, "gcpJsonKey.json")}\""));
+                expectedInvocations.Add(("gcloud", $"auth activate-service-account --key-file=\"{Path.Combine(workingDirectory, "gcpJsonKey.json")}\""));
 
-                fileSystem.Received().WriteAllBytes($"{Path.Join(workingDirectory, "gcpJsonKey.json")}", Arg.Is<byte[]>(b => Encoding.ASCII.GetString(b) == GoogleAccountJsonKey));
+                fileSystem.Received().WriteAllBytes($"{Path.Combine(workingDirectory, "gcpJsonKey.json")}", Arg.Is<byte[]>(b => Encoding.ASCII.GetString(b) == GoogleAccountJsonKey));
             }
 
             expectedInvocations.AddRange(new []
@@ -426,7 +426,7 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
 
             var expectedEnvVars = new List<KeyValuePair<string, string>>
             {
-                new KeyValuePair<string, string>("KUBECONFIG", $"{Path.Join(workingDirectory, "kubectl-octo.yml")}"),
+                new KeyValuePair<string, string>("KUBECONFIG", $"{Path.Combine(workingDirectory, "kubectl-octo.yml")}"),
             };
             if (withZone) expectedEnvVars.Add(new KeyValuePair<string, string>("CLOUDSDK_COMPUTE_ZONE", GoogleCloudZone));
             if (withRegion) expectedEnvVars.Add(new KeyValuePair<string, string>("CLOUDSDK_COMPUTE_REGION", GoogleCloudRegion));
