@@ -8,6 +8,7 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Proxies;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Kubernetes.Authentication;
 using Calamari.Kubernetes.ContextProviders;
 using Calamari.Kubernetes.Integration;
 
@@ -81,6 +82,13 @@ namespace Calamari.Kubernetes
 
         bool TrySetupContext(string kubeConfig, string @namespace, string accountType)
         {
+            if (accountType != null &&
+                !AccountTypes.IsKnownAccountType(accountType))
+            {
+                log.Error($"Account Type {accountType} is currently not valid for kubectl contexts");
+                return false;
+            }
+
             var clusterUrl = variables.Get(SpecialVariables.ClusterUrl);
             var clientCert = variables.Get(SpecialVariables.ClientCertificate);
             var skipTlsVerification = variables.GetFlag(SpecialVariables.SkipTlsVerification) ? "true" : "false";
@@ -129,10 +137,10 @@ namespace Calamari.Kubernetes
 
             if (accountType == null && !string.IsNullOrEmpty(clientCert))
             {
-                return new CertificateAuthenticationContextProvider(variables, log, kubectl).TrySetContext(@namespace, clusterUrl, clientCert, skipTlsVerification);
+                return new CertificateAuthenticationContextProvider(variables, log, kubectl)
+                    .TrySetContext(@namespace, clusterUrl, clientCert, skipTlsVerification);
             }
 
-            log.Error($"Account Type {accountType} is currently not valid for kubectl contexts");
             return false;
         }
 
