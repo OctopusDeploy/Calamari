@@ -20,7 +20,6 @@ using TestEnvironment = Calamari.Testing.Helpers.TestEnvironment;
 
 namespace Calamari.Tests.Fixtures.Integration.Packages
 {
-    [RequiresNonMono]
     [TestFixture]
     public class S3PackageDownloaderFixture : CalamariFixture
     {

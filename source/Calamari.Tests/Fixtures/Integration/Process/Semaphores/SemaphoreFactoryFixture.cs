@@ -10,15 +10,6 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
     [TestFixture]
     public class SemaphoreFactoryFixture
     {
-        [Test]
-        [RequiresMono]
-        public void ReturnsFileBasedSemaphoreManagerForMono()
-        {
-            if (!CalamariEnvironment.IsRunningOnMono)
-                Assert.Ignore("This test is designed to run on mono");
-            var result = SemaphoreFactory.Get();
-            Assert.That(result, Is.InstanceOf<FileBasedSempahoreManager>());
-        }
 
 #if NETFX
         [Test]

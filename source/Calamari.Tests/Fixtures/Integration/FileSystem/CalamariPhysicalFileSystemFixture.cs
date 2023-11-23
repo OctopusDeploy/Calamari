@@ -293,7 +293,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
             }
         }
 
-        [Test, RequiresNonMono]
+        [Test]
         [TestCase(new [] { @"*.txt" }, new [] {"r.txt", "f1.txt", "f2.txt", "f2-sub.txt"}, 4)]
         [TestCase(new [] { @"*.config" }, new [] { "root.config", "c.config", "f1-a.config", "f1-b.config", "f1-c.config", "f2.config", "f2-sub.config"}, 7)]
         [TestCase(new [] { @"*.config" , "*.txt", "*" }, new [] { "r.txt", "f1.txt", "f2.txt", "f2-sub.txt", "root.config", "c.config", "f1-a.config", "f1-b.config", "f1-c.config", "f2.config", "f2-sub.config"}, 11)]

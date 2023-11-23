@@ -235,7 +235,6 @@ namespace Calamari.Tests.KubernetesFixtures
 
         [Test]
         [WindowsTest] // This test requires the aws cli tools. Currently only configured to install on Linux & Windows
-        [RequiresNonMono]
         public async Task ExecutionWithEKS_IAMAuthenticator()
         {
             await InstallTools(InstallAwsCli);
@@ -255,7 +254,6 @@ namespace Calamari.Tests.KubernetesFixtures
 
         [Test]
         [WindowsTest] // This test requires the aws cli tools. Currently only configured to install on Windows
-        [RequiresNonMono] // as Mac and Linux installation requires Distro specific tooling
         public async Task ExecutionWithEKS_AwsCLIAuthenticator()
         {
             await InstallTools(InstallAwsCli);
@@ -277,7 +275,6 @@ namespace Calamari.Tests.KubernetesFixtures
 
         [Test]
         [WindowsTest] // This test requires the GKE GCloud Auth plugin. Currently only configured to install on Windows
-        [RequiresNonMono] // as Mac and Linux installation requires Distro specific tooling
         public async Task ExecutionWithGoogleCloudAccount_WhenZoneIsProvided()
         {
             await InstallTools(InstallGCloud);
@@ -296,7 +293,6 @@ namespace Calamari.Tests.KubernetesFixtures
 
         [Test]
         [WindowsTest] // This test requires the GKE GCloud Auth plugin. Currently only configured to install on Windows
-        [RequiresNonMono] // as Mac and Linux installation requires Distro specific tooling
         public async Task ExecutionWithGoogleCloudAccount_WhenRegionIsProvided()
         {
             await InstallTools(InstallGCloud);
@@ -315,7 +311,6 @@ namespace Calamari.Tests.KubernetesFixtures
 
         [Test]
         [WindowsTest] // This test requires the GKE GCloud Auth plugin. Currently only configured to install on Windows
-        [RequiresNonMono] // as Mac and Linux installation requires Distro specific tooling
         public async Task ExecutionWithGoogleCloudAccount_WhenBothZoneAndRegionAreProvided()
         {
             await InstallTools(InstallGCloud);
