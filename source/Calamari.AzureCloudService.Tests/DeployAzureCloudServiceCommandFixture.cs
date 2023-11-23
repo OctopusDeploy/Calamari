@@ -31,7 +31,7 @@ namespace Calamari.AzureCloudService.Tests
         public async Task Setup()
         {
             storageName = $"Test{Guid.NewGuid().ToString("N").Substring(0, 10)}".ToLower();
-            certificate = ExternalVariables.Get(ExternalVariable.AzureSubscriptionCertificate);
+            certificate = ExternalVariables.Get(ExternalVariable.AzureSubscriptionCertificate).Trim();
             subscriptionId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionId);
             managementCertificate = CreateManagementCertificate(certificate);
             subscriptionCloudCredentials = new CertificateCloudCredentials(subscriptionId, managementCertificate);

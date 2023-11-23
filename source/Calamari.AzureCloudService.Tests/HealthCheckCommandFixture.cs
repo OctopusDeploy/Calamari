@@ -17,7 +17,7 @@ namespace Calamari.AzureCloudService.Tests
         public async Task CloudService_Is_Found()
         {
             var subscriptionId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionId);
-            var certificate = ExternalVariables.Get(ExternalVariable.AzureSubscriptionCertificate);
+            var certificate = ExternalVariables.Get(ExternalVariable.AzureSubscriptionCertificate).Trim();
             var serviceName = $"{nameof(HealthCheckCommandFixture)}-{Guid.NewGuid().ToString("N").Substring(0, 12)}";
 
             using var managementCertificate = CreateManagementCertificate(certificate);
@@ -47,7 +47,7 @@ namespace Calamari.AzureCloudService.Tests
         public Task CloudService_Is_Not_Found()
         {
             var subscriptionId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionId);
-            var certificate = ExternalVariables.Get(ExternalVariable.AzureSubscriptionCertificate);
+            var certificate = ExternalVariables.Get(ExternalVariable.AzureSubscriptionCertificate).Trim();
             var serviceName = $"{nameof(HealthCheckCommandFixture)}-{Guid.NewGuid().ToString("N").Substring(0, 12)}";
 
             using var managementCertificate = CreateManagementCertificate(certificate);
