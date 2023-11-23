@@ -105,43 +105,49 @@ namespace Calamari.Kubernetes
                 return true;
             }
 
-            if (string.IsNullOrEmpty(clusterUrl))
+            if (!string.IsNullOrEmpty(clusterUrl))
+            {
+                if (new AwsContextProvider(variables, log, commandLineRunner, kubectl, environmentVars, workingDirectory)
+                    .TrySetContext(@namespace, accountType, clusterUrl, clientCert, skipTlsVerification))
+                {
+                    return true;
+                }
+
+                if (new PodServiceAccountContextProvider(variables, log, kubectl, fileSystem)
+                    .TrySetContext(@namespace, accountType, clusterUrl, clientCert, skipTlsVerification))
+                {
+                    return true;
+                }
+
+                if (new TokenContextProvider(variables, log, kubectl)
+                    .TrySetContext(@namespace, accountType, clusterUrl, clientCert, skipTlsVerification))
+                {
+                    return true;
+                }
+
+                if (new UsernamePasswordContextProvider(variables, log, kubectl)
+                    .TrySetContext(@namespace, accountType, clusterUrl, clientCert, skipTlsVerification))
+                {
+                    return true;
+                }
+            }
+            else if (accountType != null)
             {
                 log.Error("Kubernetes cluster URL is missing");
+            }
+
+            if (accountType != null)
                 return false;
-            }
 
-            if (new AwsContextProvider(variables, log, commandLineRunner, kubectl, environmentVars, workingDirectory)
-                .TrySetContext(@namespace, accountType, clusterUrl, clientCert, skipTlsVerification))
-            {
-                return true;
-            }
-
-            if (new PodServiceAccountContextProvider(variables, log, kubectl, fileSystem)
-                .TrySetContext(@namespace, accountType, clusterUrl, clientCert, skipTlsVerification))
-            {
-                return true;
-            }
-
-            if (new TokenContextProvider(variables, log, kubectl)
-                .TrySetContext(@namespace, accountType, clusterUrl, clientCert, skipTlsVerification))
-            {
-                return true;
-            }
-
-            if (new UsernamePasswordContextProvider(variables, log, kubectl)
-                .TrySetContext(@namespace, accountType, clusterUrl, clientCert, skipTlsVerification))
-            {
-                return true;
-            }
-
-            if (accountType == null && !string.IsNullOrEmpty(clientCert))
+            if (!string.IsNullOrEmpty(clientCert))
             {
                 return new CertificateAuthenticationContextProvider(variables, log, kubectl)
                     .TrySetContext(@namespace, clusterUrl, clientCert, skipTlsVerification);
             }
 
-            return false;
+            log.Verbose("No kubernetes credentials provided so assuming machine has ambient authentication context.");
+            RemoveKubectlConfig();
+            return true;
         }
 
         bool CreateNamespace(string @namespace)
@@ -152,9 +158,14 @@ namespace Calamari.Kubernetes
             return TryExecuteCommandWithVerboseLoggingOnly("create", "namespace", @namespace);
         }
 
+        string GetKubectlConfigPath()
+        {
+            return Path.Combine(workingDirectory, "kubectl-octo.yml");
+        }
+
         string CreateKubectlConfig()
         {
-            var kubeConfig = Path.Combine(workingDirectory, "kubectl-octo.yml");
+            var kubeConfig = GetKubectlConfigPath();
 
             // create an empty file, to suppress kubectl errors about the file missing
             fileSystem.WriteAllText(kubeConfig, string.Empty);
@@ -169,6 +180,17 @@ namespace Calamari.Kubernetes
             log.Verbose($"Temporary kubectl config set to {kubeConfig}");
 
             return kubeConfig;
+        }
+
+        void RemoveKubectlConfig()
+        {
+            var kubeConfig = GetKubectlConfigPath();
+
+            fileSystem.DeleteFile(kubeConfig, FailureOptions.IgnoreFailure);
+
+            environmentVars.Remove("KUBECONFIG");
+
+            log.Verbose("Temporary kubectl config removed");
         }
 
         void ExecuteCommand(string executable, params string[] arguments)

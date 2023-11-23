@@ -134,6 +134,18 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
             log.Received().Error("Kubernetes cluster URL is missing");
         }
 
+        [Test]
+        public void Execute_WithNoCredentials_FallsBackToAmbientAuthentication()
+        {
+            var sut = CreateSut();
+
+            var result = sut.Execute(null);
+
+            result.ExitCode.Should().Be(0);
+
+            log.Received().Verbose("No kubernetes credentials provided so assuming machine has ambient authentication context.");
+        }
+
         [TestCase(true)]
         [TestCase(false)]
         public void Execute_WithUsernamePasswordAndCertificates_ConfiguresAuthenticationCorrectly(bool skipServerCertificate)
@@ -662,7 +674,7 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
         [TestCase(true, false, false, true, "Pod service token file not found")]
         [TestCase(true, true, true, true, "Pod service token file is empty")]
         [TestCase(true, true, false, false, "Certificate authority file not found")]
-        public void Execute_ForPodServiceAccountMissingServiceAccountOrCertificateAuthority_Fails(bool pathVariablesSet, bool accountTokenFound, bool accountTokenNull, bool certificateAuthorityFound, string errorMessage)
+        public void Execute_ForPodServiceAccountMissingServiceAccountOrCertificateAuthority_FallsBackToAmbientAuth(bool pathVariablesSet, bool accountTokenFound, bool accountTokenNull, bool certificateAuthorityFound, string errorMessage)
         {
             fileSystem.FileExists(PodServiceAccountTokenPath).Returns(accountTokenFound);
             fileSystem.FileExists(CertificateAuthorityPath).Returns(certificateAuthorityFound);
@@ -682,9 +694,10 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
 
             var result = sut.Execute(null);
 
-            result.ExitCode.Should().NotBe(0);
+            result.ExitCode.Should().Be(0);
 
             log.Received().Error(errorMessage);
+            log.Received().Verbose("No kubernetes credentials provided so assuming machine has ambient authentication context.");
         }
 
         [Test]
