@@ -47,12 +47,11 @@ namespace Calamari.Kubernetes
                 environmentVars[proxyVariable.Key] = proxyVariable.Value;
             }
 
+            var kubeConfig = CreateKubectlConfig();
             if (!kubectl.TrySetKubectl())
             {
                 return CommandResult.Failure("Unable to setup Kubectl executable");
             }
-
-            var kubeConfig = CreateKubectlConfig();
 
             var @namespace = variables.Get(SpecialVariables.Namespace);
             if (string.IsNullOrEmpty(@namespace))
