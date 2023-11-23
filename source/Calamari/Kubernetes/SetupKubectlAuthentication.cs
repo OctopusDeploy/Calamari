@@ -1,3 +1,4 @@
+#if !NET40
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -239,3 +240,4 @@ namespace Calamari.Kubernetes
         }
     }
 }
+#endif
