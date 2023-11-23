@@ -126,10 +126,10 @@ namespace Calamari.Kubernetes.Integration
             try
             {
                 var clientVersion = JsonConvert.DeserializeAnonymousType(kubeCtlVersionJson, new { clientVersion = new { gitVersion = "1.0.0" } });
-                var kubectlVersionString = clientVersion?.clientVersion?.gitVersion?.TrimStart('v');
+                var kubectlVersionString = clientVersion?.clientVersion?.gitVersion;
                 if (kubectlVersionString != null)
                 {
-                    return Maybe<SemanticVersion>.Some(new SemanticVersion(kubectlVersionString));
+                    return Maybe<SemanticVersion>.Some(SemVerFactory.CreateVersion(kubectlVersionString));
                 }
             }
             catch (Exception e)
