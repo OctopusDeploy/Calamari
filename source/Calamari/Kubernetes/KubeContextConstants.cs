@@ -1,4 +1,4 @@
-namespace Calamari.Kubernetes.Context
+namespace Calamari.Kubernetes
 {
     public static class KubeContextConstants
     {

@@ -6,7 +6,6 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes;
-using Calamari.Kubernetes.Context;
 using Calamari.Kubernetes.Integration;
 
 namespace Calamari.Commands

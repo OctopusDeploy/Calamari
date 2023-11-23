@@ -1,15 +1,13 @@
-using System;
 using System.Collections.Generic;
-using Calamari.Aws.Deployment;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes.Authentication;
 using Calamari.Kubernetes.Integration;
 
-namespace Calamari.Kubernetes.Context
+namespace Calamari.Kubernetes.ContextProviders
 {
-    public class AwsContextProvider
+    public class AzureContextProvider
     {
         readonly IVariables variables;
         readonly ILog log;
@@ -18,8 +16,7 @@ namespace Calamari.Kubernetes.Context
         readonly Dictionary<string, string> environmentVars;
         readonly string workingDirectory;
 
-        public AwsContextProvider(
-            IVariables variables,
+        public AzureContextProvider(IVariables variables,
             ILog log,
             ICommandLineRunner commandLineRunner,
             IKubectl kubectl,
@@ -34,19 +31,17 @@ namespace Calamari.Kubernetes.Context
             this.workingDirectory = workingDirectory;
         }
 
-        public bool TrySetContext(string @namespace, string accountType, string clusterUrl, string clientCert, string skipTlsVerification)
+        public bool TrySetContext(string kubeConfig, string @namespace, string accountType, string clusterUrl)
         {
-            var eksUseInstanceRole = variables.GetFlag(AwsSpecialVariables.Authentication.UseInstanceRole);
-            if (accountType != AccountTypes.AmazonWebServicesAccount && !eksUseInstanceRole)
+            if (accountType != AccountTypes.AzureServicePrincipal &&
+                accountType != AccountTypes.AzureOidc)
                 return false;
 
-            if (!new CertificateAuthConfigurationProvider(variables, log, kubectl)
-                .TryConfigure(@namespace, clusterUrl, clientCert, skipTlsVerification))
-                return false;
+            var azureCli = new AzureCli(log, commandLineRunner, workingDirectory, environmentVars);
+            var kubeloginCli = new KubeLogin(log, commandLineRunner, workingDirectory, environmentVars);
+            var azureAuth = new AzureKubernetesServicesAuth(azureCli, kubectl, kubeloginCli, variables);
 
-            new AwsKubernetesAuth(variables, log, commandLineRunner, kubectl, environmentVars, workingDirectory)
-                .SetupContextForAmazonServiceAccount(@namespace, clusterUrl, KubeContextConstants.User);
-            return true;
+            return azureAuth.TryConfigure(@namespace, kubeConfig);
         }
     }
 }

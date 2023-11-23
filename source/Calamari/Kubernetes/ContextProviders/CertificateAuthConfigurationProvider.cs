@@ -4,7 +4,7 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes.Integration;
 
-namespace Calamari.Kubernetes.Context
+namespace Calamari.Kubernetes.ContextProviders
 {
     public class CertificateAuthConfigurationProvider
     {

@@ -4,7 +4,6 @@ using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Deployment.Conventions;
-using Calamari.Kubernetes.Context;
 using Calamari.Kubernetes.Integration;
 
 namespace Calamari.Kubernetes.Conventions

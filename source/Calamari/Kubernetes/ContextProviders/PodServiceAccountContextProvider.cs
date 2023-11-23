@@ -1,10 +1,9 @@
-using System.IO;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes.Integration;
 
-namespace Calamari.Kubernetes.Context
+namespace Calamari.Kubernetes.ContextProviders
 {
     public class PodServiceAccountContextProvider
     {

@@ -3,7 +3,7 @@ using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes.Authentication;
 using Calamari.Kubernetes.Integration;
 
-namespace Calamari.Kubernetes.Context
+namespace Calamari.Kubernetes.ContextProviders
 {
     public class UsernamePasswordContextProvider
     {
