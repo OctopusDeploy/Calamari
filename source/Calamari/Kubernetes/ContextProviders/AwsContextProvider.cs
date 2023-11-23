@@ -1,4 +1,3 @@
-#if !NET40
 using System.Collections.Generic;
 using Calamari.Aws.Deployment;
 using Calamari.Common.Features.Processes;
@@ -50,4 +49,3 @@ namespace Calamari.Kubernetes.ContextProviders
         }
     }
 }
-#endif
