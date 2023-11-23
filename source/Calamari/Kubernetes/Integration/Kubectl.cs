@@ -124,6 +124,8 @@ namespace Calamari.Kubernetes.Integration
 
     public interface IKubectl
     {
+        string workingDirectory { get; }
+        Dictionary<string, string> environmentVars { get; }
         void SetWorkingDirectory(string directory);
         void SetEnvironmentVariables(Dictionary<string, string> variables);
         bool TrySetKubectl();

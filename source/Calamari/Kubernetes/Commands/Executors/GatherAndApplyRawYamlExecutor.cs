@@ -13,6 +13,7 @@ using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes.Integration;
 using Calamari.Kubernetes.ResourceStatus.Resources;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Octopus.CoreUtilities.Extensions;
 
@@ -46,6 +47,11 @@ namespace Calamari.Kubernetes.Commands.Executors
             try
             {
                 var variables = deployment.Variables;
+                var @namespace = variables.Get(SpecialVariables.Namespace);
+                if (@namespace == null)
+                {
+                    @namespace = "default";
+                }
                 var globs = variables.GetPaths(SpecialVariables.CustomResourceYamlFileName);
                 if (globs.IsNullOrEmpty())
                     return true;
@@ -53,7 +59,7 @@ namespace Calamari.Kubernetes.Commands.Executors
                 var resources = new HashSet<Resource>();
                 foreach (var directory in directories)
                 {
-                    var res = ApplyBatchAndReturnResources(directory).ToList();
+                    var res = ApplyBatchAndReturnResources(directory, @namespace).ToList();
                     if (appliedResourcesCallback != null)
                     {
                         await appliedResourcesCallback(res.Select(r => r.ToResourceIdentifier()).ToArray());
@@ -135,7 +141,7 @@ namespace Calamari.Kubernetes.Commands.Executors
             return directories;
         }
 
-        private IEnumerable<Resource> ApplyBatchAndReturnResources(GlobDirectory globDirectory)
+        private IEnumerable<Resource> ApplyBatchAndReturnResources(GlobDirectory globDirectory, string @namespace)
         {
             var index = globDirectory.Index;
             var directoryWithTrailingSlash = globDirectory.Directory + Path.DirectorySeparatorChar;
@@ -151,9 +157,16 @@ namespace Calamari.Kubernetes.Commands.Executors
             foreach (var file in files)
             {
                 log.Verbose($"Matched file: {fileSystem.GetRelativePath(directoryWithTrailingSlash, file)}");
+                log.Verbose(fileSystem.ReadFile(file));
             }
 
-            var result = kubectl.ExecuteCommandAndReturnOutput("apply", "-f", $@"""{globDirectory.Directory}""", "--recursive", "-o", "json");
+            log.Info($"SCME ApplyBatchAndReturnResources: {kubectl.GetHashCode()}");
+            log.Info($"SCME ApplyBatchAndReturnResources EnvVars: '{JsonConvert.SerializeObject(kubectl.environmentVars)}'");
+            log.Info($"SCME ApplyBatchAndReturnResources workingDirectory: '{kubectl.workingDirectory}'");
+            if (!TryExecuteCommandWithVerboseLoggingOnly("get", "namespace", @namespace))
+                TryExecuteCommandWithVerboseLoggingOnly("create", "namespace", @namespace);
+
+            var result = kubectl.ExecuteCommandAndReturnOutput("apply", "-f", $@"""{globDirectory.Directory}""", "--recursive", "-o", "json", "-n", @namespace);
 
             foreach (var message in result.Output.Messages)
             {
@@ -207,6 +220,18 @@ namespace Calamari.Kubernetes.Commands.Executors
             }
 
             return Enumerable.Empty<Resource>();
+        }
+
+        bool TryExecuteCommandWithVerboseLoggingOnly(params string[] arguments)
+        {
+            var result = kubectl.ExecuteCommandAndReturnOutput(
+                arguments.Concat(new[] { "--request-timeout=1m" }).ToArray());
+            foreach (var message in result.Output.Messages)
+            {
+                log.Verbose(message.Text);
+            }
+
+            return result.Result.ExitCode == 0;
         }
 
         private void LogParsingError(string outputJson, int index)

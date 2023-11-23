@@ -8,8 +8,8 @@ namespace Calamari.Kubernetes.Integration
     public class CommandLineTool
     {
         protected readonly ILog log;
-        protected string workingDirectory;
-        protected Dictionary<string, string> environmentVars;
+        public string workingDirectory { get; set; }
+        public Dictionary<string, string> environmentVars { get; set; }
 
         readonly ICommandLineRunner commandLineRunner;
 

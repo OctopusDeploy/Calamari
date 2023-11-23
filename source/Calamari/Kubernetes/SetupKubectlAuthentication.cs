@@ -11,6 +11,7 @@ using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes.Authentication;
 using Calamari.Kubernetes.ContextProviders;
 using Calamari.Kubernetes.Integration;
+using Newtonsoft.Json;
 
 namespace Calamari.Kubernetes
 {
@@ -66,7 +67,7 @@ namespace Calamari.Kubernetes
                 return CommandResult.Failure($"Unable to setup auth context for accountType {accountType}");
             }
 
-            if (!CreateNamespace(@namespace))
+            if (@namespace != "default" && !CreateNamespace(@namespace))
             {
                 log.Verbose("Could not create namespace. Continuing on, as it may not be working directly with the target.");
             }
@@ -152,6 +153,10 @@ namespace Calamari.Kubernetes
 
         bool CreateNamespace(string @namespace)
         {
+            log.Info($"SCME CreateNamespace: {kubectl.GetHashCode()}");
+            log.Info($"SCME CreateNamespace EnvVars: '{JsonConvert.SerializeObject(kubectl.environmentVars)}'");
+            log.Info($"SCME CreateNamespace workingDirectory: '{kubectl.workingDirectory}'");
+
             if (TryExecuteCommandWithVerboseLoggingOnly("get", "namespace", @namespace))
                 return true;
 
@@ -200,7 +205,14 @@ namespace Calamari.Kubernetes
 
         bool TryExecuteCommandWithVerboseLoggingOnly(params string[] arguments)
         {
-            return ExecuteCommandWithVerboseLoggingOnly(new CommandLineInvocation(kubectl.ExecutableLocation, arguments.Concat(new[] { "--request-timeout=1m" }).ToArray())).ExitCode == 0;
+            var result = kubectl.ExecuteCommandAndReturnOutput(
+                arguments.Concat(new[] { "--request-timeout=1m" }).ToArray());
+            foreach (var message in result.Output.Messages)
+            {
+                log.Verbose(message.Text);
+            }
+
+            return result.Result.ExitCode == 0;
         }
 
         CommandResult ExecuteCommand(CommandLineInvocation invocation)
@@ -235,36 +247,6 @@ namespace Calamari.Kubernetes
                         log.Error(message.Text);
                         break;
                 }
-            }
-
-            return result;
-        }
-
-        /// <summary>
-        /// This is a special case for when the invocation results in an error
-        /// 1) but is to be expected as a valid scenario; and
-        /// 2) we don't want to inform this at an error level when this happens.
-        /// </summary>
-        /// <param name="invocation"></param>
-        /// <returns></returns>
-        CommandResult ExecuteCommandWithVerboseLoggingOnly(CommandLineInvocation invocation)
-        {
-            invocation.EnvironmentVars = environmentVars;
-            invocation.WorkingDirectory = workingDirectory;
-            invocation.OutputAsVerbose = true;
-            invocation.OutputToLog = false;
-
-            var captureCommandOutput = new CaptureCommandOutput();
-            invocation.AdditionalInvocationOutputSink = captureCommandOutput;
-
-            var commandString = invocation.ToString();
-            log.Verbose(commandString);
-
-            var result = commandLineRunner.Execute(invocation);
-
-            foreach (var message in captureCommandOutput.Messages)
-            {
-                log.Verbose(message.Text);
             }
 
             return result;
