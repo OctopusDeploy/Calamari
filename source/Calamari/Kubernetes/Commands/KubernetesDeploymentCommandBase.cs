@@ -120,7 +120,7 @@ namespace Calamari.Kubernetes.Commands
                 conventions.Add(new AwsAuthConvention(log, variables));
             }
 
-            conventions.Add(new KubernetesAuthContextConvention(log, new CommandLineRunner(log, variables), kubectl));
+            conventions.Add(new KubernetesAuthContextConvention(log, new CommandLineRunner(log, variables), kubectl, fileSystem));
 
             conventions.AddRange(CommandSpecificInstallConventions());
 

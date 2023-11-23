@@ -1,3 +1,4 @@
+#if !NET40
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -59,6 +60,7 @@ namespace Calamari.Kubernetes
                                                                             log,
                                                                             commandLineRunner,
                                                                             kubectl,
+                                                                            fileSystem,
                                                                             environmentVars,
                                                                             workingDirectory);
             var accountType = variables.Get("Octopus.Account.AccountType");
@@ -101,3 +103,4 @@ namespace Calamari.Kubernetes
         }
     }
 }
+#endif

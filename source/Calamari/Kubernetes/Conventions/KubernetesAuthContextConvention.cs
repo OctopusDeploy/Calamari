@@ -1,7 +1,7 @@
-using System;
+#if !NET40
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Processes;
-using Calamari.Common.Features.Scripts;
+using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Deployment.Conventions;
 using Calamari.Kubernetes.Integration;
@@ -13,15 +13,17 @@ namespace Calamari.Kubernetes.Conventions
     /// </summary>
     public class KubernetesAuthContextConvention : IInstallConvention
     {
-        private readonly ILog log;
-        private readonly ICommandLineRunner commandLineRunner;
-        private readonly Kubectl kubectl;
+        readonly ILog log;
+        readonly ICommandLineRunner commandLineRunner;
+        readonly Kubectl kubectl;
+        readonly ICalamariFileSystem fileSystem;
 
-        public KubernetesAuthContextConvention(ILog log, ICommandLineRunner commandLineRunner, Kubectl kubectl)
+        public KubernetesAuthContextConvention(ILog log, ICommandLineRunner commandLineRunner, Kubectl kubectl, ICalamariFileSystem fileSystem)
         {
             this.log = log;
             this.commandLineRunner = commandLineRunner;
             this.kubectl = kubectl;
+            this.fileSystem = fileSystem;
         }
 
         public void Install(RunningDeployment deployment)
@@ -30,6 +32,7 @@ namespace Calamari.Kubernetes.Conventions
                 log,
                 commandLineRunner,
                 kubectl,
+                fileSystem,
                 deployment.EnvironmentVariables,
                 deployment.CurrentDirectory);
 
@@ -39,3 +42,4 @@ namespace Calamari.Kubernetes.Conventions
         }
     }
 }
+#endif
