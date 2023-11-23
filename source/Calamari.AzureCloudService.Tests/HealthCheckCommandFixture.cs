@@ -17,7 +17,9 @@ namespace Calamari.AzureCloudService.Tests
         public async Task CloudService_Is_Found()
         {
             var subscriptionId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionId);
-            var certificate = ExternalVariables.Get(ExternalVariable.AzureSubscriptionCertificate);
+            // We need to trim because of issue with team city:
+            // https://app.shortcut.com/octopusdeploy/story/65471/failing-azurecloudservice-tests-due-to-whitespace-being-added-to-end-of-certificate-env-var
+            var certificate = ExternalVariables.Get(ExternalVariable.AzureSubscriptionCertificate).Trim();
             var serviceName = $"{nameof(HealthCheckCommandFixture)}-{Guid.NewGuid().ToString("N").Substring(0, 12)}";
 
             using var managementCertificate = CreateManagementCertificate(certificate);
@@ -47,7 +49,9 @@ namespace Calamari.AzureCloudService.Tests
         public Task CloudService_Is_Not_Found()
         {
             var subscriptionId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionId);
-            var certificate = ExternalVariables.Get(ExternalVariable.AzureSubscriptionCertificate);
+            // We need to trim because of issue with team city:
+            // https://app.shortcut.com/octopusdeploy/story/65471/failing-azurecloudservice-tests-due-to-whitespace-being-added-to-end-of-certificate-env-var
+            var certificate = ExternalVariables.Get(ExternalVariable.AzureSubscriptionCertificate).Trim();
             var serviceName = $"{nameof(HealthCheckCommandFixture)}-{Guid.NewGuid().ToString("N").Substring(0, 12)}";
 
             using var managementCertificate = CreateManagementCertificate(certificate);
