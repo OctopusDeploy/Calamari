@@ -181,6 +181,36 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
             }, opts => opts.WithStrictOrdering());
         }
 
+        [Test]
+        public void Execute_WithOnlyCertificates_ConfiguresAuthenticationCorrectly()
+        {
+            variables.Set(SpecialVariables.ClusterUrl, ClusterUrl);
+            variables.Set(SpecialVariables.Namespace, Namespace);
+
+            variables.Set(SpecialVariables.CertificateAuthority, CertificateAuthority);
+            variables.Set(SpecialVariables.CertificatePem(CertificateAuthority), ServerCertPem);
+            variables.Set(SpecialVariables.ClientCertificate, ClientCert);
+            variables.Set(SpecialVariables.CertificatePem(ClientCert), ClientCertPem);
+            variables.Set(SpecialVariables.PrivateKeyPem(ClientCert), ClientCertKey);
+
+            var sut = CreateSut();
+
+            var result = sut.Execute(null);
+
+            result.VerifySuccess();
+
+            invocations.Should().BeEquivalentTo(new []
+            {
+                ("kubectl", $"config set-cluster octocluster --server={ClusterUrl}"),
+                ("kubectl", $"config set-context octocontext --user=octouser --cluster=octocluster --namespace={Namespace}"),
+                ("kubectl", "config use-context octocontext"),
+                ("kubectl", $"config set users.octouser.client-certificate-data {ToBase64(ClientCertPem)}"),
+                ("kubectl", $"config set users.octouser.client-key-data {ToBase64(ClientCertKey)}"),
+                ("kubectl", $"config set clusters.octocluster.certificate-authority-data {ToBase64(ServerCertPem)}"),
+                ("kubectl", $"get namespace {Namespace} --request-timeout=1m")
+            }, opts => opts.WithStrictOrdering());
+        }
+
         [TestCase(true, false, false, "Kubernetes client certificate does not include the certificate data")]
         [TestCase(false, true, false, "Kubernetes client certificate does not include the private key data")]
         [TestCase(false, false, true, "Kubernetes server certificate does not include the certificate data")]
@@ -632,7 +662,7 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
         [TestCase(true, false, false, true, "Pod service token file not found")]
         [TestCase(true, true, true, true, "Pod service token file is empty")]
         [TestCase(true, true, false, false, "Certificate authority file not found")]
-        public void Execute_ForPodServiceAccountMissingServiceAccountOrCertificateAuthority(bool pathVariablesSet, bool accountTokenFound, bool accountTokenNull, bool certificateAuthorityFound, string errorMessage)
+        public void Execute_ForPodServiceAccountMissingServiceAccountOrCertificateAuthority_Fails(bool pathVariablesSet, bool accountTokenFound, bool accountTokenNull, bool certificateAuthorityFound, string errorMessage)
         {
             fileSystem.FileExists(PodServiceAccountTokenPath).Returns(accountTokenFound);
             fileSystem.FileExists(CertificateAuthorityPath).Returns(certificateAuthorityFound);
