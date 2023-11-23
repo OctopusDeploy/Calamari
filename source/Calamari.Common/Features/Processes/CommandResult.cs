@@ -8,6 +8,16 @@ namespace Calamari.Common.Features.Processes
         readonly string command;
         readonly string? workingDirectory;
 
+        public static CommandResult Success(string? command = null, string? workingDirectory = null)
+        {
+            return new CommandResult(command ?? string.Empty, 0, workingDirectory: workingDirectory);
+        }
+
+        public static CommandResult Failure(string? error = null, int exitCode = 1, string? command = null, string? workingDirectory = null)
+        {
+            return new CommandResult(command ?? string.Empty, exitCode, error, workingDirectory);
+        }
+
         public CommandResult(string command, int exitCode, string? additionalErrors = null, string? workingDirectory = null)
         {
             this.command = command;

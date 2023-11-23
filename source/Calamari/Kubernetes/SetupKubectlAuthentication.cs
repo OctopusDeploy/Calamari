@@ -41,15 +41,14 @@ namespace Calamari.Kubernetes
 
         public CommandResult Execute(string accountType)
         {
-            foreach (var proxyVariable in GenerateProxyEnvironmentVariables())
+            foreach (var proxyVariable in ProxyEnvironmentVariablesGenerator.GenerateProxyEnvironmentVariables())
             {
                 environmentVars[proxyVariable.Key] = proxyVariable.Value;
             }
 
-            // Make sure Kubectl exists and can be run
             if (!kubectl.TrySetKubectl())
             {
-                return new CommandResult("Unable to setup Kubectl executable", 1);
+                return CommandResult.Failure("Unable to setup Kubectl executable");
             }
 
             var kubeConfig = CreateKubectlConfig();
@@ -63,7 +62,7 @@ namespace Calamari.Kubernetes
 
             if (!TrySetupContext(kubeConfig, @namespace, accountType))
             {
-                return new CommandResult($"Unable to setup auth context for accountType {accountType}", 2);
+                return CommandResult.Failure($"Unable to setup auth context for accountType {accountType}");
             }
 
             if (!CreateNamespace(@namespace))
@@ -77,7 +76,7 @@ namespace Calamari.Kubernetes
                 kubectl.ExecuteCommandAndAssertSuccess("config", "view");
             }
 
-            return new CommandResult(string.Empty, 0);
+            return CommandResult.Success();
         }
 
         bool TrySetupContext(string kubeConfig, string @namespace, string accountType)
@@ -237,14 +236,6 @@ namespace Calamari.Kubernetes
             }
 
             return result;
-        }
-
-        /// <remarks>
-        /// Seam for testing.
-        /// </remarks>
-        protected virtual IEnumerable<EnvironmentVariable> GenerateProxyEnvironmentVariables()
-        {
-            return ProxyEnvironmentVariablesGenerator.GenerateProxyEnvironmentVariables();
         }
     }
 }
