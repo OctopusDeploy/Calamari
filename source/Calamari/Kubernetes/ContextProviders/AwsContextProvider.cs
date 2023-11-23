@@ -40,8 +40,8 @@ namespace Calamari.Kubernetes.ContextProviders
             if (accountType != AccountTypes.AmazonWebServicesAccount && !eksUseInstanceRole)
                 return false;
 
-            if (!new CertificateAuthConfigurationProvider(variables, log, kubectl)
-                .TryConfigure(@namespace, clusterUrl, clientCert, skipTlsVerification))
+            if (!new CertificateAuthenticationContextProvider(variables, log, kubectl)
+                .TrySetContext(@namespace, clusterUrl, clientCert, skipTlsVerification))
                 return false;
 
             new AwsKubernetesAuth(variables, log, commandLineRunner, kubectl, environmentVars, workingDirectory)

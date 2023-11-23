@@ -25,8 +25,8 @@ namespace Calamari.Kubernetes.ContextProviders
             if (accountType != AccountTypes.Token)
                 return false;
 
-            if (!new CertificateAuthConfigurationProvider(variables, log, kubectl)
-                .TryConfigure(@namespace, clusterUrl, clientCert, skipTlsVerification))
+            if (!new CertificateAuthenticationContextProvider(variables, log, kubectl)
+                .TrySetContext(@namespace, clusterUrl, clientCert, skipTlsVerification))
                 return false;
 
             var token = variables.Get(Deployment.SpecialVariables.Account.Token);

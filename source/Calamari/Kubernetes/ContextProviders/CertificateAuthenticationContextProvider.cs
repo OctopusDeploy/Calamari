@@ -6,13 +6,13 @@ using Calamari.Kubernetes.Integration;
 
 namespace Calamari.Kubernetes.ContextProviders
 {
-    public class CertificateAuthConfigurationProvider
+    public class CertificateAuthenticationContextProvider
     {
         readonly IVariables variables;
         readonly ILog log;
         readonly IKubectl kubectl;
 
-        public CertificateAuthConfigurationProvider(IVariables variables,
+        public CertificateAuthenticationContextProvider(IVariables variables,
             ILog log,
             IKubectl kubectl)
         {
@@ -21,7 +21,7 @@ namespace Calamari.Kubernetes.ContextProviders
             this.kubectl = kubectl;
         }
 
-        public bool TryConfigure(
+        public bool TrySetContext(
             string @namespace,
             string clusterUrl,
             string clientCert,

@@ -128,7 +128,9 @@ namespace Calamari.Kubernetes
             }
 
             if (accountType == null && !string.IsNullOrEmpty(clientCert))
-                return true;
+            {
+                return new CertificateAuthenticationContextProvider(variables, log, kubectl).TrySetContext(@namespace, clusterUrl, clientCert, skipTlsVerification);
+            }
 
             log.Error($"Account Type {accountType} is currently not valid for kubectl contexts");
             return false;
