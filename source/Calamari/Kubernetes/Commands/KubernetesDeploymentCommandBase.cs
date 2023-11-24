@@ -124,7 +124,7 @@ namespace Calamari.Kubernetes.Commands
 
             conventions.AddRange(CommandSpecificInstallConventions());
 
-            var runningDeployment = new RunningDeployment(pathToPackage, variables);
+            var runningDeployment = new RunningDeployment(pathToPackage, variables, GetEnvironmentVariables());
 
             var conventionRunner = new ConventionProcessor(runningDeployment, conventions, log);
             try
@@ -139,6 +139,12 @@ namespace Calamari.Kubernetes.Commands
                 deploymentJournalWriter.AddJournalEntry(runningDeployment, false, pathToPackage);
                 throw;
             }
+        }
+
+        private static Dictionary<string, string> GetEnvironmentVariables()
+        {
+            var environmentVariables = Environment.GetEnvironmentVariables();
+            return environmentVariables.Keys.Cast<string>().ToDictionary(x => x, x => environmentVariables[x]?.ToString());
         }
     }
 }
