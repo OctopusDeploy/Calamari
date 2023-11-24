@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Assent;
 using Calamari.Aws.Kubernetes.Discovery;
+using Calamari.CloudAccounts;
 using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
@@ -412,10 +413,10 @@ namespace Calamari.Tests.KubernetesFixtures
                 Environment.SetEnvironmentVariable(accessKeyEnvVar, eksClientID);
                 Environment.SetEnvironmentVariable(secretKeyEnvVar, eksSecretKey);
 
-                var authenticationDetails = new AwsAuthenticationDetails
+                var authenticationDetails = new AwsAuthenticationDetails<AwsWorkerCredentials>
                 {
                     Type = "Aws",
-                    Credentials = new AwsCredentials { Type = "worker" },
+                    Credentials = new AwsCredentials<AwsWorkerCredentials> { Type = "worker" },
                     Role = new AwsAssumedRole
                     {
                         Type = "assumeRole",
@@ -462,10 +463,10 @@ namespace Calamari.Tests.KubernetesFixtures
                 Environment.SetEnvironmentVariable(accessKeyEnvVar, eksClientID);
                 Environment.SetEnvironmentVariable(secretKeyEnvVar, eksSecretKey);
 
-                var authenticationDetails = new AwsAuthenticationDetails
+                var authenticationDetails = new AwsAuthenticationDetails<AwsWorkerCredentials>
                 {
                     Type = "Aws",
-                    Credentials = new AwsCredentials { Type = "worker" },
+                    Credentials = new AwsCredentials<AwsWorkerCredentials> { Type = "worker" },
                     Role = new AwsAssumedRole { Type = "noAssumedRole" },
                     Regions = new []{region}
                 };
@@ -497,12 +498,12 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         public void DiscoverKubernetesClusterWithAwsAccountCredentialsAndNoIamRole()
         {
-            var authenticationDetails = new AwsAuthenticationDetails
+            var authenticationDetails = new AwsAuthenticationDetails<AwsAccessKeyCredentials>
             {
                 Type = "Aws",
-                Credentials = new AwsCredentials
+                Credentials = new AwsCredentials<AwsAccessKeyCredentials>
                 {
-                    Account = new AwsAccount
+                    Account = new AwsAccessKeyCredentials
                     {
                         AccessKey = eksClientID,
                         SecretKey = eksSecretKey
@@ -536,12 +537,12 @@ namespace Calamari.Tests.KubernetesFixtures
         public void DiscoverKubernetesClusterWithAwsAccountCredentialsAndIamRole()
         {
             const int sessionDuration = 900;
-            var authenticationDetails = new AwsAuthenticationDetails
+            var authenticationDetails = new AwsAuthenticationDetails<AwsAccessKeyCredentials>
             {
                 Type = "Aws",
-                Credentials = new AwsCredentials
+                Credentials = new AwsCredentials<AwsAccessKeyCredentials>
                 {
-                    Account = new AwsAccount
+                    Account = new AwsAccessKeyCredentials
                     {
                         AccessKey = eksClientID,
                         SecretKey = eksSecretKey
@@ -593,10 +594,10 @@ namespace Calamari.Tests.KubernetesFixtures
                 Environment.SetEnvironmentVariable(accessKeyEnvVar, null);
                 Environment.SetEnvironmentVariable(secretKeyEnvVar, null);
 
-                var authenticationDetails = new AwsAuthenticationDetails
+                var authenticationDetails = new AwsAuthenticationDetails<AwsWorkerCredentials>
                 {
                     Type = "Aws",
-                    Credentials = new AwsCredentials { Type = "worker" },
+                    Credentials = new AwsCredentials<AwsWorkerCredentials> { Type = "worker" },
                     Role = new AwsAssumedRole { Type = "noAssumedRole" },
                     Regions = new []{region}
                 };
@@ -626,12 +627,12 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         public void DiscoverKubernetesClusterWithInvalidAccountCredentials()
         {
-            var authenticationDetails = new AwsAuthenticationDetails
+            var authenticationDetails = new AwsAuthenticationDetails<AwsAccessKeyCredentials>
             {
                 Type = "Aws",
-                Credentials = new AwsCredentials
+                Credentials = new AwsCredentials<AwsAccessKeyCredentials>
                 {
-                    Account = new AwsAccount
+                    Account = new AwsAccessKeyCredentials
                     {
                         AccessKey = "abcdefg",
                         SecretKey = null

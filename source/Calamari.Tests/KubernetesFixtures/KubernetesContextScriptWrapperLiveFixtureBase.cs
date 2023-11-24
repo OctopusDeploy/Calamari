@@ -16,6 +16,7 @@ using Calamari.Testing.Helpers;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 using KubernetesSpecialVariables = Calamari.Kubernetes.SpecialVariables;
 using SpecialVariables = Calamari.Deployment.SpecialVariables;
@@ -99,7 +100,8 @@ namespace Calamari.Tests.KubernetesFixtures
             return new Dictionary<string, string>();
         }
 
-        protected void DoDiscovery(AwsAuthenticationDetails authenticationDetails)
+        protected void DoDiscovery<TCredentials>(AwsAuthenticationDetails<TCredentials> authenticationDetails)
+            where TCredentials : AwsCredentialsBase
         {
             var scope = new TargetDiscoveryScope("TestSpace",
                 "Staging",
@@ -110,15 +112,16 @@ namespace Calamari.Tests.KubernetesFixtures
                 null);
 
             var targetDiscoveryContext =
-                new TargetDiscoveryContext<AwsAuthenticationDetails>(scope,
+                new TargetDiscoveryContext<AwsAuthenticationDetails<TCredentials>>(scope,
                     authenticationDetails);
 
             ExecuteDiscoveryCommandAndVerifyResult(targetDiscoveryContext);
         }
 
-        protected void DoDiscoveryAndAssertReceivedServiceMessageWithMatchingProperties(
-            AwsAuthenticationDetails authenticationDetails,
+        protected void DoDiscoveryAndAssertReceivedServiceMessageWithMatchingProperties<TCredentials>(
+            AwsAuthenticationDetails<TCredentials> authenticationDetails,
             Dictionary<string,string> properties)
+            where TCredentials : AwsCredentialsBase
         {
             DoDiscovery(authenticationDetails);
 

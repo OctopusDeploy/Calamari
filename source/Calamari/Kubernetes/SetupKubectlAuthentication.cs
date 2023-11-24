@@ -15,6 +15,7 @@ using Calamari.Kubernetes.Authentication;
 using Calamari.Kubernetes.Integration;
 using Newtonsoft.Json.Linq;
 using Octopus.CoreUtilities;
+using Octopus.CoreUtilities.Extensions;
 using Octopus.Versioning.Semver;
 
 namespace Calamari.Kubernetes
@@ -102,8 +103,9 @@ namespace Calamari.Kubernetes
             var isUsingGoogleCloudAuth = accountType == AccountTypes.GoogleCloudAccount || useVmServiceAccount;
             var isUsingAzureServicePrincipalAuth = accountType == AccountTypes.AzureServicePrincipal;
             var isUsingAzureOidc = accountType == AccountTypes.AzureOidc;
+            var isUsingAwsOidc = accountType == AccountTypes.AmazonWebServicesOidcAccount;
 
-            if (!isUsingAzureServicePrincipalAuth && !isUsingAzureOidc && !isUsingGoogleCloudAuth && string.IsNullOrEmpty(clusterUrl))
+            if (!isUsingAzureServicePrincipalAuth && !isUsingAzureOidc && !isUsingGoogleCloudAuth && !isUsingAwsOidc && string.IsNullOrEmpty(clusterUrl))
             {
                 log.Error("Kubernetes cluster URL is missing");
                 return false;
@@ -261,7 +263,7 @@ namespace Calamari.Kubernetes
                         }
                         default:
                         {
-                            if (accountType == AccountTypes.AmazonWebServicesAccount || eksUseInstanceRole)
+                            if (accountType == AccountTypes.AmazonWebServicesAccount || isUsingAwsOidc || eksUseInstanceRole)
                             {
                                 SetupContextForAmazonServiceAccount(@namespace, clusterUrl, user);
                             }
@@ -373,7 +375,26 @@ namespace Calamari.Kubernetes
 
         void SetKubeConfigAuthenticationToAwsCli(string user, string clusterName, string region, string apiVersion)
         {
-            kubectl.ExecuteCommandAndAssertSuccess("config", "set-credentials", user, "--exec-command=aws", "--exec-arg=eks", "--exec-arg=get-token", $"--exec-arg=--cluster-name={clusterName}", $"--exec-arg=--region={region}", $"--exec-api-version={apiVersion}");
+            var oidcJwt = variables.Get("Octopus.OpenIdConnect.Jwt");
+            var arguments = new List<string>
+            {
+                "config",
+                "set-credentials",
+                user,
+                "--exec-command=aws",
+                "--exec-arg=eks",
+                "--exec-arg=get-token",
+                $"--exec-arg=--cluster-name={clusterName}",
+                $"--exec-arg=--region={region}",
+                $"--exec-api-version={apiVersion}"
+            };
+            
+            if (!oidcJwt.IsNullOrEmpty())
+            {
+                arguments.Add($"--token={oidcJwt}");
+            }
+            
+            kubectl.ExecuteCommandAndAssertSuccess(arguments.ToArray());
         }
 
         void SetKubeConfigAuthenticationToAwsIAm(string user, string clusterName)
