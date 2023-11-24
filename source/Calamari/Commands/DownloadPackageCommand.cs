@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Globalization;
-using System.Threading;
-using System.Threading.Tasks;
 using Calamari.Commands.Support;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Packages;
