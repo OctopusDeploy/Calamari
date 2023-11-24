@@ -1,4 +1,5 @@
 #if !NET40
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -165,12 +166,23 @@ namespace Calamari.Kubernetes
             // Use the config object to create a client.
             var client = new k8s.Kubernetes(config);
 
-            var result = client.CoreV1.ReadNamespaceWithHttpMessagesAsync(@namespace).GetAwaiter().GetResult();
-            if (result.Response.IsSuccessStatusCode)
+            try
+            {
+                client.CoreV1.ReadNamespaceAsync(@namespace).GetAwaiter().GetResult();
                 return true;
-
-            return client.CoreV1.CreateNamespaceWithHttpMessagesAsync(new V1Namespace(metadata: new V1ObjectMeta(name: @namespace))).GetAwaiter().GetResult().Response
-                .IsSuccessStatusCode;
+            }
+            catch
+            {
+                try
+                {
+                    client.CoreV1.CreateNamespaceAsync(new V1Namespace(metadata: new V1ObjectMeta(name: @namespace))).GetAwaiter().GetResult();
+                    return true;
+                }
+                catch
+                {
+                    return false;
+                }
+            }
 
             // if (TryExecuteCommandWithVerboseLoggingOnly("get", "namespace", @namespace))
             //     return true;
