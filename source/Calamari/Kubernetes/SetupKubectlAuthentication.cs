@@ -11,6 +11,8 @@ using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes.Authentication;
 using Calamari.Kubernetes.ContextProviders;
 using Calamari.Kubernetes.Integration;
+using k8s;
+using k8s.Models;
 using Newtonsoft.Json;
 
 namespace Calamari.Kubernetes
@@ -48,7 +50,7 @@ namespace Calamari.Kubernetes
             {
                 environmentVars[proxyVariable.Key] = proxyVariable.Value;
             }
-
+            log.Info($"SCME Execute EnvVars: '{JsonConvert.SerializeObject(kubectl.environmentVars)}'");
             var kubeConfig = CreateKubectlConfig();
             if (!kubectl.TrySetKubectl())
             {
@@ -157,10 +159,23 @@ namespace Calamari.Kubernetes
             log.Info($"SCME CreateNamespace EnvVars: '{JsonConvert.SerializeObject(kubectl.environmentVars)}'");
             log.Info($"SCME CreateNamespace workingDirectory: '{kubectl.workingDirectory}'");
 
-            if (TryExecuteCommandWithVerboseLoggingOnly("get", "namespace", @namespace))
+            // Load from in-cluster configuration:
+            var config = KubernetesClientConfiguration.InClusterConfig();
+
+            // Use the config object to create a client.
+            var client = new k8s.Kubernetes(config);
+
+            var result = client.CoreV1.ReadNamespaceWithHttpMessagesAsync(@namespace).GetAwaiter().GetResult();
+            if (result.Response.IsSuccessStatusCode)
                 return true;
 
-            return TryExecuteCommandWithVerboseLoggingOnly("create", "namespace", @namespace);
+            return client.CoreV1.CreateNamespaceWithHttpMessagesAsync(new V1Namespace(metadata: new V1ObjectMeta(name: @namespace))).GetAwaiter().GetResult().Response
+                .IsSuccessStatusCode;
+
+            // if (TryExecuteCommandWithVerboseLoggingOnly("get", "namespace", @namespace))
+            //     return true;
+            //
+            // return TryExecuteCommandWithVerboseLoggingOnly("create", "namespace", @namespace);
         }
 
         string GetKubectlConfigPath()

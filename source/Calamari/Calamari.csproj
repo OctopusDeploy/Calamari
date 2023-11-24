@@ -47,6 +47,7 @@
     <ProjectReference Include="..\Calamari.Azure\Calamari.Azure.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="KubernetesClient.Classic" Version="12.1.1" />
     <PackageReference Include="Microsoft.DotNet.Analyzers.Compatibility" Version="0.2.12-alpha">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
@@ -64,7 +65,7 @@
     <PackageReference Include="Octopus.CoreUtilities" Version="2.1.449" />
     <PackageReference Include="scriptcs" Version="0.17.1" />
     <PackageReference Include="SharpCompress" Version="0.24.0" />
-    <PackageReference Include="YamlDotNet" Version="8.1.2" />
+    <PackageReference Include="YamlDotNet" Version="13.3.1" />
     <PackageReference Include="System.ValueTuple" Version="4.4.0" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFrameworkIdentifier)' == '.NETFramework' ">
