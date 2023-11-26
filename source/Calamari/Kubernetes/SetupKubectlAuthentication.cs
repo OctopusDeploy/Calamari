@@ -84,13 +84,11 @@ namespace Calamari.Kubernetes
 
         bool TrySetupContext(string kubeConfig, string @namespace, string accountType)
         {
-            var clusterUrl = variables.Get(SpecialVariables.ClusterUrl);
             var clientCert = variables.Get("Octopus.Action.Kubernetes.ClientCertificate");
             var eksUseInstanceRole = variables.GetFlag("Octopus.Action.AwsAccount.UseInstanceRole");
             var podServiceAccountTokenPath = variables.Get("Octopus.Action.Kubernetes.PodServiceAccountTokenPath");
             var serverCertPath = variables.Get("Octopus.Action.Kubernetes.CertificateAuthorityPath");
             var isUsingPodServiceAccount = false;
-            var skipTlsVerification = variables.GetFlag(SpecialVariables.SkipTlsVerification) ? "true" : "false";
             var useVmServiceAccount = variables.GetFlag("Octopus.Action.GoogleCloud.UseVMServiceAccount");
 
 
@@ -158,6 +156,9 @@ namespace Calamari.Kubernetes
             }
             else
             {
+                var clusterUrl = variables.Get(SpecialVariables.ClusterUrl);
+                var skipTlsVerification = variables.GetFlag(SpecialVariables.SkipTlsVerification) ? "true" : "false";
+                
                 if (string.IsNullOrEmpty(clusterUrl))
                 {
                     log.Error("Kubernetes cluster URL is missing");
