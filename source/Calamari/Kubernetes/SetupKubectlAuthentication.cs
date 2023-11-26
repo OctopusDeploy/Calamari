@@ -163,25 +163,31 @@ namespace Calamari.Kubernetes
                     log.Error("Kubernetes cluster URL is missing");
                     return false;
                 }
-                
                 const string user = "octouser";
                 const string cluster = "octocluster";
                 const string context = "octocontext";
+                
+                kubectl.ExecuteCommandAndAssertSuccess("config", "set-cluster", cluster, $"--server={clusterUrl}");
+                kubectl.ExecuteCommandAndAssertSuccess("config", "set-context", context, $"--user={user}", $"--cluster={cluster}", $"--namespace={@namespace}");
+                kubectl.ExecuteCommandAndAssertSuccess("config", "use-context", context);
+                
                 if (isUsingPodServiceAccount)
                 {
-                    SetupContextUsingPodServiceAccount(@namespace, cluster, clusterUrl, serverCert,
-                        skipTlsVerification,
-                        serverCertPath,
-                        context,
-                        user,
-                        podServiceAccountToken);
+                    if (string.IsNullOrEmpty(serverCert))
+                    {
+                        kubectl.ExecuteCommandAndAssertSuccess("config", "set-cluster", cluster, $"--insecure-skip-tls-verify={skipTlsVerification}");
+                    }
+                    else
+                    {
+                        kubectl.ExecuteCommandAndAssertSuccess("config", "set-cluster", cluster, $"--certificate-authority={serverCertPath}");
+                    }
+
+                    log.Info($"Creating kubectl context to {clusterUrl} (namespace {@namespace}) using a Pod Service Account Token");
+                    log.AddValueToRedact(podServiceAccountToken, "<token>");
+                    kubectl.ExecuteCommandAndAssertSuccess("config", "set-credentials", user, $"--token={podServiceAccountToken}");
                 }
                 else
                 {
-                    kubectl.ExecuteCommandAndAssertSuccess("config", "set-cluster", cluster, $"--server={clusterUrl}");
-                    kubectl.ExecuteCommandAndAssertSuccess("config", "set-context", context, $"--user={user}", $"--cluster={cluster}", $"--namespace={@namespace}");
-                    kubectl.ExecuteCommandAndAssertSuccess("config", "use-context", context);
-
                     var clientCertPem = variables.Get($"{clientCert}.CertificatePem");
                     var clientCertKey = variables.Get($"{clientCert}.PrivateKeyPem");
                     var certificateAuthority = variables.Get("Octopus.Action.Kubernetes.CertificateAuthority");
