@@ -86,7 +86,7 @@ namespace Calamari.Kubernetes
         {
             var clientCert = variables.Get("Octopus.Action.Kubernetes.ClientCertificate");
             var eksUseInstanceRole = variables.GetFlag("Octopus.Action.AwsAccount.UseInstanceRole");
-            var useVmServiceAccount = variables.GetFlag("Octopus.Action.GoogleCloud.UseVMServiceAccount");
+            
 
             if (accountType == "AzureServicePrincipal" ||  accountType == "AzureOidc")
             {
@@ -97,13 +97,13 @@ namespace Calamari.Kubernetes
                 if (!azureAuth.TryConfigure(@namespace, kubeConfig))
                     return false;
             }
-            else if (accountType == "GoogleCloudAccount" || useVmServiceAccount)
+            else if (accountType == "GoogleCloudAccount")
             {
                 var gcloudCli = new GCloud(log, commandLineRunner, workingDirectory, environmentVars);
                 var gkeGcloudAuthPlugin = new GkeGcloudAuthPlugin(log, commandLineRunner, workingDirectory, environmentVars);
                 var gcloudAuth = new GoogleKubernetesEngineAuth(gcloudCli, gkeGcloudAuthPlugin, kubectl, variables, log);
 
-                if (!gcloudAuth.TryConfigure(useVmServiceAccount, @namespace))
+                if (!gcloudAuth.TryConfigure(@namespace))
                     return false;
             }
             else
