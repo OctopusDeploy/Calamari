@@ -5,7 +5,6 @@ using System.Security.AccessControl;
 using System.Security.Principal;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
-using Octostache;
 
 namespace Calamari.Integration.Certificates
 {
