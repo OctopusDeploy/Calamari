@@ -194,33 +194,6 @@ namespace Calamari.Kubernetes
                     var certificateAuthority = variables.Get("Octopus.Action.Kubernetes.CertificateAuthority");
                     var serverCertPem = variables.Get($"{certificateAuthority}.CertificatePem");
 
-                    if (!string.IsNullOrEmpty(clientCert))
-                    {
-                        if (string.IsNullOrEmpty(clientCertPem))
-                        {
-                            log.Error("Kubernetes client certificate does not include the certificate data");
-                            return false;
-                        }
-
-                        if (string.IsNullOrEmpty(clientCertKey))
-                        {
-                            log.Error("Kubernetes client certificate does not include the private key data");
-                            return false;
-                        }
-
-                        log.Verbose("Encoding client cert key");
-                        var clientCertKeyEncoded = Convert.ToBase64String(Encoding.ASCII.GetBytes(clientCertKey));
-                        log.Verbose("Encoding client cert pem");
-                        var clientCertPemEncoded = Convert.ToBase64String(Encoding.ASCII.GetBytes(clientCertPem));
-
-                        // Don't leak the private key in the logs
-                        log.SetOutputVariable($"{clientCert}.PrivateKeyPemBase64", clientCertKeyEncoded, variables, true);
-                        log.AddValueToRedact(clientCertKeyEncoded, "<data>");
-                        log.AddValueToRedact(clientCertPemEncoded, "<data>");
-                        kubectl.ExecuteCommandAndAssertSuccess("config", "set", $"users.{user}.client-certificate-data", clientCertPemEncoded);
-                        kubectl.ExecuteCommandAndAssertSuccess("config", "set", $"users.{user}.client-key-data", clientCertKeyEncoded);
-                    }
-
                     if (!string.IsNullOrEmpty(certificateAuthority))
                     {
                         if (string.IsNullOrEmpty(serverCertPem))
@@ -255,13 +228,36 @@ namespace Calamari.Kubernetes
                     {
                         SetupContextForAmazonServiceAccount(@namespace, clusterUrl, user);
                     }
-                    else
+                    else if ( variables.IsSet("Octopus.Action.Kubernetes.ClientCertificate"))
                     {
-                        if (string.IsNullOrEmpty(clientCert))
+                        if (string.IsNullOrEmpty(clientCertPem))
                         {
-                            log.Error($"Account Type {accountType} is currently not valid for kubectl contexts");
+                            log.Error("Kubernetes client certificate does not include the certificate data");
                             return false;
                         }
+
+                        if (string.IsNullOrEmpty(clientCertKey))
+                        {
+                            log.Error("Kubernetes client certificate does not include the private key data");
+                            return false;
+                        }
+
+                        log.Verbose("Encoding client cert key");
+                        var clientCertKeyEncoded = Convert.ToBase64String(Encoding.ASCII.GetBytes(clientCertKey));
+                        log.Verbose("Encoding client cert pem");
+                        var clientCertPemEncoded = Convert.ToBase64String(Encoding.ASCII.GetBytes(clientCertPem));
+
+                        // Don't leak the private key in the logs
+                        log.SetOutputVariable($"{clientCert}.PrivateKeyPemBase64", clientCertKeyEncoded, variables, true);
+                        log.AddValueToRedact(clientCertKeyEncoded, "<data>");
+                        log.AddValueToRedact(clientCertPemEncoded, "<data>");
+                        kubectl.ExecuteCommandAndAssertSuccess("config", "set", $"users.{user}.client-certificate-data", clientCertPemEncoded);
+                        kubectl.ExecuteCommandAndAssertSuccess("config", "set", $"users.{user}.client-key-data", clientCertKeyEncoded);
+                    }
+                    else
+                    {
+                        log.Error($"Account Type {accountType} is currently not valid for kubectl contexts");
+                        return false;
                     }
                 }
             }
