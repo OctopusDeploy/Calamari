@@ -93,15 +93,6 @@ namespace Calamari.Kubernetes
             var skipTlsVerification = variables.GetFlag(SpecialVariables.SkipTlsVerification) ? "true" : "false";
             var useVmServiceAccount = variables.GetFlag("Octopus.Action.GoogleCloud.UseVMServiceAccount");
 
-            var isUsingGoogleCloudAuth = accountType == "GoogleCloudAccount" || useVmServiceAccount;
-            var isUsingAzureServicePrincipalAuth = accountType == "AzureServicePrincipal";
-            var isUsingAzureOidc = accountType == "AzureOidc";
-
-            if (!isUsingAzureServicePrincipalAuth && !isUsingAzureOidc && !isUsingGoogleCloudAuth && string.IsNullOrEmpty(clusterUrl))
-            {
-                log.Error("Kubernetes cluster URL is missing");
-                return false;
-            }
 
             string podServiceAccountToken = null;
             string serverCert = null;
@@ -147,7 +138,7 @@ namespace Calamari.Kubernetes
                 }
             }
 
-            if (isUsingAzureServicePrincipalAuth || isUsingAzureOidc)
+            if (accountType == "AzureServicePrincipal" ||  accountType == "AzureOidc")
             {
                 var azureCli = new AzureCli(log, commandLineRunner, workingDirectory, environmentVars);
                 var kubeloginCli = new KubeLogin(log, commandLineRunner, workingDirectory, environmentVars);
@@ -156,7 +147,7 @@ namespace Calamari.Kubernetes
                 if (!azureAuth.TryConfigure(@namespace, kubeConfig))
                     return false;
             }
-            else if (isUsingGoogleCloudAuth)
+            else if (accountType == "GoogleCloudAccount" || useVmServiceAccount)
             {
                 var gcloudCli = new GCloud(log, commandLineRunner, workingDirectory, environmentVars);
                 var gkeGcloudAuthPlugin = new GkeGcloudAuthPlugin(log, commandLineRunner, workingDirectory, environmentVars);
@@ -167,6 +158,12 @@ namespace Calamari.Kubernetes
             }
             else
             {
+                if (string.IsNullOrEmpty(clusterUrl))
+                {
+                    log.Error("Kubernetes cluster URL is missing");
+                    return false;
+                }
+                
                 const string user = "octouser";
                 const string cluster = "octocluster";
                 const string context = "octocontext";
