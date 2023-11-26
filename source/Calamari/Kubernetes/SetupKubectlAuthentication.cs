@@ -238,38 +238,29 @@ namespace Calamari.Kubernetes
                         kubectl.ExecuteCommandAndAssertSuccess("config", "set-cluster", cluster, $"--insecure-skip-tls-verify={skipTlsVerification}");
                     }
 
-                    switch (accountType)
+                    if (accountType == "Token")
                     {
-                        case "Token":
+                        var token = variables.Get("Octopus.Account.Token");
+                        if (string.IsNullOrEmpty(token))
                         {
-                            var token = variables.Get("Octopus.Account.Token");
-                            if (string.IsNullOrEmpty(token))
-                            {
-                                log.Error("Kubernetes authentication Token is missing");
-                                return false;
-                            }
-
-                            SetupContextForToken(@namespace, token, clusterUrl, user);
-                            break;
+                            log.Error("Kubernetes authentication Token is missing");
+                            return false;
                         }
-                        case "UsernamePassword":
-                        {
-                            SetupContextForUsernamePassword(user);
-                            break;
-                        }
-                        default:
-                        {
-                            if (accountType == "AmazonWebServicesAccount" || eksUseInstanceRole)
-                            {
-                                SetupContextForAmazonServiceAccount(@namespace, clusterUrl, user);
-                            }
-                            else if (string.IsNullOrEmpty(clientCert))
-                            {
-                                log.Error($"Account Type {accountType} is currently not valid for kubectl contexts");
-                                return false;
-                            }
 
-                            break;
+                        SetupContextForToken(@namespace, token, clusterUrl, user);
+                    } else if(accountType == "UsernamePassword")
+                    {
+                        SetupContextForUsernamePassword(user);
+                    } else if (accountType == "AmazonWebServicesAccount" || eksUseInstanceRole)
+                    {
+                        SetupContextForAmazonServiceAccount(@namespace, clusterUrl, user);
+                    }
+                    else
+                    {
+                        if (string.IsNullOrEmpty(clientCert))
+                        {
+                            log.Error($"Account Type {accountType} is currently not valid for kubectl contexts");
+                            return false;
                         }
                     }
                 }
