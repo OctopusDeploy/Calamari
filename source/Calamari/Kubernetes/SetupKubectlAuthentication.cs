@@ -87,16 +87,14 @@ namespace Calamari.Kubernetes
             var clientCert = variables.Get("Octopus.Action.Kubernetes.ClientCertificate");
             var eksUseInstanceRole = variables.GetFlag("Octopus.Action.AwsAccount.UseInstanceRole");
             var podServiceAccountTokenPath = variables.Get("Octopus.Action.Kubernetes.PodServiceAccountTokenPath");
-            var serverCertPath = variables.Get("Octopus.Action.Kubernetes.CertificateAuthorityPath");
             var isUsingPodServiceAccount = false;
             var useVmServiceAccount = variables.GetFlag("Octopus.Action.GoogleCloud.UseVMServiceAccount");
 
 
             string podServiceAccountToken = null;
-            string serverCert = null;
             if (string.IsNullOrEmpty(accountType) && string.IsNullOrEmpty(clientCert) && !eksUseInstanceRole && !useVmServiceAccount)
             {
-                if (string.IsNullOrEmpty(podServiceAccountTokenPath) && string.IsNullOrEmpty(serverCertPath))
+                if (string.IsNullOrEmpty(podServiceAccountTokenPath))
                 {
                     log.Error("Kubernetes account type or certificate is missing");
                     return false;
@@ -118,19 +116,6 @@ namespace Calamari.Kubernetes
                     else
                     {
                         log.Error("Pod service token file not found");
-                        return false;
-                    }
-                }
-
-                if (!string.IsNullOrEmpty(serverCertPath))
-                {
-                    if (File.Exists(serverCertPath))
-                    {
-                        serverCert = File.ReadAllText(serverCertPath);
-                    }
-                    else
-                    {
-                        log.Error("Certificate authority file not found");
                         return false;
                     }
                 }
@@ -174,13 +159,18 @@ namespace Calamari.Kubernetes
                 
                 if (isUsingPodServiceAccount)
                 {
-                    if (string.IsNullOrEmpty(serverCert))
+                    if (variables.IsSet("Octopus.Action.Kubernetes.CertificateAuthorityPath"))
+                    {
+                        var serverCertPath = variables.Get("Octopus.Action.Kubernetes.CertificateAuthorityPath");
+                        if (!File.Exists(serverCertPath))
+                        {
+                            log.Error("Certificate authority file not found");
+                            return false;
+                        }
+                        kubectl.ExecuteCommandAndAssertSuccess("config", "set-cluster", cluster, $"--certificate-authority={serverCertPath}");
+                    } else
                     {
                         kubectl.ExecuteCommandAndAssertSuccess("config", "set-cluster", cluster, $"--insecure-skip-tls-verify={skipTlsVerification}");
-                    }
-                    else
-                    {
-                        kubectl.ExecuteCommandAndAssertSuccess("config", "set-cluster", cluster, $"--certificate-authority={serverCertPath}");
                     }
 
                     log.Info($"Creating kubectl context to {clusterUrl} (namespace {@namespace}) using a Pod Service Account Token");
