@@ -86,40 +86,7 @@ namespace Calamari.Kubernetes
         {
             var clientCert = variables.Get("Octopus.Action.Kubernetes.ClientCertificate");
             var eksUseInstanceRole = variables.GetFlag("Octopus.Action.AwsAccount.UseInstanceRole");
-            var podServiceAccountTokenPath = variables.Get("Octopus.Action.Kubernetes.PodServiceAccountTokenPath");
-            var isUsingPodServiceAccount = false;
             var useVmServiceAccount = variables.GetFlag("Octopus.Action.GoogleCloud.UseVMServiceAccount");
-
-
-            string podServiceAccountToken = null;
-            if (string.IsNullOrEmpty(accountType) && string.IsNullOrEmpty(clientCert) && !eksUseInstanceRole && !useVmServiceAccount)
-            {
-                if (string.IsNullOrEmpty(podServiceAccountTokenPath))
-                {
-                    log.Error("Kubernetes account type or certificate is missing");
-                    return false;
-                }
-
-                if (!string.IsNullOrEmpty(podServiceAccountTokenPath))
-                {
-                    if (File.Exists(podServiceAccountTokenPath))
-                    {
-                        podServiceAccountToken = File.ReadAllText(podServiceAccountTokenPath);
-                        if (string.IsNullOrEmpty(podServiceAccountToken))
-                        {
-                            log.Error("Pod service token file is empty");
-                            return false;
-                        }
-
-                        isUsingPodServiceAccount = true;
-                    }
-                    else
-                    {
-                        log.Error("Pod service token file not found");
-                        return false;
-                    }
-                }
-            }
 
             if (accountType == "AzureServicePrincipal" ||  accountType == "AzureOidc")
             {
@@ -156,9 +123,22 @@ namespace Calamari.Kubernetes
                 kubectl.ExecuteCommandAndAssertSuccess("config", "set-cluster", cluster, $"--server={clusterUrl}");
                 kubectl.ExecuteCommandAndAssertSuccess("config", "set-context", context, $"--user={user}", $"--cluster={cluster}", $"--namespace={@namespace}");
                 kubectl.ExecuteCommandAndAssertSuccess("config", "use-context", context);
-                
-                if (isUsingPodServiceAccount)
+
+                if (variables.IsSet("Octopus.Action.Kubernetes.PodServiceAccountTokenPath"))
                 {
+                    var podServiceAccountTokenPath = variables.Get("Octopus.Action.Kubernetes.PodServiceAccountTokenPath");
+                    if (!File.Exists(podServiceAccountTokenPath))
+                    {
+                        log.Error("Pod service token file not found");
+                        return false;
+                    }
+                    var podServiceAccountToken = File.ReadAllText(podServiceAccountTokenPath);
+                    if (string.IsNullOrEmpty(podServiceAccountToken))
+                    {
+                        log.Error("Pod service token file is empty");
+                        return false;
+                    }
+
                     if (variables.IsSet("Octopus.Action.Kubernetes.CertificateAuthorityPath"))
                     {
                         var serverCertPath = variables.Get("Octopus.Action.Kubernetes.CertificateAuthorityPath");
@@ -167,8 +147,10 @@ namespace Calamari.Kubernetes
                             log.Error("Certificate authority file not found");
                             return false;
                         }
+
                         kubectl.ExecuteCommandAndAssertSuccess("config", "set-cluster", cluster, $"--certificate-authority={serverCertPath}");
-                    } else
+                    }
+                    else
                     {
                         kubectl.ExecuteCommandAndAssertSuccess("config", "set-cluster", cluster, $"--insecure-skip-tls-verify={skipTlsVerification}");
                     }
@@ -176,8 +158,7 @@ namespace Calamari.Kubernetes
                     log.Info($"Creating kubectl context to {clusterUrl} (namespace {@namespace}) using a Pod Service Account Token");
                     log.AddValueToRedact(podServiceAccountToken, "<token>");
                     kubectl.ExecuteCommandAndAssertSuccess("config", "set-credentials", user, $"--token={podServiceAccountToken}");
-                }
-                else
+                } else
                 {
                     var clientCertPem = variables.Get($"{clientCert}.CertificatePem");
                     var clientCertKey = variables.Get($"{clientCert}.PrivateKeyPem");
