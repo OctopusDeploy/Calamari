@@ -37,7 +37,7 @@ namespace Calamari.Testing
         [EnvironmentVariable("Helm_OctopusAPITester_Password", "Artifactory Test Account")]
         HelmPassword,
 
-        [EnvironmentVariable("ArtifactoryReader_OctopusAPITester_Password", "JFrog artifactory instance admin account")]
+        [EnvironmentVariable("Artifactory_Admin_PAT", "Jfrog Artifactory Admin PAT")]
         ArtifactoryE2EPassword,
 
         [EnvironmentVariable("DockerHub_TestReaderAccount_Password", "DockerHub Test Reader Account")]
