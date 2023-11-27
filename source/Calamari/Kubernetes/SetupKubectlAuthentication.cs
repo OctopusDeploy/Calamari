@@ -158,12 +158,10 @@ namespace Calamari.Kubernetes
                     kubectl.ExecuteCommandAndAssertSuccess("config", "set-credentials", user, $"--token={podServiceAccountToken}");
                 } else
                 {
-                    
-                    var certificateAuthority = variables.Get("Octopus.Action.Kubernetes.CertificateAuthority");
-                    var serverCertPem = variables.Get($"{certificateAuthority}.CertificatePem");
-
-                    if (!string.IsNullOrEmpty(certificateAuthority))
+                    if (variables.IsSet("Octopus.Action.Kubernetes.CertificateAuthority"))
                     {
+                        var certificateAuthority = variables.Get("Octopus.Action.Kubernetes.CertificateAuthority");
+                        var serverCertPem = variables.Get($"{certificateAuthority}.CertificatePem");
                         if (string.IsNullOrEmpty(serverCertPem))
                         {
                             log.Error("Kubernetes server certificate does not include the certificate data");
