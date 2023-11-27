@@ -85,8 +85,6 @@ namespace Calamari.Kubernetes
         bool TrySetupContext(string kubeConfig, string @namespace, string accountType)
         {
             var clientCert = variables.Get("Octopus.Action.Kubernetes.ClientCertificate");
-            var eksUseInstanceRole = variables.GetFlag("Octopus.Action.AwsAccount.UseInstanceRole");
-            
 
             if (accountType == "AzureServicePrincipal" ||  accountType == "AzureOidc")
             {
@@ -195,7 +193,7 @@ namespace Calamari.Kubernetes
                     } else if(accountType == "UsernamePassword")
                     {
                         SetupContextForUsernamePassword(user);
-                    } else if (accountType == "AmazonWebServicesAccount" || eksUseInstanceRole)
+                    } else if (accountType == "AmazonWebServicesAccount" || variables.GetFlag("Octopus.Action.AwsAccount.UseInstanceRole"))
                     {
                         SetupContextForAmazonServiceAccount(@namespace, clusterUrl, user);
                     }
