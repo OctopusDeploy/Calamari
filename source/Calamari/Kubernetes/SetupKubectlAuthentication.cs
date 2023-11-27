@@ -84,9 +84,9 @@ namespace Calamari.Kubernetes
 
         bool TrySetupContext(string kubeConfig, string @namespace, string accountType)
         {
-            
 
-            if (accountType == "AzureServicePrincipal" ||  accountType == "AzureOidc")
+
+            if (accountType == "AzureServicePrincipal" || accountType == "AzureOidc")
             {
                 var azureCli = new AzureCli(log, commandLineRunner, workingDirectory, environmentVars);
                 var kubeloginCli = new KubeLogin(log, commandLineRunner, workingDirectory, environmentVars);
@@ -107,8 +107,6 @@ namespace Calamari.Kubernetes
             else
             {
                 var clusterUrl = variables.Get(SpecialVariables.ClusterUrl);
-                var skipTlsVerification = variables.GetFlag(SpecialVariables.SkipTlsVerification) ? "true" : "false";
-                
                 if (string.IsNullOrEmpty(clusterUrl))
                 {
                     log.Error("Kubernetes cluster URL is missing");
@@ -117,10 +115,41 @@ namespace Calamari.Kubernetes
                 const string user = "octouser";
                 const string cluster = "octocluster";
                 const string context = "octocontext";
-                
+
                 kubectl.ExecuteCommandAndAssertSuccess("config", "set-cluster", cluster, $"--server={clusterUrl}");
                 kubectl.ExecuteCommandAndAssertSuccess("config", "set-context", context, $"--user={user}", $"--cluster={cluster}", $"--namespace={@namespace}");
                 kubectl.ExecuteCommandAndAssertSuccess("config", "use-context", context);
+
+                if (variables.IsSet("Octopus.Action.Kubernetes.CertificateAuthorityPath"))
+                {
+                    var serverCertPath = variables.Get("Octopus.Action.Kubernetes.CertificateAuthorityPath");
+                    if (!File.Exists(serverCertPath))
+                    {
+                        log.Error("Certificate authority file not found");
+                        return false;
+                    }
+
+                    kubectl.ExecuteCommandAndAssertSuccess("config", "set-cluster", cluster, $"--certificate-authority={serverCertPath}");
+                }
+                else if (variables.IsSet("Octopus.Action.Kubernetes.CertificateAuthority"))
+                {
+                    var certificateAuthority = variables.Get("Octopus.Action.Kubernetes.CertificateAuthority");
+                    var serverCertPem = variables.Get($"{certificateAuthority}.CertificatePem");
+                    if (string.IsNullOrEmpty(serverCertPem))
+                    {
+                        log.Error("Kubernetes server certificate does not include the certificate data");
+                        return false;
+                    }
+
+                    var authorityData = Convert.ToBase64String(Encoding.ASCII.GetBytes(serverCertPem));
+                    log.AddValueToRedact(authorityData, "<data>");
+                    kubectl.ExecuteCommandAndAssertSuccess("config", "set", $"clusters.{cluster}.certificate-authority-data", authorityData);
+                }
+                else
+                {
+                    var skipTlsVerification = variables.GetFlag(SpecialVariables.SkipTlsVerification) ? "true" : "false";
+                    kubectl.ExecuteCommandAndAssertSuccess("config", "set-cluster", cluster, $"--insecure-skip-tls-verify={skipTlsVerification}");
+                }
 
                 if (variables.IsSet("Octopus.Action.Kubernetes.PodServiceAccountTokenPath"))
                 {
@@ -130,6 +159,7 @@ namespace Calamari.Kubernetes
                         log.Error("Pod service token file not found");
                         return false;
                     }
+
                     var podServiceAccountToken = File.ReadAllText(podServiceAccountTokenPath);
                     if (string.IsNullOrEmpty(podServiceAccountToken))
                     {
@@ -137,98 +167,63 @@ namespace Calamari.Kubernetes
                         return false;
                     }
 
-                    if (variables.IsSet("Octopus.Action.Kubernetes.CertificateAuthorityPath"))
-                    {
-                        var serverCertPath = variables.Get("Octopus.Action.Kubernetes.CertificateAuthorityPath");
-                        if (!File.Exists(serverCertPath))
-                        {
-                            log.Error("Certificate authority file not found");
-                            return false;
-                        }
-
-                        kubectl.ExecuteCommandAndAssertSuccess("config", "set-cluster", cluster, $"--certificate-authority={serverCertPath}");
-                    }
-                    else
-                    {
-                        kubectl.ExecuteCommandAndAssertSuccess("config", "set-cluster", cluster, $"--insecure-skip-tls-verify={skipTlsVerification}");
-                    }
-
                     log.Info($"Creating kubectl context to {clusterUrl} (namespace {@namespace}) using a Pod Service Account Token");
                     log.AddValueToRedact(podServiceAccountToken, "<token>");
                     kubectl.ExecuteCommandAndAssertSuccess("config", "set-credentials", user, $"--token={podServiceAccountToken}");
-                } else
+                }
+                else if (accountType == "Token")
                 {
-                    if (variables.IsSet("Octopus.Action.Kubernetes.CertificateAuthority"))
+                    var token = variables.Get("Octopus.Account.Token");
+                    if (string.IsNullOrEmpty(token))
                     {
-                        var certificateAuthority = variables.Get("Octopus.Action.Kubernetes.CertificateAuthority");
-                        var serverCertPem = variables.Get($"{certificateAuthority}.CertificatePem");
-                        if (string.IsNullOrEmpty(serverCertPem))
-                        {
-                            log.Error("Kubernetes server certificate does not include the certificate data");
-                            return false;
-                        }
-
-                        var authorityData = Convert.ToBase64String(Encoding.ASCII.GetBytes(serverCertPem));
-                        log.AddValueToRedact(authorityData, "<data>");
-                        kubectl.ExecuteCommandAndAssertSuccess("config", "set", $"clusters.{cluster}.certificate-authority-data", authorityData);
-                    }
-                    else
-                    {
-                        kubectl.ExecuteCommandAndAssertSuccess("config", "set-cluster", cluster, $"--insecure-skip-tls-verify={skipTlsVerification}");
-                    }
-
-                    if (accountType == "Token")
-                    {
-                        var token = variables.Get("Octopus.Account.Token");
-                        if (string.IsNullOrEmpty(token))
-                        {
-                            log.Error("Kubernetes authentication Token is missing");
-                            return false;
-                        }
-
-                        SetupContextForToken(@namespace, token, clusterUrl, user);
-                    } else if(accountType == "UsernamePassword")
-                    {
-                        SetupContextForUsernamePassword(user);
-                    } else if (accountType == "AmazonWebServicesAccount" || variables.GetFlag("Octopus.Action.AwsAccount.UseInstanceRole"))
-                    {
-                        SetupContextForAmazonServiceAccount(@namespace, clusterUrl, user);
-                    }
-                    else if ( variables.IsSet("Octopus.Action.Kubernetes.ClientCertificate"))
-                    {
-                        var clientCert = variables.Get("Octopus.Action.Kubernetes.ClientCertificate");
-                        var clientCertPem = variables.Get($"{clientCert}.CertificatePem");
-                        var clientCertKey = variables.Get($"{clientCert}.PrivateKeyPem");
-                        
-                        if (string.IsNullOrEmpty(clientCertPem))
-                        {
-                            log.Error("Kubernetes client certificate does not include the certificate data");
-                            return false;
-                        }
-
-                        if (string.IsNullOrEmpty(clientCertKey))
-                        {
-                            log.Error("Kubernetes client certificate does not include the private key data");
-                            return false;
-                        }
-
-                        log.Verbose("Encoding client cert key");
-                        var clientCertKeyEncoded = Convert.ToBase64String(Encoding.ASCII.GetBytes(clientCertKey));
-                        log.Verbose("Encoding client cert pem");
-                        var clientCertPemEncoded = Convert.ToBase64String(Encoding.ASCII.GetBytes(clientCertPem));
-
-                        // Don't leak the private key in the logs
-                        log.SetOutputVariable($"{clientCert}.PrivateKeyPemBase64", clientCertKeyEncoded, variables, true);
-                        log.AddValueToRedact(clientCertKeyEncoded, "<data>");
-                        log.AddValueToRedact(clientCertPemEncoded, "<data>");
-                        kubectl.ExecuteCommandAndAssertSuccess("config", "set", $"users.{user}.client-certificate-data", clientCertPemEncoded);
-                        kubectl.ExecuteCommandAndAssertSuccess("config", "set", $"users.{user}.client-key-data", clientCertKeyEncoded);
-                    }
-                    else
-                    {
-                        log.Error($"Account Type {accountType} is currently not valid for kubectl contexts");
+                        log.Error("Kubernetes authentication Token is missing");
                         return false;
                     }
+
+                    SetupContextForToken(@namespace, token, clusterUrl, user);
+                }
+                else if (accountType == "UsernamePassword")
+                {
+                    SetupContextForUsernamePassword(user);
+                }
+                else if (accountType == "AmazonWebServicesAccount" || variables.GetFlag("Octopus.Action.AwsAccount.UseInstanceRole"))
+                {
+                    SetupContextForAmazonServiceAccount(@namespace, clusterUrl, user);
+                }
+                else if (variables.IsSet("Octopus.Action.Kubernetes.ClientCertificate"))
+                {
+                    var clientCert = variables.Get("Octopus.Action.Kubernetes.ClientCertificate");
+                    var clientCertPem = variables.Get($"{clientCert}.CertificatePem");
+                    var clientCertKey = variables.Get($"{clientCert}.PrivateKeyPem");
+
+                    if (string.IsNullOrEmpty(clientCertPem))
+                    {
+                        log.Error("Kubernetes client certificate does not include the certificate data");
+                        return false;
+                    }
+
+                    if (string.IsNullOrEmpty(clientCertKey))
+                    {
+                        log.Error("Kubernetes client certificate does not include the private key data");
+                        return false;
+                    }
+
+                    log.Verbose("Encoding client cert key");
+                    var clientCertKeyEncoded = Convert.ToBase64String(Encoding.ASCII.GetBytes(clientCertKey));
+                    log.Verbose("Encoding client cert pem");
+                    var clientCertPemEncoded = Convert.ToBase64String(Encoding.ASCII.GetBytes(clientCertPem));
+
+                    // Don't leak the private key in the logs
+                    log.SetOutputVariable($"{clientCert}.PrivateKeyPemBase64", clientCertKeyEncoded, variables, true);
+                    log.AddValueToRedact(clientCertKeyEncoded, "<data>");
+                    log.AddValueToRedact(clientCertPemEncoded, "<data>");
+                    kubectl.ExecuteCommandAndAssertSuccess("config", "set", $"users.{user}.client-certificate-data", clientCertPemEncoded);
+                    kubectl.ExecuteCommandAndAssertSuccess("config", "set", $"users.{user}.client-key-data", clientCertKeyEncoded);
+                }
+                else
+                {
+                    log.Error($"Account Type {accountType} is currently not valid for kubectl contexts");
+                    return false;
                 }
             }
 
