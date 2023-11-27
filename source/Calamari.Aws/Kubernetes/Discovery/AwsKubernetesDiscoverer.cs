@@ -7,6 +7,7 @@ using Amazon.EKS.Model;
 using Calamari.Common.Features.Discovery;
 using Calamari.Common.Plumbing.Logging;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Aws.Kubernetes.Discovery
@@ -97,8 +98,8 @@ namespace Calamari.Aws.Kubernetes.Discovery
         {
             try
             {
-                var targetDiscoveryContext = JsonConvert.DeserializeObject<TargetDiscoveryContext<AccountAuthenticationDetails<dynamic>>>(contextJson);
-                credentialsType = targetDiscoveryContext?.Authentication?.AuthenticationMethod ?? throw new Exception("AuthenticationMethod is null");
+                var targetDiscoveryContext = JsonConvert.DeserializeObject<TargetDiscoveryContext<AwsAuthenticationDetails<dynamic>>>(contextJson);
+                credentialsType = targetDiscoveryContext?.Authentication?.Credentials?.Type ?? throw new Exception("Credentials type is null");
                 return true;
             }
             catch (Exception e)
