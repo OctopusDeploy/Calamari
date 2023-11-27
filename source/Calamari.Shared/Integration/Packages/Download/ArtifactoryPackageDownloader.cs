@@ -14,7 +14,6 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Octopus.CoreUtilities.Extensions;
 using Octopus.Versioning;
 using HttpClient = System.Net.Http.HttpClient;
 using PackageName = Calamari.Common.Features.Packages.PackageName;
@@ -145,7 +144,7 @@ namespace Calamari.Integration.Packages.Download
 
             var artifactId = packageId.Split('/').Last();
             var path = packageId.Substring(0, packageId.LastIndexOf('/'));
-            var regex = string.IsNullOrEmpty(layoutRegex) ? new Regex("(?<orgPath>.+?)/(?<module>[^/]+)/(?<module>\\2)-(?<baseRev>[^/]+?)\\.(?<ext>(?:(?!\\d))[^\\-/]+|7z)", RegexOptions.Compiled) : new Regex(layoutRegex, RegexOptions.Compiled);
+            var regex = new Regex(layoutRegex!, RegexOptions.Compiled);
 
             var contentString = $"items.find({{\"repo\":{{\"$eq\":\"{repository}\"}}, \"$and\":[{{\"name\": {{\"$match\":\"*{artifactId}*\"}}}}, {{\"path\": {{\"$eq\":\"{path}\"}}}}]}}).include(\"repo\", \"path\", \"name\")";
             HttpContent content = new StringContent(contentString, Encoding.UTF8);
@@ -364,7 +363,7 @@ namespace Calamari.Integration.Packages.Download
         static ICredentials GetFeedCredentials(string? feedUsername, string? feedPassword)
         {
             ICredentials credentials = CredentialCache.DefaultNetworkCredentials;
-            if (!String.IsNullOrWhiteSpace(feedPassword))
+            if (!string.IsNullOrWhiteSpace(feedPassword))
             {
                 credentials = new NetworkCredential(feedUsername, feedPassword);
             }
