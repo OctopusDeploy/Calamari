@@ -120,7 +120,7 @@ namespace Calamari.Aws.Kubernetes.Discovery
             accountId = null;
             roleArnOrAccessKeyOrWorkerCredentials = null;
             awsAuthenticationDetails = null;
-            if (credentialsType == "Worker")
+            if (credentialsType == "worker")
             {
                 if (!TryGetDiscoveryContext<AwsWorkerAuthenticationDetails>(contextJson, out var awsWorkerAuthenticationDetails, out workerPoolId))
                     return false;
@@ -135,7 +135,7 @@ namespace Calamari.Aws.Kubernetes.Discovery
             {
                 switch (credentialsType)
                 {
-                    case "Account":
+                    case "account":
                     {
                         if (!TryGetDiscoveryContext<AwsAccessKeyAuthenticationDetails>(
                                 contextJson,
@@ -150,7 +150,7 @@ namespace Calamari.Aws.Kubernetes.Discovery
                         awsAuthenticationDetails = awsAccessKeyAuthentication;
                         break;
                     }
-                    case "OidcAccount":
+                    case "oidcAccount":
                     {
                         if (!TryGetDiscoveryContext<AwsOidcAuthenticationDetails>(
                                 contextJson,
