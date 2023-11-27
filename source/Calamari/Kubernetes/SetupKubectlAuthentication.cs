@@ -84,7 +84,7 @@ namespace Calamari.Kubernetes
 
         bool TrySetupContext(string kubeConfig, string @namespace, string accountType)
         {
-            var clientCert = variables.Get("Octopus.Action.Kubernetes.ClientCertificate");
+            
 
             if (accountType == "AzureServicePrincipal" ||  accountType == "AzureOidc")
             {
@@ -158,8 +158,7 @@ namespace Calamari.Kubernetes
                     kubectl.ExecuteCommandAndAssertSuccess("config", "set-credentials", user, $"--token={podServiceAccountToken}");
                 } else
                 {
-                    var clientCertPem = variables.Get($"{clientCert}.CertificatePem");
-                    var clientCertKey = variables.Get($"{clientCert}.PrivateKeyPem");
+                    
                     var certificateAuthority = variables.Get("Octopus.Action.Kubernetes.CertificateAuthority");
                     var serverCertPem = variables.Get($"{certificateAuthority}.CertificatePem");
 
@@ -199,6 +198,10 @@ namespace Calamari.Kubernetes
                     }
                     else if ( variables.IsSet("Octopus.Action.Kubernetes.ClientCertificate"))
                     {
+                        var clientCert = variables.Get("Octopus.Action.Kubernetes.ClientCertificate");
+                        var clientCertPem = variables.Get($"{clientCert}.CertificatePem");
+                        var clientCertKey = variables.Get($"{clientCert}.PrivateKeyPem");
+                        
                         if (string.IsNullOrEmpty(clientCertPem))
                         {
                             log.Error("Kubernetes client certificate does not include the certificate data");
