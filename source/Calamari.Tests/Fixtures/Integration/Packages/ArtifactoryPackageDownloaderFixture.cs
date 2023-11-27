@@ -37,10 +37,10 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
                     currentDirectory = Directory.GetCurrentDirectory();
                     cacheDirectory = Path.Combine(currentDirectory, testDirectory);
                     fileSystem.EnsureDirectoryExists(cacheDirectory);
-                        
+
                     feedUri = new Uri("https://octopusdeploy.jfrog.io");
                     var feedUsername = "admin";
-                    var sensitiveValue = ExternalVariables.Get(ExternalVariable.HelmPassword);
+                    var sensitiveValue = ExternalVariables.Get(ExternalVariable.ArtifactoryE2EPassword);
                     feedCredentials = new NetworkCredential(feedUsername, sensitiveValue.ToString());
         
                     var log = Substitute.For<ILog>();
