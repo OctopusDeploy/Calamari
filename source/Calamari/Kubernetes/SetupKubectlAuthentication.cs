@@ -334,35 +334,6 @@ namespace Calamari.Kubernetes
             kubectl.ExecuteCommandAndAssertSuccess("config", "set-credentials", user, "--exec-command=aws-iam-authenticator", $"--exec-api-version={apiVersion}", "--exec-arg=token", "--exec-arg=-i", $"--exec-arg={clusterName}");
         }
 
-        void SetupContextUsingPodServiceAccount(string @namespace,
-            string cluster,
-            string clusterUrl,
-            string serverCert,
-            string skipTlsVerification,
-            string serverCertPath,
-            string context,
-            string user,
-            string podServiceAccountToken)
-        {
-            kubectl.ExecuteCommandAndAssertSuccess("config", "set-cluster", cluster, $"--server={clusterUrl}");
-
-            if (string.IsNullOrEmpty(serverCert))
-            {
-                kubectl.ExecuteCommandAndAssertSuccess("config", "set-cluster", cluster, $"--insecure-skip-tls-verify={skipTlsVerification}");
-            }
-            else
-            {
-                kubectl.ExecuteCommandAndAssertSuccess("config", "set-cluster", cluster, $"--certificate-authority={serverCertPath}");
-            }
-
-            kubectl.ExecuteCommandAndAssertSuccess("config", "set-context", context, $"--user={user}", $"--cluster={cluster}", $"--namespace={@namespace}");
-            kubectl.ExecuteCommandAndAssertSuccess("config", "use-context", context);
-
-            log.Info($"Creating kubectl context to {clusterUrl} (namespace {@namespace}) using a Pod Service Account Token");
-            log.AddValueToRedact(podServiceAccountToken, "<token>");
-            kubectl.ExecuteCommandAndAssertSuccess("config", "set-credentials", user, $"--token={podServiceAccountToken}");
-        }
-
         bool TrySetAws()
         {
             aws = CalamariEnvironment.IsRunningOnWindows
