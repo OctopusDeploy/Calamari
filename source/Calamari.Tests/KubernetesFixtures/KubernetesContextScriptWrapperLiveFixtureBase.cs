@@ -17,6 +17,7 @@ using Calamari.Tests.Helpers;
 using FluentAssertions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Serialization;
 using NUnit.Framework;
 using KubernetesSpecialVariables = Calamari.Kubernetes.SpecialVariables;
 using SpecialVariables = Calamari.Deployment.SpecialVariables;
@@ -142,7 +143,7 @@ namespace Calamari.Tests.KubernetesFixtures
             where TAuthenticationDetails : class, ITargetDiscoveryAuthenticationDetails
         {
             variables.Add(KubernetesDiscoveryCommand.ContextVariableName,
-                JsonConvert.SerializeObject(discoveryContext));
+                JsonConvert.SerializeObject(discoveryContext, new JsonSerializerSettings { ContractResolver = new CamelCasePropertyNamesContractResolver() }));
 
             ExecuteCommandAndVerifyResult(KubernetesDiscoveryCommand.Name);
         }
