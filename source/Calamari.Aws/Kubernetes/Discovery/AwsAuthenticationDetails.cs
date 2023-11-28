@@ -155,6 +155,7 @@ namespace Calamari.Aws.Kubernetes.Discovery
     }
     
     public class AwsAuthenticationDetails<TCredentials> : ITargetDiscoveryAuthenticationDetails
+        where TCredentials : AwsCredentialsBase
     {
         protected const string DefaultSessionName = "OctopusKubernetesClusterDiscovery";
 
@@ -195,7 +196,7 @@ namespace Calamari.Aws.Kubernetes.Discovery
         public string ExternalId { get; set; }
     }
     
-    public class AwsCredentials<TCredentials>
+    public class AwsCredentials<TCredentials> where TCredentials : AwsCredentialsBase
     {
         public string Type { get; set; }
             
