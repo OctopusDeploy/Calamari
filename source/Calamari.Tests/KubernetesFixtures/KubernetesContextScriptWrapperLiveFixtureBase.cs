@@ -143,7 +143,7 @@ namespace Calamari.Tests.KubernetesFixtures
             where TAuthenticationDetails : class, ITargetDiscoveryAuthenticationDetails
         {
             variables.Add(KubernetesDiscoveryCommand.ContextVariableName,
-                JsonConvert.SerializeObject(discoveryContext, new JsonSerializerSettings { ContractResolver = new CamelCasePropertyNamesContractResolver() }));
+                JsonConvert.SerializeObject(discoveryContext));
 
             ExecuteCommandAndVerifyResult(KubernetesDiscoveryCommand.Name);
         }
