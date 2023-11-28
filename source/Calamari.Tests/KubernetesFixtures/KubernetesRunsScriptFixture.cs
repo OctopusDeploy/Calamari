@@ -334,6 +334,8 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
+        [WindowsTest] // This test requires the GKE GCloud Auth plugin. Currently only configured to install on Windows
+        [RequiresNonMono] // as Mac and Linux installation requires Distro specific tooling
         public void ExecutionWithGoogleCloudAccount_WhenNeitherZoneOrRegionAreProvided()
         {
             variables.Set(Deployment.SpecialVariables.Account.AccountType, "GoogleCloudAccount");
@@ -344,7 +346,7 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set($"{account}.JsonKey", Convert.ToBase64String(Encoding.UTF8.GetBytes(jsonKey)));
             variables.Set("Octopus.Action.GoogleCloud.Project", "gke-project");
             var wrapper = CreateWrapper();
-            Assert.Throws<ArgumentException>(() => TestScriptInReadOnlyMode(wrapper));
+            TestScriptInReadOnlyMode(wrapper).AssertFailure();
         }
 
         [Test]

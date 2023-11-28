@@ -80,7 +80,7 @@ namespace Calamari.Kubernetes.Integration
             log.Info("Successfully authenticated with the Azure CLI");
         }
 
-        public void ConfigureAksKubeCtlAuthentication(Kubectl kubectlCli, string clusterResourceGroup, string clusterName, string clusterNamespace, string kubeConfigPath, bool adminLogin)
+        public void ConfigureAksKubeCtlAuthentication(IKubectl kubectlCli, string clusterResourceGroup, string clusterName, string clusterNamespace, string kubeConfigPath, bool adminLogin)
         {
             log.Info($"Creating kubectl context to AKS Cluster in resource group {clusterResourceGroup} called {clusterName} (namespace {clusterNamespace})");
 

@@ -26,10 +26,7 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
             cli.WorkingDirectory = workingDirectory;
             cli.EnvironmentVars = environmentVars;
 
-            yield return new ScriptExecution(
-                cli,
-                otherTemporaryFiles.Concat(new[] { bootstrapFile, configurationFile })
-            );
+            yield return new ScriptExecution(cli, otherTemporaryFiles.Concat(new[] { bootstrapFile, configurationFile }));
         }
     }
 }

@@ -157,10 +157,7 @@ namespace Calamari.Integration.Packages.Download
             if (input == null)
                 return null;
 
-            if (input[0].Equals('v') || input[0].Equals('V'))
-                input = input.Substring(1);
-
-            return VersionFactory.TryCreateVersion(input, VersionFormat.Semver);
+            return VersionFactory.TryCreateVersion(input.SanitiseSemVerString(), VersionFormat.Semver);
         }
 
         PackagePhysicalFileMetadata DownloadFile(string uri,

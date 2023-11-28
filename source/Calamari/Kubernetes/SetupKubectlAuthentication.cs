@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing;
+using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Proxies;
 using Calamari.Common.Plumbing.Variables;
@@ -21,7 +22,8 @@ namespace Calamari.Kubernetes
         readonly IVariables variables;
         readonly ILog log;
         readonly ICommandLineRunner commandLineRunner;
-        private readonly Kubectl kubectl;
+        readonly IKubectl kubectl;
+        readonly ICalamariFileSystem fileSystem;
         readonly Dictionary<string, string> environmentVars;
         readonly string workingDirectory;
         string aws;
@@ -29,7 +31,8 @@ namespace Calamari.Kubernetes
         public SetupKubectlAuthentication(IVariables variables,
             ILog log,
             ICommandLineRunner commandLineRunner,
-            Kubectl kubectl,
+            IKubectl kubectl,
+            ICalamariFileSystem fileSystem,
             Dictionary<string, string> environmentVars,
             string workingDirectory)
         {
@@ -37,6 +40,7 @@ namespace Calamari.Kubernetes
             this.log = log;
             this.commandLineRunner = commandLineRunner;
             this.kubectl = kubectl;
+            this.fileSystem = fileSystem;
             this.environmentVars = environmentVars;
             this.workingDirectory = workingDirectory;
         }
@@ -84,9 +88,7 @@ namespace Calamari.Kubernetes
 
         bool TrySetupContext(string kubeConfig, string @namespace, string accountType)
         {
-
-
-            if (accountType == "AzureServicePrincipal" || accountType == "AzureOidc")
+            if (accountType == AccountTypes.AzureServicePrincipal || accountType == AccountTypes.AzureOidc)
             {
                 var azureCli = new AzureCli(log, commandLineRunner, workingDirectory, environmentVars);
                 var kubeloginCli = new KubeLogin(log, commandLineRunner, workingDirectory, environmentVars);
@@ -95,9 +97,9 @@ namespace Calamari.Kubernetes
                 if (!azureAuth.TryConfigure(@namespace, kubeConfig))
                     return false;
             }
-            else if (accountType == "GoogleCloudAccount")
+            else if (accountType == AccountTypes.GoogleCloudAccount || variables.GetFlag(Deployment.SpecialVariables.Action.GoogleCloud.UseVmServiceAccount))
             {
-                var gcloudCli = new GCloud(log, commandLineRunner, workingDirectory, environmentVars);
+                var gcloudCli = new GCloud(log, commandLineRunner, fileSystem, workingDirectory, environmentVars);
                 var gkeGcloudAuthPlugin = new GkeGcloudAuthPlugin(log, commandLineRunner, workingDirectory, environmentVars);
                 var gcloudAuth = new GoogleKubernetesEngineAuth(gcloudCli, gkeGcloudAuthPlugin, kubectl, variables, log);
 
@@ -117,24 +119,24 @@ namespace Calamari.Kubernetes
                 const string context = "octocontext";
 
                 kubectl.ExecuteCommandAndAssertSuccess("config", "set-cluster", cluster, $"--server={clusterUrl}");
-                kubectl.ExecuteCommandAndAssertSuccess("config", "set-context", context, $"--user={user}", $"--cluster={cluster}", $"--namespace={@namespace}");
-                kubectl.ExecuteCommandAndAssertSuccess("config", "use-context", context);
 
-                if (variables.IsSet("Octopus.Action.Kubernetes.CertificateAuthorityPath"))
+                if (variables.GetFlag(SpecialVariables.SkipTlsVerification))
                 {
-                    var serverCertPath = variables.Get("Octopus.Action.Kubernetes.CertificateAuthorityPath");
-                    if (!File.Exists(serverCertPath))
+                    kubectl.ExecuteCommandAndAssertSuccess("config", "set-cluster", cluster, $"--insecure-skip-tls-verify=true");
+                } else if (variables.IsSet(SpecialVariables.CertificateAuthorityPath))
+                {
+                    var serverCertPath = variables.Get(SpecialVariables.CertificateAuthorityPath);
+                    if (!fileSystem.FileExists(serverCertPath))
                     {
                         log.Error("Certificate authority file not found");
                         return false;
                     }
-
                     kubectl.ExecuteCommandAndAssertSuccess("config", "set-cluster", cluster, $"--certificate-authority={serverCertPath}");
                 }
-                else if (variables.IsSet("Octopus.Action.Kubernetes.CertificateAuthority"))
+                else if (variables.IsSet(SpecialVariables.CertificateAuthority))
                 {
-                    var certificateAuthority = variables.Get("Octopus.Action.Kubernetes.CertificateAuthority");
-                    var serverCertPem = variables.Get($"{certificateAuthority}.CertificatePem");
+                    var certificateAuthority = variables.Get(SpecialVariables.CertificateAuthority);
+                    var serverCertPem = variables.Get(SpecialVariables.CertificatePem(certificateAuthority));
                     if (string.IsNullOrEmpty(serverCertPem))
                     {
                         log.Error("Kubernetes server certificate does not include the certificate data");
@@ -150,17 +152,20 @@ namespace Calamari.Kubernetes
                     var skipTlsVerification = variables.GetFlag(SpecialVariables.SkipTlsVerification) ? "true" : "false";
                     kubectl.ExecuteCommandAndAssertSuccess("config", "set-cluster", cluster, $"--insecure-skip-tls-verify={skipTlsVerification}");
                 }
+                
+                kubectl.ExecuteCommandAndAssertSuccess("config", "set-context", context, $"--user={user}", $"--cluster={cluster}", $"--namespace={@namespace}");
+                kubectl.ExecuteCommandAndAssertSuccess("config", "use-context", context);
 
-                if (variables.IsSet("Octopus.Action.Kubernetes.PodServiceAccountTokenPath"))
+                if (variables.IsSet(SpecialVariables.PodServiceAccountTokenPath))
                 {
-                    var podServiceAccountTokenPath = variables.Get("Octopus.Action.Kubernetes.PodServiceAccountTokenPath");
-                    if (!File.Exists(podServiceAccountTokenPath))
+                    var podServiceAccountTokenPath = variables.Get(SpecialVariables.PodServiceAccountTokenPath);
+                    if (!fileSystem.FileExists(podServiceAccountTokenPath))
                     {
                         log.Error("Pod service token file not found");
                         return false;
                     }
 
-                    var podServiceAccountToken = File.ReadAllText(podServiceAccountTokenPath);
+                    var podServiceAccountToken = fileSystem.ReadFile(podServiceAccountTokenPath);
                     if (string.IsNullOrEmpty(podServiceAccountToken))
                     {
                         log.Error("Pod service token file is empty");
@@ -171,9 +176,9 @@ namespace Calamari.Kubernetes
                     log.AddValueToRedact(podServiceAccountToken, "<token>");
                     kubectl.ExecuteCommandAndAssertSuccess("config", "set-credentials", user, $"--token={podServiceAccountToken}");
                 }
-                else if (accountType == "Token")
+                else if (accountType == AccountTypes.Token)
                 {
-                    var token = variables.Get("Octopus.Account.Token");
+                    var token = variables.Get(Deployment.SpecialVariables.Account.Token);
                     if (string.IsNullOrEmpty(token))
                     {
                         log.Error("Kubernetes authentication Token is missing");
@@ -182,19 +187,19 @@ namespace Calamari.Kubernetes
 
                     SetupContextForToken(@namespace, token, clusterUrl, user);
                 }
-                else if (accountType == "UsernamePassword")
+                else if (accountType == AccountTypes.UsernamePassword)
                 {
                     SetupContextForUsernamePassword(user);
                 }
-                else if (accountType == "AmazonWebServicesAccount" || variables.GetFlag("Octopus.Action.AwsAccount.UseInstanceRole"))
+                else if (accountType == AccountTypes.AmazonWebServicesAccount || variables.GetFlag("Octopus.Action.AwsAccount.UseInstanceRole"))
                 {
                     SetupContextForAmazonServiceAccount(@namespace, clusterUrl, user);
                 }
-                else if (variables.IsSet("Octopus.Action.Kubernetes.ClientCertificate"))
+                else if (variables.IsSet(SpecialVariables.ClientCertificate))
                 {
-                    var clientCert = variables.Get("Octopus.Action.Kubernetes.ClientCertificate");
-                    var clientCertPem = variables.Get($"{clientCert}.CertificatePem");
-                    var clientCertKey = variables.Get($"{clientCert}.PrivateKeyPem");
+                    var clientCert = variables.Get(SpecialVariables.ClientCertificate);
+                    var clientCertPem = variables.Get(SpecialVariables.CertificatePem(clientCert));
+                    var clientCertKey = variables.Get(SpecialVariables.PrivateKeyPem(clientCert));
 
                     if (string.IsNullOrEmpty(clientCertPem))
                     {
@@ -220,6 +225,11 @@ namespace Calamari.Kubernetes
                     kubectl.ExecuteCommandAndAssertSuccess("config", "set", $"users.{user}.client-certificate-data", clientCertPemEncoded);
                     kubectl.ExecuteCommandAndAssertSuccess("config", "set", $"users.{user}.client-key-data", clientCertKeyEncoded);
                 }
+                else if (string.IsNullOrEmpty(accountType))
+                {
+                    log.Error($"Kubernetes account type or certificate is missing");
+                    return false;
+                }
                 else
                 {
                     log.Error($"Account Type {accountType} is currently not valid for kubectl contexts");
@@ -239,8 +249,8 @@ namespace Calamari.Kubernetes
 
         void SetupContextForUsernamePassword(string user)
         {
-            var username = variables.Get("Octopus.Account.Username");
-            var password = variables.Get("Octopus.Account.Password");
+            var username = variables.Get(Deployment.SpecialVariables.Account.Username);
+            var password = variables.Get(Deployment.SpecialVariables.Account.Password);
             if (password != null)
             {
                 log.AddValueToRedact(password, "<password>");
@@ -363,7 +373,7 @@ namespace Calamari.Kubernetes
             var kubeConfig = Path.Combine(workingDirectory, "kubectl-octo.yml");
 
             // create an empty file, to suppress kubectl errors about the file missing
-            File.WriteAllText(kubeConfig, string.Empty);
+            fileSystem.WriteAllText(kubeConfig, string.Empty);
 
             environmentVars.Add("KUBECONFIG", kubeConfig);
 

@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Calamari.Common.Features.Packages.NuGet;
+using Calamari.Common.Plumbing.Extensions;
 using Octopus.Versioning;
 using Octopus.Versioning.Maven;
 using Octopus.Versioning.Octopus;
@@ -112,7 +113,7 @@ namespace Calamari.Common.Features.Packages
             if (!packageIdMatch.Success || !versionMatch.Success || !extensionMatch.Success)
                 return false;
 
-            version = VersionFactory.TryCreateSemanticVersion(versionMatch.Value, true);
+            version = VersionFactory.TryCreateSemanticVersion(versionMatch.Value.SanitiseSemVerString(), true);
             if (version == null)
                 return false;
 
@@ -178,7 +179,7 @@ namespace Calamari.Common.Features.Packages
 //                version = metaData.Version;
 //                packageId = metaData.PackageId;
                 var metaData = new LocalNuGetPackage(path!).Metadata;
-                version = SemVerFactory.CreateVersion(metaData.Version.ToString());
+                version = SemVerFactory.CreateVersion(metaData.Version.ToString().SanitiseSemVerString());
                 packageId = metaData.Id;
             }
 
@@ -243,7 +244,7 @@ namespace Calamari.Common.Features.Packages
             switch (input[0])
             {
                 case 'S':
-                    return VersionFactory.CreateSemanticVersion(Decode(input.Substring(1)), true);
+                    return VersionFactory.CreateSemanticVersion(Decode(input.Substring(1)).SanitiseSemVerString(), true);
                 case 'M':
                     return VersionFactory.CreateMavenVersion(Decode(input.Substring(1)));
                 case 'O':

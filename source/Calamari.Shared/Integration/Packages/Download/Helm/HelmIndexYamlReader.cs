@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Calamari.Common.Plumbing.Extensions;
 using Octopus.Versioning;
 using Octopus.Versioning.Semver;
 using YamlDotNet.RepresentationModel;
@@ -55,7 +56,7 @@ namespace Calamari.Integration.Packages.Download.Helm
                 if (value == null)
                     return null;
 
-                var version = SemVerFactory.TryCreateVersion(value);
+                var version = SemVerFactory.TryCreateVersion(value.SanitiseSemVerString());
                 if (version == null)
                     return null;
 

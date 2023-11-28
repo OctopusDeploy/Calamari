@@ -1,5 +1,4 @@
-﻿using System;
-using Calamari.Common.Plumbing.Logging;
+﻿using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes.Integration;
 using Octopus.CoreUtilities;
@@ -11,7 +10,7 @@ namespace Calamari.Kubernetes.Authentication
     {
         readonly GCloud gcloudCli;
         readonly GkeGcloudAuthPlugin authPluginCli;
-        readonly Kubectl kubectlCli;
+        readonly IKubectl kubectlCli;
         readonly IVariables deploymentVariables;
         readonly ILog log;
 
@@ -22,7 +21,7 @@ namespace Calamari.Kubernetes.Authentication
         /// <param name="authPluginCli"></param>
         /// <param name="kubectlCli"></param>
         /// <param name="deploymentVariables"></param>
-        public GoogleKubernetesEngineAuth(GCloud gcloudCli,GkeGcloudAuthPlugin authPluginCli, Kubectl kubectlCli, IVariables deploymentVariables, ILog log)
+        public GoogleKubernetesEngineAuth(GCloud gcloudCli,GkeGcloudAuthPlugin authPluginCli, IKubectl kubectlCli, IVariables deploymentVariables, ILog log)
         {
             this.gcloudCli = gcloudCli;
             this.authPluginCli = authPluginCli;
@@ -36,31 +35,30 @@ namespace Calamari.Kubernetes.Authentication
             if (!gcloudCli.TrySetGcloud())
                 return false;
 
-            var accountVariable = deploymentVariables.Get("Octopus.Action.GoogleCloudAccount.Variable");
-            var jsonKey = deploymentVariables.Get($"{accountVariable}.JsonKey");
+            var accountVariable = deploymentVariables.Get(Deployment.SpecialVariables.Action.GoogleCloudAccount.Variable);
+            var jsonKey = deploymentVariables.Get(Deployment.SpecialVariables.Action.GoogleCloudAccount.JsonKeyFromAccount(accountVariable));
             if (string.IsNullOrEmpty(accountVariable) || string.IsNullOrEmpty(jsonKey))
             {
-                jsonKey = deploymentVariables.Get("Octopus.Action.GoogleCloudAccount.JsonKey");
+                jsonKey = deploymentVariables.Get(Deployment.SpecialVariables.Action.GoogleCloudAccount.JsonKey);
             }
 
             string impersonationEmails = null;
-            if (deploymentVariables.GetFlag("Octopus.Action.GoogleCloud.ImpersonateServiceAccount"))
+            if (deploymentVariables.GetFlag(Deployment.SpecialVariables.Action.GoogleCloud.ImpersonateServiceAccount))
             {
-                impersonationEmails = deploymentVariables.Get("Octopus.Action.GoogleCloud.ServiceAccountEmails");
+                impersonationEmails = deploymentVariables.Get(Deployment.SpecialVariables.Action.GoogleCloud.ServiceAccountEmails);
             }
 
-            var project = deploymentVariables.Get("Octopus.Action.GoogleCloud.Project") ?? string.Empty;
-            var region = deploymentVariables.Get("Octopus.Action.GoogleCloud.Region") ?? string.Empty;
-            var zone = deploymentVariables.Get("Octopus.Action.GoogleCloud.Zone") ?? string.Empty;
-            var useVmServiceAccount = deploymentVariables.GetFlag("Octopus.Action.GoogleCloud.UseVMServiceAccount");
-            gcloudCli.ConfigureGcloudAccount(project, region, zone, jsonKey, useVmServiceAccount, impersonationEmails);
+            var project = deploymentVariables.Get(Deployment.SpecialVariables.Action.GoogleCloud.Project) ?? string.Empty;
+            var region = deploymentVariables.Get(Deployment.SpecialVariables.Action.GoogleCloud.Region) ?? string.Empty;
+            var zone = deploymentVariables.Get(Deployment.SpecialVariables.Action.GoogleCloud.Zone) ?? string.Empty;
+            var useVmServiceAccount = deploymentVariables.GetFlag(Deployment.SpecialVariables.Action.GoogleCloud.UseVmServiceAccount);
+            if (!gcloudCli.TryConfigureGcloudAccount(project, region, zone, jsonKey, useVmServiceAccount, impersonationEmails))
+                return false;
 
             WarnCustomersAboutAuthToolingRequirements();
             var gkeClusterName = deploymentVariables.Get(SpecialVariables.GkeClusterName);
             var useClusterInternalIp = deploymentVariables.GetFlag(SpecialVariables.GkeUseClusterInternalIp);
-            gcloudCli.ConfigureGkeKubeCtlAuthentication(kubectlCli, gkeClusterName, region, zone, @namespace, useClusterInternalIp);
-
-            return true;
+            return gcloudCli.TryConfigureGkeKubeCtlAuthentication(kubectlCli, gkeClusterName, region, zone, @namespace, useClusterInternalIp);
         }
 
         /// <summary>

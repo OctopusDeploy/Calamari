@@ -1,5 +1,5 @@
 ﻿
 using System;
 
-Octopus.SetVariable("Donkey","Kong");
+SetVariable("Donkey","Kong");
 
