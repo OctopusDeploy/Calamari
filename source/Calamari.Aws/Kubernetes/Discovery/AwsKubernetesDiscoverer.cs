@@ -99,8 +99,11 @@ namespace Calamari.Aws.Kubernetes.Discovery
         {
             try
             {
-                var targetDiscoveryContext = JsonConvert.DeserializeObject<dynamic>(contextJson);
-                credentialsType = targetDiscoveryContext.authentication.credentials.type ?? throw new Exception("Credentials type is null");
+                var targetDiscoveryContext = JsonConvert.DeserializeObject<JObject>(contextJson);
+                credentialsType = targetDiscoveryContext
+                    .GetValue("Authentication", StringComparison.OrdinalIgnoreCase).Value<JObject>()
+                    .GetValue("Credentials", StringComparison.OrdinalIgnoreCase).Value<JObject>()
+                    .GetValue("Type", StringComparison.OrdinalIgnoreCase).Value<string>() ?? throw new Exception("Credentials type is null");
                 return true;
             }
             catch (Exception e)
