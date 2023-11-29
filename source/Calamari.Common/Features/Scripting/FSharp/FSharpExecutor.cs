@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Calamari.Common.Features.Processes;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Common.Features.Scripting.FSharp
@@ -13,6 +14,7 @@ namespace Calamari.Common.Features.Scripting.FSharp
             IVariables variables,
             Dictionary<string, string>? environmentVars = null)
         {
+            Log.Warn("FSharp is being deprecated as a built-in scripting language. Please see https://oc.to/FSharpDeprecattion for more details.");
             var workingDirectory = Path.GetDirectoryName(script.File);
             var executable = FSharpBootstrapper.FindExecutable();
             var configurationFile = FSharpBootstrapper.PrepareConfigurationFile(workingDirectory, variables);
