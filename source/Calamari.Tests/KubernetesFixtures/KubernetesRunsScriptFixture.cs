@@ -376,7 +376,6 @@ namespace Calamari.Tests.KubernetesFixtures
         void SetTestClusterVariables()
         {
             variables.Set(SpecialVariables.ClusterUrl, ServerUrl);
-            variables.Set(SpecialVariables.SkipTlsVerification, "true");
             variables.Set(SpecialVariables.Namespace, "calamari-testing");
         }
 

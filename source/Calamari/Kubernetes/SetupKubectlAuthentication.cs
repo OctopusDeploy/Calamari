@@ -75,7 +75,7 @@ namespace Calamari.Kubernetes
             if (!CreateNamespace(@namespace))
             {
                 log.Verbose("Could not create namespace. Continuing on, as it may not be working directly with the target.");
-            };
+            }
 
             var outputKubeConfig = variables.GetFlag(SpecialVariables.OutputKubeConfig);
             if (outputKubeConfig)
@@ -123,7 +123,8 @@ namespace Calamari.Kubernetes
                 if (variables.GetFlag(SpecialVariables.SkipTlsVerification))
                 {
                     kubectl.ExecuteCommandAndAssertSuccess("config", "set-cluster", cluster, $"--insecure-skip-tls-verify=true");
-                } else if (variables.IsSet(SpecialVariables.CertificateAuthorityPath))
+                } 
+                else if (variables.IsSet(SpecialVariables.CertificateAuthorityPath))
                 {
                     var serverCertPath = variables.Get(SpecialVariables.CertificateAuthorityPath);
                     if (!fileSystem.FileExists(serverCertPath))
@@ -147,7 +148,7 @@ namespace Calamari.Kubernetes
                     log.AddValueToRedact(authorityData, "<data>");
                     kubectl.ExecuteCommandAndAssertSuccess("config", "set", $"clusters.{cluster}.certificate-authority-data", authorityData);
                 }
-                else
+                else if(variables.IsSet(SpecialVariables.SkipTlsVerification))
                 {
                     var skipTlsVerification = variables.GetFlag(SpecialVariables.SkipTlsVerification) ? "true" : "false";
                     kubectl.ExecuteCommandAndAssertSuccess("config", "set-cluster", cluster, $"--insecure-skip-tls-verify={skipTlsVerification}");

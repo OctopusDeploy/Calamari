@@ -4,7 +4,6 @@
 [Verbose] "kubectl" config set-cluster octocluster --server=<server> --request-timeout=1m
 [Verbose] "kubectl" config set-context octocontext --user=octouser --cluster=octocluster --namespace=calamari-testing --request-timeout=1m
 [Verbose] "kubectl" config use-context octocontext --request-timeout=1m
-[Verbose] "kubectl" config set-cluster octocluster --insecure-skip-tls-verify=true --request-timeout=1m
 [Info] Creating kubectl context to <server> (namespace calamari-testing) using EKS cluster name my-eks-cluster
 [Verbose] Attempting to authenticate with aws-cli
 [Verbose] Unable to authenticate to <server> using the aws cli. Failed with error message: Unexpected character encountered while parsing value: P. Path '', line 0, position 0.
