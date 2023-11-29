@@ -480,7 +480,6 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
             var expectedInvocations = new List<(string, string)>
             {
                 ("kubectl", $"config set-cluster octocluster --server={clusterUrl}"),
-                ("kubectl", "config set-cluster octocluster --insecure-skip-tls-verify=false"),
                 ("kubectl", $"config set-context octocontext --user=octouser --cluster=octocluster --namespace={Namespace}"),
                 ("kubectl", "config use-context octocontext"),
             };
