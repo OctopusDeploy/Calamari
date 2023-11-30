@@ -63,11 +63,10 @@ namespace Calamari.Kubernetes
                                                                             fileSystem,
                                                                             environmentVars,
                                                                             workingDirectory);
-            var accountType = variables.Get("Octopus.Account.AccountType");
 
             try
             {
-                var result = setupKubectlAuthentication.Execute(accountType);
+                var result = setupKubectlAuthentication.Execute();
 
                 if (result.ExitCode != 0)
                 {
@@ -79,6 +78,7 @@ namespace Calamari.Kubernetes
                 return new CommandResult(String.Empty, 1);
             }
 
+            var accountType = variables.Get(Deployment.SpecialVariables.Account.AccountType);
             if (scriptSyntax == ScriptSyntax.PowerShell && (accountType == "AzureServicePrincipal" || accountType == "AzureOidc"))
             {
                 variables.Set("OctopusKubernetesTargetScript", $"{script.File}");

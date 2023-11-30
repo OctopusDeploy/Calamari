@@ -37,9 +37,12 @@ namespace Calamari.Kubernetes.Integration
             environmentVars = variables;
         }
 
-        public bool TrySetKubectl()
+        public void SetKubectl()
         {
-            if (isSet) return true;
+            if (isSet)
+            {
+                return;
+            }
 
             if (string.IsNullOrEmpty(customKubectlExecutable))
             {
@@ -51,32 +54,25 @@ namespace Calamari.Kubernetes.Integration
 
                 if (string.IsNullOrEmpty(foundExecutable))
                 {
-                    log.Error("Could not find kubectl. Make sure kubectl is on the PATH. See https://g.octopushq.com/KubernetesTarget for more information.");
-                    return false;
+                    throw new KubectlException("Could not find kubectl. Make sure kubectl is on the PATH. See https://g.octopushq.com/KubernetesTarget for more information.");
                 }
 
                 ExecutableLocation = foundExecutable?.Trim();
             }
-            else
+            else if (!File.Exists(customKubectlExecutable))
             {
-                if (!File.Exists(customKubectlExecutable))
-                {
-                    log.Error($"The custom kubectl location of {customKubectlExecutable} does not exist. See https://g.octopushq.com/KubernetesTarget for more information.");
-                    return false;
-                }
-
-                ExecutableLocation = customKubectlExecutable;
+                throw new KubectlException($"The custom kubectl location of {customKubectlExecutable} does not exist. See https://g.octopushq.com/KubernetesTarget for more information.");
             }
 
-            if (TryExecuteKubectlCommand("version", "--client", "--output=yaml"))
+            ExecutableLocation = customKubectlExecutable;
+
+            if (!TryExecuteKubectlCommand("version", "--client", "--output=yaml"))
             {
-                log.Verbose($"Found kubectl and successfully verified it can be executed.");
-                isSet = true;
-                return true;
+                throw new KubectlException($"Found kubectl at {ExecutableLocation}, but unable to successfully execute it. See https://g.octopushq.com/KubernetesTarget for more information.");
             }
 
-            log.Error($"Found kubectl at {ExecutableLocation}, but unable to successfully execute it. See https://g.octopushq.com/KubernetesTarget for more information.");
-            return false;
+            log.Verbose($"Found kubectl and successfully verified it can be executed.");
+            isSet = true;
         }
 
         bool TryExecuteKubectlCommand(params string[] arguments)
@@ -126,7 +122,7 @@ namespace Calamari.Kubernetes.Integration
     {
         void SetWorkingDirectory(string directory);
         void SetEnvironmentVariables(Dictionary<string, string> variables);
-        bool TrySetKubectl();
+        void SetKubectl();
         CommandResult ExecuteCommand(params string[] arguments);
         void ExecuteCommandAndAssertSuccess(params string[] arguments);
         CommandResultWithOutput ExecuteCommandAndReturnOutput(params string[] arguments);

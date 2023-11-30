@@ -16,6 +16,7 @@ using Calamari.Kubernetes.Integration;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NSubstitute;
+using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
 
 namespace Calamari.Tests.KubernetesFixtures.Authentication
@@ -96,7 +97,7 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
             });
             kubectl = Substitute.For<IKubectl>();
             kubectl.ExecutableLocation.Returns("kubectl");
-            kubectl.TrySetKubectl().Returns(true);
+            kubectl.SetKubectl();
             kubectl.When(x => x.ExecuteCommandAndAssertSuccess(Arg.Any<string[]>()))
                    .Do(x =>
                    {
@@ -113,11 +114,11 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
         [Test]
         public void Execute_WhenTrySetKubectlFails_Fails()
         {
-            kubectl.TrySetKubectl().Returns(false);
+            kubectl.When(s => s.SetKubectl()).Throws(new KubectlException("Error"));
 
             var sut = CreateSut();
 
-            var result = sut.Execute(AccountTypes.UsernamePassword);
+            var result = sut.Execute();
 
             result.ExitCode.Should().NotBe(0);
         }
@@ -127,7 +128,7 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
         {
             var sut = CreateSut();
 
-            var result = sut.Execute(AccountTypes.UsernamePassword);
+            var result = sut.Execute();
 
             result.ExitCode.Should().NotBe(0);
 
@@ -148,7 +149,7 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
 
             var sut = CreateSut();
 
-            var result = sut.Execute(null);
+            var result = sut.Execute();
 
             result.ExitCode.Should().NotBe(0);
 
@@ -160,12 +161,12 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
         {
             variables.Set(SpecialVariables.ClusterUrl, ClusterUrl);
             variables.Set(SpecialVariables.Namespace, Namespace);
-
+            variables.Set(Deployment.SpecialVariables.Account.AccountType, AccountTypes.UsernamePassword);
             invocations.FailFor("kubectl", $"get namespace {Namespace} --request-timeout=1m");
 
             var sut = CreateSut();
 
-            var result = sut.Execute(AccountTypes.UsernamePassword);
+            var result = sut.Execute();
 
             result.VerifySuccess();
 
@@ -181,13 +182,12 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
         {
             variables.Set(SpecialVariables.ClusterUrl, ClusterUrl);
             variables.Set(SpecialVariables.Namespace, Namespace);
-
             invocations.FailFor("kubectl", $"get namespace {Namespace} --request-timeout=1m");
             invocations.FailFor("kubectl", $"create namespace {Namespace} --request-timeout=1m");
-
+            variables.Set(Deployment.SpecialVariables.Account.AccountType, AccountTypes.UsernamePassword);
             var sut = CreateSut();
 
-            var result = sut.Execute(AccountTypes.UsernamePassword);
+            var result = sut.Execute();
 
             result.VerifySuccess();
 
@@ -205,12 +205,12 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
         {
             variables.Set(SpecialVariables.ClusterUrl, ClusterUrl);
             variables.Set(SpecialVariables.Namespace, Namespace);
-
+            variables.Set(Deployment.SpecialVariables.Account.AccountType, AccountTypes.UsernamePassword);
             variables.AddFlag(SpecialVariables.OutputKubeConfig, true);
 
             var sut = CreateSut();
 
-            var result = sut.Execute(AccountTypes.UsernamePassword);
+            var result = sut.Execute();
 
             result.VerifySuccess();
 
@@ -228,10 +228,10 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
             variables.Set(SpecialVariables.ClusterUrl, ClusterUrl);
             variables.Set(SpecialVariables.Namespace, Namespace);
             variables.Set(Deployment.SpecialVariables.Account.Token, token);
-
+            variables.Set(Deployment.SpecialVariables.Account.AccountType, AccountTypes.Token);
             var sut = CreateSut();
 
-            var result = sut.Execute(AccountTypes.Token);
+            var result = sut.Execute();
 
             result.VerifySuccess();
 
@@ -251,10 +251,10 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
         {
             variables.Set(SpecialVariables.ClusterUrl, ClusterUrl);
             variables.Set(SpecialVariables.Namespace, Namespace);
-
+            variables.Set(Deployment.SpecialVariables.Account.AccountType, AccountTypes.Token);
             var sut = CreateSut();
 
-            var result = sut.Execute(AccountTypes.Token);
+            var result = sut.Execute();
 
             result.ExitCode.Should().NotBe(0);
 
@@ -276,15 +276,16 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
             variables.Set(Deployment.SpecialVariables.Action.Azure.SubscriptionId, AzureSubscriptionId);
             variables.Set(Deployment.SpecialVariables.Action.Azure.TenantId, AzureTenantId);
             variables.Set(Deployment.SpecialVariables.Action.Azure.ClientId, AzureClientId);
+            variables.Set(Deployment.SpecialVariables.Account.AccountType, accountType);
             if (withJwt) variables.Set(Deployment.SpecialVariables.Action.Azure.Jwt, AzureJwt);
             else variables.Set(Deployment.SpecialVariables.Action.Azure.Password, AzurePassword);
             variables.Set(SpecialVariables.AksClusterResourceGroup, AksClusterResourceGroup);
             variables.Set(SpecialVariables.AksClusterName, AksClusterName);
             variables.AddFlag(SpecialVariables.AksAdminLogin, true);
-
+            
             var sut = CreateSut();
 
-            var result = sut.Execute(accountType);
+            var result = sut.Execute();
 
             result.VerifySuccess();
 
@@ -314,13 +315,14 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
             variables.Set(Deployment.SpecialVariables.Action.Azure.TenantId, AzureTenantId);
             variables.Set(Deployment.SpecialVariables.Action.Azure.ClientId, AzureClientId);
             variables.Set(Deployment.SpecialVariables.Action.Azure.Password, AzurePassword);
+            variables.Set(Deployment.SpecialVariables.Account.AccountType, AccountTypes.AzureServicePrincipal);
             variables.Set(SpecialVariables.AksClusterResourceGroup, AksClusterResourceGroup);
             variables.Set(SpecialVariables.AksClusterName, AksClusterName);
             variables.AddFlag(SpecialVariables.AksAdminLogin, true);
 
             var sut = CreateSut();
 
-            var result = sut.Execute(AccountTypes.AzureServicePrincipal);
+            var result = sut.Execute();
 
             result.ExitCode.Should().NotBe(0);
 
@@ -337,7 +339,7 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
             else accountType = AccountTypes.GoogleCloudAccount;
 
             variables.Set(SpecialVariables.Namespace, Namespace);
-
+            variables.Set(Deployment.SpecialVariables.Account.AccountType, accountType);
             variables.Set(Deployment.SpecialVariables.Action.GoogleCloudAccount.Variable, accountVariable);
             variables.Set(Deployment.SpecialVariables.Action.GoogleCloudAccount.JsonKeyFromAccount(accountVariable), jsonKeyFromAccountVariable != null ? ToBase64(jsonKeyFromAccountVariable) : null);
             variables.Set(Deployment.SpecialVariables.Action.GoogleCloudAccount.JsonKey, ToBase64(GoogleAccountJsonKey));
@@ -354,7 +356,7 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
 
             var sut = CreateSut();
 
-            var result = sut.Execute(accountType);
+            var result = sut.Execute();
 
             result.VerifySuccess();
 
@@ -396,11 +398,12 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
 
             variables.Set(Deployment.SpecialVariables.Action.GoogleCloud.Project, GoogleCloudProject);
             variables.Set(Deployment.SpecialVariables.Action.GoogleCloud.Zone, GoogleCloudZone);
+            variables.Set(Deployment.SpecialVariables.Account.AccountType, AccountTypes.GoogleCloudAccount);
             variables.Set(SpecialVariables.GkeClusterName, GkeClusterName);
 
             var sut = CreateSut();
 
-            var result = sut.Execute(AccountTypes.GoogleCloudAccount);
+            var result = sut.Execute();
 
             result.ExitCode.Should().NotBe(0);
 
@@ -414,11 +417,12 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
 
             variables.Set(Deployment.SpecialVariables.Action.GoogleCloudAccount.JsonKey, ToBase64(GoogleAccountJsonKey));
             variables.Set(Deployment.SpecialVariables.Action.GoogleCloud.Project, GoogleCloudProject);
+            variables.Set(Deployment.SpecialVariables.Account.AccountType, AccountTypes.GoogleCloudAccount);
             variables.Set(SpecialVariables.GkeClusterName, GkeClusterName);
 
             var sut = CreateSut();
 
-            var result = sut.Execute(AccountTypes.GoogleCloudAccount);
+            var result = sut.Execute();
 
             result.ExitCode.Should().NotBe(0);
 
@@ -469,10 +473,11 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
             variables.Set(SpecialVariables.ClusterUrl, clusterUrl);
             variables.Set(SpecialVariables.EksClusterName, EksClusterName);
             variables.Set(SpecialVariables.Namespace, Namespace);
+            variables.Set(Deployment.SpecialVariables.Account.AccountType, accountType);
 
             var sut = CreateSut();
 
-            var result = sut.Execute(accountType);
+            var result = sut.Execute();
 
             result.VerifySuccess();
 
@@ -551,7 +556,7 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
 
             var sut = CreateSut();
 
-            var result = sut.Execute(null);
+            var result = sut.Execute();
 
             result.VerifySuccess();
 
@@ -602,7 +607,7 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
 
             var sut = CreateSut();
 
-            var result = sut.Execute(null);
+            var result = sut.Execute();
 
             result.ExitCode.Should().NotBe(0);
 
@@ -615,10 +620,10 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
             const string accountType = "NonValidAccountType";
 
             variables.Set(SpecialVariables.ClusterUrl, ClusterUrl);
-
+            variables.Set(Deployment.SpecialVariables.Account.AccountType, accountType);
             var sut = CreateSut();
 
-            var result = sut.Execute(accountType);
+            var result = sut.Execute();
 
             result.ExitCode.Should().NotBe(0);
 

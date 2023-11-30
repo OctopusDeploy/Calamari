@@ -22,7 +22,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         {
             var retriever = new TestRetriever();
             var reporter = new TestReporter();
-            var kubectl = GetKubectl();
+            var kubectl = Substitute.For<IKubectl>();
             var statusCheckTaskFactory = GetStatusCheckTaskFactory(retriever, reporter, kubectl, maxChecks: 5);
             var log = new InMemoryLog();
 
@@ -46,7 +46,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         {
             var retriever = new TestRetriever();
             var reporter = new TestReporter();
-            var kubectl = GetKubectl();
+            var kubectl = Substitute.For<IKubectl>();
             var statusCheckTaskFactory = GetStatusCheckTaskFactory(retriever, reporter, kubectl, maxChecks: 5);
             var log = new InMemoryLog();
 
@@ -71,7 +71,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         {
             var retriever = new TestRetriever();
             var reporter = new TestReporter();
-            var kubectl = GetKubectl();
+            var kubectl = Substitute.For<IKubectl>();
             var statusCheckTaskFactory = GetStatusCheckTaskFactory(retriever, reporter, kubectl, maxChecks: 5);
             var log = new InMemoryLog();
 
@@ -97,7 +97,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         {
             var retriever = new TestRetriever();
             var reporter = new TestReporter();
-            var kubectl = GetKubectl();
+            var kubectl = Substitute.For<IKubectl>();
             var statusCheckTaskFactory = GetStatusCheckTaskFactory(retriever, reporter, kubectl, maxChecks: 5);
             var log = new InMemoryLog();
 
@@ -124,7 +124,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         {
             var retriever = new TestRetriever();
             var reporter = new TestReporter();
-            var kubectl = GetKubectl();
+            var kubectl = Substitute.For<IKubectl>();
             var statusCheckTaskFactory = GetStatusCheckTaskFactory(retriever, reporter, kubectl, maxChecks: 5);
             var log = new InMemoryLog();
 
@@ -153,7 +153,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         {
             var retriever = new TestRetriever();
             var reporter = new TestReporter();
-            var kubectl = GetKubectl();
+            var kubectl = Substitute.For<IKubectl>();
             var statusCheckTaskFactory = GetStatusCheckTaskFactory(retriever, reporter, kubectl, maxChecks: 5);
             var log = new InMemoryLog();
 
@@ -174,13 +174,6 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             log.StandardError
                 .Should().ContainSingle().Which
                 .Should().Be(RunningResourceStatusCheck.MessageInProgressAtTheEndOfTimeout);
-        }
-
-        private IKubectl GetKubectl()
-        {
-            var kubectl = Substitute.For<IKubectl>();
-            kubectl.TrySetKubectl().Returns(true);
-            return kubectl;
         }
 
         private Func<ResourceStatusCheckTask> GetStatusCheckTaskFactory(IResourceRetriever retriever,
