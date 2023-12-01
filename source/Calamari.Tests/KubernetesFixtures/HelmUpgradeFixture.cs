@@ -325,6 +325,18 @@ namespace Calamari.Tests.KubernetesFixtures
             result.AssertOutputMatches("[helm|\\\\helm\"] upgrade (.*) --dry-run");
         }
 
+        [Test]
+        [RequiresNonFreeBSDPlatform]
+        [RequiresNon32BitWindows]
+        [RequiresNonMac]
+        [Category(TestCategory.PlatformAgnostic)]
+        public void WhenTheChartDirectoryVariableIsSet_TheChartAtThatLocationIsUsed()
+        {
+            Variables.Set(Kubernetes.SpecialVariables.Helm.ChartDirectory, "specific/location/for/my/chart");
+            var result = DeployPackage("mychart-with-specific-location-0.3.8.tar.gz");
+            result.AssertSuccess();
+        }
+
         protected abstract string ExplicitExeVersion { get; }
 
         protected string HelmExePath => ExplicitExeVersion == null ? "helm" : Path.Combine(explicitVersionTempDirectory.DirectoryPath, HelmOsPlatform, "helm");
