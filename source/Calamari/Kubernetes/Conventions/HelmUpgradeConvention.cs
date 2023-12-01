@@ -309,7 +309,7 @@ namespace Calamari.Kubernetes.Conventions
             // Try the root directory
             if (fileSystem.FileExists(Path.Combine(installDir, "Chart.yaml")))
             {
-                log.Verbose($"Using chart found at root of installation directory '{installDir}'");
+                log.Verbose($"Using chart found at root of package installation directory '{installDir}'");
                 return Path.Combine(installDir, "Chart.yaml");
             }
 
