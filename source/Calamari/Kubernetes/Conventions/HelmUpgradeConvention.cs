@@ -278,7 +278,7 @@ namespace Calamari.Kubernetes.Conventions
                     }
                 }
             }
-            
+
             if (!files.Any() && errors.Any())
             {
                 throw new CommandException(string.Join(Environment.NewLine, errors));
@@ -291,11 +291,25 @@ namespace Calamari.Kubernetes.Conventions
         {
             var installDir = deployment.Variables.Get(PackageVariables.Output.InstallationDirectoryPath);
 
+            var chartDirectoryVariable = deployment.Variables.Get(SpecialVariables.Helm.ChartDirectory);
+
+            // Try the specific chart directory if the variable has been set
+            if (!string.IsNullOrEmpty(chartDirectoryVariable))
+            {
+                var chartDirectory = Path.Combine(installDir, chartDirectoryVariable);
+                if (fileSystem.DirectoryExists(chartDirectory) && fileSystem.FileExists(Path.Combine(chartDirectory, "Chart.yaml")))
+                {
+                    log.Verbose($"Using chart found in configured directory '{chartDirectory}'");
+                    return chartDirectory;
+                }
+            }
+
             var packageId = deployment.Variables.Get(PackageVariables.IndexedPackageId(string.Empty));
 
             // Try the root directory
             if (fileSystem.FileExists(Path.Combine(installDir, "Chart.yaml")))
             {
+                log.Verbose($"Using chart found at root of installation directory '{installDir}'");
                 return Path.Combine(installDir, "Chart.yaml");
             }
 
@@ -303,8 +317,8 @@ namespace Calamari.Kubernetes.Conventions
             var packageIdPath = Path.Combine(installDir, packageId);
             if (fileSystem.DirectoryExists(packageIdPath) && fileSystem.FileExists(Path.Combine(packageIdPath, "Chart.yaml")))
             {
+                log.Verbose($"Using chart found in directory based on package id '{packageIdPath}'");
                 return packageIdPath;
-
             }
 
             /*
@@ -316,6 +330,7 @@ namespace Calamari.Kubernetes.Conventions
             {
                 if (fileSystem.FileExists(Path.Combine(dir, "Chart.yaml")))
                 {
+                    log.Verbose($"Using chart found in sub-directory '{dir}'");
                     return dir;
                 }
             }
