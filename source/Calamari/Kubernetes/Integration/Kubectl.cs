@@ -16,17 +16,26 @@ namespace Calamari.Kubernetes.Integration
     {
         readonly string customKubectlExecutable;
         private bool isSet;
+        List<string> defaultCommandArgs = new List<string>{ "--request-timeout=1m" };
 
         public Kubectl(IVariables variables, ILog log, ICommandLineRunner commandLineRunner)
-            : this(variables, log, commandLineRunner, Environment.CurrentDirectory, new Dictionary<string, string>())
+            : this(variables,
+                   log,
+                   commandLineRunner,
+                   Environment.CurrentDirectory,
+                   new Dictionary<string, string>())
         {
         }
 
-        public Kubectl(IVariables variables, ILog log, ICommandLineRunner commandLineRunner, string workingDirectory,
-            Dictionary<string, string> environmentVariables) : base(log, commandLineRunner, workingDirectory, environmentVariables)
+        public Kubectl(IVariables variables,
+                       ILog log,
+                       ICommandLineRunner commandLineRunner,
+                       string workingDirectory,
+                       Dictionary<string, string> environmentVariables) : base(log, commandLineRunner, workingDirectory, environmentVariables)
         {
             customKubectlExecutable = variables.Get("Octopus.Action.Kubernetes.CustomKubectlExecutable");
         }
+
         public void SetWorkingDirectory(string directory)
         {
             workingDirectory = directory;
@@ -63,8 +72,10 @@ namespace Calamari.Kubernetes.Integration
             {
                 throw new KubectlException($"The custom kubectl location of {customKubectlExecutable} does not exist. See https://g.octopushq.com/KubernetesTarget for more information.");
             }
-
-            ExecutableLocation = customKubectlExecutable;
+            else
+            {
+                ExecutableLocation = customKubectlExecutable;
+            }
 
             if (!TryExecuteKubectlCommand("version", "--client", "--output=yaml"))
             {
@@ -77,12 +88,12 @@ namespace Calamari.Kubernetes.Integration
 
         bool TryExecuteKubectlCommand(params string[] arguments)
         {
-            return ExecuteCommandAndLogOutput(new CommandLineInvocation(ExecutableLocation, arguments.Concat(new[] { "--request-timeout=1m" }).ToArray())).ExitCode == 0;
+            return ExecuteCommandAndLogOutput(new CommandLineInvocation(ExecutableLocation, arguments.Concat(defaultCommandArgs).ToArray())).ExitCode == 0;
         }
 
         public CommandResult ExecuteCommand(params string[] arguments)
         {
-            var kubectlArguments = arguments.Concat(new[] { "--request-timeout=1m" }).ToArray();
+            var kubectlArguments = arguments.Concat(defaultCommandArgs).ToArray();
             var commandInvocation = new CommandLineInvocation(ExecutableLocation, kubectlArguments);
             return ExecuteCommandAndLogOutput(commandInvocation);
         }
@@ -116,6 +127,12 @@ namespace Calamari.Kubernetes.Integration
 
             return Maybe<SemanticVersion>.None;
         }
+
+        public void DisableRequestTimeoutArgument()
+        {
+            var idx = defaultCommandArgs.FindIndex(x => x.Contains("request-timeout"));
+            defaultCommandArgs.RemoveAt(idx);
+        }
     }
 
     public interface IKubectl
@@ -128,5 +145,6 @@ namespace Calamari.Kubernetes.Integration
         CommandResultWithOutput ExecuteCommandAndReturnOutput(params string[] arguments);
         Maybe<SemanticVersion> GetVersion();
         string ExecutableLocation { get; }
+        void DisableRequestTimeoutArgument();
     }
 }
