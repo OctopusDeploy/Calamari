@@ -102,6 +102,10 @@ Option 1 is recommended if you can use the default worker.
 2. Nuke will build and package up Calamari then it will update the `Calamari.Consolidated` version in your `Octopus.Server.csproj`
 3. Restart Server to force a rebuild with the new version of Calamari.
 
+> Note: You must have a local nuget feed setup for the path `../LocalPackages` relative to this repo
+> 
+> eg. `dotnet nuget add source -n local ~/path/to/LocalPackages`
+
 #### Benefits:
 - It uses the “proper” mechanism to deploy Calamari.
 - You can use it when you’re using a remote worker.
