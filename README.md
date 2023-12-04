@@ -79,3 +79,40 @@ Finally, tag and push the new release
 * `git push --tag`
 
 This will trigger our build server to build and publish a new version to feedz.io which can be seen here https://feedz.io/org/octopus-deploy/repository/dependencies/packages/Calamari.
+
+## Debugging
+
+Option 1 is recommended if you can use the default worker.
+
+### Option 1: Reference local binary
+1. Build Calamari in your IDE
+2. Get the path to the executable (The one directly in the bin folder for the Calamari project, `Calamari` with no extension of macOS and Linux, `Calamari.exe` for Windows)
+3. In Octopus, set an unscoped variable `Octopus.Calamari.Executable` to the full path to the executable. This is set per project.
+4. Now when you run a deployment it will use your debug build.
+
+#### Benefits:
+- Extremely fast iteration, you don’t need to stop server between Calamari builds.
+- It does not exercise the full deployment functionality of checking calamari versions etc (most of the time, this does not matter).
+
+#### Drawbacks:
+- You must run the step on your machine (default worker) - basically the executable has to be at the path on whatever machine is executing the step. This is a problem when working with Kubernetes Tentacle for example.
+
+### Option 2: Package Calamari into your server build
+1. In terminal, run `./build.sh --set-octopus-server-version true` (build.ps1 and build.cmd are available for Windows)
+2. Nuke will build and package up Calamari then it will update the `Calamari.Consolidated` version in your `Octopus.Server.csproj`
+3. Restart Server to force a rebuild with the new version of Calamari.
+
+#### Benefits:
+- It uses the “proper” mechanism to deploy Calamari.
+- You can use it when you’re using a remote worker.
+
+#### Drawbacks:
+- It takes ~10 minutes to build and pack Calamari
+- You need to restart Server for Calamari changes to take effect
+- Currently it only increases the version number if you make commits, don’t forget to commit your changes or you’ll waste ~10 mins waiting for the build for nothing!
+
+### Bonus Variables!
+- Set `Octopus.Calamari.WaitForDebugger` to `True` to get a debug version of Calamari to wait for a Debugger to be attached before continuing. The log message from Calamari will show it’s waiting for the debugger and it will give the PID to use when you’re looking to attach.
+- Set `OctopusPrintEvaluatedVariables` to `True` to get all variables that are sent to Calamari, printed to the verbose long when executing a step.
+
+> Tip: Creating a variable set with your configuration makes it easy to toggle this behaviour per project  
