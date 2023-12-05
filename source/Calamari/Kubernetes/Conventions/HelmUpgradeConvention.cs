@@ -296,6 +296,8 @@ namespace Calamari.Kubernetes.Conventions
             // Try the specific chart directory if the variable has been set
             if (!string.IsNullOrEmpty(chartDirectoryVariable))
             {
+                log.Verbose($"Attempting to find chart using configured directory '{chartDirectoryVariable}'");
+
                 var chartDirectory = Path.Combine(installDir, chartDirectoryVariable);
                 if (fileSystem.DirectoryExists(chartDirectory) && fileSystem.FileExists(Path.Combine(chartDirectory, "Chart.yaml")))
                 {
@@ -304,21 +306,28 @@ namespace Calamari.Kubernetes.Conventions
                 }
             }
 
-            var packageId = deployment.Variables.Get(PackageVariables.IndexedPackageId(string.Empty));
-
             // Try the root directory
+            log.Verbose($"Attempting to find chart in root of package installation directory '{installDir}'");
+
             if (fileSystem.FileExists(Path.Combine(installDir, "Chart.yaml")))
             {
                 log.Verbose($"Using chart found at root of package installation directory '{installDir}'");
                 return Path.Combine(installDir, "Chart.yaml");
             }
 
-            // Try the directory that matches the package id
-            var packageIdPath = Path.Combine(installDir, packageId);
-            if (fileSystem.DirectoryExists(packageIdPath) && fileSystem.FileExists(Path.Combine(packageIdPath, "Chart.yaml")))
+            var packageId = deployment.Variables.Get(PackageVariables.IndexedPackageId(string.Empty));
+
+            if (!string.IsNullOrEmpty(packageId))
             {
-                log.Verbose($"Using chart found in directory based on package id '{packageIdPath}'");
-                return packageIdPath;
+                log.Verbose($"Attempting to find chart in directory based on package id '{packageId}'");
+
+                // Try the directory that matches the package id
+                var packageIdPath = Path.Combine(installDir, packageId);
+                if (fileSystem.DirectoryExists(packageIdPath) && fileSystem.FileExists(Path.Combine(packageIdPath, "Chart.yaml")))
+                {
+                    log.Verbose($"Using chart found in directory based on package id '{packageIdPath}'");
+                    return packageIdPath;
+                }
             }
 
             /*
@@ -326,6 +335,8 @@ namespace Calamari.Kubernetes.Conventions
              * can not be assumed. If the standard locations above failed to locate the Chart.yaml file, loop over
              * all subdirectories to try and find the file.
              */
+            log.Verbose($"Attempting to find chart in sub-directories of package");
+
             foreach (var dir in fileSystem.EnumerateDirectories(installDir))
             {
                 if (fileSystem.FileExists(Path.Combine(dir, "Chart.yaml")))
@@ -336,7 +347,7 @@ namespace Calamari.Kubernetes.Conventions
             }
 
             // Nothing worked
-            throw new CommandException($"Unexpected error. Chart.yaml was not found in {packageIdPath}");
+            throw new CommandException($"Unexpected error. Chart.yaml was not found in any directories inside '{installDir}'");
         }
 
         static bool TryAddRawValuesYaml(RunningDeployment deployment, out string fileName)
