@@ -30,7 +30,7 @@ namespace Calamari.Kubernetes.Authentication
             this.log = log;
         }
 
-        public bool TryConfigure(bool useVmServiceAccount, string @namespace)
+        public bool TryConfigure(string @namespace)
         {
             if (!gcloudCli.TrySetGcloud())
                 return false;
@@ -51,6 +51,7 @@ namespace Calamari.Kubernetes.Authentication
             var project = deploymentVariables.Get(Deployment.SpecialVariables.Action.GoogleCloud.Project) ?? string.Empty;
             var region = deploymentVariables.Get(Deployment.SpecialVariables.Action.GoogleCloud.Region) ?? string.Empty;
             var zone = deploymentVariables.Get(Deployment.SpecialVariables.Action.GoogleCloud.Zone) ?? string.Empty;
+            var useVmServiceAccount = deploymentVariables.GetFlag(Deployment.SpecialVariables.Action.GoogleCloud.UseVmServiceAccount);
             if (!gcloudCli.TryConfigureGcloudAccount(project, region, zone, jsonKey, useVmServiceAccount, impersonationEmails))
                 return false;
 

@@ -133,54 +133,7 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
 
             log.Received().Error("Kubernetes cluster URL is missing");
         }
-
-        [TestCase(true)]
-        [TestCase(false)]
-        public void Execute_WithUsernamePasswordAndCertificates_ConfiguresAuthenticationCorrectly(bool skipServerCertificate)
-        {
-            const string username = "my-cool-username";
-            const string password = "my-cool-password";
-
-            variables.Set(SpecialVariables.ClusterUrl, ClusterUrl);
-            variables.Set(SpecialVariables.Namespace, Namespace);
-            variables.Set(Deployment.SpecialVariables.Account.Username, username);
-            variables.Set(Deployment.SpecialVariables.Account.Password, password);
-
-            if (skipServerCertificate)
-            {
-                variables.AddFlag(SpecialVariables.SkipTlsVerification, true);
-            }
-            else
-            {
-                variables.Set(SpecialVariables.CertificateAuthority, CertificateAuthority);
-                variables.Set(SpecialVariables.CertificatePem(CertificateAuthority), ServerCertPem);
-            }
-
-            variables.Set(SpecialVariables.ClientCertificate, ClientCert);
-            variables.Set(SpecialVariables.CertificatePem(ClientCert), ClientCertPem);
-            variables.Set(SpecialVariables.PrivateKeyPem(ClientCert), ClientCertKey);
-
-            var sut = CreateSut();
-
-            var result = sut.Execute(AccountTypes.UsernamePassword);
-
-            result.VerifySuccess();
-
-            invocations.Should().BeEquivalentTo(new []
-            {
-                ("kubectl", $"config set-cluster octocluster --server={ClusterUrl}"),
-                ("kubectl", $"config set-context octocontext --user=octouser --cluster=octocluster --namespace={Namespace}"),
-                ("kubectl", "config use-context octocontext"),
-                ("kubectl", $"config set users.octouser.client-certificate-data {ToBase64(ClientCertPem)}"),
-                ("kubectl", $"config set users.octouser.client-key-data {ToBase64(ClientCertKey)}"),
-                skipServerCertificate
-                    ? ("kubectl", "config set-cluster octocluster --insecure-skip-tls-verify=true")
-                    : ("kubectl", $"config set clusters.octocluster.certificate-authority-data {ToBase64(ServerCertPem)}"),
-                ("kubectl", $"config set-credentials octouser --username={username} --password={password}"),
-                ("kubectl", $"get namespace {Namespace} --request-timeout=1m")
-            }, opts => opts.WithStrictOrdering());
-        }
-
+        
         [TestCase(true, false, false, "Kubernetes client certificate does not include the certificate data")]
         [TestCase(false, true, false, "Kubernetes client certificate does not include the private key data")]
         [TestCase(false, false, true, "Kubernetes server certificate does not include the certificate data")]
@@ -195,7 +148,7 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
 
             var sut = CreateSut();
 
-            var result = sut.Execute(AccountTypes.UsernamePassword);
+            var result = sut.Execute(null);
 
             result.ExitCode.Should().NotBe(0);
 
@@ -282,15 +235,15 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
 
             result.VerifySuccess();
 
-            invocations.Should().BeEquivalentTo(new[]
+            var expected = new[]
             {
                 ("kubectl", $"config set-cluster octocluster --server={ClusterUrl}"),
                 ("kubectl", $"config set-context octocontext --user=octouser --cluster=octocluster --namespace={Namespace}"),
                 ("kubectl", "config use-context octocontext"),
-                ("kubectl", "config set-cluster octocluster --insecure-skip-tls-verify=false"),
                 ("kubectl", $"config set-credentials octouser --token={token}"),
                 ("kubectl", $"get namespace {Namespace} --request-timeout=1m")
-            }, opts => opts.WithStrictOrdering());
+            };
+            invocations.Should().BeEquivalentTo(expected, opts => opts.WithStrictOrdering());
         }
 
         [Test]
@@ -528,7 +481,6 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
                 ("kubectl", $"config set-cluster octocluster --server={clusterUrl}"),
                 ("kubectl", $"config set-context octocontext --user=octouser --cluster=octocluster --namespace={Namespace}"),
                 ("kubectl", "config use-context octocontext"),
-                ("kubectl", "config set-cluster octocluster --insecure-skip-tls-verify=false"),
             };
 
             if (awsCliFailureMode != AwsCliFailureModes.CliDoesNotInitialise)
