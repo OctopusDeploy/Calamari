@@ -5,5 +5,4 @@
 [Verbose] "kubectl" config set-cluster octocluster --server=<server> --request-timeout=1m
 [Verbose] "kubectl" config set-context octocontext --user=octouser --cluster=octocluster --namespace=calamari-testing --request-timeout=1m
 [Verbose] "kubectl" config use-context octocontext --request-timeout=1m
-[Verbose] "kubectl" config set-cluster octocluster --insecure-skip-tls-verify=true --request-timeout=1m
 [Error] Account Type not valid is currently not valid for kubectl contexts
