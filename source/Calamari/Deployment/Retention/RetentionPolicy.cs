@@ -88,7 +88,7 @@ namespace Calamari.Deployment.Retention
             }
             catch (Exception ex)
             {
-                Log.VerboseFormat("Could not delete directory '{0}' because some files could not be deleted: {1}",
+                Log.WarnFormat("Could not delete directory '{0}' because some files could not be deleted: {1}",
                     deployment.ExtractedTo, ex.Message);
             }
         }
