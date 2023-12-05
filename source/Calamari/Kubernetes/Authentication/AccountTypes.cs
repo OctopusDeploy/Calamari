@@ -8,5 +8,6 @@ namespace Calamari.Kubernetes.Authentication
         public const string AzureOidc = nameof(AzureOidc);
         public const string GoogleCloudAccount = nameof(GoogleCloudAccount);
         public const string AmazonWebServicesAccount = nameof(AmazonWebServicesAccount);
+        public const string AmazonWebServicesOidcAccount = nameof(AmazonWebServicesOidcAccount);    
     }
 }
