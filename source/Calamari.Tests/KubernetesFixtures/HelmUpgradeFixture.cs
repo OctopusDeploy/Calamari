@@ -86,8 +86,11 @@ namespace Calamari.Tests.KubernetesFixtures
             // Ensure staging directory exists and is empty
             StagingDirectory = Path.Combine(Path.GetTempPath(), "CalamariTestStaging");
             FileSystem.EnsureDirectoryExists(StagingDirectory);
-            Log.InfoFormat("Purging staging directory: {0}", StagingDirectory);
             FileSystem.PurgeDirectory(StagingDirectory, FailureOptions.ThrowOnFailure);
+
+            // Ensure that the package extraction directory is clean
+            var packageExtractionDirectory = Path.Combine(Environment.CurrentDirectory, ExtractPackage.StagingDirectoryName);
+            FileSystem.PurgeDirectory(packageExtractionDirectory, FailureOptions.ThrowOnFailure);
 
             Environment.SetEnvironmentVariable("TentacleJournal",
                 Path.Combine(StagingDirectory, "DeploymentJournal.xml"));
@@ -401,7 +404,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 {
                     packageName = $"{Variables.Get(PackageVariables.PackageId)}-{Variables.Get(PackageVariables.PackageVersion)}.tgz";
                 }
-                Log.InfoFormat("Deploying test chart from package: {0}", packageName);
+                Log.VerboseFormat("Deploying test chart from package: {0}", packageName);
                 var pkg = GetFixtureResource("Charts", packageName);
                 Variables.Save(variablesFile.FilePath);
 
