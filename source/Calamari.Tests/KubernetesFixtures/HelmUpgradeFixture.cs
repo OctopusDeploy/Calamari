@@ -90,6 +90,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
             // Ensure that the package extraction directory is clean
             var packageExtractionDirectory = Path.Combine(Environment.CurrentDirectory, ExtractPackage.StagingDirectoryName);
+            Log.VerboseFormat("Cleaning package extraction directory: {0}", packageExtractionDirectory);
             FileSystem.PurgeDirectory(packageExtractionDirectory, FailureOptions.ThrowOnFailure);
 
             Environment.SetEnvironmentVariable("TentacleJournal",
