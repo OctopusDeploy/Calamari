@@ -82,6 +82,12 @@ namespace Calamari.Build
         [Parameter(Name = "signing_certificate_password")] 
         [Secret]
         readonly string SigningCertificatePassword = "Password01!";
+        
+        [Parameter] 
+        readonly string? TargetFramework = "net6.0";
+        
+        [Parameter] 
+        readonly string? TargetRuntime = "linux-x64";
 
         [Required]
         [GitVersion]
@@ -206,7 +212,7 @@ namespace Calamari.Build
                                 FixedRuntimes.Cloud);
 
                       // Create the self-contained Calamari packages for each runtime ID defined in Calamari.csproj
-                      foreach (var rid in Solution.GetProject(RootProjectName).GetRuntimeIdentifiers()!)
+                      foreach (var rid in GetRuntimeIdentifiers(Solution.GetProject(RootProjectName)!)!)
                           DoPublish(RootProjectName, Frameworks.Net60, nugetVersion, rid);
                   });
 
@@ -260,7 +266,8 @@ namespace Calamari.Build
             // for cross-platform frameworks, we combine each runtime identifier with each target framework
             var crossPlatformPackages = calamariPackages
                 .Where(p => p.CrossPlatform)
-                .SelectMany(packageToBuild => packageToBuild.Project.GetRuntimeIdentifiers() ?? Enumerable.Empty<string>(),
+                .Where(p => string.IsNullOrWhiteSpace(TargetFramework) || p.Framework == TargetFramework)
+                .SelectMany(packageToBuild => GetRuntimeIdentifiers(packageToBuild.Project) ?? Enumerable.Empty<string>(),
                     (packageToBuild, runtimeIdentifier) => new CalamariPackageMetadata()
                     {
                         Project = packageToBuild.Project,
@@ -345,7 +352,7 @@ namespace Calamari.Build
 
                                 // Create the self-contained Calamari packages for each runtime ID defined in Calamari.csproj
                                 // ReSharper disable once LoopCanBeConvertedToQuery
-                                foreach (var rid in Solution.GetProject(RootProjectName).GetRuntimeIdentifiers()!)
+                                foreach (var rid in GetRuntimeIdentifiers(Solution.GetProject(RootProjectName)!)!)
                                     packageActions.Add(() => DoPackage(RootProjectName,
                                                                        Frameworks.Net60,
                                                                        nugetVersion,
@@ -392,7 +399,7 @@ namespace Calamari.Build
 
                       // Create a Zip for each runtime for testing
                       // ReSharper disable once LoopCanBeConvertedToQuery
-                      foreach (var rid in Solution.GetProject("Calamari.Tests").GetRuntimeIdentifiers()!)
+                      foreach (var rid in GetRuntimeIdentifiers(Solution.GetProject("Calamari.Tests")!)!)
                           actions.Add(() =>
                           {
                               var publishedLocation =
@@ -641,6 +648,19 @@ namespace Calamari.Build
                 ? $"{GitVersionInfo?.NuGetVersion}-{DateTime.Now:yyyyMMddHHmmss}"
                 : GitVersionInfo?.NuGetVersion
                   ?? throw new InvalidOperationException("Unable to retrieve valid Nuget Version");
+        }
+        
+        IReadOnlyCollection<string> GetRuntimeIdentifiers(Project? project)
+        {
+            if (project is null)
+                return Array.Empty<string>();
+
+            var runtimes = project.GetRuntimeIdentifiers();
+            
+            if (!string.IsNullOrWhiteSpace(TargetRuntime))
+                runtimes = runtimes?.Where(x => x == TargetRuntime).ToList().AsReadOnly();
+
+            return runtimes ?? Array.Empty<string>();
         }
     }
 }
