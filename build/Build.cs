@@ -82,12 +82,12 @@ namespace Calamari.Build
         [Parameter(Name = "signing_certificate_password")] 
         [Secret]
         readonly string SigningCertificatePassword = "Password01!";
+
+        [Parameter]
+        readonly string? TargetFramework;
         
         [Parameter] 
-        readonly string? TargetFramework = "net6.0";
-        
-        [Parameter] 
-        readonly string? TargetRuntime = "linux-x64";
+        readonly string? TargetRuntime;
 
         [Required]
         [GitVersion]
