@@ -337,6 +337,19 @@ namespace Calamari.Tests.KubernetesFixtures
             result.AssertSuccess();
         }
 
+        [Test]
+        [RequiresNonFreeBSDPlatform]
+        [RequiresNon32BitWindows]
+        [RequiresNonMac]
+        [Category(TestCategory.PlatformAgnostic)]
+        public void WhenTheChartDirectoryVariableIsSet_AndTheChartDoesNotExist_AnErrorIsReturned()
+        {
+            Variables.Set(Kubernetes.SpecialVariables.Helm.ChartDirectory, "specific/location/for/my/chart");
+            var result = DeployPackage(); // This package doesn't have the specific location, should go :boom:
+            result.AssertFailure();
+            result.AssertOutputContains("Chart was not found in 'specific/location/for/my/chart'");
+        }
+
         protected abstract string ExplicitExeVersion { get; }
 
         protected string HelmExePath => ExplicitExeVersion == null ? "helm" : Path.Combine(explicitVersionTempDirectory.DirectoryPath, HelmOsPlatform, "helm");
@@ -352,10 +365,10 @@ namespace Calamari.Tests.KubernetesFixtures
 
             var @namespace = explicitNamespace ?? Namespace;
 
-            var kubectlCmd = "kubectl get configmaps " + ConfigMapName + " --namespace " + @namespace +" -o jsonpath=\"{.data.myvalue}\"";
+            var kubectlCmd = "kubectl get configmaps " + ConfigMapName + " --namespace " + @namespace + " -o jsonpath=\"{.data.myvalue}\"";
             var syntax = ScriptSyntax.Bash;
             var deleteCommand = DeleteCommand(@namespace, ReleaseName);
-            var script = "set_octopusvariable Message \"$("+ kubectlCmd +$")\"\n{HelmExePath} " + deleteCommand;
+            var script = "set_octopusvariable Message \"$(" + kubectlCmd + $")\"\n{HelmExePath} " + deleteCommand;
             if (CalamariEnvironment.IsRunningOnWindows)
             {
                 syntax = ScriptSyntax.PowerShell;

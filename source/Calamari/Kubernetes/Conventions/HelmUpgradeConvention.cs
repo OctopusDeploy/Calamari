@@ -304,6 +304,10 @@ namespace Calamari.Kubernetes.Conventions
                     log.Verbose($"Using chart found in configured directory '{chartDirectory}'");
                     return chartDirectory;
                 }
+                else
+                {
+                    throw new CommandException($"Chart was not found in '{chartDirectoryVariable}'");
+                }
             }
 
             // Try the root directory
