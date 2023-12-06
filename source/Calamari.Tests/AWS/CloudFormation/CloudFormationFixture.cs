@@ -2,9 +2,10 @@
 using Calamari.Common.Plumbing.Variables;
 using System.Threading.Tasks;
 using System;
+using System.Collections.Generic;
 using Calamari.Testing.Helpers;
-using Calamari.Tests.Helpers;
 using NUnit.Framework;
+using static Calamari.Aws.Deployment.AwsSpecialVariables.CloudFormation;
 
 namespace Calamari.Tests.AWS.CloudFormation
 {
@@ -14,8 +15,17 @@ namespace Calamari.Tests.AWS.CloudFormation
     {
         string GenerateStackName() => $"calamaricloudformation{Guid.NewGuid():N}";
 
-        [Test]
-        public async Task CreateOrUpdateCloudFormationTemplate()
+        const string StackTagsRaw = "[{\"Key\":\"myTagKey\",\"Value\":\"myTagValue\"},{\"Key\":\"anotherTagKey\",\"Value\":\"anotherTagValue\"}]";
+
+        static Dictionary<string, string> StackTags = new Dictionary<string, string>()
+        {
+            { "myTagKey", "myTagValue" },
+            { "anotherTagKey", "anotherTagValue" },
+        };
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public async Task CreateOrUpdateCloudFormationTemplate(bool isChangesetEnabled)
         {
             var cloudFormationFixtureHelpers = new CloudFormationFixtureHelpers();
             var stackName = GenerateStackName();
@@ -23,10 +33,10 @@ namespace Calamari.Tests.AWS.CloudFormation
 
             try
             {
-                cloudFormationFixtureHelpers.DeployTemplate(stackName, templateFilePath, new CalamariVariables());
+                cloudFormationFixtureHelpers.DeployTemplate(stackName, templateFilePath, CreateStackVariables(isChangesetEnabled));
 
                 await cloudFormationFixtureHelpers.ValidateStackExists(stackName, true);
-
+                await cloudFormationFixtureHelpers.ValidateStackTags(stackName, StackTags);
                 await cloudFormationFixtureHelpers.ValidateS3BucketExists(stackName);
             }
             finally
@@ -40,12 +50,13 @@ namespace Calamari.Tests.AWS.CloudFormation
         {
             var cloudFormationFixtureHelpers = new CloudFormationFixtureHelpers("us-east-1");
             var stackName = GenerateStackName();
-            
+
             try
             {
-                cloudFormationFixtureHelpers.DeployTemplateS3(stackName, new CalamariVariables());
+                cloudFormationFixtureHelpers.DeployTemplateS3(stackName, CreateStackVariables(false));
 
                 await cloudFormationFixtureHelpers.ValidateStackExists(stackName, true);
+                await cloudFormationFixtureHelpers.ValidateStackTags(stackName, StackTags);
             }
             finally
             {
@@ -65,6 +76,20 @@ namespace Calamari.Tests.AWS.CloudFormation
             await cloudFormationFixtureHelpers.ValidateStackExists(stackName, false);
         }
 
+        private IVariables CreateStackVariables(bool enableChangeset)
+        {
+            var stackVariables = new CalamariVariables()
+            {
+                { Tags, StackTagsRaw }
+            };
+            if (enableChangeset)
+            {
+                stackVariables.Add(KnownVariables.Package.EnabledFeatures, Changesets.Feature);
+                stackVariables.Add(Changesets.Name, $"calamarichangeset{Guid.NewGuid():N}");
+            }
+
+            return stackVariables;
+        }
     }
 }
 #endif
