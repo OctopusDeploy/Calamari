@@ -1,3 +1,8 @@
+Param(
+    [string] $Framework,
+    [string] $Runtime
+)
+
 Write-Host "
 ##################################################################################################
 #                                                                                                #
@@ -18,7 +23,7 @@ Write-Host "
 ##################################################################################################
 " -ForegroundColor Cyan
 
-./build.ps1 -BuildVerbosity Minimal -Verbosity Normal -PackInParallel -AppendTimestamp -SetOctopusServerVersion 
+./build.ps1 -BuildVerbosity Minimal -Verbosity Normal -PackInParallel -AppendTimestamp -SetOctopusServerVersion -TargetFramework "$Framework" -TargetRuntime "$Runtime"
 
 Write-Host "
 ########################################################################################
