@@ -98,12 +98,12 @@ Option 1 is recommended if you can use the default worker.
 - You must run the step on your machine (default worker) - basically the executable has to be at the path on whatever machine is executing the step. This is a problem when working with Kubernetes Tentacle for example.
 
 ### Option 2: Package Calamari into your server build
-1. In terminal, run `./build.sh --set-octopus-server-version true` (build.ps1 and build.cmd are available for Windows)
+1. In terminal, run `./build-local.sh` (build-local.ps1 is available for Windows)
 2. Nuke will build and package up Calamari then it will update the `Calamari.Consolidated` version in your `Octopus.Server.csproj`
 3. Restart Server to force a rebuild with the new version of Calamari.
 
 > Note: You must have a local nuget feed setup for the path `../LocalPackages` relative to this repo
-> 
+>
 > eg. `dotnet nuget add source -n local ~/path/to/LocalPackages`
 
 #### Benefits:
@@ -111,9 +111,9 @@ Option 1 is recommended if you can use the default worker.
 - You can use it when you’re using a remote worker.
 
 #### Drawbacks:
-- It takes ~10 minutes to build and pack Calamari
+- It takes ~10 minutes to build and pack Calamari, however you can reduce this significantly by targeting a specific runtime/framework if you don't need the rest
+    - eg `./build-local.sh -y --framework "net6.0" --runtime "linux-x64"`
 - You need to restart Server for Calamari changes to take effect
-- Currently it only increases the version number if you make commits, don’t forget to commit your changes or you’ll waste ~10 mins waiting for the build for nothing!
 
 ### Bonus Variables!
 - Set `Octopus.Calamari.WaitForDebugger` to `True` to get a debug version of Calamari to wait for a Debugger to be attached before continuing. The log message from Calamari will show it’s waiting for the debugger and it will give the PID to use when you’re looking to attach.
