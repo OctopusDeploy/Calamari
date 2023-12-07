@@ -60,10 +60,10 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         public void DiscoverKubernetesClusterWithEc2InstanceCredentialsAndIamRole()
         {
-            var authenticationDetails = new AwsAuthenticationDetails
+            var authenticationDetails = new AwsAuthenticationDetails<AwsWorkerCredentials>
             {
                 Type = "Aws",
-                Credentials = new AwsCredentials { Type = "worker" },
+                Credentials = new AwsCredentials<AwsWorkerCredentials> { Type = "worker" },
                 Role = new AwsAssumedRole
                 {
                     Type = "assumeRole",
@@ -94,10 +94,10 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         public void DiscoverKubernetesClusterWithEc2InstanceCredentialsAndNoIamRole()
         {
-            var authenticationDetails = new AwsAuthenticationDetails
+            var authenticationDetails = new AwsAuthenticationDetails<AwsWorkerCredentials>
             {
                 Type = "Aws",
-                Credentials = new AwsCredentials { Type = "worker" },
+                Credentials = new AwsCredentials<AwsWorkerCredentials> { Type = "worker" },
                 Role = new AwsAssumedRole { Type = "noAssumedRole" },
                 Regions = new []{region}
             };

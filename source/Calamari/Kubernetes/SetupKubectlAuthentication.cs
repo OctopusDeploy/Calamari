@@ -13,6 +13,7 @@ using Calamari.Kubernetes.Authentication;
 using Calamari.Kubernetes.Integration;
 using Newtonsoft.Json.Linq;
 using Octopus.CoreUtilities;
+using Octopus.CoreUtilities.Extensions;
 using Octopus.Versioning.Semver;
 
 namespace Calamari.Kubernetes
@@ -192,7 +193,7 @@ namespace Calamari.Kubernetes
                 {
                     SetupContextForUsernamePassword(user);
                 }
-                else if (accountType == AccountTypes.AmazonWebServicesAccount || variables.GetFlag("Octopus.Action.AwsAccount.UseInstanceRole"))
+                else if (accountType == AccountTypes.AmazonWebServicesAccount || variables.GetFlag("Octopus.Action.AwsAccount.UseInstanceRole") || accountType == AccountTypes.AmazonWebServicesOidcAccount)
                 {
                     SetupContextForAmazonServiceAccount(@namespace, clusterUrl, user);
                 }
@@ -332,7 +333,26 @@ namespace Calamari.Kubernetes
 
         void SetKubeConfigAuthenticationToAwsCli(string user, string clusterName, string region, string apiVersion)
         {
-            kubectl.ExecuteCommandAndAssertSuccess("config", "set-credentials", user, "--exec-command=aws", "--exec-arg=eks", "--exec-arg=get-token", $"--exec-arg=--cluster-name={clusterName}", $"--exec-arg=--region={region}", $"--exec-api-version={apiVersion}");
+            var oidcJwt = variables.Get("Octopus.OpenIdConnect.Jwt");
+            var arguments = new List<string>
+            {
+                "config",
+                "set-credentials",
+                user,
+                "--exec-command=aws",
+                "--exec-arg=eks",
+                "--exec-arg=get-token",
+                $"--exec-arg=--cluster-name={clusterName}",
+                $"--exec-arg=--region={region}",
+                $"--exec-api-version={apiVersion}"
+            };
+            
+            if (!oidcJwt.IsNullOrEmpty())
+            {
+                arguments.Add($"--token={oidcJwt}");
+            }
+            
+            kubectl.ExecuteCommandAndAssertSuccess(arguments.ToArray());
         }
 
         void SetKubeConfigAuthenticationToAwsIAm(string user, string clusterName)
