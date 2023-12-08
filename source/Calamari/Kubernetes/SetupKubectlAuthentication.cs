@@ -1,3 +1,4 @@
+#if !NET40
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -120,7 +121,7 @@ namespace Calamari.Kubernetes
                 if (variables.GetFlag(SpecialVariables.SkipTlsVerification))
                 {
                     kubectl.ExecuteCommandAndAssertSuccess("config", "set-cluster", cluster, $"--insecure-skip-tls-verify=true");
-                } 
+                }
                 else if (variables.IsSet(SpecialVariables.CertificateAuthorityPath))
                 {
                     var serverCertPath = variables.Get(SpecialVariables.CertificateAuthorityPath);
@@ -150,7 +151,7 @@ namespace Calamari.Kubernetes
                     var skipTlsVerification = variables.GetFlag(SpecialVariables.SkipTlsVerification) ? "true" : "false";
                     kubectl.ExecuteCommandAndAssertSuccess("config", "set-cluster", cluster, $"--insecure-skip-tls-verify={skipTlsVerification}");
                 }
-                
+
                 kubectl.ExecuteCommandAndAssertSuccess("config", "set-context", context, $"--user={user}", $"--cluster={cluster}", $"--namespace={@namespace}");
                 kubectl.ExecuteCommandAndAssertSuccess("config", "use-context", context);
 
@@ -365,3 +366,4 @@ namespace Calamari.Kubernetes
         }
     }
 }
+#endif
