@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using Calamari.Aws.Deployment;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
@@ -11,10 +12,6 @@ using Calamari.Common.Plumbing.Proxies;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes.Authentication;
 using Calamari.Kubernetes.Integration;
-using Newtonsoft.Json.Linq;
-using Octopus.CoreUtilities;
-using Octopus.CoreUtilities.Extensions;
-using Octopus.Versioning.Semver;
 
 namespace Calamari.Kubernetes
 {
@@ -27,7 +24,6 @@ namespace Calamari.Kubernetes
         readonly ICalamariFileSystem fileSystem;
         readonly Dictionary<string, string> environmentVars;
         readonly string workingDirectory;
-        string aws;
 
         public SetupKubectlAuthentication(IVariables variables,
             ILog log,
@@ -193,9 +189,13 @@ namespace Calamari.Kubernetes
                 {
                     SetupContextForUsernamePassword(user);
                 }
-                else if (accountType == AccountTypes.AmazonWebServicesAccount || variables.GetFlag("Octopus.Action.AwsAccount.UseInstanceRole") || accountType == AccountTypes.AmazonWebServicesOidcAccount)
+                else if (accountType == AccountTypes.AmazonWebServicesAccount || variables.GetFlag(AwsSpecialVariables.Authentication.UseInstanceRole) || accountType == AccountTypes.AmazonWebServicesOidcAccount)
                 {
-                    SetupContextForAmazonServiceAccount(@namespace, clusterUrl, user);
+                    var awsCli = new AwsCli(log, commandLineRunner, workingDirectory, environmentVars);
+                    var awsAuth = new AwsCliAuth(awsCli, kubectl, variables, environmentVars, log);
+
+                    if (!awsAuth.TryConfigure(@namespace, clusterUrl, user))
+                        return false;
                 }
                 else if (variables.IsSet(SpecialVariables.ClientCertificate))
                 {
@@ -260,127 +260,6 @@ namespace Calamari.Kubernetes
             kubectl.ExecuteCommandAndAssertSuccess("config", "set-credentials", user, $"--username={username}", $"--password={password}");
         }
 
-        void SetupContextForAmazonServiceAccount(string @namespace, string clusterUrl, string user)
-        {
-            var clusterName = variables.Get(SpecialVariables.EksClusterName);
-            log.Info($"Creating kubectl context to {clusterUrl} (namespace {@namespace}) using EKS cluster name {clusterName}");
-
-            if (TrySetKubeConfigAuthenticationToAwsCli(clusterName, clusterUrl, user))
-            {
-                return;
-            }
-
-            log.Verbose("Attempting to authenticate with aws-iam-authenticator");
-            SetKubeConfigAuthenticationToAwsIAm(user, clusterName);
-        }
-
-        bool TrySetKubeConfigAuthenticationToAwsCli(string clusterName, string clusterUrl, string user)
-        {
-            log.Verbose("Attempting to authenticate with aws-cli");
-            if (!TrySetAws())
-            {
-                log.Verbose("Could not find the aws cli, falling back to the aws-iam-authenticator.");
-                return false;
-            }
-
-            try {
-                var awsCliVersion = GetAwsCliVersion();
-                var minimumAwsCliVersionForAuth = new SemanticVersion("1.16.156");
-                if (awsCliVersion.CompareTo(minimumAwsCliVersionForAuth) > 0)
-                {
-                    var region = GetEksClusterRegion(clusterUrl);
-                    if (!string.IsNullOrWhiteSpace(region))
-                    {
-                        var apiVersion = GetEksClusterApiVersion(clusterName, region);
-                        SetKubeConfigAuthenticationToAwsCli(user, clusterName, region, apiVersion);
-                        return true;
-                    }
-
-                    log.Verbose("The EKS cluster Url specified should contain a valid aws region name");
-                }
-
-                log.Verbose($"aws cli version: {awsCliVersion} does not support the \"aws eks get-token\" command. Please update to a version later than 1.16.156");
-            }
-            catch (Exception e)
-            {
-                log.Verbose($"Unable to authenticate to {clusterUrl} using the aws cli. Failed with error message: {e.Message}");
-            }
-
-            return false;
-        }
-
-        string GetEksClusterRegion(string clusterUrl) => clusterUrl.Replace(".eks.amazonaws.com", "").Split('.').Last();
-
-        SemanticVersion GetAwsCliVersion()
-        {
-            var awsCliCommandRes = ExecuteCommandAndReturnOutput(aws, "--version").FirstOrDefault();
-            var awsCliVersionString = awsCliCommandRes.Split()
-                                                      .FirstOrDefault(versions => versions.StartsWith("aws-cli"))
-                                                      .Replace("aws-cli/", string.Empty);
-            return new SemanticVersion(awsCliVersionString);
-        }
-
-        string GetEksClusterApiVersion(string clusterName, string region)
-        {
-            var logLines = ExecuteCommandAndReturnOutput(aws,
-                "eks",
-                "get-token",
-                $"--cluster-name={clusterName}",
-                $"--region={region}");
-            var awsEksTokenCommand = string.Join("\n", logLines);
-            return JObject.Parse(awsEksTokenCommand).SelectToken("apiVersion").ToString();
-        }
-
-        void SetKubeConfigAuthenticationToAwsCli(string user, string clusterName, string region, string apiVersion)
-        {
-            var oidcJwt = variables.Get("Octopus.OpenIdConnect.Jwt");
-            var arguments = new List<string>
-            {
-                "config",
-                "set-credentials",
-                user,
-                "--exec-command=aws",
-                "--exec-arg=eks",
-                "--exec-arg=get-token",
-                $"--exec-arg=--cluster-name={clusterName}",
-                $"--exec-arg=--region={region}",
-                $"--exec-api-version={apiVersion}"
-            };
-            
-            if (!oidcJwt.IsNullOrEmpty())
-            {
-                arguments.Add($"--token={oidcJwt}");
-            }
-            
-            kubectl.ExecuteCommandAndAssertSuccess(arguments.ToArray());
-        }
-
-        void SetKubeConfigAuthenticationToAwsIAm(string user, string clusterName)
-        {
-            var kubectlVersion = kubectl.GetVersion();
-            var apiVersion = kubectlVersion.Some() && kubectlVersion.Value > new SemanticVersion("1.23.6")
-                ? "client.authentication.k8s.io/v1beta1"
-                : "client.authentication.k8s.io/v1alpha1";
-
-            kubectl.ExecuteCommandAndAssertSuccess("config", "set-credentials", user, "--exec-command=aws-iam-authenticator", $"--exec-api-version={apiVersion}", "--exec-arg=token", "--exec-arg=-i", $"--exec-arg={clusterName}");
-        }
-
-        bool TrySetAws()
-        {
-            aws = CalamariEnvironment.IsRunningOnWindows
-                ? ExecuteCommandAndReturnOutput("where", "aws.exe").FirstOrDefault()
-                : ExecuteCommandAndReturnOutput("which", "aws").FirstOrDefault();
-
-            if (string.IsNullOrEmpty(aws))
-            {
-                return false;
-            }
-
-            aws = aws.Trim();
-
-            return true;
-        }
-
         bool CreateNamespace(string @namespace)
         {
             if (TryExecuteCommandWithVerboseLoggingOnly("get", "namespace", @namespace))
@@ -411,11 +290,6 @@ namespace Calamari.Kubernetes
         void ExecuteCommand(string executable, params string[] arguments)
         {
             ExecuteCommand(new CommandLineInvocation(executable, arguments)).VerifySuccess();
-        }
-
-        bool TryExecuteCommand(string executable, params string[] arguments)
-        {
-            return ExecuteCommand(new CommandLineInvocation(executable, arguments)).ExitCode == 0;
         }
 
         bool TryExecuteCommandWithVerboseLoggingOnly(params string[] arguments)
@@ -488,25 +362,6 @@ namespace Calamari.Kubernetes
             }
 
             return result;
-        }
-
-        IEnumerable<string> ExecuteCommandAndReturnOutput(string exe, params string[] arguments)
-        {
-            var captureCommandOutput = new CaptureCommandOutput();
-            var invocation = new CommandLineInvocation(exe, arguments)
-            {
-                EnvironmentVars = environmentVars,
-                WorkingDirectory = workingDirectory,
-                OutputAsVerbose = false,
-                OutputToLog = false,
-                AdditionalInvocationOutputSink = captureCommandOutput
-            };
-
-            var result = commandLineRunner.Execute(invocation);
-
-            return result.ExitCode == 0
-                ? captureCommandOutput.InfoLogs.ToArray()
-                : Enumerable.Empty<string>();
         }
     }
 }
