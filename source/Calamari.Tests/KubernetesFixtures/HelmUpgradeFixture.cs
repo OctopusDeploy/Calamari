@@ -88,6 +88,11 @@ namespace Calamari.Tests.KubernetesFixtures
             FileSystem.EnsureDirectoryExists(StagingDirectory);
             FileSystem.PurgeDirectory(StagingDirectory, FailureOptions.ThrowOnFailure);
 
+            // Ensure that the package extraction directory is clean
+            var packageExtractionDirectory = Path.Combine(Environment.CurrentDirectory, ExtractPackage.StagingDirectoryName);
+            Log.VerboseFormat("Cleaning package extraction directory: {0}", packageExtractionDirectory);
+            FileSystem.PurgeDirectory(packageExtractionDirectory, FailureOptions.ThrowOnFailure);
+
             Environment.SetEnvironmentVariable("TentacleJournal",
                 Path.Combine(StagingDirectory, "DeploymentJournal.xml"));
 
@@ -325,6 +330,31 @@ namespace Calamari.Tests.KubernetesFixtures
             result.AssertOutputMatches("[helm|\\\\helm\"] upgrade (.*) --dry-run");
         }
 
+        [Test]
+        [RequiresNonFreeBSDPlatform]
+        [RequiresNon32BitWindows]
+        [RequiresNonMac]
+        [Category(TestCategory.PlatformAgnostic)]
+        public void WhenTheChartDirectoryVariableIsSet_TheChartAtThatLocationIsUsed()
+        {
+            Variables.Set(Kubernetes.SpecialVariables.Helm.ChartDirectory, "specific/location/for/my/chart");
+            var result = DeployPackage("mychart-with-specific-location-0.3.8.tar.gz");
+            result.AssertSuccess();
+        }
+
+        [Test]
+        [RequiresNonFreeBSDPlatform]
+        [RequiresNon32BitWindows]
+        [RequiresNonMac]
+        [Category(TestCategory.PlatformAgnostic)]
+        public void WhenTheChartDirectoryVariableIsSet_AndTheChartDoesNotExist_AnErrorIsReturned()
+        {
+            Variables.Set(Kubernetes.SpecialVariables.Helm.ChartDirectory, "specific/location/for/my/chart");
+            var result = DeployPackage(); // This package doesn't have the specific location, should go :boom:
+            result.AssertFailure();
+            result.AssertOutputContains("Chart was not found in 'specific/location/for/my/chart'");
+        }
+
         protected abstract string ExplicitExeVersion { get; }
 
         protected string HelmExePath => ExplicitExeVersion == null ? "helm" : Path.Combine(explicitVersionTempDirectory.DirectoryPath, HelmOsPlatform, "helm");
@@ -340,10 +370,10 @@ namespace Calamari.Tests.KubernetesFixtures
 
             var @namespace = explicitNamespace ?? Namespace;
 
-            var kubectlCmd = "kubectl get configmaps " + ConfigMapName + " --namespace " + @namespace +" -o jsonpath=\"{.data.myvalue}\"";
+            var kubectlCmd = "kubectl get configmaps " + ConfigMapName + " --namespace " + @namespace + " -o jsonpath=\"{.data.myvalue}\"";
             var syntax = ScriptSyntax.Bash;
             var deleteCommand = DeleteCommand(@namespace, ReleaseName);
-            var script = "set_octopusvariable Message \"$("+ kubectlCmd +$")\"\n{HelmExePath} " + deleteCommand;
+            var script = "set_octopusvariable Message \"$(" + kubectlCmd + $")\"\n{HelmExePath} " + deleteCommand;
             if (CalamariEnvironment.IsRunningOnWindows)
             {
                 syntax = ScriptSyntax.PowerShell;
@@ -375,6 +405,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 {
                     packageName = $"{Variables.Get(PackageVariables.PackageId)}-{Variables.Get(PackageVariables.PackageVersion)}.tgz";
                 }
+                Log.VerboseFormat("Deploying test chart from package: {0}", packageName);
                 var pkg = GetFixtureResource("Charts", packageName);
                 Variables.Save(variablesFile.FilePath);
 

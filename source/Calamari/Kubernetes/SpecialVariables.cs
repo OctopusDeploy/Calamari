@@ -15,9 +15,9 @@ namespace Calamari.Kubernetes
         public const string Namespace = "Octopus.Action.Kubernetes.Namespace";
         public const string SkipTlsVerification = "Octopus.Action.Kubernetes.SkipTlsVerification";
         public const string OutputKubeConfig = "Octopus.Action.Kubernetes.OutputKubeConfig";
-        public const string CustomKubectlExecutable = "Octopus.Action.Kubernetes.CustomKubectlExecutable"; 
+        public const string CustomKubectlExecutable = "Octopus.Action.Kubernetes.CustomKubectlExecutable";
         public const string ResourceStatusCheck = "Octopus.Action.Kubernetes.ResourceStatusCheck";
-        public const string DeploymentStyle = "Octopus.Action.KubernetesContainers.DeploymentStyle"; 
+        public const string DeploymentStyle = "Octopus.Action.KubernetesContainers.DeploymentStyle";
         public const string DeploymentWait = "Octopus.Action.KubernetesContainers.DeploymentWait";
         public const string CustomResourceYamlFileName = "Octopus.Action.KubernetesContainers.CustomResourceYamlFileName";
         public const string GroupedYamlDirectories = "Octopus.Action.KubernetesContainers.YamlDirectories";
@@ -32,7 +32,7 @@ namespace Calamari.Kubernetes
 
         public const string KubeConfig = "Octopus.KubeConfig.Path";
         public const string KustomizeManifest = "Octopus.Kustomize.Manifest.Path";
-            
+
         public const string KubernetesResourceStatusServiceMessageName = "k8s-status";
 
         public static class Helm
@@ -48,6 +48,7 @@ namespace Calamari.Kubernetes
             public const string Timeout = "Octopus.Action.Helm.Timeout";
             public const string TillerNamespace = "Octopus.Action.Helm.TillerNamespace";
             public const string TillerTimeout = "Octopus.Action.Helm.TillerTimeout";
+            public const string ChartDirectory = "Octopus.Action.Helm.ChartDirectory";
 
             public static class Packages
             {
