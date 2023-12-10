@@ -25,44 +25,44 @@ using static Nuke.Common.Tools.NuGet.NuGetTasks;
 
 namespace Calamari.Build
 {
-    class Build : NukeBuild
+    partial class Build : NukeBuild
     {
         const string RootProjectName = "Calamari";
 
         [Parameter("Configuration to build - Default is 'Debug' (local) or 'Release' (server)")]
         readonly Configuration Configuration =
             IsLocalBuild ? Configuration.Debug : Configuration.Release;
-        
-        [Required] 
-        readonly Solution Solution = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) 
-            ? ProjectModelTasks.ParseSolution(SourceDirectory / "Calamari.sln") 
+
+        [Required]
+        readonly Solution Solution = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? ProjectModelTasks.ParseSolution(SourceDirectory / "Calamari.sln")
             : ProjectModelTasks.ParseSolution(SourceDirectory / "Calamari.NonWindows.sln");
 
-        [Parameter("Run packing step in parallel")] 
+        [Parameter("Run packing step in parallel")]
         readonly bool PackInParallel;
 
-        [Parameter] 
+        [Parameter]
         readonly DotNetVerbosity BuildVerbosity = DotNetVerbosity.Minimal;
 
-        [Parameter] 
+        [Parameter]
         readonly bool SignBinaries;
-        
+
         // When building locally signing isn't really necessary and it could take
         // up to 3-4 minutes to sign all the binaries as we build for many, many
         // different runtimes so disabling it locally means quicker turn around
         // when doing local development.
         bool WillSignBinaries => !IsLocalBuild || SignBinaries;
 
-        [Parameter] 
+        [Parameter]
         readonly bool AppendTimestamp;
 
         [Parameter("Set Calamari Version on OctopusServer")]
         readonly bool SetOctopusServerVersion;
 
-        [Parameter] 
+        [Parameter]
         readonly string? AzureKeyVaultUrl;
 
-        [Parameter] 
+        [Parameter]
         readonly string? AzureKeyVaultAppId;
 
         [Parameter]
@@ -73,36 +73,36 @@ namespace Calamari.Build
         [Secret]
         readonly string? AzureKeyVaultTenantId;
 
-        [Parameter] 
+        [Parameter]
         readonly string? AzureKeyVaultCertificateName;
 
         [Parameter(Name = "signing_certificate_path")]
         readonly string SigningCertificatePath = RootDirectory / "certificates" / "OctopusDevelopment.pfx";
 
-        [Parameter(Name = "signing_certificate_password")] 
+        [Parameter(Name = "signing_certificate_password")]
         [Secret]
         readonly string SigningCertificatePassword = "Password01!";
 
         [Parameter]
         readonly string? TargetFramework;
-        
-        [Parameter] 
+
+        [Parameter]
         readonly string? TargetRuntime;
 
         [Required]
         [GitVersion]
         readonly GitVersion? GitVersionInfo;
-        
+
         static readonly List<string> CalamariProjectsToSkipConsolidation = new() { "Calamari.CloudAccounts", "Calamari.Common", "Calamari.ConsolidateCalamariPackages" };
-        
+
         List<Task> SignDirectoriesTasks = new();
-        
+
         List<Task> ProjectCompressionTasks = new();
 
         public Build()
         {
-            NugetVersion = new Lazy<string>(GetNugetVersion); 
-            
+            NugetVersion = new Lazy<string>(GetNugetVersion);
+
             // This initialisation is required to ensure the build script can
             // perform actions such as GetRuntimeIdentifiers() on projects.
             ProjectModelTasks.Initialize();
@@ -170,7 +170,7 @@ namespace Calamari.Build
                   .Executes(() =>
                   {
                       Log.Information("Compiling Calamari v{CalamariVersion}", NugetVersion.Value);
-                      
+
                       DotNetBuild(_ => _.SetProjectFile(Solution)
                                         .SetConfiguration(Configuration)
                                         .SetNoRestore(true)
@@ -281,7 +281,7 @@ namespace Calamari.Build
 
             packagesToPublish.ForEach(PublishPackage);
             await Task.WhenAll(SignDirectoriesTasks);
-            
+
             projects.ForEach(CompressCalamariProject);
             await Task.WhenAll(ProjectCompressionTasks);
         }
@@ -308,7 +308,7 @@ namespace Calamari.Build
                 .SetRuntime(calamariPackageMetadata.Architecture)
                 .SetOutput(outputDirectory)
             );
-            
+
             if (!project.Name.Contains("Tests"))
             {
                 var signDirectoryTask = Task.Run(() => SignDirectory(outputDirectory));
@@ -316,7 +316,7 @@ namespace Calamari.Build
             }
 
             File.Copy(RootDirectory / "global.json", outputDirectory / "global.json");
-            
+
         }
 
         void CompressCalamariProject(Project project)
@@ -328,7 +328,7 @@ namespace Calamari.Build
                 Log.Verbose($"Skipping compression for {project.Name} since nothing was built");
                 return;
             }
-            
+
             var compressionTask = Task.Run(() => CompressionTasks.CompressZip(compressionSource, $"{ArtifactsDirectory / project.Name}.zip"));
             ProjectCompressionTasks.Add(compressionTask);
         }
@@ -502,16 +502,16 @@ namespace Calamari.Build
                      var serverProjectFile = RootDirectory / ".." / "OctopusDeploy" / "source" / "Octopus.Server" / "Octopus.Server.csproj";
                      if (File.Exists(serverProjectFile))
                      {
-                         Log.Information("Setting Calamari version in Octopus Server " 
-                                         + "project {ServerProjectFile} to {NugetVersion}", 
+                         Log.Information("Setting Calamari version in Octopus Server "
+                                         + "project {ServerProjectFile} to {NugetVersion}",
                                          serverProjectFile, NugetVersion.Value);
                          SetOctopusServerCalamariVersion(serverProjectFile);
                      }
                      else
                      {
-                         Log.Warning("Could not set Calamari version in Octopus Server project " 
-                                     + "{ServerProjectFile} to {NugetVersion} as could not find " 
-                                     + "project file", 
+                         Log.Warning("Could not set Calamari version in Octopus Server project "
+                                     + "{ServerProjectFile} to {NugetVersion} as could not find "
+                                     + "project file",
                                      serverProjectFile, NugetVersion.Value);
                      }
                  });
@@ -570,7 +570,7 @@ namespace Calamari.Build
 
             return publishedTo;
         }
-        
+
         void SignProject(string project)
         {
             if (!WillSignBinaries)
@@ -649,14 +649,14 @@ namespace Calamari.Build
                 : GitVersionInfo?.NuGetVersion
                   ?? throw new InvalidOperationException("Unable to retrieve valid Nuget Version");
         }
-        
+
         IReadOnlyCollection<string> GetRuntimeIdentifiers(Project? project)
         {
             if (project is null)
                 return Array.Empty<string>();
 
             var runtimes = project.GetRuntimeIdentifiers();
-            
+
             if (!string.IsNullOrWhiteSpace(TargetRuntime))
                 runtimes = runtimes?.Where(x => x == TargetRuntime).ToList().AsReadOnly();
 
