@@ -97,7 +97,6 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
             });
             kubectl = Substitute.For<IKubectl>();
             kubectl.ExecutableLocation.Returns("kubectl");
-            kubectl.SetKubectl();
             kubectl.When(x => x.ExecuteCommandAndAssertSuccess(Arg.Any<string[]>()))
                    .Do(x =>
                    {
@@ -114,9 +113,10 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
         [Test]
         public void Execute_WhenTrySetKubectlFails_Fails()
         {
-            kubectl.When(s => s.SetKubectl()).Throws(new KubectlException("Error"));
+            kubectl.When(s => s.SetKubectl())
+                   .Do(x => throw new KubectlException("Error"));
 
-            var sut = CreateSut();
+        var sut = CreateSut();
 
             var result = sut.Execute();
 
@@ -130,9 +130,9 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
 
             var result = sut.Execute();
 
-            result.ExitCode.Should().NotBe(0);
+            result.ExitCode.Should().Be(1);
 
-            log.Received().Error("Kubernetes cluster URL is missing");
+            log.Received().Error("Unable to configure Kubernetes authentication context. Please verify your target configuration.");
         }
         
         [TestCase(true, false, false, "Kubernetes client certificate does not include the certificate data")]
