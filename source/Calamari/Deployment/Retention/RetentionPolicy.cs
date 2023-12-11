@@ -67,7 +67,7 @@ namespace Calamari.Deployment.Retention
             RemovedFailedPackageDownloads();
         }
 
-        ReadOnlyCollection<string> RemoveDeployments(List<JournalEntry> deploymentsToDelete, List<JournalEntry> preservedEntries)
+        string[] RemoveDeployments(List<JournalEntry> deploymentsToDelete, List<JournalEntry> preservedEntries)
         {
             var deploymentsDeleted = new List<string>();
             foreach (var deployment in deploymentsToDelete)
@@ -85,7 +85,7 @@ namespace Calamari.Deployment.Retention
                 }
             }
 
-            return deploymentsDeleted.AsReadOnly();
+            return deploymentsDeleted.ToArray();
         }
 
         void DeleteExtractionDestination(JournalEntry deployment, List<JournalEntry> preservedEntries)
