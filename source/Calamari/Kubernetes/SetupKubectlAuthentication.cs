@@ -56,7 +56,7 @@ namespace Calamari.Kubernetes
             try
             {
                 kubectl.SetKubectl();
-                var @namespace = DetermineNamespace();
+                var @namespace = GetNamespaceOrDefault();
                 SetupContext(@namespace);
                 CreateNamespace(@namespace);
 
@@ -75,7 +75,7 @@ namespace Calamari.Kubernetes
             return new CommandResult(string.Empty, 0);
         }
 
-        string DetermineNamespace()
+        string GetNamespaceOrDefault()
         {
             var @namespace = variables.Get(SpecialVariables.Namespace);
             if (!string.IsNullOrEmpty(@namespace))
