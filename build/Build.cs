@@ -203,10 +203,10 @@ namespace Calamari.Build
 
                       var nugetVersion = NugetVersion.Value;
                       DoPublish(RootProjectName,
-                                OperatingSystem.IsWindows() ? Frameworks.Net40 : Frameworks.Net60,
+                                OperatingSystem.IsWindows() ? Frameworks.Net462 : Frameworks.Net60,
                                 nugetVersion);
                       DoPublish(RootProjectName,
-                                OperatingSystem.IsWindows() ? Frameworks.Net452 : Frameworks.Net60,
+                                OperatingSystem.IsWindows() ? Frameworks.Net462 : Frameworks.Net60,
                                 nugetVersion,
                                 FixedRuntimes.Cloud);
 
@@ -341,10 +341,10 @@ namespace Calamari.Build
                                 var packageActions = new List<Action>
                                 {
                                     () => DoPackage(RootProjectName,
-                                                    OperatingSystem.IsWindows() ? Frameworks.Net40 : Frameworks.Net60,
+                                                    OperatingSystem.IsWindows() ? Frameworks.Net462 : Frameworks.Net60,
                                                     nugetVersion),
                                     () => DoPackage(RootProjectName,
-                                                    OperatingSystem.IsWindows() ? Frameworks.Net452 : Frameworks.Net60,
+                                                    OperatingSystem.IsWindows() ? Frameworks.Net462 : Frameworks.Net60,
                                                     nugetVersion,
                                                     FixedRuntimes.Cloud),
                                 };
@@ -385,7 +385,7 @@ namespace Calamari.Build
                   .Executes(async () =>
                   {
                       var nugetVersion = NugetVersion.Value;
-                      var defaultTarget = OperatingSystem.IsWindows() ? Frameworks.Net461 : Frameworks.Net60;
+                      var defaultTarget = OperatingSystem.IsWindows() ? Frameworks.Net462 : Frameworks.Net60;
                       AbsolutePath binFolder = SourceDirectory / "Calamari.Tests" / "bin" / Configuration / defaultTarget;
                       Directory.Exists(binFolder);
                       var actions = new List<Action>
