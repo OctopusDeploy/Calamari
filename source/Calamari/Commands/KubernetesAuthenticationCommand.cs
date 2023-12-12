@@ -1,4 +1,3 @@
-#if !NET40
 using System.Collections.Generic;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Processes;
@@ -68,4 +67,3 @@ namespace Calamari.Commands
     
     public class KubernetesAuthenticationCommandInput { }
 }
-#endif

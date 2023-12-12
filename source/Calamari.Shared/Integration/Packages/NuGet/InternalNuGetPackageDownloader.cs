@@ -1,14 +1,10 @@
 using System;
-using System.Diagnostics;
 using System.Net;
-using System.Net.Http;
 using System.Threading;
-using System.Threading.Tasks;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Retry;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Integration.FileSystem;
 using Calamari.Integration.Packages.Download;
 using Octopus.Versioning;
 
@@ -97,61 +93,12 @@ namespace Calamari.Integration.Packages.NuGet
                 NuGetFileSystemDownloader.DownloadPackage(packageId, version, feedUri, targetFilePath);
                 return;
             }
-            
-#if USE_NUGET_V2_LIBS
-            var timeout = GetHttpTimeout();
 
-            if (IsHttp(feedUri.ToString()))
-            {
-                if (NuGetV3Downloader.CanHandle(feedUri, feedCredentials, timeout))
-                {
-                    NuGetV3Downloader.DownloadPackage(packageId, version, feedUri, feedCredentials, targetFilePath, timeout);
-                }
-                else
-                {
-                    WarnIfHttpTimeoutHasBeenSet();
-                    NuGetV2Downloader.DownloadPackage(packageId, version.ToString(), feedUri, feedCredentials, targetFilePath);
-                }
-            }
-#else
-            else
-            {
-                WarnIfHttpTimeoutHasBeenSet();
-                NuGetV3LibDownloader.DownloadPackage(packageId, version, feedUri, feedCredentials, targetFilePath);
-            }
-#endif
+            WarnIfHttpTimeoutHasBeenSet();
+            NuGetV3LibDownloader.DownloadPackage(packageId, version, feedUri, feedCredentials, targetFilePath);
         }
 
-#if USE_NUGET_V2_LIBS
-        TimeSpan GetHttpTimeout()
-        {
-            const string expectedTimespanFormat = "c";
-            
-            // Equal to Timeout.InfiniteTimeSpan, which isn't available in net40
-            var defaultTimeout = new TimeSpan(0, 0, 0, 0, -1);
-            
-            var rawTimeout = variables.Get(KnownVariables.NugetHttpTimeout);
-            if (string.IsNullOrWhiteSpace(rawTimeout))
-            {
-                return defaultTimeout;
-            }
 
-            if (TimeSpan.TryParseExact(rawTimeout, expectedTimespanFormat, null, out var parsedTimeout))
-            {
-                return parsedTimeout;
-            }
-
-            var exampleTimespan = new TimeSpan(0, 0, 1, 0).ToString(expectedTimespanFormat);
-            
-            var message = $"The variable {KnownVariables.NugetHttpTimeout} couldn't be parsed as a timespan. " +
-                          $"Expected a value like '{exampleTimespan}' but received '{rawTimeout}'. " +
-                          $"Defaulting to '{defaultTimeout.ToString(expectedTimespanFormat)}'.";
-
-            Log.Warn(message);
-            return defaultTimeout;
-        }
-
-#endif
         
         void WarnIfHttpTimeoutHasBeenSet()
         {

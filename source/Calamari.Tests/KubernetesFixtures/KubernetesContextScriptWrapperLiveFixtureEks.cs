@@ -308,7 +308,7 @@ namespace Calamari.Tests.KubernetesFixtures
             // We need to replace the backslash with forward slash because
             // the slash comes out differently on windows machines.
             var assentString = string.Join('\n', assentLogs).Replace("\\", "/");
-            this.Assent(assentString, configuration: AssentConfiguration.DefaultWithPostfix("ApplyingBatches"));
+            this.Assent(assentString, configuration: AssentConfiguration.DefaultWithPostfix("Batches"));
 
             var resources = new[]
             {

@@ -97,12 +97,8 @@ namespace Calamari.Integration.Packages.Download
                         {
                             var fileName = BuildFileName(prefix, version.ToString(), knownFileExtensions[i]);
                             foundFilePath = FindSingleFileInTheBucket(s3Client, bucketName, fileName, CancellationToken.None)
-#if NET40
-                                .Result;
-#else
                                             .GetAwaiter()
                                             .GetResult();
-#endif
                         }
 
                         var fullFileName = !foundFilePath.IsNullOrEmpty() ? foundFilePath : throw new Exception($"Unable to download package {packageId} {version}: file not found");
@@ -119,14 +115,10 @@ namespace Calamari.Integration.Packages.Download
                         }
 
                         var localDownloadName = Path.Combine(cacheDirectory, PackageName.ToCachedFileName(packageId, version, knownExtension));
-
-#if NET40
-                        var response = s3Client.GetObject(bucketName, fullFileName);
-                        response.WriteResponseStreamToFile(localDownloadName);
-#else
+                        
                         var response = s3Client.GetObjectAsync(bucketName, fullFileName).GetAwaiter().GetResult();
                         response.WriteResponseStreamToFileAsync(localDownloadName, false, CancellationToken.None).GetAwaiter().GetResult();
-#endif
+
                         var packagePhysicalFileMetadata = PackagePhysicalFileMetadata.Build(localDownloadName);
                         return packagePhysicalFileMetadata
                                ?? throw new CommandException($"Unable to retrieve metadata for package {packageId}, version {version}");
@@ -175,11 +167,7 @@ namespace Calamari.Integration.Packages.Download
         {
             using (var s3Client = GetS3Client(feedUsername, feedPassword))
             {
-#if NET40
-                var region = s3Client.GetBucketLocation(bucketName);
-#else
                 var region = s3Client.GetBucketLocationAsync(bucketName, CancellationToken.None).GetAwaiter().GetResult();
-#endif
 
                 string regionString = region.Location.Value;
                 // If the bucket is in the us-east-1 region, then the region name is not included in the response.
@@ -224,12 +212,8 @@ namespace Calamari.Integration.Packages.Download
                 BucketName = bucketName,
                 Prefix = prefix
             };
-
-#if NET40
-            var response = client.ListObjects(request);
-#else
+            
             var response = await client.ListObjectsAsync(request, cancellationToken);
-#endif
             return response.S3Objects.Count == 1 ? response.S3Objects[0].Key : null;
         }
     }

@@ -76,6 +76,7 @@ namespace Calamari.Common.Plumbing.Extensions
                    ?? LineEnding.Dos;
         }
 
+        //TODO: NET462 Upgrade - This method can probably be removed
         /// <remarks>
         /// This method is required as we are using an old version of Octopus.Versioning
         /// and can't update because it's no longer compatible with net framework versions

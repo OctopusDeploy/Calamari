@@ -14,9 +14,7 @@ using Calamari.Integration.Packages.Download.Helm;
 using Octopus.Versioning;
 using HttpClient = System.Net.Http.HttpClient;
 using PackageName = Calamari.Common.Features.Packages.PackageName;
-#if SUPPORTS_POLLY
 using Polly;
-#endif
 
 namespace Calamari.Integration.Packages.Download
 {
@@ -123,11 +121,8 @@ namespace Calamari.Integration.Packages.Download
                                 $"Helm failed to download the chart (Status Code {(int) response.StatusCode}). Reason: {response.ReasonPhrase}");
                         }
 
-                        #if NET40
-                        response.Content.CopyToAsync(fileStream).Wait();
-                        #else
                         response.Content.CopyToAsync(fileStream).GetAwaiter().GetResult();
-                        #endif
+
                     }
                 });
 
@@ -140,7 +135,6 @@ namespace Calamari.Integration.Packages.Download
             }
         }
 
-#if SUPPORTS_POLLY
         void InvokeWithRetry(Action action)
         {
             Policy.Handle<Exception>()
@@ -150,10 +144,6 @@ namespace Calamari.Integration.Packages.Download
                 })
                 .Execute(action);
         }
-#else
-        //net40 doesn't support polly... usage is low enough to skip the effort to implement nice retries
-        void InvokeWithRetry(Action action) => action();
-#endif
 
         PackagePhysicalFileMetadata? SourceFromCache(string packageId, IVersion version, string cacheDirectory)
         {
