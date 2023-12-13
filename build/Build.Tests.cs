@@ -5,7 +5,6 @@ using Nuke.Common;
 using Nuke.Common.IO;
 using Nuke.Common.Tools.DotNet;
 using Nuke.Common.Tools.Git;
-using Nuke.Common.Tools.GitVersion;
 using Serilog;
 
 namespace Calamari.Build;
@@ -85,6 +84,8 @@ partial class Build
                           else
                           {
                               Log.Information("{TestProject} is not affected, so no tests will be executed", testProject);
+                              Log.Information($"##teamcity[testStarted name='{testProject}-NoTests' captureStandardOutput='false']");
+                              Log.Information($"##teamcity[testFinished name='{testProject}-NoTests' duration='0']");
                           }
                       });
 }
