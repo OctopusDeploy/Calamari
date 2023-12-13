@@ -24,7 +24,7 @@ namespace Calamari.AzureAppService
                                                                                                   .Or<SocketException>()
                                                                                                   .OrResult<HttpResponseMessage>(r => (int)r.StatusCode >= 500 || r.StatusCode == HttpStatusCode.RequestTimeout)
                                                                                                   .WaitAndRetryAsync(5,
-                                                                                                                     retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)) + TimeSpan.FromMilliseconds(Jitterer.Next(0, 1000)));
+                                                                                                                     retryAttempt => TimeSpan.FromSeconds(Math.Pow(2.5, retryAttempt)) + TimeSpan.FromMilliseconds(Jitterer.Next(0, 1000)));
 
         public static RetryPolicy<HttpResponseMessage> AsynchronousZipDeploymentOperationPolicy { get; } = Policy.HandleResult<HttpResponseMessage>(r => r.StatusCode == HttpStatusCode.Accepted)
                                                                                                                  .WaitAndRetryForeverAsync((_1,ctx) => TimeSpan.FromSeconds(2),
