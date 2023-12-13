@@ -89,7 +89,6 @@ namespace Calamari.Build
         [Parameter]
         readonly string? TargetRuntime;
 
-        [Required]
         [GitVersion]
         readonly GitVersion? GitVersionInfo;
 
