@@ -54,7 +54,15 @@ namespace Calamari.AzureAppService.Tests
                                                                                                                        name: resourceGroup.Name,
                                                                                                                        new Site(resourceGroup.Location)
                                                                                                                        {
-                                                                                                                           ServerFarmId = svcPlan.Id
+                                                                                                                           ServerFarmId = svcPlan.Id,
+                                                                                                                           SiteConfig = new SiteConfig
+                                                                                                                           {
+                                                                                                                               AppSettings = new List<NameValuePair>
+                                                                                                                               {
+                                                                                                                                   // Default is 230
+                                                                                                                                   new NameValuePair("WEBSITES_CONTAINER_START_TIME_LIMIT", "460")
+                                                                                                                               },
+                                                                                                                           },
                                                                                                                        }
                                                                                                                       ));
             }
@@ -205,11 +213,6 @@ namespace Calamari.AzureAppService.Tests
                 packageinfo.packageVersion = "1.0.0";
                 packageinfo.packageName = "sample";
                 greeting = "java";
-                
-                var settings = LegacyAppServiceSettingsBehaviorFixture.BuildAppSettingsJson(new[]
-                {
-                    ("WEBSITES_CONTAINER_START_TIME_LIMIT", "460", false),
-                });
 
                 await CommandTestBuilder.CreateAsync<DeployAzureAppServiceCommand, Program>()
                                         .WithArrange(context =>
@@ -218,7 +221,6 @@ namespace Calamari.AzureAppService.Tests
                                                          AddVariables(context);
                                                          context.Variables["Octopus.Action.Azure.WebAppName"] = javaSite.Name;
                                                          context.Variables[PackageVariables.SubstituteInFilesTargets] = "test.jsp";
-                                                         context.Variables[SpecialVariables.Action.Azure.AppSettings] =  settings.json;
                                                      })
                                         .Execute();
 
@@ -312,6 +314,13 @@ namespace Calamari.AzureAppService.Tests
                 context.Variables.Add(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.SubstituteInFiles);
                 context.Variables.Add(PackageVariables.SubstituteInFilesTargets, "index.html");
                 context.Variables.Add(SpecialVariables.Action.Azure.DeploymentType, "ZipDeploy");
+
+                var settings = LegacyAppServiceSettingsBehaviorFixture.BuildAppSettingsJson(new[]
+                {
+                    ("WEBSITES_CONTAINER_START_TIME_LIMIT", "460", false),
+                });
+                
+                context.Variables[SpecialVariables.Action.Azure.AppSettings] =  settings.json;
             }
         }
 
@@ -455,6 +464,13 @@ namespace Calamari.AzureAppService.Tests
             {
                 AddAzureVariables(context);
                 context.Variables.Add(SpecialVariables.Action.Azure.DeploymentType, "ZipDeploy");
+
+                var settings = LegacyAppServiceSettingsBehaviorFixture.BuildAppSettingsJson(new[]
+                {
+                    ("WEBSITES_CONTAINER_START_TIME_LIMIT", "460", false),
+                });
+                
+                context.Variables[SpecialVariables.Action.Azure.AppSettings] =  settings.json;
             }
         }
     }

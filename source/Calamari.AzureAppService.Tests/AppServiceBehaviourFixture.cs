@@ -188,7 +188,11 @@ namespace Calamari.AzureAppService.Tests
                                                                                    {
                                                                                        JavaVersion = "1.8",
                                                                                        JavaContainer = "TOMCAT",
-                                                                                       JavaContainerVersion = "9.0"
+                                                                                       JavaContainerVersion = "9.0",
+                                                                                       AppSettings = new List<AppServiceNameValuePair>
+                                                                                       {
+                                                                                           new AppServiceNameValuePair { Name = "WEBSITES_CONTAINER_START_TIME_LIMIT", Value = "460" }
+                                                                                       }
                                                                                    }
                                                                                });
 
@@ -341,6 +345,13 @@ namespace Calamari.AzureAppService.Tests
 
                 //set the feature toggle so we get the new code
                 context.Variables.Add(KnownVariables.EnabledFeatureToggles, FeatureToggle.ModernAzureAppServiceSdkFeatureToggle.ToString());
+                
+                var settings = LegacyAppServiceSettingsBehaviorFixture.BuildAppSettingsJson(new[]
+                {
+                    ("WEBSITES_CONTAINER_START_TIME_LIMIT", "460", false),
+                });
+                
+                context.Variables[SpecialVariables.Action.Azure.AppSettings] =  settings.json;
             }
         }
 
@@ -526,6 +537,13 @@ namespace Calamari.AzureAppService.Tests
 
                 //set the feature toggle so we get the new code
                 context.Variables.Add(KnownVariables.EnabledFeatureToggles, FeatureToggle.ModernAzureAppServiceSdkFeatureToggle.ToString());
+                
+                var settings = LegacyAppServiceSettingsBehaviorFixture.BuildAppSettingsJson(new[]
+                {
+                    ("WEBSITES_CONTAINER_START_TIME_LIMIT", "460", false),
+                });
+                
+                context.Variables[SpecialVariables.Action.Azure.AppSettings] =  settings.json;
             }
         }
     }
