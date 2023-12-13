@@ -18,7 +18,7 @@ partial class Build
     [PublicAPI]
     Target DetermineAffectedTests =>
         target => target
-            .Produces(RootDirectory / "affected.proj")
+            .Produces("affected.proj")
             .Executes(async () =>
             {
                 if (GitVersionInfo.BranchName == MainBranchName)
