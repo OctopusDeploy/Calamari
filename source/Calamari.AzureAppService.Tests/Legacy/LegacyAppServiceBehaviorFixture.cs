@@ -43,7 +43,7 @@ namespace Calamari.AzureAppService.Tests
                                                                                                                                       name: resourceGroup.Name,
                                                                                                                                       new AppServicePlan(resourceGroup.Location)
                                                                                                                                       {
-                                                                                                                                          Sku = new SkuDescription("S1", "Standard")
+                                                                                                                                          Sku = new SkuDescription("P1V3", "PremiumV3")
                                                                                                                                       }
                                                                                                                                      ));
 
@@ -344,7 +344,7 @@ namespace Calamari.AzureAppService.Tests
                                                                                                                                            $"{resourceGroupName}-linux-asp",
                                                                                                                                            new AppServicePlan(resourceGroupLocation)
                                                                                                                                            {
-                                                                                                                                               Sku = new SkuDescription("S1", "Standard"),
+                                                                                                                                               Sku = new SkuDescription("P1V3", "PremiumV3"),
                                                                                                                                                Kind = "linux",
                                                                                                                                                Reserved = true
                                                                                                                                            }

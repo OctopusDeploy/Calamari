@@ -68,6 +68,8 @@ namespace Calamari.AzureAppService.Tests
                                                                     retryOptions.MaxRetries = 5;
                                                                     retryOptions.Mode = RetryMode.Exponential;
                                                                     retryOptions.Delay = TimeSpan.FromSeconds(2);
+                                                                    // AzureAppServiceDeployContainerBehaviorFixture.AzureLinuxContainerSlotDeploy occasional timeout at default 100 seconds
+                                                                    retryOptions.NetworkTimeout = TimeSpan.FromSeconds(200);
                                                                 });
 
             //create the resource group

@@ -482,6 +482,8 @@ namespace Calamari.Terraform.Tests
 
             string fileData;
 
+            // This intermittently throws a 401, requiring authorization. These buckets are public by default and the client has no authorization so this looks to be a race case in the bucket configuration.
+            await Task.Delay(TimeSpan.FromSeconds(5));
             using (var client = new HttpClient())
             {
                 fileData = await client.GetStringAsync(requestUri).ConfigureAwait(false);
