@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using Azure.Identity;
 using Azure.ResourceManager.Resources;
 using Azure.ResourceManager.Resources.Models;
-using Calamari.AzureAppService;
 using Calamari.AzureAppService.Azure;
 using Calamari.CloudAccounts;
 using Calamari.Testing;
@@ -14,8 +13,6 @@ using Microsoft.Azure.Management.WebSites;
 using Microsoft.Azure.Management.WebSites.Models;
 using Microsoft.Rest;
 using NUnit.Framework;
-using NUnit.Framework.Internal;
-using Polly;
 using Polly.Retry;
 using AccountVariables = Calamari.AzureAppService.Azure.AccountVariables;
 
@@ -106,6 +103,11 @@ namespace Calamari.AzureAppService.Tests
             var response = await RetryPolicies.TestsTransientHttpErrorsPolicy.ExecuteAsync(async () =>
                                                                                            {
                                                                                                var r = await client.GetAsync($"https://{hostName}/{rootPath}");
+                                                                                               if (!r.IsSuccessStatusCode)
+                                                                                               {
+                                                                                                   var messageContent = r.Content.ReadAsStringAsync();
+                                                                                                   TestContext.WriteLine($"Unable to retreive content from https://${hostName}/${rootPath}, failed with: {messageContent}");
+                                                                                               }
                                                                                                r.EnsureSuccessStatusCode();
                                                                                                return r;
                                                                                            });

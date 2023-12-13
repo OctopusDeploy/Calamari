@@ -366,7 +366,8 @@ namespace Calamari.AzureAppService.Tests
                                                                                                                                {
                                                                                                                                    new NameValuePair("FUNCTIONS_WORKER_RUNTIME", "dotnet"),
                                                                                                                                    new NameValuePair("FUNCTIONS_EXTENSION_VERSION", "~4"),
-                                                                                                                                   new NameValuePair("AzureWebJobsStorage", $"DefaultEndpointsProtocol=https;AccountName={storageAccount.Name};AccountKey={keys.Keys.First().Value};EndpointSuffix=core.windows.net")
+                                                                                                                                   new NameValuePair("AzureWebJobsStorage", $"DefaultEndpointsProtocol=https;AccountName={storageAccount.Name};AccountKey={keys.Keys.First().Value};EndpointSuffix=core.windows.net"),
+                                                                                                                                   new NameValuePair("WEBSITES_CONTAINER_START_TIME_LIMIT", "460")
                                                                                                                                }
                                                                                                                            }
                                                                                                                        }
