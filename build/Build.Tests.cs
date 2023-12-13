@@ -100,7 +100,7 @@ partial class Build
             .Executes(() =>
             {
                 DotNetTasks.DotNetTest(settings => settings
-                    .SetProjectFile(BuildDirectory / "Calamari.Tests.dll")
+                    .SetProjectFile("Binaries/Calamari.Tests.dll")
                     .SetFilter("TestCategory != Windows & TestCategory != fsharp & TestCategory != scriptcs & TestCategory != PlatformAgnostic & TestCategory != RunOnceOnWindowsAndLinux")
                     .SetLoggers("trx"));
             });
