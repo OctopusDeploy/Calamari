@@ -376,8 +376,8 @@ namespace Calamari.AzureAppService.Tests
                                                                                   {
                                                                                       Sku = new AppServiceSkuDescription
                                                                                       {
-                                                                                          Name = "PremiumV3",
-                                                                                          Tier = "P1V3"
+                                                                                          Name = "P1V3",
+                                                                                          Tier = "PremiumV3"
                                                                                       },
                                                                                       Kind = "linux",
                                                                                       IsReserved = true
@@ -401,6 +401,7 @@ namespace Calamari.AzureAppService.Tests
                                                                                                new AppServiceNameValuePair { Name = "FUNCTIONS_WORKER_RUNTIME", Value = "dotnet" },
                                                                                                new AppServiceNameValuePair { Name = "FUNCTIONS_EXTENSION_VERSION", Value = "~4" },
                                                                                                new AppServiceNameValuePair { Name = "AzureWebJobsStorage", Value = $"DefaultEndpointsProtocol=https;AccountName={storageAccountName};AccountKey={keys.First().Value};EndpointSuffix=core.windows.net" },
+                                                                                               new AppServiceNameValuePair { Name = "WEBSITES_CONTAINER_START_TIME_LIMIT", Value = "460" }
                                                                                            }
                                                                                        }
                                                                                    });

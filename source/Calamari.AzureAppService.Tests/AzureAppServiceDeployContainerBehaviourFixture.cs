@@ -36,8 +36,8 @@ namespace Calamari.AzureAppService.Tests
                                                                        IsReserved = true,
                                                                        Sku = new AppServiceSkuDescription
                                                                        {
-                                                                           Name = "PremiumV3",
-                                                                           Tier = "P1V3"
+                                                                           Name = "P1V3",
+                                                                           Tier = "PremiumV3"
                                                                        }
                                                                    },
                                                                    new WebSiteData(resourceGroup.Data.Location)
@@ -49,7 +49,8 @@ namespace Calamari.AzureAppService.Tests
                                                                            AppSettings = new List<AppServiceNameValuePair>
                                                                            {
                                                                                new AppServiceNameValuePair { Name = "DOCKER_REGISTRY_SERVER_URL", Value = "https://index.docker.io" },
-                                                                               new AppServiceNameValuePair { Name = "WEBSITES_ENABLE_APP_SERVICE_STORAGE", Value = "false" }
+                                                                               new AppServiceNameValuePair { Name = "WEBSITES_ENABLE_APP_SERVICE_STORAGE", Value = "false" },
+                                                                               new AppServiceNameValuePair { Name = "WEBSITES_CONTAINER_START_TIME_LIMIT", Value = "460" }
                                                                            }
                                                                        }
                                                                    });

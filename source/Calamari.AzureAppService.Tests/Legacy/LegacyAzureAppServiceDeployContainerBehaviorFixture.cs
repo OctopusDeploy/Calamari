@@ -85,8 +85,8 @@ namespace Calamari.AzureAppService.Tests
                                                                                                                                       Reserved = true,
                                                                                                                                       Sku = new SkuDescription
                                                                                                                                       {
-                                                                                                                                          Name = "PremiumV3",
-                                                                                                                                          Tier = "P1V3"
+                                                                                                                                          Name = "P1V3",
+                                                                                                                                          Tier = "PremiumV3"
                                                                                                                                       }
                                                                                                                                   }));
 
@@ -101,7 +101,9 @@ namespace Calamari.AzureAppService.Tests
                                                                                                                            AppSettings = new List<NameValuePair>
                                                                                                                            {
                                                                                                                                new NameValuePair("DOCKER_REGISTRY_SERVER_URL", "https://index.docker.io"),
-                                                                                                                               new NameValuePair("WEBSITES_ENABLE_APP_SERVICE_STORAGE", "false")
+                                                                                                                               new NameValuePair("WEBSITES_ENABLE_APP_SERVICE_STORAGE", "false"),
+                                                                                                                               // Default is 230
+                                                                                                                               new NameValuePair("WEBSITES_CONTAINER_START_TIME_LIMIT", "460")
                                                                                                                            },
                                                                                                                            AlwaysOn = true
                                                                                                                        }

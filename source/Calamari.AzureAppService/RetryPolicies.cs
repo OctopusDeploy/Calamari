@@ -32,7 +32,7 @@ namespace Calamari.AzureAppService
                                                                                                   .Or<SocketException>()
                                                                                                   .OrResult<HttpResponseMessage>(r => (int)r.StatusCode >= 500 || r.StatusCode == HttpStatusCode.RequestTimeout)
                                                                                                   .WaitAndRetryAsync(4,
-                                                                                                                     retryAttempt => TimeSpan.FromSeconds(Math.Pow(3, retryAttempt)) + TimeSpan.FromMilliseconds(Jitterer.Next(0, 10000)));
+                                                                                                                     retryAttempt => TimeSpan.FromSeconds(Math.Pow(3.5, retryAttempt)) + TimeSpan.FromMilliseconds(Jitterer.Next(0, 10000)));
         
         public static RetryPolicy<HttpResponseMessage> AsynchronousZipDeploymentOperationPolicy { get; } = Policy.HandleResult<HttpResponseMessage>(r => r.StatusCode == HttpStatusCode.Accepted)
                                                                                                                  .WaitAndRetryForeverAsync((_1,ctx) => TimeSpan.FromSeconds(2),

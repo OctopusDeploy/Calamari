@@ -190,8 +190,13 @@ namespace Calamari.AzureAppService.Tests
                                                                                                                                    {
                                                                                                                                        JavaVersion = "1.8",
                                                                                                                                        JavaContainer = "TOMCAT",
-                                                                                                                                       JavaContainerVersion = "9.0"
-                                                                                                                                   }
+                                                                                                                                       JavaContainerVersion = "9.0",
+                                                                                                                                       AppSettings = new List<NameValuePair>
+                                                                                                                                       {
+                                                                                                                                           // Default is 230
+                                                                                                                                           new NameValuePair("WEBSITES_CONTAINER_START_TIME_LIMIT", "460")
+                                                                                                                                       },
+                                                                                                                                   },
                                                                                                                                }));
 
                 (string packagePath, string packageName, string packageVersion) packageinfo;
@@ -200,6 +205,11 @@ namespace Calamari.AzureAppService.Tests
                 packageinfo.packageVersion = "1.0.0";
                 packageinfo.packageName = "sample";
                 greeting = "java";
+                
+                var settings = LegacyAppServiceSettingsBehaviorFixture.BuildAppSettingsJson(new[]
+                {
+                    ("WEBSITES_CONTAINER_START_TIME_LIMIT", "460", false),
+                });
 
                 await CommandTestBuilder.CreateAsync<DeployAzureAppServiceCommand, Program>()
                                         .WithArrange(context =>
@@ -208,6 +218,7 @@ namespace Calamari.AzureAppService.Tests
                                                          AddVariables(context);
                                                          context.Variables["Octopus.Action.Azure.WebAppName"] = javaSite.Name;
                                                          context.Variables[PackageVariables.SubstituteInFilesTargets] = "test.jsp";
+                                                         context.Variables[SpecialVariables.Action.Azure.AppSettings] =  settings.json;
                                                      })
                                         .Execute();
 

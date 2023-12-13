@@ -237,7 +237,7 @@ namespace Calamari.AzureAppService.Tests
             vars.Add("Octopus.Action.Azure.WebAppName", webappName);
         }
 
-        private (string json, IEnumerable<AppSetting> setting) BuildAppSettingsJson(IEnumerable<(string name, string value, bool isSlotSetting)> settings)
+        public static (string json, IEnumerable<AppSetting> setting) BuildAppSettingsJson(IEnumerable<(string name, string value, bool isSlotSetting)> settings)
         {
             var appSettings = settings.Select(setting => new AppSetting
                                                   { Name = setting.name, Value = setting.value, SlotSetting = setting.isSlotSetting });
