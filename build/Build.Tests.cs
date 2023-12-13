@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Linq;
 using JetBrains.Annotations;
 using Nuke.Common;
@@ -19,8 +20,11 @@ partial class Build
     [PublicAPI]
     Target DetermineAffectedTests =>
         target => target
-            .Executes(async () =>
+            .Executes(() =>
             {
+                if (GitVersionInfo is null)
+                    throw new ArgumentNullException(nameof(GitVersionInfo));
+                
                 if (GitVersionInfo.BranchName == MainBranchName)
                 {
                     Log.Information("On default branch, nothing to calculate");
@@ -89,5 +93,16 @@ partial class Build
                               Log.Information($"##teamcity[testFinished name='{testProject}-NoTests' duration='0']");
                           }
                       });
+
+    [PublicAPI]
+    Target NetCoreTesting =>
+        target => target
+            .Executes(() =>
+            {
+                DotNetTasks.DotNetTest(settings => settings
+                    .SetProjectFile(BuildDirectory / "Calamari.Tests.dll")
+                    .SetFilter("TestCategory != Windows & TestCategory != fsharp & TestCategory != scriptcs & TestCategory != PlatformAgnostic & TestCategory != RunOnceOnWindowsAndLinux")
+                    .SetLoggers("trx"));
+            });
 }
 
