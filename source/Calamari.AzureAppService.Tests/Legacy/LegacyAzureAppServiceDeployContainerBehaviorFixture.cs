@@ -77,7 +77,7 @@ namespace Calamari.AzureAppService.Tests
                 HttpClient = { BaseAddress = new Uri(DefaultVariables.ResourceManagementEndpoint) },
             };
 
-            var svcPlan = await retryPolicy.ExecuteAsync(async () => await webMgmtClient.AppServicePlans.BeginCreateOrUpdateAsync(resourceGroup.Name,
+            var svcPlan = await retryPolicy.ExecuteAsync(async () => await webMgmtClient.AppServicePlans.CreateOrUpdateAsync(resourceGroup.Name,
                                                                                                                                   resourceGroup.Name,
                                                                                                                                   new AppServicePlan(resourceGroup.Location)
                                                                                                                                   {
@@ -85,12 +85,12 @@ namespace Calamari.AzureAppService.Tests
                                                                                                                                       Reserved = true,
                                                                                                                                       Sku = new SkuDescription
                                                                                                                                       {
-                                                                                                                                          Name = "S1",
-                                                                                                                                          Tier = "Standard"
+                                                                                                                                          Name = "PremiumV3",
+                                                                                                                                          Tier = "P1V3"
                                                                                                                                       }
                                                                                                                                   }));
 
-            site = await retryPolicy.ExecuteAsync(async () => await webMgmtClient.WebApps.BeginCreateOrUpdateAsync(resourceGroup.Name,
+            site = await retryPolicy.ExecuteAsync(async () => await webMgmtClient.WebApps.CreateOrUpdateAsync(resourceGroup.Name,
                                                                                                                    resourceGroup.Name,
                                                                                                                    new Site(resourceGroup.Location)
                                                                                                                    {
@@ -147,7 +147,7 @@ namespace Calamari.AzureAppService.Tests
             newVariables = new CalamariVariables();
             AddVariables(newVariables);
             newVariables.Add("Octopus.Action.Azure.DeploymentSlot", slotName);
-            await retryPolicy.ExecuteAsync(async () => await webMgmtClient.WebApps.BeginCreateOrUpdateSlotAsync(resourceGroupName,
+            await retryPolicy.ExecuteAsync(async () => await webMgmtClient.WebApps.CreateOrUpdateSlotAsync(resourceGroupName,
                                                                                                                 webappName,
                                                                                                                 site,
                                                                                                                 slotName));
@@ -162,12 +162,12 @@ namespace Calamari.AzureAppService.Tests
 
         async Task AssertSetupSuccessAsync()
         {
-            var response = await RetryPolicies.TransientHttpErrorsPolicy.ExecuteAsync(async () =>
-                                                                                      {
-                                                                                          var r = await client.GetAsync($@"https://{site.DefaultHostName}");
-                                                                                          r.EnsureSuccessStatusCode();
-                                                                                          return r;
-                                                                                      });
+            var response = await RetryPolicies.TestsTransientHttpErrorsPolicy.ExecuteAsync(async () =>
+                                                                                           {
+                                                                                               var r = await client.GetAsync($@"https://{site.DefaultHostName}");
+                                                                                               r.EnsureSuccessStatusCode();
+                                                                                               return r;
+                                                                                           });
             
             var receivedContent = await response.Content.ReadAsStringAsync();
 

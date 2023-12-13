@@ -376,8 +376,8 @@ namespace Calamari.AzureAppService.Tests
                                                                                   {
                                                                                       Sku = new AppServiceSkuDescription
                                                                                       {
-                                                                                          Name = "S1",
-                                                                                          Tier = "Standard"
+                                                                                          Name = "PremiumV3",
+                                                                                          Tier = "P1V3"
                                                                                       },
                                                                                       Kind = "linux",
                                                                                       IsReserved = true

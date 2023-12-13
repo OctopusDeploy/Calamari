@@ -83,11 +83,11 @@ namespace Calamari.AzureAppService.Tests
                 HttpClient = { BaseAddress = new Uri(DefaultVariables.ResourceManagementEndpoint) },
             };
 
-            var svcPlan = await retryPolicy.ExecuteAsync(async () => await webMgmtClient.AppServicePlans.BeginCreateOrUpdateAsync(resourceGroup.Name,
+            var svcPlan = await retryPolicy.ExecuteAsync(async () => await webMgmtClient.AppServicePlans.CreateOrUpdateAsync(resourceGroup.Name,
                                                                                                                                   resourceGroup.Name,
                                                                                                                                   new AppServicePlan(resourceGroup.Location)));
 
-            site = await retryPolicy.ExecuteAsync(async () => await webMgmtClient.WebApps.BeginCreateOrUpdateAsync(resourceGroup.Name,
+            site = await retryPolicy.ExecuteAsync(async () => await webMgmtClient.WebApps.CreateOrUpdateAsync(resourceGroup.Name,
                                                                                                                    resourceGroup.Name,
                                                                                                                    new Site(resourceGroup.Location) { ServerFarmId = svcPlan.Id }));
 
@@ -186,7 +186,7 @@ namespace Calamari.AzureAppService.Tests
             var slotName = "stage";
             this.slotName = slotName;
 
-            await retryPolicy.ExecuteAsync(async () => await webMgmtClient.WebApps.BeginCreateOrUpdateSlotAsync(resourceGroupName,
+            await retryPolicy.ExecuteAsync(async () => await webMgmtClient.WebApps.CreateOrUpdateSlotAsync(resourceGroupName,
                                                                                                                 resourceGroupName,
                                                                                                                 site,
                                                                                                                 slotName));

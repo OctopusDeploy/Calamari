@@ -38,7 +38,7 @@ namespace Calamari.AzureAppService.Tests
 
             protected override async Task ConfigureTestResources(ResourceGroup resourceGroup)
             {
-                var svcPlan = await RetryPolicy.ExecuteAsync(async () => await webMgmtClient.AppServicePlans.BeginCreateOrUpdateAsync(
+                var svcPlan = await RetryPolicy.ExecuteAsync(async () => await webMgmtClient.AppServicePlans.CreateOrUpdateAsync(
                                                                                                                                       resourceGroupName: resourceGroup.Name,
                                                                                                                                       name: resourceGroup.Name,
                                                                                                                                       new AppServicePlan(resourceGroup.Location)
@@ -49,7 +49,7 @@ namespace Calamari.AzureAppService.Tests
 
                 servicePlanId = svcPlan.Id;
 
-                site = await RetryPolicy.ExecuteAsync(async () => await webMgmtClient.WebApps.BeginCreateOrUpdateAsync(
+                site = await RetryPolicy.ExecuteAsync(async () => await webMgmtClient.WebApps.CreateOrUpdateAsync(
                                                                                                                        resourceGroupName: resourceGroup.Name,
                                                                                                                        name: resourceGroup.Name,
                                                                                                                        new Site(resourceGroup.Location)
@@ -100,7 +100,7 @@ namespace Calamari.AzureAppService.Tests
 
                 (string packagePath, string packageName, string packageVersion) packageinfo;
 
-                var slotTask = RetryPolicy.ExecuteAsync(async () => await webMgmtClient.WebApps.BeginCreateOrUpdateSlotAsync(resourceGroupName,
+                var slotTask = RetryPolicy.ExecuteAsync(async () => await webMgmtClient.WebApps.CreateOrUpdateSlotAsync(resourceGroupName,
                                                                                                                              resourceGroupName,
                                                                                                                              site,
                                                                                                                              slotName));
@@ -181,7 +181,7 @@ namespace Calamari.AzureAppService.Tests
             {
                 // Need to spin up a specific app service with Tomcat installed
                 // Need java installed on the test runner (MJH 2022-05-06: is this actually true? I don't see why we'd need java on the test runner)
-                var javaSite = await RetryPolicy.ExecuteAsync(async () => await webMgmtClient.WebApps.BeginCreateOrUpdateAsync(resourceGroupName,
+                var javaSite = await RetryPolicy.ExecuteAsync(async () => await webMgmtClient.WebApps.CreateOrUpdateAsync(resourceGroupName,
                                                                                                                                $"{resourceGroupName}-java",
                                                                                                                                new Site(site.Location)
                                                                                                                                {
@@ -329,7 +329,7 @@ namespace Calamari.AzureAppService.Tests
 
                 var keys = await storageClient.StorageAccounts.ListKeysAsync(resourceGroupName, storageAccountName);
 
-                var linuxSvcPlan = await RetryPolicy.ExecuteAsync(async () => await webMgmtClient.AppServicePlans.BeginCreateOrUpdateAsync(resourceGroupName,
+                var linuxSvcPlan = await RetryPolicy.ExecuteAsync(async () => await webMgmtClient.AppServicePlans.CreateOrUpdateAsync(resourceGroupName,
                                                                                                                                            $"{resourceGroupName}-linux-asp",
                                                                                                                                            new AppServicePlan(resourceGroupLocation)
                                                                                                                                            {
@@ -339,7 +339,7 @@ namespace Calamari.AzureAppService.Tests
                                                                                                                                            }
                                                                                                                                           ));
 
-                site = await RetryPolicy.ExecuteAsync(async () => await webMgmtClient.WebApps.BeginCreateOrUpdateAsync(resourceGroupName,
+                site = await RetryPolicy.ExecuteAsync(async () => await webMgmtClient.WebApps.CreateOrUpdateAsync(resourceGroupName,
                                                                                                                        $"{resourceGroupName}-linux",
                                                                                                                        new Site(resourceGroupLocation)
                                                                                                                        {

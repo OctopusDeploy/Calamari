@@ -103,12 +103,12 @@ namespace Calamari.AzureAppService.Tests
 
         protected async Task AssertContent(string hostName, string actualText, string rootPath = null)
         {
-            var response = await RetryPolicies.TransientHttpErrorsPolicy.ExecuteAsync(async () =>
-                                                                                      {
-                                                                                          var r = await client.GetAsync($"https://{hostName}/{rootPath}");
-                                                                                          r.EnsureSuccessStatusCode();
-                                                                                          return r;
-                                                                                      });
+            var response = await RetryPolicies.TestsTransientHttpErrorsPolicy.ExecuteAsync(async () =>
+                                                                                           {
+                                                                                               var r = await client.GetAsync($"https://{hostName}/{rootPath}");
+                                                                                               r.EnsureSuccessStatusCode();
+                                                                                               return r;
+                                                                                           });
 
             var result = await response.Content.ReadAsStringAsync();
             result.Should().Contain(actualText);

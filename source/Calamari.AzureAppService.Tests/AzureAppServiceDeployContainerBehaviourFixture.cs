@@ -36,8 +36,8 @@ namespace Calamari.AzureAppService.Tests
                                                                        IsReserved = true,
                                                                        Sku = new AppServiceSkuDescription
                                                                        {
-                                                                           Name = "S1",
-                                                                           Tier = "Standard"
+                                                                           Name = "PremiumV3",
+                                                                           Tier = "P1V3"
                                                                        }
                                                                    },
                                                                    new WebSiteData(resourceGroup.Data.Location)
@@ -103,12 +103,12 @@ namespace Calamari.AzureAppService.Tests
 
         async Task AssertSetupSuccessAsync()
         {
-            var response = await RetryPolicies.TransientHttpErrorsPolicy.ExecuteAsync(async () =>
-                                                                                      {
-                                                                                          var r = await client.GetAsync($@"https://{WebSiteResource.Data.DefaultHostName}");
-                                                                                          r.EnsureSuccessStatusCode();
-                                                                                          return r;
-                                                                                      });
+            var response = await RetryPolicies.TestsTransientHttpErrorsPolicy.ExecuteAsync(async () =>
+                                                                                           {
+                                                                                               var r = await client.GetAsync($@"https://{WebSiteResource.Data.DefaultHostName}");
+                                                                                               r.EnsureSuccessStatusCode();
+                                                                                               return r;
+                                                                                           });
             
             var receivedContent = await response.Content.ReadAsStringAsync();
 
