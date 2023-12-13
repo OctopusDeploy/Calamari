@@ -43,11 +43,11 @@ partial class Build
 
                 if (File.Exists("affected.proj"))
                 {
-                    Log.Information("Found affected projects. Publishing them in affected.proj artifact");
+                    Log.Information("Published affected.proj artifact");
                 }
                 else
                 {
-                    Log.Information("No tests were affected. Not publishing an affected.proj artifact.");
+                    Log.Warning("Did not publish affected.proj artifact");
                 }
             });
 
