@@ -2,6 +2,7 @@
 using System.Linq;
 using JetBrains.Annotations;
 using Nuke.Common;
+using Nuke.Common.CI.TeamCity;
 using Nuke.Common.IO;
 using Nuke.Common.Tools.DotNet;
 using Nuke.Common.Tools.Git;
@@ -18,7 +19,6 @@ partial class Build
     [PublicAPI]
     Target DetermineAffectedTests =>
         target => target
-            .Produces("affected.proj")
             .Executes(async () =>
             {
                 if (GitVersionInfo.BranchName == MainBranchName)
@@ -42,6 +42,7 @@ partial class Build
 
                 if (File.Exists("affected.proj"))
                 {
+                    TeamCity.Instance.PublishArtifacts("affected.proj");
                     Log.Information("Published affected.proj artifact");
                 }
                 else
