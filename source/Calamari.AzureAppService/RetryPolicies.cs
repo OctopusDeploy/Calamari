@@ -24,14 +24,7 @@ namespace Calamari.AzureAppService
                                                                                                   .Or<SocketException>()
                                                                                                   .OrResult<HttpResponseMessage>(r => (int)r.StatusCode >= 500 || r.StatusCode == HttpStatusCode.RequestTimeout)
                                                                                                   .WaitAndRetryAsync(5,
-                                                                                                                     retryAttempt => TimeSpan.FromSeconds(Math.Pow(2.15, retryAttempt)) + TimeSpan.FromMilliseconds(Jitterer.Next(0, 1000)),
-                                                                                                                     onRetry: (response, delay, retryCount, context) =>
-                                                                                                                              {
-                                                                                                                                  if (retryCount == 5)
-                                                                                                                                  {
-                                                                                                                                      context["isFinalRetry"] = true;
-                                                                                                                                  }
-                                                                                                                              });
+                                                                                                                     retryAttempt => TimeSpan.FromSeconds(Math.Pow(2.15, retryAttempt)) + TimeSpan.FromMilliseconds(Jitterer.Next(0, 1000)));
 
         // This is specifically for retries in tests, we retry fewer times with a higher base to try avoid hitting rate limiting in Azure.
         // The Jitter offset has been increased to try stagger requests between parallel test runs.
@@ -39,14 +32,7 @@ namespace Calamari.AzureAppService
                                                                                                   .Or<SocketException>()
                                                                                                   .OrResult<HttpResponseMessage>(r => (int)r.StatusCode >= 500 || r.StatusCode == HttpStatusCode.RequestTimeout)
                                                                                                   .WaitAndRetryAsync(4,
-                                                                                                                     retryAttempt => TimeSpan.FromSeconds(Math.Pow(3.5, retryAttempt)) + TimeSpan.FromMilliseconds(Jitterer.Next(0, 10000)),
-                                                                                                                          onRetry: (response, delay, retryCount, context) =>
-                                                                                                                                   {
-                                                                                                                                       if (retryCount == 5)
-                                                                                                                                       {
-                                                                                                                                           context["isFinalRetry"] = true;
-                                                                                                                                       }
-                                                                                                                                   });
+                                                                                                                     retryAttempt => TimeSpan.FromSeconds(Math.Pow(3.5, retryAttempt)) + TimeSpan.FromMilliseconds(Jitterer.Next(0, 10000)));
 
         public static RetryPolicy<HttpResponseMessage> AsynchronousZipDeploymentOperationPolicy { get; } = Policy.HandleResult<HttpResponseMessage>(r => r.StatusCode == HttpStatusCode.Accepted)
                                                                                                                  .WaitAndRetryForeverAsync((_1, ctx) => TimeSpan.FromSeconds(2),

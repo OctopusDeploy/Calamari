@@ -167,13 +167,6 @@ namespace Calamari.AzureAppService.Tests
             var response = await RetryPolicies.TestsTransientHttpErrorsPolicy.ExecuteAsync(async context =>
                                                                                            {
                                                                                                var r = await client.GetAsync($@"https://{site.DefaultHostName}");
-
-                                                                                               var isFinalRetry = context.TryGetValue("isFinalRetry", out var shouldCheckResponseStatus);
-                                                                                               if (isFinalRetry && shouldCheckResponseStatus is bool)
-                                                                                               {
-                                                                                                   return r;
-                                                                                               }
-
                                                                                                if (!r.IsSuccessStatusCode)
                                                                                                {
                                                                                                    var messageContent = await r.Content.ReadAsStringAsync();

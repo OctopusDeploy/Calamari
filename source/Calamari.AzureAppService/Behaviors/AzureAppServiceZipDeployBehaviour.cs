@@ -292,12 +292,7 @@ namespace Calamari.AzureAppService.Behaviors
                                                                                                 };
 
                                                                                                 var r = await httpClient.SendAsync(uploadRequest);
-                                                                                                var isFinalRetry = context.TryGetValue("isFinalRetry", out var shouldCheckResponseStatus);
-                                                                                                if (isFinalRetry && shouldCheckResponseStatus is bool)
-                                                                                                {
-                                                                                                    r.EnsureSuccessStatusCode();
-                                                                                                }
-
+                                                                                                r.EnsureSuccessStatusCode();
                                                                                                 return r;
                                                                                             },
                                                                                             contextData: new Dictionary<string, object>());

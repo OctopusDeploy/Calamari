@@ -108,12 +108,6 @@ namespace Calamari.AzureAppService.Tests
                                                                                            {
                                                                                                var r = await client.GetAsync($@"https://{WebSiteResource.Data.DefaultHostName}");
 
-                                                                                               var isFinalRetry = context.TryGetValue("isFinalRetry", out var shouldCheckResponseStatus);
-                                                                                               if (isFinalRetry && shouldCheckResponseStatus is bool)
-                                                                                               {
-                                                                                                   return r;
-                                                                                               }
-
                                                                                                if (!r.IsSuccessStatusCode)
                                                                                                {
                                                                                                    var messageContent = await r.Content.ReadAsStringAsync();
