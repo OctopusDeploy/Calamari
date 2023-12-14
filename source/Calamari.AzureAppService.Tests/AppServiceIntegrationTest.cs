@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -105,18 +106,27 @@ namespace Calamari.AzureAppService.Tests
 
         protected async Task AssertContent(string hostName, string actualText, string rootPath = null)
         {
-            var response = await RetryPolicies.TestsTransientHttpErrorsPolicy.ExecuteAsync(async () =>
+            var response = await RetryPolicies.TestsTransientHttpErrorsPolicy.ExecuteAsync(async context =>
                                                                                            {
-                                                                                               var r = await client.GetAsync($"https://{hostName}/{rootPath}");
+                                                                                               var r = await client.GetAsync($"https://{hostName}z/{rootPath}");
+
+                                                                                               var isFinalRetry = context.TryGetValue("isFinalRetry", out var shouldCheckResponseStatus);
+                                                                                               if (isFinalRetry && shouldCheckResponseStatus is bool)
+                                                                                               {
+                                                                                                   return r;
+                                                                                               }
+
                                                                                                if (!r.IsSuccessStatusCode)
                                                                                                {
                                                                                                    var messageContent = await r.Content.ReadAsStringAsync();
-                                                                                                   TestContext.WriteLine($"Unable to retreive content from https://{hostName}/{rootPath}, failed with: {messageContent}");
+                                                                                                   TestContext.WriteLine($"Unable to retrieve content from https://{hostName}/{rootPath}, failed with: {messageContent}");
                                                                                                }
+
                                                                                                r.EnsureSuccessStatusCode();
                                                                                                return r;
-                                                                                           });
-            
+                                                                                           },
+                                                                                           contextData: new Dictionary<string, object>());
+ 
             var result = await response.Content.ReadAsStringAsync();
             result.Should().Contain(actualText);
         }

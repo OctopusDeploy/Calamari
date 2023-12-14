@@ -399,7 +399,7 @@ namespace Calamari.AzureAppService.Tests
                                         .Execute();
 
                 // Assert
-                await DoWithRetries(10,
+                await DoWithRetries(2,
                                     async () =>
                                     {
                                         await AssertContent(site.DefaultHostName,
@@ -429,7 +429,7 @@ namespace Calamari.AzureAppService.Tests
                                         .Execute();
 
                 // Assert
-                await DoWithRetries(10,
+                await DoWithRetries(2,
                                     async () =>
                                     {
                                         await AssertContent(site.DefaultHostName,
