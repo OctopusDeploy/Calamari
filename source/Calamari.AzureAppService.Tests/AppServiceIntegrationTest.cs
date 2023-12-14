@@ -108,6 +108,11 @@ namespace Calamari.AzureAppService.Tests
             var response = await RetryPolicies.TestsTransientHttpErrorsPolicy.ExecuteAsync(async () =>
                                                                                            {
                                                                                                var r = await client.GetAsync($"https://{hostName}/{rootPath}");
+                                                                                               if (!r.IsSuccessStatusCode)
+                                                                                               {
+                                                                                                   var messageContent = await r.Content.ReadAsStringAsync();
+                                                                                                   TestContext.WriteLine($"Unable to retreive content from https://{hostName}/{rootPath}, failed with: {messageContent}");
+                                                                                               }
                                                                                                r.EnsureSuccessStatusCode();
                                                                                                return r;
                                                                                            });
