@@ -36,9 +36,10 @@ namespace Calamari.Kubernetes
         /// </summary>
         public bool IsEnabled(ScriptSyntax syntax)
         {
+            var isKubernetesTentacleTarget = string.Equals(variables.Get(MachineVariables.DeploymentTargetType), "KubernetesTentacle", StringComparison.OrdinalIgnoreCase);
             var hasClusterUrl = !string.IsNullOrEmpty(variables.Get(SpecialVariables.ClusterUrl));
             var hasClusterName = !string.IsNullOrEmpty(variables.Get(SpecialVariables.AksClusterName)) || !string.IsNullOrEmpty(variables.Get(SpecialVariables.EksClusterName)) || !string.IsNullOrEmpty(variables.Get(SpecialVariables.GkeClusterName));
-            return hasClusterUrl || hasClusterName;
+            return isKubernetesTentacleTarget || hasClusterUrl || hasClusterName;
         }
 
         public IScriptWrapper NextWrapper { get; set; }

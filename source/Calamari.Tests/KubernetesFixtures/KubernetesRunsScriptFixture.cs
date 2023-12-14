@@ -49,18 +49,21 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        [TestCase("Url", "", "", true)]
-        [TestCase("", "Name", "", true)]
-        [TestCase("", "", "Name", true)]
-        [TestCase("", "", "", false)]
+        [TestCase("Url", "", "", "",true)]
+        [TestCase("", "Name", "", "",true)]
+        [TestCase("", "", "Name", "",true)]
+        [TestCase("", "", "", "KubernetesTentacle",true)]
+        [TestCase("", "", "", "",false)]
         public void ShouldBeEnabledIfAnyVariablesAreProvided(string clusterUrl,
                                                              string aksClusterName,
                                                              string eksClusterName,
+                                                             string deploymentTargetType,
                                                              bool expected)
         {
             variables.Set(SpecialVariables.ClusterUrl, clusterUrl);
             variables.Set(SpecialVariables.AksClusterName, aksClusterName);
             variables.Set(SpecialVariables.EksClusterName, eksClusterName);
+            variables.Set(MachineVariables.DeploymentTargetType, deploymentTargetType);
 
             var wrapper = CreateWrapper();
             var actual = wrapper.IsEnabled(ScriptSyntaxHelper.GetPreferredScriptSyntaxForEnvironment());
@@ -382,7 +385,7 @@ namespace Calamari.Tests.KubernetesFixtures
                     text = redactMap.Aggregate(text, (current, pair) => current.Replace(pair.Key, pair.Value));
                     sb.AppendLine($"[{message.Level}] {text}");
                 }
-                
+
                 var configuration = AssentConfiguration.Default.UsingSanitiser(approval =>
                                                                                {
                                                                                    approval = approval.Replace("\r\n", "\n");
