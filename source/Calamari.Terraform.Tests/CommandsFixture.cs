@@ -492,6 +492,7 @@ namespace Calamari.Terraform.Tests
             fileData.Should().Be("Hello World from Google Cloud");
 
             await ExecuteAndReturnResult(destroyCommand, PopulateVariables, temporaryFolder.DirectoryPath);
+            await Task.Delay(TimeSpan.FromSeconds(10));
             using (var client = new HttpClient())
             {
                 var response = await client.GetAsync($"{requestUri}&bust_cache").ConfigureAwait(false);
