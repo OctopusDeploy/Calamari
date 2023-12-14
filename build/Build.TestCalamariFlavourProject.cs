@@ -40,7 +40,7 @@ partial class Build
                               Log.Verbose("{TestProject} tests will be executed", testProject);
 
                               DotNetTasks.DotNetTest(settings => settings
-                                                                 .SetProjectFile($"{testProject}.dll")
+                                                                 .SetProjectFile($"CalamariTests/{testProject}.dll")
                                                                  .SetFilter(CalamariFlavourTestCaseFilter)
                                                                  .SetLoggers("trx"));
                           }
