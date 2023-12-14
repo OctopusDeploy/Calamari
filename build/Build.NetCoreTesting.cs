@@ -1,5 +1,6 @@
 ﻿using JetBrains.Annotations;
 using Nuke.Common;
+using Nuke.Common.Tooling;
 using Nuke.Common.Tools.DotNet;
 
 namespace Calamari.Build;
@@ -11,10 +12,19 @@ partial class Build
         target => target
             .Executes(() =>
             {
+                const string testFilter =
+                    "TestCategory != Windows & TestCategory != fsharp & TestCategory != scriptcs & TestCategory != PlatformAgnostic & TestCategory != RunOnceOnWindowsAndLinux";
+
                 DotNetTasks.DotNetTest(settings => settings
                     .SetProjectFile("Binaries/Calamari.Tests.dll")
-                    .SetFilter("TestCategory != Windows & TestCategory != fsharp & TestCategory != scriptcs & TestCategory != PlatformAgnostic & TestCategory != RunOnceOnWindowsAndLinux")
-                    .SetLoggers("trx"));
+                    .SetFilter(testFilter)
+                    .SetLoggers("trx")
+                    .SetProcessExitHandler(
+                        process => process.ExitCode switch
+                        {
+                            0 => null, //successful
+                            1 => null, //some tests failed
+                            _ => throw new ProcessException(process)
+                        }));
             });
 }
-
