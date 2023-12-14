@@ -5,6 +5,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
@@ -394,6 +395,8 @@ namespace Calamari.AzureAppService.Tests
                                                                                       IsReserved = true
                                                                                   });
 
+                await linuxAppServicePlan.WaitForCompletionAsync(CancellationToken.None);
+
                 var linuxWebSiteResponse = await resourceGroup.GetWebSites()
                                                               .CreateOrUpdateAsync(WaitUntil.Completed,
                                                                                    $"{resourceGroup.Data.Name}-linux",
@@ -416,6 +419,9 @@ namespace Calamari.AzureAppService.Tests
                                                                                            }
                                                                                        }
                                                                                    });
+
+                await linuxWebSiteResponse.WaitForCompletionAsync(CancellationToken.None);
+                
                 WebSiteResource = linuxWebSiteResponse.Value;
             }
 
