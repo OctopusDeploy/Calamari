@@ -202,7 +202,7 @@ namespace Calamari.AzureAppService.Tests
                                                                                                                                        AppSettings = new List<NameValuePair>
                                                                                                                                        {
                                                                                                                                            // Default is 230
-                                                                                                                                           new NameValuePair("WEBSITES_CONTAINER_START_TIME_LIMIT", "460")
+                                                                                                                                           new NameValuePair("WEBSITES_CONTAINER_START_TIME_LIMIT", "600")
                                                                                                                                        },
                                                                                                                                    },
                                                                                                                                }));
@@ -224,7 +224,12 @@ namespace Calamari.AzureAppService.Tests
                                                      })
                                         .Execute();
 
-                await AssertContent(javaSite.DefaultHostName, $"Hello! {greeting}", "test.jsp");
+                await DoWithRetries(3,
+                                    async () =>
+                                    {
+                                        await AssertContent(javaSite.DefaultHostName, $"Hello! {greeting}", "test.jsp");
+                                    },
+                                    secondsBetweenRetries: 10);
             }
 
             [Test]

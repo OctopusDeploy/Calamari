@@ -213,8 +213,13 @@ namespace Calamari.AzureAppService.Tests
                                                          context.Variables[PackageVariables.SubstituteInFilesTargets] = "test.jsp";
                                                      })
                                         .Execute();
-
-                await AssertContent(javaSite.Value.Data.DefaultHostName, $"Hello! {greeting}", "test.jsp");
+                
+                await DoWithRetries(3,
+                                    async () =>
+                                    {
+                                        await AssertContent(javaSite.Value.Data.DefaultHostName, $"Hello! {greeting}", "test.jsp");
+                                    },
+                                    secondsBetweenRetries: 10);
             }
 
             [Test]
