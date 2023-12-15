@@ -154,6 +154,10 @@ namespace Calamari.Tests.KubernetesFixtures
 
                                                          if (CalamariEnvironment.IsRunningOnWindows)
                                                          {
+                                                             if (Directory.Exists($"{destinationDirectoryName}\\extract"))
+                                                             {
+                                                                 return GetAwsCliExecutablePath(destinationDirectoryName);
+                                                             }
                                                              ExecuteCommandAndReturnResult("msiexec",
                                                                                            $"/a {awsInstaller} /qn TARGETDIR={destinationDirectoryName}\\extract",
                                                                                            destinationDirectoryName);
@@ -515,7 +519,7 @@ namespace Calamari.Tests.KubernetesFixtures
             log($"Downloading {toolName} cli...");
             Directory.CreateDirectory(destinationDirectoryName);
 
-            var retry = new RetryTracker(3, TimeSpan.MaxValue, new LimitedExponentialRetryInterval(1000, 30000, 2));
+            var retry = new RetryTracker(4, TimeSpan.MaxValue, new LimitedExponentialRetryInterval(3000, 30000, 2));
             while (retry.Try())
             {
                 try
