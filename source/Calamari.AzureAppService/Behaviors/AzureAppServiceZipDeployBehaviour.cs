@@ -276,7 +276,7 @@ namespace Calamari.AzureAppService.Behaviors
             var authenticationHeader = new AuthenticationHeaderValue("Basic", publishingProfile.GetBasicAuthCredentials());
 
             //we add some retry just in case the web app's Kudu/SCM is not running just yet
-            var uploadResponse = await RetryPolicies.TransientHttpErrorsPolicy.ExecuteAsync(async context =>
+            var uploadResponse = await RetryPolicies.TransientHttpErrorsPolicy.ExecuteAsync(async () =>
                                                                                             {
                                                                                                 //we have to create a new request message each time
                                                                                                 var uploadRequest = new HttpRequestMessage(HttpMethod.Post, zipUploadUrl)
@@ -294,8 +294,7 @@ namespace Calamari.AzureAppService.Behaviors
                                                                                                 var r = await httpClient.SendAsync(uploadRequest);
                                                                                                 r.EnsureSuccessStatusCode();
                                                                                                 return r;
-                                                                                            },
-                                                                                            contextData: new Dictionary<string, object>());
+                                                                                            });
 
             if (!uploadResponse.IsSuccessStatusCode)
                 throw new Exception($"Zip upload to {zipUploadUrl} failed with HTTP Status {(int)uploadResponse.StatusCode} '{uploadResponse.ReasonPhrase}'.");
