@@ -60,7 +60,8 @@ namespace Calamari.AzureAppService.Tests
                                                                                                                                AppSettings = new List<NameValuePair>
                                                                                                                                {
                                                                                                                                    // Default is 230
-                                                                                                                                   new NameValuePair("WEBSITES_CONTAINER_START_TIME_LIMIT", "460")
+                                                                                                                                   new NameValuePair("WEBSITES_CONTAINER_START_TIME_LIMIT", "460"),
+                                                                                                                                   new NameValuePair("WEBSITE_SCM_ALWAYS_ON_ENABLED", "true")
                                                                                                                                },
                                                                                                                            },
                                                                                                                        }
@@ -202,7 +203,8 @@ namespace Calamari.AzureAppService.Tests
                                                                                                                                        AppSettings = new List<NameValuePair>
                                                                                                                                        {
                                                                                                                                            // Default is 230
-                                                                                                                                           new NameValuePair("WEBSITES_CONTAINER_START_TIME_LIMIT", "600")
+                                                                                                                                           new NameValuePair("WEBSITES_CONTAINER_START_TIME_LIMIT", "600"),
+                                                                                                                                           new NameValuePair("WEBSITE_SCM_ALWAYS_ON_ENABLED", "true")
                                                                                                                                        },
                                                                                                                                    },
                                                                                                                                }));
@@ -323,6 +325,7 @@ namespace Calamari.AzureAppService.Tests
                 var settings = LegacyAppServiceSettingsBehaviorFixture.BuildAppSettingsJson(new[]
                 {
                     ("WEBSITES_CONTAINER_START_TIME_LIMIT", "460", false),
+                    ("WEBSITE_SCM_ALWAYS_ON_ENABLED", "true", false)
                 });
                 
                 context.Variables[SpecialVariables.Action.Azure.AppSettings] =  settings.json;
@@ -381,7 +384,8 @@ namespace Calamari.AzureAppService.Tests
                                                                                                                                    new NameValuePair("FUNCTIONS_WORKER_RUNTIME", "dotnet"),
                                                                                                                                    new NameValuePair("FUNCTIONS_EXTENSION_VERSION", "~4"),
                                                                                                                                    new NameValuePair("AzureWebJobsStorage", $"DefaultEndpointsProtocol=https;AccountName={storageAccount.Name};AccountKey={keys.Keys.First().Value};EndpointSuffix=core.windows.net"),
-                                                                                                                                   new NameValuePair("WEBSITES_CONTAINER_START_TIME_LIMIT", "460")
+                                                                                                                                   new NameValuePair("WEBSITES_CONTAINER_START_TIME_LIMIT", "460"),
+                                                                                                                                   new NameValuePair("WEBSITE_SCM_ALWAYS_ON_ENABLED", "true")
                                                                                                                                }
                                                                                                                            }
                                                                                                                        }
@@ -473,6 +477,7 @@ namespace Calamari.AzureAppService.Tests
                 var settings = LegacyAppServiceSettingsBehaviorFixture.BuildAppSettingsJson(new[]
                 {
                     ("WEBSITES_CONTAINER_START_TIME_LIMIT", "460", false),
+                    ("WEBSITE_SCM_ALWAYS_ON_ENABLED", "true", false)
                 });
                 
                 context.Variables[SpecialVariables.Action.Azure.AppSettings] =  settings.json;
