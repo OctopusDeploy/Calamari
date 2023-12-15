@@ -34,8 +34,7 @@ partial class Build
             isAffected = true;
         }
 
-        // Force test to ensure master build will work
-        if (isAffected || true)
+        if (isAffected)
         {
             Log.Verbose("{TestProject} tests will be executed", testProject);
 
