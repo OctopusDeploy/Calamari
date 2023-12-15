@@ -192,7 +192,7 @@ namespace Calamari.AzureAppService.Tests
                                                                                        JavaContainerVersion = "9.0",
                                                                                        AppSettings = new List<AppServiceNameValuePair>
                                                                                        {
-                                                                                           new AppServiceNameValuePair { Name = "WEBSITES_CONTAINER_START_TIME_LIMIT", Value = "460" }
+                                                                                           new AppServiceNameValuePair { Name = "WEBSITES_CONTAINER_START_TIME_LIMIT", Value = "600" }
                                                                                        }
                                                                                    }
                                                                                });
