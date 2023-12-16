@@ -8,7 +8,7 @@ namespace Calamari.AzureWebApp.Util
         /// <summary>
         /// For azure operations, try again after 1s then 2s, 4s etc...
         /// </summary>
-        static readonly LimitedExponentialRetryInterval RetryIntervalForAzureOperations = new LimitedExponentialRetryInterval(2000, 30000, 2);
+        static readonly LimitedExponentialRetryInterval RetryIntervalForAzureOperations = new LimitedExponentialRetryInterval(5000, 30000, 2);
 
         public static RetryTracker GetDefaultRetryTracker()
         {
