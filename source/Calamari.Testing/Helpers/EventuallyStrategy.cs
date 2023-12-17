@@ -116,8 +116,7 @@ namespace Calamari.Testing.Helpers
         void LogPermanentFailure(Exception exception)
         {
             var elapsed = stopwatch.Elapsed;
-            logger.ErrorFormat(
-                $"Eventual assertion failed after {elapsed} {elapsed.TotalMilliseconds} with message {exception.Message}. {exception}");
+            logger.ErrorFormat("Eventual assertion failed after {0} {1} with message {2}. {3}", elapsed, elapsed.TotalMilliseconds, exception.Message, exception);
         }
 
         public record struct Timing(TimeSpan MinDelay, TimeSpan MaxDelay, Backoff Backoff)
