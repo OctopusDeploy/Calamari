@@ -23,11 +23,19 @@ namespace Calamari.AzureAppService
         public static RetryPolicy<HttpResponseMessage> TransientHttpErrorsPolicy { get; } = Policy.Handle<HttpRequestException>()
                                                                                                   .Or<SocketException>()
                                                                                                   .OrResult<HttpResponseMessage>(r => (int)r.StatusCode >= 500 || r.StatusCode == HttpStatusCode.RequestTimeout)
-                                                                                                  .WaitAndRetryAsync(5,
+                                                                                                  .WaitAndRetryAsync(6,
                                                                                                                      retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)) + TimeSpan.FromMilliseconds(Jitterer.Next(0, 1000)));
 
+        // This is specifically for retries in tests, we retry fewer times with a higher base to try avoid hitting rate limiting in Azure.
+        // The Jitter offset has been increased to try stagger requests between parallel test runs.
+        public static RetryPolicy<HttpResponseMessage> TestsTransientHttpErrorsPolicy { get; } = Policy.Handle<HttpRequestException>()
+                                                                                                  .Or<SocketException>()
+                                                                                                  .OrResult<HttpResponseMessage>(r => (int)r.StatusCode >= 500 || r.StatusCode == HttpStatusCode.RequestTimeout)
+                                                                                                  .WaitAndRetryAsync(4,
+                                                                                                                     retryAttempt => TimeSpan.FromSeconds(Math.Pow(3.5, retryAttempt)) + TimeSpan.FromMilliseconds(Jitterer.Next(0, 10000)));
+
         public static RetryPolicy<HttpResponseMessage> AsynchronousZipDeploymentOperationPolicy { get; } = Policy.HandleResult<HttpResponseMessage>(r => r.StatusCode == HttpStatusCode.Accepted)
-                                                                                                                 .WaitAndRetryForeverAsync((_1,ctx) => TimeSpan.FromSeconds(2),
+                                                                                                                 .WaitAndRetryForeverAsync((_1, ctx) => TimeSpan.FromSeconds(2),
                                                                                                                                            (response, timeout, ctx) =>
                                                                                                                                            {
                                                                                                                                                if (ctx.TryGetValue(ContextKeys.Log, out var logObj) && logObj is ILog log)

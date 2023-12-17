@@ -38,23 +38,32 @@ namespace Calamari.AzureAppService.Tests
 
             protected override async Task ConfigureTestResources(ResourceGroup resourceGroup)
             {
-                var svcPlan = await RetryPolicy.ExecuteAsync(async () => await webMgmtClient.AppServicePlans.BeginCreateOrUpdateAsync(
+                var svcPlan = await RetryPolicy.ExecuteAsync(async () => await webMgmtClient.AppServicePlans.CreateOrUpdateAsync(
                                                                                                                                       resourceGroupName: resourceGroup.Name,
                                                                                                                                       name: resourceGroup.Name,
                                                                                                                                       new AppServicePlan(resourceGroup.Location)
                                                                                                                                       {
-                                                                                                                                          Sku = new SkuDescription("S1", "Standard")
+                                                                                                                                          Sku = new SkuDescription("P1V3", "PremiumV3")
                                                                                                                                       }
                                                                                                                                      ));
 
                 servicePlanId = svcPlan.Id;
 
-                site = await RetryPolicy.ExecuteAsync(async () => await webMgmtClient.WebApps.BeginCreateOrUpdateAsync(
+                site = await RetryPolicy.ExecuteAsync(async () => await webMgmtClient.WebApps.CreateOrUpdateAsync(
                                                                                                                        resourceGroupName: resourceGroup.Name,
                                                                                                                        name: resourceGroup.Name,
                                                                                                                        new Site(resourceGroup.Location)
                                                                                                                        {
-                                                                                                                           ServerFarmId = svcPlan.Id
+                                                                                                                           ServerFarmId = svcPlan.Id,
+                                                                                                                           SiteConfig = new SiteConfig
+                                                                                                                           {
+                                                                                                                               AppSettings = new List<NameValuePair>
+                                                                                                                               {
+                                                                                                                                   // Default is 230
+                                                                                                                                   new NameValuePair("WEBSITES_CONTAINER_START_TIME_LIMIT", "460"),
+                                                                                                                                   new NameValuePair("WEBSITE_SCM_ALWAYS_ON_ENABLED", "true")
+                                                                                                                               },
+                                                                                                                           },
                                                                                                                        }
                                                                                                                       ));
             }
@@ -100,7 +109,7 @@ namespace Calamari.AzureAppService.Tests
 
                 (string packagePath, string packageName, string packageVersion) packageinfo;
 
-                var slotTask = RetryPolicy.ExecuteAsync(async () => await webMgmtClient.WebApps.BeginCreateOrUpdateSlotAsync(resourceGroupName,
+                var slotTask = RetryPolicy.ExecuteAsync(async () => await webMgmtClient.WebApps.CreateOrUpdateSlotAsync(resourceGroupName,
                                                                                                                              resourceGroupName,
                                                                                                                              site,
                                                                                                                              slotName));
@@ -181,7 +190,7 @@ namespace Calamari.AzureAppService.Tests
             {
                 // Need to spin up a specific app service with Tomcat installed
                 // Need java installed on the test runner (MJH 2022-05-06: is this actually true? I don't see why we'd need java on the test runner)
-                var javaSite = await RetryPolicy.ExecuteAsync(async () => await webMgmtClient.WebApps.BeginCreateOrUpdateAsync(resourceGroupName,
+                var javaSite = await RetryPolicy.ExecuteAsync(async () => await webMgmtClient.WebApps.CreateOrUpdateAsync(resourceGroupName,
                                                                                                                                $"{resourceGroupName}-java",
                                                                                                                                new Site(site.Location)
                                                                                                                                {
@@ -190,8 +199,14 @@ namespace Calamari.AzureAppService.Tests
                                                                                                                                    {
                                                                                                                                        JavaVersion = "1.8",
                                                                                                                                        JavaContainer = "TOMCAT",
-                                                                                                                                       JavaContainerVersion = "9.0"
-                                                                                                                                   }
+                                                                                                                                       JavaContainerVersion = "9.0",
+                                                                                                                                       AppSettings = new List<NameValuePair>
+                                                                                                                                       {
+                                                                                                                                           // Default is 230
+                                                                                                                                           new NameValuePair("WEBSITES_CONTAINER_START_TIME_LIMIT", "600"),
+                                                                                                                                           new NameValuePair("WEBSITE_SCM_ALWAYS_ON_ENABLED", "true")
+                                                                                                                                       },
+                                                                                                                                   },
                                                                                                                                }));
 
                 (string packagePath, string packageName, string packageVersion) packageinfo;
@@ -211,7 +226,12 @@ namespace Calamari.AzureAppService.Tests
                                                      })
                                         .Execute();
 
-                await AssertContent(javaSite.DefaultHostName, $"Hello! {greeting}", "test.jsp");
+                await DoWithRetries(3,
+                                    async () =>
+                                    {
+                                        await AssertContent(javaSite.DefaultHostName, $"Hello! {greeting}", "test.jsp");
+                                    },
+                                    secondsBetweenRetries: 10);
             }
 
             [Test]
@@ -301,6 +321,14 @@ namespace Calamari.AzureAppService.Tests
                 context.Variables.Add(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.SubstituteInFiles);
                 context.Variables.Add(PackageVariables.SubstituteInFilesTargets, "index.html");
                 context.Variables.Add(SpecialVariables.Action.Azure.DeploymentType, "ZipDeploy");
+
+                var settings = LegacyAppServiceSettingsBehaviorFixture.BuildAppSettingsJson(new[]
+                {
+                    ("WEBSITES_CONTAINER_START_TIME_LIMIT", "460", false),
+                    ("WEBSITE_SCM_ALWAYS_ON_ENABLED", "true", false)
+                });
+                
+                context.Variables[SpecialVariables.Action.Azure.AppSettings] =  settings.json;
             }
         }
 
@@ -329,17 +357,17 @@ namespace Calamari.AzureAppService.Tests
 
                 var keys = await storageClient.StorageAccounts.ListKeysAsync(resourceGroupName, storageAccountName);
 
-                var linuxSvcPlan = await RetryPolicy.ExecuteAsync(async () => await webMgmtClient.AppServicePlans.BeginCreateOrUpdateAsync(resourceGroupName,
+                var linuxSvcPlan = await RetryPolicy.ExecuteAsync(async () => await webMgmtClient.AppServicePlans.CreateOrUpdateAsync(resourceGroupName,
                                                                                                                                            $"{resourceGroupName}-linux-asp",
                                                                                                                                            new AppServicePlan(resourceGroupLocation)
                                                                                                                                            {
-                                                                                                                                               Sku = new SkuDescription("S1", "Standard"),
+                                                                                                                                               Sku = new SkuDescription("P1V3", "PremiumV3"),
                                                                                                                                                Kind = "linux",
                                                                                                                                                Reserved = true
                                                                                                                                            }
                                                                                                                                           ));
 
-                site = await RetryPolicy.ExecuteAsync(async () => await webMgmtClient.WebApps.BeginCreateOrUpdateAsync(resourceGroupName,
+                site = await RetryPolicy.ExecuteAsync(async () => await webMgmtClient.WebApps.CreateOrUpdateAsync(resourceGroupName,
                                                                                                                        $"{resourceGroupName}-linux",
                                                                                                                        new Site(resourceGroupLocation)
                                                                                                                        {
@@ -355,7 +383,9 @@ namespace Calamari.AzureAppService.Tests
                                                                                                                                {
                                                                                                                                    new NameValuePair("FUNCTIONS_WORKER_RUNTIME", "dotnet"),
                                                                                                                                    new NameValuePair("FUNCTIONS_EXTENSION_VERSION", "~4"),
-                                                                                                                                   new NameValuePair("AzureWebJobsStorage", $"DefaultEndpointsProtocol=https;AccountName={storageAccount.Name};AccountKey={keys.Keys.First().Value};EndpointSuffix=core.windows.net")
+                                                                                                                                   new NameValuePair("AzureWebJobsStorage", $"DefaultEndpointsProtocol=https;AccountName={storageAccount.Name};AccountKey={keys.Keys.First().Value};EndpointSuffix=core.windows.net"),
+                                                                                                                                   new NameValuePair("WEBSITES_CONTAINER_START_TIME_LIMIT", "460"),
+                                                                                                                                   new NameValuePair("WEBSITE_SCM_ALWAYS_ON_ENABLED", "true")
                                                                                                                                }
                                                                                                                            }
                                                                                                                        }
@@ -378,7 +408,7 @@ namespace Calamari.AzureAppService.Tests
                                         .Execute();
 
                 // Assert
-                await DoWithRetries(10,
+                await DoWithRetries(2,
                                     async () =>
                                     {
                                         await AssertContent(site.DefaultHostName,
@@ -408,7 +438,7 @@ namespace Calamari.AzureAppService.Tests
                                         .Execute();
 
                 // Assert
-                await DoWithRetries(10,
+                await DoWithRetries(2,
                                     async () =>
                                     {
                                         await AssertContent(site.DefaultHostName,
@@ -443,6 +473,14 @@ namespace Calamari.AzureAppService.Tests
             {
                 AddAzureVariables(context);
                 context.Variables.Add(SpecialVariables.Action.Azure.DeploymentType, "ZipDeploy");
+
+                var settings = LegacyAppServiceSettingsBehaviorFixture.BuildAppSettingsJson(new[]
+                {
+                    ("WEBSITES_CONTAINER_START_TIME_LIMIT", "460", false),
+                    ("WEBSITE_SCM_ALWAYS_ON_ENABLED", "true", false)
+                });
+                
+                context.Variables[SpecialVariables.Action.Azure.AppSettings] =  settings.json;
             }
         }
     }

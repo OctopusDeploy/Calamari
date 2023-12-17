@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -68,6 +69,8 @@ namespace Calamari.AzureAppService.Tests
                                                                     retryOptions.MaxRetries = 5;
                                                                     retryOptions.Mode = RetryMode.Exponential;
                                                                     retryOptions.Delay = TimeSpan.FromSeconds(2);
+                                                                    // AzureAppServiceDeployContainerBehaviorFixture.AzureLinuxContainerSlotDeploy occasional timeout at default 100 seconds
+                                                                    retryOptions.NetworkTimeout = TimeSpan.FromSeconds(200);
                                                                 });
 
             //create the resource group
@@ -103,13 +106,20 @@ namespace Calamari.AzureAppService.Tests
 
         protected async Task AssertContent(string hostName, string actualText, string rootPath = null)
         {
-            var response = await RetryPolicies.TransientHttpErrorsPolicy.ExecuteAsync(async () =>
-                                                          {
-                                                              var r = await client.GetAsync($"https://{hostName}/{rootPath}");
-                                                              r.EnsureSuccessStatusCode();
-                                                              return r;
-                                                          });
-            
+            var response = await RetryPolicies.TestsTransientHttpErrorsPolicy.ExecuteAsync(async context =>
+                                                                                           {
+                                                                                               var r = await client.GetAsync($"https://{hostName}/{rootPath}");
+                                                                                               if (!r.IsSuccessStatusCode)
+                                                                                               {
+                                                                                                   var messageContent = await r.Content.ReadAsStringAsync();
+                                                                                                   TestContext.WriteLine($"Unable to retrieve content from https://{hostName}/{rootPath}, failed with: {messageContent}");
+                                                                                               }
+
+                                                                                               r.EnsureSuccessStatusCode();
+                                                                                               return r;
+                                                                                           },
+                                                                                           contextData: new Dictionary<string, object>());
+ 
             var result = await response.Content.ReadAsStringAsync();
             result.Should().Contain(actualText);
         }
@@ -157,8 +167,8 @@ namespace Calamari.AzureAppService.Tests
             {
                 Sku = new AppServiceSkuDescription
                 {
-                    Name = "S1",
-                    Tier = "Standard"
+                    Name = "P1V3",
+                    Tier = "PremiumV3"
                 }
             };
 

@@ -5,6 +5,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
@@ -188,7 +189,12 @@ namespace Calamari.AzureAppService.Tests
                                                                                    {
                                                                                        JavaVersion = "1.8",
                                                                                        JavaContainer = "TOMCAT",
-                                                                                       JavaContainerVersion = "9.0"
+                                                                                       JavaContainerVersion = "9.0",
+                                                                                       AppSettings = new List<AppServiceNameValuePair>
+                                                                                       {
+                                                                                           new AppServiceNameValuePair { Name = "WEBSITES_CONTAINER_START_TIME_LIMIT", Value = "600" },
+                                                                                           new AppServiceNameValuePair { Name = "WEBSITE_SCM_ALWAYS_ON_ENABLED", Value = "true" }
+                                                                                       }
                                                                                    }
                                                                                });
 
@@ -208,8 +214,13 @@ namespace Calamari.AzureAppService.Tests
                                                          context.Variables[PackageVariables.SubstituteInFilesTargets] = "test.jsp";
                                                      })
                                         .Execute();
-
-                await AssertContent(javaSite.Value.Data.DefaultHostName, $"Hello! {greeting}", "test.jsp");
+                
+                await DoWithRetries(3,
+                                    async () =>
+                                    {
+                                        await AssertContent(javaSite.Value.Data.DefaultHostName, $"Hello! {greeting}", "test.jsp");
+                                    },
+                                    secondsBetweenRetries: 10);
             }
 
             [Test]
@@ -341,6 +352,14 @@ namespace Calamari.AzureAppService.Tests
 
                 //set the feature toggle so we get the new code
                 context.Variables.Add(KnownVariables.EnabledFeatureToggles, FeatureToggle.ModernAzureAppServiceSdkFeatureToggle.ToString());
+                
+                var settings = LegacyAppServiceSettingsBehaviorFixture.BuildAppSettingsJson(new[]
+                {
+                    ("WEBSITES_CONTAINER_START_TIME_LIMIT", "460", false),
+                    ("WEBSITE_SCM_ALWAYS_ON_ENABLED", "true", false)
+                });
+                
+                context.Variables[SpecialVariables.Action.Azure.AppSettings] =  settings.json;
             }
         }
 
@@ -376,12 +395,14 @@ namespace Calamari.AzureAppService.Tests
                                                                                   {
                                                                                       Sku = new AppServiceSkuDescription
                                                                                       {
-                                                                                          Name = "S1",
-                                                                                          Tier = "Standard"
+                                                                                          Name = "P1V3",
+                                                                                          Tier = "PremiumV3"
                                                                                       },
                                                                                       Kind = "linux",
                                                                                       IsReserved = true
                                                                                   });
+
+                await linuxAppServicePlan.WaitForCompletionAsync(CancellationToken.None);
 
                 var linuxWebSiteResponse = await resourceGroup.GetWebSites()
                                                               .CreateOrUpdateAsync(WaitUntil.Completed,
@@ -401,9 +422,14 @@ namespace Calamari.AzureAppService.Tests
                                                                                                new AppServiceNameValuePair { Name = "FUNCTIONS_WORKER_RUNTIME", Value = "dotnet" },
                                                                                                new AppServiceNameValuePair { Name = "FUNCTIONS_EXTENSION_VERSION", Value = "~4" },
                                                                                                new AppServiceNameValuePair { Name = "AzureWebJobsStorage", Value = $"DefaultEndpointsProtocol=https;AccountName={storageAccountName};AccountKey={keys.First().Value};EndpointSuffix=core.windows.net" },
+                                                                                               new AppServiceNameValuePair { Name = "WEBSITES_CONTAINER_START_TIME_LIMIT", Value = "460" },
+                                                                                               new AppServiceNameValuePair { Name = "WEBSITE_SCM_ALWAYS_ON_ENABLED", Value = "true"}
                                                                                            }
                                                                                        }
                                                                                    });
+
+                await linuxWebSiteResponse.WaitForCompletionAsync(CancellationToken.None);
+                
                 WebSiteResource = linuxWebSiteResponse.Value;
             }
 
@@ -423,7 +449,7 @@ namespace Calamari.AzureAppService.Tests
                                         .Execute();
 
                 // Assert
-                await DoWithRetries(10,
+                await DoWithRetries(2,
                                     async () =>
                                     {
                                         await AssertContent(WebSiteResource.Data.DefaultHostName,
@@ -453,7 +479,7 @@ namespace Calamari.AzureAppService.Tests
                                         .Execute();
 
                 // Assert
-                await DoWithRetries(10,
+                await DoWithRetries(2,
                                     async () =>
                                     {
                                         await AssertContent(WebSiteResource.Data.DefaultHostName,
@@ -487,7 +513,7 @@ namespace Calamari.AzureAppService.Tests
                                         .Execute();
 
                 // Assert
-                await DoWithRetries(10,
+                await DoWithRetries(2,
                                     async () =>
                                     {
                                         await AssertContent(WebSiteResource.Data.DefaultHostName,
@@ -525,6 +551,14 @@ namespace Calamari.AzureAppService.Tests
 
                 //set the feature toggle so we get the new code
                 context.Variables.Add(KnownVariables.EnabledFeatureToggles, FeatureToggle.ModernAzureAppServiceSdkFeatureToggle.ToString());
+                
+                var settings = LegacyAppServiceSettingsBehaviorFixture.BuildAppSettingsJson(new[]
+                {
+                    ("WEBSITES_CONTAINER_START_TIME_LIMIT", "460", false),
+                    ("WEBSITE_SCM_ALWAYS_ON_ENABLED", "true", false)
+                });
+                
+                context.Variables[SpecialVariables.Action.Azure.AppSettings] =  settings.json;
             }
         }
     }

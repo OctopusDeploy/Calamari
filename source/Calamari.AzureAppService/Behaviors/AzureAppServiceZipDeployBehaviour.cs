@@ -350,12 +350,12 @@ namespace Calamari.AzureAppService.Behaviors
 
             Log.Verbose("Finished zip deployment");
         }
-        
+
         void CleanupUploadFile(string? uploadPath)
         {
             if (File.Exists(uploadPath))
             {
-                File.Delete(uploadPath!);    
+                File.Delete(uploadPath!);
             }
         }
     }

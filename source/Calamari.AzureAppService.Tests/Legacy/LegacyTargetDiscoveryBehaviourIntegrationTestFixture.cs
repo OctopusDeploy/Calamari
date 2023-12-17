@@ -83,7 +83,7 @@ namespace Calamari.AzureAppService.Tests
 
             svcPlan = await retryPolicy.ExecuteAsync(async () => await webMgmtClient.AppServicePlans.CreateOrUpdateAsync(resourceGroup.Name,
                                                                                                                          resourceGroup.Name,
-                                                                                                                         new AppServicePlan(resourceGroup.Location) { Sku = new SkuDescription("S1", "Standard") }
+                                                                                                                         new AppServicePlan(resourceGroup.Location) { Sku = new SkuDescription("P1V3", "PremiumV3") }
                                                                                                                         ));
         }
 
