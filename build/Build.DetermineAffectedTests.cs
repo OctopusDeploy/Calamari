@@ -13,7 +13,7 @@ namespace Calamari.Build;
 partial class Build
 {
     [Parameter(Name = "DefaultGitBranch")] readonly string MainBranchName;
-    
+
     [PublicAPI]
     Target DetermineAffectedTests =>
         target => target
@@ -21,7 +21,11 @@ partial class Build
             {
                 if (GitVersionInfo is null)
                     throw new ArgumentNullException(nameof(GitVersionInfo));
-                
+
+                File.WriteAllText("placeholder.txt",
+                    "TeamCity can't stand to have no artifacts in a consuming configuration, so this is a placeholder");
+                TeamCity.Instance.PublishArtifacts("placeholder.txt");
+
                 if (GitVersionInfo.BranchName == MainBranchName)
                 {
                     Log.Information("On default branch, nothing to calculate");
@@ -52,4 +56,3 @@ partial class Build
                 }
             });
 }
-
