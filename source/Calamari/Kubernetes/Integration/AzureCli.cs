@@ -15,7 +15,7 @@ namespace Calamari.Kubernetes.Integration
         {
         }
 
-        public bool TrySetAz()
+        public void SetAz()
         {
             var result = CalamariEnvironment.IsRunningOnWindows
                 ? ExecuteCommandAndReturnOutput("where", "az.cmd")
@@ -24,12 +24,10 @@ namespace Calamari.Kubernetes.Integration
             var foundExecutable = result.Output.InfoLogs.FirstOrDefault();
             if (string.IsNullOrEmpty(foundExecutable))
             {
-                log.Error("Could not find az. Make sure az is on the PATH.");
-                return false;
+                throw new KubectlException("Could not find az. Make sure az is on the PATH.");
             }
 
             ExecutableLocation = foundExecutable.Trim();
-            return true;
         }
 
         public void ConfigureAzAccount(string subscriptionId,

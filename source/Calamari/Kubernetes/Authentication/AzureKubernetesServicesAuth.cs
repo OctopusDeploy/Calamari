@@ -27,10 +27,9 @@ namespace Calamari.Kubernetes.Authentication
             this.kubeLogin = kubeloginCli;
         }
 
-        public bool TryConfigure(string @namespace, string kubeConfig)
+        public void Configure(string @namespace, string kubeConfig)
         {
-            if (!azureCli.TrySetAz())
-                return false;
+            azureCli.SetAz();
 
             if (FeatureToggle.KubernetesAksKubeloginFeatureToggle.IsEnabled(deploymentVariables))
             {
@@ -65,8 +64,6 @@ namespace Calamari.Kubernetes.Authentication
                     kubeLogin.ConfigureAksKubeLogin(kubeConfig);
                 }
             }
-
-            return true;
         }
     }
 }

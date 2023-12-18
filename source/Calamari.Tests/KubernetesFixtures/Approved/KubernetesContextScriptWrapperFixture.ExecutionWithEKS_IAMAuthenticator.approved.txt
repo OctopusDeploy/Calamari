@@ -1,6 +1,7 @@
-[Verbose] Temporary kubectl config set to <path>kubectl-octo.yml
 [Verbose] "kubectl" version --client --output=yaml --request-timeout=1m
 [Verbose] Found kubectl and successfully verified it can be executed.
+[Verbose] "chmod" u=rw,g=,o= "<path>kubectl-octo.yml"
+[Verbose] Temporary kubectl config set to <path>kubectl-octo.yml
 [Verbose] "kubectl" config set-cluster octocluster --server=<server> --request-timeout=1m
 [Verbose] "kubectl" config set-context octocontext --user=octouser --cluster=octocluster --namespace=calamari-testing --request-timeout=1m
 [Verbose] "kubectl" config use-context octocontext --request-timeout=1m

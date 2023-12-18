@@ -30,10 +30,9 @@ namespace Calamari.Kubernetes.Authentication
             this.log = log;
         }
 
-        public bool TryConfigure(string @namespace)
+        public void Configure(string @namespace)
         {
-            if (!gcloudCli.TrySetGcloud())
-                return false;
+            gcloudCli.SetGcloud();
 
             var accountVariable = deploymentVariables.Get(Deployment.SpecialVariables.Action.GoogleCloudAccount.Variable);
             var jsonKey = deploymentVariables.Get(Deployment.SpecialVariables.Action.GoogleCloudAccount.JsonKeyFromAccount(accountVariable));
@@ -52,13 +51,12 @@ namespace Calamari.Kubernetes.Authentication
             var region = deploymentVariables.Get(Deployment.SpecialVariables.Action.GoogleCloud.Region) ?? string.Empty;
             var zone = deploymentVariables.Get(Deployment.SpecialVariables.Action.GoogleCloud.Zone) ?? string.Empty;
             var useVmServiceAccount = deploymentVariables.GetFlag(Deployment.SpecialVariables.Action.GoogleCloud.UseVmServiceAccount);
-            if (!gcloudCli.TryConfigureGcloudAccount(project, region, zone, jsonKey, useVmServiceAccount, impersonationEmails))
-                return false;
+            gcloudCli.ConfigureGcloudAccount(project, region, zone, jsonKey, useVmServiceAccount, impersonationEmails);
 
             WarnCustomersAboutAuthToolingRequirements();
             var gkeClusterName = deploymentVariables.Get(SpecialVariables.GkeClusterName);
             var useClusterInternalIp = deploymentVariables.GetFlag(SpecialVariables.GkeUseClusterInternalIp);
-            return gcloudCli.TryConfigureGkeKubeCtlAuthentication(kubectlCli, gkeClusterName, region, zone, @namespace, useClusterInternalIp);
+            gcloudCli.ConfigureGkeKubeCtlAuthentication(kubectlCli, gkeClusterName, region, zone, @namespace, useClusterInternalIp);
         }
 
         /// <summary>

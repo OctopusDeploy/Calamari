@@ -51,11 +51,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
             public void Install(RunningDeployment deployment)
             {
-                if (!kubectl.TrySetKubectl())
-                {
-                    throw new InvalidOperationException("Unable to set KubeCtl");
-                }
-
+                kubectl.SetKubectl();
                 kubectl.ExecuteCommand("cluster-info");
             }
         }

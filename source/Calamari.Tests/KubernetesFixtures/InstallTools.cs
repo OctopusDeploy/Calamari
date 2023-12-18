@@ -486,19 +486,17 @@ namespace Calamari.Tests.KubernetesFixtures
                 }
 
                 var path = Directory.EnumerateFiles(destinationDirectoryName).FirstOrDefault();
-                if (toolName == "gcloud")
+                switch (toolName)
                 {
-                    path = GetGcloudExecutablePath(destinationDirectoryName);
-                }
-
-                if (toolName == "aws")
-                {
-                    path = GetAwsCliExecutablePath(destinationDirectoryName);
-                }
-
-                if (toolName == "kubelogin")
-                {
-                    path = GetKubeloginExecutablePath(destinationDirectoryName);
+                    case "gcloud":
+                        path = GetGcloudExecutablePath(destinationDirectoryName);
+                        break;
+                    case "aws":
+                        path = GetAwsCliExecutablePath(destinationDirectoryName);
+                        break;
+                    case "kubelogin":
+                        path = GetKubeloginExecutablePath(destinationDirectoryName);
+                        break;
                 }
 
                 if (path == null || !File.Exists(path))

@@ -41,7 +41,7 @@ namespace Calamari.Commands
             
             kubectl.SetEnvironmentVariables(environmentVars);
             kubectl.SetWorkingDirectory(runningDeployment.CurrentDirectory);
-            
+
             var setupKubectlAuthentication = new SetupKubectlAuthentication(variables,
                 log,
                 commandLineRunner,
@@ -49,11 +49,9 @@ namespace Calamari.Commands
                 fileSystem,
                 environmentVars,
                 runningDeployment.CurrentDirectory);
-            var accountType = variables.Get("Octopus.Account.AccountType");
-
             try
             {
-                var result = setupKubectlAuthentication.Execute(accountType);
+                var result = setupKubectlAuthentication.Execute();
                 result.VerifySuccess();
             }
             catch (CommandLineException ex)
