@@ -1,8 +1,10 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Logging;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Octopus.Versioning.Semver;
 
@@ -67,7 +69,15 @@ namespace Calamari.Kubernetes.Integration
             result.Result.VerifySuccess();
 
             var awsEksTokenCommand = string.Join("\n", result.Output.InfoLogs);
-            return JObject.Parse(awsEksTokenCommand).SelectToken("apiVersion")?.ToString();
+
+            try
+            {
+                return JObject.Parse(awsEksTokenCommand).SelectToken("apiVersion")?.ToString();
+            }
+            catch (Exception e)
+            {
+                throw new JsonReaderException($"Could not parse eks token: '{awsEksTokenCommand}'", e);
+            }
         }
 
         CommandResultWithOutput ExecuteAwsCommand(params string[] arguments)

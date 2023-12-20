@@ -20,11 +20,9 @@ using NUnit.Framework;
 namespace Calamari.Tests.KubernetesFixtures.Authentication
 {
     [TestFixture]
-    public class SetupKubectlAuthenticationFixture
+    public class SetupKubectlAuthenticationFixture : BaseSetupKubectlAuthenticationFixture
     {
-        private readonly string workingDirectory = Path.Combine("working", "directory");
         private const string ClusterUrl = "https://my-cool-cluster.com";
-        private const string Namespace = "my-cool-namespace";
         private const string ClientCert = "my-cool-client-cert";
         private const string ClientCertPem = "my-cool-client-cert-pem";
         private const string ClientCertKey = "my-cool-client-cert-key";
@@ -52,65 +50,14 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
         private const string PodServiceAccountTokenPath = "/path/to/pod-service-account.token";
         private const string PodServiceAccountToken = "my-cool-pod-server-account-token";
 
-        private IVariables variables;
-        private ILog log;
-        private ICommandLineRunner commandLineRunner;
-        private IKubectl kubectl;
-        private ICalamariFileSystem fileSystem;
-        private Dictionary<string,string> environmentVars;
-
-        private Invocations invocations;
 
         [SetUp]
         public void Setup()
         {
-            invocations = new Invocations();
             invocations.AddLogMessageFor("which", "gcloud", "gcloud");
             invocations.AddLogMessageFor("where", "gcloud.cmd", "gcloud");
-            invocations.AddLogMessageFor("which", "kubelogin", "kubelogin");
-            invocations.AddLogMessageFor("where", "kubelogin", "kubelogin");
-            invocations.AddLogMessageFor("aws", "--version", "aws-cli/1.16.157");
 
-            variables = new CalamariVariables();
             variables.AddFeatureToggles(FeatureToggle.KubernetesAksKubeloginFeatureToggle);
-
-            log = Substitute.For<ILog>();
-            commandLineRunner = Substitute.For<ICommandLineRunner>();
-            commandLineRunner.Execute(Arg.Any<CommandLineInvocation>()).Returns(x =>
-            {
-                var invocation = x.Arg<CommandLineInvocation>();
-                var isSuccess = true;
-                string logMessage = null;
-                if (invocation.Executable != "chmod")
-                {
-                    isSuccess = invocations.TryAdd(invocation.Executable, invocation.Arguments, out logMessage);
-                }
-                if (logMessage != null) invocation.AdditionalInvocationOutputSink?.WriteInfo(logMessage);
-                return new CommandResult(invocation.Executable, isSuccess ? 0 : 1, workingDirectory: workingDirectory);
-            });
-
-            kubectl = Substitute.For<IKubectl>();
-            kubectl.ExecutableLocation.Returns("kubectl");
-            kubectl.When(x => x.ExecuteCommandAndAssertSuccess(Arg.Any<string[]>()))
-                   .Do(x =>
-                   {
-                       var args = x.Arg<string[]>();
-                       if (args != null) invocations.TryAdd("kubectl", string.Join(" ", args), out var _);
-                   });
-            kubectl.ExecuteCommandWithVerboseLoggingOnly(Arg.Any<string[]>())
-                   .Returns(x =>
-                            {
-                                var args = x.Arg<string[]>();
-                                var isSuccess = true;
-
-                                if (args != null)
-                                    isSuccess = invocations.TryAdd("kubectl", string.Join(" ", args), out _);
-
-                                return new CommandResult("kubectl", isSuccess ? 0 : 1);
-                            });
-
-            fileSystem = Substitute.For<ICalamariFileSystem>();
-            environmentVars = new Dictionary<string, string>();
         }
 
         SetupKubectlAuthentication CreateSut() =>
@@ -535,44 +482,6 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
         string ToBase64(string input)
         {
             return Convert.ToBase64String(Encoding.ASCII.GetBytes(input));
-        }
-
-        internal class Invocations : IReadOnlyList<(string Executable, string Arguments)>
-        {
-            private List<(string Executable, string Arguments)> invocations = new List<(string Executable, string Arguments)>();
-            private List<(string Executable, string Arguments)> failFor = new List<(string Executable, string Arguments)>();
-            private Dictionary<(string, string), string> logMessageMap = new Dictionary<(string, string), string>();
-
-            public bool TryAdd(string executable, string arguments, out string logMessage)
-            {
-                invocations.Add((executable, arguments));
-                logMessageMap.TryGetValue((executable, arguments), out logMessage);
-                return !failFor.Contains((executable, arguments));
-            }
-
-            public void FailFor(string executable, string arguments)
-            {
-                failFor.Add((executable, arguments));
-            }
-
-            public void AddLogMessageFor(string executable, string arguments, string logMessage)
-            {
-                logMessageMap[(executable, arguments)] = logMessage;
-            }
-
-            public IEnumerator<(string Executable, string Arguments)> GetEnumerator()
-            {
-                return invocations.GetEnumerator();
-            }
-
-            IEnumerator IEnumerable.GetEnumerator()
-            {
-                return GetEnumerator();
-            }
-
-            public int Count => invocations.Count;
-
-            public (string Executable, string Arguments) this[int index] => invocations[index];
         }
     }
 
