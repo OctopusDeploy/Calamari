@@ -121,7 +121,7 @@ namespace Calamari.Common.Features.Scripting
         {
             if (FeatureToggle.FSharpDeprecationFeatureToggle.IsEnabled(variables))
             {
-                log.Warn($"Executing FSharp scripts will soon be deprecated. Please read our deprecation {log.FormatLink("https://octopus.com/blog/2024-deprecated-features#f-sharp", "blog post")} for more details");
+                log.Warn($"Executing FSharp scripts will soon be deprecated. Please read our deprecation {log.FormatLink("https://octopus.com/blog/2024-deprecated-features#f-sharp", "blog post")} for more details.");
             }
         }
     }
