@@ -30,6 +30,11 @@ namespace Calamari.Kubernetes.Integration
         protected CommandResult ExecuteCommandAndLogOutput(CommandLineInvocation invocation)
             => ExecuteCommandAndLogOutput(invocation, false);
 
+        /// <summary>
+        /// This is a special case for when the invocation results in an error
+        /// 1) but is to be expected as a valid scenario; and
+        /// 2) we don't want to inform this at an error level when this happens.
+        /// </summary>
         protected CommandResult ExecuteCommandAndLogOutputAsVerbose(CommandLineInvocation invocation)
             => ExecuteCommandAndLogOutput(invocation, true);
 
