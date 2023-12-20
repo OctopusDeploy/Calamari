@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using Calamari.Aws.Deployment;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.FileSystem;
@@ -15,9 +14,7 @@ using Calamari.Kubernetes.Authentication;
 using Calamari.Kubernetes.Integration;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
-using Microsoft.Azure.Management.ContainerRegistry.Fluent.Models;
 using NSubstitute;
-using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
 
 namespace Calamari.Tests.KubernetesFixtures.Authentication
@@ -50,11 +47,6 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
         private const string GoogleCloudRegion = "my-cool-google-cloud-region";
         private const string GoogleCloudProject = "my-cool-google-cloud-project";
         private const string GkeClusterName = "my-cool-gke-cluster-name";
-
-        private const string EksClusterName = "my-cool-eks-cluster-name";
-        private const string AwsRegion = "southwest";
-        private const string AwsClusterUrl = "http://www." + AwsRegion + ".eks.amazonaws.com";
-        private const string InvalidAwsClusterUrl = "http://www." + AwsRegion + "..eks.amazonaws.com";
 
         private const string CertificateAuthorityPath = "/path/to/certificate.authority";
         private const string PodServiceAccountTokenPath = "/path/to/pod-service-account.token";
@@ -443,110 +435,6 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
             log.Received().Error("Either zone or region must be defined");
         }
 
-        public enum AwsCliFailureModes
-        {
-            None,
-            CliDoesNotInitialise,
-            NoRegion,
-            InvalidVersion,
-            ExceptionWhenGettingVersion
-        }
-
-        [TestCase(true, AwsCliFailureModes.None)]
-        [TestCase(false, AwsCliFailureModes.None)]
-        [TestCase(true, AwsCliFailureModes.CliDoesNotInitialise)]
-        [TestCase(false, AwsCliFailureModes.CliDoesNotInitialise)]
-        [TestCase(false, AwsCliFailureModes.NoRegion)]
-        [TestCase(true, AwsCliFailureModes.InvalidVersion)]
-        [TestCase(true, AwsCliFailureModes.ExceptionWhenGettingVersion)]
-        public void Execute_WithAwsAccountType_ConfiguresAuthenticationCorrectly(bool useInstanceRole, AwsCliFailureModes awsCliFailureMode)
-        {
-            const string apiVersion = "1.2.3";
-            invocations.AddLogMessageFor("aws", $"eks get-token --cluster-name={EksClusterName} --region={AwsRegion}", $"{{ \"apiVersion\": \"{apiVersion}\"}}");
-            if (awsCliFailureMode != AwsCliFailureModes.CliDoesNotInitialise)
-            {
-                invocations.AddLogMessageFor("which", "aws", "aws");
-                invocations.AddLogMessageFor("where", "aws.exe", "aws");
-            }
-
-            switch (awsCliFailureMode)
-            {
-                case AwsCliFailureModes.InvalidVersion:
-                    invocations.AddLogMessageFor("aws", "--version", "aws-cli/1.16.155");
-                    break;
-                case AwsCliFailureModes.ExceptionWhenGettingVersion:
-                    invocations.AddLogMessageFor("aws", "--version", "aws-cli/a3nsf3");
-                    break;
-            }
-
-            string accountType = null;
-            if (useInstanceRole) variables.AddFlag(AwsSpecialVariables.Authentication.UseInstanceRole, true);
-            else accountType = AccountTypes.AmazonWebServicesAccount;
-
-            var clusterUrl = awsCliFailureMode == AwsCliFailureModes.NoRegion ? InvalidAwsClusterUrl : AwsClusterUrl;
-            variables.Set(SpecialVariables.ClusterUrl, clusterUrl);
-            variables.Set(SpecialVariables.EksClusterName, EksClusterName);
-            variables.Set(SpecialVariables.Namespace, Namespace);
-            variables.Set(Deployment.SpecialVariables.Account.AccountType, accountType);
-
-            var sut = CreateSut();
-
-            var result = sut.Execute();
-
-            result.VerifySuccess();
-
-            var expectedInvocations = new List<(string, string)>
-            {
-                ("kubectl", $"config set-cluster octocluster --server={clusterUrl}"),
-                ("kubectl", $"config set-context octocontext --user=octouser --cluster=octocluster --namespace={Namespace}"),
-                ("kubectl", "config use-context octocontext"),
-            };
-
-            if (awsCliFailureMode != AwsCliFailureModes.CliDoesNotInitialise)
-            {
-                expectedInvocations.Add(("aws", "--version"));
-            }
-
-            if (awsCliFailureMode == AwsCliFailureModes.None)
-            {
-                expectedInvocations.AddRange(new []
-                {
-                    ("aws", $"eks get-token --cluster-name={EksClusterName} --region={AwsRegion}"),
-                    ("kubectl", $"config set-credentials octouser --exec-command=aws --exec-arg=eks --exec-arg=get-token --exec-arg=--cluster-name={EksClusterName} --exec-arg=--region={AwsRegion} --exec-api-version={apiVersion}"),
-                });
-            }
-            else
-            {
-                expectedInvocations.Add(("kubectl",
-                    $"config set-credentials octouser --exec-command=aws-iam-authenticator --exec-api-version=client.authentication.k8s.io/v1alpha1 --exec-arg=token --exec-arg=-i --exec-arg={EksClusterName}"));
-            }
-
-            expectedInvocations.Add(("kubectl", $"get namespace {Namespace}"));
-
-            invocations.Where(x => x.Executable != "which" && x.Executable != "where")
-                .Should().BeEquivalentTo(expectedInvocations, opts => opts.WithStrictOrdering());
-
-            switch (awsCliFailureMode)
-            {
-                case AwsCliFailureModes.CliDoesNotInitialise:
-                    log.Received().Verbose(
-                        "Could not find the aws cli, falling back to the aws-iam-authenticator.");
-                    break;
-                case AwsCliFailureModes.NoRegion:
-                    log.Received().Verbose(
-                        "The EKS cluster Url specified should contain a valid aws region name");
-                    break;
-                case AwsCliFailureModes.InvalidVersion:
-                    log.Received().Verbose(
-                        "aws cli version: 1.16.155 does not support the \"aws eks get-token\" command. Please update to a version later than 1.16.156");
-                    break;
-                case AwsCliFailureModes.ExceptionWhenGettingVersion:
-                    log.Received().Verbose(
-                        Arg.Is<string>(s => s.StartsWith($"Unable to authenticate to {AwsClusterUrl} using the aws cli. Failed with error message: 'a3nsf3' is not a valid version string")));
-                    break;
-            }
-        }
-
         [TestCase(true)]
         [TestCase(false)]
         public void Execute_WithPodServiceAccountAuth_ConfiguresAuthenticationCorrectly(bool skipTlsVerification)
@@ -649,7 +537,7 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
             return Convert.ToBase64String(Encoding.ASCII.GetBytes(input));
         }
 
-        class Invocations : IReadOnlyList<(string Executable, string Arguments)>
+        internal class Invocations : IReadOnlyList<(string Executable, string Arguments)>
         {
             private List<(string Executable, string Arguments)> invocations = new List<(string Executable, string Arguments)>();
             private List<(string Executable, string Arguments)> failFor = new List<(string Executable, string Arguments)>();
