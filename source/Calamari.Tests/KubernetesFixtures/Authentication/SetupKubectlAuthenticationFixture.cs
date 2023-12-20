@@ -15,6 +15,7 @@ using Calamari.Kubernetes.Authentication;
 using Calamari.Kubernetes.Integration;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
+using Microsoft.Azure.Management.ContainerRegistry.Fluent.Models;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
@@ -95,6 +96,7 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
                 if (logMessage != null) invocation.AdditionalInvocationOutputSink?.WriteInfo(logMessage);
                 return new CommandResult(invocation.Executable, isSuccess ? 0 : 1, workingDirectory: workingDirectory);
             });
+
             kubectl = Substitute.For<IKubectl>();
             kubectl.ExecutableLocation.Returns("kubectl");
             kubectl.When(x => x.ExecuteCommandAndAssertSuccess(Arg.Any<string[]>()))
@@ -103,6 +105,18 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
                        var args = x.Arg<string[]>();
                        if (args != null) invocations.TryAdd("kubectl", string.Join(" ", args), out var _);
                    });
+            kubectl.ExecuteCommandWithVerboseLoggingOnly(Arg.Any<string[]>())
+                   .Returns(x =>
+                            {
+                                var args = x.Arg<string[]>();
+                                var isSuccess = true;
+
+                                if (args != null)
+                                    isSuccess = invocations.TryAdd("kubectl", string.Join(" ", args), out _);
+
+                                return new CommandResult("kubectl", isSuccess ? 0 : 1);
+                            });
+
             fileSystem = Substitute.For<ICalamariFileSystem>();
             environmentVars = new Dictionary<string, string>();
         }
@@ -134,7 +148,7 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
 
             log.Received().Error("Unable to configure Kubernetes authentication context. Please verify your target configuration.");
         }
-        
+
         [TestCase(true, false, false, "Kubernetes client certificate does not include the certificate data")]
         [TestCase(false, true, false, "Kubernetes client certificate does not include the private key data")]
         [TestCase(false, false, true, "Kubernetes server certificate does not include the certificate data")]
@@ -162,7 +176,7 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
             variables.Set(SpecialVariables.ClusterUrl, ClusterUrl);
             variables.Set(SpecialVariables.Namespace, Namespace);
             variables.Set(Deployment.SpecialVariables.Account.AccountType, AccountTypes.UsernamePassword);
-            invocations.FailFor("kubectl", $"get namespace {Namespace} --request-timeout=1m");
+            invocations.FailFor("kubectl", $"get namespace {Namespace}");
 
             var sut = CreateSut();
 
@@ -172,8 +186,8 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
 
             invocations.TakeLast(2).Should().BeEquivalentTo(new[]
             {
-                ("kubectl", $"get namespace {Namespace} --request-timeout=1m"),
-                ("kubectl", $"create namespace {Namespace} --request-timeout=1m"),
+                ("kubectl", $"get namespace {Namespace}"),
+                ("kubectl", $"create namespace {Namespace}"),
             }, opts => opts.WithStrictOrdering());
         }
 
@@ -182,8 +196,8 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
         {
             variables.Set(SpecialVariables.ClusterUrl, ClusterUrl);
             variables.Set(SpecialVariables.Namespace, Namespace);
-            invocations.FailFor("kubectl", $"get namespace {Namespace} --request-timeout=1m");
-            invocations.FailFor("kubectl", $"create namespace {Namespace} --request-timeout=1m");
+            invocations.FailFor("kubectl", $"get namespace {Namespace}");
+            invocations.FailFor("kubectl", $"create namespace {Namespace}");
             variables.Set(Deployment.SpecialVariables.Account.AccountType, AccountTypes.UsernamePassword);
             var sut = CreateSut();
 
@@ -193,8 +207,8 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
 
             invocations.TakeLast(2).Should().BeEquivalentTo(new[]
             {
-                ("kubectl", $"get namespace {Namespace} --request-timeout=1m"),
-                ("kubectl", $"create namespace {Namespace} --request-timeout=1m"),
+                ("kubectl", $"get namespace {Namespace}"),
+                ("kubectl", $"create namespace {Namespace}"),
             }, opts => opts.WithStrictOrdering());
 
             log.Received().Verbose("Could not create namespace. Continuing on, as it may not be working directly with the target.");
@@ -241,7 +255,7 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
                 ("kubectl", $"config set-context octocontext --user=octouser --cluster=octocluster --namespace={Namespace}"),
                 ("kubectl", "config use-context octocontext"),
                 ("kubectl", $"config set-credentials octouser --token={token}"),
-                ("kubectl", $"get namespace {Namespace} --request-timeout=1m")
+                ("kubectl", $"get namespace {Namespace}")
             };
             invocations.Should().BeEquivalentTo(expected, opts => opts.WithStrictOrdering());
         }
@@ -282,7 +296,7 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
             variables.Set(SpecialVariables.AksClusterResourceGroup, AksClusterResourceGroup);
             variables.Set(SpecialVariables.AksClusterName, AksClusterName);
             variables.AddFlag(SpecialVariables.AksAdminLogin, true);
-            
+
             var sut = CreateSut();
 
             var result = sut.Execute();
@@ -301,7 +315,7 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
                 ("az", $"aks get-credentials --resource-group {AksClusterResourceGroup} --name {AksClusterName} --file \"{Path.Combine(workingDirectory, "kubectl-octo.yml")}\" --overwrite-existing --admin"),
                 ("kubectl", $"config set-context {AksClusterName}-admin --namespace={Namespace}"),
                 ("kubelogin", $"convert-kubeconfig -l azurecli --kubeconfig \"{Path.Combine(workingDirectory, "kubectl-octo.yml")}\""),
-                ("kubectl", $"get namespace {Namespace} --request-timeout=1m"),
+                ("kubectl", $"get namespace {Namespace}"),
             }, opts => opts.WithStrictOrdering());
         }
 
@@ -373,7 +387,7 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
             {
                 ("gcloud", $"container clusters get-credentials {GkeClusterName} --internal-ip {(withZone ? $"--zone={GoogleCloudZone}" : $"--region={GoogleCloudRegion}")}"),
                 ("kubectl", $"config set-context --current --namespace={Namespace}"),
-                ("kubectl", $"get namespace {Namespace} --request-timeout=1m")
+                ("kubectl", $"get namespace {Namespace}")
             });
 
             // Skipping "where/which" "gcloud.cmd/gcloud" because it it different on windows and nix
@@ -507,7 +521,7 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
                     $"config set-credentials octouser --exec-command=aws-iam-authenticator --exec-api-version=client.authentication.k8s.io/v1alpha1 --exec-arg=token --exec-arg=-i --exec-arg={EksClusterName}"));
             }
 
-            expectedInvocations.Add(("kubectl", $"get namespace {Namespace} --request-timeout=1m"));
+            expectedInvocations.Add(("kubectl", $"get namespace {Namespace}"));
 
             invocations.Where(x => x.Executable != "which" && x.Executable != "where")
                 .Should().BeEquivalentTo(expectedInvocations, opts => opts.WithStrictOrdering());
@@ -579,7 +593,7 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
                 ("kubectl", $"config set-context octocontext --user=octouser --cluster=octocluster --namespace={Namespace}"),
                 ("kubectl", "config use-context octocontext"),
                 ("kubectl", $"config set-credentials octouser --token={PodServiceAccountToken}"),
-                ("kubectl", $"get namespace {Namespace} --request-timeout=1m"),
+                ("kubectl", $"get namespace {Namespace}"),
             });
 
             invocations.Should().BeEquivalentTo(expectedInvocations, opts => opts.WithStrictOrdering());

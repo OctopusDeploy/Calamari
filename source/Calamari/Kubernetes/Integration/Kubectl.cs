@@ -16,7 +16,7 @@ namespace Calamari.Kubernetes.Integration
     {
         readonly string customKubectlExecutable;
         private bool isSet;
-        List<string> defaultCommandArgs = new List<string>{ "--request-timeout=1m" };
+        List<string> defaultCommandArgs = new List<string> { "--request-timeout=1m" };
 
         public Kubectl(IVariables variables, ILog log, ICommandLineRunner commandLineRunner)
             : this(variables,
@@ -98,6 +98,18 @@ namespace Calamari.Kubernetes.Integration
             return ExecuteCommandAndLogOutput(commandInvocation);
         }
 
+        /// <summary>
+        /// This is a special case for when the invocation results in an error
+        /// 1) but is to be expected as a valid scenario; and
+        /// 2) we don't want to inform this at an error level when this happens.
+        /// </summary>
+        public CommandResult ExecuteCommandWithVerboseLoggingOnly(params string[] arguments)
+        {
+            var kubectlArguments = arguments.Concat(defaultCommandArgs).ToArray();
+            var commandInvocation = new CommandLineInvocation(ExecutableLocation, kubectlArguments);
+            return ExecuteCommandAndLogOutputAsVerbose(commandInvocation);
+        }
+
         public void ExecuteCommandAndAssertSuccess(params string[] arguments)
         {
             var result = ExecuteCommand(arguments);
@@ -141,6 +153,7 @@ namespace Calamari.Kubernetes.Integration
         void SetEnvironmentVariables(Dictionary<string, string> variables);
         void SetKubectl();
         CommandResult ExecuteCommand(params string[] arguments);
+        CommandResult ExecuteCommandWithVerboseLoggingOnly(params string[] arguments);
         void ExecuteCommandAndAssertSuccess(params string[] arguments);
         CommandResultWithOutput ExecuteCommandAndReturnOutput(params string[] arguments);
         Maybe<SemanticVersion> GetVersion();

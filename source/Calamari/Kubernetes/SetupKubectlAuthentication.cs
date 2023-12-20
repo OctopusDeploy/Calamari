@@ -30,12 +30,12 @@ namespace Calamari.Kubernetes
         string aws;
 
         public SetupKubectlAuthentication(IVariables variables,
-            ILog log,
-            ICommandLineRunner commandLineRunner,
-            IKubectl kubectl,
-            ICalamariFileSystem fileSystem,
-            Dictionary<string, string> environmentVars,
-            string workingDirectory)
+                                          ILog log,
+                                          ICommandLineRunner commandLineRunner,
+                                          IKubectl kubectl,
+                                          ICalamariFileSystem fileSystem,
+                                          Dictionary<string, string> environmentVars,
+                                          string workingDirectory)
         {
             this.variables = variables;
             this.log = log;
@@ -97,7 +97,7 @@ namespace Calamari.Kubernetes
             {
                 SetupGCloudContext(@namespace);
             }
-            else if(variables.IsSet(SpecialVariables.ClusterUrl)) // Most other auth mechanisms require some manual commands to configure
+            else if (variables.IsSet(SpecialVariables.ClusterUrl)) // Most other auth mechanisms require some manual commands to configure
             {
                 var clusterUrl = variables.Get(SpecialVariables.ClusterUrl);
                 const string user = "octouser";
@@ -106,7 +106,12 @@ namespace Calamari.Kubernetes
 
                 kubectl.ExecuteCommandAndAssertSuccess("config", "set-cluster", cluster, $"--server={clusterUrl}");
                 SetCertAuthority(cluster);
-                kubectl.ExecuteCommandAndAssertSuccess("config", "set-context", context, $"--user={user}", $"--cluster={cluster}", $"--namespace={@namespace}");
+                kubectl.ExecuteCommandAndAssertSuccess("config",
+                                                       "set-context",
+                                                       context,
+                                                       $"--user={user}",
+                                                       $"--cluster={cluster}",
+                                                       $"--namespace={@namespace}");
                 kubectl.ExecuteCommandAndAssertSuccess("config", "use-context", context);
 
                 if (variables.IsSet(SpecialVariables.PodServiceAccountTokenPath))
@@ -138,7 +143,7 @@ namespace Calamari.Kubernetes
                     throw new KubectlException($"Account Type {accountType} is currently not valid for kubectl contexts");
                 }
             }
-            else if(HasAmbientKubeContext())
+            else if (HasAmbientKubeContext())
             {
                 SetupAmbientContext(@namespace, kubeConfig);
                 kubectl.DisableRequestTimeoutArgument();
@@ -304,7 +309,12 @@ namespace Calamari.Kubernetes
             {
                 log.AddValueToRedact(password, "<password>");
             }
-            kubectl.ExecuteCommandAndAssertSuccess("config", "set-credentials", user, $"--username={username}", $"--password={password}");
+
+            kubectl.ExecuteCommandAndAssertSuccess("config",
+                                                   "set-credentials",
+                                                   user,
+                                                   $"--username={username}",
+                                                   $"--password={password}");
         }
 
         void SetupContextForAmazonServiceAccount(string @namespace, string clusterUrl, string user)
@@ -330,7 +340,8 @@ namespace Calamari.Kubernetes
                 return false;
             }
 
-            try {
+            try
+            {
                 var awsCliVersion = GetAwsCliVersion();
                 var minimumAwsCliVersionForAuth = new SemanticVersion("1.16.156");
                 if (awsCliVersion.CompareTo(minimumAwsCliVersionForAuth) > 0)
@@ -370,10 +381,10 @@ namespace Calamari.Kubernetes
         string GetEksClusterApiVersion(string clusterName, string region)
         {
             var logLines = ExecuteCommandAndReturnOutput(aws,
-                "eks",
-                "get-token",
-                $"--cluster-name={clusterName}",
-                $"--region={region}");
+                                                         "eks",
+                                                         "get-token",
+                                                         $"--cluster-name={clusterName}",
+                                                         $"--region={region}");
             var awsEksTokenCommand = string.Join("\n", logLines);
             return JObject.Parse(awsEksTokenCommand).SelectToken("apiVersion").ToString();
         }
@@ -393,12 +404,12 @@ namespace Calamari.Kubernetes
                 $"--exec-arg=--region={region}",
                 $"--exec-api-version={apiVersion}"
             };
-            
+
             if (!oidcJwt.IsNullOrEmpty())
             {
                 arguments.Add($"--token={oidcJwt}");
             }
-            
+
             kubectl.ExecuteCommandAndAssertSuccess(arguments.ToArray());
         }
 
@@ -409,7 +420,14 @@ namespace Calamari.Kubernetes
                 ? "client.authentication.k8s.io/v1beta1"
                 : "client.authentication.k8s.io/v1alpha1";
 
-            kubectl.ExecuteCommandAndAssertSuccess("config", "set-credentials", user, "--exec-command=aws-iam-authenticator", $"--exec-api-version={apiVersion}", "--exec-arg=token", "--exec-arg=-i", $"--exec-arg={clusterName}");
+            kubectl.ExecuteCommandAndAssertSuccess("config",
+                                                   "set-credentials",
+                                                   user,
+                                                   "--exec-command=aws-iam-authenticator",
+                                                   $"--exec-api-version={apiVersion}",
+                                                   "--exec-arg=token",
+                                                   "--exec-arg=-i",
+                                                   $"--exec-arg={clusterName}");
         }
 
         bool TrySetAws()
@@ -430,10 +448,10 @@ namespace Calamari.Kubernetes
 
         void CreateNamespace(string @namespace)
         {
-            if (TryExecuteCommandWithVerboseLoggingOnly("get", "namespace", @namespace))
+            if (kubectl.ExecuteCommandWithVerboseLoggingOnly("get", "namespace", @namespace).ExitCode == 0)
                 return;
 
-            if (!TryExecuteCommandWithVerboseLoggingOnly("create", "namespace", @namespace))
+            if (kubectl.ExecuteCommandWithVerboseLoggingOnly("create", "namespace", @namespace).ExitCode != 0)
             {
                 log.Verbose("Could not create namespace. Continuing on, as it may not be working directly with the target.");
             }
@@ -461,11 +479,6 @@ namespace Calamari.Kubernetes
         void ExecuteCommand(string executable, params string[] arguments)
         {
             ExecuteCommand(new CommandLineInvocation(executable, arguments)).VerifySuccess();
-        }
-
-        bool TryExecuteCommandWithVerboseLoggingOnly(params string[] arguments)
-        {
-            return ExecuteCommandWithVerboseLoggingOnly(new CommandLineInvocation(kubectl.ExecutableLocation, arguments.Concat(new[] { "--request-timeout=1m" }).ToArray())).ExitCode == 0;
         }
 
         CommandResult ExecuteCommand(CommandLineInvocation invocation)
@@ -500,36 +513,6 @@ namespace Calamari.Kubernetes
                         log.Error(message.Text);
                         break;
                 }
-            }
-
-            return result;
-        }
-
-        /// <summary>
-        /// This is a special case for when the invocation results in an error
-        /// 1) but is to be expected as a valid scenario; and
-        /// 2) we don't want to inform this at an error level when this happens.
-        /// </summary>
-        /// <param name="invocation"></param>
-        /// <returns></returns>
-        CommandResult ExecuteCommandWithVerboseLoggingOnly(CommandLineInvocation invocation)
-        {
-            invocation.EnvironmentVars = environmentVars;
-            invocation.WorkingDirectory = workingDirectory;
-            invocation.OutputAsVerbose = true;
-            invocation.OutputToLog = false;
-
-            var captureCommandOutput = new CaptureCommandOutput();
-            invocation.AdditionalInvocationOutputSink = captureCommandOutput;
-
-            var commandString = invocation.ToString();
-            log.Verbose(commandString);
-
-            var result = commandLineRunner.Execute(invocation);
-
-            foreach (var message in captureCommandOutput.Messages)
-            {
-                log.Verbose(message.Text);
             }
 
             return result;
