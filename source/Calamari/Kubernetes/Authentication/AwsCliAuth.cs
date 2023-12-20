@@ -138,7 +138,8 @@ namespace Calamari.Kubernetes.Authentication
                 "--exec-arg=get-token",
                 $"--exec-arg=--cluster-name={clusterName}",
                 $"--exec-arg=--region={region}",
-                $"--exec-api-version={apiVersion}"
+                $"--exec-api-version={apiVersion}",
+                "--exec-env AWS_PROFILE=octopus"
             };
 
             if (!oidcJwt.IsNullOrEmpty())

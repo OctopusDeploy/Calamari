@@ -71,6 +71,9 @@ namespace Calamari.Kubernetes.Integration
         }
 
         CommandResultWithOutput ExecuteAwsCommand(params string[] arguments)
-            => ExecuteCommandAndReturnOutput(ExecutableLocation, arguments);
+        {
+            var args = arguments.Concat(new[] { "--profile octopus" }).ToArray();
+            return ExecuteCommandAndReturnOutput(ExecutableLocation, args);
+        }
     }
 }
