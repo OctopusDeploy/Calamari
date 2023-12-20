@@ -9,7 +9,6 @@ using Calamari.Common.Features.Scripting.Python;
 using Calamari.Common.Features.Scripting.ScriptCS;
 using Calamari.Common.Features.Scripting.WindowsPowerShell;
 using Calamari.Common.Features.Scripts;
-using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
@@ -108,20 +107,11 @@ namespace Calamari.Common.Features.Scripting
                 case ScriptSyntax.Bash:
                     return new BashScriptExecutor();
                 case ScriptSyntax.FSharp:
-                    LogFSharpDeprecationWarning(variables);
-                    return new FSharpExecutor();
+                    return new FSharpExecutor(log);
                 case ScriptSyntax.Python:
                     return new PythonScriptExecutor();
                 default:
                     throw new NotSupportedException($"{scriptSyntax} script are not supported for execution");
-            }
-        }
-
-        void LogFSharpDeprecationWarning(IVariables variables)
-        {
-            if (FeatureToggle.FSharpDeprecationFeatureToggle.IsEnabled(variables))
-            {
-                log.Warn($"Executing FSharp scripts will soon be deprecated. Please read our deprecation {log.FormatLink("https://octopus.com/blog/2024-deprecated-features#f-sharp", "blog post")} for more details.");
             }
         }
     }
