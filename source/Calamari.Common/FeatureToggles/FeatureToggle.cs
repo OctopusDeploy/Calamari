@@ -11,6 +11,7 @@
         GlobPathsGroupSupportFeatureToggle,
         ModernAzureAppServiceSdkFeatureToggle,
         OidcAccountsFeatureToggle,
-        AsynchronousAzureZipDeployFeatureToggle
+        AsynchronousAzureZipDeployFeatureToggle,
+        FSharpDeprecationFeatureToggle
     }
 }

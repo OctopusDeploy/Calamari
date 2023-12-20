@@ -9,7 +9,9 @@ using Calamari.Common.Features.Scripting.Python;
 using Calamari.Common.Features.Scripting.ScriptCS;
 using Calamari.Common.Features.Scripting.WindowsPowerShell;
 using Calamari.Common.Features.Scripts;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Extensions;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Common.Features.Scripting
@@ -28,10 +30,12 @@ namespace Calamari.Common.Features.Scripting
     public class ScriptEngine : IScriptEngine
     {
         readonly IEnumerable<IScriptWrapper> scriptWrapperHooks;
+        readonly ILog log;
 
-        public ScriptEngine(IEnumerable<IScriptWrapper> scriptWrapperHooks)
+        public ScriptEngine(IEnumerable<IScriptWrapper> scriptWrapperHooks, ILog log)
         {
             this.scriptWrapperHooks = scriptWrapperHooks;
+            this.log = log;
         }
 
         public ScriptSyntax[] GetSupportedTypes()
@@ -79,7 +83,7 @@ namespace Calamari.Common.Features.Scripting
                 .OrderByDescending(hook => hook.Priority)
                 .Aggregate(
                     // The last wrapper is always the TerminalScriptWrapper
-                    new TerminalScriptWrapper(GetScriptExecutor(scriptSyntax, useDotnetScript), variables),
+                    new TerminalScriptWrapper(GetScriptExecutor(scriptSyntax, variables, useDotnetScript), variables),
                     (IScriptWrapper current, IScriptWrapper next) =>
                     {
                         // the next wrapper is pointed to the current one
@@ -93,7 +97,7 @@ namespace Calamari.Common.Features.Scripting
                     });
         }
 
-        IScriptExecutor GetScriptExecutor(ScriptSyntax scriptSyntax, bool runDotnetScript = false)
+        IScriptExecutor GetScriptExecutor(ScriptSyntax scriptSyntax, IVariables variables, bool runDotnetScript = false)
         {
             switch (scriptSyntax)
             {
@@ -104,11 +108,20 @@ namespace Calamari.Common.Features.Scripting
                 case ScriptSyntax.Bash:
                     return new BashScriptExecutor();
                 case ScriptSyntax.FSharp:
+                    LogFSharpDeprecationWarning(variables);
                     return new FSharpExecutor();
                 case ScriptSyntax.Python:
                     return new PythonScriptExecutor();
                 default:
                     throw new NotSupportedException($"{scriptSyntax} script are not supported for execution");
+            }
+        }
+
+        void LogFSharpDeprecationWarning(IVariables variables)
+        {
+            if (FeatureToggle.FSharpDeprecationFeatureToggle.IsEnabled(variables))
+            {
+                log.Warn($"Executing FSharp scripts will soon be deprecated. Please read our deprecation {log.FormatLink("https://octopus.com/blog/2024-deprecated-features#f-sharp", "blog post")} for more details");
             }
         }
     }
