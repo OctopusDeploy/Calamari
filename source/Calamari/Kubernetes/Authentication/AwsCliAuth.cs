@@ -126,6 +126,7 @@ namespace Calamari.Kubernetes.Authentication
 
             var arguments = new List<string> { "config", "set-credentials", user, $"--token={token}" };
 
+            log.AddValueToRedact(token, "<token>");
             kubectl.ExecuteCommandAndAssertSuccess(arguments.ToArray());
         }
     }
