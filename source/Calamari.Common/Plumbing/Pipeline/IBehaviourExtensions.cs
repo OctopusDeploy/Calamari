@@ -7,13 +7,7 @@
     {
         public static Task CompletedTask(this IBehaviour _)
         {
-#if NETSTANDARD
             return Task.CompletedTask;
-#elif NET452
-            return Task.FromResult(0);
-#else
-            return Net40CompletedTask;
-#endif
         }
 
 #if NET40
