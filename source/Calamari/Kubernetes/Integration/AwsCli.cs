@@ -41,14 +41,6 @@ namespace Calamari.Kubernetes.Integration
             return true;
         }
 
-        public void Configure(string accessKey, string secretKey, string region, string sessionToken)
-        {
-            ExecuteAwsCommand("configure", "set", "aws_access_key_id", accessKey);
-            ExecuteAwsCommand("configure", "set", "aws_secret_access_key", secretKey);
-            ExecuteAwsCommand("configure", "set", "aws_default_region", region);
-            ExecuteAwsCommand("configure", "set", "aws_session_token", sessionToken);
-        }
-
         public SemanticVersion GetAwsCliVersion()
         {
             var result = ExecuteAwsCommand("--version");
@@ -62,28 +54,25 @@ namespace Calamari.Kubernetes.Integration
             return new SemanticVersion(awsCliVersion);
         }
 
-        public string GetEksClusterApiVersion(string clusterName, string region)
+        public string GetEksClusterToken(string clusterName, string region)
         {
             var result = ExecuteAwsCommand("eks", "get-token", $"--cluster-name={clusterName}", $"--region={region}");
 
             result.Result.VerifySuccess();
 
-            var awsEksTokenCommand = string.Join("\n", result.Output.InfoLogs);
+            var jsonString = string.Join("\n", result.Output.InfoLogs);
 
             try
             {
-                return JObject.Parse(awsEksTokenCommand).SelectToken("apiVersion")?.ToString();
+                return JObject.Parse(jsonString).SelectToken("status")?.SelectToken("token")?.ToString();
             }
             catch (Exception e)
             {
-                throw new JsonReaderException($"Could not parse eks token: '{awsEksTokenCommand}'", e);
+                throw new JsonReaderException($"Could not parse eks token: '{jsonString}'", e);
             }
         }
 
         CommandResultWithOutput ExecuteAwsCommand(params string[] arguments)
-        {
-            var args = arguments.Concat(new[] { "--profile octopus" }).ToArray();
-            return ExecuteCommandAndReturnOutput(ExecutableLocation, args);
-        }
+            => ExecuteCommandAndReturnOutput(ExecutableLocation, arguments);
     }
 }

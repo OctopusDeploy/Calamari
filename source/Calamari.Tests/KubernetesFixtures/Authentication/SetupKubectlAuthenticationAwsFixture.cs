@@ -58,7 +58,7 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
                 new List<(string, string)>
                 {
                     GetAwsTokenInvocation,
-                    SetKubectlCredentialsWithAwsCliInvocation,
+                    SetKubectlTokenInvocation,
                     GetNamespaceInvocation
                 });
 
@@ -83,7 +83,7 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
                 new List<(string, string)>
                 {
                     GetAwsTokenInvocation,
-                    SetKubectlCredentialsWithAwsCliInvocation,
+                    SetKubectlTokenInvocation,
                     GetNamespaceInvocation
                 });
 
@@ -221,13 +221,13 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
         {
             invocations.AddLogMessageFor(
                 "aws",
-                $"eks get-token --cluster-name={EksClusterName} --region={AwsRegion} --profile octopus",
-                $"{{ \"apiVersion\": \"1.2.3\"}}");
+                $"eks get-token --cluster-name={EksClusterName} --region={AwsRegion}",
+                $"{{\"status\": {{\"token\": \"k8s-aws-v1.token\"}}}}");
         }
 
         void AddLogForAwsVersion(string version)
         {
-            invocations.AddLogMessageFor("aws", "--version --profile octopus", version);
+            invocations.AddLogMessageFor("aws", "--version", version);
         }
 
         List<(string, string)> SetupClusterContextInvocations(string clusterUser)
@@ -241,31 +241,19 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
             };
         }
 
-        List<(string, string)> AwsCliInvocations()
-        {
-            return new List<(string, string)>
-            {
-                ("aws", "configure set aws_access_key_id access_key --profile octopus"),
-                ("aws", "configure set aws_secret_access_key secret_key --profile octopus"),
-                ("aws", "configure set aws_default_region region --profile octopus"),
-                ("aws", "configure set aws_session_token --profile octopus"),
-                ("aws", "--version --profile octopus")
-            };
-        }
+        List<(string, string)> AwsCliInvocations() => new List<(string, string)> { ("aws", "--version") };
 
         (string, string) IamAuthenticatorInvocation =>
             ("kubectl",
                 $"config set-credentials octouser --exec-command=aws-iam-authenticator --exec-api-version=client.authentication.k8s.io/v1alpha1 --exec-arg=token --exec-arg=-i --exec-arg={EksClusterName}");
 
-        (string, string ) GetAwsTokenInvocation =>
-            ("aws", "eks get-token --cluster-name=my-cool-eks-cluster-name --region=southwest --profile octopus");
+        (string, string ) GetAwsTokenInvocation
+            => ("aws", "eks get-token --cluster-name=my-cool-eks-cluster-name --region=southwest");
 
-        (string, string) SetKubectlCredentialsWithAwsCliInvocation =>
-            ("kubectl",
-                "config set-credentials octouser --exec-command=aws --exec-arg=eks --exec-arg=get-token --exec-arg=--cluster-name=my-cool-eks-cluster-name --exec-arg=--region=southwest --exec-api-version=1.2.3 --exec-env AWS_PROFILE=octopus");
+        (string, string) SetKubectlTokenInvocation
+            => ("kubectl", "config set-credentials octouser --token=k8s-aws-v1.token");
 
-        (string, string) GetNamespaceInvocation =>
-            ("kubectl", $"get namespace {Namespace}");
+        (string, string) GetNamespaceInvocation => ("kubectl", $"get namespace {Namespace}");
 
         private void AssertInvocations(List<(string, string)> expectedInvocations)
         {

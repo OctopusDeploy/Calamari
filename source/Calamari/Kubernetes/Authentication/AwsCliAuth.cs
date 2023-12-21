@@ -66,8 +66,7 @@ namespace Calamari.Kubernetes.Authentication
                     var region = GetEksClusterRegion(clusterUrl);
                     if (!string.IsNullOrWhiteSpace(region))
                     {
-                        var apiVersion = awsCli.GetEksClusterApiVersion(clusterName, region);
-                        SetKubeConfigAuthenticationToAwsCli(user, clusterName, region, apiVersion);
+                        SetKubeConfigAuthenticationToAwsCli(user, clusterName, region);
                         return true;
                     }
 
@@ -112,40 +111,20 @@ namespace Calamari.Kubernetes.Authentication
                     AwsEnvironmentGeneration.Create(log, deploymentVariables).GetAwaiter().GetResult();
                 environmentVars.AddRange(awsEnvironmentGeneration.EnvironmentVars);
             }
-
-            awsCli.Configure(
-                GetEnvironmentVarOrDefault("AWS_ACCESS_KEY_ID"),
-                GetEnvironmentVarOrDefault("AWS_SECRET_ACCESS_KEY"),
-                GetEnvironmentVarOrDefault("AWS_REGION"),
-                GetEnvironmentVarOrDefault("AWS_SESSION_TOKEN")
-            );
         }
-
-        string GetEnvironmentVarOrDefault(string key) => environmentVars.TryGetValue(key, out var value) ? value : null;
 
         string GetEksClusterRegion(string clusterUrl) => clusterUrl.Replace(".eks.amazonaws.com", "").Split('.').Last();
 
-        void SetKubeConfigAuthenticationToAwsCli(string user, string clusterName, string region, string apiVersion)
+        void SetKubeConfigAuthenticationToAwsCli(string user, string clusterName, string region)
         {
-            var oidcJwt = deploymentVariables.Get(AccountVariables.Jwt);
-            var arguments = new List<string>
-            {
-                "config",
-                "set-credentials",
-                user,
-                "--exec-command=aws",
-                "--exec-arg=eks",
-                "--exec-arg=get-token",
-                $"--exec-arg=--cluster-name={clusterName}",
-                $"--exec-arg=--region={region}",
-                $"--exec-api-version={apiVersion}",
-                "--exec-env AWS_PROFILE=octopus"
-            };
+            var token = deploymentVariables.Get(AccountVariables.Jwt);
 
-            if (!oidcJwt.IsNullOrEmpty())
+            if (string.IsNullOrEmpty(token))
             {
-                arguments.Add($"--token={oidcJwt}");
+                token = awsCli.GetEksClusterToken(clusterName, region);
             }
+
+            var arguments = new List<string> { "config", "set-credentials", user, $"--token={token}" };
 
             kubectl.ExecuteCommandAndAssertSuccess(arguments.ToArray());
         }
