@@ -48,8 +48,7 @@ namespace Calamari.Common.Features.ConfigurationVariables
             {
                 if (ignoreVariableReplacementErrors)
                 {
-                    log.Warn(ex.Message);
-                    log.Warn(ex.StackTrace);
+                    log.InfoFormat("Ignoring variable replacement error: {0}", ex.Message);
                 }
                 else
                 {
