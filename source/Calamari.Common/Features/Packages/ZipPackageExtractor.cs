@@ -4,10 +4,7 @@ using Calamari.Common.Plumbing.Logging;
 using SharpCompress.Archives;
 using SharpCompress.Archives.Zip;
 using SharpCompress.Common;
-#if !NET40
 using Polly;
-
-#endif
 
 namespace Calamari.Common.Features.Packages
 {
@@ -40,9 +37,6 @@ namespace Calamari.Common.Features.Packages
 
         public void ExtractEntry(string directory, IArchiveEntry entry)
         {
-#if NET40
-            entry.WriteToDirectory(directory, new PackageExtractionOptions(log));
-#else
             var extractAttempts = 10;
             Policy.Handle<IOException>()
                 .WaitAndRetry(
@@ -56,7 +50,6 @@ namespace Calamari.Common.Features.Packages
                 {
                     entry.WriteToDirectory(directory, new PackageExtractionOptions(log));
                 });
-#endif
         }
 
         protected void ProcessEvent(ref int filesExtracted, IEntry entry)
