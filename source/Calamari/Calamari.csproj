@@ -20,12 +20,12 @@
     <ApplicationManifest>Calamari.exe.manifest</ApplicationManifest>
   </PropertyGroup>
   <PropertyGroup Condition="!$([MSBuild]::IsOSUnixLike())">
-    <TargetFrameworks>net40;net452;net6.0</TargetFrameworks>
+    <TargetFrameworks>net462;net6.0</TargetFrameworks>
   </PropertyGroup>
   <PropertyGroup Condition="$([MSBuild]::IsOSUnixLike())">
     <TargetFramework>net6.0</TargetFramework>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(TargetFramework)' == 'net40' OR '$(TargetFramework)' == 'net452' ">
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'net462' ">
     <DefineConstants>$(DefineConstants);IIS_SUPPORT;WINDOWS_CERTIFICATE_STORE_SUPPORT</DefineConstants>
     <PlatformTarget>anycpu</PlatformTarget>
   </PropertyGroup>
@@ -33,30 +33,25 @@
     <DefineConstants>$(DefineConstants);DEBUG</DefineConstants>
   </PropertyGroup>
   <!--
-	The net452 build is the one that pulls in the AWS and Azure extensions. We treat
+	The net462 build is the one that pulls in the AWS and Azure extensions. We treat
 	this build as the "Cloud" build.
   -->
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net452' ">
-    <PackageReference Include="Microsoft.Identity.Client" Version="4.48.1" />
-    <ProjectReference Include="..\Calamari.Aws\Calamari.Aws.csproj" />
-    <ProjectReference Include="..\Calamari.Azure\Calamari.Azure.csproj" />
-  </ItemGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net6.0' ">
-    <PackageReference Include="Microsoft.Identity.Client" Version="4.48.1" />
-    <ProjectReference Include="..\Calamari.Aws\Calamari.Aws.csproj" />
-    <ProjectReference Include="..\Calamari.Azure\Calamari.Azure.csproj" />
-  </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Microsoft.Identity.Client" Version="4.48.1" />
+    <ProjectReference Include="..\Calamari.Aws\Calamari.Aws.csproj" />
+    <ProjectReference Include="..\Calamari.Azure\Calamari.Azure.csproj" />
     <PackageReference Include="Microsoft.DotNet.Analyzers.Compatibility" Version="0.2.12-alpha">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
     <ProjectReference Include="..\Calamari.Common\Calamari.Common.csproj" />
     <ProjectReference Include="..\Calamari.Shared\Calamari.Shared.csproj" />
-    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies.net452" Version="1.0.2">
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies.net462" Version="1.0.2">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Autofac" Version="4.8.0" />
+    <PackageReference Include="System.ComponentModel.TypeConverter" Version="4.3.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="Octodiff" Version="1.1.2" />
     <PackageReference Include="FSharp.Compiler.Tools" Version="4.0.0.1" />
@@ -82,13 +77,6 @@
     <Reference Include="WindowsBase" />
     <Reference Include="System" />
     <Reference Include="System.Security" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)' == 'net6.0' OR '$(TargetFramework)' == 'net452' ">
-    <PackageReference Include="Autofac" Version="4.8.0" />
-    <PackageReference Include="System.ComponentModel.TypeConverter" Version="4.3.0" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)' == 'net40'">
-    <PackageReference Include="Autofac" Version="3.5.2" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Kubernetes\Scripts\AzurePowershellContext.ps1" />

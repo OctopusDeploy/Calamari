@@ -161,11 +161,7 @@ namespace Calamari.Integration.Packages.Download
                     $"Failed to download artifact (Status Code {(int)response.StatusCode}). Reason: {response.ReasonPhrase}");
             }
 
-#if NET40
-            response.Content.CopyToAsync(fileStream).Wait();
-#else
             response.Content.CopyToAsync(fileStream).GetAwaiter().GetResult();
-#endif
         }
 
         static void ApplyAccept(HttpRequestMessage request)
@@ -320,21 +316,13 @@ namespace Calamari.Integration.Packages.Download
             var queryStringValues = new Dictionary<string, string>();
             if (details.TryGetValue("service", out var service))
             {
-#if NET40
-                var encodedService = System.Web.HttpUtility.UrlEncode(service);
-#else
                 var encodedService = WebUtility.UrlEncode(service);
-#endif
                 queryStringValues.Add("service", encodedService);
             }
 
             if (details.TryGetValue("scope", out var scope))
             {
-#if NET40
-                var encodedScope = System.Web.HttpUtility.UrlEncode(scope);
-#else
                 var encodedScope = WebUtility.UrlEncode(scope);
-#endif
                 queryStringValues.Add("scope", encodedScope);
             }
 
@@ -363,20 +351,12 @@ namespace Calamari.Integration.Packages.Download
 
         HttpResponseMessage SendRequest(HttpRequestMessage request)
         {
-#if NET40
-            return client.SendAsync(request).Result;
-#else
             return client.SendAsync(request).GetAwaiter().GetResult();
-#endif
         }
 
         static string? GetContent(HttpResponseMessage response)
         {
-#if NET40
-            return response.Content.ReadAsStringAsync().Result;
-#else
             return response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-#endif
         }
     }
 }

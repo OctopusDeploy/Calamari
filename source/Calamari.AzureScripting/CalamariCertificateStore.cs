@@ -128,13 +128,9 @@ namespace Calamari.AzureScripting
         {
             try
             {
-#if NET452
-                return certificate2.HasPrivateKey && certificate2.PrivateKey != null;
-#else
                 return certificate2.HasPrivateKey && (
                     certificate2.GetRSAPrivateKey() != null || 
                         certificate2.GetDSAPrivateKey() != null);
-#endif
             }
             catch (Exception)
             {

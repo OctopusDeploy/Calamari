@@ -1,4 +1,3 @@
-#if !NET40
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing.FileSystem;
@@ -40,4 +39,3 @@ namespace Calamari.Kubernetes.Conventions
         }
     }
 }
-#endif

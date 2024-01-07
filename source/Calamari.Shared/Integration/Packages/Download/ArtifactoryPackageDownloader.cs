@@ -122,12 +122,8 @@ namespace Calamari.Integration.Packages.Download
                         throw new CommandException(
                                                    $"Failed to download artifact (Status Code {(int)response.StatusCode}). Reason: {response.ReasonPhrase}");
                     }
-
-#if NET40
-                    response.Content.CopyToAsync(fileStream).Wait();
-#else
+                    
                     response.Content.CopyToAsync(fileStream).GetAwaiter().GetResult();
-#endif
                 }
 
                 var localDownloadName = Path.Combine(cacheDirectory, cachedFileName);
@@ -150,12 +146,8 @@ namespace Calamari.Integration.Packages.Download
             HttpContent content = new StringContent(contentString, Encoding.UTF8);
 
             var response = Post(new Uri(url, "artifactory/api/search/aql"), content, credentials);
-
-#if NET40
-            var allPackagesRaw = response.Content.ReadAsStringAsync().Result;
-#else
+            
             var allPackagesRaw = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-#endif
 
             var allPackagesJson = JsonConvert.DeserializeObject<JObject>(allPackagesRaw);
             var packagesCollection = allPackagesJson["results"].ToArray();
@@ -272,22 +264,15 @@ namespace Calamari.Integration.Packages.Download
             var details = auth.Parameter.Split(',').ToDictionary(x => x.Substring(0, x.IndexOf('=')), y => y.Substring(y.IndexOf('=') + 1, y.Length - y.IndexOf('=') - 1).Trim('"'));
             var oathUrl = new UriBuilder(details["realm"]);
             var queryStringValues = new Dictionary<string, string>();
+            //TODO: NET462 - This code seems to do nothing?
             if (details.TryGetValue("service", out var service))
             {
-#if NET40
-                var encodedScope = System.Web.HttpUtility.UrlEncode(service);
-#else
                 var encodedScope = WebUtility.UrlEncode(service);
-#endif
             }
 
             if (details.TryGetValue("scope", out var scope))
             {
-#if NET40
-                var encodedScope = System.Web.HttpUtility.UrlEncode(scope);
-#else
                 var encodedScope = WebUtility.UrlEncode(scope);
-#endif
             }
 
             oathUrl.Query = "?" + string.Join("&", queryStringValues.Select(kvp => $"{kvp.Key}={kvp.Value}").ToArray());
@@ -338,11 +323,7 @@ namespace Calamari.Integration.Packages.Download
 
         static string? GetContent(HttpResponseMessage response)
         {
-#if NET40
-            return response.Content.ReadAsStringAsync().Result;
-#else
             return response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-#endif
         }
 
         AuthenticationHeaderValue CreateAuthenticationHeader(NetworkCredential credential)
@@ -353,11 +334,7 @@ namespace Calamari.Integration.Packages.Download
 
         HttpResponseMessage SendRequest(HttpRequestMessage request)
         {
-#if NET40
-            return client.SendAsync(request).Result;
-#else
             return client.SendAsync(request).GetAwaiter().GetResult();
-#endif
         }
 
         static ICredentials GetFeedCredentials(string? feedUsername, string? feedPassword)

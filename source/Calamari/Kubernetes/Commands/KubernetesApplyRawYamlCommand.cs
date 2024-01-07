@@ -1,4 +1,3 @@
-#if !NET40
 using System.Threading.Tasks;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Packages;
@@ -59,4 +58,3 @@ namespace Calamari.Kubernetes.Commands
         }
     }
 }
-#endif

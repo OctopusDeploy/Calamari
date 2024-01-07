@@ -1,4 +1,3 @@
-#if !NET40
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -100,4 +99,3 @@ namespace Calamari.Commands
         public bool Enabled { get; set; }
     }
 }
-#endif
