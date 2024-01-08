@@ -70,6 +70,15 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         }
 
         [Test]
+        public void FromFile_UnsortableVersion()
+        {
+            var details = PackageName.FromFile("blah/Foo123@U123Foo@BlahFoo.zip");
+            Assert.AreEqual("Foo123", details.PackageId);
+            Assert.AreEqual(VersionFactory.CreateUnsortableVersion("123Foo"), details.Version);
+            Assert.AreEqual(".zip", details.Extension);
+        }
+
+        [Test]
         [TestCaseSource(nameof(PackageNameTestCases))]
         public void FromFile(string filename, string extension, string packageId, IVersion version)
         {
@@ -120,7 +129,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
                 ("foo.1.0.0-tag", "1.0.0-tag", "foo"),
                 ("foo.1.0.0-tag-release.tag", "1.0.0-tag-release.tag", "foo"),
                 ("foo.1.0.0+buildmeta", "1.0.0+buildmeta", "foo"),
-                ("foo.1.0.0-tag-release.tag+buildmeta", "1.0.0-tag-release.tag+buildmeta", "foo"),
+                ("foo.1.0.0-tag-release.tag+buildmeta", "1.0.0-tag-release.tag+buildmeta", "foo")
             };
 
             var extensions = new []
