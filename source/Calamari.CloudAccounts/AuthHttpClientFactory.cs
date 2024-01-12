@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http;
+using Calamari.Common.Plumbing.Logging;
 using Microsoft.Identity.Client;
 
 namespace Calamari.CloudAccounts
@@ -17,6 +18,7 @@ namespace Calamari.CloudAccounts
         
         public static HttpClientHandler ProxyClientHandler()
         {
+            Log.Verbose($"Proxy Is Set As {WebRequest.DefaultWebProxy}");
             return new HttpClientHandler
             {
                 Proxy = WebRequest.DefaultWebProxy,

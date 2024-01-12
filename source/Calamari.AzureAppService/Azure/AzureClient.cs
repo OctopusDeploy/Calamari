@@ -9,6 +9,7 @@ using Azure.Identity;
 using Azure.ResourceManager;
 using Azure.ResourceManager.AppService;
 using Calamari.CloudAccounts;
+using Calamari.Common.Plumbing.Logging;
 using Microsoft.Azure.Management.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Authentication;
@@ -47,6 +48,7 @@ namespace Calamari.AzureAppService.Azure
 
             // Configure a specific transport that will pick up the proxy settings set by Calamari
 #pragma warning disable DE0003
+            Log.Verbose($"Proxy Is Set As {WebRequest.DefaultWebProxy}");
             var httpClientTransport = new HttpClientTransport(new HttpClientHandler { Proxy = WebRequest.DefaultWebProxy });
 #pragma warning restore DE0003
 

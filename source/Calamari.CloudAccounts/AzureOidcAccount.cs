@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Microsoft.Azure.Management.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Authentication;
@@ -87,6 +88,7 @@ namespace Calamari.CloudAccounts
                                                    TenantId,
                                                    environment);
 
+            Log.Verbose($"Proxy Is Set As {NetWebRequest.DefaultWebProxy}");
             // to ensure the Azure API uses the appropriate web proxy
             var client = new HttpClient(new HttpClientHandler {Proxy = NetWebRequest.DefaultWebProxy});
 

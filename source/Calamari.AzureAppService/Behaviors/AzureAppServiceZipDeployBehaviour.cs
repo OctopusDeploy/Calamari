@@ -212,6 +212,9 @@ namespace Calamari.AzureAppService.Behaviors
             var zipUploadUrl = $"{publishingProfile.PublishUrl}{packageProvider.UploadUrlPath}";
             Log.Verbose($@"Publishing {uploadZipPath} to {zipUploadUrl}");
 
+#pragma warning disable DE0003
+            Log.Verbose($"Proxy Is Set As {WebRequest.DefaultWebProxy}");
+#pragma warning restore DE0003
             using var httpClient = new HttpClient(new HttpClientHandler
             {
 #pragma warning disable DE0003
@@ -268,7 +271,9 @@ namespace Calamari.AzureAppService.Behaviors
 
             var zipUploadUrl = $"{publishingProfile.PublishUrl}{packageProvider.UploadUrlPath}?isAsync=true";
             Log.Verbose($"Publishing {uploadZipPath} to {zipUploadUrl} and checking for deployment");
-
+#pragma warning disable DE0003
+            Log.Verbose($"Proxy Is Set As {WebRequest.DefaultWebProxy}");
+#pragma warning restore DE0003
             using var httpClient = new HttpClient(new HttpClientHandler
             {
 #pragma warning disable DE0003
