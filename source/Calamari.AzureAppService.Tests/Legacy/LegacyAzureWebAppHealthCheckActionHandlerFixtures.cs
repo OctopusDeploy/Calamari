@@ -16,7 +16,7 @@ using OperatingSystem = Microsoft.Azure.Management.AppService.Fluent.OperatingSy
 namespace Calamari.AzureAppService.Tests
 {
     [TestFixture]
-    [Ignore("Testing assumption that proxy is causing havoc")]
+   // [Ignore("Testing assumption that proxy is causing havoc")]
     [NonParallelizable]
     class LegacyAzureWebAppHealthCheckActionHandlerFixtures
     {

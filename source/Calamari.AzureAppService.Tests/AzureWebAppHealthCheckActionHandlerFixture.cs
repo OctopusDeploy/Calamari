@@ -14,7 +14,7 @@ using NUnit.Framework.Internal;
 namespace Calamari.AzureAppService.Tests
 {
     [TestFixture]
-    [Ignore("Testing assumption that proxy is causing havoc")]
+    //[Ignore("Testing assumption that proxy is causing havoc")]
     [NonParallelizable]
     class AzureWebAppHealthCheckActionHandlerFixture : AppServiceIntegrationTest
     {

@@ -88,7 +88,7 @@ namespace Calamari.CloudAccounts
                                                    TenantId,
                                                    environment);
 
-            Log.Verbose($"Proxy Is Set As {NetWebRequest.DefaultWebProxy}");
+            Log.Verbose($"Proxy Is Set As {(NetWebRequest.DefaultWebProxy as WebProxy)?.Address}");
             // to ensure the Azure API uses the appropriate web proxy
             var client = new HttpClient(new HttpClientHandler {Proxy = NetWebRequest.DefaultWebProxy});
 

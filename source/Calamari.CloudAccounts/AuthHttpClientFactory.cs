@@ -18,7 +18,7 @@ namespace Calamari.CloudAccounts
         
         public static HttpClientHandler ProxyClientHandler()
         {
-            Log.Verbose($"Proxy Is Set As {WebRequest.DefaultWebProxy}");
+            Log.Verbose($"Proxy Is Set As {(WebRequest.DefaultWebProxy as WebProxy)?.Address}");
             return new HttpClientHandler
             {
                 Proxy = WebRequest.DefaultWebProxy,

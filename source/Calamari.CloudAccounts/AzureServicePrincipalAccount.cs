@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net;
 using System.Net.Http;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
@@ -63,7 +64,7 @@ namespace Calamari.CloudAccounts
             var credentials = SdkContext.AzureCredentialsFactory.FromServicePrincipal(ClientId,
                                                                                       GetCredentials, TenantId, environment
                                                                                      );
-            Log.Verbose($"Proxy Is Set As {NetWebRequest.DefaultWebProxy}");
+            Log.Verbose($"Proxy Is Set As {(NetWebRequest.DefaultWebProxy as WebProxy)?.Address}");
             // to ensure the Azure API uses the appropriate web proxy
             var client = new HttpClient(new HttpClientHandler {Proxy = NetWebRequest.DefaultWebProxy});
 

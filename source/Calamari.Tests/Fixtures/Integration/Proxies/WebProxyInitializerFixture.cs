@@ -12,7 +12,7 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
 {
     [TestFixture]
     [Category(TestCategory.CompatibleOS.OnlyWindows)]
-    [Ignore("Testing assumption that proxy is causing havoc")]
+  //  [Ignore("Testing assumption that proxy is causing havoc")]
     public class ProxyInitializerFixture
     {
         const string BadproxyUrl = "http://proxy-initializer-fixture-bad-proxy:1234";
