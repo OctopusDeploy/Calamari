@@ -11,11 +11,6 @@ using Calamari.Common.Plumbing.Variables;
 using Calamari.Integration.Packages.NuGet;
 using Octopus.Versioning;
 using PackageName = Calamari.Common.Features.Packages.PackageName;
-#if USE_NUGET_V2_LIBS
-using NuGet;
-#else
-using NuGet.Packaging;
-#endif
 
 namespace Calamari.Integration.Packages.Download
 {
@@ -124,11 +119,8 @@ namespace Calamari.Integration.Packages.Download
         void CheckWhetherThePackageHasDependencies(PackagePhysicalFileMetadata pkg)
         {
             var nuGetMetadata = new LocalNuGetPackage(pkg.FullFilePath).Metadata;
-#if USE_NUGET_V3_LIBS
             var dependencies = nuGetMetadata.DependencyGroups.SelectMany(ds => ds.Packages).ToArray();
-#else
-            var dependencies = nuGetMetadata.DependencySets.SelectMany(ds => ds.Dependencies).ToArray();
-#endif
+
             if (dependencies.Any())
                 Log.Info(
                     "NuGet packages with dependencies are not currently supported, and dependencies won't be installed on the Tentacle. The package '{0} {1}' appears to have the following dependencies: {2}. For more information please see {3}",
