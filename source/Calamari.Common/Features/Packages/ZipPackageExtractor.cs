@@ -24,9 +24,6 @@ namespace Calamari.Common.Features.Packages
 
         public int Extract(string packageFile, string directory)
         {
-            if (!Directory.Exists(directory))
-                Directory.CreateDirectory(directory);
-
             var filesExtracted = 0;
             using (var inStream = new FileStream(packageFile, FileMode.Open, FileAccess.Read))
             using (var archive = ZipArchive.Open(inStream))
