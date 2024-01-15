@@ -70,11 +70,11 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         }
 
         [Test]
-        public void FromFile_UnsortableVersion()
+        public void FromFile_LexicographicSortedVersion()
         {
-            var details = PackageName.FromFile("blah/Foo123@U123Foo@BlahFoo.zip");
+            var details = PackageName.FromFile("blah/Foo123@L123Foo@BlahFoo.zip");
             Assert.AreEqual("Foo123", details.PackageId);
-            Assert.AreEqual(VersionFactory.CreateUnsortableVersion("123Foo"), details.Version);
+            Assert.AreEqual(VersionFactory.CreateLexicographicSortedVersion("123Foo"), details.Version);
             Assert.AreEqual(".zip", details.Extension);
         }
 
