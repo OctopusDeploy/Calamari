@@ -2,12 +2,7 @@
 
     <PropertyGroup>
         <RootNamespace>Calamari.CloudAccounts</RootNamespace>
-    </PropertyGroup>
-    <PropertyGroup Condition="!$([MSBuild]::IsOSUnixLike())">
         <TargetFrameworks>net462;netstandard2.1</TargetFrameworks>
-    </PropertyGroup>
-    <PropertyGroup Condition="$([MSBuild]::IsOSUnixLike())">
-        <TargetFramework>netstandard2.1</TargetFramework>
     </PropertyGroup>
 
     <ItemGroup Condition="'$(TargetFramework)' == 'net462'">

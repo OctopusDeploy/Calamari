@@ -1,22 +1,18 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-    <PropertyGroup Condition="!$([MSBuild]::IsOSUnixLike())">
+    <PropertyGroup>
         <TargetFrameworks>net462;netstandard2.1</TargetFrameworks>
-    </PropertyGroup>
-    <PropertyGroup Condition="$([MSBuild]::IsOSUnixLike())">
-        <TargetFramework>netstandard2.1</TargetFramework>
+        <LangVersion>8</LangVersion>
+        <Nullable>enable</Nullable>
+        <PlatformTarget>anycpu</PlatformTarget>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(TargetFramework)' == 'net462' ">
         <DefineConstants>$(DefineConstants);USE_ALPHAFS_FOR_LONG_FILE_PATH_SUPPORT;HAS_SSL3</DefineConstants>
-        <PlatformTarget>anycpu</PlatformTarget>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(TargetFramework)' == 'netstandard2.1' ">
         <DefineConstants>$(DefineConstants);USE_NUGET_V3_LIBS;WORKAROUND_FOR_EMPTY_STRING_BUG;HAS_NULLABLE_REF_TYPES</DefineConstants>
     </PropertyGroup>
-    <PropertyGroup>
-      <LangVersion>8</LangVersion>
-      <Nullable>enable</Nullable>
-    </PropertyGroup>
+
     <PropertyGroup Condition="'$(TargetFramework)' == 'net462' ">
         <NoWarn>CS8600;CS8601;CS8602;CS8603;CS8604</NoWarn>
     </PropertyGroup>
