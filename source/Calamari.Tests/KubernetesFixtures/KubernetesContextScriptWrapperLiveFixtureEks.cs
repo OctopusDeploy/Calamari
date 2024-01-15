@@ -256,7 +256,7 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        public void DeployRawYaml_WithMultipleYamlFilesSpecifiedByGlobPatterns_YamlFilesAreAppliedInCorrectBatches()
+        public void DeployRawYaml_WithMultipleYamlFilesGlobPatterns_YamlFilesAppliedInCorrectBatches()
         {
             SetVariablesToAuthoriseWithAmazonAccount();
 
