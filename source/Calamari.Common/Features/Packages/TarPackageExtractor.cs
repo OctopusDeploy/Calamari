@@ -25,6 +25,9 @@ namespace Calamari.Common.Features.Packages
 
         public int Extract(string packageFile, string directory)
         {
+            if (!Directory.Exists(directory))
+                Directory.CreateDirectory(directory);
+
             var files = 0;
             using (var inStream = new FileStream(packageFile, FileMode.Open, FileAccess.Read))
             {
