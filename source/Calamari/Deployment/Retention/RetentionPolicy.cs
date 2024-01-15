@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Calamari.Common.Features.Deployment.Journal;
@@ -61,15 +61,31 @@ namespace Calamari.Deployment.Retention
                 Log.Info("Did not find any deployments to clean up");
             }
 
-            foreach (var deployment in deploymentsToDelete)
-            {
-                DeleteExtractionDestination(deployment, preservedEntries);
-
-                // Deleting packages is now handled by package retention
-            }
-            deploymentJournal.RemoveJournalEntries(deploymentsToDelete.Select(x => x.Id));
+            var entriesRemoved = RemoveDeployments(deploymentsToDelete, preservedEntries);
+            deploymentJournal.RemoveJournalEntries(entriesRemoved);
 
             RemovedFailedPackageDownloads();
+        }
+
+        string[] RemoveDeployments(List<JournalEntry> deploymentsToDelete, List<JournalEntry> preservedEntries)
+        {
+            var deploymentsDeleted = new List<string>();
+            foreach (var deployment in deploymentsToDelete)
+            {
+                try
+                {
+                    DeleteExtractionDestination(deployment, preservedEntries);
+                    deploymentsDeleted.Add(deployment.Id);
+                }
+                catch (Exception ex)
+                {
+                    Log.VerboseFormat("Could not delete directory '{0}' because some files could not be deleted: {1}",
+                                   deployment.ExtractedTo,
+                                   ex.Message);
+                }
+            }
+
+            return deploymentsDeleted.ToArray();
         }
 
         void DeleteExtractionDestination(JournalEntry deployment, List<JournalEntry> preservedEntries)
@@ -82,15 +98,7 @@ namespace Calamari.Deployment.Retention
             Log.Info($"Removing directory '{deployment.ExtractedTo}'");
             fileSystem.PurgeDirectory(deployment.ExtractedTo, FailureOptions.IgnoreFailure);
 
-            try
-            {
-                fileSystem.DeleteDirectory(deployment.ExtractedTo);
-            }
-            catch (Exception ex)
-            {
-                Log.VerboseFormat("Could not delete directory '{0}' because some files could not be deleted: {1}",
-                    deployment.ExtractedTo, ex.Message);
-            }
+            fileSystem.DeleteDirectory(deployment.ExtractedTo);
         }
 
         static Func<JournalEntry, bool> SuccessfulCountGreaterThanPolicyCountOrDeployedUnsuccessfully(int successfulDeploymentsToKeep, List<JournalEntry> preservedEntries)
