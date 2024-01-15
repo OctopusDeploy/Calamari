@@ -34,9 +34,7 @@ namespace Calamari.Build
             IsLocalBuild ? Configuration.Debug : Configuration.Release;
 
         [Required]
-        readonly Solution Solution = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
-            ? ProjectModelTasks.ParseSolution(SourceDirectory / "Calamari.sln")
-            : ProjectModelTasks.ParseSolution(SourceDirectory / "Calamari.NonWindows.sln");
+        readonly Solution Solution = SolutionModelTasks.ParseSolution(SourceDirectory / "Calamari.sln");
 
         [Parameter("Run packing step in parallel")]
         readonly bool PackInParallel;
