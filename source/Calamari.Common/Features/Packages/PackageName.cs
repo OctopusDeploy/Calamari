@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using Calamari.Common.Features.Packages.NuGet;
 using Calamari.Common.Plumbing.Extensions;
 using Octopus.Versioning;
+using Octopus.Versioning.Lexicographic;
 using Octopus.Versioning.Maven;
 using Octopus.Versioning.Octopus;
 using Octopus.Versioning.Semver;
@@ -234,6 +235,8 @@ namespace Calamari.Common.Features.Packages
                     return "S" + Encode(version.ToString());
                 case OctopusVersion _:
                     return "O" + Encode(version.ToString());
+                case LexicographicSortedVersion _:
+                    return "L" + Encode(version.ToString());
             }
 
             throw new Exception($"Unrecognised Version format `{version.GetType().Name}`");
@@ -249,6 +252,8 @@ namespace Calamari.Common.Features.Packages
                     return VersionFactory.CreateMavenVersion(Decode(input.Substring(1)));
                 case 'O':
                     return VersionFactory.CreateOctopusVersion(Decode(input.Substring(1)));
+                case 'L':
+                    return VersionFactory.CreateLexicographicSortedVersion(Decode(input.Substring(1)));
             }
 
             throw new Exception($"Unrecognised Version format `{input}`");
