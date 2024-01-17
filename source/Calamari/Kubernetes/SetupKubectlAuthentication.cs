@@ -267,15 +267,18 @@ namespace Calamari.Kubernetes
             else if (variables.IsSet(SpecialVariables.CertificateAuthority))
             {
                 var certificateAuthority = variables.Get(SpecialVariables.CertificateAuthority);
-                var serverCertPem = variables.Get(SpecialVariables.CertificatePem(certificateAuthority));
-                if (string.IsNullOrEmpty(serverCertPem))
+                if (!string.IsNullOrEmpty(certificateAuthority))
                 {
-                    throw new KubectlException("Kubernetes server certificate does not include the certificate data");
-                }
+                    var serverCertPem = variables.Get(SpecialVariables.CertificatePem(certificateAuthority));
+                    if (string.IsNullOrEmpty(serverCertPem))
+                    {
+                        throw new KubectlException("Kubernetes server certificate does not include the certificate data");
+                    }
 
-                var authorityData = Convert.ToBase64String(Encoding.ASCII.GetBytes(serverCertPem));
-                log.AddValueToRedact(authorityData, "<data>");
-                kubectl.ExecuteCommandAndAssertSuccess("config", "set", $"clusters.{cluster}.certificate-authority-data", authorityData);
+                    var authorityData = Convert.ToBase64String(Encoding.ASCII.GetBytes(serverCertPem));
+                    log.AddValueToRedact(authorityData, "<data>");
+                    kubectl.ExecuteCommandAndAssertSuccess("config", "set", $"clusters.{cluster}.certificate-authority-data", authorityData);
+                }
             }
             else if (variables.IsSet(SpecialVariables.SkipTlsVerification))
             {
