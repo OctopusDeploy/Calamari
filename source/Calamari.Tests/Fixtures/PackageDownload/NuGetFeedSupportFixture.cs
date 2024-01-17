@@ -72,7 +72,6 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         [Test]
         [TestCaseSource(nameof(ArtifactoryNuGet3SupportedVersionStrings))]
         [TestCaseSource(nameof(ArtifactoryNuGet2SupportedVersionStrings))]
-        [Platform("Net-4.5")]
         public void ArtifactoryShouldSupportNuGetVersion3Feeds(string versionString)
         {
             var calamariResult = DownloadPackage(TestNuGetPackageId,  versionString, "nuget-local", ArtifactoryNuGetV3FeedUrl);

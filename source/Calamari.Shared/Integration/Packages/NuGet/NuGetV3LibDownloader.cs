@@ -1,6 +1,4 @@
-﻿#if USE_NUGET_V3_LIBS
-
-using System;
+﻿using System;
 using System.Net;
 using System.Threading;
 using NuGet.Configuration;
@@ -8,17 +6,21 @@ using NuGet.Common;
 using NuGet.Protocol;
 using NuGet.Protocol.Core.Types;
 using System.IO;
-using Calamari.Common.Plumbing.Logging;
+using System.Threading.Tasks;
 using Calamari.Common.Plumbing.Extensions;
-using NuGet.DependencyResolver;
-using NuGet.LibraryModel;
+using NuGet.Commands;
+using NuGet.Packaging.Core;
 using Octopus.Versioning;
 
 namespace Calamari.Integration.Packages.NuGet
 {
     public class NuGetV3LibDownloader
     {
-        public static void DownloadPackage(string packageId, IVersion version, Uri feedUri, ICredentials feedCredentials, string targetFilePath)
+        public static void DownloadPackage(string packageId,
+                                           IVersion version,
+                                           Uri feedUri,
+                                           ICredentials feedCredentials,
+                                           string targetFilePath)
         {
             ILogger logger = new NugetLogger();
             var sourceRepository = Repository.Factory.GetCoreV3(feedUri.AbsoluteUri);
@@ -28,47 +30,90 @@ namespace Calamari.Integration.Packages.NuGet
                 sourceRepository.PackageSource.Credentials = new PackageSourceCredential("octopus", cred.UserName, cred.Password, true);
             }
 
-            using (var sourceCacheContext = new SourceCacheContext() { NoCache = true })
+            var targetPath = Directory.GetParent(targetFilePath).FullName;
+            if (!Directory.Exists(targetPath))
             {
-                var providers = new SourceRepositoryDependencyProvider(sourceRepository, logger, sourceCacheContext);
-                var libraryIdentity = new LibraryIdentity(packageId, version.ToNuGetVersion(), LibraryType.Package);
-
-                var targetPath = Directory.GetParent(targetFilePath).FullName;
-                if (!Directory.Exists(targetPath))
-                {
-                    Directory.CreateDirectory(targetPath);
-                }
-
-                string targetTempNupkg = Path.Combine(targetPath, Path.GetRandomFileName());
-                using (var nupkgStream = new FileStream(targetTempNupkg,
-                                                        FileMode.Create,
-                                                        FileAccess.ReadWrite,
-                                                        FileShare.ReadWrite | FileShare.Delete,
-                                                        4096,
-                                                        true))
-                {
-                    providers.CopyToAsync(libraryIdentity, nupkgStream, CancellationToken.None)
-                             .GetAwaiter()
-                             .GetResult();
-                }
-
-                File.Move(targetTempNupkg, targetFilePath);
+                Directory.CreateDirectory(targetPath);
             }
+
+            var targetTempNupkg = Path.Combine(targetPath, Path.GetRandomFileName());
+            var packageIdentity = new PackageIdentity(packageId, version.ToNuGetVersion());
+            PerformNuGetDownload(packageIdentity, targetTempNupkg, sourceRepository, logger)
+                .GetAwaiter()
+                .GetResult();
+
+            File.Move(targetTempNupkg, targetFilePath);
+
         }
 
+        static async Task PerformNuGetDownload(PackageIdentity packageIdentity,
+                                               string targetFilePath,
+                                               SourceRepository sourceRepository,
+                                               ILogger logger)
+        {
+            using var sourceCacheContext = new SourceCacheContext() { NoCache = true };
+            var providers = new SourceRepositoryDependencyProvider(sourceRepository,
+                                                                   logger,
+                                                                   sourceCacheContext,
+                                                                   false,
+                                                                   true);
+            using var downloader = await providers.GetPackageDownloaderAsync(packageIdentity, sourceCacheContext, logger, CancellationToken.None);
+            await downloader.CopyNupkgFileToAsync(targetFilePath, default);
+        }
+        
         public class NugetLogger : ILogger
         {
-            public void LogDebug(string data) => Log.Verbose(data);
-            public void LogVerbose(string data) => Log.Verbose(data);
-            public void LogInformation(string data) => Log.Info(data);
-            public void LogMinimal(string data) => Log.Verbose(data);
-            public void LogWarning(string data) => Log.Warn(data);
-            public void LogError(string data) => Log.Error(data);
-            public void LogSummary(string data) => Log.Info(data);
-            public void LogInformationSummary(string data) => Log.Info(data);
-            public void LogErrorSummary(string data) => Log.Error(data);
+            public void LogDebug(string data) => Common.Plumbing.Logging.Log.Verbose(data);
+            public void LogVerbose(string data) => Common.Plumbing.Logging.Log.Verbose(data);
+            public void LogInformation(string data) => Common.Plumbing.Logging.Log.Info(data);
+            public void LogMinimal(string data) => Common.Plumbing.Logging.Log.Verbose(data);
+            public void LogWarning(string data) => Common.Plumbing.Logging.Log.Warn(data);
+            public void LogError(string data) => Common.Plumbing.Logging.Log.Error(data);
+            public void LogInformationSummary(string data) => Common.Plumbing.Logging.Log.Info(data);
+
+            public void Log(LogLevel level, string data)
+            {
+                switch (level)
+                {
+                    case LogLevel.Debug:
+                        LogDebug(data);
+                        break;
+                    case LogLevel.Verbose:
+                        LogVerbose(data);
+                        break;
+                    case LogLevel.Information:
+                        LogInformation(data);
+                        break;
+                    case LogLevel.Minimal:
+                        LogMinimal(data);
+                        break;
+                    case LogLevel.Warning:
+                        LogWarning(data);
+                        break;
+                    case LogLevel.Error:
+                        LogError(data);
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(level), level, null);
+                }
+            }
+
+            public Task LogAsync(LogLevel level, string data)
+            {
+                Log(level, data);
+                return Task.CompletedTask;
+            }
+
+            public void Log(ILogMessage message)
+            {
+                Log(message.Level, message.Message);
+            }
+
+            public Task LogAsync(ILogMessage message)
+            {
+                Log(message);
+                return Task.CompletedTask;
+            }
         }
     }
 }
-
-#endif
