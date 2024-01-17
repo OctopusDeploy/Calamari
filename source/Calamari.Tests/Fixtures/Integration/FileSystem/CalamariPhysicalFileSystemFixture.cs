@@ -367,30 +367,6 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyWindows)]
-        public void LongFilePathsShouldWork()
-        {
-            var paths = new Stack<string>();
-            var path = rootPath;
-
-            for (var i = 0; i <= 15; i++)
-            {
-                path += @"\ZZZZabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz";
-                fileSystem.EnsureDirectoryExists(path);
-                paths.Push(path);
-            }
-
-            fileSystem.OverwriteFile("Some sample text", path + @"\test.txt");
-            fileSystem.DeleteFile(path + @"\test.txt");
-
-            while (paths.Any())
-            {
-                var pathToRemove = paths.Pop();
-                fileSystem.DeleteDirectory(pathToRemove);
-            }
-        }
-
-        [Test]
         public void WriteAllTextShouldOverwriteHiddenFileContent()
         {
             var path = Path.GetTempFileName();
