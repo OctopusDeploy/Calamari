@@ -11,7 +11,6 @@ using System.Net;
 using System.Net.Http;
 using System.Web;
 using Calamari.Common.Commands;
-using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Deployment;
 using Newtonsoft.Json;
@@ -288,7 +287,7 @@ namespace Calamari.Integration.Packages.NuGet
             if (json.TryGetValue("version", out versionToken) &&
                 versionToken.Type == JTokenType.String)
             {
-                var version = VersionFactory.TryCreateSemanticVersion(((string)versionToken).SanitiseSemVerString());
+                var version = VersionFactory.TryCreateSemanticVersion((string)versionToken);
                 if (version != null && version.Major == 3)
                 {
                     return true;
