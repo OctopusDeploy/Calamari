@@ -1,11 +1,7 @@
 ﻿using System;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
-using Calamari.Common.Plumbing.Variables;
-using Calamari.Deployment.PackageRetention;
-using Calamari.Deployment.PackageRetention.Repositories;
-using Calamari.Integration.Nginx;
-using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
+using Octopus.TinyTypes;
 
 namespace Calamari.Tests.Fixtures.TypeConverters
 {
@@ -32,7 +28,7 @@ namespace Calamari.Tests.Fixtures.TypeConverters
             var validString = "Valid String";
             var tc = new TinyTypeTypeConverter<ServerTaskId>();
             var result = tc.ConvertFrom(validString) as ServerTaskId;
-            var expectedResult = CaseInsensitiveTinyType.Create<ServerTaskId>(validString);
+            var expectedResult = CaseInsensitiveStringTinyType.Create<ServerTaskId>(validString);
             Assert.AreEqual(expectedResult, result);
         }
     }
