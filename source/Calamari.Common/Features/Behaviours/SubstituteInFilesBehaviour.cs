@@ -31,7 +31,7 @@ namespace Calamari.Common.Features.Behaviours
         public Task Execute(RunningDeployment context)
         {
             substituteInFiles.SubstituteBasedSettingsInSuppliedVariables(Path.Combine(context.CurrentDirectory, subdirectory));
-            return this.CompletedTask();
+            return Task.CompletedTask;
         }
     }
 }

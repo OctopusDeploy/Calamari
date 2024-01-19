@@ -441,7 +441,7 @@ namespace Calamari.Tests.NewPipeline
             public Task Execute(RunningDeployment context)
             {
                 context.Variables.AddFlag(KnownVariables.Action.SkipRemainingConventions, true);
-                return this.CompletedTask();
+                return Task.CompletedTask;
             }
         }
 
@@ -527,7 +527,7 @@ namespace Calamari.Tests.NewPipeline
                 stages.Add(name);
                 log.SetOutputVariable("ExecutionStages", string.Join(";", stages), context.Variables);
 
-                return this.CompletedTask();
+                return Task.CompletedTask;
             }
         }
     }

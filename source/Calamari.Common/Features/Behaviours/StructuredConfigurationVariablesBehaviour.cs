@@ -30,7 +30,7 @@ namespace Calamari.Common.Features.Behaviours
         {
             structuredConfigVariablesService.ReplaceVariables(Path.Combine(context.CurrentDirectory, subdirectory));
 
-            return this.CompletedTask();
+            return Task.CompletedTask;
         }
     }
 }

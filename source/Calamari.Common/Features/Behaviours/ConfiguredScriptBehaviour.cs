@@ -82,7 +82,7 @@ namespace Calamari.Common.Features.Behaviours
                 }
             }
 
-            return this.CompletedTask();
+            return Task.CompletedTask;
         }
     }
 

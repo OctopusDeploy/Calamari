@@ -23,7 +23,7 @@ namespace Calamari.Common.Features.Behaviours
         public Task Execute(RunningDeployment context)
         {
             extractPackage.ExtractToStagingDirectory(context.PackageFilePath);
-            return this.CompletedTask();
+            return Task.CompletedTask;
         }
     }
 }

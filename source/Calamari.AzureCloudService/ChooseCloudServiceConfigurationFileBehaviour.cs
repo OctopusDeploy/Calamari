@@ -33,7 +33,7 @@ namespace Calamari.AzureCloudService
             log.SetOutputVariable(SpecialVariables.Action.Azure.Output.ConfigurationFile,
                 configurationFile, context.Variables);
 
-            return this.CompletedTask();
+            return Task.CompletedTask;
         }
 
         string ChooseWhichConfigurationFileToUse(RunningDeployment deployment)

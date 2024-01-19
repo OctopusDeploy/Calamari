@@ -43,7 +43,7 @@ namespace Calamari.Scripting
             // The may or may not be extracted.
             StagePackageReferences(context);
 
-            return this.CompletedTask();
+            return Task.CompletedTask;
         }
 
         void StagePackageReferences(RunningDeployment deployment)

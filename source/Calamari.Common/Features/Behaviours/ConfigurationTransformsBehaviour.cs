@@ -49,7 +49,7 @@ namespace Calamari.Common.Features.Behaviours
         {
             DoTransforms(Path.Combine(deployment.CurrentDirectory, subdirectory));
 
-            return this.CompletedTask();
+            return Task.CompletedTask;
         }
 
         public void DoTransforms(string currentDirectory)

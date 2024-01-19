@@ -29,7 +29,7 @@ namespace Calamari.AzureServiceFabric.Behaviours
                 EnsureCertificateInStore(variables, clientCertVariable);
             }
 
-            return this.CompletedTask();
+            return Task.CompletedTask;
         }
 
         void EnsureCertificateInStore(IVariables variables, string certificateVariable)

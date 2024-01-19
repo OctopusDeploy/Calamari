@@ -31,7 +31,7 @@ namespace Calamari.AzureServiceFabric.Behaviours
                 substituter.PerformSubstitution(configurationFile, context.Variables);
             }
 
-            return this.CompletedTask();
+            return Task.CompletedTask;
         }
     }
 }

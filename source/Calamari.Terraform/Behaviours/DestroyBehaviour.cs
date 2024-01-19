@@ -38,7 +38,7 @@ namespace Calamari.Terraform.Behaviours
                    .VerifySuccess();
             }
 
-            return this.CompletedTask();
+            return Task.CompletedTask;
         }
     }
 }
