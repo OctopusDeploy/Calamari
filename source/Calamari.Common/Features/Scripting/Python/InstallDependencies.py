@@ -4,10 +4,17 @@ import sys
 
 def install_package_using_pip(package):
     printverbose("Did not find dependency, attempting to install {} for the current user using pip".format(package))
-    exitcode = subprocess.call([sys.executable, "-m", "pipx", "install", package, "--user"])
+    exitcode = subprocess.call([sys.executable, "-m", "pip", "install", package, "--user"])
+    if exitcode == 0:
+        exit(0)
+
+    print("Unable to install package {} using pip, will try to install it using pipx".format(package))
+    printverbose("Now attempting to install {} using pipx".format(package))
+    exitcode = subprocess.call([sys.executable, "-m", "pipx", "install", package])
+
     if exitcode != 0:
-        print("Unable to install package {} using pip.".format(package), file=sys.stderr)
-        print("If you do not have pip you can install {} using your favorite python package manager.".format(package), file=sys.stderr)
+        print("Unable to install package {} using pip or pipx.".format(package), file=sys.stderr)
+        print("If you do not have pip or pipx you can install {} using your favorite python package manager.".format(package), file=sys.stderr)
         exit(exitcode)
 
 def install_missing_dependency(module, package):
