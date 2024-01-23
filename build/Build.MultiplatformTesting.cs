@@ -15,7 +15,7 @@ partial class Build
                 const string testFilter = "TestCategory = RunOnceOnWindowsAndLinux";
 
                 DotNetTasks.DotNetTest(settings => settings
-                    .SetProjectFile("/Users/scottmerchant/Documents/dev/Calamari/source/Calamari.Tests/bin/Debug/net6.0/Calamari.Tests.dll")
+                    .SetProjectFile("Binaries/Calamari.Tests.dll")
                     .SetFilter(testFilter)
                     .SetLoggers("trx")
                     .SetProcessExitHandler(
