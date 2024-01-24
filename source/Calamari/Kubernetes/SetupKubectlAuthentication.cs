@@ -215,8 +215,14 @@ namespace Calamari.Kubernetes
              * https://kubernetes.io/docs/tasks/run-application/access-api-from-pod/#directly-accessing-the-rest-api
              */
             return fileSystem.FileExists("/var/run/secrets/kubernetes.io/serviceaccount/token")
-                   && !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("KUBERNETES_SERVICE_HOST"))
-                   && !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("KUBERNETES_SERVICE_PORT"));
+                   && EnvironmentVariableSet("KUBERNETES_SERVICE_HOST")
+                   && (EnvironmentVariableSet("KUBERNETES_SERVICE_PORT") ||
+                       EnvironmentVariableSet("KUBERNETES_SERVICE_PORT_HTTPS"));
+
+            bool EnvironmentVariableSet(string name)
+            {
+                return !string.IsNullOrEmpty(Environment.GetEnvironmentVariable(name));
+            }
         }
 
         void SetupContextForClientCertificate(string user)
