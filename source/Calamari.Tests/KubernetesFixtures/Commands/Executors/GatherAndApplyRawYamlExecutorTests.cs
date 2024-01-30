@@ -18,6 +18,7 @@ using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
 using FluentAssertions;
 using NSubstitute;
+using NSubstitute.ClearExtensions;
 using NUnit.Framework;
 
 namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
@@ -26,8 +27,9 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
     public class GatherAndApplyRawYamlExecutorTests
     {
         readonly ICalamariFileSystem fileSystem = TestCalamariPhysicalFileSystem.GetPhysicalFileSystem();
+        readonly ICommandLineRunner commandLineRunner = Substitute.For<ICommandLineRunner>();
+
         InMemoryLog log;
-        ICommandLineRunner commandLineRunner;
         List<ResourceIdentifier> receivedCallbacks;
         string tempDirectory;
 
@@ -40,22 +42,25 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
             log = new InMemoryLog();
             receivedCallbacks = new List<ResourceIdentifier>();
             tempDirectory = fileSystem.CreateTemporaryDirectory();
-            SetupCommandLineRunnerMocks();
         }
 
         [TearDown]
         public void Cleanup()
         {
             fileSystem.DeleteDirectory(tempDirectory, FailureOptions.IgnoreFailure);
+            commandLineRunner.ClearSubstitute();
         }
 
         [Test]
         public async Task NoYamlFileName_DoesNothing()
         {
             // Arrange
+            AddTestFiles();
+            SetupCommandLineRunnerMocks();
             var variables = new CalamariVariables
             {
-                [KnownVariables.EnabledFeatureToggles] = FeatureToggle.GlobPathsGroupSupportFeatureToggle.ToString()
+                [KnownVariables.EnabledFeatureToggles] = FeatureToggle.GlobPathsGroupSupportFeatureToggle.ToString(),
+                [KnownVariables.OriginalPackageDirectoryPath] = StagingDirectory,
             };
             var runningDeployment = new RunningDeployment(variables);
             var fileSystem = new TestCalamariPhysicalFileSystem();
@@ -75,6 +80,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
         {
             // Arrange
             AddTestFiles();
+            SetupCommandLineRunnerMocks();
             var variables = new CalamariVariables
             {
                 [KnownVariables.EnabledFeatureToggles] = FeatureToggle.GlobPathsGroupSupportFeatureToggle.ToString(),
@@ -131,6 +137,30 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
             CreateTemporaryTestFile(dirB);
         }
 
+        [Test]
+        public async Task CommandLineReturnsNonZeroCode_ReturnsFalseToIndicateFailure()
+        {
+            // Arrange
+            AddTestFiles();
+            commandLineRunner.Execute(Arg.Any<CommandLineInvocation>()).Returns(new CommandResult("blah", 1));
+            var variables = new CalamariVariables
+            {
+                [KnownVariables.EnabledFeatureToggles] = FeatureToggle.GlobPathsGroupSupportFeatureToggle.ToString(),
+                [KnownVariables.OriginalPackageDirectoryPath] = StagingDirectory,
+                [SpecialVariables.CustomResourceYamlFileName] = "dirA/*\ndirB/*"
+            };
+            var runningDeployment = new RunningDeployment(variables);
+            var executor = CreateExecutor(variables, fileSystem);
+            
+            // Act
+            var result = await executor.Execute(runningDeployment, RecordingCallback);
+
+            // Assert
+            result.Should().BeFalse();
+            commandLineRunner.ReceivedCalls().Should().NotBeEmpty();
+            receivedCallbacks.Should().BeEmpty();
+        }
+
         void SetupCommandLineRunnerMocks()
         {
             const string deploymentJson = @"{
@@ -160,8 +190,6 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
                     },
                 ]
             }";
-
-            commandLineRunner = Substitute.For<ICommandLineRunner>();
             commandLineRunner.Execute(Arg.Is<CommandLineInvocation>(invocation => invocation.Arguments.Contains(Path.Combine("grouped", "1"))))
                              .Returns(info =>
                                       {
