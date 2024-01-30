@@ -3,99 +3,56 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 using Calamari.Common.Commands;
-using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.FileSystem.GlobExpressions;
 using Calamari.Common.Plumbing.Logging;
-using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes.Integration;
 using Calamari.Kubernetes.ResourceStatus.Resources;
-using Newtonsoft.Json.Linq;
 using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Kubernetes.Commands.Executors
 {
-    class GatherAndApplyRawYamlExecutor : IKubernetesApplyExecutor
+    class GatherAndApplyRawYamlExecutor : BaseKubernetesApplyExecutor
     {
-        private const string GroupedDirectoryName = "grouped";
+        const string GroupedDirectoryName = "grouped";
 
-        private readonly ILog log;
-        private readonly ICalamariFileSystem fileSystem;
-        private readonly Kubectl kubectl;
+        readonly ILog log;
+        readonly ICalamariFileSystem fileSystem;
+        readonly Kubectl kubectl;
 
         public GatherAndApplyRawYamlExecutor(
             ILog log,
             ICalamariFileSystem fileSystem,
-            Kubectl kubectl)
+            Kubectl kubectl) : base(log, kubectl)
         {
             this.log = log;
             this.fileSystem = fileSystem;
             this.kubectl = kubectl;
         }
 
-        public async Task<bool> Execute(RunningDeployment deployment, Func<ResourceIdentifier[], Task> appliedResourcesCallback)
+        protected override IEnumerable<ResourceIdentifier> ApplyAndGetResourceIdentifiers(RunningDeployment deployment)
         {
-            try
+            var variables = deployment.Variables;
+            var globs = variables.GetPaths(SpecialVariables.CustomResourceYamlFileName);
+            
+            if (globs.IsNullOrEmpty())
+                return Enumerable.Empty<ResourceIdentifier>();
+            
+            var directories = GroupFilesIntoDirectories(deployment, globs, variables);
+            
+            var resourcesIdentifiers = new HashSet<ResourceIdentifier>();
+            foreach (var directory in directories)
             {
-                var variables = deployment.Variables;
-                var globs = variables.GetPaths(SpecialVariables.CustomResourceYamlFileName);
-                if (globs.IsNullOrEmpty())
-                    return true;
-                var directories = GroupFilesIntoDirectories(deployment, globs, variables);
-                var resourcesIdentifiers = new HashSet<ResourceIdentifier>();
-                foreach (var directory in directories)
-                {
-                    var res = ApplyBatchAndReturnResourceIdentifiers(directory).ToList();
-                    
-                    if (appliedResourcesCallback != null)
-                    {
-                        var debug = res.Except(resourcesIdentifiers).ToArray();
-                        await appliedResourcesCallback(debug);
-                    }
-                    resourcesIdentifiers.UnionWith(res);
-                }
+                var res = ApplyBatchAndReturnResourceIdentifiers(directory).ToList();
+                resourcesIdentifiers.UnionWith(res);
+            }
 
-                WriteResourcesToOutputVariables(resourcesIdentifiers);
-                return true;
-            }
-            catch (GatherAndApplyRawYamlException)
-            {
-                return false;
-            }
-            catch (Exception e)
-            {
-                log.Error($"Deployment Failed due to exception: {e.Message}");
-                return false;
-            }
+            return resourcesIdentifiers;
         }
 
-        private void WriteResourcesToOutputVariables(IEnumerable<ResourceIdentifier> resources)
-        {
-            foreach (var resource in resources)
-            {
-                try
-                {
-                    var result = kubectl.ExecuteCommandAndReturnOutput("get", resource.Kind, resource.Name,
-                        "-o", "json");
-
-                    log.WriteServiceMessage(new ServiceMessage(ServiceMessageNames.SetVariable.Name, new Dictionary<string, string>
-                    {
-                        {ServiceMessageNames.SetVariable.NameAttribute, $"CustomResources({resource.Name})"},
-                        {ServiceMessageNames.SetVariable.ValueAttribute, result.Output.InfoLogs.Join("\n")}
-                    }));
-                }
-                catch
-                {
-                    log.Warn(
-                        $"Could not save json for resource to output variable for '{resource.Kind}/{resource.Name}'");
-                }
-            }
-        }
-
-        private IEnumerable<GlobDirectory> GroupFilesIntoDirectories(RunningDeployment deployment, List<string> globs, IVariables variables)
+        IEnumerable<GlobDirectory> GroupFilesIntoDirectories(RunningDeployment deployment, List<string> globs, IVariables variables)
         {
             var stagingDirectory = deployment.CurrentDirectory;
             var packageDirectory =
@@ -132,7 +89,7 @@ namespace Calamari.Kubernetes.Commands.Executors
             return directories;
         }
 
-        private IEnumerable<ResourceIdentifier> ApplyBatchAndReturnResourceIdentifiers(GlobDirectory globDirectory)
+        IEnumerable<ResourceIdentifier> ApplyBatchAndReturnResourceIdentifiers(GlobDirectory globDirectory)
         {
             var index = globDirectory.Index;
             var directoryWithTrailingSlash = globDirectory.Directory + Path.DirectorySeparatorChar;
@@ -152,93 +109,8 @@ namespace Calamari.Kubernetes.Commands.Executors
 
             var result = kubectl.ExecuteCommandAndReturnOutput("apply", "-f", $@"""{globDirectory.Directory}""", "--recursive", "-o", "json");
 
-            foreach (var message in result.Output.Messages)
-            {
-                switch (message.Level)
-                {
-                    case Level.Info:
-                        //No need to log as it's the output json from above.
-                        break;
-                    case Level.Error:
-                        //Files in the error are shown with the full path in their batch directory,
-                        //so we'll remove that for the user.
-                        log.Error(message.Text.Replace($"{directoryWithTrailingSlash}", ""));
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException();
-                }
-            }
-
-            if (result.Result.ExitCode != 0)
-            {
-                LogParsingError(null, index);
-            }
-
-            // If it did not error, the output should be valid json.
-            var outputJson = result.Output.InfoLogs.Join(Environment.NewLine);
-            try
-            {
-                var token = JToken.Parse(outputJson);
-
-                List<Resource> lastResources;
-                if (token["kind"]?.ToString() != "List" ||
-                    (lastResources = token["items"]?.ToObject<List<Resource>>()) == null)
-                {
-                    lastResources = new List<Resource> { token.ToObject<Resource>() };
-                }
-
-                var resources = lastResources.Select(r => r.ToResourceIdentifier()).ToList();
-
-                if (resources.Any())
-                {
-                    log.Verbose("Created Resources:");
-                    log.LogResources(resources);
-                }
-
-
-                return lastResources.Select(r => r.ToResourceIdentifier());
-            }
-            catch
-            {
-                LogParsingError(outputJson, index);
-            }
-
-            return Enumerable.Empty<ResourceIdentifier>();
+            return ProcessKubectlCommandOutput(result, globDirectory.Directory);
         }
-
-        private void LogParsingError(string outputJson, int index)
-        {
-            log.Error($"\"kubectl apply -o json\" returned invalid JSON for Batch #{index}:");
-            log.Error("---------------------------");
-            log.Error(outputJson);
-            log.Error("---------------------------");
-            log.Error("This can happen with older versions of kubectl. Please update to a recent version of kubectl.");
-            log.Error("See https://github.com/kubernetes/kubernetes/issues/58834 for more details.");
-            log.Error("Custom resources will not be saved as output variables.");
-
-            throw new GatherAndApplyRawYamlException();
-        }
-
-        private class ResourceMetadata
-        {
-            public string Namespace { get; set; }
-            public string Name { get; set; }
-        }
-
-        private class Resource
-        {
-            public string Kind { get; set; }
-            public ResourceMetadata Metadata { get; set; }
-
-            public ResourceIdentifier ToResourceIdentifier()
-            {
-                return new ResourceIdentifier(Kind, Metadata.Name, Metadata.Namespace);
-            }
-        }
-
-        private class GatherAndApplyRawYamlException : Exception
-        {
-		}
 
         private class GlobDirectory
         {

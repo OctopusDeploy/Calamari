@@ -100,8 +100,8 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
 
             commandLineRunner.ReceivedCalls().Count().Should().Be(4);
             var commandLineArgs = commandLineRunner.ReceivedCalls().SelectMany(call => call.GetArguments().Select(arg => arg.ToString())).ToArray();
-            commandLineArgs[0].Should().Contain("apply").And.Contain($"{Path.Combine("grouped", "1")}");
-            commandLineArgs[1].Should().Contain("apply").And.Contain($"{Path.Combine("grouped", "2")}");
+            commandLineArgs[0].Should().Contain("apply -f").And.Contain("--recursive").And.Contain("-o json").And.Contain($"{Path.Combine("grouped", "1")}");
+            commandLineArgs[1].Should().Contain("apply -f").And.Contain("--recursive").And.Contain("-o json").And.Contain($"{Path.Combine("grouped", "2")}");
             commandLineArgs[2].Should().Contain("get").And.Contain("basic-deployment");
             commandLineArgs[3].Should().Contain("get").And.Contain("basic-service");
 
@@ -116,25 +116,6 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
             log.ServiceMessages[0].Properties.Should().Contain(new KeyValuePair<string, string>("name", "CustomResources(basic-deployment)"));
             log.ServiceMessages[1].Name.Should().Be(ServiceMessageNames.SetVariable.Name);
             log.ServiceMessages[1].Properties.Should().Contain(new KeyValuePair<string, string>("name", "CustomResources(basic-service)"));
-        }
-
-        void AddTestFiles()
-        {
-            void CreateTemporaryTestFile(string directory)
-            {
-                if (!Directory.Exists(directory))
-                    Directory.CreateDirectory(directory);
-                var path = Path.Combine(directory, Guid.NewGuid() + ".tmp");
-                using (fileSystem.OpenFile(path, FileMode.OpenOrCreate, FileAccess.Read))
-                {
-                }
-            }
-
-            var dirA = Path.Combine(PackageDirectory, "dirA");
-            var dirB = Path.Combine(PackageDirectory, "dirB");
-            CreateTemporaryTestFile(dirA);
-            CreateTemporaryTestFile(dirB);
-            CreateTemporaryTestFile(dirB);
         }
 
         [Test]
@@ -159,6 +140,25 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
             result.Should().BeFalse();
             commandLineRunner.ReceivedCalls().Should().NotBeEmpty();
             receivedCallbacks.Should().BeEmpty();
+        }
+        
+        void AddTestFiles()
+        {
+            void CreateTemporaryTestFile(string directory)
+            {
+                if (!Directory.Exists(directory))
+                    Directory.CreateDirectory(directory);
+                var path = Path.Combine(directory, Guid.NewGuid() + ".tmp");
+                using (fileSystem.OpenFile(path, FileMode.OpenOrCreate, FileAccess.Read))
+                {
+                }
+            }
+
+            var dirA = Path.Combine(PackageDirectory, "dirA");
+            var dirB = Path.Combine(PackageDirectory, "dirB");
+            CreateTemporaryTestFile(dirA);
+            CreateTemporaryTestFile(dirB);
+            CreateTemporaryTestFile(dirB);
         }
 
         void SetupCommandLineRunnerMocks()
