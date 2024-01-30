@@ -66,7 +66,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands
                 Substitute.For<IExtractPackage>(),
                 Substitute.For<ISubstituteInFiles>(),
                 Substitute.For<IStructuredConfigVariablesService>(),
-                Substitute.For<IGatherAndApplyRawYamlExecutor>(),
+                Substitute.For<IKubernetesApplyExecutor>(),
                 resourceStatusCheck,
                 kubectl);
         }

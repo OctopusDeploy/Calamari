@@ -18,12 +18,7 @@ using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Kubernetes.Commands.Executors
 {
-    public interface IGatherAndApplyRawYamlExecutor
-    {
-        Task<bool> Execute(RunningDeployment deployment, Func<ResourceIdentifier[], Task> appliedResourcesCallback = null);
-    }
-
-    public class GatherAndApplyRawYamlExecutor : IGatherAndApplyRawYamlExecutor
+    class GatherAndApplyRawYamlExecutor : IKubernetesApplyExecutor
     {
         private const string GroupedDirectoryName = "grouped";
 
@@ -50,18 +45,20 @@ namespace Calamari.Kubernetes.Commands.Executors
                 if (globs.IsNullOrEmpty())
                     return true;
                 var directories = GroupFilesIntoDirectories(deployment, globs, variables);
-                var resources = new HashSet<Resource>();
+                var resourcesIdentifiers = new HashSet<ResourceIdentifier>();
                 foreach (var directory in directories)
                 {
-                    var res = ApplyBatchAndReturnResources(directory).ToList();
+                    var res = ApplyBatchAndReturnResourceIdentifiers(directory).ToList();
+                    
                     if (appliedResourcesCallback != null)
                     {
-                        await appliedResourcesCallback(res.Select(r => r.ToResourceIdentifier()).ToArray());
+                        var debug = res.Except(resourcesIdentifiers).ToArray();
+                        await appliedResourcesCallback(debug);
                     }
-                    resources.UnionWith(res);
+                    resourcesIdentifiers.UnionWith(res);
                 }
 
-                WriteResourcesToOutputVariables(resources);
+                WriteResourcesToOutputVariables(resourcesIdentifiers);
                 return true;
             }
             catch (GatherAndApplyRawYamlException)
@@ -75,25 +72,25 @@ namespace Calamari.Kubernetes.Commands.Executors
             }
         }
 
-        private void WriteResourcesToOutputVariables(IEnumerable<Resource> resources)
+        private void WriteResourcesToOutputVariables(IEnumerable<ResourceIdentifier> resources)
         {
             foreach (var resource in resources)
             {
                 try
                 {
-                    var result = kubectl.ExecuteCommandAndReturnOutput("get", resource.Kind, resource.Metadata.Name,
+                    var result = kubectl.ExecuteCommandAndReturnOutput("get", resource.Kind, resource.Name,
                         "-o", "json");
 
                     log.WriteServiceMessage(new ServiceMessage(ServiceMessageNames.SetVariable.Name, new Dictionary<string, string>
                     {
-                        {ServiceMessageNames.SetVariable.NameAttribute, $"CustomResources({resource.Metadata.Name})"},
+                        {ServiceMessageNames.SetVariable.NameAttribute, $"CustomResources({resource.Name})"},
                         {ServiceMessageNames.SetVariable.ValueAttribute, result.Output.InfoLogs.Join("\n")}
                     }));
                 }
                 catch
                 {
                     log.Warn(
-                        $"Could not save json for resource to output variable for '{resource.Kind}/{resource.Metadata.Name}'");
+                        $"Could not save json for resource to output variable for '{resource.Kind}/{resource.Name}'");
                 }
             }
         }
@@ -135,7 +132,7 @@ namespace Calamari.Kubernetes.Commands.Executors
             return directories;
         }
 
-        private IEnumerable<Resource> ApplyBatchAndReturnResources(GlobDirectory globDirectory)
+        private IEnumerable<ResourceIdentifier> ApplyBatchAndReturnResourceIdentifiers(GlobDirectory globDirectory)
         {
             var index = globDirectory.Index;
             var directoryWithTrailingSlash = globDirectory.Directory + Path.DirectorySeparatorChar;
@@ -145,7 +142,7 @@ namespace Calamari.Kubernetes.Commands.Executors
             if (!files.Any())
             {
                 log.Warn($"No files found matching '{globDirectory.Glob}'");
-                return Enumerable.Empty<Resource>();
+                return Enumerable.Empty<ResourceIdentifier>();
             }
 
             foreach (var file in files)
@@ -199,14 +196,14 @@ namespace Calamari.Kubernetes.Commands.Executors
                 }
 
 
-                return lastResources;
+                return lastResources.Select(r => r.ToResourceIdentifier());
             }
             catch
             {
                 LogParsingError(outputJson, index);
             }
 
-            return Enumerable.Empty<Resource>();
+            return Enumerable.Empty<ResourceIdentifier>();
         }
 
         private void LogParsingError(string outputJson, int index)

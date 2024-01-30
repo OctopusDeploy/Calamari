@@ -75,7 +75,7 @@ namespace Calamari
             builder.RegisterType<ResourceStatusCheckTask>().AsSelf();
             builder.RegisterType<ResourceUpdateReporter>().As<IResourceUpdateReporter>().SingleInstance();
             builder.RegisterType<ResourceStatusReportExecutor>().As<IResourceStatusReportExecutor>();
-            builder.RegisterType<GatherAndApplyRawYamlExecutor>().As<IGatherAndApplyRawYamlExecutor>();
+            builder.RegisterType<GatherAndApplyRawYamlExecutor>().As<IKubernetesApplyExecutor>();
             builder.RegisterType<Timer>().As<ITimer>();
 #endif
             builder.RegisterType<Kubectl>().AsSelf().As<IKubectl>().InstancePerLifetimeScope();
