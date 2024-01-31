@@ -49,8 +49,8 @@ namespace Calamari.Kubernetes.Commands.Executors
         }
         
         protected abstract IEnumerable<ResourceIdentifier> ApplyAndGetResourceIdentifiers(RunningDeployment deployment);
-
-        protected IEnumerable<ResourceIdentifier> ProcessKubectlCommandOutput(CommandResultWithOutput commandResult, string directory)
+        
+        protected void CheckResultForErrors(CommandResultWithOutput commandResult, string directory)
         {
             var directoryWithTrailingSlash = directory + Path.DirectorySeparatorChar;
 
@@ -75,6 +75,11 @@ namespace Calamari.Kubernetes.Commands.Executors
             {
                 throw new KubernetesApplyException();
             }
+        }
+
+        protected IEnumerable<ResourceIdentifier> ProcessKubectlCommandOutput(CommandResultWithOutput commandResult, string directory)
+        {
+            CheckResultForErrors(commandResult, directory);
             
             // If it did not error, the output should be valid json.
             var outputJson = commandResult.Output.InfoLogs.Join(Environment.NewLine);

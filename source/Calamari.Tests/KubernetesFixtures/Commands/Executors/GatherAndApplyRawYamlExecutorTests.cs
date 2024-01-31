@@ -73,6 +73,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
             result.Should().BeTrue();
             commandLineRunner.ReceivedCalls().Should().BeEmpty();
             receivedCallbacks.Should().BeEmpty();
+            log.ServiceMessages.Should().BeEmpty();
         }
 
         [Test]
@@ -140,6 +141,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
             result.Should().BeFalse();
             commandLineRunner.ReceivedCalls().Should().NotBeEmpty();
             receivedCallbacks.Should().BeEmpty();
+            log.ServiceMessages.Should().BeEmpty();
         }
         
         void AddTestFiles()
@@ -171,7 +173,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
                 }
             }";
 
-            const string serviceJson = @"{
+            const string serviceAndDeploymentJson = @"{
                 ""kind"": ""List"",
                 ""items"": [
                     {
@@ -201,7 +203,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
                              .Returns(info =>
                                       {
                                           var invocation = (CommandLineInvocation)info[0];
-                                          invocation.AdditionalInvocationOutputSink?.WriteInfo(serviceJson);
+                                          invocation.AdditionalInvocationOutputSink?.WriteInfo(serviceAndDeploymentJson);
                                           return new CommandResult("group 2", 0);
                                       });
         }
