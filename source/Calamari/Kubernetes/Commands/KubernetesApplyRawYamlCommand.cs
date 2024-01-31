@@ -31,7 +31,7 @@ namespace Calamari.Kubernetes.Commands
             IExtractPackage extractPackage,
             ISubstituteInFiles substituteInFiles,
             IStructuredConfigVariablesService structuredConfigVariablesService,
-            IKubernetesApplyExecutor kubernetesApplyExecutor,
+            IRawYamlKubernetesApplyExecutor kubernetesApplyExecutor,
             IResourceStatusReportExecutor statusReporter,
             Kubectl kubectl)
             : base(log, deploymentJournalWriter, variables, fileSystem, extractPackage,

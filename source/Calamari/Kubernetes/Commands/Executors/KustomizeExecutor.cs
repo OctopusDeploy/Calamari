@@ -12,7 +12,11 @@ using Newtonsoft.Json.Linq;
 
 namespace Calamari.Kubernetes.Commands.Executors
 {
-    class KustomizeExecutor : BaseKubernetesApplyExecutor
+    public interface IKustomizeKubernetesApplyExecutor : IKubernetesApplyExecutor
+    {
+    }
+    
+    class KustomizeExecutor : BaseKubernetesApplyExecutor, IKustomizeKubernetesApplyExecutor
     {
         const int MinimumKubectlVersionMajor = 1;
         const int MinimumKubectlVersionMinor = 24;

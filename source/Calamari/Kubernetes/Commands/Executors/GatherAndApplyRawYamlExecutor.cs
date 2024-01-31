@@ -14,7 +14,11 @@ using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Kubernetes.Commands.Executors
 {
-    class GatherAndApplyRawYamlExecutor : BaseKubernetesApplyExecutor
+    public interface IRawYamlKubernetesApplyExecutor : IKubernetesApplyExecutor
+    {
+    }
+    
+    class GatherAndApplyRawYamlExecutor : BaseKubernetesApplyExecutor, IRawYamlKubernetesApplyExecutor
     {
         const string GroupedDirectoryName = "grouped";
 

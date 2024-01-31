@@ -246,7 +246,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
                 }}
             }}";
 
-        KustomizeExecutor CreateExecutor(IVariables variables)
+        IKustomizeKubernetesApplyExecutor CreateExecutor(IVariables variables)
         {
             var kubectl = new Kubectl(variables, log, commandLineRunner);
             return new KustomizeExecutor(log, kubectl);

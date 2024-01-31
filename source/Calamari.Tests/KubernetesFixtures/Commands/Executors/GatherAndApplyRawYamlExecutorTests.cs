@@ -208,7 +208,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
                                       });
         }
 
-        GatherAndApplyRawYamlExecutor CreateExecutor(IVariables variables, ICalamariFileSystem fs)
+        IRawYamlKubernetesApplyExecutor CreateExecutor(IVariables variables, ICalamariFileSystem fs)
         {
             var kubectl = new Kubectl(variables, log, commandLineRunner);
             return new GatherAndApplyRawYamlExecutor(log, fs, kubectl);
