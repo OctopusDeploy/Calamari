@@ -65,10 +65,11 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
             var result = await executor.Execute(runningDeployment, RecordingCallback);
 
             // Assert
-            result.Should().BeTrue();
+            result.Should().BeFalse();
             commandLineRunner.ReceivedCalls().Should().BeEmpty();
             receivedCallbacks.Should().BeEmpty();
             log.ServiceMessages.Should().BeEmpty();
+            log.StandardError[0].Should().Contain("Kustomization directory not specified");
         }
         
         [Test]

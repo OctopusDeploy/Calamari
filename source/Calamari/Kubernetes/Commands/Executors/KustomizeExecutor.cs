@@ -36,8 +36,7 @@ namespace Calamari.Kubernetes.Commands.Executors
 
             if (overlayPath == null)
             {
-                log.Warn("Kustomization directory not specified");
-                return Enumerable.Empty<ResourceIdentifier>();
+                throw new KubectlException("Kustomization directory not specified");
             }
 
             ValidateKubectlVersion(deployment.CurrentDirectory);
