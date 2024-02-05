@@ -21,6 +21,8 @@ namespace Calamari.Kubernetes
         public const string DeploymentWait = "Octopus.Action.KubernetesContainers.DeploymentWait";
         public const string CustomResourceYamlFileName = "Octopus.Action.KubernetesContainers.CustomResourceYamlFileName";
         public const string GroupedYamlDirectories = "Octopus.Action.KubernetesContainers.YamlDirectories";
+        public const string KustomizeOverlayPath = "Octopus.Action.Kubernetes.Kustomize.OverlayPath";
+        
         public const string Timeout = "Octopus.Action.Kubernetes.DeploymentTimeout";
         public const string WaitForJobs = "Octopus.Action.Kubernetes.WaitForJobs";
         public const string ClientCertificate = "Octopus.Action.Kubernetes.ClientCertificate";

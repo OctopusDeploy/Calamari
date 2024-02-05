@@ -1,3 +1,6 @@
+using System;
+using System.Threading.Tasks;
+using Calamari.Common.Commands;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.StructuredVariables;
@@ -9,6 +12,7 @@ using Calamari.Kubernetes.Commands;
 using Calamari.Kubernetes.Commands.Executors;
 using Calamari.Kubernetes.Integration;
 using Calamari.Kubernetes.ResourceStatus;
+using Calamari.Kubernetes.ResourceStatus.Resources;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
 using FluentAssertions;
@@ -18,47 +22,64 @@ using NSubstitute;
 namespace Calamari.Tests.KubernetesFixtures.Commands
 {
     [TestFixture]
-    public class KubernetesApplyRawYamlCommandFixture
+    public class KubernetesKustomizeCommandFixture
     {
         [Test]
         public void WhenResourceStatusIsDisabled_ShouldNotRunStatusChecks()
         {
+            // Arrange
             var variables = new CalamariVariables()
             {
-                [KnownVariables.EnabledFeatureToggles] = "MultiGlobPathsForRawYamlFeatureToggle",
                 [SpecialVariables.ResourceStatusCheck] = "False"
             };
             var resourceStatusCheck = Substitute.For<IResourceStatusReportExecutor>();
             var command = CreateCommand(variables, resourceStatusCheck);
 
-            command.Execute(new string[]{ });
-
+            // Act
+            var result = command.Execute(new string[]{ });
+            
+            // Assert
             resourceStatusCheck.ReceivedCalls().Should().BeEmpty();
+            result.Should().Be(0);
         }
 
         [Test]
-        public void WhenResourceStatusIsEnabled_ShouldRunStatusChecks()
+        [TestCase(5, true)]
+        [TestCase(10, false)]
+        public void WhenResourceStatusIsEnabled_ShouldRunStatusChecks(int timeout, bool waitForJobs)
         {
+            // Arrange
             var variables = new CalamariVariables()
             {
-                [KnownVariables.EnabledFeatureToggles] = "MultiGlobPathsForRawYamlFeatureToggle",
-                [SpecialVariables.ResourceStatusCheck] = "True"
+                [SpecialVariables.ResourceStatusCheck] = "True",
+                [SpecialVariables.Timeout] = timeout.ToString(),
+                [SpecialVariables.WaitForJobs] = waitForJobs.ToString()
             };
+            var runningCheck = Substitute.For<IRunningResourceStatusCheck>();
+            runningCheck.WaitForCompletionOrTimeout().Returns(true);
             var resourceStatusCheck = Substitute.For<IResourceStatusReportExecutor>();
+            resourceStatusCheck.Start(Arg.Any<int>(), Arg.Any<bool>()).Returns(runningCheck);
             var command = CreateCommand(variables, resourceStatusCheck);
 
-            command.Execute(new string[]{ });
+            // Act
+            var result = command.Execute(new string[]{ });
 
+            // Assert
             resourceStatusCheck.ReceivedCalls().Should().HaveCount(1);
+            resourceStatusCheck.Received().Start(timeout, waitForJobs);
+            runningCheck.Received().WaitForCompletionOrTimeout();
+            result.Should().Be(0);
         }
 
-        private KubernetesApplyRawYamlCommand CreateCommand(IVariables variables, IResourceStatusReportExecutor resourceStatusCheck)
+        KubernetesKustomizeCommand CreateCommand(IVariables variables, IResourceStatusReportExecutor resourceStatusCheck)
         {
             var log = new InMemoryLog();
             var fs = new TestCalamariPhysicalFileSystem();
             var kubectl = new Kubectl(variables, log, Substitute.For<ICommandLineRunner>());
+            var kubernetesApplyExecutor = Substitute.For<IKustomizeKubernetesApplyExecutor>();
+            kubernetesApplyExecutor.Execute(Arg.Any<RunningDeployment>(), Arg.Any<Func<ResourceIdentifier[], Task>>()).Returns(true);
 
-            return new KubernetesApplyRawYamlCommand(
+            return new KubernetesKustomizeCommand(
                 log,
                 Substitute.For<IDeploymentJournalWriter>(),
                 variables,
@@ -66,7 +87,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands
                 Substitute.For<IExtractPackage>(),
                 Substitute.For<ISubstituteInFiles>(),
                 Substitute.For<IStructuredConfigVariablesService>(),
-                Substitute.For<IRawYamlKubernetesApplyExecutor>(),
+                kubernetesApplyExecutor,
                 resourceStatusCheck,
                 kubectl);
         }

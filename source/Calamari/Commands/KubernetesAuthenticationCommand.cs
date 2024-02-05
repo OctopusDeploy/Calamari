@@ -1,4 +1,5 @@
 #if !NET40
+using System;
 using System.Collections.Generic;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Processes;
@@ -10,6 +11,7 @@ using Calamari.Kubernetes.Integration;
 
 namespace Calamari.Commands
 {
+    [Obsolete("This command is used exclusively by the Kustomize step package. It should be removed together with \"KustomizeStepMigrationFeatureToggle\" once the step migration has settled.")]
     [Command("authenticate-to-kubernetes")]
     public class KubernetesAuthenticationCommand: Command<KubernetesAuthenticationCommandInput>
     {

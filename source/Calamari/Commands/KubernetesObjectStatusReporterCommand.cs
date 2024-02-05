@@ -12,6 +12,7 @@ using Calamari.Kubernetes.ResourceStatus;
 
 namespace Calamari.Commands
 {
+    [Obsolete("This command is used exclusively by the Kustomize step package. It should be removed together with \"KustomizeStepMigrationFeatureToggle\" once the step migration has settled.")]
     [Command("kubernetes-object-status")]
     public class KubernetesObjectStatusReporterCommand : Command<KubernetesObjectStatusReporterCommandInput>
     {

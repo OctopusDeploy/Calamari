@@ -1,4 +1,5 @@
 #if !NET40
+using System;
 using System.Threading.Tasks;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Packages;
@@ -14,16 +15,15 @@ using Calamari.Kubernetes.ResourceStatus;
 
 namespace Calamari.Kubernetes.Commands
 {
-    [Command(Name, Description = "Apply Raw Yaml to Kubernetes Cluster")]
-    public class KubernetesApplyRawYamlCommand : KubernetesDeploymentCommandBase
+    [Command(Name, Description = "Apply Kubernetes manifests with Kustomize")]
+    public class KubernetesKustomizeCommand : KubernetesDeploymentCommandBase
     {
-        public const string Name = "kubernetes-apply-raw-yaml";
+        public const string Name = "kubernetes-kustomize";
+        readonly IVariables variables;
+        readonly IKubernetesApplyExecutor kubernetesApplyExecutor;
+        readonly IResourceStatusReportExecutor statusReporter;
 
-        private readonly IVariables variables;
-        private readonly IResourceStatusReportExecutor statusReporter;
-        private readonly IKubernetesApplyExecutor kubernetesApplyExecutor;
-
-        public KubernetesApplyRawYamlCommand(
+        public KubernetesKustomizeCommand(
             ILog log,
             IDeploymentJournalWriter deploymentJournalWriter,
             IVariables variables,
@@ -31,15 +31,20 @@ namespace Calamari.Kubernetes.Commands
             IExtractPackage extractPackage,
             ISubstituteInFiles substituteInFiles,
             IStructuredConfigVariablesService structuredConfigVariablesService,
-            IRawYamlKubernetesApplyExecutor kubernetesApplyExecutor,
+            IKustomizeKubernetesApplyExecutor kubernetesApplyExecutor,
             IResourceStatusReportExecutor statusReporter,
-            Kubectl kubectl)
-            : base(log, deploymentJournalWriter, variables, fileSystem, extractPackage,
-            substituteInFiles, structuredConfigVariablesService, kubectl)
+            Kubectl kubectl) : base(log,
+                                    deploymentJournalWriter,
+                                    variables,
+                                    fileSystem,
+                                    extractPackage,
+                                    substituteInFiles,
+                                    structuredConfigVariablesService,
+                                    kubectl)
         {
             this.variables = variables;
-            this.statusReporter = statusReporter;
             this.kubernetesApplyExecutor = kubernetesApplyExecutor;
+            this.statusReporter = statusReporter;
         }
 
         protected override async Task<bool> ExecuteCommand(RunningDeployment runningDeployment)
@@ -51,11 +56,10 @@ namespace Calamari.Kubernetes.Commands
 
             var timeoutSeconds = variables.GetInt32(SpecialVariables.Timeout) ?? 0;
             var waitForJobs = variables.GetFlag(SpecialVariables.WaitForJobs);
-            
+
             var statusCheck = statusReporter.Start(timeoutSeconds, waitForJobs);
 
-            return await kubernetesApplyExecutor.Execute(runningDeployment, statusCheck.AddResources) &&
-                await statusCheck.WaitForCompletionOrTimeout();
+            return await kubernetesApplyExecutor.Execute(runningDeployment, statusCheck.AddResources) && await statusCheck.WaitForCompletionOrTimeout();
         }
     }
 }
