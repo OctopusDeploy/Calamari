@@ -127,18 +127,9 @@ namespace Calamari.Kubernetes.Commands
             var runningDeployment = new RunningDeployment(pathToPackage, variables);
 
             var conventionRunner = new ConventionProcessor(runningDeployment, conventions, log);
-            try
-            {
-                conventionRunner.RunConventions(logExceptions: false);
-                var result = ExecuteCommand(runningDeployment).GetAwaiter().GetResult();
-                deploymentJournalWriter.AddJournalEntry(runningDeployment, result, pathToPackage);
-                return result ? 0 : -1;
-            }
-            catch (Exception)
-            {
-                deploymentJournalWriter.AddJournalEntry(runningDeployment, false, pathToPackage);
-                throw;
-            }
+            conventionRunner.RunConventions(logExceptions: false);
+            var result = ExecuteCommand(runningDeployment).GetAwaiter().GetResult();
+            return result ? 0 : -1;
         }
     }
 }
