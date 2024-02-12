@@ -48,14 +48,13 @@ namespace Calamari.Kubernetes.Conventions
                 if (result.ExitCode != 0)
                 {
                     throw new CommandException(
-                        $"Helm Upgrade returned non-zero exit code: {result.ExitCode}. Deployment terminated.");
+                                               $"Helm Upgrade returned non-zero exit code: {result.ExitCode}. Deployment terminated.");
                 }
 
-                if (result.HasErrors &&
-                    deployment.Variables.GetFlag(Deployment.SpecialVariables.Action.FailScriptOnErrorOutput, false))
+                if (result.HasErrors && deployment.Variables.GetFlag(Deployment.SpecialVariables.Action.FailScriptOnErrorOutput, false))
                 {
                     throw new CommandException(
-                        "Helm Upgrade returned zero exit code but had error output. Deployment terminated.");
+                                               "Helm Upgrade returned zero exit code but had error output. Deployment terminated.");
                 }
             }
         }
@@ -68,6 +67,11 @@ namespace Calamari.Kubernetes.Conventions
             var customHelmExecutable = CustomHelmExecutableFullPath(deployment.Variables, deployment.CurrentDirectory);
             var helmVersion = GetVersion(deployment.Variables);
             CheckHelmToolVersion(customHelmExecutable, helmVersion);
+
+            if (helmVersion == HelmVersion.V2)
+            {
+                log.Warn("This step is currently configured to use Helm V2. Support for Helm V2 will be removed in Octopus Server 2024.2. Please migrate to Helm V3 as soon as possible");
+            }
 
             var sb = new StringBuilder();
 
@@ -120,11 +124,12 @@ namespace Calamari.Kubernetes.Conventions
             if (!string.IsNullOrWhiteSpace(helmExecutable))
             {
                 if (variables.GetIndexes(PackageVariables.PackageCollection)
-                        .Contains(SpecialVariables.Helm.Packages.CustomHelmExePackageKey) && !Path.IsPathRooted(helmExecutable))
+                             .Contains(SpecialVariables.Helm.Packages.CustomHelmExePackageKey)
+                    && !Path.IsPathRooted(helmExecutable))
                 {
                     var fullPath = Path.GetFullPath(Path.Combine(workingDirectory, SpecialVariables.Helm.Packages.CustomHelmExePackageKey, helmExecutable));
                     log.Info(
-                        $"Using custom helm executable at {helmExecutable} from inside package. Full path at {fullPath}");
+                             $"Using custom helm executable at {helmExecutable} from inside package. Full path at {fullPath}");
 
                     return fullPath;
                 }
@@ -389,7 +394,11 @@ namespace Calamari.Kubernetes.Conventions
             log.Verbose($"Helm version selected: {selectedVersion}");
 
             StringBuilder stdout = new StringBuilder();
-            var result = SilentProcessRunner.ExecuteCommand(customHelmExecutable ?? "helm", "version --client --short", Environment.CurrentDirectory, output => stdout.Append(output), error => { });
+            var result = SilentProcessRunner.ExecuteCommand(customHelmExecutable ?? "helm",
+                                                            "version --client --short",
+                                                            Environment.CurrentDirectory,
+                                                            output => stdout.Append(output),
+                                                            error => { });
 
             if (result.ExitCode != 0)
                 log.Warn("Unable to retrieve the Helm tool version");
