@@ -70,7 +70,7 @@ namespace Calamari.Kubernetes.Conventions
 
             if (helmVersion == HelmVersion.V2)
             {
-                log.Warn("This step is currently configured to use Helm V2. Support for Helm V2 will be removed in Octopus Server 2024.2. Please migrate to Helm V3 as soon as possible");
+                log.Warn("This step is currently configured to use Helm V2. Support for Helm V2 will be removed in Octopus Server 2024.3. Please migrate to Helm V3 as soon as possible");
             }
 
             var sb = new StringBuilder();
