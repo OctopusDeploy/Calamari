@@ -17,8 +17,12 @@ environment: # inline at top level
       arch: x86
 skip_tags: false
 branches:
-# block between mapping key and value
+  # block between mapping key and value
   only: # inline between mapping key and value
     - main
     # - alt
     - aux
+leadingComments:
+# Block comment
+# Another block comment
+  test: "some value"

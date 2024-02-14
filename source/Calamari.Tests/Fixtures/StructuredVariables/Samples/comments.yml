@@ -22,3 +22,7 @@ branches:
   - main
   # - alt
   - aux
+leadingComments:
+  #Block comment
+  #Another block comment
+  test: "some value"
