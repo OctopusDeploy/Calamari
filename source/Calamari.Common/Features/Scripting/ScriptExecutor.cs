@@ -23,7 +23,7 @@ namespace Calamari.Common.Features.Scripting
             foreach (var proxyVariable in ProxyEnvironmentVariablesGenerator.GenerateProxyEnvironmentVariables())
                 environmentVariablesIncludingProxy[proxyVariable.Key] = proxyVariable.Value;
 
-            var prepared = PrepareExecution(script, variables, environmentVariablesIncludingProxy);
+            var prepared = PrepareExecution(script, variables, commandLineRunner, environmentVariablesIncludingProxy);
 
             CommandResult? result = null;
             foreach (var execution in prepared)
@@ -63,6 +63,7 @@ namespace Calamari.Common.Features.Scripting
 
         protected abstract IEnumerable<ScriptExecution> PrepareExecution(Script script,
             IVariables variables,
+            ICommandLineRunner commandLineRunner,
             Dictionary<string, string>? environmentVars = null);
 
         static void CopyWorkingDirectory(IVariables variables, string workingDirectory, string arguments)

@@ -49,7 +49,7 @@ namespace Calamari.Common.Features.Scripting
             Dictionary<string, string>? environmentVars = null)
         {
             var syntax = script.File.ToScriptType();
-            return BuildWrapperChain(syntax, variables)
+            return BuildWrapperChain(syntax, variables, commandLineRunner)
                 .ExecuteScript(script, syntax, commandLineRunner, environmentVars);
         }
 
@@ -68,7 +68,7 @@ namespace Calamari.Common.Features.Scripting
         /// calling ExecuteScript() on the start of the chain will result in every part of the chain being
         /// executed, down to the final TerminalScriptWrapper.
         /// </returns>
-        IScriptWrapper BuildWrapperChain(ScriptSyntax scriptSyntax, IVariables variables)
+        IScriptWrapper BuildWrapperChain(ScriptSyntax scriptSyntax, IVariables variables, ICommandLineRunner commandLineRunner)
         {
             bool.TryParse(variables.Get(ScriptVariables.UseDotnetScript, bool.FalseString), out bool useDotnetScript);
             // get the type of script
@@ -82,7 +82,7 @@ namespace Calamari.Common.Features.Scripting
                 .OrderByDescending(hook => hook.Priority)
                 .Aggregate(
                     // The last wrapper is always the TerminalScriptWrapper
-                    new TerminalScriptWrapper(GetScriptExecutor(scriptSyntax, variables, useDotnetScript), variables),
+                    new TerminalScriptWrapper(GetScriptExecutor(scriptSyntax, variables, commandLineRunner, useDotnetScript), variables),
                     (IScriptWrapper current, IScriptWrapper next) =>
                     {
                         // the next wrapper is pointed to the current one
@@ -96,14 +96,14 @@ namespace Calamari.Common.Features.Scripting
                     });
         }
 
-        IScriptExecutor GetScriptExecutor(ScriptSyntax scriptSyntax, IVariables variables, bool runDotnetScript = false)
+        IScriptExecutor GetScriptExecutor(ScriptSyntax scriptSyntax, IVariables variables, ICommandLineRunner commandLineRunner, bool runDotnetScript = false)
         {
             switch (scriptSyntax)
             {
                 case ScriptSyntax.PowerShell:
                     return new PowerShellScriptExecutor();
                 case ScriptSyntax.CSharp:
-                    return runDotnetScript ? (IScriptExecutor) new DotnetScriptExecutor() : new ScriptCSScriptExecutor();
+                    return runDotnetScript ? (IScriptExecutor) new DotnetScriptExecutor(commandLineRunner) : new ScriptCSScriptExecutor();
                 case ScriptSyntax.Bash:
                     return new BashScriptExecutor();
                 case ScriptSyntax.FSharp:

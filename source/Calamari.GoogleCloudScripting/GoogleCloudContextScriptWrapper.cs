@@ -240,40 +240,6 @@ namespace Calamari.GoogleCloudScripting
                     ? String.Join(Environment.NewLine, captureCommandOutput.Messages.Where(m => m.Level == Level.Verbose).Select(m => m.Text).ToArray()).Trim()
                     : null;
             }
-
-            class CaptureCommandOutput : ICommandInvocationOutputSink
-            {
-                private List<Message> messages = new List<Message>();
-
-                public List<Message> Messages => messages;
-
-                public void WriteInfo(string line)
-                {
-                    Messages.Add(new Message(Level.Verbose, line));
-                }
-
-                public void WriteError(string line)
-                {
-                    Messages.Add(new Message(Level.Error, line));
-                }
-            }
-
-            class Message
-            {
-                public Level Level { get; }
-                public string Text { get; }
-                public Message(Level level, string text)
-                {
-                    Level = level;
-                    Text = text;
-                }
-            }
-
-            enum Level
-            {
-                Verbose,
-                Error
-            }
         }
     }
 }

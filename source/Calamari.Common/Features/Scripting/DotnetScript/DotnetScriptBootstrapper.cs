@@ -30,6 +30,30 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
             ClassBasedBootstrapScriptTemplate = EmbeddedResource.ReadEmbeddedText(typeof(DotnetScriptBootstrapper).Namespace + ".ClassBootstrap.csx");
         }
 
+        public static string? HasDotnetScript(ICommandLineRunner commandLineRunner)
+        {
+            var commandOutput = CalamariEnvironment.IsRunningOnWindows
+                ? ExecuteCommandAndReturnOutput(commandLineRunner, "where", "dotnet-script")
+                : ExecuteCommandAndReturnOutput(commandLineRunner, "which", "dotnet-script");
+
+            var hasDotnetScriptMessage = commandOutput.Messages.Where(m => m.Text.Contains("dotnet-script")).ToList();
+            return hasDotnetScriptMessage.FirstOrDefault()?.Text;
+        }
+        
+        static CaptureCommandOutput ExecuteCommandAndReturnOutput(ICommandLineRunner commandLineRunner, string exe, params string[] arguments)
+        {
+            var captureCommandOutput = new CaptureCommandOutput();
+            var invocation = new CommandLineInvocation(exe, arguments)
+            {
+                OutputAsVerbose = false,
+                OutputToLog = false,
+                AdditionalInvocationOutputSink = captureCommandOutput
+            };
+
+            var result = commandLineRunner.Execute(invocation);
+            return captureCommandOutput;
+        }
+
         public static string FindExecutable()
         {
             if (ScriptingEnvironment.IsNetFramework())

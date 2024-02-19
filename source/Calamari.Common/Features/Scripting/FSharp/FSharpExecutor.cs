@@ -20,6 +20,7 @@ namespace Calamari.Common.Features.Scripting.FSharp
         
         protected override IEnumerable<ScriptExecution> PrepareExecution(Script script,
             IVariables variables,
+            ICommandLineRunner commandLineRunner,
             Dictionary<string, string>? environmentVars = null)
         {
             LogFSharpDeprecationWarning(variables);
