@@ -51,6 +51,14 @@ namespace Calamari.Kubernetes
             public const string TillerNamespace = "Octopus.Action.Helm.TillerNamespace";
             public const string TillerTimeout = "Octopus.Action.Helm.TillerTimeout";
             public const string ChartDirectory = "Octopus.Action.Helm.ChartDirectory";
+            public const string OciRegistry = "Octopus.Action.Helm.OciRegistry";
+
+            public static class ScriptSource
+            {
+                public const string OciRegistry = nameof(OciRegistry);
+                public const string Package = nameof(Package);
+                public const string GitRepository = nameof(GitRepository);
+            }
 
             public static class Packages
             {

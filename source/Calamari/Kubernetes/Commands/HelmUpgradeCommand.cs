@@ -60,7 +60,7 @@ namespace Calamari.Kubernetes.Commands
         {
               Options.Parse(commandLineArguments);
 
-            if (!File.Exists(pathToPackage))
+            if (variables.Get(ScriptVariables.ScriptSource) != SpecialVariables.Helm.ScriptSource.OciRegistry && !File.Exists(pathToPackage))
                 throw new CommandException("Could not find package file: " + pathToPackage);
 
             var conventions = new List<IConvention>

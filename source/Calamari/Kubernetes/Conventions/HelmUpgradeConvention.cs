@@ -294,6 +294,11 @@ namespace Calamari.Kubernetes.Conventions
 
         string GetChartLocation(RunningDeployment deployment)
         {
+            if (deployment.Variables.Get(ScriptVariables.ScriptSource) == SpecialVariables.Helm.ScriptSource.OciRegistry)
+            {
+                return deployment.Variables.Get(SpecialVariables.Helm.OciRegistry);
+            }
+
             var installDir = deployment.Variables.Get(PackageVariables.Output.InstallationDirectoryPath);
 
             var chartDirectoryVariable = deployment.Variables.Get(SpecialVariables.Helm.ChartDirectory);
