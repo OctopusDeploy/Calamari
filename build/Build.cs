@@ -304,6 +304,7 @@ namespace Calamari.Build
                 .SetFramework(calamariPackageMetadata.Framework)
                 .SetRuntime(calamariPackageMetadata.Architecture)
                 .SetOutput(outputDirectory)
+                .EnableNoBuild()
             );
 
             if (!project.Name.Contains("Tests"))
@@ -558,7 +559,8 @@ namespace Calamari.Build
                                 .SetVersion(NugetVersion.Value)
                                 .SetVerbosity(BuildVerbosity)
                                 .SetRuntime(runtimeId)
-                                .SetVersion(version));
+                                .SetVersion(version)
+                                .EnableNoBuild());
 
             if (WillSignBinaries)
                 Signing.SignAndTimestampBinaries(publishedTo, AzureKeyVaultUrl, AzureKeyVaultAppId,
