@@ -46,6 +46,8 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
         
         public static bool IsDotnetScriptToolInstalled(ICommandLineRunner commandLineRunner)
         {
+            // On Windows dotnet tools use the %USERPROFILE%\.dotnet\tools location. In Calamari the UserProfile is set to 
+            // C:\Windows\system32\config\systemprofile, if the tool has been installed under another profile this will not find dotnet-script
             var commandOutput = ExecuteCommandAndReturnOutput(commandLineRunner,
                                                               "dotnet",
                                                               "tool",
