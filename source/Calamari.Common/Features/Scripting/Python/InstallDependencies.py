@@ -11,6 +11,10 @@ def install_package_using_pip(package):
         exit(exitcode)
 
 def install_missing_dependency(module, package):
+    if module == '':
+        install_package_using_pip(package)
+        return
+
     try:
         printverbose("Checking for dependency {}".format(package))
         importlib.import_module(module)
@@ -23,4 +27,7 @@ def printverbose(message):
     print(message)
     print("##octopus[stdout-default]")
 
-install_missing_dependency('setuptools', 'gcloud', 'pyrebase', 'Crypto.Cipher.AES', 'pycryptodome')
+install_missing_dependency('', 'setuptools')
+install_missing_dependency('', 'gcloud')
+install_missing_dependency('', 'pyrebase')
+install_missing_dependency('Crypto.Cipher.AES', 'pycryptodome')
