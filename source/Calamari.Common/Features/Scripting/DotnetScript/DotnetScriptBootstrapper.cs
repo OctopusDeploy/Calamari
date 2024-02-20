@@ -36,7 +36,7 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
             // On Windows dotnet tools use the %USERPROFILE%\.dotnet\tools location. In Calamari the UserProfile is set to 
             // C:\Windows\system32\config\systemprofile, if the tool has been installed under another profile this will not find dotnet-script
             // This approach handles dotnet-script being installed via powershell/bash scripts.
-            var commandOutput = CalamariEnvironment.IsRunningOnWindows
+            var (_, commandOutput) = CalamariEnvironment.IsRunningOnWindows
                 ? ExecuteCommandAndReturnOutput(commandLineRunner, "where", "dotnet-script")
                 : ExecuteCommandAndReturnOutput(commandLineRunner, "which", "dotnet-script");
 
@@ -48,17 +48,16 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
         {
             // On Windows dotnet tools use the %USERPROFILE%\.dotnet\tools location. In Calamari the UserProfile is set to 
             // C:\Windows\system32\config\systemprofile, if the tool has been installed under another profile this will not find dotnet-script
-            var commandOutput = ExecuteCommandAndReturnOutput(commandLineRunner,
+            var (wasSuccessful, commandOutput) = ExecuteCommandAndReturnOutput(commandLineRunner,
                                                               "dotnet",
                                                               "tool",
                                                               "list",
-                                                              "-g",
-                                                              "dotnet-script");
+                                                              "-g");
             var messages = commandOutput.Messages.Where(m => m.Text.Contains("dotnet-script"));
-            return messages.Any();
+            return wasSuccessful && messages.Any();
         }
         
-        static CaptureCommandOutput ExecuteCommandAndReturnOutput(ICommandLineRunner commandLineRunner, string exe, params string[] arguments)
+        static (bool wasSuccessful, CaptureCommandOutput) ExecuteCommandAndReturnOutput(ICommandLineRunner commandLineRunner, string exe, params string[] arguments)
         {
             var captureCommandOutput = new CaptureCommandOutput();
             var envVars = Environment.GetEnvironmentVariables()
@@ -74,8 +73,9 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
                 WorkingDirectory = Path.GetPathRoot(Environment.CurrentDirectory)
             };
 
-            commandLineRunner.Execute(invocation);
-            return captureCommandOutput;
+            var res = commandLineRunner.Execute(invocation);
+            
+            return (res.ExitCode == 0, captureCommandOutput);
         }
 
         public static string FindExecutable()
