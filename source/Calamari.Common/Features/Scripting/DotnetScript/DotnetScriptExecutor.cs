@@ -26,10 +26,10 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
             var workingDirectory = Path.GetDirectoryName(script.File);
             
             var hasDotnetToolInstalled = DotnetScriptBootstrapper.IsDotnetScriptToolInstalled(commandLineRunner);
-            //var localDotnetScriptPath = DotnetScriptBootstrapper.DotnetScriptPath(commandLineRunner);
+            var localDotnetScriptPath = DotnetScriptBootstrapper.DotnetScriptPath(commandLineRunner);
             var bundledExecutable = DotnetScriptBootstrapper.FindExecutable();
             
-            var executable = hasDotnetToolInstalled ? "dotnet-script" : bundledExecutable;
+            var executable = hasDotnetToolInstalled ? "dotnet-script" : localDotnetScriptPath ?? bundledExecutable;
             
             var configurationFile = DotnetScriptBootstrapper.PrepareConfigurationFile(workingDirectory, variables);
             var (bootstrapFile, otherTemporaryFiles) = DotnetScriptBootstrapper.PrepareBootstrapFile(script.File, configurationFile, workingDirectory, variables);
