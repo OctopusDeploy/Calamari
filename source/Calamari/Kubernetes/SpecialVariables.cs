@@ -55,9 +55,9 @@ namespace Calamari.Kubernetes
 
             public static class ScriptSource
             {
-                public const string OciRegistry = nameof(OciRegistry);
-                public const string Package = nameof(Package);
-                public const string GitRepository = nameof(GitRepository);
+                public const string OciRegistry = "OciRegistry";
+                public const string Package = "Package";
+                public const string GitRepository = "GitRepository";
             }
 
             public static class Packages
