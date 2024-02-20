@@ -24,14 +24,21 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
             Dictionary<string, string>? environmentVars = null)
         {
             var workingDirectory = Path.GetDirectoryName(script.File);
-            var localDotnetScriptPath = DotnetScriptBootstrapper.HasDotnetScript(commandLineRunner);
+            
+            var hasDotnetToolInstalled = DotnetScriptBootstrapper.IsDotnetScriptToolInstalled(commandLineRunner);
+            //var localDotnetScriptPath = DotnetScriptBootstrapper.DotnetScriptPath(commandLineRunner);
             var bundledExecutable = DotnetScriptBootstrapper.FindExecutable();
+            
+            var executable = hasDotnetToolInstalled ? "dotnet-script" : bundledExecutable;
+            
             var configurationFile = DotnetScriptBootstrapper.PrepareConfigurationFile(workingDirectory, variables);
             var (bootstrapFile, otherTemporaryFiles) = DotnetScriptBootstrapper.PrepareBootstrapFile(script.File, configurationFile, workingDirectory, variables);
             var arguments = DotnetScriptBootstrapper.FormatCommandArguments(bootstrapFile, script.Parameters);
-            var cli = new CommandLineInvocation(localDotnetScriptPath ?? bundledExecutable, arguments);
-            cli.WorkingDirectory = workingDirectory;
-            cli.EnvironmentVars = environmentVars;
+            var cli = new CommandLineInvocation(executable, arguments)
+            {
+                WorkingDirectory = workingDirectory,
+                EnvironmentVars = environmentVars
+            };
 
             yield return new ScriptExecution(cli, otherTemporaryFiles.Concat(new[] { bootstrapFile, configurationFile }));
         }

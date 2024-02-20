@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
@@ -30,8 +31,11 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
             ClassBasedBootstrapScriptTemplate = EmbeddedResource.ReadEmbeddedText(typeof(DotnetScriptBootstrapper).Namespace + ".ClassBootstrap.csx");
         }
 
-        public static string? HasDotnetScript(ICommandLineRunner commandLineRunner)
+        public static string? DotnetScriptPath(ICommandLineRunner commandLineRunner)
         {
+            // On Windows dotnet tools use the %USERPROFILE%\.dotnet\tools location. In Calamari the UserProfile is set to 
+            // C:\Windows\system32\config\systemprofile, if the tool has been installed under another profile this will not find dotnet-script
+            // This approach handles dotnet-script being installed via powershell/bash scripts.
             var commandOutput = CalamariEnvironment.IsRunningOnWindows
                 ? ExecuteCommandAndReturnOutput(commandLineRunner, "where", "dotnet-script")
                 : ExecuteCommandAndReturnOutput(commandLineRunner, "which", "dotnet-script");
@@ -40,17 +44,35 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
             return hasDotnetScriptMessage.FirstOrDefault()?.Text;
         }
         
+        public static bool IsDotnetScriptToolInstalled(ICommandLineRunner commandLineRunner)
+        {
+            var commandOutput = ExecuteCommandAndReturnOutput(commandLineRunner,
+                                                              "dotnet",
+                                                              "tool",
+                                                              "list",
+                                                              "-g",
+                                                              "dotnet-script");
+            var messages = commandOutput.Messages.Where(m => m.Text.Contains("dotnet-script"));
+            return messages.Any();
+        }
+        
         static CaptureCommandOutput ExecuteCommandAndReturnOutput(ICommandLineRunner commandLineRunner, string exe, params string[] arguments)
         {
             var captureCommandOutput = new CaptureCommandOutput();
+            var envVars = Environment.GetEnvironmentVariables()
+                                     .Cast<DictionaryEntry>()
+                                     .ToDictionary(x => (string)x.Key, x => (string)x.Value);
+            
             var invocation = new CommandLineInvocation(exe, arguments)
             {
                 OutputAsVerbose = false,
                 OutputToLog = false,
-                AdditionalInvocationOutputSink = captureCommandOutput
+                AdditionalInvocationOutputSink = captureCommandOutput,
+                EnvironmentVars = envVars,
+                WorkingDirectory = Path.GetPathRoot(Environment.CurrentDirectory)
             };
 
-            var result = commandLineRunner.Execute(invocation);
+            commandLineRunner.Execute(invocation);
             return captureCommandOutput;
         }
 
