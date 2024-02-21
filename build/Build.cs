@@ -54,8 +54,8 @@ namespace Calamari.Build
         [Parameter]
         readonly bool AppendTimestamp;
 
-        [Parameter("Set Calamari Version on OctopusServer")]
-        readonly bool SetOctopusServerVersion;
+        // [Parameter("Set Calamari Version on OctopusServer")]
+        readonly bool SetOctopusServerVersion = true;
 
         [Parameter]
         readonly string? AzureKeyVaultUrl;

@@ -31,6 +31,8 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
             
             var executable = hasDotnetToolInstalled ? "dotnet-script" : localDotnetScriptPath ?? bundledExecutable;
             
+            Log.Verbose(hasDotnetToolInstalled ? "Found dotnet-script tool installed locally, executing dotnet-script directly." : string.IsNullOrEmpty(localDotnetScriptPath) ? $"Found dotnet-script executable at {localDotnetScriptPath}" : "Executing bundled dotnet-script");
+            
             var configurationFile = DotnetScriptBootstrapper.PrepareConfigurationFile(workingDirectory, variables);
             var (bootstrapFile, otherTemporaryFiles) = DotnetScriptBootstrapper.PrepareBootstrapFile(script.File, configurationFile, workingDirectory, variables);
             var arguments = DotnetScriptBootstrapper.FormatCommandArguments(bootstrapFile, script.Parameters);
