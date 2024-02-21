@@ -29,7 +29,7 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
             var localDotnetScriptPath = DotnetScriptBootstrapper.DotnetScriptPath(commandLineRunner);
             var bundledExecutable = DotnetScriptBootstrapper.FindExecutable();
             
-            var executable = hasDotnetToolInstalled ? "dotnet-script" : localDotnetScriptPath ?? bundledExecutable;
+            var executable = hasDotnetToolInstalled ? "dotnet-script" : string.IsNullOrEmpty(localDotnetScriptPath) ? localDotnetScriptPath : bundledExecutable;
             
             Log.Verbose(hasDotnetToolInstalled ? "Found dotnet-script tool installed locally, executing dotnet-script directly." : string.IsNullOrEmpty(localDotnetScriptPath) ? $"Found dotnet-script executable at {localDotnetScriptPath}" : "Executing bundled dotnet-script");
             
