@@ -25,7 +25,7 @@ namespace Calamari.Commands
         {
             var exitCode = context.Variables.GetInt32(SpecialVariables.Action.Script.ExitCode);
             deploymentJournalWriter.AddJournalEntry(context, exitCode == 0, context.PackageFilePath);
-            return this.CompletedTask();
+            return Task.CompletedTask;
         }
     }
 }

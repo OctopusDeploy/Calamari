@@ -30,10 +30,9 @@ namespace Calamari.Kubernetes.Authentication
             this.log = log;
         }
 
-        public bool TryConfigure(bool useVmServiceAccount, string @namespace)
+        public void Configure(string @namespace)
         {
-            if (!gcloudCli.TrySetGcloud())
-                return false;
+            gcloudCli.SetGcloud();
 
             var accountVariable = deploymentVariables.Get(Deployment.SpecialVariables.Action.GoogleCloudAccount.Variable);
             var jsonKey = deploymentVariables.Get(Deployment.SpecialVariables.Action.GoogleCloudAccount.JsonKeyFromAccount(accountVariable));
@@ -51,13 +50,13 @@ namespace Calamari.Kubernetes.Authentication
             var project = deploymentVariables.Get(Deployment.SpecialVariables.Action.GoogleCloud.Project) ?? string.Empty;
             var region = deploymentVariables.Get(Deployment.SpecialVariables.Action.GoogleCloud.Region) ?? string.Empty;
             var zone = deploymentVariables.Get(Deployment.SpecialVariables.Action.GoogleCloud.Zone) ?? string.Empty;
-            if (!gcloudCli.TryConfigureGcloudAccount(project, region, zone, jsonKey, useVmServiceAccount, impersonationEmails))
-                return false;
+            var useVmServiceAccount = deploymentVariables.GetFlag(Deployment.SpecialVariables.Action.GoogleCloud.UseVmServiceAccount);
+            gcloudCli.ConfigureGcloudAccount(project, region, zone, jsonKey, useVmServiceAccount, impersonationEmails);
 
             WarnCustomersAboutAuthToolingRequirements();
             var gkeClusterName = deploymentVariables.Get(SpecialVariables.GkeClusterName);
             var useClusterInternalIp = deploymentVariables.GetFlag(SpecialVariables.GkeUseClusterInternalIp);
-            return gcloudCli.TryConfigureGkeKubeCtlAuthentication(kubectlCli, gkeClusterName, region, zone, @namespace, useClusterInternalIp);
+            gcloudCli.ConfigureGkeKubeCtlAuthentication(kubectlCli, gkeClusterName, region, zone, @namespace, useClusterInternalIp);
         }
 
         /// <summary>

@@ -1,0 +1,22 @@
+Applying Batch #1 for YAML matching 'deployments/**/*'
+Matched file: deployments/customresource.yml
+Matched file: deployments/subfolder/myapp-deployment.yml
+Created Resources:
+ - Deployment/nginx-deployment in namespace calamari-testing
+ - Deployment/nginx-deployment2 in namespace calamari-testing
+Applying Batch #2 for YAML matching 'services/myapp-service.yml'
+Matched file: services/myapp-service.yml
+Created Resources:
+ - Service/nginx-service in namespace calamari-testing
+Applying Batch #3 for YAML matching 'configmaps/*.yml'
+Matched file: configmaps/myapp-configmap2.yml
+Matched file: configmaps/myapp-configmap1.yml
+Created Resources:
+ - ConfigMap/game-demo in namespace calamari-testing
+ - ConfigMap/game-demo2 in namespace calamari-testing
+Resource Status Check: 5 new resources have been added:
+ - Deployment/nginx-deployment in namespace calamari-testing
+ - Deployment/nginx-deployment2 in namespace calamari-testing
+ - Service/nginx-service in namespace calamari-testing
+ - ConfigMap/game-demo in namespace calamari-testing
+ - ConfigMap/game-demo2 in namespace calamari-testing

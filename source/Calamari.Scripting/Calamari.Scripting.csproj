@@ -8,12 +8,7 @@
         <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
         <IsPackable>true</IsPackable>
         <LangVersion>9</LangVersion>
-    </PropertyGroup>
-    <PropertyGroup Condition="!$([MSBuild]::IsOSUnixLike())">
-        <TargetFrameworks>net452;net6.0</TargetFrameworks>
-    </PropertyGroup>
-    <PropertyGroup Condition="$([MSBuild]::IsOSUnixLike())">
-        <TargetFramework>net6.0</TargetFramework>
+        <TargetFrameworks>net462;net6.0</TargetFrameworks>
     </PropertyGroup>
 
     <ItemGroup>
@@ -24,8 +19,8 @@
         <PackageReference Include="FSharp.Compiler.Tools" Version="4.0.0.1" />
     </ItemGroup>
 
-    <!-- The following is to stop incorrect nullable reference type warnings for net452 build -->
-    <PropertyGroup Condition="'$(TargetFramework)' == 'net452' ">
+    <!-- The following is to stop incorrect nullable reference type warnings for net462 build -->
+    <PropertyGroup Condition="'$(TargetFramework)' == 'net462' ">
         <NoWarn>CS8600;CS8601;CS8602;CS8603;CS8604</NoWarn>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(TargetFramework)' == 'net6.0' ">

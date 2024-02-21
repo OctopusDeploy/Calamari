@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text;
 using Calamari.Aws.Deployment;
 using Calamari.Common.Features.Processes;
@@ -13,9 +12,6 @@ using Calamari.Common.Plumbing.Proxies;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes.Authentication;
 using Calamari.Kubernetes.Integration;
-using Newtonsoft.Json.Linq;
-using Octopus.CoreUtilities;
-using Octopus.Versioning.Semver;
 
 namespace Calamari.Kubernetes
 {
@@ -28,15 +24,14 @@ namespace Calamari.Kubernetes
         readonly ICalamariFileSystem fileSystem;
         readonly Dictionary<string, string> environmentVars;
         readonly string workingDirectory;
-        string aws;
 
         public SetupKubectlAuthentication(IVariables variables,
-            ILog log,
-            ICommandLineRunner commandLineRunner,
-            IKubectl kubectl,
-            ICalamariFileSystem fileSystem,
-            Dictionary<string, string> environmentVars,
-            string workingDirectory)
+                                          ILog log,
+                                          ICommandLineRunner commandLineRunner,
+                                          IKubectl kubectl,
+                                          ICalamariFileSystem fileSystem,
+                                          Dictionary<string, string> environmentVars,
+                                          string workingDirectory)
         {
             this.variables = variables;
             this.log = log;
@@ -47,241 +42,259 @@ namespace Calamari.Kubernetes
             this.workingDirectory = workingDirectory;
         }
 
-        public CommandResult Execute(string accountType)
+        public CommandResult Execute()
         {
-            var errorResult = new CommandResult(string.Empty, 1);
-
             foreach (var proxyVariable in ProxyEnvironmentVariablesGenerator.GenerateProxyEnvironmentVariables())
             {
                 environmentVars[proxyVariable.Key] = proxyVariable.Value;
             }
 
-            var kubeConfig = CreateKubectlConfig();
-            if (!kubectl.TrySetKubectl())
+            try
             {
-                return errorResult;
-            }
+                kubectl.SetKubectl();
+                var @namespace = GetNamespaceOrDefault();
+                SetupContext(@namespace);
+                CreateNamespace(@namespace);
 
-            var @namespace = variables.Get(SpecialVariables.Namespace);
-            if (string.IsNullOrEmpty(@namespace))
-            {
-                log.Verbose("No namespace provided. Using default");
-                @namespace = "default";
+                var outputKubeConfig = variables.GetFlag(SpecialVariables.OutputKubeConfig);
+                if (outputKubeConfig)
+                {
+                    kubectl.ExecuteCommandAndAssertSuccess("config", "view");
+                }
             }
-
-            if (!TrySetupContext(kubeConfig, @namespace, accountType))
+            catch (KubectlException e)
             {
-                return errorResult;
-            }
-
-            if (!CreateNamespace(@namespace))
-            {
-                log.Verbose("Could not create namespace. Continuing on, as it may not be working directly with the target.");
-            }
-
-            var outputKubeConfig = variables.GetFlag(SpecialVariables.OutputKubeConfig);
-            if (outputKubeConfig)
-            {
-                kubectl.ExecuteCommandAndAssertSuccess("config", "view");
+                log.Error(e.Message);
+                return new CommandResult(string.Empty, 1);
             }
 
             return new CommandResult(string.Empty, 0);
         }
 
-        bool TrySetupContext(string kubeConfig, string @namespace, string accountType)
+        string GetNamespaceOrDefault()
         {
-            var clusterUrl = variables.Get(SpecialVariables.ClusterUrl);
-            var clientCert = variables.Get(SpecialVariables.ClientCertificate);
-            var eksUseInstanceRole = variables.GetFlag(AwsSpecialVariables.Authentication.UseInstanceRole);
-            var podServiceAccountTokenPath = variables.Get(SpecialVariables.PodServiceAccountTokenPath);
-            var serverCertPath = variables.Get(SpecialVariables.CertificateAuthorityPath);
-            var isUsingPodServiceAccount = false;
-            var skipTlsVerification = variables.GetFlag(SpecialVariables.SkipTlsVerification) ? "true" : "false";
-            var useVmServiceAccount = variables.GetFlag(Deployment.SpecialVariables.Action.GoogleCloud.UseVmServiceAccount);
+            var @namespace = variables.Get(SpecialVariables.Namespace);
+            if (!string.IsNullOrEmpty(@namespace))
+                return @namespace;
 
-            var isUsingGoogleCloudAuth = accountType == AccountTypes.GoogleCloudAccount || useVmServiceAccount;
-            var isUsingAzureServicePrincipalAuth = accountType == AccountTypes.AzureServicePrincipal;
-            var isUsingAzureOidc = accountType == AccountTypes.AzureOidc;
+            log.Verbose("No namespace provided. Using default");
+            return "default";
+        }
 
-            if (!isUsingAzureServicePrincipalAuth && !isUsingAzureOidc && !isUsingGoogleCloudAuth && string.IsNullOrEmpty(clusterUrl))
+        void SetupContext(string @namespace)
+        {
+            var kubeConfig = CreateKubectlConfig();
+            var accountType = variables.Get(Deployment.SpecialVariables.Account.AccountType);
+            if (accountType == AccountTypes.AzureServicePrincipal || accountType == AccountTypes.AzureOidc)
             {
-                log.Error("Kubernetes cluster URL is missing");
-                return false;
+                SetupAzureContext(@namespace, kubeConfig);
             }
-
-            string podServiceAccountToken = null;
-            string serverCert = null;
-            if (string.IsNullOrEmpty(accountType) && string.IsNullOrEmpty(clientCert) && !eksUseInstanceRole && !useVmServiceAccount)
+            else if (accountType == AccountTypes.GoogleCloudAccount || variables.GetFlag(Deployment.SpecialVariables.Action.GoogleCloud.UseVmServiceAccount))
             {
-                if (string.IsNullOrEmpty(podServiceAccountTokenPath) && string.IsNullOrEmpty(serverCertPath))
-                {
-                    log.Error("Kubernetes account type or certificate is missing");
-                    return false;
-                }
-
-                if (!string.IsNullOrEmpty(podServiceAccountTokenPath))
-                {
-                    if (fileSystem.FileExists(podServiceAccountTokenPath))
-                    {
-                        podServiceAccountToken = fileSystem.ReadFile(podServiceAccountTokenPath);
-                        if (string.IsNullOrEmpty(podServiceAccountToken))
-                        {
-                            log.Error("Pod service token file is empty");
-                            return false;
-                        }
-
-                        isUsingPodServiceAccount = true;
-                    }
-                    else
-                    {
-                        log.Error("Pod service token file not found");
-                        return false;
-                    }
-                }
-
-                if (!string.IsNullOrEmpty(serverCertPath))
-                {
-                    if (fileSystem.FileExists(serverCertPath))
-                    {
-                        serverCert = fileSystem.ReadFile(serverCertPath);
-                    }
-                    else
-                    {
-                        log.Error("Certificate authority file not found");
-                        return false;
-                    }
-                }
+                SetupGCloudContext(@namespace);
             }
-
-            if (isUsingAzureServicePrincipalAuth || isUsingAzureOidc)
+            else if (variables.IsSet(SpecialVariables.ClusterUrl)) // Most other auth mechanisms require some manual commands to configure
             {
-                var azureCli = new AzureCli(log, commandLineRunner, workingDirectory, environmentVars);
-                var kubeloginCli = new KubeLogin(log, commandLineRunner, workingDirectory, environmentVars);
-                var azureAuth = new AzureKubernetesServicesAuth(azureCli, kubectl, kubeloginCli, variables);
-
-                if (!azureAuth.TryConfigure(@namespace, kubeConfig))
-                    return false;
-            }
-            else if (isUsingGoogleCloudAuth)
-            {
-                var gcloudCli = new GCloud(log, commandLineRunner, fileSystem, workingDirectory, environmentVars);
-                var gkeGcloudAuthPlugin = new GkeGcloudAuthPlugin(log, commandLineRunner, workingDirectory, environmentVars);
-                var gcloudAuth = new GoogleKubernetesEngineAuth(gcloudCli, gkeGcloudAuthPlugin, kubectl, variables, log);
-
-                if (!gcloudAuth.TryConfigure(useVmServiceAccount, @namespace))
-                    return false;
-            }
-            else
-            {
+                var clusterUrl = variables.Get(SpecialVariables.ClusterUrl);
                 const string user = "octouser";
                 const string cluster = "octocluster";
                 const string context = "octocontext";
-                if (isUsingPodServiceAccount)
+
+                kubectl.ExecuteCommandAndAssertSuccess("config", "set-cluster", cluster, $"--server={clusterUrl}");
+                SetCertAuthority(cluster);
+                kubectl.ExecuteCommandAndAssertSuccess("config",
+                                                       "set-context",
+                                                       context,
+                                                       $"--user={user}",
+                                                       $"--cluster={cluster}",
+                                                       $"--namespace={@namespace}");
+                kubectl.ExecuteCommandAndAssertSuccess("config", "use-context", context);
+
+                if (variables.IsSet(SpecialVariables.PodServiceAccountTokenPath))
                 {
-                    SetupContextUsingPodServiceAccount(@namespace, cluster, clusterUrl, serverCert,
-                        skipTlsVerification,
-                        serverCertPath,
-                        context,
-                        user,
-                        podServiceAccountToken);
+                    SetupPodServiceAccountTokenAuth(@namespace, clusterUrl, user);
+                }
+                else if (accountType == AccountTypes.Token)
+                {
+                    SetupContextForToken(@namespace, clusterUrl, user);
+                }
+                else if (accountType == AccountTypes.UsernamePassword)
+                {
+                    SetupContextForUsernamePassword(user);
+                }
+                else if (accountType == AccountTypes.AmazonWebServicesAccount || variables.GetFlag(AwsSpecialVariables.Authentication.UseInstanceRole) || accountType == AccountTypes.AmazonWebServicesOidcAccount)
+                {
+                    SetupAwsContext(@namespace, clusterUrl, user);
+                }
+                else if (variables.IsSet(SpecialVariables.ClientCertificate))
+                {
+                    SetupContextForClientCertificate(user);
+                }
+                else if (string.IsNullOrEmpty(accountType))
+                {
+                    throw new KubectlException($"Kubernetes account type or certificate is missing");
                 }
                 else
                 {
-                    kubectl.ExecuteCommandAndAssertSuccess("config", "set-cluster", cluster, $"--server={clusterUrl}");
-                    kubectl.ExecuteCommandAndAssertSuccess("config", "set-context", context, $"--user={user}", $"--cluster={cluster}", $"--namespace={@namespace}");
-                    kubectl.ExecuteCommandAndAssertSuccess("config", "use-context", context);
-
-                    var clientCertPem = variables.Get($"{clientCert}.CertificatePem");
-                    var clientCertKey = variables.Get($"{clientCert}.PrivateKeyPem");
-                    var certificateAuthority = variables.Get("Octopus.Action.Kubernetes.CertificateAuthority");
-                    var serverCertPem = variables.Get($"{certificateAuthority}.CertificatePem");
-
-                    if (!string.IsNullOrEmpty(clientCert))
-                    {
-                        if (string.IsNullOrEmpty(clientCertPem))
-                        {
-                            log.Error("Kubernetes client certificate does not include the certificate data");
-                            return false;
-                        }
-
-                        if (string.IsNullOrEmpty(clientCertKey))
-                        {
-                            log.Error("Kubernetes client certificate does not include the private key data");
-                            return false;
-                        }
-
-                        log.Verbose("Encoding client cert key");
-                        var clientCertKeyEncoded = Convert.ToBase64String(Encoding.ASCII.GetBytes(clientCertKey));
-                        log.Verbose("Encoding client cert pem");
-                        var clientCertPemEncoded = Convert.ToBase64String(Encoding.ASCII.GetBytes(clientCertPem));
-
-                        // Don't leak the private key in the logs
-                        log.SetOutputVariable($"{clientCert}.PrivateKeyPemBase64", clientCertKeyEncoded, variables, true);
-                        log.AddValueToRedact(clientCertKeyEncoded, "<data>");
-                        log.AddValueToRedact(clientCertPemEncoded, "<data>");
-                        kubectl.ExecuteCommandAndAssertSuccess("config", "set", $"users.{user}.client-certificate-data", clientCertPemEncoded);
-                        kubectl.ExecuteCommandAndAssertSuccess("config", "set", $"users.{user}.client-key-data", clientCertKeyEncoded);
-                    }
-
-                    if (!string.IsNullOrEmpty(certificateAuthority))
-                    {
-                        if (string.IsNullOrEmpty(serverCertPem))
-                        {
-                            log.Error("Kubernetes server certificate does not include the certificate data");
-                            return false;
-                        }
-
-                        var authorityData = Convert.ToBase64String(Encoding.ASCII.GetBytes(serverCertPem));
-                        log.AddValueToRedact(authorityData, "<data>");
-                        kubectl.ExecuteCommandAndAssertSuccess("config", "set", $"clusters.{cluster}.certificate-authority-data", authorityData);
-                    }
-                    else
-                    {
-                        kubectl.ExecuteCommandAndAssertSuccess("config", "set-cluster", cluster, $"--insecure-skip-tls-verify={skipTlsVerification}");
-                    }
-
-                    switch (accountType)
-                    {
-                        case AccountTypes.Token:
-                        {
-                            var token = variables.Get(Deployment.SpecialVariables.Account.Token);
-                            if (string.IsNullOrEmpty(token))
-                            {
-                                log.Error("Kubernetes authentication Token is missing");
-                                return false;
-                            }
-
-                            SetupContextForToken(@namespace, token, clusterUrl, user);
-                            break;
-                        }
-                        case AccountTypes.UsernamePassword:
-                        {
-                            SetupContextForUsernamePassword(user);
-                            break;
-                        }
-                        default:
-                        {
-                            if (accountType == AccountTypes.AmazonWebServicesAccount || eksUseInstanceRole)
-                            {
-                                SetupContextForAmazonServiceAccount(@namespace, clusterUrl, user);
-                            }
-                            else if (string.IsNullOrEmpty(clientCert))
-                            {
-                                log.Error($"Account Type {accountType} is currently not valid for kubectl contexts");
-                                return false;
-                            }
-
-                            break;
-                        }
-                    }
+                    throw new KubectlException($"Account Type {accountType} is currently not valid for kubectl contexts");
                 }
             }
-
-            return true;
+            else if (HasAmbientKubeContext())
+            {
+                SetupAmbientContext(@namespace, kubeConfig);
+                kubectl.DisableRequestTimeoutArgument();
+            }
+            else
+            {
+                throw new KubectlException($"Unable to configure Kubernetes authentication context. Please verify your target configuration.");
+            }
         }
 
-        void SetupContextForToken(string @namespace, string token, string clusterUrl, string user)
+        void SetupPodServiceAccountTokenAuth(string @namespace, string clusterUrl, string user)
         {
+            var podServiceAccountTokenPath = variables.Get(SpecialVariables.PodServiceAccountTokenPath);
+            if (!fileSystem.FileExists(podServiceAccountTokenPath))
+            {
+                throw new KubectlException("Pod service token file not found");
+            }
+
+            var podServiceAccountToken = fileSystem.ReadFile(podServiceAccountTokenPath);
+            if (string.IsNullOrEmpty(podServiceAccountToken))
+            {
+                throw new KubectlException("Pod service token file is empty");
+            }
+
+            log.Info($"Creating kubectl context to {clusterUrl} (namespace {@namespace}) using a Pod Service Account Token");
+            log.AddValueToRedact(podServiceAccountToken, "<token>");
+            kubectl.ExecuteCommandAndAssertSuccess("config", "set-credentials", user, $"--token={podServiceAccountToken}");
+        }
+
+        void SetupGCloudContext(string @namespace)
+        {
+            var gcloudCli = new GCloud(log,
+                                       commandLineRunner,
+                                       fileSystem,
+                                       workingDirectory,
+                                       environmentVars);
+            var gkeGcloudAuthPlugin = new GkeGcloudAuthPlugin(log, commandLineRunner, workingDirectory, environmentVars);
+            var gcloudAuth = new GoogleKubernetesEngineAuth(gcloudCli,
+                                                            gkeGcloudAuthPlugin,
+                                                            kubectl,
+                                                            variables,
+                                                            log);
+            gcloudAuth.Configure(@namespace);
+        }
+
+        void SetupAzureContext(string @namespace, string kubeConfig)
+        {
+            var azureCli = new AzureCli(log, commandLineRunner, workingDirectory, environmentVars);
+            var kubeloginCli = new KubeLogin(log, commandLineRunner, workingDirectory, environmentVars);
+            var azureAuth = new AzureKubernetesServicesAuth(azureCli, kubectl, kubeloginCli, variables);
+            azureAuth.Configure(@namespace, kubeConfig);
+        }
+
+        void SetupAmbientContext(string @namespace, string kubeConfig)
+        {
+            /*
+            By default kubectl will look at which maps to the namespace the pod is running in.
+            The POD_NAMESPACE environment variable allows this to be overridden,
+            https://kubernetes.io/docs/reference/kubectl/#in-cluster-authentication-and-namespace-overrides
+            */
+            log.Verbose("Detected ambient cluster context. Assuming running inside the cluster");
+            environmentVars.Add("POD_NAMESPACE", @namespace);
+
+            // Cleanup the kubeconfig that we dont want to use
+            fileSystem.DeleteFile(kubeConfig);
+            environmentVars.Remove("KUBECONFIG");
+        }
+
+        bool HasAmbientKubeContext()
+        {
+            /*
+             * kubectl looks for environment configuration to use ambient context provided by the cluster
+             * https://kubernetes.io/docs/tasks/run-application/access-api-from-pod/#directly-accessing-the-rest-api
+             */
+            return fileSystem.FileExists("/var/run/secrets/kubernetes.io/serviceaccount/token")
+                   && !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("KUBERNETES_SERVICE_HOST"))
+                   && !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("KUBERNETES_SERVICE_PORT"));
+        }
+
+        void SetupContextForClientCertificate(string user)
+        {
+            var clientCert = variables.Get(SpecialVariables.ClientCertificate);
+            var clientCertPem = variables.Get(SpecialVariables.CertificatePem(clientCert));
+            var clientCertKey = variables.Get(SpecialVariables.PrivateKeyPem(clientCert));
+
+            if (string.IsNullOrEmpty(clientCertPem))
+            {
+                throw new KubectlException("Kubernetes client certificate does not include the certificate data");
+            }
+
+            if (string.IsNullOrEmpty(clientCertKey))
+            {
+                throw new KubectlException("Kubernetes client certificate does not include the private key data");
+            }
+
+            log.Verbose("Encoding client cert key");
+            var clientCertKeyEncoded = Convert.ToBase64String(Encoding.ASCII.GetBytes(clientCertKey));
+            log.Verbose("Encoding client cert pem");
+            var clientCertPemEncoded = Convert.ToBase64String(Encoding.ASCII.GetBytes(clientCertPem));
+
+            // Don't leak the private key in the logs
+            log.SetOutputVariable($"{clientCert}.PrivateKeyPemBase64", clientCertKeyEncoded, variables, true);
+            log.AddValueToRedact(clientCertKeyEncoded, "<data>");
+            log.AddValueToRedact(clientCertPemEncoded, "<data>");
+            kubectl.ExecuteCommandAndAssertSuccess("config", "set", $"users.{user}.client-certificate-data", clientCertPemEncoded);
+            kubectl.ExecuteCommandAndAssertSuccess("config", "set", $"users.{user}.client-key-data", clientCertKeyEncoded);
+        }
+
+        void SetCertAuthority(string cluster)
+        {
+            if (variables.GetFlag(SpecialVariables.SkipTlsVerification))
+            {
+                kubectl.ExecuteCommandAndAssertSuccess("config", "set-cluster", cluster, $"--insecure-skip-tls-verify=true");
+            }
+            else if (variables.IsSet(SpecialVariables.CertificateAuthorityPath))
+            {
+                var serverCertPath = variables.Get(SpecialVariables.CertificateAuthorityPath);
+                if (!fileSystem.FileExists(serverCertPath))
+                {
+                    throw new KubectlException("Certificate authority file not found");
+                }
+
+                kubectl.ExecuteCommandAndAssertSuccess("config", "set-cluster", cluster, $"--certificate-authority={serverCertPath}");
+            }
+            else if (variables.IsSet(SpecialVariables.CertificateAuthority))
+            {
+                var certificateAuthority = variables.Get(SpecialVariables.CertificateAuthority);
+                if (!string.IsNullOrEmpty(certificateAuthority))
+                {
+                    var serverCertPem = variables.Get(SpecialVariables.CertificatePem(certificateAuthority));
+                    if (string.IsNullOrEmpty(serverCertPem))
+                    {
+                        throw new KubectlException("Kubernetes server certificate does not include the certificate data");
+                    }
+
+                    var authorityData = Convert.ToBase64String(Encoding.ASCII.GetBytes(serverCertPem));
+                    log.AddValueToRedact(authorityData, "<data>");
+                    kubectl.ExecuteCommandAndAssertSuccess("config", "set", $"clusters.{cluster}.certificate-authority-data", authorityData);
+                }
+            }
+            else if (variables.IsSet(SpecialVariables.SkipTlsVerification))
+            {
+                var skipTlsVerification = variables.GetFlag(SpecialVariables.SkipTlsVerification) ? "true" : "false";
+                kubectl.ExecuteCommandAndAssertSuccess("config", "set-cluster", cluster, $"--insecure-skip-tls-verify={skipTlsVerification}");
+            }
+        }
+
+        void SetupContextForToken(string @namespace, string clusterUrl, string user)
+        {
+            var token = variables.Get(Deployment.SpecialVariables.Account.Token);
+            if (string.IsNullOrEmpty(token))
+            {
+                throw new KubectlException("Kubernetes authentication Token is missing");
+            }
+
             log.AddValueToRedact(token, "<token>");
             log.Info($"Creating kubectl context to {clusterUrl} (namespace {@namespace}) using a Token");
             kubectl.ExecuteCommandAndAssertSuccess("config", "set-credentials", user, $"--token={token}");
@@ -295,148 +308,31 @@ namespace Calamari.Kubernetes
             {
                 log.AddValueToRedact(password, "<password>");
             }
-            kubectl.ExecuteCommandAndAssertSuccess("config", "set-credentials", user, $"--username={username}", $"--password={password}");
+
+            kubectl.ExecuteCommandAndAssertSuccess("config",
+                                                   "set-credentials",
+                                                   user,
+                                                   $"--username={username}",
+                                                   $"--password={password}");
         }
 
-        void SetupContextForAmazonServiceAccount(string @namespace, string clusterUrl, string user)
+        void SetupAwsContext(string @namespace, string clusterUrl, string user)
         {
-            var clusterName = variables.Get(SpecialVariables.EksClusterName);
-            log.Info($"Creating kubectl context to {clusterUrl} (namespace {@namespace}) using EKS cluster name {clusterName}");
+            var awsCli = new AwsCli(log, commandLineRunner, workingDirectory, environmentVars);
+            var awsAuth = new AwsCliAuth(awsCli, kubectl, variables, environmentVars, log);
 
-            if (TrySetKubeConfigAuthenticationToAwsCli(clusterName, clusterUrl, user))
-            {
+            awsAuth.Configure(@namespace, clusterUrl, user);
+        }
+
+        void CreateNamespace(string @namespace)
+        {
+            if (kubectl.ExecuteCommandWithVerboseLoggingOnly("get", "namespace", @namespace).ExitCode == 0)
                 return;
-            }
 
-            log.Verbose("Attempting to authenticate with aws-iam-authenticator");
-            SetKubeConfigAuthenticationToAwsIAm(user, clusterName);
-        }
-
-        bool TrySetKubeConfigAuthenticationToAwsCli(string clusterName, string clusterUrl, string user)
-        {
-            log.Verbose("Attempting to authenticate with aws-cli");
-            if (!TrySetAws())
+            if (kubectl.ExecuteCommandWithVerboseLoggingOnly("create", "namespace", @namespace).ExitCode != 0)
             {
-                log.Verbose("Could not find the aws cli, falling back to the aws-iam-authenticator.");
-                return false;
+                log.Verbose("Could not create namespace. Continuing on, as it may not be working directly with the target.");
             }
-
-            try {
-                var awsCliVersion = GetAwsCliVersion();
-                var minimumAwsCliVersionForAuth = new SemanticVersion("1.16.156");
-                if (awsCliVersion.CompareTo(minimumAwsCliVersionForAuth) > 0)
-                {
-                    var region = GetEksClusterRegion(clusterUrl);
-                    if (!string.IsNullOrWhiteSpace(region))
-                    {
-                        var apiVersion = GetEksClusterApiVersion(clusterName, region);
-                        SetKubeConfigAuthenticationToAwsCli(user, clusterName, region, apiVersion);
-                        return true;
-                    }
-
-                    log.Verbose("The EKS cluster Url specified should contain a valid aws region name");
-                }
-                else
-                {
-                    log.Verbose($"aws cli version: {awsCliVersion} does not support the \"aws eks get-token\" command. Please update to a version later than 1.16.156");
-                }
-            }
-            catch (Exception e)
-            {
-                log.Verbose($"Unable to authenticate to {clusterUrl} using the aws cli. Failed with error message: {e.Message}");
-            }
-
-            return false;
-        }
-
-        string GetEksClusterRegion(string clusterUrl) => clusterUrl.Replace(".eks.amazonaws.com", "").Split('.').Last();
-
-        SemanticVersion GetAwsCliVersion()
-        {
-            var awsCliCommandRes = ExecuteCommandAndReturnOutput(aws, "--version").FirstOrDefault();
-            var awsCliVersionString = awsCliCommandRes.Split()
-                                                      .FirstOrDefault(versions => versions.StartsWith("aws-cli"))
-                                                      .Replace("aws-cli/", string.Empty);
-            return new SemanticVersion(awsCliVersionString);
-        }
-
-        string GetEksClusterApiVersion(string clusterName, string region)
-        {
-            var logLines = ExecuteCommandAndReturnOutput(aws,
-                "eks",
-                "get-token",
-                $"--cluster-name={clusterName}",
-                $"--region={region}");
-            var awsEksTokenCommand = string.Join("\n", logLines);
-            return JObject.Parse(awsEksTokenCommand).SelectToken("apiVersion").ToString();
-        }
-
-        void SetKubeConfigAuthenticationToAwsCli(string user, string clusterName, string region, string apiVersion)
-        {
-            kubectl.ExecuteCommandAndAssertSuccess("config", "set-credentials", user, "--exec-command=aws", "--exec-arg=eks", "--exec-arg=get-token", $"--exec-arg=--cluster-name={clusterName}", $"--exec-arg=--region={region}", $"--exec-api-version={apiVersion}");
-        }
-
-        void SetKubeConfigAuthenticationToAwsIAm(string user, string clusterName)
-        {
-            var kubectlVersion = kubectl.GetVersion();
-            var apiVersion = kubectlVersion.Some() && kubectlVersion.Value > new SemanticVersion("1.23.6")
-                ? "client.authentication.k8s.io/v1beta1"
-                : "client.authentication.k8s.io/v1alpha1";
-
-            kubectl.ExecuteCommandAndAssertSuccess("config", "set-credentials", user, "--exec-command=aws-iam-authenticator", $"--exec-api-version={apiVersion}", "--exec-arg=token", "--exec-arg=-i", $"--exec-arg={clusterName}");
-        }
-
-        void SetupContextUsingPodServiceAccount(string @namespace,
-            string cluster,
-            string clusterUrl,
-            string serverCert,
-            string skipTlsVerification,
-            string serverCertPath,
-            string context,
-            string user,
-            string podServiceAccountToken)
-        {
-            kubectl.ExecuteCommandAndAssertSuccess("config", "set-cluster", cluster, $"--server={clusterUrl}");
-
-            if (string.IsNullOrEmpty(serverCert))
-            {
-                kubectl.ExecuteCommandAndAssertSuccess("config", "set-cluster", cluster, $"--insecure-skip-tls-verify={skipTlsVerification}");
-            }
-            else
-            {
-                kubectl.ExecuteCommandAndAssertSuccess("config", "set-cluster", cluster, $"--certificate-authority={serverCertPath}");
-            }
-
-            kubectl.ExecuteCommandAndAssertSuccess("config", "set-context", context, $"--user={user}", $"--cluster={cluster}", $"--namespace={@namespace}");
-            kubectl.ExecuteCommandAndAssertSuccess("config", "use-context", context);
-
-            log.Info($"Creating kubectl context to {clusterUrl} (namespace {@namespace}) using a Pod Service Account Token");
-            log.AddValueToRedact(podServiceAccountToken, "<token>");
-            kubectl.ExecuteCommandAndAssertSuccess("config", "set-credentials", user, $"--token={podServiceAccountToken}");
-        }
-
-        bool TrySetAws()
-        {
-            aws = CalamariEnvironment.IsRunningOnWindows
-                ? ExecuteCommandAndReturnOutput("where", "aws.exe").FirstOrDefault()
-                : ExecuteCommandAndReturnOutput("which", "aws").FirstOrDefault();
-
-            if (string.IsNullOrEmpty(aws))
-            {
-                return false;
-            }
-
-            aws = aws.Trim();
-
-            return true;
-        }
-
-        bool CreateNamespace(string @namespace)
-        {
-            if (TryExecuteCommandWithVerboseLoggingOnly("get", "namespace", @namespace))
-                return true;
-
-            return TryExecuteCommandWithVerboseLoggingOnly("create", "namespace", @namespace);
         }
 
         string CreateKubectlConfig()
@@ -461,11 +357,6 @@ namespace Calamari.Kubernetes
         void ExecuteCommand(string executable, params string[] arguments)
         {
             ExecuteCommand(new CommandLineInvocation(executable, arguments)).VerifySuccess();
-        }
-
-        bool TryExecuteCommandWithVerboseLoggingOnly(params string[] arguments)
-        {
-            return ExecuteCommandWithVerboseLoggingOnly(new CommandLineInvocation(kubectl.ExecutableLocation, arguments.Concat(new[] { "--request-timeout=1m" }).ToArray())).ExitCode == 0;
         }
 
         CommandResult ExecuteCommand(CommandLineInvocation invocation)
@@ -503,55 +394,6 @@ namespace Calamari.Kubernetes
             }
 
             return result;
-        }
-
-        /// <summary>
-        /// This is a special case for when the invocation results in an error
-        /// 1) but is to be expected as a valid scenario; and
-        /// 2) we don't want to inform this at an error level when this happens.
-        /// </summary>
-        /// <param name="invocation"></param>
-        /// <returns></returns>
-        CommandResult ExecuteCommandWithVerboseLoggingOnly(CommandLineInvocation invocation)
-        {
-            invocation.EnvironmentVars = environmentVars;
-            invocation.WorkingDirectory = workingDirectory;
-            invocation.OutputAsVerbose = true;
-            invocation.OutputToLog = false;
-
-            var captureCommandOutput = new CaptureCommandOutput();
-            invocation.AdditionalInvocationOutputSink = captureCommandOutput;
-
-            var commandString = invocation.ToString();
-            log.Verbose(commandString);
-
-            var result = commandLineRunner.Execute(invocation);
-
-            foreach (var message in captureCommandOutput.Messages)
-            {
-                log.Verbose(message.Text);
-            }
-
-            return result;
-        }
-
-        IEnumerable<string> ExecuteCommandAndReturnOutput(string exe, params string[] arguments)
-        {
-            var captureCommandOutput = new CaptureCommandOutput();
-            var invocation = new CommandLineInvocation(exe, arguments)
-            {
-                EnvironmentVars = environmentVars,
-                WorkingDirectory = workingDirectory,
-                OutputAsVerbose = false,
-                OutputToLog = false,
-                AdditionalInvocationOutputSink = captureCommandOutput
-            };
-
-            var result = commandLineRunner.Execute(invocation);
-
-            return result.ExitCode == 0
-                ? captureCommandOutput.InfoLogs.ToArray()
-                : Enumerable.Empty<string>();
         }
     }
 }

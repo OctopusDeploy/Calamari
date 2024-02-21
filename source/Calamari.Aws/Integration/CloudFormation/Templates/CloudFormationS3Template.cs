@@ -155,7 +155,8 @@ namespace Calamari.Aws.Integration.CloudFormation.Templates
                 ChangeSetName = variables[AwsSpecialVariables.CloudFormation.Changesets.Name],
                 ChangeSetType = await GetStackStatus() == StackStatus.DoesNotExist ? ChangeSetType.CREATE : ChangeSetType.UPDATE,
                 Capabilities = capabilities,
-                RoleARN = roleArn
+                RoleARN = roleArn,
+                Tags = tags
             };
         }
     }

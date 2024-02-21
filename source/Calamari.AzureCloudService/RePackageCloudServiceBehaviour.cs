@@ -70,7 +70,7 @@ namespace Calamari.AzureCloudService
 
             fileSystem.OverwriteAndDelete(originalPackagePath, newPackagePath);
 
-            return this.CompletedTask();
+            return Task.CompletedTask;
         }
 
         void AddPackageManifest(Package package, PackageDefinition manifest)

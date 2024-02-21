@@ -25,44 +25,42 @@ using static Nuke.Common.Tools.NuGet.NuGetTasks;
 
 namespace Calamari.Build
 {
-    class Build : NukeBuild
+    partial class Build : NukeBuild
     {
         const string RootProjectName = "Calamari";
 
         [Parameter("Configuration to build - Default is 'Debug' (local) or 'Release' (server)")]
         readonly Configuration Configuration =
             IsLocalBuild ? Configuration.Debug : Configuration.Release;
-        
-        [Required] 
-        readonly Solution Solution = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) 
-            ? ProjectModelTasks.ParseSolution(SourceDirectory / "Calamari.sln") 
-            : ProjectModelTasks.ParseSolution(SourceDirectory / "Calamari.NonWindows.sln");
 
-        [Parameter("Run packing step in parallel")] 
+        [Required]
+        readonly Solution Solution = SolutionModelTasks.ParseSolution(SourceDirectory / "Calamari.sln");
+
+        [Parameter("Run packing step in parallel")]
         readonly bool PackInParallel;
 
-        [Parameter] 
+        [Parameter]
         readonly DotNetVerbosity BuildVerbosity = DotNetVerbosity.Minimal;
 
-        [Parameter] 
+        [Parameter]
         readonly bool SignBinaries;
-        
+
         // When building locally signing isn't really necessary and it could take
         // up to 3-4 minutes to sign all the binaries as we build for many, many
         // different runtimes so disabling it locally means quicker turn around
         // when doing local development.
         bool WillSignBinaries => !IsLocalBuild || SignBinaries;
 
-        [Parameter] 
+        [Parameter]
         readonly bool AppendTimestamp;
 
         [Parameter("Set Calamari Version on OctopusServer")]
         readonly bool SetOctopusServerVersion;
 
-        [Parameter] 
+        [Parameter]
         readonly string? AzureKeyVaultUrl;
 
-        [Parameter] 
+        [Parameter]
         readonly string? AzureKeyVaultAppId;
 
         [Parameter]
@@ -73,30 +71,35 @@ namespace Calamari.Build
         [Secret]
         readonly string? AzureKeyVaultTenantId;
 
-        [Parameter] 
+        [Parameter]
         readonly string? AzureKeyVaultCertificateName;
 
         [Parameter(Name = "signing_certificate_path")]
         readonly string SigningCertificatePath = RootDirectory / "certificates" / "OctopusDevelopment.pfx";
 
-        [Parameter(Name = "signing_certificate_password")] 
+        [Parameter(Name = "signing_certificate_password")]
         [Secret]
         readonly string SigningCertificatePassword = "Password01!";
 
-        [Required]
+        [Parameter]
+        readonly string? TargetFramework;
+
+        [Parameter]
+        readonly string? TargetRuntime;
+
         [GitVersion]
         readonly GitVersion? GitVersionInfo;
-        
+
         static readonly List<string> CalamariProjectsToSkipConsolidation = new() { "Calamari.CloudAccounts", "Calamari.Common", "Calamari.ConsolidateCalamariPackages" };
-        
+
         List<Task> SignDirectoriesTasks = new();
-        
+
         List<Task> ProjectCompressionTasks = new();
 
         public Build()
         {
-            NugetVersion = new Lazy<string>(GetNugetVersion); 
-            
+            NugetVersion = new Lazy<string>(GetNugetVersion);
+
             // This initialisation is required to ensure the build script can
             // perform actions such as GetRuntimeIdentifiers() on projects.
             ProjectModelTasks.Initialize();
@@ -164,7 +167,7 @@ namespace Calamari.Build
                   .Executes(() =>
                   {
                       Log.Information("Compiling Calamari v{CalamariVersion}", NugetVersion.Value);
-                      
+
                       DotNetBuild(_ => _.SetProjectFile(Solution)
                                         .SetConfiguration(Configuration)
                                         .SetNoRestore(true)
@@ -198,15 +201,15 @@ namespace Calamari.Build
 
                       var nugetVersion = NugetVersion.Value;
                       DoPublish(RootProjectName,
-                                OperatingSystem.IsWindows() ? Frameworks.Net40 : Frameworks.Net60,
+                                OperatingSystem.IsWindows() ? Frameworks.Net462 : Frameworks.Net60,
                                 nugetVersion);
                       DoPublish(RootProjectName,
-                                OperatingSystem.IsWindows() ? Frameworks.Net452 : Frameworks.Net60,
+                                OperatingSystem.IsWindows() ? Frameworks.Net462 : Frameworks.Net60,
                                 nugetVersion,
                                 FixedRuntimes.Cloud);
 
                       // Create the self-contained Calamari packages for each runtime ID defined in Calamari.csproj
-                      foreach (var rid in Solution.GetProject(RootProjectName).GetRuntimeIdentifiers()!)
+                      foreach (var rid in GetRuntimeIdentifiers(Solution.GetProject(RootProjectName)!)!)
                           DoPublish(RootProjectName, Frameworks.Net60, nugetVersion, rid);
                   });
 
@@ -260,7 +263,8 @@ namespace Calamari.Build
             // for cross-platform frameworks, we combine each runtime identifier with each target framework
             var crossPlatformPackages = calamariPackages
                 .Where(p => p.CrossPlatform)
-                .SelectMany(packageToBuild => packageToBuild.Project.GetRuntimeIdentifiers() ?? Enumerable.Empty<string>(),
+                .Where(p => string.IsNullOrWhiteSpace(TargetFramework) || p.Framework == TargetFramework)
+                .SelectMany(packageToBuild => GetRuntimeIdentifiers(packageToBuild.Project) ?? Enumerable.Empty<string>(),
                     (packageToBuild, runtimeIdentifier) => new CalamariPackageMetadata()
                     {
                         Project = packageToBuild.Project,
@@ -274,7 +278,7 @@ namespace Calamari.Build
 
             packagesToPublish.ForEach(PublishPackage);
             await Task.WhenAll(SignDirectoriesTasks);
-            
+
             projects.ForEach(CompressCalamariProject);
             await Task.WhenAll(ProjectCompressionTasks);
         }
@@ -301,7 +305,7 @@ namespace Calamari.Build
                 .SetRuntime(calamariPackageMetadata.Architecture)
                 .SetOutput(outputDirectory)
             );
-            
+
             if (!project.Name.Contains("Tests"))
             {
                 var signDirectoryTask = Task.Run(() => SignDirectory(outputDirectory));
@@ -309,7 +313,7 @@ namespace Calamari.Build
             }
 
             File.Copy(RootDirectory / "global.json", outputDirectory / "global.json");
-            
+
         }
 
         void CompressCalamariProject(Project project)
@@ -321,7 +325,7 @@ namespace Calamari.Build
                 Log.Verbose($"Skipping compression for {project.Name} since nothing was built");
                 return;
             }
-            
+
             var compressionTask = Task.Run(() => CompressionTasks.CompressZip(compressionSource, $"{ArtifactsDirectory / project.Name}.zip"));
             ProjectCompressionTasks.Add(compressionTask);
         }
@@ -335,17 +339,17 @@ namespace Calamari.Build
                                 var packageActions = new List<Action>
                                 {
                                     () => DoPackage(RootProjectName,
-                                                    OperatingSystem.IsWindows() ? Frameworks.Net40 : Frameworks.Net60,
+                                                    OperatingSystem.IsWindows() ? Frameworks.Net462 : Frameworks.Net60,
                                                     nugetVersion),
                                     () => DoPackage(RootProjectName,
-                                                    OperatingSystem.IsWindows() ? Frameworks.Net452 : Frameworks.Net60,
+                                                    OperatingSystem.IsWindows() ? Frameworks.Net462 : Frameworks.Net60,
                                                     nugetVersion,
                                                     FixedRuntimes.Cloud),
                                 };
 
                                 // Create the self-contained Calamari packages for each runtime ID defined in Calamari.csproj
                                 // ReSharper disable once LoopCanBeConvertedToQuery
-                                foreach (var rid in Solution.GetProject(RootProjectName).GetRuntimeIdentifiers()!)
+                                foreach (var rid in GetRuntimeIdentifiers(Solution.GetProject(RootProjectName)!)!)
                                     packageActions.Add(() => DoPackage(RootProjectName,
                                                                        Frameworks.Net60,
                                                                        nugetVersion,
@@ -379,7 +383,7 @@ namespace Calamari.Build
                   .Executes(async () =>
                   {
                       var nugetVersion = NugetVersion.Value;
-                      var defaultTarget = OperatingSystem.IsWindows() ? Frameworks.Net461 : Frameworks.Net60;
+                      var defaultTarget = OperatingSystem.IsWindows() ? Frameworks.Net462 : Frameworks.Net60;
                       AbsolutePath binFolder = SourceDirectory / "Calamari.Tests" / "bin" / Configuration / defaultTarget;
                       Directory.Exists(binFolder);
                       var actions = new List<Action>
@@ -392,7 +396,7 @@ namespace Calamari.Build
 
                       // Create a Zip for each runtime for testing
                       // ReSharper disable once LoopCanBeConvertedToQuery
-                      foreach (var rid in Solution.GetProject("Calamari.Tests").GetRuntimeIdentifiers()!)
+                      foreach (var rid in GetRuntimeIdentifiers(Solution.GetProject("Calamari.Tests")!)!)
                           actions.Add(() =>
                           {
                               var publishedLocation =
@@ -495,16 +499,16 @@ namespace Calamari.Build
                      var serverProjectFile = RootDirectory / ".." / "OctopusDeploy" / "source" / "Octopus.Server" / "Octopus.Server.csproj";
                      if (File.Exists(serverProjectFile))
                      {
-                         Log.Information("Setting Calamari version in Octopus Server " 
-                                         + "project {ServerProjectFile} to {NugetVersion}", 
+                         Log.Information("Setting Calamari version in Octopus Server "
+                                         + "project {ServerProjectFile} to {NugetVersion}",
                                          serverProjectFile, NugetVersion.Value);
                          SetOctopusServerCalamariVersion(serverProjectFile);
                      }
                      else
                      {
-                         Log.Warning("Could not set Calamari version in Octopus Server project " 
-                                     + "{ServerProjectFile} to {NugetVersion} as could not find " 
-                                     + "project file", 
+                         Log.Warning("Could not set Calamari version in Octopus Server project "
+                                     + "{ServerProjectFile} to {NugetVersion} as could not find "
+                                     + "project file",
                                      serverProjectFile, NugetVersion.Value);
                      }
                  });
@@ -563,7 +567,7 @@ namespace Calamari.Build
 
             return publishedTo;
         }
-        
+
         void SignProject(string project)
         {
             if (!WillSignBinaries)
@@ -641,6 +645,19 @@ namespace Calamari.Build
                 ? $"{GitVersionInfo?.NuGetVersion}-{DateTime.Now:yyyyMMddHHmmss}"
                 : GitVersionInfo?.NuGetVersion
                   ?? throw new InvalidOperationException("Unable to retrieve valid Nuget Version");
+        }
+
+        IReadOnlyCollection<string> GetRuntimeIdentifiers(Project? project)
+        {
+            if (project is null)
+                return Array.Empty<string>();
+
+            var runtimes = project.GetRuntimeIdentifiers();
+
+            if (!string.IsNullOrWhiteSpace(TargetRuntime))
+                runtimes = runtimes?.Where(x => x == TargetRuntime).ToList().AsReadOnly();
+
+            return runtimes ?? Array.Empty<string>();
         }
     }
 }

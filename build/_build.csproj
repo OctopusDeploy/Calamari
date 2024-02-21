@@ -22,12 +22,12 @@
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Nuke.Common" Version="6.3.0" />
+        <PackageReference Include="Nuke.Common" Version="7.0.6" />
     </ItemGroup>
 
     <ItemGroup>
       <PackageDownload Include="AzureSignTool" Version="[3.0.0]" />
-      <PackageDownload Include="GitVersion.Tool" Version="[5.9.0]" />
+      <PackageDownload Include="GitVersion.Tool" Version="[5.12.0]" />
     </ItemGroup>
 
     <ItemGroup>

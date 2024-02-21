@@ -9,15 +9,10 @@
     <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
     <LangVersion>8.0</LangVersion>
     <NoWarn>NU5104</NoWarn>
-  </PropertyGroup>
-  <PropertyGroup Condition="!$([MSBuild]::IsOSUnixLike())">
-    <TargetFrameworks>net461;net6.0</TargetFrameworks>
-  </PropertyGroup>
-  <PropertyGroup Condition="$([MSBuild]::IsOSUnixLike())">
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFrameworks>net462;net6.0</TargetFrameworks>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Azure.Identity" Version="1.10.0" />
+    <PackageReference Include="Azure.Identity" Version="1.10.4" />
     <PackageReference Include="Azure.ResourceManager" Version="1.7.0" />
     <PackageReference Include="Azure.ResourceManager.AppService" Version="1.0.2" />
     <PackageReference Include="Azure.ResourceManager.ResourceGraph" Version="1.0.1" />

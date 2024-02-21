@@ -154,6 +154,10 @@ namespace Calamari.Tests.KubernetesFixtures
 
                                                          if (CalamariEnvironment.IsRunningOnWindows)
                                                          {
+                                                             if (Directory.Exists($"{destinationDirectoryName}\\extract"))
+                                                             {
+                                                                 return GetAwsCliExecutablePath(destinationDirectoryName);
+                                                             }
                                                              ExecuteCommandAndReturnResult("msiexec",
                                                                                            $"/a {awsInstaller} /qn TARGETDIR={destinationDirectoryName}\\extract",
                                                                                            destinationDirectoryName);
@@ -482,19 +486,17 @@ namespace Calamari.Tests.KubernetesFixtures
                 }
 
                 var path = Directory.EnumerateFiles(destinationDirectoryName).FirstOrDefault();
-                if (toolName == "gcloud")
+                switch (toolName)
                 {
-                    path = GetGcloudExecutablePath(destinationDirectoryName);
-                }
-
-                if (toolName == "aws")
-                {
-                    path = GetAwsCliExecutablePath(destinationDirectoryName);
-                }
-
-                if (toolName == "kubelogin")
-                {
-                    path = GetKubeloginExecutablePath(destinationDirectoryName);
+                    case "gcloud":
+                        path = GetGcloudExecutablePath(destinationDirectoryName);
+                        break;
+                    case "aws":
+                        path = GetAwsCliExecutablePath(destinationDirectoryName);
+                        break;
+                    case "kubelogin":
+                        path = GetKubeloginExecutablePath(destinationDirectoryName);
+                        break;
                 }
 
                 if (path == null || !File.Exists(path))
@@ -515,7 +517,7 @@ namespace Calamari.Tests.KubernetesFixtures
             log($"Downloading {toolName} cli...");
             Directory.CreateDirectory(destinationDirectoryName);
 
-            var retry = new RetryTracker(3, TimeSpan.MaxValue, new LimitedExponentialRetryInterval(1000, 30000, 2));
+            var retry = new RetryTracker(4, TimeSpan.MaxValue, new LimitedExponentialRetryInterval(3000, 30000, 2));
             while (retry.Try())
             {
                 try

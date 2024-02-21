@@ -19,12 +19,7 @@
     <ApplicationManifest>Calamari.Aws.exe.manifest</ApplicationManifest>
     <ApplicationIcon />
     <StartupObject />
-  </PropertyGroup>
-  <PropertyGroup Condition="!$([MSBuild]::IsOSUnixLike())">
-    <TargetFrameworks>net452;netstandard2.1</TargetFrameworks>
-  </PropertyGroup>
-  <PropertyGroup Condition="$([MSBuild]::IsOSUnixLike())">
-    <TargetFramework>netstandard2.1</TargetFramework>
+    <TargetFrameworks>net462;netstandard2.1</TargetFrameworks>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="AWSSDK.EKS" Version="3.7.13.24" />

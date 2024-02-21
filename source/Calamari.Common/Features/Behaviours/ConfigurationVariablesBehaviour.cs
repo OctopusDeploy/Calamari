@@ -44,7 +44,7 @@ namespace Calamari.Common.Features.Behaviours
         {
             DoTransforms(Path.Combine(context.CurrentDirectory, subdirectory));
 
-            return this.CompletedTask();
+            return Task.CompletedTask;
         }
 
         public void DoTransforms(string currentDirectory)

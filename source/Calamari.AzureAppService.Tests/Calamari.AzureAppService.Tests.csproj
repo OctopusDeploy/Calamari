@@ -6,16 +6,11 @@
     <IsPackable>false</IsPackable>
     <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
     <LangVersion>8.0</LangVersion>
-  </PropertyGroup>
-  <PropertyGroup Condition="!$([MSBuild]::IsOSUnixLike())">
-    <TargetFrameworks>net461;net6.0</TargetFrameworks>
-  </PropertyGroup>
-  <PropertyGroup Condition="$([MSBuild]::IsOSUnixLike())">
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFrameworks>net462;net6.0</TargetFrameworks>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Azure.Identity" Version="1.10.0" />
+    <PackageReference Include="Azure.Identity" Version="1.10.4" />
     <PackageReference Include="Azure.ResourceManager.Resources" Version="1.0.0-preview.2" />
     <PackageReference Include="Azure.ResourceManager.Storage" Version="1.1.1" />
     <PackageReference Include="Microsoft.Azure.Management.Storage" Version="24.0.0" />

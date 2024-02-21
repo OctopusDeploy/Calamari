@@ -1,5 +1,26 @@
 #!/usr/bin/env bash
 
+auto_accept=""
+target_framework=""
+target_runtime=""
+
+while test $# -gt 0; do
+  case "$1" in
+  -y)
+    auto_accept='yes'
+    ;;
+  --framework)
+    target_framework=$2
+    shift
+    ;;
+  --runtime)
+    target_runtime=$2
+    shift
+    ;;
+  esac
+  shift
+done
+
 Green='\033[32m'
 Yellow='\033[1;33m'
 NoColour='\033[0m' # No Color
@@ -48,15 +69,16 @@ echo -e "$StartMessage"
 
 echo -e "$WarningMessage"
 
-read -p "Are you sure you want to continue? (Y,n): " option
-
-if ! [[ -z "$option" ]] && ! [[ "$option" == 'Y' ]] && ! [[ "$option" == 'y' ]]
-then
-    echo "Build Cancelled."
-    exit 0;
+if [ -z "$auto_accept" ]; then
+  read -p "Are you sure you want to continue? (Y,n): " option
+  
+  if ! [[ -z "$option" ]] && ! [[ "$option" == 'Y' ]] && ! [[ "$option" == 'y' ]]
+  then
+      echo "Build Cancelled."
+      exit 0;
+  fi
 fi
 
-./build.sh -BuildVerbosity Minimal -Verbosity Minimal -PackInParallel -AppendTimestamp -SetOctopusServerVersion
+./build.sh -BuildVerbosity Minimal -Verbosity Minimal -PackInParallel -AppendTimestamp -SetOctopusServerVersion -TargetFramework "$target_framework" -TargetRuntime "$target_runtime"
 
 echo -e "$FinishMessage"
-

@@ -16,17 +16,26 @@ namespace Calamari.Kubernetes.Integration
     {
         readonly string customKubectlExecutable;
         private bool isSet;
+        List<string> defaultCommandArgs = new List<string> { "--request-timeout=1m" };
 
         public Kubectl(IVariables variables, ILog log, ICommandLineRunner commandLineRunner)
-            : this(variables, log, commandLineRunner, Environment.CurrentDirectory, new Dictionary<string, string>())
+            : this(variables,
+                   log,
+                   commandLineRunner,
+                   Environment.CurrentDirectory,
+                   new Dictionary<string, string>())
         {
         }
 
-        public Kubectl(IVariables variables, ILog log, ICommandLineRunner commandLineRunner, string workingDirectory,
-            Dictionary<string, string> environmentVariables) : base(log, commandLineRunner, workingDirectory, environmentVariables)
+        public Kubectl(IVariables variables,
+                       ILog log,
+                       ICommandLineRunner commandLineRunner,
+                       string workingDirectory,
+                       Dictionary<string, string> environmentVariables) : base(log, commandLineRunner, workingDirectory, environmentVariables)
         {
             customKubectlExecutable = variables.Get("Octopus.Action.Kubernetes.CustomKubectlExecutable");
         }
+
         public void SetWorkingDirectory(string directory)
         {
             workingDirectory = directory;
@@ -37,9 +46,12 @@ namespace Calamari.Kubernetes.Integration
             environmentVars = variables;
         }
 
-        public bool TrySetKubectl()
+        public void SetKubectl()
         {
-            if (isSet) return true;
+            if (isSet)
+            {
+                return;
+            }
 
             if (string.IsNullOrEmpty(customKubectlExecutable))
             {
@@ -51,44 +63,51 @@ namespace Calamari.Kubernetes.Integration
 
                 if (string.IsNullOrEmpty(foundExecutable))
                 {
-                    log.Error("Could not find kubectl. Make sure kubectl is on the PATH. See https://g.octopushq.com/KubernetesTarget for more information.");
-                    return false;
+                    throw new KubectlException("Could not find kubectl. Make sure kubectl is on the PATH. See https://g.octopushq.com/KubernetesTarget for more information.");
                 }
 
                 ExecutableLocation = foundExecutable?.Trim();
             }
+            else if (!File.Exists(customKubectlExecutable))
+            {
+                throw new KubectlException($"The custom kubectl location of {customKubectlExecutable} does not exist. See https://g.octopushq.com/KubernetesTarget for more information.");
+            }
             else
             {
-                if (!File.Exists(customKubectlExecutable))
-                {
-                    log.Error($"The custom kubectl location of {customKubectlExecutable} does not exist. See https://g.octopushq.com/KubernetesTarget for more information.");
-                    return false;
-                }
-
                 ExecutableLocation = customKubectlExecutable;
             }
 
-            if (TryExecuteKubectlCommand("version", "--client", "--output=yaml"))
+            if (!TryExecuteKubectlCommand("version", "--client", "--output=yaml"))
             {
-                log.Verbose($"Found kubectl and successfully verified it can be executed.");
-                isSet = true;
-                return true;
+                throw new KubectlException($"Found kubectl at {ExecutableLocation}, but unable to successfully execute it. See https://g.octopushq.com/KubernetesTarget for more information.");
             }
 
-            log.Error($"Found kubectl at {ExecutableLocation}, but unable to successfully execute it. See https://g.octopushq.com/KubernetesTarget for more information.");
-            return false;
+            log.Verbose($"Found kubectl and successfully verified it can be executed.");
+            isSet = true;
         }
 
         bool TryExecuteKubectlCommand(params string[] arguments)
         {
-            return ExecuteCommandAndLogOutput(new CommandLineInvocation(ExecutableLocation, arguments.Concat(new[] { "--request-timeout=1m" }).ToArray())).ExitCode == 0;
+            return ExecuteCommandAndLogOutput(new CommandLineInvocation(ExecutableLocation, arguments.Concat(defaultCommandArgs).ToArray())).ExitCode == 0;
         }
 
         public CommandResult ExecuteCommand(params string[] arguments)
         {
-            var kubectlArguments = arguments.Concat(new[] { "--request-timeout=1m" }).ToArray();
+            var kubectlArguments = arguments.Concat(defaultCommandArgs).ToArray();
             var commandInvocation = new CommandLineInvocation(ExecutableLocation, kubectlArguments);
             return ExecuteCommandAndLogOutput(commandInvocation);
+        }
+
+        /// <summary>
+        /// This is a special case for when the invocation results in an error
+        /// 1) but is to be expected as a valid scenario; and
+        /// 2) we don't want to inform this at an error level when this happens.
+        /// </summary>
+        public CommandResult ExecuteCommandWithVerboseLoggingOnly(params string[] arguments)
+        {
+            var kubectlArguments = arguments.Concat(defaultCommandArgs).ToArray();
+            var commandInvocation = new CommandLineInvocation(ExecutableLocation, kubectlArguments);
+            return ExecuteCommandAndLogOutputAsVerbose(commandInvocation);
         }
 
         public void ExecuteCommandAndAssertSuccess(params string[] arguments)
@@ -107,10 +126,10 @@ namespace Calamari.Kubernetes.Integration
             try
             {
                 var clientVersion = JsonConvert.DeserializeAnonymousType(kubeCtlVersionJson, new { clientVersion = new { gitVersion = "1.0.0" } });
-                var kubectlVersionString = clientVersion?.clientVersion?.gitVersion?.TrimStart('v');
+                var kubectlVersionString = clientVersion?.clientVersion?.gitVersion;
                 if (kubectlVersionString != null)
                 {
-                    return Maybe<SemanticVersion>.Some(new SemanticVersion(kubectlVersionString));
+                    return Maybe<SemanticVersion>.Some(SemVerFactory.CreateVersion(kubectlVersionString));
                 }
             }
             catch (Exception e)
@@ -120,17 +139,25 @@ namespace Calamari.Kubernetes.Integration
 
             return Maybe<SemanticVersion>.None;
         }
+
+        public void DisableRequestTimeoutArgument()
+        {
+            var idx = defaultCommandArgs.FindIndex(x => x.Contains("request-timeout"));
+            defaultCommandArgs.RemoveAt(idx);
+        }
     }
 
     public interface IKubectl
     {
         void SetWorkingDirectory(string directory);
         void SetEnvironmentVariables(Dictionary<string, string> variables);
-        bool TrySetKubectl();
+        void SetKubectl();
         CommandResult ExecuteCommand(params string[] arguments);
+        CommandResult ExecuteCommandWithVerboseLoggingOnly(params string[] arguments);
         void ExecuteCommandAndAssertSuccess(params string[] arguments);
         CommandResultWithOutput ExecuteCommandAndReturnOutput(params string[] arguments);
         Maybe<SemanticVersion> GetVersion();
         string ExecutableLocation { get; }
+        void DisableRequestTimeoutArgument();
     }
 }

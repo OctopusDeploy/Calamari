@@ -81,7 +81,7 @@ namespace Calamari.AzureServiceFabric.Behaviours
                     result.ExitCode));
             }
 
-            return this.CompletedTask();
+            return Task.CompletedTask;
         }
 
         void SetRegisterApplicationTypeTimeout(IVariables variables)

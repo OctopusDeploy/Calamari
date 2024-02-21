@@ -81,7 +81,7 @@ namespace Calamari.Terraform.Behaviours
                 }
             }
 
-            return this.CompletedTask();
+            return Task.CompletedTask;
         }
 
         void CapturePlainTextOutput(RunningDeployment deployment, string results)

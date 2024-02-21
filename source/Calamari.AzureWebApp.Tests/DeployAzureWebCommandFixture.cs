@@ -66,7 +66,7 @@ namespace Calamari.AzureWebApp.Tests
                 .Define(SdkContext.RandomResourceName(nameof(DeployAzureWebCommandFixture), 60))
                 .WithRegion(resourceGroup.Region)
                 .WithExistingResourceGroup(resourceGroup)
-                .WithPricingTier(PricingTier.StandardS1)
+                .WithPricingTier(PricingTier.PremiumP1v3)
                 .WithOperatingSystem(OperatingSystem.Windows)
                 .CreateAsync();
         }

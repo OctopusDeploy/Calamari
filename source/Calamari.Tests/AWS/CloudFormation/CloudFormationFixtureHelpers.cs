@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using Amazon.CloudFormation;
@@ -108,6 +109,17 @@ namespace Calamari.Tests.AWS.CloudFormation
                 stackStatus.Should().Be(shouldExist ? Aws.Deployment.Conventions.StackStatus.Completed : Aws.Deployment.Conventions.StackStatus.DoesNotExist);
             });
         }
+
+        public async Task ValidateStackTags(string stackName, IEnumerable<KeyValuePair<string, string>> expectedTags)
+        {
+            await ValidateCloudFormation(async (client) =>
+            {
+                Func<IAmazonCloudFormation> clientFactory = () => client;
+                var stack = await clientFactory.DescribeStackAsync(new StackArn(stackName));
+                stack.Tags.Should().BeEquivalentTo(expectedTags);
+            });
+        }
+        
         async Task ValidateCloudFormation(Func<AmazonCloudFormationClient, Task> execute)
         {
             var credentials = new BasicAWSCredentials(ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3AccessKey),

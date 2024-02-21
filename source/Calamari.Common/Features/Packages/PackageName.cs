@@ -4,8 +4,8 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Calamari.Common.Features.Packages.NuGet;
-using Calamari.Common.Plumbing.Extensions;
 using Octopus.Versioning;
+using Octopus.Versioning.Lexicographic;
 using Octopus.Versioning.Maven;
 using Octopus.Versioning.Octopus;
 using Octopus.Versioning.Semver;
@@ -113,7 +113,7 @@ namespace Calamari.Common.Features.Packages
             if (!packageIdMatch.Success || !versionMatch.Success || !extensionMatch.Success)
                 return false;
 
-            version = VersionFactory.TryCreateSemanticVersion(versionMatch.Value.SanitiseSemVerString(), true);
+            version = VersionFactory.TryCreateSemanticVersion(versionMatch.Value, true);
             if (version == null)
                 return false;
 
@@ -179,7 +179,7 @@ namespace Calamari.Common.Features.Packages
 //                version = metaData.Version;
 //                packageId = metaData.PackageId;
                 var metaData = new LocalNuGetPackage(path!).Metadata;
-                version = SemVerFactory.CreateVersion(metaData.Version.ToString().SanitiseSemVerString());
+                version = SemVerFactory.CreateVersion(metaData.Version.ToString());
                 packageId = metaData.Id;
             }
 
@@ -234,6 +234,8 @@ namespace Calamari.Common.Features.Packages
                     return "S" + Encode(version.ToString());
                 case OctopusVersion _:
                     return "O" + Encode(version.ToString());
+                case LexicographicSortedVersion _:
+                    return "L" + Encode(version.ToString());
             }
 
             throw new Exception($"Unrecognised Version format `{version.GetType().Name}`");
@@ -244,11 +246,13 @@ namespace Calamari.Common.Features.Packages
             switch (input[0])
             {
                 case 'S':
-                    return VersionFactory.CreateSemanticVersion(Decode(input.Substring(1)).SanitiseSemVerString(), true);
+                    return VersionFactory.CreateSemanticVersion(Decode(input.Substring(1)), true);
                 case 'M':
                     return VersionFactory.CreateMavenVersion(Decode(input.Substring(1)));
                 case 'O':
                     return VersionFactory.CreateOctopusVersion(Decode(input.Substring(1)));
+                case 'L':
+                    return VersionFactory.CreateLexicographicSortedVersion(Decode(input.Substring(1)));
             }
 
             throw new Exception($"Unrecognised Version format `{input}`");

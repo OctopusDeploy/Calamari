@@ -34,10 +34,7 @@ namespace Calamari.Kubernetes.ResourceStatus
         public async Task<Result> Run(IEnumerable<ResourceIdentifier> resources, Options options, TimeSpan timeout,
             CancellationToken cancellationToken)
         {
-            if (!kubectl.TrySetKubectl())
-            {
-                throw new Exception("Unable to set KubeCtl");
-            }
+            kubectl.SetKubectl();
 
             var timer = timerFactory(TimeSpan.FromSeconds(PollingIntervalSeconds), timeout);
 

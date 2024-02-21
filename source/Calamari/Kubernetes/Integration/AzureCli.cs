@@ -15,7 +15,7 @@ namespace Calamari.Kubernetes.Integration
         {
         }
 
-        public bool TrySetAz()
+        public void SetAz()
         {
             var result = CalamariEnvironment.IsRunningOnWindows
                 ? ExecuteCommandAndReturnOutput("where", "az.cmd")
@@ -24,12 +24,10 @@ namespace Calamari.Kubernetes.Integration
             var foundExecutable = result.Output.InfoLogs.FirstOrDefault();
             if (string.IsNullOrEmpty(foundExecutable))
             {
-                log.Error("Could not find az. Make sure az is on the PATH.");
-                return false;
+                throw new KubectlException("Could not find az. Make sure az is on the PATH.");
             }
 
             ExecutableLocation = foundExecutable.Trim();
-            return true;
         }
 
         public void ConfigureAzAccount(string subscriptionId,
@@ -41,11 +39,12 @@ namespace Calamari.Kubernetes.Integration
         {
             SetConfigDirectoryEnvironmentVariable(environmentVars, workingDirectory);
 
-            TryExecuteCommandAndLogOutput(ExecutableLocation,
-                                          "cloud",
-                                          "set",
-                                          "--name",
-                                          azEnvironment);
+            ExecuteCommandAndLogOutput(new CommandLineInvocation(
+                                                                 ExecutableLocation,
+                                                                 "cloud",
+                                                                 "set",
+                                                                 "--name",
+                                                                 azEnvironment));
 
             if (isOidc)
             {
@@ -80,7 +79,12 @@ namespace Calamari.Kubernetes.Integration
             log.Info("Successfully authenticated with the Azure CLI");
         }
 
-        public void ConfigureAksKubeCtlAuthentication(IKubectl kubectlCli, string clusterResourceGroup, string clusterName, string clusterNamespace, string kubeConfigPath, bool adminLogin)
+        public void ConfigureAksKubeCtlAuthentication(IKubectl kubectlCli,
+                                                      string clusterResourceGroup,
+                                                      string clusterName,
+                                                      string clusterNamespace,
+                                                      string kubeConfigPath,
+                                                      bool adminLogin)
         {
             log.Info($"Creating kubectl context to AKS Cluster in resource group {clusterResourceGroup} called {clusterName} (namespace {clusterNamespace})");
 

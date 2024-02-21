@@ -11,7 +11,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
 {
     [TestFixture]
 #if NETFX
-    [Ignore("GitHub tests are not run in .netcore to reduce throttling exceptions from GitHub itself.")]
+    [Ignore("GitHub tests are not run in .netframework to reduce throttling exceptions from GitHub itself.")]
 #endif
     public class GitHubPackageDownloadFixture
     {

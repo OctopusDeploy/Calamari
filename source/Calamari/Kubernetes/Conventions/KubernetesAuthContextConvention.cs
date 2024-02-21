@@ -36,9 +36,7 @@ namespace Calamari.Kubernetes.Conventions
                 deployment.EnvironmentVariables,
                 deployment.CurrentDirectory);
 
-            var accountType = deployment.Variables.Get("Octopus.Account.AccountType");
-
-            setupKubectlAuthentication.Execute(accountType);
+            setupKubectlAuthentication.Execute();
         }
     }
 }

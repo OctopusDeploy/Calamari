@@ -31,7 +31,7 @@ namespace Calamari.Common.Features.Behaviours
             {
                 DeleteScripts(context);
             }
-            return this.CompletedTask();
+            return Task.CompletedTask;
         }
     }
 }

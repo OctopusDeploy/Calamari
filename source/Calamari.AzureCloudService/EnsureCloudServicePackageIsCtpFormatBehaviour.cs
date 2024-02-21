@@ -44,7 +44,7 @@ namespace Calamari.AzureCloudService
                     throw new InvalidOperationException("Unexpected PackageFormat: " + packageFormat);
             }
 
-            return this.CompletedTask();
+            return Task.CompletedTask;
         }
 
         void ConvertPackage(string packagePath)

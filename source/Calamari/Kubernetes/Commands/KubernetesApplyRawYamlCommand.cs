@@ -21,7 +21,7 @@ namespace Calamari.Kubernetes.Commands
 
         private readonly IVariables variables;
         private readonly IResourceStatusReportExecutor statusReporter;
-        private readonly IGatherAndApplyRawYamlExecutor gatherAndApplyRawYamlExecutor;
+        private readonly IKubernetesApplyExecutor kubernetesApplyExecutor;
 
         public KubernetesApplyRawYamlCommand(
             ILog log,
@@ -31,7 +31,7 @@ namespace Calamari.Kubernetes.Commands
             IExtractPackage extractPackage,
             ISubstituteInFiles substituteInFiles,
             IStructuredConfigVariablesService structuredConfigVariablesService,
-            IGatherAndApplyRawYamlExecutor gatherAndApplyRawYamlExecutor,
+            IRawYamlKubernetesApplyExecutor kubernetesApplyExecutor,
             IResourceStatusReportExecutor statusReporter,
             Kubectl kubectl)
             : base(log, deploymentJournalWriter, variables, fileSystem, extractPackage,
@@ -39,14 +39,14 @@ namespace Calamari.Kubernetes.Commands
         {
             this.variables = variables;
             this.statusReporter = statusReporter;
-            this.gatherAndApplyRawYamlExecutor = gatherAndApplyRawYamlExecutor;
+            this.kubernetesApplyExecutor = kubernetesApplyExecutor;
         }
 
         protected override async Task<bool> ExecuteCommand(RunningDeployment runningDeployment)
         {
             if (!variables.GetFlag(SpecialVariables.ResourceStatusCheck))
             {
-                return await gatherAndApplyRawYamlExecutor.Execute(runningDeployment);
+                return await kubernetesApplyExecutor.Execute(runningDeployment);
             }
 
             var timeoutSeconds = variables.GetInt32(SpecialVariables.Timeout) ?? 0;
@@ -54,7 +54,7 @@ namespace Calamari.Kubernetes.Commands
             
             var statusCheck = statusReporter.Start(timeoutSeconds, waitForJobs);
 
-            return await gatherAndApplyRawYamlExecutor.Execute(runningDeployment, statusCheck.AddResources) &&
+            return await kubernetesApplyExecutor.Execute(runningDeployment, statusCheck.AddResources) &&
                 await statusCheck.WaitForCompletionOrTimeout();
         }
     }

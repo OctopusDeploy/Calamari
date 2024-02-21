@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using Assent;
@@ -33,7 +34,6 @@ namespace Calamari.Tests.KubernetesFixtures
 
         IVariables variables;
         InMemoryLog log;
-        Dictionary<string, string> redactMap;
         InstallTools installTools;
         Dictionary<string, string> environmentVariables;
 
@@ -43,25 +43,27 @@ namespace Calamari.Tests.KubernetesFixtures
             variables = new CalamariVariables();
             variables.Set(KnownVariables.EnabledFeatureToggles, FeatureToggle.KubernetesAksKubeloginFeatureToggle.ToString());
             log = new DoNotDoubleLog();
-            redactMap = new Dictionary<string, string>();
             environmentVariables = new Dictionary<string, string>();
 
             SetTestClusterVariables();
         }
 
         [Test]
-        [TestCase("Url", "", "", true)]
-        [TestCase("", "Name", "", true)]
-        [TestCase("", "", "Name", true)]
-        [TestCase("", "", "", false)]
+        [TestCase("Url", "", "", "",true)]
+        [TestCase("", "Name", "", "",true)]
+        [TestCase("", "", "Name", "",true)]
+        [TestCase("", "", "", "KubernetesTentacle",true)]
+        [TestCase("", "", "", "",false)]
         public void ShouldBeEnabledIfAnyVariablesAreProvided(string clusterUrl,
                                                              string aksClusterName,
                                                              string eksClusterName,
+                                                             string deploymentTargetType,
                                                              bool expected)
         {
             variables.Set(SpecialVariables.ClusterUrl, clusterUrl);
             variables.Set(SpecialVariables.AksClusterName, aksClusterName);
             variables.Set(SpecialVariables.EksClusterName, eksClusterName);
+            variables.Set(MachineVariables.DeploymentTargetType, deploymentTargetType);
 
             var wrapper = CreateWrapper();
             var actual = wrapper.IsEnabled(ScriptSyntaxHelper.GetPreferredScriptSyntaxForEnvironment());
@@ -69,7 +71,6 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        [NonWindowsTest]
         public void ExecutionShouldFailWhenAccountTypeNotValid()
         {
             variables.Set(Deployment.SpecialVariables.Account.AccountType, "not valid");
@@ -80,7 +81,6 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        [NonWindowsTest]
         public void ExecutionShouldApplyChmodInBash()
         {
             variables.Set(PowerShellVariables.Edition, "Desktop");
@@ -91,7 +91,6 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        [NonWindowsTest]
         public void ExecutionShouldUseGivenNamespace()
         {
             variables.Set(ScriptVariables.Syntax, ScriptSyntax.PowerShell.ToString());
@@ -104,7 +103,6 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        [NonWindowsTest]
         public void ExecutionShouldOutputKubeConfig()
         {
             variables.Set(ScriptVariables.Syntax, ScriptSyntax.PowerShell.ToString());
@@ -117,7 +115,6 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        [NonWindowsTest]
         public void ExecutionWithCustomKubectlExecutable_FileDoesNotExist()
         {
             variables.Set(ScriptVariables.Syntax, ScriptSyntax.Bash.ToString());
@@ -130,7 +127,6 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        [NonWindowsTest]
         public void ExecutionWithAzureServicePrincipal()
         {
             variables.Set(ScriptVariables.Syntax, ScriptSyntax.Bash.ToString());
@@ -148,7 +144,6 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        [NonWindowsTest]
         public void ExecutionWithAzureServicePrincipalWithAdmin()
         {
             variables.Set(ScriptVariables.Syntax, ScriptSyntax.PowerShell.ToString());
@@ -166,7 +161,6 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        [NonWindowsTest]
         public void ExecutionUsingPodServiceAccount_WithoutServerCert()
         {
             variables.Set(ScriptVariables.Syntax, ScriptSyntax.PowerShell.ToString());
@@ -175,15 +169,13 @@ namespace Calamari.Tests.KubernetesFixtures
             using (var podServiceAccountToken = new TemporaryFile(Path.Combine(dir.DirectoryPath, "podServiceAccountToken")))
             {
                 File.WriteAllText(podServiceAccountToken.FilePath, "podServiceAccountToken");
-                redactMap[podServiceAccountToken.FilePath] = "<podServiceAccountTokenPath>";
                 variables.Set("Octopus.Action.Kubernetes.PodServiceAccountTokenPath", podServiceAccountToken.FilePath);
                 var wrapper = CreateWrapper();
-                TestScriptInReadOnlyMode(wrapper).AssertSuccess();
+                TestScriptInReadOnlyMode(wrapper, redactMap: new Dictionary<string, string>(){{podServiceAccountToken.FilePath, "<podServiceAccountTokenPath>"}}).AssertSuccess();
             }
         }
 
         [Test]
-        [NonWindowsTest]
         public void ExecutionUsingPodServiceAccount_WithServerCert()
         {
             variables.Set(ScriptVariables.Syntax, ScriptSyntax.PowerShell.ToString());
@@ -194,17 +186,17 @@ namespace Calamari.Tests.KubernetesFixtures
             {
                 File.WriteAllText(podServiceAccountToken.FilePath, "podServiceAccountToken");
                 File.WriteAllText(certificateAuthority.FilePath, "certificateAuthority");
+                var redactMap = new Dictionary<string, string>();
                 redactMap[podServiceAccountToken.FilePath] = "<podServiceAccountTokenPath>";
                 redactMap[certificateAuthority.FilePath] = "<certificateAuthorityPath>";
                 variables.Set("Octopus.Action.Kubernetes.PodServiceAccountTokenPath", podServiceAccountToken.FilePath);
                 variables.Set("Octopus.Action.Kubernetes.CertificateAuthorityPath", certificateAuthority.FilePath);
                 var wrapper = CreateWrapper();
-                TestScriptInReadOnlyMode(wrapper).AssertSuccess();
+                TestScriptInReadOnlyMode(wrapper, redactMap: redactMap).AssertSuccess();
             }
         }
 
         [Test]
-        [NonWindowsTest]
         public void ExecutionWithClientAndCertificateAuthority()
         {
             variables.Set(ScriptVariables.Syntax, ScriptSyntax.Bash.ToString());
@@ -221,7 +213,6 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        [NonWindowsTest]
         public void ExecutionWithUsernamePassword()
         {
             variables.Set(ScriptVariables.Syntax, ScriptSyntax.Bash.ToString());
@@ -350,7 +341,6 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        [NonWindowsTest]
         public void ExecutionWithCustomKubectlExecutable_FileExists()
         {
             variables.Set(ScriptVariables.Syntax, ScriptSyntax.PowerShell.ToString());
@@ -362,9 +352,8 @@ namespace Calamari.Tests.KubernetesFixtures
             {
                 File.WriteAllText(tempExe.FilePath, string.Empty);
                 variables.Set("Octopus.Action.Kubernetes.CustomKubectlExecutable", tempExe.FilePath);
-                redactMap[tempExe.FilePath] = "<customkubectl>";
                 var wrapper = CreateWrapper();
-                TestScriptInReadOnlyMode(wrapper).AssertSuccess();
+                TestScriptInReadOnlyMode(wrapper, redactMap: new Dictionary<string, string>(){{tempExe.FilePath, "<customkubectl>"}}).AssertSuccess();
             }
         }
 
@@ -376,12 +365,12 @@ namespace Calamari.Tests.KubernetesFixtures
         void SetTestClusterVariables()
         {
             variables.Set(SpecialVariables.ClusterUrl, ServerUrl);
-            variables.Set(SpecialVariables.SkipTlsVerification, "true");
             variables.Set(SpecialVariables.Namespace, "calamari-testing");
         }
 
-        CalamariResult TestScriptInReadOnlyMode(IScriptWrapper wrapper, [CallerMemberName] string testName = null, [CallerFilePath] string filePath = null)
+        CalamariResult TestScriptInReadOnlyMode(IScriptWrapper wrapper, [CallerMemberName] string testName = null, [CallerFilePath] string filePath = null, Dictionary<string, string> redactMap = null)
         {
+            redactMap = redactMap ?? new Dictionary<string, string>();
             using (var dir = TemporaryDirectory.Create())
             using (var temp = new TemporaryFile(Path.Combine(dir.DirectoryPath, $"scriptName.{(variables.Get(ScriptVariables.Syntax) == ScriptSyntax.Bash.ToString() ? "sh" : "ps1")}")))
             {
@@ -397,7 +386,23 @@ namespace Calamari.Tests.KubernetesFixtures
                     sb.AppendLine($"[{message.Level}] {text}");
                 }
 
-                this.Assent(sb.ToString().Replace("\r\n", "\n"), testName: testName, filePath: filePath, configuration: AssentConfiguration.Default);
+                var configuration = AssentConfiguration.Default.UsingSanitiser(approval =>
+                                                                               {
+                                                                                   approval = approval.Replace("\r\n", "\n");
+
+                                                                                   // On Windows machines the chmod message wont appear
+                                                                                   // To avoid having multiple approval files, just fake the line.
+                                                                                   // This specific logic will be explicitly checked elsewhere
+                                                                                   if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                                                                                   {
+                                                                                       const string chmodMsg = "[Verbose] \"chmod\" u=rw,g=,o= \"<path>kubectl-octo.yml\"";
+                                                                                       const string tempPathMsg = "[Verbose] Temporary kubectl config set to <path>kubectl-octo.yml";
+                                                                                       approval = approval.Replace(tempPathMsg, $"{chmodMsg}\n{tempPathMsg}");
+                                                                                   }
+                                                                                   return approval;
+                                                                               });
+
+                this.Assent(sb.ToString(), testName: testName, filePath: filePath, configuration: configuration);
 
                 return output;
             }
@@ -416,7 +421,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 wrappers.Add(new AwsScriptWrapper(log, variables) { VerifyAmazonLogin = () => Task.FromResult(true) });
             }
 
-            var engine = new ScriptEngine(wrappers);
+            var engine = new ScriptEngine(wrappers, log);
             var result = engine.Execute(new Script(scriptName), variables, runner, environmentVariables);
 
             return new CalamariResult(result.ExitCode, new CaptureCommandInvocationOutputSink());

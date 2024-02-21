@@ -5,12 +5,7 @@
         <PackageProjectUrl>https://github.com/OctopusDeploy/Calamari/</PackageProjectUrl>
         <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
         <LangVersion>default</LangVersion>
-    </PropertyGroup>
-    <PropertyGroup Condition="!$([MSBuild]::IsOSUnixLike())">
-        <TargetFrameworks>net452;netstandard2.1</TargetFrameworks>
-    </PropertyGroup>
-    <PropertyGroup Condition="$([MSBuild]::IsOSUnixLike())">
-        <TargetFramework>netstandard2.1</TargetFramework>
+        <TargetFrameworks>net462;netstandard2.1</TargetFrameworks>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(TargetFramework)' == 'netstandard2.1' ">
         <DefineConstants>$(DefineConstants);NETCORE</DefineConstants>
@@ -20,7 +15,6 @@
         <PackageReference Include="Assent" Version="1.6.1" />
         <PackageReference Include="FluentAssertions" Version="5.10.3" />
         <PackageReference Include="NUnit" Version="3.13.3" />
-        <PackageReference Include="Octopus.Diagnostics" Version="2.1.0" />
         <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.3.0" />
     </ItemGroup>
 

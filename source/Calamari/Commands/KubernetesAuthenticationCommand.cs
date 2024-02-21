@@ -1,4 +1,5 @@
 #if !NET40
+using System;
 using System.Collections.Generic;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Processes;
@@ -10,6 +11,7 @@ using Calamari.Kubernetes.Integration;
 
 namespace Calamari.Commands
 {
+    [Obsolete("This command is used exclusively by the Kustomize step package. It should be removed together with \"KustomizeStepMigrationFeatureToggle\" once the step migration has settled.")]
     [Command("authenticate-to-kubernetes")]
     public class KubernetesAuthenticationCommand: Command<KubernetesAuthenticationCommandInput>
     {
@@ -41,7 +43,7 @@ namespace Calamari.Commands
             
             kubectl.SetEnvironmentVariables(environmentVars);
             kubectl.SetWorkingDirectory(runningDeployment.CurrentDirectory);
-            
+
             var setupKubectlAuthentication = new SetupKubectlAuthentication(variables,
                 log,
                 commandLineRunner,
@@ -49,11 +51,9 @@ namespace Calamari.Commands
                 fileSystem,
                 environmentVars,
                 runningDeployment.CurrentDirectory);
-            var accountType = variables.Get("Octopus.Account.AccountType");
-
             try
             {
-                var result = setupKubectlAuthentication.Execute(accountType);
+                var result = setupKubectlAuthentication.Execute();
                 result.VerifySuccess();
             }
             catch (CommandLineException ex)

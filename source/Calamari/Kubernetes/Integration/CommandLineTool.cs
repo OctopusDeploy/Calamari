@@ -27,13 +27,18 @@ namespace Calamari.Kubernetes.Integration
 
         public string ExecutableLocation { get; protected set; }
 
-        protected bool TryExecuteCommandAndLogOutput(string exe, params string[] arguments)
-        {
-            var result = ExecuteCommandAndLogOutput(new CommandLineInvocation(exe, arguments));
-            return result.ExitCode == 0;
-        }
-
         protected CommandResult ExecuteCommandAndLogOutput(CommandLineInvocation invocation)
+            => ExecuteCommandAndLogOutput(invocation, false);
+
+        /// <summary>
+        /// This is a special case for when the invocation results in an error
+        /// 1) but is to be expected as a valid scenario; and
+        /// 2) we don't want to inform this at an error level when this happens.
+        /// </summary>
+        protected CommandResult ExecuteCommandAndLogOutputAsVerbose(CommandLineInvocation invocation)
+            => ExecuteCommandAndLogOutput(invocation, true);
+
+        CommandResult ExecuteCommandAndLogOutput(CommandLineInvocation invocation, bool logOutputAsVerbose)
         {
             invocation.EnvironmentVars = environmentVars;
             invocation.WorkingDirectory = workingDirectory;
@@ -47,7 +52,7 @@ namespace Calamari.Kubernetes.Integration
 
             var result = commandLineRunner.Execute(invocation);
 
-            LogCapturedOutput(result, captureCommandOutput);
+            LogCapturedOutput(result, captureCommandOutput, logOutputAsVerbose);
 
             return result;
         }
@@ -57,7 +62,7 @@ namespace Calamari.Kubernetes.Integration
             log.Verbose(invocation.ToString());
         }
 
-        void LogCapturedOutput(CommandResult result, CaptureCommandOutput captureCommandOutput)
+        void LogCapturedOutput(CommandResult result, CaptureCommandOutput captureCommandOutput, bool logOutputAsVerbose)
         {
             foreach (var message in captureCommandOutput.Messages)
             {
@@ -67,14 +72,21 @@ namespace Calamari.Kubernetes.Integration
                     continue;
                 }
 
-                switch (message.Level)
+                if (logOutputAsVerbose)
                 {
-                    case Level.Info:
-                        log.Verbose(message.Text);
-                        break;
-                    case Level.Error:
-                        log.Error(message.Text);
-                        break;
+                    log.Verbose(message.Text);
+                }
+                else
+                {
+                    switch (message.Level)
+                    {
+                        case Level.Info:
+                            log.Verbose(message.Text);
+                            break;
+                        case Level.Error:
+                            log.Error(message.Text);
+                            break;
+                    }
                 }
             }
         }

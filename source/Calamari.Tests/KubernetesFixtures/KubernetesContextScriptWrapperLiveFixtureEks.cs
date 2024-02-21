@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Assent;
 using Calamari.Aws.Kubernetes.Discovery;
+using Calamari.CloudAccounts;
 using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
@@ -187,49 +188,10 @@ namespace Calamari.Tests.KubernetesFixtures
             var rawLogs = Log.Messages.Select(m => m.FormattedMessage).Where(m => !m.StartsWith("##octopus") && m != string.Empty).ToArray();
 
             var fileName = usePackage ? $"deployments{Path.DirectorySeparatorChar}{DeploymentFileName}" : DeploymentFileName;
-            var initialErrorMessage =
+            var parsingErrorLog =
                 $"error: error parsing {fileName}: error converting YAML to JSON: yaml: line 7: could not find expected ':'";
             rawLogs.Should()
-                   .ContainSingle(l => l == initialErrorMessage);
-            var index = Array.IndexOf(rawLogs, initialErrorMessage);
-            var logsToCompare = new List<string>(rawLogs);
-            // We'll check the rest of the logs after the one above
-            // as they should be the same for all cases (except those
-            // filtered out or adjusted below).
-            logsToCompare.RemoveRange(0, index+1);
-            logsToCompare = logsToCompare.Select(l =>
-                                         {
-                                             // This log line is slightly different in the new command because
-                                             // we apply the yaml in batches (even if there is only one file).
-                                             return l.Replace("\"kubectl apply -o json\" returned invalid JSON:",
-                                                 "\"kubectl apply -o json\" returned invalid JSON for Batch #1:");
-                                         })
-                                         .Select(l =>
-                                         {
-                                             // There was actually no clean-up process for custom resources
-                                             // so the log line produced by the deployment script doesn't
-                                             // make sense. The new command does not have that part of the
-                                             // log line.
-                                             return l.Replace(
-                                                 "Custom resources will not be saved as output variables, and will not be automatically cleaned up.",
-                                                 "Custom resources will not be saved as output variables.");
-                                         })
-                                         .Where(l =>
-                                         {
-                                             // These log lines are in the old deployment script but the script
-                                             // doesn't actually do the things that the logs describe and so they
-                                             // aren't in the new command.
-                                             return l != "The previous custom resources were not removed." &&
-                                                 l != "The deployment process failed. The resources created by this step will be passed to \"kubectl describe\" and logged below.";
-                                         })
-                                         .Where(l =>
-                                             {
-                                               // These logs are printed after an error is caught but only for the new command
-                                               return l != "Adding journal entry:" && !l.StartsWith("<Deployment Id=");
-                                             })
-                                         .ToList();
-
-            this.Assent(string.Join('\n', logsToCompare), configuration: AssentConfiguration.Default);
+                   .ContainSingle(l => l == parsingErrorLog);
         }
 
         [Test]
@@ -255,7 +217,7 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        public void DeployRawYaml_WithMultipleYamlFilesSpecifiedByGlobPatterns_YamlFilesAreAppliedInCorrectBatches()
+        public void DeployRawYaml_WithMultipleYamlFilesGlobPatterns_YamlFilesAppliedInCorrectBatches()
         {
             SetVariablesToAuthoriseWithAmazonAccount();
 
@@ -286,7 +248,7 @@ namespace Calamari.Tests.KubernetesFixtures
             // to when the last k8s resource is created and compare them in an assent test.
             var startIndex = Array.FindIndex(rawLogs, l => l.StartsWith("Applying Batch #1"));
             var endIndex =
-                Array.FindLastIndex(rawLogs, l => l == "Resource Status Check: 2 new resources have been added:") + 2;
+                Array.FindLastIndex(rawLogs, l => l == "Resource Status Check: 5 new resources have been added:") + 5;
             var assentLogs = rawLogs.Skip(startIndex)
                                     .Take(endIndex + 1 - startIndex)
                                     .Where(l => !l.StartsWith("##octopus")).ToArray();
@@ -412,10 +374,10 @@ namespace Calamari.Tests.KubernetesFixtures
                 Environment.SetEnvironmentVariable(accessKeyEnvVar, eksClientID);
                 Environment.SetEnvironmentVariable(secretKeyEnvVar, eksSecretKey);
 
-                var authenticationDetails = new AwsAuthenticationDetails
+                var authenticationDetails = new AwsAuthenticationDetails<AwsWorkerCredentials>
                 {
                     Type = "Aws",
-                    Credentials = new AwsCredentials { Type = "worker" },
+                    Credentials = new AwsCredentials<AwsWorkerCredentials> { Type = "worker" },
                     Role = new AwsAssumedRole
                     {
                         Type = "assumeRole",
@@ -462,10 +424,10 @@ namespace Calamari.Tests.KubernetesFixtures
                 Environment.SetEnvironmentVariable(accessKeyEnvVar, eksClientID);
                 Environment.SetEnvironmentVariable(secretKeyEnvVar, eksSecretKey);
 
-                var authenticationDetails = new AwsAuthenticationDetails
+                var authenticationDetails = new AwsAuthenticationDetails<AwsWorkerCredentials>
                 {
                     Type = "Aws",
-                    Credentials = new AwsCredentials { Type = "worker" },
+                    Credentials = new AwsCredentials<AwsWorkerCredentials> { Type = "worker" },
                     Role = new AwsAssumedRole { Type = "noAssumedRole" },
                     Regions = new []{region}
                 };
@@ -497,12 +459,12 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         public void DiscoverKubernetesClusterWithAwsAccountCredentialsAndNoIamRole()
         {
-            var authenticationDetails = new AwsAuthenticationDetails
+            var authenticationDetails = new AwsAuthenticationDetails<AwsAccessKeyCredentials>
             {
                 Type = "Aws",
-                Credentials = new AwsCredentials
+                Credentials = new AwsCredentials<AwsAccessKeyCredentials>
                 {
-                    Account = new AwsAccount
+                    Account = new AwsAccessKeyCredentials
                     {
                         AccessKey = eksClientID,
                         SecretKey = eksSecretKey
@@ -536,12 +498,12 @@ namespace Calamari.Tests.KubernetesFixtures
         public void DiscoverKubernetesClusterWithAwsAccountCredentialsAndIamRole()
         {
             const int sessionDuration = 900;
-            var authenticationDetails = new AwsAuthenticationDetails
+            var authenticationDetails = new AwsAuthenticationDetails<AwsAccessKeyCredentials>
             {
                 Type = "Aws",
-                Credentials = new AwsCredentials
+                Credentials = new AwsCredentials<AwsAccessKeyCredentials>
                 {
-                    Account = new AwsAccount
+                    Account = new AwsAccessKeyCredentials
                     {
                         AccessKey = eksClientID,
                         SecretKey = eksSecretKey
@@ -593,10 +555,10 @@ namespace Calamari.Tests.KubernetesFixtures
                 Environment.SetEnvironmentVariable(accessKeyEnvVar, null);
                 Environment.SetEnvironmentVariable(secretKeyEnvVar, null);
 
-                var authenticationDetails = new AwsAuthenticationDetails
+                var authenticationDetails = new AwsAuthenticationDetails<AwsWorkerCredentials>
                 {
                     Type = "Aws",
-                    Credentials = new AwsCredentials { Type = "worker" },
+                    Credentials = new AwsCredentials<AwsWorkerCredentials> { Type = "worker" },
                     Role = new AwsAssumedRole { Type = "noAssumedRole" },
                     Regions = new []{region}
                 };
@@ -626,12 +588,12 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         public void DiscoverKubernetesClusterWithInvalidAccountCredentials()
         {
-            var authenticationDetails = new AwsAuthenticationDetails
+            var authenticationDetails = new AwsAuthenticationDetails<AwsAccessKeyCredentials>
             {
                 Type = "Aws",
-                Credentials = new AwsCredentials
+                Credentials = new AwsCredentials<AwsAccessKeyCredentials>
                 {
-                    Account = new AwsAccount
+                    Account = new AwsAccessKeyCredentials
                     {
                         AccessKey = "abcdefg",
                         SecretKey = null

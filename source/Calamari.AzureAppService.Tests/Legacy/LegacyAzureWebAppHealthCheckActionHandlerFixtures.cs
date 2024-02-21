@@ -127,7 +127,7 @@ namespace Calamari.AzureAppService.Tests
                                                 .Define(SdkContext.RandomResourceName(nameof(LegacyAzureWebAppHealthCheckActionHandlerFixtures), 60))
                                                 .WithRegion(resourceGroup.Region)
                                                 .WithExistingResourceGroup(resourceGroup)
-                                                .WithPricingTier(PricingTier.BasicB1)
+                                                .WithPricingTier(PricingTier.PremiumP1v3)
                                                 .WithOperatingSystem(OperatingSystem.Windows)
                                                 .CreateAsync();
 

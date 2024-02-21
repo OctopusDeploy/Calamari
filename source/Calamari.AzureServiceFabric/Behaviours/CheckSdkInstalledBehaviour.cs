@@ -18,7 +18,7 @@ namespace Calamari.AzureServiceFabric.Behaviours
             if (!ServiceFabricHelper.IsServiceFabricSdkKeyInRegistry())
                 throw new CommandException("Could not find the Azure Service Fabric SDK on this server. This SDK is required before running Service Fabric commands.");
 
-            return this.CompletedTask();
+            return Task.CompletedTask;
         }
     }
 }

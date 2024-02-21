@@ -26,7 +26,7 @@ namespace Calamari.AzureCloudService
         {
             context.Variables.Set(SpecialVariables.Action.Azure.CloudServicePackagePath, FindPackage(context.CurrentDirectory));
 
-            return this.CompletedTask();
+            return Task.CompletedTask;
         }
 
         string FindPackage(string workingDirectory)

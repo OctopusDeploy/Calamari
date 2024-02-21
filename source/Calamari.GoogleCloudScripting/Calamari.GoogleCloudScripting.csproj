@@ -7,12 +7,7 @@
         <LangVersion>8</LangVersion>
         <IsPackable>false</IsPackable>
         <ValidateExecutableReferencesMatchSelfContained>false</ValidateExecutableReferencesMatchSelfContained>
-    </PropertyGroup>
-    <PropertyGroup Condition="!$([MSBuild]::IsOSUnixLike())">
-        <TargetFrameworks>net452;net6.0</TargetFrameworks>
-    </PropertyGroup>
-    <PropertyGroup Condition="$([MSBuild]::IsOSUnixLike())">
-        <TargetFramework>net6.0</TargetFramework>
+        <TargetFrameworks>net462;net6.0</TargetFrameworks>
     </PropertyGroup>
 
     <ItemGroup>

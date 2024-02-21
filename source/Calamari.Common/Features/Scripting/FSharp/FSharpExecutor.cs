@@ -3,16 +3,27 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Calamari.Common.Features.Processes;
+using Calamari.Common.FeatureToggles;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Common.Features.Scripting.FSharp
 {
     public class FSharpExecutor : ScriptExecutor
     {
+        readonly ILog log;
+        
+        public FSharpExecutor(ILog log)
+        {
+            this.log = log;
+        }
+        
         protected override IEnumerable<ScriptExecution> PrepareExecution(Script script,
             IVariables variables,
             Dictionary<string, string>? environmentVars = null)
         {
+            LogFSharpDeprecationWarning(variables);
+            
             var workingDirectory = Path.GetDirectoryName(script.File);
             var executable = FSharpBootstrapper.FindExecutable();
             var configurationFile = FSharpBootstrapper.PrepareConfigurationFile(workingDirectory, variables);
@@ -27,6 +38,14 @@ namespace Calamari.Common.Features.Scripting.FSharp
                 },
                 otherTemporaryFiles.Concat(new[] { bootstrapFile, configurationFile })
             );
+        }
+        
+        void LogFSharpDeprecationWarning(IVariables variables)
+        {
+            if (FeatureToggle.FSharpDeprecationFeatureToggle.IsEnabled(variables))
+            {
+                log.Warn($"Executing FSharp scripts will soon be deprecated. Please read our deprecation {log.FormatLink("https://oc.to/fsharp-deprecation", "blog post")} for more details.");
+            }
         }
     }
 }
