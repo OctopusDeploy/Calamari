@@ -24,4 +24,4 @@ def printverbose(message):
     print(message)
     print("##octopus[stdout-default]")
 
-install_missing_dependency('Crypto.Cipher.AES', 'pycryptodome==3.19.1')
+install_missing_dependency('Crypto.Cipher.AES', 'pycryptodome')
