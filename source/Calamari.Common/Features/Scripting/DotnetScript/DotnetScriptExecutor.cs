@@ -35,7 +35,7 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
 
             var executable = GetExecutable(hasDotnetToolInstalled, localDotnetScriptPath, bundledExecutable);
 
-            LogExecutionInfo(hasDotnetToolInstalled, localDotnetScriptPath, executable);
+            LogExecutionInfo(hasDotnetToolInstalled, localDotnetScriptPath);
 
             var configurationFile = DotnetScriptBootstrapper.PrepareConfigurationFile(workingDirectory, variables);
             var (bootstrapFile, otherTemporaryFiles) = DotnetScriptBootstrapper.PrepareBootstrapFile(script.File, configurationFile, workingDirectory, variables);
@@ -47,7 +47,7 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
             yield return new ScriptExecution(cli, otherTemporaryFiles.Concat(new[] { bootstrapFile, configurationFile }));
         }
         
-        private string GetExecutable(bool hasDotnetToolInstalled, string localDotnetScriptPath, string bundledExecutable)
+        private string GetExecutable(bool hasDotnetToolInstalled, string? localDotnetScriptPath, string bundledExecutable)
         {
             return hasDotnetToolInstalled
                 ? "dotnet-script"
@@ -56,16 +56,16 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
                     : localDotnetScriptPath;
         }
 
-        private void LogExecutionInfo(bool hasDotnetToolInstalled, string localDotnetScriptPath, string executable)
+        private void LogExecutionInfo(bool hasDotnetToolInstalled, string? localDotnetScriptPath)
         {
             Log.Verbose(hasDotnetToolInstalled
                             ? "Found dotnet-script tool installed locally, executing dotnet-script directly."
                             : string.IsNullOrEmpty(localDotnetScriptPath)
-                                ? "Executing bundled dotnet-script"
+                                ? "dotnet-script was not found, executing the bundled version"
                                 : $"Found dotnet-script executable at {localDotnetScriptPath}");
         }
 
-        private CommandLineInvocation CreateCommandLineInvocation(string executable, string arguments, string workingDirectory, bool hasDotnetToolInstalled)
+        CommandLineInvocation CreateCommandLineInvocation(string executable, string arguments, string workingDirectory, bool hasDotnetToolInstalled)
         {
             if (CalamariEnvironment.IsRunningOnWindows || hasDotnetToolInstalled)
             {
