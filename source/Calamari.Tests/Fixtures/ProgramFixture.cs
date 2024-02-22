@@ -10,6 +10,7 @@ using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures
 {
+    //[Ignore("Testing assumption that proxy is causing havoc")]
     public class ProgramFixture
     {
         [Test]
