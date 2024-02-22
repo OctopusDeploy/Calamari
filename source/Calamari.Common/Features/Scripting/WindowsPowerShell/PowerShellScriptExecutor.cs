@@ -16,7 +16,6 @@ namespace Calamari.Common.Features.Scripting.WindowsPowerShell
     {
         protected override IEnumerable<ScriptExecution> PrepareExecution(Script script,
             IVariables variables,
-            ICommandLineRunner commandLineRunner,
             Dictionary<string, string>? environmentVars = null)
         {
             var powerShellBootstrapper = GetPowerShellBootstrapper(variables);
