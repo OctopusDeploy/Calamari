@@ -24,10 +24,13 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
             Dictionary<string, string>? environmentVars = null)
         {
             var workingDirectory = Path.GetDirectoryName(script.File);
+            // Note the environmentVars above come in as null, here we fetch the environment variables from Calamari variables
+            var environmentVariables = variables.Where(t => t.Key.StartsWith("env:"))
+                                                .ToDictionary(x => ((string)x.Key).Replace("env:", ""), x => (string)x.Value);
             
-            var hasDotnetToolInstalled = DotnetScriptBootstrapper.IsDotnetScriptToolInstalled(commandLineRunner);
-            var localDotnetScriptPath = DotnetScriptBootstrapper.DotnetScriptPath(commandLineRunner);
-            var bundledExecutable = DotnetScriptBootstrapper.FindExecutable();
+            var hasDotnetToolInstalled = DotnetScriptBootstrapper.IsDotnetScriptToolInstalled(commandLineRunner, environmentVariables);
+            var localDotnetScriptPath = DotnetScriptBootstrapper.DotnetScriptPath(commandLineRunner, environmentVariables);
+            var bundledExecutable = DotnetScriptBootstrapper.FindBundledExecutable();
             
             var executable = hasDotnetToolInstalled ? "dotnet-script" : string.IsNullOrEmpty(localDotnetScriptPath) ? bundledExecutable : localDotnetScriptPath;
             
@@ -36,11 +39,18 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
             var configurationFile = DotnetScriptBootstrapper.PrepareConfigurationFile(workingDirectory, variables);
             var (bootstrapFile, otherTemporaryFiles) = DotnetScriptBootstrapper.PrepareBootstrapFile(script.File, configurationFile, workingDirectory, variables);
             var arguments = DotnetScriptBootstrapper.FormatCommandArguments(bootstrapFile, script.Parameters);
-            var cli = new CommandLineInvocation(executable, arguments)
+            CommandLineInvocation cli;
+            if (CalamariEnvironment.IsRunningOnWindows)
             {
-                WorkingDirectory = workingDirectory,
-                EnvironmentVars = environmentVars
-            };
+                cli = new CommandLineInvocation(executable, arguments);
+            }
+            else
+            {
+                cli = hasDotnetToolInstalled ? new CommandLineInvocation(executable, arguments) : new CommandLineInvocation("dotnet", $"\"{executable}\"", arguments);
+            }
+            
+            cli.WorkingDirectory = workingDirectory;
+            cli.EnvironmentVars = environmentVariables;
 
             yield return new ScriptExecution(cli, otherTemporaryFiles.Concat(new[] { bootstrapFile, configurationFile }));
         }

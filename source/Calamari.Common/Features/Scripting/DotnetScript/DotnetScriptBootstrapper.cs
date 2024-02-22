@@ -31,24 +31,25 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
             ClassBasedBootstrapScriptTemplate = EmbeddedResource.ReadEmbeddedText(typeof(DotnetScriptBootstrapper).Namespace + ".ClassBootstrap.csx");
         }
 
-        public static string? DotnetScriptPath(ICommandLineRunner commandLineRunner)
+        public static string? DotnetScriptPath(ICommandLineRunner commandLineRunner, Dictionary<string, string> envVars)
         {
             // On Windows dotnet tools use the %USERPROFILE%\.dotnet\tools location. In Calamari the UserProfile is set to 
             // C:\Windows\system32\config\systemprofile, if the tool has been installed under another profile this will not find dotnet-script
             // This approach handles dotnet-script being installed via powershell/bash scripts.
             var (_, commandOutput) = CalamariEnvironment.IsRunningOnWindows
-                ? ExecuteCommandAndReturnOutput(commandLineRunner, "where", "dotnet-script")
-                : ExecuteCommandAndReturnOutput(commandLineRunner, "which", "dotnet-script");
+                ? ExecuteCommandAndReturnOutput(commandLineRunner, envVars, "where", "dotnet-script.cmd")
+                : ExecuteCommandAndReturnOutput(commandLineRunner, envVars, "which", "dotnet-script.sh");
 
             var hasDotnetScriptMessage = commandOutput.Messages.Where(m => m.Text.Contains("dotnet-script")).ToList();
             return hasDotnetScriptMessage.FirstOrDefault()?.Text;
         }
         
-        public static bool IsDotnetScriptToolInstalled(ICommandLineRunner commandLineRunner)
+        public static bool IsDotnetScriptToolInstalled(ICommandLineRunner commandLineRunner, Dictionary<string, string> envVars)
         {
             // On Windows dotnet tools use the %USERPROFILE%\.dotnet\tools location. In Calamari the UserProfile is set to 
             // C:\Windows\system32\config\systemprofile, if the tool has been installed under another profile this will not find dotnet-script
             var (wasSuccessful, commandOutput) = ExecuteCommandAndReturnOutput(commandLineRunner,
+                                                                               envVars,
                                                               "dotnet",
                                                               "tool",
                                                               "list",
@@ -57,13 +58,9 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
             return wasSuccessful && messages.Any();
         }
         
-        static (bool wasSuccessful, CaptureCommandOutput) ExecuteCommandAndReturnOutput(ICommandLineRunner commandLineRunner, string exe, params string[] arguments)
+        static (bool wasSuccessful, CaptureCommandOutput) ExecuteCommandAndReturnOutput(ICommandLineRunner commandLineRunner, Dictionary<string, string> envVars, string exe, params string[] arguments)
         {
             var captureCommandOutput = new CaptureCommandOutput();
-            var envVars = Environment.GetEnvironmentVariables()
-                                     .Cast<DictionaryEntry>()
-                                     .ToDictionary(x => (string)x.Key, x => (string)x.Value);
-            
             var invocation = new CommandLineInvocation(exe, arguments)
             {
                 OutputAsVerbose = false,
@@ -78,7 +75,7 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
             return (res.ExitCode == 0, captureCommandOutput);
         }
 
-        public static string FindExecutable()
+        public static string FindBundledExecutable()
         {
             if (ScriptingEnvironment.IsNetFramework())
                 throw new CommandException("dotnet-script requires .NET Core 6 or later");

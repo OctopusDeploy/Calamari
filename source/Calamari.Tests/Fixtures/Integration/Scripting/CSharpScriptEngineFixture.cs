@@ -1,4 +1,7 @@
+using System;
+using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using Calamari.Common.Features.Scripting.DotnetScript;
 using Calamari.Common.Features.Scripting.ScriptCS;
 using Calamari.Common.Plumbing.FileSystem;
