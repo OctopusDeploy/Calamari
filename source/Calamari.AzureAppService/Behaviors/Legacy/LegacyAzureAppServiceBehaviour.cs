@@ -236,7 +236,10 @@ namespace Calamari.AzureAppService.Behaviors
                                                                                       });
 
             if (!response.IsSuccessStatusCode)
+            {
+                Log.Verbose($"Zip upload to {zipUploadUrl} failed with HTTP Status '{response.StatusCode} {response.ReasonPhrase}'.");
                 throw new Exception($"Zip upload to {zipUploadUrl} failed with HTTP Status '{response.StatusCode} {response.ReasonPhrase}'.");
+            }
 
             Log.Verbose("Finished deploying");
         }
