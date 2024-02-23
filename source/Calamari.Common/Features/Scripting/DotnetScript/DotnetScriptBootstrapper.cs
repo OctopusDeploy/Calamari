@@ -38,7 +38,7 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
             // This approach handles dotnet-script being installed via powershell/bash scripts.
             var (_, commandOutput) = CalamariEnvironment.IsRunningOnWindows
                 ? ExecuteCommandAndReturnOutput(commandLineRunner, envVars, "where", "dotnet-script.cmd")
-                : ExecuteCommandAndReturnOutput(commandLineRunner, envVars, "which", "dotnet-script.sh");
+                : ExecuteCommandAndReturnOutput(commandLineRunner, envVars, "which", "dotnet-script.dll");
 
             var hasDotnetScriptMessage = commandOutput.Messages.Where(m => m.Text.Contains("dotnet-script")).ToList();
             return hasDotnetScriptMessage.FirstOrDefault()?.Text;

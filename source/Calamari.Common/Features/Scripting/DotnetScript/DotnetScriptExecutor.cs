@@ -65,9 +65,9 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
                                 : $"Found dotnet-script executable at {localDotnetScriptPath}");
         }
 
-        CommandLineInvocation CreateCommandLineInvocation(string executable, string arguments, string workingDirectory, bool hasDotnetToolInstalled, bool hasDotnetScriptLocalExecutable)
+        CommandLineInvocation CreateCommandLineInvocation(string executable, string arguments, string workingDirectory)
         {
-            if (CalamariEnvironment.IsRunningOnWindows || hasDotnetToolInstalled || hasDotnetScriptLocalExecutable)
+            if (CalamariEnvironment.IsRunningOnWindows)
             {
                 return new CommandLineInvocation(executable, arguments);
             }
