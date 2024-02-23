@@ -24,7 +24,7 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
         {
             var workingDirectory = Path.GetDirectoryName(script.File);
     
-            // Fetch environment variables from Calamari variables
+            // Fetch environment variables from Calamari variables environmentVars is not populated here...
             var environmentVariables = variables
                                        .Where(t => t.Key.StartsWith("env:"))
                                        .ToDictionary(x => (x.Key).Replace("env:", ""), x => (string)x.Value);
@@ -41,7 +41,7 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
             var (bootstrapFile, otherTemporaryFiles) = DotnetScriptBootstrapper.PrepareBootstrapFile(script.File, configurationFile, workingDirectory, variables);
             var arguments = DotnetScriptBootstrapper.FormatCommandArguments(bootstrapFile, script.Parameters);
 
-            var cli = CreateCommandLineInvocation(executable, arguments, workingDirectory, hasDotnetToolInstalled, !string.IsNullOrEmpty(localDotnetScriptPath));
+            var cli = CreateCommandLineInvocation(executable, arguments, workingDirectory, hasDotnetToolInstalled);
             cli.EnvironmentVars = environmentVariables;
 
             yield return new ScriptExecution(cli, otherTemporaryFiles.Concat(new[] { bootstrapFile, configurationFile }));
@@ -65,9 +65,9 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
                                 : $"Found dotnet-script executable at {localDotnetScriptPath}");
         }
 
-        CommandLineInvocation CreateCommandLineInvocation(string executable, string arguments, string workingDirectory)
+        CommandLineInvocation CreateCommandLineInvocation(string executable, string arguments, string workingDirectory, bool hasDotnetToolInstalled)
         {
-            if (CalamariEnvironment.IsRunningOnWindows)
+            if (CalamariEnvironment.IsRunningOnWindows || hasDotnetToolInstalled)
             {
                 return new CommandLineInvocation(executable, arguments);
             }
