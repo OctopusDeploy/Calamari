@@ -30,9 +30,11 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
                                        .ToDictionary(x => (x.Key).Replace("env:", ""), x => (string)x.Value);
 
             var hasDotnetToolInstalled = DotnetScriptBootstrapper.IsDotnetScriptToolInstalled(commandLineRunner, environmentVariables);
+            Log.Warn($"Has dotnet-script installed: {hasDotnetToolInstalled}");
             var localDotnetScriptPath = DotnetScriptBootstrapper.DotnetScriptPath(commandLineRunner, environmentVariables);
+            Log.Warn($"Has local dotnet-script on path: {localDotnetScriptPath}");
             var bundledExecutable = DotnetScriptBootstrapper.FindBundledExecutable();
-
+            Log.Warn($"Bundled executable: {bundledExecutable}");
             var executable = GetExecutable(hasDotnetToolInstalled, localDotnetScriptPath, bundledExecutable);
 
             LogExecutionInfo(hasDotnetToolInstalled, localDotnetScriptPath);
@@ -65,9 +67,9 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
                                 : $"Found dotnet-script executable at {localDotnetScriptPath}");
         }
 
-        CommandLineInvocation CreateCommandLineInvocation(string executable, string arguments, string workingDirectory, bool hasDotnetToolInstalled)
+        CommandLineInvocation CreateCommandLineInvocation(string executable, string arguments, string workingDirectory, bool executeDotnetCommand)
         {
-            if (CalamariEnvironment.IsRunningOnWindows || hasDotnetToolInstalled)
+            if (CalamariEnvironment.IsRunningOnWindows && !executeDotnetCommand)
             {
                 return new CommandLineInvocation(executable, arguments);
             }
