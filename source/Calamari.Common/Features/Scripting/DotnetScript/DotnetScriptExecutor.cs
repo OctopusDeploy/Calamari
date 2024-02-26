@@ -2,31 +2,70 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Calamari.Common.Commands;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting.DotnetScript;
 using Calamari.Common.Plumbing;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Common.Features.Scripting.DotnetScript
 {
     public class DotnetScriptExecutor : ScriptExecutor
     {
+        readonly ICommandLineRunner commandLineRunner;
+        public DotnetScriptExecutor(ICommandLineRunner commandLineRunner)
+        {
+            this.commandLineRunner = commandLineRunner;
+        }
         protected override IEnumerable<ScriptExecution> PrepareExecution(Script script,
             IVariables variables,
             Dictionary<string, string>? environmentVars = null)
         {
             var workingDirectory = Path.GetDirectoryName(script.File);
-            var executable = DotnetScriptBootstrapper.FindExecutable();
+            
+            var hasDotnetToolInstalled = DotnetScriptBootstrapper.IsDotnetScriptToolInstalled(commandLineRunner, environmentVars);
+            var localDotnetScriptPath = DotnetScriptBootstrapper.DotnetScriptPath(commandLineRunner, environmentVars);
+            var bundledExecutable = DotnetScriptBootstrapper.FindBundledExecutable();
+
+            var executable = GetExecutable(hasDotnetToolInstalled, localDotnetScriptPath, bundledExecutable);
+
+            LogExecutionInfo(hasDotnetToolInstalled, localDotnetScriptPath);
+
             var configurationFile = DotnetScriptBootstrapper.PrepareConfigurationFile(workingDirectory, variables);
             var (bootstrapFile, otherTemporaryFiles) = DotnetScriptBootstrapper.PrepareBootstrapFile(script.File, configurationFile, workingDirectory, variables);
             var arguments = DotnetScriptBootstrapper.FormatCommandArguments(bootstrapFile, script.Parameters);
-            var cli = CalamariEnvironment.IsRunningOnWindows 
-                ? new CommandLineInvocation(executable, arguments) 
-                : new CommandLineInvocation("dotnet", $"\"{executable}\"", arguments);
-            cli.WorkingDirectory = workingDirectory;
+
+            var cli = CreateCommandLineInvocation(executable, arguments, hasDotnetToolInstalled);
             cli.EnvironmentVars = environmentVars;
+            cli.WorkingDirectory = workingDirectory;
 
             yield return new ScriptExecution(cli, otherTemporaryFiles.Concat(new[] { bootstrapFile, configurationFile }));
+        }
+        
+        private string GetExecutable(bool hasDotnetToolInstalled, string? localDotnetScriptPath, string bundledExecutable)
+        {
+            return hasDotnetToolInstalled
+                ? "dotnet-script"
+                : string.IsNullOrWhiteSpace(localDotnetScriptPath)
+                    ? bundledExecutable
+                    : localDotnetScriptPath;
+        }
+
+        private void LogExecutionInfo(bool hasDotnetToolInstalled, string? localDotnetScriptPath)
+        {
+            Log.Verbose(hasDotnetToolInstalled
+                            ? "Found dotnet-script tool installed locally, executing dotnet-script directly."
+                            : string.IsNullOrEmpty(localDotnetScriptPath)
+                                ? "dotnet-script was not found, executing the bundled version"
+                                : $"Found dotnet-script executable at {localDotnetScriptPath}");
+        }
+
+        CommandLineInvocation CreateCommandLineInvocation(string executable, string arguments, bool hasDotnetToolInstalled)
+        {
+            return (CalamariEnvironment.IsRunningOnWindows || hasDotnetToolInstalled)
+                ? new CommandLineInvocation(executable, arguments)
+                : new CommandLineInvocation("dotnet", $"\"{executable}\"", arguments);
         }
     }
 }

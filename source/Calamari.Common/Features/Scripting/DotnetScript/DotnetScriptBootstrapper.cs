@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
@@ -30,7 +31,51 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
             ClassBasedBootstrapScriptTemplate = EmbeddedResource.ReadEmbeddedText(typeof(DotnetScriptBootstrapper).Namespace + ".ClassBootstrap.csx");
         }
 
-        public static string FindExecutable()
+        public static string? DotnetScriptPath(ICommandLineRunner commandLineRunner, Dictionary<string, string> envVars)
+        {
+            // On Windows dotnet tools use the %USERPROFILE%\.dotnet\tools location. In Calamari the UserProfile is set to 
+            // C:\Windows\system32\config\systemprofile, if the tool has been installed under another profile this will not find dotnet-script
+            // This approach handles dotnet-script being installed via powershell/bash scripts.
+            var (_, commandOutput) = CalamariEnvironment.IsRunningOnWindows
+                ? ExecuteCommandAndReturnOutput(commandLineRunner, envVars, "where", "dotnet-script.cmd")
+                : ExecuteCommandAndReturnOutput(commandLineRunner, envVars, "which", "dotnet-script.dll");
+
+            var hasDotnetScriptMessage = commandOutput.Messages.Where(m => m.Text.Contains("dotnet-script")).ToList();
+            return hasDotnetScriptMessage.FirstOrDefault()?.Text;
+        }
+        
+        public static bool IsDotnetScriptToolInstalled(ICommandLineRunner commandLineRunner, Dictionary<string, string> envVars)
+        {
+            // On Windows dotnet tools use the %USERPROFILE%\.dotnet\tools location. In Calamari the UserProfile is set to 
+            // C:\Windows\system32\config\systemprofile, if the tool has been installed under another profile this will not find dotnet-script
+            var (wasSuccessful, commandOutput) = ExecuteCommandAndReturnOutput(commandLineRunner,
+                                                                               envVars,
+                                                              "dotnet",
+                                                              "tool",
+                                                              "list",
+                                                              "-g");
+            var messages = commandOutput.Messages.Where(m => m.Text.Contains("dotnet-script"));
+            return wasSuccessful && messages.Any();
+        }
+        
+        static (bool wasSuccessful, CaptureCommandOutput) ExecuteCommandAndReturnOutput(ICommandLineRunner commandLineRunner, Dictionary<string, string> envVars, string exe, params string[] arguments)
+        {
+            var captureCommandOutput = new CaptureCommandOutput();
+            var invocation = new CommandLineInvocation(exe, arguments)
+            {
+                OutputAsVerbose = false,
+                OutputToLog = false,
+                AdditionalInvocationOutputSink = captureCommandOutput,
+                EnvironmentVars = envVars,
+                WorkingDirectory = Path.GetPathRoot(Environment.CurrentDirectory)
+            };
+
+            var res = commandLineRunner.Execute(invocation);
+            
+            return (res.ExitCode == 0, captureCommandOutput);
+        }
+
+        public static string FindBundledExecutable()
         {
             if (ScriptingEnvironment.IsNetFramework())
                 throw new CommandException("dotnet-script requires .NET Core 6 or later");
