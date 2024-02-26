@@ -23,14 +23,9 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
             Dictionary<string, string>? environmentVars = null)
         {
             var workingDirectory = Path.GetDirectoryName(script.File);
-    
-            // Fetch environment variables from Calamari variables environmentVars is not populated here...
-            var environmentVariables = variables
-                                       .Where(t => t.Key.StartsWith("env:"))
-                                       .ToDictionary(x => (x.Key).Replace("env:", ""), x => (string)x.Value);
-
-            var hasDotnetToolInstalled = DotnetScriptBootstrapper.IsDotnetScriptToolInstalled(commandLineRunner, environmentVariables);
-            var localDotnetScriptPath = DotnetScriptBootstrapper.DotnetScriptPath(commandLineRunner, environmentVariables);
+            
+            var hasDotnetToolInstalled = DotnetScriptBootstrapper.IsDotnetScriptToolInstalled(commandLineRunner, environmentVars);
+            var localDotnetScriptPath = DotnetScriptBootstrapper.DotnetScriptPath(commandLineRunner, environmentVars);
             var bundledExecutable = DotnetScriptBootstrapper.FindBundledExecutable();
 
             var executable = GetExecutable(hasDotnetToolInstalled, localDotnetScriptPath, bundledExecutable);
@@ -42,7 +37,7 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
             var arguments = DotnetScriptBootstrapper.FormatCommandArguments(bootstrapFile, script.Parameters);
 
             var cli = CreateCommandLineInvocation(executable, arguments, hasDotnetToolInstalled);
-            cli.EnvironmentVars = environmentVariables;
+            cli.EnvironmentVars = environmentVars;
             cli.WorkingDirectory = workingDirectory;
 
             yield return new ScriptExecution(cli, otherTemporaryFiles.Concat(new[] { bootstrapFile, configurationFile }));
