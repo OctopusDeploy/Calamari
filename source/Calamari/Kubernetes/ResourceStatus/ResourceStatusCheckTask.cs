@@ -59,11 +59,26 @@ namespace Calamari.Kubernetes.ResourceStatus
                     var definedResourceStatuses = resourceRetriever
                                                   .GetAllOwnedResources(definedResources, kubectl, options)
                                                   .ToArray();
+
+                    var nonNamespacedDefinedResources = definedResourceStatuses
+                        .Where(resourceStatus => !resourceStatus.Namespaced)
+                        .Select(resourceStatus => new ResourceIdentifier(
+                            resourceStatus.Kind, 
+                            resourceStatus.Name,
+                            resourceStatus.Namespace))
+                        .ToHashSet();
+
+                    // Filter out cluster-wide resources
+                    definedResources = definedResources
+                        .Where(resource => !string.IsNullOrEmpty(resource.Namespace) && !nonNamespacedDefinedResources.Contains(new ResourceIdentifier(resource.Kind, resource.Name, string.Empty)))
+                        .ToArray();
+                    
                     var resourceStatuses = definedResourceStatuses
                                            .SelectMany(IterateResourceTree)
+                                           .Where(resource => resource.Namespaced)
                                            .ToDictionary(resource => resource.Uid, resource => resource);
 
-                    var deploymentStatus = GetDeploymentStatus(definedResourceStatuses, definedResources);
+                    var deploymentStatus = GetDeploymentStatus(definedResourceStatuses.Where(resource => resource.Namespaced).ToArray(), definedResources);
 
                     reporter.ReportUpdatedResources(result.ResourceStatuses, resourceStatuses, ++checkCount);
 
@@ -82,7 +97,6 @@ namespace Calamari.Kubernetes.ResourceStatus
 
         private static DeploymentStatus GetDeploymentStatus(Resource[] resources, ResourceIdentifier[] definedResources)
         {
-
             if (resources.All(resource => resource.ResourceStatus == ResourceStatus.Resources.ResourceStatus.Successful)
                 && resources.Length == definedResources.Length)
             {

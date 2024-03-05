@@ -55,6 +55,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             if (initialResources.Any())
             {
                 log.Verbose("Resource Status Check: Performing resource status checks on the following resources:");
+                log.Verbose("(Please note that resources that do not have namespaces will be not be included in status checks.)");
                 log.LogResources(initialResources);
             }
             else
@@ -105,6 +106,7 @@ namespace Calamari.Kubernetes.ResourceStatus
                 await statusCheckTask;
                 statusCheckTask = RunNewStatusCheck(newResources);
                 log.Verbose($"Resource Status Check: {newResources.Length} new resources have been added:");
+                log.Verbose("(Please note that resources that do not have namespaces will be not be included in status checks.)");
                 log.LogResources(newResources);
             }
             finally
