@@ -9,6 +9,7 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using YamlDotNet.Core;
 using YamlDotNet.Core.Events;
+using YamlDotNet.Serialization;
 
 namespace Calamari.Common.Features.StructuredVariables
 {
@@ -18,6 +19,8 @@ namespace Calamari.Common.Features.StructuredVariables
 
         readonly ICalamariFileSystem fileSystem;
         readonly ILog log;
+        
+        private int replaced = 0;
 
         public YamlFormatVariableReplacer(ICalamariFileSystem fileSystem, ILog log)
         {
@@ -37,21 +40,7 @@ namespace Calamari.Common.Features.StructuredVariables
         {
             try
             {
-                void LogReplacement(string key)
-                    => log.Verbose(StructuredConfigMessages.StructureFound(key));
-
-                var replaced = 0;
-                var variablesByKey = variables
-                                     .Where(v => !OctopusReservedVariablePattern.IsMatch(v.Key))
-                                     .DistinctBy(v => v.Key)
-                                     .ToDictionary<KeyValuePair<string, string>, string, Func<string?>>(v => v.Key,
-                                                                                                        v => () =>
-                                                                                                             {
-                                                                                                                 LogReplacement(v.Key);
-                                                                                                                 replaced++;
-                                                                                                                 return variables.Get(v.Key);
-                                                                                                             },
-                                                                                                        StringComparer.OrdinalIgnoreCase);
+                var variablesByKey = GetMappings(variables, new Dictionary<string, string>());
 
                 // Read and transform the input file
                 var fileText = fileSystem.ReadFile(filePath, out var encoding);
@@ -66,16 +55,44 @@ namespace Calamari.Common.Features.StructuredVariables
                     var parser = new Parser(scanner);
                     var classifier = new YamlEventStreamClassifier();
                     (IYamlNode startEvent, string? replacementValue)? structureWeAreReplacing = null;
+                    var atDocumentStart = false;
+                    
                     while (parser.MoveNext())
                     {
                         var ev = parser.Current;
+
+                        if (ev is Comment c)
+                        {
+                            if (atDocumentStart)
+                            {
+                                var varName = GetCommentVariable(c.Value);
+                                if (!string.IsNullOrWhiteSpace(varName))
+                                {
+                                    var patchVariables = GetPatchVariables(variables, varName);
+                                    variablesByKey = GetMappings(variables, patchVariables);
+                                }
+                            }
+                            ev = c.RestoreLeadingSpaces();
+                        }
+
+                        if (ev is DocumentStart)
+                        {
+                            atDocumentStart = true;
+                        }
+                        else
+                        {
+                            atDocumentStart = false;
+                        }
+
+                        if (ev is DocumentEnd)
+                        {
+                            variablesByKey = GetMappings(variables, new Dictionary<string, string>());
+                        }
+                        
                         if (ev == null)
                             continue;
 
                         indentDetector.Process(ev);
-
-                        if (ev is Comment c)
-                            ev = c.RestoreLeadingSpaces();
 
                         var node = classifier.Process(ev);
 
@@ -159,6 +176,57 @@ namespace Calamari.Common.Features.StructuredVariables
             }
         }
 
+        string GetCommentVariable(string comment)
+        {
+            if (comment.TrimStart().StartsWith("patch:"))
+            {
+                return comment.Replace("patch:", "").Trim();
+            }
+
+            return string.Empty;
+        }
+
+        Dictionary<string, string> GetPatchVariables(IVariables variables, string variableName)
+        {
+            var patch = variables.Get(variableName);
+            if (string.IsNullOrEmpty(patch))
+            {
+                return new Dictionary<string, string>();
+            }
+            
+            var deserializer = new Deserializer();
+            var yamlObject = deserializer.Deserialize(new StringReader(patch)) ?? new object();
+            
+            return new FlattenedProperties(yamlObject);
+        }
+
+        Dictionary<string, Func<string?>> GetMappings(
+            IVariables variables,
+            Dictionary<string, string> patchVariables)
+        {
+            var keys = variables.Select(v => v.Key).ToList();
+            keys.AddRange(patchVariables.Keys.ToList());
+            keys = keys.Distinct().Where(k => !OctopusReservedVariablePattern.IsMatch(k)).ToList();
+
+            var merged = variables.Clone();
+            foreach (var (k, v) in patchVariables)
+            {
+                merged.Add(k, v);
+            }
+            
+            return keys
+                .ToDictionary<string, string, Func<string?>>(k => k,
+                    k => () =>
+                    {
+                        LogReplacement(k);
+                        replaced++;
+                        return merged.Get(k);
+                    },
+                    StringComparer.OrdinalIgnoreCase);
+        }
+
+        void LogReplacement(string key) => log.Verbose(StructuredConfigMessages.StructureFound(key));
+        
         List<ParsingEvent> ParseFragment(string? value, string? anchor, string? tag)
         {
             var result = new List<ParsingEvent>();
