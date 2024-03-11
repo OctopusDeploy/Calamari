@@ -36,57 +36,57 @@ function Get-RunningInPowershellCore
     return $PSVersionTable.PSVersion.Major -gt 5
 }
 
-function Initialize-AzureRmContext
-{
-    # Turn off context autosave, as this will make all authentication occur in memory, and isolate each session from the context changes in other sessions
-    Write-Host "##octopus[stdout-verbose]"
-    Disable-AzureRMContextAutosave -Scope Process
-    Write-Host "##octopus[stdout-default]"
-
-    $AzureEnvironment = Get-AzureRmEnvironment -Name $OctopusAzureEnvironment
-    if (!$AzureEnvironment)
-    {
-        Write-Error "No Azure environment could be matched given the name $OctopusAzureEnvironment"
-        exit 2
-    }
-
-    If ([System.Convert]::ToBoolean($OctopusUseOidc)) {
-            Write-Verbose "AzureRM Modules: Authenticating with OpenID Connect Federated Token"
-
-            # Force any output generated to be verbose in Octopus logs.
-            Write-Host "##octopus[stdout-verbose]"
-            [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-            Login-AzureRmAccount -Environment $AzureEnvironment -ApplicationId $OctopusAzureADClientId -Tenant $OctopusAzureADTenantId -Subscription $OctopusAzureSubscriptionId -FederatedToken $OctopusOpenIdJwt
-            Write-Host "##octopus[stdout-default]"
-    }
-    else {
-        # Authenticate via Service Principal
-        $securePassword = ConvertTo-SecureString $OctopusAzureADPassword -AsPlainText -Force
-        $creds = New-Object System.Management.Automation.PSCredential ($OctopusAzureADClientId, $securePassword)
-
-        Write-Verbose "AzureRM Modules: Authenticating with Service Principal"
-
-        # Force any output generated to be verbose in Octopus logs.
-        Write-Host "##octopus[stdout-verbose]"
-        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-        Login-AzureRmAccount -Credential $creds -TenantId $OctopusAzureADTenantId -SubscriptionId $OctopusAzureSubscriptionId -Environment $AzureEnvironment -ServicePrincipal
-        Write-Host "##octopus[stdout-default]"
-    }
-}
+#function Initialize-AzureRmContext
+#{
+#    # Turn off context autosave, as this will make all authentication occur in memory, and isolate each session from the context changes in other sessions
+#    Write-Host "##octopus[stdout-verbose]"
+#    Disable-AzureRMContextAutosave -Scope Process
+#    Write-Host "##octopus[stdout-default]"
+#
+#    $AzureEnvironment = Get-AzureRmEnvironment -Name $OctopusAzureEnvironment
+#    if (!$AzureEnvironment)
+#    {
+#        Write-Error "No Azure environment could be matched given the name $OctopusAzureEnvironment"
+#        exit 2
+#    }
+#
+#    If ([System.Convert]::ToBoolean($OctopusUseOidc)) {
+#            Write-Verbose "AzureRM Modules: Authenticating with OpenID Connect Federated Token"
+#
+#            # Force any output generated to be verbose in Octopus logs.
+#            Write-Host "##octopus[stdout-verbose]"
+#            [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+#            Login-AzureRmAccount -Environment $AzureEnvironment -ApplicationId $OctopusAzureADClientId -Tenant $OctopusAzureADTenantId -Subscription $OctopusAzureSubscriptionId -FederatedToken $OctopusOpenIdJwt
+#            Write-Host "##octopus[stdout-default]"
+#    }
+#    else {
+#        # Authenticate via Service Principal
+#        $securePassword = ConvertTo-SecureString $OctopusAzureADPassword -AsPlainText -Force
+#        $creds = New-Object System.Management.Automation.PSCredential ($OctopusAzureADClientId, $securePassword)
+#
+#        Write-Verbose "AzureRM Modules: Authenticating with Service Principal"
+#
+#        # Force any output generated to be verbose in Octopus logs.
+#        Write-Host "##octopus[stdout-verbose]"
+#        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+#        Login-AzureRmAccount -Credential $creds -TenantId $OctopusAzureADTenantId -SubscriptionId $OctopusAzureSubscriptionId -Environment $AzureEnvironment -ServicePrincipal
+#        Write-Host "##octopus[stdout-default]"
+#    }
+#}
 
 function Initialize-AzContext
 {
     $tempWarningPreference = $WarningPreference
     $WarningPreference = 'SilentlyContinue'
-    if (-Not(Get-Command "Disable-AzureRMContextAutosave" -errorAction SilentlyContinue))
-    {
-        $WarningPreference = $tempWarningPreference
-        Write-Verbose "Enabling AzureRM aliasing"
-
-        # Turn on AzureRm aliasing
-        # See https://docs.microsoft.com/en-us/powershell/azure/migrate-from-azurerm-to-az?view=azps-3.0.0#enable-azurerm-compatibility-aliases
-        Enable-AzureRmAlias -Scope Process
-    }
+#    if (-Not(Get-Command "Disable-AzureRMContextAutosave" -errorAction SilentlyContinue))
+#    {
+#        $WarningPreference = $tempWarningPreference
+#        Write-Verbose "Enabling AzureRM aliasing"
+#
+#        # Turn on AzureRm aliasing
+#        # See https://docs.microsoft.com/en-us/powershell/azure/migrate-from-azurerm-to-az?view=azps-3.0.0#enable-azurerm-compatibility-aliases
+#        Enable-AzureRmAlias -Scope Process
+#    }
     $WarningPreference = $tempWarningPreference
 
     # Turn off context autosave, as this will make all authentication occur in memory, and isolate each session from the context changes in other sessions
@@ -140,8 +140,8 @@ function ConnectAzAccount
         }
         elseif (Get-AzureRmModuleInstalled)
         {
-            # AzureRM is not supported on powershell core
-            Write-Warning "AzureRM module is not compatible with Powershell Core, authentication will not be performed with AzureRM"
+            # AzureRM has been deprecated since 2024-02-29 https://learn.microsoft.com/en-us/powershell/azure/azurerm-retirement-overview
+            Write-Warning "AzureRM module is deprecated since 2024-02-29, Az module is now required to authenticate with Azure."
         }
     }
     else
@@ -153,7 +153,8 @@ function ConnectAzAccount
         }
         elseif (Get-AzureRmModuleInstalled)
         {
-            Initialize-AzureRmContext
+            # AzureRM has been deprecated since 2024-02-29 https://learn.microsoft.com/en-us/powershell/azure/azurerm-retirement-overview
+            Write-Warning "AzureRM module is deprecated since 2024-02-29, Az module is now required to authenticate with Azure."
         }
     }
 }
