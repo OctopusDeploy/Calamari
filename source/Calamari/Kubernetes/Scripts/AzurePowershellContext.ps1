@@ -94,7 +94,7 @@ function ConnectAzAccount
         elseif (Get-AzureRmModuleInstalled)
         {
             # AzureRM has been deprecated since 2024-02-29 https://learn.microsoft.com/en-us/powershell/azure/azurerm-retirement-overview
-            Write-Warning "AzureRM module is deprecated since 2024-02-29, Az module is now required to authenticate with Azure."
+            Write-Warning "AzureRM module is deprecated since 2024-02-29, Az module is now required to authenticate with Azure. See https://learn.microsoft.com/en-us/powershell/azure/azurerm-retirement-overview for more details."
         }
     }
     else
@@ -107,7 +107,7 @@ function ConnectAzAccount
         elseif (Get-AzureRmModuleInstalled)
         {
             # AzureRM has been deprecated since 2024-02-29 https://learn.microsoft.com/en-us/powershell/azure/azurerm-retirement-overview
-            Write-Warning "AzureRM module is deprecated since 2024-02-29, Az module is now required to authenticate with Azure."
+            Write-Warning "AzureRM module is deprecated since 2024-02-29, Az module is now required to authenticate with Azure. See https://learn.microsoft.com/en-us/powershell/azure/azurerm-retirement-overview for more details."
         }
     }
 }
