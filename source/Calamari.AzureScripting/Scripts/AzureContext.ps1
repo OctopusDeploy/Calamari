@@ -128,10 +128,9 @@ Execute-WithRetry{
                     Initialize-AzContext
                 }
                 elseif (Get-AzureRmModuleInstalled) {
-                    # AzureRM is not supported on powershell core
-#                    Write-Warning "AzureRM module is not compatible with Powershell Core, authentication will not be performed with AzureRM"
                     # AzureRM has been deprecated since 2024-02-29 https://learn.microsoft.com/en-us/powershell/azure/azurerm-retirement-overview
-                    Write-Warning "AzureRM module is deprecated since 2024-02-29, Az module is now required to authenticate with Azure."
+                    Write-Host "AzureRM module is deprecated since 2024-02-29, Az module is now required to authenticate with Azure."
+                    Write-Warning "WARNING: AzureRM module is deprecated since 2024-02-29, Az module is now required to authenticate with Azure."
                 }                
             }            
             else { 
@@ -141,7 +140,8 @@ Execute-WithRetry{
                 }
                 elseif (Get-AzureRmModuleInstalled) {
                     # AzureRM has been deprecated since 2024-02-29 https://learn.microsoft.com/en-us/powershell/azure/azurerm-retirement-overview
-                    Write-Warning "AzureRM module is deprecated since 2024-02-29, Az module is now required to authenticate with Azure."
+                    Write-Host "AzureRM module is deprecated since 2024-02-29, Az module is now required to authenticate with Azure."
+                    Write-Warning "WARNING: AzureRM module is deprecated since 2024-02-29, Az module is now required to authenticate with Azure."
                 }
             }
             
