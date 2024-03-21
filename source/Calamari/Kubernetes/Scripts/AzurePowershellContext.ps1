@@ -77,14 +77,8 @@ function Initialize-AzContext
 
 function ConnectAzAccount
 {
-    # Depending on which version of Powershell we are running under will change which module context we want to initialize.
-    #   Powershell Core: Check Az then AzureRM (provide a warning and do nothing if AzureRM is installed)
-    #   Windows Powershell: Check AzureRM then Az
-    #
-    # If a module is installed (e.g. AzureRM) then testing for it causes the module to be loaded along with its various assemblies
-    # and dependencies. If we then test for the other module (e.g. Az) then it also loads it's module and assemblies which then
-    # creates havoc when you try and call any context methods such as Disable-AzContextAutosave due to version differences etc.
-    # For this reason we'll only test the module we prefer and then if it exists initialize it and not the other one.
+    # Since AzureRM module is deprecated and no longer recommended for use in Powershell
+    # We check for the up to date Az module first, if that isn't available we check for the AzureRM module then warn the user and then do nothing.
     if (Get-RunningInPowershellCore)
     {
         if (Get-AzModuleInstalled)
