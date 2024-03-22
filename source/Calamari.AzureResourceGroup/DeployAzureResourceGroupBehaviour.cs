@@ -48,8 +48,9 @@ namespace Calamari.AzureResourceGroup
 
             var templateFile = variables.Get(SpecialVariables.Action.Azure.Template, "template.json");
             var templateParametersFile = variables.Get(SpecialVariables.Action.Azure.TemplateParameters, "parameters.json");
-            var filesInPackage = variables.Get(SpecialVariables.Action.Azure.TemplateSource, String.Empty) == "Package";
-            if (filesInPackage)
+            var templateSource = variables.Get(SpecialVariables.Action.Azure.TemplateSource, String.Empty);
+            var filesInPackageOrRepository = templateSource == "Package" || templateSource == "GitRepository";
+            if (filesInPackageOrRepository)
             {
                 templateFile = variables.Get(SpecialVariables.Action.Azure.ResourceGroupTemplate);
                 templateParametersFile = variables.Get(SpecialVariables.Action.Azure.ResourceGroupTemplateParameters);
@@ -60,17 +61,17 @@ namespace Calamari.AzureResourceGroup
                 log.InfoFormat("Using override for resource management endpoint - {0}", resourceManagementEndpoint);
 
             var activeDirectoryEndPoint = variables.Get(AzureAccountVariables.ActiveDirectoryEndPoint, DefaultVariables.ActiveDirectoryEndpoint);
-                log.InfoFormat("Using override for Azure Active Directory endpoint - {0}", activeDirectoryEndPoint);
+            log.InfoFormat("Using override for Azure Active Directory endpoint - {0}", activeDirectoryEndPoint);
 
             var resourceGroupName = variables[SpecialVariables.Action.Azure.ResourceGroupName];
             var deploymentName = !string.IsNullOrWhiteSpace(variables[SpecialVariables.Action.Azure.ResourceGroupDeploymentName])
                 ? variables[SpecialVariables.Action.Azure.ResourceGroupDeploymentName]
                 : GenerateDeploymentNameFromStepName(variables[ActionVariables.Name]);
-            var deploymentMode = (DeploymentMode) Enum.Parse(typeof (DeploymentMode),
+            var deploymentMode = (DeploymentMode)Enum.Parse(typeof(DeploymentMode),
                                                              variables[SpecialVariables.Action.Azure.ResourceGroupDeploymentMode]);
-            var template = templateService.GetSubstitutedTemplateContent(templateFile, filesInPackage, variables);
+            var template = templateService.GetSubstitutedTemplateContent(templateFile, filesInPackageOrRepository, variables);
             var parameters = !string.IsNullOrWhiteSpace(templateParametersFile)
-                ? parameterNormalizer.Normalize(templateService.GetSubstitutedTemplateContent(templateParametersFile, filesInPackage, variables))
+                ? parameterNormalizer.Normalize(templateService.GetSubstitutedTemplateContent(templateParametersFile, filesInPackageOrRepository, variables))
                 : null;
 
             log.Info($"Deploying Resource Group {resourceGroupName} in subscription {subscriptionId}.\nDeployment name: {deploymentName}\nDeployment mode: {deploymentMode}");
