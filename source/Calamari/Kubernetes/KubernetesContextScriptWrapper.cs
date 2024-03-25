@@ -79,18 +79,6 @@ namespace Calamari.Kubernetes
                 return new CommandResult(String.Empty, 1);
             }
 
-            var accountType = variables.Get(Deployment.SpecialVariables.Account.AccountType);
-            if (scriptSyntax == ScriptSyntax.PowerShell && (accountType == "AzureServicePrincipal" || accountType == "AzureOidc"))
-            {
-                variables.Set("OctopusKubernetesTargetScript", $"{script.File}");
-                variables.Set("OctopusKubernetesTargetScriptParameters", script.Parameters);
-
-                using (var contextScriptFile = new TemporaryFile(CreateContextScriptFile(workingDirectory)))
-                {
-                    return NextWrapper.ExecuteScript(new Script(contextScriptFile.FilePath), scriptSyntax, commandLineRunner, environmentVars);
-                }
-            }
-
             return NextWrapper.ExecuteScript(script, scriptSyntax, commandLineRunner, environmentVars);
         }
 
