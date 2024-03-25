@@ -79,7 +79,6 @@
     <PackageReference Include="System.ComponentModel.TypeConverter" Version="4.3.0" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Kubernetes\Scripts\AzurePowershellContext.ps1" />
     <EmbeddedResource Include="Scripts\**" />
     <None Update="Calamari.exe.manifest">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
