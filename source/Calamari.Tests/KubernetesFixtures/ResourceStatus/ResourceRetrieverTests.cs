@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Kubernetes.Integration;
 using Calamari.Kubernetes.ResourceStatus;
 using Calamari.Kubernetes.ResourceStatus.Resources;
 using FluentAssertions;
+using NSubstitute;
 using NUnit.Framework;
 
 namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
@@ -43,7 +45,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                 .Build();
 
             var kubectlGet = new MockKubectlGet();
-            var resourceRetriever = new ResourceRetriever(kubectlGet);
+            var resourceRetriever = new ResourceRetriever(kubectlGet, Substitute.For<ILog>());
 
             kubectlGet.SetResource("nginx", nginxDeployment);
             kubectlGet.SetAllResources("ReplicaSet", nginxReplicaSet);
@@ -111,7 +113,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                 .Build();
 
             var kubectlGet = new MockKubectlGet();
-            var resourceRetriever = new ResourceRetriever(kubectlGet);
+            var resourceRetriever = new ResourceRetriever(kubectlGet, Substitute.For<ILog>());
 
             kubectlGet.SetResource("deployment-1", deployment1);
             kubectlGet.SetResource("deployment-2", deployment2);
@@ -180,7 +182,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                 .Build();
 
             var kubectlGet = new MockKubectlGet();
-            var resourceRetriever = new ResourceRetriever(kubectlGet);
+            var resourceRetriever = new ResourceRetriever(kubectlGet, Substitute.For<ILog>());
 
             kubectlGet.SetResource("rs", replicaSet);
             kubectlGet.SetAllResources("Pod", childPod, irrelevantPod);
