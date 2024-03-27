@@ -49,7 +49,7 @@ namespace Calamari.Kubernetes.Commands.Executors
             var resourcesIdentifiers = new HashSet<ResourceIdentifier>();
             foreach (var directory in directories)
             {
-                var res = ApplyBatchAndReturnResourceIdentifiers(directory).ToList();
+                var res = ApplyBatchAndReturnResourceIdentifiers(deployment, directory).ToList();
                 resourcesIdentifiers.UnionWith(res);
             }
 
@@ -93,7 +93,7 @@ namespace Calamari.Kubernetes.Commands.Executors
             return directories;
         }
 
-        IEnumerable<ResourceIdentifier> ApplyBatchAndReturnResourceIdentifiers(GlobDirectory globDirectory)
+        IEnumerable<ResourceIdentifier> ApplyBatchAndReturnResourceIdentifiers(RunningDeployment deployment, GlobDirectory globDirectory)
         {
             var index = globDirectory.Index;
             var directoryWithTrailingSlash = globDirectory.Directory + Path.DirectorySeparatorChar;
@@ -113,7 +113,7 @@ namespace Calamari.Kubernetes.Commands.Executors
 
             var result = kubectl.ExecuteCommandAndReturnOutput("apply", "-f", $@"""{globDirectory.Directory}""", "--recursive", "-o", "json");
 
-            return ProcessKubectlCommandOutput(result, globDirectory.Directory);
+            return ProcessKubectlCommandOutput(deployment, result, globDirectory.Directory);
         }
 
         private class GlobDirectory
