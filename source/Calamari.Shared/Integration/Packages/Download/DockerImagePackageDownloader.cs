@@ -56,29 +56,39 @@ namespace Calamari.Integration.Packages.Download
                                                            int maxDownloadAttempts,
                                                            TimeSpan downloadAttemptBackoff)
         {
-            //Always try re-pull image, docker engine can take care of the rest
             var fullImageName = GetFullImageName(packageId, version, feedUri);
 
-            var feedHost = GetFeedHost(feedUri);
-            
-            PerformLogin(username, password, feedHost);
-
-            const string cachedWorkerToolsShortLink = "https://g.octopushq.com/CachedWorkerToolsImages";
-            var imageNotCachedMessage =
-                "The docker image '{0}' may not be cached." +
-                " Please note images that have not been cached may take longer to be acquired than expected." +
-                " Your deployment will begin as soon as all images have been pulled." +
-                $" Please see {cachedWorkerToolsShortLink} for more information on cached worker-tools image versions.";
-            
-            if (!IsImageCached(fullImageName))
+            try
             {
-                log.InfoFormat(imageNotCachedMessage, fullImageName);
+                var feedHost = GetFeedHost(feedUri);
+
+                PerformLogin(username, password, feedHost);
+
+                const string cachedWorkerToolsShortLink = "https://g.octopushq.com/CachedWorkerToolsImages";
+                var imageNotCachedMessage =
+                    "The docker image '{0}' may not be cached." + " Please note images that have not been cached may take longer to be acquired than expected." + " Your deployment will begin as soon as all images have been pulled." + $" Please see {cachedWorkerToolsShortLink} for more information on cached worker-tools image versions.";
+
+                if (!IsLatestImageManifestCached(fullImageName))
+                {
+                    log.InfoFormat(imageNotCachedMessage, fullImageName);
+                }
+
+                PerformPull(fullImageName);
+
+                var (hash, size) = GetImageDetails(fullImageName);
+                return new PackagePhysicalFileMetadata(new PackageFileNameMetadata(packageId, version, version, ""), string.Empty, hash, size);
             }
-            
-            PerformPull(fullImageName);
-            
-            var (hash, size) = GetImageDetails(fullImageName);
-            return new PackagePhysicalFileMetadata(new PackageFileNameMetadata(packageId, version, version, ""), string.Empty, hash, size);
+            catch (CommandException)
+            {
+                // Check whether the image is cached before throwing an exception
+                if (!IsAnyImageManifestCached(fullImageName))
+                    throw;
+                
+                
+                var (hash, size) = GetImageDetails(fullImageName);
+                log.WarnFormat("Failed to verify that docker image '{0}' was the latest available. Continuing with a cached image ('{1}'), which may not be the latest available.", fullImageName, hash);
+                return new PackagePhysicalFileMetadata(new PackageFileNameMetadata(packageId, version, version, ""), string.Empty, hash, size);
+            }
         }
 
         static string GetFullImageName(string packageId, IVersion version, Uri feedUri)
@@ -117,7 +127,7 @@ namespace Calamari.Integration.Packages.Download
                 throw new CommandException("Unable to log in Docker registry");
         }
 
-        bool IsImageCached(string fullImageName)
+        bool IsLatestImageManifestCached(string fullImageName)
         {
             var cachedDigests = GetCachedImageDigests();
             var selectedDigests = GetImageDigests(fullImageName);
@@ -129,6 +139,12 @@ namespace Calamari.Integration.Packages.Download
             }
 
             return cachedDigests.Intersect(selectedDigests).Any();
+        }
+
+        bool IsAnyImageManifestCached(string fullImageName)
+        {
+            var cachedDigests = GetCachedImageId(fullImageName);
+            return cachedDigests.Any();
         }
 
         void PerformPull(string fullImageName)
@@ -196,6 +212,21 @@ namespace Calamari.Integration.Packages.Download
                 ? output.Split(' ').Select(digest => digest.Trim()) 
                 : null;
         }
+        
+        IEnumerable<string> GetCachedImageId(string fullImageName)
+        {
+            var output = "";
+            var result = SilentProcessRunner.ExecuteCommand("docker",
+                                                            $"images {fullImageName} --format=\"{{{{.ID}}}}\" --no-trunc",
+                                                            ".", 
+                                                            environmentVariables, 
+                                                            (stdout) => { output += stdout + " "; },
+                                                            (error) => { });
+            return result.ExitCode == 0 
+                ? output.Split(' ').Select(digest => digest.Trim()) 
+                : new List<string>();
+        }
+
 
         IEnumerable<string>? GetImageDigests(string fullImageName)
         {
