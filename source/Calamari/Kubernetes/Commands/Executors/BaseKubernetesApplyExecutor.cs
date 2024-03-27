@@ -73,7 +73,7 @@ namespace Calamari.Kubernetes.Commands.Executors
             }
         }
 
-        protected IEnumerable<ResourceIdentifier> ProcessKubectlCommandOutput(CommandResultWithOutput commandResult, string directory)
+        protected IEnumerable<ResourceIdentifier> ProcessKubectlCommandOutput(RunningDeployment deployment, CommandResultWithOutput commandResult, string directory)
         {
             CheckResultForErrors(commandResult, directory);
             
@@ -102,7 +102,7 @@ namespace Calamari.Kubernetes.Commands.Executors
             }
             catch
             {
-                LogParsingError(outputJson);
+                LogParsingError(outputJson, deployment.Variables.GetFlag(SpecialVariables.PrintVerboseKubectlOutputOnError));
             }
             
             return Enumerable.Empty<ResourceIdentifier>();
@@ -131,12 +131,15 @@ namespace Calamari.Kubernetes.Commands.Executors
             }
         }
         
-        void LogParsingError(string outputJson)
+        void LogParsingError(string outputJson, bool logKubectlOutputOnError)
         {
-            log.Error($"\"kubectl apply -o json\" returned invalid JSON:");
-            log.Error("---------------------------");
-            log.Error(outputJson);
-            log.Error("---------------------------");
+            log.Error($"\"kubectl apply -o json\" returned invalid JSON");
+            if (logKubectlOutputOnError)
+            {
+                log.Verbose("---------------------------");
+                log.Verbose(outputJson);
+                log.Verbose("---------------------------");
+            }
             log.Error("This can happen with older versions of kubectl. Please update to a recent version of kubectl.");
             log.Error("See https://github.com/kubernetes/kubernetes/issues/58834 for more details.");
             log.Error("Custom resources will not be saved as output variables.");

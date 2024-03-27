@@ -45,7 +45,7 @@ namespace Calamari.Kubernetes.Commands.Executors
             var kustomizationDirectory = Path.Combine(deployment.CurrentDirectory, KubernetesDeploymentCommandBase.PackageDirectoryName, overlayPath);
             var result = kubectl.ExecuteCommandAndReturnOutput("apply", "-k", $@"""{kustomizationDirectory}""", "-o", "json");
 
-            var resourceIdentifiers =  ProcessKubectlCommandOutput(result, kustomizationDirectory).ToArray();
+            return ProcessKubectlCommandOutput(deployment, result, kustomizationDirectory);
             
             if (appliedResourcesCallback != null)
             {
