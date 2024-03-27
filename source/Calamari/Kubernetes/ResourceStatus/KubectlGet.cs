@@ -1,4 +1,3 @@
-using System;
 using System.Linq;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Kubernetes.Integration;
@@ -18,7 +17,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             return kubectl.ExecuteCommandAndReturnOutput(new[]
             {
                 "get", kind, name, "-o json", string.IsNullOrEmpty(@namespace) ? "" : $"-n {@namespace}"
-            }).Output.InfoLogs.Join(Environment.NewLine);
+            }).Output.InfoLogs.Join(string.Empty);
         }
 
         public string AllResources(string kind, string @namespace, IKubectl kubectl)
@@ -26,7 +25,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             return kubectl.ExecuteCommandAndReturnOutput(new[]
             {
                 "get", kind, "-o json", string.IsNullOrEmpty(@namespace) ? "" : $"-n {@namespace}"
-            }).Output.InfoLogs.Join(Environment.NewLine);
+            }).Output.InfoLogs.Join(string.Empty);
         }
     }
 }
