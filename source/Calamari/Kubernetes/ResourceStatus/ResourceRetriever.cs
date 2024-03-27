@@ -1,7 +1,11 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Kubernetes.Integration;
 using Calamari.Kubernetes.ResourceStatus.Resources;
+using Newtonsoft.Json;
+using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Kubernetes.ResourceStatus
 {
@@ -19,10 +23,12 @@ namespace Calamari.Kubernetes.ResourceStatus
     public class ResourceRetriever : IResourceRetriever
     {
         private readonly IKubectlGet kubectlGet;
+        readonly ILog log;
 
-        public ResourceRetriever(IKubectlGet kubectlGet)
+        public ResourceRetriever(IKubectlGet kubectlGet, ILog log)
         {
             this.kubectlGet = kubectlGet;
+            this.log = log;
         }
 
         /// <inheritdoc />
@@ -44,7 +50,7 @@ namespace Calamari.Kubernetes.ResourceStatus
         private Resource GetResource(ResourceIdentifier resourceIdentifier, IKubectl kubectl, Options options)
         {
             var result = kubectlGet.Resource(resourceIdentifier.Kind, resourceIdentifier.Name, resourceIdentifier.Namespace, kubectl);
-            return string.IsNullOrEmpty(result) ? null : ResourceFactory.FromJson(result, options);
+            return result.IsNullOrEmpty() ? null : TryParse(ResourceFactory.FromJson, result, options);
         }
 
         private IEnumerable<Resource> GetChildrenResources(Resource parentResource, IKubectl kubectl, Options options)
@@ -56,13 +62,30 @@ namespace Calamari.Kubernetes.ResourceStatus
             }
 
             var result = kubectlGet.AllResources(childKind, parentResource.Namespace, kubectl);
-            var resources = ResourceFactory.FromListJson(result, options);
+
+            var resources = TryParse(ResourceFactory.FromListJson, result, options);
             return resources.Where(resource => resource.OwnerUids.Contains(parentResource.Uid))
-                .Select(child =>
+                            .Select(child =>
+                            {
+                                child.UpdateChildren(GetChildrenResources(child, kubectl, options));
+                                return child;
+                            }).ToList();
+        }
+
+        T TryParse<T>(Func<string, Options, T> function, string jsonString, Options options)
+        {
+            try
+            {
+                return function(jsonString, options);
+            }
+            catch (JsonException)
+            {
+                if (options.PrintVerboseKubectlOutputOnError)
                 {
-                    child.UpdateChildren(GetChildrenResources(child, kubectl, options));
-                    return child;
-                }).ToList();
+                    log.Verbose($"Failed to parse JSON: \n----------\n{jsonString}\n----------");
+                }
+                throw;
+            }
         }
     }
 }
