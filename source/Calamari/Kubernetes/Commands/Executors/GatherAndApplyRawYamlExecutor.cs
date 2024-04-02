@@ -50,11 +50,11 @@ namespace Calamari.Kubernetes.Commands.Executors
             var resourcesIdentifiers = new HashSet<ResourceIdentifier>();
             foreach (var directory in directories)
             {
-                var res = ApplyBatchAndReturnResourceIdentifiers(directory).ToList();
+                var res = ApplyBatchAndReturnResourceIdentifiers(directory).ToArray();
 
                 if (appliedResourcesCallback != null)
                 {
-                    await appliedResourcesCallback(res.ToArray());
+                    await appliedResourcesCallback(res);
                 }
                 
                 resourcesIdentifiers.UnionWith(res);
