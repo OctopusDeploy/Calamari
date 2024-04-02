@@ -60,7 +60,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
             var variables = new CalamariVariables
             {
                 [KnownVariables.EnabledFeatureToggles] = FeatureToggle.GlobPathsGroupSupportFeatureToggle.ToString(),
-                [KnownVariables.OriginalPackageDirectoryPath] = StagingDirectory,
+                [KnownVariables.OriginalPackageDirectoryPath] = StagingDirectory
             };
             var runningDeployment = new RunningDeployment(variables);
             var fileSystem = new TestCalamariPhysicalFileSystem();
@@ -109,7 +109,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
             receivedCallbacks.Should()
                              .BeEquivalentTo(new List<ResourceIdentifier>
                              {
-                                 new ResourceIdentifier("Deployment", "basic-deployment", "dev"), new ResourceIdentifier("Service", "basic-service", "dev")
+                                 new ResourceIdentifier("Deployment", "basic-deployment", "dev"), new ResourceIdentifier("Service", "basic-service", "dev"), new ResourceIdentifier("Deployment", "basic-deployment", "dev")
                              });
 
             log.ServiceMessages.Count.Should().Be(2);
@@ -133,7 +133,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
             };
             var runningDeployment = new RunningDeployment(variables);
             var executor = CreateExecutor(variables, fileSystem);
-            
+
             // Act
             var result = await executor.Execute(runningDeployment, RecordingCallback);
 
@@ -143,7 +143,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
             receivedCallbacks.Should().BeEmpty();
             log.ServiceMessages.Should().BeEmpty();
         }
-        
+
         void AddTestFiles()
         {
             void CreateTemporaryTestFile(string directory)

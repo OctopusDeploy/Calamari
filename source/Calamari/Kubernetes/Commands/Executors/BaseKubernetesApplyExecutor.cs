@@ -25,15 +25,11 @@ namespace Calamari.Kubernetes.Commands.Executors
             this.kubectl = kubectl;
         }
      
-        public async Task<bool> Execute(RunningDeployment deployment, Func<ResourceIdentifier[], Task> appliedResourcesCallback)
+        public async Task<bool> Execute(RunningDeployment deployment, Func<ResourceIdentifier[], Task> appliedResourcesCallback = null)
         {
             try
             {
-                var resourceIdentifiers = ApplyAndGetResourceIdentifiers(deployment).ToArray();
-                if (appliedResourcesCallback != null)
-                {
-                    await appliedResourcesCallback(resourceIdentifiers);
-                }
+                var resourceIdentifiers = await ApplyAndGetResourceIdentifiers(deployment, appliedResourcesCallback);
                 WriteResourcesToOutputVariables(resourceIdentifiers);
                 return true;
             }
@@ -48,7 +44,7 @@ namespace Calamari.Kubernetes.Commands.Executors
             }
         }
         
-        protected abstract IEnumerable<ResourceIdentifier> ApplyAndGetResourceIdentifiers(RunningDeployment deployment);
+        protected abstract Task<IEnumerable<ResourceIdentifier>> ApplyAndGetResourceIdentifiers(RunningDeployment deployment, Func<ResourceIdentifier[], Task> appliedResourcesCallback = null);
         
         protected void CheckResultForErrors(CommandResultWithOutput commandResult, string directory)
         {

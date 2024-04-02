@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.FileSystem.GlobExpressions;
@@ -36,7 +37,7 @@ namespace Calamari.Kubernetes.Commands.Executors
             this.kubectl = kubectl;
         }
 
-        protected override IEnumerable<ResourceIdentifier> ApplyAndGetResourceIdentifiers(RunningDeployment deployment)
+        protected override async Task<IEnumerable<ResourceIdentifier>> ApplyAndGetResourceIdentifiers(RunningDeployment deployment, Func<ResourceIdentifier[], Task> appliedResourcesCallback = null)
         {
             var variables = deployment.Variables;
             var globs = variables.GetPaths(SpecialVariables.CustomResourceYamlFileName);
@@ -50,6 +51,12 @@ namespace Calamari.Kubernetes.Commands.Executors
             foreach (var directory in directories)
             {
                 var res = ApplyBatchAndReturnResourceIdentifiers(directory).ToList();
+
+                if (appliedResourcesCallback != null)
+                {
+                    await appliedResourcesCallback(res.ToArray());
+                }
+                
                 resourcesIdentifiers.UnionWith(res);
             }
 
