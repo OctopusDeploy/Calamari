@@ -140,6 +140,10 @@ namespace Calamari.Kubernetes.Commands.Executors
                 log.Verbose(outputJson);
                 log.Verbose("---------------------------");
             }
+            else
+            {
+                log.Verbose($"To get Octopus to print out the JSON string retrieved from kubectl, set Octopus Variable '{SpecialVariables.PrintVerboseKubectlOutputOnError}' to 'true'");
+            }
             log.Error("This can happen with older versions of kubectl. Please update to a recent version of kubectl.");
             log.Error("See https://github.com/kubernetes/kubernetes/issues/58834 for more details.");
             log.Error("Custom resources will not be saved as output variables.");
