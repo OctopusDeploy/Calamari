@@ -82,11 +82,14 @@ namespace Calamari.Kubernetes.ResourceStatus
             {
                 if (options.PrintVerboseKubectlOutputOnError)
                 {
-                    log.Verbose($"Failed to parse JSON: \n----------\n{jsonString}\n----------");
+                    log.Verbose("Failed to parse JSON:");
+                    log.Verbose("---------------------------");
+                    log.Verbose(jsonString);
+                    log.Verbose("---------------------------");
                 }
                 else
                 {
-                    log.Verbose($"Failed to parse JSON, to get Octopus to print out the JSON string retrieved from kubectl, set Octopus Variable '{SpecialVariables.PrintVerboseKubectlOutputOnError}' to 'true'");
+                    log.Verbose($"Failed to parse JSON, to get Octopus to log out the JSON string retrieved from kubectl, set Octopus Variable '{SpecialVariables.PrintVerboseKubectlOutputOnError}' to 'true'");
                 }
                 throw;
             }

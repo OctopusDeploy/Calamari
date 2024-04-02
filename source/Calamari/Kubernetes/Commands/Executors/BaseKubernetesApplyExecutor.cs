@@ -142,7 +142,7 @@ namespace Calamari.Kubernetes.Commands.Executors
             }
             else
             {
-                log.Verbose($"To get Octopus to print out the JSON string retrieved from kubectl, set Octopus Variable '{SpecialVariables.PrintVerboseKubectlOutputOnError}' to 'true'");
+                log.Verbose($"To get Octopus to log out the JSON string retrieved from kubectl, set Octopus Variable '{SpecialVariables.PrintVerboseKubectlOutputOnError}' to 'true'");
             }
             log.Error("This can happen with older versions of kubectl. Please update to a recent version of kubectl.");
             log.Error("See https://github.com/kubernetes/kubernetes/issues/58834 for more details.");
