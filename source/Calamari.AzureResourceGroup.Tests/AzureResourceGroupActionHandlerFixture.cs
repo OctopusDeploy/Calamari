@@ -24,7 +24,7 @@ namespace Calamari.AzureResourceGroup.Tests
         private string subscriptionId;
         private IResourceGroup resourceGroup;
         private IAzure azure;
-
+        
         [OneTimeSetUp]
         public async Task Setup()
         {
@@ -117,7 +117,7 @@ namespace Calamari.AzureResourceGroup.Tests
                     context.Variables.Add(SpecialVariables.Action.Azure.ResourceGroupTemplateParameters, parameters);
 
                     context.WithFilesToCopy(packagePath);
-
+                    
                     AddTemplateFiles(context, templateFileContent, paramsFileContent);
                 })
                 .Execute();
