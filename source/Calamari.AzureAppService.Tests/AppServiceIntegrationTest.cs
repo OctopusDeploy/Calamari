@@ -11,9 +11,11 @@ using Azure.ResourceManager.AppService;
 using Azure.ResourceManager.AppService.Models;
 using Azure.ResourceManager.Resources;
 using Calamari.AzureAppService.Azure;
+using Calamari.AzureAppService.Json;
 using Calamari.CloudAccounts;
 using Calamari.Testing;
 using FluentAssertions;
+using Newtonsoft.Json;
 using NUnit.Framework;
 using Octostache;
 using AccountVariables = Calamari.AzureAppService.Azure.AccountVariables;
@@ -186,6 +188,14 @@ namespace Calamari.AzureAppService.Tests
                                                                           webSiteData);
 
             return (servicePlanResponse.Value, webSiteResponse.Value);
+        }
+        
+        protected (string json, IEnumerable<AppSetting> setting) BuildAppSettingsJson(IEnumerable<(string name, string value, bool isSlotSetting)> settings)
+        {
+            var appSettings = settings.Select(setting => new AppSetting
+                                                  { Name = setting.name, Value = setting.value, SlotSetting = setting.isSlotSetting });
+
+            return (JsonConvert.SerializeObject(appSettings), appSettings);
         }
     }
 }

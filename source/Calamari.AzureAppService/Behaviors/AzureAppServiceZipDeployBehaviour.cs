@@ -40,7 +40,7 @@ namespace Calamari.AzureAppService.Behaviors
 
         private ILog Log { get; }
 
-        public bool IsEnabled(RunningDeployment context) => FeatureToggle.ModernAzureAppServiceSdkFeatureToggle.IsEnabled(context.Variables);
+        public bool IsEnabled(RunningDeployment context) => true;
 
         public async Task Execute(RunningDeployment context)
         {

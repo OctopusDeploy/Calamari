@@ -3,7 +3,6 @@ using System.Threading.Tasks;
 using Calamari.AzureAppService.Azure;
 using Calamari.CloudAccounts;
 using Calamari.Common.Commands;
-using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 using Octopus.CoreUtilities.Extensions;
@@ -20,7 +19,7 @@ namespace Calamari.AzureAppService.Behaviors
             Log = log;
         }
 
-        public bool IsEnabled(RunningDeployment context) => FeatureToggle.ModernAzureAppServiceSdkFeatureToggle.IsEnabled(context.Variables);
+        public bool IsEnabled(RunningDeployment context) => true;
 
         public async Task Execute(RunningDeployment context)
         {
