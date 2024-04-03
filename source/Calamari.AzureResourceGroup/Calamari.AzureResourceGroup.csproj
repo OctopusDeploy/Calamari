@@ -1,27 +1,30 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <RootNamespace>Calamari.AzureResourceGroup</RootNamespace>
-    <AssemblyName>Calamari.AzureResourceGroup</AssemblyName>
-    <LangVersion>8</LangVersion>
-    <Nullable>enable</Nullable>
-    <OutputType>Exe</OutputType>
-    <IsPackable>false</IsPackable>
-    <ValidateExecutableReferencesMatchSelfContained>false</ValidateExecutableReferencesMatchSelfContained>
-    <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
-    <TargetFrameworks>net462;net6.0</TargetFrameworks>
-  </PropertyGroup>
+    <PropertyGroup>
+        <RootNamespace>Calamari.AzureResourceGroup</RootNamespace>
+        <AssemblyName>Calamari.AzureResourceGroup</AssemblyName>
+        <LangVersion>8</LangVersion>
+        <Nullable>enable</Nullable>
+        <OutputType>Exe</OutputType>
+        <IsPackable>false</IsPackable>
+        <ValidateExecutableReferencesMatchSelfContained>false</ValidateExecutableReferencesMatchSelfContained>
+        <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
+        <TargetFrameworks>net462;net6.0</TargetFrameworks>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Microsoft.Rest.ClientRuntime" Version="2.3.23" />
-    <PackageReference Include="Microsoft.Identity.Client" Version="4.48.1" />
-    <PackageReference Include="Microsoft.Azure.Management.ResourceManager" Version="3.9.0-preview" />
-    <PackageReference Include="Microsoft.DotNet.Analyzers.Compatibility" Version="0.2.12-alpha">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
-    </PackageReference>
-  </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Rest.ClientRuntime" Version="2.3.23"/>
+        <PackageReference Include="Microsoft.Identity.Client" Version="4.56.0"/>
+        <PackageReference Include="Microsoft.Azure.Management.ResourceManager" Version="3.9.0-preview"/>
+        <PackageReference Include="Azure.Identity" Version="1.10.4" />
+        <PackageReference Include="Azure.ResourceManager.Resources" Version="1.7.0" />
+        <PackageReference Include="Microsoft.DotNet.Analyzers.Compatibility" Version="0.2.12-alpha">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Calamari.AzureScripting\Calamari.AzureScripting.csproj" />
-  </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\Calamari.AzureScripting\Calamari.AzureScripting.csproj"/>
+        <ProjectReference Include="..\Calamari.Azure\Calamari.Azure.csproj"/>
+    </ItemGroup>
 </Project>

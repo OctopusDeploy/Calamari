@@ -39,12 +39,12 @@ namespace Calamari.AzureResourceGroup.Tests
                 clientSecret,
                 tenantId,
                 AzureEnvironment.AzureGlobalCloud);
-
-            azure = Azure
-                .Configure()
-                .WithLogLevel(HttpLoggingDelegatingHandler.Level.Basic)
-                .Authenticate(credentials)
-                .WithSubscription(subscriptionId);
+            
+            azure = Microsoft.Azure.Management.Fluent.Azure
+                             .Configure()
+                             .WithLogLevel(HttpLoggingDelegatingHandler.Level.Basic)
+                             .Authenticate(credentials)
+                             .WithSubscription(subscriptionId);
 
             resourceGroup = await azure.ResourceGroups
                 .Define(resourceGroupName)
