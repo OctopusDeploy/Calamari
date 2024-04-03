@@ -30,9 +30,8 @@ namespace Calamari.AzureAppService.Behaviors
 
         public bool IsEnabled(RunningDeployment context)
         {
-            return FeatureToggle.ModernAzureAppServiceSdkFeatureToggle.IsEnabled(context.Variables) &&
-                   (!string.IsNullOrWhiteSpace(context.Variables.Get(SpecialVariables.Action.Azure.AppSettings)) ||
-                    !string.IsNullOrWhiteSpace(context.Variables.Get(SpecialVariables.Action.Azure.ConnectionStrings)));
+            return !string.IsNullOrWhiteSpace(context.Variables.Get(SpecialVariables.Action.Azure.AppSettings)) ||
+                   !string.IsNullOrWhiteSpace(context.Variables.Get(SpecialVariables.Action.Azure.ConnectionStrings));
         }
 
         public async Task Execute(RunningDeployment context)
