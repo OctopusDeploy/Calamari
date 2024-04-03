@@ -1,22 +1,15 @@
 using System;
-using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Threading;
 using Azure.Core;
 using Azure.Core.Pipeline;
 using Azure.Identity;
 using Azure.ResourceManager;
-using Azure.ResourceManager.AppService;
 using Calamari.CloudAccounts;
-using Microsoft.Azure.Management.Fluent;
-using Microsoft.Azure.Management.ResourceManager.Fluent;
-using Microsoft.Azure.Management.ResourceManager.Fluent.Authentication;
-using Microsoft.Rest;
 
-namespace Calamari.AzureAppService.Azure
+namespace Calamari.Azure
 {
-    internal static class AzureClient
+    public static class AzureClient
     {
         /// <summary>
         /// Creates an ArmClient for the new Azure SDK, which replaces the older fluent libraries.
@@ -33,6 +26,7 @@ namespace Calamari.AzureAppService.Azure
                 var clientAssertionCreds = new ClientAssertionCredential(oidcAccount.TenantId, oidcAccount.ClientId, () => oidcAccount.GetCredentials);
                 return new ArmClient(clientAssertionCreds, defaultSubscriptionId: azureAccount.SubscriptionNumber, clientOptions);
             }
+
             string clientSecret;
             clientSecret = azureAccount.GetCredentials;
 

@@ -35,10 +35,11 @@
     <PackageReference Include="Markdown" Version="2.1.0" />
     <PackageReference Include="System.ServiceProcess.ServiceController" Version="4.3.0" />
     <ProjectReference Include="..\Calamari.Aws\Calamari.Aws.csproj" />
+    <ProjectReference Include="..\Calamari.Azure\Calamari.Azure.csproj" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)'=='net462'">
     <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.3.0" />
-    <ProjectReference Include="..\Calamari.Aws\Calamari.Aws.csproj" />
+    <ProjectReference Include="..\Calamari.Azure\Calamari.Azure.csproj" />
     <Reference Include="System.Core" />
     <Reference Include="System.Net" />
     <Reference Include="System.ServiceProcess" />

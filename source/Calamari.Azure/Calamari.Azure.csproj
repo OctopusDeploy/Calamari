@@ -5,10 +5,13 @@
         <OutputType>Library</OutputType>
         <Authors>Octopus Deploy</Authors>
         <Copyright>Octopus Deploy Pty Ltd</Copyright>
-        <TargetFrameworks>net462;netstandard2.1</TargetFrameworks>
+        <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
+        <LangVersion>8.0</LangVersion>
+        <TargetFrameworks>net462;net6.0</TargetFrameworks>
     </PropertyGroup>
     <ItemGroup>
-      <PackageReference Include="Microsoft.Azure.Management.Fluent" Version="1.38.1" />
+        <PackageReference Include="Azure.Identity" Version="1.10.4" />
+        <PackageReference Include="Azure.ResourceManager" Version="1.7.0" />
     </ItemGroup>
     <ItemGroup>
       <ProjectReference Include="..\Calamari.CloudAccounts\Calamari.CloudAccounts.csproj" />
