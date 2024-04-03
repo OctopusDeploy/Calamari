@@ -17,10 +17,6 @@
     <PackageReference Include="Azure.ResourceManager.AppService" Version="1.0.2" />
     <PackageReference Include="Azure.ResourceManager.ResourceGraph" Version="1.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.WebUtilities" Version="2.2.0" />
-    <PackageReference Include="Microsoft.Azure.Management.AppService.Fluent" Version="1.37.1" />
-    <PackageReference Include="Microsoft.Azure.Management.Fluent" Version="1.37.1" />
-    <PackageReference Include="Microsoft.Azure.Management.Websites" Version="4.0.0" />
-    <PackageReference Include="Microsoft.Identity.Client" Version="4.56.0" />
     <PackageReference Include="Microsoft.DotNet.Analyzers.Compatibility" Version="0.2.12-alpha">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
