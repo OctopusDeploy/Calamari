@@ -80,18 +80,23 @@ namespace Calamari.Kubernetes.ResourceStatus
             }
             catch (JsonException)
             {
-                if (options.PrintVerboseKubectlOutputOnError)
-                {
-                    log.Verbose("Failed to parse JSON:");
-                    log.Verbose("---------------------------");
-                    log.Verbose(jsonString);
-                    log.Verbose("---------------------------");
-                }
-                else
-                {
-                    log.Verbose($"Failed to parse JSON, to get Octopus to log out the JSON string retrieved from kubectl, set Octopus Variable '{SpecialVariables.PrintVerboseKubectlOutputOnError}' to 'true'");
-                }
+                LogJsonStringError(jsonString, options);
                 throw;
+            }
+        }
+
+        void LogJsonStringError(string jsonString, Options options)
+        {
+            if (options.PrintVerboseKubectlOutputOnError)
+            {
+                log.Error("Failed to parse JSON:");
+                log.Error("---------------------------");
+                log.Error(jsonString);
+                log.Error("---------------------------");
+            }
+            else
+            {
+                log.Error($"Failed to parse JSON, to get Octopus to log out the JSON string retrieved from kubectl, set Octopus Variable '{SpecialVariables.PrintVerboseKubectlOutputOnError}' to 'true'");
             }
         }
     }
