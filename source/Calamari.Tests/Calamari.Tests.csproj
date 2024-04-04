@@ -39,6 +39,7 @@
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)'=='net462'">
     <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.3.0" />
+    <ProjectReference Include="..\Calamari.Aws\Calamari.Aws.csproj" />
     <ProjectReference Include="..\Calamari.Azure\Calamari.Azure.csproj" />
     <Reference Include="System.Core" />
     <Reference Include="System.Net" />
