@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.FileSystem.GlobExpressions;
@@ -36,7 +37,7 @@ namespace Calamari.Kubernetes.Commands.Executors
             this.kubectl = kubectl;
         }
 
-        protected override IEnumerable<ResourceIdentifier> ApplyAndGetResourceIdentifiers(RunningDeployment deployment)
+        protected override async Task<IEnumerable<ResourceIdentifier>> ApplyAndGetResourceIdentifiers(RunningDeployment deployment, Func<ResourceIdentifier[], Task> appliedResourcesCallback = null)
         {
             var variables = deployment.Variables;
             var globs = variables.GetPaths(SpecialVariables.CustomResourceYamlFileName);
@@ -49,7 +50,13 @@ namespace Calamari.Kubernetes.Commands.Executors
             var resourcesIdentifiers = new HashSet<ResourceIdentifier>();
             foreach (var directory in directories)
             {
-                var res = ApplyBatchAndReturnResourceIdentifiers(directory).ToList();
+                var res = ApplyBatchAndReturnResourceIdentifiers(deployment, directory).ToArray();
+
+                if (appliedResourcesCallback != null)
+                {
+                    await appliedResourcesCallback(res);
+                }
+                
                 resourcesIdentifiers.UnionWith(res);
             }
 
@@ -93,7 +100,7 @@ namespace Calamari.Kubernetes.Commands.Executors
             return directories;
         }
 
-        IEnumerable<ResourceIdentifier> ApplyBatchAndReturnResourceIdentifiers(GlobDirectory globDirectory)
+        IEnumerable<ResourceIdentifier> ApplyBatchAndReturnResourceIdentifiers(RunningDeployment deployment, GlobDirectory globDirectory)
         {
             var index = globDirectory.Index;
             var directoryWithTrailingSlash = globDirectory.Directory + Path.DirectorySeparatorChar;
@@ -113,7 +120,7 @@ namespace Calamari.Kubernetes.Commands.Executors
 
             var result = kubectl.ExecuteCommandAndReturnOutput("apply", "-f", $@"""{globDirectory.Directory}""", "--recursive", "-o", "json");
 
-            return ProcessKubectlCommandOutput(result, globDirectory.Directory);
+            return ProcessKubectlCommandOutput(deployment, result, globDirectory.Directory);
         }
 
         private class GlobDirectory

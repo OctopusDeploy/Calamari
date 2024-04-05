@@ -2,7 +2,6 @@
 using System.Threading.Tasks;
 using Calamari.AzureAppService.Azure;
 using Calamari.Common.Commands;
-using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 
@@ -22,7 +21,7 @@ namespace Calamari.AzureAppService.Behaviors
             zipDeployBehaviour = new AzureAppServiceZipDeployBehaviour(log);
         }
 
-        public bool IsEnabled(RunningDeployment context) => FeatureToggle.ModernAzureAppServiceSdkFeatureToggle.IsEnabled(context.Variables);
+        public bool IsEnabled(RunningDeployment context) => true;
 
         public Task Execute(RunningDeployment context)
         {

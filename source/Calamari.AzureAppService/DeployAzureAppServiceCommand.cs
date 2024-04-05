@@ -11,12 +11,6 @@ namespace Calamari.AzureAppService
     {
         protected override IEnumerable<IDeployBehaviour> Deploy(DeployResolver resolver)
         {
-            //Legacy behaviours
-            yield return resolver.Create<LegacyAppDeployBehaviour>();
-            yield return resolver.Create<LegacyAzureAppServiceSettingsBehaviour>();
-            yield return resolver.Create<LegacyRestartAzureWebAppBehaviour>();
-
-            //Modern behaviours
             yield return resolver.Create<AppDeployBehaviour>();
             yield return resolver.Create<AzureAppServiceSettingsBehaviour>();
             yield return resolver.Create<RestartAzureWebAppBehaviour>();
@@ -28,9 +22,6 @@ namespace Calamari.AzureAppService
     {
         protected override IEnumerable<IDeployBehaviour> Deploy(DeployResolver resolver)
         {
-            //Legacy behaviour
-            yield return resolver.Create<LegacyAzureAppServiceBehaviour>();
-
             //Modern behaviour
             yield return resolver.Create<AzureAppServiceZipDeployBehaviour>();
         }
