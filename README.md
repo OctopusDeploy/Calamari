@@ -80,7 +80,7 @@ Finally, tag and push the new release
 
 > [!WARNING]
 > Avoid using `git push --tags` as it will push all of your local tags to the remote repository.  
-> This is not recommended as it can cause confusion and potential issues with the build server when it attempts to calculate the release version number due to the potential of unexpected tags been pushed.
+> This is not recommended as it can cause confusion and potential issues with the build server when it attempts to calculate the release version number due to the potential of unexpected tags being pushed.
 
 This will trigger our build server to build and publish a new version to feedz.io which can be seen here https://feedz.io/org/octopus-deploy/repository/dependencies/packages/Calamari.
 
