@@ -76,7 +76,11 @@ Alternatively,
 Finally, tag and push the new release
 
 * Patch, Minor or Major Version the tag according to `<Major>.<Minor>.<Patch>`
-* `git push --tag`
+* `git push origin <Major>.<Minor>.<Patch>` to push your newly created tag to Github.
+
+> [!WARNING]
+> Avoid using `git push --tags` as it will push all of your local tags to the remote repository.  
+> This is not recommended as it can cause confusion and potential issues with the build server when it attempts to calculate the release version number due to the potential of unexpected tags been pushed.
 
 This will trigger our build server to build and publish a new version to feedz.io which can be seen here https://feedz.io/org/octopus-deploy/repository/dependencies/packages/Calamari.
 
@@ -86,7 +90,7 @@ Option 1 is recommended if you can use the default worker.
 
 ### Option 1: Reference local binary
 1. Build Calamari in your IDE
-2. Get the path to the executable (The one directly in the bin folder for the Calamari project, `Calamari` with no extension of macOS and Linux, `Calamari.exe` for Windows)
+2. Get the path to the executable (The one directly in the bin folder for the Calamari project for the flavour you are wanting to debug e.g. `Calamari` or `Calamari.AzureAppService` with no extension of macOS and Linux, `Calamari.exe` or `Calamari.AzureAppService.exe` for Windows)
 3. In Octopus, set an unscoped variable `Octopus.Calamari.Executable` to the full path to the executable. This is set per project.
 4. Now when you run a deployment it will use your debug build.
 
