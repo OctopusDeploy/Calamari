@@ -90,7 +90,7 @@ Option 1 is recommended if you can use the default worker.
 
 ### Option 1: Reference local binary
 1. Build Calamari in your IDE
-2. Get the path to the executable (The one directly in the bin folder for the Calamari project for the flavour you are wanting to debug e.g. `Calamari` or `Calamari.AzureAppService` with no extension of macOS and Linux, `Calamari.exe` or `Calamari.AzureAppService.exe` for Windows)
+2. Get the path to the executable (The one directly in the bin folder for the Calamari project for the flavour you want to debug e.g. `Calamari` or `Calamari.AzureAppService` with no extension for macOS and Linux, `Calamari.exe` or `Calamari.AzureAppService.exe` for Windows)
 3. In Octopus, set an unscoped variable `Octopus.Calamari.Executable` to the full path to the executable. This is set per project.
 4. Now when you run a deployment it will use your debug build.
 
