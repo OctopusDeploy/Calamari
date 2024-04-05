@@ -71,7 +71,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
             log.ServiceMessages.Should().BeEmpty();
             log.StandardError[0].Should().Contain("Kustomization directory not specified");
         }
-        
+
         [Test]
         public async Task InvalidKubectlVersionJson_ReturnsFalseToIndicateFailure()
         {
@@ -93,7 +93,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
 
             // Act
             var result = await executor.Execute(runningDeployment, RecordingCallback);
-            
+
             // Assert
             result.Should().BeFalse();
             commandLineRunner.ReceivedCalls().Count().Should().Be(1);
@@ -126,7 +126,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
 
             // Act
             var result = await executor.Execute(runningDeployment, RecordingCallback);
-            
+
             // Assert
             result.Should().BeFalse();
             commandLineRunner.ReceivedCalls().Count().Should().Be(1);
@@ -170,7 +170,101 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
             log.ServiceMessages[1].Name.Should().Be(ServiceMessageNames.SetVariable.Name);
             log.ServiceMessages[1].Properties.Should().Contain(new KeyValuePair<string, string>("name", "CustomResources(basic-deployment)"));
         }
-        
+
+        [Test]
+        public async Task AppliesKustomizationWithServerSideApply()
+        {
+            // Arrange
+            SetupCommandLineRunnerMock();
+            var variables = new CalamariVariables
+            {
+                [KnownVariables.OriginalPackageDirectoryPath] = StagingDirectory,
+                [SpecialVariables.KustomizeOverlayPath] = OverlayPath,
+                [SpecialVariables.ServerSideApplyEnabled] = "true"
+            };
+            var runningDeployment = new RunningDeployment(variables);
+            var executor = CreateExecutor(variables);
+
+            // Act
+            var result = await executor.Execute(runningDeployment, RecordingCallback);
+
+            // Assert
+            result.Should().BeTrue();
+            commandLineRunner.ReceivedCalls().Count().Should().Be(4);
+            var commandLineArgs = commandLineRunner.ReceivedCalls().SelectMany(call => call.GetArguments().Select(arg => arg.ToString())).ToArray();
+            commandLineArgs[1]
+                .Should()
+                .Contain("apply -k")
+                .And.Contain("-o json")
+                .And.Contain(OverlayPath)
+                .And.Contain("--server-side")
+                .And.Contain("--field-manager octopus");
+        }
+
+        [Test]
+        public async Task AppliesKustomizationWithServerSideApplyAndForceConflicts()
+        {
+            // Arrange
+            SetupCommandLineRunnerMock();
+            var variables = new CalamariVariables
+            {
+                [KnownVariables.OriginalPackageDirectoryPath] = StagingDirectory,
+                [SpecialVariables.KustomizeOverlayPath] = OverlayPath,
+                [SpecialVariables.ServerSideApplyEnabled] = "true",
+                [SpecialVariables.ServerSideApplyForceConflicts] = "true"
+            };
+            var runningDeployment = new RunningDeployment(variables);
+            var executor = CreateExecutor(variables);
+
+            // Act
+            var result = await executor.Execute(runningDeployment, RecordingCallback);
+
+            // Assert
+            result.Should().BeTrue();
+            commandLineRunner.ReceivedCalls().Count().Should().Be(4);
+            var commandLineArgs = commandLineRunner.ReceivedCalls().SelectMany(call => call.GetArguments().Select(arg => arg.ToString())).ToArray();
+            commandLineArgs[1]
+                .Should()
+                .Contain("apply -k")
+                .And.Contain("-o json")
+                .And.Contain(OverlayPath)
+                .And.Contain("--server-side")
+                .And.Contain("--field-manager octopus")
+                .And.Contain("--force-conflicts");
+        }
+
+        [Test]
+        public async Task AppliesKustomizationAndForceConflictsIsIgnoredWithServerSideApplyDisabled()
+        {
+            // Arrange
+            SetupCommandLineRunnerMock();
+            var variables = new CalamariVariables
+            {
+                [KnownVariables.OriginalPackageDirectoryPath] = StagingDirectory,
+                [SpecialVariables.KustomizeOverlayPath] = OverlayPath,
+                [SpecialVariables.ServerSideApplyEnabled] = "false",
+                [SpecialVariables.ServerSideApplyForceConflicts] = "true"
+            };
+            var runningDeployment = new RunningDeployment(variables);
+            var executor = CreateExecutor(variables);
+
+            // Act
+            var result = await executor.Execute(runningDeployment, RecordingCallback);
+
+            // Assert
+            result.Should().BeTrue();
+            commandLineRunner.ReceivedCalls().Count().Should().Be(4);
+            var commandLineArgs = commandLineRunner.ReceivedCalls().SelectMany(call => call.GetArguments().Select(arg => arg.ToString())).ToArray();
+            commandLineArgs[1]
+                .Should()
+                .Contain("apply -k")
+                .And.Contain("-o json")
+                .And.Contain(OverlayPath)
+                .And.NotContain("--server-side")
+                .And.NotContain("--field-manager octopus")
+                .And.NotContain("--force-conflicts");
+        }
+
         [Test]
         public async Task CommandLineReturnsNonZeroCode_ReturnsFalseToIndicateFailure()
         {
@@ -183,10 +277,10 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
             };
             var runningDeployment = new RunningDeployment(variables);
             var executor = CreateExecutor(variables);
-            
+
             // Act
             var result = await executor.Execute(runningDeployment, RecordingCallback);
-        
+
             // Assert
             result.Should().BeFalse();
             commandLineRunner.ReceivedCalls().Should().NotBeEmpty();
@@ -215,8 +309,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
                     },
                 ]
             }";
-            
-            
+
             commandLineRunner.Execute(Arg.Is<CommandLineInvocation>(invocation => invocation.Arguments.Contains(OverlayPath)))
                              .Returns(info =>
                                       {
@@ -232,8 +325,8 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
                                           return new CommandResult("kubectl version result", 0);
                                       });
         }
-        
-        static string GetVersionJson(int major=1, int minor=28) => $@"{{
+
+        static string GetVersionJson(int major = 1, int minor = 28) => $@"{{
                 ""clientVersion"": {{
                     ""major"": ""{major}"",
                     ""minor"": ""{minor}"",

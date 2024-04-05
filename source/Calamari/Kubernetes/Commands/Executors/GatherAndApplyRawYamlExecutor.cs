@@ -118,7 +118,20 @@ namespace Calamari.Kubernetes.Commands.Executors
                 log.Verbose($"Matched file: {fileSystem.GetRelativePath(directoryWithTrailingSlash, file)}");
             }
 
-            var result = kubectl.ExecuteCommandAndReturnOutput("apply", "-f", $@"""{globDirectory.Directory}""", "--recursive", "-o", "json");
+            string[] executeArgs = {"apply", "-f", $@"""{globDirectory.Directory}""", "--recursive", "-o", "json"};
+            if (deployment.Variables.GetFlag(SpecialVariables.ServerSideApplyEnabled))
+            {
+                log.Verbose("Server-side apply is enabled. Applying with field manager 'octopus'");
+                
+                executeArgs = executeArgs.Concat(new[] {"--server-side", "--field-manager", "octopus"}).ToArray();
+                if(deployment.Variables.GetFlag(SpecialVariables.ServerSideApplyForceConflicts))
+                {
+                    log.Verbose("Force conflicts is enabled. Field manager 'octopus' will be the sole manager.");
+                    executeArgs = executeArgs.Concat(new[] {"--force-conflicts"}).ToArray();
+                }
+            }
+
+            var result = kubectl.ExecuteCommandAndReturnOutput(executeArgs);
 
             return ProcessKubectlCommandOutput(deployment, result, globDirectory.Directory);
         }

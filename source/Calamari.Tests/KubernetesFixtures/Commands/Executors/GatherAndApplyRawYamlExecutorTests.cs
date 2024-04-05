@@ -120,6 +120,145 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
         }
 
         [Test]
+        public async Task AppliesKubernetesManifestsWithServerSideApply()
+        {
+            // Arrange
+            AddTestFiles();
+            SetupCommandLineRunnerMocks();
+            var variables = new CalamariVariables
+            {
+                [KnownVariables.EnabledFeatureToggles] = FeatureToggle.GlobPathsGroupSupportFeatureToggle.ToString(),
+                [KnownVariables.OriginalPackageDirectoryPath] = StagingDirectory,
+                [SpecialVariables.CustomResourceYamlFileName] = "dirA/*\ndirB/*",
+                [SpecialVariables.ServerSideApplyEnabled] = "true"
+            };
+            var runningDeployment = new RunningDeployment(variables);
+            var executor = CreateExecutor(variables, fileSystem);
+            var expectedYamlGrouping = $"{Path.Combine(StagingDirectory, "grouped", "1")};{Path.Combine(StagingDirectory, "grouped", "2")}";
+
+            // Act
+            var result = await executor.Execute(runningDeployment, RecordingCallback);
+
+            // Assert
+            result.Should().BeTrue();
+            variables.Get(SpecialVariables.GroupedYamlDirectories).Should().Be(expectedYamlGrouping);
+
+            commandLineRunner.ReceivedCalls().Count().Should().Be(4);
+            var commandLineArgs = commandLineRunner.ReceivedCalls().SelectMany(call => call.GetArguments().Select(arg => arg.ToString())).ToArray();
+            commandLineArgs[0]
+                .Should()
+                .Contain("apply -f")
+                .And.Contain("--recursive")
+                .And.Contain("-o json")
+                .And.Contain($"{Path.Combine("grouped", "1")}")
+                .And.Contain("--server-side")
+                .And.Contain("--field-manager octopus");
+            commandLineArgs[1]
+                .Should()
+                .Contain("apply -f")
+                .And.Contain("--recursive")
+                .And.Contain("-o json")
+                .And.Contain($"{Path.Combine("grouped", "2")}")
+                .And.Contain("--server-side")
+                .And.Contain("--field-manager octopus");
+        }
+
+        [Test]
+        public async Task AppliesKubernetesManifestsWithServerSideApplyAndForceConflicts()
+        {
+            // Arrange
+            AddTestFiles();
+            SetupCommandLineRunnerMocks();
+            var variables = new CalamariVariables
+            {
+                [KnownVariables.EnabledFeatureToggles] = FeatureToggle.GlobPathsGroupSupportFeatureToggle.ToString(),
+                [KnownVariables.OriginalPackageDirectoryPath] = StagingDirectory,
+                [SpecialVariables.CustomResourceYamlFileName] = "dirA/*\ndirB/*",
+                [SpecialVariables.ServerSideApplyEnabled] = "true",
+                [SpecialVariables.ServerSideApplyForceConflicts] = "true"
+            };
+            var runningDeployment = new RunningDeployment(variables);
+            var executor = CreateExecutor(variables, fileSystem);
+            var expectedYamlGrouping = $"{Path.Combine(StagingDirectory, "grouped", "1")};{Path.Combine(StagingDirectory, "grouped", "2")}";
+
+            // Act
+            var result = await executor.Execute(runningDeployment, RecordingCallback);
+
+            // Assert
+            result.Should().BeTrue();
+            variables.Get(SpecialVariables.GroupedYamlDirectories).Should().Be(expectedYamlGrouping);
+
+            commandLineRunner.ReceivedCalls().Count().Should().Be(4);
+            var commandLineArgs = commandLineRunner.ReceivedCalls().SelectMany(call => call.GetArguments().Select(arg => arg.ToString())).ToArray();
+            commandLineArgs[0]
+                .Should()
+                .Contain("apply -f")
+                .And.Contain("--recursive")
+                .And.Contain("-o json")
+                .And.Contain($"{Path.Combine("grouped", "1")}")
+                .And.Contain("--server-side")
+                .And.Contain("--field-manager octopus")
+                .And.Contain("--force-conflicts");
+            commandLineArgs[1]
+                .Should()
+                .Contain("apply -f")
+                .And.Contain("--recursive")
+                .And.Contain("-o json")
+                .And.Contain($"{Path.Combine("grouped", "2")}")
+                .And.Contain("--server-side")
+                .And.Contain("--field-manager octopus")
+                .And.Contain("--force-conflicts");
+        }
+
+        [Test]
+        public async Task AppliesKubernetesManifestsAndForceConflictsIsIgnoredWithServerSideApplyDisabled()
+        {
+            // Arrange
+            AddTestFiles();
+            SetupCommandLineRunnerMocks();
+            var variables = new CalamariVariables
+            {
+                [KnownVariables.EnabledFeatureToggles] = FeatureToggle.GlobPathsGroupSupportFeatureToggle.ToString(),
+                [KnownVariables.OriginalPackageDirectoryPath] = StagingDirectory,
+                [SpecialVariables.CustomResourceYamlFileName] = "dirA/*\ndirB/*",
+                [SpecialVariables.ServerSideApplyEnabled] = "false",
+                [SpecialVariables.ServerSideApplyForceConflicts] = "true"
+            };
+            var runningDeployment = new RunningDeployment(variables);
+            var executor = CreateExecutor(variables, fileSystem);
+            var expectedYamlGrouping = $"{Path.Combine(StagingDirectory, "grouped", "1")};{Path.Combine(StagingDirectory, "grouped", "2")}";
+
+            // Act
+            var result = await executor.Execute(runningDeployment, RecordingCallback);
+
+            // Assert
+            result.Should().BeTrue();
+            variables.Get(SpecialVariables.GroupedYamlDirectories).Should().Be(expectedYamlGrouping);
+
+            commandLineRunner.ReceivedCalls().Count().Should().Be(4);
+            var commandLineArgs = commandLineRunner.ReceivedCalls().SelectMany(call => call.GetArguments().Select(arg => arg.ToString())).ToArray();
+            commandLineArgs[0]
+                .Should()
+                .Contain("apply -f")
+                .And.Contain("--recursive")
+                .And.Contain("-o json")
+                .And.Contain($"{Path.Combine("grouped", "1")}")
+                .And.NotContain("--server-side")
+                .And.NotContain("--field-manager octopus")
+                .And.NotContain("--force-conflicts");
+
+            commandLineArgs[1]
+                .Should()
+                .Contain("apply -f")
+                .And.Contain("--recursive")
+                .And.Contain("-o json")
+                .And.Contain($"{Path.Combine("grouped", "2")}")
+                .And.NotContain("--server-side")
+                .And.NotContain("--field-manager octopus")
+                .And.NotContain("--force-conflicts");
+        }
+
+        [Test]
         public async Task CommandLineReturnsNonZeroCode_ReturnsFalseToIndicateFailure()
         {
             // Arrange

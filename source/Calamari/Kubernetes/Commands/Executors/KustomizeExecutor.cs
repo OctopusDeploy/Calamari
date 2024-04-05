@@ -43,8 +43,21 @@ namespace Calamari.Kubernetes.Commands.Executors
             ValidateKubectlVersion(deployment.CurrentDirectory);
 
             var kustomizationDirectory = Path.Combine(deployment.CurrentDirectory, KubernetesDeploymentCommandBase.PackageDirectoryName, overlayPath);
-            var result = kubectl.ExecuteCommandAndReturnOutput("apply", "-k", $@"""{kustomizationDirectory}""", "-o", "json");
-
+            string[] executeArgs = {"apply", "-k", $@"""{kustomizationDirectory}""", "-o", "json"};
+            if (deployment.Variables.GetFlag(SpecialVariables.ServerSideApplyEnabled))
+            {
+                log.Verbose("Server-side apply is enabled. Applying with field manager 'octopus'");
+                
+                executeArgs = executeArgs.Concat(new[] {"--server-side", "--field-manager", "octopus"}).ToArray();
+                if(deployment.Variables.GetFlag(SpecialVariables.ServerSideApplyForceConflicts))
+                {
+                    log.Verbose("Force conflicts is enabled. Field manager 'octopus' will be the sole manager.");
+                    executeArgs = executeArgs.Concat(new[] {"--force-conflicts"}).ToArray();
+                }
+            }
+            
+            var result = kubectl.ExecuteCommandAndReturnOutput(executeArgs);
+            
             var resourceIdentifiers = ProcessKubectlCommandOutput(deployment, result, kustomizationDirectory).ToArray();
             
             if (appliedResourcesCallback != null)
