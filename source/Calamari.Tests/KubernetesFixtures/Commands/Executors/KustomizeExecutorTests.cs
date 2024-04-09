@@ -198,7 +198,8 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
                 .And.Contain("-o json")
                 .And.Contain(OverlayPath)
                 .And.Contain("--server-side")
-                .And.Contain("--field-manager octopus");
+                .And.Contain("--field-manager octopus")
+                .And.NotContain("--force-conflicts");
         }
 
         [Test]

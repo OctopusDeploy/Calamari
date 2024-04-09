@@ -152,7 +152,8 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
                 .And.Contain("-o json")
                 .And.Contain($"{Path.Combine("grouped", "1")}")
                 .And.Contain("--server-side")
-                .And.Contain("--field-manager octopus");
+                .And.Contain("--field-manager octopus")
+                .And.NotContain("--force-conflicts");
             commandLineArgs[1]
                 .Should()
                 .Contain("apply -f")
@@ -160,7 +161,8 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
                 .And.Contain("-o json")
                 .And.Contain($"{Path.Combine("grouped", "2")}")
                 .And.Contain("--server-side")
-                .And.Contain("--field-manager octopus");
+                .And.Contain("--field-manager octopus")
+                .And.NotContain("--force-conflicts");
         }
 
         [Test]
