@@ -79,6 +79,27 @@ namespace Calamari.AzureResourceGroup.Tests
         }
 
         [Test]
+        public async Task Deploy_with_template_in_git_repository()
+        {
+            // For the purposes of ARM templates in Calamari, a template in a Git Repository
+            // is equivalent to a template in a package, so we can just re-use the same
+            // package in the test here, it's just the template source property that is
+            // different.
+            var packagePath = TestEnvironment.GetTestPath("Packages", "AzureResourceGroup");
+            await CommandTestBuilder.CreateAsync<DeployAzureResourceGroupCommand, Program>()
+                .WithArrange(context =>
+                {
+                    AddDefaults(context);
+                    context.Variables.Add(SpecialVariables.Action.Azure.ResourceGroupDeploymentMode, "Complete");
+                    context.Variables.Add("Octopus.Action.Azure.TemplateSource", "GitRepository");
+                    context.Variables.Add("Octopus.Action.Azure.ResourceGroupTemplate", "azure_website_template.json");
+                    context.Variables.Add("Octopus.Action.Azure.ResourceGroupTemplateParameters", "azure_website_params.json");
+                    context.WithFilesToCopy(packagePath);
+                })
+                .Execute();
+        }
+
+        [Test]
         public async Task Deploy_with_template_inline()
         {
             var packagePath = TestEnvironment.GetTestPath("Packages", "AzureResourceGroup");
@@ -131,7 +152,7 @@ az group list";
                     context.Variables.Add(KnownVariables.Action.CustomScripts.GetCustomScriptStage(DeploymentStages.PostDeploy, ScriptSyntax.FSharp), "printfn \"Hello from F#\"");
 
                     context.WithFilesToCopy(packagePath);
-                    
+
                     AddTemplateFiles(context, templateFileContent, paramsFileContent);
                 })
                 .Execute();

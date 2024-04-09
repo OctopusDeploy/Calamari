@@ -8,8 +8,8 @@
         "dotnet-gitversion"
       ]
     },
-    "octonotes.tool": {
-      "version": "0.1.171",
+    "octopus.octonotes.tool": {
+      "version": "0.1.767",
       "commands": [
         "octonotes"
       ]
