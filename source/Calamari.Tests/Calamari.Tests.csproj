@@ -241,13 +241,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Remove="KubernetesFixtures\Scripts\KubernetesDeployment.ps1" />
-    <Content Include="KubernetesFixtures\Scripts\KubernetesDeployment.ps1">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
     <None Remove="KubernetesFixtures\Scripts\KubernetesDeployment.sh" />
-    <Content Include="KubernetesFixtures\Scripts\KubernetesDeployment.sh">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
     <None Remove="KubernetesFixtures\Scripts\KubernetesHealthCheck.ps1" />
     <Content Include="KubernetesFixtures\Scripts\KubernetesHealthCheck.ps1">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
