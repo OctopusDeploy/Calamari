@@ -25,7 +25,6 @@ namespace Calamari.Tests.KubernetesFixtures.Commands
         {
             var variables = new CalamariVariables()
             {
-                [KnownVariables.EnabledFeatureToggles] = "MultiGlobPathsForRawYamlFeatureToggle",
                 [SpecialVariables.ResourceStatusCheck] = "False"
             };
             var resourceStatusCheck = Substitute.For<IResourceStatusReportExecutor>();
@@ -41,7 +40,6 @@ namespace Calamari.Tests.KubernetesFixtures.Commands
         {
             var variables = new CalamariVariables()
             {
-                [KnownVariables.EnabledFeatureToggles] = "MultiGlobPathsForRawYamlFeatureToggle",
                 [SpecialVariables.ResourceStatusCheck] = "True"
             };
             var resourceStatusCheck = Substitute.For<IResourceStatusReportExecutor>();
