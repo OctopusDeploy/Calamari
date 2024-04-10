@@ -118,7 +118,10 @@ namespace Calamari.Kubernetes.Commands.Executors
                 log.Verbose($"Matched file: {fileSystem.GetRelativePath(directoryWithTrailingSlash, file)}");
             }
 
-            var result = kubectl.ExecuteCommandAndReturnOutput("apply", "-f", $@"""{globDirectory.Directory}""", "--recursive", "-o", "json");
+            string[] executeArgs = {"apply", "-f", $@"""{globDirectory.Directory}""", "--recursive", "-o", "json"};
+            executeArgs = executeArgs.AddOptionsForServerSideApply(deployment.Variables, log);
+
+            var result = kubectl.ExecuteCommandAndReturnOutput(executeArgs);
 
             return ProcessKubectlCommandOutput(deployment, result, globDirectory.Directory);
         }
