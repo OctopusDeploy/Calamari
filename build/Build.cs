@@ -218,9 +218,10 @@ namespace Calamari.Build
                  .DependsOn(Compile)
                  .Executes(async () =>
                  {
-                     var migratedCalamariFlavoursTests = MigratedCalamariFlavours.Flavours.Select(f => $"{f}.Tests");
+                     var flavours = GetCalamariFlavours();
+                     var migratedCalamariFlavoursTests = flavours.Select(f => $"{f}.Tests");
                      var calamariFlavourProjects = Solution.Projects
-                         .Where(project => MigratedCalamariFlavours.Flavours.Contains(project.Name)
+                         .Where(project => flavours.Contains(project.Name)
                                            || migratedCalamariFlavoursTests.Contains(project.Name));
 
                      // Calamari.Scripting is a library that other calamari flavours depend on; not a flavour on its own right.
@@ -457,7 +458,7 @@ namespace Calamari.Build
                                     });
                                 }
 
-                                foreach (var flavour in MigratedCalamariFlavours.Flavours)
+                                foreach (var flavour in GetCalamariFlavours())
                                 {
                                     if (Solution.GetProject(flavour) != null)
                                     {
@@ -658,6 +659,13 @@ namespace Calamari.Build
                 runtimes = runtimes?.Where(x => x == TargetRuntime).ToList().AsReadOnly();
 
             return runtimes ?? Array.Empty<string>();
+        }
+
+        static List<string> GetCalamariFlavours()
+        {
+            return IsLocalBuild && !OperatingSystem.IsWindows()
+                ? MigratedCalamariFlavours.CrossPlatformFlavours
+                : MigratedCalamariFlavours.Flavours;
         }
     }
 }

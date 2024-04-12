@@ -25,6 +25,7 @@ namespace Calamari.Kubernetes
         
         public const string Timeout = "Octopus.Action.Kubernetes.DeploymentTimeout";
         public const string WaitForJobs = "Octopus.Action.Kubernetes.WaitForJobs";
+        public const string PrintVerboseKubectlOutputOnError = "Octopus.Action.Kubernetes.PrintVerboseKubectlOutputOnError";  
         public const string ClientCertificate = "Octopus.Action.Kubernetes.ClientCertificate";
         public const string CertificateAuthorityPath = "Octopus.Action.Kubernetes.CertificateAuthorityPath";
         public const string PodServiceAccountTokenPath = "Octopus.Action.Kubernetes.PodServiceAccountTokenPath";
@@ -37,6 +38,9 @@ namespace Calamari.Kubernetes
 
         public const string KubernetesResourceStatusServiceMessageName = "k8s-status";
 
+        public const string ServerSideApplyEnabled = "Octopus.Action.Kubernetes.ServerSideApply.Enabled";
+        public const string ServerSideApplyForceConflicts = "Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts";
+        
         public static class Helm
         {
             public const string ReleaseName = "Octopus.Action.Helm.ReleaseName";

@@ -1,7 +1,10 @@
 mode: ContinuousDeployment
 branches:
   release:
+    mode: ContinuousDelivery
     is-release-branch: false
+    tag: hotfix
+    increment: None
 ignore:
   sha: [
     e823e5382ae16d433cbfda913f593f92aaaa462f,

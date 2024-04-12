@@ -50,7 +50,7 @@ namespace Calamari.Kubernetes.Commands.Executors
             var resourcesIdentifiers = new HashSet<ResourceIdentifier>();
             foreach (var directory in directories)
             {
-                var res = ApplyBatchAndReturnResourceIdentifiers(directory).ToArray();
+                var res = ApplyBatchAndReturnResourceIdentifiers(deployment, directory).ToArray();
 
                 if (appliedResourcesCallback != null)
                 {
@@ -100,7 +100,7 @@ namespace Calamari.Kubernetes.Commands.Executors
             return directories;
         }
 
-        IEnumerable<ResourceIdentifier> ApplyBatchAndReturnResourceIdentifiers(GlobDirectory globDirectory)
+        IEnumerable<ResourceIdentifier> ApplyBatchAndReturnResourceIdentifiers(RunningDeployment deployment, GlobDirectory globDirectory)
         {
             var index = globDirectory.Index;
             var directoryWithTrailingSlash = globDirectory.Directory + Path.DirectorySeparatorChar;
@@ -118,9 +118,12 @@ namespace Calamari.Kubernetes.Commands.Executors
                 log.Verbose($"Matched file: {fileSystem.GetRelativePath(directoryWithTrailingSlash, file)}");
             }
 
-            var result = kubectl.ExecuteCommandAndReturnOutput("apply", "-f", $@"""{globDirectory.Directory}""", "--recursive", "-o", "json");
+            string[] executeArgs = {"apply", "-f", $@"""{globDirectory.Directory}""", "--recursive", "-o", "json"};
+            executeArgs = executeArgs.AddOptionsForServerSideApply(deployment.Variables, log);
 
-            return ProcessKubectlCommandOutput(result, globDirectory.Directory);
+            var result = kubectl.ExecuteCommandAndReturnOutput(executeArgs);
+
+            return ProcessKubectlCommandOutput(deployment, result, globDirectory.Directory);
         }
 
         private class GlobDirectory

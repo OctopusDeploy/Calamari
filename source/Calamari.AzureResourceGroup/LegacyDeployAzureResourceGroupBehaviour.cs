@@ -6,13 +6,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using Calamari.CloudAccounts;
 using Calamari.Common.Commands;
-using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Variables;
 using Microsoft.Azure.Management.ResourceManager;
 using Microsoft.Azure.Management.ResourceManager.Models;
-using Microsoft.Rest;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Octopus.CoreUtilities.Extensions;
@@ -33,7 +31,10 @@ namespace Calamari.AzureResourceGroup
             this.log = log;
         }
 
-        public bool IsEnabled(RunningDeployment context) => !FeatureToggle.ModernAzureSdkFeatureToggle.IsEnabled(context.Variables);
+        public bool IsEnabled(RunningDeployment context)
+        {
+            return true;
+        }
 
         public async Task Execute(RunningDeployment deployment)
         {
@@ -46,13 +47,13 @@ namespace Calamari.AzureResourceGroup
 
             var templateFile = variables.Get(SpecialVariables.Action.Azure.Template, "template.json");
             var templateParametersFile = variables.Get(SpecialVariables.Action.Azure.TemplateParameters, "parameters.json");
-            var filesInPackage = variables.Get(SpecialVariables.Action.Azure.TemplateSource, String.Empty) == "Package";
-            if (filesInPackage)
+            var templateSource = variables.Get(SpecialVariables.Action.Azure.TemplateSource, String.Empty);
+            var filesInPackageOrRepository = templateSource == "Package" || templateSource == "GitRepository";
+            if (filesInPackageOrRepository)
             {
                 templateFile = variables.Get(SpecialVariables.Action.Azure.ResourceGroupTemplate);
                 templateParametersFile = variables.Get(SpecialVariables.Action.Azure.ResourceGroupTemplateParameters);
             }
-
             var resourceManagementEndpoint = variables.Get(AzureAccountVariables.ResourceManagementEndPoint, DefaultVariables.ResourceManagementEndpoint);
 
             if (resourceManagementEndpoint != DefaultVariables.ResourceManagementEndpoint)
@@ -64,47 +65,52 @@ namespace Calamari.AzureResourceGroup
             var resourceGroupName = variables[SpecialVariables.Action.Azure.ResourceGroupName];
             var deploymentName = !string.IsNullOrWhiteSpace(variables[SpecialVariables.Action.Azure.ResourceGroupDeploymentName])
                 ? variables[SpecialVariables.Action.Azure.ResourceGroupDeploymentName]
-                : DeploymentName.FromStepName(variables[ActionVariables.Name]);
+                : GenerateDeploymentNameFromStepName(variables[ActionVariables.Name]);
             var deploymentMode = (DeploymentMode)Enum.Parse(typeof(DeploymentMode),
-                                                            variables[SpecialVariables.Action.Azure.ResourceGroupDeploymentMode]);
-            var template = templateService.GetSubstitutedTemplateContent(templateFile, filesInPackage, variables);
+                                                             variables[SpecialVariables.Action.Azure.ResourceGroupDeploymentMode]);
+            var template = templateService.GetSubstitutedTemplateContent(templateFile, filesInPackageOrRepository, variables);
             var parameters = !string.IsNullOrWhiteSpace(templateParametersFile)
-                ? parameterNormalizer.Normalize(templateService.GetSubstitutedTemplateContent(templateParametersFile, filesInPackage, variables))
+                ? parameterNormalizer.Normalize(templateService.GetSubstitutedTemplateContent(templateParametersFile, filesInPackageOrRepository, variables))
                 : null;
 
             log.Info($"Deploying Resource Group {resourceGroupName} in subscription {subscriptionId}.\nDeployment name: {deploymentName}\nDeployment mode: {deploymentMode}");
 
             // We re-create the client each time it is required in order to get a new authorization-token. Else, the token can expire during long-running deployments.
             Func<Task<IResourceManagementClient>> createArmClient = async () =>
-                                                                    {
-                                                                        var token = !jwt.IsNullOrEmpty()
-                                                                            ? await new AzureOidcAccount(variables).Credentials(CancellationToken.None)
-                                                                            : await new AzureServicePrincipalAccount(variables).Credentials();
-                                                                        var resourcesClient = new ResourceManagementClient(token, AuthHttpClientFactory.ProxyClientHandler())
-                                                                        {
-                                                                            SubscriptionId = subscriptionId,
-                                                                            BaseUri = new Uri(resourceManagementEndpoint),
-                                                                        };
-                                                                        resourcesClient.HttpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
-                                                                        resourcesClient.HttpClient.BaseAddress = new Uri(resourceManagementEndpoint);
-                                                                        return resourcesClient;
-                                                                    };
+                                                              {
+                                                                  var token = !jwt.IsNullOrEmpty()
+                                                                      ? await new AzureOidcAccount(variables).Credentials(CancellationToken.None)
+                                                                      : await new AzureServicePrincipalAccount(variables).Credentials();
+                                                                  var resourcesClient = new ResourceManagementClient(token, AuthHttpClientFactory.ProxyClientHandler())
+                                                                  {
+                                                                      SubscriptionId = subscriptionId,
+                                                                      BaseUri = new Uri(resourceManagementEndpoint),
+                                                                  };
+                                                                  resourcesClient.HttpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
+                                                                  resourcesClient.HttpClient.BaseAddress = new Uri(resourceManagementEndpoint);
+                                                                  return resourcesClient;
+                                                              };
 
-            await CreateDeployment(createArmClient,
-                                   resourceGroupName,
-                                   deploymentName,
-                                   deploymentMode,
-                                   template,
-                                   parameters);
+            await CreateDeployment(createArmClient, resourceGroupName, deploymentName, deploymentMode, template, parameters);
             await PollForCompletion(createArmClient, resourceGroupName, deploymentName, variables);
         }
 
-        async Task CreateDeployment(Func<Task<IResourceManagementClient>> createArmClient,
-                                    string resourceGroupName,
-                                    string deploymentName,
-                                    DeploymentMode deploymentMode,
-                                    string template,
-                                    string parameters)
+        internal static string GenerateDeploymentNameFromStepName(string stepName)
+        {
+            var deploymentName = stepName ?? string.Empty;
+            deploymentName = deploymentName.ToLower();
+            deploymentName = Regex.Replace(deploymentName, "\\s", "-");
+            deploymentName = new string(deploymentName.Select(x => (char.IsLetterOrDigit(x) || x == '-') ? x : '-').ToArray());
+            deploymentName = Regex.Replace(deploymentName, "-+", "-");
+            deploymentName = deploymentName.Trim('-', '/');
+            // Azure Deployment Names can only be 64 characters == 31 chars + "-" (1) + Guid (32 chars)
+            deploymentName = deploymentName.Length <= 31 ? deploymentName : deploymentName.Substring(0, 31);
+            deploymentName = deploymentName + "-" + Guid.NewGuid().ToString("N");
+            return deploymentName;
+        }
+
+        async Task CreateDeployment(Func<Task<IResourceManagementClient>> createArmClient, string resourceGroupName, string deploymentName,
+                                     DeploymentMode deploymentMode, string template, string parameters)
         {
             log.Verbose($"Template:\n{template}\n");
             if (parameters != null)
@@ -140,10 +146,8 @@ namespace Calamari.AzureResourceGroup
             }
         }
 
-        async Task PollForCompletion(Func<Task<IResourceManagementClient>> createArmClient,
-                                     string resourceGroupName,
-                                     string deploymentName,
-                                     IVariables variables)
+        async Task PollForCompletion(Func<Task<IResourceManagementClient>> createArmClient, string resourceGroupName,
+                                      string deploymentName, IVariables variables)
         {
             // While the deployment is running, we poll to check its state.
             // We increase the poll interval according to the Fibonacci sequence, up to a maximum of 30 seconds.
@@ -251,17 +255,14 @@ namespace Calamari.AzureResourceGroup
                 {
                     log.Error($"{indent}Message: {error.Message}");
                 }
-
                 if (!string.IsNullOrEmpty(error.Code))
                 {
                     log.Error($"{indent}Code: {error.Code}");
                 }
-
                 if (!string.IsNullOrEmpty(error.Target))
                 {
                     log.Error($"{indent}Target: {error.Target}");
                 }
-
                 foreach (var errorDetail in error.Details)
                 {
                     LogCloudError(errorDetail, ++count);
