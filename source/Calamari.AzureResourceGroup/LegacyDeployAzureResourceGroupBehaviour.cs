@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Calamari.CloudAccounts;
 using Calamari.Common.Commands;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Variables;
@@ -30,19 +31,13 @@ namespace Calamari.AzureResourceGroup
             this.parameterNormalizer = parameterNormalizer;
             this.log = log;
         }
-
-        public bool IsEnabled(RunningDeployment context)
-        {
-            return true;
-        }
-
+        
+        public bool IsEnabled(RunningDeployment context) => !FeatureToggle.ModernAzureSdkFeatureToggle.IsEnabled(context.Variables);
+        
         public async Task Execute(RunningDeployment deployment)
         {
             var variables = deployment.Variables;
             var subscriptionId = variables[AzureAccountVariables.SubscriptionId];
-            var tenantId = variables[AzureAccountVariables.TenantId];
-            var clientId = variables[AzureAccountVariables.ClientId];
-            var password = variables[AzureAccountVariables.Password];
             var jwt = variables[AzureAccountVariables.Jwt];
 
             var templateFile = variables.Get(SpecialVariables.Action.Azure.Template, "template.json");
