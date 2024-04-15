@@ -1,9 +1,7 @@
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 using Calamari.Common.Features.Deployment;
 using Calamari.Common.Features.Scripts;
-using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Testing;
 using Calamari.Testing.Helpers;
@@ -19,7 +17,7 @@ using NUnit.Framework;
 namespace Calamari.AzureResourceGroup.Tests
 {
     [TestFixture]
-    internal class AzureResourceGroupActionHandlerFixture
+    internal class LegacyAzureResourceGroupActionHandlerFixture
     {
         private string clientId;
         private string clientSecret;
@@ -36,7 +34,7 @@ namespace Calamari.AzureResourceGroup.Tests
             tenantId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId);
             subscriptionId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionId);
 
-            var resourceGroupName = SdkContext.RandomResourceName(nameof(AzureResourceGroupActionHandlerFixture), 60);
+            var resourceGroupName = SdkContext.RandomResourceName(nameof(LegacyAzureResourceGroupActionHandlerFixture), 60);
 
             var credentials = SdkContext.AzureCredentialsFactory.FromServicePrincipal(clientId,
                                                                                       clientSecret,
@@ -174,12 +172,6 @@ az group list";
             context.Variables.Add("WebSite", SdkContext.RandomResourceName(string.Empty, 12));
             context.Variables.Add("Location", resourceGroup.RegionName);
             context.Variables.Add("AccountPrefix", SdkContext.RandomResourceName(string.Empty, 6));
-            var existingFeatureToggles = context.Variables.GetStrings(KnownVariables.EnabledFeatureToggles);
-            context.Variables.SetStrings(KnownVariables.EnabledFeatureToggles,
-                                         existingFeatureToggles.Concat(new[]
-                                         {
-                                             FeatureToggle.ModernAzureSdkFeatureToggle.ToString()
-                                         }));
         }
 
         private static void AddTemplateFiles(CommandTestBuilderContext context, string template, string parameters)

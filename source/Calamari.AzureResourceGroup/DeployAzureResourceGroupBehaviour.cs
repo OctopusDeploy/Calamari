@@ -1,26 +1,35 @@
-﻿using System;
-using System.Linq;
+using System;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using Azure;
+using Azure.Core;
+using Azure.ResourceManager;
+using Azure.ResourceManager.Resources;
+using Azure.ResourceManager.Resources.Models;
+using Calamari.Azure;
 using Calamari.CloudAccounts;
 using Calamari.Common.Commands;
+using Calamari.Common.FeatureToggles;
+using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Variables;
-using Microsoft.Azure.Management.ResourceManager;
-using Microsoft.Azure.Management.ResourceManager.Models;
-using Microsoft.Rest;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Octopus.CoreUtilities.Extensions;
-using AzureResourceManagerDeployment = Microsoft.Azure.Management.ResourceManager.Models.Deployment;
+using Polly;
+using Polly.Timeout;
 
 namespace Calamari.AzureResourceGroup
 {
     class DeployAzureResourceGroupBehaviour : IDeployBehaviour
     {
+        static readonly TimeSpan PollingTimeout = TimeSpan.FromMinutes(3);
+
+        static readonly TimeoutPolicy<ArmDeploymentResource> AsyncResourceGroupPollingTimeoutPolicy =
+            Policy.TimeoutAsync<ArmDeploymentResource>(PollingTimeout, TimeoutStrategy.Optimistic);
+
         readonly TemplateService templateService;
         readonly IResourceGroupTemplateNormalizer parameterNormalizer;
         readonly ILog log;
@@ -32,43 +41,40 @@ namespace Calamari.AzureResourceGroup
             this.log = log;
         }
 
-        public bool IsEnabled(RunningDeployment context)
-        {
-            return true;
-        }
+        public bool IsEnabled(RunningDeployment context) => FeatureToggle.ModernAzureSdkFeatureToggle.IsEnabled(context.Variables);
 
-        public async Task Execute(RunningDeployment deployment)
+        public async Task Execute(RunningDeployment context)
         {
-            var variables = deployment.Variables;
-            var subscriptionId = variables[AzureAccountVariables.SubscriptionId];
-            var tenantId = variables[AzureAccountVariables.TenantId];
-            var clientId = variables[AzureAccountVariables.ClientId];
-            var password = variables[AzureAccountVariables.Password];
-            var jwt = variables[AzureAccountVariables.Jwt];
+            log.Verbose("Using Modern Azure SDK behaviour.");
+
+            var variables = context.Variables;
+            var hasAccessToken = !variables.Get(AccountVariables.Jwt).IsNullOrEmpty();
+            var account = hasAccessToken ? (IAzureAccount)new AzureOidcAccount(variables) : new AzureServicePrincipalAccount(variables);
+
+            var armClient = account.CreateArmClient();
+
+            var resourceGroupName = variables.GetRequiredVariable(SpecialVariables.Action.Azure.ResourceGroupName);
+            var subscriptionId = variables.GetRequiredVariable(AzureAccountVariables.SubscriptionId);
+
+            var deploymentNameVariable = variables[SpecialVariables.Action.Azure.ResourceGroupDeploymentName];
+            var deploymentName = !string.IsNullOrWhiteSpace(deploymentNameVariable)
+                ? deploymentNameVariable
+                : DeploymentName.FromStepName(variables[ActionVariables.Name]);
+            
+            var deploymentModeVariable = variables.GetRequiredVariable(SpecialVariables.Action.Azure.ResourceGroupDeploymentMode);
+            var deploymentMode = (ArmDeploymentMode)Enum.Parse(typeof(ArmDeploymentMode), deploymentModeVariable);
 
             var templateFile = variables.Get(SpecialVariables.Action.Azure.Template, "template.json");
             var templateParametersFile = variables.Get(SpecialVariables.Action.Azure.TemplateParameters, "parameters.json");
             var templateSource = variables.Get(SpecialVariables.Action.Azure.TemplateSource, String.Empty);
+
             var filesInPackageOrRepository = templateSource == "Package" || templateSource == "GitRepository";
             if (filesInPackageOrRepository)
             {
                 templateFile = variables.Get(SpecialVariables.Action.Azure.ResourceGroupTemplate);
                 templateParametersFile = variables.Get(SpecialVariables.Action.Azure.ResourceGroupTemplateParameters);
             }
-            var resourceManagementEndpoint = variables.Get(AzureAccountVariables.ResourceManagementEndPoint, DefaultVariables.ResourceManagementEndpoint);
 
-            if (resourceManagementEndpoint != DefaultVariables.ResourceManagementEndpoint)
-                log.InfoFormat("Using override for resource management endpoint - {0}", resourceManagementEndpoint);
-
-            var activeDirectoryEndPoint = variables.Get(AzureAccountVariables.ActiveDirectoryEndPoint, DefaultVariables.ActiveDirectoryEndpoint);
-            log.InfoFormat("Using override for Azure Active Directory endpoint - {0}", activeDirectoryEndPoint);
-
-            var resourceGroupName = variables[SpecialVariables.Action.Azure.ResourceGroupName];
-            var deploymentName = !string.IsNullOrWhiteSpace(variables[SpecialVariables.Action.Azure.ResourceGroupDeploymentName])
-                ? variables[SpecialVariables.Action.Azure.ResourceGroupDeploymentName]
-                : GenerateDeploymentNameFromStepName(variables[ActionVariables.Name]);
-            var deploymentMode = (DeploymentMode)Enum.Parse(typeof(DeploymentMode),
-                                                             variables[SpecialVariables.Action.Azure.ResourceGroupDeploymentMode]);
             var template = templateService.GetSubstitutedTemplateContent(templateFile, filesInPackageOrRepository, variables);
             var parameters = !string.IsNullOrWhiteSpace(templateParametersFile)
                 ? parameterNormalizer.Normalize(templateService.GetSubstitutedTemplateContent(templateParametersFile, filesInPackageOrRepository, variables))
@@ -76,42 +82,24 @@ namespace Calamari.AzureResourceGroup
 
             log.Info($"Deploying Resource Group {resourceGroupName} in subscription {subscriptionId}.\nDeployment name: {deploymentName}\nDeployment mode: {deploymentMode}");
 
-            // We re-create the client each time it is required in order to get a new authorization-token. Else, the token can expire during long-running deployments.
-            Func<Task<IResourceManagementClient>> createArmClient = async () =>
-                                                              {
-                                                                  var token = !jwt.IsNullOrEmpty()
-                                                                      ? await new AzureOidcAccount(variables).Credentials(CancellationToken.None)
-                                                                      : await new AzureServicePrincipalAccount(variables).Credentials();
-                                                                  var resourcesClient = new ResourceManagementClient(token, AuthHttpClientFactory.ProxyClientHandler())
-                                                                  {
-                                                                      SubscriptionId = subscriptionId,
-                                                                      BaseUri = new Uri(resourceManagementEndpoint),
-                                                                  };
-                                                                  resourcesClient.HttpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
-                                                                  resourcesClient.HttpClient.BaseAddress = new Uri(resourceManagementEndpoint);
-                                                                  return resourcesClient;
-                                                              };
-
-            await CreateDeployment(createArmClient, resourceGroupName, deploymentName, deploymentMode, template, parameters);
-            await PollForCompletion(createArmClient, resourceGroupName, deploymentName, variables);
+            var deploymentOperation = await CreateDeployment(armClient,
+                                                             resourceGroupName,
+                                                             subscriptionId,
+                                                             deploymentName,
+                                                             deploymentMode,
+                                                             template,
+                                                             parameters);
+            await PollForCompletion(deploymentOperation);
+            await FinalizeDeployment(deploymentOperation, variables);
         }
 
-        internal static string GenerateDeploymentNameFromStepName(string stepName)
-        {
-            var deploymentName = stepName ?? string.Empty;
-            deploymentName = deploymentName.ToLower();
-            deploymentName = Regex.Replace(deploymentName, "\\s", "-");
-            deploymentName = new string(deploymentName.Select(x => (char.IsLetterOrDigit(x) || x == '-') ? x : '-').ToArray());
-            deploymentName = Regex.Replace(deploymentName, "-+", "-");
-            deploymentName = deploymentName.Trim('-', '/');
-            // Azure Deployment Names can only be 64 characters == 31 chars + "-" (1) + Guid (32 chars)
-            deploymentName = deploymentName.Length <= 31 ? deploymentName : deploymentName.Substring(0, 31);
-            deploymentName = deploymentName + "-" + Guid.NewGuid().ToString("N");
-            return deploymentName;
-        }
-
-        async Task CreateDeployment(Func<Task<IResourceManagementClient>> createArmClient, string resourceGroupName, string deploymentName,
-                                     DeploymentMode deploymentMode, string template, string parameters)
+        async Task<ArmOperation<ArmDeploymentResource>> CreateDeployment(ArmClient armClient,
+                                                                         string resourceGroupName,
+                                                                         string subscriptionId,
+                                                                         string deploymentName,
+                                                                         ArmDeploymentMode deploymentMode,
+                                                                         string template,
+                                                                         string? parameters)
         {
             log.Verbose($"Template:\n{template}\n");
             if (parameters != null)
@@ -119,111 +107,75 @@ namespace Calamari.AzureResourceGroup
                 log.Verbose($"Parameters:\n{parameters}\n");
             }
 
-            using (var armClient = await createArmClient())
+            try
             {
-                try
+                var resourceGroupResource = armClient.GetResourceGroupResource(ResourceGroupResource.CreateResourceIdentifier(subscriptionId, resourceGroupName));
+                var deploymentContent = new ArmDeploymentContent(new ArmDeploymentProperties(deploymentMode)
                 {
-                    var createDeploymentResult = await armClient.Deployments.BeginCreateOrUpdateAsync(resourceGroupName,
-                                                                                                      deploymentName,
-                                                                                                      new AzureResourceManagerDeployment
-                                                                                                      {
-                                                                                                          Properties = new DeploymentProperties
-                                                                                                          {
-                                                                                                              Mode = deploymentMode,
-                                                                                                              Template = template,
-                                                                                                              Parameters = parameters
-                                                                                                          }
-                                                                                                      });
+                    Template = BinaryData.FromString(template),
+                    Parameters = parameters != null ? BinaryData.FromString(parameters) : null
+                });
+                var createDeploymentResult = await resourceGroupResource.GetArmDeployments().CreateOrUpdateAsync(WaitUntil.Started, deploymentName, deploymentContent);
 
-                    log.Info($"Deployment created: {createDeploymentResult.Id}");
-                }
-                catch (Microsoft.Rest.Azure.CloudException ex)
-                {
-                    log.Error("Error submitting deployment");
-                    log.Error(ex.Message);
-                    LogCloudError(ex.Body, 0);
-                    throw;
-                }
+                log.Info($"Deployment {deploymentName} created.");
+
+                return createDeploymentResult;
+            }
+            catch
+            {
+                log.Error("Error submitting deployment");
+                throw;
             }
         }
 
-        async Task PollForCompletion(Func<Task<IResourceManagementClient>> createArmClient, string resourceGroupName,
-                                      string deploymentName, IVariables variables)
+        async Task PollForCompletion(ArmOperation<ArmDeploymentResource> deploymentOperation)
         {
-            // While the deployment is running, we poll to check its state.
-            // We increase the poll interval according to the Fibonacci sequence, up to a maximum of 30 seconds.
-            var currentPollWait = 1;
-            var previousPollWait = 0;
-            var continueToPoll = true;
-            const int maxWaitSeconds = 30;
-
-            while (continueToPoll)
+            log.Info("Polling for deployment completion...");
+            try
             {
-                await Task.Delay(TimeSpan.FromSeconds(Math.Min(currentPollWait, maxWaitSeconds)));
-
-                log.Verbose("Polling for status of deployment...");
-                using (var armClient = await createArmClient())
-                {
-                    var deployment = await armClient.Deployments.GetAsync(resourceGroupName, deploymentName);
-                    if (deployment.Properties == null)
-                    {
-                        log.Verbose("Failed to find deployment.Properties");
-                        return;
-                    }
-
-                    log.Verbose($"Provisioning state: {deployment.Properties.ProvisioningState}");
-                    switch (deployment.Properties.ProvisioningState)
-                    {
-                        case "Succeeded":
-                            log.Info($"Deployment {deploymentName} complete.");
-                            log.Info(GetOperationResults(armClient, resourceGroupName, deploymentName));
-                            CaptureOutputs(deployment.Properties.Outputs?.ToString(), variables);
-                            continueToPoll = false;
-                            break;
-
-                        case "Failed":
-                            throw new CommandException($"Azure Resource Group deployment {deploymentName} failed:\n" + GetOperationResults(armClient, resourceGroupName, deploymentName));
-
-                        case "Canceled":
-                            throw new CommandException($"Azure Resource Group deployment {deploymentName} was canceled:\n" + GetOperationResults(armClient, resourceGroupName, deploymentName));
-
-                        default:
-                            if (currentPollWait < maxWaitSeconds)
-                            {
-                                var temp = previousPollWait;
-                                previousPollWait = currentPollWait;
-                                currentPollWait = temp + currentPollWait;
-                            }
-
-                            break;
-                    }
-                }
+                var deploymentResult = await AsyncResourceGroupPollingTimeoutPolicy.ExecuteAsync(async timeoutCancellationToken =>
+                                                                                                 {
+                                                                                                     var delayStrategy = DelayStrategy.CreateExponentialDelayStrategy(TimeSpan.FromSeconds(1), PollingTimeout);
+                                                                                                     var result = await deploymentOperation.WaitForCompletionAsync(delayStrategy, timeoutCancellationToken);
+                                                                                                     return result;
+                                                                                                 },
+                                                                                                 CancellationToken.None);
+                log.Info($"Deployment completed with status: {deploymentResult.Data.Properties?.ProvisioningState}");
+            }
+            catch
+            {
+                log.Error("Error polling for deployment completion");
+                throw;
             }
         }
 
-        static string GetOperationResults(IResourceManagementClient armClient, string resourceGroupName, string deploymentName)
+        async Task FinalizeDeployment(ArmOperation<ArmDeploymentResource> operation, IVariables variables)
         {
-            var operations = armClient?.DeploymentOperations.List(resourceGroupName, deploymentName);
-            if (operations == null)
-                return null;
+            await LogOperationResults(operation);
+            CaptureOutputs(operation.Value.Data.Properties.Outputs.ToString(), variables);
+        }
 
-            var log = new StringBuilder("Operations details:\n");
-            foreach (var operation in operations)
+        async Task LogOperationResults(ArmOperation<ArmDeploymentResource> operation)
+        {
+            if (!operation.HasValue || !operation.HasCompleted)
+                return;
+
+            var sb = new StringBuilder("Operations details:\n");
+            await foreach (var op in operation.Value.GetDeploymentOperationsAsync())
             {
-                if (operation?.Properties == null)
-                    continue;
-
-                log.AppendLine($"Resource: {operation.Properties.TargetResource?.ResourceName}");
-                log.AppendLine($"Type: {operation.Properties.TargetResource?.ResourceType}");
-                log.AppendLine($"Timestamp: {operation.Properties.Timestamp?.ToLocalTime():s}");
-                log.AppendLine($"Deployment operation: {operation.Id}");
-                log.AppendLine($"Status: {operation.Properties.StatusCode}");
-                log.AppendLine($"Provisioning State: {operation.Properties.ProvisioningState}");
-                if (operation.Properties.StatusMessage != null)
-                    log.AppendLine($"Status Message: {JsonConvert.SerializeObject(operation.Properties.StatusMessage)}");
+                var properties = op.Properties;
+                sb.AppendLine($"Resource: {properties.TargetResource?.ResourceName}");
+                sb.AppendLine($"Type: {properties.TargetResource?.ResourceType}");
+                sb.AppendLine($"Timestamp: {properties.Timestamp?.ToLocalTime():s}");
+                sb.AppendLine($"Deployment operation: {op.Id}");
+                sb.AppendLine($"Status: {properties.StatusCode}");
+                sb.AppendLine($"Provisioning State: {properties.ProvisioningState}");
+                if (properties.StatusMessage != null)
+                    sb.AppendLine($"Status Message: {JsonConvert.SerializeObject(properties.StatusMessage)}");
+                sb.Append(" \n");
             }
 
-            return log.ToString();
+            log.Info(sb.ToString());
         }
 
         void CaptureOutputs(string outputsJson, IVariables variables)
@@ -239,35 +191,6 @@ namespace Calamari.AzureResourceGroup
             foreach (var output in outputs)
             {
                 log.SetOutputVariable($"AzureRmOutputs[{output.Key}]", output.Value["value"].ToString(), variables);
-            }
-        }
-
-        void LogCloudError(Microsoft.Rest.Azure.CloudError error, int count)
-        {
-            if (count > 5)
-            {
-                return;
-            }
-
-            if (error != null)
-            {
-                string indent = new string(' ', count * 4);
-                if (!string.IsNullOrEmpty(error.Message))
-                {
-                    log.Error($"{indent}Message: {error.Message}");
-                }
-                if (!string.IsNullOrEmpty(error.Code))
-                {
-                    log.Error($"{indent}Code: {error.Code}");
-                }
-                if (!string.IsNullOrEmpty(error.Target))
-                {
-                    log.Error($"{indent}Target: {error.Target}");
-                }
-                foreach (var errorDetail in error.Details)
-                {
-                    LogCloudError(errorDetail, ++count);
-                }
             }
         }
     }

@@ -70,5 +70,16 @@ namespace Calamari.Common.Plumbing.Extensions
             var machineIndexedVariableName = ActionVariables.GetMachineIndexedOutputVariableName(actionName, machineName, name);
             variables.Set(machineIndexedVariableName, value);
         }
+        
+        public static string GetRequiredVariable(this IVariables variables, string key)
+        {
+            var value = variables[key];
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                throw new Exception($"{key} is required");
+            }
+
+            return value;
+        }
     }
 }

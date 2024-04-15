@@ -4,7 +4,7 @@ using System.Text.Json;
 using Azure.Core;
 using Azure.Core.Pipeline;
 
-namespace Calamari.AzureAppService.Azure
+namespace Calamari.Azure
 {
     /// <remarks>
     /// Based on: https://github.com/Azure/azure-sdk-for-net/issues/33384#issuecomment-1428080542

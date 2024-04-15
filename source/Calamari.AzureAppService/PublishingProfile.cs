@@ -4,17 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
-using Calamari.AzureAppService.Azure;
-using Calamari.CloudAccounts;
-using Microsoft.Azure.Management.AppService.Fluent;
-using Microsoft.Azure.Management.AppService.Fluent.Models;
-using Microsoft.Azure.Management.ResourceManager.Fluent.Authentication;
-using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
-using Microsoft.Rest;
 
 namespace Calamari.AzureAppService
 {
-    internal class PublishingProfile
+    class PublishingProfile
     {
         public string Site { get; set; }
 
@@ -26,43 +19,6 @@ namespace Calamari.AzureAppService
         
         public string GetBasicAuthCredentials()
             => Convert.ToBase64String(Encoding.ASCII.GetBytes($"{Username}:{Password}"));
-        
-        public static async Task<PublishingProfile> GetPublishingProfile(AzureTargetSite targetSite, IAzureAccount account)
-        {
-            string mgmtEndpoint = account.ResourceManagementEndpointBaseUri;
-            var token = new TokenCredentials(await Auth.GetAuthTokenAsync(account));
-
-            var azureCredentials = new AzureCredentials(
-                    token,
-                    token,
-                    account.TenantId,
-                    new AzureKnownEnvironment(account.AzureEnvironment).AsAzureSDKEnvironment())
-                .WithDefaultSubscription(account.SubscriptionNumber);
-
-            var restClient = RestClient
-                .Configure()
-                .WithBaseUri(mgmtEndpoint)
-                .WithEnvironment(new AzureKnownEnvironment(account.AzureEnvironment).AsAzureSDKEnvironment())
-                .WithLogLevel(HttpLoggingDelegatingHandler.Level.Basic)
-                .WithCredentials(azureCredentials)
-                .Build();
-
-            var webAppClient = new WebSiteManagementClient(restClient)
-                {SubscriptionId = account.SubscriptionNumber};
-
-            var options = new CsmPublishingProfileOptions {Format = PublishingProfileFormat.WebDeploy};
-
-            await webAppClient.WebApps.GetWithHttpMessagesAsync(targetSite.ResourceGroupName, targetSite.Site);
-
-            using var publishProfileStream = targetSite.HasSlot
-                ? await webAppClient.WebApps.ListPublishingProfileXmlWithSecretsSlotAsync(targetSite.ResourceGroupName,
-                    targetSite.Site, options, targetSite.Slot)
-                : await webAppClient.WebApps.ListPublishingProfileXmlWithSecretsAsync(targetSite.ResourceGroupName,
-                    targetSite.Site,
-                    options);
-
-            return await ParseXml(publishProfileStream);
-        }
         
         public static async Task<PublishingProfile> ParseXml(Stream publishingProfileXmlStream)
         {

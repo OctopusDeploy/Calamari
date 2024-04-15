@@ -1,11 +1,9 @@
 ﻿using System;
-using Azure.ResourceManager;
-using Calamari.AzureAppService;
-using Calamari.AzureAppService.Azure;
+using Calamari.Azure;
 using Calamari.CloudAccounts;
 using NUnit.Framework;
 
-namespace Calamari.AzureAppService.Tests
+namespace Calamari.Tests.Azure
 {
     public class AzureClientFixture
     {
