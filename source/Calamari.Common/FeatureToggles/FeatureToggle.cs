@@ -12,6 +12,7 @@
         ModernAzureSdkFeatureToggle,
         OidcAccountsFeatureToggle,
         AsynchronousAzureZipDeployFeatureToggle,
-        FSharpDeprecationFeatureToggle
+        FSharpDeprecationFeatureToggle,
+        AzureRMDeprecationFeatureToggle
     }
 }
