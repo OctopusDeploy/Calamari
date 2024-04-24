@@ -59,6 +59,12 @@ namespace Calamari.Tests.KubernetesFixtures
                                                             var jObject = JObject.Parse(await json.Content.ReadAsStringAsync());
                                                             var downloadBaseUrl = jObject["current_download_url"].Value<string>();
                                                             var version = jObject["current_version"].Value<string>();
+                                                            
+                                                            //TODO(tmm): AzureRM_provider and/or Terraform were causing flakey tests - this pins the required version of terraform
+                                                            var pinnedVersion = "1.7.5";
+                                                            downloadBaseUrl = downloadBaseUrl.Replace(version, pinnedVersion);
+                                                            version = pinnedVersion;
+                                                            
                                                             return (version, downloadBaseUrl);
                                                         },
                                                         async (destinationDirectoryName, tuple) =>
