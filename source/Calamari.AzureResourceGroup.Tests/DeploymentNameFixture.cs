@@ -3,13 +3,13 @@
 namespace Calamari.AzureResourceGroup.Tests
 {
     [TestFixture]
-    public class DeployAzureResourceGroupConventionFixture
+    public class DeploymentNameFixture
     {
         [Test]
         public void GivenShortStepName_Then_Can_Generate_Deployment_Name_Appropriately()
         {
             // Given / When
-            var deploymentName = DeployAzureResourceGroupBehaviour.GenerateDeploymentNameFromStepName("StepA");
+            var deploymentName = DeploymentName.FromStepName("StepA");
 
             // Then
             Assert.That(deploymentName, Has.Length.LessThanOrEqualTo(64));
@@ -21,7 +21,7 @@ namespace Calamari.AzureResourceGroup.Tests
         public void GivenNormalStepName_Then_Can_Generate_Deployment_Name_Appropriately()
         {
             // Given / When
-            var deploymentName = DeployAzureResourceGroupBehaviour.GenerateDeploymentNameFromStepName("1234567890123456789012345678901"); // 31 chars
+            var deploymentName = DeploymentName.FromStepName("1234567890123456789012345678901"); // 31 chars
 
             // Then
             Assert.That(deploymentName, Has.Length.EqualTo(64));
@@ -32,7 +32,7 @@ namespace Calamari.AzureResourceGroup.Tests
         public void GivenLongStepName_Then_Can_Generate_Deployment_Name_Appropriately()
         {
             // Given / When
-            var deploymentName = DeployAzureResourceGroupBehaviour.GenerateDeploymentNameFromStepName("1234567890123456789012345678901234567890"); // 40 chars
+            var deploymentName = DeploymentName.FromStepName("1234567890123456789012345678901234567890"); // 40 chars
 
             // Then
             Assert.That(deploymentName, Has.Length.EqualTo(64));

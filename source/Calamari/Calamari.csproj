@@ -32,7 +32,6 @@
 	this build as the "Cloud" build.
   -->
   <ItemGroup>
-    <PackageReference Include="Microsoft.Identity.Client" Version="4.48.1" />
     <ProjectReference Include="..\Calamari.Aws\Calamari.Aws.csproj" />
     <ProjectReference Include="..\Calamari.Azure\Calamari.Azure.csproj" />
   </ItemGroup>
@@ -56,7 +55,7 @@
     <PackageReference Include="scriptcs" Version="0.17.1" />
     <PackageReference Include="SharpCompress" Version="0.24.0" />
     <PackageReference Include="YamlDotNet" Version="8.1.2" />
-    <PackageReference Include="System.ValueTuple" Version="4.4.0" />
+    <PackageReference Include="System.ValueTuple" Version="4.5.0" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFrameworkIdentifier)' == '.NETFramework' ">
     <Reference Include="System.ComponentModel.DataAnnotations" />

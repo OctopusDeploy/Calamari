@@ -99,7 +99,8 @@ namespace Calamari.CloudAccounts
                       variables.Get("Octopus.Action.Amazon.RoleArn")?.Trim();
             sessionDuration = variables.Get($"{account}.SessionDuration")?.Trim() ??
                               variables.Get("Octopus.Action.Amazon.SessionDuration")?.Trim();
-            oidcJwt = variables.Get("Octopus.OpenIdConnect.Jwt")?.Trim();
+            oidcJwt = variables.Get($"{account}.OpenIdConnect.Jwt")?.Trim() ??
+                      variables.Get("Octopus.OpenIdConnect.Jwt")?.Trim();
             
             assumeRole = variables.Get("Octopus.Action.Aws.AssumeRole")?.Trim();
             assumeRoleArn = variables.Get("Octopus.Action.Aws.AssumedRoleArn")?.Trim();

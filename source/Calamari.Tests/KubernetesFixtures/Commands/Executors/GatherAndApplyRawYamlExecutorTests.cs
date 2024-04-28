@@ -60,7 +60,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
             var variables = new CalamariVariables
             {
                 [KnownVariables.EnabledFeatureToggles] = FeatureToggle.GlobPathsGroupSupportFeatureToggle.ToString(),
-                [KnownVariables.OriginalPackageDirectoryPath] = StagingDirectory,
+                [KnownVariables.OriginalPackageDirectoryPath] = StagingDirectory
             };
             var runningDeployment = new RunningDeployment(variables);
             var fileSystem = new TestCalamariPhysicalFileSystem();
@@ -109,7 +109,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
             receivedCallbacks.Should()
                              .BeEquivalentTo(new List<ResourceIdentifier>
                              {
-                                 new ResourceIdentifier("Deployment", "basic-deployment", "dev"), new ResourceIdentifier("Service", "basic-service", "dev")
+                                 new ResourceIdentifier("Deployment", "basic-deployment", "dev"), new ResourceIdentifier("Service", "basic-service", "dev"), new ResourceIdentifier("Deployment", "basic-deployment", "dev")
                              });
 
             log.ServiceMessages.Count.Should().Be(2);
@@ -117,6 +117,147 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
             log.ServiceMessages[0].Properties.Should().Contain(new KeyValuePair<string, string>("name", "CustomResources(basic-deployment)"));
             log.ServiceMessages[1].Name.Should().Be(ServiceMessageNames.SetVariable.Name);
             log.ServiceMessages[1].Properties.Should().Contain(new KeyValuePair<string, string>("name", "CustomResources(basic-service)"));
+        }
+
+        [Test]
+        public async Task AppliesKubernetesManifestsWithServerSideApply()
+        {
+            // Arrange
+            AddTestFiles();
+            SetupCommandLineRunnerMocks();
+            var variables = new CalamariVariables
+            {
+                [KnownVariables.EnabledFeatureToggles] = FeatureToggle.GlobPathsGroupSupportFeatureToggle.ToString(),
+                [KnownVariables.OriginalPackageDirectoryPath] = StagingDirectory,
+                [SpecialVariables.CustomResourceYamlFileName] = "dirA/*\ndirB/*",
+                [SpecialVariables.ServerSideApplyEnabled] = "true"
+            };
+            var runningDeployment = new RunningDeployment(variables);
+            var executor = CreateExecutor(variables, fileSystem);
+            var expectedYamlGrouping = $"{Path.Combine(StagingDirectory, "grouped", "1")};{Path.Combine(StagingDirectory, "grouped", "2")}";
+
+            // Act
+            var result = await executor.Execute(runningDeployment, RecordingCallback);
+
+            // Assert
+            result.Should().BeTrue();
+            variables.Get(SpecialVariables.GroupedYamlDirectories).Should().Be(expectedYamlGrouping);
+
+            commandLineRunner.ReceivedCalls().Count().Should().Be(4);
+            var commandLineArgs = commandLineRunner.ReceivedCalls().SelectMany(call => call.GetArguments().Select(arg => arg.ToString())).ToArray();
+            commandLineArgs[0]
+                .Should()
+                .Contain("apply -f")
+                .And.Contain("--recursive")
+                .And.Contain("-o json")
+                .And.Contain($"{Path.Combine("grouped", "1")}")
+                .And.Contain("--server-side")
+                .And.Contain("--field-manager octopus")
+                .And.NotContain("--force-conflicts");
+            commandLineArgs[1]
+                .Should()
+                .Contain("apply -f")
+                .And.Contain("--recursive")
+                .And.Contain("-o json")
+                .And.Contain($"{Path.Combine("grouped", "2")}")
+                .And.Contain("--server-side")
+                .And.Contain("--field-manager octopus")
+                .And.NotContain("--force-conflicts");
+        }
+
+        [Test]
+        public async Task AppliesKubernetesManifestsWithServerSideApplyAndForceConflicts()
+        {
+            // Arrange
+            AddTestFiles();
+            SetupCommandLineRunnerMocks();
+            var variables = new CalamariVariables
+            {
+                [KnownVariables.EnabledFeatureToggles] = FeatureToggle.GlobPathsGroupSupportFeatureToggle.ToString(),
+                [KnownVariables.OriginalPackageDirectoryPath] = StagingDirectory,
+                [SpecialVariables.CustomResourceYamlFileName] = "dirA/*\ndirB/*",
+                [SpecialVariables.ServerSideApplyEnabled] = "true",
+                [SpecialVariables.ServerSideApplyForceConflicts] = "true"
+            };
+            var runningDeployment = new RunningDeployment(variables);
+            var executor = CreateExecutor(variables, fileSystem);
+            var expectedYamlGrouping = $"{Path.Combine(StagingDirectory, "grouped", "1")};{Path.Combine(StagingDirectory, "grouped", "2")}";
+
+            // Act
+            var result = await executor.Execute(runningDeployment, RecordingCallback);
+
+            // Assert
+            result.Should().BeTrue();
+            variables.Get(SpecialVariables.GroupedYamlDirectories).Should().Be(expectedYamlGrouping);
+
+            commandLineRunner.ReceivedCalls().Count().Should().Be(4);
+            var commandLineArgs = commandLineRunner.ReceivedCalls().SelectMany(call => call.GetArguments().Select(arg => arg.ToString())).ToArray();
+            commandLineArgs[0]
+                .Should()
+                .Contain("apply -f")
+                .And.Contain("--recursive")
+                .And.Contain("-o json")
+                .And.Contain($"{Path.Combine("grouped", "1")}")
+                .And.Contain("--server-side")
+                .And.Contain("--field-manager octopus")
+                .And.Contain("--force-conflicts");
+            commandLineArgs[1]
+                .Should()
+                .Contain("apply -f")
+                .And.Contain("--recursive")
+                .And.Contain("-o json")
+                .And.Contain($"{Path.Combine("grouped", "2")}")
+                .And.Contain("--server-side")
+                .And.Contain("--field-manager octopus")
+                .And.Contain("--force-conflicts");
+        }
+
+        [Test]
+        public async Task AppliesKubernetesManifestsAndForceConflictsIsIgnoredWithServerSideApplyDisabled()
+        {
+            // Arrange
+            AddTestFiles();
+            SetupCommandLineRunnerMocks();
+            var variables = new CalamariVariables
+            {
+                [KnownVariables.EnabledFeatureToggles] = FeatureToggle.GlobPathsGroupSupportFeatureToggle.ToString(),
+                [KnownVariables.OriginalPackageDirectoryPath] = StagingDirectory,
+                [SpecialVariables.CustomResourceYamlFileName] = "dirA/*\ndirB/*",
+                [SpecialVariables.ServerSideApplyEnabled] = "false",
+                [SpecialVariables.ServerSideApplyForceConflicts] = "true"
+            };
+            var runningDeployment = new RunningDeployment(variables);
+            var executor = CreateExecutor(variables, fileSystem);
+            var expectedYamlGrouping = $"{Path.Combine(StagingDirectory, "grouped", "1")};{Path.Combine(StagingDirectory, "grouped", "2")}";
+
+            // Act
+            var result = await executor.Execute(runningDeployment, RecordingCallback);
+
+            // Assert
+            result.Should().BeTrue();
+            variables.Get(SpecialVariables.GroupedYamlDirectories).Should().Be(expectedYamlGrouping);
+
+            commandLineRunner.ReceivedCalls().Count().Should().Be(4);
+            var commandLineArgs = commandLineRunner.ReceivedCalls().SelectMany(call => call.GetArguments().Select(arg => arg.ToString())).ToArray();
+            commandLineArgs[0]
+                .Should()
+                .Contain("apply -f")
+                .And.Contain("--recursive")
+                .And.Contain("-o json")
+                .And.Contain($"{Path.Combine("grouped", "1")}")
+                .And.NotContain("--server-side")
+                .And.NotContain("--field-manager octopus")
+                .And.NotContain("--force-conflicts");
+
+            commandLineArgs[1]
+                .Should()
+                .Contain("apply -f")
+                .And.Contain("--recursive")
+                .And.Contain("-o json")
+                .And.Contain($"{Path.Combine("grouped", "2")}")
+                .And.NotContain("--server-side")
+                .And.NotContain("--field-manager octopus")
+                .And.NotContain("--force-conflicts");
         }
 
         [Test]
@@ -133,7 +274,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
             };
             var runningDeployment = new RunningDeployment(variables);
             var executor = CreateExecutor(variables, fileSystem);
-            
+
             // Act
             var result = await executor.Execute(runningDeployment, RecordingCallback);
 
@@ -143,7 +284,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
             receivedCallbacks.Should().BeEmpty();
             log.ServiceMessages.Should().BeEmpty();
         }
-        
+
         void AddTestFiles()
         {
             void CreateTemporaryTestFile(string directory)

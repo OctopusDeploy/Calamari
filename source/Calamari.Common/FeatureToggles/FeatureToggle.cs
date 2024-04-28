@@ -9,9 +9,10 @@
         SkunkworksFeatureToggle,
         KubernetesAksKubeloginFeatureToggle,
         GlobPathsGroupSupportFeatureToggle,
-        ModernAzureAppServiceSdkFeatureToggle,
+        ModernAzureSdkFeatureToggle,
         OidcAccountsFeatureToggle,
         AsynchronousAzureZipDeployFeatureToggle,
-        FSharpDeprecationFeatureToggle
+        FSharpDeprecationFeatureToggle,
+        AzureRMDeprecationFeatureToggle
     }
 }

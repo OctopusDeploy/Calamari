@@ -25,15 +25,11 @@ namespace Calamari.Kubernetes.Commands.Executors
             this.kubectl = kubectl;
         }
      
-        public async Task<bool> Execute(RunningDeployment deployment, Func<ResourceIdentifier[], Task> appliedResourcesCallback)
+        public async Task<bool> Execute(RunningDeployment deployment, Func<ResourceIdentifier[], Task> appliedResourcesCallback = null)
         {
             try
             {
-                var resourceIdentifiers = ApplyAndGetResourceIdentifiers(deployment).ToArray();
-                if (appliedResourcesCallback != null)
-                {
-                    await appliedResourcesCallback(resourceIdentifiers);
-                }
+                var resourceIdentifiers = await ApplyAndGetResourceIdentifiers(deployment, appliedResourcesCallback);
                 WriteResourcesToOutputVariables(resourceIdentifiers);
                 return true;
             }
@@ -48,7 +44,7 @@ namespace Calamari.Kubernetes.Commands.Executors
             }
         }
         
-        protected abstract IEnumerable<ResourceIdentifier> ApplyAndGetResourceIdentifiers(RunningDeployment deployment);
+        protected abstract Task<IEnumerable<ResourceIdentifier>> ApplyAndGetResourceIdentifiers(RunningDeployment deployment, Func<ResourceIdentifier[], Task> appliedResourcesCallback = null);
         
         protected void CheckResultForErrors(CommandResultWithOutput commandResult, string directory)
         {
@@ -77,7 +73,7 @@ namespace Calamari.Kubernetes.Commands.Executors
             }
         }
 
-        protected IEnumerable<ResourceIdentifier> ProcessKubectlCommandOutput(CommandResultWithOutput commandResult, string directory)
+        protected IEnumerable<ResourceIdentifier> ProcessKubectlCommandOutput(RunningDeployment deployment, CommandResultWithOutput commandResult, string directory)
         {
             CheckResultForErrors(commandResult, directory);
             
@@ -102,14 +98,14 @@ namespace Calamari.Kubernetes.Commands.Executors
                     log.LogResources(resources);
                 }
 
-                return lastResources.Select(r => r.ToResourceIdentifier());
+                return resources;
             }
             catch
             {
-                LogParsingError(outputJson);
+                LogParsingError(outputJson, deployment.Variables.GetFlag(SpecialVariables.PrintVerboseKubectlOutputOnError));
+
+                throw new KubernetesApplyException();
             }
-            
-            return Enumerable.Empty<ResourceIdentifier>();
         }
 
         void WriteResourcesToOutputVariables(IEnumerable<ResourceIdentifier> resources)
@@ -135,17 +131,22 @@ namespace Calamari.Kubernetes.Commands.Executors
             }
         }
         
-        void LogParsingError(string outputJson)
+        void LogParsingError(string outputJson, bool logKubectlOutputOnError)
         {
-            log.Error($"\"kubectl apply -o json\" returned invalid JSON:");
-            log.Error("---------------------------");
-            log.Error(outputJson);
-            log.Error("---------------------------");
+            log.Error($"\"kubectl apply -o json\" returned invalid JSON");
+            if (logKubectlOutputOnError)
+            {
+                log.Error("---------------------------");
+                log.Error(outputJson);
+                log.Error("---------------------------");
+            }
+            else
+            {
+                log.Error($"To get Octopus to log out the JSON string retrieved from kubectl, set Octopus Variable '{SpecialVariables.PrintVerboseKubectlOutputOnError}' to 'true'");
+            }
             log.Error("This can happen with older versions of kubectl. Please update to a recent version of kubectl.");
             log.Error("See https://github.com/kubernetes/kubernetes/issues/58834 for more details.");
             log.Error("Custom resources will not be saved as output variables.");
-
-            throw new KubernetesApplyException();
         }
         
         protected class KubernetesApplyException : Exception

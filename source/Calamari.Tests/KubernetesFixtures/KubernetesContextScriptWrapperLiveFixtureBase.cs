@@ -48,15 +48,6 @@ namespace Calamari.Tests.KubernetesFixtures
             SetTestClusterVariables();
         }
 
-        protected void DeployWithDeploymentScriptAndVerifyResult(Func<string, string> addFilesOrPackageFunc = null, bool shouldSucceed = true)
-        {
-            var scriptPath = Path.Combine(testFolder, "KubernetesFixtures/Scripts");
-            var bashScript = File.ReadAllText(Path.Combine(scriptPath, "KubernetesDeployment.sh"));
-            var powershellScript = File.ReadAllText(Path.Combine(scriptPath, "KubernetesDeployment.ps1"));
-            SetInlineScriptVariables(bashScript, powershellScript);
-            ExecuteCommandAndVerifyResult(RunScriptCommand.Name, addFilesOrPackageFunc, shouldSucceed);
-        }
-
         protected void DeployWithKubectlTestScriptAndVerifyResult()
         {
             SetInlineScriptVariables("#{Octopus.Action.Kubernetes.CustomKubectlExecutable} cluster-info");

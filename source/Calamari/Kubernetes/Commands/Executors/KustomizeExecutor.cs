@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
@@ -29,7 +30,7 @@ namespace Calamari.Kubernetes.Commands.Executors
             this.kubectl = kubectl;
         }
 
-        protected override IEnumerable<ResourceIdentifier> ApplyAndGetResourceIdentifiers(RunningDeployment deployment)
+        protected override async Task<IEnumerable<ResourceIdentifier>> ApplyAndGetResourceIdentifiers(RunningDeployment deployment, Func<ResourceIdentifier[], Task> appliedResourcesCallback = null)
         {
             var variables = deployment.Variables;
             var overlayPath = variables.Get(SpecialVariables.KustomizeOverlayPath);
@@ -42,9 +43,19 @@ namespace Calamari.Kubernetes.Commands.Executors
             ValidateKubectlVersion(deployment.CurrentDirectory);
 
             var kustomizationDirectory = Path.Combine(deployment.CurrentDirectory, KubernetesDeploymentCommandBase.PackageDirectoryName, overlayPath);
-            var result = kubectl.ExecuteCommandAndReturnOutput("apply", "-k", $@"""{kustomizationDirectory}""", "-o", "json");
+            string[] executeArgs = {"apply", "-k", $@"""{kustomizationDirectory}""", "-o", "json"};
+            executeArgs = executeArgs.AddOptionsForServerSideApply(deployment.Variables, log);
+            
+            var result = kubectl.ExecuteCommandAndReturnOutput(executeArgs);
+            
+            var resourceIdentifiers = ProcessKubectlCommandOutput(deployment, result, kustomizationDirectory).ToArray();
+            
+            if (appliedResourcesCallback != null)
+            {
+                await appliedResourcesCallback(resourceIdentifiers);
+            }
 
-            return ProcessKubectlCommandOutput(result, kustomizationDirectory);
+            return resourceIdentifiers;
         }
 
         void ValidateKubectlVersion(string currentDirectory)

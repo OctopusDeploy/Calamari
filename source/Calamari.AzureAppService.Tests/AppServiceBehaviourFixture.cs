@@ -349,11 +349,8 @@ namespace Calamari.AzureAppService.Tests
                 context.Variables.Add(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.SubstituteInFiles);
                 context.Variables.Add(PackageVariables.SubstituteInFilesTargets, "index.html");
                 context.Variables.Add(SpecialVariables.Action.Azure.DeploymentType, "ZipDeploy");
-
-                //set the feature toggle so we get the new code
-                context.Variables.Add(KnownVariables.EnabledFeatureToggles, FeatureToggle.ModernAzureAppServiceSdkFeatureToggle.ToString());
                 
-                var settings = LegacyAppServiceSettingsBehaviorFixture.BuildAppSettingsJson(new[]
+                var settings = BuildAppSettingsJson(new[]
                 {
                     ("WEBSITES_CONTAINER_START_TIME_LIMIT", "460", false),
                     ("WEBSITE_SCM_ALWAYS_ON_ENABLED", "true", false)
@@ -548,11 +545,8 @@ namespace Calamari.AzureAppService.Tests
             {
                 AddAzureVariables(context);
                 context.Variables.Add(SpecialVariables.Action.Azure.DeploymentType, "ZipDeploy");
-
-                //set the feature toggle so we get the new code
-                context.Variables.Add(KnownVariables.EnabledFeatureToggles, FeatureToggle.ModernAzureAppServiceSdkFeatureToggle.ToString());
                 
-                var settings = LegacyAppServiceSettingsBehaviorFixture.BuildAppSettingsJson(new[]
+                var settings = BuildAppSettingsJson(new[]
                 {
                     ("WEBSITES_CONTAINER_START_TIME_LIMIT", "460", false),
                     ("WEBSITE_SCM_ALWAYS_ON_ENABLED", "true", false)

@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Azure.ResourceManager;
 using Azure.ResourceManager.AppService.Models;
+using Calamari.Azure;
 using Calamari.AzureAppService.Azure;
 using Calamari.AzureAppService.Json;
 using Calamari.CloudAccounts;
@@ -30,9 +31,8 @@ namespace Calamari.AzureAppService.Behaviors
 
         public bool IsEnabled(RunningDeployment context)
         {
-            return FeatureToggle.ModernAzureAppServiceSdkFeatureToggle.IsEnabled(context.Variables) &&
-                   (!string.IsNullOrWhiteSpace(context.Variables.Get(SpecialVariables.Action.Azure.AppSettings)) ||
-                    !string.IsNullOrWhiteSpace(context.Variables.Get(SpecialVariables.Action.Azure.ConnectionStrings)));
+            return !string.IsNullOrWhiteSpace(context.Variables.Get(SpecialVariables.Action.Azure.AppSettings)) ||
+                   !string.IsNullOrWhiteSpace(context.Variables.Get(SpecialVariables.Action.Azure.ConnectionStrings));
         }
 
         public async Task Execute(RunningDeployment context)

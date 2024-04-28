@@ -17,7 +17,8 @@
 ##   $OctopusAzureEnvironment = "..."
 ##   $OctopusDisableAzureCLI = "..."
 ##   $OctopusAzureExtensionsDirectory = "..." 
-##   OctopusOpenIdJwt = "..."
+##   $OctopusOpenIdJwt = "..."
+##   $OctopusAzureRMIsDepreciated = "..."
 
 $ErrorActionPreference = "Stop"
 
@@ -184,7 +185,14 @@ Execute-WithRetry{
                     Initialize-AzContext
                 }
                 elseif (Get-AzureRmModuleInstalled) {
-                    Initialize-AzureRmContext
+                    if($OctopusAzureRMIsDepreciated -like [Boolean]::FalseString) {
+                        Write-Warning "Azure Resource Manager powershell module has reached end-of-life; please authenticate using Azure CLI or the Az module, Octopus will prevent usage of the AzureRM module in 2024.3."
+                        Initialize-AzureRmContext    
+                    }
+                    else {
+                        Write-Error "Azure Resource Manager modules are no longer available for authenticating with Azure, you are required to move to Azure CLI or the Az powershell modules."
+                        exit 2
+                    }
                 }
             }
             
