@@ -58,6 +58,12 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
 
         CommandLineInvocation CreateCommandLineInvocation(string executable, string arguments, bool hasDotnetToolOnPath)
         {
+            Log.Info("Testing logs");
+            Log.Info(CalamariEnvironment.IsRunningOnWindows.ToString());
+            Log.Info(hasDotnetToolOnPath.ToString());
+            Log.Info(executable);
+            Log.Info(arguments);
+            
             return (CalamariEnvironment.IsRunningOnWindows || hasDotnetToolOnPath)
                 ? new CommandLineInvocation(executable, arguments)
                 : new CommandLineInvocation("dotnet", $"\"{executable}\"", arguments);

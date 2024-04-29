@@ -1,10 +1,8 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Text;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Processes;
@@ -46,8 +44,7 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
 
             foreach (var executableName in executableNames)
             {
-                var (_, commandOutput) = ExecuteCommandAndReturnOutput(
-                                                                       commandLineRunner,
+                var (_, commandOutput) = ExecuteCommandAndReturnOutput(commandLineRunner,
                                                                        envVars,
                                                                        CalamariEnvironment.IsRunningOnWindows ? "where" : "which",
                                                                        executableName);
