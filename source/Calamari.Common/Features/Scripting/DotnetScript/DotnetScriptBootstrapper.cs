@@ -42,36 +42,18 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
                 ? ExecuteCommandAndReturnOutput(commandLineRunner, envVars, "where", "dotnet-script.cmd")
                 : ExecuteCommandAndReturnOutput(commandLineRunner, envVars, "which", "dotnet-script.dll");
 
-            foreach (var message in commandOutput.Messages)
-            {
-                Log.Info($"##teamcity[message text={message.Text}]");
-            }
-
             var hasDotnetScriptMessage = commandOutput.Messages.Where(m => m.Text.Contains("dotnet-script")).ToList();
-            return hasDotnetScriptMessage.FirstOrDefault()?.Text;
-        }
 
-        public static bool IsDotnetScriptToolInstalled(ICommandLineRunner commandLineRunner, Dictionary<string, string> envVars)
-        {
-            // On Windows dotnet tools use the %USERPROFILE%\.dotnet\tools location. In Calamari the UserProfile is set to 
-            // C:\Windows\system32\config\systemprofile, if the tool has been installed under another profile this will not find dotnet-script
-            Log.Info($"##teamcity[message text=Checking IsDotnetScriptToolInstalled]");
-            try
+            if (!hasDotnetScriptMessage.Any())
             {
-                var (wasSuccessful, commandOutput) = ExecuteCommandAndReturnOutput(commandLineRunner, envVars,
-                                                                                   "dotnet", 
-                                                                                   "tool",
-                                                                                   "list",
-                                                                                   "-g");
-                var messages = commandOutput.Messages.Where(m => m.Text.Contains("dotnet-script"));
-                Log.Info($"##teamcity[message text={(wasSuccessful && messages.Any()).ToString()}]");
-                return wasSuccessful && messages.Any();
+                (_, commandOutput) = CalamariEnvironment.IsRunningOnWindows
+                    ? ExecuteCommandAndReturnOutput(commandLineRunner, envVars, "where", "dotnet-script.exe")
+                    : ExecuteCommandAndReturnOutput(commandLineRunner, envVars, "which", "dotnet-script");
             }
-            catch (Exception _)
-            {
-                Log.Info($"##teamcity[message text=Checking IsDotnetScriptToolInstalled threw an exception]");
-                return false;
-            }
+            
+            hasDotnetScriptMessage = commandOutput.Messages.Where(m => m.Text.Contains("dotnet-script")).ToList();
+
+            return hasDotnetScriptMessage.FirstOrDefault()?.Text;
         }
 
         static (bool wasSuccessful, CaptureCommandOutput) ExecuteCommandAndReturnOutput(ICommandLineRunner commandLineRunner, Dictionary<string, string> envVars, string exe, params string[] arguments)
