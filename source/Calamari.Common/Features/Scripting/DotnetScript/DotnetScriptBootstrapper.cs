@@ -35,25 +35,34 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
         {
             // On Windows dotnet tools use the %USERPROFILE%\.dotnet\tools location. In Calamari the UserProfile is set to 
             // C:\Windows\system32\config\systemprofile, if the tool has been installed under another profile this will not find dotnet-script
-            // This approach handles dotnet-script being installed via powershell/bash scripts.
-            Log.Info($"##teamcity[message text=Checking DotnetScriptPath]");
-            
-            var (_, commandOutput) = CalamariEnvironment.IsRunningOnWindows
-                ? ExecuteCommandAndReturnOutput(commandLineRunner, envVars, "where", "dotnet-script.cmd")
-                : ExecuteCommandAndReturnOutput(commandLineRunner, envVars, "which", "dotnet-script.dll");
+            // This approach handles dotnet-script being installed via powershell/bash scripts or invoking the executable installed by dotnet-tools
+            // directly.
+            var dotnetScriptExecutorPath = typeof(DotnetScriptExecutor).Assembly.Location;
+            var bundledPath = Path.GetDirectoryName(dotnetScriptExecutorPath);
 
-            var hasDotnetScriptMessage = commandOutput.Messages.Where(m => m.Text.Contains("dotnet-script")).ToList();
+            var executableNames = CalamariEnvironment.IsRunningOnWindows
+                ? new[] { "dotnet-script.cmd", "dotnet-script.exe" }
+                : new[] { "dotnet-script.dll", "dotnet-script" };
 
-            if (!hasDotnetScriptMessage.Any())
+            foreach (var executableName in executableNames)
             {
-                (_, commandOutput) = CalamariEnvironment.IsRunningOnWindows
-                    ? ExecuteCommandAndReturnOutput(commandLineRunner, envVars, "where", "dotnet-script.exe")
-                    : ExecuteCommandAndReturnOutput(commandLineRunner, envVars, "which", "dotnet-script");
-            }
-            
-            hasDotnetScriptMessage = commandOutput.Messages.Where(m => m.Text.Contains("dotnet-script")).ToList();
+                var (_, commandOutput) = ExecuteCommandAndReturnOutput(
+                                                                       commandLineRunner,
+                                                                       envVars,
+                                                                       CalamariEnvironment.IsRunningOnWindows ? "where" : "which",
+                                                                       executableName);
 
-            return hasDotnetScriptMessage.FirstOrDefault()?.Text;
+                var hasDotnetScriptMessage = commandOutput.Messages
+                                                          .FirstOrDefault(m => m.Text.Contains("dotnet-script") && 
+                                                                               (bundledPath == null || !m.Text.Contains(bundledPath)));
+
+                if (hasDotnetScriptMessage != null)
+                {
+                    return hasDotnetScriptMessage.Text;
+                }
+            }
+
+            return null;
         }
 
         static (bool wasSuccessful, CaptureCommandOutput) ExecuteCommandAndReturnOutput(ICommandLineRunner commandLineRunner, Dictionary<string, string> envVars, string exe, params string[] arguments)
