@@ -67,7 +67,8 @@ namespace Calamari.Tests.KubernetesFixtures
 
                                                             await DownloadTerraform(fileName, client, tuple.data, destinationDirectoryName);
 
-                                                            var terraformExecutable = Directory.EnumerateFiles(destinationDirectoryName).FirstOrDefault();
+                                                            var terraformExecutable = Directory.EnumerateFiles(destinationDirectoryName)
+                                                                                               .FirstOrDefault(f => f.Split(Path.PathSeparator).LastOrDefault().Contains("terraform"));
                                                             return terraformExecutable;
                                                         });
             }
