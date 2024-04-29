@@ -48,8 +48,9 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
                                                                        envVars,
                                                                        CalamariEnvironment.IsRunningOnWindows ? "where" : "which",
                                                                        executableName);
-
+                
                 var hasDotnetScriptMessage = commandOutput.Messages
+                                                          .Where(m => m.Level == Level.Verbose)
                                                           .FirstOrDefault(m => m.Text.Contains("dotnet-script") && 
                                                                                (bundledPath == null || !m.Text.Contains(bundledPath)));
 
