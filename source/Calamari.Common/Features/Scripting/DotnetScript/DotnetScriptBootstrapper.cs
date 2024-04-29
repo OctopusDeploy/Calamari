@@ -43,21 +43,27 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
             var hasDotnetScriptMessage = commandOutput.Messages.Where(m => m.Text.Contains("dotnet-script")).ToList();
             return hasDotnetScriptMessage.FirstOrDefault()?.Text;
         }
-        
+
         public static bool IsDotnetScriptToolInstalled(ICommandLineRunner commandLineRunner, Dictionary<string, string> envVars)
         {
             // On Windows dotnet tools use the %USERPROFILE%\.dotnet\tools location. In Calamari the UserProfile is set to 
             // C:\Windows\system32\config\systemprofile, if the tool has been installed under another profile this will not find dotnet-script
-            var (wasSuccessful, commandOutput) = ExecuteCommandAndReturnOutput(commandLineRunner,
-                                                                               envVars,
-                                                              "dotnet",
-                                                              "tool",
-                                                              "list",
-                                                              "-g");
-            var messages = commandOutput.Messages.Where(m => m.Text.Contains("dotnet-script"));
-            return wasSuccessful && messages.Any();
+            try
+            {
+                var (wasSuccessful, commandOutput) = ExecuteCommandAndReturnOutput(commandLineRunner, envVars,
+                                                                                   "dotnet", 
+                                                                                   "tool",
+                                                                                   "list",
+                                                                                   "-g");
+                var messages = commandOutput.Messages.Where(m => m.Text.Contains("dotnet-script"));
+                return wasSuccessful && messages.Any();
+            }
+            catch (Exception _)
+            {
+                return false;
+            }
         }
-        
+
         static (bool wasSuccessful, CaptureCommandOutput) ExecuteCommandAndReturnOutput(ICommandLineRunner commandLineRunner, Dictionary<string, string> envVars, string exe, params string[] arguments)
         {
             var captureCommandOutput = new CaptureCommandOutput();
@@ -71,7 +77,7 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
             };
 
             var res = commandLineRunner.Execute(invocation);
-            
+
             return (res.ExitCode == 0, captureCommandOutput);
         }
 
@@ -105,8 +111,8 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
         static string? RetrieveParameterValues(string? scriptParameters)
         {
             return scriptParameters?.Trim()
-                .TrimStart('-')
-                .Trim();
+                                   .TrimStart('-')
+                                   .Trim();
         }
 
         public static (string bootstrapFile, string[] temporaryFiles) PrepareBootstrapFile(string scriptFilePath, string configurationFile, string workingDirectory, IVariables variables)
@@ -150,7 +156,7 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
             var configurationFile = Path.Combine(workingDirectory, "Configure." + Guid.NewGuid().ToString().Substring(10) + ".csx");
             bool.TryParse(variables.Get("Octopus.Action.Script.CSharp.UseOctopusClassBootstrapper", "false"), out var useClassBootstrapped);
             var builder = useClassBootstrapped
-                ? new StringBuilder(ClassBasedBootstrapScriptTemplate) 
+                ? new StringBuilder(ClassBasedBootstrapScriptTemplate)
                 : new StringBuilder(BootstrapScriptTemplate);
             builder.Replace("/*{{VariableDeclarations}}*/", WriteVariableDictionary(variables));
 
