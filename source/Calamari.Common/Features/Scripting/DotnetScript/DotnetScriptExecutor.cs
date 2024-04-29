@@ -63,11 +63,11 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
 
         CommandLineInvocation CreateCommandLineInvocation(string executable, string arguments, bool hasDotnetToolInstalled)
         {
-            Log.Info("Testing logs");
-            Log.Info(CalamariEnvironment.IsRunningOnWindows.ToString());
-            Log.Info(hasDotnetToolInstalled.ToString());
-            Log.Info(executable);
-            Log.Info(arguments);
+            Log.Info($"##teamcity[message text=Testing logs]");
+            Log.Info($"##teamcity[message text={CalamariEnvironment.IsRunningOnWindows.ToString()}]");
+            Log.Info($"##teamcity[message text={hasDotnetToolInstalled.ToString()}]");
+            Log.Info($"##teamcity[message text={executable}]");
+            Log.Info($"##teamcity[message text={arguments}]");
             
             return (CalamariEnvironment.IsRunningOnWindows || hasDotnetToolInstalled)
                 ? new CommandLineInvocation(executable, arguments)
