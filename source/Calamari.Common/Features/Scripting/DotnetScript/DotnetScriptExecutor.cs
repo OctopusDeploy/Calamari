@@ -2,9 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Calamari.Common.Commands;
 using Calamari.Common.Features.Processes;
-using Calamari.Common.Features.Scripting.DotnetScript;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
@@ -24,7 +22,7 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
         {
             var workingDirectory = Path.GetDirectoryName(script.File);
             
-            var localDotnetScriptPath = DotnetScriptBootstrapper.DotnetScriptPath(commandLineRunner, environmentVars);
+            var localDotnetScriptPath = DotnetScriptBootstrapper.DotnetScriptPath(commandLineRunner);
             var bundledExecutable = DotnetScriptBootstrapper.FindBundledExecutable();
 
             var executable = GetExecutable(localDotnetScriptPath, bundledExecutable);
