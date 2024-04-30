@@ -498,6 +498,11 @@ namespace Calamari.Tests.KubernetesFixtures
                     case "kubelogin":
                         path = GetKubeloginExecutablePath(destinationDirectoryName);
                         break;
+                    case "Terraform": 
+                        path = Directory.EnumerateFiles(destinationDirectoryName)
+                                               .FirstOrDefault(f => Path.GetFileName(f).Contains("terraform"));
+                        break;
+                        
                 }
 
                 if (path == null || !File.Exists(path))
