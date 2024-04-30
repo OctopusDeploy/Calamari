@@ -22,7 +22,7 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
         {
             var workingDirectory = Path.GetDirectoryName(script.File);
             
-            var localDotnetScriptPath = DotnetScriptBootstrapper.DotnetScriptPath(commandLineRunner);
+            var localDotnetScriptPath = DotnetScriptBootstrapper.DotnetScriptPath(commandLineRunner, environmentVars);
             var bundledExecutable = DotnetScriptBootstrapper.FindBundledExecutable();
 
             var executable = GetExecutable(localDotnetScriptPath, bundledExecutable);

@@ -30,7 +30,7 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
             ClassBasedBootstrapScriptTemplate = EmbeddedResource.ReadEmbeddedText(typeof(DotnetScriptBootstrapper).Namespace + ".ClassBootstrap.csx");
         }
 
-        public static string? DotnetScriptPath(ICommandLineRunner commandLineRunner)
+        public static string? DotnetScriptPath(ICommandLineRunner commandLineRunner, Dictionary<string, string>? environmentVars)
         {
             // On Windows dotnet tools use the %USERPROFILE%\.dotnet\tools location. In Calamari the UserProfile is set to 
             // C:\Windows\system32\config\systemprofile, if the tool has been installed under another profile this will not find dotnet-script
@@ -39,13 +39,6 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
             var dotnetScriptExecutorPath = typeof(DotnetScriptExecutor).Assembly.Location;
             var bundledPath = Path.GetDirectoryName(dotnetScriptExecutorPath);
 
-            var envVars = Environment.GetEnvironmentVariables();
-            var dict = new Dictionary<string, string>();
-            foreach(DictionaryEntry de in envVars)
-            {
-                dict.Add(de.Key.ToString(), de.Value.ToString());
-            }
-
             var executableNames = CalamariEnvironment.IsRunningOnWindows
                 ? new[] { "dotnet-script.cmd", "dotnet-script.exe" }
                 : new[] { "dotnet-script.dll", "dotnet-script" };
@@ -53,7 +46,7 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
             foreach (var executableName in executableNames)
             {
                 var (_, commandOutput) = ExecuteCommandAndReturnOutput(commandLineRunner,
-                                                                       dict,
+                                                                       environmentVars,
                                                                        CalamariEnvironment.IsRunningOnWindows ? "where" : "which",
                                                                        executableName);
                 
