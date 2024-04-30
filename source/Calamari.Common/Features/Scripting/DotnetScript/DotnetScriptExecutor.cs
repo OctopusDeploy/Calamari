@@ -61,8 +61,10 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
             Log.Info(hasDotnetToolOnPath.ToString());
             Log.Info(executable);
             Log.Info(arguments);
+
+            var extension = Path.GetExtension(executable);
             
-            return (CalamariEnvironment.IsRunningOnWindows || hasDotnetToolOnPath)
+            return (CalamariEnvironment.IsRunningOnWindows || (hasDotnetToolOnPath && extension != ".dll"))
                 ? new CommandLineInvocation(executable, arguments)
                 : new CommandLineInvocation("dotnet", $"\"{executable}\"", arguments);
         }

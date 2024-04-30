@@ -41,7 +41,7 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
 
             var executableNames = CalamariEnvironment.IsRunningOnWindows
                 ? new[] { "dotnet-script.cmd", "dotnet-script.exe" }
-                : new[] { "dotnet-script.dll", "dotnet-script" };
+                : new[] { "dotnet-script.sh", "dotnet-script", "dotnet-script.dll" };
 
             foreach (var executableName in executableNames)
             {
