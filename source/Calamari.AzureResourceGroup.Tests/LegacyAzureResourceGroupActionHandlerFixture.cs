@@ -127,6 +127,7 @@ namespace Calamari.AzureResourceGroup.Tests
         [Test]
         [WindowsTest]
         [RequiresPowerShell5OrAbove]
+        [Ignore("Powershell modules not installed, this test is muted in TC on the old AzureResourceGroup tests")]
         public async Task Deploy_Ensure_Tools_Are_Configured()
         {
             var packagePath = TestEnvironment.GetTestPath("Packages", "AzureResourceGroup");
