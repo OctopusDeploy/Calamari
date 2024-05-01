@@ -19,7 +19,6 @@ namespace Calamari.Common.Features.Scripting.ScriptCS
             var configurationFile = ScriptCSBootstrapper.PrepareConfigurationFile(workingDirectory, variables);
             var (bootstrapFile, otherTemporaryFiles) = ScriptCSBootstrapper.PrepareBootstrapFile(script.File, configurationFile, workingDirectory, variables);
             var arguments = ScriptCSBootstrapper.FormatCommandArguments(bootstrapFile, script.Parameters);
-            Log.Warn("The usage of ScriptCS is being deprecated in Octopus 2024.4. This has been replaced with [dotnet-script](https://github.com/dotnet-script/dotnet-script). See our post on migrating from [scriptcs to dotnet-script](https://g.octopushq.com/ScriptCSDeprecation).");
 
             yield return new ScriptExecution(
                                              new CommandLineInvocation(executable, arguments)
