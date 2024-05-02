@@ -67,7 +67,8 @@ namespace Calamari.Tests.KubernetesFixtures
 
                                                             await DownloadTerraform(fileName, client, tuple.data, destinationDirectoryName);
 
-                                                            var terraformExecutable = Directory.EnumerateFiles(destinationDirectoryName).FirstOrDefault();
+                                                            var terraformExecutable = Directory.EnumerateFiles(destinationDirectoryName)
+                                                                                               .FirstOrDefault(f => Path.GetFileName(f).Contains("terraform"));
                                                             return terraformExecutable;
                                                         });
             }
@@ -497,6 +498,11 @@ namespace Calamari.Tests.KubernetesFixtures
                     case "kubelogin":
                         path = GetKubeloginExecutablePath(destinationDirectoryName);
                         break;
+                    case "Terraform": 
+                        path = Directory.EnumerateFiles(destinationDirectoryName)
+                                               .FirstOrDefault(f => Path.GetFileName(f).Contains("terraform"));
+                        break;
+                        
                 }
 
                 if (path == null || !File.Exists(path))

@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using Calamari.Common.Features.Scripting.DotnetScript;
 using Calamari.Common.Features.Scripting.ScriptCS;
@@ -21,7 +22,8 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
                 var variables = GetVariables();
                 variables.Add(ScriptVariables.UseDotnetScript, bool.TrueString);
                 File.WriteAllText(scriptFile.FilePath, "System.Console.WriteLine(OctopusParameters[\"mysecrect\"]);");
-                var result = ExecuteScript(new DotnetScriptExecutor(), scriptFile.FilePath, variables);
+                var commandLineRunner = new TestCommandLineRunner(new InMemoryLog(), new CalamariVariables());
+                var result = ExecuteScript(new DotnetScriptExecutor(commandLineRunner), scriptFile.FilePath, variables);
                 result.AssertOutput("KingKong");
             }
         }
