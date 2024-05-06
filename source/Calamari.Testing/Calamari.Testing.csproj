@@ -24,6 +24,7 @@
 
     <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
       <PackageReference Include="Microsoft.Extensions.Http" Version="6.0.0" />
+      <PackageReference Include="Octopus.1Password.Sdk" Version="0.0.101" />
     </ItemGroup>
 
 </Project>
