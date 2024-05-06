@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Calamari.Common.Plumbing.Logging;
 using Microsoft.Extensions.Logging;
 using NUnit.Framework;
+using NUnit.Framework.Internal;
 using OnePasswordSdk;
 
 namespace Calamari.Testing
@@ -89,8 +92,11 @@ namespace Calamari.Testing
         
         static SecretManagerClient LoadSecretManagerClient()
         {
-            var allVariableAttributes = EnvironmentVariableAttribute.GetAll().Select(x => x.SecretReference).WhereNotNull().ToArray();
-            var loggerFactory = new LoggerFactory().AddSerilog(Logger);
+            var allVariableAttributes = EnvironmentVariableAttribute.GetAll()
+                                                                    .Select(x => x.SecretReference)
+                                                                    .Where(x => x is not null)
+                                                                    .ToArray();
+            var loggerFactory = new LoggerFactory(); //.AddSerilog(Logger);
             var microsoftLogger = loggerFactory.CreateLogger<SecretManagerClient>();
             return new SecretManagerClient(SecretManagerAccount, allVariableAttributes, microsoftLogger);
         }
@@ -110,7 +116,7 @@ namespace Calamari.Testing
                      $"\n\nTests that rely on these variables are likely to fail.");
         }
 
-        public static string Get(ExternalVariable property)
+        public static async Task<string> Get(ExternalVariable property, CancellationToken cancellationToken)
         {
             var attr = EnvironmentVariableAttribute.Get(property);
             if (attr == null)
@@ -119,12 +125,24 @@ namespace Calamari.Testing
             }
 
             var valueFromEnv = Environment.GetEnvironmentVariable(attr.Name);
-            if (valueFromEnv == null)
+            if (valueFromEnv != null)
             {
-                throw new Exception($"Environment Variable `{attr.Name}` could not be found. The value can be found in the password store under `{attr.LastPassName}`");
+                return valueFromEnv;
+                //throw new Exception($"Environment Variable `{attr.Name}` could not be found. The value can be found in the password store under `{attr.LastPassName}`");
+            }
+            
+            if (SecretManagerIsEnabled)
+            {
+                var valueFromSecretManager = string.IsNullOrEmpty(attr.SecretReference)
+                    ? null
+                    : await SecretManagerClient.Value.GetSecret(attr.SecretReference, cancellationToken, throwOnNotFound: false);
+                if (!string.IsNullOrEmpty(valueFromSecretManager))
+                {
+                    return valueFromSecretManager;
+                }
             }
 
-            return valueFromEnv;
+            throw new Exception($"Unable to find `{attr.Name}` as either an Environment Variable, or a SecretReference. The value can be found in the password store under `{attr.LastPassName}`");
         }
     }
 
