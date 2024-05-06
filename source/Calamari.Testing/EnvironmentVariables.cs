@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Calamari.Common.Plumbing.Logging;
@@ -60,13 +61,13 @@ namespace Calamari.Testing
 
         [EnvironmentVariable("CALAMARI_FEEDZV3URI", "Not LastPass; Calamari TC Config Variables")]
         FeedzNuGetV3FeedUrl,
-        
+
         [EnvironmentVariable("CALAMARI_ARTIFACTORYV2URI", "Not LastPass; Calamari TC Config Variables")]
         ArtifactoryNuGetV2FeedUrl,
 
         [EnvironmentVariable("CALAMARI_ARTIFACTORYV3URI", "Not LastPass; Calamari TC Config Variables")]
         ArtifactoryNuGetV3FeedUrl,
-        
+
         [EnvironmentVariable("CALAMARI_AUTHURI", "OctopusMyGetTester")]
         MyGetFeedUrl,
 
@@ -78,7 +79,7 @@ namespace Calamari.Testing
 
         [EnvironmentVariable("GOOGLECLOUD_OCTOPUSAPITESTER_JSONKEY", "GoogleCloud - OctopusAPITester", "op://Calamari Secrets for Tests/Google Cloud Octopus Api Tester JsonKey")]
         GoogleCloudJsonKeyfile,
-        
+
         [EnvironmentVariable("GitHub_RateLimitingPersonalAccessToken", "GitHub test account PAT")]
         GitHubRateLimitingPersonalAccessToken,
     }
@@ -89,7 +90,7 @@ namespace Calamari.Testing
         static readonly string SecretManagerAccount = Environment.GetEnvironmentVariable("CALAMARI__Tests__SecretManagerAccount") ?? "octopusdeploy.1password.com";
 
         static readonly Lazy<SecretManagerClient> SecretManagerClient = new(LoadSecretManagerClient);
-        
+
         static SecretManagerClient LoadSecretManagerClient()
         {
             var allVariableAttributes = EnvironmentVariableAttribute.GetAll()
@@ -100,10 +101,11 @@ namespace Calamari.Testing
             var microsoftLogger = loggerFactory.CreateLogger<SecretManagerClient>();
             return new SecretManagerClient(SecretManagerAccount, allVariableAttributes, microsoftLogger);
         }
-        
+
         public static void LogMissingVariables()
         {
-            var missingVariables = Enum.GetValues(typeof(ExternalVariable)).Cast<ExternalVariable>()
+            var missingVariables = Enum.GetValues(typeof(ExternalVariable))
+                                       .Cast<ExternalVariable>()
                                        .Select(prop => EnvironmentVariableAttribute.Get(prop))
                                        .Where(attr => Environment.GetEnvironmentVariable(attr.Name) == null)
                                        .ToList();
@@ -111,9 +113,7 @@ namespace Calamari.Testing
             if (!missingVariables.Any())
                 return;
 
-            Log.Warn($"The following environment variables could not be found: " +
-                     $"\n{string.Join("\n", missingVariables.Select(var => $" - {var.Name}\t\tSource: {var.LastPassName}"))}" +
-                     $"\n\nTests that rely on these variables are likely to fail.");
+            Log.Warn($"The following environment variables could not be found: " + $"\n{string.Join("\n", missingVariables.Select(var => $" - {var.Name}\t\tSource: {var.LastPassName}"))}" + $"\n\nTests that rely on these variables are likely to fail.");
         }
 
         public static async Task<string> Get(ExternalVariable property, CancellationToken cancellationToken)
@@ -130,7 +130,7 @@ namespace Calamari.Testing
                 return valueFromEnv;
                 //throw new Exception($"Environment Variable `{attr.Name}` could not be found. The value can be found in the password store under `{attr.LastPassName}`");
             }
-            
+
             if (SecretManagerIsEnabled)
             {
                 var valueFromSecretManager = string.IsNullOrEmpty(attr.SecretReference)
@@ -152,6 +152,7 @@ namespace Calamari.Testing
         public string Name { get; }
         public string LastPassName { get; }
         public string? SecretReference { get; }
+
         public EnvironmentVariableAttribute(string name, string lastPassName, string? secretReference = null)
         {
             Name = name;
@@ -169,23 +170,24 @@ namespace Calamari.Testing
 
             return GetCustomAttribute(mi[0], typeof(EnvironmentVariableAttribute)) as EnvironmentVariableAttribute;
         }
-        
+
         /// <summary>
         /// Retrieves a list of <see cref="EnvironmentVariableAttribute"/> from all enum types in the current application domain.
         /// </summary>
         /// <returns>A list of <see cref="EnvironmentVariableAttribute"/>.</returns>
         internal static ICollection<EnvironmentVariableAttribute> GetAll()
         {
-            // var envVarAttributes = AppDomainScanner.OctopusAssemblies
-            //                                        .Where(a => a.FullName?.Contains("Test", StringComparison.OrdinalIgnoreCase) == true)
-            //                                        .SelectMany(a => a.GetTypes())
-            //                                        .Where(t => t.IsEnum)
-            //                                        .SelectMany(t => t.GetFields())
-            //                                        .Select(field => field.GetCustomAttribute<EnvironmentVariableAttribute>())
-            //                                        .WhereNotNull()
-            //                                        .ToArray();
-
-            return Array.Empty<EnvironmentVariableAttribute>();
+            // inferred from OctopusDeploy.AppDomainScanner
+            return AppDomain.CurrentDomain.GetAssemblies()
+                         .Where(assembly => !assembly.IsDynamic)
+                         .Where(assembly => assembly.GetName().Name is not null && assembly.GetName().Name.StartsWith("Calamari"))
+                         .Where(a => a.FullName?.Contains("Test", StringComparison.OrdinalIgnoreCase) == true)
+                         .SelectMany(a => a.GetTypes())
+                         .Where(t => t.IsEnum)
+                         .SelectMany(t => t.GetFields())
+                         .Select(field => field.GetCustomAttribute<EnvironmentVariableAttribute>())
+                         .Where(f => f is not null)
+                         .ToArray();
         }
     }
 }
