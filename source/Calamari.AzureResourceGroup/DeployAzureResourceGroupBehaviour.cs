@@ -27,7 +27,7 @@ namespace Calamari.AzureResourceGroup
     {
         static readonly TimeSpan PollingTimeout = TimeSpan.FromMinutes(3);
 
-        static readonly TimeoutPolicy<ArmDeploymentResource> AsyncResourceGroupPollingTimeoutPolicy =
+        static readonly AsyncTimeoutPolicy<ArmDeploymentResource> AsyncResourceGroupPollingTimeoutPolicy =
             Policy.TimeoutAsync<ArmDeploymentResource>(PollingTimeout, TimeoutStrategy.Optimistic);
 
         readonly TemplateService templateService;
