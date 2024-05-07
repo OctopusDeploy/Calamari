@@ -103,12 +103,12 @@ namespace Calamari.AzureAppService.Behaviors
             var packageFileInfo = new FileInfo(variables.Get(TentacleVariables.CurrentDeployment.PackageFilePath)!);
 
             IPackageProvider packageProvider = packageFileInfo.Extension switch
-                                  {
-                                      ".zip" => new ZipPackageProvider(),
-                                      ".nupkg" => new NugetPackageProvider(),
-                                      ".war" => new WarPackageProvider(Log, variables, context),
-                                      _ => throw new Exception("Unsupported archive type")
-                                  };
+                                               {
+                                                   ".zip" => new ZipPackageProvider(),
+                                                   ".nupkg" => new NugetPackageProvider(),
+                                                   ".war" => new WarPackageProvider(Log, variables, context),
+                                                   _ => throw new Exception("Unsupported archive type")
+                                               };
 
             // Let's process our archive while the slot is spun up. We will await it later before we try to upload to it.
             Task<WebSiteSlotResource>? slotCreateTask = null;
@@ -328,11 +328,10 @@ namespace Calamari.AzureAppService.Behaviors
                                                                                                                                                                    },
                                                                                                                                                                    ct1),
                                                                                                                               //pass the logger so we can log the retries
-                                                                                                                              new Context(Guid.NewGuid().ToString(),
-                                                                                                                                          new Dictionary<string, object>
-                                                                                                                                          {
-                                                                                                                                              [nameof(RetryPolicies.ContextKeys.Log)] = Log
-                                                                                                                                          }),
+                                                                                                                              new Dictionary<string, object>
+                                                                                                                              {
+                                                                                                                                  [nameof(RetryPolicies.ContextKeys.Log)] = Log
+                                                                                                                              },
                                                                                                                               timeoutCancellationToken);
                                                                                   },
                                                                                   CancellationToken.None);
@@ -355,16 +354,16 @@ namespace Calamari.AzureAppService.Behaviors
         static void CleanupUploadFile(string? uploadPath)
         {
             Policy.Handle<IOException>()
-                .WaitAndRetry(
-                    5,
-                    i => TimeSpan.FromMilliseconds(200))
-                .Execute(() =>
-                    {
-                        if (File.Exists(uploadPath))
-                        {
-                            File.Delete(uploadPath!);
-                        }
-                    });
+                  .WaitAndRetry(
+                                5,
+                                i => TimeSpan.FromMilliseconds(200))
+                  .Execute(() =>
+                           {
+                               if (File.Exists(uploadPath))
+                               {
+                                   File.Delete(uploadPath!);
+                               }
+                           });
         }
     }
 }
