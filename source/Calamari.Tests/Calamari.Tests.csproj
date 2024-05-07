@@ -10,13 +10,7 @@
     <ApplicationIcon />
     <StartupObject />
     <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
-    <TargetFrameworks>net462;net6.0</TargetFrameworks>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(TargetFramework)' == 'net6.0' ">
-    <DefineConstants>$(DefineConstants);NETCORE;AWS;AZURE_CORE;JAVA_SUPPORT</DefineConstants>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(TargetFramework)' == 'net462' ">
-    <DefineConstants>$(DefineConstants);NETFX;AWS;IIS_SUPPORT;USE_NUGET_V2_LIBS;USE_OCTODIFF_EXE;WINDOWS_CERTIFICATE_STORE_SUPPORT;WINDOWS_USER_ACCOUNT_SUPPORT;WINDOWS_REGISTRY_SUPPORT</DefineConstants>
+    <TargetFramework>net6.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="XPath2" Version="1.0.12" />
@@ -31,30 +25,11 @@
     <PackageReference Include="Polly" Version="5.4.0" />
     <PackageReference Include="System.ComponentModel.TypeConverter" Version="4.3.0" />
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)'=='net6.0'">
+  <ItemGroup>
     <PackageReference Include="Markdown" Version="2.1.0" />
     <PackageReference Include="System.ServiceProcess.ServiceController" Version="4.3.0" />
     <ProjectReference Include="..\Calamari.Aws\Calamari.Aws.csproj" />
     <ProjectReference Include="..\Calamari.Azure\Calamari.Azure.csproj" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)'=='net462'">
-    <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.3.0" />
-    <ProjectReference Include="..\Calamari.Aws\Calamari.Aws.csproj" />
-    <ProjectReference Include="..\Calamari.Azure\Calamari.Azure.csproj" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Net" />
-    <Reference Include="System.ServiceProcess" />
-    <Reference Include="System.DirectoryServices.AccountManagement" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Xml" />
-    <Reference Include="WindowsBase" />
-    <Reference Include="System.IO.Compression" />
-    <Reference Include="System.IO.Compression.FileSystem" />
-    <Reference Include="System" />
-    <Reference Include="System.Security" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Fixtures\PowerShell\Scripts\HelloWithVariable.ps1" />

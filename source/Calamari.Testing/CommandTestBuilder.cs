@@ -21,6 +21,8 @@ using Calamari.Testing.Helpers;
 using Calamari.Testing.LogParser;
 using FluentAssertions;
 using NuGet;
+using NuGet.Packaging;
+using NuGet.Versioning;
 using Octopus.CoreUtilities;
 using KnownVariables = Calamari.Common.Plumbing.Variables.KnownVariables;
 using OSPlatform = System.Runtime.InteropServices.OSPlatform;
@@ -98,8 +100,8 @@ namespace Calamari.Testing
                 Authors = new [] {"octopus@e2eTests"},
                 Version = new NuGetVersion(packageVersion),
 #else
-                Authors = "octopus@e2eTests",
-                Version = packageVersion,
+                Authors = new[] { "octopus@e2eTests" },
+                Version = new NuGetVersion(packageVersion),
 #endif
                 Id = packageId,
                 Description = nameof(CommandTestBuilder)
@@ -148,7 +150,7 @@ namespace Calamari.Testing
 
             List<string> GetArgs(string workingPath)
             {
-                var args = new List<string> {command};
+                var args = new List<string> { command };
 
                 var varPath = Path.Combine(workingPath, "variables.json");
 
@@ -157,7 +159,7 @@ namespace Calamari.Testing
 
                 return args;
             }
-            
+
             List<string> InstallTools(string toolsPath)
             {
                 var extractor = new NupkgExtractor(new InMemoryLog());
@@ -188,8 +190,8 @@ namespace Calamari.Testing
                         : Path.Combine(toolPath, tool.SubFolder.Value);
                     if (tool.ToolPathVariableToSet.Some())
                         context.Variables[tool.ToolPathVariableToSet.Value] = fullPathToTool
-                                                                      .Replace("$HOME", "#{env:HOME}")
-                                                                      .Replace("$TentacleHome", "#{env:TentacleHome}");
+                                                                              .Replace("$HOME", "#{env:HOME}")
+                                                                              .Replace("$TentacleHome", "#{env:TentacleHome}");
 
                     if (tool.AddToPath)
                         addToPath.Add(fullPathToTool);
@@ -242,15 +244,17 @@ namespace Calamari.Testing
             {
                 var inMemoryLog = new InMemoryLog();
                 var constructor = typeof(TCalamariProgram).GetConstructor(
-                    BindingFlags.Public | BindingFlags.Instance,
-                    null, new[] {typeof(ILog)}, new ParameterModifier[0]);
+                                                                          BindingFlags.Public | BindingFlags.Instance,
+                                                                          null,
+                                                                          new[] { typeof(ILog) },
+                                                                          new ParameterModifier[0]);
                 if (constructor == null)
                 {
                     throw new Exception(
-                        $"{typeof(TCalamariProgram).Name} doesn't seem to have a `public {typeof(TCalamariProgram)}({nameof(ILog)})` constructor.");
+                                        $"{typeof(TCalamariProgram).Name} doesn't seem to have a `public {typeof(TCalamariProgram)}({nameof(ILog)})` constructor.");
                 }
 
-                var instance = (TCalamariProgram) constructor.Invoke(new object?[]
+                var instance = (TCalamariProgram)constructor.Invoke(new object?[]
                 {
                     inMemoryLog
                 });
@@ -261,7 +265,7 @@ namespace Calamari.Testing
                 {
                     throw new Exception($"{typeof(TCalamariProgram).Name}.Run method was not found.");
                 }
-                
+
                 var exitCode = await ExecuteWrapped(paths,
                                                     async () =>
                                                     {
@@ -270,7 +274,7 @@ namespace Calamari.Testing
 
                                                         return (int)methodInfo.Invoke(instance, new object?[] { args.ToArray() })!;
                                                     });
-                
+
                 var serverInMemoryLog = new CalamariInMemoryTaskLog();
                 var outputFilter = new ScriptOutputFilter(serverInMemoryLog);
                 foreach (var text in inMemoryLog.StandardError)
@@ -284,9 +288,13 @@ namespace Calamari.Testing
                 }
 
                 return new TestCalamariCommandResult(exitCode,
-                    outputFilter.TestOutputVariables, outputFilter.Actions,
-                    outputFilter.ServiceMessages, outputFilter.ResultMessage, outputFilter.Artifacts,
-                    serverInMemoryLog.ToString(), workingFolder);
+                                                     outputFilter.TestOutputVariables,
+                                                     outputFilter.Actions,
+                                                     outputFilter.ServiceMessages,
+                                                     outputFilter.ResultMessage,
+                                                     outputFilter.Artifacts,
+                                                     serverInMemoryLog.ToString(),
+                                                     workingFolder);
             }
 
             foreach (var arrangeAction in arrangeActions)
@@ -305,7 +313,7 @@ namespace Calamari.Testing
                 try
                 {
                     Environment.CurrentDirectory = workingPath;
-                    
+
                     using var toolsBasePath = TemporaryDirectory.Create();
                     var paths = InstallTools(toolsBasePath.DirectoryPath);
 
@@ -319,6 +327,7 @@ namespace Calamari.Testing
                     {
                         result.WasSuccessful.Should().BeTrue($"{command} execute result was unsuccessful");
                     }
+
                     assertAction?.Invoke(result);
                 }
                 finally
@@ -329,7 +338,7 @@ namespace Calamari.Testing
 
             return result;
         }
-        
+
         Task<int> ExecuteWrapped(IReadOnlyCollection<string> paths, Func<Task<int>> func)
         {
             if (paths.Count > 0)

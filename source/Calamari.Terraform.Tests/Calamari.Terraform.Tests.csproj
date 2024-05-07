@@ -6,7 +6,7 @@
         <RuntimeIdentifiers>win-x64;win-x86;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
         <IsPackable>false</IsPackable>
         <LangVersion>9</LangVersion>
-        <TargetFrameworks>net462;net6.0</TargetFrameworks>
+        <TargetFramework>net6.0</TargetFramework>
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="FluentAssertions" Version="6.7.0" />
