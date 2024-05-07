@@ -32,7 +32,7 @@ namespace Calamari.AzureAppService.Behaviors
     internal class AzureAppServiceZipDeployBehaviour : IDeployBehaviour
     {
         static readonly TimeSpan PollingTimeout = TimeSpan.FromMinutes(3);
-        static readonly TimeoutPolicy<HttpResponseMessage> AsyncZipDeployTimeoutPolicy = Policy.TimeoutAsync<HttpResponseMessage>(PollingTimeout, TimeoutStrategy.Optimistic);
+        static readonly AsyncTimeoutPolicy<HttpResponseMessage> AsyncZipDeployTimeoutPolicy = Policy.TimeoutAsync<HttpResponseMessage>(PollingTimeout, TimeoutStrategy.Optimistic);
 
         public AzureAppServiceZipDeployBehaviour(ILog log)
         {
@@ -308,7 +308,7 @@ namespace Calamari.AzureAppService.Behaviors
                                                                                   {
                                                                                       //the outer policy should only retry when the response is a 202
                                                                                       return await RetryPolicies.AsynchronousZipDeploymentOperationPolicy
-                                                                                                                .ExecuteAsync(async ct1 =>
+                                                                                                                .ExecuteAsync(async (_, ct1) =>
                                                                                                                                   //we nest this policy so any transient errors are handled and retried. If it just keeps falling over, then we want it to bail out of the outer operation
                                                                                                                                   await RetryPolicies.TransientHttpErrorsPolicy
                                                                                                                                                      .ExecuteAsync(async ct2 =>
