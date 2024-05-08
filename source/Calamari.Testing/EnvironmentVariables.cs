@@ -26,25 +26,25 @@ namespace Calamari.Testing
         [EnvironmentVariable("Azure_OctopusAPITester_Certificate", "Azure - OctopusAPITester")]
         AzureSubscriptionCertificate,
 
-        [EnvironmentVariable("GitHub_OctopusAPITester_Username", "GitHub Test Account", "op://Calamari Server Secrets for Tests/GitHub Test Account/username")]
+        [EnvironmentVariable("GitHub_OctopusAPITester_Username", "GitHub Test Account", "op://Calamari Secrets for Tests/GitHub Test Account/username")]
         GitHubUsername,
 
-        [EnvironmentVariable("GitHub_OctopusAPITester_Password", "GitHub Test Account", "op://Calamari Server Secrets for Tests/GitHub Test Account/PAT")]
+        [EnvironmentVariable("GitHub_OctopusAPITester_Password", "GitHub Test Account", "op://Calamari Secrets for Tests/GitHub Test Account/PAT")]
         GitHubPassword,
 
-        [EnvironmentVariable("K8S_OctopusAPITester_Token", "GKS Kubernetes API Test Cluster Token", "op://Calamari Server Secrets for Tests/GKS Kubernetes API Test Cluster/Token")]
+        [EnvironmentVariable("K8S_OctopusAPITester_Token", "GKS Kubernetes API Test Cluster Token", "op://Calamari Secrets for Tests/GKS Kubernetes API Test Cluster/Token")]
         KubernetesClusterToken,
 
-        [EnvironmentVariable("K8S_OctopusAPITester_Server", "GKS Kubernetes API Test Cluster Url", "op://Calamari Server Secrets for Tests/GKS Kubernetes API Test Cluster/Server")]
+        [EnvironmentVariable("K8S_OctopusAPITester_Server", "GKS Kubernetes API Test Cluster Url", "op://Calamari Secrets for Tests/GKS Kubernetes API Test Cluster/Server")]
         KubernetesClusterUrl,
 
         [EnvironmentVariable("Helm_OctopusAPITester_Password", "Artifactory Test Account")]
         HelmPassword,
 
-        [EnvironmentVariable("Artifactory_Admin_PAT", "Jfrog Artifactory Admin PAT", "op://Calamari Server Secrets for Tests/Artifactory Admin PAT/PAT")]
+        [EnvironmentVariable("Artifactory_Admin_PAT", "Jfrog Artifactory Admin PAT", "op://Calamari Secrets for Tests/Artifactory Admin PAT/PAT")]
         ArtifactoryE2EPassword,
 
-        [EnvironmentVariable("DockerHub_TestReaderAccount_Password", "DockerHub Test Reader Account", "op://Calamari Server Secrets for Tests/DockerHub Test Reader Account/password")]
+        [EnvironmentVariable("DockerHub_TestReaderAccount_Password", "DockerHub Test Reader Account", "op://Calamari Secrets for Tests/DockerHub Test Reader Account/password")]
         DockerReaderPassword,
 
         [EnvironmentVariable("AWS_E2E_AccessKeyId", "AWS E2E Test User Keys")]
@@ -59,19 +59,19 @@ namespace Calamari.Testing
         [EnvironmentVariable("CALAMARI_FEEDZV3URI", "Not LastPass; Calamari TC Config Variables")]
         FeedzNuGetV3FeedUrl,
         
-        [EnvironmentVariable("CALAMARI_ARTIFACTORYV2URI", "Not LastPass; Calamari TC Config Variables")]
+        [EnvironmentVariable("CALAMARI_ARTIFACTORYV2URI", "Not LastPass; Calamari TC Config Variables", default)]
         ArtifactoryNuGetV2FeedUrl,
 
         [EnvironmentVariable("CALAMARI_ARTIFACTORYV3URI", "Not LastPass; Calamari TC Config Variables")]
         ArtifactoryNuGetV3FeedUrl,
         
-        [EnvironmentVariable("CALAMARI_AUTHURI", "OctopusMyGetTester")]
+        [EnvironmentVariable("CALAMARI_AUTHURI", "OctopusMyGetTester", "op://Calamari Secrets For Test/MyGet Package Manager/website")]
         MyGetFeedUrl,
 
-        [EnvironmentVariable("CALAMARI_AUTHUSERNAME", "OctopusMyGetTester")]
+        [EnvironmentVariable("CALAMARI_AUTHUSERNAME", "OctopusMyGetTester", "op://Calamari Secrets For Test/MyGet Package Manager/username")]
         MyGetFeedUsername,
 
-        [EnvironmentVariable("CALAMARI_AUTHPASSWORD", "OctopusMyGetTester")]
+        [EnvironmentVariable("CALAMARI_AUTHPASSWORD", "OctopusMyGetTester", "op://Calamari Secrets For Test/MyGet Package Manager/password")]
         MyGetFeedPassword,
 
         [EnvironmentVariable("GOOGLECLOUD_OCTOPUSAPITESTER_JSONKEY", "GoogleCloud - OctopusAPITester", "op://Calamari Secrets for Tests/Google Cloud Octopus Api Tester JsonKey")]
