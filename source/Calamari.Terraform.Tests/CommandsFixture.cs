@@ -247,9 +247,7 @@ namespace Calamari.Terraform.Tests
             var additionalParams = "-var-file=\"backend.tfvars\"";
             ExecuteAndReturnLogOutput(planCommand,
                                       _ =>
-                                      {
-                                          _.Variables.Add(TerraformSpecialVariables.Action.Terraform.AdditionalInitParams, additionalParams);
-                                      },
+                                          _.Variables.Add(TerraformSpecialVariables.Action.Terraform.AdditionalInitParams, additionalParams),
                                       "Simple")
                 .Should()
                 .Contain($"init -no-color -get-plugins=true {additionalParams}");
@@ -275,9 +273,7 @@ namespace Calamari.Terraform.Tests
         {
             ExecuteAndReturnLogOutput(planCommand,
                                       _ =>
-                                      {
-                                          _.Variables.Add(TerraformSpecialVariables.Action.Terraform.AttachLogFile, true.ToString());
-                                      },
+                                          _.Variables.Add(TerraformSpecialVariables.Action.Terraform.AttachLogFile, true.ToString()),
                                       "Simple",
                                       result =>
                                       {
@@ -311,11 +307,7 @@ namespace Calamari.Terraform.Tests
         [TestCase(typeof(DestroyCommand), "destroy -auto-approve -no-color -var-file=\"example.tfvars\"")]
         public void VarFiles(Type commandType, string actual)
         {
-            ExecuteAndReturnLogOutput(GetCommandFromType(commandType),
-                                      _ =>
-                                      {
-                                          _.Variables.Add(TerraformSpecialVariables.Action.Terraform.VarFiles, "example.tfvars"); 
-                                      }, "WithVariables")
+            ExecuteAndReturnLogOutput(GetCommandFromType(commandType), _ => { _.Variables.Add(TerraformSpecialVariables.Action.Terraform.VarFiles, "example.tfvars"); }, "WithVariables")
                 .Should()
                 .Contain(actual);
         }
@@ -324,7 +316,7 @@ namespace Calamari.Terraform.Tests
         public void WithOutputSensitiveVariables()
         {
             ExecuteAndReturnLogOutput(applyCommand,
-                                      _ => Task.CompletedTask,
+                                      _ => { },
                                       "WithOutputSensitiveVariables",
                                       result =>
                                       {
@@ -369,7 +361,7 @@ namespace Calamari.Terraform.Tests
         [Test]
         public void EnableNoMatchWarningIsNotSet()
         {
-            ExecuteAndReturnLogOutput(applyCommand, _ => Task.CompletedTask, "Simple")
+            ExecuteAndReturnLogOutput(applyCommand, _ => { }, "Simple")
                 .Should()
                 .NotContain("No files were found that match the substitution target pattern");
         }
@@ -425,10 +417,7 @@ namespace Calamari.Terraform.Tests
         public void TerraformPlanOutput(Type commandType)
         {
             ExecuteAndReturnLogOutput(GetCommandFromType(commandType),
-                                      _ =>
-                                      {
-                                          _.Variables.Add("Octopus.Action.StepName", "Step Name"); 
-                                      },
+                                      _ => { _.Variables.Add("Octopus.Action.StepName", "Step Name"); },
                                       "Simple",
                                       result =>
                                       {
@@ -442,11 +431,7 @@ namespace Calamari.Terraform.Tests
         [Test]
         public void UsesWorkSpace()
         {
-            ExecuteAndReturnLogOutput(applyCommand,
-                                      _ =>
-                                      {
-                                          _.Variables.Add(TerraformSpecialVariables.Action.Terraform.Workspace, "myspace"); 
-                                      }, "Simple")
+            ExecuteAndReturnLogOutput(applyCommand, _ => { _.Variables.Add(TerraformSpecialVariables.Action.Terraform.Workspace, "myspace"); }, "Simple")
                 .Should()
                 .Contain("workspace new \"myspace\"");
         }
@@ -454,11 +439,7 @@ namespace Calamari.Terraform.Tests
         [Test]
         public void UsesTemplateDirectory()
         {
-            ExecuteAndReturnLogOutput(applyCommand,
-                                      _ =>
-                                      {
-                                          _.Variables.Add(TerraformSpecialVariables.Action.Terraform.TemplateDirectory, "SubFolder"); 
-                                      }, "TemplateDirectory")
+            ExecuteAndReturnLogOutput(applyCommand, _ => { _.Variables.Add(TerraformSpecialVariables.Action.Terraform.TemplateDirectory, "SubFolder"); }, "TemplateDirectory")
                 .Should()
                 .Contain($"SubFolder{Path.DirectorySeparatorChar}example.tf");
         }
@@ -483,7 +464,7 @@ namespace Calamari.Terraform.Tests
 
             var jsonKey = Convert.ToBase64String(Encoding.UTF8.GetBytes(environmentJsonKey));
 
-            async Task PopulateVariables(CommandTestBuilderContext _)
+            void PopulateVariables(CommandTestBuilderContext _)
             {
                 _.Variables.Add(TerraformSpecialVariables.Action.Terraform.FileSubstitution, "test.txt");
                 _.Variables.Add("Hello", "Hello World from Google Cloud");
@@ -492,7 +473,6 @@ namespace Calamari.Terraform.Tests
                 _.Variables.Add("Octopus.Action.Terraform.GoogleCloudAccount", bool.TrueString);
                 _.Variables.Add("Octopus.Action.GoogleCloudAccount.JsonKey", jsonKey);
                 _.Variables.Add(KnownVariables.OriginalPackageDirectoryPath, temporaryFolder.DirectoryPath);
-                await Task.CompletedTask;
             }
 
             var output = await ExecuteAndReturnResult(planCommand, PopulateVariables, temporaryFolder.DirectoryPath);
@@ -644,11 +624,10 @@ namespace Calamari.Terraform.Tests
         {
             using var stateFileFolder = TemporaryDirectory.Create();
 
-            async Task PopulateVariables(CommandTestBuilderContext _)
+            void PopulateVariables(CommandTestBuilderContext _)
             {
                 _.Variables.Add(TerraformSpecialVariables.Action.Terraform.AdditionalActionParams,
                                 $"-state=\"{Path.Combine(stateFileFolder.DirectoryPath, "terraform.tfstate")}\" -refresh=false");
-                await Task.CompletedTask;
             }
 
             var output = await ExecuteAndReturnResult(planCommand, PopulateVariables, "PlanDetailedExitCode");
@@ -790,11 +769,7 @@ output ""config-map-aws-auth"" {{
         [Test]
         public void CanDetermineTerraformVersion()
         {
-            ExecuteAndReturnLogOutput(applyCommand,
-                                      _ =>
-                                      {
-                                          _.Variables.Add(TerraformSpecialVariables.Action.Terraform.Workspace, "testversionspace"); 
-                                      }, "Simple")
+            ExecuteAndReturnLogOutput(applyCommand, _ => { _.Variables.Add(TerraformSpecialVariables.Action.Terraform.Workspace, "testversionspace"); }, "Simple")
                 .Should()
                 .NotContain("Could not parse Terraform CLI version");
         }
