@@ -196,7 +196,6 @@ namespace Calamari.Terraform.Tests
                                                           ScriptVariables.ScriptSourceOptions.Package);
                                           _.Variables.Add(TerraformSpecialVariables.Action.Terraform.EnvironmentVariables,
                                                           JsonConvert.SerializeObject(new Dictionary<string, string> { { "TF_PLUGIN_CACHE_DIR", "NonSense" } }));
-                                          return Task.CompletedTask;
                                       },
                                       "Simple")
                 .Should()
@@ -212,7 +211,6 @@ namespace Calamari.Terraform.Tests
                                           _.Variables.Add(ScriptVariables.ScriptSource,
                                               ScriptVariables.ScriptSourceOptions.Package);
                                           _.Variables.Add(TerraformSpecialVariables.Action.Terraform.EnvironmentVariables, null);
-                                          return Task.CompletedTask;
                                       },
                                       "Simple")
                 .Should()
@@ -233,7 +231,6 @@ namespace Calamari.Terraform.Tests
                                               ScriptVariables.ScriptSourceOptions.Inline);
                                           _.Variables.Add(TerraformSpecialVariables.Action.Terraform.EnvironmentVariables,
                                                           JsonConvert.SerializeObject(new Dictionary<string, string> { { "TF_VAR_ami", "new ami value" } }));
-                                          return Task.CompletedTask;
                                       },
                                       String.Empty,
                                       _ =>
@@ -252,7 +249,6 @@ namespace Calamari.Terraform.Tests
                                       _ =>
                                       {
                                           _.Variables.Add(TerraformSpecialVariables.Action.Terraform.AdditionalInitParams, additionalParams);
-                                          return Task.CompletedTask;
                                       },
                                       "Simple")
                 .Should()
@@ -268,7 +264,6 @@ namespace Calamari.Terraform.Tests
                                       {
                                           _.Variables.Add(TerraformSpecialVariables.Action.Terraform.AllowPluginDownloads,
                                                           false.ToString());
-                                          return Task.CompletedTask;
                                       },
                                       "Simple")
                 .Should()
@@ -282,7 +277,6 @@ namespace Calamari.Terraform.Tests
                                       _ =>
                                       {
                                           _.Variables.Add(TerraformSpecialVariables.Action.Terraform.AttachLogFile, true.ToString());
-                                          return Task.CompletedTask;
                                       },
                                       "Simple",
                                       result =>
@@ -304,7 +298,6 @@ namespace Calamari.Terraform.Tests
                                       _ =>
                                       {
                                           _.Variables.Add(TerraformSpecialVariables.Action.Terraform.AdditionalActionParams, "-var my_var=\"Hello world\"");
-                                          return Task.CompletedTask;
                                       },
                                       "AdditionalParams")
                 .Should()
@@ -322,7 +315,6 @@ namespace Calamari.Terraform.Tests
                                       _ =>
                                       {
                                           _.Variables.Add(TerraformSpecialVariables.Action.Terraform.VarFiles, "example.tfvars"); 
-                                          return Task.CompletedTask;
                                       }, "WithVariables")
                 .Should()
                 .Contain(actual);
@@ -351,7 +343,6 @@ namespace Calamari.Terraform.Tests
                                           _.Variables.Add("Octopus.Action.StepName", "Step Name");
                                           _.Variables.Add("Should_Be_Substituted", "Hello World");
                                           _.Variables.Add("Should_Be_Substituted_in_txt", "Hello World from text");
-                                          return Task.CompletedTask;
                                       },
                                       "WithVariablesSubstitution",
                                       result =>
@@ -390,7 +381,6 @@ namespace Calamari.Terraform.Tests
                                       _ =>
                                       {
                                           _.Variables.Add(TerraformSpecialVariables.Action.Terraform.FileSubstitution, "doesNotExist.txt");
-                                          return Task.CompletedTask;
                                       },
                                       "Simple")
                 .Should()
@@ -407,7 +397,6 @@ namespace Calamari.Terraform.Tests
                                       {
                                           _.Variables.Add(TerraformSpecialVariables.Action.Terraform.FileSubstitution, "doesNotExist.txt");
                                           _.Variables.Add("Octopus.Action.SubstituteInFiles.EnableNoMatchWarning", "true");
-                                          return Task.CompletedTask;
                                       },
                                       "Simple")
                 .Should()
@@ -424,7 +413,6 @@ namespace Calamari.Terraform.Tests
                                       {
                                           _.Variables.Add(TerraformSpecialVariables.Action.Terraform.FileSubstitution, "doesNotExist.txt");
                                           _.Variables.Add("Octopus.Action.SubstituteInFiles.EnableNoMatchWarning", "False");
-                                          return Task.CompletedTask;
                                       },
                                       "Simple")
                 .Should()
@@ -440,7 +428,6 @@ namespace Calamari.Terraform.Tests
                                       _ =>
                                       {
                                           _.Variables.Add("Octopus.Action.StepName", "Step Name"); 
-                                          return Task.CompletedTask;
                                       },
                                       "Simple",
                                       result =>
@@ -459,7 +446,6 @@ namespace Calamari.Terraform.Tests
                                       _ =>
                                       {
                                           _.Variables.Add(TerraformSpecialVariables.Action.Terraform.Workspace, "myspace"); 
-                                          return Task.CompletedTask;
                                       }, "Simple")
                 .Should()
                 .Contain("workspace new \"myspace\"");
@@ -472,7 +458,6 @@ namespace Calamari.Terraform.Tests
                                       _ =>
                                       {
                                           _.Variables.Add(TerraformSpecialVariables.Action.Terraform.TemplateDirectory, "SubFolder"); 
-                                          return Task.CompletedTask;
                                       }, "TemplateDirectory")
                 .Should()
                 .Contain($"SubFolder{Path.DirectorySeparatorChar}example.tf");
@@ -694,7 +679,6 @@ namespace Calamari.Terraform.Tests
                                           _.Variables.Add(TerraformSpecialVariables.Action.Terraform.TemplateParameters, variables);
                                           _.Variables.Add(ScriptVariables.ScriptSource,
                                               ScriptVariables.ScriptSourceOptions.Inline);
-                                          return Task.CompletedTask;
                                       },
                                       String.Empty,
                                       _ =>
@@ -720,7 +704,6 @@ namespace Calamari.Terraform.Tests
                                           _.Variables.Add(TerraformSpecialVariables.Action.Terraform.TemplateParameters, variables);
                                           _.Variables.Add(ScriptVariables.ScriptSource,
                                               ScriptVariables.ScriptSourceOptions.Inline);
-                                          return Task.CompletedTask;
                                       },
                                       String.Empty,
                                       _ =>
@@ -762,7 +745,6 @@ output ""config-map-aws-auth"" {{
                                           _.Variables.Add(TerraformSpecialVariables.Action.Terraform.TemplateParameters, "");
                                           _.Variables.Add(ScriptVariables.ScriptSource,
                                               ScriptVariables.ScriptSourceOptions.Inline);
-                                          return Task.CompletedTask;
                                       },
                                       String.Empty,
                                       _ =>
@@ -794,7 +776,6 @@ output ""config-map-aws-auth"" {{
                                           _.Variables.Add(TerraformSpecialVariables.Action.Terraform.TemplateParameters, variables);
                                           _.Variables.Add(ScriptVariables.ScriptSource,
                                               ScriptVariables.ScriptSourceOptions.Inline);
-                                          return Task.CompletedTask;
                                       },
                                       String.Empty,
                                       _ =>
@@ -813,7 +794,6 @@ output ""config-map-aws-auth"" {{
                                       _ =>
                                       {
                                           _.Variables.Add(TerraformSpecialVariables.Action.Terraform.Workspace, "testversionspace"); 
-                                          return Task.CompletedTask;
                                       }, "Simple")
                 .Should()
                 .NotContain("Could not parse Terraform CLI version");
@@ -838,7 +818,6 @@ output ""config-map-aws-auth"" {{
                                           _.Variables.Add(TerraformSpecialVariables.Action.Terraform.TemplateParameters, variables);
                                           _.Variables.Add(ScriptVariables.ScriptSource,
                                               ScriptVariables.ScriptSourceOptions.Inline);
-                                          return Task.CompletedTask;
                                       },
                                       String.Empty,
                                       _ =>
@@ -871,14 +850,39 @@ output ""config-map-aws-auth"" {{
         }
 
         string ExecuteAndReturnLogOutput(string command,
+                                         Action<CommandTestBuilderContext> populateVariables,
+                                         string folderName,
+                                         Action<TestCalamariCommandResult>? assert = null)
+        {
+            Func<CommandTestBuilderContext, Task> wrappedAction = context =>
+                                                                  {
+                                                                      populateVariables(context);
+                                                                      return Task.CompletedTask;
+                                                                  };
+            
+            return ExecuteAndReturnLogOutput(command, wrappedAction, folderName, assert);
+        }
+        
+        string ExecuteAndReturnLogOutput(string command,
                                          Func<CommandTestBuilderContext, Task> populateVariables,
                                          string folderName,
                                          Action<TestCalamariCommandResult>? assert = null)
         {
             return ExecuteAndReturnResult(command, populateVariables, folderName, assert).Result.FullLog;
         }
+        
 
-        async Task<TestCalamariCommandResult> ExecuteAndReturnResult(string command, Func <CommandTestBuilderContext, Task> populateVariables, string folderName, Action<TestCalamariCommandResult>? assert = null)
+        async Task<TestCalamariCommandResult> ExecuteAndReturnResult(string command, Action<CommandTestBuilderContext> populateVariables, string folderName, Action<TestCalamariCommandResult>? assert = null)
+        {
+            Func<CommandTestBuilderContext, Task> wrappedAction = context =>
+                                                         {
+                                                             populateVariables(context);
+                                                             return Task.CompletedTask;
+                                                         };
+            return await ExecuteAndReturnResult(command, wrappedAction, folderName, assert);
+        }
+        
+        async Task<TestCalamariCommandResult> ExecuteAndReturnResult(string command, Func<CommandTestBuilderContext, Task> populateVariables, string folderName, Action<TestCalamariCommandResult>? assert = null)
         {
             var assertResult = assert ?? (_ => { });
 
@@ -895,7 +899,7 @@ output ""config-map-aws-auth"" {{
                                                                   context.Variables.Add(TerraformSpecialVariables.Action.Terraform.CustomTerraformExecutable,
                                                                                         customTerraformExecutable);
 
-                                                                  populateVariables(context);
+                                                                  populateVariables(context).RunSynchronously();
 
                                                                   var isInline = context.Variables.Get(ScriptVariables.ScriptSource)!
                                                                                         .Equals(ScriptVariables.ScriptSourceOptions.Inline, StringComparison.InvariantCultureIgnoreCase);
