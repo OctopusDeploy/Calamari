@@ -333,7 +333,7 @@ namespace Calamari.Tests.AWS
 
             var packageFilePath = TestEnvironment.GetTestPath("AWS", "S3", "CompressedPackages", fileName);
 
-            var prefix = UploadEntireCompressedPackage(packageFilePath,
+            var prefix = await UploadEntireCompressedPackage(packageFilePath,
                                                        packageId,
                                                        packageVersion,
                                                        packageOptions,
@@ -374,7 +374,7 @@ namespace Calamari.Tests.AWS
 
             var packageFilePath = TestEnvironment.GetTestPath("AWS", "S3", "CompressedPackages", fileName);
 
-            var prefix = UploadEntireCompressedPackage(packageFilePath,
+            var prefix = await UploadEntireCompressedPackage(packageFilePath,
                                                        packageId,
                                                        packageVersion,
                                                        packageOptions,
@@ -430,7 +430,7 @@ namespace Calamari.Tests.AWS
 
             var packageFilePath = TestEnvironment.GetTestPath("AWS", "S3", "CompressedPackages", fileName);
 
-            var prefix = UploadEntireCompressedPackage(packageFilePath,
+            var prefix = await UploadEntireCompressedPackage(packageFilePath,
                                                        packageId,
                                                        packageVersion,
                                                        packageOptions,
@@ -486,7 +486,7 @@ namespace Calamari.Tests.AWS
 
             var packageFilePath = TestEnvironment.GetTestPath("AWS", "S3", "CompressedPackages", fileName);
 
-            var prefix = UploadEntireCompressedPackage(packageFilePath,
+            var prefix = await UploadEntireCompressedPackage(packageFilePath,
                                                        packageId,
                                                        packageVersion,
                                                        packageOptions,
