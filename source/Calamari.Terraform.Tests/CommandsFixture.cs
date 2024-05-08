@@ -874,7 +874,11 @@ output ""config-map-aws-auth"" {{
                                                                   context.Variables.Add(TerraformSpecialVariables.Action.Terraform.CustomTerraformExecutable,
                                                                                         customTerraformExecutable);
 
-                                                                  populateVariables(context).RunSynchronously();
+                                                                  var task = populateVariables(context);
+                                                                  if (!task.IsCompleted)
+                                                                  {
+                                                                      task.RunSynchronously();
+                                                                  }
 
                                                                   var isInline = context.Variables.Get(ScriptVariables.ScriptSource)!
                                                                                         .Equals(ScriptVariables.ScriptSourceOptions.Inline, StringComparison.InvariantCultureIgnoreCase);
