@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading;
 using System.Threading.Tasks;
 using Calamari.Common.Features.Deployment;
 using Calamari.Common.Features.Scripts;
@@ -33,8 +34,8 @@ namespace Calamari.AzureCloudService.Tests
             storageName = $"Test{Guid.NewGuid().ToString("N").Substring(0, 10)}".ToLower();
             // We need to trim because of issue with team city:
             // https://app.shortcut.com/octopusdeploy/story/65471/failing-azurecloudservice-tests-due-to-whitespace-being-added-to-end-of-certificate-env-var
-            certificate = ExternalVariables.Get(ExternalVariable.AzureSubscriptionCertificate).Trim();
-            subscriptionId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionId);
+            certificate = (await ExternalVariables.Get(ExternalVariable.AzureSubscriptionCertificate, CancellationToken.None)).Trim();
+            subscriptionId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionId, CancellationToken.None);
             managementCertificate = CreateManagementCertificate(certificate);
             subscriptionCloudCredentials = new CertificateCloudCredentials(subscriptionId, managementCertificate);
             storageClient = new StorageManagementClient(subscriptionCloudCredentials);

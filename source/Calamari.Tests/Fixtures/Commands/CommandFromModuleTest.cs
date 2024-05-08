@@ -2,6 +2,8 @@
 using NUnit.Framework;
 using System;
 using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Testing;
@@ -27,20 +29,20 @@ namespace Calamari.Tests.Fixtures.Commands
             return Path.Combine(TestEnvironment.CurrentWorkingDirectory, path, Path.Combine(paths));
         }
 
-        private CalamariVariables BuildVariables()
+        private async Task<CalamariVariables> BuildVariables(CancellationToken cancellationToken)
         {
             var variables = new CalamariVariables();
             variables.Set("Octopus.Action.AwsAccount.Variable", "AwsAccount");
             variables.Set("Octopus.Action.Aws.Region", "us-east-1");
-            variables.Set("AWSAccount.AccessKey", ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3AccessKey));
-            variables.Set("AWSAccount.SecretKey", ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3SecretKey));
+            variables.Set("AWSAccount.AccessKey", await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3AccessKey, cancellationToken));
+            variables.Set("AWSAccount.SecretKey", await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3SecretKey, cancellationToken));
             variables.Set("Octopus.Action.Aws.AssumeRole", "False");
             variables.Set("Octopus.Action.Aws.AssumedRoleArn", "");
             variables.Set("Octopus.Action.Aws.AssumedRoleSession", "");
             variables.Set("Octopus.Account.AccountType", "AzureServicePrincipal");
             variables.Set("Octopus.Action.Azure.TenantId", "2a881dca-3230-4e01-abcb-a1fd235c0981");
-            variables.Set("Octopus.Action.Azure.ClientId", ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId));
-            variables.Set("Octopus.Action.Azure.Password", ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword));
+            variables.Set("Octopus.Action.Azure.ClientId", await ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId, cancellationToken));
+            variables.Set("Octopus.Action.Azure.Password", await ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword, cancellationToken));
             variables.Set("Octopus.Action.Azure.SubscriptionId", "cf21dc34-73dc-4d7d-bd86-041884e0bc75");
 
             return variables;

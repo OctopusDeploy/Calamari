@@ -7,6 +7,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Calamari.CloudAccounts;
 using Calamari.Common.Features.Processes;
@@ -195,6 +196,7 @@ namespace Calamari.Terraform.Tests
                                                           ScriptVariables.ScriptSourceOptions.Package);
                                           _.Variables.Add(TerraformSpecialVariables.Action.Terraform.EnvironmentVariables,
                                                           JsonConvert.SerializeObject(new Dictionary<string, string> { { "TF_PLUGIN_CACHE_DIR", "NonSense" } }));
+                                          return Task.CompletedTask;
                                       },
                                       "Simple")
                 .Should()
@@ -210,6 +212,7 @@ namespace Calamari.Terraform.Tests
                                           _.Variables.Add(ScriptVariables.ScriptSource,
                                               ScriptVariables.ScriptSourceOptions.Package);
                                           _.Variables.Add(TerraformSpecialVariables.Action.Terraform.EnvironmentVariables, null);
+                                          return Task.CompletedTask;
                                       },
                                       "Simple")
                 .Should()
@@ -230,6 +233,7 @@ namespace Calamari.Terraform.Tests
                                               ScriptVariables.ScriptSourceOptions.Inline);
                                           _.Variables.Add(TerraformSpecialVariables.Action.Terraform.EnvironmentVariables,
                                                           JsonConvert.SerializeObject(new Dictionary<string, string> { { "TF_VAR_ami", "new ami value" } }));
+                                          return Task.CompletedTask;
                                       },
                                       String.Empty,
                                       _ =>
@@ -511,12 +515,12 @@ namespace Calamari.Terraform.Tests
             using var temporaryFolder = TemporaryDirectory.Create();
             CopyAllFiles(TestEnvironment.GetTestPath("Azure"), temporaryFolder.DirectoryPath);
 
-            void PopulateVariables(CommandTestBuilderContext _)
+            async Task PopulateVariables(CommandTestBuilderContext _)
             {
-                _.Variables.Add(AzureAccountVariables.SubscriptionId, ExternalVariables.Get(ExternalVariable.AzureSubscriptionId));
-                _.Variables.Add(AzureAccountVariables.TenantId, ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId));
-                _.Variables.Add(AzureAccountVariables.ClientId, ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId));
-                _.Variables.Add(AzureAccountVariables.Password, ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword));
+                _.Variables.Add(AzureAccountVariables.SubscriptionId, await ExternalVariables.Get(ExternalVariable.AzureSubscriptionId, CancellationToken.None));
+                _.Variables.Add(AzureAccountVariables.TenantId, await ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId, CancellationToken.None));
+                _.Variables.Add(AzureAccountVariables.ClientId, await ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId, CancellationToken.None));
+                _.Variables.Add(AzureAccountVariables.Password, await ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword, CancellationToken.None));
                 _.Variables.Add("app_name", appName);
                 _.Variables.Add("random", random);
                 _.Variables.Add(TerraformSpecialVariables.Action.Terraform.VarFiles, "example.tfvars");
@@ -824,14 +828,14 @@ output ""config-map-aws-auth"" {{
         }
 
         string ExecuteAndReturnLogOutput(string command,
-                                         Action<CommandTestBuilderContext> populateVariables,
+                                         Func<CommandTestBuilderContext, Task> populateVariables,
                                          string folderName,
                                          Action<TestCalamariCommandResult>? assert = null)
         {
             return ExecuteAndReturnResult(command, populateVariables, folderName, assert).Result.FullLog;
         }
 
-        async Task<TestCalamariCommandResult> ExecuteAndReturnResult(string command, Action<CommandTestBuilderContext> populateVariables, string folderName, Action<TestCalamariCommandResult>? assert = null)
+        async Task<TestCalamariCommandResult> ExecuteAndReturnResult(string command, Func <CommandTestBuilderContext, Task> populateVariables, string folderName, Action<TestCalamariCommandResult>? assert = null)
         {
             var assertResult = assert ?? (_ => { });
 

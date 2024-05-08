@@ -1,7 +1,11 @@
 ﻿using System;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Calamari.Common.Plumbing.Logging;
-using NUnit.Framework;
+using Microsoft.Extensions.Logging;
+using Octopus.OnePassword.Sdk;
+using Serilog.Extensions.Logging;
 
 namespace Calamari.Testing
 {
@@ -22,25 +26,25 @@ namespace Calamari.Testing
         [EnvironmentVariable("Azure_OctopusAPITester_Certificate", "Azure - OctopusAPITester")]
         AzureSubscriptionCertificate,
 
-        [EnvironmentVariable("GitHub_OctopusAPITester_Username", "GitHub Test Account")]
+        [EnvironmentVariable("GitHub_OctopusAPITester_Username", "GitHub Test Account", "op://Calamari Secrets for Tests/Github Octopus Api Tester Username")]
         GitHubUsername,
 
-        [EnvironmentVariable("GitHub_OctopusAPITester_Password", "GitHub Test Account")]
+        [EnvironmentVariable("GitHub_OctopusAPITester_Password", "GitHub Test Account", "op://Calamari Secrets for Tests/Github Octopus Api Tester Password")]
         GitHubPassword,
 
-        [EnvironmentVariable("K8S_OctopusAPITester_Token", "GKS Kubernetes API Test Cluster Token")]
+        [EnvironmentVariable("K8S_OctopusAPITester_Token", "GKS Kubernetes API Test Cluster Token", "op://Calamari Secrets for Tests/K8s Octopus Api Tester Token")]
         KubernetesClusterToken,
 
-        [EnvironmentVariable("K8S_OctopusAPITester_Server", "GKS Kubernetes API Test Cluster Url")]
+        [EnvironmentVariable("K8S_OctopusAPITester_Server", "GKS Kubernetes API Test Cluster Url", "op://Calamari Secrets for Tests/K8s Octopus Api Test Server")]
         KubernetesClusterUrl,
 
         [EnvironmentVariable("Helm_OctopusAPITester_Password", "Artifactory Test Account")]
         HelmPassword,
 
-        [EnvironmentVariable("Artifactory_Admin_PAT", "Jfrog Artifactory Admin PAT")]
+        [EnvironmentVariable("Artifactory_Admin_PAT", "Jfrog Artifactory Admin PAT", "op://Calamari Secrets for Tests/Artifactory_Admin_PAT")]
         ArtifactoryE2EPassword,
 
-        [EnvironmentVariable("DockerHub_TestReaderAccount_Password", "DockerHub Test Reader Account")]
+        [EnvironmentVariable("DockerHub_TestReaderAccount_Password", "DockerHub Test Reader Account", "op://Calamari Secrets for Tests/DockerHub Test Reader Account Password")]
         DockerReaderPassword,
 
         [EnvironmentVariable("AWS_E2E_AccessKeyId", "AWS E2E Test User Keys")]
@@ -70,7 +74,7 @@ namespace Calamari.Testing
         [EnvironmentVariable("CALAMARI_AUTHPASSWORD", "OctopusMyGetTester")]
         MyGetFeedPassword,
 
-        [EnvironmentVariable("GOOGLECLOUD_OCTOPUSAPITESTER_JSONKEY", "GoogleCloud - OctopusAPITester")]
+        [EnvironmentVariable("GOOGLECLOUD_OCTOPUSAPITESTER_JSONKEY", "GoogleCloud - OctopusAPITester", "op://Calamari Secrets for Tests/Google Cloud Octopus Api Tester JsonKey")]
         GoogleCloudJsonKeyfile,
         
         [EnvironmentVariable("GitHub_RateLimitingPersonalAccessToken", "GitHub test account PAT")]
@@ -79,6 +83,21 @@ namespace Calamari.Testing
 
     public static class ExternalVariables
     {
+        static readonly Serilog.ILogger Logger = Serilog.Log.ForContext(typeof(ExternalVariables));
+        
+        static readonly bool SecretManagerIsEnabled = Convert.ToBoolean(Environment.GetEnvironmentVariable("CALAMARI__Tests__SecretManagerEnabled") ?? "True");
+        static readonly string SecretManagerAccount = Environment.GetEnvironmentVariable("CALAMARI__Tests__SecretManagerAccount") ?? "octopusdeploy.1password.com";
+
+        static readonly Lazy<SecretManagerClient> SecretManagerClient = new(LoadSecretManagerClient);
+        
+        static SecretManagerClient LoadSecretManagerClient()
+        {
+            var loggerFactory = new LoggerFactory();
+            loggerFactory.AddProvider(new SerilogLoggerProvider(Logger, false));
+            var microsoftLogger = loggerFactory.CreateLogger<SecretManagerClient>();
+            return new SecretManagerClient(SecretManagerAccount, microsoftLogger);
+        }
+        
         public static void LogMissingVariables()
         {
             var missingVariables = Enum.GetValues(typeof(ExternalVariable)).Cast<ExternalVariable>()
@@ -94,7 +113,7 @@ namespace Calamari.Testing
                      $"\n\nTests that rely on these variables are likely to fail.");
         }
 
-        public static string Get(ExternalVariable property)
+        public static async Task<string> Get(ExternalVariable property, CancellationToken cancellationToken)
         {
             var attr = EnvironmentVariableAttribute.Get(property);
             if (attr == null)
@@ -103,12 +122,23 @@ namespace Calamari.Testing
             }
 
             var valueFromEnv = Environment.GetEnvironmentVariable(attr.Name);
-            if (valueFromEnv == null)
+            if (valueFromEnv != null)
             {
-                throw new Exception($"Environment Variable `{attr.Name}` could not be found. The value can be found in the password store under `{attr.LastPassName}`");
+                return valueFromEnv;
+            }
+            
+            if (SecretManagerIsEnabled)
+            {
+                var valueFromSecretManager = string.IsNullOrEmpty(attr.SecretReference)
+                    ? null
+                    : await SecretManagerClient.Value.GetSecret(attr.SecretReference, cancellationToken, throwOnNotFound: false);
+                if (!string.IsNullOrEmpty(valueFromSecretManager))
+                {
+                    return valueFromSecretManager;
+                }
             }
 
-            return valueFromEnv;
+            throw new Exception($"Unable to find `{attr.Name}` as either an Environment Variable, or a SecretReference. The value can be found in the password store under `{attr.LastPassName}`");
         }
     }
 
@@ -117,10 +147,12 @@ namespace Calamari.Testing
     {
         public string Name { get; }
         public string LastPassName { get; }
-        public EnvironmentVariableAttribute(string name, string lastPassName)
+        public string? SecretReference { get; }
+        public EnvironmentVariableAttribute(string name, string lastPassName, string? secretReference = null)
         {
             Name = name;
             LastPassName = lastPassName;
+            SecretReference = secretReference;
         }
 
         public static EnvironmentVariableAttribute? Get(object enm)
