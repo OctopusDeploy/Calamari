@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Integration.Packages.Download;
 using Calamari.Testing;
@@ -18,15 +19,17 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
     {
         //See "GitHub Test Account"
         static readonly string AuthFeedUri =  "https://api.github.com";
-        static readonly string FeedUsername = await ExternalVariables.Get(ExternalVariable.GitHubUsername, CancellationToken.None);
-        static readonly string FeedPassword = await ExternalVariables.Get(ExternalVariable.GitHubPassword, CancellationToken.None);
+        static string FeedUsername;
+        static string FeedPassword;
 
         static readonly CalamariPhysicalFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
         static string home = Path.GetTempPath();
         [OneTimeSetUp]
-        public void TestFixtureSetUp()
+        public async Task TestFixtureSetUp()
         {
+            FeedUsername = await ExternalVariables.Get(ExternalVariable.GitHubUsername, CancellationToken.None);
+            FeedPassword = await ExternalVariables.Get(ExternalVariable.GitHubPassword, CancellationToken.None);
             Environment.SetEnvironmentVariable("TentacleHome", home);
         }
 
