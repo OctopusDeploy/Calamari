@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
 using Calamari.Common.Features.Packages;
 using Calamari.Testing;
 using Calamari.Testing.Helpers;
@@ -23,13 +24,22 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         // In future, we should ensure this test fixture sets its own data up from scratch before running
         // and tears it down on completion, rather than relying on external state as it currently does.
 
-        static readonly string FeedzNuGetV2FeedUrl = await ExternalVariables.Get(ExternalVariable.FeedzNuGetV2FeedUrl, CancellationToken.None);
-        static readonly string FeedzNuGetV3FeedUrl = await ExternalVariables.Get(ExternalVariable.FeedzNuGetV3FeedUrl, CancellationToken.None);
-        static readonly string ArtifactoryNuGetV2FeedUrl = await ExternalVariables.Get(ExternalVariable.ArtifactoryNuGetV2FeedUrl, CancellationToken.None);
-        static readonly string ArtifactoryNuGetV3FeedUrl = await ExternalVariables.Get(ExternalVariable.ArtifactoryNuGetV3FeedUrl, CancellationToken.None);
+        static string FeedzNuGetV2FeedUrl;
+        static string FeedzNuGetV3FeedUrl;
+        static string ArtifactoryNuGetV2FeedUrl;
+        static string ArtifactoryNuGetV3FeedUrl;
         
         static readonly string TentacleHome = TestEnvironment.GetTestPath("Fixtures", "PackageDownload");
 
+        [OneTimeSetUp]
+        public async Task OneTimeSetup()
+        {
+            FeedzNuGetV2FeedUrl = await ExternalVariables.Get(ExternalVariable.FeedzNuGetV2FeedUrl, CancellationToken.None);
+            FeedzNuGetV3FeedUrl = await ExternalVariables.Get(ExternalVariable.FeedzNuGetV3FeedUrl, CancellationToken.None);
+            ArtifactoryNuGetV2FeedUrl = await ExternalVariables.Get(ExternalVariable.ArtifactoryNuGetV2FeedUrl, CancellationToken.None);
+            ArtifactoryNuGetV3FeedUrl = await ExternalVariables.Get(ExternalVariable.ArtifactoryNuGetV3FeedUrl, CancellationToken.None);
+        }
+        
         [SetUp]
         public void SetUp()
         {
