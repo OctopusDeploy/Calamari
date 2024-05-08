@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Calamari.Testing;
 using Calamari.Testing.Helpers;
@@ -44,11 +45,11 @@ namespace Calamari.Tests.KubernetesFixtures
             gkeLocation = jsonOutput["gke_cluster_location"]["value"].Value<string>();
         }
 
-        protected override Dictionary<string, string> GetEnvironmentVars()
+        protected override async Task<Dictionary<string, string>> GetEnvironmentVars(CancellationToken cancellationToken)
         {
             return new Dictionary<string, string>
             {
-                { "GOOGLE_CLOUD_KEYFILE_JSON", ExternalVariables.Get(ExternalVariable.GoogleCloudJsonKeyfile) },
+                { "GOOGLE_CLOUD_KEYFILE_JSON", await ExternalVariables.Get(ExternalVariable.GoogleCloudJsonKeyfile, cancellationToken) },
                 { "USE_GKE_GCLOUD_AUTH_PLUGIN", "True" }
             };
         }
@@ -77,13 +78,13 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         [TestCase(true)]
         [TestCase(false)]
-        public void AuthorisingWithGoogleCloudAccount(bool runAsScript)
+        public async Task AuthorisingWithGoogleCloudAccount(bool runAsScript)
         {
             variables.Set(Deployment.SpecialVariables.Account.AccountType, "GoogleCloudAccount");
             variables.Set(SpecialVariables.GkeClusterName, gkeClusterName);
             var account = "gke_account";
             variables.Set("Octopus.Action.GoogleCloudAccount.Variable", account);
-            var jsonKey = ExternalVariables.Get(ExternalVariable.GoogleCloudJsonKeyfile);
+            var jsonKey = await ExternalVariables.Get(ExternalVariable.GoogleCloudJsonKeyfile, CancellationToken.None);
             variables.Set($"{account}.JsonKey", Convert.ToBase64String(Encoding.UTF8.GetBytes(jsonKey)));
             variables.Set("Octopus.Action.GoogleCloud.Project", gkeProject);
             variables.Set("Octopus.Action.GoogleCloud.Zone", gkeLocation);
@@ -98,14 +99,14 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        public void UsingInternalIpForPrivateCluster()
+        public async Task UsingInternalIpForPrivateCluster()
         {
             variables.Set(Deployment.SpecialVariables.Account.AccountType, "GoogleCloudAccount");
             variables.Set(SpecialVariables.GkeClusterName, gkeClusterName);
             variables.Set(SpecialVariables.GkeUseClusterInternalIp, bool.TrueString);
             var account = "gke_account";
             variables.Set("Octopus.Action.GoogleCloudAccount.Variable", account);
-            var jsonKey = ExternalVariables.Get(ExternalVariable.GoogleCloudJsonKeyfile);
+            var jsonKey = await ExternalVariables.Get(ExternalVariable.GoogleCloudJsonKeyfile, CancellationToken.None);
             variables.Set($"{account}.JsonKey", Convert.ToBase64String(Encoding.UTF8.GetBytes(jsonKey)));
             variables.Set("Octopus.Action.GoogleCloud.Project", gkeProject);
             variables.Set("Octopus.Action.GoogleCloud.Zone", gkeLocation);

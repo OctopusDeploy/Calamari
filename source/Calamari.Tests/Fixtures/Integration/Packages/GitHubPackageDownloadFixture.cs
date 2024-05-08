@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Threading;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Integration.Packages.Download;
 using Calamari.Testing;
@@ -17,8 +18,8 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
     {
         //See "GitHub Test Account"
         static readonly string AuthFeedUri =  "https://api.github.com";
-        static readonly string FeedUsername = ExternalVariables.Get(ExternalVariable.GitHubUsername);
-        static readonly string FeedPassword = ExternalVariables.Get(ExternalVariable.GitHubPassword);
+        static readonly string FeedUsername = await ExternalVariables.Get(ExternalVariable.GitHubUsername, CancellationToken.None);
+        static readonly string FeedPassword = await ExternalVariables.Get(ExternalVariable.GitHubPassword, CancellationToken.None);
 
         static readonly CalamariPhysicalFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 

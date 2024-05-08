@@ -56,13 +56,13 @@ namespace Calamari.Tests.Fixtures.Commands
 
         [Test]
         [Category(TestCategory.CompatibleOS.OnlyWindows)]
-        public void RunScript()
+        public async Task RunScript()
         {
             Assert.IsTrue(File.Exists(Script), Script + " must exist as a file");
 
             using (var temp = new TemporaryFile(Path.GetTempFileName()))
             {
-                BuildVariables().Save(temp.FilePath);
+                (await BuildVariables(CancellationToken.None)).Save(temp.FilePath);
 
                 var args = new[]
                 {
