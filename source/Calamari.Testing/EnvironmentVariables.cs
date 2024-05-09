@@ -58,13 +58,13 @@ namespace Calamari.Testing
 
         [EnvironmentVariable("CALAMARI_FEEDZV3URI", "Not LastPass; Calamari TC Config Variables")]
         FeedzNuGetV3FeedUrl,
-        
+
         [EnvironmentVariable("CALAMARI_ARTIFACTORYV2URI", "Not LastPass; Calamari TC Config Variables")]
         ArtifactoryNuGetV2FeedUrl,
 
         [EnvironmentVariable("CALAMARI_ARTIFACTORYV3URI", "Not LastPass; Calamari TC Config Variables")]
         ArtifactoryNuGetV3FeedUrl,
-        
+
         [EnvironmentVariable("CALAMARI_AUTHURI", "OctopusMyGetTester")]
         MyGetFeedUrl,
 
@@ -76,7 +76,7 @@ namespace Calamari.Testing
 
         [EnvironmentVariable("GOOGLECLOUD_OCTOPUSAPITESTER_JSONKEY", "GoogleCloud - OctopusAPITester", "op://Calamari Secrets for Tests/Google Cloud Octopus Api Tester JsonKey")]
         GoogleCloudJsonKeyfile,
-        
+
         [EnvironmentVariable("GitHub_RateLimitingPersonalAccessToken", "GitHub test account PAT")]
         GitHubRateLimitingPersonalAccessToken,
     }
@@ -84,12 +84,12 @@ namespace Calamari.Testing
     public static class ExternalVariables
     {
         static readonly Serilog.ILogger Logger = Serilog.Log.ForContext(typeof(ExternalVariables));
-        
+
         static readonly bool SecretManagerIsEnabled = Convert.ToBoolean(Environment.GetEnvironmentVariable("CALAMARI__Tests__SecretManagerEnabled") ?? "True");
         static readonly string SecretManagerAccount = Environment.GetEnvironmentVariable("CALAMARI__Tests__SecretManagerAccount") ?? "octopusdeploy.1password.com";
 
         static readonly Lazy<SecretManagerClient> SecretManagerClient = new(LoadSecretManagerClient);
-        
+
         static SecretManagerClient LoadSecretManagerClient()
         {
             var loggerFactory = new LoggerFactory();
@@ -97,10 +97,11 @@ namespace Calamari.Testing
             var microsoftLogger = loggerFactory.CreateLogger<SecretManagerClient>();
             return new SecretManagerClient(SecretManagerAccount, microsoftLogger);
         }
-        
+
         public static void LogMissingVariables()
         {
-            var missingVariables = Enum.GetValues(typeof(ExternalVariable)).Cast<ExternalVariable>()
+            var missingVariables = Enum.GetValues(typeof(ExternalVariable))
+                                       .Cast<ExternalVariable>()
                                        .Select(prop => EnvironmentVariableAttribute.Get(prop))
                                        .Where(attr => Environment.GetEnvironmentVariable(attr.Name) == null)
                                        .ToList();
@@ -108,9 +109,7 @@ namespace Calamari.Testing
             if (!missingVariables.Any())
                 return;
 
-            Log.Warn($"The following environment variables could not be found: " +
-                     $"\n{string.Join("\n", missingVariables.Select(var => $" - {var.Name}\t\tSource: {var.LastPassName}"))}" +
-                     $"\n\nTests that rely on these variables are likely to fail.");
+            Log.Warn($"The following environment variables could not be found: " + $"\n{string.Join("\n", missingVariables.Select(var => $" - {var.Name}\t\tSource: {var.LastPassName}"))}" + $"\n\nTests that rely on these variables are likely to fail.");
         }
 
         public static async Task<string> Get(ExternalVariable property, CancellationToken cancellationToken)
@@ -126,7 +125,7 @@ namespace Calamari.Testing
             {
                 return valueFromEnv;
             }
-            
+
             if (SecretManagerIsEnabled)
             {
                 var valueFromSecretManager = string.IsNullOrEmpty(attr.SecretReference)
@@ -136,9 +135,11 @@ namespace Calamari.Testing
                 {
                     return valueFromSecretManager;
                 }
+
+                throw new Exception($"Unable to locate {attr.Name} as an environment variable, nor does its secretReference exist in the Octopus Secret Manager (1Password).");
             }
 
-            throw new Exception($"Unable to find `{attr.Name}` as either an Environment Variable, or a SecretReference. The value can be found in the password store under `{attr.LastPassName}`");
+            throw new Exception($"Unable to locate {attr.Name} as an environment variable, and the Secret Manager integrations is not currently enabled (enable via env var CALAMARI__Tests__SecretManagerEnabled).");
         }
     }
 
@@ -148,6 +149,7 @@ namespace Calamari.Testing
         public string Name { get; }
         public string LastPassName { get; }
         public string? SecretReference { get; }
+
         public EnvironmentVariableAttribute(string name, string lastPassName, string? secretReference = null)
         {
             Name = name;
