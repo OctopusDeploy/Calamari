@@ -11,6 +11,7 @@ namespace Calamari.Testing
 {
     public enum ExternalVariable
     {
+        
         [EnvironmentVariable("Azure_OctopusAPITester_SubscriptionId", "op://Calamari Secrets for Tests/Azure - OctopusApiTester/subscription id")]
         AzureSubscriptionId,
 
@@ -38,7 +39,7 @@ namespace Calamari.Testing
         [EnvironmentVariable("K8S_OctopusAPITester_Server", "op://Calamari Secrets for Tests/GKS Kubernetes API Test Cluster/Server")]
         KubernetesClusterUrl,
 
-        [EnvironmentVariable("Helm_OctopusAPITester_Password", "op://Calamari Secrets for Tests/Artifactory e2e-reader Test Account/Server")]
+        [EnvironmentVariable("Helm_OctopusAPITester_Password", "op://Calamari Secrets for Tests/Artifactory e2e-reader Test Account/password")]
         HelmPassword,
 
         [EnvironmentVariable("Artifactory_Admin_PAT", "op://Calamari Secrets for Tests/Artifactory Admin PAT/PAT")]
@@ -65,13 +66,13 @@ namespace Calamari.Testing
         [EnvironmentVariable("CALAMARI_ARTIFACTORYV3URI", defaultValue: "https://packages.octopushq.com/artifactory/api/nuget/v3/nuget")]
         ArtifactoryNuGetV3FeedUrl,
 
-        [EnvironmentVariable("CALAMARI_AUTHURI", "op://Calamari Secrets For Test/MyGet Package Manager/website")]
+        [EnvironmentVariable("CALAMARI_AUTHURI", "op://Calamari Secrets For Tests/MyGet Package Manager/website")]
         MyGetFeedUrl,
 
-        [EnvironmentVariable("CALAMARI_AUTHUSERNAME", "op://Calamari Secrets For Test/MyGet Package Manager/username")]
+        [EnvironmentVariable("CALAMARI_AUTHUSERNAME", "op://Calamari Secrets For Tests/MyGet Package Manager/username")]
         MyGetFeedUsername,
 
-        [EnvironmentVariable("CALAMARI_AUTHPASSWORD", "op://Calamari Secrets For Test/MyGet Package Manager/password")]
+        [EnvironmentVariable("CALAMARI_AUTHPASSWORD", "op://Calamari Secrets For Tests/MyGet Package Manager/password")]
         MyGetFeedPassword,
 
         [EnvironmentVariable("GOOGLECLOUD_OCTOPUSAPITESTER_JSONKEY", "op://Calamari Secrets for Tests/Google Cloud Octopus Api Tester/jsonkey")]
@@ -96,7 +97,7 @@ namespace Calamari.Testing
             var loggerFactory = new LoggerFactory();
             loggerFactory.AddProvider(new SerilogLoggerProvider(Logger, false));
             var microsoftLogger = loggerFactory.CreateLogger<SecretManagerClient>();
-            return new SecretManagerClient(SecretManagerAccount, microsoftLogger);
+            return new SecretManagerClient(SecretManagerAccount, new[] { "op://Calamari Secrets for Tests/Azure - OctopusApiTester/subscription id" }, microsoftLogger);
         }
 
         public static void LogMissingVariables()
@@ -110,7 +111,7 @@ namespace Calamari.Testing
             if (!missingVariables.Any())
                 return;
 
-            Log.Warn($"The following environment variables could not be found: " + $"\n{string.Join("\n", missingVariables.Select(var => $" - {var.Name}\t\tSource: {var.LastPassName}"))}" + $"\n\nTests that rely on these variables are likely to fail.");
+            Log.Warn($"The following environment variables could not be found: " + $"\n{string.Join("\n", missingVariables.Select(var => $" - {var.Name}"))}" + $"\n\nTests that rely on these variables are likely to fail.");
         }
 
         public static async Task<string> Get(ExternalVariable property, CancellationToken cancellationToken)
@@ -137,12 +138,13 @@ namespace Calamari.Testing
                     return valueFromSecretManager;
                 }
 
-                throw new Exception($"Unable to locate {attr.Name} as an environment variable, nor does its secretReference exist in the Octopus Secret Manager (1Password).");
+                return attr.DefaultValue ?? 
+                throw new Exception($"Unable to locate {attr.Name} as an environment variable, nor does its secretReference exist in the Octopus Secret Manager (1Password), and no default value is specified.");
             }
 
             return attr.DefaultValue
                    ?? throw new Exception($"Unable to locate {attr.Name} as an environment variable, the Secret Manager integrations is not currently enabled (enable via env var CALAMARI__Tests__SecretManagerEnabled), "
-                                          + $"and no default value specified.");
+                                          + $"and no default value is specified.");
         }
     }
 
