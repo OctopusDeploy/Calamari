@@ -18,7 +18,7 @@
 ##   $OctopusDisableAzureCLI = "..."
 ##   $OctopusAzureExtensionsDirectory = "..." 
 ##   $OctopusOpenIdJwt = "..."
-##   $OctopusAzureRMDeprecationFeatureToggle = "..."
+##   $OctopusAzureRmIsDeprecated = "..."
 
 $ErrorActionPreference = "Stop"
 
@@ -185,7 +185,7 @@ Execute-WithRetry{
                     Initialize-AzContext
                 }
                 elseif (Get-AzureRmModuleInstalled) {
-                    if($OctopusAzureRMDeprecationFeatureToggle -like [Boolean]::TrueString) {
+                    if($OctopusAzureRmIsDeprecated -like [Boolean]::TrueString) {
                         Write-Error "Azure Resource Manager modules are no longer available for authenticating with Azure, you are required to move to Azure CLI or the Az powershell modules."
                         exit 2
                     }
