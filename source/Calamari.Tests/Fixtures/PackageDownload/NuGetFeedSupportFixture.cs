@@ -30,14 +30,16 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         static string ArtifactoryNuGetV3FeedUrl;
         
         static readonly string TentacleHome = TestEnvironment.GetTestPath("Fixtures", "PackageDownload");
+        static readonly CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
+        readonly CancellationToken cancellationToken = CancellationTokenSource.Token;
 
         [OneTimeSetUp]
         public async Task OneTimeSetup()
         {
-            FeedzNuGetV2FeedUrl = await ExternalVariables.Get(ExternalVariable.FeedzNuGetV2FeedUrl, CancellationToken.None);
-            FeedzNuGetV3FeedUrl = await ExternalVariables.Get(ExternalVariable.FeedzNuGetV3FeedUrl, CancellationToken.None);
-            ArtifactoryNuGetV2FeedUrl = await ExternalVariables.Get(ExternalVariable.ArtifactoryNuGetV2FeedUrl, CancellationToken.None);
-            ArtifactoryNuGetV3FeedUrl = await ExternalVariables.Get(ExternalVariable.ArtifactoryNuGetV3FeedUrl, CancellationToken.None);
+            FeedzNuGetV2FeedUrl = await ExternalVariables.Get(ExternalVariable.FeedzNuGetV2FeedUrl, cancellationToken);
+            FeedzNuGetV3FeedUrl = await ExternalVariables.Get(ExternalVariable.FeedzNuGetV3FeedUrl, cancellationToken);
+            ArtifactoryNuGetV2FeedUrl = await ExternalVariables.Get(ExternalVariable.ArtifactoryNuGetV2FeedUrl, cancellationToken);
+            ArtifactoryNuGetV3FeedUrl = await ExternalVariables.Get(ExternalVariable.ArtifactoryNuGetV3FeedUrl, cancellationToken);
         }
         
         [SetUp]

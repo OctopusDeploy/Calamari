@@ -27,6 +27,8 @@ namespace Calamari.AzureCloudService.Tests
         string subscriptionId;
         string certificate;
         string pathToPackage;
+        static readonly CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
+        readonly CancellationToken cancellationToken = CancellationTokenSource.Token;
 
         [OneTimeSetUp]
         public async Task Setup()
@@ -34,8 +36,8 @@ namespace Calamari.AzureCloudService.Tests
             storageName = $"Test{Guid.NewGuid().ToString("N").Substring(0, 10)}".ToLower();
             // We need to trim because of issue with team city:
             // https://app.shortcut.com/octopusdeploy/story/65471/failing-azurecloudservice-tests-due-to-whitespace-being-added-to-end-of-certificate-env-var
-            certificate = (await ExternalVariables.Get(ExternalVariable.AzureSubscriptionCertificate, CancellationToken.None)).Trim();
-            subscriptionId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionId, CancellationToken.None);
+            certificate = (await ExternalVariables.Get(ExternalVariable.AzureSubscriptionCertificate, cancellationToken)).Trim();
+            subscriptionId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionId, cancellationToken);
             managementCertificate = CreateManagementCertificate(certificate);
             subscriptionCloudCredentials = new CertificateCloudCredentials(subscriptionId, managementCertificate);
             storageClient = new StorageManagementClient(subscriptionCloudCredentials);

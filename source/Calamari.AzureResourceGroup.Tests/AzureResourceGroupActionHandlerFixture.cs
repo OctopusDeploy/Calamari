@@ -20,22 +20,24 @@ using NUnit.Framework;
 namespace Calamari.AzureResourceGroup.Tests
 {
     [TestFixture]
-    internal class AzureResourceGroupActionHandlerFixture
+    class AzureResourceGroupActionHandlerFixture
     {
-        private string clientId;
-        private string clientSecret;
-        private string tenantId;
-        private string subscriptionId;
-        private IResourceGroup resourceGroup;
-        private IAzure azure;
+        string clientId;
+        string clientSecret;
+        string tenantId;
+        string subscriptionId;
+        IResourceGroup resourceGroup;
+        IAzure azure;
+        static readonly CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
+        readonly CancellationToken cancellationToken = CancellationTokenSource.Token;
 
         [OneTimeSetUp]
         public async Task Setup()
         {
-            clientId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId, CancellationToken.None);
-            clientSecret = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword, CancellationToken.None);
-            tenantId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId, CancellationToken.None);
-            subscriptionId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionId, CancellationToken.None);
+            clientId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId, cancellationToken);
+            clientSecret = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword, cancellationToken);
+            tenantId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId, cancellationToken);
+            subscriptionId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionId, cancellationToken);
 
             var resourceGroupName = SdkContext.RandomResourceName(nameof(AzureResourceGroupActionHandlerFixture), 60);
 

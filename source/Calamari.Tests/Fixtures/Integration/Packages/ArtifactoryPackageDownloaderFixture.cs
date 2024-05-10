@@ -25,6 +25,8 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
                 Uri feedUri;
                 NetworkCredential feedCredentials;
                 ArtifactoryPackageDownloader downloader;
+                static readonly CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
+                readonly CancellationToken cancellationToken = CancellationTokenSource.Token;
         
                 public ArtifactoryPackageDownloaderFixture()
                 {
@@ -40,7 +42,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
                     fileSystem.EnsureDirectoryExists(cacheDirectory);
 
                     feedUri = new Uri("https://octopusdeploy.jfrog.io");
-                    var sensitiveValue = await ExternalVariables.Get(ExternalVariable.ArtifactoryE2EPassword, CancellationToken.None);
+                    var sensitiveValue = await ExternalVariables.Get(ExternalVariable.ArtifactoryE2EPassword, cancellationToken);
                     feedCredentials = new NetworkCredential("", sensitiveValue.ToString());
         
                     var log = Substitute.For<ILog>();

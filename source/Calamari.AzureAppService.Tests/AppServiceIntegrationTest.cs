@@ -43,6 +43,9 @@ namespace Calamari.AzureAppService.Tests
         private readonly HttpClient client = new HttpClient();
 
         protected virtual string DefaultResourceGroupLocation => "eastus";
+        
+        static readonly CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
+        readonly CancellationToken cancellationToken = CancellationTokenSource.Token;
 
         [OneTimeSetUp]
         public async Task Setup()
@@ -54,10 +57,10 @@ namespace Calamari.AzureAppService.Tests
 
             ResourceGroupName = $"{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid():N}";
 
-            ClientId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId, CancellationToken.None);
-            ClientSecret = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword, CancellationToken.None);
-            TenantId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId, CancellationToken.None);
-            SubscriptionId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionId, CancellationToken.None);
+            ClientId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId, cancellationToken);
+            ClientSecret = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword, cancellationToken);
+            TenantId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId, cancellationToken);
+            SubscriptionId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionId, cancellationToken);
             ResourceGroupLocation = Environment.GetEnvironmentVariable("AZURE_NEW_RESOURCE_REGION") ?? DefaultResourceGroupLocation;
 
             var servicePrincipalAccount = new AzureServicePrincipalAccount(SubscriptionId,

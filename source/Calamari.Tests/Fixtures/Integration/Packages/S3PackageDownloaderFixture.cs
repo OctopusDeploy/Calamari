@@ -28,6 +28,8 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         static readonly string TentacleHome = TestEnvironment.GetTestPath("Fixtures", "PackageDownload");
         readonly string region;
         readonly string bucketName;
+        static readonly CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
+        readonly CancellationToken cancellationToken = CancellationTokenSource.Token;
         
         public S3PackageDownloaderFixture()
         {
@@ -89,15 +91,15 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
                                                                            Key = filename,
                                                                            InputStream = File.OpenRead(Path.Combine(rootDir, filename))
                                                                        },
-                                                                       CancellationToken.None));
+                                                                       cancellationToken));
 
             var downloader = GetDownloader();
             var package = downloader.DownloadPackage(packageId,
                                                      version,
                                                      "s3-feed",
                                                      new Uri("https://please-ignore.com"),
-                                                     await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3AccessKey, CancellationToken.None),
-                                                     await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3SecretKey, CancellationToken.None),
+                                                     await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3AccessKey, cancellationToken),
+                                                     await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3SecretKey, cancellationToken),
                                                      true,
                                                      3,
                                                      TimeSpan.FromSeconds(3));
@@ -109,8 +111,8 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         protected async Task Validate(Func<AmazonS3Client, Task> execute)
         {
             var credentials = new BasicAWSCredentials(
-                                                      await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3AccessKey, CancellationToken.None),
-                                                      await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3SecretKey, CancellationToken.None));
+                                                      await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3AccessKey, cancellationToken),
+                                                      await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3SecretKey, cancellationToken));
 
             var config = new AmazonS3Config {AllowAutoRedirect = true, RegionEndpoint = RegionEndpoint.GetBySystemName(region)};
             

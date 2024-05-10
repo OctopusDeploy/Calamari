@@ -25,11 +25,15 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         static readonly CalamariPhysicalFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
         static string home = Path.GetTempPath();
+        
+        static readonly CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
+        readonly CancellationToken cancellationToken = CancellationTokenSource.Token;
+        
         [OneTimeSetUp]
         public async Task TestFixtureSetUp()
         {
-            FeedUsername = await ExternalVariables.Get(ExternalVariable.GitHubUsername, CancellationToken.None);
-            FeedPassword = await ExternalVariables.Get(ExternalVariable.GitHubPassword, CancellationToken.None);
+            FeedUsername = await ExternalVariables.Get(ExternalVariable.GitHubUsername, cancellationToken);
+            FeedPassword = await ExternalVariables.Get(ExternalVariable.GitHubPassword, cancellationToken);
             Environment.SetEnvironmentVariable("TentacleHome", home);
         }
 

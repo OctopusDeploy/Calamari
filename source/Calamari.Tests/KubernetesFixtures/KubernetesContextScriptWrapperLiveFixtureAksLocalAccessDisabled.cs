@@ -24,6 +24,9 @@ namespace Calamari.Tests.KubernetesFixtures
         string aksClusterName;
         string azurermResourceGroup;
         string azureSubscriptionId;
+        
+        static readonly CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
+        readonly CancellationToken cancellationToken = CancellationTokenSource.Token;
 
         protected override string KubernetesCloudProvider => "AKS-local-access-disabled";
 
@@ -67,10 +70,10 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set("Octopus.Action.Kubernetes.AksClusterResourceGroup", azurermResourceGroup);
             variables.Set(Kubernetes.SpecialVariables.AksClusterName, aksClusterName);
             variables.Set("Octopus.Action.Kubernetes.AksAdminLogin", Boolean.FalseString);
-            variables.Set("Octopus.Action.Azure.SubscriptionId", await ExternalVariables.Get(ExternalVariable.AzureSubscriptionId, CancellationToken.None));
-            variables.Set("Octopus.Action.Azure.TenantId", await ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId, CancellationToken.None));
-            variables.Set("Octopus.Action.Azure.Password", await ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword, CancellationToken.None));
-            variables.Set("Octopus.Action.Azure.ClientId", await ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId, CancellationToken.None));
+            variables.Set("Octopus.Action.Azure.SubscriptionId", await ExternalVariables.Get(ExternalVariable.AzureSubscriptionId, cancellationToken));
+            variables.Set("Octopus.Action.Azure.TenantId", await ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId, cancellationToken));
+            variables.Set("Octopus.Action.Azure.Password", await ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword, cancellationToken));
+            variables.Set("Octopus.Action.Azure.ClientId", await ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId, cancellationToken));
             if (runAsScript)
             {
                 DeployWithKubectlTestScriptAndVerifyResult();
@@ -95,10 +98,10 @@ namespace Calamari.Tests.KubernetesFixtures
                 setHealthCheckContainer ? new FeedImage("MyImage:with-tag", "Feeds-123") : null);
 
             var account = new AzureServicePrincipalAccount(
-                await ExternalVariables.Get(ExternalVariable.AzureSubscriptionId, CancellationToken.None),
-                await ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId, CancellationToken.None),
-                await ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId, CancellationToken.None),
-                await ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword, CancellationToken.None),
+                await ExternalVariables.Get(ExternalVariable.AzureSubscriptionId, cancellationToken),
+                await ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId, cancellationToken),
+                await ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId, cancellationToken),
+                await ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword, cancellationToken),
                 null,
                 null,
                 null);
