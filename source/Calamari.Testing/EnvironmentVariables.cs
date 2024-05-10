@@ -97,7 +97,7 @@ namespace Calamari.Testing
             var loggerFactory = new LoggerFactory();
             loggerFactory.AddProvider(new SerilogLoggerProvider(Logger, false));
             var microsoftLogger = loggerFactory.CreateLogger<SecretManagerClient>();
-            return new SecretManagerClient(SecretManagerAccount, new[] { "op://Calamari Secrets for Tests/Azure - OctopusApiTester/subscription id" }, microsoftLogger);
+            return new SecretManagerClient(SecretManagerAccount, microsoftLogger);
         }
 
         public static void LogMissingVariables()
