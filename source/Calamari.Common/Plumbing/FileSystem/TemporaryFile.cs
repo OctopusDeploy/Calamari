@@ -21,7 +21,7 @@ namespace Calamari.Common.Plumbing.FileSystem
         {
             get
             {
-                using (var file = File.OpenRead(FilePath))
+                using (var file = fileSystem.OpenFile(FilePath, FileAccess.Read))
                 {
                     var hash = SHA1.Create().ComputeHash(file);
                     return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
@@ -33,7 +33,7 @@ namespace Calamari.Common.Plumbing.FileSystem
         {
             get
             {
-                using (var file = File.OpenRead(FilePath))
+                using (var file = fileSystem.OpenFile(FilePath, FileAccess.Read))
                 {
                     return file.Length;
                 }

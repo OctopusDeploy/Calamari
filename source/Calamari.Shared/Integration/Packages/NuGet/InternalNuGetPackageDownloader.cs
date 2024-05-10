@@ -94,7 +94,7 @@ namespace Calamari.Integration.Packages.NuGet
             // FileSystem feed 
             if (feedUri.IsFile)
             {
-                NuGetFileSystemDownloader.DownloadPackage(packageId, version, feedUri, targetFilePath);
+                NuGetFileSystemDownloader.DownloadPackage(packageId, version, feedUri, targetFilePath, fileSystem);
                 return;
             }
             

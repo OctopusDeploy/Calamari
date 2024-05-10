@@ -60,7 +60,7 @@ namespace Calamari.Common.Features.FunctionScriptContributions
                     destinationFile = Path.Combine(workingDirectory, copyScriptFile);
                 }
 
-                File.Copy(scriptFile, destinationFile, true);
+                fileSystem.CopyFile(scriptFile, destinationFile);
             }
 
             using (var contextScriptFile = new TemporaryFile(scriptFile))
