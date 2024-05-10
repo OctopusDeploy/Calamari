@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Assent;
 using Calamari.Aws.Kubernetes.Discovery;
@@ -109,12 +110,12 @@ namespace Calamari.Tests.KubernetesFixtures
             awsIamInstanceProfileName = jsonOutput["aws_iam_instance_profile_name"]["value"].Value<string>();
         }
 
-        protected override Dictionary<string, string> GetEnvironmentVars()
+        protected override async Task<Dictionary<string, string>> GetEnvironmentVars(CancellationToken cancellationToken)
         {
             return new Dictionary<string, string>
             {
-                { "AWS_ACCESS_KEY_ID", ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3AccessKey) },
-                { "AWS_SECRET_ACCESS_KEY", ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3SecretKey) },
+                { "AWS_ACCESS_KEY_ID", await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3AccessKey, cancellationToken) },
+                { "AWS_SECRET_ACCESS_KEY", await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3SecretKey, cancellationToken) },
                 { "AWS_DEFAULT_REGION", region },
                 { "TF_VAR_tests_source_dir", testFolder }
             };
@@ -326,7 +327,7 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        public void UsingEc2Instance()
+        public async Task UsingEc2Instance()
         {
             var terraformWorkingFolder = InitialiseTerraformWorkingFolder("terraform_working/EC2", "KubernetesFixtures/Terraform/EC2");
 
@@ -340,16 +341,16 @@ namespace Calamari.Tests.KubernetesFixtures
                 { "TF_VAR_aws_region", region }
             };
 
-            RunTerraformInternal(terraformWorkingFolder, env, "init");
+            await RunTerraformInternal(terraformWorkingFolder, env, "init");
             try
             {
                 // The actual tests are run via EC2/test.sh which executes the tests in
                 // KubernetesContextScriptWrapperLiveFixtureForAmazon.cs
-                RunTerraformInternal(terraformWorkingFolder, env, "apply", "-auto-approve");
+                await RunTerraformInternal(terraformWorkingFolder, env, "apply", "-auto-approve");
             }
             finally
             {
-                RunTerraformDestroy(terraformWorkingFolder, env);
+                await RunTerraformDestroy(terraformWorkingFolder, env);
             }
         }
 

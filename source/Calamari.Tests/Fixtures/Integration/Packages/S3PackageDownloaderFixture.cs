@@ -96,8 +96,8 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
                                                      version,
                                                      "s3-feed",
                                                      new Uri("https://please-ignore.com"),
-                                                     ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3AccessKey),
-                                                     ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3SecretKey),
+                                                     await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3AccessKey, CancellationToken.None),
+                                                     await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3SecretKey, CancellationToken.None),
                                                      true,
                                                      3,
                                                      TimeSpan.FromSeconds(3));
@@ -109,8 +109,8 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         protected async Task Validate(Func<AmazonS3Client, Task> execute)
         {
             var credentials = new BasicAWSCredentials(
-                                                      ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3AccessKey),
-                                                      ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3SecretKey));
+                                                      await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3AccessKey, CancellationToken.None),
+                                                      await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3SecretKey, CancellationToken.None));
 
             var config = new AmazonS3Config {AllowAutoRedirect = true, RegionEndpoint = RegionEndpoint.GetBySystemName(region)};
             

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing;
@@ -42,13 +43,13 @@ namespace Calamari.Tests.KubernetesFixtures
             await installTools.Install();
             await InstallOptionalTools(installTools);
         
-            InitialiseInfrastructure(terraformWorkingFolder);
+            await InitialiseInfrastructure(terraformWorkingFolder);
         }
 
         [OneTimeTearDown]
-        public void TearDownInfrastructure()
+        public async Task TearDownInfrastructure()
         {
-            RunTerraformDestroy(terraformWorkingFolder);
+            await RunTerraformDestroy(terraformWorkingFolder);
         }
 
         [SetUp]
@@ -83,41 +84,41 @@ namespace Calamari.Tests.KubernetesFixtures
 
         protected abstract void ExtractVariablesFromTerraformOutput(JObject jsonOutput);
 
-        void InitialiseInfrastructure(string terraformWorkingFolder)
+        async Task InitialiseInfrastructure(string terraformWorkingFolder)
         {
-            RunTerraformInternal(terraformWorkingFolder, "init");
-            RunTerraformInternal(terraformWorkingFolder, "apply", "-auto-approve");
-            var jsonOutput = JObject.Parse(RunTerraformOutput(terraformWorkingFolder));
+            await RunTerraformInternal(terraformWorkingFolder, "init");
+            await RunTerraformInternal(terraformWorkingFolder, "apply", "-auto-approve");
+            var jsonOutput = JObject.Parse(await RunTerraformOutput(terraformWorkingFolder));
         
             ExtractVariablesFromTerraformOutput(jsonOutput);
         }
 
-        protected void RunTerraformDestroy(string terraformWorkingFolder, Dictionary<string, string> env = null)
+        protected async Task RunTerraformDestroy(string terraformWorkingFolder, Dictionary<string, string> env = null)
         {
-            RunTerraformInternal(terraformWorkingFolder, env ?? new Dictionary<string, string>(), "destroy", "-auto-approve");
+            await RunTerraformInternal(terraformWorkingFolder, env ?? new Dictionary<string, string>(), "destroy", "-auto-approve");
         }
         
-        string RunTerraformOutput(string terraformWorkingFolder)
+        async Task<string> RunTerraformOutput(string terraformWorkingFolder)
         {
-            return RunTerraformInternal(terraformWorkingFolder, new Dictionary<string, string>(), false, "output", "-json");
+            return await RunTerraformInternal(terraformWorkingFolder, new Dictionary<string, string>(), false, "output", "-json");
         }
         
-        string RunTerraformInternal(string terraformWorkingFolder, params string[] args)
+        async Task<string> RunTerraformInternal(string terraformWorkingFolder, params string[] args)
         {
-            return RunTerraformInternal(terraformWorkingFolder, new Dictionary<string, string>(), args);
+            return await RunTerraformInternal(terraformWorkingFolder, new Dictionary<string, string>(), args);
         }
         
-        protected string RunTerraformInternal(string terraformWorkingFolder, Dictionary<string, string> env, params string[] args)
+        protected async Task<string> RunTerraformInternal(string terraformWorkingFolder, Dictionary<string, string> env, params string[] args)
         {
-            return RunTerraformInternal(terraformWorkingFolder, env, true, args);
+            return await RunTerraformInternal(terraformWorkingFolder, env, true, args);
         }
 
-        protected abstract Dictionary<string, string> GetEnvironmentVars();
+        protected abstract Task<Dictionary<string, string>> GetEnvironmentVars(CancellationToken cancellationToken);
 
-        string RunTerraformInternal(string terraformWorkingFolder, Dictionary<string, string> env, bool printOut, params string[] args)
+        async Task<string> RunTerraformInternal(string terraformWorkingFolder, Dictionary<string, string> env, bool printOut, params string[] args)
         {
             var stdOut = new StringBuilder();
-            var environmentVars = GetEnvironmentVars();
+            var environmentVars = await GetEnvironmentVars(CancellationToken.None);
             environmentVars["TF_IN_AUTOMATION"] = bool.TrueString;
             environmentVars.AddRange(env);
 

@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
+using System.Threading;
 using Amazon;
 using Amazon.Runtime;
 using Amazon.S3;
@@ -85,7 +86,7 @@ namespace Calamari.Tests.AWS
                 }
             };
 
-            var prefix = Upload("Package1", fileSelections);
+            var prefix = await Upload("Package1", fileSelections);
 
             await Validate(async client =>
                            {
@@ -109,7 +110,7 @@ namespace Calamari.Tests.AWS
                 }
             };
 
-            var prefix = Upload("Package2", fileSelections);
+            var prefix = await Upload("Package2", fileSelections);
 
             await Validate(async client =>
                            {
@@ -146,7 +147,7 @@ namespace Calamari.Tests.AWS
             var variables = new CalamariVariables();
             variables.Set("Property1:Property2:Value", "InjectedValue");
 
-            var prefix = Upload("Package3", fileSelections, variables);
+            var prefix = await Upload("Package3", fileSelections, variables);
 
             await Validate(async client =>
                            {
@@ -173,7 +174,7 @@ namespace Calamari.Tests.AWS
             var variables = new CalamariVariables();
             variables.Set("Property1:Property2:Value", "InjectedValue");
 
-            var prefix = Upload("Package3", packageOptions, variables, S3TargetMode.EntirePackage);
+            var prefix = await Upload("Package3", packageOptions, variables, S3TargetMode.EntirePackage);
 
             await Validate(async client =>
                            {
@@ -186,7 +187,7 @@ namespace Calamari.Tests.AWS
         }
 
         [Test]
-        public void UploadPackageWithContentHashAppended()
+        public async Task UploadPackageWithContentHashAppended()
         {
             var packageOptions = new List<S3TargetPropertiesBase>
             {
@@ -202,7 +203,7 @@ namespace Calamari.Tests.AWS
             var variables = new CalamariVariables();
             variables.Set("Property1:Property2:Value", "InjectedValue");
 
-            Upload("Package3", packageOptions, variables, S3TargetMode.EntirePackage);
+            await Upload("Package3", packageOptions, variables, S3TargetMode.EntirePackage);
         }
 
         [Test]
@@ -225,7 +226,7 @@ namespace Calamari.Tests.AWS
             var variables = new CalamariVariables();
             variables.Set("Property1:Property2:Value", "InjectedValue");
 
-            Upload("Package3", fileSelections, variables);
+            await Upload("Package3", fileSelections, variables);
 
             await Validate(async client =>
                            {
@@ -275,7 +276,7 @@ namespace Calamari.Tests.AWS
                 }
             };
 
-            var prefix = Upload("Package1", fileSelections);
+            var prefix = await Upload("Package1", fileSelections);
 
             await Validate(async client =>
                            {
@@ -332,7 +333,7 @@ namespace Calamari.Tests.AWS
 
             var packageFilePath = TestEnvironment.GetTestPath("AWS", "S3", "CompressedPackages", fileName);
 
-            var prefix = UploadEntireCompressedPackage(packageFilePath,
+            var prefix = await UploadEntireCompressedPackage(packageFilePath,
                                                        packageId,
                                                        packageVersion,
                                                        packageOptions,
@@ -373,7 +374,7 @@ namespace Calamari.Tests.AWS
 
             var packageFilePath = TestEnvironment.GetTestPath("AWS", "S3", "CompressedPackages", fileName);
 
-            var prefix = UploadEntireCompressedPackage(packageFilePath,
+            var prefix = await UploadEntireCompressedPackage(packageFilePath,
                                                        packageId,
                                                        packageVersion,
                                                        packageOptions,
@@ -429,7 +430,7 @@ namespace Calamari.Tests.AWS
 
             var packageFilePath = TestEnvironment.GetTestPath("AWS", "S3", "CompressedPackages", fileName);
 
-            var prefix = UploadEntireCompressedPackage(packageFilePath,
+            var prefix = await UploadEntireCompressedPackage(packageFilePath,
                                                        packageId,
                                                        packageVersion,
                                                        packageOptions,
@@ -485,7 +486,7 @@ namespace Calamari.Tests.AWS
 
             var packageFilePath = TestEnvironment.GetTestPath("AWS", "S3", "CompressedPackages", fileName);
 
-            var prefix = UploadEntireCompressedPackage(packageFilePath,
+            var prefix = await UploadEntireCompressedPackage(packageFilePath,
                                                        packageId,
                                                        packageVersion,
                                                        packageOptions,
@@ -546,7 +547,7 @@ namespace Calamari.Tests.AWS
                 }
             };
 
-            var prefix = Upload("Package1", fileSelections);
+            var prefix = await Upload("Package1", fileSelections);
 
             await DoSafelyWithRetries(async () =>
                                       {
@@ -619,8 +620,8 @@ namespace Calamari.Tests.AWS
         protected async Task Validate(Func<AmazonS3Client, Task> execute)
         {
             var credentials = new BasicAWSCredentials(
-                                                      ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3AccessKey),
-                                                      ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3SecretKey));
+                                                      await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3AccessKey, CancellationToken.None),
+                                                      await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3SecretKey, CancellationToken.None));
 
             var config = new AmazonS3Config { AllowAutoRedirect = true, RegionEndpoint = RegionEndpoint.GetBySystemName(region) };
 
@@ -630,7 +631,7 @@ namespace Calamari.Tests.AWS
             }
         }
 
-        protected string Upload(string packageName, List<S3TargetPropertiesBase> propertiesList, VariableDictionary customVariables = null, S3TargetMode s3TargetMode = S3TargetMode.FileSelections)
+        protected async Task<string> Upload(string packageName, List<S3TargetPropertiesBase> propertiesList, VariableDictionary customVariables = null, S3TargetMode s3TargetMode = S3TargetMode.FileSelections)
         {
             const string packageVersion = "1.0.0";
             var bucketKeyPrefix = $"calamaritest/{Guid.NewGuid():N}/";
@@ -660,8 +661,8 @@ namespace Calamari.Tests.AWS
             var variablesFile = Path.GetTempFileName();
 
             variables.Set("Octopus.Action.AwsAccount.Variable", "AWSAccount");
-            variables.Set("AWSAccount.AccessKey", ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3AccessKey));
-            variables.Set("AWSAccount.SecretKey", ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3SecretKey));
+            variables.Set("AWSAccount.AccessKey", await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3AccessKey, CancellationToken.None));
+            variables.Set("AWSAccount.SecretKey", await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3SecretKey, CancellationToken.None));
             variables.Set("Octopus.Action.Aws.Region", region);
 
             if (customVariables != null) variables.Merge(customVariables);
@@ -707,7 +708,7 @@ namespace Calamari.Tests.AWS
             return bucketKeyPrefix;
         }
 
-        protected string UploadEntireCompressedPackage(string packageFilePath,
+        protected async Task<string> UploadEntireCompressedPackage(string packageFilePath,
                                                        string packageId,
                                                        string packageVersion,
                                                        List<S3PackageOptions> propertiesList,
@@ -727,8 +728,8 @@ namespace Calamari.Tests.AWS
             var variablesFile = Path.GetTempFileName();
 
             variables.Set("Octopus.Action.AwsAccount.Variable", "AWSAccount");
-            variables.Set("AWSAccount.AccessKey", ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3AccessKey));
-            variables.Set("AWSAccount.SecretKey", ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3SecretKey));
+            variables.Set("AWSAccount.AccessKey", await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3AccessKey, CancellationToken.None));
+            variables.Set("AWSAccount.SecretKey", await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3SecretKey, CancellationToken.None));
             variables.Set("Octopus.Action.Aws.Region", region);
 
             if (customVariables != null) variables.Merge(customVariables);

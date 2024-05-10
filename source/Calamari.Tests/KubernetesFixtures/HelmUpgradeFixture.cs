@@ -3,6 +3,7 @@ using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Calamari.Common.Features.Deployment;
 using Calamari.Common.Features.Packages;
@@ -28,9 +29,9 @@ namespace Calamari.Tests.KubernetesFixtures
 {
     public abstract class HelmUpgradeFixture : CalamariFixture
     {
-        static readonly string ServerUrl = ExternalVariables.Get(ExternalVariable.KubernetesClusterUrl);
+        static string ServerUrl;
 
-        static readonly string ClusterToken = ExternalVariables.Get(ExternalVariable.KubernetesClusterToken);
+        static string ClusterToken;
 
         ICalamariFileSystem FileSystem { get; set; }
         protected IVariables Variables { get; set; }
@@ -49,6 +50,9 @@ namespace Calamari.Tests.KubernetesFixtures
         [OneTimeSetUp]
         public async Task OneTimeSetUp()
         {
+            ServerUrl = await ExternalVariables.Get(ExternalVariable.KubernetesClusterUrl, CancellationToken.None);
+            ClusterToken = await ExternalVariables.Get(ExternalVariable.KubernetesClusterToken, CancellationToken.None);
+            
             if (ExplicitExeVersion != null)
             {
                 await DownloadExplicitHelmExecutable();

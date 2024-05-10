@@ -5,6 +5,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Assent;
 using Calamari.Aws.Integration;
@@ -277,7 +278,7 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set(SpecialVariables.GkeClusterName, "gke-cluster-name");
             var account = "gke_account";
             variables.Set("Octopus.Action.GoogleCloudAccount.Variable", account);
-            var jsonKey = ExternalVariables.Get(ExternalVariable.GoogleCloudJsonKeyfile);
+            var jsonKey = await ExternalVariables.Get(ExternalVariable.GoogleCloudJsonKeyfile, CancellationToken.None);
             variables.Set($"{account}.JsonKey", Convert.ToBase64String(Encoding.UTF8.GetBytes(jsonKey)));
             variables.Set("Octopus.Action.GoogleCloud.Project", "gke-project");
             variables.Set("Octopus.Action.GoogleCloud.Zone", "gke-zone");
@@ -296,7 +297,7 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set(SpecialVariables.GkeClusterName, "gke-cluster-name");
             var account = "gke_account";
             variables.Set("Octopus.Action.GoogleCloudAccount.Variable", account);
-            var jsonKey = ExternalVariables.Get(ExternalVariable.GoogleCloudJsonKeyfile);
+            var jsonKey = await ExternalVariables.Get(ExternalVariable.GoogleCloudJsonKeyfile, CancellationToken.None);
             variables.Set($"{account}.JsonKey", Convert.ToBase64String(Encoding.UTF8.GetBytes(jsonKey)));
             variables.Set("Octopus.Action.GoogleCloud.Project", "gke-project");
             variables.Set("Octopus.Action.GoogleCloud.Region", "gke-region");
@@ -315,7 +316,7 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set(SpecialVariables.GkeClusterName, "gke-cluster-name");
             var account = "gke_account";
             variables.Set("Octopus.Action.GoogleCloudAccount.Variable", account);
-            var jsonKey = ExternalVariables.Get(ExternalVariable.GoogleCloudJsonKeyfile);
+            var jsonKey = await ExternalVariables.Get(ExternalVariable.GoogleCloudJsonKeyfile, CancellationToken.None);
             variables.Set($"{account}.JsonKey", Convert.ToBase64String(Encoding.UTF8.GetBytes(jsonKey)));
             variables.Set("Octopus.Action.GoogleCloud.Project", "gke-project");
             variables.Set("Octopus.Action.GoogleCloud.Region", "gke-region");
@@ -327,13 +328,13 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         [WindowsTest] // This test requires the GKE GCloud Auth plugin. Currently only configured to install on Windows
         [RequiresNonMono] // as Mac and Linux installation requires Distro specific tooling
-        public void ExecutionWithGoogleCloudAccount_WhenNeitherZoneOrRegionAreProvided()
+        public async Task ExecutionWithGoogleCloudAccount_WhenNeitherZoneOrRegionAreProvided()
         {
             variables.Set(Deployment.SpecialVariables.Account.AccountType, "GoogleCloudAccount");
             variables.Set(SpecialVariables.GkeClusterName, "gke-cluster-name");
             var account = "gke_account";
             variables.Set("Octopus.Action.GoogleCloudAccount.Variable", account);
-            var jsonKey = ExternalVariables.Get(ExternalVariable.GoogleCloudJsonKeyfile);
+            var jsonKey = await ExternalVariables.Get(ExternalVariable.GoogleCloudJsonKeyfile, CancellationToken.None);
             variables.Set($"{account}.JsonKey", Convert.ToBase64String(Encoding.UTF8.GetBytes(jsonKey)));
             variables.Set("Octopus.Action.GoogleCloud.Project", "gke-project");
             var wrapper = CreateWrapper();

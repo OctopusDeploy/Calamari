@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using Azure;
 using Azure.Core;
@@ -53,10 +54,10 @@ namespace Calamari.AzureAppService.Tests
 
             ResourceGroupName = $"{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid():N}";
 
-            ClientId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId);
-            ClientSecret = ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword);
-            TenantId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId);
-            SubscriptionId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionId);
+            ClientId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId, CancellationToken.None);
+            ClientSecret = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword, CancellationToken.None);
+            TenantId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId, CancellationToken.None);
+            SubscriptionId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionId, CancellationToken.None);
             ResourceGroupLocation = Environment.GetEnvironmentVariable("AZURE_NEW_RESOURCE_REGION") ?? DefaultResourceGroupLocation;
 
             var servicePrincipalAccount = new AzureServicePrincipalAccount(SubscriptionId,

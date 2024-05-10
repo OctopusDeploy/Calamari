@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 using Amazon.CloudFormation;
 using Amazon.Runtime;
@@ -90,8 +91,8 @@ namespace Calamari.Tests.AWS.CloudFormation
 
         async Task ValidateS3(Func<AmazonS3Client, Task> execute)
         {
-            var credentials = new BasicAWSCredentials(ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3AccessKey),
-                                                      ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3SecretKey));
+            var credentials = new BasicAWSCredentials(await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3AccessKey, CancellationToken.None),
+                                                      await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3SecretKey, CancellationToken.None));
 
             var config = new AmazonS3Config { AllowAutoRedirect = true, RegionEndpoint = RegionEndpoint.GetBySystemName(region) };
             using (var client = new AmazonS3Client(credentials, config))
@@ -122,8 +123,8 @@ namespace Calamari.Tests.AWS.CloudFormation
         
         async Task ValidateCloudFormation(Func<AmazonCloudFormationClient, Task> execute)
         {
-            var credentials = new BasicAWSCredentials(ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3AccessKey),
-                                                      ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3SecretKey));
+            var credentials = new BasicAWSCredentials(await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3AccessKey, CancellationToken.None),
+                                                      await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3SecretKey, CancellationToken.None));
 
             var config = new AmazonCloudFormationConfig { AllowAutoRedirect = true, RegionEndpoint = RegionEndpoint.GetBySystemName(region) };
             using (var client = new AmazonCloudFormationClient(credentials, config))
@@ -132,12 +133,12 @@ namespace Calamari.Tests.AWS.CloudFormation
             }
         }
 
-        public void DeployTemplate(string resourceName, string templateFilePath, IVariables variables)
+        public async Task DeployTemplate(string resourceName, string templateFilePath, IVariables variables)
         {
             var variablesFile = Path.GetTempFileName();
             variables.Set("Octopus.Action.AwsAccount.Variable", "AWSAccount");
-            variables.Set("AWSAccount.AccessKey", ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3AccessKey));
-            variables.Set("AWSAccount.SecretKey", ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3SecretKey));
+            variables.Set("AWSAccount.AccessKey", await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3AccessKey, CancellationToken.None));
+            variables.Set("AWSAccount.SecretKey", await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3SecretKey, CancellationToken.None));
             variables.Set("Octopus.Action.Aws.Region", region);
             variables.Save(variablesFile);
 
@@ -171,12 +172,12 @@ namespace Calamari.Tests.AWS.CloudFormation
             }
         }
 
-        public void DeployTemplateS3(string resourceName, IVariables variables)
+        public async Task DeployTemplateS3(string resourceName, IVariables variables)
         {
             var variablesFile = Path.GetTempFileName();
             variables.Set("Octopus.Action.AwsAccount.Variable", "AWSAccount");
-            variables.Set("AWSAccount.AccessKey", ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3AccessKey));
-            variables.Set("AWSAccount.SecretKey", ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3SecretKey));
+            variables.Set("AWSAccount.AccessKey", await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3AccessKey, CancellationToken.None));
+            variables.Set("AWSAccount.SecretKey", await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3SecretKey, CancellationToken.None));
             variables.Set("Octopus.Action.Aws.Region", "us-east-1");
             variables.Save(variablesFile);
 
@@ -208,11 +209,11 @@ namespace Calamari.Tests.AWS.CloudFormation
             }
         }
 
-        public void CleanupStack(string stackName)
+        public async Task CleanupStack(string stackName)
         {
             try
             {
-                DeleteStack(stackName);
+                await DeleteStack(stackName);
             }
             catch (Exception e)
             {
@@ -221,13 +222,13 @@ namespace Calamari.Tests.AWS.CloudFormation
             }
         }
 
-        public void DeleteStack(string stackName)
+        public async Task DeleteStack(string stackName)
         {
             var variablesFile = Path.GetTempFileName();
             var variables = new CalamariVariables();
             variables.Set("Octopus.Action.AwsAccount.Variable", "AWSAccount");
-            variables.Set("AWSAccount.AccessKey", ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3AccessKey));
-            variables.Set("AWSAccount.SecretKey", ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3SecretKey));
+            variables.Set("AWSAccount.AccessKey", await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3AccessKey, CancellationToken.None));
+            variables.Set("AWSAccount.SecretKey", await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3SecretKey, CancellationToken.None));
             variables.Set("Octopus.Action.Aws.Region", region);
             variables.Set(AwsSpecialVariables.CloudFormation.StackName, stackName);
             variables.Save(variablesFile);

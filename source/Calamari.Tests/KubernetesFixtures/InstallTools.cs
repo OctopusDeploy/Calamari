@@ -5,6 +5,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing;
@@ -108,7 +109,7 @@ namespace Calamari.Tests.KubernetesFixtures
                                                                {
                                                                    string requiredVersion = "v0.5.9";
                                                                    client.DefaultRequestHeaders.Add("User-Agent", "Octopus");
-                                                                   client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Token", ExternalVariables.Get(ExternalVariable.GitHubRateLimitingPersonalAccessToken));
+                                                                   client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Token", await ExternalVariables.Get(ExternalVariable.GitHubRateLimitingPersonalAccessToken, CancellationToken.None));
                                                                    var json = await client.GetAsync(
                                                                                                     $"https://api.github.com/repos/kubernetes-sigs/aws-iam-authenticator/releases/tags/{requiredVersion}");
                                                                    json.EnsureSuccessStatusCode();

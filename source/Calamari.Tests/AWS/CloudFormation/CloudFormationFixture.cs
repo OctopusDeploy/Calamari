@@ -33,7 +33,7 @@ namespace Calamari.Tests.AWS.CloudFormation
 
             try
             {
-                cloudFormationFixtureHelpers.DeployTemplate(stackName, templateFilePath, CreateStackVariables(isChangesetEnabled));
+                await cloudFormationFixtureHelpers.DeployTemplate(stackName, templateFilePath, CreateStackVariables(isChangesetEnabled));
 
                 await cloudFormationFixtureHelpers.ValidateStackExists(stackName, true);
                 await cloudFormationFixtureHelpers.ValidateStackTags(stackName, StackTags);
@@ -41,7 +41,7 @@ namespace Calamari.Tests.AWS.CloudFormation
             }
             finally
             {
-                cloudFormationFixtureHelpers.CleanupStack(stackName);
+                await cloudFormationFixtureHelpers.CleanupStack(stackName);
             }
         }
 
@@ -53,14 +53,14 @@ namespace Calamari.Tests.AWS.CloudFormation
 
             try
             {
-                cloudFormationFixtureHelpers.DeployTemplateS3(stackName, CreateStackVariables(false));
+                await cloudFormationFixtureHelpers.DeployTemplateS3(stackName, CreateStackVariables(false));
 
                 await cloudFormationFixtureHelpers.ValidateStackExists(stackName, true);
                 await cloudFormationFixtureHelpers.ValidateStackTags(stackName, StackTags);
             }
             finally
             {
-                cloudFormationFixtureHelpers.CleanupStack(stackName);
+                await cloudFormationFixtureHelpers.CleanupStack(stackName);
             }
         }
 
@@ -71,8 +71,8 @@ namespace Calamari.Tests.AWS.CloudFormation
             var stackName = GenerateStackName();
             var templateFilePath = cloudFormationFixtureHelpers.WriteTemplateFile(CloudFormationFixtureHelpers.GetBasicS3Template(stackName));
 
-            cloudFormationFixtureHelpers.DeployTemplate(stackName, templateFilePath, new CalamariVariables());
-            cloudFormationFixtureHelpers.DeleteStack(stackName);
+            await cloudFormationFixtureHelpers.DeployTemplate(stackName, templateFilePath, new CalamariVariables());
+            await cloudFormationFixtureHelpers.DeleteStack(stackName);
             await cloudFormationFixtureHelpers.ValidateStackExists(stackName, false);
         }
 
