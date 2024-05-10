@@ -20,31 +20,31 @@ namespace Calamari.Testing
         [EnvironmentVariable("Azure_OctopusAPITester_Password", "op://Calamari Secrets for Tests/Azure - OctopusApiTester/password")]
         AzureSubscriptionPassword,
 
-        [EnvironmentVariable("Azure_OctopusAPITester_ClientId",  "op://Calamari Secrets for Tests/Azure - OctopusApiTester/client application id")]
+        [EnvironmentVariable("Azure_OctopusAPITester_ClientId", "op://Calamari Secrets for Tests/Azure - OctopusApiTester/client application id")]
         AzureSubscriptionClientId,
 
-        [EnvironmentVariable("Azure_OctopusAPITester_Certificate",  "op://Calamari Secrets for Tests/Azure - OctopusApiTester/thumbprint")]
+        [EnvironmentVariable("Azure_OctopusAPITester_Certificate", "op://Calamari Secrets for Tests/Azure - OctopusApiTester/thumbprint")]
         AzureSubscriptionCertificate,
 
         [EnvironmentVariable("GitHub_OctopusAPITester_Username", "op://Calamari Secrets for Tests/GitHub Test Account/username")]
         GitHubUsername,
 
-        [EnvironmentVariable("GitHub_OctopusAPITester_Password",  "op://Calamari Secrets for Tests/GitHub Test Account/PAT")]
+        [EnvironmentVariable("GitHub_OctopusAPITester_Password", "op://Calamari Secrets for Tests/GitHub Test Account/PAT")]
         GitHubPassword,
 
-        [EnvironmentVariable("K8S_OctopusAPITester_Token",  "op://Calamari Secrets for Tests/GKS Kubernetes API Test Cluster/Token")]
+        [EnvironmentVariable("K8S_OctopusAPITester_Token", "op://Calamari Secrets for Tests/GKS Kubernetes API Test Cluster/Token")]
         KubernetesClusterToken,
 
         [EnvironmentVariable("K8S_OctopusAPITester_Server", "op://Calamari Secrets for Tests/GKS Kubernetes API Test Cluster/Server")]
         KubernetesClusterUrl,
 
-        [EnvironmentVariable("Helm_OctopusAPITester_Password",  "op://Calamari Secrets for Tests/Artifactory e2e-reader Test Account/Server")]
+        [EnvironmentVariable("Helm_OctopusAPITester_Password", "op://Calamari Secrets for Tests/Artifactory e2e-reader Test Account/Server")]
         HelmPassword,
 
-        [EnvironmentVariable("Artifactory_Admin_PAT",  "op://Calamari Secrets for Tests/Artifactory Admin PAT/PAT")]
+        [EnvironmentVariable("Artifactory_Admin_PAT", "op://Calamari Secrets for Tests/Artifactory Admin PAT/PAT")]
         ArtifactoryE2EPassword,
 
-        [EnvironmentVariable("DockerHub_TestReaderAccount_Password",  "op://Calamari Secrets for Tests/DockerHub Test Reader Account/password")]
+        [EnvironmentVariable("DockerHub_TestReaderAccount_Password", "op://Calamari Secrets for Tests/DockerHub Test Reader Account/password")]
         DockerReaderPassword,
 
         [EnvironmentVariable("AWS_E2E_AccessKeyId", "op://Calamari Secrets for Tests/AWS E2E Test User Keys/AccessKeyId")]
@@ -53,18 +53,18 @@ namespace Calamari.Testing
         [EnvironmentVariable("AWS_E2E_SecretKeyId", "op://Calamari Secrets for Tests/AWS E2E Test User Keys/SecretKeyId")]
         AwsCloudFormationAndS3SecretKey,
 
-        [EnvironmentVariable("CALAMARI_FEEDZV2URI", defaultValue:"https://f.feedz.io/octopus-deploy/integration-tests/nuget")]
+        [EnvironmentVariable("CALAMARI_FEEDZV2URI", defaultValue: "https://f.feedz.io/octopus-deploy/integration-tests/nuget")]
         FeedzNuGetV2FeedUrl,
 
-        [EnvironmentVariable("CALAMARI_FEEDZV3URI", defaultValue:"https://f.feedz.io/octopus-deploy/integration-tests/nuget/index.json")]
+        [EnvironmentVariable("CALAMARI_FEEDZV3URI", defaultValue: "https://f.feedz.io/octopus-deploy/integration-tests/nuget/index.json")]
         FeedzNuGetV3FeedUrl,
-        
-        [EnvironmentVariable("CALAMARI_ARTIFACTORYV2URI", defaultValue:"https://nuget.packages.octopushq.com/")]
+
+        [EnvironmentVariable("CALAMARI_ARTIFACTORYV2URI", defaultValue: "https://nuget.packages.octopushq.com/")]
         ArtifactoryNuGetV2FeedUrl,
 
-        [EnvironmentVariable("CALAMARI_ARTIFACTORYV3URI", defaultValue:"https://packages.octopushq.com/artifactory/api/nuget/v3/nuget")]
+        [EnvironmentVariable("CALAMARI_ARTIFACTORYV3URI", defaultValue: "https://packages.octopushq.com/artifactory/api/nuget/v3/nuget")]
         ArtifactoryNuGetV3FeedUrl,
-        
+
         [EnvironmentVariable("CALAMARI_AUTHURI", "op://Calamari Secrets For Test/MyGet Package Manager/website")]
         MyGetFeedUrl,
 
@@ -74,9 +74,9 @@ namespace Calamari.Testing
         [EnvironmentVariable("CALAMARI_AUTHPASSWORD", "op://Calamari Secrets For Test/MyGet Package Manager/password")]
         MyGetFeedPassword,
 
-        [EnvironmentVariable("GOOGLECLOUD_OCTOPUSAPITESTER_JSONKEY", "op://Calamari Secrets for Tests/Google Cloud Octopus Api Tester JsonKey")]
+        [EnvironmentVariable("GOOGLECLOUD_OCTOPUSAPITESTER_JSONKEY", "op://Calamari Secrets for Tests/Google Cloud Octopus Api Tester/jsonkey")]
         GoogleCloudJsonKeyfile,
-        
+
         //TODO(tmm): not sure about this one - this is a copy of the github account above.
         [EnvironmentVariable("GitHub_RateLimitingPersonalAccessToken", "op://Calamari Secrets for Tests/GitHub Test Account/PAT")]
         GitHubRateLimitingPersonalAccessToken,
@@ -85,12 +85,12 @@ namespace Calamari.Testing
     public static class ExternalVariables
     {
         static readonly Serilog.ILogger Logger = Serilog.Log.ForContext(typeof(ExternalVariables));
-        
+
         static readonly bool SecretManagerIsEnabled = Convert.ToBoolean(Environment.GetEnvironmentVariable("CALAMARI__Tests__SecretManagerEnabled") ?? "True");
         static readonly string SecretManagerAccount = Environment.GetEnvironmentVariable("CALAMARI__Tests__SecretManagerAccount") ?? "octopusdeploy.1password.com";
 
         static readonly Lazy<SecretManagerClient> SecretManagerClient = new(LoadSecretManagerClient);
-        
+
         static SecretManagerClient LoadSecretManagerClient()
         {
             var loggerFactory = new LoggerFactory();
@@ -98,10 +98,11 @@ namespace Calamari.Testing
             var microsoftLogger = loggerFactory.CreateLogger<SecretManagerClient>();
             return new SecretManagerClient(SecretManagerAccount, microsoftLogger);
         }
-        
+
         public static void LogMissingVariables()
         {
-            var missingVariables = Enum.GetValues(typeof(ExternalVariable)).Cast<ExternalVariable>()
+            var missingVariables = Enum.GetValues(typeof(ExternalVariable))
+                                       .Cast<ExternalVariable>()
                                        .Select(prop => EnvironmentVariableAttribute.Get(prop))
                                        .Where(attr => Environment.GetEnvironmentVariable(attr.Name) == null)
                                        .ToList();
@@ -109,9 +110,7 @@ namespace Calamari.Testing
             if (!missingVariables.Any())
                 return;
 
-            Log.Warn($"The following environment variables could not be found: " +
-                     $"\n{string.Join("\n", missingVariables.Select(var => $" - {var.Name}\t\tSource: {var.LastPassName}"))}" +
-                     $"\n\nTests that rely on these variables are likely to fail.");
+            Log.Warn($"The following environment variables could not be found: " + $"\n{string.Join("\n", missingVariables.Select(var => $" - {var.Name}\t\tSource: {var.LastPassName}"))}" + $"\n\nTests that rely on these variables are likely to fail.");
         }
 
         public static async Task<string> Get(ExternalVariable property, CancellationToken cancellationToken)
@@ -127,7 +126,7 @@ namespace Calamari.Testing
             {
                 return valueFromEnv;
             }
-            
+
             if (SecretManagerIsEnabled)
             {
                 var valueFromSecretManager = string.IsNullOrEmpty(attr.SecretReference)
@@ -137,9 +136,13 @@ namespace Calamari.Testing
                 {
                     return valueFromSecretManager;
                 }
+
+                throw new Exception($"Unable to locate {attr.Name} as an environment variable, nor does its secretReference exist in the Octopus Secret Manager (1Password).");
             }
 
-            return attr.DefaultValue ?? throw new Exception($"Unable to find `{attr.Name}` as either an Environment Variable, or a SecretReference. The value can be found in the password store under `{attr.LastPassName}`");
+            return attr.DefaultValue
+                   ?? throw new Exception($"Unable to locate {attr.Name} as an environment variable, the Secret Manager integrations is not currently enabled (enable via env var CALAMARI__Tests__SecretManagerEnabled), "
+                                          + $"and no default value specified.");
         }
     }
 
@@ -149,7 +152,7 @@ namespace Calamari.Testing
         public string Name { get; }
         public string? SecretReference { get; }
         public string? DefaultValue { get; }
-        
+
         public EnvironmentVariableAttribute(string name, string? secretReference = null, string? defaultValue = null)
         {
             Name = name;

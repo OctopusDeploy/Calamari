@@ -86,7 +86,7 @@ namespace Calamari.Tests.AWS
                 }
             };
 
-            var prefix = Upload("Package1", fileSelections);
+            var prefix = await Upload("Package1", fileSelections);
 
             await Validate(async client =>
                            {
@@ -110,7 +110,7 @@ namespace Calamari.Tests.AWS
                 }
             };
 
-            var prefix = Upload("Package2", fileSelections);
+            var prefix = await Upload("Package2", fileSelections);
 
             await Validate(async client =>
                            {
@@ -147,7 +147,7 @@ namespace Calamari.Tests.AWS
             var variables = new CalamariVariables();
             variables.Set("Property1:Property2:Value", "InjectedValue");
 
-            var prefix = Upload("Package3", fileSelections, variables);
+            var prefix = await Upload("Package3", fileSelections, variables);
 
             await Validate(async client =>
                            {
@@ -174,7 +174,7 @@ namespace Calamari.Tests.AWS
             var variables = new CalamariVariables();
             variables.Set("Property1:Property2:Value", "InjectedValue");
 
-            var prefix = Upload("Package3", packageOptions, variables, S3TargetMode.EntirePackage);
+            var prefix = await Upload("Package3", packageOptions, variables, S3TargetMode.EntirePackage);
 
             await Validate(async client =>
                            {
@@ -276,7 +276,7 @@ namespace Calamari.Tests.AWS
                 }
             };
 
-            var prefix = Upload("Package1", fileSelections);
+            var prefix = await Upload("Package1", fileSelections);
 
             await Validate(async client =>
                            {
@@ -547,7 +547,7 @@ namespace Calamari.Tests.AWS
                 }
             };
 
-            var prefix = Upload("Package1", fileSelections);
+            var prefix = await Upload("Package1", fileSelections);
 
             await DoSafelyWithRetries(async () =>
                                       {
