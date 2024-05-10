@@ -9,6 +9,7 @@ using Calamari.Common.Features.EmbeddedResources;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
@@ -49,6 +50,7 @@ namespace Calamari.AzureScripting
             var workingDirectory = Path.GetDirectoryName(script.File)!;
             variables.Set("OctopusAzureTargetScript", script.File);
             variables.Set("OctopusAzureTargetScriptParameters", script.Parameters);
+            variables.Set("OctopusAzureRmIsDeprecated", FeatureToggle.AzureRMDeprecationFeatureToggle.IsEnabled(variables).ToString());
 
             SetOutputVariable("OctopusAzureSubscriptionId", variables.Get(SpecialVariables.Action.Azure.SubscriptionId)!);
             SetOutputVariable("OctopusAzureStorageAccountName", variables.Get(SpecialVariables.Action.Azure.StorageAccountName)!);
