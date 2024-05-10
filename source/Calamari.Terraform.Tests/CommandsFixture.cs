@@ -7,6 +7,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Calamari.CloudAccounts;
 using Calamari.Common.Features.Processes;
@@ -511,12 +512,12 @@ namespace Calamari.Terraform.Tests
             using var temporaryFolder = TemporaryDirectory.Create();
             CopyAllFiles(TestEnvironment.GetTestPath("Azure"), temporaryFolder.DirectoryPath);
 
-            void PopulateVariables(CommandTestBuilderContext _)
+            async Task PopulateVariables(CommandTestBuilderContext _)
             {
-                _.Variables.Add(AzureAccountVariables.SubscriptionId, ExternalVariables.Get(ExternalVariable.AzureSubscriptionId));
-                _.Variables.Add(AzureAccountVariables.TenantId, ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId));
-                _.Variables.Add(AzureAccountVariables.ClientId, ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId));
-                _.Variables.Add(AzureAccountVariables.Password, ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword));
+                _.Variables.Add(AzureAccountVariables.SubscriptionId, await ExternalVariables.Get(ExternalVariable.AzureSubscriptionId, CancellationToken.None));
+                _.Variables.Add(AzureAccountVariables.TenantId, await ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId, CancellationToken.None));
+                _.Variables.Add(AzureAccountVariables.ClientId, await ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId, CancellationToken.None));
+                _.Variables.Add(AzureAccountVariables.Password, await ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword, CancellationToken.None));
                 _.Variables.Add("app_name", appName);
                 _.Variables.Add("random", random);
                 _.Variables.Add(TerraformSpecialVariables.Action.Terraform.VarFiles, "example.tfvars");
@@ -584,11 +585,11 @@ namespace Calamari.Terraform.Tests
             using var temporaryFolder = TemporaryDirectory.Create();
             CopyAllFiles(TestEnvironment.GetTestPath("AWS"), temporaryFolder.DirectoryPath);
 
-            void PopulateVariables(CommandTestBuilderContext _)
+            async Task PopulateVariables(CommandTestBuilderContext _)
             {
                 _.Variables.Add(TerraformSpecialVariables.Action.Terraform.FileSubstitution, "test.txt");
-                _.Variables.Add("Octopus.Action.Amazon.AccessKey", ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3AccessKey));
-                _.Variables.Add("Octopus.Action.Amazon.SecretKey", ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3SecretKey));
+                _.Variables.Add("Octopus.Action.Amazon.AccessKey", await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3AccessKey, CancellationToken.None));
+                _.Variables.Add("Octopus.Action.Amazon.SecretKey", await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3SecretKey, CancellationToken.None));
                 _.Variables.Add("Octopus.Action.Aws.Region", "ap-southeast-1");
                 _.Variables.Add("Hello", "Hello World from AWS");
                 _.Variables.Add("bucket_name", bucketName);
@@ -828,10 +829,35 @@ output ""config-map-aws-auth"" {{
                                          string folderName,
                                          Action<TestCalamariCommandResult>? assert = null)
         {
+            Func<CommandTestBuilderContext, Task> wrappedAction = context =>
+                                                                  {
+                                                                      populateVariables(context);
+                                                                      return Task.CompletedTask;
+                                                                  };
+            
+            return ExecuteAndReturnLogOutput(command, wrappedAction, folderName, assert);
+        }
+        
+        string ExecuteAndReturnLogOutput(string command,
+                                         Func<CommandTestBuilderContext, Task> populateVariables,
+                                         string folderName,
+                                         Action<TestCalamariCommandResult>? assert = null)
+        {
             return ExecuteAndReturnResult(command, populateVariables, folderName, assert).Result.FullLog;
         }
+        
 
         async Task<TestCalamariCommandResult> ExecuteAndReturnResult(string command, Action<CommandTestBuilderContext> populateVariables, string folderName, Action<TestCalamariCommandResult>? assert = null)
+        {
+            Func<CommandTestBuilderContext, Task> wrappedAction = context =>
+                                                         {
+                                                             populateVariables(context);
+                                                             return Task.CompletedTask;
+                                                         };
+            return await ExecuteAndReturnResult(command, wrappedAction, folderName, assert);
+        }
+        
+        async Task<TestCalamariCommandResult> ExecuteAndReturnResult(string command, Func<CommandTestBuilderContext, Task> populateVariables, string folderName, Action<TestCalamariCommandResult>? assert = null)
         {
             var assertResult = assert ?? (_ => { });
 
@@ -848,7 +874,11 @@ output ""config-map-aws-auth"" {{
                                                                   context.Variables.Add(TerraformSpecialVariables.Action.Terraform.CustomTerraformExecutable,
                                                                                         customTerraformExecutable);
 
-                                                                  populateVariables(context);
+                                                                  var task = populateVariables(context);
+                                                                  if (!task.IsCompleted)
+                                                                  {
+                                                                      task.RunSynchronously();
+                                                                  }
 
                                                                   var isInline = context.Variables.Get(ScriptVariables.ScriptSource)!
                                                                                         .Equals(ScriptVariables.ScriptSourceOptions.Inline, StringComparison.InvariantCultureIgnoreCase);

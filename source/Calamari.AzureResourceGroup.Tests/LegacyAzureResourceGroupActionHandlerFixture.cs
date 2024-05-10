@@ -1,4 +1,5 @@
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 using Calamari.Common.Features.Deployment;
 using Calamari.Common.Features.Scripts;
@@ -29,10 +30,10 @@ namespace Calamari.AzureResourceGroup.Tests
         [OneTimeSetUp]
         public async Task Setup()
         {
-            clientId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId);
-            clientSecret = ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword);
-            tenantId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId);
-            subscriptionId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionId);
+            clientId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId, CancellationToken.None);
+            clientSecret = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword, CancellationToken.None);
+            tenantId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId, CancellationToken.None);
+            subscriptionId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionId, CancellationToken.None);
 
             var resourceGroupName = SdkContext.RandomResourceName(nameof(LegacyAzureResourceGroupActionHandlerFixture), 60);
 

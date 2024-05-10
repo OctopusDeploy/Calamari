@@ -20,6 +20,7 @@ using Calamari.Common.Commands;
 using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Variables;
@@ -33,7 +34,7 @@ namespace Calamari.AzureAppService.Behaviors
     internal class AzureAppServiceZipDeployBehaviour : IDeployBehaviour
     {
         static readonly TimeSpan PollingTimeout = TimeSpan.FromMinutes(3);
-        static readonly TimeoutPolicy<HttpResponseMessage> AsyncZipDeployTimeoutPolicy = Policy.TimeoutAsync<HttpResponseMessage>(PollingTimeout, TimeoutStrategy.Optimistic);
+        static readonly AsyncTimeoutPolicy<HttpResponseMessage> AsyncZipDeployTimeoutPolicy = Policy.TimeoutAsync<HttpResponseMessage>(PollingTimeout, TimeoutStrategy.Optimistic);
         static readonly ICalamariFileSystem CalamariFileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
         
         public AzureAppServiceZipDeployBehaviour(ILog log)
@@ -105,12 +106,12 @@ namespace Calamari.AzureAppService.Behaviors
             var packageFileInfo = new FileInfo(variables.Get(TentacleVariables.CurrentDeployment.PackageFilePath)!);
 
             IPackageProvider packageProvider = packageFileInfo.Extension switch
-                                  {
-                                      ".zip" => new ZipPackageProvider(),
-                                      ".nupkg" => new NugetPackageProvider(),
-                                      ".war" => new WarPackageProvider(Log, variables, context),
-                                      _ => throw new Exception("Unsupported archive type")
-                                  };
+                                               {
+                                                   ".zip" => new ZipPackageProvider(),
+                                                   ".nupkg" => new NugetPackageProvider(),
+                                                   ".war" => new WarPackageProvider(Log, variables, context),
+                                                   _ => throw new Exception("Unsupported archive type")
+                                               };
 
             // Let's process our archive while the slot is spun up. We will await it later before we try to upload to it.
             Task<WebSiteSlotResource>? slotCreateTask = null;
@@ -310,7 +311,7 @@ namespace Calamari.AzureAppService.Behaviors
                                                                                   {
                                                                                       //the outer policy should only retry when the response is a 202
                                                                                       return await RetryPolicies.AsynchronousZipDeploymentOperationPolicy
-                                                                                                                .ExecuteAsync(async ct1 =>
+                                                                                                                .ExecuteAsync(async (_, ct1) =>
                                                                                                                                   //we nest this policy so any transient errors are handled and retried. If it just keeps falling over, then we want it to bail out of the outer operation
                                                                                                                                   await RetryPolicies.TransientHttpErrorsPolicy
                                                                                                                                                      .ExecuteAsync(async ct2 =>
@@ -330,11 +331,10 @@ namespace Calamari.AzureAppService.Behaviors
                                                                                                                                                                    },
                                                                                                                                                                    ct1),
                                                                                                                               //pass the logger so we can log the retries
-                                                                                                                              new Context(Guid.NewGuid().ToString(),
-                                                                                                                                          new Dictionary<string, object>
-                                                                                                                                          {
-                                                                                                                                              [nameof(RetryPolicies.ContextKeys.Log)] = Log
-                                                                                                                                          }),
+                                                                                                                              new Dictionary<string, object>
+                                                                                                                              {
+                                                                                                                                  [nameof(RetryPolicies.ContextKeys.Log)] = Log
+                                                                                                                              },
                                                                                                                               timeoutCancellationToken);
                                                                                   },
                                                                                   CancellationToken.None);

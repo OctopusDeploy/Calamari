@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
@@ -23,16 +25,18 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
     {
         static readonly string AuthFeedUri =   "https://octopusdeploy-docker.jfrog.io";
         static readonly string FeedUsername = "e2e-reader";
-        static readonly string FeedPassword = ExternalVariables.Get(ExternalVariable.HelmPassword);
+        static string FeedPassword;
         static readonly string Home = Path.GetTempPath();
 
         static readonly string DockerHubFeedUri = "https://index.docker.io";
         static readonly string DockerTestUsername = "octopustestaccount";
-        static readonly string DockerTestPassword = ExternalVariables.Get(ExternalVariable.DockerReaderPassword);
+        static string DockerTestPassword;
 
         [OneTimeSetUp]
-        public void TestFixtureSetUp()
+        public async Task TestFixtureSetUp()
         {
+            FeedPassword = await ExternalVariables.Get(ExternalVariable.HelmPassword, CancellationToken.None);
+            DockerTestPassword = await ExternalVariables.Get(ExternalVariable.DockerReaderPassword, CancellationToken.None);
             Environment.SetEnvironmentVariable("TentacleHome", Home);
         }
 

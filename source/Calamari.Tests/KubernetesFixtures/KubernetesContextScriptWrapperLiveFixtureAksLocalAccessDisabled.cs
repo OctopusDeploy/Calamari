@@ -1,6 +1,7 @@
 #if NETCORE
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Calamari.Azure;
 using Calamari.CloudAccounts;
@@ -42,17 +43,17 @@ namespace Calamari.Tests.KubernetesFixtures
             azurermResourceGroup = jsonOutput.Get<string>("aks_rg_name", "value");
         }
 
-        protected override Dictionary<string, string> GetEnvironmentVars()
+        protected override async Task<Dictionary<string, string>> GetEnvironmentVars(CancellationToken cancellationToken)
         {
-            azureSubscriptionId = ExternalVariables.Get(ExternalVariable.AzureSubscriptionId);
+            azureSubscriptionId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionId, cancellationToken);
             return new Dictionary<string, string>()
             {
                 { "ARM_SUBSCRIPTION_ID", azureSubscriptionId },
-                { "ARM_CLIENT_ID", ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId) },
-                { "ARM_CLIENT_SECRET", ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword) },
-                { "ARM_TENANT_ID", ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId) },
-                { "TF_VAR_aks_client_id", ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId) },
-                { "TF_VAR_aks_client_secret", ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword) },
+                { "ARM_CLIENT_ID", await ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId, cancellationToken) },
+                { "ARM_CLIENT_SECRET", await ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword, cancellationToken) },
+                { "ARM_TENANT_ID", await ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId, cancellationToken) },
+                { "TF_VAR_aks_client_id", await ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId, cancellationToken) },
+                { "TF_VAR_aks_client_secret", await ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword, cancellationToken) },
                 { "TF_VAR_test_namespace", TestNamespace },
             };
         }
@@ -60,16 +61,16 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         [TestCase(true)]
         [TestCase(false)]
-        public void AuthorisingWithAzureServicePrincipal(bool runAsScript)
+        public async Task AuthorisingWithAzureServicePrincipal(bool runAsScript)
         {
             variables.Set(SpecialVariables.Account.AccountType, "AzureServicePrincipal");
             variables.Set("Octopus.Action.Kubernetes.AksClusterResourceGroup", azurermResourceGroup);
             variables.Set(Kubernetes.SpecialVariables.AksClusterName, aksClusterName);
             variables.Set("Octopus.Action.Kubernetes.AksAdminLogin", Boolean.FalseString);
-            variables.Set("Octopus.Action.Azure.SubscriptionId", ExternalVariables.Get(ExternalVariable.AzureSubscriptionId));
-            variables.Set("Octopus.Action.Azure.TenantId", ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId));
-            variables.Set("Octopus.Action.Azure.Password", ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword));
-            variables.Set("Octopus.Action.Azure.ClientId", ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId));
+            variables.Set("Octopus.Action.Azure.SubscriptionId", await ExternalVariables.Get(ExternalVariable.AzureSubscriptionId, CancellationToken.None));
+            variables.Set("Octopus.Action.Azure.TenantId", await ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId, CancellationToken.None));
+            variables.Set("Octopus.Action.Azure.Password", await ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword, CancellationToken.None));
+            variables.Set("Octopus.Action.Azure.ClientId", await ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId, CancellationToken.None));
             if (runAsScript)
             {
                 DeployWithKubectlTestScriptAndVerifyResult();
@@ -83,7 +84,7 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         [TestCase(false)]
         [TestCase(true)]
-        public void DiscoverKubernetesClusterWithAzureServicePrincipalAccount(bool setHealthCheckContainer)
+        public async Task DiscoverKubernetesClusterWithAzureServicePrincipalAccount(bool setHealthCheckContainer)
         {
             var scope = new TargetDiscoveryScope("TestSpace",
                 "Staging",
@@ -94,10 +95,10 @@ namespace Calamari.Tests.KubernetesFixtures
                 setHealthCheckContainer ? new FeedImage("MyImage:with-tag", "Feeds-123") : null);
 
             var account = new AzureServicePrincipalAccount(
-                ExternalVariables.Get(ExternalVariable.AzureSubscriptionId),
-                ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId),
-                ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId),
-                ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword),
+                await ExternalVariables.Get(ExternalVariable.AzureSubscriptionId, CancellationToken.None),
+                await ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId, CancellationToken.None),
+                await ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId, CancellationToken.None),
+                await ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword, CancellationToken.None),
                 null,
                 null,
                 null);

@@ -35,12 +35,12 @@ namespace Calamari.Tests.AWS.CloudFormation
             
             try
             {
-                cloudFormationFixtureHelpers.DeployTemplate(StackName, templateFilePath, variables);
+                await cloudFormationFixtureHelpers.DeployTemplate(StackName, templateFilePath, variables);
                 await cloudFormationFixtureHelpers.ValidateS3BucketExists(ReplacedName);
             }
             finally
             {
-                cloudFormationFixtureHelpers.CleanupStack(StackName);
+                await cloudFormationFixtureHelpers.CleanupStack(StackName);
             }
         }
     }

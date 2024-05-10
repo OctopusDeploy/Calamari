@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Globalization;
 using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
@@ -24,9 +26,9 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         static readonly string PublicFeedUri = "https://f.feedz.io/octopus-deploy/integration-tests/nuget/index.json";
         static readonly string NuGetFeedUri = "https://www.nuget.org/api/v2/";
 
-        private static readonly string AuthFeedUri = ExternalVariables.Get(ExternalVariable.MyGetFeedUrl);
-        private static readonly string AuthFeedUsername = ExternalVariables.Get(ExternalVariable.MyGetFeedUsername);
-        private static readonly string AuthFeedPassword = ExternalVariables.Get(ExternalVariable.MyGetFeedPassword);
+        static string AuthFeedUri;
+        static string AuthFeedUsername;
+        static string AuthFeedPassword;
         static readonly string ExpectedPackageHash = "1e0856338eb5ada3b30903b980cef9892ebf7201";
 
         static readonly long ExpectedPackageSize = 3749;
@@ -47,6 +49,14 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         static readonly string ExpectedMavenSnapshotPackageHash = "425932eacd1450c4c4c32b9ed8a1d9b397f20082";
         static readonly long ExpectedMavenSnapshotPackageSize = 2621686;
 
+        [OneTimeSetUp]
+        public async Task OneTimeSetup()
+        {
+            AuthFeedUri = await ExternalVariables.Get(ExternalVariable.MyGetFeedUrl, CancellationToken.None);
+            AuthFeedUsername = await ExternalVariables.Get(ExternalVariable.MyGetFeedUsername, CancellationToken.None);
+            AuthFeedPassword = await ExternalVariables.Get(ExternalVariable.MyGetFeedPassword, CancellationToken.None);
+        } 
+        
         [SetUp]
         public void SetUp()
         {

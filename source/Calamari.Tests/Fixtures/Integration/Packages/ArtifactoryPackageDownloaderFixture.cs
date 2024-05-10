@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
@@ -31,7 +32,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
                 }
         
                 [OneTimeSetUp] 
-                public void Setup()
+                public async Task Setup()
                 {
                     testDirectory = "TestFileCache";
                     currentDirectory = Directory.GetCurrentDirectory();
@@ -39,7 +40,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
                     fileSystem.EnsureDirectoryExists(cacheDirectory);
 
                     feedUri = new Uri("https://octopusdeploy.jfrog.io");
-                    var sensitiveValue = ExternalVariables.Get(ExternalVariable.ArtifactoryE2EPassword);
+                    var sensitiveValue = await ExternalVariables.Get(ExternalVariable.ArtifactoryE2EPassword, CancellationToken.None);
                     feedCredentials = new NetworkCredential("", sensitiveValue.ToString());
         
                     var log = Substitute.For<ILog>();

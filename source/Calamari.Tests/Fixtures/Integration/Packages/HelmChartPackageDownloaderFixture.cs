@@ -1,6 +1,8 @@
 ﻿using System;
 using System.IO;
 using System.Net;
+using System.Threading;
+using System.Threading.Tasks;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Integration.Packages.Download;
 using Calamari.Testing;
@@ -16,13 +18,14 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
     {
         static readonly string AuthFeedUri =   "https://octopusdeploy.jfrog.io/octopusdeploy/helm-testing/";
         static readonly string FeedUsername = "e2e-reader";
-        static readonly string FeedPassword = ExternalVariables.Get(ExternalVariable.HelmPassword);
+        static string FeedPassword;
         static string home = Path.GetTempPath();
         HelmChartPackageDownloader downloader;
         
         [OneTimeSetUp]
-        public void TestFixtureSetUp()
+        public async Task TestFixtureSetUp()
         {
+            FeedPassword = await ExternalVariables.Get(ExternalVariable.HelmPassword, CancellationToken.None);
             Environment.SetEnvironmentVariable("TentacleHome", home);
         }
 
