@@ -20,7 +20,6 @@ using Calamari.Common.Commands;
 using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
-using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Variables;
