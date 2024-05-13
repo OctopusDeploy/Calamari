@@ -365,6 +365,8 @@ namespace Calamari.AzureAppService.Tests
         {
             // For some reason we are having issues creating these linux resources on Standard in EastUS
             protected override string DefaultResourceGroupLocation => "westus2";
+            static readonly CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
+            readonly CancellationToken cancellationToken = CancellationTokenSource.Token;
 
             protected override async Task ConfigureTestResources(ResourceGroupResource resourceGroup)
             {
@@ -399,7 +401,7 @@ namespace Calamari.AzureAppService.Tests
                                                                                       IsReserved = true
                                                                                   });
 
-                await linuxAppServicePlan.WaitForCompletionAsync(CancellationToken.None);
+                await linuxAppServicePlan.WaitForCompletionAsync(cancellationToken);
 
                 var linuxWebSiteResponse = await resourceGroup.GetWebSites()
                                                               .CreateOrUpdateAsync(WaitUntil.Completed,
@@ -425,7 +427,7 @@ namespace Calamari.AzureAppService.Tests
                                                                                        }
                                                                                    });
 
-                await linuxWebSiteResponse.WaitForCompletionAsync(CancellationToken.None);
+                await linuxWebSiteResponse.WaitForCompletionAsync(cancellationToken);
                 
                 WebSiteResource = linuxWebSiteResponse.Value;
             }

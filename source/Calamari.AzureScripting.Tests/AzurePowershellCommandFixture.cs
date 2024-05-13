@@ -27,14 +27,16 @@ namespace Calamari.AzureScripting.Tests
                                                                                              "Powershell\\Azure\\5.3.0",
                                                                                              "Powershell",
                                                                                          });
+        static readonly CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
+        readonly CancellationToken cancellationToken = CancellationTokenSource.Token;
 
         [OneTimeSetUp]
         public async Task Setup()
         {
-            clientId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId, CancellationToken.None);
-            clientSecret = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword, CancellationToken.None);
-            tenantId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId, CancellationToken.None);
-            subscriptionId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionId, CancellationToken.None);
+            clientId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId, cancellationToken);
+            clientSecret = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword, cancellationToken);
+            tenantId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId, cancellationToken);
+            subscriptionId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionId, cancellationToken);
         }
 
         [Test]

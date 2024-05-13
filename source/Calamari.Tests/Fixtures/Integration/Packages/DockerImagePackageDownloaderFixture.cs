@@ -31,12 +31,14 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         static readonly string DockerHubFeedUri = "https://index.docker.io";
         static readonly string DockerTestUsername = "octopustestaccount";
         static string DockerTestPassword;
+        static readonly CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
+        readonly CancellationToken cancellationToken = CancellationTokenSource.Token;
 
         [OneTimeSetUp]
         public async Task TestFixtureSetUp()
         {
-            FeedPassword = await ExternalVariables.Get(ExternalVariable.HelmPassword, CancellationToken.None);
-            DockerTestPassword = await ExternalVariables.Get(ExternalVariable.DockerReaderPassword, CancellationToken.None);
+            FeedPassword = await ExternalVariables.Get(ExternalVariable.HelmPassword, cancellationToken);
+            DockerTestPassword = await ExternalVariables.Get(ExternalVariable.DockerReaderPassword, cancellationToken);
             Environment.SetEnvironmentVariable("TentacleHome", Home);
         }
 

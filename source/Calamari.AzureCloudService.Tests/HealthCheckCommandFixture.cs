@@ -14,13 +14,15 @@ namespace Calamari.AzureCloudService.Tests
 {
     public class HealthCheckCommandFixture
     {
+        static readonly CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
+        readonly CancellationToken cancellationToken = CancellationTokenSource.Token;
         [Test]
         public async Task CloudService_Is_Found()
         {
-            var subscriptionId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionId, CancellationToken.None);
+            var subscriptionId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionId, cancellationToken);
             // We need to trim because of issue with team city:
             // https://app.shortcut.com/octopusdeploy/story/65471/failing-azurecloudservice-tests-due-to-whitespace-being-added-to-end-of-certificate-env-var
-            var certificate = (await ExternalVariables.Get(ExternalVariable.AzureSubscriptionCertificate, CancellationToken.None)).Trim();
+            var certificate = (await ExternalVariables.Get(ExternalVariable.AzureSubscriptionCertificate, cancellationToken)).Trim();
             var serviceName = $"{nameof(HealthCheckCommandFixture)}-{Guid.NewGuid().ToString("N").Substring(0, 12)}";
 
             using var managementCertificate = CreateManagementCertificate(certificate);
@@ -49,10 +51,10 @@ namespace Calamari.AzureCloudService.Tests
         [Test]
         public async Task CloudService_Is_Not_Found()
         {
-            var subscriptionId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionId, CancellationToken.None);
+            var subscriptionId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionId, cancellationToken);
             // We need to trim because of issue with team city:
             // https://app.shortcut.com/octopusdeploy/story/65471/failing-azurecloudservice-tests-due-to-whitespace-being-added-to-end-of-certificate-env-var
-            var certificate = (await ExternalVariables.Get(ExternalVariable.AzureSubscriptionCertificate, CancellationToken.None)).Trim();
+            var certificate = (await ExternalVariables.Get(ExternalVariable.AzureSubscriptionCertificate, cancellationToken)).Trim();
             var serviceName = $"{nameof(HealthCheckCommandFixture)}-{Guid.NewGuid().ToString("N").Substring(0, 12)}";
 
             using var managementCertificate = CreateManagementCertificate(certificate);

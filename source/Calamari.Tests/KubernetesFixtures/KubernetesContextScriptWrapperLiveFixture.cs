@@ -20,6 +20,8 @@ namespace Calamari.Tests.KubernetesFixtures
     {
         protected const string KubeCtlExecutableVariableName = "Octopus.Action.Kubernetes.CustomKubectlExecutable";
         protected const string KubeConfigFileName = "kubeconfig.tpl";
+        static readonly CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
+        readonly CancellationToken cancellationToken = CancellationTokenSource.Token;
         
         InstallTools installTools;
 
@@ -118,7 +120,7 @@ namespace Calamari.Tests.KubernetesFixtures
         async Task<string> RunTerraformInternal(string terraformWorkingFolder, Dictionary<string, string> env, bool printOut, params string[] args)
         {
             var stdOut = new StringBuilder();
-            var environmentVars = await GetEnvironmentVars(CancellationToken.None);
+            var environmentVars = await GetEnvironmentVars(cancellationToken);
             environmentVars["TF_IN_AUTOMATION"] = bool.TrueString;
             environmentVars.AddRange(env);
 
