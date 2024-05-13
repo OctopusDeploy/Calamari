@@ -33,17 +33,14 @@ namespace Calamari.Common.Plumbing.FileSystem
         {
             try
             {
-                Policy.Handle<IOException>()
-                      .WaitAndRetry(
-                                    3,
-                                    i => TimeSpan.FromMilliseconds(200))
-                      .Execute(accessFile);
+                accessFile();
             }
             catch (Exception e)
             {
                 var errorCode = Marshal.GetHRForException(e) & ((1 << 16) - 1);
                 var isLocked = errorCode == 32 || errorCode == 33;
-                Log.Error($"File is {isLocked}, threw with error code {errorCode}");
+                Log.Warn($"File is {isLocked}, threw with error code {errorCode}");
+                Log.Warn(e.Message);
                 throw e;
             }
         }
