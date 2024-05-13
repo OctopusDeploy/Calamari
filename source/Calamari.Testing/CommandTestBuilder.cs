@@ -337,7 +337,7 @@ namespace Calamari.Testing
                 var originalPath = Environment.GetEnvironmentVariable("PATH");
                 try
                 {
-                    Environment.SetEnvironmentVariable("PATH", $"{originalPath};{string.Join(";", paths)}", EnvironmentVariableTarget.Process);
+                    Environment.SetEnvironmentVariable("PATH", $"{originalPath}{Path.PathSeparator}{string.Join(Path.PathSeparator.ToString(), paths)}", EnvironmentVariableTarget.Process);
 
                     return func();
                 }

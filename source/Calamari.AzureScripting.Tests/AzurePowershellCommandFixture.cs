@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Scripting;
@@ -38,7 +39,7 @@ namespace Calamari.AzureScripting.Tests
         }
 
         [Test]
-        [WindowsTest]
+        //[WindowsTest]
         [RequiresPowerShell5OrAbove]
         public async Task ExecuteAnInlineWindowsPowerShellScript()
         {
@@ -55,6 +56,7 @@ az group list";
                                                context.Variables.Add(ScriptVariables.ScriptSource, ScriptVariables.ScriptSourceOptions.Inline);
                                                context.Variables.Add(ScriptVariables.Syntax, ScriptSyntax.PowerShell.ToString());
                                                context.Variables.Add(ScriptVariables.ScriptBody, psScript);
+                                               context.Variables.Add(KnownVariables.EnabledFeatureToggles, "AzureRMDeprecationFeatureToggle");
                                            })
                               .Execute();
         }
