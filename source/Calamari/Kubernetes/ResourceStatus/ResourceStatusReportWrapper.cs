@@ -38,7 +38,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             var isBlueGreen = string.Equals(variables.Get(SpecialVariables.DeploymentStyle), "bluegreen", StringComparison.OrdinalIgnoreCase);
             var isWaitDeployment = string.Equals(variables.Get(SpecialVariables.DeploymentWait) , "wait", StringComparison.OrdinalIgnoreCase);
 
-            //A blue/green or deployment wait is already waiting, so we don't run the 
+            //A blue/green or deployment wait is waiting for other things, so we don't run resource status check 
             if (isBlueGreen || isWaitDeployment)
             {
                 return false;
