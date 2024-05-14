@@ -323,9 +323,8 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
              statusChecker.CheckedResources.Should().BeEquivalentTo(new ResourceIdentifier("Deployment", "deployment", "default"));
          }
 
-         private static void AddKubernetesStatusCheckVariables(IVariables variables)
+         static void AddKubernetesStatusCheckVariables(IVariables variables)
          {
-             variables.Set(SpecialVariables.ClusterUrl, "https://localhost");
              variables.Set(SpecialVariables.ResourceStatusCheck, "True");
          }
     }
