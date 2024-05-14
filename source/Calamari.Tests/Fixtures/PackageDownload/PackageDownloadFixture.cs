@@ -48,13 +48,16 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         static readonly SampleFeedPackage MavenSnapshotPublicFeed = new SampleFeedPackage("#") { Id = "feeds-maven", Version = VersionFactory.CreateMavenVersion("24.0-SNAPSHOT"), PackageId = "com.google.guava:guava" };
         static readonly string ExpectedMavenSnapshotPackageHash = "425932eacd1450c4c4c32b9ed8a1d9b397f20082";
         static readonly long ExpectedMavenSnapshotPackageSize = 2621686;
+        
+        static readonly CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
+        readonly CancellationToken cancellationToken = CancellationTokenSource.Token;
 
         [OneTimeSetUp]
         public async Task OneTimeSetup()
         {
-            AuthFeedUri = await ExternalVariables.Get(ExternalVariable.MyGetFeedUrl, CancellationToken.None);
-            AuthFeedUsername = await ExternalVariables.Get(ExternalVariable.MyGetFeedUsername, CancellationToken.None);
-            AuthFeedPassword = await ExternalVariables.Get(ExternalVariable.MyGetFeedPassword, CancellationToken.None);
+            AuthFeedUri = await ExternalVariables.Get(ExternalVariable.MyGetFeedUrl, cancellationToken);
+            AuthFeedUsername = await ExternalVariables.Get(ExternalVariable.MyGetFeedUsername, cancellationToken);
+            AuthFeedPassword = await ExternalVariables.Get(ExternalVariable.MyGetFeedPassword, cancellationToken);
         } 
         
         [SetUp]

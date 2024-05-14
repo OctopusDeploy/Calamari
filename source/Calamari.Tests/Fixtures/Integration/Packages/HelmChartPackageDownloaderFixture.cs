@@ -21,11 +21,13 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         static string FeedPassword;
         static string home = Path.GetTempPath();
         HelmChartPackageDownloader downloader;
+        static readonly CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
+        readonly CancellationToken cancellationToken = CancellationTokenSource.Token;
         
         [OneTimeSetUp]
         public async Task TestFixtureSetUp()
         {
-            FeedPassword = await ExternalVariables.Get(ExternalVariable.HelmPassword, CancellationToken.None);
+            FeedPassword = await ExternalVariables.Get(ExternalVariable.HelmPassword, cancellationToken);
             Environment.SetEnvironmentVariable("TentacleHome", home);
         }
 

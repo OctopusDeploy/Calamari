@@ -46,12 +46,15 @@ namespace Calamari.Tests.KubernetesFixtures
 
         HelmVersion? helmVersion;
         TemporaryDirectory explicitVersionTempDirectory;
+        
+        static readonly CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
+        readonly CancellationToken cancellationToken = CancellationTokenSource.Token;
 
         [OneTimeSetUp]
         public async Task OneTimeSetUp()
         {
-            ServerUrl = await ExternalVariables.Get(ExternalVariable.KubernetesClusterUrl, CancellationToken.None);
-            ClusterToken = await ExternalVariables.Get(ExternalVariable.KubernetesClusterToken, CancellationToken.None);
+            ServerUrl = await ExternalVariables.Get(ExternalVariable.KubernetesClusterUrl, cancellationToken);
+            ClusterToken = await ExternalVariables.Get(ExternalVariable.KubernetesClusterToken, cancellationToken);
             
             if (ExplicitExeVersion != null)
             {

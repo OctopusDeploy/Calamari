@@ -37,6 +37,9 @@ namespace Calamari.Tests.KubernetesFixtures
         InMemoryLog log;
         InstallTools installTools;
         Dictionary<string, string> environmentVariables;
+        
+        static readonly CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
+        readonly CancellationToken cancellationToken = CancellationTokenSource.Token;
 
         [SetUp]
         public void Setup()
@@ -278,7 +281,7 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set(SpecialVariables.GkeClusterName, "gke-cluster-name");
             var account = "gke_account";
             variables.Set("Octopus.Action.GoogleCloudAccount.Variable", account);
-            var jsonKey = await ExternalVariables.Get(ExternalVariable.GoogleCloudJsonKeyfile, CancellationToken.None);
+            var jsonKey = await ExternalVariables.Get(ExternalVariable.GoogleCloudJsonKeyfile, cancellationToken);
             variables.Set($"{account}.JsonKey", Convert.ToBase64String(Encoding.UTF8.GetBytes(jsonKey)));
             variables.Set("Octopus.Action.GoogleCloud.Project", "gke-project");
             variables.Set("Octopus.Action.GoogleCloud.Zone", "gke-zone");
@@ -297,7 +300,7 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set(SpecialVariables.GkeClusterName, "gke-cluster-name");
             var account = "gke_account";
             variables.Set("Octopus.Action.GoogleCloudAccount.Variable", account);
-            var jsonKey = await ExternalVariables.Get(ExternalVariable.GoogleCloudJsonKeyfile, CancellationToken.None);
+            var jsonKey = await ExternalVariables.Get(ExternalVariable.GoogleCloudJsonKeyfile, cancellationToken);
             variables.Set($"{account}.JsonKey", Convert.ToBase64String(Encoding.UTF8.GetBytes(jsonKey)));
             variables.Set("Octopus.Action.GoogleCloud.Project", "gke-project");
             variables.Set("Octopus.Action.GoogleCloud.Region", "gke-region");
@@ -316,7 +319,7 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set(SpecialVariables.GkeClusterName, "gke-cluster-name");
             var account = "gke_account";
             variables.Set("Octopus.Action.GoogleCloudAccount.Variable", account);
-            var jsonKey = await ExternalVariables.Get(ExternalVariable.GoogleCloudJsonKeyfile, CancellationToken.None);
+            var jsonKey = await ExternalVariables.Get(ExternalVariable.GoogleCloudJsonKeyfile, cancellationToken);
             variables.Set($"{account}.JsonKey", Convert.ToBase64String(Encoding.UTF8.GetBytes(jsonKey)));
             variables.Set("Octopus.Action.GoogleCloud.Project", "gke-project");
             variables.Set("Octopus.Action.GoogleCloud.Region", "gke-region");
@@ -334,7 +337,7 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set(SpecialVariables.GkeClusterName, "gke-cluster-name");
             var account = "gke_account";
             variables.Set("Octopus.Action.GoogleCloudAccount.Variable", account);
-            var jsonKey = await ExternalVariables.Get(ExternalVariable.GoogleCloudJsonKeyfile, CancellationToken.None);
+            var jsonKey = await ExternalVariables.Get(ExternalVariable.GoogleCloudJsonKeyfile, cancellationToken);
             variables.Set($"{account}.JsonKey", Convert.ToBase64String(Encoding.UTF8.GetBytes(jsonKey)));
             variables.Set("Octopus.Action.GoogleCloud.Project", "gke-project");
             var wrapper = CreateWrapper();
