@@ -55,18 +55,25 @@ namespace Calamari.Common.Plumbing.Extensions
         {
             try
             {
-                foreach (var cmd in new[] { "powershell.exe", "pwsh.exe" })
+                foreach (var cmd in new[] { "powershell.exe", "pwsh.exe", "pwsh" })
                 {
-                    var stdOut = new StringBuilder();
-                    var stdError = new StringBuilder();
-                    var result = SilentProcessRunner.ExecuteCommand(
-                        cmd,
-                        $"-command \"{"$PSVersionTable.PSVersion.ToString()"}\"",
-                        Environment.CurrentDirectory,
-                        s => stdOut.AppendLine(s),
-                        s => stdError.AppendLine(s));
-                    if (result.ExitCode == 0)
-                        return Version.Parse(stdOut.ToString());
+                    try
+                    {
+                        var stdOut = new StringBuilder();
+                        var stdError = new StringBuilder();
+                        var result = SilentProcessRunner.ExecuteCommand(
+                                                                        cmd,
+                                                                        $"-command \"{"$PSVersionTable.PSVersion.ToString()"}\"",
+                                                                        Environment.CurrentDirectory,
+                                                                        s => stdOut.AppendLine(s),
+                                                                        s => stdError.AppendLine(s));
+                        if (result.ExitCode == 0)
+                            return Version.Parse(stdOut.ToString());
+                    }
+                    catch
+                    {
+                        //maybe pwsh will work?
+                    }
                 }
             }
             catch
