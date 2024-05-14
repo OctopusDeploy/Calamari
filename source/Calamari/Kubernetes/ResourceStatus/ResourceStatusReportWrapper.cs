@@ -35,19 +35,18 @@ namespace Calamari.Kubernetes.ResourceStatus
 
         public bool IsEnabled(ScriptSyntax syntax)
         {
-            var resourceStatusEnabled = variables.GetFlag(SpecialVariables.ResourceStatusCheck);
-            var isBlueGreen = variables.Get(SpecialVariables.DeploymentStyle) == "bluegreen";
-            var isWaitDeployment = variables.Get(SpecialVariables.DeploymentWait) == "wait";
-            if (!resourceStatusEnabled || isBlueGreen || isWaitDeployment)
+            var isBlueGreen = string.Equals(variables.Get(SpecialVariables.DeploymentStyle), "bluegreen", StringComparison.OrdinalIgnoreCase);
+            var isWaitDeployment = string.Equals(variables.Get(SpecialVariables.DeploymentWait) , "wait", StringComparison.OrdinalIgnoreCase);
+
+            //A blue/green or deployment wait is already waiting, so we don't run the 
+            if (isBlueGreen || isWaitDeployment)
             {
                 return false;
             }
 
-            var hasClusterUrl = !string.IsNullOrEmpty(variables.Get(SpecialVariables.ClusterUrl));
-            var hasClusterName = !string.IsNullOrEmpty(variables.Get(SpecialVariables.AksClusterName)) ||
-                                 !string.IsNullOrEmpty(variables.Get(SpecialVariables.EksClusterName)) ||
-                                 !string.IsNullOrEmpty(variables.Get(SpecialVariables.GkeClusterName));
-            return hasClusterUrl || hasClusterName;
+            // At this point, we only care about the status of the resource status check
+            // If someone has set this variable manually, then it might blow up, but hey, that's on them
+            return variables.GetFlag(SpecialVariables.ResourceStatusCheck);
         }
 
         public CommandResult ExecuteScript(

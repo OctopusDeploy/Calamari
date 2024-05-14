@@ -34,13 +34,7 @@ namespace Calamari.Kubernetes
         /// <summary>
         /// One of these fields must be present for a k8s step
         /// </summary>
-        public bool IsEnabled(ScriptSyntax syntax)
-        {
-            var isKubernetesTentacleTarget = string.Equals(variables.Get(MachineVariables.DeploymentTargetType), "KubernetesTentacle", StringComparison.OrdinalIgnoreCase);
-            var hasClusterUrl = !string.IsNullOrEmpty(variables.Get(SpecialVariables.ClusterUrl));
-            var hasClusterName = !string.IsNullOrEmpty(variables.Get(SpecialVariables.AksClusterName)) || !string.IsNullOrEmpty(variables.Get(SpecialVariables.EksClusterName)) || !string.IsNullOrEmpty(variables.Get(SpecialVariables.GkeClusterName));
-            return isKubernetesTentacleTarget || hasClusterUrl || hasClusterName;
-        }
+        public bool IsEnabled(ScriptSyntax syntax) => variables.IsKubernetesScript();
 
         public IScriptWrapper NextWrapper { get; set; }
 
@@ -56,7 +50,11 @@ namespace Calamari.Kubernetes
                 environmentVars = new Dictionary<string, string>();
             }
 
-            var kubectl = new Kubectl(variables, log, commandLineRunner, workingDirectory, environmentVars);
+            var kubectl = new Kubectl(variables,
+                                      log,
+                                      commandLineRunner,
+                                      workingDirectory,
+                                      environmentVars);
             var setupKubectlAuthentication = new SetupKubectlAuthentication(variables,
                                                                             log,
                                                                             commandLineRunner,
