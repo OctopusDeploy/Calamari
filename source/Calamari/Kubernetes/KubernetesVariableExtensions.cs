@@ -7,7 +7,7 @@ namespace Calamari.Kubernetes
     {
         public static bool IsKubernetesScript(this IVariables variables)
         {
-            //A Kubernetes agent won't have any of the other variable set
+            //A Kubernetes agent won't have any of the other variables set
             var isKubernetesAgentTarget = string.Equals(variables.Get(MachineVariables.DeploymentTargetType), "KubernetesTentacle", StringComparison.OrdinalIgnoreCase);
             
             var hasClusterUrl = !string.IsNullOrEmpty(variables.Get(SpecialVariables.ClusterUrl));

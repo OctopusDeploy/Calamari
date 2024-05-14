@@ -45,7 +45,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             }
 
             // At this point, we only care about the status of the resource status check
-            // If someone has set this variable manually, then it might blow up, but hey, that's on them
+            // If someone has set this variable manually then it might blow up, but that's not a supported configuration
             return variables.GetFlag(SpecialVariables.ResourceStatusCheck);
         }
 
