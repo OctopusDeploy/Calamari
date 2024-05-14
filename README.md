@@ -95,7 +95,7 @@ Option 1 is recommended if you can use the default worker.
 4. Now when you run a deployment it will use your debug build.
 
 #### Benefits:
-- Extremely fast iteration, you don’t need to stop server between Calamari builds.
+- Extremely fast iteration, you don’t need to stop the server between Calamari builds.
 - It does not exercise the full deployment functionality of checking calamari versions etc (most of the time, this does not matter).
 
 #### Drawbacks:
@@ -104,7 +104,7 @@ Option 1 is recommended if you can use the default worker.
 ### Option 2: Package Calamari into your server build
 1. In terminal, run `./build-local.sh` (build-local.ps1 is available for Windows)
 2. Nuke will build and package up Calamari then it will update the `Calamari.Consolidated` version in your `Octopus.Server.csproj`
-3. Restart Server to force a rebuild with the new version of Calamari.
+3. Restart the Server to force a rebuild with the new version of Calamari.
 
 > Note: You must have a local nuget feed setup for the path `../LocalPackages` relative to this repo
 >
@@ -115,7 +115,7 @@ Option 1 is recommended if you can use the default worker.
 - You can use it when you’re using a remote worker.
 
 #### Drawbacks:
-- It takes ~10 minutes to build and pack Calamari, however you can reduce this significantly by targeting a specific runtime/framework if you don't need the rest
+- It takes ~10 minutes to build and pack Calamari, however, you can reduce this significantly by targeting a specific runtime/framework if you don't need the rest
     - eg `./build-local.sh -y --framework "net6.0" --runtime "linux-x64"`
 - You need to restart Server for Calamari changes to take effect
 
