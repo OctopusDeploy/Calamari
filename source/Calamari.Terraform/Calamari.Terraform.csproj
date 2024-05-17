@@ -6,7 +6,7 @@
     <IsPackable>false</IsPackable>
     <OutputType>Exe</OutputType>
     <LangVersion>9</LangVersion>
-    <RuntimeIdentifiers>win-x64;win-x86;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
+    <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
     <TargetFrameworks>net462;net6.0</TargetFrameworks>
   </PropertyGroup>
   <ItemGroup>
