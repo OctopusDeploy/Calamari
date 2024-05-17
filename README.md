@@ -62,16 +62,16 @@ Octopus.Server.exe service --instance <instance> --start --nologo --console
 
 ## Releasing
 
-After you finish merging to master to tag the Calamari NuGet package:
+After you finish merging to main to tag the Calamari NuGet package:
 
 Firstly, find out what the latest tag is. There are two ways to do this:
 
-* On your terminal, checkout `master` and `git pull` for good measure
+* On your terminal, checkout `main` and `git pull` for good measure
 * Run `git tag` and scroll to the bottom of the list to get the last known tag
 
 Alternatively,
 
-* Check the last build on master as it will be pre-release version of the next `<Major>.<Minor>.<Patch>` version
+* Check the last build on main as it will be pre-release version of the next `<Major>.<Minor>.<Patch>` version
 
 Finally, tag and push the new release
 
