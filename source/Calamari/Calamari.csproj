@@ -7,7 +7,7 @@
     <PackageId>Calamari</PackageId>
     <GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>
     <PackageProjectUrl>https://github.com/OctopusDeploy/Calamari</PackageProjectUrl>
-    <PackageLicense>https://github.com/OctopusDeploy/Calamari/blob/master/LICENSE.txt</PackageLicense>
+    <PackageLicense>https://github.com/OctopusDeploy/Calamari/blob/main/LICENSE.txt</PackageLicense>
     <Authors>Octopus Deploy</Authors>
     <Copyright>Octopus Deploy Pty Ltd</Copyright>
     <PackageTags>tool</PackageTags>

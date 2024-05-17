@@ -124,7 +124,7 @@ namespace Calamari.AzureAppService.Behaviors
 
             /*
              * Calamari default behaviors
-             * https://github.com/OctopusDeploy/Calamari/tree/master/source/Calamari.Common/Features/Behaviours
+             * https://github.com/OctopusDeploy/Calamari/tree/main/source/Calamari.Common/Features/Behaviours
              */
             var uploadPath = string.Empty;
             bool uploadFileNeedsCleaning = false;

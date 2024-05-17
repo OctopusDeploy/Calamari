@@ -9,7 +9,7 @@
     <AssemblyName>Acme.StructuredConfigFiles</AssemblyName>
     <PackageId>Acme.StructuredConfigFiles</PackageId>
     <PackageProjectUrl>https://github.com/OctopusDeploy/Calamari/</PackageProjectUrl>
-    <PackageLicenseUrl>https://github.com/OctopusDeploy/Calamari/blob/master/LICENSE.txt</PackageLicenseUrl>
+    <PackageLicenseUrl>https://github.com/OctopusDeploy/Calamari/blob/main/LICENSE.txt</PackageLicenseUrl>
     <NuspecFile>Acme.StructuredConfigFiles.nuspec</NuspecFile>
   </PropertyGroup>
 
