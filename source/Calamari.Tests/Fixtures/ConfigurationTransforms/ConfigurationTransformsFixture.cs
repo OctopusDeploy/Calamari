@@ -40,7 +40,6 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
         }
 
         [Test]
-        [RequiresMonoVersion423OrAbove] //Bug in mono < 4.2.3 https://bugzilla.xamarin.com/show_bug.cgi?id=19426
         public void WebReleaseConfig()
         {
             var text = PerformTest(GetFixtureResource("Samples", "Web.config"), GetFixtureResource("Samples", "Web.Release.config"));
@@ -54,7 +53,6 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
         }
 
         [Test]
-        [RequiresMonoVersion423OrAbove] //Bug in mono < 4.2.3 https://bugzilla.xamarin.com/show_bug.cgi?id=19426
         [ExpectedException(typeof(System.Xml.XmlException))]
         public void ShouldThrowExceptionForBadConfig()
         {
@@ -62,7 +60,6 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
         }
 
         [Test]
-        [RequiresMonoVersion423OrAbove] //Bug in mono < 4.2.3 https://bugzilla.xamarin.com/show_bug.cgi?id=19426
         public void ShouldSupressExceptionForBadConfig_WhenFlagIsSet()
         {
             var variables = new CalamariVariables();
@@ -73,7 +70,6 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
         }
 
         [Test]
-        [RequiresMonoVersion423OrAbove] //Bug in mono < 4.2.3 https://bugzilla.xamarin.com/show_bug.cgi?id=19426
         [ExpectedException(typeof(CommandException))]
         public void ShouldThrowExceptionForTransformWarnings()
         {
@@ -81,7 +77,6 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
         }
 
         [Test]
-        [RequiresMonoVersion423OrAbove] //Bug in mono < 4.2.3 https://bugzilla.xamarin.com/show_bug.cgi?id=19426
         public void ShouldSuppressExceptionForTransformWarnings_WhenFlagIsSet()
         {
             var variables = new CalamariVariables();
@@ -92,7 +87,6 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
         }
 
         [Test]
-        [RequiresMonoVersion423OrAbove] //Bug in mono < 4.2.3 https://bugzilla.xamarin.com/show_bug.cgi?id=19426
         public void ShouldShowMessageWhenResultIsInvalidXml()
         {
             PerformTest(GetFixtureResource("Samples", "Web.config"), GetFixtureResource("Samples", "Web.Empty.config"));

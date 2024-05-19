@@ -81,8 +81,6 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         }
 
         [Test]
-        [RequiresMonoVersion480OrAboveForTls12]
-        [RequiresMinimumMonoVersion(5, 12, 0, Description = "HttpClient 4.3.2 broken on Mono - https://xamarin.github.io/bugzilla-archives/60/60315/bug.html#c7")]
         public void ShouldDownloadPackage()
         {
             var result = DownloadPackage(FeedzPackage.PackageId, FeedzPackage.Version.ToString(), FeedzPackage.Id, PublicFeedUri);
@@ -98,7 +96,6 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         }
 
         [Test]
-        [RequiresMonoVersion480OrAboveForTls12]
         [RequiresNonFreeBSDPlatform]
         public void ShouldDownloadMavenPackage()
         {
@@ -127,7 +124,6 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         }
 
         [Test]
-        [RequiresMonoVersion480OrAboveForTls12]
         [RequiresNonFreeBSDPlatform]
         public void ShouldDownloadMavenSnapshotPackage()
         {
@@ -156,8 +152,6 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         }
 
         [Test]
-        [RequiresMonoVersion480OrAboveForTls12]
-        [RequiresMinimumMonoVersion(5, 12, 0, Description = "HttpClient 4.3.2 broken on Mono - https://xamarin.github.io/bugzilla-archives/60/60315/bug.html#c7")]
         public void ShouldDownloadPackageWithRepositoryMetadata()
         {
             var result = DownloadPackage(NuGetFeed.PackageId, NuGetFeed.Version.ToString(), NuGetFeed.Id, NuGetFeedUri);
@@ -173,8 +167,6 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         }
 
         [Test]
-        [RequiresMonoVersion480OrAboveForTls12]
-        [RequiresMinimumMonoVersion(5, 12, 0, Description = "HttpClient 4.3.2 broken on Mono - https://xamarin.github.io/bugzilla-archives/60/60315/bug.html#c7")]
         public void ShouldUsePackageFromCache()
         {
             DownloadPackage(FeedzPackage.PackageId,
@@ -198,7 +190,6 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         }
 
         [Test]
-        [RequiresMonoVersion480OrAboveForTls12]
         [RequiresNonFreeBSDPlatform]
         public void ShouldUseMavenPackageFromCache()
         {
@@ -230,7 +221,6 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         }
 
         [Test]
-        [RequiresMonoVersion480OrAboveForTls12]
         [RequiresNonFreeBSDPlatform]
         public void ShouldUseMavenSnapshotPackageFromCache()
         {
@@ -261,8 +251,6 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         }
 
         [Test]
-        [RequiresMonoVersion480OrAboveForTls12]
-        [RequiresMinimumMonoVersion(5, 12, 0, Description = "HttpClient 4.3.2 broken on Mono - https://xamarin.github.io/bugzilla-archives/60/60315/bug.html#c7")]
         public void ShouldByPassCacheAndDownloadPackage()
         {
             DownloadPackage(FeedzPackage.PackageId,
@@ -285,7 +273,6 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         }
 
         [Test]
-        [RequiresMonoVersion480OrAboveForTls12]
         [RequiresNonFreeBSDPlatform]
         public void ShouldByPassCacheAndDownloadMavenPackage()
         {
@@ -323,7 +310,6 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         }
 
         [Test]
-        [RequiresMonoVersion480OrAboveForTls12]
         [RequiresNonFreeBSDPlatform]
         public void ShouldByPassCacheAndDownloadMavenSnapshotPackage()
         {

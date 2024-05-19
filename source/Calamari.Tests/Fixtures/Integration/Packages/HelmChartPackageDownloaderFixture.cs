@@ -44,8 +44,6 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         }
         
         [Test]
-        [RequiresMonoVersion480OrAboveForTls12(Description = "This test requires TLS 1.2, which doesn't work with mono prior to 4.8")]
-        [RequiresMinimumMonoVersion(5, 12, 0, Description = "HttpClient 4.3.2 broken on Mono - https://xamarin.github.io/bugzilla-archives/60/60315/bug.html#c7")]
         public void PackageWithCredentials_Loads()
         {
             var pkg = downloader.DownloadPackage("mychart", new SemanticVersion("0.3.7"), "helm-feed", new Uri(AuthFeedUri), FeedUsername, FeedPassword, true, 1,
@@ -55,8 +53,6 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         }
         
         [Test]
-        [RequiresMonoVersion480OrAboveForTls12(Description = "This test requires TLS 1.2, which doesn't work with mono prior to 4.8")]
-        [RequiresMinimumMonoVersion(5, 12, 0, Description = "HttpClient 4.3.2 broken on Mono - https://xamarin.github.io/bugzilla-archives/60/60315/bug.html#c7")]
         public void PackageWithInvalidUrl_Throws()
         {
             var badUrl = new Uri($"https://octopusdeploy.jfrog.io/gobbelygook/{Guid.NewGuid().ToString("N")}");
