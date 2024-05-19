@@ -287,7 +287,6 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        [RequiresNonMono]
         public void ShouldDeployInParallel()
         {
             var locker = new object();
