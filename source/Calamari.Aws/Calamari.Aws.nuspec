@@ -5,7 +5,7 @@
     <version>$version$</version>
     <authors>Octopus Deploy</authors>
     <owners>Octopus Deploy</owners>
-    <licenseUrl>https://github.com/OctopusDeploy/Calamari/blob/master/LICENSE.txt</licenseUrl>
+    <licenseUrl>https://github.com/OctopusDeploy/Calamari/blob/main/LICENSE.txt</licenseUrl>
     <projectUrl>https://github.com/OctopusDeploy/Calamari/</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>Contains the command-line Calamari tool, plus additional commands for Aws integration.</description>
