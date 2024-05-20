@@ -11,7 +11,6 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
     public class SemaphoreFactoryFixture
     {
         [Test]
-        [RequiresMono]
         public void ReturnsFileBasedSemaphoreManagerForMono()
         {
             if (!CalamariEnvironment.IsRunningOnMono)

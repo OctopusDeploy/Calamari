@@ -126,7 +126,6 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        [RequiresMonoVersion423OrAbove] //Bug in mono < 4.2.3 https://bugzilla.xamarin.com/show_bug.cgi?id=19426
         public void ShouldTransformConfig()
         {
             // Set the environment, and the flag to automatically run config transforms
@@ -143,7 +142,6 @@ namespace Calamari.Tests.Fixtures.Deployment
         [Test]
         [Category(TestCategory.ScriptingSupport.FSharp)]
         [Category(TestCategory.ScriptingSupport.DotnetScript)]
-        [RequiresMonoVersion423OrAbove] //Bug in mono < 4.2.3 https://bugzilla.xamarin.com/show_bug.cgi?id=19426
         public void ShouldInvokeDeployFailedOnError()
         {
             Variables.Set("ShouldFail", "yes");
@@ -156,7 +154,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             result.AssertNoOutput("I have failed! DeployFailed.csx");
         }
 
-        [RequiresMonoVersion423OrAbove] //Bug in mono < 4.2.3 https://bugzilla.xamarin.com/show_bug.cgi?id=19426
+        [Test]
         public void ShouldNotInvokeDeployFailedWhenNoError()
         {
             var result = DeployPackage();
@@ -287,7 +285,6 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        [RequiresNonMono]
         public void ShouldDeployInParallel()
         {
             var locker = new object();

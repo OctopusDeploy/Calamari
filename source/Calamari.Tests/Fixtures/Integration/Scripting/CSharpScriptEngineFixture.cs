@@ -29,7 +29,7 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
         }
 
         [Category(TestCategory.ScriptingSupport.ScriptCS)]
-        [Test, RequiresMonoVersion400OrAbove, RequiresDotNet45, RequiresMonoVersionBefore(5, 14, 0)]
+        [Test, RequiresDotNet45]
         public void ScriptCS_CSharpDecryptsVariables()
         {
             using (var scriptFile = new TemporaryFile(Path.ChangeExtension(Path.GetTempFileName(), "cs")))
