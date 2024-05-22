@@ -42,6 +42,9 @@ namespace Calamari.Common.Plumbing.FileSystem
 
         public static CalamariPhysicalFileSystem GetPhysicalFileSystem()
         {
+            if (CalamariEnvironment.IsRunningOnKubernetes)
+                return new KubernetesFileSystem();
+
             if (CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac)
                 return new NixCalamariPhysicalFileSystem();
 
