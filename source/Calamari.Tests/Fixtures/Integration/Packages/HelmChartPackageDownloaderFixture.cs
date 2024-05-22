@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Integration.Packages.Download;
 using Calamari.Testing;
+using Calamari.Testing.Helpers;
 using Calamari.Testing.Requirements;
 using FluentAssertions;
 using NUnit.Framework;
@@ -40,7 +41,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         [SetUp]
         public void Setup()
         {
-            downloader = new HelmChartPackageDownloader(CalamariPhysicalFileSystem.GetPhysicalFileSystem());
+            downloader = new HelmChartPackageDownloader(CalamariPhysicalFileSystem.GetPhysicalFileSystem(), new InMemoryLog());
         }
         
         [Test]
@@ -56,7 +57,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         public void PackageWithInvalidUrl_Throws()
         {
             var badUrl = new Uri($"https://octopusdeploy.jfrog.io/gobbelygook/{Guid.NewGuid().ToString("N")}");
-            var badEndpointDownloader = new HelmChartPackageDownloader(CalamariPhysicalFileSystem.GetPhysicalFileSystem());
+            var badEndpointDownloader = new HelmChartPackageDownloader(CalamariPhysicalFileSystem.GetPhysicalFileSystem(), new InMemoryLog());
             Action action = () => badEndpointDownloader.DownloadPackage("something", new SemanticVersion("99.9.7"), "gobbely", new Uri(badUrl, "something.99.9.7"), FeedUsername, FeedPassword, true, 1, TimeSpan.FromSeconds(3));
             action.Should().Throw<Exception>().And.Message.Should().Contain("Unable to read Helm index file").And.Contain("404");
         }
