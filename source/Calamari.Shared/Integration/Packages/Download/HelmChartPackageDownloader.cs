@@ -14,9 +14,6 @@ using Calamari.Integration.Packages.Download.Helm;
 using Octopus.Versioning;
 using HttpClient = System.Net.Http.HttpClient;
 using PackageName = Calamari.Common.Features.Packages.PackageName;
-#if SUPPORTS_POLLY
-using Polly;
-#endif
 
 namespace Calamari.Integration.Packages.Download
 {
@@ -25,12 +22,14 @@ namespace Calamari.Integration.Packages.Download
         static readonly IPackageDownloaderUtils PackageDownloaderUtils = new PackageDownloaderUtils();
         const string Extension = ".tgz";
         readonly ICalamariFileSystem fileSystem;
+        readonly ILog log;
         readonly IHelmEndpointProxy endpointProxy;
         readonly HttpClient client;
 
-        public HelmChartPackageDownloader(ICalamariFileSystem fileSystem)
+        public HelmChartPackageDownloader(ICalamariFileSystem fileSystem, ILog log)
         {
             this.fileSystem = fileSystem;
+            this.log = log;
             client = new HttpClient(new HttpClientHandler{ AutomaticDecompression  = DecompressionMethods.None });
             endpointProxy = new HelmEndpointProxy(client);
         }
@@ -76,7 +75,7 @@ namespace Calamari.Integration.Packages.Download
             }
 
             var packageUrl = foundUrl.IsValidUrl() ? new Uri(foundUrl, UriKind.Absolute) :  new Uri(feedUri, foundUrl);
-            return DownloadChart(packageUrl, packageId, version, feedCredentials, cacheDirectory);
+            return DownloadChart(packageUrl, packageId, version, feedCredentials, cacheDirectory, maxDownloadAttempts, downloadAttemptBackoff);
         }
 
         (string PackageId, IEnumerable<HelmIndexYamlReader.ChartData> Versions) GetChartDetails(Uri feedUri, ICredentials credentials, string packageId, CancellationToken cancellationToken)
@@ -88,13 +87,19 @@ namespace Calamari.Integration.Packages.Download
             return package;
         }
 
-        PackagePhysicalFileMetadata DownloadChart(Uri url, string packageId, IVersion version, ICredentials feedCredentials, string cacheDirectory)
+        PackagePhysicalFileMetadata DownloadChart(Uri url,
+                                                  string packageId,
+                                                  IVersion version,
+                                                  ICredentials feedCredentials,
+                                                  string cacheDirectory,
+                                                  int maxDownloadAttempts,
+                                                  TimeSpan downloadAttemptBackoff)
         {
             var cred = feedCredentials.GetCredential(url, "basic");
             var tempDirectory = fileSystem.CreateTemporaryDirectory();
 
             using (new TemporaryDirectory(tempDirectory))
-            {
+            {   
                 var homeDir = Path.Combine(tempDirectory, "helm");
                 if (!Directory.Exists(homeDir))
                 {
@@ -106,30 +111,25 @@ namespace Calamari.Integration.Packages.Download
                     Directory.CreateDirectory(stagingDir);
                 }
 
-                string cachedFileName = PackageName.ToCachedFileName(packageId, version, Extension);
+                var cachedFileName = PackageName.ToCachedFileName(packageId, version, Extension);
                 var downloadPath = Path.Combine(Path.Combine(stagingDir, cachedFileName));
 
-                InvokeWithRetry(() =>
-                {
-                    var request = new HttpRequestMessage(HttpMethod.Get, url);
-                    request.Headers.AddAuthenticationHeader(cred.UserName, cred.Password);
+                var strategy = PackageDownloaderRetryUtils.CreateRetryStrategy<CommandException>(maxDownloadAttempts, downloadAttemptBackoff, log);
+                strategy.Execute(() =>
+                                 {
 
-                    using (var fileStream = fileSystem.OpenFile(downloadPath, FileAccess.Write))
-                    using (var response = client.SendAsync(request).Result)
-                    {
-                        if (!response.IsSuccessStatusCode)
-                        {
-                            throw new CommandException(
-                                $"Helm failed to download the chart (Status Code {(int) response.StatusCode}). Reason: {response.ReasonPhrase}");
-                        }
+                                     var request = new HttpRequestMessage(HttpMethod.Get, url);
+                                     request.Headers.AddAuthenticationHeader(cred.UserName, cred.Password);
 
-                        #if NET40
-                        response.Content.CopyToAsync(fileStream).Wait();
-                        #else
-                        response.Content.CopyToAsync(fileStream).GetAwaiter().GetResult();
-                        #endif
-                    }
-                });
+                                     using var fileStream = fileSystem.OpenFile(downloadPath, FileAccess.Write);
+                                     using var response = client.SendAsync(request).GetAwaiter().GetResult();
+                                     if (!response.IsSuccessStatusCode)
+                                     {
+                                         throw new CommandException($"Helm failed to download the chart (Status Code {(int)response.StatusCode}). Reason: {response.ReasonPhrase}");
+                                     }
+                                         
+                                     response.Content.CopyToAsync(fileStream).GetAwaiter().GetResult();
+                                 });
 
                 var localDownloadName = Path.Combine(cacheDirectory, cachedFileName);
 
@@ -139,21 +139,6 @@ namespace Calamari.Integration.Packages.Download
                     ?? throw new CommandException($"Unable to retrieve metadata for package {packageId}, version {version}");
             }
         }
-
-#if SUPPORTS_POLLY
-        void InvokeWithRetry(Action action)
-        {
-            Policy.Handle<Exception>()
-                .WaitAndRetry(4, retry => TimeSpan.FromSeconds(retry), (ex, timespan) =>
-                {
-                    Console.WriteLine($"Command failed. Retrying in {timespan}.");
-                })
-                .Execute(action);
-        }
-#else
-        //net40 doesn't support polly... usage is low enough to skip the effort to implement nice retries
-        void InvokeWithRetry(Action action) => action();
-#endif
 
         PackagePhysicalFileMetadata? SourceFromCache(string packageId, IVersion version, string cacheDirectory)
         {
