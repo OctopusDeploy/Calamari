@@ -18,136 +18,260 @@ using Octostache;
 
 namespace Calamari.AzureAppService.Tests
 {
-    [TestFixture]
-    public class AzureAppServiceDeployContainerBehaviorFixture : AppServiceIntegrationTest
+    public class AzureAppServiceDeployContainerBehaviourFixture
     {
-        CalamariVariables newVariables;
-        readonly HttpClient client = new HttpClient();
-
-        // For some reason we are having issues creating these linux resources on Standard in EastUS
-        protected override string DefaultResourceGroupLocation => "westus2";
-
-        protected override async Task ConfigureTestResources(ResourceGroupResource resourceGroup)
+        [TestFixture]
+        public class WhenUsingAWindowsAppService : AppServiceIntegrationTest
         {
-            var (_, webSite) = await CreateAppServicePlanAndWebApp(resourceGroup,
-                                                                   new AppServicePlanData(resourceGroup.Data.Location)
-                                                                   {
-                                                                       Kind = "linux",
-                                                                       IsReserved = true,
-                                                                       Sku = new AppServiceSkuDescription
+            CalamariVariables newVariables;
+            readonly HttpClient client = new HttpClient();
+
+            // For some reason we are having issues creating these linux resources on Standard in EastUS
+            protected override string DefaultResourceGroupLocation => "westus2";
+
+            protected override async Task ConfigureTestResources(ResourceGroupResource resourceGroup)
+            {
+                var (_, webSite) = await CreateAppServicePlanAndWebApp(resourceGroup,
+                                                                       webSiteData: new WebSiteData(resourceGroup.Data.Location)
                                                                        {
-                                                                           Name = "P1V3",
-                                                                           Tier = "PremiumV3"
-                                                                       }
-                                                                   },
-                                                                   new WebSiteData(resourceGroup.Data.Location)
-                                                                   {
-                                                                       SiteConfig = new SiteConfigProperties
-                                                                       {
-                                                                           LinuxFxVersion = @"DOCKER|mcr.microsoft.com/azuredocs/aci-helloworld",
-                                                                           IsAlwaysOn = true,
-                                                                           AppSettings = new List<AppServiceNameValuePair>
+                                                                           SiteConfig = new SiteConfigProperties
                                                                            {
-                                                                               new AppServiceNameValuePair { Name = "DOCKER_REGISTRY_SERVER_URL", Value = "https://index.docker.io" },
-                                                                               new AppServiceNameValuePair { Name = "WEBSITES_ENABLE_APP_SERVICE_STORAGE", Value = "false" },
-                                                                               new AppServiceNameValuePair { Name = "WEBSITES_CONTAINER_START_TIME_LIMIT", Value = "460" }
+                                                                               WindowsFxVersion = "DOCKER|mcr.microsoft.com/azuredocs/aci-helloworld",
+                                                                               IsAlwaysOn = true,
+                                                                               AppSettings = new List<AppServiceNameValuePair>
+                                                                               {
+                                                                                   new AppServiceNameValuePair { Name = "DOCKER_REGISTRY_SERVER_URL", Value = "https://index.docker.io" },
+                                                                                   new AppServiceNameValuePair { Name = "WEBSITES_ENABLE_APP_SERVICE_STORAGE", Value = "false" },
+                                                                                   new AppServiceNameValuePair { Name = "WEBSITES_CONTAINER_START_TIME_LIMIT", Value = "460" }
+                                                                               }
                                                                            }
-                                                                       }
-                                                                   });
+                                                                       });
 
-            WebSiteResource = webSite;
+                WebSiteResource = webSite;
 
-            await AssertSetupSuccessAsync();
-        }
+                await AssertSetupSuccessAsync();
+            }
 
-        [Test]
-        public async Task AzureLinuxContainerDeploy()
-        {
-            newVariables = new CalamariVariables();
-            AddVariables(newVariables);
+            [Test]
+            public async Task AzureWindowsContainerDeploy()
+            {
+                newVariables = new CalamariVariables();
+                AddVariables(newVariables);
 
-            var runningContext = new RunningDeployment("", newVariables);
+                var runningContext = new RunningDeployment("", newVariables);
 
-            await new AzureAppServiceContainerDeployBehaviour(new InMemoryLog()).Execute(runningContext);
+                await new AzureAppServiceContainerDeployBehaviour(new InMemoryLog()).Execute(runningContext);
 
-            var targetSite = new AzureTargetSite(SubscriptionId,
-                                                 ResourceGroupName,
-                                                 WebSiteResource.Data.Name);
+                var targetSite = new AzureTargetSite(SubscriptionId,
+                                                     ResourceGroupName,
+                                                     WebSiteResource.Data.Name);
 
-            await AssertDeploySuccessAsync(targetSite);
-        }
+                await AssertDeploySuccessAsync(targetSite);
+            }
 
-        [Test]
-        public async Task AzureLinuxContainerSlotDeploy()
-        {
-            var slotName = "stage";
+            [Test]
+            public async Task AzureWindowsContainerSlotDeploy()
+            {
+                var slotName = "stage";
 
-            newVariables = new CalamariVariables();
-            AddVariables(newVariables);
-            newVariables.Add("Octopus.Action.Azure.DeploymentSlot", slotName);
-            await WebSiteResource.GetWebSiteSlots()
-                                 .CreateOrUpdateAsync(WaitUntil.Completed,
-                                                      slotName,
-                                                      WebSiteResource.Data);
+                newVariables = new CalamariVariables();
+                AddVariables(newVariables);
+                newVariables.Add("Octopus.Action.Azure.DeploymentSlot", slotName);
+                await WebSiteResource.GetWebSiteSlots()
+                                     .CreateOrUpdateAsync(WaitUntil.Completed,
+                                                          slotName,
+                                                          WebSiteResource.Data);
 
-            var runningContext = new RunningDeployment("", newVariables);
+                var runningContext = new RunningDeployment("", newVariables);
 
-            await new AzureAppServiceContainerDeployBehaviour(new InMemoryLog()).Execute(runningContext);
+                await new AzureAppServiceContainerDeployBehaviour(new InMemoryLog()).Execute(runningContext);
 
-            var targetSite = new AzureTargetSite(SubscriptionId,
-                                                 ResourceGroupName,
-                                                 WebSiteResource.Data.Name,
-                                                 slotName);
+                var targetSite = new AzureTargetSite(SubscriptionId,
+                                                     ResourceGroupName,
+                                                     WebSiteResource.Data.Name,
+                                                     slotName);
 
-            await AssertDeploySuccessAsync(targetSite);
-        }
+                await AssertDeploySuccessAsync(targetSite);
+            }
 
-        async Task AssertSetupSuccessAsync()
-        {
-            var response = await RetryPolicies.TestsTransientHttpErrorsPolicy.ExecuteAsync(async context =>
-                                                                                           {
-                                                                                               var r = await client.GetAsync($@"https://{WebSiteResource.Data.DefaultHostName}");
-
-                                                                                               if (!r.IsSuccessStatusCode)
+            async Task AssertSetupSuccessAsync()
+            {
+                var response = await RetryPolicies.TestsTransientHttpErrorsPolicy.ExecuteAsync(async context =>
                                                                                                {
-                                                                                                   var messageContent = await r.Content.ReadAsStringAsync();
-                                                                                                   TestContext.WriteLine($"Unable to retrieve content from https://{WebSiteResource.Data.DefaultHostName}, failed with: {messageContent}");
-                                                                                               }
+                                                                                                   var r = await client.GetAsync($@"https://{WebSiteResource.Data.DefaultHostName}");
 
-                                                                                               r.EnsureSuccessStatusCode();
-                                                                                               return r;
-                                                                                           },
-                                                                                           contextData: new Dictionary<string, object>());
+                                                                                                   if (!r.IsSuccessStatusCode)
+                                                                                                   {
+                                                                                                       var messageContent = await r.Content.ReadAsStringAsync();
+                                                                                                       TestContext.WriteLine($"Unable to retrieve content from https://{WebSiteResource.Data.DefaultHostName}, failed with: {messageContent}");
+                                                                                                   }
 
-            var receivedContent = await response.Content.ReadAsStringAsync();
+                                                                                                   r.EnsureSuccessStatusCode();
+                                                                                                   return r;
+                                                                                               },
+                                                                                               contextData: new Dictionary<string, object>());
 
-            receivedContent.Should().Contain(@"<title>Welcome to Azure Container Instances!</title>");
-            Assert.IsTrue(response.IsSuccessStatusCode);
+                var receivedContent = await response.Content.ReadAsStringAsync();
+
+                receivedContent.Should().Contain(@"<title>Welcome to Azure Container Instances!</title>");
+                Assert.IsTrue(response.IsSuccessStatusCode);
+            }
+
+            async Task AssertDeploySuccessAsync(AzureTargetSite targetSite)
+            {
+                var imageName = newVariables.Get(SpecialVariables.Action.Package.PackageId);
+                var registryUrl = newVariables.Get(SpecialVariables.Action.Package.Registry);
+                var imageVersion = newVariables.Get(SpecialVariables.Action.Package.PackageVersion) ?? "latest";
+
+                var config = await WebSiteResource.GetWebSiteConfig().GetAsync();
+                Assert.AreEqual($@"DOCKER|{imageName}:{imageVersion}", config.Value.Data.WindowsFxVersion);
+
+                var appSettings = await ArmClient.GetAppSettingsListAsync(targetSite);
+                Assert.AreEqual("https://" + registryUrl, appSettings.FirstOrDefault(app => app.Name == "DOCKER_REGISTRY_SERVER_URL")?.Value);
+            }
+
+            void AddVariables(VariableDictionary vars)
+            {
+                AddAzureVariables(vars);
+                vars.Add(SpecialVariables.Action.Package.FeedId, "Feeds-42");
+                vars.Add(SpecialVariables.Action.Package.Registry, "index.docker.io");
+                vars.Add(SpecialVariables.Action.Package.PackageId, "e2eteam/sample-apiserver");
+                vars.Add(SpecialVariables.Action.Package.Image, "e2eteam/sample-apiserver:1.17");
+                vars.Add(SpecialVariables.Action.Package.PackageVersion, "1.17");
+                vars.Add(SpecialVariables.Action.Azure.DeploymentType, "Container");
+            }
         }
-
-        async Task AssertDeploySuccessAsync(AzureTargetSite targetSite)
+        
+        [TestFixture]
+        public class WhenUsingALinuxAppService : AppServiceIntegrationTest
         {
-            var imageName = newVariables.Get(SpecialVariables.Action.Package.PackageId);
-            var registryUrl = newVariables.Get(SpecialVariables.Action.Package.Registry);
-            var imageVersion = newVariables.Get(SpecialVariables.Action.Package.PackageVersion) ?? "latest";
+            CalamariVariables newVariables;
+            readonly HttpClient client = new HttpClient();
 
-            var config = await WebSiteResource.GetWebSiteConfig().GetAsync();
-            Assert.AreEqual($@"DOCKER|{imageName}:{imageVersion}", config.Value.Data.LinuxFxVersion);
+            // For some reason we are having issues creating these linux resources on Standard in EastUS
+            protected override string DefaultResourceGroupLocation => "westus2";
 
-            var appSettings = await ArmClient.GetAppSettingsListAsync(targetSite);
-            Assert.AreEqual("https://" + registryUrl, appSettings.FirstOrDefault(app => app.Name == "DOCKER_REGISTRY_SERVER_URL")?.Value);
-        }
+            protected override async Task ConfigureTestResources(ResourceGroupResource resourceGroup)
+            {
+                var (_, webSite) = await CreateAppServicePlanAndWebApp(resourceGroup,
+                                                                       new AppServicePlanData(resourceGroup.Data.Location)
+                                                                       {
+                                                                           Kind = "linux",
+                                                                           IsReserved = true,
+                                                                           Sku = new AppServiceSkuDescription
+                                                                           {
+                                                                               Name = "P1V3",
+                                                                               Tier = "PremiumV3"
+                                                                           }
+                                                                       },
+                                                                       new WebSiteData(resourceGroup.Data.Location)
+                                                                       {
+                                                                           SiteConfig = new SiteConfigProperties
+                                                                           {
+                                                                               LinuxFxVersion = @"DOCKER|mcr.microsoft.com/azuredocs/aci-helloworld",
+                                                                               IsAlwaysOn = true,
+                                                                               AppSettings = new List<AppServiceNameValuePair>
+                                                                               {
+                                                                                   new AppServiceNameValuePair { Name = "DOCKER_REGISTRY_SERVER_URL", Value = "https://index.docker.io" },
+                                                                                   new AppServiceNameValuePair { Name = "WEBSITES_ENABLE_APP_SERVICE_STORAGE", Value = "false" },
+                                                                                   new AppServiceNameValuePair { Name = "WEBSITES_CONTAINER_START_TIME_LIMIT", Value = "460" }
+                                                                               }
+                                                                           }
+                                                                       });
 
-        void AddVariables(VariableDictionary vars)
-        {
-            AddAzureVariables(vars);
-            vars.Add(SpecialVariables.Action.Package.FeedId, "Feeds-42");
-            vars.Add(SpecialVariables.Action.Package.Registry, "index.docker.io");
-            vars.Add(SpecialVariables.Action.Package.PackageId, "nginx");
-            vars.Add(SpecialVariables.Action.Package.Image, "nginx:latest");
-            vars.Add(SpecialVariables.Action.Package.PackageVersion, "latest");
-            vars.Add(SpecialVariables.Action.Azure.DeploymentType, "Container");
-            //vars.Add(SpecialVariables.Action.Azure.ContainerSettings, BuildContainerConfigJson());
+                WebSiteResource = webSite;
+
+                await AssertSetupSuccessAsync();
+            }
+
+            [Test]
+            public async Task AzureLinuxContainerDeploy()
+            {
+                newVariables = new CalamariVariables();
+                AddVariables(newVariables);
+
+                var runningContext = new RunningDeployment("", newVariables);
+
+                await new AzureAppServiceContainerDeployBehaviour(new InMemoryLog()).Execute(runningContext);
+
+                var targetSite = new AzureTargetSite(SubscriptionId,
+                                                     ResourceGroupName,
+                                                     WebSiteResource.Data.Name);
+
+                await AssertDeploySuccessAsync(targetSite);
+            }
+
+            [Test]
+            public async Task AzureLinuxContainerSlotDeploy()
+            {
+                var slotName = "stage";
+
+                newVariables = new CalamariVariables();
+                AddVariables(newVariables);
+                newVariables.Add("Octopus.Action.Azure.DeploymentSlot", slotName);
+                await WebSiteResource.GetWebSiteSlots()
+                                     .CreateOrUpdateAsync(WaitUntil.Completed,
+                                                          slotName,
+                                                          WebSiteResource.Data);
+
+                var runningContext = new RunningDeployment("", newVariables);
+
+                await new AzureAppServiceContainerDeployBehaviour(new InMemoryLog()).Execute(runningContext);
+
+                var targetSite = new AzureTargetSite(SubscriptionId,
+                                                     ResourceGroupName,
+                                                     WebSiteResource.Data.Name,
+                                                     slotName);
+
+                await AssertDeploySuccessAsync(targetSite);
+            }
+
+            async Task AssertSetupSuccessAsync()
+            {
+                var response = await RetryPolicies.TestsTransientHttpErrorsPolicy.ExecuteAsync(async context =>
+                                                                                               {
+                                                                                                   var r = await client.GetAsync($@"https://{WebSiteResource.Data.DefaultHostName}");
+
+                                                                                                   if (!r.IsSuccessStatusCode)
+                                                                                                   {
+                                                                                                       var messageContent = await r.Content.ReadAsStringAsync();
+                                                                                                       TestContext.WriteLine($"Unable to retrieve content from https://{WebSiteResource.Data.DefaultHostName}, failed with: {messageContent}");
+                                                                                                   }
+
+                                                                                                   r.EnsureSuccessStatusCode();
+                                                                                                   return r;
+                                                                                               },
+                                                                                               contextData: new Dictionary<string, object>());
+
+                var receivedContent = await response.Content.ReadAsStringAsync();
+
+                receivedContent.Should().Contain(@"<title>Welcome to Azure Container Instances!</title>");
+                Assert.IsTrue(response.IsSuccessStatusCode);
+            }
+
+            async Task AssertDeploySuccessAsync(AzureTargetSite targetSite)
+            {
+                var imageName = newVariables.Get(SpecialVariables.Action.Package.PackageId);
+                var registryUrl = newVariables.Get(SpecialVariables.Action.Package.Registry);
+                var imageVersion = newVariables.Get(SpecialVariables.Action.Package.PackageVersion) ?? "latest";
+
+                var config = await WebSiteResource.GetWebSiteConfig().GetAsync();
+                Assert.AreEqual($@"DOCKER|{imageName}:{imageVersion}", config.Value.Data.LinuxFxVersion);
+
+                var appSettings = await ArmClient.GetAppSettingsListAsync(targetSite);
+                Assert.AreEqual("https://" + registryUrl, appSettings.FirstOrDefault(app => app.Name == "DOCKER_REGISTRY_SERVER_URL")?.Value);
+            }
+
+            void AddVariables(VariableDictionary vars)
+            {
+                AddAzureVariables(vars);
+                vars.Add(SpecialVariables.Action.Package.FeedId, "Feeds-42");
+                vars.Add(SpecialVariables.Action.Package.Registry, "index.docker.io");
+                vars.Add(SpecialVariables.Action.Package.PackageId, "nginx");
+                vars.Add(SpecialVariables.Action.Package.Image, "nginx:latest");
+                vars.Add(SpecialVariables.Action.Package.PackageVersion, "latest");
+                vars.Add(SpecialVariables.Action.Azure.DeploymentType, "Container");
+            }
         }
     }
 }
