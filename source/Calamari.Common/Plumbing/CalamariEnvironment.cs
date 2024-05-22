@@ -12,6 +12,9 @@ namespace Calamari.Common.Plumbing
         /// </summary>
         public static readonly bool IsRunningOnMono = Type.GetType("Mono.Runtime") != null;
 
+        public static bool IsRunningOnKubernetes =>
+            !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(KubernetesEnvironmentVariables.KubernetesAgentNamespace));
+
         /// <summary>
         /// Based on some internal methods used my mono itself
         /// https://github.com/mono/mono/blob/master/mcs/class/corlib/System/Environment.cs
