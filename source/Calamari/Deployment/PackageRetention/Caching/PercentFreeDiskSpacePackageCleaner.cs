@@ -49,14 +49,33 @@ namespace Calamari.Deployment.PackageRetention.Caching
             var spaceToFree = (desiredSpaceInBytes - totalNumberOfFreeBytes) * (100 + FreeSpacePercentBuffer) / 100;
             log.VerboseFormat("Cleaning {0} space from the package cache.", spaceToFree.ToFileSizeString());
             ulong spaceFreed = 0L;
-            var orderedJournalEntries = sortJournalEntries.Sort(journalEntries);
-            return orderedJournalEntries.TakeWhile(entry =>
-                                                   {
-                                                       var moreToClean = spaceFreed < spaceToFree;
-                                                       spaceFreed += entry.FileSizeBytes;
-                                                       return moreToClean;
-                                                   })
-                                        .Select(entry => entry.Package);
+            var allPackageJournalEntries = journalEntries.ToList();
+            var orderedJournalEntries = sortJournalEntries.Sort(allPackageJournalEntries);
+            var packages = orderedJournalEntries.TakeWhile(entry =>
+                                        {
+                                            var moreToClean = spaceFreed < spaceToFree;
+                                            spaceFreed += entry.FileSizeBytes;
+                                            return moreToClean;
+                                        })
+                                        .Select(entry => entry.Package)
+                                        .ToList();
+            if (spaceFreed < spaceToFree)
+            {
+                if (spaceFreed == 0 && packages.Count == 0)
+                {
+                    log.Warn($"No packages can be deleted from a total of {allPackageJournalEntries.Count} packages.");
+                }
+                else
+                {
+                    log.Warn($"Only {spaceFreed.ToFileSizeString()} from {packages.Count} packages can be deleted from a total of {allPackageJournalEntries.Count} packages. ");
+                }
+                log.Warn("This means there will be less free space than desired. This could happen if packages are still being used by other deployments and cannot be currently be deleted.");
+            }
+            else
+            {
+                log.Verbose($"{spaceFreed.ToFileSizeString()} has been freed by deleting {packages.Count} packages");
+            }
+            return packages;
         }
     }
 }
