@@ -113,7 +113,7 @@ namespace Calamari.AzureAppService.Tests
 
                 var receivedContent = await response.Content.ReadAsStringAsync();
 
-                receivedContent.Should().Contain(@"<title>Welcome to Azure Container Instances!</title>");
+                receivedContent.Should().Contain(@"<title>Microsoft Azure App Service - Welcome</title>");
                 Assert.IsTrue(response.IsSuccessStatusCode);
             }
 
