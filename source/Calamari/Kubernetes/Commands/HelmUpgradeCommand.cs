@@ -39,11 +39,11 @@ namespace Calamari.Kubernetes.Commands
             IScriptEngine scriptEngine,
             IDeploymentJournalWriter deploymentJournalWriter,
             IVariables variables,
-			ICommandLineRunner commandLineRunner,
+            ICommandLineRunner commandLineRunner,
             ICalamariFileSystem fileSystem,
             ISubstituteInFiles substituteInFiles,
             IExtractPackage extractPackage
-            )
+        )
         {
             Options.Add("package=", "Path to the NuGet package to install.", v => pathToPackage = new PathToPackage(Path.GetFullPath(v)));
             this.log = log;
@@ -58,7 +58,7 @@ namespace Calamari.Kubernetes.Commands
 
         public override int Execute(string[] commandLineArguments)
         {
-              Options.Parse(commandLineArguments);
+            Options.Parse(commandLineArguments);
 
             if (!File.Exists(pathToPackage))
                 throw new CommandException("Could not find package file: " + pathToPackage);
@@ -80,7 +80,7 @@ namespace Calamari.Kubernetes.Commands
 
             var conventionRunner = new ConventionProcessor(deployment, conventions, log);
             conventionRunner.RunConventions();
-            
+
             return 0;
         }
 
@@ -122,6 +122,7 @@ namespace Calamari.Kubernetes.Commands
             {
                 packageRoot = variables.Get(PackageVariables.IndexedPackageId(packageReferenceName ?? ""));
             }
+
             return fileSystem.RemoveInvalidFileNameChars(packageRoot ?? string.Empty);
         }
     }

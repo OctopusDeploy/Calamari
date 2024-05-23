@@ -4,10 +4,7 @@ using Calamari.Common.Plumbing.Logging;
 using SharpCompress.Archives;
 using SharpCompress.Archives.Zip;
 using SharpCompress.Common;
-#if !NET40
 using Polly;
-
-#endif
 
 namespace Calamari.Common.Features.Packages
 {
@@ -24,15 +21,16 @@ namespace Calamari.Common.Features.Packages
 
         public int Extract(string packageFile, string directory)
         {
+            PackageExtractorUtils.EnsureTargetDirectoryExists(directory);
+            
             var filesExtracted = 0;
-            using (var inStream = new FileStream(packageFile, FileMode.Open, FileAccess.Read))
-            using (var archive = ZipArchive.Open(inStream))
+            using var inStream = new FileStream(packageFile, FileMode.Open, FileAccess.Read);
+            using var archive = ZipArchive.Open(inStream);
+            
+            foreach (var entry in archive.Entries)
             {
-                foreach (var entry in archive.Entries)
-                {
-                    ProcessEvent(ref filesExtracted, entry);
-                    ExtractEntry(directory, entry);
-                }
+                ProcessEvent(ref filesExtracted, entry);
+                ExtractEntry(directory, entry);
             }
 
             return filesExtracted;
@@ -40,26 +38,12 @@ namespace Calamari.Common.Features.Packages
 
         public void ExtractEntry(string directory, IArchiveEntry entry)
         {
-#if NET40
-            entry.WriteToDirectory(directory, new PackageExtractionOptions(log));
-#else
-            var extractAttempts = 10;
-            Policy.Handle<IOException>()
-                .WaitAndRetry(
-                    extractAttempts,
-                    i => TimeSpan.FromMilliseconds(50),
-                    (ex, retry) =>
-                    {
-                        log.Verbose($"Failed to extract: {ex.Message}. Retry in {retry.Milliseconds} milliseconds.");
-                    })
-                .Execute(() =>
-                {
-                    entry.WriteToDirectory(directory, new PackageExtractionOptions(log));
-                });
-#endif
+            var strategy = PackageExtractorUtils.CreateIoExceptionRetryStrategy(log);
+
+            strategy.Execute(() => entry.WriteToDirectory(directory, new PackageExtractionOptions(log)));
         }
 
-        protected void ProcessEvent(ref int filesExtracted, IEntry entry)
+        void ProcessEvent(ref int filesExtracted, IEntry entry)
         {
             if (entry.IsDirectory)
                 return;
