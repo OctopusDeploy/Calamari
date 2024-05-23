@@ -116,15 +116,16 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
                 new Uri(AuthFeedUri),
                 FeedUsername, "SuperDooper",
                 true, 
-                3,
-                TimeSpan.FromSeconds(1)));
+                //we don't want to perform too many of these otherwise jfrog / artifactory gets sad at us
+                2,
+                TimeSpan.FromSeconds(5)));
             
             StringAssert.Contains("Unable to log in Docker registry", exception.Message);
             memoryLog.Messages
                      .Where(msg => msg.Level == InMemoryLog.Level.Verbose)
                      .Where(msg => msg.FormattedMessage.Contains("before attempting the download from the external feed again"))
                      .Should()
-                     .HaveCount(3);
+                     .HaveCount(2);
         }
 
         [Test]
