@@ -18,6 +18,12 @@ using Octostache;
 
 namespace Calamari.AzureAppService.Tests
 {
+    /// <summary>
+    /// Tests that both windows and linux app services can have container deployments
+    /// </summary>
+    /// <remarks>
+    /// Both test fixtures have the same two tests, but they have different setups, so it's just easier to have separate test fixtures.
+    /// </remarks>
     public class AzureAppServiceDeployContainerBehaviourFixture
     {
         [TestFixture]
