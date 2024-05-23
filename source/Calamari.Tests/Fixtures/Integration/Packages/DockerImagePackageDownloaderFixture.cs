@@ -15,6 +15,7 @@ using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using Calamari.Testing.Requirements;
 using Calamari.Tests.Helpers;
+using FluentAssertions;
 using NUnit.Framework;
 using Octopus.Versioning.Semver;
 
@@ -105,17 +106,25 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
 
         [Test]
         [RequiresDockerInstalled]
-        public void PackageWithWrongCredentials_Fails()
+        public void PackageWithWrongCredentials_FailsWithRetry()
         {
-            var downloader = GetDownloader();
+            var memoryLog = new InMemoryLog();
+            var downloader = GetDownloader(memoryLog);
+            
             var exception = Assert.Throws<CommandException>(() => downloader.DownloadPackage("octopus-echo",
                 new SemanticVersion("1.1"), "docker-feed",
                 new Uri(AuthFeedUri),
                 FeedUsername, "SuperDooper",
-                true, 1,
-                TimeSpan.FromSeconds(3)));
-
+                true, 
+                3,
+                TimeSpan.FromSeconds(1)));
+            
             StringAssert.Contains("Unable to log in Docker registry", exception.Message);
+            memoryLog.Messages
+                     .Where(msg => msg.Level == InMemoryLog.Level.Verbose)
+                     .Where(msg => msg.FormattedMessage.Contains("before attempting the download from the external feed again"))
+                     .Should()
+                     .HaveCount(3);
         }
 
         [Test]

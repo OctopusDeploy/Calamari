@@ -65,7 +65,8 @@ namespace Calamari.Integration.Packages.Download
 
             var feedHost = GetFeedHost(feedUri);
 
-            PerformLogin(username, password, feedHost);
+            var strategy = PackageDownloaderRetryUtils.CreateRetryStrategy<CommandException>(maxDownloadAttempts, downloadAttemptBackoff, log);
+            strategy.Execute(() => PerformLogin(username, password, feedHost));
 
             const string cachedWorkerToolsShortLink = "https://g.octopushq.com/CachedWorkerToolsImages";
             var imageNotCachedMessage =
@@ -76,7 +77,6 @@ namespace Calamari.Integration.Packages.Download
                 log.InfoFormat(imageNotCachedMessage, fullImageName);
             }
 
-            var strategy = PackageDownloaderRetryUtils.CreateRetryStrategy<CommandException>(maxDownloadAttempts, downloadAttemptBackoff, log);
             strategy.Execute(() => PerformPull(fullImageName));
 
             var (hash, size) = GetImageDetails(fullImageName);
