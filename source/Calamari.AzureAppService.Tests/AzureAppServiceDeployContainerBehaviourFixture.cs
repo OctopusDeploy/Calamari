@@ -15,6 +15,7 @@ using Calamari.Testing.Helpers;
 using FluentAssertions;
 using NUnit.Framework;
 using Octostache;
+using Polly;
 
 namespace Calamari.AzureAppService.Tests
 {
@@ -32,17 +33,24 @@ namespace Calamari.AzureAppService.Tests
             CalamariVariables newVariables;
             readonly HttpClient client = new HttpClient();
 
-            // For some reason we are having issues creating these linux resources on Standard in EastUS
-            protected override string DefaultResourceGroupLocation => "westus2";
-
             protected override async Task ConfigureTestResources(ResourceGroupResource resourceGroup)
             {
                 var (_, webSite) = await CreateAppServicePlanAndWebApp(resourceGroup,
+                                                                       new AppServicePlanData(resourceGroup.Data.Location)
+                                                                       {
+                                                                           IsXenon = true,
+                                                                           IsHyperV = true,
+                                                                           Sku = new AppServiceSkuDescription
+                                                                           {
+                                                                               Name = "P1V3",
+                                                                               Tier = "PremiumV3"
+                                                                           }
+                                                                       },
                                                                        webSiteData: new WebSiteData(resourceGroup.Data.Location)
                                                                        {
                                                                            SiteConfig = new SiteConfigProperties
                                                                            {
-                                                                               WindowsFxVersion = "DOCKER|mcr.microsoft.com/azuredocs/aci-helloworld",
+                                                                               WindowsFxVersion = "DOCKER|mcr.microsoft.com/dotnet/samples:aspnetapp",
                                                                                IsAlwaysOn = true,
                                                                                AppSettings = new List<AppServiceNameValuePair>
                                                                                {
@@ -102,25 +110,36 @@ namespace Calamari.AzureAppService.Tests
 
             async Task AssertSetupSuccessAsync()
             {
-                var response = await RetryPolicies.TestsTransientHttpErrorsPolicy.ExecuteAsync(async context =>
-                                                                                               {
-                                                                                                   var r = await client.GetAsync($@"https://{WebSiteResource.Data.DefaultHostName}");
+                var timeout = Policy.TimeoutAsync(TimeSpan.FromMinutes(5));
 
-                                                                                                   if (!r.IsSuccessStatusCode)
-                                                                                                   {
-                                                                                                       var messageContent = await r.Content.ReadAsStringAsync();
-                                                                                                       TestContext.WriteLine($"Unable to retrieve content from https://{WebSiteResource.Data.DefaultHostName}, failed with: {messageContent}");
-                                                                                                   }
+                var receivedContent = await timeout.ExecuteAsync(async () =>
+                                                                 {
+                                                                     string content;
+                                                                     do
+                                                                     {
+                                                                         var response = await RetryPolicies.TestsTransientHttpErrorsPolicy
+                                                                                                           .ExecuteAsync(async context =>
+                                                                                                                         {
+                                                                                                                             var r = await client.GetAsync($@"https://{WebSiteResource.Data.DefaultHostName}");
 
-                                                                                                   r.EnsureSuccessStatusCode();
-                                                                                                   return r;
-                                                                                               },
-                                                                                               contextData: new Dictionary<string, object>());
+                                                                                                                             if (!r.IsSuccessStatusCode)
+                                                                                                                             {
+                                                                                                                                 var messageContent = await r.Content.ReadAsStringAsync();
+                                                                                                                                 TestContext.WriteLine($"Unable to retrieve content from https://{WebSiteResource.Data.DefaultHostName}, failed with: {messageContent}");
+                                                                                                                             }
 
-                var receivedContent = await response.Content.ReadAsStringAsync();
+                                                                                                                             r.EnsureSuccessStatusCode();
+                                                                                                                             return r;
+                                                                                                                         },
+                                                                                                                         contextData: new Dictionary<string, object>());
 
-                receivedContent.Should().Contain(@"<title>Microsoft Azure App Service - Welcome</title>");
-                Assert.IsTrue(response.IsSuccessStatusCode);
+                                                                         content = await response.Content.ReadAsStringAsync();
+                                                                     } while (content is null || content.Contains("container is starting up"));
+
+                                                                     return content;
+                                                                 });
+
+                receivedContent.Should().Contain("<h1>Welcome to .NET</h1>");
             }
 
             async Task AssertDeploySuccessAsync(AzureTargetSite targetSite)
@@ -147,7 +166,7 @@ namespace Calamari.AzureAppService.Tests
                 vars.Add(SpecialVariables.Action.Azure.DeploymentType, "Container");
             }
         }
-        
+
         [TestFixture]
         public class WhenUsingALinuxAppService : AppServiceIntegrationTest
         {
@@ -172,9 +191,10 @@ namespace Calamari.AzureAppService.Tests
                                                                        },
                                                                        new WebSiteData(resourceGroup.Data.Location)
                                                                        {
+                                                                           Kind = "app,linux,container",
                                                                            SiteConfig = new SiteConfigProperties
                                                                            {
-                                                                               LinuxFxVersion = @"DOCKER|mcr.microsoft.com/azuredocs/aci-helloworld",
+                                                                               LinuxFxVersion = "DOCKER|mcr.microsoft.com/dotnet/samples:aspnetapp",
                                                                                IsAlwaysOn = true,
                                                                                AppSettings = new List<AppServiceNameValuePair>
                                                                                {
@@ -234,25 +254,36 @@ namespace Calamari.AzureAppService.Tests
 
             async Task AssertSetupSuccessAsync()
             {
-                var response = await RetryPolicies.TestsTransientHttpErrorsPolicy.ExecuteAsync(async context =>
-                                                                                               {
-                                                                                                   var r = await client.GetAsync($@"https://{WebSiteResource.Data.DefaultHostName}");
+                var timeout = Policy.TimeoutAsync(TimeSpan.FromMinutes(5));
 
-                                                                                                   if (!r.IsSuccessStatusCode)
-                                                                                                   {
-                                                                                                       var messageContent = await r.Content.ReadAsStringAsync();
-                                                                                                       TestContext.WriteLine($"Unable to retrieve content from https://{WebSiteResource.Data.DefaultHostName}, failed with: {messageContent}");
-                                                                                                   }
+                var receivedContent = await timeout.ExecuteAsync(async () =>
+                                                                 {
+                                                                     string content;
+                                                                     do
+                                                                     {
+                                                                         var response = await RetryPolicies.TestsTransientHttpErrorsPolicy
+                                                                                                           .ExecuteAsync(async context =>
+                                                                                                                         {
+                                                                                                                             var r = await client.GetAsync($@"https://{WebSiteResource.Data.DefaultHostName}");
 
-                                                                                                   r.EnsureSuccessStatusCode();
-                                                                                                   return r;
-                                                                                               },
-                                                                                               contextData: new Dictionary<string, object>());
+                                                                                                                             if (!r.IsSuccessStatusCode)
+                                                                                                                             {
+                                                                                                                                 var messageContent = await r.Content.ReadAsStringAsync();
+                                                                                                                                 TestContext.WriteLine($"Unable to retrieve content from https://{WebSiteResource.Data.DefaultHostName}, failed with: {messageContent}");
+                                                                                                                             }
 
-                var receivedContent = await response.Content.ReadAsStringAsync();
+                                                                                                                             r.EnsureSuccessStatusCode();
+                                                                                                                             return r;
+                                                                                                                         },
+                                                                                                                         contextData: new Dictionary<string, object>());
 
-                receivedContent.Should().Contain(@"<title>Welcome to Azure Container Instances!</title>");
-                Assert.IsTrue(response.IsSuccessStatusCode);
+                                                                         content = await response.Content.ReadAsStringAsync();
+                                                                     } while (content is null || content.Contains("container is starting up"));
+
+                                                                     return content;
+                                                                 });
+
+                receivedContent.Should().Contain("<h1>Welcome to .NET</h1>");
             }
 
             async Task AssertDeploySuccessAsync(AzureTargetSite targetSite)
