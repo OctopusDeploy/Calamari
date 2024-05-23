@@ -33,6 +33,9 @@ namespace Calamari.AzureAppService.Tests
             CalamariVariables newVariables;
             readonly HttpClient client = new HttpClient();
 
+            // There are capacity issues in eastus
+            protected override string DefaultResourceGroupLocation => "westus2";
+            
             protected override async Task ConfigureTestResources(ResourceGroupResource resourceGroup)
             {
                 var (_, webSite) = await CreateAppServicePlanAndWebApp(resourceGroup,
