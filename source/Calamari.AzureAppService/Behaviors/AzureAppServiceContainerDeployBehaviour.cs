@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Azure.ResourceManager;
+using Azure.ResourceManager.AppService;
 using Calamari.Azure;
 using Calamari.AzureAppService.Azure;
 using Calamari.CloudAccounts;
@@ -44,9 +46,23 @@ namespace Calamari.AzureAppService.Behaviors
 
             Log.Info($"Updating web app to use image {image} from registry {registryHost}");
 
+            Log.Verbose("Retrieving app service to determine operating system");
+            var isLinuxWebApp = await IsLinuxWebApp(armClient, targetSite);
+
             Log.Verbose("Retrieving config (this is required to update image)");
             var config = await armClient.GetSiteConfigDataAsync(targetSite);
-            config.LinuxFxVersion = $@"DOCKER|{image}";
+
+            var newVersion = $"DOCKER|{image}";
+            if (isLinuxWebApp)
+            {
+                Log.Verbose($"Updating LinuxFxVersion to {newVersion}");
+                config.LinuxFxVersion = newVersion;
+            }
+            else
+            {
+                Log.Verbose($"Updating WindowsFxVersion to {newVersion}");
+                config.WindowsFxVersion = newVersion;
+            }
 
             Log.Verbose("Retrieving app settings");
             var appSettings = await armClient.GetAppSettingsAsync(targetSite);
@@ -60,6 +76,28 @@ namespace Calamari.AzureAppService.Behaviors
 
             Log.Info("Updating configuration with container image");
             await armClient.UpdateSiteConfigDataAsync(targetSite, config);
+        }
+
+        static async Task<bool> IsLinuxWebApp(ArmClient armClient, AzureTargetSite targetSite)
+        {
+            var webSiteData = targetSite.HasSlot switch
+                              {
+                                  true => (await armClient.GetWebSiteSlotResource(WebSiteSlotResource.CreateResourceIdentifier(
+                                                                                                                               targetSite.SubscriptionId,
+                                                                                                                               targetSite.ResourceGroupName,
+                                                                                                                               targetSite.Site,
+                                                                                                                               targetSite.Slot))
+                                                          .GetAsync()).Value.Data,
+                                  false => (await armClient.GetWebSiteResource(WebSiteResource.CreateResourceIdentifier(
+                                                                                                                        targetSite.SubscriptionId,
+                                                                                                                        targetSite.ResourceGroupName,
+                                                                                                                        targetSite.Site))
+                                                           .GetAsync()).Value.Data
+                              };
+
+            //If the app service is a linux, it will contain linux in the kind string
+            //possible values are found here: https://github.com/Azure/app-service-linux-docs/blob/master/Things_You_Should_Know/kind_property.md
+            return webSiteData.Kind.ToLowerInvariant().Contains("linux");
         }
     }
 }
