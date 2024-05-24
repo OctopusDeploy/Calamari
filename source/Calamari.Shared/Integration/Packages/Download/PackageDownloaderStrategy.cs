@@ -68,7 +68,6 @@ namespace Calamari.Integration.Packages.Download
                     var x = new OciArtifactManifestRetriever();
                     if (x.TryGetArtifactType(packageId,
                                              version,
-                                             feedId,
                                              feedUri,
                                              feedUsername,
                                              feedPassword)

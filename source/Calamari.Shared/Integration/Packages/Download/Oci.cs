@@ -12,46 +12,65 @@ using Newtonsoft.Json.Linq;
 using Octopus.Versioning;
 
 namespace Calamari.Integration.Packages.Download
-{    
+{
     // TODO: make less static, and store things like the client.
     class Oci
     {
         const string VersionPath = "v2";
-        const string OciImageManifestAcceptHeader = "application/vnd.oci.image.manifest.v1+json";
+       // const string OciImageManifestAcceptHeader = "application/vnd.oci.image.manifest.v1+json";
 
         internal class Manifest
         {
+            internal const string MediaTypePropertyName = "mediaType";
+            internal const string DockerImageMediaTypeValue = "application/vnd.docker.distribution.manifest.v2+json";
+            
+            internal class Config
+            {
+                internal const string PropertyName = "config";
+                internal const string MediaTypePropertyName = "mediaType";
+                internal const string OciImageMediaTypeValue = "application/vnd.oci.image.config.v1+json";
+                internal const string DockerImageMediaTypeValue = "application/vnd.docker.container.image.v1+json";
+            }
+
             internal class Image
             {
                 internal const string TitleAnnotationKey = "org.opencontainers.image.title";
             }
 
-            internal class Layer
+            internal class Layers
             {
                 internal const string PropertyName = "layers";
                 internal const string DigestPropertyName = "digest";
-                internal const string SizePropertyName = "size"; 
-                internal const string MediaTypePropertyName = "mediaType"; 
+                internal const string SizePropertyName = "size";
+                internal const string MediaTypePropertyName = "mediaType";
                 internal const string AnnotationsPropertyName = "annotations";
-            }                                
+                internal const string HelmChartMediaTypeValue = "application/vnd.cncf.helm.chart.content.v1.tar+gzip"; // https://helm.sh/docs/topics/registries/#oci-feature-deprecation-and-behavior-changes-with-v370
+                internal const string DockerImageMediaTypeValue = "application/vnd.docker.image.rootfs.diff.tar.gzip";
+            }
         }
 
         static readonly Regex PackageDigestHashRegex = new Regex(@"[A-Za-z0-9_+.-]+:(?<hash>[A-Fa-f0-9]+)", RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.IgnoreCase);
 
-        internal static JObject? GetManifest(HttpClient client, Uri url, string packageId, string version, string? feedUsername, string? feedPassword)
+        internal static JObject? GetManifest(HttpClient client,
+                                             Uri url,
+                                             string packageId,
+                                             string version,
+                                             string? feedUsername,
+                                             string? feedPassword)
         {
             using var response = Get(client, new Uri($"{url}/{packageId}/manifests/{version}"), new NetworkCredential(feedUsername, feedPassword), ApplyAcceptHeader);
             var manifest = JsonConvert.DeserializeObject<JObject>(response.Content.ReadAsStringAsync().Result);
 
             return manifest;
-        } 
-        
+        }
+
         static void ApplyAcceptHeader(HttpRequestMessage request)
-            => request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(OciImageManifestAcceptHeader));
+            => request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(Manifest.Config.OciImageMediaTypeValue));
 
         internal static Uri GetApiUri(Uri feedUri)
         {
             var httpScheme = BuildScheme(IsPlainHttp(feedUri));
+
             var r = feedUri.ToString().Replace($"oci{Uri.SchemeDelimiter}", $"{httpScheme}{Uri.SchemeDelimiter}").TrimEnd('/');
             var uri = new Uri(r);
             if (!r.EndsWith("/" + VersionPath))
@@ -75,7 +94,7 @@ namespace Calamari.Integration.Packages.Download
 
         internal static string? GetPackageHashFromDigest(string digest)
             => PackageDigestHashRegex.Match(digest).Groups["hash"]?.Value;
-        
+
         internal static HttpResponseMessage Get(HttpClient client, Uri url, ICredentials credentials, Action<HttpRequestMessage>? customAcceptHeader = null)
         {
             var request = new HttpRequestMessage(HttpMethod.Get, url);
@@ -129,7 +148,7 @@ namespace Calamari.Integration.Packages.Download
                 request.Dispose();
             }
         }
-        
+
         static AuthenticationHeaderValue GetAuthRequestHeader(HttpClient client, HttpResponseMessage response, NetworkCredential credential)
         {
             var auth = response.Headers.WwwAuthenticate.FirstOrDefault(a => a.Scheme == "Bearer");
@@ -146,8 +165,7 @@ namespace Calamari.Integration.Packages.Download
 
             throw new CommandException($"Unknown Authentication scheme for Uri `{response.RequestMessage.RequestUri}`");
         }
-        
-        
+
         static string RetrieveAuthenticationToken(HttpClient client, string authUrl, NetworkCredential credential)
         {
             HttpResponseMessage? response = null;
@@ -176,7 +194,7 @@ namespace Calamari.Integration.Packages.Download
 
             throw new CommandException("Unable to retrieve authentication token required to perform operation.");
         }
-        
+
         static string GetOAuthServiceUrl(AuthenticationHeaderValue auth)
         {
             var details = auth.Parameter.Split(',').ToDictionary(x => x.Substring(0, x.IndexOf('=')), y => y.Substring(y.IndexOf('=') + 1, y.Length - y.IndexOf('=') - 1).Trim('"'));
@@ -197,12 +215,57 @@ namespace Calamari.Integration.Packages.Download
             oathUrl.Query = "?" + string.Join("&", queryStringValues.Select(kvp => $"{kvp.Key}={kvp.Value}").ToArray());
             return oathUrl.ToString();
         }
+
+        /*
+        public static bool HasAnnotationContaining(JObject manifest, string key, string value)
+        {
+            var annotations = manifest[Manifest.Annotations.PropertyName];
+            return annotations is { Type: JTokenType.Object }
+                   && annotations[key] != null
+                   && annotations[key].ToString().IndexOf(value, StringComparison.OrdinalIgnoreCase) >= 0; // ~equiv to case insensitive contains, for non-net standard 2.0+
+        }     */
         
+        public static bool HasMediaTypeContaining(JObject manifest, string value)
+        {
+            var mediaType = manifest[Manifest.MediaTypePropertyName];
+
+            return mediaType != null
+                   && mediaType.ToString().IndexOf(value, StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        public static bool HasConfigMediaTypeContaining(JObject manifest, string value)
+        {
+            var config = manifest[Manifest.Config.PropertyName];
+
+            return config is { Type: JTokenType.Object }
+                   && config[Manifest.Config.MediaTypePropertyName] != null
+                   && config[Manifest.Config.MediaTypePropertyName].ToString().IndexOf(value, StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        public static bool HasLayersMediaTypeContaining(JObject manifest, string value)
+        {
+            var layers = manifest[Manifest.Layers.PropertyName];
+
+            if (layers is { Type: JTokenType.Array })
+            {
+                foreach (var layer in layers)
+                {
+                    if (layer[Manifest.Layers.MediaTypePropertyName] != null 
+                        && layer[Manifest.Layers.MediaTypePropertyName].ToString().IndexOf(value, StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
         static string ExtractTokenFromResponse(HttpResponseMessage response)
         {
             var token = GetContent(response);
 
-            var lastItem = (string) JObject.Parse(token).SelectToken("token");
+            var lastItem = (string)JObject.Parse(token).SelectToken("token");
             if (lastItem != null)
             {
                 return lastItem;
@@ -210,7 +273,7 @@ namespace Calamari.Integration.Packages.Download
 
             throw new CommandException("Unable to retrieve authentication token required to perform operation.");
         }
-        
+
         static AuthenticationHeaderValue CreateAuthenticationHeader(NetworkCredential credential)
         {
             var byteArray = Encoding.ASCII.GetBytes($"{credential.UserName}:{credential.Password}");

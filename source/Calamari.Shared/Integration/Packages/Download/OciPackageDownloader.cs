@@ -114,9 +114,9 @@ namespace Calamari.Integration.Packages.Download
         {
             var manifest = Oci.GetManifest(client, url, packageId, version, feedUserName, feedPassword);
 
-            var layer = manifest.Value<JArray>(Oci.Manifest.Layer.PropertyName)[0];
-            var digest = layer.Value<string>(Oci.Manifest.Layer.DigestPropertyName);
-            var size = layer.Value<int>(Oci.Manifest.Layer.SizePropertyName);
+            var layer = manifest.Value<JArray>(Oci.Manifest.Layers.PropertyName)[0];
+            var digest = layer.Value<string>(Oci.Manifest.Layers.DigestPropertyName);
+            var size = layer.Value<int>(Oci.Manifest.Layers.SizePropertyName);
             var extension = GetExtensionFromManifest(layer);
 
             return (digest, size, extension);
@@ -124,13 +124,13 @@ namespace Calamari.Integration.Packages.Download
 
         string GetExtensionFromManifest(JToken layer)
         {
-            var artifactTitle = layer.Value<JObject>(Oci.Manifest.Layer.AnnotationsPropertyName)?[Oci.Manifest.Image.TitleAnnotationKey]?.Value<string>() ?? "";
+            var artifactTitle = layer.Value<JObject>(Oci.Manifest.Layers.AnnotationsPropertyName)?[Oci.Manifest.Image.TitleAnnotationKey]?.Value<string>() ?? "";
             var extension = combinedPackageExtractor
                 .Extensions
                 .FirstOrDefault(ext => 
                     Path.GetExtension(artifactTitle).Equals(ext, StringComparison.OrdinalIgnoreCase));
 
-            return extension ?? (layer.Value<string>(Oci.Manifest.Layer.MediaTypePropertyName).EndsWith("tar+gzip") ? ".tgz" : ".tar");
+            return extension ?? (layer.Value<string>(Oci.Manifest.Layers.MediaTypePropertyName).EndsWith("tar+gzip") ? ".tgz" : ".tar");
         }
 
         void DownloadPackage(
