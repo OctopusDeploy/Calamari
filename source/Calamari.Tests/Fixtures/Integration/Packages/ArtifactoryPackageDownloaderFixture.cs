@@ -71,7 +71,9 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
                                                                  version,
                                                                  feedUri,
                                                                  feedCredentials,
-                                                                 cacheDirectory);
+                                                                 cacheDirectory, 
+                                                                 5, 
+                                                                 TimeSpan.FromSeconds(1));
 
             packagePhysicalFile.PackageId.Should().Be("com/octopus/TestWebApp2/TestWebApp2");
             packagePhysicalFile.Version.ToString().Should().Be("1.0.0");
@@ -90,7 +92,9 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
                                                                  version,
                                                                  feedUri,
                                                                  feedCredentials,
-                                                                 cacheDirectory);
+                                                                 cacheDirectory, 
+                                                                 5, 
+                                                                 TimeSpan.FromSeconds(1));
 
             // The packageId for nupkgs uses the id from the nuspec file.
             packagePhysicalFile.PackageId.Should().Be("Octopus.Client");
@@ -110,7 +114,9 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
                                                                  version,
                                                                  feedUri,
                                                                  feedCredentials,
-                                                                 cacheDirectory);
+                                                                 cacheDirectory, 
+                                                                 5, 
+                                                                 TimeSpan.FromSeconds(1));
 
             packagePhysicalFile.PackageId.Should().Be("octopus/Acme.Web/Acme.Web");
             packagePhysicalFile.Version.ToString().Should().Be("3.2.5");

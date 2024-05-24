@@ -26,11 +26,11 @@
     <TargetFrameworks>net462;netstandard2.1</TargetFrameworks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net462' ">
-    <DefineConstants>$(DefineConstants);USE_NUGET_V2_LIBS;SUPPORTS_POLLY;USE_OCTODIFF_EXE;WINDOWS_CERTIFICATE_STORE_SUPPORT</DefineConstants>
+    <DefineConstants>$(DefineConstants);USE_NUGET_V2_LIBS;USE_OCTODIFF_EXE;WINDOWS_CERTIFICATE_STORE_SUPPORT</DefineConstants>
     <PlatformTarget>anycpu</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(TargetFramework)' == 'netstandard2.1' ">
-    <DefineConstants>$(DefineConstants);USE_NUGET_V3_LIBS;SUPPORTS_POLLY</DefineConstants>
+    <DefineConstants>$(DefineConstants);USE_NUGET_V3_LIBS</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition="'$(TargetFramework)' == 'net462' ">
     <NoWarn>CS8600;CS8601;CS8602;CS8603;CS8604;DE0003;DE0004</NoWarn>

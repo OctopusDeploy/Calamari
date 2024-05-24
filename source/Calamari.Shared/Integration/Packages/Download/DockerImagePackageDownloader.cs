@@ -37,7 +37,11 @@ namespace Calamari.Integration.Packages.Download
             }
         };
 
-        public DockerImagePackageDownloader(IScriptEngine scriptEngine, ICalamariFileSystem fileSystem, ICommandLineRunner commandLineRunner, IVariables variables, ILog log)
+        public DockerImagePackageDownloader(IScriptEngine scriptEngine,
+                                            ICalamariFileSystem fileSystem,
+                                            ICommandLineRunner commandLineRunner,
+                                            IVariables variables,
+                                            ILog log)
         {
             this.scriptEngine = scriptEngine;
             this.fileSystem = fileSystem;
@@ -60,23 +64,21 @@ namespace Calamari.Integration.Packages.Download
             var fullImageName = GetFullImageName(packageId, version, feedUri);
 
             var feedHost = GetFeedHost(feedUri);
-            
-            PerformLogin(username, password, feedHost);
+
+            var strategy = PackageDownloaderRetryUtils.CreateRetryStrategy<CommandException>(maxDownloadAttempts, downloadAttemptBackoff, log);
+            strategy.Execute(() => PerformLogin(username, password, feedHost));
 
             const string cachedWorkerToolsShortLink = "https://g.octopushq.com/CachedWorkerToolsImages";
             var imageNotCachedMessage =
-                "The docker image '{0}' may not be cached." +
-                " Please note images that have not been cached may take longer to be acquired than expected." +
-                " Your deployment will begin as soon as all images have been pulled." +
-                $" Please see {cachedWorkerToolsShortLink} for more information on cached worker-tools image versions.";
-            
+                "The docker image '{0}' may not be cached." + " Please note images that have not been cached may take longer to be acquired than expected." + " Your deployment will begin as soon as all images have been pulled." + $" Please see {cachedWorkerToolsShortLink} for more information on cached worker-tools image versions.";
+
             if (!IsImageCached(fullImageName))
             {
                 log.InfoFormat(imageNotCachedMessage, fullImageName);
             }
-            
-            PerformPull(fullImageName);
-            
+
+            strategy.Execute(() => PerformPull(fullImageName));
+
             var (hash, size) = GetImageDetails(fullImageName);
             return new PackagePhysicalFileMetadata(new PackageFileNameMetadata(packageId, version, version, ""), string.Empty, hash, size);
         }
@@ -105,12 +107,13 @@ namespace Calamari.Integration.Packages.Download
 
         void PerformLogin(string? username, string? password, string feed)
         {
-            var result = ExecuteScript("DockerLogin", new Dictionary<string, string?>
-            {
-                ["DockerUsername"] = username,
-                ["DockerPassword"] = password,
-                ["FeedUri"] = feed
-            });
+            var result = ExecuteScript("DockerLogin",
+                                       new Dictionary<string, string?>
+                                       {
+                                           ["DockerUsername"] = username,
+                                           ["DockerPassword"] = password,
+                                           ["FeedUri"] = feed
+                                       });
             if (result == null)
                 throw new CommandException("Null result attempting to log in Docker registry");
             if (result.ExitCode != 0)
@@ -133,10 +136,11 @@ namespace Calamari.Integration.Packages.Download
 
         void PerformPull(string fullImageName)
         {
-            var result = ExecuteScript("DockerPull", new Dictionary<string, string?>
-            {
-                ["Image"] = fullImageName
-            });
+            var result = ExecuteScript("DockerPull",
+                                       new Dictionary<string, string?>
+                                       {
+                                           ["Image"] = fullImageName
+                                       });
             if (result == null)
                 throw new CommandException("Null result attempting to pull Docker image");
             if (result.ExitCode != 0)
@@ -153,16 +157,20 @@ namespace Calamari.Integration.Packages.Download
                 {
                     clone[keyValuePair.Key] = keyValuePair.Value;
                 }
+
                 return scriptEngine.Execute(new Script(file), clone, commandLineRunner, environmentVariables);
             }
         }
-        
+
         (string hash, long size) GetImageDetails(string fullImageName)
         {
             var details = "";
             var result2 = SilentProcessRunner.ExecuteCommand("docker",
-                "inspect --format=\"{{.Id}} {{.Size}}\" " + fullImageName,
-                ".", environmentVariables, (stdout) => { details = stdout; }, log.Error);
+                                                             "inspect --format=\"{{.Id}} {{.Size}}\" " + fullImageName,
+                                                             ".",
+                                                             environmentVariables,
+                                                             (stdout) => { details = stdout; },
+                                                             log.Error);
             if (result2.ExitCode != 0)
             {
                 throw new CommandException("Unable to determine acquired docker image hash");
@@ -179,7 +187,6 @@ namespace Calamari.Integration.Packages.Download
                 log.Verbose($"Unable to parse image size. ({parts[0]})");
             }
 
-
             return (hash, size);
         }
 
@@ -188,12 +195,12 @@ namespace Calamari.Integration.Packages.Download
             var output = "";
             var result = SilentProcessRunner.ExecuteCommand("docker",
                                                             "image ls --format=\"{{.ID}}\" --no-trunc",
-                                                            ".", 
-                                                            environmentVariables, 
+                                                            ".",
+                                                            environmentVariables,
                                                             (stdout) => { output += stdout + " "; },
                                                             (error) => { });
-            return result.ExitCode == 0 
-                ? output.Split(' ').Select(digest => digest.Trim()) 
+            return result.ExitCode == 0
+                ? output.Split(' ').Select(digest => digest.Trim())
                 : null;
         }
 
@@ -202,8 +209,8 @@ namespace Calamari.Integration.Packages.Download
             var output = "";
             var result = SilentProcessRunner.ExecuteCommand("docker",
                                                             $"manifest inspect --verbose {fullImageName}",
-                                                            ".", 
-                                                            environmentVariables, 
+                                                            ".",
+                                                            environmentVariables,
                                                             (stdout) => { output += stdout; },
                                                             (error) => { });
 
@@ -247,7 +254,7 @@ namespace Calamari.Integration.Packages.Download
             }
 
             var scriptFile = Path.Combine(".", $"Octopus.{contextFile}");
-            var contextScript = new AssemblyEmbeddedResources().GetEmbeddedResourceText(Assembly.GetExecutingAssembly(), $"{typeof (DockerImagePackageDownloader).Namespace}.Scripts.{contextFile}");
+            var contextScript = new AssemblyEmbeddedResources().GetEmbeddedResourceText(Assembly.GetExecutingAssembly(), $"{typeof(DockerImagePackageDownloader).Namespace}.Scripts.{contextFile}");
             fileSystem.OverwriteFile(scriptFile, contextScript);
             return scriptFile;
         }
