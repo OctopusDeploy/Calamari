@@ -59,7 +59,8 @@ namespace Calamari.Integration.Packages.Download
 
             var feedCredentials = GetFeedCredentials(feedUsername, feedPassword);
 
-            var package = GetChartDetails(feedUri, feedCredentials, packageId, CancellationToken.None);
+            var strategy = PackageDownloaderRetryUtils.CreateRetryStrategy<Exception>(maxDownloadAttempts, downloadAttemptBackoff, log);
+            var package = strategy.Execute(() => GetChartDetails(feedUri, feedCredentials, packageId, CancellationToken.None));
 
             if (string.IsNullOrEmpty(package.PackageId))
             {
