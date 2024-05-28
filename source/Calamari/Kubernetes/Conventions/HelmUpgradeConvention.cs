@@ -71,13 +71,13 @@ namespace Calamari.Kubernetes.Conventions
 
             if (helmVersion == HelmVersion.V2)
             {
-                if (!FeatureToggle.PreventHelmV2DeploymentsFeatureToggle.IsEnabled(deployment.Variables))
+                if (FeatureToggle.PreventHelmV2DeploymentsFeatureToggle.IsEnabled(deployment.Variables))
                 {
-                    log.Warn("This step is currently configured to use Helm V2. Support for Helm V2 will be removed in Octopus Server 2024.3. Please migrate to Helm V3 as soon as possible.");
+                    throw new CommandException("Helm V2 is no longer supported. Please migrate to Helm V3.");
                 }
                 else
                 {
-                    throw new CommandException("Helm V2 is no longer supported. Please migrate to Helm V3.");
+                    log.Warn("This step is currently configured to use Helm V2. Support for Helm V2 will be removed in Octopus Server 2024.3. Please migrate to Helm V3 as soon as possible.");
                 }
             }
 
