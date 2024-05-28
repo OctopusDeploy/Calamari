@@ -14,6 +14,6 @@
         AsynchronousAzureZipDeployFeatureToggle,
         FSharpDeprecationFeatureToggle,
         AzureRMDeprecationFeatureToggle,
-        HelmV2SupportEnabledFeatureToggle
+        PreventHelmV2DeploymentsFeatureToggle
     }
 }
