@@ -133,7 +133,7 @@ namespace Calamari.AzureAppService.Behaviors
                 if (substitutionFeatures.Any(featureName => context.Variables.IsFeatureEnabled(featureName)))
                 {
                     uploadPath = (await packageProvider.PackageArchive(context.StagingDirectory, context.CurrentDirectory)).FullName;
-                    uploadFileNeedsCleaning = false;
+                    uploadFileNeedsCleaning = true;
                 }
                 else
                 {
@@ -280,16 +280,17 @@ namespace Calamari.AzureAppService.Behaviors
             var uploadResponse = await RetryPolicies.TransientHttpErrorsPolicy.ExecuteAsync(async () =>
                                                                                             {
                                                                                                 //we have to create a new request message each time
+                                                                                                using var fileStream = new FileStream(uploadZipPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+                                                                                                using var streamContent = new StreamContent(fileStream);
+                                                                                                streamContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+
                                                                                                 var uploadRequest = new HttpRequestMessage(HttpMethod.Post, zipUploadUrl)
                                                                                                 {
                                                                                                     Headers =
                                                                                                     {
                                                                                                         Authorization = authenticationHeader
                                                                                                     },
-                                                                                                    Content = new StreamContent(new FileStream(uploadZipPath, FileMode.Open, FileAccess.Read, FileShare.Read))
-                                                                                                    {
-                                                                                                        Headers = { ContentType = new MediaTypeHeaderValue("application/octet-stream") }
-                                                                                                    }
+                                                                                                    Content = streamContent
                                                                                                 };
 
                                                                                                 var r = await httpClient.SendAsync(uploadRequest);
