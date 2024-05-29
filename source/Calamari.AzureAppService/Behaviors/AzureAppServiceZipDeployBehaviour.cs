@@ -102,12 +102,12 @@ namespace Calamari.AzureAppService.Behaviors
             var packageFileInfo = new FileInfo(variables.Get(TentacleVariables.CurrentDeployment.PackageFilePath)!);
 
             IPackageProvider packageProvider = packageFileInfo.Extension switch
-                                  {
-                                      ".zip" => new ZipPackageProvider(),
-                                      ".nupkg" => new NugetPackageProvider(),
-                                      ".war" => new WarPackageProvider(Log, variables, context),
-                                      _ => throw new Exception("Unsupported archive type")
-                                  };
+                                               {
+                                                   ".zip" => new ZipPackageProvider(),
+                                                   ".nupkg" => new NugetPackageProvider(),
+                                                   ".war" => new WarPackageProvider(Log, variables, context),
+                                                   _ => throw new Exception("Unsupported archive type")
+                                               };
 
             // Let's process our archive while the slot is spun up. We will await it later before we try to upload to it.
             Task<WebSiteSlotResource>? slotCreateTask = null;
@@ -129,17 +129,17 @@ namespace Calamari.AzureAppService.Behaviors
             bool uploadFileNeedsCleaning = false;
             try
             {
+                FileInfo? uploadFile;
                 if (substitutionFeatures.Any(featureName => context.Variables.IsFeatureEnabled(featureName)))
                 {
-                    uploadPath = (await packageProvider.PackageArchive(context.StagingDirectory, context.CurrentDirectory)).FullName;
-                    uploadFileNeedsCleaning = false;
+                    uploadFile = (await packageProvider.PackageArchive(context.StagingDirectory, context.CurrentDirectory));
                 }
                 else
                 {
-                    var uploadFile = await packageProvider.ConvertToAzureSupportedFile(packageFileInfo);
-                    uploadPath = uploadFile.FullName;
-                    uploadFileNeedsCleaning = packageFileInfo.Extension != uploadFile.Extension;
+                    uploadFile = await packageProvider.ConvertToAzureSupportedFile(packageFileInfo);
                 }
+                uploadPath = uploadFile.FullName;
+                uploadFileNeedsCleaning = packageFileInfo.Extension != uploadFile.Extension;
 
                 if (uploadPath == null)
                 {
@@ -351,12 +351,19 @@ namespace Calamari.AzureAppService.Behaviors
             Log.Verbose("Finished zip deployment");
         }
 
-        void CleanupUploadFile(string? uploadPath)
+        static void CleanupUploadFile(string? uploadPath)
         {
-            if (File.Exists(uploadPath))
-            {
-                File.Delete(uploadPath!);
-            }
+            Policy.Handle<IOException>()
+                  .WaitAndRetry(
+                                5,
+                                i => TimeSpan.FromMilliseconds(200))
+                  .Execute(() =>
+                           {
+                               if (File.Exists(uploadPath))
+                               {
+                                   File.Delete(uploadPath!);
+                               }
+                           });
         }
     }
 }
