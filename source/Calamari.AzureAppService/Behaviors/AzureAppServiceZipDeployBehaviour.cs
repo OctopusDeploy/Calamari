@@ -228,6 +228,10 @@ namespace Calamari.AzureAppService.Behaviors
             //we add some retry just in case the web app's Kudu/SCM is not running just yet
             var response = await RetryPolicies.TransientHttpErrorsPolicy.ExecuteAsync(async () =>
                                                                                       {
+                                                                                          using var fileStream = new FileStream(uploadZipPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+                                                                                          using var streamContent = new StreamContent(fileStream);
+                                                                                          streamContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+                                                                                          
                                                                                           //we have to create a new request message each time
                                                                                           var request = new HttpRequestMessage(HttpMethod.Post, zipUploadUrl)
                                                                                           {
@@ -235,10 +239,7 @@ namespace Calamari.AzureAppService.Behaviors
                                                                                               {
                                                                                                   Authorization = new AuthenticationHeaderValue("Basic", publishingProfile.GetBasicAuthCredentials())
                                                                                               },
-                                                                                              Content = new StreamContent(new FileStream(uploadZipPath, FileMode.Open, FileAccess.Read, FileShare.Read))
-                                                                                              {
-                                                                                                  Headers = { ContentType = new MediaTypeHeaderValue("application/octet-stream") }
-                                                                                              }
+                                                                                              Content = streamContent
                                                                                           };
 
                                                                                           var r = await httpClient.SendAsync(request);
@@ -278,6 +279,10 @@ namespace Calamari.AzureAppService.Behaviors
             //we add some retry just in case the web app's Kudu/SCM is not running just yet
             var uploadResponse = await RetryPolicies.TransientHttpErrorsPolicy.ExecuteAsync(async () =>
                                                                                             {
+                                                                                                using var fileStream = new FileStream(uploadZipPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+                                                                                                using var streamContent = new StreamContent(fileStream);
+                                                                                                streamContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+                                                                                                
                                                                                                 //we have to create a new request message each time
                                                                                                 var uploadRequest = new HttpRequestMessage(HttpMethod.Post, zipUploadUrl)
                                                                                                 {
@@ -285,10 +290,7 @@ namespace Calamari.AzureAppService.Behaviors
                                                                                                     {
                                                                                                         Authorization = authenticationHeader
                                                                                                     },
-                                                                                                    Content = new StreamContent(new FileStream(uploadZipPath, FileMode.Open, FileAccess.Read, FileShare.Read))
-                                                                                                    {
-                                                                                                        Headers = { ContentType = new MediaTypeHeaderValue("application/octet-stream") }
-                                                                                                    }
+                                                                                                    Content = streamContent
                                                                                                 };
 
                                                                                                 var r = await httpClient.SendAsync(uploadRequest);
