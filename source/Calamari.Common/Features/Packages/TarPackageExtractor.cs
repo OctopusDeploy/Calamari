@@ -50,7 +50,7 @@ namespace Calamari.Common.Features.Packages
         {
             var strategy = PackageExtractorUtils.CreateIoExceptionRetryStrategy(log);
 
-            strategy.Execute(() => reader.WriteEntryToDirectory(directory, new PackageExtractionOptions(log)));
+            strategy.Execute(() => reader.WriteEntryToDirectory(directory, new PackageExtractionOptions(log) { PreserveAttributes = true }));
         }
 
         protected virtual Stream GetCompressionStream(Stream stream)
