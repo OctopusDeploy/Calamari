@@ -130,17 +130,17 @@ namespace Calamari.AzureAppService.Behaviors
             bool uploadFileNeedsCleaning = false;
             try
             {
+                FileInfo? uploadFile;
                 if (substitutionFeatures.Any(featureName => context.Variables.IsFeatureEnabled(featureName)))
                 {
-                    uploadPath = (await packageProvider.PackageArchive(context.StagingDirectory, context.CurrentDirectory)).FullName;
-                    uploadFileNeedsCleaning = true;
+                    uploadFile = (await packageProvider.PackageArchive(context.StagingDirectory, context.CurrentDirectory));
                 }
                 else
                 {
-                    var uploadFile = await packageProvider.ConvertToAzureSupportedFile(packageFileInfo);
-                    uploadPath = uploadFile.FullName;
-                    uploadFileNeedsCleaning = packageFileInfo.Extension != uploadFile.Extension;
+                    uploadFile = await packageProvider.ConvertToAzureSupportedFile(packageFileInfo);
                 }
+                uploadPath = uploadFile.FullName;
+                uploadFileNeedsCleaning = packageFileInfo.Extension != uploadFile.Extension;
 
                 if (uploadPath == null)
                 {
