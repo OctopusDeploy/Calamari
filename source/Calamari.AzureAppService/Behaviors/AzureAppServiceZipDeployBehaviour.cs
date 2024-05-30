@@ -229,7 +229,11 @@ namespace Calamari.AzureAppService.Behaviors
             //we add some retry just in case the web app's Kudu/SCM is not running just yet
             var response = await RetryPolicies.TransientHttpErrorsPolicy.ExecuteAsync(async () =>
                                                                                       {
+#if NETFRAMEWORK
+                                                                                          using var fileStream = new FileStream(uploadZipPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+#else
                                                                                           await using var fileStream = new FileStream(uploadZipPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+#endif
                                                                                           using var streamContent = new StreamContent(fileStream);
                                                                                           streamContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
                                                                                           
@@ -281,7 +285,11 @@ namespace Calamari.AzureAppService.Behaviors
             var uploadResponse = await RetryPolicies.TransientHttpErrorsPolicy.ExecuteAsync(async () =>
                                                                                             {
                                                                                                 //we have to create a new request message each time
+#if NETFRAMEWORK
+                                                                                                using var fileStream = new FileStream(uploadZipPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+#else
                                                                                                 await using var fileStream = new FileStream(uploadZipPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+#endif
                                                                                                 using var streamContent = new StreamContent(fileStream);
                                                                                                 streamContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
 
