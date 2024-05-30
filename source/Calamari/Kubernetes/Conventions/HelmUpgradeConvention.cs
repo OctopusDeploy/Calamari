@@ -9,6 +9,7 @@ using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.FileSystem.GlobExpressions;
 using Calamari.Common.Plumbing.Logging;
@@ -70,7 +71,14 @@ namespace Calamari.Kubernetes.Conventions
 
             if (helmVersion == HelmVersion.V2)
             {
-                log.Warn("This step is currently configured to use Helm V2. Support for Helm V2 will be removed in Octopus Server 2024.3. Please migrate to Helm V3 as soon as possible");
+                if (FeatureToggle.PreventHelmV2DeploymentsFeatureToggle.IsEnabled(deployment.Variables))
+                {
+                    throw new CommandException("Helm V2 is no longer supported. Please migrate to Helm V3.");
+                }
+                else
+                {
+                    log.Warn("This step is currently configured to use Helm V2. Support for Helm V2 will be completely removed in Octopus Server 2025.1. Please migrate to Helm V3 as soon as possible.");
+                }
             }
 
             var sb = new StringBuilder();
