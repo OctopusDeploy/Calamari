@@ -31,9 +31,6 @@ namespace Calamari.AzureAppService.Behaviors
 {
     internal class AzureAppServiceZipDeployBehaviour : IDeployBehaviour
     {
-        static readonly TimeSpan PollingTimeout = TimeSpan.FromMinutes(3);
-        static readonly AsyncTimeoutPolicy<HttpResponseMessage> AsyncZipDeployTimeoutPolicy = Policy.TimeoutAsync<HttpResponseMessage>(PollingTimeout, TimeoutStrategy.Optimistic);
-
         public AzureAppServiceZipDeployBehaviour(ILog log)
         {
             Log = log;
@@ -54,6 +51,11 @@ namespace Calamari.AzureAppService.Behaviors
             Log.Verbose($"Using Azure Subscription '{account.SubscriptionNumber}'");
             Log.Verbose($"Using Azure ServicePrincipal AppId/ClientId '{account.ClientId}'");
             Log.Verbose($"Using Azure Cloud '{account.AzureEnvironment}'");
+
+            var pollingTimeoutVariableValue = variables.Get(SpecialVariables.Action.Azure.AsyncZipDeploymentTimeout, "5");
+            int.TryParse(pollingTimeoutVariableValue, out var pollingTimeoutValue);
+            var pollingTimeout = TimeSpan.FromMinutes(pollingTimeoutValue);
+            var asyncZipDeployTimeoutPolicy = Policy.TimeoutAsync<HttpResponseMessage>(pollingTimeout, TimeoutStrategy.Optimistic);
 
             string? resourceGroupName = variables.Get(SpecialVariables.Action.Azure.ResourceGroupName);
             if (resourceGroupName == null)
@@ -163,7 +165,7 @@ namespace Calamari.AzureAppService.Behaviors
 
                 if (packageProvider.SupportsAsynchronousDeployment && FeatureToggle.AsynchronousAzureZipDeployFeatureToggle.IsEnabled(context.Variables))
                 {
-                    await UploadZipAndPollAsync(publishingProfile, uploadPath, targetSite.ScmSiteAndSlot, packageProvider);
+                    await UploadZipAndPollAsync(publishingProfile, uploadPath, targetSite.ScmSiteAndSlot, packageProvider, pollingTimeout, asyncZipDeployTimeoutPolicy);
                 }
                 else
                 {
@@ -229,7 +231,11 @@ namespace Calamari.AzureAppService.Behaviors
             //we add some retry just in case the web app's Kudu/SCM is not running just yet
             var response = await RetryPolicies.TransientHttpErrorsPolicy.ExecuteAsync(async () =>
                                                                                       {
+#if NETFRAMEWORK
                                                                                           using var fileStream = new FileStream(uploadZipPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+#else
+                                                                                          await using var fileStream = new FileStream(uploadZipPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+#endif
                                                                                           using var streamContent = new StreamContent(fileStream);
                                                                                           streamContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
                                                                                           
@@ -257,7 +263,9 @@ namespace Calamari.AzureAppService.Behaviors
         private async Task UploadZipAndPollAsync(PublishingProfile publishingProfile,
                                                  string uploadZipPath,
                                                  string targetSite,
-                                                 IPackageProvider packageProvider)
+                                                 IPackageProvider packageProvider,
+                                                 TimeSpan pollingTimeout,
+                                                 AsyncTimeoutPolicy<HttpResponseMessage> asyncZipDeployTimeoutPolicy)
         {
             Log.Verbose($"Path to upload: {uploadZipPath}");
             Log.Verbose($"Target Site: {targetSite}");
@@ -281,7 +289,11 @@ namespace Calamari.AzureAppService.Behaviors
             var uploadResponse = await RetryPolicies.TransientHttpErrorsPolicy.ExecuteAsync(async () =>
                                                                                             {
                                                                                                 //we have to create a new request message each time
+#if NETFRAMEWORK
                                                                                                 using var fileStream = new FileStream(uploadZipPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+#else
+                                                                                                await using var fileStream = new FileStream(uploadZipPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+#endif
                                                                                                 using var streamContent = new StreamContent(fileStream);
                                                                                                 streamContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
 
@@ -306,7 +318,7 @@ namespace Calamari.AzureAppService.Behaviors
             var location = uploadResponse.Headers.Location;
 
             //wrap the entire thing in a Polly Timeout policy which uses the cancellation token to raise the timout
-            var result = await AsyncZipDeployTimeoutPolicy.ExecuteAndCaptureAsync(async timeoutCancellationToken =>
+            var result = await asyncZipDeployTimeoutPolicy.ExecuteAndCaptureAsync(async timeoutCancellationToken =>
                                                                                   {
                                                                                       //the outer policy should only retry when the response is a 202
                                                                                       return await RetryPolicies.AsynchronousZipDeploymentOperationPolicy
@@ -342,7 +354,7 @@ namespace Calamari.AzureAppService.Behaviors
             {
                 throw result.FinalException switch
                       {
-                          OperationCanceledException oce => new Exception($"Zip deployment failed to complete after {PollingTimeout}.", oce),
+                          OperationCanceledException oce => new Exception($"Zip deployment failed to complete after {pollingTimeout}.", oce),
                           _ => new Exception($"Zip deployment failed to complete.", result.FinalException)
                       };
             }
