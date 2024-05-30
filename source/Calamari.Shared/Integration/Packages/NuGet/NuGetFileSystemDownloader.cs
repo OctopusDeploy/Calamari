@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Calamari.Common.Features.Packages.NuGet;
+using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Octopus.Versioning;
 
@@ -12,7 +13,7 @@ namespace Calamari.Integration.Packages.NuGet
     {
         private static string NuGetFileExtension = ".nupkg";
         
-        public static void DownloadPackage(string packageId, IVersion version, Uri feedUri, string targetFilePath)
+        public static void DownloadPackage(string packageId, IVersion version, Uri feedUri, string targetFilePath, ICalamariFileSystem fileSystem)
         {
             if (!Directory.Exists(feedUri.LocalPath))
                 throw new Exception($"Path does not exist: '{feedUri}'");
@@ -33,9 +34,9 @@ namespace Calamari.Integration.Packages.NuGet
             Log.VerboseFormat("Found package {0} v{1}", packageId, version);
             Log.Verbose("Downloading to: " + targetFilePath);
 
-            using (var targetFile = File.Open(targetFilePath, FileMode.Create, FileAccess.ReadWrite, FileShare.None))
+            using (var targetFile = fileSystem.OpenFile(targetFilePath, FileMode.Create, FileAccess.ReadWrite, FileShare.None))
             {
-                using (var fileStream = File.OpenRead(package))
+                using (var fileStream = fileSystem.OpenFile(package, FileMode.Open, FileAccess.Read))
                 {
                     fileStream.CopyTo(targetFile);
                 }

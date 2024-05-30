@@ -40,47 +40,47 @@ namespace Calamari.Common.Plumbing.FileSystem
     {
         public void Delete(string path)
         {
-            File.Delete(path);
+            FileAccessChecker.IsFileLocked(() => File.Delete(path));
         }
 
         public bool Exists(string? path)
         {
-            return File.Exists(path);
+            return FileAccessChecker.IsFileLocked(() => File.Exists(path));
         }
 
         public byte[] ReadAllBytes(string path)
         {
-            return File.ReadAllBytes(path);
+            return FileAccessChecker.IsFileLocked(() => File.ReadAllBytes(path));
         }
 
         public void WriteAllBytes(string path, byte[] bytes)
         {
-            File.WriteAllBytes(path, bytes);
+            FileAccessChecker.IsFileLocked(() => File.WriteAllBytes(path, bytes));
         }
 
         public void Move(string source, string destination)
         {
-            File.Move(source, destination);
+            FileAccessChecker.IsFileLocked(() => File.Move(source, destination));
         }
 
         public void SetAttributes(string path, FileAttributes fileAttributes)
         {
-            File.SetAttributes(path, fileAttributes);
+            FileAccessChecker.IsFileLocked(() => File.SetAttributes(path, fileAttributes));
         }
 
         public DateTime GetCreationTime(string path)
         {
-            return File.GetCreationTime(path);
+            return FileAccessChecker.IsFileLocked<DateTime>(() => File.GetCreationTime(path));
         }
 
         public Stream Open(string path, FileMode mode, FileAccess access, FileShare share)
         {
-            return File.Open(path, mode, access, share);
+            return FileAccessChecker.IsFileLocked<Stream>(() => File.Open(path, mode, access, share));
         }
 
         public void Copy(string source, string destination, bool overwrite)
         {
-            File.Copy(source, destination, overwrite);
+            FileAccessChecker.IsFileLocked(() => File.Copy(source, destination, overwrite));
         }
     }
 
@@ -88,46 +88,46 @@ namespace Calamari.Common.Plumbing.FileSystem
     {
         public void CreateDirectory(string path)
         {
-            Directory.CreateDirectory(path);
+            FileAccessChecker.IsFileLocked(() => Directory.CreateDirectory(path));
         }
 
         public void Delete(string path, bool recursive)
         {
-            Directory.Delete(path, recursive);
+            FileAccessChecker.IsFileLocked(() => Directory.Delete(path, recursive));
         }
 
         public bool Exists(string? path)
         {
-            return Directory.Exists(path);
+            return FileAccessChecker.IsFileLocked(() => Directory.Exists(path));
         }
 
         public string[] GetFileSystemEntries(string path)
         {
-            return Directory.GetFileSystemEntries(path);
+            return FileAccessChecker.IsFileLocked(() => Directory.GetFileSystemEntries(path));
         }
 
         public IEnumerable<string> EnumerateDirectories(string path)
         {
-            return Directory.EnumerateDirectories(path);
+            return FileAccessChecker.IsFileLocked(() => Directory.EnumerateDirectories(path));
         }
 
         public IEnumerable<string> EnumerateDirectoriesRecursively(string path)
         {
-            return Directory.EnumerateDirectories(path, "*", SearchOption.AllDirectories);
+            return FileAccessChecker.IsFileLocked(() => Directory.EnumerateDirectories(path, "*", SearchOption.AllDirectories));
         }
 
         public virtual IEnumerable<string> EnumerateFiles(
             string parentDirectoryPath,
             params string[] searchPatterns)
         {
-            return EnumerateFiles(parentDirectoryPath, SearchOption.TopDirectoryOnly, searchPatterns);
+            return FileAccessChecker.IsFileLocked(() => EnumerateFiles(parentDirectoryPath, SearchOption.TopDirectoryOnly, searchPatterns));
         }
 
         public virtual IEnumerable<string> EnumerateFilesRecursively(
             string parentDirectoryPath,
             params string[] searchPatterns)
         {
-            return EnumerateFiles(parentDirectoryPath, SearchOption.AllDirectories, searchPatterns);
+            return FileAccessChecker.IsFileLocked(() => EnumerateFiles(parentDirectoryPath, SearchOption.AllDirectories, searchPatterns));
         }
 
         private IEnumerable<string> EnumerateFiles(
@@ -136,24 +136,24 @@ namespace Calamari.Common.Plumbing.FileSystem
             string[] searchPatterns)
         {
             return searchPatterns.Length == 0
-                ? Directory.EnumerateFiles(parentDirectoryPath, "*", searchOption)
+                ? FileAccessChecker.IsFileLocked(() => Directory.EnumerateFiles(parentDirectoryPath, "*", searchOption))
                 : searchPatterns.SelectMany(pattern =>
-                    Directory.EnumerateFiles(parentDirectoryPath, pattern, searchOption)).Distinct();
+                                                FileAccessChecker.IsFileLocked(() => Directory.EnumerateFiles(parentDirectoryPath, pattern, searchOption)).Distinct());
         }
 
         public IEnumerable<string> GetFiles(string path, string searchPattern)
         {
-            return Directory.GetFiles(path, searchPattern);
+            return FileAccessChecker.IsFileLocked(() => Directory.GetFiles(path, searchPattern));
         }
 
         public IEnumerable<string> GetDirectories(string path)
         {
-            return Directory.GetDirectories(path);
+            return FileAccessChecker.IsFileLocked(() => Directory.GetDirectories(path));
         }
 
         public string GetCurrentDirectory()
         {
-            return Directory.GetCurrentDirectory();
+            return FileAccessChecker.IsFileLocked(() => Directory.GetCurrentDirectory());
         }
     }
 
@@ -162,47 +162,47 @@ namespace Calamari.Common.Plumbing.FileSystem
     {
         public void Delete(string path)
         {
-            Alphaleonis.Win32.Filesystem.File.Delete(path);
+            FileAccessChecker.IsFileLocked(() => Alphaleonis.Win32.Filesystem.File.Delete(path));
         }
 
         public bool Exists(string? path)
         {
-            return Alphaleonis.Win32.Filesystem.File.Exists(path);
+            return FileAccessChecker.IsFileLocked(() => Alphaleonis.Win32.Filesystem.File.Exists(path));
         }
 
         public byte[] ReadAllBytes(string path)
         {
-            return Alphaleonis.Win32.Filesystem.File.ReadAllBytes(path);
+            return FileAccessChecker.IsFileLocked(() => Alphaleonis.Win32.Filesystem.File.ReadAllBytes(path));
         }
 
         public void WriteAllBytes(string path, byte[] bytes)
         {
-            Alphaleonis.Win32.Filesystem.File.WriteAllBytes(path, bytes);
+            FileAccessChecker.IsFileLocked(() => Alphaleonis.Win32.Filesystem.File.WriteAllBytes(path, bytes));
         }
 
         public void Move(string source, string destination)
         {
-            Alphaleonis.Win32.Filesystem.File.Move(source, destination);
+            FileAccessChecker.IsFileLocked(() => Alphaleonis.Win32.Filesystem.File.Move(source, destination));
         }
 
         public void SetAttributes(string path, FileAttributes fileAttributes)
         {
-            Alphaleonis.Win32.Filesystem.File.SetAttributes(path, fileAttributes);
+            FileAccessChecker.IsFileLocked(() => Alphaleonis.Win32.Filesystem.File.SetAttributes(path, fileAttributes));
         }
 
         public DateTime GetCreationTime(string path)
         {
-            return Alphaleonis.Win32.Filesystem.File.GetCreationTime(path);
+            return FileAccessChecker.IsFileLocked(() => Alphaleonis.Win32.Filesystem.File.GetCreationTime(path));
         }
 
         public Stream Open(string path, FileMode mode, FileAccess access, FileShare share)
         {
-            return Alphaleonis.Win32.Filesystem.File.Open(path, mode, access, share);
+            return FileAccessChecker.IsFileLocked(() => Alphaleonis.Win32.Filesystem.File.Open(path, mode, access, share));
         }
 
         public void Copy(string source, string destination, bool overwrite)
         {
-            Alphaleonis.Win32.Filesystem.File.Copy(source, destination, overwrite);
+            FileAccessChecker.IsFileLocked(() => Alphaleonis.Win32.Filesystem.File.Copy(source, destination, overwrite));
         }
     }
 
@@ -210,42 +210,42 @@ namespace Calamari.Common.Plumbing.FileSystem
     {
         public void CreateDirectory(string path)
         {
-            Alphaleonis.Win32.Filesystem.Directory.CreateDirectory(path);
+            FileAccessChecker.IsFileLocked(() => Alphaleonis.Win32.Filesystem.Directory.CreateDirectory(path));
         }
 
         public void Delete(string path, bool recursive)
         {
-            Alphaleonis.Win32.Filesystem.Directory.Delete(path, recursive);
+            FileAccessChecker.IsFileLocked(() => Alphaleonis.Win32.Filesystem.Directory.Delete(path, recursive));
         }
 
         public bool Exists(string? path)
         {
-            return Alphaleonis.Win32.Filesystem.Directory.Exists(path);
+            return FileAccessChecker.IsFileLocked(() => Alphaleonis.Win32.Filesystem.Directory.Exists(path));
         }
 
         public string[] GetFileSystemEntries(string path)
         {
-            return Alphaleonis.Win32.Filesystem.Directory.GetFileSystemEntries(path);
+            return FileAccessChecker.IsFileLocked(() => Alphaleonis.Win32.Filesystem.Directory.GetFileSystemEntries(path));
         }
 
         public IEnumerable<string> EnumerateDirectories(string path)
         {
-            return Alphaleonis.Win32.Filesystem.Directory.EnumerateDirectories(path);
+            return FileAccessChecker.IsFileLocked(() => Alphaleonis.Win32.Filesystem.Directory.EnumerateDirectories(path));
         }
 
         public IEnumerable<string> EnumerateDirectoriesRecursively(string path)
         {
-            return Alphaleonis.Win32.Filesystem.Directory.EnumerateDirectories(path, "*", SearchOption.AllDirectories);
+            return FileAccessChecker.IsFileLocked(() => Alphaleonis.Win32.Filesystem.Directory.EnumerateDirectories(path, "*", SearchOption.AllDirectories));
         }
 
         public IEnumerable<string> EnumerateFiles(string parentDirectoryPath, params string[] searchPatterns)
         {
-            return EnumerateFiles(parentDirectoryPath, SearchOption.TopDirectoryOnly, searchPatterns);
+            return FileAccessChecker.IsFileLocked(() => EnumerateFiles(parentDirectoryPath, SearchOption.TopDirectoryOnly, searchPatterns));
         }
 
         public IEnumerable<string> EnumerateFilesRecursively(string parentDirectoryPath, params string[] searchPatterns)
         {
-            return EnumerateFiles(parentDirectoryPath, SearchOption.AllDirectories, searchPatterns);
+            return FileAccessChecker.IsFileLocked(() => EnumerateFiles(parentDirectoryPath, SearchOption.AllDirectories, searchPatterns));
         }
 
         private IEnumerable<string> EnumerateFiles(

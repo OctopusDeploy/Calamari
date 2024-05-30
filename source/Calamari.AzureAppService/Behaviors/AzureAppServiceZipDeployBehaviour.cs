@@ -19,6 +19,7 @@ using Calamari.CloudAccounts;
 using Calamari.Common.Commands;
 using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Extensions;
+using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Variables;
@@ -33,7 +34,8 @@ namespace Calamari.AzureAppService.Behaviors
     {
         static readonly TimeSpan PollingTimeout = TimeSpan.FromMinutes(3);
         static readonly AsyncTimeoutPolicy<HttpResponseMessage> AsyncZipDeployTimeoutPolicy = Policy.TimeoutAsync<HttpResponseMessage>(PollingTimeout, TimeoutStrategy.Optimistic);
-
+        static readonly ICalamariFileSystem CalamariFileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
+        
         public AzureAppServiceZipDeployBehaviour(ILog log)
         {
             Log = log;
@@ -356,16 +358,16 @@ namespace Calamari.AzureAppService.Behaviors
         static void CleanupUploadFile(string? uploadPath)
         {
             Policy.Handle<IOException>()
-                  .WaitAndRetry(
-                                5,
-                                i => TimeSpan.FromMilliseconds(200))
-                  .Execute(() =>
-                           {
-                               if (File.Exists(uploadPath))
-                               {
-                                   File.Delete(uploadPath!);
-                               }
-                           });
+                .WaitAndRetry(
+                    5,
+                    i => TimeSpan.FromMilliseconds(200))
+                .Execute(() =>
+                    {
+                        if (CalamariFileSystem.FileExists(uploadPath))
+                        {
+                            CalamariFileSystem.DeleteFile(uploadPath!);
+                        }
+                    });
         }
     }
 }

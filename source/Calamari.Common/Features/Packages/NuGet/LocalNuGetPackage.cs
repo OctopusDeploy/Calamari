@@ -6,6 +6,7 @@ using NuGet;
 using System;
 using System.IO;
 using Calamari.Common.Plumbing;
+using Calamari.Common.Plumbing.FileSystem;
 using SharpCompress.Archives.Zip;
 
 namespace Calamari.Common.Features.Packages.NuGet
@@ -14,6 +15,7 @@ namespace Calamari.Common.Features.Packages.NuGet
     {
         readonly string filePath;
         readonly Lazy<ManifestMetadata> metadata;
+        static readonly ICalamariFileSystem CalamariFileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
         public LocalNuGetPackage(string filePath)
         {
@@ -30,7 +32,7 @@ namespace Calamari.Common.Features.Packages.NuGet
 
         public void GetStream(Action<Stream> process)
         {
-            using (var fileStream = File.OpenRead(filePath))
+            using (var fileStream = CalamariFileSystem.OpenFile(filePath, FileAccess.Read))
             {
                 process(fileStream);
             }
@@ -38,7 +40,7 @@ namespace Calamari.Common.Features.Packages.NuGet
 
         static ManifestMetadata ReadMetadata(string filePath)
         {
-            using (var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+            using (var fileStream = CalamariFileSystem.OpenFile(filePath, FileMode.Open, FileAccess.Read))
             using (var archive = ZipArchive.Open(fileStream))
             {
                 foreach (var entry in archive.Entries)

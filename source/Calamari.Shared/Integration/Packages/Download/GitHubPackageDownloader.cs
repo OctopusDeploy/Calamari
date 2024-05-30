@@ -172,8 +172,8 @@ namespace Calamari.Integration.Packages.Download
                 Path.Combine(cacheDirectory, PackageName.ToCachedFileName(packageId, version, Extension));
 
             var tempPath = Path.GetTempFileName();
-            if (File.Exists(tempPath))
-                File.Delete(tempPath);
+            if (fileSystem.FileExists(tempPath))
+                fileSystem.DeleteFile(tempPath);
 
             for (var retry = 0; retry < maxDownloadAttempts; ++retry)
                 try
@@ -273,13 +273,14 @@ namespace Calamari.Integration.Packages.Download
         /// Unfortunately the server needs the same logic so that we can ensure that the Hash comparisons match.
         /// </summary>
         /// <param name="fileName"></param>
-        static void DeNestContents(string src, string dest)
+        void DeNestContents(string src, string dest)
         {
             var rootPathSeperator = -1;
-            using (var readerStram = File.Open(src, FileMode.Open, FileAccess.ReadWrite))
+            
+            using (var readerStram = fileSystem.OpenFile(src, FileMode.Open, FileAccess.ReadWrite))
             using (var reader = ReaderFactory.Open(readerStram))
             {
-                using (var writerStream = File.Open(dest, FileMode.CreateNew, FileAccess.ReadWrite))
+                using (var writerStream = fileSystem.OpenFile(dest, FileMode.CreateNew, FileAccess.ReadWrite))
                 using (var writer = WriterFactory.Open(writerStream, ArchiveType.Zip, new ZipWriterOptions(CompressionType.Deflate)))
                 {
                     while (reader.MoveToNextEntry())
