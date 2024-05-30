@@ -357,6 +357,7 @@ namespace Calamari.AzureAppService.Tests
                 });
                 
                 context.Variables[SpecialVariables.Action.Azure.AppSettings] =  settings.json;
+                context.Variables[SpecialVariables.Action.Azure.AsyncZipDeploymentTimeout] =  "3";
             }
         }
 
