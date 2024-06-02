@@ -1,6 +1,7 @@
 using System;
 using System.Net;
 using System.Net.Http;
+using System.Threading.Tasks;
 using Azure.Core;
 using Azure.Core.Pipeline;
 using Azure.Identity;
@@ -74,6 +75,27 @@ namespace Calamari.Azure
             armClientOptions.AddPolicy(new SlotConfigNamesInvalidIdFilterPolicy(), HttpPipelinePosition.PerRetry);
 
             return (armClientOptions, tokenCredentialOptions);
+        }
+        public static async Task<AccessToken> GetAccessTokenAsync(this IAzureAccount azureAccount)
+        {
+            if (azureAccount.AccountType == AccountType.AzureOidc)
+            {
+                var oidcAccount = (AzureOidcAccount)azureAccount;
+                var clientAssertionCreds = new ClientAssertionCredential(oidcAccount.TenantId, oidcAccount.ClientId, () => oidcAccount.GetCredentials);
+                var tokenRequestContext = new TokenRequestContext(new[] { "https://management.azure.com/.default" });
+                var token = await clientAssertionCreds.GetTokenAsync(tokenRequestContext);
+
+                return token;
+            }
+            else
+            {
+                string clientSecret = azureAccount.GetCredentials;
+                var credential = new ClientSecretCredential(azureAccount.TenantId, azureAccount.ClientId, clientSecret);
+                var tokenRequestContext = new TokenRequestContext(new[] { "https://management.azure.com/.default" });
+                var token = await credential.GetTokenAsync(tokenRequestContext);
+
+                return token;
+            }
         }
     }
 }

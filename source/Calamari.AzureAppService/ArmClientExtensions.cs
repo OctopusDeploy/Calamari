@@ -74,6 +74,22 @@ namespace Calamari.AzureAppService
                    };
         }
 
+        public static async Task<bool> IsScmPublishEnable(this ArmClient armClient, AzureTargetSite targetSite)
+        {
+            if (targetSite.HasSlot)
+            {
+                var webSiteSlotResource = armClient.GetWebSiteSlotResource(targetSite.CreateResourceIdentifier());
+                var scmSiteBasicPublishingCredentialsPolicy = await webSiteSlotResource.GetScmSiteSlotBasicPublishingCredentialsPolicy().GetAsync();
+                return scmSiteBasicPublishingCredentialsPolicy.Value.Data.Allow ?? false;
+            }
+            else
+            {
+               var webSiteResource= armClient.GetWebSiteResource(targetSite.CreateResourceIdentifier());
+               var scmSiteBasicPublishingCredentialsPolicy = await webSiteResource.GetScmSiteBasicPublishingCredentialsPolicy().GetAsync();
+               return scmSiteBasicPublishingCredentialsPolicy.Value.Data.Allow ?? false;
+            }
+        }
+        
         public static async Task<AppServiceConfigurationDictionary> GetAppSettingsAsync(this ArmClient armClient, AzureTargetSite targetSite)
         {
             return targetSite.HasSlot switch
