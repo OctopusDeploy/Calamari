@@ -4,6 +4,7 @@ using System.Net;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
+using Calamari.Azure;
 using Calamari.AzureWebApp.Integration.Websites.Publishing;
 using Calamari.AzureWebApp.Util;
 using Calamari.CloudAccounts;
@@ -35,22 +36,30 @@ namespace Calamari.AzureWebApp
         public async Task Execute(RunningDeployment deployment)
         {
             var variables = deployment.Variables;
+            var hasJwt = !variables.Get(AzureAccountVariables.Jwt).IsNullOrEmpty();
             var subscriptionId = variables.Get(SpecialVariables.Action.Azure.SubscriptionId);
             var resourceGroupName = variables.Get(SpecialVariables.Action.Azure.ResourceGroupName, string.Empty);
             var siteAndSlotName = variables.Get(SpecialVariables.Action.Azure.WebAppName);
             var slotName = variables.Get(SpecialVariables.Action.Azure.WebAppSlot);
-
             var targetSite = AzureWebAppHelper.GetAzureTargetSite(siteAndSlotName, slotName);
-
-            var resourceGroupText = string.IsNullOrEmpty(resourceGroupName)
-                ? string.Empty
-                : $" in Resource Group '{resourceGroupName}'";
-            var slotText = targetSite.HasSlot
-                ? $", deployment slot '{targetSite.Slot}'"
-                : string.Empty;
+            var resourceGroupText = string.IsNullOrEmpty(resourceGroupName) ? string.Empty : $" in Resource Group '{resourceGroupName}'";
+            var slotText = targetSite.HasSlot ? $", deployment slot '{targetSite.Slot}'" : string.Empty;
+            var azureAccount = hasJwt ? (IAzureAccount)new AzureOidcAccount(variables) : new AzureServicePrincipalAccount(variables);
+            var accessToken = await azureAccount.GetAccessTokenAsync();
+            var isCurrentScmBasicAuthPublishingEnable = await AzureWebAppHelper.GetBasicPublishingCredentialsPoliciesAsync(subscriptionId, resourceGroupName, siteAndSlotName, accessToken.Token);
+            
+            if (!isCurrentScmBasicAuthPublishingEnable)
+            {
+                log.Info($"Detect 'SCM Basic Auth Publishing Credentials' configuration is setting off on '{targetSite.Site}'{slotText}. Turn it on for deployment and will set it off after finish deployment.");
+                await AzureWebAppHelper.SetScmBasicAuthPolicyAsync(subscriptionId,
+                                                                   resourceGroupName,
+                                                             siteAndSlotName,
+                                                             accessToken.Token,
+                                                             true);
+            }
+            
             log.Info($"Deploying to Azure WebApp '{targetSite.Site}'{slotText}{resourceGroupText}, using subscription-id '{subscriptionId}'");
-
-            var publishSettings = await GetPublishProfile(variables);
+            var publishSettings = await GetPublishProfile(variables, azureAccount);
             RemoteCertificateValidationCallback originalServerCertificateValidationCallback = null;
             try
             {
@@ -61,6 +70,16 @@ namespace Calamari.AzureWebApp
             finally
             {
                 ServicePointManager.ServerCertificateValidationCallback = originalServerCertificateValidationCallback;
+                //Set SetScmBasicAuthPolicyAsync back 
+                if (!isCurrentScmBasicAuthPublishingEnable)
+                {
+                    log.Info($"Reverser 'SCM Basic Auth Publishing Credentials' configuration off.");
+                    await AzureWebAppHelper.SetScmBasicAuthPolicyAsync(subscriptionId,
+                                                                       resourceGroupName,
+                                                                       siteAndSlotName,
+                                                                       (await azureAccount.GetAccessTokenAsync()).Token,
+                                                                       false);
+                }
             }
         }
 
@@ -125,11 +144,8 @@ namespace Calamari.AzureWebApp
             return false;
         }
 
-        Task<WebDeployPublishSettings> GetPublishProfile(IVariables variables)
+        Task<WebDeployPublishSettings> GetPublishProfile(IVariables variables, IAzureAccount account)
         {
-            var hasJwt = !variables.Get(AzureAccountVariables.Jwt).IsNullOrEmpty();
-            var account = hasJwt ? (IAzureAccount)new AzureOidcAccount(variables) : new AzureServicePrincipalAccount(variables);
-
             var siteAndSlotName = variables.Get(SpecialVariables.Action.Azure.WebAppName);
             var slotName = variables.Get(SpecialVariables.Action.Azure.WebAppSlot);
             var targetSite = AzureWebAppHelper.GetAzureTargetSite(siteAndSlotName, slotName);
@@ -164,7 +180,6 @@ namespace Calamari.AzureWebApp
                 ComputerName = new Uri(publishProfile.Uri, $"/msdeploy.axd?site={deploySite}").ToString()
             };
             options.Trace += (sender, eventArgs) => LogDeploymentEvent(eventArgs);
-
             return options;
         }
 

@@ -1,5 +1,10 @@
 ﻿using System;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text;
+using System.Threading.Tasks;
 using Calamari.AzureWebApp.Integration.Websites.Publishing;
+using Newtonsoft.Json.Linq;
 
 namespace Calamari.AzureWebApp.Util
 {
@@ -30,6 +35,37 @@ namespace Calamari.AzureWebApp.Util
             targetSite.Site = siteAndMaybeSlotName;
             targetSite.Slot = slotName;
             return targetSite;
+        }
+       
+        public static async Task<bool> GetBasicPublishingCredentialsPoliciesAsync(string subscriptionId, string resourceGroupName, string webAppName, string accessToken)
+        {
+            var url = $"https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{webAppName}/basicPublishingCredentialsPolicies/scm?api-version=2021-01-15";
+            using (var client = new HttpClient())
+            {
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+                var response = await client.GetAsync(url);
+                response.EnsureSuccessStatusCode();
+
+                var json = await response.Content.ReadAsStringAsync();
+                var jObject = JObject.Parse(json);
+                return jObject["properties"]["allow"].Value<bool>();
+            }
+        }
+
+        public static async Task<string> SetScmBasicAuthPolicyAsync(string subscriptionId, string resourceGroupName, string webAppName, string accessToken, bool isEnable)
+        {
+            var url = $"https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{webAppName}/basicPublishingCredentialsPolicies/scm?api-version=2021-01-15";
+            using (var client = new HttpClient())
+            {
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+                var content = new StringContent($"{{\"properties\": {{\"allow\": {isEnable.ToString().ToLower()}}}}}", Encoding.UTF8, "application/json");
+                var response = await client.PutAsync(url, content);
+                response.EnsureSuccessStatusCode();
+
+                var json = await response.Content.ReadAsStringAsync();
+                return json;
+            }
         }
     }
 }
