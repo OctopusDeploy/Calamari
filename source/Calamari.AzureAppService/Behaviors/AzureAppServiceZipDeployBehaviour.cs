@@ -163,13 +163,16 @@ namespace Calamari.AzureAppService.Behaviors
 
                 Log.Info($"Uploading package to {targetSite.SiteAndSlot}");
 
+                //Need to check if site turn off 
+                var scmPublishEnable = await armClient.IsScmPublishEnable(targetSite);
+                
                 if (packageProvider.SupportsAsynchronousDeployment && FeatureToggle.AsynchronousAzureZipDeployFeatureToggle.IsEnabled(context.Variables))
                 {
-                    await UploadZipAndPollAsync(publishingProfile, uploadPath, targetSite.ScmSiteAndSlot, packageProvider, pollingTimeout, asyncZipDeployTimeoutPolicy);
+                    await UploadZipAndPollAsync(account, publishingProfile, scmPublishEnable, uploadPath, targetSite.ScmSiteAndSlot, packageProvider, pollingTimeout, asyncZipDeployTimeoutPolicy);
                 }
                 else
                 {
-                    await UploadZipAsync(publishingProfile, uploadPath, targetSite.ScmSiteAndSlot, packageProvider);
+                    await UploadZipAsync(account, publishingProfile, scmPublishEnable, uploadPath, targetSite.ScmSiteAndSlot, packageProvider);
                 }
             }
             finally
@@ -194,14 +197,17 @@ namespace Calamari.AzureAppService.Behaviors
 
             Log.Verbose($"Slot '{site.Slot}' not found.");
             Log.Info($"Creating slot '{site.Slot}'.");
+            var webSiteResourceData = (await webSiteResource.GetAsync()).Value.Data;
             var operation = await slots.CreateOrUpdateAsync(WaitUntil.Completed,
                                                             site.Slot,
-                                                            webSiteResource.Data);
+                                                            webSiteResourceData);
 
             return operation.Value;
         }
 
-        private async Task UploadZipAsync(PublishingProfile publishingProfile,
+        private async Task UploadZipAsync(IAzureAccount azureAccount,
+                                          PublishingProfile publishingProfile,
+                                          bool scmPublishEnable,
                                           string uploadZipPath,
                                           string targetSite,
                                           IPackageProvider packageProvider)
@@ -214,6 +220,8 @@ namespace Calamari.AzureAppService.Behaviors
 
             var zipUploadUrl = $"{publishingProfile.PublishUrl}{packageProvider.UploadUrlPath}";
             Log.Verbose($@"Publishing {uploadZipPath} to {zipUploadUrl}");
+
+            var authenticationHeader = await GetAuthenticationHeaderValue(azureAccount, publishingProfile, scmPublishEnable);
 
             using var httpClient = new HttpClient(new HttpClientHandler
             {
@@ -244,7 +252,7 @@ namespace Calamari.AzureAppService.Behaviors
                                                                                           {
                                                                                               Headers =
                                                                                               {
-                                                                                                  Authorization = new AuthenticationHeaderValue("Basic", publishingProfile.GetBasicAuthCredentials())
+                                                                                                  Authorization = authenticationHeader
                                                                                               },
                                                                                               Content = streamContent
                                                                                           };
@@ -260,7 +268,25 @@ namespace Calamari.AzureAppService.Behaviors
             Log.Verbose("Finished deploying");
         }
 
-        private async Task UploadZipAndPollAsync(PublishingProfile publishingProfile,
+        static async Task<AuthenticationHeaderValue> GetAuthenticationHeaderValue(IAzureAccount azureAccount, PublishingProfile publishingProfile, bool scmPublishEnable)
+        {
+            AuthenticationHeaderValue authenticationHeader;
+            if (scmPublishEnable)
+            {
+                authenticationHeader = new AuthenticationHeaderValue("Basic", publishingProfile.GetBasicAuthCredentials());
+            }
+            else
+            {
+                var accessToken = await azureAccount.GetAccessTokenAsync();
+                authenticationHeader = new AuthenticationHeaderValue("Bearer", accessToken.Token);
+            }
+
+            return authenticationHeader;
+        }
+
+        private async Task UploadZipAndPollAsync(IAzureAccount azureAccount,
+                                                 PublishingProfile publishingProfile,
+                                                 bool scmPublishEnable,
                                                  string uploadZipPath,
                                                  string targetSite,
                                                  IPackageProvider packageProvider,
@@ -283,7 +309,7 @@ namespace Calamari.AzureAppService.Behaviors
 #pragma warning restore DE0003
             });
 
-            var authenticationHeader = new AuthenticationHeaderValue("Basic", publishingProfile.GetBasicAuthCredentials());
+            var authenticationHeader = await GetAuthenticationHeaderValue(azureAccount, publishingProfile, scmPublishEnable);
 
             //we add some retry just in case the web app's Kudu/SCM is not running just yet
             var uploadResponse = await RetryPolicies.TransientHttpErrorsPolicy.ExecuteAsync(async () =>
