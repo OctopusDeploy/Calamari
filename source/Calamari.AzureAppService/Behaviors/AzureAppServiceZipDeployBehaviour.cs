@@ -278,7 +278,7 @@ namespace Calamari.AzureAppService.Behaviors
             else
             {
                 var accessToken = await azureAccount.GetAccessTokenAsync();
-                authenticationHeader = new AuthenticationHeaderValue("Bearer", accessToken.Token);
+                authenticationHeader = new AuthenticationHeaderValue("Bearer", accessToken);
             }
 
             return authenticationHeader;

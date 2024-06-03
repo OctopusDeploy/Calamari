@@ -1,6 +1,7 @@
 using System;
 using System.Net;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using Azure.Core;
 using Azure.Core.Pipeline;
@@ -76,26 +77,21 @@ namespace Calamari.Azure
 
             return (armClientOptions, tokenCredentialOptions);
         }
-        public static async Task<AccessToken> GetAccessTokenAsync(this IAzureAccount azureAccount)
+        public static async Task<string> GetAccessTokenAsync(this IAzureAccount azureAccount)
         {
-            if (azureAccount.AccountType == AccountType.AzureOidc)
-            {
-                var oidcAccount = (AzureOidcAccount)azureAccount;
-                var clientAssertionCreds = new ClientAssertionCredential(oidcAccount.TenantId, oidcAccount.ClientId, () => oidcAccount.GetCredentials);
-                var tokenRequestContext = new TokenRequestContext(new[] { "https://management.azure.com/.default" });
-                var token = await clientAssertionCreds.GetTokenAsync(tokenRequestContext);
-
-                return token;
-            }
-            else
-            {
-                string clientSecret = azureAccount.GetCredentials;
-                var credential = new ClientSecretCredential(azureAccount.TenantId, azureAccount.ClientId, clientSecret);
-                var tokenRequestContext = new TokenRequestContext(new[] { "https://management.azure.com/.default" });
-                var token = await credential.GetTokenAsync(tokenRequestContext);
-
-                return token;
-            }
+           return azureAccount.AccountType == AccountType.AzureOidc
+                ? await AzureOidcAccountExtensions.GetAuthorizationToken(azureAccount.TenantId,
+                                                                         azureAccount.ClientId,
+                                                                         azureAccount.GetCredentials,
+                                                                         azureAccount.ResourceManagementEndpointBaseUri,
+                                                                         azureAccount.ActiveDirectoryEndpointBaseUri,
+                                                                         azureAccount.AzureEnvironment,
+                                                                         CancellationToken.None)
+                : await AzureServicePrincipalAccountExtensions.GetAuthorizationToken(azureAccount.TenantId,
+                                                                                     azureAccount.ClientId,
+                                                                                     azureAccount.GetCredentials,
+                                                                                     azureAccount.ResourceManagementEndpointBaseUri,
+                                                                                     azureAccount.ActiveDirectoryEndpointBaseUri);
         }
     }
 }
