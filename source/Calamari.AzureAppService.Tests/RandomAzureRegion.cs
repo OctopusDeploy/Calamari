@@ -15,7 +15,6 @@ namespace Calamari.AzureAppService.Tests
             "eastus2",
             "westus",
             "westus2",
-            "westus3",
             "australiaeast"
         };
 
