@@ -77,6 +77,7 @@ namespace Calamari.Azure
 
             return (armClientOptions, tokenCredentialOptions);
         }
+        
         public static async Task<string> GetAccessTokenAsync(this IAzureAccount azureAccount)
         {
            return azureAccount.AccountType == AccountType.AzureOidc
