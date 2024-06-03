@@ -32,7 +32,7 @@ namespace Calamari.AzureAppService.Tests
         protected string SubscriptionId { get; private set; }
         protected string ResourceGroupName { get; private set; }
         protected string ResourceGroupLocation { get; private set; }
-        
+
         protected string greeting = "Calamari";
         protected ArmClient ArmClient { get; private set; }
 
@@ -42,8 +42,8 @@ namespace Calamari.AzureAppService.Tests
 
         private readonly HttpClient client = new HttpClient();
 
-        protected virtual string DefaultResourceGroupLocation => "eastus";
-        
+        protected virtual string DefaultResourceGroupLocation => RandomAzureRegion.GetRandomRegionWithExclusions();
+
         static readonly CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
         readonly CancellationToken cancellationToken = CancellationTokenSource.Token;
 
@@ -62,6 +62,8 @@ namespace Calamari.AzureAppService.Tests
             TenantId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId, cancellationToken);
             SubscriptionId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionId, cancellationToken);
             ResourceGroupLocation = Environment.GetEnvironmentVariable("AZURE_NEW_RESOURCE_REGION") ?? DefaultResourceGroupLocation;
+
+            TestContext.Progress.WriteLine($"Resource group location: {ResourceGroupLocation}");
 
             var servicePrincipalAccount = new AzureServicePrincipalAccount(SubscriptionId,
                                                                            ClientId,
@@ -126,7 +128,7 @@ namespace Calamari.AzureAppService.Tests
                                                                                                return r;
                                                                                            },
                                                                                            contextData: new Dictionary<string, object>());
- 
+
             var result = await response.Content.ReadAsStringAsync();
             result.Should().Contain(actualText);
         }
@@ -194,7 +196,7 @@ namespace Calamari.AzureAppService.Tests
 
             return (servicePlanResponse.Value, webSiteResponse.Value);
         }
-        
+
         protected (string json, IEnumerable<AppSetting> setting) BuildAppSettingsJson(IEnumerable<(string name, string value, bool isSlotSetting)> settings)
         {
             var appSettings = settings.Select(setting => new AppSetting

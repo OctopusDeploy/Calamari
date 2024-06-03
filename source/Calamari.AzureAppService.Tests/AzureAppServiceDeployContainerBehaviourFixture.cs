@@ -33,8 +33,8 @@ namespace Calamari.AzureAppService.Tests
             CalamariVariables newVariables;
             readonly HttpClient client = new HttpClient();
 
-            // There are capacity issues in eastus
-            protected override string DefaultResourceGroupLocation => "westus2";
+            //We are having capacity issues in EastUS and WestUS2
+            protected override string DefaultResourceGroupLocation => RandomAzureRegion.GetRandomRegionWithExclusions("eastus", "westus2");
             
             protected override async Task ConfigureTestResources(ResourceGroupResource resourceGroup)
             {
@@ -177,7 +177,7 @@ namespace Calamari.AzureAppService.Tests
             readonly HttpClient client = new HttpClient();
 
             // For some reason we are having issues creating these linux resources on Standard in EastUS
-            protected override string DefaultResourceGroupLocation => "westus2";
+            protected override string DefaultResourceGroupLocation => RandomAzureRegion.GetRandomRegionWithExclusions("eastus");
 
             protected override async Task ConfigureTestResources(ResourceGroupResource resourceGroup)
             {
