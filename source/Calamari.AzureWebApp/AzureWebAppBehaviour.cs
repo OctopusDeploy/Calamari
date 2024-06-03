@@ -50,12 +50,8 @@ namespace Calamari.AzureWebApp
             
             if (!isCurrentScmBasicAuthPublishingEnable)
             {
-                log.Info($"Detect 'SCM Basic Auth Publishing Credentials' configuration is setting off on '{targetSite.Site}'{slotText}. Turn it on for deployment and will set it off after finish deployment.");
-                await AzureWebAppHelper.SetScmBasicAuthPolicyAsync(subscriptionId,
-                                                                   resourceGroupName,
-                                                             siteAndSlotName,
-                                                             accessToken.Token,
-                                                             true);
+                log.Error($"The 'SCM Basic Auth Publishing Credentials' configuration is disabled on '{targetSite.Site}'{slotText}. Please enable it, as it is required for the AzureWebApp deployment step.");
+                throw new CommandException($"The 'SCM Basic Auth Publishing Credentials' is disabled on target '{targetSite.Site}'{slotText}");
             }
             
             log.Info($"Deploying to Azure WebApp '{targetSite.Site}'{slotText}{resourceGroupText}, using subscription-id '{subscriptionId}'");
@@ -70,16 +66,6 @@ namespace Calamari.AzureWebApp
             finally
             {
                 ServicePointManager.ServerCertificateValidationCallback = originalServerCertificateValidationCallback;
-                //Set SetScmBasicAuthPolicyAsync back 
-                if (!isCurrentScmBasicAuthPublishingEnable)
-                {
-                    log.Info($"Reverser 'SCM Basic Auth Publishing Credentials' configuration off.");
-                    await AzureWebAppHelper.SetScmBasicAuthPolicyAsync(subscriptionId,
-                                                                       resourceGroupName,
-                                                                       siteAndSlotName,
-                                                                       (await azureAccount.GetAccessTokenAsync()).Token,
-                                                                       false);
-                }
             }
         }
 
