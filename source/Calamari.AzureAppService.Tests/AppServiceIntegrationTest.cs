@@ -63,7 +63,7 @@ namespace Calamari.AzureAppService.Tests
             SubscriptionId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionId, cancellationToken);
             ResourceGroupLocation = Environment.GetEnvironmentVariable("AZURE_NEW_RESOURCE_REGION") ?? DefaultResourceGroupLocation;
 
-            TestContext.WriteLine($"Resource group location: {ResourceGroupLocation}");
+            TestContext.Progress.WriteLine($"Resource group location: {ResourceGroupLocation}");
 
             var servicePrincipalAccount = new AzureServicePrincipalAccount(SubscriptionId,
                                                                            ClientId,
