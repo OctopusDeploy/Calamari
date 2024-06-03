@@ -46,7 +46,7 @@ namespace Calamari.AzureWebApp
             var slotText = targetSite.HasSlot ? $", deployment slot '{targetSite.Slot}'" : string.Empty;
             var azureAccount = hasJwt ? (IAzureAccount)new AzureOidcAccount(variables) : new AzureServicePrincipalAccount(variables);
             var accessToken = await azureAccount.GetAccessTokenAsync();
-            var isCurrentScmBasicAuthPublishingEnable = await AzureWebAppHelper.GetBasicPublishingCredentialsPoliciesAsync(subscriptionId, resourceGroupName, siteAndSlotName, accessToken.Token);
+            var isCurrentScmBasicAuthPublishingEnable = await AzureWebAppHelper.GetBasicPublishingCredentialsPoliciesAsync(azureAccount.ResourceManagementEndpointBaseUri, subscriptionId, resourceGroupName, siteAndSlotName, accessToken);
             
             if (!isCurrentScmBasicAuthPublishingEnable)
             {

@@ -37,9 +37,9 @@ namespace Calamari.AzureWebApp.Util
             return targetSite;
         }
        
-        public static async Task<bool> GetBasicPublishingCredentialsPoliciesAsync(string subscriptionId, string resourceGroupName, string webAppName, string accessToken)
+        public static async Task<bool> GetBasicPublishingCredentialsPoliciesAsync(string resourceManagementEndpointBaseUri , string subscriptionId, string resourceGroupName, string webAppName, string accessToken)
         {
-            var url = $"https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{webAppName}/basicPublishingCredentialsPolicies/scm?api-version=2021-01-15";
+            var url = $"{resourceManagementEndpointBaseUri}/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{webAppName}/basicPublishingCredentialsPolicies/scm?api-version=2021-01-15";
             using (var client = new HttpClient())
             {
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
@@ -52,20 +52,5 @@ namespace Calamari.AzureWebApp.Util
             }
         }
 
-        public static async Task<string> SetScmBasicAuthPolicyAsync(string subscriptionId, string resourceGroupName, string webAppName, string accessToken, bool isEnable)
-        {
-            var url = $"https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{webAppName}/basicPublishingCredentialsPolicies/scm?api-version=2021-01-15";
-            using (var client = new HttpClient())
-            {
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-
-                var content = new StringContent($"{{\"properties\": {{\"allow\": {isEnable.ToString().ToLower()}}}}}", Encoding.UTF8, "application/json");
-                var response = await client.PutAsync(url, content);
-                response.EnsureSuccessStatusCode();
-
-                var json = await response.Content.ReadAsStringAsync();
-                return json;
-            }
-        }
     }
 }
