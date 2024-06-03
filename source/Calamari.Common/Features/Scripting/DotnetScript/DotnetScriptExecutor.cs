@@ -36,6 +36,7 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
             var cli = CreateCommandLineInvocation(executable, arguments, !string.IsNullOrWhiteSpace(localDotnetScriptPath));
             cli.EnvironmentVars = environmentVars;
             cli.WorkingDirectory = workingDirectory;
+            cli.Isolate = true;
 
             yield return new ScriptExecution(cli, otherTemporaryFiles.Concat(new[] { bootstrapFile, configurationFile }));
         }
