@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using JetBrains.Annotations;
 
 namespace Calamari.AzureAppService.Tests
 {
@@ -20,11 +19,11 @@ namespace Calamari.AzureAppService.Tests
             "australiaeast"
         };
 
-        public static string GetRandomRegion(params string[] excludedRegions)
+        public static string GetRandomRegionWithExclusions(params string[] excludedRegions)
         {
             var possibleRegions = regions.Except(excludedRegions).ToArray();
 
-            return possibleRegions[random.Next(0, regions.Length)];
+            return possibleRegions[random.Next(0, possibleRegions.Length)];
         }
     }
 }
