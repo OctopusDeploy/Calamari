@@ -1,12 +1,10 @@
 ﻿#nullable enable
 
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Threading;
 using System.Threading.Tasks;
 using Calamari.AzureAppService.Azure;
 using Calamari.CloudAccounts;
@@ -19,6 +17,7 @@ using Calamari.Common.Plumbing.Variables;
 using Microsoft.Azure.Management.AppService.Fluent;
 using Microsoft.Rest;
 using Octopus.CoreUtilities.Extensions;
+using Polly;
 using AccountVariables = Calamari.AzureAppService.Azure.AccountVariables;
 using WebSiteManagementClient = Microsoft.Azure.Management.WebSites.WebSiteManagementClient;
 
@@ -125,15 +124,21 @@ namespace Calamari.AzureAppService.Behaviors
             bool uploadFileNeedsCleaning = false;
             try
             {
+                FileInfo? uploadFile;
                 if (substitutionFeatures.Any(featureName => context.Variables.IsFeatureEnabled(featureName)))
                 {
-                    uploadPath = (await Archive.PackageArchive(context.StagingDirectory, context.CurrentDirectory)).FullName;
+                    uploadFile = (await Archive.PackageArchive(context.StagingDirectory, context.CurrentDirectory));
                 }
                 else
                 {
-                    var uploadFile = await Archive.ConvertToAzureSupportedFile(packageFileInfo);
-                    uploadPath = uploadFile.FullName;
-                    uploadFileNeedsCleaning = packageFileInfo.Extension != uploadFile.Extension;
+                    uploadFile = await Archive.ConvertToAzureSupportedFile(packageFileInfo);
+                }
+                uploadPath = uploadFile.FullName;
+                uploadFileNeedsCleaning = packageFileInfo.Extension != uploadFile.Extension;
+
+                if (uploadPath == null)
+                {
+                    throw new Exception("Package File Path must be specified");
                 }
 
                 if (uploadPath == null)
@@ -217,6 +222,15 @@ namespace Calamari.AzureAppService.Behaviors
             //we add some retry just in case the web app's Kudu/SCM is not running just yet
             var response = await RetryPolicies.TransientHttpErrorsPolicy.ExecuteAsync(async () =>
                                                                                       {
+#if NETFRAMEWORK
+                                                                                          using var fileStream = new FileStream(uploadZipPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+#else
+                                                                                          await using var fileStream = new FileStream(uploadZipPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+#endif
+                                                                                          using var streamContent = new StreamContent(fileStream);
+                                                                                          streamContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+
+                                                                                          
                                                                                           //we have to create a new request message each time
                                                                                           var request = new HttpRequestMessage(HttpMethod.Post, zipUploadUrl)
                                                                                           {
@@ -224,10 +238,7 @@ namespace Calamari.AzureAppService.Behaviors
                                                                                               {
                                                                                                   Authorization = new AuthenticationHeaderValue("Basic", publishingProfile.GetBasicAuthCredentials())
                                                                                               },
-                                                                                              Content = new StreamContent(new FileStream(uploadZipPath, FileMode.Open, FileAccess.Read, FileShare.Read))
-                                                                                              {
-                                                                                                  Headers = { ContentType = new MediaTypeHeaderValue("application/octet-stream") }
-                                                                                              }
+                                                                                              Content = streamContent
                                                                                           };
 
                                                                                           var r = await client.SendAsync(request);
@@ -241,12 +252,19 @@ namespace Calamari.AzureAppService.Behaviors
             Log.Verbose("Finished deploying");
         }
         
-        void CleanupUploadFile(string? uploadPath)
+        static void CleanupUploadFile(string? uploadPath)
         {
-            if (File.Exists(uploadPath))
-            {
-                File.Delete(uploadPath!);    
-            }
+            Policy.Handle<IOException>()
+                  .WaitAndRetry(
+                                5,
+                                i => TimeSpan.FromMilliseconds(200))
+                  .Execute(() =>
+                           {
+                               if (File.Exists(uploadPath))
+                               {
+                                   File.Delete(uploadPath!);
+                               }
+                           });
         }
     }
 }
