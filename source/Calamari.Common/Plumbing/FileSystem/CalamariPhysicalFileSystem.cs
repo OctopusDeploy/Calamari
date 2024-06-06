@@ -7,7 +7,6 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using Calamari.Common.Plumbing.Extensions;
-using Calamari.Common.Plumbing.FileSystem.GlobExpressions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Retry;
 using Globfish;
@@ -190,25 +189,16 @@ namespace Calamari.Common.Plumbing.FileSystem
             Log.Verbose(message);
         }
 
-        public virtual IEnumerable<string> EnumerateFilesWithGlob(string parentDirectoryPath, GlobMode globMode, params string[] globPattern)
+        public virtual IEnumerable<string> EnumerateFilesWithGlob(string parentDirectoryPath, params string[] globPattern)
         {
-            return EnumerateWithGlob(parentDirectoryPath, globMode, globPattern).Select(fi => fi.FullName).Where(FileExists);
+            return EnumerateWithGlob(parentDirectoryPath, globPattern).Select(fi => fi.FullName).Where(FileExists);
         }
 
-        IEnumerable<FileSystemInfo> EnumerateWithGlob(string parentDirectoryPath, GlobMode globMode, params string[] globPattern)
+        IEnumerable<FileSystemInfo> EnumerateWithGlob(string parentDirectoryPath, params string[] globPattern)
         {
-            IEnumerable<FileSystemInfo> Expand(string path)
-            {
-                return globMode switch
-                {
-                    GlobMode.GroupExpansionMode => Glob.Expand(path),
-                    _ => LegacyGlob.Expand(path)
-                };
-            }
-
             var results = globPattern.Length == 0
-                ? Expand(Path.Combine(parentDirectoryPath, "*"))
-                : globPattern.SelectMany(pattern => Expand(Path.Combine(parentDirectoryPath, pattern)));
+                ? Glob.Expand(Path.Combine(parentDirectoryPath, "*"))
+                : globPattern.SelectMany(pattern => Glob.Expand(Path.Combine(parentDirectoryPath, pattern)));
 
             return results
                 .GroupBy(fi => fi.FullName) // use groupby + first to do .Distinct using fullname
@@ -430,12 +420,12 @@ namespace Calamari.Common.Plumbing.FileSystem
             PurgeDirectory(targetDirectory, exclude, options, CancellationToken.None);
         }
 
-        public void PurgeDirectory(string targetDirectory, FailureOptions options, GlobMode globMode, params string[] globs)
+        public void PurgeDirectory(string targetDirectory, FailureOptions options, params string[] globs)
         {
             Predicate<FileSystemInfo>? check = null;
             if (globs.Any())
             {
-                var keep = EnumerateWithGlob(targetDirectory, globMode, globs);
+                var keep = EnumerateWithGlob(targetDirectory, globs);
                 check = fsi =>
                 {
                     return keep.Any(k => k is DirectoryInfo && fsi.FullName.IsChildOf(k.FullName) ||

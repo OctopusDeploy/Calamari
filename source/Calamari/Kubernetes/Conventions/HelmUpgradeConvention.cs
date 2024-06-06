@@ -11,7 +11,6 @@ using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
 using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.FileSystem;
-using Calamari.Common.Plumbing.FileSystem.GlobExpressions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.Conventions;
@@ -268,14 +267,13 @@ namespace Calamari.Kubernetes.Conventions
                     var packageId = PackageName.ExtractPackageNameFromPathedPackageId(variables.Get(PackageVariables.IndexedPackageId(packageReferenceName)));
                     var version = variables.Get(PackageVariables.IndexedPackageVersion(packageReferenceName));
                     var relativePath = Path.Combine(sanitizedPackageReferenceName, valuePath);
-                    var globMode = GlobModeRetriever.GetFromVariables(variables);
-                    var currentFiles = fileSystem.EnumerateFilesWithGlob(deployment.CurrentDirectory, globMode, relativePath).ToList();
+                    var currentFiles = fileSystem.EnumerateFilesWithGlob(deployment.CurrentDirectory, relativePath).ToList();
 
                     if (!currentFiles.Any() && string.IsNullOrEmpty(packageReferenceName)) // Chart archives have chart name root directory
                     {
                         log.Verbose($"Unable to find values files at path `{valuePath}`. Chart package contains root directory with chart name, so looking for values in there.");
                         var chartRelativePath = Path.Combine(packageId, relativePath);
-                        currentFiles = fileSystem.EnumerateFilesWithGlob(deployment.CurrentDirectory, globMode, chartRelativePath).ToList();
+                        currentFiles = fileSystem.EnumerateFilesWithGlob(deployment.CurrentDirectory, chartRelativePath).ToList();
                     }
 
                     if (!currentFiles.Any())

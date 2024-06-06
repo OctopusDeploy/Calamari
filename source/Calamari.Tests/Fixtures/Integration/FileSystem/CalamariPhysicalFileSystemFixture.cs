@@ -5,9 +5,7 @@ using System.Linq;
 using System.Text;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
-using Calamari.Common.Plumbing.FileSystem.GlobExpressions;
 using Calamari.Testing.Helpers;
-using Calamari.Testing.Requirements;
 using FluentAssertions;
 using NUnit.Framework;
 
@@ -110,7 +108,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
 
             var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
-            fileSystem.PurgeDirectory(PurgeTestDirectory, FailureOptions.IgnoreFailure, GlobMode.GroupExpansionMode, glob);
+            fileSystem.PurgeDirectory(PurgeTestDirectory, FailureOptions.IgnoreFailure, glob);
 
             return File.Exists(testFile);
         }
@@ -176,13 +174,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
             writeFile(configPath, "Feature1", "f1-c.config");
             writeFile(configPath, "Feature2", "f2.config");
 
-            var result = fileSystem.EnumerateFilesWithGlob(rootPath, GlobMode.GroupExpansionMode, pattern).ToList();
-
-            var resultNoGrouping = fileSystem.EnumerateFilesWithGlob(rootPath, GlobMode.LegacyMode, pattern).ToList();
-
-            resultNoGrouping.Should()
-                            .HaveCount(expectedQtyWithNoGrouping.Value,
-                $"{pattern} should have found {expectedQtyWithNoGrouping}, but found {result.Count}");
+            var result = fileSystem.EnumerateFilesWithGlob(rootPath, pattern).ToList();
 
             result.Should()
                   .HaveCount(expectedQty, $"{pattern} should have found {expectedQty}, but found {result.Count}");
@@ -203,7 +195,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
             File.WriteAllText(Path.Combine(rootPath, "Dir", "File"), "");
             File.WriteAllText(Path.Combine(rootPath, "Dir", "Sub", "File"), "");
 
-            var results = fileSystem.EnumerateFilesWithGlob(rootPath, GlobMode.GroupExpansionMode, pattern).ToArray();
+            var results = fileSystem.EnumerateFilesWithGlob(rootPath, pattern).ToArray();
 
             if (results.Length > 0)
                 results.Should().OnlyContain(f => f.EndsWith("File"));
@@ -214,7 +206,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
         {
             File.WriteAllText(Path.Combine(rootPath, "File"), "");
 
-            var results = fileSystem.EnumerateFilesWithGlob(rootPath, GlobMode.GroupExpansionMode, "*", "**").ToList();
+            var results = fileSystem.EnumerateFilesWithGlob(rootPath, "*", "**").ToList();
 
             results.Should().HaveCount(1);
         }
@@ -357,8 +349,8 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
 
             File.WriteAllText(Path.Combine(rootPath, directory, "Foo.txt"), "");
 
-            var results = fileSystem.EnumerateFilesWithGlob(rootPath, GlobMode.GroupExpansionMode, glob).ToList();
-            var resultsWithNoGrouping = fileSystem.EnumerateFilesWithGlob(rootPath, GlobMode.LegacyMode, glob).ToList();
+            var results = fileSystem.EnumerateFilesWithGlob(rootPath, glob).ToList();
+            var resultsWithNoGrouping = fileSystem.EnumerateFilesWithGlob(rootPath, glob).ToList();
 
             results.Should().ContainSingle();
             resultsWithNoGrouping.Should().ContainSingle();
