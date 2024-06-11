@@ -405,11 +405,6 @@ namespace Calamari.Common.Plumbing.FileSystem
             Directory.CreateDirectory(directory);
         }
 
-        public void PurgeDirectory(string targetDirectory, FailureOptions options)
-        {
-            PurgeDirectory(targetDirectory, fi => false, options);
-        }
-
         public void PurgeDirectory(string targetDirectory, FailureOptions options, CancellationToken cancel)
         {
             PurgeDirectory(targetDirectory, fi => false, options, cancel);

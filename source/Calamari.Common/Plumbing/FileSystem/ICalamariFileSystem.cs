@@ -37,7 +37,6 @@ namespace Calamari.Common.Plumbing.FileSystem
         int CopyDirectory(string sourceDirectory, string targetDirectory);
         int CopyDirectory(string sourceDirectory, string targetDirectory, CancellationToken cancel);
         void CopyFile(string sourceFile, string destinationFile);
-        void PurgeDirectory(string targetDirectory, FailureOptions options);
         void PurgeDirectory(string targetDirectory, FailureOptions options, CancellationToken cancel);
         void PurgeDirectory(string targetDirectory, Predicate<FileSystemInfo> exclude, FailureOptions options);
         void PurgeDirectory(string targetDirectory, FailureOptions options, params string[] globs);
