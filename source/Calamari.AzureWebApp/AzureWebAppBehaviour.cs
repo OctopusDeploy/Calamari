@@ -46,9 +46,9 @@ namespace Calamari.AzureWebApp
             var slotText = targetSite.HasSlot ? $", deployment slot '{targetSite.Slot}'" : string.Empty;
             var azureAccount = hasJwt ? (IAzureAccount)new AzureOidcAccount(variables) : new AzureServicePrincipalAccount(variables);
             var accessToken = await azureAccount.GetAccessTokenAsync();
-            var isCurrentScmBasicAuthPublishingEnable = await AzureWebAppHelper.GetBasicPublishingCredentialsPoliciesAsync(azureAccount.ResourceManagementEndpointBaseUri, subscriptionId, resourceGroupName, siteAndSlotName, accessToken);
+            var isCurrentScmBasicAuthPublishingEnabled = await AzureWebAppHelper.GetBasicPublishingCredentialsPoliciesAsync(azureAccount.ResourceManagementEndpointBaseUri, subscriptionId, resourceGroupName, siteAndSlotName, accessToken);
             
-            if (!isCurrentScmBasicAuthPublishingEnable)
+            if (!isCurrentScmBasicAuthPublishingEnabled)
             {
                 log.Error($"The 'SCM Basic Auth Publishing Credentials' configuration is disabled on '{targetSite.Site}'-{slotText}. To deploy Web Apps with SCM disabled, please use the 'Deploy an Azure App Service' step.");
                 throw new CommandException($"The 'SCM Basic Auth Publishing Credentials' is disabled on target '{targetSite.Site}'{slotText}");
