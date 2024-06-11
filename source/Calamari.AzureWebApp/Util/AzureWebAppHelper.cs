@@ -39,7 +39,7 @@ namespace Calamari.AzureWebApp.Util
        
         public static async Task<bool> GetBasicPublishingCredentialsPoliciesAsync(string resourceManagementEndpointBaseUri , string subscriptionId, string resourceGroupName, string webAppName, string accessToken)
         {
-            var url = $"{resourceManagementEndpointBaseUri}/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{webAppName}/basicPublishingCredentialsPolicies/scm?api-version=2021-01-15";
+            var url = $"{resourceManagementEndpointBaseUri.TrimEnd('/')}/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Web/sites/{webAppName}/basicPublishingCredentialsPolicies/scm?api-version=2021-01-15";
             using (var client = new HttpClient())
             {
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);

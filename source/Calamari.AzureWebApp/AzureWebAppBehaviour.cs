@@ -50,7 +50,7 @@ namespace Calamari.AzureWebApp
             
             if (!isCurrentScmBasicAuthPublishingEnable)
             {
-                log.Error($"The 'SCM Basic Auth Publishing Credentials' configuration is disabled on '{targetSite.Site}'{slotText}. Please enable it, as it is required for the AzureWebApp deployment step.");
+                log.Error($"The 'SCM Basic Auth Publishing Credentials' configuration is disabled on '{targetSite.Site}'-{slotText}. To deploy Web Apps with SCM disabled, please use the 'Deploy an Azure App Service' step.");
                 throw new CommandException($"The 'SCM Basic Auth Publishing Credentials' is disabled on target '{targetSite.Site}'{slotText}");
             }
             
