@@ -1,3 +1,12 @@
+# Get latest version
+data "google_container_engine_versions" "main" {
+  location = local.region
+
+  # Since this is just a string match, it's recommended that you append a . after minor versions 
+  # to ensure that prefixes such as 1.1 don't match versions like 1.12.5-gke.10 accidentally.
+  version_prefix = "1.28."
+}
+
 # VPC
 resource "google_compute_network" "vpc" {
   name                    = "${random_pet.prefix.id}-vpc"
@@ -14,9 +23,15 @@ resource "google_compute_subnetwork" "subnet" {
   project       = "octopus-api-tester"
 }
 
+locals {
+  # we will pick the latest k8s version
+  master_version = data.google_container_engine_versions.main.valid_master_versions[0]
+}
+
 resource "google_container_cluster" "default" {
   name               = "${random_pet.prefix.id}-gke"
   project            = "octopus-api-tester"
+  min_master_version = local.master_version
   initial_node_count = 1
   node_config {
     preemptible  = true
@@ -26,6 +41,11 @@ resource "google_container_cluster" "default" {
     client_certificate_config {
       issue_client_certificate = true
     }
+  }
+  
+  # to prevent automatic updates to cluster
+  release_channel {
+    channel = "UNSPECIFIED"
   }
 
   network    = google_compute_network.vpc.name
