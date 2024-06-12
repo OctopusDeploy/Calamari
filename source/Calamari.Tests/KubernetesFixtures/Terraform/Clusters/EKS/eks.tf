@@ -79,6 +79,7 @@ resource "aws_eks_cluster" "default" {
   tags = {
     octopus-environment = "Staging"
     octopus-role = "discovery-role"
+    source       = "calamari-e2e-tests"
   }
 
   vpc_config {

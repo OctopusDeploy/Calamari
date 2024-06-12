@@ -13,6 +13,7 @@ resource "azurerm_kubernetes_cluster" "default" {
   tags = {
     octopus-environment = "Staging"
     octopus-role = "discovery-role"
+    source       = "calamari-e2e-tests"
   }
 
   default_node_pool {
