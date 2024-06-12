@@ -1,6 +1,7 @@
 # Get latest version
 data "google_container_engine_versions" "main" {
   location = local.region
+  project       = "octopus-api-tester"
 
   # Since this is just a string match, it's recommended that you append a . after minor versions 
   # to ensure that prefixes such as 1.1 don't match versions like 1.12.5-gke.10 accidentally.
