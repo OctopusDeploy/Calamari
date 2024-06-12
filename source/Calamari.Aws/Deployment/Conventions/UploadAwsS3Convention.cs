@@ -16,11 +16,9 @@ using Calamari.Common.Commands;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.StructuredVariables;
 using Calamari.Common.Features.Substitutions;
-using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
-using Calamari.Common.Plumbing.FileSystem.GlobExpressions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.Conventions;
@@ -30,7 +28,6 @@ using Octopus.CoreUtilities.Extensions;
 using SharpCompress.Archives;
 using SharpCompress.Archives.Tar;
 using SharpCompress.Archives.Zip;
-using SharpCompress.Writers.Tar;
 using CompressionType = SharpCompress.Common.CompressionType;
 
 namespace Calamari.Aws.Deployment.Conventions
@@ -236,9 +233,8 @@ namespace Calamari.Aws.Deployment.Conventions
             Guard.NotNull(clientFactory, "Client factory must not be null");
             var results = new List<S3UploadResult>();
 
-            var globMode = GlobModeRetriever.GetFromVariables(deployment.Variables);
             var files = new RelativeGlobber(
-                (@base, pattern) => fileSystem.EnumerateFilesWithGlob(@base, globMode, pattern),
+                (@base, pattern) => fileSystem.EnumerateFilesWithGlob(@base, pattern),
                 deployment.StagingDirectory).EnumerateFilesWithGlob(selection.Pattern).ToList();
 
             if (!files.Any())

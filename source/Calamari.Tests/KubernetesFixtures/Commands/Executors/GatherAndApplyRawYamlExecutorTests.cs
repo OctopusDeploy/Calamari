@@ -5,7 +5,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Processes;
-using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Common.Plumbing.Variables;
@@ -59,7 +58,6 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
             SetupCommandLineRunnerMocks();
             var variables = new CalamariVariables
             {
-                [KnownVariables.EnabledFeatureToggles] = FeatureToggle.GlobPathsGroupSupportFeatureToggle.ToString(),
                 [KnownVariables.OriginalPackageDirectoryPath] = StagingDirectory
             };
             var runningDeployment = new RunningDeployment(variables);
@@ -84,7 +82,6 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
             SetupCommandLineRunnerMocks();
             var variables = new CalamariVariables
             {
-                [KnownVariables.EnabledFeatureToggles] = FeatureToggle.GlobPathsGroupSupportFeatureToggle.ToString(),
                 [KnownVariables.OriginalPackageDirectoryPath] = StagingDirectory,
                 [SpecialVariables.CustomResourceYamlFileName] = "dirA/*\ndirB/*"
             };
@@ -127,7 +124,6 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
             SetupCommandLineRunnerMocks();
             var variables = new CalamariVariables
             {
-                [KnownVariables.EnabledFeatureToggles] = FeatureToggle.GlobPathsGroupSupportFeatureToggle.ToString(),
                 [KnownVariables.OriginalPackageDirectoryPath] = StagingDirectory,
                 [SpecialVariables.CustomResourceYamlFileName] = "dirA/*\ndirB/*",
                 [SpecialVariables.ServerSideApplyEnabled] = "true"
@@ -173,7 +169,6 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
             SetupCommandLineRunnerMocks();
             var variables = new CalamariVariables
             {
-                [KnownVariables.EnabledFeatureToggles] = FeatureToggle.GlobPathsGroupSupportFeatureToggle.ToString(),
                 [KnownVariables.OriginalPackageDirectoryPath] = StagingDirectory,
                 [SpecialVariables.CustomResourceYamlFileName] = "dirA/*\ndirB/*",
                 [SpecialVariables.ServerSideApplyEnabled] = "true",
@@ -220,7 +215,6 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
             SetupCommandLineRunnerMocks();
             var variables = new CalamariVariables
             {
-                [KnownVariables.EnabledFeatureToggles] = FeatureToggle.GlobPathsGroupSupportFeatureToggle.ToString(),
                 [KnownVariables.OriginalPackageDirectoryPath] = StagingDirectory,
                 [SpecialVariables.CustomResourceYamlFileName] = "dirA/*\ndirB/*",
                 [SpecialVariables.ServerSideApplyEnabled] = "false",
@@ -268,7 +262,6 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
             commandLineRunner.Execute(Arg.Any<CommandLineInvocation>()).Returns(new CommandResult("blah", 1));
             var variables = new CalamariVariables
             {
-                [KnownVariables.EnabledFeatureToggles] = FeatureToggle.GlobPathsGroupSupportFeatureToggle.ToString(),
                 [KnownVariables.OriginalPackageDirectoryPath] = StagingDirectory,
                 [SpecialVariables.CustomResourceYamlFileName] = "dirA/*\ndirB/*"
             };
