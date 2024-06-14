@@ -191,8 +191,9 @@ namespace Calamari.Kubernetes.Conventions
         void SetOrderedTemplateValues(RunningDeployment deployment, StringBuilder sb)
         {
             var filenames = HelmTemplateValueSourcesCreator.ParseTemplateValueSources(deployment, fileSystem, log);
-
-            foreach (var filename in filenames)
+            
+            //we apply these in reverse order
+            foreach (var filename in filenames.Reverse())
             {
                 sb.Append($" --values \"{filename}\"");
             }
