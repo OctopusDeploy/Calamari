@@ -132,3 +132,9 @@ These credentials can be provided via environment variables, or read from Octopu
 There are two environment variables which define how credentials are provided:
 * CALAMARI__Tests__SecretManagerEnabled - if true, read from 1password; if false read from environment variables
 * CALAMARI__Tests__SecretManagerAccount - if set defines the account to use. If unset, defaults to "octopusdeploy.1password.com"
+
+To use the 1password integration you are required to have installed:
+* 1Password application, and associated
+* 1Password cli application (op)
+
+For details on their configuration see the [README.md](https://github.com/OctopusDeploy/1password-sdk/blob/main/README.md) in the 1password-sdk repository
