@@ -123,4 +123,12 @@ Option 1 is recommended if you can use the default worker.
 - Set `Octopus.Calamari.WaitForDebugger` to `True` to get a debug version of Calamari to wait for a Debugger to be attached before continuing. The log message from Calamari will show it’s waiting for the debugger and it will give the PID to use when you’re looking to attach.
 - Set `OctopusPrintEvaluatedVariables` to `True` to get all variables that are sent to Calamari, printed to the verbose long when executing a step.
 
-> Tip: Creating a variable set with your configuration makes it easy to toggle this behaviour per project  
+> Tip: Creating a variable set with your configuration makes it easy to toggle this behaviour per project
+
+## Testing:
+
+Many of the tests require credentials for accessing external services.
+These credentials can be provided via environment variables, or read from OctopusDeploy's 1Password repository.
+There are two environment variables which define how credentials are provided:
+* CALAMARI__Tests__SecretManagerEnabled - if true, read from 1password; if false read from environment variables
+* CALAMARI__Tests__SecretManagerAccount - if set defines the account to use. If unset, defaults to "octopusdeploy.1password.com"
