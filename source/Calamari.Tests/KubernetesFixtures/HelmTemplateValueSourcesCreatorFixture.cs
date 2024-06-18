@@ -56,7 +56,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 var filename = kvp.Key;
                 var contents = kvp.Value;
 
-                fileSystem.Received(1).WriteAllText(Arg.Is(Path.Combine(RootDir, filename)), Arg.Is(contents));
+                fileSystem.Received(1).WriteAllText(Arg.Is(Path.Combine(RootDir, filename)), Arg.Is(contents.ReplaceLineEndings()));
             }
         }
 
