@@ -13,7 +13,10 @@ namespace Calamari.Kubernetes.Conventions
 {
     public static class HelmTemplateValueSourcesCreator
     {
-        public static IEnumerable<string> ParseTemplateValueSources(RunningDeployment deployment, ICalamariFileSystem fileSystem, ILog log)
+        public const string KeyValuesFileName = "explicitVariableValues.yaml";
+        public const string InlineYamlFileName = "rawYamlValues.yaml";
+
+        public static IEnumerable<string> ParseTemplateValuesSources(RunningDeployment deployment, ICalamariFileSystem fileSystem, ILog log)
         {
             var templateValueSources = deployment.Variables.Get(SpecialVariables.Helm.TemplateValuesSources);
 
@@ -23,35 +26,42 @@ namespace Calamari.Kubernetes.Conventions
             var parsedJsonArray = JArray.Parse(templateValueSources);
 
             var filenames = new List<string>();
-            foreach (var json in parsedJsonArray)
+            // we reverse the order of the array so that we maintain the order that sources at the top take higher precendences (i.e. are adding to the --values list later),
+            // however, within a source, the file path order must be maintained (for consistency) so that later file paths take higher precendence 
+            foreach (var json in parsedJsonArray.Reverse())
             {
                 var tvs = json.ToObject<TemplateValuesSource>();
                 switch (tvs.Type)
                 {
                     case TemplateValuesSourceType.Chart:
                         var chartTvs = json.ToObject<ChartTemplateValuesSource>();
-                        var chartFilenames =  GenerateAndWriteChartValues(deployment,fileSystem,log, chartTvs.ValuesFilePaths);
+                        var chartFilenames = GenerateAndWriteChartValues(deployment, fileSystem, log, chartTvs.ValuesFilePaths);
+
                         filenames.AddRange(chartFilenames);
-                        
                         break;
                     case TemplateValuesSourceType.KeyValues:
                         var keyValuesTvs = json.ToObject<KeyValuesTemplateValuesSource>();
-                        var keyValueFilename = GenerateAndWriteKeyValues(deployment, keyValuesTvs.Value);
+                        var keyValueFilename = GenerateAndWriteKeyValues(deployment, fileSystem, keyValuesTvs.Value);
+
                         AddIfNotNull(filenames, keyValueFilename);
-                        
                         break;
-                    
+
                     case TemplateValuesSourceType.Package:
                         var packageTvs = json.ToObject<PackageTemplateValuesSource>();
-                        var packageFilenames = GenerateAndWritePackageValues(deployment,fileSystem,log, packageTvs.ValuesFilePaths,packageTvs.PackageId, packageTvs.PackageName);
+                        var packageFilenames = GenerateAndWritePackageValues(deployment,
+                                                                             fileSystem,
+                                                                             log,
+                                                                             packageTvs.ValuesFilePaths,
+                                                                             packageTvs.PackageId,
+                                                                             packageTvs.PackageName);
+
                         filenames.AddRange(packageFilenames);
-                        
                         break;
                     case TemplateValuesSourceType.InlineYaml:
                         var inlineYamlTvs = json.ToObject<InlineYamlTemplateValuesSource>();
-                        var inlineYamlFilename = GenerateAndWriteInlineYaml(deployment, inlineYamlTvs.Value);
+                        var inlineYamlFilename = GenerateAndWriteInlineYaml(deployment, fileSystem, inlineYamlTvs.Value);
+
                         AddIfNotNull(filenames, inlineYamlFilename);
-                        
                         break;
                     default:
                         throw new ArgumentOutOfRangeException();
@@ -62,11 +72,11 @@ namespace Calamari.Kubernetes.Conventions
         }
 
         public static IEnumerable<string> GenerateAndWritePackageValues(RunningDeployment deployment,
-                                                                 ICalamariFileSystem fileSystem,
-                                                                 ILog log,
-                                                                 string valuesFilePaths,
-                                                                 string packageId,
-                                                                 string packageName)
+                                                                        ICalamariFileSystem fileSystem,
+                                                                        ILog log,
+                                                                        string valuesFilePaths,
+                                                                        string packageId,
+                                                                        string packageName)
         {
             var variables = deployment.Variables;
             var packageNames = variables.GetIndexes(PackageVariables.PackageCollection);
@@ -74,22 +84,27 @@ namespace Calamari.Kubernetes.Conventions
             {
                 return null;
             }
-            
-            var packageIdFromVariables = variables.Get(PackageVariables.IndexedPackageId(packageName));
-            if (string.IsNullOrEmpty(packageIdFromVariables) || !packageIdFromVariables.Equals(packageId, StringComparison.CurrentCultureIgnoreCase))
+
+            //if the package name is null/empty then this is the chart primary package, so we don't need to validate the packageId
+            if (!string.IsNullOrEmpty(packageName))
             {
-                return null;
+                var packageIdFromVariables = variables.Get(PackageVariables.IndexedPackageId(packageName));
+                if (string.IsNullOrEmpty(packageIdFromVariables) || !packageIdFromVariables.Equals(packageId, StringComparison.CurrentCultureIgnoreCase))
+                {
+                    return null;
+                }
             }
-            
+
             var filenames = new List<string>();
             var errors = new List<string>();
 
             var sanitizedPackageReferenceName = PackageName.ExtractPackageNameFromPathedPackageId(fileSystem.RemoveInvalidFileNameChars(packageName));
-            var valuesPaths = variables.GetPaths(valuesFilePaths);
-                
+            var valuesPaths = valuesFilePaths.Split('\r', '\n').Where(x => !string.IsNullOrWhiteSpace(x));
+
             foreach (var valuePath in valuesPaths)
             {
-                var pathedPackedName = PackageName.ExtractPackageNameFromPathedPackageId(packageId);
+                //we get the package id here
+                var pathedPackedName = PackageName.ExtractPackageNameFromPathedPackageId(variables.Get(PackageVariables.IndexedPackageId(packageName)));
                 var version = variables.Get(PackageVariables.IndexedPackageVersion(packageName));
                 var relativePath = Path.Combine(sanitizedPackageReferenceName, valuePath);
                 var currentFiles = fileSystem.EnumerateFilesWithGlob(deployment.CurrentDirectory, relativePath).ToList();
@@ -113,7 +128,6 @@ namespace Calamari.Kubernetes.Conventions
                     filenames.AddRange(currentFiles);
                 }
             }
-            
 
             if (!filenames.Any() && errors.Any())
             {
@@ -129,30 +143,30 @@ namespace Calamari.Kubernetes.Conventions
                                                  fileSystem,
                                                  log,
                                                  valuesFilePaths,
-                                                 null,
-                                                 null);
+                                                 string.Empty,
+                                                 string.Empty);
         }
 
-        public static string GenerateAndWriteKeyValues(RunningDeployment deployment, Dictionary<string, object> keyValues)
+        public static string GenerateAndWriteKeyValues(RunningDeployment deployment, ICalamariFileSystem fileSystem, Dictionary<string, object> keyValues)
         {
             if (!keyValues.Any())
             {
                 return null;
             }
 
-            var fileName = Path.Combine(deployment.CurrentDirectory, "explicitVariableValues.yaml");
-            File.WriteAllText(fileName, RawValuesToYamlConverter.Convert(keyValues));
+            var fileName = Path.Combine(deployment.CurrentDirectory, KeyValuesFileName);
+            fileSystem.WriteAllText(fileName, RawValuesToYamlConverter.Convert(keyValues));
 
             return fileName;
         }
 
-        public static string GenerateAndWriteInlineYaml(RunningDeployment deployment, string yaml)
+        public static string GenerateAndWriteInlineYaml(RunningDeployment deployment, ICalamariFileSystem fileSystem, string yaml)
         {
             if (string.IsNullOrWhiteSpace(yaml))
                 return null;
 
             var fileName = Path.Combine(deployment.CurrentDirectory, "rawYamlValues.yaml");
-            File.WriteAllText(fileName, yaml);
+            fileSystem.WriteAllText(fileName, yaml);
 
             return fileName;
         }
@@ -165,39 +179,59 @@ namespace Calamari.Kubernetes.Conventions
             }
         }
 
-        enum TemplateValuesSourceType
+        internal enum TemplateValuesSourceType
         {
             Chart,
             KeyValues,
             Package,
             InlineYaml
         }
-        
-        class TemplateValuesSource
+
+        internal class TemplateValuesSource
         {
             public TemplateValuesSourceType Type { get; set; }
         }
 
-        class ChartTemplateValuesSource : TemplateValuesSource
+        internal class ChartTemplateValuesSource : TemplateValuesSource
         {
             public string ValuesFilePaths { get; set; }
+
+            public ChartTemplateValuesSource()
+            {
+                Type = TemplateValuesSourceType.Chart;
+            }
         }
 
-        class InlineYamlTemplateValuesSource : TemplateValuesSource
+        internal class InlineYamlTemplateValuesSource : TemplateValuesSource
         {
             public string Value { get; set; }
+
+            public InlineYamlTemplateValuesSource()
+            {
+                Type = TemplateValuesSourceType.InlineYaml;
+            }
         }
 
-        class PackageTemplateValuesSource : TemplateValuesSource
+        internal class PackageTemplateValuesSource : TemplateValuesSource
         {
             public string PackageId { get; set; }
             public string PackageName { get; set; }
             public string ValuesFilePaths { get; set; }
+
+            public PackageTemplateValuesSource()
+            {
+                Type = TemplateValuesSourceType.Package;
+            }
         }
 
-        class KeyValuesTemplateValuesSource : TemplateValuesSource
+        internal class KeyValuesTemplateValuesSource : TemplateValuesSource
         {
-            public Dictionary<string,object> Value { get; set; }
+            public Dictionary<string, object> Value { get; set; }
+
+            public KeyValuesTemplateValuesSource()
+            {
+                Type = TemplateValuesSourceType.KeyValues;
+            }
         }
     }
 }

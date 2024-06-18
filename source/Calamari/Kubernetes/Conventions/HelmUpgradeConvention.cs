@@ -170,8 +170,11 @@ namespace Calamari.Kubernetes.Conventions
 
         void SetValuesParameters(RunningDeployment deployment, StringBuilder sb)
         {
-            SetOrderedTemplateValues(deployment, sb);
-            
+            if (FeatureToggle.ImprovedHelmTemplateValuesFeatureToggle.IsEnabled(deployment.Variables))
+            {
+                SetOrderedTemplateValues(deployment, sb);
+            }
+
             foreach (var additionalValuesFile in AdditionalValuesFiles(deployment))
             {
                 sb.Append($" --values \"{additionalValuesFile}\"");
@@ -190,10 +193,9 @@ namespace Calamari.Kubernetes.Conventions
 
         void SetOrderedTemplateValues(RunningDeployment deployment, StringBuilder sb)
         {
-            var filenames = HelmTemplateValueSourcesCreator.ParseTemplateValueSources(deployment, fileSystem, log);
-            
-            //we apply these in reverse order
-            foreach (var filename in filenames.Reverse())
+            var filenames = HelmTemplateValueSourcesCreator.ParseTemplateValuesSources(deployment, fileSystem, log);
+
+            foreach (var filename in filenames)
             {
                 sb.Append($" --values \"{filename}\"");
             }
@@ -379,23 +381,23 @@ namespace Calamari.Kubernetes.Conventions
             throw new CommandException($"Unexpected error. Chart.yaml was not found in any directories inside '{installDir}'");
         }
 
-        static bool TryAddRawValuesYaml(RunningDeployment deployment, out string fileName)
+        bool TryAddRawValuesYaml(RunningDeployment deployment, out string fileName)
         {
             fileName = null;
             var yaml = deployment.Variables.Get(SpecialVariables.Helm.YamlValues);
 
-            fileName = HelmTemplateValueSourcesCreator.GenerateAndWriteInlineYaml(deployment, yaml);
+            fileName = HelmTemplateValueSourcesCreator.GenerateAndWriteInlineYaml(deployment, fileSystem, yaml);
 
             return fileName != null;
         }
 
-        static bool TryGenerateVariablesFile(RunningDeployment deployment, out string fileName)
+        bool TryGenerateVariablesFile(RunningDeployment deployment, out string fileName)
         {
             fileName = null;
             var variables = deployment.Variables.Get(SpecialVariables.Helm.KeyValues, "{}");
             var values = JsonConvert.DeserializeObject<Dictionary<string, object>>(variables);
 
-            var filename = HelmTemplateValueSourcesCreator.GenerateAndWriteKeyValues(deployment, values);
+            var filename = HelmTemplateValueSourcesCreator.GenerateAndWriteKeyValues(deployment, fileSystem, values);
 
             return filename != null;
         }
