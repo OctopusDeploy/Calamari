@@ -71,6 +71,7 @@ namespace Calamari.Tests.KubernetesFixtures
                     if (receivedFileContents.TryGetValue(filenameWithPath, out var receivedContent))
                     {
                         expectedContent.Should().Be(receivedContent);
+                        expectedContent.ToArray().Should().BeEquivalentTo(receivedContent.ToArray());
                         Encoding.UTF8.GetBytes(expectedContent).Should().BeEquivalentTo(Encoding.UTF8.GetBytes(receivedContent));
                     }
 
