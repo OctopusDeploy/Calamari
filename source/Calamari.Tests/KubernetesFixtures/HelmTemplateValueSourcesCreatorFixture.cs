@@ -66,7 +66,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
                 if (receivedFileContents.TryGetValue(filenameWithPath, out var receivedContent))
                 {
-                    content.Should().Be(receivedContent);
+                    content.Should().Be(receivedContent.ReplaceLineEndings());
                 }
 
                 fileSystem.Received(1).WriteAllText(Arg.Is(filenameWithPath), Arg.Is(content.ReplaceLineEndings()));
