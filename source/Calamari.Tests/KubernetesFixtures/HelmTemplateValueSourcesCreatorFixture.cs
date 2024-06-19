@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Deployment;
 using Calamari.Common.Plumbing.FileSystem;
@@ -44,6 +45,13 @@ namespace Calamari.Tests.KubernetesFixtures
                       .Returns(ci => ci.ArgAt<string[]>(1)
                                        ?.Select(x => Path.Combine(deployment.CurrentDirectory, x))
                                        .ToArray());
+            
+            var receivedFileContents = new Dictionary<string, string>();
+            fileSystem.When(fs => fs.WriteAllText(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<Encoding>()))
+                      .Do(ci =>
+                          {
+                              receivedFileContents.Add(ci.ArgAt<string>(0), ci.ArgAt<string>(1));
+                          });
 
             // Act
             var filenames = HelmTemplateValueSourcesCreator.ParseTemplateValuesSources(deployment, fileSystem, new SilentLog());
@@ -54,9 +62,14 @@ namespace Calamari.Tests.KubernetesFixtures
             foreach (var kvp in expectedFileContent)
             {
                 var filename = kvp.Key;
-                var contents = kvp.Value;
+                var content = kvp.Value;
 
-                fileSystem.Received(1).WriteAllText(Arg.Is(Path.Combine(RootDir, filename)), Arg.Is(contents.ReplaceLineEndings()));
+                if (receivedFileContents.TryGetValue(kvp.Key, out var receivedContent))
+                {
+                    content.Should().BeEquivalentTo(receivedContent);
+                }
+
+                fileSystem.Received(1).WriteAllText(Arg.Is(Path.Combine(RootDir, filename)), Arg.Is(content.ReplaceLineEndings()));
             }
         }
 
