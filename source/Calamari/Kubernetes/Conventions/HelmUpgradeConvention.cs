@@ -397,9 +397,9 @@ namespace Calamari.Kubernetes.Conventions
             var variables = deployment.Variables.Get(SpecialVariables.Helm.KeyValues, "{}");
             var values = JsonConvert.DeserializeObject<Dictionary<string, object>>(variables);
 
-            var filename = HelmTemplateValueSourcesCreator.GenerateAndWriteKeyValues(deployment, fileSystem, values);
+            fileName = HelmTemplateValueSourcesCreator.GenerateAndWriteKeyValues(deployment, fileSystem, values);
 
-            return filename != null;
+            return fileName != null;
         }
 
         void CheckHelmToolVersion(string customHelmExecutable, HelmVersion selectedVersion)
