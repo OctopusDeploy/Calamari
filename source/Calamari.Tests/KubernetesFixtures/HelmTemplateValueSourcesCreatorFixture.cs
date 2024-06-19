@@ -62,11 +62,12 @@ namespace Calamari.Tests.KubernetesFixtures
             foreach (var kvp in expectedFileContent)
             {
                 var filenameWithPath = Path.Combine(RootDir, kvp.Key);
-                var expectedContent = kvp.Value;
+                //we normalize line endings due to weirdness
+                var expectedContent = kvp.Value.ReplaceLineEndings();
 
                 if (receivedFileContents.TryGetValue(filenameWithPath, out var receivedContent))
                 {
-                    expectedContent.ReplaceLineEndings().Should().Be(receivedContent);
+                    expectedContent.Should().Be(receivedContent);
                 }
 
                 fileSystem.Received(1).WriteAllText(Arg.Is(filenameWithPath), Arg.Is(expectedContent.ReplaceLineEndings()));
@@ -74,7 +75,25 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         public static IEnumerable<object> ParseTemplateValuesSourceTestData => new object[]
-        {
+        {            
+            CreateTestCase("Super-simple KeyValues source",
+                                    new[]
+                                    {
+                                        new HelmTemplateValueSourcesCreator.KeyValuesTemplateValuesSource
+                                        {
+                                            Value = new Dictionary<string, object>
+                                            {
+                                                ["Value 1"] = "Test"
+                                            }
+                                        }
+                                    },
+                                    new[] { HelmTemplateValueSourcesCreator.KeyValuesFileName },
+                                    new Dictionary<string, string>
+                                    {
+                                        //the key values converter adds an extra end of line
+                                        [HelmTemplateValueSourcesCreator.KeyValuesFileName] = "Value 1: Test\r\n",
+                                    }),
+            
             CreateTestCase("Simple KeyValues source",
                            new[]
                            {
