@@ -183,7 +183,7 @@ Value 2: 1234
             Dictionary<string, string> expectedFileContent,
             Dictionary<string, string> extraVariables = null)
         {
-            return new TestCaseData(JsonConvert.SerializeObject(sources, Formatting.None),
+            return new TestCaseData(JsonConvert.SerializeObject(sources, Formatting.None).ReplaceLineEndings(),
                                     expectedFilenames,
                                     expectedFileContent,
                                     extraVariables)
