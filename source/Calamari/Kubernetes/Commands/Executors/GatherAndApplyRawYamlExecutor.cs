@@ -12,6 +12,7 @@ using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes.Integration;
 using Calamari.Kubernetes.ResourceStatus.Resources;
 using Octopus.CoreUtilities.Extensions;
+using YamlDotNet.Core;
 using YamlDotNet.RepresentationModel;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
@@ -127,47 +128,54 @@ namespace Calamari.Kubernetes.Commands.Executors
 
                 using (var yamlFile = fileSystem.OpenFile(file, FileAccess.ReadWrite))
                 {
-                    var yamlStream = new YamlStream();
-                    yamlStream.Load(new StreamReader(yamlFile));
-
-                    foreach (var document in yamlStream.Documents)
+                    try
                     {
-                        if (!(document.RootNode is YamlMappingNode rootNode))
+                        var yamlStream = new YamlStream();
+                        yamlStream.Load(new StreamReader(yamlFile));
+
+                        foreach (var document in yamlStream.Documents)
                         {
-                            continue;
+                            if (!(document.RootNode is YamlMappingNode rootNode))
+                            {
+                                continue;
+                            }
+
+                            var metadata = rootNode.Children["metadata"] as YamlMappingNode ?? new YamlMappingNode();
+
+                            if (!metadata.Children.TryGetValue("name", out var name))
+                            {
+                                name = "undefined";
+                            }
+
+                            if (!metadata.Children.TryGetValue("namespace", out var @namespace))
+                            {
+                                @namespace = "undefined";
+                            }
+
+                            if (!metadata.Children.TryGetValue("kind", out var kind))
+                            {
+                                kind = "undefined";
+                            }
+
+                            var updatedDocument = serializer.Serialize(rootNode);
+                            // updatedDocuments.Add(updatedDocument);
+
+                            log.WriteServiceMessage(new ServiceMessage(ServiceMessageNames.SetVariable.Name,
+                                                                       new Dictionary<string, string>
+                                                                       {
+                                                                           { ServiceMessageNames.SetVariable.NameAttribute, $"AppliedManifests({kind}:{@namespace}:{name})" },
+                                                                           { ServiceMessageNames.SetVariable.ValueAttribute, updatedDocument }
+                                                                       }));
                         }
-
-                        var metadata = rootNode.Children["metadata"] as YamlMappingNode ?? new YamlMappingNode();
-
-                        if (!metadata.Children.TryGetValue("name", out var name))
-                        {
-                            name = "undefined";
-                        }
-
-                        if (!metadata.Children.TryGetValue("namespace", out var @namespace))
-                        {
-                            @namespace = "undefined";
-                        }
-
-                        if (!metadata.Children.TryGetValue("kind", out var kind))
-                        {
-                            kind = "undefined";
-                        }
-
-                        var updatedDocument = serializer.Serialize(rootNode);
-                        // updatedDocuments.Add(updatedDocument);
-
-                        log.WriteServiceMessage(new ServiceMessage(ServiceMessageNames.SetVariable.Name,
-                                                                   new Dictionary<string, string>
-                                                                   {
-                                                                       { ServiceMessageNames.SetVariable.NameAttribute, $"AppliedManifests({kind}:{@namespace}:{name})" },
-                                                                       { ServiceMessageNames.SetVariable.ValueAttribute, updatedDocument }
-                                                                   }));
                     }
-
-                    // TODO: EM - Add octopus labels and re-write file
-                    // fileSystem.OverwriteFile(file, string.Join("\n---\n", updatedDocuments));
+                    catch (SemanticErrorException)
+                    {
+                        log.Warn("Invalid YAML syntax found, resources will not be added to live object status");
+                    }
                 }
+
+                // TODO: EM - Add octopus labels and re-write file
+                // fileSystem.OverwriteFile(file, string.Join("\n---\n", updatedDocuments));
             }
 
             string[] executeArgs = { "apply", "-f", $@"""{globDirectory.Directory}""", "--recursive", "-o", "json" };
