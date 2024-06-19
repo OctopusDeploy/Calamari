@@ -61,15 +61,15 @@ namespace Calamari.Tests.KubernetesFixtures
 
             foreach (var kvp in expectedFileContent)
             {
-                var filename = kvp.Key;
+                var filenameWithPath = Path.Combine(RootDir, kvp.Key);
                 var content = kvp.Value;
 
-                if (receivedFileContents.TryGetValue(kvp.Key, out var receivedContent))
+                if (receivedFileContents.TryGetValue(filenameWithPath, out var receivedContent))
                 {
                     content.Should().Be(receivedContent);
                 }
 
-                fileSystem.Received(1).WriteAllText(Arg.Is(Path.Combine(RootDir, filename)), Arg.Is(content.ReplaceLineEndings()));
+                fileSystem.Received(1).WriteAllText(Arg.Is(filenameWithPath), Arg.Is(content.ReplaceLineEndings()));
             }
         }
 
