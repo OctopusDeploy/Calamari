@@ -66,7 +66,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 {
                     var filenameWithPath = Path.Combine(RootDir, kvp.Key);
                     //we normalize line endings due to weirdness
-                    var expectedContent = kvp.Value.ReplaceLineEndings();
+                    var expectedContent = kvp.Value;
 
                     if (receivedFileContents.TryGetValue(filenameWithPath, out var receivedContent))
                     {
@@ -75,7 +75,7 @@ namespace Calamari.Tests.KubernetesFixtures
                         Encoding.UTF8.GetBytes(expectedContent).Should().BeEquivalentTo(Encoding.UTF8.GetBytes(receivedContent));
                     }
 
-                    fileSystem.Received(1).WriteAllText(Arg.Is(filenameWithPath), Arg.Is(expectedContent.ReplaceLineEndings()));
+                    fileSystem.Received(1).WriteAllText(Arg.Is(filenameWithPath), Arg.Is(expectedContent));
                 }
             }
         }
