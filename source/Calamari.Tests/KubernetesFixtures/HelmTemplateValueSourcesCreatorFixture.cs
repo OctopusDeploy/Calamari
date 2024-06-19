@@ -10,6 +10,7 @@ using Calamari.Kubernetes;
 using Calamari.Kubernetes.Conventions;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
+using FluentAssertions.Execution;
 using Newtonsoft.Json;
 using NSubstitute;
 using NUnit.Framework;
@@ -45,7 +46,7 @@ namespace Calamari.Tests.KubernetesFixtures
                       .Returns(ci => ci.ArgAt<string[]>(1)
                                        ?.Select(x => Path.Combine(deployment.CurrentDirectory, x))
                                        .ToArray());
-            
+
             var receivedFileContents = new Dictionary<string, string>();
             fileSystem.When(fs => fs.WriteAllText(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<Encoding>()))
                       .Do(ci =>
@@ -57,43 +58,47 @@ namespace Calamari.Tests.KubernetesFixtures
             var filenames = HelmTemplateValueSourcesCreator.ParseTemplateValuesSources(deployment, fileSystem, new SilentLog());
 
             // Assert
-            filenames.Should().BeEquivalentTo(expectedFilenames.Select(f => Path.Combine(RootDir, f)));
-
-            foreach (var kvp in expectedFileContent)
+            using (var _ = new AssertionScope())
             {
-                var filenameWithPath = Path.Combine(RootDir, kvp.Key);
-                //we normalize line endings due to weirdness
-                var expectedContent = kvp.Value.ReplaceLineEndings();
+                filenames.Should().BeEquivalentTo(expectedFilenames.Select(f => Path.Combine(RootDir, f)));
 
-                if (receivedFileContents.TryGetValue(filenameWithPath, out var receivedContent))
+                foreach (var kvp in expectedFileContent)
                 {
-                    expectedContent.Should().Be(receivedContent);
-                }
+                    var filenameWithPath = Path.Combine(RootDir, kvp.Key);
+                    //we normalize line endings due to weirdness
+                    var expectedContent = kvp.Value.ReplaceLineEndings();
 
-                fileSystem.Received(1).WriteAllText(Arg.Is(filenameWithPath), Arg.Is(expectedContent.ReplaceLineEndings()));
+                    if (receivedFileContents.TryGetValue(filenameWithPath, out var receivedContent))
+                    {
+                        expectedContent.Should().Be(receivedContent);
+                        Encoding.UTF8.GetBytes(expectedContent).Should().BeEquivalentTo(Encoding.UTF8.GetBytes(receivedContent));
+                    }
+
+                    fileSystem.Received(1).WriteAllText(Arg.Is(filenameWithPath), Arg.Is(expectedContent.ReplaceLineEndings()));
+                }
             }
         }
 
         public static IEnumerable<object> ParseTemplateValuesSourceTestData => new object[]
-        {            
+        {
             CreateTestCase("Super-simple KeyValues source",
-                                    new[]
-                                    {
-                                        new HelmTemplateValueSourcesCreator.KeyValuesTemplateValuesSource
-                                        {
-                                            Value = new Dictionary<string, object>
-                                            {
-                                                ["Value 1"] = "Test"
-                                            }
-                                        }
-                                    },
-                                    new[] { HelmTemplateValueSourcesCreator.KeyValuesFileName },
-                                    new Dictionary<string, string>
-                                    {
-                                        //the key values converter adds an extra end of line
-                                        [HelmTemplateValueSourcesCreator.KeyValuesFileName] = "Value 1: Test\r\n",
-                                    }),
-            
+                           new[]
+                           {
+                               new HelmTemplateValueSourcesCreator.KeyValuesTemplateValuesSource
+                               {
+                                   Value = new Dictionary<string, object>
+                                   {
+                                       ["Value 1"] = "Test"
+                                   }
+                               }
+                           },
+                           new[] { HelmTemplateValueSourcesCreator.KeyValuesFileName },
+                           new Dictionary<string, string>
+                           {
+                               //the key values converter adds an extra end of line
+                               [HelmTemplateValueSourcesCreator.KeyValuesFileName] = "Value 1: Test\r\n",
+                           }),
+
             CreateTestCase("Simple KeyValues source",
                            new[]
                            {
@@ -191,7 +196,7 @@ secondary.Development.yaml"
                                    }
                                }
                            },
-                           new[] { HelmTemplateValueSourcesCreator.KeyValuesFileName, "secondary.yaml", "secondary.Development.yaml",HelmTemplateValueSourcesCreator.InlineYamlFileName},
+                           new[] { HelmTemplateValueSourcesCreator.KeyValuesFileName, "secondary.yaml", "secondary.Development.yaml", HelmTemplateValueSourcesCreator.InlineYamlFileName },
                            new Dictionary<string, string>
                            {
                                [HelmTemplateValueSourcesCreator.KeyValuesFileName] = @"Value 1: Test
