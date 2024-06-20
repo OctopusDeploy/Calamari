@@ -65,7 +65,6 @@ namespace Calamari.Tests.KubernetesFixtures
                 foreach (var kvp in expectedFileContent)
                 {
                     var filenameWithPath = Path.Combine(RootDir, kvp.Key);
-                    //we normalize line endings due to weirdness
                     var expectedContent = kvp.Value;
 
                     if (receivedFileContents.TryGetValue(filenameWithPath, out var receivedContent))
@@ -97,7 +96,7 @@ namespace Calamari.Tests.KubernetesFixtures
                            new Dictionary<string, string>
                            {
                                //the key values converter adds an extra end of line
-                               [HelmTemplateValueSourcesCreator.KeyValuesFileName] = "Value 1: Test\r\n",
+                               [HelmTemplateValueSourcesCreator.KeyValuesFileName] = "Value 1: Test\r\n".ReplaceLineEndings(),
                            }),
 
             CreateTestCase("Simple KeyValues source",
@@ -117,7 +116,7 @@ namespace Calamari.Tests.KubernetesFixtures
                            {
                                [HelmTemplateValueSourcesCreator.KeyValuesFileName] = @"Value 1: Test
 Value 2: 1234
-",
+".ReplaceLineEndings(),
                            }),
 
             CreateTestCase("Simple Inline Yaml",
@@ -202,7 +201,7 @@ secondary.Development.yaml"
                            {
                                [HelmTemplateValueSourcesCreator.KeyValuesFileName] = @"Value 1: Test
 Value 2: 1234
-",
+".ReplaceLineEndings(),
                                [HelmTemplateValueSourcesCreator.InlineYamlFileName] = @"it:
   is:
     some: 'yaml'",
@@ -221,7 +220,7 @@ Value 2: 1234
             Dictionary<string, string> expectedFileContent,
             Dictionary<string, string> extraVariables = null)
         {
-            return new TestCaseData(JsonConvert.SerializeObject(sources, Formatting.None).ReplaceLineEndings(),
+            return new TestCaseData(JsonConvert.SerializeObject(sources, Formatting.None),
                                     expectedFilenames,
                                     expectedFileContent,
                                     extraVariables)
