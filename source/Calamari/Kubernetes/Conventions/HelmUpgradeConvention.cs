@@ -170,7 +170,7 @@ namespace Calamari.Kubernetes.Conventions
 
         void SetValuesParameters(RunningDeployment deployment, StringBuilder sb)
         {
-            if (FeatureToggle.ImprovedHelmTemplateValuesFeatureToggle.IsEnabled(deployment.Variables))
+            if (OctopusFeatureToggles.ImprovedHelmTemplateValuesFeatureToggle.IsEnabled(deployment.Variables))
             {
                 SetOrderedTemplateValues(deployment, sb);
             }

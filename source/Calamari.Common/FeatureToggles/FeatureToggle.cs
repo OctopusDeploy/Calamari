@@ -13,7 +13,6 @@
         AsynchronousAzureZipDeployFeatureToggle,
         FSharpDeprecationFeatureToggle,
         AzureRMDeprecationFeatureToggle,
-        PreventHelmV2DeploymentsFeatureToggle,
-        ImprovedHelmTemplateValuesFeatureToggle
+        PreventHelmV2DeploymentsFeatureToggle
     }
 }
