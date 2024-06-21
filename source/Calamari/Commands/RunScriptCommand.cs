@@ -74,10 +74,11 @@ namespace Calamari.Commands
             ValidateArguments();
             var deployment = new RunningDeployment(packageFile, variables);
             WriteVariableScriptToFile(deployment);
-
+            
             var conventions = new List<IConvention>
             {
                 new StageScriptPackagesConvention(packageFile, fileSystem, new CombinedPackageExtractor(log, variables, commandLineRunner)),
+                new StageScriptGitDependenciesConvention(packageFile, fileSystem, new CombinedPackageExtractor(log, variables, commandLineRunner)),
                 // Substitute the script source file
                 new DelegateInstallConvention(d => substituteInFiles.Substitute(d.CurrentDirectory, ScriptFileTargetFactory(d).ToList())),
                 // Substitute any user-specified files

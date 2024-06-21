@@ -2,6 +2,15 @@ using System;
 
 namespace Calamari.Common.Plumbing.Variables
 {
+    public static class GitResourceVariables
+    {
+        public static readonly string GitResourceCollection = "Octopus.Action.GitResource";        
+        
+        public static string CommitHash(string name) => $"Octopus.Action.GitResource[{name}].CommitHash";
+        public static string OriginalPath(string name) => $"Octopus.Action.GitResource[{name}].OriginalPath";
+        public static string ExtractedPath(string name) => $"Octopus.Action.GitResource[{name}].Extract";
+    }
+    
     public static class PackageVariables
     {
         public static readonly string TransferPath = "Octopus.Action.Package.TransferPath";

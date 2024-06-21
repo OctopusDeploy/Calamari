@@ -72,6 +72,24 @@ namespace Calamari.Deployment
             public static readonly string IgnoreVariableReplacementErrors = "Octopus.Action.Package.IgnoreVariableReplacementErrors";
             public static readonly string RunPackageScripts = "Octopus.Action.Package.RunScripts";
         }
+        
+        public static class GitResources
+        {
+            public static string ExtractedPath(string key)
+            {
+                return $"Octopus.Action.GitResource[{key}].ExtractedPath";
+            }
+
+            public static string PackageFileName(string key)
+            {
+                return $"Octopus.Action.GitResource[{key}].PackageFileName";
+            }
+
+            public static string PackageFilePath(string key)
+            {
+                return $"Octopus.Action.GitResource[{key}].PackageFilePath";
+            }
+        }
 
         public static class Packages
         {
