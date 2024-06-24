@@ -52,9 +52,7 @@ namespace Calamari.AzureAppService.Behaviors
             Log.Verbose($"Using Azure ServicePrincipal AppId/ClientId '{account.ClientId}'");
             Log.Verbose($"Using Azure Cloud '{account.AzureEnvironment}'");
 
-            var pollingTimeoutVariableValue = variables.Get(SpecialVariables.Action.Azure.AsyncZipDeploymentTimeout, "5");
-            int.TryParse(pollingTimeoutVariableValue, out var pollingTimeoutValue);
-            var pollingTimeout = TimeSpan.FromMinutes(pollingTimeoutValue);
+            var pollingTimeout = TimeSpan.FromMinutes(5);
             var asyncZipDeployTimeoutPolicy = Policy.TimeoutAsync<HttpResponseMessage>(pollingTimeout, TimeoutStrategy.Optimistic);
 
             string? resourceGroupName = variables.Get(SpecialVariables.Action.Azure.ResourceGroupName);
