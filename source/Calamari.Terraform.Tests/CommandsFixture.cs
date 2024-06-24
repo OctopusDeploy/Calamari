@@ -517,7 +517,7 @@ namespace Calamari.Terraform.Tests
             var expectedHostName = $"{appName}.azurewebsites.net";
 
             using var temporaryFolder = TemporaryDirectory.Create();
-            CopyAllFiles(TestEnvironment.GetTestPath("Azure"), temporaryFolder.DirectoryPath);
+            CopyAllFiles(TestEnvironment.GetTestPath("Azure"), temporaryFolder.DirectoryPath, terraformCliVersion);
 
             async Task PopulateVariables(CommandTestBuilderContext _)
             {
@@ -810,10 +810,17 @@ output ""config-map-aws-auth"" {{
                                       });
         }
 
-        static void CopyAllFiles(string sourceFolderPath, string destinationFolderPath)
+        static void CopyAllFiles(string sourceFolderPath, string destinationFolderPath, string terraformVersion = null)
         {
             if (Directory.Exists(sourceFolderPath))
             {
+                //if there is version specific folder, use that 
+                if (terraformVersion != null && Directory.Exists(Path.Combine(sourceFolderPath, terraformVersion)))
+                {
+                    sourceFolderPath = Path.Combine(sourceFolderPath, terraformVersion);
+                }
+                
+                
                 var filePaths = Directory.GetFiles(sourceFolderPath);
 
                 // Copy the files and overwrite destination files if they already exist.
