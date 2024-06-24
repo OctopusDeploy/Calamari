@@ -5,6 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripts;
@@ -23,7 +24,7 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
         static readonly string SensitiveVariablePassword = AesEncryption.RandomString(16);
         static readonly AesEncryption VariableEncryptor = new AesEncryption(SensitiveVariablePassword);
         static readonly ICalamariFileSystem CalamariFileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
-
+        static readonly Regex ScriptParameterArgumentsRegex = new Regex(@"^(?<scriptCommandArgs>.*)\s*--\s(?<scriptArgs>.*)$", RegexOptions.Compiled);
         static DotnetScriptBootstrapper()
         {
             BootstrapScriptTemplate = EmbeddedResource.ReadEmbeddedText(typeof(DotnetScriptBootstrapper).Namespace + ".Bootstrap.csx");
@@ -99,20 +100,30 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
 
         public static string FormatCommandArguments(string bootstrapFile, string? scriptParameters)
         {
-            scriptParameters = RetrieveParameterValues(scriptParameters);
+            var (scriptCommandArguments, scriptArguments) = RetrieveParameterValues(scriptParameters);
             var encryptionKey = Convert.ToBase64String(AesEncryption.GetEncryptionKey(SensitiveVariablePassword));
             var commandArguments = new StringBuilder();
             commandArguments.Append("-s https://api.nuget.org/v3/index.json ");
-            commandArguments.AppendFormat("\"{0}\" -- {1} \"{2}\"", bootstrapFile, scriptParameters, encryptionKey);
+            if (!string.IsNullOrWhiteSpace(scriptCommandArguments)) commandArguments.Append($"{scriptCommandArguments} ");
+            commandArguments.AppendFormat("\"{0}\" -- {1} \"{2}\"", bootstrapFile, scriptArguments, encryptionKey);
             return commandArguments.ToString();
         }
 
         [return: NotNullIfNotNull("scriptParameters")]
-        static string? RetrieveParameterValues(string? scriptParameters)
+        static (string? scriptCommandArguments, string? scriptArguments) RetrieveParameterValues(string? scriptParameters)
         {
-            return scriptParameters?.Trim()
-                                   .TrimStart('-')
-                                   .Trim();
+            var scriptCommandArguments = string.Empty;
+            if (!string.IsNullOrEmpty(scriptParameters))
+            {
+                var scriptParameterParts = ScriptParameterArgumentsRegex.Match(scriptParameters);
+                if (scriptParameterParts.Success)
+                {
+                    scriptCommandArguments = scriptParameterParts.Groups["scriptCommandArgs"].Value;
+                    scriptParameters = scriptParameterParts.Groups["scriptArgs"].Value;
+                }
+            }
+
+            return (scriptCommandArguments.Trim(), scriptParameters?.Trim().TrimStart('-').Trim());
         }
 
         public static (string bootstrapFile, string[] temporaryFiles) PrepareBootstrapFile(string scriptFilePath, string configurationFile, string workingDirectory, IVariables variables)
