@@ -171,7 +171,7 @@ namespace Calamari.Terraform.Tests
 
             if (Directory.Exists(destinationDirectoryName))
             {
-                var path = Directory.EnumerateFiles(destinationDirectoryName).FirstOrDefault();
+                var path = Directory.EnumerateFiles(destinationDirectoryName).FirstOrDefault(f => Path.GetFileName(f).Contains("terraform"));
                 if (path != null)
                 {
                     customTerraformExecutable = path;
