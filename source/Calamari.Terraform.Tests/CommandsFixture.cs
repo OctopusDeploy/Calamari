@@ -26,15 +26,7 @@ using NUnit.Framework;
 
 namespace Calamari.Terraform.Tests
 {
-    [TestFixture("0.15.5")]
-    // [TestFixture("1.0.11")]
-    // [TestFixture("1.1.9")]
-    // [TestFixture("1.2.9")]
-    // [TestFixture("1.3.10")]
-    // [TestFixture("1.4.7")]
-    // [TestFixture("1.5.7")]
-    // [TestFixture("1.6.6")]
-    // [TestFixture("1.7.5")]
+    [TestFixture("0.13.7")]
     [TestFixture("1.8.5")]
     public class CommandsFixture
     {
