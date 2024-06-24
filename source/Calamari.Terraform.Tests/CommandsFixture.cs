@@ -26,9 +26,16 @@ using NUnit.Framework;
 
 namespace Calamari.Terraform.Tests
 {
-    [TestFixture("0.11.15")]
-    [TestFixture("0.13.0")]
-    [TestFixture("1.0.0")]
+    [TestFixture("0.15.5")]
+    [TestFixture("1.0.11")]
+    [TestFixture("1.1.9")]
+    [TestFixture("1.2.9")]
+    [TestFixture("1.3.10")]
+    [TestFixture("1.4.7")]
+    [TestFixture("1.5.7")]
+    [TestFixture("1.6.6")]
+    [TestFixture("1.7.5")]
+    [TestFixture("1.8.5")]
     public class CommandsFixture
     {
         string? customTerraformExecutable;
@@ -519,7 +526,6 @@ namespace Calamari.Terraform.Tests
                 _.Variables.Add(AzureAccountVariables.ClientId, await ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId, CancellationToken.None));
                 _.Variables.Add(AzureAccountVariables.Password, await ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword, CancellationToken.None));
                 _.Variables.Add("app_name", appName);
-                _.Variables.Add("random", random);
                 _.Variables.Add(TerraformSpecialVariables.Action.Terraform.VarFiles, "example.tfvars");
                 _.Variables.Add(TerraformSpecialVariables.Action.Terraform.AzureManagedAccount, Boolean.TrueString);
                 _.Variables.Add(KnownVariables.OriginalPackageDirectoryPath, temporaryFolder.DirectoryPath);
