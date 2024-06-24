@@ -13,8 +13,8 @@ namespace Calamari.Kubernetes.Conventions
 {
     public static class HelmTemplateValueSourcesCreator
     {
-        public const string KeyValuesFileName = "explicitVariableValues.yaml";
-        public const string InlineYamlFileName = "rawYamlValues.yaml";
+        public const string KeyValuesFileNamePrefix = "explicitVariableValues";
+        public const string InlineYamlFileNamePrefix = "rawYamlValues";
 
         public static IEnumerable<string> ParseTemplateValuesSources(RunningDeployment deployment, ICalamariFileSystem fileSystem, ILog log)
         {
@@ -28,7 +28,7 @@ namespace Calamari.Kubernetes.Conventions
             var filenames = new List<string>();
             // we reverse the order of the array so that we maintain the order that sources at the top take higher precendences (i.e. are adding to the --values list later),
             // however, within a source, the file path order must be maintained (for consistency) so that later file paths take higher precendence 
-            foreach (var json in parsedJsonArray.Reverse())
+            foreach (var (json, index) in parsedJsonArray.Select((json, index) => (json, index)).Reverse())
             {
                 var tvs = json.ToObject<TemplateValuesSource>();
                 switch (tvs.Type)
@@ -41,7 +41,7 @@ namespace Calamari.Kubernetes.Conventions
                         break;
                     case TemplateValuesSourceType.KeyValues:
                         var keyValuesTvs = json.ToObject<KeyValuesTemplateValuesSource>();
-                        var keyValueFilename = GenerateAndWriteKeyValues(deployment, fileSystem, keyValuesTvs.Value);
+                        var keyValueFilename = GenerateAndWriteKeyValues(deployment, fileSystem, keyValuesTvs.Value, index);
 
                         AddIfNotNull(filenames, keyValueFilename);
                         break;
@@ -59,7 +59,7 @@ namespace Calamari.Kubernetes.Conventions
                         break;
                     case TemplateValuesSourceType.InlineYaml:
                         var inlineYamlTvs = json.ToObject<InlineYamlTemplateValuesSource>();
-                        var inlineYamlFilename = GenerateAndWriteInlineYaml(deployment, fileSystem, inlineYamlTvs.Value);
+                        var inlineYamlFilename = GenerateAndWriteInlineYaml(deployment, fileSystem, inlineYamlTvs.Value, index);
 
                         AddIfNotNull(filenames, inlineYamlFilename);
                         break;
@@ -147,28 +147,43 @@ namespace Calamari.Kubernetes.Conventions
                                                  string.Empty);
         }
 
-        public static string GenerateAndWriteKeyValues(RunningDeployment deployment, ICalamariFileSystem fileSystem, Dictionary<string, object> keyValues)
+        public static string GenerateAndWriteKeyValues(RunningDeployment deployment, ICalamariFileSystem fileSystem, Dictionary<string, object> keyValues, int? index = null)
         {
             if (!keyValues.Any())
             {
                 return null;
             }
 
-            var fileName = Path.Combine(deployment.CurrentDirectory, KeyValuesFileName);
+            var targetFilename = GetKeyValuesFileName(index);
+
+            var fileName = Path.Combine(deployment.CurrentDirectory, targetFilename);
             fileSystem.WriteAllText(fileName, RawValuesToYamlConverter.Convert(keyValues));
 
             return fileName;
         }
 
-        public static string GenerateAndWriteInlineYaml(RunningDeployment deployment, ICalamariFileSystem fileSystem, string yaml)
+        public static string GenerateAndWriteInlineYaml(RunningDeployment deployment, ICalamariFileSystem fileSystem, string yaml, int? index = null)
         {
             if (string.IsNullOrWhiteSpace(yaml))
                 return null;
 
-            var fileName = Path.Combine(deployment.CurrentDirectory, "rawYamlValues.yaml");
+            var targetFilename = GetInlineYamlFileName(index);
+
+            var fileName = Path.Combine(deployment.CurrentDirectory, targetFilename);
             fileSystem.WriteAllText(fileName, yaml);
 
             return fileName;
+        }
+        
+        internal static string GetKeyValuesFileName(int? index)=> GetUniqueFileName(KeyValuesFileNamePrefix, index);
+
+        internal static string GetInlineYamlFileName(int? index) => GetUniqueFileName(InlineYamlFileNamePrefix, index);
+        
+        static string GetUniqueFileName(string prefix, int? index)
+        {
+            return index != null
+                ? $"{prefix}-{index}.yaml"
+                : $"{prefix}.yaml";
         }
 
         static void AddIfNotNull(List<string> filenames, string filename)

@@ -92,11 +92,11 @@ namespace Calamari.Tests.KubernetesFixtures
                                    }
                                }
                            },
-                           new[] { HelmTemplateValueSourcesCreator.KeyValuesFileName },
+                           new[] {  HelmTemplateValueSourcesCreator.GetKeyValuesFileName(0) },
                            new Dictionary<string, string>
                            {
                                //the key values converter adds an extra end of line
-                               [HelmTemplateValueSourcesCreator.KeyValuesFileName] = "Value 1: Test\r\n".ReplaceLineEndings(),
+                               [HelmTemplateValueSourcesCreator.GetKeyValuesFileName(0)] = "Value 1: Test\r\n".ReplaceLineEndings(),
                            }),
 
             CreateTestCase("Simple KeyValues source",
@@ -111,10 +111,10 @@ namespace Calamari.Tests.KubernetesFixtures
                                    }
                                }
                            },
-                           new[] { HelmTemplateValueSourcesCreator.KeyValuesFileName },
+                           new[] { HelmTemplateValueSourcesCreator.GetKeyValuesFileName(0) },
                            new Dictionary<string, string>
                            {
-                               [HelmTemplateValueSourcesCreator.KeyValuesFileName] = @"Value 1: Test
+                               [HelmTemplateValueSourcesCreator.GetKeyValuesFileName(0)] = @"Value 1: Test
 Value 2: 1234
 ".ReplaceLineEndings(),
                            }),
@@ -129,10 +129,10 @@ Value 2: 1234
     some: 'yaml'"
                                },
                            },
-                           new[] { HelmTemplateValueSourcesCreator.InlineYamlFileName },
+                           new[] { HelmTemplateValueSourcesCreator.GetInlineYamlFileName(0) },
                            new Dictionary<string, string>
                            {
-                               [HelmTemplateValueSourcesCreator.InlineYamlFileName] = @"it:
+                               [HelmTemplateValueSourcesCreator.GetInlineYamlFileName(0)] = @"it:
   is:
     some: 'yaml'",
                            }),
@@ -194,17 +194,39 @@ secondary.Development.yaml"
                                        ["Value 1"] = "Test",
                                        ["Value 2"] = 1234
                                    }
-                               }
+                               },
+                               new HelmTemplateValueSourcesCreator.InlineYamlTemplateValuesSource
+                               {
+                                   Value = @"yes: '1234'"
+                               },
+                               new HelmTemplateValueSourcesCreator.KeyValuesTemplateValuesSource
+                               {
+                                   Value = new Dictionary<string, object>
+                                   {
+                                       ["Value 3"] = "Testing",
+                                   }
+                               },
                            },
-                           new[] { HelmTemplateValueSourcesCreator.KeyValuesFileName, "secondary.yaml", "secondary.Development.yaml", HelmTemplateValueSourcesCreator.InlineYamlFileName },
+                           new[]
+                           {
+                               HelmTemplateValueSourcesCreator.GetKeyValuesFileName(4), 
+                               HelmTemplateValueSourcesCreator.GetInlineYamlFileName(3),
+                               HelmTemplateValueSourcesCreator.GetKeyValuesFileName(2), 
+                               "secondary.yaml", 
+                               "secondary.Development.yaml", 
+                               HelmTemplateValueSourcesCreator.GetInlineYamlFileName(0),
+                           },
                            new Dictionary<string, string>
                            {
-                               [HelmTemplateValueSourcesCreator.KeyValuesFileName] = @"Value 1: Test
-Value 2: 1234
-".ReplaceLineEndings(),
-                               [HelmTemplateValueSourcesCreator.InlineYamlFileName] = @"it:
+                               [HelmTemplateValueSourcesCreator.GetInlineYamlFileName(0)] = @"it:
   is:
     some: 'yaml'",
+                               [HelmTemplateValueSourcesCreator.GetKeyValuesFileName(2)] = @"Value 1: Test
+Value 2: 1234
+".ReplaceLineEndings(),
+                               [HelmTemplateValueSourcesCreator.GetInlineYamlFileName(3)] = "yes: '1234'",
+                               [HelmTemplateValueSourcesCreator.GetKeyValuesFileName(4)] = @"Value 3: Testing
+".ReplaceLineEndings()
                            },
                            new Dictionary<string, string>
                            {
