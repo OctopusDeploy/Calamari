@@ -240,7 +240,7 @@ namespace Calamari.Terraform.Tests
         [Test]
         public void ExtraInitParametersAreSet()
         {
-            IgnoreIfVersionIsNotInRange("0.0.0", "1.0.0");
+            IgnoreIfVersionIsNotInRange("0.0.0", "1.0.0", "-get-plugins was removed in 0.15.0/1.0.0");
             var additionalParams = "-var-file=\"backend.tfvars\"";
             ExecuteAndReturnLogOutput(planCommand,
                                       _ =>
@@ -253,7 +253,7 @@ namespace Calamari.Terraform.Tests
         [Test]
         public void AllowPluginDownloadsShouldBeDisabled()
         {
-            IgnoreIfVersionIsNotInRange("0.0.0", "0.15.0");
+            IgnoreIfVersionIsNotInRange("0.0.0", "0.15.0", "-get-plugins was removed in 0.15.0/1.0.0");
             ExecuteAndReturnLogOutput(planCommand,
                                       _ =>
                                       {
@@ -869,7 +869,7 @@ output ""config-map-aws-auth"" {{
                               ?.ToString();
         }
 
-        void IgnoreIfVersionIsNotInRange(string minimum, string? maximum = null)
+        void IgnoreIfVersionIsNotInRange(string minimum, string maximum, string because)
         {
             var minimumVersion = new Version(minimum);
             var maximumVersion = new Version(maximum ?? "999.0.0");
@@ -877,7 +877,8 @@ output ""config-map-aws-auth"" {{
             if (TerraformCliVersionAsObject.CompareTo(minimumVersion) < 0
                 || TerraformCliVersionAsObject.CompareTo(maximumVersion) >= 0)
             {
-                Assert.Ignore($"Test ignored as terraform version is not between {minimumVersion} and {maximumVersion}");
+                var becauseText = because is not null ? $" because {because}" : null; 
+                Assert.Ignore($"Test ignored as terraform version is not between {minimumVersion} and {maximumVersion}{becauseText}");
             }
         }
 
