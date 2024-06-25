@@ -444,19 +444,12 @@ namespace Calamari.Terraform.Tests
         [Test]
         public async Task GoogleCloudIntegration()
         {
-            const string jsonEnvironmentVariableKey = "GOOGLECLOUD_OCTOPUSAPITESTER_JSONKEY";
-
             var bucketName = $"e2e-tf-{Guid.NewGuid().ToString("N").Substring(0, 6)}";
 
             using var temporaryFolder = TemporaryDirectory.Create();
             CopyAllFiles(TestEnvironment.GetTestPath("GoogleCloud"), temporaryFolder.DirectoryPath);
 
             var environmentJsonKey = await ExternalVariables.Get(ExternalVariable.GoogleCloudJsonKeyfile, CancellationToken.None);
-            if (environmentJsonKey == null)
-            {
-                throw new Exception($"Environment Variable `{jsonEnvironmentVariableKey}` could not be found. The value can be found in the password store under GoogleCloud - OctopusAPITester");
-            }
-
             var jsonKey = Convert.ToBase64String(Encoding.UTF8.GetBytes(environmentJsonKey));
 
             void PopulateVariables(CommandTestBuilderContext _)
@@ -719,7 +712,7 @@ output ""config-map-aws-auth"" {{
         {
             const string variables =
                 "{\"ami\":\"new ami value\"}";
-            string template = TemplateLoader.LoadTextTemplate("InlineJsonWithVariablesV0150.json");
+            string template = TemplateLoader.LoadTextTemplate("InlineJsonWithVariables.json");
 
             var randomNumber = new Random().Next().ToString();
 
