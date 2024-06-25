@@ -1,28 +1,17 @@
 ﻿using System;
 using System.Net.Http;
 using Polly;
-using Polly.Retry;
 
 namespace Calamari.Testing;
 
 public static class TestingRetryPolicies
 {
-    public static ResiliencePipeline CreateGoogleCloudHttpRetryPipeline()
+    static readonly Random Jitterer = new();
+    
+    public static IAsyncPolicy<HttpResponseMessage> CreateGoogleCloudHttpRetryPipeline()
     {
-        return new ResiliencePipelineBuilder()
-               .AddRetry(new RetryStrategyOptions
-               {
-                   ShouldHandle = args => args.Outcome switch
-                                          {
-                                              { Exception: HttpRequestException } => PredicateResult.True(),
-                                              { Result: HttpResponseMessage { IsSuccessStatusCode: false } } => PredicateResult.True(),
-                                              _ => PredicateResult.False()
-                                          },
-                   BackoffType = DelayBackoffType.Exponential,
-                   UseJitter = true,
-                   MaxRetryAttempts = 5,
-                   Delay = TimeSpan.FromSeconds(5)
-               })
-               .Build();
+        return Policy.Handle<HttpRequestException>()
+                     .OrResult<HttpResponseMessage>(r => !r.IsSuccessStatusCode)
+                     .WaitAndRetryAsync(5, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)) + TimeSpan.FromMilliseconds(Jitterer.Next(0, 1000)));
     }
 }

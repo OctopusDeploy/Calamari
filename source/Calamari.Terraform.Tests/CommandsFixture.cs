@@ -7,6 +7,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Calamari.CloudAccounts;
 using Calamari.Common.Features.Processes;
@@ -447,7 +448,7 @@ namespace Calamari.Terraform.Tests
             using var temporaryFolder = TemporaryDirectory.Create();
             CopyAllFiles(TestEnvironment.GetTestPath("GoogleCloud"), temporaryFolder.DirectoryPath);
 
-            var environmentJsonKey = await ExternalVariables.Get(ExternalVariable.GoogleCloudJsonKeyfile, CancellationToken.None);
+            var environmentJsonKey = ExternalVariables.Get(ExternalVariable.GoogleCloudJsonKeyfile);
             var jsonKey = Convert.ToBase64String(Encoding.UTF8.GetBytes(environmentJsonKey));
 
             void PopulateVariables(CommandTestBuilderContext _)
@@ -470,11 +471,11 @@ namespace Calamari.Terraform.Tests
 
             string fileData;            
             // This intermittently throws a 401, requiring authorization. These buckets are public by default and the client has no authorization so this looks to be a race condition in the bucket configuration.    
-            var strategy = TestingRetryPolicies.CreateGoogleCloudHttpRetryPipeline();
+            var retryPolicy = TestingRetryPolicies.CreateGoogleCloudHttpRetryPipeline();
             using (var client = new HttpClient())
             {
                 //we perform checking in a retry as sometimes it's not quite ready by the time we want to request it
-                var response = await strategy.ExecuteAsync(async _ => await client.GetAsync(requestUri));
+                var response = await retryPolicy.ExecuteAsync(async () => await client.GetAsync(requestUri));
                 response.IsSuccessStatusCode.Should().BeTrue();
                 fileData = await response.Content.ReadAsStringAsync();
             }
@@ -484,7 +485,7 @@ namespace Calamari.Terraform.Tests
             await ExecuteAndReturnResult(destroyCommand, PopulateVariables, temporaryFolder.DirectoryPath);
             using (var client = new HttpClient())
             {
-                var response = await strategy.ExecuteAsync(async _ => await client.GetAsync($"{requestUri}&bust_cache"));
+                var response = await retryPolicy.ExecuteAsync(async () => await client.GetAsync($"{requestUri}&bust_cache"));
                 response.StatusCode.Should().Be(HttpStatusCode.NotFound);
             }
         }
