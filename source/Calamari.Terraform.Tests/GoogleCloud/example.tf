@@ -1,5 +1,4 @@
 provider "google" {
-
 }
 
 variable "bucket_name" {
