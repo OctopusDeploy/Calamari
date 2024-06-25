@@ -25,13 +25,12 @@ using NUnit.Framework;
 
 namespace Calamari.Terraform.Tests
 {
-    [TestFixture("0.11.15")]
-    [TestFixture("0.13.0")]
-    [TestFixture("1.0.0")]
+    [TestFixture("0.13.7")]
+    [TestFixture("1.8.5")]
     public class CommandsFixture
     {
         string? customTerraformExecutable;
-        string terraformCliVersion;
+        readonly string terraformCliVersion;
         readonly string planCommand = GetCommandFromType(typeof(PlanCommand));
         readonly string applyCommand = GetCommandFromType(typeof(ApplyCommand));
         readonly string destroyCommand = GetCommandFromType(typeof(DestroyCommand));
@@ -170,7 +169,7 @@ namespace Calamari.Terraform.Tests
 
             if (Directory.Exists(destinationDirectoryName))
             {
-                var path = Directory.EnumerateFiles(destinationDirectoryName).FirstOrDefault();
+                var path = Directory.EnumerateFiles(destinationDirectoryName).FirstOrDefault(f => Path.GetFileName(f).Contains("terraform"));
                 if (path != null)
                 {
                     customTerraformExecutable = path;
@@ -183,17 +182,15 @@ namespace Calamari.Terraform.Tests
         }
 
         [Test]
-        public void OverridingCacheFolder_WithNonSense_ThrowsAnError()
+        public void OverridingCacheFolder_WithNonsense_ThrowsAnError()
         {
-            IgnoreIfVersionIsNotInRange("0.15.0");
-
             ExecuteAndReturnLogOutput("apply-terraform",
                                       _ =>
                                       {
                                           _.Variables.Add(ScriptVariables.ScriptSource,
                                                           ScriptVariables.ScriptSourceOptions.Package);
                                           _.Variables.Add(TerraformSpecialVariables.Action.Terraform.EnvironmentVariables,
-                                                          JsonConvert.SerializeObject(new Dictionary<string, string> { { "TF_PLUGIN_CACHE_DIR", "NonSense" } }));
+                                                          JsonConvert.SerializeObject(new Dictionary<string, string> { { "TF_PLUGIN_CACHE_DIR", "Nonsense" } }));
                                       },
                                       "Simple")
                 .Should()
@@ -241,7 +238,7 @@ namespace Calamari.Terraform.Tests
         [Test]
         public void ExtraInitParametersAreSet()
         {
-            IgnoreIfVersionIsNotInRange("0.11.15", "0.15.0");
+            IgnoreIfVersionIsNotInRange("0.0.0", "1.0.0", "-get-plugins was removed in 0.15.0/1.0.0");
             var additionalParams = "-var-file=\"backend.tfvars\"";
             ExecuteAndReturnLogOutput(planCommand,
                                       _ =>
@@ -254,7 +251,7 @@ namespace Calamari.Terraform.Tests
         [Test]
         public void AllowPluginDownloadsShouldBeDisabled()
         {
-            IgnoreIfVersionIsNotInRange("0.11.15", "0.15.0");
+            IgnoreIfVersionIsNotInRange("0.0.0", "0.15.0", "-get-plugins was removed in 0.15.0/1.0.0");
             ExecuteAndReturnLogOutput(planCommand,
                                       _ =>
                                       {
@@ -445,21 +442,12 @@ namespace Calamari.Terraform.Tests
         [Test]
         public async Task GoogleCloudIntegration()
         {
-            IgnoreIfVersionIsNotInRange("0.15.0");
-
-            const string jsonEnvironmentVariableKey = "GOOGLECLOUD_OCTOPUSAPITESTER_JSONKEY";
-
             var bucketName = $"e2e-tf-{Guid.NewGuid().ToString("N").Substring(0, 6)}";
 
             using var temporaryFolder = TemporaryDirectory.Create();
             CopyAllFiles(TestEnvironment.GetTestPath("GoogleCloud"), temporaryFolder.DirectoryPath);
 
-            var environmentJsonKey = Environment.GetEnvironmentVariable(jsonEnvironmentVariableKey);
-            if (environmentJsonKey == null)
-            {
-                throw new Exception($"Environment Variable `{jsonEnvironmentVariableKey}` could not be found. The value can be found in the password store under GoogleCloud - OctopusAPITester");
-            }
-
+            var environmentJsonKey = await ExternalVariables.Get(ExternalVariable.GoogleCloudJsonKeyfile, CancellationToken.None);
             var jsonKey = Convert.ToBase64String(Encoding.UTF8.GetBytes(environmentJsonKey));
 
             void PopulateVariables(CommandTestBuilderContext _)
@@ -480,22 +468,23 @@ namespace Calamari.Terraform.Tests
             output.OutputVariables.ContainsKey("TerraformValueOutputs[url]").Should().BeTrue();
             var requestUri = output.OutputVariables["TerraformValueOutputs[url]"].Value;
 
-            string fileData;
-
-            // This intermittently throws a 401, requiring authorization. These buckets are public by default and the client has no authorization so this looks to be a race case in the bucket configuration.
-            await Task.Delay(TimeSpan.FromSeconds(5));
+            string fileData;            
+            // This intermittently throws a 401, requiring authorization. These buckets are public by default and the client has no authorization so this looks to be a race condition in the bucket configuration.    
+            var strategy = TestingRetryPolicies.CreateGoogleCloudHttpRetryPipeline();
             using (var client = new HttpClient())
             {
-                fileData = await client.GetStringAsync(requestUri).ConfigureAwait(false);
+                //we perform checking in a retry as sometimes it's not quite ready by the time we want to request it
+                var response = await strategy.ExecuteAsync(async _ => await client.GetAsync(requestUri));
+                response.IsSuccessStatusCode.Should().BeTrue();
+                fileData = await response.Content.ReadAsStringAsync();
             }
 
             fileData.Should().Be("Hello World from Google Cloud");
 
             await ExecuteAndReturnResult(destroyCommand, PopulateVariables, temporaryFolder.DirectoryPath);
-            await Task.Delay(TimeSpan.FromSeconds(10));
             using (var client = new HttpClient())
             {
-                var response = await client.GetAsync($"{requestUri}&bust_cache").ConfigureAwait(false);
+                var response = await strategy.ExecuteAsync(async _ => await client.GetAsync($"{requestUri}&bust_cache"));
                 response.StatusCode.Should().Be(HttpStatusCode.NotFound);
             }
         }
@@ -508,7 +497,7 @@ namespace Calamari.Terraform.Tests
             var expectedHostName = $"{appName}.azurewebsites.net";
 
             using var temporaryFolder = TemporaryDirectory.Create();
-            CopyAllFiles(TestEnvironment.GetTestPath("Azure"), temporaryFolder.DirectoryPath);
+            CopyAllFiles(TestEnvironment.GetTestPath("Azure"), temporaryFolder.DirectoryPath, terraformCliVersion);
 
             void PopulateVariables(CommandTestBuilderContext _)
             {
@@ -517,7 +506,6 @@ namespace Calamari.Terraform.Tests
                 _.Variables.Add(AzureAccountVariables.ClientId, ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId));
                 _.Variables.Add(AzureAccountVariables.Password, ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword));
                 _.Variables.Add("app_name", appName);
-                _.Variables.Add("random", random);
                 _.Variables.Add(TerraformSpecialVariables.Action.Terraform.VarFiles, "example.tfvars");
                 _.Variables.Add(TerraformSpecialVariables.Action.Terraform.AzureManagedAccount, Boolean.TrueString);
                 _.Variables.Add(KnownVariables.OriginalPackageDirectoryPath, temporaryFolder.DirectoryPath);
@@ -644,34 +632,8 @@ namespace Calamari.Terraform.Tests
         [Test]
         public void InlineHclTemplateAndVariables()
         {
-            IgnoreIfVersionIsNotInRange("0.11.15", "0.15.0");
             const string variables = "stringvar = \"default string\"";
-            string template = TemplateLoader.LoadTextTemplate("HclWithVariablesV0118.hcl");
-
-            ExecuteAndReturnLogOutput(applyCommand,
-                                      _ =>
-                                      {
-                                          _.Variables.Add("RandomNumber", new Random().Next().ToString());
-                                          _.Variables.Add(TerraformSpecialVariables.Action.Terraform.Template, template);
-                                          _.Variables.Add(TerraformSpecialVariables.Action.Terraform.TemplateParameters, variables);
-                                          _.Variables.Add(ScriptVariables.ScriptSource,
-                                              ScriptVariables.ScriptSourceOptions.Inline);
-                                      },
-                                      String.Empty,
-                                      _ =>
-                                      {
-                                          _.OutputVariables.ContainsKey("TerraformValueOutputs[nestedlist]").Should().BeTrue();
-                                          _.OutputVariables.ContainsKey("TerraformValueOutputs[nestedmap]").Should().BeTrue();
-                                      });
-        }
-
-        [Test]
-        public void InlineHclTemplateAndVariablesV015()
-        {
-            IgnoreIfVersionIsNotInRange("0.15.0");
-
-            const string variables = "stringvar = \"default string\"";
-            string template = TemplateLoader.LoadTextTemplate("HclWithVariablesV0150.hcl");
+            string template = TemplateLoader.LoadTextTemplate("HclWithVariables.hcl");
 
             ExecuteAndReturnLogOutput(applyCommand,
                                       _ =>
@@ -736,50 +698,19 @@ output ""config-map-aws-auth"" {{
         }
 
         [Test]
-        public void InlineJsonTemplateAndVariables()
-        {
-            IgnoreIfVersionIsNotInRange("0.11.15", "0.15.0");
-            const string variables =
-                "{\"ami\":\"new ami value\"}";
-            string template = TemplateLoader.LoadTextTemplate("InlineJsonWithVariablesV01180.json");
-
-            var randomNumber = new Random().Next().ToString();
-
-            ExecuteAndReturnLogOutput(applyCommand,
-                                      _ =>
-                                      {
-                                          _.Variables.Add("RandomNumber", randomNumber);
-                                          _.Variables.Add(TerraformSpecialVariables.Action.Terraform.Template, template);
-                                          _.Variables.Add(TerraformSpecialVariables.Action.Terraform.TemplateParameters, variables);
-                                          _.Variables.Add(ScriptVariables.ScriptSource,
-                                              ScriptVariables.ScriptSourceOptions.Inline);
-                                      },
-                                      String.Empty,
-                                      _ =>
-                                      {
-                                          _.OutputVariables.ContainsKey("TerraformValueOutputs[ami]").Should().BeTrue();
-                                          _.OutputVariables["TerraformValueOutputs[ami]"].Value.Should().Be("new ami value");
-                                          _.OutputVariables.ContainsKey("TerraformValueOutputs[random]").Should().BeTrue();
-                                          _.OutputVariables["TerraformValueOutputs[random]"].Value.Should().Be(randomNumber);
-                                      });
-        }
-
-        [Test]
         public void CanDetermineTerraformVersion()
         {
             ExecuteAndReturnLogOutput(applyCommand, _ => { _.Variables.Add(TerraformSpecialVariables.Action.Terraform.Workspace, "testversionspace"); }, "Simple")
                 .Should()
                 .NotContain("Could not parse Terraform CLI version");
         }
-
+        
         [Test]
-        public void InlineJsonTemplateAndVariablesV015()
+        public void InlineJsonTemplateAndVariables()
         {
-            IgnoreIfVersionIsNotInRange("0.15.0");
-
             const string variables =
                 "{\"ami\":\"new ami value\"}";
-            string template = TemplateLoader.LoadTextTemplate("InlineJsonWithVariablesV0150.json");
+            string template = TemplateLoader.LoadTextTemplate("InlineJsonWithVariables.json");
 
             var randomNumber = new Random().Next().ToString();
 
@@ -802,10 +733,17 @@ output ""config-map-aws-auth"" {{
                                       });
         }
 
-        static void CopyAllFiles(string sourceFolderPath, string destinationFolderPath)
+        static void CopyAllFiles(string sourceFolderPath, string destinationFolderPath, string terraformVersion = null)
         {
             if (Directory.Exists(sourceFolderPath))
             {
+                //if there is version specific folder, use that 
+                if (terraformVersion != null && Directory.Exists(Path.Combine(sourceFolderPath, terraformVersion)))
+                {
+                    sourceFolderPath = Path.Combine(sourceFolderPath, terraformVersion);
+                }
+                
+                
                 var filePaths = Directory.GetFiles(sourceFolderPath);
 
                 // Copy the files and overwrite destination files if they already exist.
@@ -893,7 +831,7 @@ output ""config-map-aws-auth"" {{
                               ?.ToString();
         }
 
-        void IgnoreIfVersionIsNotInRange(string minimum, string? maximum = null)
+        void IgnoreIfVersionIsNotInRange(string minimum, string maximum, string because)
         {
             var minimumVersion = new Version(minimum);
             var maximumVersion = new Version(maximum ?? "999.0.0");
@@ -901,7 +839,8 @@ output ""config-map-aws-auth"" {{
             if (TerraformCliVersionAsObject.CompareTo(minimumVersion) < 0
                 || TerraformCliVersionAsObject.CompareTo(maximumVersion) >= 0)
             {
-                Assert.Ignore($"Test ignored as terraform version is not between {minimumVersion} and {maximumVersion}");
+                var becauseText = because is not null ? $" because {because}" : null; 
+                Assert.Ignore($"Test ignored as terraform version is not between {minimumVersion} and {maximumVersion}{becauseText}");
             }
         }
 
