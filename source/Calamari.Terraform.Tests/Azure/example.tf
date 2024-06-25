@@ -1,24 +1,22 @@
 provider "azurerm" {
-  version = "~> 1.27"
+  features {}
 }
 
 variable "app_name" {
   description = "The name of the app"
 }
 
-variable "random" {
-  description = "A random value"
-}
+resource "random_pet" "prefix" {}
 
 resource "azurerm_resource_group" "resgrp" {
-  name     = "terraformtestrg${var.random}"
-  location = "AustraliaSouthEast"
+  name     = "${random_pet.prefix.id}-rg"
+  location = "Australia East"
 }
 
 resource "azurerm_app_service_plan" "service_plan" {
-  name                = "terraform_test_service_plan${var.random}"
-  location            = "${azurerm_resource_group.resgrp.location}"
-  resource_group_name = "${azurerm_resource_group.resgrp.name}"
+  name                = "${random_pet.prefix.id}-plan"
+  location            = azurerm_resource_group.resgrp.location
+  resource_group_name = azurerm_resource_group.resgrp.name
 
   sku {
     tier = "Standard"
@@ -27,10 +25,10 @@ resource "azurerm_app_service_plan" "service_plan" {
 }
 
 resource "azurerm_app_service" "web_app" {
-  name                = "${var.app_name}"
-  location            = "${azurerm_resource_group.resgrp.location}"
-  resource_group_name = "${azurerm_resource_group.resgrp.name}"
-  app_service_plan_id = "${azurerm_app_service_plan.service_plan.id}"
+  name                = var.app_name
+  location            = azurerm_resource_group.resgrp.location
+  resource_group_name = azurerm_resource_group.resgrp.name
+  app_service_plan_id = azurerm_app_service_plan.service_plan.id
 
   site_config {
     dotnet_framework_version = "v4.0"
@@ -43,5 +41,5 @@ resource "azurerm_app_service" "web_app" {
 }
 
 output "url" {
-  value = "${azurerm_app_service.web_app.default_site_hostname}"
+  value = azurerm_app_service.web_app.default_site_hostname
 }
