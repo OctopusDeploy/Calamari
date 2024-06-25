@@ -148,7 +148,7 @@ namespace Calamari.Terraform.Tests
                             await DownloadTerraform(fileName, client, downloadBaseUrl, destination);
                         }
 
-                        customTerraformExecutable = Directory.EnumerateFiles(destination).FirstOrDefault();
+                        customTerraformExecutable = Directory.EnumerateFiles(destination).FirstOrDefault(f => Path.GetFileName(f).Contains("terraform"));;
                         Console.WriteLine($"Downloaded terraform to {customTerraformExecutable}");
 
                         AddExecutePermission(customTerraformExecutable!);
