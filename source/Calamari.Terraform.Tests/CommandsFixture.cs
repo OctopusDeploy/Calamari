@@ -481,12 +481,11 @@ namespace Calamari.Terraform.Tests
             output.OutputVariables.ContainsKey("TerraformValueOutputs[url]").Should().BeTrue();
             var requestUri = output.OutputVariables["TerraformValueOutputs[url]"].Value;
 
-            string fileData;
+            string fileData;            
+            // This intermittently throws a 401, requiring authorization. These buckets are public by default and the client has no authorization so this looks to be a race condition in the bucket configuration.    
+            var strategy = TestingRetryPolicies.CreateHttpRetryPipeline();
             using (var client = new HttpClient())
             {
-                // This intermittently throws a 401, requiring authorization. These buckets are public by default and the client has no authorization so this looks to be a race condition in the bucket configuration.
-                var strategy = TestingRetryPolicies.CreateHttpRetryPipeline();
-
                 //we perform checking in a retry as sometimes it's not quite ready by the time we want to request it
                 fileData = await strategy.ExecuteAsync(async _ => await client.GetStringAsync(requestUri));
             }
@@ -494,10 +493,9 @@ namespace Calamari.Terraform.Tests
             fileData.Should().Be("Hello World from Google Cloud");
 
             await ExecuteAndReturnResult(destroyCommand, PopulateVariables, temporaryFolder.DirectoryPath);
-            await Task.Delay(TimeSpan.FromSeconds(10));
             using (var client = new HttpClient())
             {
-                var response = await client.GetAsync($"{requestUri}&bust_cache").ConfigureAwait(false);
+                var response = await strategy.ExecuteAsync(async _ => await client.GetAsync($"{requestUri}&bust_cache"));
                 response.StatusCode.Should().Be(HttpStatusCode.NotFound);
             }
         }
