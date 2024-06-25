@@ -7,12 +7,17 @@ namespace Calamari.Testing;
 
 public static class TestingRetryPolicies
 {
-    public static ResiliencePipeline CreateHttpRetryPipeline()
+    public static ResiliencePipeline CreateGoogleCloudHttpRetryPipeline()
     {
         return new ResiliencePipelineBuilder()
                .AddRetry(new RetryStrategyOptions
                {
-                   ShouldHandle = new PredicateBuilder().Handle<HttpRequestException>(),
+                   ShouldHandle = args => args.Outcome switch
+                                          {
+                                              { Exception: HttpRequestException } => PredicateResult.True(),
+                                              { Result: HttpResponseMessage { IsSuccessStatusCode: false } } => PredicateResult.True(),
+                                              _ => PredicateResult.False()
+                                          },
                    BackoffType = DelayBackoffType.Exponential,
                    UseJitter = true,
                    MaxRetryAttempts = 5,

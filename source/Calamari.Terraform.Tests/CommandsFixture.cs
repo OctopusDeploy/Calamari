@@ -184,17 +184,15 @@ namespace Calamari.Terraform.Tests
         }
 
         [Test]
-        public void OverridingCacheFolder_WithNonSense_ThrowsAnError()
+        public void OverridingCacheFolder_WithNonsense_ThrowsAnError()
         {
-            IgnoreIfVersionIsNotInRange("0.15.0");
-
             ExecuteAndReturnLogOutput("apply-terraform",
                                       _ =>
                                       {
                                           _.Variables.Add(ScriptVariables.ScriptSource,
                                                           ScriptVariables.ScriptSourceOptions.Package);
                                           _.Variables.Add(TerraformSpecialVariables.Action.Terraform.EnvironmentVariables,
-                                                          JsonConvert.SerializeObject(new Dictionary<string, string> { { "TF_PLUGIN_CACHE_DIR", "NonSense" } }));
+                                                          JsonConvert.SerializeObject(new Dictionary<string, string> { { "TF_PLUGIN_CACHE_DIR", "Nonsense" } }));
                                       },
                                       "Simple")
                 .Should()
@@ -242,7 +240,7 @@ namespace Calamari.Terraform.Tests
         [Test]
         public void ExtraInitParametersAreSet()
         {
-            IgnoreIfVersionIsNotInRange("0.11.15", "0.15.0");
+            IgnoreIfVersionIsNotInRange("0.0.0", "1.0.0");
             var additionalParams = "-var-file=\"backend.tfvars\"";
             ExecuteAndReturnLogOutput(planCommand,
                                       _ =>
@@ -255,7 +253,7 @@ namespace Calamari.Terraform.Tests
         [Test]
         public void AllowPluginDownloadsShouldBeDisabled()
         {
-            IgnoreIfVersionIsNotInRange("0.11.15", "0.15.0");
+            IgnoreIfVersionIsNotInRange("0.0.0", "0.15.0");
             ExecuteAndReturnLogOutput(planCommand,
                                       _ =>
                                       {
@@ -446,8 +444,6 @@ namespace Calamari.Terraform.Tests
         [Test]
         public async Task GoogleCloudIntegration()
         {
-            IgnoreIfVersionIsNotInRange("0.15.0");
-
             const string jsonEnvironmentVariableKey = "GOOGLECLOUD_OCTOPUSAPITESTER_JSONKEY";
 
             var bucketName = $"e2e-tf-{Guid.NewGuid().ToString("N").Substring(0, 6)}";
@@ -455,7 +451,7 @@ namespace Calamari.Terraform.Tests
             using var temporaryFolder = TemporaryDirectory.Create();
             CopyAllFiles(TestEnvironment.GetTestPath("GoogleCloud"), temporaryFolder.DirectoryPath);
 
-            var environmentJsonKey = Environment.GetEnvironmentVariable(jsonEnvironmentVariableKey);
+            var environmentJsonKey = await ExternalVariables.Get(ExternalVariable.GoogleCloudJsonKeyfile, CancellationToken.None);
             if (environmentJsonKey == null)
             {
                 throw new Exception($"Environment Variable `{jsonEnvironmentVariableKey}` could not be found. The value can be found in the password store under GoogleCloud - OctopusAPITester");
@@ -483,11 +479,13 @@ namespace Calamari.Terraform.Tests
 
             string fileData;            
             // This intermittently throws a 401, requiring authorization. These buckets are public by default and the client has no authorization so this looks to be a race condition in the bucket configuration.    
-            var strategy = TestingRetryPolicies.CreateHttpRetryPipeline();
+            var strategy = TestingRetryPolicies.CreateGoogleCloudHttpRetryPipeline();
             using (var client = new HttpClient())
             {
                 //we perform checking in a retry as sometimes it's not quite ready by the time we want to request it
-                fileData = await strategy.ExecuteAsync(async _ => await client.GetStringAsync(requestUri));
+                var response = await strategy.ExecuteAsync(async _ => await client.GetAsync(requestUri));
+                response.IsSuccessStatusCode.Should().BeTrue();
+                fileData = await response.Content.ReadAsStringAsync();
             }
 
             fileData.Should().Be("Hello World from Google Cloud");
@@ -643,34 +641,8 @@ namespace Calamari.Terraform.Tests
         [Test]
         public void InlineHclTemplateAndVariables()
         {
-            IgnoreIfVersionIsNotInRange("0.11.15", "0.15.0");
             const string variables = "stringvar = \"default string\"";
-            string template = TemplateLoader.LoadTextTemplate("HclWithVariablesV0118.hcl");
-
-            ExecuteAndReturnLogOutput(applyCommand,
-                                      _ =>
-                                      {
-                                          _.Variables.Add("RandomNumber", new Random().Next().ToString());
-                                          _.Variables.Add(TerraformSpecialVariables.Action.Terraform.Template, template);
-                                          _.Variables.Add(TerraformSpecialVariables.Action.Terraform.TemplateParameters, variables);
-                                          _.Variables.Add(ScriptVariables.ScriptSource,
-                                              ScriptVariables.ScriptSourceOptions.Inline);
-                                      },
-                                      String.Empty,
-                                      _ =>
-                                      {
-                                          _.OutputVariables.ContainsKey("TerraformValueOutputs[nestedlist]").Should().BeTrue();
-                                          _.OutputVariables.ContainsKey("TerraformValueOutputs[nestedmap]").Should().BeTrue();
-                                      });
-        }
-
-        [Test]
-        public void InlineHclTemplateAndVariablesV015()
-        {
-            IgnoreIfVersionIsNotInRange("0.15.0");
-
-            const string variables = "stringvar = \"default string\"";
-            string template = TemplateLoader.LoadTextTemplate("HclWithVariablesV0150.hcl");
+            string template = TemplateLoader.LoadTextTemplate("HclWithVariables.hcl");
 
             ExecuteAndReturnLogOutput(applyCommand,
                                       _ =>
@@ -735,47 +707,16 @@ output ""config-map-aws-auth"" {{
         }
 
         [Test]
-        public void InlineJsonTemplateAndVariables()
-        {
-            IgnoreIfVersionIsNotInRange("0.11.15", "0.15.0");
-            const string variables =
-                "{\"ami\":\"new ami value\"}";
-            string template = TemplateLoader.LoadTextTemplate("InlineJsonWithVariablesV01180.json");
-
-            var randomNumber = new Random().Next().ToString();
-
-            ExecuteAndReturnLogOutput(applyCommand,
-                                      _ =>
-                                      {
-                                          _.Variables.Add("RandomNumber", randomNumber);
-                                          _.Variables.Add(TerraformSpecialVariables.Action.Terraform.Template, template);
-                                          _.Variables.Add(TerraformSpecialVariables.Action.Terraform.TemplateParameters, variables);
-                                          _.Variables.Add(ScriptVariables.ScriptSource,
-                                              ScriptVariables.ScriptSourceOptions.Inline);
-                                      },
-                                      String.Empty,
-                                      _ =>
-                                      {
-                                          _.OutputVariables.ContainsKey("TerraformValueOutputs[ami]").Should().BeTrue();
-                                          _.OutputVariables["TerraformValueOutputs[ami]"].Value.Should().Be("new ami value");
-                                          _.OutputVariables.ContainsKey("TerraformValueOutputs[random]").Should().BeTrue();
-                                          _.OutputVariables["TerraformValueOutputs[random]"].Value.Should().Be(randomNumber);
-                                      });
-        }
-
-        [Test]
         public void CanDetermineTerraformVersion()
         {
             ExecuteAndReturnLogOutput(applyCommand, _ => { _.Variables.Add(TerraformSpecialVariables.Action.Terraform.Workspace, "testversionspace"); }, "Simple")
                 .Should()
                 .NotContain("Could not parse Terraform CLI version");
         }
-
+        
         [Test]
-        public void InlineJsonTemplateAndVariablesV015()
+        public void InlineJsonTemplateAndVariables()
         {
-            IgnoreIfVersionIsNotInRange("0.15.0");
-
             const string variables =
                 "{\"ami\":\"new ami value\"}";
             string template = TemplateLoader.LoadTextTemplate("InlineJsonWithVariablesV0150.json");
