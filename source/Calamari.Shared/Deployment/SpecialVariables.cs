@@ -74,21 +74,15 @@ namespace Calamari.Deployment
         }
         
         public static class GitResources
-        {
-            public static string ExtractedPath(string key)
-            {
-                return $"Octopus.Action.GitResource[{key}].ExtractedPath";
-            }
-
-            public static string PackageFileName(string key)
-            {
-                return $"Octopus.Action.GitResource[{key}].PackageFileName";
-            }
-
-            public static string PackageFilePath(string key)
-            {
-                return $"Octopus.Action.GitResource[{key}].PackageFilePath";
-            }
+        {                  
+            public static readonly string GitResourceCollection = "Octopus.Action.GitResource";        
+        
+            public static string CommitHash(string name) => $"Octopus.Action.GitResource[{name}].CommitHash";
+            public static string OriginalPath(string name) => $"Octopus.Action.GitResource[{name}].OriginalPath";
+            public static string Extract(string name) => $"Octopus.Action.GitResource[{name}].Extract";
+            public static string ExtractedPath(string name) => $"Octopus.Action.GitResource[{name}].ExtractedPath";
+            public static string FileName(string name) => $"Octopus.Action.GitResource[{name}].PackageFileName";       
+            public static string FilePath(string name) => $"Octopus.Action.GitResource[{name}].PackageFilePath";
         }
 
         public static class Packages
