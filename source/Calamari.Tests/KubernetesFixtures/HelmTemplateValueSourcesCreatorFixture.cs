@@ -81,7 +81,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
         public static IEnumerable<object> ParseTemplateValuesSourceTestData => new object[]
         {
-            CreateTestCase("Super-simple KeyValues source",
+            CreateTestCase("Single pair KeyValues source",
                            new[]
                            {
                                new HelmTemplateValueSourcesCreator.KeyValuesTemplateValuesSource
@@ -99,7 +99,7 @@ namespace Calamari.Tests.KubernetesFixtures
                                [HelmTemplateValueSourcesCreator.GetKeyValuesFileName(0)] = "Value 1: Test\r\n".ReplaceLineEndings(),
                            }),
 
-            CreateTestCase("Simple KeyValues source",
+            CreateTestCase("Multiple pairs KeyValues source",
                            new[]
                            {
                                new HelmTemplateValueSourcesCreator.KeyValuesTemplateValuesSource
