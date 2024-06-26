@@ -13,8 +13,8 @@ namespace Calamari.Kubernetes.Conventions
 {
     public static class HelmTemplateValueSourcesCreator
     {
-        public const string KeyValuesFileNamePrefix = "explicitVariableValues";
-        public const string InlineYamlFileNamePrefix = "rawYamlValues";
+        const string KeyValuesFileNamePrefix = "explicitVariableValues";
+        const string InlineYamlFileNamePrefix = "rawYamlValues";
 
         public static IEnumerable<string> ParseTemplateValuesSources(RunningDeployment deployment, ICalamariFileSystem fileSystem, ILog log)
         {
@@ -35,7 +35,20 @@ namespace Calamari.Kubernetes.Conventions
                 {
                     case TemplateValuesSourceType.Chart:
                         var chartTvs = json.ToObject<ChartTemplateValuesSource>();
-                        var chartFilenames = GenerateAndWriteChartValues(deployment, fileSystem, log, chartTvs.ValuesFilePaths);
+
+                        IEnumerable<string> chartFilenames;
+                        var scriptSource = deployment.Variables.Get(ScriptVariables.ScriptSource);
+                        switch (scriptSource)
+                        {
+                            case ScriptVariables.ScriptSourceOptions.Package:
+                                chartFilenames = GenerateAndWriteChartValues(deployment, fileSystem, log, chartTvs.ValuesFilePaths);
+                                break;
+                            case ScriptVariables.ScriptSourceOptions.GitRepository:
+                                chartFilenames = GetGitRepositoryPath(deployment, fileSystem, log, chartTvs.ValuesFilePaths);
+                                break;
+                            default:
+                                throw new ArgumentException($"{scriptSource} is not a support Chart values source type");
+                        }
 
                         filenames.AddRange(chartFilenames);
                         break;
@@ -66,6 +79,38 @@ namespace Calamari.Kubernetes.Conventions
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
+            }
+
+            return filenames;
+        }
+
+        static IEnumerable<string> GetGitRepositoryPath(RunningDeployment deployment, ICalamariFileSystem fileSystem, ILog log, string valuesFilePaths)
+        {
+            var valuesPaths = valuesFilePaths.Split('\r', '\n').Where(x => !string.IsNullOrWhiteSpace(x));
+            var filenames = new List<string>();
+            var errors = new List<string>();
+
+            var shortHash = deployment.Variables.Get(KnownVariables.Action.GitResource.CommitHash)?.Substring(0, 7);
+
+            foreach (var valuePath in valuesPaths)
+            {
+                var currentFiles = fileSystem.EnumerateFilesWithGlob(deployment.CurrentDirectory, valuePath).ToList();
+                if (!currentFiles.Any())
+                {
+                    errors.Add($"Unable to find file `{valuePath}` in git repository, commit {shortHash}");
+                }
+
+                foreach (var file in currentFiles)
+                {
+                    var relative = file.Substring(deployment.CurrentDirectory.Length);
+                    log.Info($"Including values file `{relative}` from git repository, commit {shortHash}");
+                    filenames.AddRange(currentFiles);
+                }
+            }
+
+            if (!filenames.Any() && errors.Any())
+            {
+                throw new CommandException(string.Join(Environment.NewLine, errors));
             }
 
             return filenames;
@@ -174,11 +219,11 @@ namespace Calamari.Kubernetes.Conventions
 
             return fileName;
         }
-        
-        internal static string GetKeyValuesFileName(int? index)=> GetUniqueFileName(KeyValuesFileNamePrefix, index);
+
+        internal static string GetKeyValuesFileName(int? index) => GetUniqueFileName(KeyValuesFileNamePrefix, index);
 
         internal static string GetInlineYamlFileName(int? index) => GetUniqueFileName(InlineYamlFileNamePrefix, index);
-        
+
         static string GetUniqueFileName(string prefix, int? index)
         {
             return index != null
