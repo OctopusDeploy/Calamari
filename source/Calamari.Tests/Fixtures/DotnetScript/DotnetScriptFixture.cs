@@ -108,5 +108,29 @@ namespace Calamari.Tests.Fixtures.DotnetScript
             output.AssertSuccess();
             output.AssertOutput("Parameters Parameter0Parameter1");
         }
+
+        [TestCase(true)]
+        [TestCase(false)]
+        [RequiresDotNetCore]
+        public void UsingIsolatedAssemblyLoadContext(bool enableIsolatedLoadContext)
+        {
+            var (output, _) = RunScript("IsolatedLoadContext.csx",
+                                        new Dictionary<string, string>()
+                                        {
+                                            [SpecialVariables.Action.Script.ScriptParameters] = $"{(enableIsolatedLoadContext ? "--isolated-load-context " : "")}-- Parameter0 Parameter1",
+                                            [ScriptVariables.UseDotnetScript] = bool.TrueString
+                                        });
+            if (enableIsolatedLoadContext)
+            {
+                output.AssertSuccess();
+                output.AssertOutput("NuGet.Commands version: 6.10.0.");
+                output.AssertOutput("Parameters Parameter0Parameter1");
+            }
+            else
+            {
+                output.AssertFailure();
+                output.AssertErrorOutput("Could not load file or assembly 'NuGet.Protocol, Version=6.10.0.");
+            }
+        }
     }
 }
