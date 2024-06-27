@@ -8,7 +8,6 @@
     public enum FeatureToggle {
         SkunkworksFeatureToggle,
         KubernetesAksKubeloginFeatureToggle,
-        GlobPathsGroupSupportFeatureToggle,
         ModernAzureSdkFeatureToggle,
         OidcAccountsFeatureToggle,
         AsynchronousAzureZipDeployFeatureToggle,

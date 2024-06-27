@@ -1,14 +1,11 @@
 ﻿using System;
 using Calamari.Common.Commands;
-using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
-using Calamari.Common.Plumbing.FileSystem.GlobExpressions;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.Conventions;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Util;
-using Calamari.Tests.Helpers;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
@@ -50,32 +47,20 @@ namespace Calamari.Tests.Fixtures.Deployment.Conventions
         }
 
         [Test]
-        [TestCase(GlobMode.GroupExpansionMode)]
-        [TestCase(GlobMode.LegacyMode)]
-        public void ShouldPurgeCustomInstallationDirectoryWhenFlagIsSet(GlobMode globMode)
+        public void ShouldPurgeCustomInstallationDirectoryWhenFlagIsSet()
         {
-            if (globMode == GlobMode.GroupExpansionMode)
-            {
-                variables.AddFeatureToggles(FeatureToggle.GlobPathsGroupSupportFeatureToggle);
-            }
             variables.Set(PackageVariables.CustomInstallationDirectory, customInstallationDirectory);
             variables.Set(PackageVariables.CustomInstallationDirectoryShouldBePurgedBeforeDeployment, true.ToString());
 
             CreateConvention().Install(deployment);
 
             // Assert directory was purged
-            fileSystem.Received().PurgeDirectory(customInstallationDirectory, Arg.Any<FailureOptions>(), globMode);
+            fileSystem.Received().PurgeDirectory(customInstallationDirectory, Arg.Any<FailureOptions>());
         }
 
         [Test]
-        [TestCase(GlobMode.GroupExpansionMode)]
-        [TestCase(GlobMode.LegacyMode)]
-        public void ShouldPassGlobsToPurgeWhenSet(GlobMode globMode)
+        public void ShouldPassGlobsToPurgeWhenSet()
         {
-            if (globMode == GlobMode.GroupExpansionMode)
-            {
-                variables.AddFeatureToggles(FeatureToggle.GlobPathsGroupSupportFeatureToggle);
-            }
             variables.Set(PackageVariables.CustomInstallationDirectory, customInstallationDirectory);
             variables.Set(PackageVariables.CustomInstallationDirectoryShouldBePurgedBeforeDeployment, true.ToString());
             variables.Set(PackageVariables.CustomInstallationDirectoryPurgeExclusions, "firstglob\nsecondglob");
@@ -84,7 +69,7 @@ namespace Calamari.Tests.Fixtures.Deployment.Conventions
             CreateConvention().Install(deployment);
 
             // Assert we handed in the exclusion globs
-            fileSystem.Received().PurgeDirectory(customInstallationDirectory, Arg.Any<FailureOptions>(), globMode, Arg.Is<string[]>(a => a[0] == "firstglob" && a[1] == "secondglob"));
+            fileSystem.Received().PurgeDirectory(customInstallationDirectory, Arg.Any<FailureOptions>(), Arg.Is<string[]>(a => a[0] == "firstglob" && a[1] == "secondglob"));
         }
 
         [Test]
