@@ -8,17 +8,17 @@ using Calamari.Deployment.Conventions.DependencyVariablesStrategies;
 
 namespace Calamari.Deployment.Conventions
 {
-    public class StageScriptPackagesConvention : IInstallConvention
+    public class StageScriptDependenciesConvention : IInstallConvention
     {
-        readonly string? packagePathContainingScript;
+        readonly string? dependencyPathContainingPrimaryFiles;
         readonly ICalamariFileSystem fileSystem;
         readonly IPackageExtractor extractor;
         readonly IDependencyVariablesStrategy dependencyVariablesStrategy;
         readonly bool forceExtract;
 
-        public StageScriptPackagesConvention(string? packagePathContainingScript, ICalamariFileSystem fileSystem, IPackageExtractor extractor, IDependencyVariablesStrategy dependencyVariablesStrategy, bool forceExtract = false)
+        public StageScriptDependenciesConvention(string? dependencyPathContainingPrimaryFiles, ICalamariFileSystem fileSystem, IPackageExtractor extractor, IDependencyVariablesStrategy dependencyVariablesStrategy, bool forceExtract = false)
         {
-            this.packagePathContainingScript = packagePathContainingScript;
+            this.dependencyPathContainingPrimaryFiles = dependencyPathContainingPrimaryFiles;
             this.fileSystem = fileSystem;
             this.extractor = extractor;
             this.dependencyVariablesStrategy = dependencyVariablesStrategy;
@@ -27,10 +27,10 @@ namespace Calamari.Deployment.Conventions
 
         public void Install(RunningDeployment deployment)
         {
-            // If the script is contained in a dependency, then extract the containing dependency in the working directory
-            if (!string.IsNullOrWhiteSpace(packagePathContainingScript))
+            // If the primary files (e.g. a script) is contained in a dependency, then extract the containing dependency in the working directory
+            if (!string.IsNullOrWhiteSpace(dependencyPathContainingPrimaryFiles))
             {
-                ExtractDependency(packagePathContainingScript, deployment.CurrentDirectory);
+                ExtractDependency(dependencyPathContainingPrimaryFiles, deployment.CurrentDirectory);
                 deployment.Variables.Set(KnownVariables.OriginalPackageDirectoryPath, deployment.CurrentDirectory);
             }
 

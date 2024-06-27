@@ -67,7 +67,7 @@ namespace Calamari.Kubernetes.Commands
             var conventions = new List<IConvention>
             {
                 new DelegateInstallConvention(d => extractPackage.ExtractToStagingDirectory(pathToPackage)),
-                new StageScriptPackagesConvention(null, fileSystem, new CombinedPackageExtractor(log, variables, commandLineRunner), new PackageVariablesStrategy(),true),
+                new StageScriptDependenciesConvention(null, fileSystem, new CombinedPackageExtractor(log, variables, commandLineRunner), new PackageVariablesStrategy(),true),
                 new ConfiguredScriptConvention(new PreDeployConfiguredScriptBehaviour(log, fileSystem, scriptEngine, commandLineRunner)),
                 // Any values.yaml files in any packages referenced by the step will automatically have variable substitution applied (we won't log a warning if these aren't present)
                 new DelegateInstallConvention(d => substituteInFiles.Substitute(d.CurrentDirectory, DefaultValuesFiles().ToList(), false)),
