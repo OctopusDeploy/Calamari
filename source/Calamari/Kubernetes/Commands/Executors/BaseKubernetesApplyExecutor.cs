@@ -115,7 +115,7 @@ namespace Calamari.Kubernetes.Commands.Executors
                 try
                 {
                     var result = kubectl.ExecuteCommandAndReturnOutput("get", resource.Kind, resource.Name,
-                                                                       "-o", "json");
+                                                                       "-o", "json", "-n", resource.Namespace);
 
                     log.WriteServiceMessage(new ServiceMessage(ServiceMessageNames.SetVariable.Name, new Dictionary<string, string>
                     {

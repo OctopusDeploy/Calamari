@@ -8,10 +8,12 @@ resource "azurerm_kubernetes_cluster" "default" {
   resource_group_name = azurerm_resource_group.default.name
   location            = "Australia East"
   dns_prefix          = "${random_pet.prefix.id}-k8s"
+  kubernetes_version  = "1.28"
   
   tags = {
     octopus-environment = "Staging"
     octopus-role = "discovery-role"
+    source       = "calamari-e2e-tests"
   }
 
   default_node_pool {

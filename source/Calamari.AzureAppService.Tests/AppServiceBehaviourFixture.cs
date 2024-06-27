@@ -357,6 +357,7 @@ namespace Calamari.AzureAppService.Tests
                 });
                 
                 context.Variables[SpecialVariables.Action.Azure.AppSettings] =  settings.json;
+                context.Variables[SpecialVariables.Action.Azure.AsyncZipDeploymentTimeout] =  "3";
             }
         }
 
@@ -364,7 +365,8 @@ namespace Calamari.AzureAppService.Tests
         public class WhenUsingALinuxAppService : AppServiceIntegrationTest
         {
             // For some reason we are having issues creating these linux resources on Standard in EastUS
-            protected override string DefaultResourceGroupLocation => "westus2";
+            protected override string DefaultResourceGroupLocation => RandomAzureRegion.GetRandomRegionWithExclusions("eastus");
+            
             static readonly CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
             readonly CancellationToken cancellationToken = CancellationTokenSource.Token;
 

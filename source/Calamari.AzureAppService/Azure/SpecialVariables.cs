@@ -19,6 +19,7 @@ namespace Calamari.AzureAppService.Azure
                 public static readonly string WebAppSlot = "Octopus.Action.Azure.DeploymentSlot";
                 public static readonly string AppSettings = "Octopus.Action.Azure.AppSettings";
                 public static readonly string ConnectionStrings = "Octopus.Action.Azure.ConnectionStrings";
+                public static readonly string AsyncZipDeploymentTimeout = "Octopus.Action.Azure.AsyncZipDeploymentTimeout";
             }
 
             public static class Package

@@ -35,7 +35,7 @@ namespace Calamari.AzureAppService
                                                                                                                                retryAttempt => TimeSpan.FromSeconds(Math.Pow(3.5, retryAttempt)) + TimeSpan.FromMilliseconds(Jitterer.Next(0, 10000)));
 
         public static AsyncRetryPolicy<HttpResponseMessage> AsynchronousZipDeploymentOperationPolicy { get; } = Policy.HandleResult<HttpResponseMessage>(r => r.StatusCode == HttpStatusCode.Accepted)
-                                                                                                                      .WaitAndRetryForeverAsync((_1, ctx) => TimeSpan.FromSeconds(2),
+                                                                                                                      .WaitAndRetryForeverAsync((_1, ctx) => TimeSpan.FromSeconds(4),
                                                                                                                                                 (response, timeout, ctx) =>
                                                                                                                                                 {
                                                                                                                                                     if (ctx.TryGetValue(ContextKeys.Log, out var logObj) && logObj is ILog log)
