@@ -1,8 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using YamlDotNet.Serialization;
 
-namespace Calamari.Kubernetes.Conventions
+namespace Calamari.Kubernetes.Helm
 {
     public class RawValuesToYamlConverter
     {

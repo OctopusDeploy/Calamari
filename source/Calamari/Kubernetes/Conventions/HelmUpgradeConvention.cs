@@ -14,6 +14,7 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.Conventions;
+using Calamari.Kubernetes.Helm;
 using Calamari.Util;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -193,7 +194,7 @@ namespace Calamari.Kubernetes.Conventions
 
         void SetOrderedTemplateValues(RunningDeployment deployment, StringBuilder sb)
         {
-            var filenames = HelmTemplateValueSourcesCreator.ParseTemplateValuesSources(deployment, fileSystem, log);
+            var filenames = HelmTemplateValueSourcesParser.ParseTemplateValuesSources(deployment, fileSystem, log);
 
             foreach (var filename in filenames)
             {
@@ -386,7 +387,7 @@ namespace Calamari.Kubernetes.Conventions
             fileName = null;
             var yaml = deployment.Variables.Get(SpecialVariables.Helm.YamlValues);
 
-            fileName = HelmTemplateValueSourcesCreator.GenerateAndWriteInlineYaml(deployment, fileSystem, yaml);
+            fileName = InlineYamlValuesFileWriter.WriteToFile(deployment, fileSystem, yaml);
 
             return fileName != null;
         }
@@ -397,7 +398,7 @@ namespace Calamari.Kubernetes.Conventions
             var variables = deployment.Variables.Get(SpecialVariables.Helm.KeyValues, "{}");
             var values = JsonConvert.DeserializeObject<Dictionary<string, object>>(variables);
 
-            fileName = HelmTemplateValueSourcesCreator.GenerateAndWriteKeyValues(deployment, fileSystem, values);
+            fileName = KeyValuesValuesFileWriter.WriteToFile(deployment, fileSystem, values);
 
             return fileName != null;
         }
