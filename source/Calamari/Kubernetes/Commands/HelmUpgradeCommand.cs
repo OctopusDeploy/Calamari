@@ -64,10 +64,33 @@ namespace Calamari.Kubernetes.Commands
             if (!File.Exists(pathToPackage))
                 throw new CommandException("Could not find package file: " + pathToPackage);
 
+            var improvedHelmTemplateValuesFeatureToggleEnabled = false;
+
             var conventions = new List<IConvention>
             {
                 new DelegateInstallConvention(d => extractPackage.ExtractToStagingDirectory(pathToPackage)),
-                new StageScriptDependenciesConvention(null, fileSystem, new CombinedPackageExtractor(log, variables, commandLineRunner), new PackageVariablesStrategy(),true),
+            };
+            
+            if (improvedHelmTemplateValuesFeatureToggleEnabled)
+            {
+                conventions.Add(new StageScriptDependenciesConvention(null,
+                                                                      fileSystem,
+                                                                      new CombinedPackageExtractor(log, variables, commandLineRunner),
+                                                                      new PackageVariablesStrategy(),
+                                                                      true));
+                conventions.Add(new StageScriptDependenciesConvention(null,
+                                                                      fileSystem,
+                                                                      new CombinedPackageExtractor(log, variables, commandLineRunner),
+                                                                      new GitDependencyVariablesStrategy(),
+                                                                      true));
+            }
+            else
+            {
+                conventions.Add(new StageScriptPackagesConvention(null, fileSystem, new CombinedPackageExtractor(log, variables, commandLineRunner), true));
+            }
+            
+            conventions.AddRange(new IInstallConvention[]
+            {
                 new ConfiguredScriptConvention(new PreDeployConfiguredScriptBehaviour(log, fileSystem, scriptEngine, commandLineRunner)),
                 // Any values.yaml files in any packages referenced by the step will automatically have variable substitution applied (we won't log a warning if these aren't present)
                 new DelegateInstallConvention(d => substituteInFiles.Substitute(d.CurrentDirectory, DefaultValuesFiles().ToList(), false)),
@@ -76,7 +99,8 @@ namespace Calamari.Kubernetes.Commands
                 new ConfiguredScriptConvention(new DeployConfiguredScriptBehaviour(log, fileSystem, scriptEngine, commandLineRunner)),
                 new HelmUpgradeConvention(log, scriptEngine, commandLineRunner, fileSystem),
                 new ConfiguredScriptConvention(new PostDeployConfiguredScriptBehaviour(log, fileSystem, scriptEngine, commandLineRunner))
-            };
+            });
+            
             var deployment = new RunningDeployment(pathToPackage, variables);
 
             var conventionRunner = new ConventionProcessor(deployment, conventions, log);

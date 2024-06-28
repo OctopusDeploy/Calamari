@@ -21,6 +21,7 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.Conventions.DependencyVariablesStrategies;
+using NuGet.Packaging;
 
 namespace Calamari.Commands
 {
@@ -75,11 +76,21 @@ namespace Calamari.Commands
             ValidateArguments();
             var deployment = new RunningDeployment(packageFile, variables);
             WriteVariableScriptToFile(deployment);
-            
-            var conventions = new List<IConvention>
-            {
-                new StageScriptDependenciesConvention(packageFile, fileSystem, new CombinedPackageExtractor(log, variables, commandLineRunner), new PackageVariablesStrategy()),
-                new StageScriptDependenciesConvention(packageFile, fileSystem, new CombinedPackageExtractor(log, variables, commandLineRunner), new GitDependencyVariablesStrategy()),
+
+            var enabledSecondaryGitDependencies = false;
+
+            var conventions = new List<IConvention>(enabledSecondaryGitDependencies ?
+                new IConvention[]
+                {
+                    new StageScriptDependenciesConvention(packageFile, fileSystem, new CombinedPackageExtractor(log, variables, commandLineRunner), new PackageVariablesStrategy()),
+                    new StageScriptDependenciesConvention(packageFile, fileSystem, new CombinedPackageExtractor(log, variables, commandLineRunner), new GitDependencyVariablesStrategy()),
+                } : 
+                new IConvention[]
+                {
+                    new StageScriptPackagesConvention(packageFile, fileSystem, new CombinedPackageExtractor(log, variables, commandLineRunner))
+                }
+            );
+            conventions.AddRange(new IConvention[] {
                 // Substitute the script source file
                 new DelegateInstallConvention(d => substituteInFiles.Substitute(d.CurrentDirectory, ScriptFileTargetFactory(d).ToList())),
                 // Substitute any user-specified files
@@ -88,7 +99,7 @@ namespace Calamari.Commands
                 new ConfigurationVariablesConvention(new ConfigurationVariablesBehaviour(fileSystem, variables, replacer, log)),
                 new StructuredConfigurationVariablesConvention(new StructuredConfigurationVariablesBehaviour(structuredConfigVariablesService)),
                 new ExecuteScriptConvention(scriptEngine, commandLineRunner)
-            };
+                });
 
             var conventionRunner = new ConventionProcessor(deployment, conventions, log);
 
