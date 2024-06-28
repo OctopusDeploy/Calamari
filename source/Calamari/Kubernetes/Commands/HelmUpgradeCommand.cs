@@ -64,13 +64,10 @@ namespace Calamari.Kubernetes.Commands
             if (!File.Exists(pathToPackage))
                 throw new CommandException("Could not find package file: " + pathToPackage);
 
-            var improvedHelmTemplateValuesFeatureToggleEnabled = false;
-
-            var conventions = new List<IConvention>
-            {
-                new DelegateInstallConvention(d => extractPackage.ExtractToStagingDirectory(pathToPackage)),
-            };
+            var conventions = new List<IConvention>();
+            conventions.Add(new DelegateInstallConvention(d => extractPackage.ExtractToStagingDirectory(pathToPackage)));
             
+            var improvedHelmTemplateValuesFeatureToggleEnabled = false;
             if (improvedHelmTemplateValuesFeatureToggleEnabled)
             {
                 conventions.Add(new StageScriptDependenciesConvention(null,

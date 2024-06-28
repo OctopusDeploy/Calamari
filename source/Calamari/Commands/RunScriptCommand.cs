@@ -77,19 +77,19 @@ namespace Calamari.Commands
             var deployment = new RunningDeployment(packageFile, variables);
             WriteVariableScriptToFile(deployment);
 
+            var conventions = new List<IConvention>();
+            
             var enabledSecondaryGitDependencies = false;
-
-            var conventions = new List<IConvention>(enabledSecondaryGitDependencies ?
-                new IConvention[]
-                {
-                    new StageScriptDependenciesConvention(packageFile, fileSystem, new CombinedPackageExtractor(log, variables, commandLineRunner), new PackageVariablesStrategy()),
-                    new StageScriptDependenciesConvention(packageFile, fileSystem, new CombinedPackageExtractor(log, variables, commandLineRunner), new GitDependencyVariablesStrategy()),
-                } : 
-                new IConvention[]
-                {
-                    new StageScriptPackagesConvention(packageFile, fileSystem, new CombinedPackageExtractor(log, variables, commandLineRunner))
-                }
-            );
+            if (enabledSecondaryGitDependencies)
+            {
+                conventions.Add(new StageScriptDependenciesConvention(packageFile, fileSystem, new CombinedPackageExtractor(log, variables, commandLineRunner), new PackageVariablesStrategy()));
+                conventions.Add(new StageScriptDependenciesConvention(packageFile, fileSystem, new CombinedPackageExtractor(log, variables, commandLineRunner), new GitDependencyVariablesStrategy()));
+            }
+            else
+            {
+                conventions.Add(new StageScriptPackagesConvention(packageFile, fileSystem, new CombinedPackageExtractor(log, variables, commandLineRunner)));
+            }
+            
             conventions.AddRange(new IConvention[] {
                 // Substitute the script source file
                 new DelegateInstallConvention(d => substituteInFiles.Substitute(d.CurrentDirectory, ScriptFileTargetFactory(d).ToList())),
