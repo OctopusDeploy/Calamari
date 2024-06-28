@@ -14,8 +14,10 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.Conventions;
+using Calamari.Kubernetes.Helm;
 using Calamari.Util;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Kubernetes.Conventions
@@ -169,6 +171,11 @@ namespace Calamari.Kubernetes.Conventions
 
         void SetValuesParameters(RunningDeployment deployment, StringBuilder sb)
         {
+            if (OctopusFeatureToggles.ImprovedHelmTemplateValuesFeatureToggle.IsEnabled(deployment.Variables))
+            {
+                SetOrderedTemplateValues(deployment, sb);
+            }
+
             foreach (var additionalValuesFile in AdditionalValuesFiles(deployment))
             {
                 sb.Append($" --values \"{additionalValuesFile}\"");
@@ -182,6 +189,16 @@ namespace Calamari.Kubernetes.Conventions
             if (TryGenerateVariablesFile(deployment, out var valuesFile))
             {
                 sb.Append($" --values \"{valuesFile}\"");
+            }
+        }
+
+        void SetOrderedTemplateValues(RunningDeployment deployment, StringBuilder sb)
+        {
+            var filenames = HelmTemplateValueSourcesParser.ParseTemplateValuesSources(deployment, fileSystem, log);
+
+            foreach (var filename in filenames)
+            {
+                sb.Append($" --values \"{filename}\"");
             }
         }
 
@@ -365,34 +382,25 @@ namespace Calamari.Kubernetes.Conventions
             throw new CommandException($"Unexpected error. Chart.yaml was not found in any directories inside '{installDir}'");
         }
 
-        static bool TryAddRawValuesYaml(RunningDeployment deployment, out string fileName)
+        bool TryAddRawValuesYaml(RunningDeployment deployment, out string fileName)
         {
             fileName = null;
             var yaml = deployment.Variables.Get(SpecialVariables.Helm.YamlValues);
-            if (!string.IsNullOrWhiteSpace(yaml))
-            {
-                fileName = Path.Combine(deployment.CurrentDirectory, "rawYamlValues.yaml");
-                File.WriteAllText(fileName, yaml);
-                return true;
-            }
 
-            return false;
+            fileName = InlineYamlValuesFileWriter.WriteToFile(deployment, fileSystem, yaml);
+
+            return fileName != null;
         }
 
-        static bool TryGenerateVariablesFile(RunningDeployment deployment, out string fileName)
+        bool TryGenerateVariablesFile(RunningDeployment deployment, out string fileName)
         {
             fileName = null;
             var variables = deployment.Variables.Get(SpecialVariables.Helm.KeyValues, "{}");
             var values = JsonConvert.DeserializeObject<Dictionary<string, object>>(variables);
 
-            if (!values.Any())
-            {
-                return false;
-            }
+            fileName = KeyValuesValuesFileWriter.WriteToFile(deployment, fileSystem, values);
 
-            fileName = Path.Combine(deployment.CurrentDirectory, "explicitVariableValues.yaml");
-            File.WriteAllText(fileName, RawValuesToYamlConverter.Convert(values));
-            return true;
+            return fileName != null;
         }
 
         void CheckHelmToolVersion(string customHelmExecutable, HelmVersion selectedVersion)
