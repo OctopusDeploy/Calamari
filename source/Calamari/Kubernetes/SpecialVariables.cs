@@ -48,6 +48,7 @@ namespace Calamari.Kubernetes
             public const string KeyValues = "Octopus.Action.Helm.KeyValues";
             public const string YamlValues = "Octopus.Action.Helm.YamlValues";
             public const string ResetValues = "Octopus.Action.Helm.ResetValues";
+            public const string TemplateValuesSources = "Octopus.Action.Helm.TemplateValuesSources";
             public const string AdditionalArguments = "Octopus.Action.Helm.AdditionalArgs";
             public const string CustomHelmExecutable = "Octopus.Action.Helm.CustomHelmExecutable";
             public const string ClientVersion = "Octopus.Action.Helm.ClientVersion";
