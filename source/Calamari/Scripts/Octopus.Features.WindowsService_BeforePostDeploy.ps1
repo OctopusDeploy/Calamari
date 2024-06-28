@@ -147,7 +147,7 @@ else
 
 if ($serviceAccount -eq "_CUSTOM") {
 	# dont use sc.exe to set the username / password, as it may be logged to the windows audit log if process creation event logs are enabled 
-	Write-Host "Setting custom service credentials for $serviceName"
+	Write-Host "Setting custom service credentials for '$serviceName'"
 	$wmiService = Get-WmiObject win32_service -filter "name='$($serviceName -replace "'", "\'")'" -computer "."
 	if ($customAccountPassword -eq "") {
         $customAccountPassword = $null
