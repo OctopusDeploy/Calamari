@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using System.Linq;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Packages;
