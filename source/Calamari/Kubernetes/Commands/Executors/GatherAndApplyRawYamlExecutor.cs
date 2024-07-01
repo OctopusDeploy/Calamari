@@ -133,6 +133,7 @@ namespace Calamari.Kubernetes.Commands.Executors
                         var yamlStream = new YamlStream();
                         yamlStream.Load(new StreamReader(yamlFile));
 
+                        var i = 0;
                         foreach (var document in yamlStream.Documents)
                         {
                             if (!(document.RootNode is YamlMappingNode rootNode))
@@ -140,30 +141,12 @@ namespace Calamari.Kubernetes.Commands.Executors
                                 continue;
                             }
 
-                            var metadata = rootNode.Children["metadata"] as YamlMappingNode ?? new YamlMappingNode();
-
-                            if (!metadata.Children.TryGetValue("name", out var name))
-                            {
-                                name = "undefined";
-                            }
-
-                            if (!metadata.Children.TryGetValue("namespace", out var @namespace))
-                            {
-                                @namespace = "undefined";
-                            }
-
-                            if (!metadata.Children.TryGetValue("kind", out var kind))
-                            {
-                                kind = "undefined";
-                            }
-
                             var updatedDocument = serializer.Serialize(rootNode);
-                            // updatedDocuments.Add(updatedDocument);
 
                             log.WriteServiceMessage(new ServiceMessage(ServiceMessageNames.SetVariable.Name,
                                                                        new Dictionary<string, string>
                                                                        {
-                                                                           { ServiceMessageNames.SetVariable.NameAttribute, $"AppliedManifests({kind}:{@namespace}:{name})" },
+                                                                           { ServiceMessageNames.SetVariable.NameAttribute, $"AppliedManifests({i++})" },
                                                                            { ServiceMessageNames.SetVariable.ValueAttribute, updatedDocument }
                                                                        }));
                         }
