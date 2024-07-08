@@ -56,7 +56,10 @@ namespace Calamari.Kubernetes.Authentication
                 var azureCluster = deploymentVariables.Get(SpecialVariables.AksClusterName);
                 var azureAdmin = deploymentVariables.GetFlag(SpecialVariables.AksAdminLogin);
                 azureCli.ConfigureAksKubeCtlAuthentication(kubectlCli, azureResourceGroup, azureCluster, @namespace, kubeConfig, azureAdmin);
-                kubeLogin.ConfigureAksKubeLogin(kubeConfig);
+                if (kubeLogin.IsConfigured)
+                {
+                    kubeLogin.ConfigureAksKubeLogin(kubeConfig);
+                }
             }
         }
     }
