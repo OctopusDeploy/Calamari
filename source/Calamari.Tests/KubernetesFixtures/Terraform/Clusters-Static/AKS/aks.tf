@@ -1,3 +1,13 @@
+# import {
+#   to = azurerm_resource_group.default
+#   id = "/subscriptions/cf21dc34-73dc-4d7d-bd86-041884e0bc75/resourceGroups/calamari-testing-static-rg"
+# }
+
+# import {
+#   to = azurerm_kubernetes_cluster.default
+#   id = "/subscriptions/cf21dc34-73dc-4d7d-bd86-041884e0bc75/resourceGroups/calamari-testing-static-rg/providers/Microsoft.ContainerService/managedClusters/calamari-testing-static-aks"
+# }
+
 resource "azurerm_resource_group" "default" {
   name     = "${var.static_resource_prefix}-rg"
   location = "Australia East"
@@ -35,7 +45,7 @@ resource "azurerm_kubernetes_cluster" "local_access_disabled" {
   name                = "${var.static_resource_prefix}-aks-no-local"
   resource_group_name = azurerm_resource_group.default.name
   location            = "Australia East"
-  dns_prefix          = "${var.static_resource_prefix}-k8s"
+  dns_prefix          = "${var.static_resource_prefix}-k8s-no-local"
   kubernetes_version  = "1.28"
 
   tags = {
