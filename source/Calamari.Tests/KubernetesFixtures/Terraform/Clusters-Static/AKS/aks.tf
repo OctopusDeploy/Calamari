@@ -32,7 +32,7 @@ resource "azurerm_kubernetes_cluster" "default" {
 }
 
 resource "azurerm_kubernetes_cluster" "local_access_disabled" {
-  name                = "${var.static_resource_prefix}-aks-local-access-diabled"
+  name                = "${var.static_resource_prefix}-aks-no-local"
   resource_group_name = azurerm_resource_group.default.name
   location            = "Australia East"
   dns_prefix          = "${var.static_resource_prefix}-k8s"
