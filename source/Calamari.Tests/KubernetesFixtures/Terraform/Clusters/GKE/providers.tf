@@ -17,6 +17,6 @@ locals {
 }
 
 provider "google" {
-  region      = local.region
-  zone        = "australia-southeast1-c"
+  region = local.region
+  zone   = "australia-southeast1-c"
 }

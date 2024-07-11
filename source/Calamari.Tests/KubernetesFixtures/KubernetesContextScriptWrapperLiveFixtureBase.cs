@@ -27,6 +27,7 @@ namespace Calamari.Tests.KubernetesFixtures
     public abstract class KubernetesContextScriptWrapperLiveFixtureBase : CalamariFixture
     {
         protected const string TestNamespace = "calamari-testing";
+        protected const string StaticTestResourcePrefix = "calamari-testing";
 
         protected IVariables variables;
         protected string testFolder;
