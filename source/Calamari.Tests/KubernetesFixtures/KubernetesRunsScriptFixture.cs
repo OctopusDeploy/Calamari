@@ -45,7 +45,6 @@ namespace Calamari.Tests.KubernetesFixtures
         public void Setup()
         {
             variables = new CalamariVariables();
-            variables.Set(KnownVariables.EnabledFeatureToggles, FeatureToggle.KubernetesAksKubeloginFeatureToggle.ToString());
             log = new DoNotDoubleLog();
             environmentVariables = new Dictionary<string, string>();
 
