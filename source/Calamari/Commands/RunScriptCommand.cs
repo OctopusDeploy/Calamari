@@ -21,7 +21,6 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.Conventions.DependencyVariablesStrategies;
-using NuGet.Packaging;
 
 namespace Calamari.Commands
 {
