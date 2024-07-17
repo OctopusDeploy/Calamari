@@ -18,7 +18,7 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
-using Calamari.Deployment.Conventions.DependencyVariablesStrategies;
+using Calamari.Deployment.Conventions.DependencyVariables;
 using Calamari.Kubernetes.Conventions;
 
 namespace Calamari.Kubernetes.Commands

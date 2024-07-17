@@ -4,7 +4,7 @@ using Calamari.Common.Features.Packages;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Deployment.Conventions.DependencyVariablesStrategies;
+using Calamari.Deployment.Conventions.DependencyVariables;
 
 namespace Calamari.Deployment.Conventions
 {
@@ -13,15 +13,15 @@ namespace Calamari.Deployment.Conventions
         readonly string? dependencyPathContainingPrimaryFiles;
         readonly ICalamariFileSystem fileSystem;
         readonly IPackageExtractor extractor;
-        readonly IDependencyVariablesFactory dependencyVariablesStrategy;
+        readonly IDependencyVariablesFactory dependencyVariablesFactory;
         readonly bool forceExtract;
 
-        public StageDependenciesConvention(string? dependencyPathContainingPrimaryFiles, ICalamariFileSystem fileSystem, IPackageExtractor extractor, IDependencyVariablesFactory dependencyVariablesStrategy, bool forceExtract = false)
+        public StageDependenciesConvention(string? dependencyPathContainingPrimaryFiles, ICalamariFileSystem fileSystem, IPackageExtractor extractor, IDependencyVariablesFactory dependencyVariablesFactory, bool forceExtract = false)
         {
             this.dependencyPathContainingPrimaryFiles = dependencyPathContainingPrimaryFiles;
             this.fileSystem = fileSystem;
             this.extractor = extractor;
-            this.dependencyVariablesStrategy = dependencyVariablesStrategy;
+            this.dependencyVariablesFactory = dependencyVariablesFactory;
             this.forceExtract = forceExtract;
         }
 
@@ -41,7 +41,7 @@ namespace Calamari.Deployment.Conventions
 
         void StageDependencyReferences(RunningDeployment deployment)
         {
-            var variables = dependencyVariablesStrategy.GetDependencyVariables(deployment.Variables);
+            var variables = dependencyVariablesFactory.GetDependencyVariables(deployment.Variables);
 
             // No need to check for "default" dependency since it gets extracted in the current directory in previous step.
             var referenceNames = variables.GetIndexes();

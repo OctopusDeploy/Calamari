@@ -1,7 +1,8 @@
+using System;
 using System.Collections.Generic;
 using Calamari.Common.Plumbing.Variables;
 
-namespace Calamari.Deployment.Conventions.DependencyVariablesStrategies
+namespace Calamari.Deployment.Conventions.DependencyVariables
 {
     public interface IDependencyVariablesFactory
     {

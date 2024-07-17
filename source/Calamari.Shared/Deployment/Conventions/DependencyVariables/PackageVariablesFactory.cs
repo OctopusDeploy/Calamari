@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Calamari.Common.Plumbing.Variables;
 using Octopus.CoreUtilities.Extensions;
 
-namespace Calamari.Deployment.Conventions.DependencyVariablesStrategies
+namespace Calamari.Deployment.Conventions.DependencyVariables
 {
     public class PackageVariablesFactory : IDependencyVariablesFactory
     {
