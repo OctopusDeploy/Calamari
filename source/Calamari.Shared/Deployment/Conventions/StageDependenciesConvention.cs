@@ -8,15 +8,15 @@ using Calamari.Deployment.Conventions.DependencyVariablesStrategies;
 
 namespace Calamari.Deployment.Conventions
 {
-    public class StageScriptDependenciesConvention : IInstallConvention
+    public class StageDependenciesConvention : IInstallConvention
     {
         readonly string? dependencyPathContainingPrimaryFiles;
         readonly ICalamariFileSystem fileSystem;
         readonly IPackageExtractor extractor;
-        readonly IDependencyVariablesStrategy dependencyVariablesStrategy;
+        readonly IDependencyVariablesFactory dependencyVariablesStrategy;
         readonly bool forceExtract;
 
-        public StageScriptDependenciesConvention(string? dependencyPathContainingPrimaryFiles, ICalamariFileSystem fileSystem, IPackageExtractor extractor, IDependencyVariablesStrategy dependencyVariablesStrategy, bool forceExtract = false)
+        public StageDependenciesConvention(string? dependencyPathContainingPrimaryFiles, ICalamariFileSystem fileSystem, IPackageExtractor extractor, IDependencyVariablesFactory dependencyVariablesStrategy, bool forceExtract = false)
         {
             this.dependencyPathContainingPrimaryFiles = dependencyPathContainingPrimaryFiles;
             this.fileSystem = fileSystem;

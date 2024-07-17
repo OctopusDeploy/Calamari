@@ -72,15 +72,15 @@ namespace Calamari.Kubernetes.Commands
 
             if (OctopusFeatureToggles.NonPrimaryGitDependencySupportFeatureToggle.IsEnabled(variables))
             {
-                conventions.Add(new StageScriptDependenciesConvention(null,
+                conventions.Add(new StageDependenciesConvention(null,
                                                                       fileSystem,
                                                                       new CombinedPackageExtractor(log, variables, commandLineRunner),
-                                                                      new PackageVariablesStrategy(),
+                                                                      new PackageVariablesFactory(),
                                                                       true));
-                conventions.Add(new StageScriptDependenciesConvention(null,
+                conventions.Add(new StageDependenciesConvention(null,
                                                                       fileSystem,
                                                                       new CombinedPackageExtractor(log, variables, commandLineRunner),
-                                                                      new GitDependencyVariablesStrategy(),
+                                                                      new GitDependencyVariablesFactory(),
                                                                       true));
             }
             else

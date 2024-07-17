@@ -5,7 +5,7 @@ using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Deployment.Conventions.DependencyVariablesStrategies
 {
-    public class PackageVariablesStrategy : IDependencyVariablesStrategy
+    public class PackageVariablesFactory : IDependencyVariablesFactory
     {
         public IDependencyVariables GetDependencyVariables(IVariables variables) => new PackageDependencyVariables(variables);
 

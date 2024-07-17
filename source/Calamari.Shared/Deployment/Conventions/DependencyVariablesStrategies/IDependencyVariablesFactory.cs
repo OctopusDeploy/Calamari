@@ -3,7 +3,7 @@ using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Deployment.Conventions.DependencyVariablesStrategies
 {
-    public interface IDependencyVariablesStrategy
+    public interface IDependencyVariablesFactory
     {
         IDependencyVariables GetDependencyVariables(IVariables variables);
     }

@@ -5,7 +5,7 @@ using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Deployment.Conventions.DependencyVariablesStrategies
 {
-    public class GitDependencyVariablesStrategy : IDependencyVariablesStrategy
+    public class GitDependencyVariablesFactory : IDependencyVariablesFactory
     {
         public IDependencyVariables GetDependencyVariables(IVariables variables) => new GitDependencyVariables(variables);
 
