@@ -15,6 +15,7 @@ using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
 using Calamari.Common.Features.StructuredVariables;
 using Calamari.Common.Features.Substitutions;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Deployment.Journal;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
@@ -77,9 +78,8 @@ namespace Calamari.Commands
             WriteVariableScriptToFile(deployment);
 
             var conventions = new List<IConvention>();
-            
-            var enabledSecondaryGitDependencies = false;
-            if (enabledSecondaryGitDependencies)
+
+            if (OctopusFeatureToggles.NonPrimaryGitDependencySupportFeatureToggle.IsEnabled(variables))
             {
                 conventions.Add(new StageScriptDependenciesConvention(packageFile, fileSystem, new CombinedPackageExtractor(log, variables, commandLineRunner), new PackageVariablesStrategy()));
                 conventions.Add(new StageScriptDependenciesConvention(packageFile, fileSystem, new CombinedPackageExtractor(log, variables, commandLineRunner), new GitDependencyVariablesStrategy()));

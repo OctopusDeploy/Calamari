@@ -10,6 +10,7 @@ using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Substitutions;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Deployment;
 using Calamari.Common.Plumbing.Deployment.Journal;
 using Calamari.Common.Plumbing.FileSystem;
@@ -64,11 +65,12 @@ namespace Calamari.Kubernetes.Commands
             if (!File.Exists(pathToPackage))
                 throw new CommandException("Could not find package file: " + pathToPackage);
 
-            var conventions = new List<IConvention>();
-            conventions.Add(new DelegateInstallConvention(d => extractPackage.ExtractToStagingDirectory(pathToPackage)));
-            
-            var improvedHelmTemplateValuesFeatureToggleEnabled = false;
-            if (improvedHelmTemplateValuesFeatureToggleEnabled)
+            var conventions = new List<IConvention>
+            {
+                new DelegateInstallConvention(d => extractPackage.ExtractToStagingDirectory(pathToPackage))
+            };
+
+            if (OctopusFeatureToggles.NonPrimaryGitDependencySupportFeatureToggle.IsEnabled(variables))
             {
                 conventions.Add(new StageScriptDependenciesConvention(null,
                                                                       fileSystem,
