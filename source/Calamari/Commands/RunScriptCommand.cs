@@ -15,11 +15,13 @@ using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
 using Calamari.Common.Features.StructuredVariables;
 using Calamari.Common.Features.Substitutions;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Deployment.Journal;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Deployment.Conventions.DependencyVariables;
 
 namespace Calamari.Commands
 {
@@ -75,9 +77,18 @@ namespace Calamari.Commands
             var deployment = new RunningDeployment(packageFile, variables);
             WriteVariableScriptToFile(deployment);
 
-            var conventions = new List<IConvention>
+            var conventions = new List<IConvention>();
+
+            if (OctopusFeatureToggles.NonPrimaryGitDependencySupportFeatureToggle.IsEnabled(variables))
             {
-                new StageScriptPackagesConvention(packageFile, fileSystem, new CombinedPackageExtractor(log, variables, commandLineRunner)),
+                conventions.Add(new StageDependenciesConvention(packageFile, fileSystem, new CombinedPackageExtractor(log, variables, commandLineRunner), new PackageVariablesFactory()));
+            }
+            else
+            {
+                conventions.Add(new StageScriptPackagesConvention(packageFile, fileSystem, new CombinedPackageExtractor(log, variables, commandLineRunner)));
+            }
+            
+            conventions.AddRange(new IConvention[] {
                 // Substitute the script source file
                 new DelegateInstallConvention(d => substituteInFiles.Substitute(d.CurrentDirectory, ScriptFileTargetFactory(d).ToList())),
                 // Substitute any user-specified files
@@ -86,7 +97,7 @@ namespace Calamari.Commands
                 new ConfigurationVariablesConvention(new ConfigurationVariablesBehaviour(fileSystem, variables, replacer, log)),
                 new StructuredConfigurationVariablesConvention(new StructuredConfigurationVariablesBehaviour(structuredConfigVariablesService)),
                 new ExecuteScriptConvention(scriptEngine, commandLineRunner)
-            };
+                });
 
             var conventionRunner = new ConventionProcessor(deployment, conventions, log);
 
