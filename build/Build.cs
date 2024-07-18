@@ -354,7 +354,7 @@ namespace Calamari.Build
                   .Executes(() =>
                             {
                                 Log.Verbose($"Compressing Calamari.Legacy");
-                                LegacyCalamariDirectory.ZipTo(ArtifactsDirectory / "Calamari.Legacy.zip");
+                                LegacyCalamariDirectory.ZipTo(ArtifactsDirectory / $"Calamari.Legacy.{NugetVersion.Value}.zip");
                             });
 
         Target PackBinaries =>
