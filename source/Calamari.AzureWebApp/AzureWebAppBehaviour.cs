@@ -45,11 +45,11 @@ namespace Calamari.AzureWebApp
             var resourceGroupText = string.IsNullOrEmpty(resourceGroupName) ? string.Empty : $" in Resource Group '{resourceGroupName}'";
             var slotText = targetSite.HasSlot ? $", deployment slot '{targetSite.Slot}'" : string.Empty;
             var azureAccount = hasJwt ? (IAzureAccount)new AzureOidcAccount(variables) : new AzureServicePrincipalAccount(variables);
-            var accessToken = await azureAccount.GetAccessTokenAsync();
 
             // We will skip checking if SCM is enabled when a resource group is not provided as it's not possible, and authentication may still be valid
             if (!string.IsNullOrEmpty(resourceGroupName))
             {
+                var accessToken = await azureAccount.GetAccessTokenAsync();
                 var isCurrentScmBasicAuthPublishingEnabled = await AzureWebAppHelper.GetBasicPublishingCredentialsPoliciesAsync(azureAccount.ResourceManagementEndpointBaseUri,
                                                                                                                                 subscriptionId,
                                                                                                                                 resourceGroupName,
