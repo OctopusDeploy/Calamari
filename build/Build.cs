@@ -330,7 +330,7 @@ namespace Calamari.Build
                          {
                              Log.Information($"Copying {calamariPackageMetadata.Project?.Name} for legacy Calamari '{calamariPackageMetadata.Framework}' and arch '{calamariPackageMetadata.Architecture}'");
                              var project = calamariPackageMetadata.Project;
-                             var publishedPath = PublishDirectory / project.Name / Frameworks.Net462;
+                             var publishedPath = PublishDirectory / project.Name / "netfx";
                              CopyDirectoryRecursively(publishedPath, (LegacyCalamariDirectory / project.Name), DirectoryExistsPolicy.Merge);
                          });        
 
