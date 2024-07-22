@@ -73,12 +73,8 @@ namespace Calamari.Kubernetes.Helm
                 return null;
             }
 
-            var valuesPaths = valuesFilePaths?
-                              .Split('\r', '\n')
-                              .Where(x => !string.IsNullOrWhiteSpace(x))
-                              .Select(x => x.Trim())
-                              .ToList();
-            
+
+            var valuesPaths = HelmValuesFileUtils.SplitValuesFilePaths(valuesFilePaths);
             if (valuesPaths == null || !valuesPaths.Any())
                 return null;
 
@@ -87,6 +83,7 @@ namespace Calamari.Kubernetes.Helm
 
             var sanitizedPackageReferenceName = fileSystem.RemoveInvalidFileNameChars(gitDependencyName);
 
+            var commitHash = variables.Get(Deployment.SpecialVariables.GitResources.CommitHash(gitDependencyName));
             foreach (var valuePath in valuesPaths)
             {
                 var relativePath = Path.Combine(sanitizedPackageReferenceName, valuePath);
@@ -94,13 +91,13 @@ namespace Calamari.Kubernetes.Helm
 
                 if (!currentFiles.Any())
                 {
-                    errors.Add($"Unable to find file `{valuePath}` for git repository {gitDependencyName}");
+                    errors.Add($"Unable to find file `{valuePath}` for git repository {gitDependencyName}, commit {commitHash}");
                 }
 
                 foreach (var file in currentFiles)
                 {
                     var relative = file.Substring(Path.Combine(deployment.CurrentDirectory, sanitizedPackageReferenceName).Length);
-                    log.Info($"Including values file `{relative}` from git repository {gitDependencyName}");
+                    log.Info($"Including values file `{relative}` from git repository {gitDependencyName}, commit {commitHash}");
                     filenames.Add(file);
                 }
             }

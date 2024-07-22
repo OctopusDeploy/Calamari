@@ -44,12 +44,7 @@ namespace Calamari.Kubernetes.Helm
                 }
             }
             
-            var valuesPaths = valuesFilePaths?
-                              .Split('\r', '\n')
-                              .Where(x => !string.IsNullOrWhiteSpace(x))
-                              .Select(x => x.Trim())
-                              .ToList();
-            
+            var valuesPaths = HelmValuesFileUtils.SplitValuesFilePaths(valuesFilePaths);
             if (valuesPaths == null || !valuesPaths.Any())
                 return null;
 
