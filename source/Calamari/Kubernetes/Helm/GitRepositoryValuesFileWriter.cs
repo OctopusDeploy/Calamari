@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Deployment.Conventions.DependencyVariables;
 
 namespace Calamari.Kubernetes.Helm
 {
@@ -48,6 +50,68 @@ namespace Calamari.Kubernetes.Helm
             }
 
             return filenames;
+        }
+        
+        
+        public static IEnumerable<string> FindGitDependencyValuesFiles(RunningDeployment deployment,
+                                                                       ICalamariFileSystem fileSystem,
+                                                                       ILog log,
+                                                                       string gitDependencyName,
+                                                                       string valuesFilePaths)
+        {
+            
+            if (string.IsNullOrWhiteSpace(gitDependencyName))
+            {
+                log.Verbose("Sourcing secondary values files from primary git dependency is not supported.");
+                return null;
+            }
+            
+            var variables = deployment.Variables;
+            var gitDependencyNames = variables.GetIndexes(Deployment.SpecialVariables.GitResources.GitResourceCollection);
+            if (!gitDependencyNames.Contains(gitDependencyName))
+            {
+                return null;
+            }
+
+            var valuesPaths = valuesFilePaths?
+                              .Split('\r', '\n')
+                              .Where(x => !string.IsNullOrWhiteSpace(x))
+                              .Select(x => x.Trim())
+                              .ToList();
+            
+            if (valuesPaths == null || !valuesPaths.Any())
+                return null;
+
+            var filenames = new List<string>();
+            var errors = new List<string>();
+
+            var sanitizedPackageReferenceName = fileSystem.RemoveInvalidFileNameChars(gitDependencyName);
+
+            foreach (var valuePath in valuesPaths)
+            {
+                var relativePath = Path.Combine(sanitizedPackageReferenceName, valuePath);
+                var currentFiles = fileSystem.EnumerateFilesWithGlob(deployment.CurrentDirectory, relativePath).ToList();
+
+                if (!currentFiles.Any())
+                {
+                    errors.Add($"Unable to find file `{valuePath}` for git repository {gitDependencyName}");
+                }
+
+                foreach (var file in currentFiles)
+                {
+                    var relative = file.Substring(Path.Combine(deployment.CurrentDirectory, sanitizedPackageReferenceName).Length);
+                    log.Info($"Including values file `{relative}` from git repository {gitDependencyName}");
+                    filenames.AddRange(currentFiles);
+                }
+            }
+
+            if (!filenames.Any() && errors.Any())
+            {
+                throw new CommandException(string.Join(Environment.NewLine, errors));
+            }
+            
+            return filenames;
+
         }
     }
 }
