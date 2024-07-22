@@ -53,12 +53,12 @@ namespace Calamari.Kubernetes.Helm
 
             var sanitizedPackageReferenceName = PackageName.ExtractPackageNameFromPathedPackageId(fileSystem.RemoveInvalidFileNameChars(packageName));
             
-
+            var version = variables.Get(PackageVariables.IndexedPackageVersion(packageName));
+            
+            //we get the package id here
+            var pathedPackedName = PackageName.ExtractPackageNameFromPathedPackageId(variables.Get(PackageVariables.IndexedPackageId(packageName)));
             foreach (var valuePath in valuesPaths)
             {
-                //we get the package id here
-                var pathedPackedName = PackageName.ExtractPackageNameFromPathedPackageId(variables.Get(PackageVariables.IndexedPackageId(packageName)));
-                var version = variables.Get(PackageVariables.IndexedPackageVersion(packageName));
                 var relativePath = Path.Combine(sanitizedPackageReferenceName, valuePath);
                 var currentFiles = fileSystem.EnumerateFilesWithGlob(deployment.CurrentDirectory, relativePath).ToList();
 
