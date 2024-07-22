@@ -101,7 +101,7 @@ namespace Calamari.Kubernetes.Helm
                 {
                     var relative = file.Substring(Path.Combine(deployment.CurrentDirectory, sanitizedPackageReferenceName).Length);
                     log.Info($"Including values file `{relative}` from git repository {gitDependencyName}");
-                    filenames.AddRange(currentFiles);
+                    filenames.Add(file);
                 }
             }
 

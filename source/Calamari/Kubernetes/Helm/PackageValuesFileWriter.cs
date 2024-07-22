@@ -83,7 +83,7 @@ namespace Calamari.Kubernetes.Helm
                 {
                     var relative = file.Substring(Path.Combine(deployment.CurrentDirectory, sanitizedPackageReferenceName).Length);
                     log.Info($"Including values file `{relative}` from package {pathedPackedName} v{version}");
-                    filenames.AddRange(currentFiles);
+                    filenames.Add(file);
                 }
             }
 
