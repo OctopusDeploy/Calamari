@@ -112,6 +112,7 @@ namespace Calamari.Build
         static AbsolutePath LocalPackagesDirectory => RootDirectory / "../LocalPackages";
         static AbsolutePath ConsolidateCalamariPackagesProject => SourceDirectory / "Calamari.ConsolidateCalamariPackages.Tests" / "Calamari.ConsolidateCalamariPackages.Tests.csproj";
         static AbsolutePath ConsolidatedPackageDirectory => ArtifactsDirectory / "consolidated";
+        static AbsolutePath LegacyCalamariDirectory = PublishDirectory / "Calamari.Legacy";
 
         Lazy<string> NugetVersion { get; }
 
@@ -200,9 +201,11 @@ namespace Calamari.Build
                                       RootProjectName, $"{RootProjectName}.{FixedRuntimes.Cloud}");
 
                       var nugetVersion = NugetVersion.Value;
-                      DoPublish(RootProjectName,
+                      var outputDirectory = DoPublish(RootProjectName,
                                 OperatingSystem.IsWindows() ? Frameworks.Net462 : Frameworks.Net60,
                                 nugetVersion);
+                      CopyDirectoryRecursively(outputDirectory, (LegacyCalamariDirectory / RootProjectName), DirectoryExistsPolicy.Merge);
+                      
                       DoPublish(RootProjectName,
                                 OperatingSystem.IsWindows() ? Frameworks.Net462 : Frameworks.Net60,
                                 nugetVersion,
@@ -275,10 +278,12 @@ namespace Calamari.Build
                     })
                 .Distinct(t => new {t.Project?.Name, t.Architecture, t.Framework});
 
-            var packagesToPublish = crossPlatformPackages.Concat(netFxPackages);
+            var packagesToPublish = crossPlatformPackages.Concat(netFxPackages).ToArray();
 
             packagesToPublish.ForEach(PublishPackage);
             await Task.WhenAll(SignDirectoriesTasks);
+
+            StageLegacyCalamariAssemblies(packagesToPublish);
 
             projects.ForEach(CompressCalamariProject);
             await Task.WhenAll(ProjectCompressionTasks);
@@ -316,6 +321,18 @@ namespace Calamari.Build
             File.Copy(RootDirectory / "global.json", outputDirectory / "global.json");
 
         }
+        
+        static void StageLegacyCalamariAssemblies(CalamariPackageMetadata[] packagesToPublish) =>
+            packagesToPublish
+                //We only need to bundle executable (not tests or libraries) full framework projects 
+                .Where(d => d.Framework == Frameworks.Net462 && d.Project.GetOutputType() == "Exe")
+                .ForEach(calamariPackageMetadata =>
+                         {
+                             Log.Information($"Copying {calamariPackageMetadata.Project?.Name} for legacy Calamari '{calamariPackageMetadata.Framework}' and arch '{calamariPackageMetadata.Architecture}'");
+                             var project = calamariPackageMetadata.Project;
+                             var publishedPath = PublishDirectory / project.Name / "netfx";
+                             CopyDirectoryRecursively(publishedPath, (LegacyCalamariDirectory / project.Name), DirectoryExistsPolicy.Merge);
+                         });        
 
         void CompressCalamariProject(Project project)
         {
@@ -330,6 +347,15 @@ namespace Calamari.Build
             var compressionTask = Task.Run(() => CompressionTasks.CompressZip(compressionSource, $"{ArtifactsDirectory / project.Name}.zip"));
             ProjectCompressionTasks.Add(compressionTask);
         }
+
+        Target PackLegacyCalamari =>
+            _ => _.DependsOn(Publish)
+                  .DependsOn(PublishCalamariFlavourProjects)
+                  .Executes(() =>
+                            {
+                                Log.Verbose($"Compressing Calamari.Legacy");
+                                LegacyCalamariDirectory.ZipTo(ArtifactsDirectory / $"Calamari.Legacy.{NugetVersion.Value}.zip");
+                            });
 
         Target PackBinaries =>
             _ => _.DependsOn(Publish)
@@ -424,7 +450,8 @@ namespace Calamari.Build
 
         Target Pack =>
             _ => _.DependsOn(PackTests)
-                  .DependsOn(PackBinaries);
+                  .DependsOn(PackBinaries)
+                  .DependsOn(PackLegacyCalamari);
 
         Target CopyToLocalPackages =>
             _ => _.Requires(() => IsLocalBuild)
