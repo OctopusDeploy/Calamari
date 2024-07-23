@@ -302,7 +302,7 @@ namespace Calamari.Kubernetes.Conventions
                     {
                         var relative = file.Substring(Path.Combine(deployment.CurrentDirectory, sanitizedPackageReferenceName).Length);
                         log.Info($"Including values file `{relative}` from package {packageId} v{version}");
-                        files.AddRange(currentFiles);
+                        files.Add(file);
                     }
                 }
             }
