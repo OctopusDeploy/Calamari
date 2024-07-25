@@ -190,26 +190,34 @@ namespace Calamari.Build
         Target Publish =>
             _ => _.DependsOn(Compile)
                   .Executes(() =>
-                  {
-                      if (!OperatingSystem.IsWindows())
-                          Log.Warning("Building Calamari on a non-windows machine will result "
-                                      + "in the {DefaultNugetPackageName} and {CloudNugetPackageName} "
-                                      + "nuget packages being built as .Net Core 6.0 packages "
-                                      + "instead of as .Net Framework 4.0 and 4.5.2 respectively. "
-                                      + "This can cause compatibility issues when running certain "
-                                      + "deployment steps in Octopus Server",
-                                      RootProjectName, $"{RootProjectName}.{FixedRuntimes.Cloud}");
+                            {
+                                if (!OperatingSystem.IsWindows())
+                                    Log.Warning("Building Calamari on a non-windows machine will result "
+                                                + "in the {DefaultNugetPackageName} and {CloudNugetPackageName} "
+                                                + "nuget packages being built as .Net Core 6.0 packages "
+                                                + "instead of as .Net Framework. "
+                                                + "This can cause compatibility issues when running certain "
+                                                + "deployment steps in Octopus Server",
+                                                RootProjectName, $"{RootProjectName}.{FixedRuntimes.Cloud}");
 
-                      var nugetVersion = NugetVersion.Value;
-                      var outputDirectory = DoPublish(RootProjectName,
-                                OperatingSystem.IsWindows() ? Frameworks.Net462 : Frameworks.Net60,
-                                nugetVersion);
-                      CopyDirectoryRecursively(outputDirectory, (LegacyCalamariDirectory / RootProjectName), DirectoryExistsPolicy.Merge);
-                      
-                      DoPublish(RootProjectName,
-                                OperatingSystem.IsWindows() ? Frameworks.Net462 : Frameworks.Net60,
-                                nugetVersion,
-                                FixedRuntimes.Cloud);
+                                var nugetVersion = NugetVersion.Value;
+                                var outputDirectory = DoPublish(RootProjectName,
+                                                                OperatingSystem.IsWindows() ? Frameworks.Net462 : Frameworks.Net60,
+                                                                nugetVersion);
+                                if (OperatingSystem.IsWindows())
+                                {
+                                    CopyDirectoryRecursively(outputDirectory, (LegacyCalamariDirectory / RootProjectName), DirectoryExistsPolicy.Merge);
+                                }
+                                else
+                                {
+                                    Log.Warning($"Skipping the bundling of {RootProjectName} into the Calamari.Legacy bundle. "
+                                                + "This is required for providing .Net Framework executables for legacy Target Operating Systems");
+                                }
+
+                                DoPublish(RootProjectName,
+                                          OperatingSystem.IsWindows() ? Frameworks.Net462 : Frameworks.Net60,
+                                          nugetVersion,
+                                          FixedRuntimes.Cloud);
 
                       // Create the self-contained Calamari packages for each runtime ID defined in Calamari.csproj
                       foreach (var rid in GetRuntimeIdentifiers(Solution.GetProject(RootProjectName)!)!)
@@ -322,7 +330,15 @@ namespace Calamari.Build
 
         }
         
-        static void StageLegacyCalamariAssemblies(CalamariPackageMetadata[] packagesToPublish) =>
+        static void StageLegacyCalamariAssemblies(CalamariPackageMetadata[] packagesToPublish) {
+
+            if (!OperatingSystem.IsWindows())
+            {
+                Log.Warning($"Skipping the bundling of Calamari projects into the Calamari.Legacy bundle. "
+                            + "This is required for providing .Net Framework executables for legacy Target Operating Systems.");
+                return;
+            }
+
             packagesToPublish
                 //We only need to bundle executable (not tests or libraries) full framework projects 
                 .Where(d => d.Framework == Frameworks.Net462 && d.Project.GetOutputType() == "Exe")
@@ -332,7 +348,8 @@ namespace Calamari.Build
                              var project = calamariPackageMetadata.Project;
                              var publishedPath = PublishDirectory / project.Name / "netfx";
                              CopyDirectoryRecursively(publishedPath, (LegacyCalamariDirectory / project.Name), DirectoryExistsPolicy.Merge);
-                         });        
+                         });
+        }
 
         void CompressCalamariProject(Project project)
         {
@@ -353,6 +370,10 @@ namespace Calamari.Build
                   .DependsOn(PublishCalamariFlavourProjects)
                   .Executes(() =>
                             {
+                                if (!OperatingSystem.IsWindows())
+                                {
+                                    return;
+                                }
                                 Log.Verbose($"Compressing Calamari.Legacy");
                                 LegacyCalamariDirectory.ZipTo(ArtifactsDirectory / $"Calamari.Legacy.{NugetVersion.Value}.zip");
                             });
