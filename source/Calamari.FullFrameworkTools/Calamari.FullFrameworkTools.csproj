@@ -1,0 +1,40 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <Version>1.0.0.0</Version>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <AssemblyName>Calamari.FullFrameworkTools</AssemblyName>
+        <RootNamespace>Calamari.FullFrameworkTools</RootNamespace>
+        <Product>Calamari.FullFrameworkTools</Product>
+        <OutputType>Exe</OutputType>
+        <PackageId>Calamari.FullFrameworkTools</PackageId>
+        <GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>
+        <PackageProjectUrl>https://github.com/OctopusDeploy/Calamari</PackageProjectUrl>
+        <PackageLicense>https://github.com/OctopusDeploy/Calamari/blob/main/LICENSE.txt</PackageLicense>
+        <Authors>Octopus Deploy</Authors>
+        <Copyright>Octopus Deploy Pty Ltd</Copyright>
+        <PackageTags>tool</PackageTags>
+        <RepositoryType>git</RepositoryType>
+        <RepositoryUrl>https://github.com/OctopusDeploy/Calamari/</RepositoryUrl>
+        <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+        <Description>Contains the command-line Calamari tool that is used by Tentacle to perform depoyment actions on machines.</Description>
+        <TargetFramework>net462</TargetFramework>
+        <LangVersion>latest</LangVersion>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(TargetFramework)' == 'net462' ">
+        <DefineConstants>$(DefineConstants);IIS_SUPPORT;WINDOWS_CERTIFICATE_STORE_SUPPORT</DefineConstants>
+        <PlatformTarget>anycpu</PlatformTarget>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+        <DefineConstants>$(DefineConstants);DEBUG</DefineConstants>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies.net462" Version="1.0.2" />
+        <PackageReference Include="Microsoft.Web.Administration" Version="7.0.0.0" />
+        <PackageReference Include="System.Text.Json" Version="8.0.4" />
+        <Reference Include="System.DirectoryServices" />
+    </ItemGroup>
+    <ItemGroup>
+      <Compile Remove="WindowsCertStore\WindowsX509CertificateStore.cs" />
+      <Compile Remove="WindowsCertStore\SystemSemaphoreManager.cs" />
+    </ItemGroup>
+</Project>

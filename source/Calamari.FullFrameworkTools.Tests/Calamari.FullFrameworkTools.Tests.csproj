@@ -1,0 +1,55 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <AssemblyName>Calamari.FullFrameworkTools.Tests</AssemblyName>
+        <PackageId>Calamari.FullFrameworkTools.Tests</PackageId>
+        <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+        <OutputType>Library</OutputType>
+        <GenerateProgramFile>false</GenerateProgramFile>
+        <NoWarn>NU1603</NoWarn>
+        <ApplicationIcon />
+        <StartupObject />
+        <TargetFramework>net462</TargetFramework>
+        <RootNamespace>Calamari.FullFrameworkTools.Tests</RootNamespace>
+    </PropertyGroup>
+    <!--<PropertyGroup Condition=" '$(TargetFramework)' == 'net462' ">
+        <DefineConstants>$(DefineConstants);NETFX;AWS;IIS_SUPPORT;USE_NUGET_V2_LIBS;USE_OCTODIFF_EXE;WINDOWS_CERTIFICATE_STORE_SUPPORT;WINDOWS_USER_ACCOUNT_SUPPORT;WINDOWS_REGISTRY_SUPPORT</DefineConstants>
+    </PropertyGroup>-->
+    <ItemGroup>
+        <PackageReference Include="XPath2" Version="1.0.12" />
+        <!--<ProjectReference Include="..\Calamari.Testing\Calamari.Testing.csproj" />
+        <ProjectReference Include="..\Calamari\Calamari.csproj" />-->
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.3.0" />
+        <PackageReference Include="NSubstitute" Version="2.0.3" />
+        <PackageReference Include="FluentAssertions" Version="5.10.3" />
+        <PackageReference Include="NUnit" Version="3.13.3" />
+        <PackageReference Include="NUnit3TestAdapter" Version="4.4.2" />
+        <PackageReference Include="Assent" Version="1.6.1" />
+        <PackageReference Include="Polly" Version="8.3.1" />
+        <PackageReference Include="System.ComponentModel.TypeConverter" Version="4.3.0" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(TargetFramework)'=='net462'">
+        <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.3.0" />
+        <!--<ProjectReference Include="..\Calamari.Aws\Calamari.Aws.csproj" />
+        <ProjectReference Include="..\Calamari.Azure\Calamari.Azure.csproj" />-->
+        <Reference Include="System.Core" />
+        <Reference Include="System.Net" />
+        <Reference Include="System.ServiceProcess" />
+        <Reference Include="System.DirectoryServices.AccountManagement" />
+        <Reference Include="System.Xml.Linq" />
+        <Reference Include="System.Data.DataSetExtensions" />
+        <Reference Include="Microsoft.CSharp" />
+        <Reference Include="System.Data" />
+        <Reference Include="System.Xml" />
+        <Reference Include="WindowsBase" />
+        <Reference Include="System.IO.Compression" />
+        <Reference Include="System.IO.Compression.FileSystem" />
+        <Reference Include="System" />
+        <Reference Include="System.Security" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Calamari.FullFrameworkTools\Calamari.FullFrameworkTools.csproj" />
+    </ItemGroup>
+</Project>

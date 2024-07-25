@@ -165,6 +165,7 @@ namespace Calamari.Integration.Certificates
             }
         }
 
+        // Used in IIS Tests
         /// <summary>
         /// Unlike X509Store.Remove() this function also cleans up private-keys
         /// </summary>

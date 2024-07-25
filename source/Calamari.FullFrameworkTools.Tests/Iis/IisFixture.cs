@@ -1,18 +1,15 @@
-﻿#if IIS_SUPPORT
-using System;
-using Calamari.Integration.Iis;
-using Calamari.Testing.Helpers;
+﻿using System;
+using Calamari.FullFrameworkTools.Iis;
 using NUnit.Framework;
 
-namespace Calamari.Tests.Fixtures.Iis
+namespace Calamari.FullFrameworkTools.Tests.Iis
 {
     /// <summary>
-    /// Note. This test is a direct clone of <see cref="Calamari.Legacy.Tests.Iis.IisFixture"/>.
+    /// Note. This test is a direct clone of <see cref="Calamari.Tests.Fixtures.Iis.IisFixture"/>.
     /// While we extract IIS functionality out of Calamari, we will have the relevant functionality in both places for a short period.
     /// Ensure any changes to make to this test are reflected in the clone test.
     /// </summary>
     [TestFixture]
-    [Category(TestCategory.CompatibleOS.OnlyWindows)]
     public class IisFixture
     {
         readonly WebServerSupport webServer = WebServerSupport.AutoDetect();
@@ -67,4 +64,3 @@ namespace Calamari.Tests.Fixtures.Iis
         }
     }
 }
-#endif

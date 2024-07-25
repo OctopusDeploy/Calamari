@@ -15,6 +15,7 @@ using Calamari.Common.Features.Processes.Semaphores;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.StructuredVariables;
 using Calamari.Common.Features.Substitutions;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Deployment;
 using Calamari.Common.Plumbing.Deployment.Journal;
@@ -86,7 +87,9 @@ namespace Calamari.Commands
             var transformFileLocator = new TransformFileLocator(fileSystem, log);
             var embeddedResources = new AssemblyEmbeddedResources();
 #if IIS_SUPPORT
-            var iis = new InternetInformationServer();
+            var iis = OctopusFeatureToggles.FullFrameworkTasksExternalProcess.IsEnabled(variables) ? 
+                (IInternetInformationServer)new InProcessFullFrameworkToolInternetInformationServer() :
+                new InternetInformationServer();
             featureClasses.AddRange(new IFeature[] { new IisWebSiteBeforeDeployFeature(), new IisWebSiteAfterPostDeployFeature() });
 #endif
             if (!CalamariEnvironment.IsRunningOnWindows)
