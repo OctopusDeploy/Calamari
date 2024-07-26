@@ -83,6 +83,7 @@ namespace Calamari.Kubernetes.Helm
 
             var sanitizedPackageReferenceName = fileSystem.RemoveInvalidFileNameChars(gitDependencyName);
 
+            var repositoryUrl = variables.Get(Deployment.SpecialVariables.GitResources.RepositoryUrl(gitDependencyName));
             var commitHash = variables.Get(Deployment.SpecialVariables.GitResources.CommitHash(gitDependencyName));
             foreach (var valuePath in valuesPaths)
             {
@@ -91,13 +92,13 @@ namespace Calamari.Kubernetes.Helm
 
                 if (!currentFiles.Any())
                 {
-                    errors.Add($"Unable to find file `{valuePath}` for git repository {gitDependencyName}, commit {commitHash}");
+                    errors.Add($"Unable to find file `{valuePath}` for git repository {repositoryUrl}, commit {commitHash}");
                 }
 
                 foreach (var file in currentFiles)
                 {
                     var relative = file.Substring(Path.Combine(deployment.CurrentDirectory, sanitizedPackageReferenceName).Length);
-                    log.Info($"Including values file `{relative}` from git repository {gitDependencyName}, commit {commitHash}");
+                    log.Info($"Including values file `{relative}` from git repository {repositoryUrl}, commit {commitHash}");
                     filenames.Add(file);
                 }
             }
