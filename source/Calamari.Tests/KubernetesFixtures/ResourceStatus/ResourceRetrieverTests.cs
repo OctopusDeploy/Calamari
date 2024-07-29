@@ -283,6 +283,6 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             return this;
         }
 
-        public string Build() => string.Format(template, kind, name, uid, ownerUid).ReplaceLineEndings();
+        public string Build() => string.Format(template, kind, name, uid, ownerUid).ReplaceLineEndings().Replace(Environment.NewLine, string.Empty);
     }
 }
