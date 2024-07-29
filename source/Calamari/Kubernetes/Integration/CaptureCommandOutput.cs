@@ -14,7 +14,7 @@ namespace Calamari.Kubernetes.Integration
         private readonly List<Message> messages = new List<Message>();
         public Message[] Messages => messages.ToArray();
 
-        public IEnumerable<string> InfoLogs => Messages.Where(m => m.Level == Level.Info).Select(m => m.Text);
+        public IEnumerable<string> InfoLogs => Messages.Where(m => m.Level == Level.Info).Select(m => m.Text).ToArray();
 
         public void WriteInfo(string line)
         {

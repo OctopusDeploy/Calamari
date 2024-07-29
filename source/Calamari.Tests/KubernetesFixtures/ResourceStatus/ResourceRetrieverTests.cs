@@ -227,14 +227,18 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         }
 
 
-        public string Resource(string kind, string name, string @namespace, IKubectl kubectl)
+        public ICommandOutput Resource(string kind, string name, string @namespace, IKubectl kubectl)
         {
-            return resourceEntries[name];
+            var output = new CaptureCommandOutput();
+            output.WriteInfo(resourceEntries[name]);
+            return output;
         }
 
-        public string AllResources(string kind, string @namespace, IKubectl kubectl)
+        public ICommandOutput AllResources(string kind, string @namespace, IKubectl kubectl)
         {
-            return resourcesByKind[kind];
+            var output = new CaptureCommandOutput();
+            output.WriteInfo(resourcesByKind[kind]);
+            return output;
         }
     }
 

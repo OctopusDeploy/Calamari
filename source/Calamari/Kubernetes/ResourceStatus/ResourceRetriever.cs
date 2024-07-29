@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Kubernetes.Integration;
 using Calamari.Kubernetes.ResourceStatus.Resources;
@@ -50,7 +51,8 @@ namespace Calamari.Kubernetes.ResourceStatus
         private Resource GetResource(ResourceIdentifier resourceIdentifier, IKubectl kubectl, Options options)
         {
             var result = kubectlGet.Resource(resourceIdentifier.Kind, resourceIdentifier.Name, resourceIdentifier.Namespace, kubectl);
-            return result.IsNullOrEmpty() ? null : TryParse(ResourceFactory.FromJson, result, options);
+            
+            return result.InfoLogs.IsNullOrEmpty() ? null : TryParse(ResourceFactory.FromJson, result, options);
         }
 
         private IEnumerable<Resource> GetChildrenResources(Resource parentResource, IKubectl kubectl, Options options)
@@ -72,26 +74,35 @@ namespace Calamari.Kubernetes.ResourceStatus
                             }).ToList();
         }
 
-        T TryParse<T>(Func<string, Options, T> function, string jsonString, Options options)
+        T TryParse<T>(Func<string, Options, T> function, ICommandOutput commandOutput, Options options)
         {
+            var jsonString = commandOutput.InfoLogs.Join(string.Empty);
             try
             {
+                
                 return function(jsonString, options);
             }
             catch (JsonException)
             {
-                LogJsonStringError(jsonString, options);
+                LogJsonStringError(jsonString, commandOutput, options);
                 throw;
             }
         }
 
-        void LogJsonStringError(string jsonString, Options options)
+        void LogJsonStringError(string jsonString, ICommandOutput commandOutput, Options options)
         {
             if (options.PrintVerboseKubectlOutputOnError)
             {
                 log.Error("Failed to parse JSON:");
                 log.Error("---------------------------");
                 log.Error(jsonString);
+                log.Error("---------------------------");
+                log.Error("Full command output:");
+                log.Error("---------------------------");
+                foreach (var msg in commandOutput.Messages)
+                {
+                    log.Error($"{msg.Level}: {msg.Text}");
+                }
                 log.Error("---------------------------");
             }
             else
