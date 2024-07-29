@@ -657,6 +657,7 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set("Octopus.Action.Kubernetes.ResourceStatusCheck", "True");
             variables.Set("Octopus.Action.KubernetesContainers.DeploymentWait", "NoWait");
             variables.Set("Octopus.Action.Kubernetes.DeploymentTimeout", timeout.ToString());
+            variables.Set("Octopus.Action.Kubernetes.PrintVerboseKubectlOutputOnError", "True");
         }
 
         private static string CreateResourceYamlFile(string directory, string fileName, string content)
