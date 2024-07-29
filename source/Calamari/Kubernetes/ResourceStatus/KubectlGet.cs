@@ -16,15 +16,14 @@ namespace Calamari.Kubernetes.ResourceStatus
         {
             return kubectl.ExecuteCommandAndReturnOutput(new[]
             {
-                "get", kind, name, "-o=jsonpath='{@}'", string.IsNullOrEmpty(@namespace) ? "" : $"-n {@namespace}"
-            }).Output;
+                "get", kind, name, "-o=jsonpath=\"{@}\"", string.IsNullOrEmpty(@namespace) ? "" : $"-n {@namespace}" }).Output;
         }
 
         public ICommandOutput AllResources(string kind, string @namespace, IKubectl kubectl)
         {
             return kubectl.ExecuteCommandAndReturnOutput(new[]
             {
-                "get", kind, "-o=jsonpath='{@}'", string.IsNullOrEmpty(@namespace) ? "" : $"-n {@namespace}"
+                "get", kind, "-o=jsonpath=\"{@}\"", string.IsNullOrEmpty(@namespace) ? "" : $"-n {@namespace}"
             }).Output;
         }
     }
