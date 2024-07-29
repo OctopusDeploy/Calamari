@@ -4,6 +4,7 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Kubernetes.Integration;
 using Calamari.Kubernetes.ResourceStatus;
 using Calamari.Kubernetes.ResourceStatus.Resources;
+using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
@@ -282,6 +283,6 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             return this;
         }
 
-        public string Build() => string.Format(template, kind, name, uid, ownerUid);
+        public string Build() => string.Format(template, kind, name, uid, ownerUid).ReplaceLineEndings();
     }
 }
