@@ -52,7 +52,7 @@ namespace Calamari.Kubernetes.ResourceStatus
         {
             var result = kubectlGet.Resource(resourceIdentifier.Kind, resourceIdentifier.Name, resourceIdentifier.Namespace, kubectl);
             
-            return result.InfoLogs.IsNullOrEmpty() ? null : TryParse(ResourceFactory.FromJson, result, options);
+            return result.RawOutput.IsNullOrEmpty() ? null : TryParse(ResourceFactory.FromJson, result, options);
         }
 
         private IEnumerable<Resource> GetChildrenResources(Resource parentResource, IKubectl kubectl, Options options)
@@ -74,22 +74,21 @@ namespace Calamari.Kubernetes.ResourceStatus
                             }).ToList();
         }
 
-        T TryParse<T>(Func<string, Options, T> function, ICommandOutput commandOutput, Options options)
+        T TryParse<T>(Func<string, Options, T> function, KubectlGetResult getResult, Options options)
         {
-            var jsonString = commandOutput.InfoLogs.Join(string.Empty);
             try
             {
                 
-                return function(jsonString, options);
+                return function(getResult.ResourceJson, options);
             }
             catch (JsonException)
             {
-                LogJsonStringError(jsonString, commandOutput, options);
+                LogJsonStringError(getResult.ResourceJson, getResult, options);
                 throw;
             }
         }
 
-        void LogJsonStringError(string jsonString, ICommandOutput commandOutput, Options options)
+        void LogJsonStringError(string jsonString, KubectlGetResult getResult, Options options)
         {
             if (options.PrintVerboseKubectlOutputOnError)
             {
@@ -99,9 +98,9 @@ namespace Calamari.Kubernetes.ResourceStatus
                 log.Error("---------------------------");
                 log.Error("Full command output:");
                 log.Error("---------------------------");
-                foreach (var msg in commandOutput.Messages)
+                foreach (var msg in getResult.RawOutput)
                 {
-                    log.Error($"{msg.Level}: {msg.Text}");
+                    log.Error(msg);
                 }
                 log.Error("---------------------------");
             }
