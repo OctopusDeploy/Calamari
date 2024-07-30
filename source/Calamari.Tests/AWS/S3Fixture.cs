@@ -683,7 +683,7 @@ namespace Calamari.Tests.AWS
                                                      variables,
                                                      fileSystem,
                                                      new SubstituteInFiles(log, fileSystem, new FileSubstituter(log, fileSystem), variables),
-                                                     new ExtractPackage(new CombinedPackageExtractor(log, variables, new CommandLineRunner(log, variables)), fileSystem, variables, log),
+                                                     new ExtractPackage(new CombinedPackageExtractor(log, fileSystem, variables, new CommandLineRunner(log, variables)), fileSystem, variables, log),
                                                      new StructuredConfigVariablesService(new PrioritisedList<IFileFormatVariableReplacer>
                                                                                           {
                                                                                               new JsonFormatVariableReplacer(fileSystem, log),
@@ -748,7 +748,7 @@ namespace Calamari.Tests.AWS
                                                      variables,
                                                      fileSystem,
                                                      new SubstituteInFiles(log, fileSystem, new FileSubstituter(log, fileSystem), variables),
-                                                     new ExtractPackage(new CombinedPackageExtractor(log, variables, new CommandLineRunner(log, variables)), fileSystem, variables, log),
+                                                     new ExtractPackage(new CombinedPackageExtractor(log, fileSystem, variables, new CommandLineRunner(log, variables)), fileSystem, variables, log),
                                                      new StructuredConfigVariablesService(new PrioritisedList<IFileFormatVariableReplacer>
                                                                                           {
                                                                                               new JsonFormatVariableReplacer(fileSystem, log),

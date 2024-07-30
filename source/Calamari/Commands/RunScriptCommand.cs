@@ -81,11 +81,11 @@ namespace Calamari.Commands
 
             if (OctopusFeatureToggles.NonPrimaryGitDependencySupportFeatureToggle.IsEnabled(variables))
             {
-                conventions.Add(new StageDependenciesConvention(packageFile, fileSystem, new CombinedPackageExtractor(log, variables, commandLineRunner), new PackageVariablesFactory()));
+                conventions.Add(new StageDependenciesConvention(packageFile, fileSystem, new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner), new PackageVariablesFactory()));
             }
             else
             {
-                conventions.Add(new StageScriptPackagesConvention(packageFile, fileSystem, new CombinedPackageExtractor(log, variables, commandLineRunner)));
+                conventions.Add(new StageScriptPackagesConvention(packageFile, fileSystem, new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner)));
             }
             
             conventions.AddRange(new IConvention[] {

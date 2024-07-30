@@ -6,6 +6,7 @@ using Calamari.Common.Features.Packages.Decorators;
 using Calamari.Common.Features.Packages.Java;
 using Calamari.Common.Features.Packages.NuGet;
 using Calamari.Common.Features.Processes;
+using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 
@@ -19,7 +20,7 @@ namespace Calamari.Common.Features.Packages
     {
         readonly IPackageExtractor[] extractors;
 
-        public CombinedPackageExtractor(ILog log, IVariables variables, ICommandLineRunner commandLineRunner)
+        public CombinedPackageExtractor(ILog log, ICalamariFileSystem calamariFileSystem, IVariables variables, ICommandLineRunner commandLineRunner)
         {
             extractors = new IPackageExtractor[]
             {
@@ -29,7 +30,7 @@ namespace Calamari.Common.Features.Packages
                 new TarBzipPackageExtractor(log),
                 new ZipPackageExtractor(log),
                 new TarPackageExtractor(log),
-                new JarPackageExtractor(new JarTool(commandLineRunner, log, variables))
+                new JarPackageExtractor(new JarTool(commandLineRunner, log, calamariFileSystem, variables))
             }.Select(e => e.WithExtractionLimits(log, variables)).ToArray();
         }
 

@@ -62,7 +62,7 @@ namespace Calamari.Integration.Packages.Download
                     downloader = new HelmChartPackageDownloader(fileSystem, log);
                     break;
                 case FeedType.OciRegistry:
-                    downloader = new OciPackageDownloader(fileSystem, new CombinedPackageExtractor(log, variables, commandLineRunner), log);
+                    downloader = new OciPackageDownloader(fileSystem, new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner), log);
                     break;
                 case FeedType.Docker:
                 case FeedType.AwsElasticContainerRegistry:

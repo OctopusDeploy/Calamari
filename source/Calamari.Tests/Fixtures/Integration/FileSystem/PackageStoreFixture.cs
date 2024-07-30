@@ -117,8 +117,9 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
             var log = new InMemoryLog();
             var variables = new CalamariVariables();
             var commandLineRunner = new TestCommandLineRunner(log, variables);
+            var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
-            return new CombinedPackageExtractor(log, variables, commandLineRunner);
+            return new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner);
         }
     }
 }
