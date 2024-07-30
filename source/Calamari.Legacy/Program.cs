@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Linq;
+using Calamari.Legacy.Iis;
 
 namespace Calamari.Legacy
 {
@@ -24,7 +26,12 @@ namespace Calamari.Legacy
             switch (cmd)
             {
                 case "iis":
-                    // DO IIS Stuff
+                    var subcmd = args[1];
+                    var cmd2 = new IisLegacyCommand(new InternetInformationServer());
+                    if (subcmd == cmd2.Name)
+                    {
+                        cmd2.Execute(args.Skip(2).ToArray());
+                    }
                     break;
                 case "win-cert-store":
                     break;
