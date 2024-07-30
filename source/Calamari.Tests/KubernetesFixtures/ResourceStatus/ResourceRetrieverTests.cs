@@ -4,6 +4,7 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Kubernetes.Integration;
 using Calamari.Kubernetes.ResourceStatus;
 using Calamari.Kubernetes.ResourceStatus.Resources;
+using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
@@ -226,14 +227,20 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         }
 
 
-        public string Resource(string kind, string name, string @namespace, IKubectl kubectl)
+        public KubectlGetResult Resource(string kind, string name, string @namespace, IKubectl kubectl)
         {
-            return resourceEntries[name];
+            return new KubectlGetResult(resourceEntries[name], new List<string>
+            {
+                $"{Level.Info}: {resourceEntries[name]}"
+            });
         }
 
-        public string AllResources(string kind, string @namespace, IKubectl kubectl)
+        public KubectlGetResult AllResources(string kind, string @namespace, IKubectl kubectl)
         {
-            return resourcesByKind[kind];
+            return new KubectlGetResult(resourcesByKind[kind], new List<string>
+            {
+                $"{Level.Info}: {resourcesByKind[kind]}"
+            });
         }
     }
 
@@ -282,6 +289,6 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             return this;
         }
 
-        public string Build() => string.Format(template, kind, name, uid, ownerUid);
+        public string Build() => string.Format(template, kind, name, uid, ownerUid).ReplaceLineEndings().Replace(Environment.NewLine, string.Empty);
     }
 }

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Kubernetes.Integration;
@@ -6,26 +7,47 @@ namespace Calamari.Kubernetes.ResourceStatus
 {
     public interface IKubectlGet
     {
-        string Resource(string kind, string name, string @namespace, IKubectl kubectl);
-        string AllResources(string kind, string @namespace, IKubectl kubectl);
+        KubectlGetResult Resource(string kind, string name, string @namespace, IKubectl kubectl);
+        KubectlGetResult AllResources(string kind, string @namespace, IKubectl kubectl);
     }
 
     public class KubectlGet : IKubectlGet
     {
-        public string Resource(string kind, string name, string @namespace, IKubectl kubectl)
+        public KubectlGetResult Resource(string kind, string name, string @namespace, IKubectl kubectl)
         {
-            return kubectl.ExecuteCommandAndReturnOutput(new[]
-            {
-                "get", kind, name, "-o json", string.IsNullOrEmpty(@namespace) ? "" : $"-n {@namespace}"
-            }).Output.InfoLogs.Join(string.Empty);
+            var output = kubectl.ExecuteCommandAndReturnOutput(new[]
+                                {
+                                    "get", kind, name, "-o=jsonpath=\"{@}\"", string.IsNullOrEmpty(@namespace) ? "" : $"-n {@namespace}"
+                                })
+                                .Output;
+
+            return new KubectlGetResult(output.InfoLogs.Join(string.Empty),
+                                        output.Messages.Select(msg => $"{msg.Level}: {msg.Text}").ToList());
         }
 
-        public string AllResources(string kind, string @namespace, IKubectl kubectl)
+        public KubectlGetResult AllResources(string kind, string @namespace, IKubectl kubectl)
         {
-            return kubectl.ExecuteCommandAndReturnOutput(new[]
-            {
-                "get", kind, "-o json", string.IsNullOrEmpty(@namespace) ? "" : $"-n {@namespace}"
-            }).Output.InfoLogs.Join(string.Empty);
+            var output = kubectl.ExecuteCommandAndReturnOutput(new[]
+                                {
+                                    "get", kind, "-o=jsonpath=\"{@}\"", string.IsNullOrEmpty(@namespace) ? "" : $"-n {@namespace}"
+                                })
+                                .Output;
+
+            return new KubectlGetResult(output.InfoLogs.Join(string.Empty),
+                                        output.Messages.Select(msg => $"{msg.Level}: {msg.Text}").ToList());
         }
+    }
+
+    public class KubectlGetResult
+    {
+        public KubectlGetResult(string resourceJson, IList<string> rawOutput)
+        {
+            ResourceJson = resourceJson;
+            RawOutput = rawOutput;
+        }
+
+        public string ResourceJson { get; }
+
+        public IList<string> RawOutput { get; }
     }
 }
