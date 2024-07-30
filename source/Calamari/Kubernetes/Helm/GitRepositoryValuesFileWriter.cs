@@ -5,52 +5,17 @@ using System.Linq;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
-using Calamari.Common.Plumbing.Variables;
-using Calamari.Deployment.Conventions.DependencyVariables;
 
 namespace Calamari.Kubernetes.Helm
 {
     public static class GitRepositoryValuesFileWriter
     {
         public static IEnumerable<string> FindChartValuesFiles(RunningDeployment deployment, ICalamariFileSystem fileSystem, ILog log, string valuesFilePaths)
-        {
-            var valuesPaths = valuesFilePaths?
-                              .Split('\r', '\n')
-                              .Where(x => !string.IsNullOrWhiteSpace(x))
-                              .Select(x => x.Trim())
-                              .ToList();
-            
-            if (valuesPaths == null || !valuesPaths.Any())
-                return null;
-            
-            var filenames = new List<string>();
-            var errors = new List<string>();
-
-            var hash = deployment.Variables.Get(KnownVariables.Action.GitResource.CommitHash);
-
-            foreach (var valuePath in valuesPaths)
-            {
-                var currentFiles = fileSystem.EnumerateFilesWithGlob(deployment.CurrentDirectory, valuePath).ToList();
-                if (!currentFiles.Any())
-                {
-                    errors.Add($"Unable to find file `{valuePath}` in git repository, commit {hash}");
-                }
-
-                foreach (var file in currentFiles)
-                {
-                    var relative = file.Substring(deployment.CurrentDirectory.Length);
-                    log.Info($"Including values file `{relative}` from git repository, commit {hash}");
-                    filenames.AddRange(currentFiles);
-                }
-            }
-
-            if (!filenames.Any() && errors.Any())
-            {
-                throw new CommandException(string.Join(Environment.NewLine, errors));
-            }
-
-            return filenames;
-        }
+            => FindGitDependencyValuesFiles(deployment,
+                                      fileSystem,
+                                      log,
+                                      string.Empty,
+                                      valuesFilePaths);
         
         
         public static IEnumerable<string> FindGitDependencyValuesFiles(RunningDeployment deployment,
@@ -59,13 +24,6 @@ namespace Calamari.Kubernetes.Helm
                                                                        string gitDependencyName,
                                                                        string valuesFilePaths)
         {
-            
-            if (string.IsNullOrWhiteSpace(gitDependencyName))
-            {
-                log.Verbose("Sourcing secondary values files from primary git dependency is not supported.");
-                return null;
-            }
-            
             var variables = deployment.Variables;
             var gitDependencyNames = variables.GetIndexes(Deployment.SpecialVariables.GitResources.GitResourceCollection);
             if (!gitDependencyNames.Contains(gitDependencyName))
@@ -85,6 +43,7 @@ namespace Calamari.Kubernetes.Helm
 
             var repositoryUrl = variables.Get(Deployment.SpecialVariables.GitResources.RepositoryUrl(gitDependencyName));
             var commitHash = variables.Get(Deployment.SpecialVariables.GitResources.CommitHash(gitDependencyName));
+            
             foreach (var valuePath in valuesPaths)
             {
                 var relativePath = Path.Combine(sanitizedPackageReferenceName, valuePath);

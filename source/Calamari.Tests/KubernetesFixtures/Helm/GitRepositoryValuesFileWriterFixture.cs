@@ -41,6 +41,7 @@ namespace Calamari.Tests.KubernetesFixtures.Helm
         public void FindChartValuesFiles_InvalidValuesFilePaths_ReturnsNull(string valuesFilePaths)
         {
             // Act
+            deployment.Variables.Add(SpecialVariables.GitResources.CommitHash(string.Empty), "123abc");
             var result = GitRepositoryValuesFileWriter.FindChartValuesFiles(deployment, fileSystem, log, valuesFilePaths);
 
             // Assert
@@ -51,6 +52,7 @@ namespace Calamari.Tests.KubernetesFixtures.Helm
         public void FindChartValuesFiles_FileNotFoundInFilesystem_ThrowsCommandException()
         {
             // Arrange
+            deployment.Variables.Add(SpecialVariables.GitResources.CommitHash(string.Empty), "123abc");
             fileSystem.EnumerateFilesWithGlob(Arg.Any<string>(), Arg.Any<string[]>())
                       .Returns(new List<string>());
 
@@ -65,6 +67,7 @@ namespace Calamari.Tests.KubernetesFixtures.Helm
         public void FindChartValuesFiles_FilesFoundInFilesystem_ReturnsFullyQualifiedPaths()
         {
             // Arrange
+            deployment.Variables.Add(SpecialVariables.GitResources.CommitHash(string.Empty), "123abc");
             fileSystem.EnumerateFilesWithGlob(Arg.Any<string>(), Arg.Any<string[]>())
                       .Returns(ci =>
                                {
@@ -83,24 +86,6 @@ namespace Calamari.Tests.KubernetesFixtures.Helm
                       Path.Combine(deployment.CurrentDirectory, "values.yaml"),
                       Path.Combine(deployment.CurrentDirectory, "values.Development.yaml")
                   });
-        }
-
-        [Test]
-        public void FindGitDependencyValueFiles_GitDependencyNameEmpty_ReturnsNullAndLogsVerboseMessage()
-        {
-            // Arrange
-            deployment.Variables.Add(SpecialVariables.GitResources.CommitHash("MyRepo"), "123abc");
-
-            // Act
-            var result = GitRepositoryValuesFileWriter.FindGitDependencyValuesFiles(deployment,
-                                                                                    fileSystem,
-                                                                                    log,
-                                                                                    null,
-                                                                                    "values.yaml");
-
-            // Assert
-            result.Should().BeNull();
-            log.Messages.Should().Contain(msg => msg.Level == InMemoryLog.Level.Verbose && msg.FormattedMessage.Contains("Sourcing secondary values files from primary git dependency is not supported"));
         }
 
         [Test]
