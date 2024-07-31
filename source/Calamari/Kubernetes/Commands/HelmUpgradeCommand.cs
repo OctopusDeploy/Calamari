@@ -74,18 +74,18 @@ namespace Calamari.Kubernetes.Commands
             {
                 conventions.Add(new StageDependenciesConvention(null,
                                                                       fileSystem,
-                                                                      new CombinedPackageExtractor(log, variables, commandLineRunner),
+                                                                      new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner),
                                                                       new PackageVariablesFactory(),
                                                                       true));
                 conventions.Add(new StageDependenciesConvention(null,
                                                                       fileSystem,
-                                                                      new CombinedPackageExtractor(log, variables, commandLineRunner),
+                                                                      new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner),
                                                                       new GitDependencyVariablesFactory(),
                                                                       true));
             }
             else
             {
-                conventions.Add(new StageScriptPackagesConvention(null, fileSystem, new CombinedPackageExtractor(log, variables, commandLineRunner), true));
+                conventions.Add(new StageScriptPackagesConvention(null, fileSystem, new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner), true));
             }
             
             conventions.AddRange(new IInstallConvention[]

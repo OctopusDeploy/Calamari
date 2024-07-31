@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Calamari.AzureAppService.Azure;
 using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 
@@ -14,11 +15,11 @@ namespace Calamari.AzureAppService.Behaviors
 
         ILog Log { get; }
 
-        public AppDeployBehaviour(ILog log)
+        public AppDeployBehaviour(ILog log, ICalamariFileSystem fileSystem)
         {
             Log = log;
             containerBehaviour = new AzureAppServiceContainerDeployBehaviour(log);
-            zipDeployBehaviour = new AzureAppServiceZipDeployBehaviour(log);
+            zipDeployBehaviour = new AzureAppServiceZipDeployBehaviour(log, fileSystem);
         }
 
         public bool IsEnabled(RunningDeployment context) => true;
