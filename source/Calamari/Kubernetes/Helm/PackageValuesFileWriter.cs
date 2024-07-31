@@ -31,6 +31,7 @@ namespace Calamari.Kubernetes.Helm
             var packageNames = variables.GetIndexes(PackageVariables.PackageCollection);
             if (!packageNames.Contains(packageName))
             {
+                log.Warn($"Failed to find variables for package {packageName}");
                 return null;
             }
 

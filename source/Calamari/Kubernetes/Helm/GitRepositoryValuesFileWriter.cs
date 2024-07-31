@@ -28,6 +28,7 @@ namespace Calamari.Kubernetes.Helm
             var gitDependencyNames = variables.GetIndexes(Deployment.SpecialVariables.GitResources.GitResourceCollection);
             if (!gitDependencyNames.Contains(gitDependencyName))
             {
+                log.Warn($"Failed to find variables for git resource {gitDependencyName}");
                 return null;
             }
 
