@@ -31,6 +31,7 @@ namespace Calamari.Kubernetes.Helm
             var packageNames = variables.GetIndexes(PackageVariables.PackageCollection);
             if (!packageNames.Contains(packageName))
             {
+                log.Warn($"Failed to find variables for package {packageName}");
                 return null;
             }
 
@@ -44,12 +45,7 @@ namespace Calamari.Kubernetes.Helm
                 }
             }
             
-            var valuesPaths = valuesFilePaths?
-                              .Split('\r', '\n')
-                              .Where(x => !string.IsNullOrWhiteSpace(x))
-                              .Select(x => x.Trim())
-                              .ToList();
-            
+            var valuesPaths = HelmValuesFileUtils.SplitValuesFilePaths(valuesFilePaths);
             if (valuesPaths == null || !valuesPaths.Any())
                 return null;
 
@@ -58,12 +54,12 @@ namespace Calamari.Kubernetes.Helm
 
             var sanitizedPackageReferenceName = PackageName.ExtractPackageNameFromPathedPackageId(fileSystem.RemoveInvalidFileNameChars(packageName));
             
-
+            var version = variables.Get(PackageVariables.IndexedPackageVersion(packageName));
+            
+            //we get the package id here
+            var pathedPackedName = PackageName.ExtractPackageNameFromPathedPackageId(variables.Get(PackageVariables.IndexedPackageId(packageName)));
             foreach (var valuePath in valuesPaths)
             {
-                //we get the package id here
-                var pathedPackedName = PackageName.ExtractPackageNameFromPathedPackageId(variables.Get(PackageVariables.IndexedPackageId(packageName)));
-                var version = variables.Get(PackageVariables.IndexedPackageVersion(packageName));
                 var relativePath = Path.Combine(sanitizedPackageReferenceName, valuePath);
                 var currentFiles = fileSystem.EnumerateFilesWithGlob(deployment.CurrentDirectory, relativePath).ToList();
 
@@ -83,7 +79,7 @@ namespace Calamari.Kubernetes.Helm
                 {
                     var relative = file.Substring(Path.Combine(deployment.CurrentDirectory, sanitizedPackageReferenceName).Length);
                     log.Info($"Including values file `{relative}` from package {pathedPackedName} v{version}");
-                    filenames.AddRange(currentFiles);
+                    filenames.Add(file);
                 }
             }
 

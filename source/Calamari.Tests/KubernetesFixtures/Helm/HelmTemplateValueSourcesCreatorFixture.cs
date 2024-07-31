@@ -212,7 +212,8 @@ secondary.Development.yaml"
             {
                 [SpecialVariables.Helm.TemplateValuesSources] = templateValuesSourcesJson,
                 [KnownVariables.OriginalPackageDirectoryPath] = RootDir,
-                [ScriptVariables.ScriptSource] = ScriptVariables.ScriptSourceOptions.GitRepository
+                [ScriptVariables.ScriptSource] = ScriptVariables.ScriptSourceOptions.GitRepository,
+                [Deployment.SpecialVariables.GitResources.CommitHash(string.Empty)] = "abc123"
             };
 
             var deployment = new RunningDeployment(variables)

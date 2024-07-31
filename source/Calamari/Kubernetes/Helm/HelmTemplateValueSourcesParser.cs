@@ -44,12 +44,17 @@ namespace Calamari.Kubernetes.Helm
                             default:
                                 if (scriptSource is null)
                                     throw new ArgumentNullException($"{ScriptVariables.ScriptSource} variable cannot be null");
-                                
+
                                 throw new ArgumentException($"{scriptSource} is not a support Chart values source type");
                         }
 
-                        filenames.AddRange(chartFilenames);
+                        if (chartFilenames != null)
+                        {
+                            filenames.AddRange(chartFilenames);
+                        }
+
                         break;
+
                     case TemplateValuesSourceType.KeyValues:
                         var keyValuesTvs = json.ToObject<KeyValuesTemplateValuesSource>();
                         var keyValueFilename = KeyValuesValuesFileWriter.WriteToFile(deployment, fileSystem, keyValuesTvs.Value, index);
@@ -66,14 +71,35 @@ namespace Calamari.Kubernetes.Helm
                                                                                               packageTvs.PackageId,
                                                                                               packageTvs.PackageName);
 
-                        filenames.AddRange(packageFilenames);
+                        if (packageFilenames != null)
+                        {
+                            filenames.AddRange(packageFilenames);
+                        }
+
                         break;
+
                     case TemplateValuesSourceType.InlineYaml:
                         var inlineYamlTvs = json.ToObject<InlineYamlTemplateValuesSource>();
                         var inlineYamlFilename = InlineYamlValuesFileWriter.WriteToFile(deployment, fileSystem, inlineYamlTvs.Value, index);
 
                         AddIfNotNull(filenames, inlineYamlFilename);
                         break;
+
+                    case TemplateValuesSourceType.GitRepository:
+                        var gitRepTvs = json.ToObject<GitRepositoryTemplateValuesSource>();
+                        var gitRepositoryFilenames = GitRepositoryValuesFileWriter.FindGitDependencyValuesFiles(deployment,
+                                                                                                                fileSystem,
+                                                                                                                log,
+                                                                                                                gitRepTvs.GitDependencyName,
+                                                                                                                gitRepTvs.ValuesFilePaths);
+
+                        if (gitRepositoryFilenames != null)
+                        {
+                            filenames.AddRange(gitRepositoryFilenames);
+                        }
+
+                        break;
+
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
@@ -95,7 +121,8 @@ namespace Calamari.Kubernetes.Helm
             Chart,
             KeyValues,
             Package,
-            InlineYaml
+            InlineYaml,
+            GitRepository
         }
 
         internal class TemplateValuesSource
@@ -132,6 +159,17 @@ namespace Calamari.Kubernetes.Helm
             public PackageTemplateValuesSource()
             {
                 Type = TemplateValuesSourceType.Package;
+            }
+        }
+
+        internal class GitRepositoryTemplateValuesSource : TemplateValuesSource
+        {
+            public string GitDependencyName { get; set; }
+            public string ValuesFilePaths { get; set; }
+
+            public GitRepositoryTemplateValuesSource()
+            {
+                Type = TemplateValuesSourceType.GitRepository;
             }
         }
 
