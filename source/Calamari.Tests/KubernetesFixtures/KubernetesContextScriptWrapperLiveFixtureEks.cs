@@ -8,8 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Assent;
 using Calamari.Aws.Kubernetes.Discovery;
-using Calamari.CloudAccounts;
-using Calamari.Common.FeatureToggles;
+using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Kubernetes.Commands;
@@ -136,7 +135,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
             AssertObjectStatusMonitoringStarted(rawLogs, (SimpleDeploymentResourceType, SimpleDeploymentResourceName));
 
-            var objectStatusUpdates = Log.Messages.GetServiceMessagesOfType("k8s-status");
+            var objectStatusUpdates = Log.Messages.GetServiceMessagesOfType(ServiceMessageNames.Kubernetes.ResourceStatus);
 
             objectStatusUpdates.Where(m => m.Properties["status"] == "Successful").Should().HaveCount(5);
 
@@ -273,7 +272,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 (Name: SimpleConfigMap2ResourceName, Label: "ConfigMap3")
             };
 
-            var statusMessages = Log.Messages.GetServiceMessagesOfType("k8s-status");
+            var statusMessages = Log.Messages.GetServiceMessagesOfType(ServiceMessageNames.Kubernetes.ResourceStatus);
 
             foreach (var (name, label) in resources)
             {

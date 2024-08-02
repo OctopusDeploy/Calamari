@@ -52,5 +52,11 @@ namespace Calamari.Common.Plumbing.ServiceMessages
             public const string MetricAttribute = "metric";
             public const string ValueAttribute = "value";
         }
+
+        public static class Kubernetes
+        {
+            public const string AppliedManifest = "k8s-applied-manifest";
+            public const string ResourceStatus = "k8s-status";
+        }
     }
 }
