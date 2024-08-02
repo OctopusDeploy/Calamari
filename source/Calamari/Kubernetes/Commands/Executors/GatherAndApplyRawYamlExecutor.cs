@@ -132,8 +132,6 @@ namespace Calamari.Kubernetes.Commands.Executors
                     {
                         var yamlStream = new YamlStream();
                         yamlStream.Load(new StreamReader(yamlFile));
-
-                        var i = 0;
                         foreach (var document in yamlStream.Documents)
                         {
                             if (!(document.RootNode is YamlMappingNode rootNode))
@@ -143,10 +141,9 @@ namespace Calamari.Kubernetes.Commands.Executors
 
                             var updatedDocument = serializer.Serialize(rootNode);
 
-                            log.WriteServiceMessage(new ServiceMessage(ServiceMessageNames.SetVariable.Name,
+                            log.WriteServiceMessage(new ServiceMessage(ServiceMessageNames.Kubernetes.AppliedManifest,
                                                                        new Dictionary<string, string>
                                                                        {
-                                                                           { ServiceMessageNames.SetVariable.NameAttribute, $"AppliedManifests({i++})" },
                                                                            { ServiceMessageNames.SetVariable.ValueAttribute, updatedDocument }
                                                                        }));
                         }
