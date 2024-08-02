@@ -79,10 +79,9 @@ namespace Calamari.Kubernetes.ResourceStatus
                 stepNumber = actionNumber;
                 stepName = variables.Get("Octopus.Action.Name");
             }
-            
+
             var parameters = new Dictionary<string, string>
             {
-                {"type", "k8s-status"},
                 {"actionId", variables.Get("Octopus.Action.Id")},
                 {"stepName", $"Step {stepNumber}: {stepName}"},
                 {"taskId", variables.Get(KnownVariables.ServerTask.Id)},
@@ -99,7 +98,7 @@ namespace Calamari.Kubernetes.ResourceStatus
                 {"checkCount", checkCount.ToString()}
             };
 
-            var message = new ServiceMessage(SpecialVariables.KubernetesResourceStatusServiceMessageName, parameters);
+            var message = new ServiceMessage(ServiceMessageNames.Kubernetes.ResourceStatus, parameters);
             log.WriteServiceMessage(message);
         }
     }
