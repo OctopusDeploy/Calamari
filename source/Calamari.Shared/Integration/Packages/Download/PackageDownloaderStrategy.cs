@@ -64,8 +64,23 @@ namespace Calamari.Integration.Packages.Download
                 case FeedType.OciRegistry:
                     downloader = new OciPackageDownloader(fileSystem, new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner), log);
                     break;
-                case FeedType.Docker:
                 case FeedType.AwsElasticContainerRegistry:
+                    var x = new OciArtifactManifestRetriever();
+                    if (x.TryGetArtifactType(packageId,
+                                             version,
+                                             feedUri,
+                                             feedUsername,
+                                             feedPassword)
+                        == OciArtifactTypes.HelmChart)
+                    {
+                        downloader = new OciPackageDownloader(fileSystem, new CombinedPackageExtractor(log, variables, commandLineRunner));
+                    }
+                    else
+                    {                   
+                        downloader = new DockerImagePackageDownloader(engine, fileSystem, commandLineRunner, variables, log);
+                    }
+                    break;
+                case FeedType.Docker:
                 case FeedType.AzureContainerRegistry:
                 case FeedType.GoogleContainerRegistry:
                     downloader = new DockerImagePackageDownloader(engine, fileSystem, commandLineRunner, variables, log);
