@@ -171,11 +171,9 @@ namespace Calamari.Kubernetes.Conventions
 
         void SetValuesParameters(RunningDeployment deployment, StringBuilder sb)
         {
-            if (OctopusFeatureToggles.ImprovedHelmTemplateValuesFeatureToggle.IsEnabled(deployment.Variables))
-            {
-                SetOrderedTemplateValues(deployment, sb);
-            }
+            SetOrderedTemplateValues(deployment, sb);
 
+            //We leave the remaining values here as the users may not have migrated to the new structure
             foreach (var additionalValuesFile in AdditionalValuesFiles(deployment))
             {
                 sb.Append($" --values \"{additionalValuesFile}\"");
