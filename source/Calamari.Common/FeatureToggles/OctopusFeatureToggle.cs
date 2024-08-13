@@ -4,7 +4,6 @@ namespace Calamari.Common.FeatureToggles
 {
     public static class OctopusFeatureToggles
     {
-        public static readonly OctopusFeatureToggle ImprovedHelmTemplateValuesFeatureToggle = new OctopusFeatureToggle("improved-helm-template-values");
         public static readonly OctopusFeatureToggle NonPrimaryGitDependencySupportFeatureToggle = new OctopusFeatureToggle("non-primary-git-dependency-support");
         
         public class OctopusFeatureToggle
