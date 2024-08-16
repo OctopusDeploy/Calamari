@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using Calamari.Common.Features.Processes;
+using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 
@@ -14,12 +15,14 @@ namespace Calamari.Common.Features.Packages.Java
     {
         readonly ICommandLineRunner commandLineRunner;
         readonly ILog log;
+        readonly ICalamariFileSystem calamariFileSystem;
         readonly string toolsPath;
 
-        public JarTool(ICommandLineRunner commandLineRunner, ILog log, IVariables variables)
+        public JarTool(ICommandLineRunner commandLineRunner, ILog log, ICalamariFileSystem calamariFileSystem, IVariables variables)
         {
             this.commandLineRunner = commandLineRunner;
             this.log = log;
+            this.calamariFileSystem = calamariFileSystem;
 
             /*
                 The precondition script will also set the location of the java library files
@@ -60,6 +63,8 @@ namespace Calamari.Common.Features.Packages.Java
         {
             try
             {
+                calamariFileSystem.EnsureDirectoryExists(targetDirectory);
+
                 /*
                     Start by verifying the archive is valid.
                 */

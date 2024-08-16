@@ -19,6 +19,7 @@ using Calamari.CloudAccounts;
 using Calamari.Common.Commands;
 using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Extensions;
+using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Variables;
@@ -31,8 +32,11 @@ namespace Calamari.AzureAppService.Behaviors
 {
     internal class AzureAppServiceZipDeployBehaviour : IDeployBehaviour
     {
-        public AzureAppServiceZipDeployBehaviour(ILog log)
+        readonly ICalamariFileSystem fileSystem;
+
+        public AzureAppServiceZipDeployBehaviour(ILog log, ICalamariFileSystem fileSystem)
         {
+            this.fileSystem = fileSystem;
             Log = log;
         }
 
@@ -108,7 +112,7 @@ namespace Calamari.AzureAppService.Behaviors
                                                {
                                                    ".zip" => new ZipPackageProvider(),
                                                    ".nupkg" => new NugetPackageProvider(),
-                                                   ".war" => new WarPackageProvider(Log, variables, context),
+                                                   ".war" => new WarPackageProvider(Log, fileSystem, variables, context),
                                                    _ => throw new Exception("Unsupported archive type")
                                                };
 

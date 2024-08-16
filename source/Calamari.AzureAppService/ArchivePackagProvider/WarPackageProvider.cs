@@ -5,6 +5,7 @@ using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Packages.Java;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing.Extensions;
+using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 
@@ -12,13 +13,15 @@ namespace Calamari.AzureAppService
 {
     public class WarPackageProvider : IPackageProvider
     {
+        readonly ICalamariFileSystem fileSystem;
         public bool SupportsAsynchronousDeployment => false;
         private ILog Log { get; }
         private IVariables Variables { get; }
         private RunningDeployment Deployment { get; }
 
-        public WarPackageProvider(ILog log, IVariables variables, RunningDeployment deployment)
+        public WarPackageProvider(ILog log, ICalamariFileSystem fileSystem, IVariables variables, RunningDeployment deployment)
         {
+            this.fileSystem = fileSystem;
             Log = log;
             Variables = variables;
             Deployment = deployment;
@@ -29,7 +32,7 @@ namespace Calamari.AzureAppService
         public async Task<FileInfo> PackageArchive(string sourceDirectory, string targetDirectory)
         {
             var cmdLineRunner = new CommandLineRunner(Log, Variables);
-            var jarTool = new JarTool(cmdLineRunner, Log, Variables);
+            var jarTool = new JarTool(cmdLineRunner, Log, fileSystem, Variables);
 
             var packageMetadata = PackageName.FromFile(Deployment.PackageFilePath);
 

@@ -56,8 +56,6 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
         {
             invocations.AddLogMessageFor("which", "gcloud", "gcloud");
             invocations.AddLogMessageFor("where", "gcloud.cmd", "gcloud");
-
-            variables.AddFeatureToggles(FeatureToggle.KubernetesAksKubeloginFeatureToggle);
         }
 
         SetupKubectlAuthentication CreateSut() =>

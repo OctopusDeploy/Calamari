@@ -73,6 +73,21 @@ namespace Calamari.Deployment
             public static readonly string RunPackageScripts = "Octopus.Action.Package.RunScripts";
         }
 
+        public static class GitResources
+        {
+            public const string GitResourceCollection = "Octopus.Action.GitResource";
+
+            public static string CommitHash(string name) => GetIndexedName(name, "CommitHash");
+            public static string OriginalPath(string name) => GetIndexedName(name, "OriginalPath");
+            public static string Extract(string name) => GetIndexedName(name, "Extract");
+            public static string ExtractedPath(string name) => GetIndexedName(name, "ExtractedPath");
+            public static string FileName(string name) => GetIndexedName(name, "PackageFileName");
+            public static string FilePath(string name) => GetIndexedName(name, "PackageFilePath");
+            public static string RepositoryUrl(string name) => GetIndexedName(name, "RepositoryUrl");
+
+            static string GetIndexedName(string name, string property) => $"Octopus.Action.GitResource[{name}].{property}";
+        }
+
         public static class Packages
         {
             public static string ExtractedPath(string key)
@@ -150,7 +165,7 @@ namespace Calamari.Deployment
             public static class Aws
             {
                 public static readonly string CloudFormationStackName = "Octopus.Action.Aws.CloudFormationStackName";
-                public static readonly string CloudFormationTemplate =  "Octopus.Action.Aws.CloudFormationTemplate";
+                public static readonly string CloudFormationTemplate = "Octopus.Action.Aws.CloudFormationTemplate";
                 public static readonly string CloudFormationProperties = "Octopus.Action.Aws.CloudFormationProperties";
                 public static readonly string AssumeRoleARN = "Octopus.Action.Aws.AssumedRoleArn";
                 public static readonly string AssumeRoleExternalId = "Octopus.Action.Aws.AssumeRoleExternalId";
@@ -295,7 +310,6 @@ namespace Calamari.Deployment
                     public static readonly string KeystoreAlias = "Java.Certificate.KeystoreAlias";
                 }
 
-
                 public static class WildFly
                 {
                     public static readonly string Feature = "Octopus.Features.WildflyDeployCLI";
@@ -355,10 +369,8 @@ namespace Calamari.Deployment
 
         public static class Certificate
         {
-
             public static readonly string PrivateKeyAccessRules =
                 "Octopus.Action.Certificate.PrivateKeyAccessRules";
-
 
             public static string Name(string variableName)
             {

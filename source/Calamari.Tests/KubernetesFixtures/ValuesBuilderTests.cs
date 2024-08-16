@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Calamari.Kubernetes.Conventions;
+using Calamari.Kubernetes.Helm;
 using NUnit.Framework;
 
 namespace Calamari.Tests.KubernetesFixtures
