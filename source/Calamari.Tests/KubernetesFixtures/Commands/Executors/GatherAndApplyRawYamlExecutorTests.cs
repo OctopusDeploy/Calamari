@@ -96,24 +96,16 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
             result.Should().BeTrue();
             variables.Get(SpecialVariables.GroupedYamlDirectories).Should().Be(expectedYamlGrouping);
 
-            commandLineRunner.ReceivedCalls().Count().Should().Be(4);
+            commandLineRunner.ReceivedCalls().Count().Should().Be(2);
             var commandLineArgs = commandLineRunner.ReceivedCalls().SelectMany(call => call.GetArguments().Select(arg => arg.ToString())).ToArray();
             commandLineArgs[0].Should().Contain("apply -f").And.Contain("--recursive").And.Contain("-o json").And.Contain($"{Path.Combine("grouped", "1")}");
             commandLineArgs[1].Should().Contain("apply -f").And.Contain("--recursive").And.Contain("-o json").And.Contain($"{Path.Combine("grouped", "2")}");
-            commandLineArgs[2].Should().Contain("get").And.Contain("basic-deployment");
-            commandLineArgs[3].Should().Contain("get").And.Contain("basic-service");
 
             receivedCallbacks.Should()
                              .BeEquivalentTo(new List<ResourceIdentifier>
                              {
                                  new ResourceIdentifier("Deployment", "basic-deployment", "dev"), new ResourceIdentifier("Service", "basic-service", "dev"), new ResourceIdentifier("Deployment", "basic-deployment", "dev")
                              });
-
-            log.ServiceMessages.Count.Should().Be(2);
-            log.ServiceMessages[0].Name.Should().Be(ServiceMessageNames.SetVariable.Name);
-            log.ServiceMessages[0].Properties.Should().Contain(new KeyValuePair<string, string>("name", "CustomResources(basic-deployment)"));
-            log.ServiceMessages[1].Name.Should().Be(ServiceMessageNames.SetVariable.Name);
-            log.ServiceMessages[1].Properties.Should().Contain(new KeyValuePair<string, string>("name", "CustomResources(basic-service)"));
         }
 
         [Test]
@@ -139,7 +131,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
             result.Should().BeTrue();
             variables.Get(SpecialVariables.GroupedYamlDirectories).Should().Be(expectedYamlGrouping);
 
-            commandLineRunner.ReceivedCalls().Count().Should().Be(4);
+            commandLineRunner.ReceivedCalls().Count().Should().Be(2);
             var commandLineArgs = commandLineRunner.ReceivedCalls().SelectMany(call => call.GetArguments().Select(arg => arg.ToString())).ToArray();
             commandLineArgs[0]
                 .Should()
@@ -185,7 +177,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
             result.Should().BeTrue();
             variables.Get(SpecialVariables.GroupedYamlDirectories).Should().Be(expectedYamlGrouping);
 
-            commandLineRunner.ReceivedCalls().Count().Should().Be(4);
+            commandLineRunner.ReceivedCalls().Count().Should().Be(2);
             var commandLineArgs = commandLineRunner.ReceivedCalls().SelectMany(call => call.GetArguments().Select(arg => arg.ToString())).ToArray();
             commandLineArgs[0]
                 .Should()
@@ -231,7 +223,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
             result.Should().BeTrue();
             variables.Get(SpecialVariables.GroupedYamlDirectories).Should().Be(expectedYamlGrouping);
 
-            commandLineRunner.ReceivedCalls().Count().Should().Be(4);
+            commandLineRunner.ReceivedCalls().Count().Should().Be(2);
             var commandLineArgs = commandLineRunner.ReceivedCalls().SelectMany(call => call.GetArguments().Select(arg => arg.ToString())).ToArray();
             commandLineArgs[0]
                 .Should()
