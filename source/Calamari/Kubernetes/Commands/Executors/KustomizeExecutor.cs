@@ -61,7 +61,12 @@ namespace Calamari.Kubernetes.Commands.Executors
         void ValidateKubectlVersion(string currentDirectory)
         {
             var commandResult = kubectl.ExecuteCommandAndReturnOutput("version", "--client", "-o", "json");
-            CheckResultForErrors(commandResult, currentDirectory);
+            commandResult.LogErrorsWithSanitizedDirectory(log, currentDirectory);
+            if (commandResult.Result.ExitCode != 0)
+            {
+                throw new KubectlException("Command Failed");
+            }
+            
             var outputJson = commandResult.Output.InfoLogs.Join(Environment.NewLine);
 
             if (!TryParseVersion(outputJson, out var major, out var minor))

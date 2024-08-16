@@ -33,10 +33,6 @@ namespace Calamari.Kubernetes.Commands.Executors
                 WriteResourcesToOutputVariables(resourceIdentifiers);
                 return true;
             }
-            catch (KubernetesApplyException)
-            {
-                return false;
-            }
             catch (Exception e)
             {
                 log.Error($"Deployment Failed due to exception: {e.Message}");
@@ -45,37 +41,10 @@ namespace Calamari.Kubernetes.Commands.Executors
         }
         
         protected abstract Task<IEnumerable<ResourceIdentifier>> ApplyAndGetResourceIdentifiers(RunningDeployment deployment, Func<ResourceIdentifier[], Task> appliedResourcesCallback = null);
-        
-        protected void CheckResultForErrors(CommandResultWithOutput commandResult, string directory)
-        {
-            var directoryWithTrailingSlash = directory + Path.DirectorySeparatorChar;
-
-            foreach (var message in commandResult.Output.Messages)
-            {
-                switch (message.Level)
-                {
-                    case Level.Info:
-                        //No need to log as it's the output json from above.
-                        break;
-                    case Level.Error:
-                        //Files in the error are shown with the full path in their batch directory,
-                        //so we'll remove that for the user.
-                        log.Error(message.Text.Replace($"{directoryWithTrailingSlash}", ""));
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException();
-                }
-            }
-            
-            if (commandResult.Result.ExitCode != 0)
-            {
-                throw new KubernetesApplyException();
-            }
-        }
 
         protected IEnumerable<ResourceIdentifier> ProcessKubectlCommandOutput(RunningDeployment deployment, CommandResultWithOutput commandResult, string directory)
         {
-            CheckResultForErrors(commandResult, directory);
+            commandResult.LogErrorsWithSanitizedDirectory(log, directory);
             
             // If it did not error, the output should be valid json.
             var outputJson = commandResult.Output.InfoLogs.Join(Environment.NewLine);
@@ -103,8 +72,7 @@ namespace Calamari.Kubernetes.Commands.Executors
             catch
             {
                 LogParsingError(outputJson, deployment.Variables.GetFlag(SpecialVariables.PrintVerboseKubectlOutputOnError));
-
-                throw new KubernetesApplyException();
+                throw new KubectlException("Log Parsing Error");
             }
         }
 
@@ -149,9 +117,9 @@ namespace Calamari.Kubernetes.Commands.Executors
             log.Error("Custom resources will not be saved as output variables.");
         }
         
-        protected class KubernetesApplyException : Exception
+        /*protected class KubernetesApplyException : Exception
         {
-        }
+        }*/
 
         class ResourceMetadata
         {
@@ -169,6 +137,32 @@ namespace Calamari.Kubernetes.Commands.Executors
                 return new ResourceIdentifier(Kind, Metadata.Name, Metadata.Namespace);
             }
         }
+    }
+
+    public static class CommandResultWithOutputExtensionMethods
+    {
+        public static void LogErrorsWithSanitizedDirectory(this CommandResultWithOutput commandResult, ILog log, string directory)
+        {
+            var directoryWithTrailingSlash = directory + Path.DirectorySeparatorChar;
+
+            foreach (var message in commandResult.Output.Messages)
+            {
+                switch (message.Level)
+                {
+                    case Level.Info:
+                        //No need to log as it's the output json from above.
+                        break;
+                    case Level.Error:
+                        //Files in the error are shown with the full path in their batch directory,
+                        //so we'll remove that for the user.
+                        log.Error(message.Text.Replace($"{directoryWithTrailingSlash}", ""));
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+            }
+        }
+            
     }
 }
 #endif
