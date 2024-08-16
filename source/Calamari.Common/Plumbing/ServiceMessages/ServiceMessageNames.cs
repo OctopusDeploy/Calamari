@@ -55,7 +55,13 @@ namespace Calamari.Common.Plumbing.ServiceMessages
 
         public static class Kubernetes
         {
-            public const string AppliedManifest = "k8s-applied-manifest";
+            
+
+            public static class AppliedManifest
+            {
+                public const string Name = "k8s-applied-manifest";
+                public const string Yaml = "yaml";
+            }
             public const string ResourceStatus = "k8s-status";
         }
     }

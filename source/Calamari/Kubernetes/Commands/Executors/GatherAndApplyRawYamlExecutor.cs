@@ -141,10 +141,10 @@ namespace Calamari.Kubernetes.Commands.Executors
 
                             var updatedDocument = serializer.Serialize(rootNode);
 
-                            log.WriteServiceMessage(new ServiceMessage(ServiceMessageNames.Kubernetes.AppliedManifest,
+                            log.WriteServiceMessage(new ServiceMessage(ServiceMessageNames.Kubernetes.AppliedManifest.Name,
                                                                        new Dictionary<string, string>
                                                                        {
-                                                                           { ServiceMessageNames.SetVariable.ValueAttribute, updatedDocument }
+                                                                           { ServiceMessageNames.Kubernetes.AppliedManifest.Yaml, updatedDocument }
                                                                        }));
                         }
                     }
