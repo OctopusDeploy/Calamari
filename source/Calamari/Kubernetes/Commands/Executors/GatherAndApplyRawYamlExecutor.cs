@@ -7,17 +7,22 @@ using System.Threading.Tasks;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes.Integration;
 using Calamari.Kubernetes.ResourceStatus.Resources;
 using Octopus.CoreUtilities.Extensions;
+using YamlDotNet.Core;
+using YamlDotNet.RepresentationModel;
+using YamlDotNet.Serialization;
+using YamlDotNet.Serialization.NamingConventions;
 
 namespace Calamari.Kubernetes.Commands.Executors
 {
     public interface IRawYamlKubernetesApplyExecutor : IKubernetesApplyExecutor
     {
     }
-    
+
     class GatherAndApplyRawYamlExecutor : BaseKubernetesApplyExecutor, IRawYamlKubernetesApplyExecutor
     {
         const string GroupedDirectoryName = "grouped";
@@ -40,12 +45,12 @@ namespace Calamari.Kubernetes.Commands.Executors
         {
             var variables = deployment.Variables;
             var globs = variables.GetPaths(SpecialVariables.CustomResourceYamlFileName);
-            
+
             if (globs.IsNullOrEmpty())
                 return Enumerable.Empty<ResourceIdentifier>();
-            
+
             var directories = GroupFilesIntoDirectories(deployment, globs, variables);
-            
+
             var resourcesIdentifiers = new HashSet<ResourceIdentifier>();
             foreach (var directory in directories)
             {
@@ -55,7 +60,7 @@ namespace Calamari.Kubernetes.Commands.Executors
                 {
                     await appliedResourcesCallback(res);
                 }
-                
+
                 resourcesIdentifiers.UnionWith(res);
             }
 
@@ -66,13 +71,12 @@ namespace Calamari.Kubernetes.Commands.Executors
         {
             var stagingDirectory = deployment.CurrentDirectory;
             var packageDirectory =
-                Path.Combine(stagingDirectory, KubernetesDeploymentCommandBase.PackageDirectoryName) +
-                Path.DirectorySeparatorChar;
+                Path.Combine(stagingDirectory, KubernetesDeploymentCommandBase.PackageDirectoryName) + Path.DirectorySeparatorChar;
 
             var directories = new List<GlobDirectory>();
-            for (var i = 1; i <= globs.Count; i ++)
+            for (var i = 1; i <= globs.Count; i++)
             {
-                var glob = globs[i-1];
+                var glob = globs[i - 1];
                 var directoryPath = Path.Combine(stagingDirectory, GroupedDirectoryName, i.ToString());
                 var directory = new GlobDirectory(i, glob, directoryPath);
                 fileSystem.CreateDirectory(directoryPath);
@@ -87,6 +91,7 @@ namespace Calamari.Kubernetes.Commands.Executors
                     {
                         fileSystem.CreateDirectory(targetDirectory);
                     }
+
                     fileSystem.CopyFile(file, targetPath);
                 }
 
@@ -94,7 +99,7 @@ namespace Calamari.Kubernetes.Commands.Executors
             }
 
             variables.Set(SpecialVariables.GroupedYamlDirectories,
-                string.Join(";", directories.Select(d => d.Directory)));
+                          string.Join(";", directories.Select(d => d.Directory)));
             return directories;
         }
 
@@ -114,9 +119,46 @@ namespace Calamari.Kubernetes.Commands.Executors
             foreach (var file in files)
             {
                 log.Verbose($"Matched file: {fileSystem.GetRelativePath(directoryWithTrailingSlash, file)}");
+
+                var serializer = new SerializerBuilder()
+                                 .WithNamingConvention(CamelCaseNamingConvention.Instance)
+                                 .Build();
+
+                // var updatedDocuments = new List<string>();
+
+                using (var yamlFile = fileSystem.OpenFile(file, FileAccess.ReadWrite))
+                {
+                    try
+                    {
+                        var yamlStream = new YamlStream();
+                        yamlStream.Load(new StreamReader(yamlFile));
+                        foreach (var document in yamlStream.Documents)
+                        {
+                            if (!(document.RootNode is YamlMappingNode rootNode))
+                            {
+                                continue;
+                            }
+
+                            var updatedDocument = serializer.Serialize(rootNode);
+
+                            log.WriteServiceMessage(new ServiceMessage(ServiceMessageNames.Kubernetes.AppliedManifest.Name,
+                                                                       new Dictionary<string, string>
+                                                                       {
+                                                                           { ServiceMessageNames.Kubernetes.AppliedManifest.Yaml, updatedDocument }
+                                                                       }));
+                        }
+                    }
+                    catch (SemanticErrorException)
+                    {
+                        log.Warn("Invalid YAML syntax found, resources will not be added to live object status");
+                    }
+                }
+
+                // TODO: EM - Add octopus labels and re-write file
+                // fileSystem.OverwriteFile(file, string.Join("\n---\n", updatedDocuments));
             }
 
-            string[] executeArgs = {"apply", "-f", $@"""{globDirectory.Directory}""", "--recursive", "-o", "json"};
+            string[] executeArgs = { "apply", "-f", $@"""{globDirectory.Directory}""", "--recursive", "-o", "json" };
             executeArgs = executeArgs.AddOptionsForServerSideApply(deployment.Variables, log);
 
             var result = kubectl.ExecuteCommandAndReturnOutput(executeArgs);

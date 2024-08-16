@@ -36,8 +36,6 @@ namespace Calamari.Kubernetes
         public const string KubeConfig = "Octopus.KubeConfig.Path";
         public const string KustomizeManifest = "Octopus.Kustomize.Manifest.Path";
 
-        public const string KubernetesResourceStatusServiceMessageName = "k8s-status";
-
         public const string ServerSideApplyEnabled = "Octopus.Action.Kubernetes.ServerSideApply.Enabled";
         public const string ServerSideApplyForceConflicts = "Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts";
         
