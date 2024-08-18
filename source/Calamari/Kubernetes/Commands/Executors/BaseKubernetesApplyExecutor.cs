@@ -1,7 +1,6 @@
 #if !NET40
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Calamari.Common.Commands;
@@ -45,7 +44,11 @@ namespace Calamari.Kubernetes.Commands.Executors
         protected IEnumerable<ResourceIdentifier> ProcessKubectlCommandOutput(RunningDeployment deployment, CommandResultWithOutput commandResult, string directory)
         {
             commandResult.LogErrorsWithSanitizedDirectory(log, directory);
-            
+            if (commandResult.Result.ExitCode != 0)
+            {
+                throw new KubectlException("Command Failed");
+            }
+
             // If it did not error, the output should be valid json.
             var outputJson = commandResult.Output.InfoLogs.Join(Environment.NewLine);
             try
@@ -116,10 +119,6 @@ namespace Calamari.Kubernetes.Commands.Executors
             log.Error("See https://github.com/kubernetes/kubernetes/issues/58834 for more details.");
             log.Error("Custom resources will not be saved as output variables.");
         }
-        
-        /*protected class KubernetesApplyException : Exception
-        {
-        }*/
 
         class ResourceMetadata
         {
@@ -137,32 +136,6 @@ namespace Calamari.Kubernetes.Commands.Executors
                 return new ResourceIdentifier(Kind, Metadata.Name, Metadata.Namespace);
             }
         }
-    }
-
-    public static class CommandResultWithOutputExtensionMethods
-    {
-        public static void LogErrorsWithSanitizedDirectory(this CommandResultWithOutput commandResult, ILog log, string directory)
-        {
-            var directoryWithTrailingSlash = directory + Path.DirectorySeparatorChar;
-
-            foreach (var message in commandResult.Output.Messages)
-            {
-                switch (message.Level)
-                {
-                    case Level.Info:
-                        //No need to log as it's the output json from above.
-                        break;
-                    case Level.Error:
-                        //Files in the error are shown with the full path in their batch directory,
-                        //so we'll remove that for the user.
-                        log.Error(message.Text.Replace($"{directoryWithTrailingSlash}", ""));
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException();
-                }
-            }
-        }
-            
     }
 }
 #endif
