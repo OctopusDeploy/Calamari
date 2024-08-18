@@ -6,21 +6,18 @@ using Calamari.Aws.Kubernetes.Discovery;
 using Calamari.Commands;
 using Calamari.Common.Features.Discovery;
 using Calamari.Common.Features.Scripts;
-using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Deployment;
 using Calamari.Kubernetes.Commands;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json.Serialization;
 using NUnit.Framework;
 using KubernetesSpecialVariables = Calamari.Kubernetes.SpecialVariables;
-using SpecialVariables = Calamari.Deployment.SpecialVariables;
 
 namespace Calamari.Tests.KubernetesFixtures
 {
@@ -153,9 +150,9 @@ namespace Calamari.Tests.KubernetesFixtures
         private void SetInlineScriptVariables(string bashScript, string powershellScript)
         {
             variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.Bash),
-                bashScript);
+                          bashScript);
             variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.PowerShell),
-                powershellScript);
+                          powershellScript);
         }
 
         private CalamariResult ExecuteCommand(string command, string workingDirectory, string packagePath)
