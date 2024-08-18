@@ -26,8 +26,7 @@ namespace Calamari.Kubernetes.Commands.Executors
         {
             try
             {
-                var resourceIdentifiers = await ApplyAndGetResourceIdentifiers(deployment, appliedResourcesCallback);
-              //  WriteResourcesToOutputVariables(resourceIdentifiers);
+                await ApplyAndGetResourceIdentifiers(deployment, appliedResourcesCallback);
                 return true;
             }
             catch (KubernetesApplyException)

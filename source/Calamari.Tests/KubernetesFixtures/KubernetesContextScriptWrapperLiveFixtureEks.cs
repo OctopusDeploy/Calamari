@@ -130,10 +130,6 @@ namespace Calamari.Tests.KubernetesFixtures
 
             var rawLogs = Log.Messages.Select(m => m.FormattedMessage).ToArray();
 
-            //var scrubbedJson = AssertResourceCreatedAndGetJson(SimpleDeploymentResourceName);
-
-            //this.Assent(scrubbedJson, configuration: AssentConfiguration.Default);
-
             AssertObjectStatusMonitoringStarted(rawLogs, (SimpleDeploymentResourceType, SimpleDeploymentResourceName));
 
             var objectStatusUpdates = Log.Messages.GetServiceMessagesOfType("k8s-status");
@@ -153,25 +149,6 @@ namespace Calamari.Tests.KubernetesFixtures
                 rawLogs[idx + i + 1].Should().Be($" - {type}/{name} in namespace calamari-testing");
             }
         }
-
-        /*private string AssertResourceCreatedAndGetJson(string resourceName)
-        {
-            var variableMessages = Log.Messages.GetServiceMessagesOfType("setVariable");
-
-            var variableMessage =
-                variableMessages.Should().ContainSingle(m => m.Properties["name"] == $"CustomResources({resourceName})")
-                                .Subject;
-
-            return KubernetesJsonResourceScrubber.ScrubRawJson(variableMessage.Properties["value"], p =>
-                p.Name.Contains("Time") ||
-                p.Name == "annotations" ||
-                p.Name == "uid" ||
-                p.Name == "conditions" ||
-                p.Name == "resourceVersion" ||
-                p.Name == "status" ||
-                p.Name == "generation" ||
-                p.Name.StartsWith("clusterIP"));
-        }*/
 
         [Test]
         [TestCase(true)]
@@ -197,10 +174,6 @@ namespace Calamari.Tests.KubernetesFixtures
             SetupAndRunKubernetesRawYamlDeployment(usePackage, FailToDeploymentResource, shouldSucceed: false);
 
             var rawLogs = Log.Messages.Select(m => m.FormattedMessage).ToArray();
-
-            //var scrubbedJson = AssertResourceCreatedAndGetJson(SimpleDeploymentResourceName);
-
-                //this.Assent(scrubbedJson, configuration: AssentConfiguration.Default);
 
             AssertObjectStatusMonitoringStarted(rawLogs, (SimpleDeploymentResourceType, SimpleDeploymentResourceName));
 
@@ -277,10 +250,6 @@ namespace Calamari.Tests.KubernetesFixtures
 
             foreach (var (name, label) in resources)
             {
-                // Check that each resource was created and the appropriate setvariable service message was created.
-                //var resource = AssertResourceCreatedAndGetJson(name);
-                //this.Assent(resource, configuration: AssentConfiguration.DefaultWithPostfix(label));
-
                 // Check that each deployed resource has a "Successful" status reported.
                 statusMessages.Should().Contain(m => m.Properties["name"] == name && m.Properties["status"] == "Successful");
             }
