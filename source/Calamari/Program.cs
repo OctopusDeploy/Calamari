@@ -86,7 +86,7 @@ namespace Calamari
                    .As<IKubernetesDiscovererFactory>()
                    .SingleInstance();
 
-            builder.RegisterInstance(SemaphoreFactory.Get()).As<ISemaphoreFactory>();
+            builder.RegisterInstance(new SystemSemaphoreManager()).As<ISemaphoreFactory>();
 
             builder.RegisterModule<PackageRetentionModule>();
 

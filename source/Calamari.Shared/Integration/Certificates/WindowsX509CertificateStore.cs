@@ -20,7 +20,7 @@ namespace Calamari.Integration.Certificates
 {
     public class WindowsX509CertificateStore
     {
-        public static readonly ISemaphoreFactory Semaphores = SemaphoreFactory.Get();
+        public static readonly ISemaphoreFactory Semaphores = new SystemSemaphoreManager();
         public static readonly string SemaphoreName = nameof(WindowsX509CertificateStore);
 
         const string IntermediateAuthorityStoreName = "CA";
