@@ -21,7 +21,7 @@ namespace Calamari.Kubernetes.Commands.Executors
         /// <param name="deployment"></param>
         /// <param name="rootDirectory"></param>
         /// <param name="globs"></param>
-        /// <returns>Ordered result of directories</returns>
+        /// <returns>Result of directories in the same order as globs parameter</returns>
         public GlobDirectory[] Group(string rootDirectory, List<string> globs)
         {
             if (globs.IsNullOrEmpty())
