@@ -1,7 +1,6 @@
 #if !NET40
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Calamari.Common.Commands;
@@ -29,10 +28,6 @@ namespace Calamari.Kubernetes.Commands.Executors
                 await ApplyAndGetResourceIdentifiers(deployment, appliedResourcesCallback);
                 return true;
             }
-            catch (KubernetesApplyException)
-            {
-                return false;
-            }
             catch (Exception e)
             {
                 log.Error($"Deployment Failed due to exception: {e.Message}");
@@ -41,38 +36,15 @@ namespace Calamari.Kubernetes.Commands.Executors
         }
         
         protected abstract Task<IEnumerable<ResourceIdentifier>> ApplyAndGetResourceIdentifiers(RunningDeployment deployment, Func<ResourceIdentifier[], Task> appliedResourcesCallback = null);
-        
-        protected void CheckResultForErrors(CommandResultWithOutput commandResult, string directory)
-        {
-            var directoryWithTrailingSlash = directory + Path.DirectorySeparatorChar;
-
-            foreach (var message in commandResult.Output.Messages)
-            {
-                switch (message.Level)
-                {
-                    case Level.Info:
-                        //No need to log as it's the output json from above.
-                        break;
-                    case Level.Error:
-                        //Files in the error are shown with the full path in their batch directory,
-                        //so we'll remove that for the user.
-                        log.Error(message.Text.Replace($"{directoryWithTrailingSlash}", ""));
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException();
-                }
-            }
-            
-            if (commandResult.Result.ExitCode != 0)
-            {
-                throw new KubernetesApplyException();
-            }
-        }
 
         protected IEnumerable<ResourceIdentifier> ProcessKubectlCommandOutput(RunningDeployment deployment, CommandResultWithOutput commandResult, string directory)
         {
-            CheckResultForErrors(commandResult, directory);
-            
+            commandResult.LogErrorsWithSanitizedDirectory(log, directory);
+            if (commandResult.Result.ExitCode != 0)
+            {
+                throw new KubectlException("Command Failed");
+            }
+
             // If it did not error, the output should be valid json.
             var outputJson = commandResult.Output.InfoLogs.Join(Environment.NewLine);
             try
@@ -99,8 +71,7 @@ namespace Calamari.Kubernetes.Commands.Executors
             catch
             {
                 LogParsingError(outputJson, deployment.Variables.GetFlag(SpecialVariables.PrintVerboseKubectlOutputOnError));
-
-                throw new KubernetesApplyException();
+                throw new KubectlException("Log Parsing Error");
             }
         }
         
@@ -120,10 +91,6 @@ namespace Calamari.Kubernetes.Commands.Executors
             log.Error("This can happen with older versions of kubectl. Please update to a recent version of kubectl.");
             log.Error("See https://github.com/kubernetes/kubernetes/issues/58834 for more details.");
             log.Error("Custom resources will not be saved as output variables.");
-        }
-        
-        protected class KubernetesApplyException : Exception
-        {
         }
 
         class ResourceMetadata
