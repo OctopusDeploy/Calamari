@@ -29,7 +29,7 @@ namespace Calamari.Kubernetes.Commands.Executors
         public GatherAndApplyRawYamlExecutor(
             ILog log,
             ICalamariFileSystem fileSystem,
-            Kubectl kubectl) : base(log, kubectl)
+            Kubectl kubectl) : base(log)
         {
             this.log = log;
             this.fileSystem = fileSystem;

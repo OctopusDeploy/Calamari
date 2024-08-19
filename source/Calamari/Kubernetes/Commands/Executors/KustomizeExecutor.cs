@@ -24,7 +24,7 @@ namespace Calamari.Kubernetes.Commands.Executors
         readonly ILog log;
         readonly Kubectl kubectl;
 
-        public KustomizeExecutor(ILog log, Kubectl kubectl) : base(log, kubectl)
+        public KustomizeExecutor(ILog log, Kubectl kubectl) : base(log)
         {
             this.log = log;
             this.kubectl = kubectl;
