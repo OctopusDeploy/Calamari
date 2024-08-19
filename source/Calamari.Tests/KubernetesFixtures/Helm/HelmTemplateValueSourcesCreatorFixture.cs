@@ -23,7 +23,7 @@ namespace Calamari.Tests.KubernetesFixtures.Helm
         static readonly string RootDir = Path.Combine("root", "staging");
 
         [Test]
-        public void ParseTemplateValuesSources_ChartSourceButIncorrectScriptSource_ShouldThrowArgumentException()
+        public void ParseTemplateValuesFilesFromAllSources_ChartSourceButIncorrectScriptSource_ShouldThrowArgumentException()
         {
             // Arrange
             var templateValuesSourcesJson = JsonConvert.SerializeObject(new HelmTemplateValueSourcesParser.TemplateValuesSource[]
@@ -51,14 +51,14 @@ namespace Calamari.Tests.KubernetesFixtures.Helm
             var fileSystem = Substitute.For<ICalamariFileSystem>();
 
             // Act
-            Action act = () => HelmTemplateValueSourcesParser.ParseTemplateValuesSources(deployment, fileSystem, new SilentLog());
+            Action act = () => HelmTemplateValueSourcesParser.ParseTemplateValuesFilesFromAllSources(deployment, fileSystem, new SilentLog());
 
             // Assert
             act.Should().ThrowExactly<ArgumentException>();
         }
-        
+
         [Test]
-        public void ParseTemplateValuesSources_ChartSourceButNotScriptSourceVairable_ShouldThrowArgumentNullException()
+        public void ParseTemplateValuesFilesFromAllSources_ChartSourceButNotScriptSourceVairable_ShouldThrowArgumentNullException()
         {
             // Arrange
             var templateValuesSourcesJson = JsonConvert.SerializeObject(new HelmTemplateValueSourcesParser.TemplateValuesSource[]
@@ -85,14 +85,14 @@ namespace Calamari.Tests.KubernetesFixtures.Helm
             var fileSystem = Substitute.For<ICalamariFileSystem>();
 
             // Act
-            Action act = () => HelmTemplateValueSourcesParser.ParseTemplateValuesSources(deployment, fileSystem, new SilentLog());
+            Action act = () => HelmTemplateValueSourcesParser.ParseTemplateValuesFilesFromAllSources(deployment, fileSystem, new SilentLog());
 
             // Assert
             act.Should().ThrowExactly<ArgumentNullException>();
         }
 
         [Test]
-        public void ParseTemplateValuesSources_ChartPackageAndInlineAndKeyValues_CorrectlyParsesAndWritesAndOrdersFiles()
+        public void ParseTemplateValuesFilesFromAllSources_ChartPackageAndInlineAndKeyValues_CorrectlyParsesAndWritesAndOrdersFiles()
         {
             // Arrange
             var templateValuesSourcesJson = JsonConvert.SerializeObject(new HelmTemplateValueSourcesParser.TemplateValuesSource[]
@@ -151,7 +151,7 @@ secondary.Development.yaml"
                                        .ToArray());
 
             // Act
-            var filenames = HelmTemplateValueSourcesParser.ParseTemplateValuesSources(deployment, fileSystem, new SilentLog());
+            var filenames = HelmTemplateValueSourcesParser.ParseTemplateValuesFilesFromAllSources(deployment, fileSystem, new SilentLog());
 
             // Assert
             using (var _ = new AssertionScope())
@@ -168,9 +168,9 @@ secondary.Development.yaml"
                          }.Select(f => Path.Combine(RootDir, f)));
             }
         }
-        
+
         [Test]
-        public void ParseTemplateValuesSources_ChartGitRepositoryAndInlineAndKeyValues_CorrectlyParsesAndWritesAndOrdersFiles()
+        public void ParseTemplateValuesFilesFromAllSources_ChartGitRepositoryAndInlineAndKeyValues_CorrectlyParsesAndWritesAndOrdersFiles()
         {
             // Arrange
             var templateValuesSourcesJson = JsonConvert.SerializeObject(new HelmTemplateValueSourcesParser.TemplateValuesSource[]
@@ -228,7 +228,7 @@ secondary.Development.yaml"
                                        .ToArray());
 
             // Act
-            var filenames = HelmTemplateValueSourcesParser.ParseTemplateValuesSources(deployment, fileSystem, new SilentLog());
+            var filenames = HelmTemplateValueSourcesParser.ParseTemplateValuesFilesFromAllSources(deployment, fileSystem, new SilentLog());
 
             // Assert
             using (var _ = new AssertionScope())
@@ -242,6 +242,79 @@ secondary.Development.yaml"
                              "secondary.yaml",
                              "secondary.Development.yaml",
                              InlineYamlValuesFileWriter.GetFileName(0),
+                         }.Select(f => Path.Combine(RootDir, f)));
+            }
+        }
+
+        [Test]
+        public void ParseTemplateValuesFilesFromDependencies_ChartGitRepositoryAndInlineAndKeyValues_CorrectlyParsesAndOnlyIncludesFilesFromDepedencies()
+        {
+            // Arrange
+            var templateValuesSourcesJson = JsonConvert.SerializeObject(new HelmTemplateValueSourcesParser.TemplateValuesSource[]
+                                                                        {
+                                                                            new HelmTemplateValueSourcesParser.InlineYamlTemplateValuesSource
+                                                                            {
+                                                                                Value = @"it:
+  is:
+    some: 'yaml'"
+                                                                            },
+                                                                            new HelmTemplateValueSourcesParser.ChartTemplateValuesSource
+                                                                            {
+                                                                                ValuesFilePaths = @"secondary.yaml
+secondary.Development.yaml"
+                                                                            },
+                                                                            new HelmTemplateValueSourcesParser.KeyValuesTemplateValuesSource
+                                                                            {
+                                                                                Value = new Dictionary<string, object>
+                                                                                {
+                                                                                    ["Value 1"] = "Test",
+                                                                                    ["Value 2"] = 1234
+                                                                                }
+                                                                            },
+                                                                            new HelmTemplateValueSourcesParser.InlineYamlTemplateValuesSource
+                                                                            {
+                                                                                Value = @"yes: '1234'"
+                                                                            },
+                                                                            new HelmTemplateValueSourcesParser.KeyValuesTemplateValuesSource
+                                                                            {
+                                                                                Value = new Dictionary<string, object>
+                                                                                {
+                                                                                    ["Value 3"] = "Testing",
+                                                                                }
+                                                                            },
+                                                                        },
+                                                                        Formatting.None);
+
+            var variables = new CalamariVariables
+            {
+                [SpecialVariables.Helm.TemplateValuesSources] = templateValuesSourcesJson,
+                [KnownVariables.OriginalPackageDirectoryPath] = RootDir,
+                [ScriptVariables.ScriptSource] = ScriptVariables.ScriptSourceOptions.GitRepository,
+                [Deployment.SpecialVariables.GitResources.CommitHash(string.Empty)] = "abc123"
+            };
+
+            var deployment = new RunningDeployment(variables)
+            {
+                CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory
+            };
+
+            var fileSystem = Substitute.For<ICalamariFileSystem>();
+            fileSystem.EnumerateFilesWithGlob(Arg.Any<string>(), Arg.Any<string>())
+                      .Returns(ci => ci.ArgAt<string[]>(1)
+                                       ?.Select(x => Path.Combine(deployment.CurrentDirectory, x))
+                                       .ToArray());
+
+            // Act
+            var filenames = HelmTemplateValueSourcesParser.ParseTemplateValuesFilesFromDependencies(deployment, fileSystem, new SilentLog());
+
+            // Assert
+            using (var _ = new AssertionScope())
+            {
+                filenames.Should()
+                         .BeEquivalentTo(new[]
+                         {
+                             "secondary.yaml",
+                             "secondary.Development.yaml",
                          }.Select(f => Path.Combine(RootDir, f)));
             }
         }

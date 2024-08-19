@@ -11,7 +11,7 @@ namespace Calamari.Kubernetes.Helm
 {
     public static class HelmTemplateValueSourcesParser
     {
-        public static IEnumerable<string> ParseTemplateValuesSources(RunningDeployment deployment, ICalamariFileSystem fileSystem, ILog log)
+        public static IEnumerable<string> ParseTemplateValuesFilesFromAllSources(RunningDeployment deployment, ICalamariFileSystem fileSystem, ILog log)
         {
             var templateValueSources = deployment.Variables.Get(SpecialVariables.Helm.TemplateValuesSources);
 
@@ -20,6 +20,33 @@ namespace Calamari.Kubernetes.Helm
 
             var parsedJsonArray = JArray.Parse(templateValueSources);
 
+            return ParseFilenamesFromTemplateValuesArray(deployment, fileSystem, log, parsedJsonArray);
+        }
+
+        public static IEnumerable<string> ParseTemplateValuesFilesFromDependencies(RunningDeployment deployment, ICalamariFileSystem fileSystem, ILog log)
+        {
+            var templateValueSources = deployment.Variables.Get(SpecialVariables.Helm.TemplateValuesSources);
+
+            if (string.IsNullOrWhiteSpace(templateValueSources))
+                return Enumerable.Empty<string>();
+
+            var parsedJsonArray = JArray.Parse(templateValueSources);
+
+            //we are only interested in the values files in external dependencies (chart/package/git repo), so filter this array
+            var relevantTypes = parsedJsonArray.Where(t =>
+                                                      {
+                                                          var type = (TemplateValuesSourceType)Enum.Parse(typeof(TemplateValuesSourceType),t.Value<string>(nameof(TemplateValuesSource.Type)));
+                                                          return type == TemplateValuesSourceType.Chart || type == TemplateValuesSourceType.Package || type == TemplateValuesSourceType.GitRepository;
+                                                      })
+                                               .ToList();
+            
+            
+            
+            return ParseFilenamesFromTemplateValuesArray(deployment, fileSystem, log, relevantTypes);
+        }
+
+        static List<string> ParseFilenamesFromTemplateValuesArray(RunningDeployment deployment, ICalamariFileSystem fileSystem, ILog log, IEnumerable<JToken> parsedJsonArray)
+        {
             var filenames = new List<string>();
             // we reverse the order of the array so that we maintain the order that sources at the top take higher precendences (i.e. are adding to the --values list later),
             // however, within a source, the file path order must be maintained (for consistency) so that later file paths take higher precendence 

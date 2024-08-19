@@ -28,7 +28,7 @@ namespace Calamari.Kubernetes.Helm
             var gitDependencyNames = variables.GetIndexes(Deployment.SpecialVariables.GitResources.GitResourceCollection);
             if (!gitDependencyNames.Contains(gitDependencyName))
             {
-                log.Warn($"Failed to find variables for git resource {gitDependencyName}");
+                log?.Warn($"Failed to find variables for git resource {gitDependencyName}");
                 return null;
             }
 
@@ -58,7 +58,7 @@ namespace Calamari.Kubernetes.Helm
                 foreach (var file in currentFiles)
                 {
                     var relative = file.Substring(Path.Combine(deployment.CurrentDirectory, sanitizedPackageReferenceName).Length);
-                    log.Info($"Including values file `{relative}` from git repository {repositoryUrl}, commit {commitHash}");
+                    log?.Info($"Including values file `{relative}` from git repository {repositoryUrl}, commit {commitHash}");
                     filenames.Add(file);
                 }
             }

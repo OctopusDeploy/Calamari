@@ -31,7 +31,7 @@ namespace Calamari.Kubernetes.Helm
             var packageNames = variables.GetIndexes(PackageVariables.PackageCollection);
             if (!packageNames.Contains(packageName))
             {
-                log.Warn($"Failed to find variables for package {packageName}");
+                log?.Warn($"Failed to find variables for package {packageName}");
                 return null;
             }
 
@@ -65,7 +65,7 @@ namespace Calamari.Kubernetes.Helm
 
                 if (!currentFiles.Any() && string.IsNullOrEmpty(packageName)) // Chart archives have chart name root directory
                 {
-                    log.Verbose($"Unable to find values files at path `{valuePath}`. Chart package contains root directory with chart name, so looking for values in there.");
+                    log?.Verbose($"Unable to find values files at path `{valuePath}`. Chart package contains root directory with chart name, so looking for values in there.");
                     var chartRelativePath = Path.Combine(pathedPackedName, relativePath);
                     currentFiles = fileSystem.EnumerateFilesWithGlob(deployment.CurrentDirectory, chartRelativePath).ToList();
                 }
@@ -78,7 +78,7 @@ namespace Calamari.Kubernetes.Helm
                 foreach (var file in currentFiles)
                 {
                     var relative = file.Substring(Path.Combine(deployment.CurrentDirectory, sanitizedPackageReferenceName).Length);
-                    log.Info($"Including values file `{relative}` from package {pathedPackedName} v{version}");
+                    log?.Info($"Including values file `{relative}` from package {pathedPackedName} v{version}");
                     filenames.Add(file);
                 }
             }

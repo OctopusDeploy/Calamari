@@ -17,7 +17,6 @@ using Calamari.Deployment.Conventions;
 using Calamari.Kubernetes.Helm;
 using Calamari.Util;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Kubernetes.Conventions
@@ -192,7 +191,7 @@ namespace Calamari.Kubernetes.Conventions
 
         void SetOrderedTemplateValues(RunningDeployment deployment, StringBuilder sb)
         {
-            var filenames = HelmTemplateValueSourcesParser.ParseTemplateValuesSources(deployment, fileSystem, log);
+            var filenames = HelmTemplateValueSourcesParser.ParseTemplateValuesFilesFromAllSources(deployment, fileSystem, log);
 
             foreach (var filename in filenames)
             {

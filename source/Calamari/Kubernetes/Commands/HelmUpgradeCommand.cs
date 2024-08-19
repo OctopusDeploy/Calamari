@@ -20,6 +20,7 @@ using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Deployment.Conventions.DependencyVariables;
 using Calamari.Kubernetes.Conventions;
+using Calamari.Kubernetes.Helm;
 
 namespace Calamari.Kubernetes.Commands
 {
@@ -95,6 +96,7 @@ namespace Calamari.Kubernetes.Commands
                 new DelegateInstallConvention(d => substituteInFiles.Substitute(d.CurrentDirectory, DefaultValuesFiles().ToList(), false)),
                 // Any values files explicitly specified by the user will also have variable substitution applied
                 new DelegateInstallConvention(d => substituteInFiles.Substitute(d.CurrentDirectory, ExplicitlySpecifiedValuesFiles().ToList(), true)),
+                new DelegateInstallConvention(d => substituteInFiles.Substitute(d.CurrentDirectory, TemplateValuesFiles(d)  , true)),
                 new ConfiguredScriptConvention(new DeployConfiguredScriptBehaviour(log, fileSystem, scriptEngine, commandLineRunner)),
                 new HelmUpgradeConvention(log, scriptEngine, commandLineRunner, fileSystem),
                 new ConfiguredScriptConvention(new PostDeployConfiguredScriptBehaviour(log, fileSystem, scriptEngine, commandLineRunner))
@@ -137,6 +139,13 @@ namespace Calamari.Kubernetes.Commands
                     yield return Path.Combine(PackageDirectory(packageReferenceName), path);
                 }
             }
+        }
+        
+        IList<string> TemplateValuesFiles(RunningDeployment deployment)
+        {
+            //we pass null here for the log as we don't want to log the values files being included twice. They will be properly logged during the deployment
+            return HelmTemplateValueSourcesParser.ParseTemplateValuesFilesFromDependencies(deployment, fileSystem, null)
+                                                 .ToList();
         }
 
         string PackageDirectory(string packageReferenceName)
