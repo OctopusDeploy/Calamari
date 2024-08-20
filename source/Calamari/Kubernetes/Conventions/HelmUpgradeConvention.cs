@@ -17,7 +17,6 @@ using Calamari.Deployment.Conventions;
 using Calamari.Kubernetes.Helm;
 using Calamari.Util;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Kubernetes.Conventions
@@ -28,13 +27,15 @@ namespace Calamari.Kubernetes.Conventions
         readonly IScriptEngine scriptEngine;
         readonly ICommandLineRunner commandLineRunner;
         readonly ICalamariFileSystem fileSystem;
+        readonly HelmTemplateValueSourcesParser valueSourcesParser;
 
-        public HelmUpgradeConvention(ILog log, IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner, ICalamariFileSystem fileSystem)
+        public HelmUpgradeConvention(ILog log, IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner, ICalamariFileSystem fileSystem, HelmTemplateValueSourcesParser valueSourcesParser)
         {
             this.log = log;
             this.scriptEngine = scriptEngine;
             this.commandLineRunner = commandLineRunner;
             this.fileSystem = fileSystem;
+            this.valueSourcesParser = valueSourcesParser;
         }
 
         public void Install(RunningDeployment deployment)
@@ -192,7 +193,7 @@ namespace Calamari.Kubernetes.Conventions
 
         void SetOrderedTemplateValues(RunningDeployment deployment, StringBuilder sb)
         {
-            var filenames = HelmTemplateValueSourcesParser.ParseTemplateValuesSources(deployment, fileSystem, log);
+            var filenames = valueSourcesParser.ParseAndWriteTemplateValuesFilesFromAllSources(deployment);
 
             foreach (var filename in filenames)
             {

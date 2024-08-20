@@ -20,6 +20,7 @@ using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Deployment.Conventions.DependencyVariables;
 using Calamari.Kubernetes.Conventions;
+using Calamari.Kubernetes.Helm;
 
 namespace Calamari.Kubernetes.Commands
 {
@@ -29,32 +30,32 @@ namespace Calamari.Kubernetes.Commands
         PathToPackage pathToPackage;
         readonly ILog log;
         readonly IScriptEngine scriptEngine;
-        readonly IDeploymentJournalWriter deploymentJournalWriter;
         readonly IVariables variables;
         readonly ICalamariFileSystem fileSystem;
         readonly ISubstituteInFiles substituteInFiles;
         readonly IExtractPackage extractPackage;
+        readonly HelmTemplateValueSourcesParser templateValueSourcesParser;
         readonly ICommandLineRunner commandLineRunner;
 
         public HelmUpgradeCommand(
             ILog log,
             IScriptEngine scriptEngine,
-            IDeploymentJournalWriter deploymentJournalWriter,
             IVariables variables,
             ICommandLineRunner commandLineRunner,
             ICalamariFileSystem fileSystem,
             ISubstituteInFiles substituteInFiles,
-            IExtractPackage extractPackage
+            IExtractPackage extractPackage,
+            HelmTemplateValueSourcesParser templateValueSourcesParser
         )
         {
             Options.Add("package=", "Path to the NuGet package to install.", v => pathToPackage = new PathToPackage(Path.GetFullPath(v)));
             this.log = log;
             this.scriptEngine = scriptEngine;
-            this.deploymentJournalWriter = deploymentJournalWriter;
             this.variables = variables;
             this.fileSystem = fileSystem;
             this.substituteInFiles = substituteInFiles;
             this.extractPackage = extractPackage;
+            this.templateValueSourcesParser = templateValueSourcesParser;
             this.commandLineRunner = commandLineRunner;
         }
 
@@ -95,8 +96,9 @@ namespace Calamari.Kubernetes.Commands
                 new DelegateInstallConvention(d => substituteInFiles.Substitute(d.CurrentDirectory, DefaultValuesFiles().ToList(), false)),
                 // Any values files explicitly specified by the user will also have variable substitution applied
                 new DelegateInstallConvention(d => substituteInFiles.Substitute(d.CurrentDirectory, ExplicitlySpecifiedValuesFiles().ToList(), true)),
+                new DelegateInstallConvention(d => substituteInFiles.Substitute(d.CurrentDirectory, TemplateValuesFiles(d)  , true)),
                 new ConfiguredScriptConvention(new DeployConfiguredScriptBehaviour(log, fileSystem, scriptEngine, commandLineRunner)),
-                new HelmUpgradeConvention(log, scriptEngine, commandLineRunner, fileSystem),
+                new HelmUpgradeConvention(log, scriptEngine, commandLineRunner, fileSystem, templateValueSourcesParser),
                 new ConfiguredScriptConvention(new PostDeployConfiguredScriptBehaviour(log, fileSystem, scriptEngine, commandLineRunner))
             });
             
@@ -138,6 +140,9 @@ namespace Calamari.Kubernetes.Commands
                 }
             }
         }
+        
+        //we don't log the included files as they will have been done separately
+        IList<string> TemplateValuesFiles(RunningDeployment deployment) => templateValueSourcesParser.ParseTemplateValuesFilesFromDependencies(deployment, false).ToList();
 
         string PackageDirectory(string packageReferenceName)
         {

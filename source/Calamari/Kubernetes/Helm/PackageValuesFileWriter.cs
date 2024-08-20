@@ -12,20 +12,26 @@ namespace Calamari.Kubernetes.Helm
 {
     public static class PackageValuesFileWriter
     {
-        public static IEnumerable<string> FindChartValuesFiles(RunningDeployment deployment, ICalamariFileSystem fileSystem, ILog log, string valuesFilePaths)
+        public static IEnumerable<string> FindChartValuesFiles(RunningDeployment deployment,
+                                                               ICalamariFileSystem fileSystem,
+                                                               ILog log,
+                                                               string valuesFilePaths,
+                                                               bool logIncludedFiles = true)
             => FindPackageValuesFiles(deployment,
                                       fileSystem,
                                       log,
                                       valuesFilePaths,
                                       string.Empty,
-                                      string.Empty);
+                                      string.Empty,
+                                      logIncludedFiles);
 
         public static IEnumerable<string> FindPackageValuesFiles(RunningDeployment deployment,
                                                                  ICalamariFileSystem fileSystem,
                                                                  ILog log,
                                                                  string valuesFilePaths,
                                                                  string packageId,
-                                                                 string packageName)
+                                                                 string packageName,
+                                                                 bool logIncludedFiles = true)
         {
             var variables = deployment.Variables;
             var packageNames = variables.GetIndexes(PackageVariables.PackageCollection);
@@ -44,7 +50,7 @@ namespace Calamari.Kubernetes.Helm
                     return null;
                 }
             }
-            
+
             var valuesPaths = HelmValuesFileUtils.SplitValuesFilePaths(valuesFilePaths);
             if (valuesPaths == null || !valuesPaths.Any())
                 return null;
@@ -53,9 +59,9 @@ namespace Calamari.Kubernetes.Helm
             var errors = new List<string>();
 
             var sanitizedPackageReferenceName = PackageName.ExtractPackageNameFromPathedPackageId(fileSystem.RemoveInvalidFileNameChars(packageName));
-            
+
             var version = variables.Get(PackageVariables.IndexedPackageVersion(packageName));
-            
+
             //we get the package id here
             var pathedPackedName = PackageName.ExtractPackageNameFromPathedPackageId(variables.Get(PackageVariables.IndexedPackageId(packageName)));
             foreach (var valuePath in valuesPaths)
@@ -78,7 +84,12 @@ namespace Calamari.Kubernetes.Helm
                 foreach (var file in currentFiles)
                 {
                     var relative = file.Substring(Path.Combine(deployment.CurrentDirectory, sanitizedPackageReferenceName).Length);
-                    log.Info($"Including values file `{relative}` from package {pathedPackedName} v{version}");
+
+                    if (logIncludedFiles)
+                    {
+                        log.Info($"Including values file `{relative}` from package {pathedPackedName} v{version}");
+                    }
+
                     filenames.Add(file);
                 }
             }
