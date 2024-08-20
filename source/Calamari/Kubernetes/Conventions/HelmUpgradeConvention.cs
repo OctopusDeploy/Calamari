@@ -27,13 +27,15 @@ namespace Calamari.Kubernetes.Conventions
         readonly IScriptEngine scriptEngine;
         readonly ICommandLineRunner commandLineRunner;
         readonly ICalamariFileSystem fileSystem;
+        readonly HelmTemplateValueSourcesParser valueSourcesParser;
 
-        public HelmUpgradeConvention(ILog log, IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner, ICalamariFileSystem fileSystem)
+        public HelmUpgradeConvention(ILog log, IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner, ICalamariFileSystem fileSystem, HelmTemplateValueSourcesParser valueSourcesParser)
         {
             this.log = log;
             this.scriptEngine = scriptEngine;
             this.commandLineRunner = commandLineRunner;
             this.fileSystem = fileSystem;
+            this.valueSourcesParser = valueSourcesParser;
         }
 
         public void Install(RunningDeployment deployment)
@@ -191,7 +193,7 @@ namespace Calamari.Kubernetes.Conventions
 
         void SetOrderedTemplateValues(RunningDeployment deployment, StringBuilder sb)
         {
-            var filenames = HelmTemplateValueSourcesParser.ParseTemplateValuesFilesFromAllSources(deployment, fileSystem, log);
+            var filenames = valueSourcesParser.ParseAndWriteTemplateValuesFilesFromAllSources(deployment);
 
             foreach (var filename in filenames)
             {

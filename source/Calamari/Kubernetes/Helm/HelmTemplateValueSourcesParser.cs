@@ -9,9 +9,18 @@ using Newtonsoft.Json.Linq;
 
 namespace Calamari.Kubernetes.Helm
 {
-    public static class HelmTemplateValueSourcesParser
+    public class HelmTemplateValueSourcesParser
     {
-        public static IEnumerable<string> ParseTemplateValuesFilesFromAllSources(RunningDeployment deployment, ICalamariFileSystem fileSystem, ILog log)
+        readonly ICalamariFileSystem fileSystem;
+        readonly ILog log;
+
+        public HelmTemplateValueSourcesParser(ICalamariFileSystem fileSystem, ILog log)
+        {
+            this.fileSystem = fileSystem;
+            this.log = log;
+        }
+
+        public IEnumerable<string> ParseAndWriteTemplateValuesFilesFromAllSources(RunningDeployment deployment)
         {
             var templateValueSources = deployment.Variables.Get(SpecialVariables.Helm.TemplateValuesSources);
 
@@ -20,10 +29,10 @@ namespace Calamari.Kubernetes.Helm
 
             var parsedJsonArray = JArray.Parse(templateValueSources);
 
-            return ParseFilenamesFromTemplateValuesArray(deployment, fileSystem, log, parsedJsonArray);
+            return ParseFilenamesFromTemplateValuesArray(deployment, parsedJsonArray, true);
         }
 
-        public static IEnumerable<string> ParseTemplateValuesFilesFromDependencies(RunningDeployment deployment, ICalamariFileSystem fileSystem, ILog log)
+        public IEnumerable<string> ParseTemplateValuesFilesFromDependencies(RunningDeployment deployment, bool logIncludedFiles = true)
         {
             var templateValueSources = deployment.Variables.Get(SpecialVariables.Helm.TemplateValuesSources);
 
@@ -35,17 +44,15 @@ namespace Calamari.Kubernetes.Helm
             //we are only interested in the values files in external dependencies (chart/package/git repo), so filter this array
             var relevantTypes = parsedJsonArray.Where(t =>
                                                       {
-                                                          var type = (TemplateValuesSourceType)Enum.Parse(typeof(TemplateValuesSourceType),t.Value<string>(nameof(TemplateValuesSource.Type)));
+                                                          var type = (TemplateValuesSourceType)Enum.Parse(typeof(TemplateValuesSourceType), t.Value<string>(nameof(TemplateValuesSource.Type)));
                                                           return type == TemplateValuesSourceType.Chart || type == TemplateValuesSourceType.Package || type == TemplateValuesSourceType.GitRepository;
                                                       })
                                                .ToList();
-            
-            
-            
-            return ParseFilenamesFromTemplateValuesArray(deployment, fileSystem, log, relevantTypes);
+
+            return ParseFilenamesFromTemplateValuesArray(deployment, relevantTypes, logIncludedFiles);
         }
 
-        static List<string> ParseFilenamesFromTemplateValuesArray(RunningDeployment deployment, ICalamariFileSystem fileSystem, ILog log, IEnumerable<JToken> parsedJsonArray)
+        List<string> ParseFilenamesFromTemplateValuesArray(RunningDeployment deployment, IEnumerable<JToken> parsedJsonArray, bool logIncludedFiles)
         {
             var filenames = new List<string>();
             // we reverse the order of the array so that we maintain the order that sources at the top take higher precendences (i.e. are adding to the --values list later),
@@ -63,10 +70,10 @@ namespace Calamari.Kubernetes.Helm
                         switch (scriptSource)
                         {
                             case ScriptVariables.ScriptSourceOptions.Package:
-                                chartFilenames = PackageValuesFileWriter.FindChartValuesFiles(deployment, fileSystem, log, chartTvs.ValuesFilePaths);
+                                chartFilenames = PackageValuesFileWriter.FindChartValuesFiles(deployment, fileSystem, log, chartTvs.ValuesFilePaths, logIncludedFiles);
                                 break;
                             case ScriptVariables.ScriptSourceOptions.GitRepository:
-                                chartFilenames = GitRepositoryValuesFileWriter.FindChartValuesFiles(deployment, fileSystem, log, chartTvs.ValuesFilePaths);
+                                chartFilenames = GitRepositoryValuesFileWriter.FindChartValuesFiles(deployment, fileSystem, log, chartTvs.ValuesFilePaths, logIncludedFiles);
                                 break;
                             default:
                                 if (scriptSource is null)
@@ -96,7 +103,8 @@ namespace Calamari.Kubernetes.Helm
                                                                                               log,
                                                                                               packageTvs.ValuesFilePaths,
                                                                                               packageTvs.PackageId,
-                                                                                              packageTvs.PackageName);
+                                                                                              packageTvs.PackageName, 
+                                                                                              logIncludedFiles);
 
                         if (packageFilenames != null)
                         {
@@ -118,7 +126,8 @@ namespace Calamari.Kubernetes.Helm
                                                                                                                 fileSystem,
                                                                                                                 log,
                                                                                                                 gitRepTvs.GitDependencyName,
-                                                                                                                gitRepTvs.ValuesFilePaths);
+                                                                                                                gitRepTvs.ValuesFilePaths, 
+                                                                                                                logIncludedFiles);
 
                         if (gitRepositoryFilenames != null)
                         {

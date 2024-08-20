@@ -10,28 +10,32 @@ namespace Calamari.Kubernetes.Helm
 {
     public static class GitRepositoryValuesFileWriter
     {
-        public static IEnumerable<string> FindChartValuesFiles(RunningDeployment deployment, ICalamariFileSystem fileSystem, ILog log, string valuesFilePaths)
+        public static IEnumerable<string> FindChartValuesFiles(RunningDeployment deployment,
+                                                               ICalamariFileSystem fileSystem,
+                                                               ILog log,
+                                                               string valuesFilePaths,
+                                                               bool logIncludedFiles = true)
             => FindGitDependencyValuesFiles(deployment,
-                                      fileSystem,
-                                      log,
-                                      string.Empty,
-                                      valuesFilePaths);
-        
-        
+                                            fileSystem,
+                                            log,
+                                            string.Empty,
+                                            valuesFilePaths,
+                                            logIncludedFiles);
+
         public static IEnumerable<string> FindGitDependencyValuesFiles(RunningDeployment deployment,
                                                                        ICalamariFileSystem fileSystem,
                                                                        ILog log,
                                                                        string gitDependencyName,
-                                                                       string valuesFilePaths)
+                                                                       string valuesFilePaths,
+                                                                       bool logIncludedFiles = true)
         {
             var variables = deployment.Variables;
             var gitDependencyNames = variables.GetIndexes(Deployment.SpecialVariables.GitResources.GitResourceCollection);
             if (!gitDependencyNames.Contains(gitDependencyName))
             {
-                log?.Warn($"Failed to find variables for git resource {gitDependencyName}");
+                log.Warn($"Failed to find variables for git resource {gitDependencyName}");
                 return null;
             }
-
 
             var valuesPaths = HelmValuesFileUtils.SplitValuesFilePaths(valuesFilePaths);
             if (valuesPaths == null || !valuesPaths.Any())
@@ -44,7 +48,7 @@ namespace Calamari.Kubernetes.Helm
 
             var repositoryUrl = variables.Get(Deployment.SpecialVariables.GitResources.RepositoryUrl(gitDependencyName));
             var commitHash = variables.Get(Deployment.SpecialVariables.GitResources.CommitHash(gitDependencyName));
-            
+
             foreach (var valuePath in valuesPaths)
             {
                 var relativePath = Path.Combine(sanitizedPackageReferenceName, valuePath);
@@ -58,7 +62,12 @@ namespace Calamari.Kubernetes.Helm
                 foreach (var file in currentFiles)
                 {
                     var relative = file.Substring(Path.Combine(deployment.CurrentDirectory, sanitizedPackageReferenceName).Length);
-                    log?.Info($"Including values file `{relative}` from git repository {repositoryUrl}, commit {commitHash}");
+                    
+                    if (logIncludedFiles)
+                    {
+                        log.Info($"Including values file `{relative}` from git repository {repositoryUrl}, commit {commitHash}");
+                    }
+
                     filenames.Add(file);
                 }
             }
@@ -67,9 +76,8 @@ namespace Calamari.Kubernetes.Helm
             {
                 throw new CommandException(string.Join(Environment.NewLine, errors));
             }
-            
-            return filenames;
 
+            return filenames;
         }
     }
 }
