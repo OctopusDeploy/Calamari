@@ -2,20 +2,19 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Security.Policy;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using Azure.ResourceManager;
+using Azure.ResourceManager.AppService;
+using Azure.ResourceManager.Resources;
 using Calamari.Azure;
+using Calamari.Azure.AppServices;
 using Calamari.AzureWebApp.Util;
 using Calamari.CloudAccounts;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Logging;
-using Microsoft.Azure.Management.ResourceManager;
-using Microsoft.Azure.Management.WebSites;
-using Microsoft.Azure.Management.WebSites.Models;
-using Microsoft.Rest;
-using Microsoft.Rest.TransientFaultHandling;
 
 namespace Calamari.AzureWebApp.Integration.Websites.Publishing
 {
@@ -36,14 +35,27 @@ namespace Calamari.AzureWebApp.Integration.Websites.Publishing
             if (account.ActiveDirectoryEndpointBaseUri != DefaultVariables.ActiveDirectoryEndpoint)
                 log.InfoFormat("Using override for Azure Active Directory endpoint - {0}", account.ActiveDirectoryEndpointBaseUri);
 
-            var token = await account.GetAccessTokenAsync();
-            var baseUri = new Uri(account.ResourceManagementEndpointBaseUri);
+            var armClient = account.CreateArmClient();
 
-            using (var resourcesClient = new ResourceManagementClient(new TokenCredentials(token)) 
+            var resourceGroup = armClient.GetSubscriptionResource(SubscriptionResource.CreateResourceIdentifier(account.SubscriptionNumber))
+                                         .GetResourceGroups();
+
+            log.Verbose($"Looking up site {azureTargetSite.Site} {(string.IsNullOrWhiteSpace(resourceGroupName) ? string.Empty : $"in resourceGroup {resourceGroupName}")}");
+
+            //The resource group name is unknown, we need to find the app service in all the resource groups we can see
+            WebSiteResource webSite;
+            if (string.IsNullOrWhiteSpace(resourceGroupName))
             {
-                SubscriptionId = account.SubscriptionNumber,
-                BaseUri = baseUri,
-            })
+                webSite = await FindSiteByNameWithRetry(armClient, azureTargetSite) ?? throw new CommandException(GetSiteNotFoundExceptionMessage(account.SubscriptionNumber, azureTargetSite));
+                resourceGroupName = webSite.Data.ResourceGroup;
+            }
+            else
+            {
+                webSite = armClient.GetWebSiteResource(azureTargetSite.CreateWebSiteResourceIdentifier());
+                log.Verbose("Found site:");
+                logSite(webSite);
+            }
+
             using (var webSiteClient = new WebSiteManagementClient(new Uri(account.ResourceManagementEndpointBaseUri), new TokenCredentials(token)) { SubscriptionId = account.SubscriptionNumber })
             {
                 webSiteClient.SetRetryPolicy(new RetryPolicy(new HttpStatusCodeErrorDetectionStrategy(), 3));
@@ -85,12 +97,12 @@ namespace Calamari.AzureWebApp.Integration.Websites.Publishing
         {
             var options = new CsmPublishingProfileOptions { Format = "WebDeploy" };
             var stream = await (slot == null
-                ? webSiteClient.WebApps.ListPublishingProfileXmlWithSecretsAsync(resourceGroupName, site, options)
-                : webSiteClient.WebApps.ListPublishingProfileXmlWithSecretsSlotAsync(resourceGroupName,
-                    site,
-                    options,
-                    slot)
-            );
+                    ? webSiteClient.WebApps.ListPublishingProfileXmlWithSecretsAsync(resourceGroupName, site, options)
+                    : webSiteClient.WebApps.ListPublishingProfileXmlWithSecretsSlotAsync(resourceGroupName,
+                                                                                         site,
+                                                                                         options,
+                                                                                         slot)
+                );
             string text;
             using (var streamReader = new StreamReader(stream))
             {
@@ -100,14 +112,14 @@ namespace Calamari.AzureWebApp.Integration.Websites.Publishing
             var document = XDocument.Parse(text);
 
             var profile = (from el in document.Descendants("publishProfile")
-                where string.Compare(el.Attribute("publishMethod")?.Value, "MSDeploy", StringComparison.OrdinalIgnoreCase) == 0
-                select new
-                {
-                    PublishUrl = $"https://{el.Attribute("publishUrl")?.Value}",
-                    Username = el.Attribute("userName")?.Value,
-                    Password = el.Attribute("userPWD")?.Value,
-                    Site = el.Attribute("msdeploySite")?.Value
-                }).FirstOrDefault();
+                           where string.Compare(el.Attribute("publishMethod")?.Value, "MSDeploy", StringComparison.OrdinalIgnoreCase) == 0
+                           select new
+                           {
+                               PublishUrl = $"https://{el.Attribute("publishUrl")?.Value}",
+                               Username = el.Attribute("userName")?.Value,
+                               Password = el.Attribute("userPWD")?.Value,
+                               Site = el.Attribute("msdeploySite")?.Value
+                           }).FirstOrDefault();
 
             if (profile == null)
             {
@@ -117,8 +129,7 @@ namespace Calamari.AzureWebApp.Integration.Websites.Publishing
             return new WebDeployPublishSettings(profile.Site, new SitePublishProfile(profile.Username, profile.Password, new Uri(profile.PublishUrl)));
         }
 
-        async Task<Site> FindSiteByNameWithRetry(IAzureAccount account, AzureTargetSite azureTargetSite,
-            WebSiteManagementClient webSiteClient)
+        async Task<Site> FindSiteByNameWithRetry(IAzureAccount account, AzureTargetSite azureTargetSite)
         {
             Site matchingSite = null;
             var retry = AzureRetryTracker.GetDefaultRetryTracker();
@@ -126,7 +137,8 @@ namespace Calamari.AzureWebApp.Integration.Websites.Publishing
             {
                 var sites = await webSiteClient.WebApps.ListAsync();
                 var matchingSites = sites.Where(webApp =>
-                    string.Equals(webApp.Name, azureTargetSite.Site, StringComparison.OrdinalIgnoreCase)).ToList();
+                                                    string.Equals(webApp.Name, azureTargetSite.Site, StringComparison.OrdinalIgnoreCase))
+                                         .ToList();
 
                 logFoundSites(sites.ToList());
 
@@ -138,7 +150,7 @@ namespace Calamari.AzureWebApp.Integration.Websites.Publishing
                 if (matchingSites.Count > 1)
                 {
                     throw new CommandException(
-                        $"Found {matchingSites.Count} matching the site name '{azureTargetSite.Site}' in subscription '{account.SubscriptionNumber}'. Please supply a Resource Group name.");
+                                               $"Found {matchingSites.Count} matching the site name '{azureTargetSite.Site}' in subscription '{account.SubscriptionNumber}'. Please supply a Resource Group name.");
                 }
 
                 matchingSite = matchingSites.Single();
@@ -151,7 +163,7 @@ namespace Calamari.AzureWebApp.Integration.Websites.Publishing
                         if (retry.ShouldLogWarning())
                         {
                             log.Warn(
-                                $"Azure Site query failed to return the resource group, trying again in {retry.Sleep().TotalMilliseconds:n0} ms.");
+                                     $"Azure Site query failed to return the resource group, trying again in {retry.Sleep().TotalMilliseconds:n0} ms.");
                         }
 
                         matchingSite = null;
@@ -167,17 +179,73 @@ namespace Calamari.AzureWebApp.Integration.Websites.Publishing
             return matchingSite;
         }
 
-        string GetSiteNotFoundExceptionMessage(IAzureAccount account, AzureTargetSite azureTargetSite, string resourceGroupName = null)
+        async Task<WebSiteResource> FindWebSiteByNameWithRetry(SubscriptionResource subscriptionResource, AzureTargetSite azureTargetSite)
+        {
+            WebSiteResource webSite = null;
+            var retry = AzureRetryTracker.GetDefaultRetryTracker();
+            while (retry.Try() && webSite == null)
+            {
+                var allWebSites = subscriptionResource.GetWebSitesAsync();
+                var matchingSites = new List<WebSiteResource>();
+                await foreach (var site in allWebSites)
+                {
+                    if (site.Data.Name.Equals(azureTargetSite.Site, StringComparison.OrdinalIgnoreCase))
+                    {
+                        matchingSites.Add(site);
+                    }
+                }
+
+                logFoundSites(sites);
+
+                if (!matchingSites.Any())
+                {
+                    throw new CommandException(GetSiteNotFoundExceptionMessage(subscriptionResource.Data., azureTargetSite));
+                }
+
+                if (matchingSites.Count > 1)
+                {
+                    throw new CommandException(
+                                               $"Found {matchingSites.Count} matching the site name '{azureTargetSite.Site}' in subscription '{account.SubscriptionNumber}'. Please supply a Resource Group name.");
+                }
+                
+
+                webSite = matchingSites.Single();
+
+                // ensure the site loaded the resource group
+                if (string.IsNullOrWhiteSpace(webSite.ResourceGroup))
+                {
+                    if (retry.CanRetry())
+                    {
+                        if (retry.ShouldLogWarning())
+                        {
+                            log.Warn(
+                                     $"Azure Site query failed to return the resource group, trying again in {retry.Sleep().TotalMilliseconds:n0} ms.");
+                        }
+
+                        webSite = null;
+                        await Task.Delay(retry.Sleep());
+                    }
+                    else
+                    {
+                        throw new CommandException(GetSiteNotFoundExceptionMessage(account, azureTargetSite));
+                    }
+                }
+            }
+
+            return webSite;
+        }
+
+        string GetSiteNotFoundExceptionMessage(string subscriptionNumber, AzureTargetSite azureTargetSite, string resourceGroupName = null)
         {
             var hasResourceGroup = !string.IsNullOrWhiteSpace(resourceGroupName);
             var sb = new StringBuilder($"Could not find Azure WebSite '{azureTargetSite.Site}'");
             sb.Append(hasResourceGroup ? $" in resource group '{resourceGroupName}'" : string.Empty);
-            sb.Append($" in subscription '{account.SubscriptionNumber}'.");
+            sb.Append($" in subscription '{subscriptionNumber}'.");
             sb.Append(hasResourceGroup ? string.Empty : " Please supply a Resource Group name.");
             return sb.ToString();
         }
 
-        void logFoundSites(List<Site> sites)
+        void logFoundSites(List<WebSiteResource> sites)
         {
             if (sites.Any())
             {
@@ -189,7 +257,7 @@ namespace Calamari.AzureWebApp.Integration.Websites.Publishing
             }
         }
 
-        void logSite(Site site)
+        void logSite(WebSiteResource site)
         {
             if (site != null)
             {
