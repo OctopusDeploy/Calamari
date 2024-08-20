@@ -13,7 +13,7 @@ using Octostache;
 
 namespace Calamari.Tests.Fixtures.Certificates
 {
-    public class ImportCertificateFixture : CalamariFixture
+    public class ImportCertificateCommandFixture : CalamariFixture
     {
         readonly string certificateVariable = "FooCert";
         readonly string randomSubject = $"Subject-{Guid.NewGuid():d}";
