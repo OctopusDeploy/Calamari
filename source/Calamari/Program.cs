@@ -24,12 +24,9 @@ using Calamari.Kubernetes.Integration;
 using Calamari.Kubernetes.ResourceStatus;
 using Calamari.LaunchTools;
 using IContainer = Autofac.IContainer;
-#if !NET40
 using Calamari.Aws.Deployment;
-using Calamari.Azure;
 using Calamari.Azure.Kubernetes.Discovery;
 using Calamari.Kubernetes.Commands.Executors;
-#endif
 
 namespace Calamari
 {
@@ -70,7 +67,6 @@ namespace Calamari
             builder.RegisterType<CalamariCertificateStore>().As<ICertificateStore>().SingleInstance();
             builder.RegisterType<DeploymentJournalWriter>().As<IDeploymentJournalWriter>().SingleInstance();
             builder.RegisterType<PackageStore>().As<IPackageStore>().SingleInstance();
-#if !NET40
             builder.RegisterType<ResourceRetriever>().As<IResourceRetriever>().SingleInstance();
             builder.RegisterType<RunningResourceStatusCheck>().As<IRunningResourceStatusCheck>().SingleInstance();
             builder.RegisterType<ResourceStatusCheckTask>().AsSelf();
@@ -79,7 +75,6 @@ namespace Calamari
             builder.RegisterType<GatherAndApplyRawYamlExecutor>().As<IRawYamlKubernetesApplyExecutor>();
             builder.RegisterType<KustomizeExecutor>().As<IKustomizeKubernetesApplyExecutor>();
             builder.RegisterType<Timer>().As<ITimer>();
-#endif
             builder.RegisterType<Kubectl>().AsSelf().As<IKubectl>().InstancePerLifetimeScope();
             builder.RegisterType<KubectlGet>().As<IKubectlGet>().SingleInstance();
             builder.RegisterType<HelmTemplateValueSourcesParser>().AsSelf().SingleInstance();
@@ -122,14 +117,10 @@ namespace Calamari
 
         IEnumerable<Assembly> GetExtensionAssemblies()
         {
-#if !NET40
             //Calamari.Aws
             yield return typeof(AwsSpecialVariables).Assembly;
             //Calamari.Azure, this includes AzureOidcAccount
             yield return typeof(AzureKubernetesDiscoverer).Assembly;
-#else
-                return Enumerable.Empty<Assembly>();
-#endif
         }
 
         protected override IEnumerable<Assembly> GetAllAssembliesToRegister()
