@@ -71,6 +71,14 @@ namespace Calamari
             builder.RegisterType<RunningResourceStatusCheck>().As<IRunningResourceStatusCheck>().SingleInstance();
             builder.RegisterType<ResourceStatusCheckTask>().AsSelf();
             builder.RegisterType<ResourceUpdateReporter>().As<IResourceUpdateReporter>().SingleInstance();
+
+            //TODO: Once this runs on both netcore and full framework, this can be converted to a runtime conditional check
+#if WINDOWS_CERTIFICATE_STORE_SUPPORT 
+                builder.RegisterType<WindowsX509CertificateStore>().As<IWindowsX509CertificateStore>().SingleInstance();
+#else
+                builder.RegisterType<NoOpWindowsX509CertificateStore>().As<IWindowsX509CertificateStore>().SingleInstance();
+#endif
+
             builder.RegisterType<ResourceStatusReportExecutor>().As<IResourceStatusReportExecutor>();
             builder.RegisterType<GatherAndApplyRawYamlExecutor>().As<IRawYamlKubernetesApplyExecutor>();
             builder.RegisterType<KustomizeExecutor>().As<IKustomizeKubernetesApplyExecutor>();

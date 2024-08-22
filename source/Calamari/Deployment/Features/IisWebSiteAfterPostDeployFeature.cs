@@ -13,7 +13,13 @@ namespace Calamari.Deployment.Features
 {
     public class IisWebSiteAfterPostDeployFeature : IisWebSiteFeature
     {
+        readonly IWindowsX509CertificateStore windowsX509CertificateStore;
         public override string DeploymentStage => DeploymentStages.AfterPostDeploy;
+
+        public IisWebSiteAfterPostDeployFeature(IWindowsX509CertificateStore windowsX509CertificateStore)
+        {
+            this.windowsX509CertificateStore = windowsX509CertificateStore;
+        }
 
         public override void Execute(RunningDeployment deployment)
         {
@@ -21,16 +27,13 @@ namespace Calamari.Deployment.Features
 
             if (variables.GetFlag(SpecialVariables.Action.IisWebSite.DeployAsWebSite, false))
             {
-#if WINDOWS_CERTIFICATE_STORE_SUPPORT
                 // For any bindings using certificate variables, the application pool account
                 // must have access to the private-key.
                 EnsureApplicationPoolHasCertificatePrivateKeyAccess(variables);
-#endif
             }
         }
 
-#if WINDOWS_CERTIFICATE_STORE_SUPPORT
-        static void EnsureApplicationPoolHasCertificatePrivateKeyAccess(IVariables variables)
+        void EnsureApplicationPoolHasCertificatePrivateKeyAccess(IVariables variables)
         {
             foreach (var binding in GetEnabledBindings(variables))
             {
@@ -42,7 +45,7 @@ namespace Calamari.Deployment.Features
                 var thumbprint = variables.Get($"{certificateVariable}.{CertificateVariables.Properties.Thumbprint}");
                 var privateKeyAccess = CreatePrivateKeyAccessForApplicationPoolAccount(variables);
 
-                WindowsX509CertificateStore.AddPrivateKeyAccessRules(thumbprint,
+                windowsX509CertificateStore.AddPrivateKeyAccessRules(thumbprint,
                                                                      StoreLocation.LocalMachine,
                                                                      new List<PrivateKeyAccessRule> { privateKeyAccess });
             }
@@ -66,6 +69,13 @@ namespace Calamari.Deployment.Features
         static IdentityReference GetIdentityForApplicationPoolIdentity(ApplicationPoolIdentityType applicationPoolIdentityType,
                                                                        IVariables variables)
         {
+            //TODO: Once this only runs netcore we can remove this check (or potentially externalize the whole check)
+#if !NETFRAMEWORK
+            if (!OperatingSystem.IsWindows())
+            {
+                throw new InvalidOperationException("This code should only be reachable on Windows Platforms");
+            }
+#endif
             switch (applicationPoolIdentityType)
             {
                 case ApplicationPoolIdentityType.ApplicationPoolIdentity:
@@ -95,6 +105,5 @@ namespace Calamari.Deployment.Features
             //The following expression is to remove .\ from the beginning of usernames, we still allow for usernames in the format of machine\user or domain\user
             return Regex.Replace(username, "\\.\\\\(.*)", "$1", RegexOptions.None);
         }
-#endif
     }
 }
