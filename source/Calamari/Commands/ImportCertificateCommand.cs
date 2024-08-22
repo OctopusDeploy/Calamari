@@ -9,17 +9,18 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Integration.Certificates;
-
 namespace Calamari.Commands
 {
     [Command("import-certificate", Description = "Imports a X.509 certificate into a Windows certificate store")]
     public class ImportCertificateCommand : Command
     {
         readonly IVariables variables;
-        
-        public ImportCertificateCommand(IVariables variables)
+        readonly IWindowsX509CertificateStore windowsX509CertificateStore;
+
+        public ImportCertificateCommand(IVariables variables, IWindowsX509CertificateStore windowsX509CertificateStore)
         {
             this.variables = variables;
+            this.windowsX509CertificateStore = windowsX509CertificateStore;
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -50,16 +51,16 @@ namespace Calamari.Commands
                 {
                     Log.Info(
                         $"Importing certificate '{variables.Get($"{certificateVariable}.{CertificateVariables.Properties.Subject}")}' with thumbprint '{thumbprint}' into store '{storeLocation}\\{storeName}'");
-                    WindowsX509CertificateStore.ImportCertificateToStore(pfxBytes, password, storeLocation, storeName,
-                        privateKeyExportable);
+                    windowsX509CertificateStore.ImportCertificateToStore(pfxBytes, password, storeLocation, storeName,
+                                                                         privateKeyExportable);
 
                     if (storeLocation == StoreLocation.LocalMachine)
                     {
                         // Set private-key access
                         var privateKeyAccessRules = GetPrivateKeyAccessRules(variables);
                         if (privateKeyAccessRules.Any())
-                            WindowsX509CertificateStore.AddPrivateKeyAccessRules(thumbprint, storeLocation, storeName,
-                                privateKeyAccessRules);
+                            windowsX509CertificateStore.AddPrivateKeyAccessRules(thumbprint, storeLocation, storeName,
+                                                                                 privateKeyAccessRules);
                     }
                 }
                 else // Import into a specific user's store
@@ -74,8 +75,8 @@ namespace Calamari.Commands
 
                     Log.Info(
                         $"Importing certificate '{variables.Get($"{certificateVariable}.{CertificateVariables.Properties.Subject}")}' with thumbprint '{thumbprint}' into store '{storeName}' for user '{storeUser}'");
-                    WindowsX509CertificateStore.ImportCertificateToStore(pfxBytes, password, storeUser, storeName,
-                        privateKeyExportable);
+                    windowsX509CertificateStore.ImportCertificateToStore(pfxBytes, password, storeUser, storeName,
+                                                                         privateKeyExportable);
                 }
 
             }
@@ -122,10 +123,10 @@ namespace Calamari.Commands
             // Windows wants to launch an interactive confirmation dialog when importing into the Root store for a user.
             // https://github.com/OctopusDeploy/Issues/issues/3347
             if ((!storeLocation.HasValue || storeLocation.Value != StoreLocation.LocalMachine)
-                && storeName == WindowsX509CertificateStore.RootAuthorityStoreName)
+                && storeName == WindowsX509CertificateConstants.RootAuthorityStoreName)
             {
-                throw new CommandException($"When importing certificate into {WindowsX509CertificateStore.RootAuthorityStoreName} store, location must be '{StoreLocation.LocalMachine}'. " +
-                    $"Windows security restrictions prevent importing into the {WindowsX509CertificateStore.RootAuthorityStoreName} store for a user.");
+                throw new CommandException($"When importing certificate into {WindowsX509CertificateConstants.RootAuthorityStoreName} store, location must be '{StoreLocation.LocalMachine}'. " +
+                    $"Windows security restrictions prevent importing into the {WindowsX509CertificateConstants.RootAuthorityStoreName} store for a user.");
             }
         }
     }
