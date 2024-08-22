@@ -1,8 +1,8 @@
 terraform {
   required_providers {
-    azurerm = {
-      source  = "hashicorp/azurerm"
-      version = "3.109.0"
+    aws = {
+      source  = "hashicorp/aws"
+      version = ">= 3.45.0"
     }
     kubernetes = {
       source  = "hashicorp/kubernetes"
@@ -12,6 +12,5 @@ terraform {
   required_version = ">= 0.15"
 }
 
-provider "azurerm" {
-  features {}
+provider "aws" {
 }

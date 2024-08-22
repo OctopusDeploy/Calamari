@@ -53,7 +53,8 @@ namespace Calamari.Tests.KubernetesFixtures
             return new Dictionary<string, string>
             {
                 { "GOOGLE_CLOUD_KEYFILE_JSON", await ExternalVariables.Get(ExternalVariable.GoogleCloudJsonKeyfile, cancellationToken) },
-                { "USE_GKE_GCLOUD_AUTH_PLUGIN", "True" }
+                { "USE_GKE_GCLOUD_AUTH_PLUGIN", "True" },
+                { "TF_VAR_static_resource_prefix", StaticTestResourcePrefix }
             };
         }
 

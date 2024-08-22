@@ -117,7 +117,8 @@ namespace Calamari.Tests.KubernetesFixtures
                 { "AWS_ACCESS_KEY_ID", await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3AccessKey, cancellationToken) },
                 { "AWS_SECRET_ACCESS_KEY", await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3SecretKey, cancellationToken) },
                 { "AWS_DEFAULT_REGION", region },
-                { "TF_VAR_tests_source_dir", testFolder }
+                { "TF_VAR_tests_source_dir", testFolder },
+                { "TF_VAR_static_resource_prefix", StaticTestResourcePrefix }
             };
         }
 

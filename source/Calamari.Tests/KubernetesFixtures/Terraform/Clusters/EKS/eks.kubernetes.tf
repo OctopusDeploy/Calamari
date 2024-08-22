@@ -1,11 +1,3 @@
-data "aws_eks_cluster" "default" {
-  name = aws_eks_cluster.default.name
-}
-
-data "aws_eks_cluster_auth" "default" {
-  name = aws_eks_cluster.default.name
-}
-
 provider "kubernetes" {
   alias                  = "aws"
   host                   = data.aws_eks_cluster.default.endpoint
@@ -15,11 +7,11 @@ provider "kubernetes" {
 
 resource "local_file" "kubeconfig" {
   sensitive_content = templatefile("${path.module}/kubeconfig.tpl", {
-    cluster_name = aws_eks_cluster.default.name,
-    cluster_ca    = data.aws_eks_cluster.default.certificate_authority[0].data,
+    cluster_name = data.aws_eks_cluster.default.name,
+    cluster_ca   = data.aws_eks_cluster.default.certificate_authority[0].data,
     endpoint     = data.aws_eks_cluster.default.endpoint,
   })
-  filename = "./kubeconfig-${aws_eks_cluster.default.name}"
+  filename = "./kubeconfig-${data.aws_eks_cluster.default.name}"
 }
 
 resource "kubernetes_config_map" "aws_auth" {
