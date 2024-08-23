@@ -8,37 +8,37 @@ output "eks_secret_key" {
 }
 
 output "eks_iam_role_arn" {
-  value = aws_iam_role.user.arn
+  value = data.aws_iam_role.user.arn
 }
 
 output "eks_cluster_endpoint" {
   description = "Endpoint for EKS control plane."
-  value       = aws_eks_cluster.default.endpoint
+  value       = data.aws_eks_cluster.default.endpoint
 }
 
 output "eks_cluster_ca_certificate" {
-  value     = base64decode(aws_eks_cluster.default.certificate_authority[0].data)
+  value     = base64decode(data.aws_eks_cluster.default.certificate_authority[0].data)
   sensitive = true
 }
 
 output "eks_cluster_name" {
   description = "EKS name."
-  value       = aws_eks_cluster.default.name
+  value       = data.aws_eks_cluster.default.name
 }
 
 output "eks_cluster_arn" {
   description = "EKS ARN"
-  value       = aws_eks_cluster.default.arn
+  value       = data.aws_eks_cluster.default.arn
 }
 
 output "aws_vpc_id" {
-  value = aws_vpc.default.id
+  value = one(data.aws_eks_cluster.default.vpc_config[*].vpc_id)
 }
 
 output "aws_subnet_id" {
-  value = aws_subnet.default[0].id
+  value = tolist(data.aws_eks_cluster.default.vpc_config[0].subnet_ids)[0]
 }
 
 output "aws_iam_instance_profile_name" {
-  value = aws_iam_instance_profile.profile.name
+  value = data.aws_iam_instance_profile.profile.name
 }
