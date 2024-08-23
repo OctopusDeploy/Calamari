@@ -1,5 +1,5 @@
 data "aws_iam_role" "iam_role_with_cluster_access" {
-  name = "calamari-testing-static-iam-role-with-cluster-access"
+  name = "${var.static_resource_prefix}-iam-role-with-cluster-access"
 }
 
 data "aws_eks_cluster" "default" {
@@ -7,11 +7,11 @@ data "aws_eks_cluster" "default" {
 }
 
 data "aws_iam_instance_profile" "profile" {
-  name = "calamari-testing-static-instance-profile"
+  name = "${var.static_resource_prefix}-instance-profile"
 }
 
 resource "aws_iam_user" "default" {
-  name = "calamari-testing-static-${random_pet.name}"
+  name = "${var.static_resource_prefix}-${random_pet.name}"
   path = "/test/"
 }
 

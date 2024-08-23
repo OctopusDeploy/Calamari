@@ -145,7 +145,7 @@ data "aws_iam_policy_document" "ec2Role" {
 }
 
 resource "aws_iam_instance_profile" "profile" {
-  name = "eddym-calamari-test-instance-profile"
+  name = "${var.static_resource_prefix}-instance-profile"
   role = aws_iam_role.ec2.name
 }
 
@@ -155,7 +155,7 @@ resource "aws_iam_role" "ec2" {
 }
 
 resource "aws_iam_role" "user" {
-  name = "eddym-calamari-test-user-role-assumption"
+  name = "${var.static_resource_prefix}-iam-role-with-cluster-access"
   assume_role_policy = data.aws_iam_policy_document.userRole.json
   managed_policy_arns = [
     aws_iam_policy.default.arn
@@ -194,7 +194,7 @@ resource "aws_iam_access_key" "default" {
 }
 
 resource "aws_iam_user" "default" {
-  name = "eddym-calamari-test"
+  name = "${var.static_resource_prefix}-user"
   path = "/test/"
 }
 
