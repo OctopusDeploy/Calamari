@@ -4,7 +4,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace Calamari.FullFrameworkTools.Command
+namespace Calamari.FullFrameworkTools.Utils
 {
     public class AesEncryption
     {

@@ -18,7 +18,8 @@
         <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
         <Description>Contains the command-line Calamari tool that is used by Tentacle to perform depoyment actions on machines.</Description>
         <TargetFramework>net462</TargetFramework>
-        <LangVersion>latest</LangVersion>
+        <LangVersion>10</LangVersion>
+        
     </PropertyGroup>
     <PropertyGroup Condition=" '$(TargetFramework)' == 'net462' ">
         <DefineConstants>$(DefineConstants);IIS_SUPPORT;WINDOWS_CERTIFICATE_STORE_SUPPORT</DefineConstants>
@@ -30,11 +31,8 @@
     <ItemGroup>
         <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies.net462" Version="1.0.2" />
         <PackageReference Include="Microsoft.Web.Administration" Version="7.0.0.0" />
-        <PackageReference Include="System.Text.Json" Version="8.0.4" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+        <PackageReference Include="BouncyCastle" Version="1.8.1-octopus" />
         <Reference Include="System.DirectoryServices" />
-    </ItemGroup>
-    <ItemGroup>
-      <Compile Remove="WindowsCertStore\WindowsX509CertificateStore.cs" />
-      <Compile Remove="WindowsCertStore\SystemSemaphoreManager.cs" />
     </ItemGroup>
 </Project>

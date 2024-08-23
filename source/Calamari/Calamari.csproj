@@ -108,8 +108,14 @@
       <FSharpFiles Include="$(FSharpCompilerTools)" />
       <ScriptCSFiles Include="$(ScriptCS)" />
       <DotnetScriptFiles Include="$(MSBuildProjectDirectory)/../Calamari.Scripting/DotnetScript/dotnet-script.*.zip" Condition="'$(TargetFramework)' == 'net6.0'" />
+      <FullFrameworkFiles Include="$(MSBuildProjectDirectory)/../Calamari.FullFrameworkTools/bin/Debug/net462/*" />
     </ItemGroup>
   </Target>
+  
+  <Target Name="CopyExe" AfterTargets="Build" >
+    <Copy SourceFiles="@(FullFrameworkFiles)" DestinationFolder="$(OutDir)/Calamari.FullFrameworkTools/" />
+  </Target>
+  
   <Target Name="CopyToolsAfterBuild" AfterTargets="Build" DependsOnTargets="GetToolFiles">
     <Copy SourceFiles="@(FSharpFiles)" DestinationFolder="$(OutDir)/FSharp/" />
     <Copy SourceFiles="@(ScriptCSFiles)" DestinationFolder="$(OutDir)/ScriptCS/" />

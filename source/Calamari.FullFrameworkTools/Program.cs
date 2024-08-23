@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Diagnostics;
 using Calamari.FullFrameworkTools.Command;
+using Calamari.FullFrameworkTools.Iis;
+using Calamari.FullFrameworkTools.WindowsCertStore;
 
 namespace Calamari.FullFrameworkTools
 {
@@ -8,22 +10,22 @@ namespace Calamari.FullFrameworkTools
     {
         public static int Main(string[] args)
         {
-            var log = new Log();
-            if (ExtractArgs(args, out var cmd, out var password, out var file))
+            var log = new SerializedLog();
+            if (!ExtractArgs(args, out var cmd, out var password, out var file))
             {
                 WriteHelp();
                 return -1;
             }
-
-            var commandLocator = new CommandLocator();
-            var requestInvoker = new CommandRequestInvoker(commandLocator);
-
             if (cmd == "version")
             {
                 var fileVersionInfo = FileVersionInfo.GetVersionInfo(typeof(Program).Assembly.Location);
                 log.Info(fileVersionInfo.ProductVersion);
+                return 1;
             }
 
+            var commandLocator = new RequestTypeLocator();
+            var commandHandler = new CommandHandler(new WindowsX509CertificateStore(log), new InternetInformationServer());
+            var requestInvoker = new CommandRequestInvoker(commandLocator, commandHandler);
             try
             {
                 var result = requestInvoker.Run(cmd, password, file);

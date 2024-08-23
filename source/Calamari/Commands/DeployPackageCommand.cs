@@ -91,7 +91,7 @@ namespace Calamari.Commands
             var embeddedResources = new AssemblyEmbeddedResources();
 #if IIS_SUPPORT
             var iis = OctopusFeatureToggles.FullFrameworkTasksExternalProcess.IsEnabled(variables) ? 
-                new InternetInformationServer(): (IInternetInformationServer)new InProcessFullFrameworkToolInternetInformationServer();
+                new InternetInformationServer(): (IInternetInformationServer)new LegacyInternetInformationServer(new InProcessInvoker());
             featureClasses.AddRange(new IFeature[] { new IisWebSiteBeforeDeployFeature(windowsX509CertificateStore), new IisWebSiteAfterPostDeployFeature(windowsX509CertificateStore) });
 #endif
             if (!CalamariEnvironment.IsRunningOnWindows)

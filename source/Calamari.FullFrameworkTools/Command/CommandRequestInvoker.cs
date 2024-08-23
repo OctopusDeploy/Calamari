@@ -1,30 +1,54 @@
 ﻿using System;
 using System.IO;
-using System.Text.Json;
+using System.Linq;
 using Calamari.FullFrameworkTools.Iis;
+using Calamari.FullFrameworkTools.Utils;
+using Calamari.FullFrameworkTools.WindowsCertStore;
+using Newtonsoft.Json;
 
 namespace Calamari.FullFrameworkTools.Command
 {
+
+    public interface IRequestTypeLocator
+    {
+        Type FindType(string command);
+    }
+
+    public class RequestTypeLocator: IRequestTypeLocator
+    {
+        public Type FindType(string command)
+        {
+            var allRequests = typeof(IRequest).Assembly.GetTypes().Where(t => typeof(IRequest).IsAssignableFrom(t));
+            var request = allRequests.FirstOrDefault(n => n.Name.Equals(command));
+            if (request is null)
+            {
+                throw new Exception($"Unable to find command `{command}`");
+            }
+
+            return request;
+        }
+    }
     public class CommandRequestInvoker
     {
-        readonly ICommandLocator commandLocator;
+        readonly IRequestTypeLocator requestTypeLocator;
+        readonly ICommandHandler commandLocator;
 
-        public CommandRequestInvoker(ICommandLocator commandLocator)
+        public CommandRequestInvoker(IRequestTypeLocator requestTypeLocator, ICommandHandler commandLocator)
         {
+            this.requestTypeLocator = requestTypeLocator;
             this.commandLocator = commandLocator;
         }
 
         public object Run(string command, string content)
         {
-            var commandHandler = commandLocator.GetCommand(command);
-            if (commandHandler == null)
+            var requestType = requestTypeLocator.FindType(command);
+            var requestObject = (IRequest)JsonConvert.DeserializeObject(content, requestType);
+            if (requestObject is null)
             {
-                throw new CommandException($"Unknown command {command}");
+                throw new Exception($"Unable to find deserialize request `{command}`");
             }
-
-            var requestType = commandHandler.GetType().BaseType.GetGenericArguments()[0]; //Probably proper type checking
-            var requestObject = JsonSerializer.Deserialize(content, requestType, new JsonSerializerOptions());
-            return commandHandler.Handle(requestObject);
+            
+            return commandLocator.Handle(requestObject);
         }
 
         public object Run(string command, string encryptionPassword, string filePath)

@@ -1,12 +1,15 @@
 using System;
-using System.Text.Json;
-using System.Text.Json.Serialization;
+using System.Collections.Generic;
+using Newtonsoft.Json;
+using JsonConverter = Newtonsoft.Json.JsonConverter;
 
 namespace Calamari.FullFrameworkTools.Command
 {
-    public class Log: ILog
+    public class SerializedLog: ILog
     {
-        private enum LogLevel
+        static readonly JsonSerializerSettings Settings = new() { Converters = new List<JsonConverter>() { new Newtonsoft.Json.Converters.StringEnumConverter() } };
+
+        enum LogLevel
         {
             Verbose,
             Info,
@@ -18,20 +21,20 @@ namespace Calamari.FullFrameworkTools.Command
 
         public void Verbose(string message)
         {
-            var line = JsonSerializer.Serialize(new { Level = LogLevel.Verbose.ToString(), Message = message });
+            var line =  JsonConvert.SerializeObject(new { Level = LogLevel.Verbose.ToString(), Message = message }, Settings);
             Console.WriteLine(line);
         }
 
         public void Error(string message)
         {
-            var line = JsonSerializer.Serialize(new { Level = LogLevel.Error.ToString(), Message = message });
+            var line = JsonConvert.SerializeObject(new { Level = LogLevel.Error.ToString(), Message = message }, Settings);
             Console.WriteLine(line);
         }
 
         public void Fatal(Exception exception)
         {
             // For simplicity lets not assume Inner exceptions right now....
-            var line = JsonSerializer.Serialize(new
+            var line =  JsonConvert.SerializeObject(new
             {
                 Level = LogLevel.Fatal.ToString(),
                 Message = exception.Message,
@@ -43,18 +46,18 @@ namespace Calamari.FullFrameworkTools.Command
 
         string Serialize(LogLevel level, string message)
         {
-            return JsonSerializer.Serialize(new { Level = level.ToString(), Message = message});
+            return  JsonConvert.SerializeObject(new { Level = level.ToString(), Message = message}, Settings);
         }
         
         public void Info(string message)
         {
-            var line = JsonSerializer.Serialize(new { Level = LogLevel.Info, Message = message });
+            var line =  JsonConvert.SerializeObject(new { Level = LogLevel.Info, Message = message }, Settings);
             Console.WriteLine(line);
         }
 
         public void Result(object result)
         {
-            var line = JsonSerializer.Serialize(new { Level = LogLevel.Result, Result = result});
+            var line =  JsonConvert.SerializeObject(new { Level = LogLevel.Result, Result = result}, Settings);
             Console.WriteLine(line);
         }
     }

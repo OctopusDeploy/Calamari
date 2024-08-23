@@ -11,6 +11,7 @@
         <StartupObject />
         <TargetFramework>net462</TargetFramework>
         <RootNamespace>Calamari.FullFrameworkTools.Tests</RootNamespace>
+        
     </PropertyGroup>
     <!--<PropertyGroup Condition=" '$(TargetFramework)' == 'net462' ">
         <DefineConstants>$(DefineConstants);NETFX;AWS;IIS_SUPPORT;USE_NUGET_V2_LIBS;USE_OCTODIFF_EXE;WINDOWS_CERTIFICATE_STORE_SUPPORT;WINDOWS_USER_ACCOUNT_SUPPORT;WINDOWS_REGISTRY_SUPPORT</DefineConstants>

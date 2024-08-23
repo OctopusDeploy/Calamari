@@ -1,7 +1,7 @@
-using System;
-using Calamari.FullFrameworkTools.Iis;
+/*using System;
+using Calamari.FullFrameworkTools.Command;
 
-namespace Calamari.FullFrameworkTools.Command
+namespace Calamari.FullFrameworkTools.Iis
 {
     public class OverwriteHomeDirectoryHandler : FullFrameworkToolCommandHandler<OverwriteHomeDirectoryRequest, OverwriteHomeDirectoryResponse>
     {
@@ -31,4 +31,4 @@ namespace Calamari.FullFrameworkTools.Command
 
         public bool Result { get; set; }
     }
-}
+}*/

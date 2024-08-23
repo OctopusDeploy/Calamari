@@ -18,7 +18,7 @@ namespace Calamari.Tests.Logger
         {
             const string placeholder = "<placeholder-for-secrets>";
             Func<string,string> logMessage = s => $"here is my super cool message with {s} but is it redacted?";
-            var log = new TestLog();
+            var log = new TestSerializedLog();
             log.AddValueToRedact(Password, placeholder);
             log.Info(logMessage(Password));
 
@@ -31,7 +31,7 @@ namespace Calamari.Tests.Logger
         {
             const string logMessage = "here is a message with " + Password + " and other text";
             const string logFormatString = "here is a log format string {0} where  stuff is added in the middle";
-            var log = new TestLog();
+            var log = new TestSerializedLog();
             log.AddValueToRedact(Password, "<password>");
             log.Error(logMessage);
             log.ErrorFormat(logFormatString, Password);
@@ -56,7 +56,7 @@ namespace Calamari.Tests.Logger
             act.Should().NotThrow(because: "you can update the placeholder for a given redacted value.");
         }
 
-        public class TestLog : AbstractLog
+        public class TestSerializedLog : AbstractLog
         {
             public List<string> AllOutput { get; } = new List<string>();
             protected override void StdOut(string message)

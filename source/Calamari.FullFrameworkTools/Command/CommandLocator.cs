@@ -1,7 +1,8 @@
-﻿using System;
+﻿/*using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Calamari.FullFrameworkTools.Iis;
 
 namespace Calamari.FullFrameworkTools.Command
 {
@@ -43,4 +44,4 @@ namespace Calamari.FullFrameworkTools.Command
             }
         }
     }
-}
+}*/
