@@ -136,7 +136,7 @@ namespace Calamari.Kubernetes.Commands
 
                 foreach (var path in paths)
                 {
-                    yield return Path.Combine(PackageDirectory(packageReferenceName), path);
+                    yield return Path.Combine(PackageDirectory(prn), path);
                 }
             }
         }
