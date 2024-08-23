@@ -8,7 +8,7 @@ output "eks_secret_key" {
 }
 
 output "eks_iam_role_arn" {
-  value = data.aws_iam_role.user.arn
+  value = data.aws_iam_role.iam_role_with_cluster_access.arn
 }
 
 output "eks_cluster_endpoint" {

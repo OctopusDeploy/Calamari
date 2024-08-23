@@ -11,7 +11,7 @@ data "aws_iam_instance_profile" "profile" {
 }
 
 resource "aws_iam_user" "default" {
-  name = "${var.static_resource_prefix}-${random_pet.name}"
+  name = "${var.static_resource_prefix}-${random_pet.name.id}"
   path = "/test/"
 }
 
@@ -26,7 +26,7 @@ data "aws_iam_policy_document" "user" {
       "sts:AssumeRole"
     ]
     
-    resources = [data.aws_iam_role.user.arn]
+    resources = [data.aws_iam_role.iam_role_with_cluster_access.arn]
   }
 }
 

@@ -65,6 +65,10 @@ namespace Calamari.Tests.KubernetesFixtures
         private const string SimpleConfigMap2ResourceName = "game-demo2";
         private const string SimpleConfigMap2 =
             "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: game-demo2\ndata:\n  player_initial_lives: '1'\n  ui_properties_file_name: 'user-interface.properties'\n  game.properties: |\n    enemy.types=blobs,foxes\n    player.maximum-lives=10\n  user-interface.properties: |\n    color.good=orange\n    color.bad=pink\n    allow.textmode=false";
+
+        string awsAccessKey;
+        string awsSecretKey;
+        
         string eksClientID;
         string eksSecretKey;
         string eksClusterEndpoint;
@@ -81,7 +85,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
         protected override async Task PreInitialise()
         {
-            region = RegionRandomiser.GetARegion();
+            region = "ap-southeast-1";
             await TestContext.Progress.WriteLineAsync($"Aws Region chosen: {region}");
         }
 
@@ -112,12 +116,16 @@ namespace Calamari.Tests.KubernetesFixtures
 
         protected override async Task<Dictionary<string, string>> GetEnvironmentVars(CancellationToken cancellationToken)
         {
+            awsAccessKey = await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3AccessKey, cancellationToken);
+            awsSecretKey = await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3SecretKey, cancellationToken);
+            
             return new Dictionary<string, string>
             {
-                { "AWS_ACCESS_KEY_ID", await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3AccessKey, cancellationToken) },
-                { "AWS_SECRET_ACCESS_KEY", await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3SecretKey, cancellationToken) },
+                { "AWS_ACCESS_KEY_ID", awsAccessKey },
+                { "AWS_SECRET_ACCESS_KEY", awsSecretKey },
                 { "AWS_DEFAULT_REGION", region },
-                { "TF_VAR_tests_source_dir", testFolder }
+                { "TF_VAR_tests_source_dir", testFolder },
+                { "TF_VAR_static_resource_prefix", StaticTestResourcePrefix }
             };
         }
 
@@ -383,8 +391,8 @@ namespace Calamari.Tests.KubernetesFixtures
 
             try
             {
-                Environment.SetEnvironmentVariable(accessKeyEnvVar, eksClientID);
-                Environment.SetEnvironmentVariable(secretKeyEnvVar, eksSecretKey);
+                Environment.SetEnvironmentVariable(accessKeyEnvVar, awsAccessKey);
+                Environment.SetEnvironmentVariable(secretKeyEnvVar, awsSecretKey);
 
                 var authenticationDetails = new AwsAuthenticationDetails<AwsWorkerCredentials>
                 {
@@ -428,8 +436,8 @@ namespace Calamari.Tests.KubernetesFixtures
                 {
                     Account = new AwsAccessKeyCredentials
                     {
-                        AccessKey = eksClientID,
-                        SecretKey = eksSecretKey
+                        AccessKey = awsAccessKey,
+                        SecretKey = awsSecretKey
                     },
                     AccountId = "Accounts-1",
                     Type = "account"
@@ -608,15 +616,15 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set(KubernetesSpecialVariables.EksClusterName, eksClusterName);
             variables.Set("Octopus.Action.Aws.Region", region);
             variables.Set("Octopus.Action.AwsAccount.Variable", account);
-            variables.Set($"{account}.AccessKey", eksClientID);
-            variables.Set($"{account}.SecretKey", eksSecretKey);
+            variables.Set($"{account}.AccessKey", awsAccessKey);
+            variables.Set($"{account}.SecretKey", awsSecretKey);
             variables.Set("Octopus.Action.Kubernetes.CertificateAuthority", certificateAuthority);
             variables.Set($"{certificateAuthority}.CertificatePem", eksClusterCaCertificate);
         }
 
         private void SetVariablesForRawYamlCommand(string globPaths)
         {
-            variables.Set("Octopus.Action.KubernetesContainers.Namespace", "nginx");
+            variables.Set("Octopus.Action.KubernetesContainers.Namespace", "nginx-2");
             variables.Set(KnownVariables.Package.JsonConfigurationVariablesTargets, "**/*.{yml,yaml}");
             variables.Set(KubernetesSpecialVariables.CustomResourceYamlFileName, globPaths);
         }
