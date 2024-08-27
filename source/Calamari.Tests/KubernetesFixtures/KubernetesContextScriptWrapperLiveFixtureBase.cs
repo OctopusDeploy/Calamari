@@ -28,7 +28,7 @@ namespace Calamari.Tests.KubernetesFixtures
     {
         protected const string TestNamespace = "calamari-testing";
         protected const string StaticTestResourcePrefix = "calamari-testing-static";
-        
+
         protected IVariables variables;
         protected string testFolder;
 
