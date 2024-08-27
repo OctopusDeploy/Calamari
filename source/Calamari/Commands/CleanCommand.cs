@@ -39,7 +39,7 @@ namespace Calamari.Commands
             if (days <=0 && releases <= 0)
                 throw new CommandException("A value must be provided for either --days or --releases");
 
-            var deploymentJournal = new DeploymentJournal(fileSystem, SemaphoreFactory.Get(), variables);
+            var deploymentJournal = new DeploymentJournal(fileSystem, new SystemSemaphoreManager(), variables);
             var clock = new SystemClock();
 
             var retentionPolicy = new RetentionPolicy(fileSystem, deploymentJournal, clock);
