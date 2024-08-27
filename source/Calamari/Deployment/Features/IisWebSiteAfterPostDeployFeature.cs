@@ -41,12 +41,9 @@ namespace Calamari.Deployment.Features
 
                 var thumbprint = variables.Get($"{certificateVariable}.{CertificateVariables.Properties.Thumbprint}");
                 var privateKeyAccess = CreatePrivateKeyAccessForApplicationPoolAccount(variables);
- 
-                var storeName = IisWebSiteBeforeDeployFeature.FindCertificateInLocalMachineStore(thumbprint);
 
                 WindowsX509CertificateStore.AddPrivateKeyAccessRules(thumbprint,
                                                                      StoreLocation.LocalMachine,
-                                                                     storeName,
                                                                      new List<PrivateKeyAccessRule> { privateKeyAccess });
             }
         }

@@ -141,7 +141,7 @@ namespace Calamari.Tests.KubernetesFixtures
                     TestContext.Error.WriteLine(e);
                 });
         
-            result.ExitCode.Should().Be(0, because: $"`terraform {args[0]}` should run without error and exit cleanly during infrastructure setup. Error output: \r\n{result.ErrorOutput}");
+            result.ExitCode.Should().Be(0, because: $"`terraform {args[0]}` should run without error and exit cleanly during infrastructure setup. Error output: \\r\\n{{result.ErrorOutput}}\");");
         
             return stdOut.ToString().Trim(Environment.NewLine.ToCharArray());
         }
