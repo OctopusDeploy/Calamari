@@ -21,7 +21,7 @@ namespace Calamari.Tests.KubernetesFixtures
             var variables = new CalamariVariables();
             
             var yaml = @"foo: bar";
-            using (CreteFile(yaml, out var filePath))
+            using (CreateFile(yaml, out var filePath))
             {
                 var mr = new ManifestReporter(variables, CalamariPhysicalFileSystem.GetPhysicalFileSystem(), memoryLog);
 
@@ -38,7 +38,7 @@ namespace Calamari.Tests.KubernetesFixtures
             var variables = new CalamariVariables();
             
             var yaml = @"text - Bar";
-            using (CreteFile(yaml, out var filePath))
+            using (CreateFile(yaml, out var filePath))
             {
                 var mr = new ManifestReporter(variables, CalamariPhysicalFileSystem.GetPhysicalFileSystem(), memoryLog);
 
@@ -56,7 +56,7 @@ namespace Calamari.Tests.KubernetesFixtures
             var yaml = @"metadata:
   name: game-demo
   namespace: XXX";
-            using (CreteFile(yaml, out var filePath))
+            using (CreateFile(yaml, out var filePath))
             {
                 var variableNs = Some.String();
                 variables.Set(SpecialVariables.Namespace, variableNs);
@@ -74,7 +74,7 @@ namespace Calamari.Tests.KubernetesFixtures
             var memoryLog = new InMemoryLog();
             var variables = new CalamariVariables();
             var yaml = @"foo: bar";
-            using (CreteFile(yaml, out var filePath))
+            using (CreateFile(yaml, out var filePath))
             {
                 var variableNs = Some.String();
                 variables.Set(SpecialVariables.Namespace, variableNs);
@@ -92,7 +92,7 @@ namespace Calamari.Tests.KubernetesFixtures
             var memoryLog = new InMemoryLog();
             var variables = new CalamariVariables();
             var yaml = @"foo: bar";
-            using (CreteFile(yaml, out var filePath))
+            using (CreateFile(yaml, out var filePath))
             {
                 var mr = new ManifestReporter(variables, CalamariPhysicalFileSystem.GetPhysicalFileSystem(), memoryLog);
 
@@ -102,7 +102,7 @@ namespace Calamari.Tests.KubernetesFixtures
             }
         }
 
-        IDisposable CreteFile(string yaml, out string filePath)
+        IDisposable CreateFile(string yaml, out string filePath)
         {
             var tempDir = TemporaryDirectory.Create();
             filePath = Path.Combine(tempDir.DirectoryPath, $"{Guid.NewGuid():d}.tmp");
