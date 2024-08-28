@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing.FileSystem;
-using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes;
 using Calamari.Kubernetes.Commands;
@@ -27,6 +26,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
     {
         readonly ICalamariFileSystem fileSystem = TestCalamariPhysicalFileSystem.GetPhysicalFileSystem();
         readonly ICommandLineRunner commandLineRunner = Substitute.For<ICommandLineRunner>();
+        readonly IManifestReporter manifestReporter = Substitute.For<IManifestReporter>();
 
         InMemoryLog log;
         List<ResourceIdentifier> receivedCallbacks;
@@ -337,7 +337,8 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
         IRawYamlKubernetesApplyExecutor CreateExecutor(IVariables variables, ICalamariFileSystem fs)
         {
             var kubectl = new Kubectl(variables, log, commandLineRunner);
-            return new GatherAndApplyRawYamlExecutor(log, fs, kubectl);
+            
+            return new GatherAndApplyRawYamlExecutor(log, fs, manifestReporter, kubectl);
         }
 
         Task RecordingCallback(ResourceIdentifier[] identifiers)

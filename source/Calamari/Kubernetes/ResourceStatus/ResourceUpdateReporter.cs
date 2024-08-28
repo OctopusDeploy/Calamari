@@ -99,7 +99,7 @@ namespace Calamari.Kubernetes.ResourceStatus
                 {"checkCount", checkCount.ToString()}
             };
 
-            var message = new ServiceMessage(SpecialVariables.KubernetesResourceStatusServiceMessageName, parameters);
+            var message = new ServiceMessage(SpecialVariables.ServiceMessageNames.ResourceStatus.Name, parameters);
             log.WriteServiceMessage(message);
         }
     }
