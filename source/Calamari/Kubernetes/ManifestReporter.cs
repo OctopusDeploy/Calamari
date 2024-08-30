@@ -17,14 +17,17 @@ namespace Calamari.Kubernetes
         void ReportManifestApplied(string filePath);
     }
 
-    public class ManifestReporter
+    public class ManifestReporter : IManifestReporter
     {
         readonly IVariables variables;
         readonly ICalamariFileSystem fileSystem;
         readonly ILog log;
 
+        static readonly IDeserializer YamlDeserializer = new Deserializer();
+
         static readonly ISerializer YamlSerializer = new SerializerBuilder()
                                                      .WithNamingConvention(CamelCaseNamingConvention.Instance)
+                                                     .JsonCompatible()
                                                      .Build();
 
         public ManifestReporter(IVariables variables, ICalamariFileSystem fileSystem, ILog log)
@@ -37,7 +40,7 @@ namespace Calamari.Kubernetes
         string GetNamespace(YamlMappingNode yamlRoot)
         {
             var implicitNamespace = variables.Get(SpecialVariables.Namespace) ?? "default";
-            
+
             if (yamlRoot.Children.TryGetValue("metadata", out var metadataNode) && metadataNode is YamlMappingNode metadataMappingNode &&
                 metadataMappingNode.Children.TryGetValue("namespace", out var namespaceNode) && namespaceNode is YamlScalarNode namespaceScalarNode &&
                 !string.IsNullOrWhiteSpace(namespaceScalarNode.Value))
@@ -61,11 +64,12 @@ namespace Calamari.Kubernetes
                     {
                         if (!(document.RootNode is YamlMappingNode rootNode))
                         {
+                            log.Warn("Could not parse manifest, resources will not be added to live object status");
                             continue;
                         }
 
-                        var updatedDocument = YamlSerializer.Serialize(rootNode);
-                        
+                        var updatedDocument = YamlNodeToJson(rootNode);
+
                         var ns = GetNamespace(rootNode);
                         log.WriteServiceMessage(new ServiceMessage(SpecialVariables.ServiceMessageNames.ManifestApplied.Name,
                                                                    new Dictionary<string, string>
@@ -78,6 +82,21 @@ namespace Calamari.Kubernetes
                 catch (SemanticErrorException)
                 {
                     log.Warn("Invalid YAML syntax found, resources will not be added to live object status");
+                }
+            }
+        }
+
+        static string YamlNodeToJson(YamlNode node)
+        {
+            var stream = new YamlStream { new YamlDocument(node) };
+            using (var writer = new StringWriter())
+            {
+                stream.Save(writer);
+
+                using (var reader = new StringReader(writer.ToString()))
+                {
+                    var yamlObject = YamlDeserializer.Deserialize(reader);
+                    return yamlObject is null ? string.Empty : YamlSerializer.Serialize(yamlObject).Trim();
                 }
             }
         }
