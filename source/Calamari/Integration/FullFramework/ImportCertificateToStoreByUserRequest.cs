@@ -1,0 +1,28 @@
+using System;
+
+namespace Calamari.Integration.FullFramework
+{
+
+    public class ImportCertificateToStoreByUserRequest : IRequest
+    {
+        public ImportCertificateToStoreByUserRequest(byte[] pfxBytes,
+                                                     string password,
+                                                     string userName,
+                                                     string storeName,
+                                                     bool privateKeyExportable)
+        {
+            PfxBytes = pfxBytes;
+            Password = password;
+            UserName = userName;
+            StoreName = storeName;
+            PrivateKeyExportable = privateKeyExportable;
+        }
+
+        public byte[] PfxBytes { get; set; }
+        public string Password { get; set; }
+        public string UserName { get; set; }
+        public string StoreName { get; set; }
+        public bool PrivateKeyExportable { get; set; }
+
+    }
+}

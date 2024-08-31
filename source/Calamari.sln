@@ -86,6 +86,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.FullFrameworkTools
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.FullFrameworkTools.Tests", "Calamari.FullFrameworkTools.Tests\Calamari.FullFrameworkTools.Tests.csproj", "{EC26DBFD-A364-4AF9-BFEF-F8ABCA2656FA}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Full Framework Tools", "Full Framework Tools", "{35F9AC75-DAC6-4ADF-B2D7-2EFCE5CB54E3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -150,10 +152,6 @@ Global
 		{0EA7711F-34D3-44C6-BBCC-D4EA1A6B9D2C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0EA7711F-34D3-44C6-BBCC-D4EA1A6B9D2C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0EA7711F-34D3-44C6-BBCC-D4EA1A6B9D2C}.Release|Any CPU.Build.0 = Release|Any CPU
-		{71B996DD-409B-4EB6-AB1A-D7469B0A7A8A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{71B996DD-409B-4EB6-AB1A-D7469B0A7A8A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{71B996DD-409B-4EB6-AB1A-D7469B0A7A8A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{71B996DD-409B-4EB6-AB1A-D7469B0A7A8A}.Release|Any CPU.Build.0 = Release|Any CPU
 		{BFE038E8-6F46-40DA-AD40-C00ED25C1FEE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{BFE038E8-6F46-40DA-AD40-C00ED25C1FEE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BFE038E8-6F46-40DA-AD40-C00ED25C1FEE}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -211,11 +209,9 @@ Global
 		{D8DEC40C-948F-4806-AE87-1A7502E41A06}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D8DEC40C-948F-4806-AE87-1A7502E41A06}.Release|Any CPU.Build.0 = Release|Any CPU
 		{D1F10B67-71EF-4024-8F71-178CE48E901F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D1F10B67-71EF-4024-8F71-178CE48E901F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D1F10B67-71EF-4024-8F71-178CE48E901F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D1F10B67-71EF-4024-8F71-178CE48E901F}.Release|Any CPU.Build.0 = Release|Any CPU
 		{EC26DBFD-A364-4AF9-BFEF-F8ABCA2656FA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{EC26DBFD-A364-4AF9-BFEF-F8ABCA2656FA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EC26DBFD-A364-4AF9-BFEF-F8ABCA2656FA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EC26DBFD-A364-4AF9-BFEF-F8ABCA2656FA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
@@ -224,5 +220,9 @@ Global
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {429833DB-66EA-49BA-9444-6F1B047F50FC}
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{D1F10B67-71EF-4024-8F71-178CE48E901F} = {35F9AC75-DAC6-4ADF-B2D7-2EFCE5CB54E3}
+		{EC26DBFD-A364-4AF9-BFEF-F8ABCA2656FA} = {35F9AC75-DAC6-4ADF-B2D7-2EFCE5CB54E3}
 	EndGlobalSection
 EndGlobal

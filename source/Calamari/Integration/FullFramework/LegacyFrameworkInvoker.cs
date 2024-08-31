@@ -1,24 +1,16 @@
-﻿#if IIS_SUPPORT
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.IO;
-using System.Security.Cryptography.X509Certificates;
+using System.Reflection;
 using Calamari.Common.Features.Processes;
+using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
-using Calamari.FullFrameworkTools.Command;
-using Calamari.FullFrameworkTools.Utils;
-using Calamari.FullFrameworkTools.WindowsCertStore;
-using Calamari.FullFrameworkTools.WindowsCertStore.WindowsNative;
+using Calamari.Integration.Certificates;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace Calamari.Integration.Iis
+namespace Calamari.Integration.FullFramework
 {
-    public interface ILegacyFrameworkInvoker
-    {
-        TResponse Invoke<TRequest, TResponse>(TRequest cmd);
-    }
     public class LegacyFrameworkInvoker: ILegacyFrameworkInvoker
     {
         readonly ICalamariFileSystem fileSystem;
@@ -35,7 +27,7 @@ namespace Calamari.Integration.Iis
 
         public TResponse Invoke<TRequest, TResponse>(TRequest cmd)
         {
-            var path = @"C:\Development\OctopusDeploy\calamari-second\source\Calamari.FullFrameworkTools\bin\Debug\net462\out\Calamari.FullFrameworkTools.exe";
+            var path = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Calamari.FullFrameworkTools", "Calamari.FullFrameworkTools.exe");
 
             var json = JsonConvert.SerializeObject(cmd);
             using (var tempDir = TemporaryDirectory.Create())
@@ -107,27 +99,5 @@ namespace Calamari.Integration.Iis
             Fatal, // Used for Exceptions
             Result, // Special Response
         }
-
-
-        
-
     }
-    
-    public class InProcessInvoker: ILegacyFrameworkInvoker
-    {
-        public TResponse Invoke<TRequest, TResponse>(TRequest cmd)
-        {
-            var log = new InnerLog();
-            var commandLocator = new RequestTypeLocator();
-            var commandHandler = new CommandHandler(null, new Calamari.FullFrameworkTools.Iis.InternetInformationServer());
-            var requestInvoker = new CommandRequestInvoker(commandLocator, commandHandler);
-
-            var json = JsonConvert.SerializeObject(cmd);
-
-            var result = requestInvoker.Run(nameof(OverwriteHomeDirectoryRequest), json);
-            return (TResponse)result;
-        }
-    }
-
 }
-#endif

@@ -48,7 +48,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             {
                 Variables.Save(variablesFile.FilePath);
 
-                return InvokeInProcess(Calamari()
+                return Invoke(Calamari()
                     .Action("deploy-package")
                     .Argument("package", packageName)
                     .Argument("variables", variablesFile.FilePath));

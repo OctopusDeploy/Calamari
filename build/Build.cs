@@ -117,7 +117,9 @@ namespace Calamari.Build
         Lazy<string> NugetVersion { get; }
 
         Target CheckForbiddenWords =>
-            _ => _.Executes(() =>
+            _ => _
+                 .OnlyWhenStatic(() => !IsLocalBuild)
+                .Executes(() =>
             {
                 Log.Information("Checking codebase for forbidden words");
 
@@ -169,6 +171,18 @@ namespace Calamari.Build
                   {
                       Log.Information("Compiling Calamari v{CalamariVersion}", NugetVersion.Value);
 
+                      DotNetBuild(_ => _.SetProjectFile(SourceDirectory / "Calamari.FullFrameworkTools"/ "Calamari.FullFrameworkTools.csproj")
+                                        .SetConfiguration(Configuration)
+                                        .DisableNoRestore()
+                                        .SetVersion(NugetVersion.Value)
+                                        .SetInformationalVersion(GitVersionInfo?.InformationalVersion));
+                      
+                      DotNetBuild(_ => _.SetProjectFile(SourceDirectory / "Calamari.FullFrameworkTools.Tests"/ "Calamari.FullFrameworkTools.Tests.csproj")
+                                        .SetConfiguration(Configuration)
+                                        .DisableNoRestore()
+                                        .SetVersion(NugetVersion.Value)
+                                        .SetInformationalVersion(GitVersionInfo?.InformationalVersion));
+
                       DotNetBuild(_ => _.SetProjectFile(Solution)
                                         .SetConfiguration(Configuration)
                                         .SetNoRestore(true)
@@ -219,11 +233,32 @@ namespace Calamari.Build
                                           nugetVersion,
                                           FixedRuntimes.Cloud);
 
-                      // Create the self-contained Calamari packages for each runtime ID defined in Calamari.csproj
-                      foreach (var rid in GetRuntimeIdentifiers(Solution.GetProject(RootProjectName)!)!)
-                          DoPublish(RootProjectName, Frameworks.Net60, nugetVersion, rid);
-                  });
+                                if (OperatingSystem.IsWindows())
+                                {
+                                    var path = SourceDirectory / "Calamari.FullFrameworkTools"  / "bin" / Configuration / Frameworks.Net462 ;
+                                    CopyDirectoryRecursively(path, (PublishDirectory / "Calamari"  / Frameworks.Net462  / "Calamari.FullFrameworkTools"), DirectoryExistsPolicy.Merge, FileExistsPolicy.Overwrite);
+                                    CopyDirectoryRecursively(path, (PublishDirectory / "Calamari"  / Frameworks.Net60 / "Calamari.FullFrameworkTools"), DirectoryExistsPolicy.Merge, FileExistsPolicy.Overwrite);
+                                }
 
+                                // Create the self-contained Calamari packages for each runtime ID defined in Calamari.csproj
+                                foreach (var rid in GetRuntimeIdentifiers(Solution.GetProject(RootProjectName)!)!)
+                                {
+                                    var publishPath = DoPublish(RootProjectName, Frameworks.Net60, nugetVersion, rid);
+
+                                    if (rid == FixedRuntimes.Windows && OperatingSystem.IsWindows())
+                                    {
+                                        CopyFullFrameworkFiles(publishPath);
+                                    }
+                                }
+                            });
+
+
+        void CopyFullFrameworkFiles(AbsolutePath targetPath)
+        {
+            var path = SourceDirectory / "Calamari.FullFrameworkTools" / "bin" / Configuration / Frameworks.Net462;
+            CopyDirectoryRecursively(path, (targetPath / "Calamari.FullFrameworkTools"), DirectoryExistsPolicy.Merge, FileExistsPolicy.Overwrite);
+        }
+        
         Target PublishCalamariFlavourProjects =>
             _ => _
                  .DependsOn(Compile)
@@ -329,7 +364,7 @@ namespace Calamari.Build
             File.Copy(RootDirectory / "global.json", outputDirectory / "global.json");
 
         }
-        
+
         static void StageLegacyCalamariAssemblies(CalamariPackageMetadata[] packagesToPublish) {
 
             if (!OperatingSystem.IsWindows())
@@ -340,7 +375,7 @@ namespace Calamari.Build
             }
 
             packagesToPublish
-                //We only need to bundle executable (not tests or libraries) full framework projects 
+                //We only need to bundle executable (not tests or libraries) full framework projects
                 .Where(d => d.Framework == Frameworks.Net462 && d.Project.GetOutputType() == "Exe")
                 .ForEach(calamariPackageMetadata =>
                          {
@@ -434,6 +469,8 @@ namespace Calamari.Build
                       var defaultTarget = OperatingSystem.IsWindows() ? Frameworks.Net462 : Frameworks.Net60;
                       AbsolutePath binFolder = SourceDirectory / "Calamari.Tests" / "bin" / Configuration / defaultTarget;
                       Directory.Exists(binFolder);
+                      
+                      CopyFullFrameworkFiles(binFolder);
                       var actions = new List<Action>
                       {
                           () =>

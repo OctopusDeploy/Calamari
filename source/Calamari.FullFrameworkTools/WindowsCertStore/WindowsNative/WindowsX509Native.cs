@@ -6,15 +6,6 @@ using Microsoft.Win32.SafeHandles;
 
 namespace Calamari.FullFrameworkTools.WindowsCertStore.WindowsNative
 {
-
-    public interface IFullFrameworkToolResponse
-    {
-    }
-
-    public class StringResponse : IFullFrameworkToolResponse { public string Valus { get; set; } }
-    public class VoidResponse : IFullFrameworkToolResponse { }
-    public class BoolResponse : IFullFrameworkToolResponse { public bool Value { get; set; } }
-    
      internal static class WindowsX509Native
     {
         [DllImport("Crypt32.dll", SetLastError = true)]

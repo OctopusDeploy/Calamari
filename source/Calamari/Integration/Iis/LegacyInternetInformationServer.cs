@@ -3,46 +3,22 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
-using Calamari.Common.Plumbing.Logging;
-using Calamari.FullFrameworkTools.WindowsCertStore;
-using Calamari.FullFrameworkTools.WindowsCertStore.WindowsNative;
-using ILog = Calamari.FullFrameworkTools.Command.ILog;
+using Calamari.Integration.Certificates;
+using Calamari.Integration.FullFramework;
 
 namespace Calamari.Integration.Iis
 {
-    class InnerLog : ILog
-    {
-        public void Verbose(string message)
-        {
-            Log.Verbose(message);
-        }
-
-        public void Error(string message)
-        {
-            Log.Error(message);
-        }
-
-        public void Info(string message)
-        {
-            Log.Info(message);
-        }
-
-        public void Fatal(Exception exception)
-        {
-            throw new NotImplementedException("This should not be handled in-process");
-        }
-
-        public void Result(object response)
-        {
-            throw new NotImplementedException("This should not be handled in-process");
-        }
-    }
-
+    
+    public class StringResponse  { public string Value { get; set; } }
+    public class VoidResponse { }
+    
+    public class BoolResponse  { public bool Value { get; set; } }
+    
     public class LegacyInternetInformationServer : IInternetInformationServer
     {
-        readonly InProcessInvoker processInvoker;
+        readonly ILegacyFrameworkInvoker processInvoker;
 
-        public LegacyInternetInformationServer(InProcessInvoker processInvoker)
+        public LegacyInternetInformationServer(ILegacyFrameworkInvoker processInvoker)
         {
             this.processInvoker = processInvoker;
         }
@@ -55,12 +31,11 @@ namespace Calamari.Integration.Iis
         }
     }
     
-    
     public class LegacyWindowsX509CertificateStore : IWindowsX509CertificateStore
         {
-            readonly InProcessInvoker processInvoker;
+            readonly ILegacyFrameworkInvoker processInvoker;
 
-            public LegacyWindowsX509CertificateStore(InProcessInvoker processInvoker)
+            public LegacyWindowsX509CertificateStore(ILegacyFrameworkInvoker processInvoker)
             {
                 this.processInvoker = processInvoker;
             }
@@ -69,7 +44,7 @@ namespace Calamari.Integration.Iis
             {
                 var cmd = new FindCertificateStoreRequest(thumbprint, storeLocation);
                 var response = processInvoker.Invoke<FindCertificateStoreRequest, StringResponse>(cmd);
-                return response.Valus;
+                return response.Value;
             }
 
             public void ImportCertificateToStore(byte[] pfxBytes,
@@ -78,13 +53,15 @@ namespace Calamari.Integration.Iis
                                                  string storeName,
                                                  bool privateKeyExportable)
             {
-                
+                var cmd = new ImportCertificateToStoreByLocationRequest(pfxBytes, password, storeLocation, storeName, privateKeyExportable);
+                processInvoker.Invoke<ImportCertificateToStoreByLocationRequest, VoidResponse>(cmd);
             
             }
 
             public void AddPrivateKeyAccessRules(string thumbprint, StoreLocation storeLocation, ICollection<PrivateKeyAccessRule> privateKeyAccessRules)
             {
-                throw new NotImplementedException();
+                var cmd = new AddPrivateKeyAccessRulesRequest(thumbprint, storeLocation, null, privateKeyAccessRules.ToList());
+                processInvoker.Invoke<AddPrivateKeyAccessRulesRequest, VoidResponse>(cmd);
             }
 
             public void AddPrivateKeyAccessRules(string thumbprint, StoreLocation storeLocation, string storeName, ICollection<PrivateKeyAccessRule> privateKeyAccessRules)

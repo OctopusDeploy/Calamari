@@ -26,6 +26,7 @@ using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Deployment.Features;
 using Calamari.Integration.Certificates;
+using Calamari.Integration.FullFramework;
 using Calamari.Integration.Iis;
 using Calamari.Integration.Nginx;
 
@@ -90,8 +91,8 @@ namespace Calamari.Commands
             var transformFileLocator = new TransformFileLocator(fileSystem, log);
             var embeddedResources = new AssemblyEmbeddedResources();
 #if IIS_SUPPORT
-            var iis = OctopusFeatureToggles.FullFrameworkTasksExternalProcess.IsEnabled(variables) ? 
-                new InternetInformationServer(): (IInternetInformationServer)new LegacyInternetInformationServer(new InProcessInvoker());
+            var iis = !OctopusFeatureToggles.FullFrameworkTasksExternalProcess.IsEnabled(variables) ? 
+                new InternetInformationServer(): (IInternetInformationServer)new LegacyInternetInformationServer(new LegacyFrameworkInvoker());
             featureClasses.AddRange(new IFeature[] { new IisWebSiteBeforeDeployFeature(windowsX509CertificateStore), new IisWebSiteAfterPostDeployFeature(windowsX509CertificateStore) });
 #endif
             if (!CalamariEnvironment.IsRunningOnWindows)

@@ -26,7 +26,7 @@ namespace Calamari.FullFrameworkTools.Tests
             var iisServer = Substitute.For<IInternetInformationServer>();
             var cmd = new IisCommand(iisServer);
 
-            Assert.Throws<InvalidOperationException>(() => cmd.Execute(new string[] { Guid.NewGuid().ToString()}));
+            Assert.Throws<CommandException>(() => cmd.Execute(new string[] { Guid.NewGuid().ToString()}));
         }
 
         [Test]
@@ -35,7 +35,7 @@ namespace Calamari.FullFrameworkTools.Tests
             var iisServer = Substitute.For<IInternetInformationServer>();
             var cmd = new IisCommand(iisServer);
 
-            Assert.Throws<InvalidOperationException>(() => cmd.Execute(Array.Empty<string>()));
+            Assert.Throws<CommandException>(() => cmd.Execute(Array.Empty<string>()));
         }
     }
 }
