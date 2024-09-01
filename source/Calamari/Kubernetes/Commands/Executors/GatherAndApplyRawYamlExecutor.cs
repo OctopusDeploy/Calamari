@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
-using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes.Integration;
 using Calamari.Kubernetes.ResourceStatus.Resources;
 using Octopus.CoreUtilities.Extensions;
@@ -21,15 +20,18 @@ namespace Calamari.Kubernetes.Commands.Executors
     {
         readonly ILog log;
         readonly ICalamariFileSystem fileSystem;
+        readonly IManifestReporter manifestReporter;
         readonly Kubectl kubectl;
 
         public GatherAndApplyRawYamlExecutor(
             ILog log,
             ICalamariFileSystem fileSystem,
+            IManifestReporter manifestReporter,
             Kubectl kubectl) : base(log)
         {
             this.log = log;
             this.fileSystem = fileSystem;
+            this.manifestReporter = manifestReporter;
             this.kubectl = kubectl;
         }
 
@@ -37,7 +39,7 @@ namespace Calamari.Kubernetes.Commands.Executors
         {
             var variables = deployment.Variables;
             var globs = variables.GetPaths(SpecialVariables.CustomResourceYamlFileName);
-            
+
             if (globs.IsNullOrEmpty())
                 return Enumerable.Empty<ResourceIdentifier>();
 
@@ -65,38 +67,31 @@ namespace Calamari.Kubernetes.Commands.Executors
 
         IEnumerable<ResourceIdentifier> ApplyBatchAndReturnResourceIdentifiers(RunningDeployment deployment, GlobDirectory globDirectory)
         {
-            if (!LogFoundFiles(globDirectory))
+            var files = fileSystem.EnumerateFilesRecursively(globDirectory.Directory).ToArray();
+            if (!files.Any())
+            {
+                log.Warn($"No files found matching '{globDirectory.Glob}'");
                 return Array.Empty<ResourceIdentifier>();
+            }
+            
+            ReportEachManifestBeingApplied(globDirectory, files);
 
             string[] executeArgs = {"apply", "-f", $@"""{globDirectory.Directory}""", "--recursive", "-o", "json"};
             executeArgs = executeArgs.AddOptionsForServerSideApply(deployment.Variables, log);
-
             var result = kubectl.ExecuteCommandAndReturnOutput(executeArgs);
 
             return ProcessKubectlCommandOutput(deployment, result, globDirectory.Directory);
         }
 
-        /// <summary>
-        /// Logs files that are found at the relevant glob locations.
-        /// </summary>
-        /// <param name="globDirectory"></param>
-        /// <returns>True if files are found, False if no files exist at this location</returns>
-        bool LogFoundFiles(GlobDirectory globDirectory)
+        void ReportEachManifestBeingApplied(GlobDirectory globDirectory, string[] files)
         {
             var directoryWithTrailingSlash = globDirectory.Directory + Path.DirectorySeparatorChar;
-            var files = fileSystem.EnumerateFilesRecursively(globDirectory.Directory).ToArray();
-            if (!files.Any())
-            {
-                log.Warn($"No files found matching '{globDirectory.Glob}'");
-                return false;
-            }
-
             foreach (var file in files)
             {
-                log.Verbose($"Matched file: {fileSystem.GetRelativePath(directoryWithTrailingSlash, file)}");
+                var fullFilePath = fileSystem.GetRelativePath(directoryWithTrailingSlash, file);
+                log.Verbose($"Matched file: {fullFilePath}");
+                manifestReporter.ReportManifestApplied(file);
             }
-
-            return true;
         }
     }
 }

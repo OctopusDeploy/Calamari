@@ -26,6 +26,7 @@ using Calamari.LaunchTools;
 using IContainer = Autofac.IContainer;
 using Calamari.Aws.Deployment;
 using Calamari.Azure.Kubernetes.Discovery;
+using Calamari.Kubernetes;
 using Calamari.Kubernetes.Commands.Executors;
 
 namespace Calamari
@@ -71,6 +72,7 @@ namespace Calamari
             builder.RegisterType<RunningResourceStatusCheck>().As<IRunningResourceStatusCheck>().SingleInstance();
             builder.RegisterType<ResourceStatusCheckTask>().AsSelf();
             builder.RegisterType<ResourceUpdateReporter>().As<IResourceUpdateReporter>().SingleInstance();
+            builder.RegisterType<ManifestReporter>().As<IManifestReporter>().SingleInstance();
             builder.RegisterType<ResourceStatusReportExecutor>().As<IResourceStatusReportExecutor>();
             builder.RegisterType<GatherAndApplyRawYamlExecutor>().As<IRawYamlKubernetesApplyExecutor>();
             builder.RegisterType<KustomizeExecutor>().As<IKustomizeKubernetesApplyExecutor>();
