@@ -87,7 +87,11 @@ namespace Calamari.Common.Features.FunctionScriptContributions
                 TabIndentedAppendLine("");
             }
 
-            sb.AppendLine("Write-Verbose \"Invoking target script $OctopusFunctionAppenderTargetScript with $OctopusFunctionAppenderTargetScriptParameters parameters.\"");
+            sb.AppendLine("if ([string]::IsNullOrEmpty($OctopusFunctionAppenderTargetScriptParameters)) {");
+            sb.AppendLine("    Write-Verbose \"Invoking target script '$OctopusFunctionAppenderTargetScript'\"");
+            sb.AppendLine("} else {");
+            sb.AppendLine("    Write-Verbose \"Invoking target script '$OctopusFunctionAppenderTargetScript' with parameters '$OctopusFunctionAppenderTargetScriptParameters'\"");
+            sb.AppendLine("}");
             sb.AppendLine("Invoke-Expression \". `\"$OctopusFunctionAppenderTargetScript`\" $OctopusFunctionAppenderTargetScriptParameters\"");
 
             return sb.ToString();
