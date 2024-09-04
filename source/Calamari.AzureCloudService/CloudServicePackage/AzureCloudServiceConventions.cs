@@ -23,11 +23,6 @@ namespace Calamari.AzureCloudService.CloudServicePackage
             }
         }
 
-        public static bool RoleLayoutFilePathIsModifiable(string filePath)
-        {
-            return filePath.StartsWith("approot\\") || filePath.StartsWith("sitesroot\\");
-        }
-
         public static class PackageFolders
         {
             public const string ServiceDefinition = "ServiceDefinition";
