@@ -30,7 +30,7 @@ function New-MyFunc2([string] $mystring, [switch] $myboolean, [int] $mynumber)
 
 if ([string]::IsNullOrEmpty($OctopusFunctionAppenderTargetScriptParameters)) {
     Write-Verbose "Invoking target script '$OctopusFunctionAppenderTargetScript'."
-} else{
+} else {
     Write-Verbose "Invoking target script '$OctopusFunctionAppenderTargetScript' with parameters '$OctopusFunctionAppenderTargetScriptParameters'."
 }
 Invoke-Expression ". `"$OctopusFunctionAppenderTargetScript`" $OctopusFunctionAppenderTargetScriptParameters"
