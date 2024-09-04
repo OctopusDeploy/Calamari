@@ -20,7 +20,7 @@ namespace Calamari.Integration.Certificates
 {
     public class WindowsX509CertificateStore
     {
-        public static readonly ISemaphoreFactory Semaphores = SemaphoreFactory.Get();
+        public static readonly ISemaphoreFactory Semaphores = new SystemSemaphoreManager();
         public static readonly string SemaphoreName = nameof(WindowsX509CertificateStore);
 
         const string IntermediateAuthorityStoreName = "CA";
@@ -31,6 +31,25 @@ namespace Calamari.Integration.Certificates
             return Semaphores.Acquire(SemaphoreName, "Another process is working with the certificate store, please wait...");
         }
 
+        public static string? FindCertificateStore(string thumbprint, StoreLocation storeLocation)
+        {
+            foreach (var storeName in GetStoreNames(storeLocation))
+            {
+                var store = new X509Store(storeName, storeLocation);
+                store.Open(OpenFlags.ReadOnly);
+
+                var found = store.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, false);
+                if (found.Count != 0 && found[0].HasPrivateKey)
+                {
+                    return storeName;
+                }
+
+                store.Close();
+            }
+
+            return null;
+        }
+        
         public static void ImportCertificateToStore(byte[] pfxBytes, string password, StoreLocation storeLocation,
             string storeName, bool privateKeyExportable)
         {
@@ -82,6 +101,14 @@ namespace Calamari.Integration.Certificates
                     AddPrivateKeyAccessRules(keySecurity, certificate);
                 }
             }
+        }
+
+        public static void AddPrivateKeyAccessRules(string thumbprint,
+                                                    StoreLocation storeLocation,
+                                                    ICollection<PrivateKeyAccessRule> privateKeyAccessRules)
+        {
+            var storeName = FindCertificateStore(thumbprint, StoreLocation.LocalMachine);
+            AddPrivateKeyAccessRules(thumbprint, storeLocation, storeName, privateKeyAccessRules);
         }
 
         public static void AddPrivateKeyAccessRules(string thumbprint, StoreLocation storeLocation, string storeName,

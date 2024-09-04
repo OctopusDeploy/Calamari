@@ -36,8 +36,6 @@ namespace Calamari.Kubernetes
         public const string KubeConfig = "Octopus.KubeConfig.Path";
         public const string KustomizeManifest = "Octopus.Kustomize.Manifest.Path";
 
-        public const string KubernetesResourceStatusServiceMessageName = "k8s-status";
-
         public const string ServerSideApplyEnabled = "Octopus.Action.Kubernetes.ServerSideApply.Enabled";
         public const string ServerSideApplyForceConflicts = "Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts";
         
@@ -64,6 +62,21 @@ namespace Calamari.Kubernetes
                 {
                     return $"Octopus.Action.Package[{key}].ValuesFilePath";
                 }
+            }
+        }
+
+        public class ServiceMessageNames
+        {
+            public static class ResourceStatus
+            {
+                public const string Name = "k8s-status";
+            }
+            
+            public static class ManifestApplied
+            {
+                public const string Name = "k8s-manifest-applied";
+                public const string ManifestAttribute = "manifest";
+                public const string NamespaceAttribute = "ns";
             }
         }
     }

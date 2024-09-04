@@ -94,7 +94,7 @@ namespace Calamari.Commands
                 featureClasses.Add(new NginxFeature(NginxServer.AutoDetect(), fileSystem));
             }
 
-            var semaphore = SemaphoreFactory.Get();
+            var semaphore = new SystemSemaphoreManager();
             var journal = new DeploymentJournal(fileSystem, semaphore, variables);
 
             var conventions = new List<IConvention>

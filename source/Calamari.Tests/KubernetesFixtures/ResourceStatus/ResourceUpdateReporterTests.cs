@@ -29,7 +29,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             reporter.ReportUpdatedResources(originalStatuses, newStatuses, 1);
 
             var serviceMessages = log.ServiceMessages
-                .Where(message => message.Name == SpecialVariables.KubernetesResourceStatusServiceMessageName)
+                .Where(message => message.Name == SpecialVariables.ServiceMessageNames.ResourceStatus.Name)
                 .ToList();
 
             serviceMessages.Select(message => message.Properties["name"])
@@ -72,7 +72,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             reporter.ReportUpdatedResources(originalStatuses, newStatuses, 1);
             
             var serviceMessages = log.ServiceMessages
-                .Where(message => message.Name == SpecialVariables.KubernetesResourceStatusServiceMessageName)
+                .Where(message => message.Name == SpecialVariables.ServiceMessageNames.ResourceStatus.Name)
                 .ToList();
 
             serviceMessages.Should().ContainSingle().Which.Properties
@@ -102,7 +102,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             reporter.ReportUpdatedResources(originalStatuses, newStatuses, 1);
             
             var serviceMessages = log.ServiceMessages
-                .Where(message => message.Name == SpecialVariables.KubernetesResourceStatusServiceMessageName)
+                .Where(message => message.Name == SpecialVariables.ServiceMessageNames.ResourceStatus.Name)
                 .ToList();
 
             serviceMessages.Should().ContainSingle().Which.Properties
@@ -129,7 +129,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             reporter.ReportUpdatedResources(new Dictionary<string, Resource>(), newStatuses, 1);
             
             var serviceMessages = log.ServiceMessages
-                .Where(message => message.Name == SpecialVariables.KubernetesResourceStatusServiceMessageName)
+                .Where(message => message.Name == SpecialVariables.ServiceMessageNames.ResourceStatus.Name)
                 .ToList();
 
             serviceMessages.Should().ContainSingle().Which.Properties

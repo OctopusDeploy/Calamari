@@ -48,7 +48,7 @@ namespace Calamari.Deployment.Features
         {
             var thumbprint = variables.Get($"{certificateVariable}.{CertificateVariables.Properties.Thumbprint}");
 
-            var storeName = FindCertificateInLocalMachineStore(thumbprint);
+            var storeName = WindowsX509CertificateStore.FindCertificateStore(thumbprint, StoreLocation.LocalMachine);
             if (storeName != null)
             {
                 Log.Verbose($"Found existing certificate with thumbprint '{thumbprint}' in Cert:\\LocalMachine\\{storeName}");
@@ -66,24 +66,7 @@ namespace Calamari.Deployment.Features
             Log.SetOutputVariable(SpecialVariables.Action.IisWebSite.Output.CertificateStoreName, storeNamesVariable, variables);
         }
 
-        public static string FindCertificateInLocalMachineStore(string thumbprint)
-        {
-            foreach (var storeName in WindowsX509CertificateStore.GetStoreNames(StoreLocation.LocalMachine))
-            {
-                var store = new X509Store(storeName, StoreLocation.LocalMachine);
-                store.Open(OpenFlags.ReadOnly);
-
-                var found = store.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, false);
-                if (found.Count != 0 && found[0].HasPrivateKey)
-                {
-                    return storeName;
-                }
-
-                store.Close();
-            }
-
-            return null;
-        }
+       
 
         static string AddCertificateToLocalMachineStore(IVariables variables, string certificateVariable)
         {

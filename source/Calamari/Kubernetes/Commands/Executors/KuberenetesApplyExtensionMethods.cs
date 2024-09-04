@@ -1,4 +1,3 @@
-#if !NET40
 using System;
 using System.Linq;
 using Calamari.Common.Plumbing.Logging;
@@ -26,4 +25,3 @@ namespace Calamari.Kubernetes.Commands.Executors
         }
     }
 }
-#endif
