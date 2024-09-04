@@ -175,57 +175,13 @@ namespace Calamari.Deployment
 
             public static class Azure
             {
-                public static readonly string UseBundledAzurePowerShellModules = "Octopus.Action.Azure.UseBundledAzurePowerShellModules";
-
-                public static readonly string AccountVariable = "Octopus.Action.AzureAccount.Variable";
-
                 public static readonly string SubscriptionId = "Octopus.Action.Azure.SubscriptionId";
                 public static readonly string ClientId = "Octopus.Action.Azure.ClientId";
                 public static readonly string TenantId = "Octopus.Action.Azure.TenantId";
                 public static readonly string Password = "Octopus.Action.Azure.Password";
                 public static readonly string Jwt = "Octopus.OpenIdConnect.Jwt";
-                public static readonly string CertificateBytes = "Octopus.Action.Azure.CertificateBytes";
-                public static readonly string CertificateThumbprint = "Octopus.Action.Azure.CertificateThumbprint";
-
-                public static readonly string WebAppName = "Octopus.Action.Azure.WebAppName";
-                public static readonly string WebAppSlot = "Octopus.Action.Azure.DeploymentSlot";
-                public static readonly string RemoveAdditionalFiles = "Octopus.Action.Azure.RemoveAdditionalFiles";
-                public static readonly string AppOffline = "Octopus.Action.Azure.AppOffline";
-                public static readonly string PreserveAppData = "Octopus.Action.Azure.PreserveAppData";
-                public static readonly string PreservePaths = "Octopus.Action.Azure.PreservePaths";
-                public static readonly string PhysicalPath = "Octopus.Action.Azure.PhysicalPath";
-                public static readonly string UseChecksum = "Octopus.Action.Azure.UseChecksum";
-
-                public static readonly string CloudServiceName = "Octopus.Action.Azure.CloudServiceName";
-                public static readonly string Slot = "Octopus.Action.Azure.Slot";
-                public static readonly string SwapIfPossible = "Octopus.Action.Azure.SwapIfPossible";
-                public static readonly string StorageAccountName = "Octopus.Action.Azure.StorageAccountName";
-                public static readonly string UseCurrentInstanceCount = "Octopus.Action.Azure.UseCurrentInstanceCount";
-                public static readonly string UploadedPackageUri = "Octopus.Action.Azure.UploadedPackageUri";
                 public static readonly string CloudServicePackagePath = "Octopus.Action.Azure.CloudServicePackagePath";
-                public static readonly string PackageExtractionPath = "Octopus.Action.Azure.PackageExtractionPath";
-                public static readonly string CloudServicePackageExtractionDisabled = "Octopus.Action.Azure.CloudServicePackageExtractionDisabled";
-                public static readonly string LogExtractedCspkg = "Octopus.Action.Azure.LogExtractedCspkg";
-                public static readonly string CloudServiceConfigurationFileRelativePath = "Octopus.Action.Azure.CloudServiceConfigurationFileRelativePath";
-                public static readonly string DeploymentLabel = "Octopus.Action.Azure.DeploymentLabel";
-                public static readonly string ExtensionsDirectory = "Octopus.Action.Azure.ExtensionsDirectory";
-
-                public static readonly string ResourceGroupName = "Octopus.Action.Azure.ResourceGroupName";
-                public static readonly string ResourceGroupDeploymentName = "Octopus.Action.Azure.ResourceGroupDeploymentName";
-                public static readonly string ResourceGroupDeploymentMode = "Octopus.Action.Azure.ResourceGroupDeploymentMode";
-
                 public static readonly string Environment = "Octopus.Action.Azure.Environment";
-                public static readonly string ResourceManagementEndPoint = "Octopus.Action.Azure.ResourceManagementEndPoint";
-                public static readonly string ServiceManagementEndPoint = "Octopus.Action.Azure.ServiceManagementEndPoint";
-                public static readonly string ActiveDirectoryEndPoint = "Octopus.Action.Azure.ActiveDirectoryEndPoint";
-                public static readonly string StorageEndPointSuffix = "Octopus.Action.Azure.StorageEndpointSuffix";
-
-                public static class Output
-                {
-                    public static readonly string SubscriptionId = "OctopusAzureSubscriptionId";
-                    public static readonly string ConfigurationFile = "OctopusAzureConfigurationFile";
-                    public static readonly string CloudServiceDeploymentSwapped = "OctopusAzureCloudServiceDeploymentSwapped";
-                }
             }
 
             public class WindowsService
