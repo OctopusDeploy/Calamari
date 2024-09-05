@@ -13,9 +13,9 @@ namespace Calamari.Common.Plumbing.Proxies
             try
             {
 #if !NETCORE
-                Log.Info("Running without NETCORE");
+                Log.Info("GetSystemWebProxy Running without NETCORE");
 #else
-                Log.Info("Running with NETCORE");
+                Log.Info("GetSystemWebProxy Running with NETCORE");
 #endif                
                 var TestUri = new Uri("http://test9c7b575efb72442c85f706ef1d64afa6.com");
 
