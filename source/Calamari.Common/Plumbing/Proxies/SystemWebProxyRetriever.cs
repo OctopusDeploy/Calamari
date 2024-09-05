@@ -13,9 +13,9 @@ namespace Calamari.Common.Plumbing.Proxies
             try
             {
 #if !NETCORE
-                Log.Warn("Running without NETCORE");
+                Log.Info("Running without NETCORE");
 #else
-                Log.Warn("Running with NETCORE");
+                Log.Info("Running with NETCORE");
 #endif                
                 var TestUri = new Uri("http://test9c7b575efb72442c85f706ef1d64afa6.com");
 
@@ -25,7 +25,7 @@ namespace Calamari.Common.Plumbing.Proxies
 
                 if (proxyUri == null) return Maybe<IWebProxy>.None;
 
-                Log.Warn("ProxyUri: " + proxyUri.Host);
+                Log.Info("ProxyUri: " + proxyUri.Host);
 
                 return proxyUri.Host != TestUri.Host
                     ? systemWebProxy.AsSome()
