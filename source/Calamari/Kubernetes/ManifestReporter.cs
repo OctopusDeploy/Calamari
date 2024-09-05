@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.ServiceMessages;
@@ -53,6 +54,9 @@ namespace Calamari.Kubernetes
 
         public void ReportManifestApplied(string filePath)
         {
+            if (!FeatureToggle.KubernetesLiveObjectStatusFeatureToggle.IsEnabled(variables))
+                return;
+            
             using (var yamlFile = fileSystem.OpenFile(filePath, FileAccess.ReadWrite))
             {
                 try

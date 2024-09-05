@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Common.Plumbing.Variables;
@@ -16,10 +17,28 @@ namespace Calamari.Tests.KubernetesFixtures
     public class ManifestReporterTests
     {
         [Test]
+        public void GivenDisabledFeatureToggle_ShouldNotPostServiceMessage()
+        {
+            var memoryLog = new InMemoryLog();
+            var variables = new CalamariVariables();
+
+            var yaml = @"foo: bar";
+            using (CreateFile(yaml, out var filePath))
+            {
+                var mr = new ManifestReporter(variables, CalamariPhysicalFileSystem.GetPhysicalFileSystem(), memoryLog);
+
+                mr.ReportManifestApplied(filePath);
+
+                memoryLog.ServiceMessages.Should().BeEmpty();
+            }
+        }
+        
+        [Test]
         public void GivenValidYaml_ShouldPostSingleServiceMessage()
         {
             var memoryLog = new InMemoryLog();
             var variables = new CalamariVariables();
+            variables.Set(KnownVariables.EnabledFeatureToggles, nameof(FeatureToggle.KubernetesLiveObjectStatusFeatureToggle));
 
             var yaml = @"foo: bar";
             var expectedJson = "{\"foo\": \"bar\"}";
@@ -39,6 +58,7 @@ namespace Calamari.Tests.KubernetesFixtures
         {
             var memoryLog = new InMemoryLog();
             var variables = new CalamariVariables();
+            variables.Set(KnownVariables.EnabledFeatureToggles, nameof(FeatureToggle.KubernetesLiveObjectStatusFeatureToggle));
 
             var yaml = @"text - Bar";
             using (CreateFile(yaml, out var filePath))
@@ -56,6 +76,7 @@ namespace Calamari.Tests.KubernetesFixtures
         {
             var memoryLog = new InMemoryLog();
             var variables = new CalamariVariables();
+            variables.Set(KnownVariables.EnabledFeatureToggles, nameof(FeatureToggle.KubernetesLiveObjectStatusFeatureToggle));
             var yaml = @"metadata:
   name: game-demo
   namespace: XXX";
@@ -76,6 +97,7 @@ namespace Calamari.Tests.KubernetesFixtures
         {
             var memoryLog = new InMemoryLog();
             var variables = new CalamariVariables();
+            variables.Set(KnownVariables.EnabledFeatureToggles, nameof(FeatureToggle.KubernetesLiveObjectStatusFeatureToggle));
             var yaml = @"foo: bar";
             using (CreateFile(yaml, out var filePath))
             {
@@ -94,6 +116,7 @@ namespace Calamari.Tests.KubernetesFixtures
         {
             var memoryLog = new InMemoryLog();
             var variables = new CalamariVariables();
+            variables.Set(KnownVariables.EnabledFeatureToggles, nameof(FeatureToggle.KubernetesLiveObjectStatusFeatureToggle));
             var yaml = @"foo: bar";
             using (CreateFile(yaml, out var filePath))
             {
