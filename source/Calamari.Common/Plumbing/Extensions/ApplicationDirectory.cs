@@ -9,7 +9,7 @@ namespace Calamari.Common.Plumbing.Extensions
 {
     public class ApplicationDirectory
     {
-        static readonly ISemaphoreFactory Semaphore = SemaphoreFactory.Get();
+        static readonly ISemaphoreFactory Semaphore = new SystemSemaphoreManager();
 
         /// <summary>
         /// Returns the directory where the package will be installed.

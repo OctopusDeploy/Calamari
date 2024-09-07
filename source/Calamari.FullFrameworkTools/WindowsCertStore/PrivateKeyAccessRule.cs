@@ -9,6 +9,7 @@ namespace Calamari.FullFrameworkTools.WindowsCertStore;
 
 public class PrivateKeyAccessRule
 {
+    [JsonConstructor]
     public PrivateKeyAccessRule(string identity, PrivateKeyAccess access)
         :this(new NTAccount(identity), access)
     {

@@ -28,7 +28,7 @@ namespace Calamari.Common.Plumbing.Deployment.Journal
         {
             if (deployment.SkipJournal)
                 return;
-            var semaphore = SemaphoreFactory.Get();
+            var semaphore = new SystemSemaphoreManager();
             var journal = new DeploymentJournal(fileSystem, semaphore, deployment.Variables);
 
             var hasPackages = !string.IsNullOrWhiteSpace(packageFile) || deployment.Variables.GetIndexes(PackageVariables.PackageCollection).Any();

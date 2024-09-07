@@ -1,5 +1,5 @@
-variable "tests_source_dir" {
+variable "static_resource_prefix" {
   type = string
 }
 
-resource "random_pet" "prefix" {}
+resource "random_pet" "name" {}

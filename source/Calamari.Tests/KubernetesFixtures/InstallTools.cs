@@ -164,7 +164,7 @@ namespace Calamari.Tests.KubernetesFixtures
                                                                                            $"/a {awsInstaller} /qn TARGETDIR={destinationDirectoryName}\\extract",
                                                                                            destinationDirectoryName);
                                                          }
-                                                         else if (CalamariEnvironment.IsRunningOnNix && !CalamariEnvironment.IsRunningOnMono)
+                                                         else if (CalamariEnvironment.IsRunningOnNix)
                                                          {
                                                              ExecuteCommandAndReturnResult("sudo",
                                                                                            "apt-get install unzip",
