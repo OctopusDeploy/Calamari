@@ -20,7 +20,7 @@ namespace Calamari.FullFrameworkTools
             {
                 var fileVersionInfo = FileVersionInfo.GetVersionInfo(typeof(Program).Assembly.Location);
                 log.Info(fileVersionInfo.ProductVersion);
-                return 1;
+                return 0;
             }
 
             var commandLocator = new RequestTypeLocator();
@@ -34,6 +34,7 @@ namespace Calamari.FullFrameworkTools
             catch (Exception ex)
             {
                 log.Fatal(ex);
+                return -1;
             }
             return 0;
         }

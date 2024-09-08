@@ -41,7 +41,8 @@ namespace Calamari.Integration.FullFramework
                     fileSystem.WriteAllBytes(file.FilePath, encRequestObj);
 
                     var args = new[] { cmd.GetType().Name, "--password", password, "--file", file.FilePath };
-                    var taskResult = "";
+                    var taskResult = string.Empty;
+                    var error = string.Empty;
                     var processResult = SilentProcessRunner.ExecuteCommand(path,
                                                                            string.Join(" ", args),
                                                                            tempDir.DirectoryPath,
@@ -70,12 +71,14 @@ namespace Calamari.Integration.FullFramework
                                                                                        Log.Error(line["Message"]?.ToString() ?? string.Empty);
                                                                                        Log.Error(line["Type"]?.ToString() ?? string.Empty);
                                                                                        Log.Error(line["StackTrace"]?.ToString() ?? string.Empty);
-                                                                                       throw new Exception(line["Message"]?.ToString());
+                                                                                       error = line["Message"]?.ToString();
+                                                                                       throw new Exception(error);
                                                                                    case LogLevel.Result:
                                                                                        taskResult = line["Result"]?.ToString();
                                                                                        break;
                                                                                    default:
-                                                                                       throw new ArgumentOutOfRangeException();
+                                                                                       error = $"Unknown log level {logLevel}";
+                                                                                       break;
                                                                                }
                                                                            },
                                                                            Log.Error);
@@ -84,6 +87,7 @@ namespace Calamari.Integration.FullFramework
                     {
                         throw new Exception("Operation failed: "+ processResult.ErrorOutput);
                     }
+
                     return JsonConvert.DeserializeObject<TResponse>(taskResult);
                 }
             }
