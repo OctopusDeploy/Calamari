@@ -108,7 +108,7 @@ namespace Calamari.FullFrameworkTools.WindowsCertStore
                 if (certificate.HasPrivateKey())
                 {
                     // Because we have to store the private-key in the machine key-store, we must grant the user access to it
-                    var keySecurity = new[] {new PrivateKeyAccessRule(account, PrivateKeyAccess.FullControl)};
+                    var keySecurity = new[] {new PrivateKeyAccessRule(account.Value, PrivateKeyAccess.FullControl)};
                     AddPrivateKeyAccessRules(keySecurity, certificate);
                 }
             }

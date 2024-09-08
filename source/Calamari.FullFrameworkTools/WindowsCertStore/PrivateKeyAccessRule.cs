@@ -11,26 +11,34 @@ public class PrivateKeyAccessRule
 {
     [JsonConstructor]
     public PrivateKeyAccessRule(string identity, PrivateKeyAccess access)
-        :this(new NTAccount(identity), access)
-    {
-    }
-
-    public PrivateKeyAccessRule(IdentityReference identity, PrivateKeyAccess access)
     {
         Identity = identity;
         Access = access;
     }
-
-    public IdentityReference Identity { get; }
+    
     public PrivateKeyAccess Access { get; }
 
-
-    private static JsonSerializerSettings JsonSerializerSettings => new JsonSerializerSettings
+    public string Identity { get; }
+    
+    
+    public IdentityReference GetIdentityReference()
     {
-        Converters = new List<JsonConverter>
+        return TryParse(Identity, out var temp) ? temp! : new NTAccount(Identity);
+    }
+        
+        
+    public static bool TryParse(string value, out SecurityIdentifier? result)
+    {
+        try
         {
-            new StringEnumConverter(),
+            result = new SecurityIdentifier(value);
+            return true;
         }
-    };
+        catch (ArgumentException)
+        {
+            result = null;
+            return false;
+        }
+    }
 
 }

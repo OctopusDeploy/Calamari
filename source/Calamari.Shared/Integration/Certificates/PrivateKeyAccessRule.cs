@@ -10,17 +10,42 @@ namespace Calamari.Integration.Certificates
     {
         [JsonConstructor]
         public PrivateKeyAccessRule(string identity, PrivateKeyAccess access)
-            :this(new NTAccount(identity), access)
-        {
-        }
 
-        public PrivateKeyAccessRule(IdentityReference identity, PrivateKeyAccess access)
         {
             Identity = identity;
             Access = access;
         }
 
-        public IdentityReference Identity { get; }
+        /*public PrivateKeyAccessRule(IdentityReference identity, PrivateKeyAccess access)
+        {
+            Identity = identity;
+            Access = access;
+        }*/
+
+        /*public IdentityReference Identity { get; }*/
+        public string Identity { get; }
+
+        public IdentityReference GetIdentityReference()
+        {
+            return TryParse(Identity, out var temp) ? (IdentityReference)temp : new NTAccount(Identity);
+        }
+        
+        
+        public static bool TryParse(string value, out SecurityIdentifier result)
+        {
+            try
+            {
+                result = new SecurityIdentifier(value);
+                return true;
+            }
+            catch (ArgumentException)
+            {
+                result = null;
+                return false;
+            }
+        }
+        
+        
         public PrivateKeyAccess Access { get; }
 
         public static ICollection<PrivateKeyAccessRule> FromJson(string json)
