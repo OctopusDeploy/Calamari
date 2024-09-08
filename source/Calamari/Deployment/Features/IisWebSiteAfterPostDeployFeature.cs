@@ -63,25 +63,25 @@ namespace Calamari.Deployment.Features
                                             PrivateKeyAccess.FullControl);
         }
 
-        static IdentityReference GetIdentityForApplicationPoolIdentity(ApplicationPoolIdentityType applicationPoolIdentityType,
+        static string GetIdentityForApplicationPoolIdentity(ApplicationPoolIdentityType applicationPoolIdentityType,
                                                                        IVariables variables)
         {
             switch (applicationPoolIdentityType)
             {
                 case ApplicationPoolIdentityType.ApplicationPoolIdentity:
-                    return new NTAccount("IIS AppPool\\" + variables.Get(SpecialVariables.Action.IisWebSite.ApplicationPoolName));
+                    return new NTAccount("IIS AppPool\\" + variables.Get(SpecialVariables.Action.IisWebSite.ApplicationPoolName)).Value;
 
                 case ApplicationPoolIdentityType.LocalService:
-                    return new SecurityIdentifier(WellKnownSidType.LocalServiceSid, null);
+                    return new SecurityIdentifier(WellKnownSidType.LocalServiceSid, null).Value;
 
                 case ApplicationPoolIdentityType.LocalSystem:
-                    return new SecurityIdentifier(WellKnownSidType.LocalServiceSid, null);
+                    return new SecurityIdentifier(WellKnownSidType.LocalServiceSid, null).Value;
 
                 case ApplicationPoolIdentityType.NetworkService:
-                    return new SecurityIdentifier(WellKnownSidType.NetworkServiceSid, null);
+                    return new SecurityIdentifier(WellKnownSidType.NetworkServiceSid, null).Value;
 
                 case ApplicationPoolIdentityType.SpecificUser:
-                    return new NTAccount(StripLocalAccountIdentifierFromUsername(variables.Get(SpecialVariables.Action.IisWebSite.ApplicationPoolUserName)));
+                    return new NTAccount(StripLocalAccountIdentifierFromUsername(variables.Get(SpecialVariables.Action.IisWebSite.ApplicationPoolUserName))).Value;
 
                 default:
                     throw new ArgumentOutOfRangeException(nameof(applicationPoolIdentityType), applicationPoolIdentityType, null);
