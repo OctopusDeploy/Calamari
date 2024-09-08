@@ -12,29 +12,28 @@ namespace Calamari.Build;
 
 partial class Build
 {
-    [Parameter(Name = "DefaultGitBranch")] readonly string MainBranchName;
+
+    [Parameter(Name = "BUILD_VCS_NUMBER")]
+    readonly string CommitSha;
 
     [PublicAPI]
     Target DetermineAffectedTests =>
         target => target
             .Executes(() =>
             {
-                if (GitVersionInfo is null)
-                    throw new ArgumentNullException(nameof(GitVersionInfo));
-
                 File.WriteAllText("placeholder.txt",
                     "TeamCity can't stand to have no artifacts in a consuming configuration, so this is a placeholder");
                 TeamCity.Instance.PublishArtifacts("placeholder.txt");
 
-                if (GitVersionInfo.BranchName == MainBranchName)
+                if (BranchName == DefaultBranchName)
                 {
                     Log.Information("On default branch, nothing to calculate");
                     return;
                 }
-
-                GitTasks.Git($"fetch origin {MainBranchName}");
-                var mainCommitSha = GitTasks.Git($"show-ref {MainBranchName} -s").FirstOrDefault().Text;
-                var mergeBase = GitTasks.Git($"merge-base {GitVersionInfo.Sha} {mainCommitSha}").FirstOrDefault();
+ 
+                GitTasks.Git($"fetch origin {DefaultBranchName}");
+                var mainCommitSha = GitTasks.Git($"show-ref {DefaultBranchName} -s").FirstOrDefault().Text;
+                var mergeBase = GitTasks.Git($"merge-base {CommitSha} {mainCommitSha}").FirstOrDefault();
 
                 if (string.IsNullOrWhiteSpace(mergeBase.Text))
                 {
@@ -43,7 +42,7 @@ partial class Build
                 }
 
                 DotNetTasks.DotNetToolRestore();
-                DotNetTasks.DotNet($"affected --from {GitVersionInfo.Sha} --to {mergeBase.Text} --verbose");
+                DotNetTasks.DotNet($"affected --from {CommitSha} --to {mergeBase.Text} --verbose");
 
                 if (File.Exists("affected.proj"))
                 {

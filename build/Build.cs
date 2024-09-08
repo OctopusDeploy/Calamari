@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using Calamari.ConsolidateCalamariPackages;
 using NuGet.Packaging;
@@ -14,8 +14,8 @@ using Nuke.Common.IO;
 using Nuke.Common.ProjectModel;
 using Nuke.Common.Tooling;
 using Nuke.Common.Tools.DotNet;
-using Nuke.Common.Tools.GitVersion;
 using Nuke.Common.Tools.NuGet;
+using Nuke.Common.Tools.OctoVersion;
 using Nuke.Common.Utilities.Collections;
 using Serilog;
 using static Nuke.Common.IO.FileSystemTasks;
@@ -87,8 +87,14 @@ namespace Calamari.Build
         [Parameter]
         readonly string? TargetRuntime;
 
-        [GitVersion]
-        readonly GitVersion? GitVersionInfo;
+        public Lazy<OctoVersionInfo?> OctoVersionInfo;
+        const string CiBranchNameEnvVariable = "OCTOVERSION_CurrentBranch";
+        [Parameter($"The name of the current git branch. OctoVersion will use this to calculate the version number. This can be set via the environment variable {CiBranchNameEnvVariable}.", Name = CiBranchNameEnvVariable)]
+        string? BranchName { get; set; }
+
+        const string CiDefaultBranchNameEnvVariable = "GitDefaultBranch";
+        [Parameter($"Default branch in the git repositoriy. This will usually be 'refs/heads/master' or 'refs/heads/main'. This can be set via the environment variable {CiDefaultBranchNameEnvVariable}.", Name = CiDefaultBranchNameEnvVariable)]
+        string? DefaultBranchName { get; set; }
 
         static readonly List<string> CalamariProjectsToSkipConsolidation = new() { "Calamari.CloudAccounts", "Calamari.Common", "Calamari.ConsolidateCalamariPackages" };
 
@@ -98,7 +104,19 @@ namespace Calamari.Build
 
         public Build()
         {
-            NugetVersion = new Lazy<string>(GetNugetVersion);
+            
+            // Mimic the behaviour of this attribute, but lazily so we don't pay the OctoVersion cost when it isn't needed
+            //[OctoVersion(BranchMember = nameof(BranchName), Framework = "net8.0")]
+            OctoVersionInfo = new Lazy<OctoVersionInfo?>(() =>
+                                                         {
+                                                             var attribute = new OctoVersionAttribute { BranchMember = nameof(BranchName), Framework = "net8.0" };
+
+                                                             // the Attribute does all the work such as calling TeamCity.Instance?.SetBuildNumber for us
+                                                             var version = attribute.GetValue(null!, this);
+
+                                                             return version as OctoVersionInfo;
+
+                                                         }, LazyThreadSafetyMode.ExecutionAndPublication);
 
             // This initialisation is required to ensure the build script can
             // perform actions such as GetRuntimeIdentifiers() on projects.
@@ -113,8 +131,6 @@ namespace Calamari.Build
         static AbsolutePath ConsolidateCalamariPackagesProject => SourceDirectory / "Calamari.ConsolidateCalamariPackages.Tests" / "Calamari.ConsolidateCalamariPackages.Tests.csproj";
         static AbsolutePath ConsolidatedPackageDirectory => ArtifactsDirectory / "consolidated";
         static AbsolutePath LegacyCalamariDirectory = PublishDirectory / "Calamari.Legacy";
-
-        Lazy<string> NugetVersion { get; }
 
         Target CheckForbiddenWords =>
             _ => _.Executes(() =>
@@ -162,18 +178,22 @@ namespace Calamari.Build
                                           .SetProperty("DisableImplicitNuGetFallbackFolder", true));
                   });
 
+
+        string VersionInformational => OctoVersionInfo.Value!.InformationalVersion;
+        string VersionFullSemver => OctoVersionInfo.Value!.FullSemVer;
+        
         Target Compile =>
             _ => _.DependsOn(CheckForbiddenWords)
                   .DependsOn(Restore)
                   .Executes(() =>
                   {
-                      Log.Information("Compiling Calamari v{CalamariVersion}", NugetVersion.Value);
+                      Log.Information("Compiling Calamari v{CalamariVersion}", VersionFullSemver);
 
                       DotNetBuild(_ => _.SetProjectFile(Solution)
                                         .SetConfiguration(Configuration)
                                         .SetNoRestore(true)
-                                        .SetVersion(NugetVersion.Value)
-                                        .SetInformationalVersion(GitVersionInfo?.InformationalVersion));
+                                        .SetVersion(VersionFullSemver)
+                                        .SetInformationalVersion(VersionInformational));
                   });
 
         Target CalamariConsolidationTests =>
@@ -200,10 +220,9 @@ namespace Calamari.Build
                                                 + "deployment steps in Octopus Server",
                                                 RootProjectName, $"{RootProjectName}.{FixedRuntimes.Cloud}");
 
-                                var nugetVersion = NugetVersion.Value;
                                 var outputDirectory = DoPublish(RootProjectName,
                                                                 OperatingSystem.IsWindows() ? Frameworks.Net462 : Frameworks.Net60,
-                                                                nugetVersion);
+                                                                VersionFullSemver);
                                 if (OperatingSystem.IsWindows())
                                 {
                                     CopyDirectoryRecursively(outputDirectory, (LegacyCalamariDirectory / RootProjectName), DirectoryExistsPolicy.Merge);
@@ -216,12 +235,12 @@ namespace Calamari.Build
 
                                 DoPublish(RootProjectName,
                                           OperatingSystem.IsWindows() ? Frameworks.Net462 : Frameworks.Net60,
-                                          nugetVersion,
+                                          VersionFullSemver,
                                           FixedRuntimes.Cloud);
 
                       // Create the self-contained Calamari packages for each runtime ID defined in Calamari.csproj
                       foreach (var rid in GetRuntimeIdentifiers(Solution.GetProject(RootProjectName)!)!)
-                          DoPublish(RootProjectName, Frameworks.Net60, nugetVersion, rid);
+                          DoPublish(RootProjectName, Frameworks.Net60, VersionFullSemver, rid);
                   });
 
         Target PublishCalamariFlavourProjects =>
@@ -375,7 +394,7 @@ namespace Calamari.Build
                                     return;
                                 }
                                 Log.Verbose($"Compressing Calamari.Legacy");
-                                LegacyCalamariDirectory.ZipTo(ArtifactsDirectory / $"Calamari.Legacy.{NugetVersion.Value}.zip");
+                                LegacyCalamariDirectory.ZipTo(ArtifactsDirectory / $"Calamari.Legacy.{VersionFullSemver}.zip");
                             });
 
         Target PackBinaries =>
@@ -383,15 +402,14 @@ namespace Calamari.Build
                   .DependsOn(PublishCalamariFlavourProjects)
                   .Executes(async () =>
                             {
-                                var nugetVersion = NugetVersion.Value;
                                 var packageActions = new List<Action>
                                 {
                                     () => DoPackage(RootProjectName,
                                                     OperatingSystem.IsWindows() ? Frameworks.Net462 : Frameworks.Net60,
-                                                    nugetVersion),
+                                                    VersionFullSemver),
                                     () => DoPackage(RootProjectName,
                                                     OperatingSystem.IsWindows() ? Frameworks.Net462 : Frameworks.Net60,
-                                                    nugetVersion,
+                                                    VersionFullSemver,
                                                     FixedRuntimes.Cloud),
                                 };
 
@@ -400,14 +418,14 @@ namespace Calamari.Build
                                 foreach (var rid in GetRuntimeIdentifiers(Solution.GetProject(RootProjectName)!)!)
                                     packageActions.Add(() => DoPackage(RootProjectName,
                                                                        Frameworks.Net60,
-                                                                       nugetVersion,
+                                                                       VersionFullSemver,
                                                                        rid));
 
                                 var dotNetCorePackSettings = new DotNetPackSettings().SetConfiguration(Configuration)
                                                                                      .SetOutputDirectory(ArtifactsDirectory)
                                                                                      .EnableNoBuild()
                                                                                      .EnableIncludeSource()
-                                                                                     .SetVersion(nugetVersion)
+                                                                                     .SetVersion(VersionFullSemver)
                                                                                      .SetNoRestore(true);
 
                                 var commonProjects = Directory.GetFiles(SourceDirectory, "*.Common.csproj",
@@ -430,7 +448,6 @@ namespace Calamari.Build
                   .DependsOn(PublishCalamariFlavourProjects)
                   .Executes(async () =>
                   {
-                      var nugetVersion = NugetVersion.Value;
                       var defaultTarget = OperatingSystem.IsWindows() ? Frameworks.Net462 : Frameworks.Net60;
                       AbsolutePath binFolder = SourceDirectory / "Calamari.Tests" / "bin" / Configuration / defaultTarget;
                       Directory.Exists(binFolder);
@@ -448,8 +465,8 @@ namespace Calamari.Build
                           actions.Add(() =>
                           {
                               var publishedLocation =
-                                  DoPublish("Calamari.Tests", Frameworks.Net60, nugetVersion, rid);
-                              var zipName = $"Calamari.Tests.{rid}.{nugetVersion}.zip";
+                                  DoPublish("Calamari.Tests", Frameworks.Net60, VersionFullSemver, rid);
+                              var zipName = $"Calamari.Tests.{rid}.{VersionFullSemver}.zip";
                               File.Copy(RootDirectory / "global.json", publishedLocation / "global.json");
                               CompressionTasks.Compress(publishedLocation, ArtifactsDirectory / zipName);
                           });
@@ -462,7 +479,7 @@ namespace Calamari.Build
                                                              .SetOutputDirectory(ArtifactsDirectory)
                                                              .EnableNoBuild()
                                                              .EnableIncludeSource()
-                                                             .SetVersion(nugetVersion)
+                                                             .SetVersion(VersionFullSemver)
                                                              .SetNoRestore(true));
                       });
 
@@ -513,7 +530,7 @@ namespace Calamari.Build
                                         packageReferences.Add(new BuildPackageReference
                                         {
                                             Name = flavour,
-                                            Version = NugetVersion.Value,
+                                            Version = VersionFullSemver,
                                             PackagePath = ArtifactsDirectory / $"{flavour}.zip"
                                         });
                                     }
@@ -534,7 +551,7 @@ namespace Calamari.Build
                   {
                       NuGetPack(s => s.SetTargetPath(BuildDirectory / "Calamari.Consolidated.nuspec")
                                       .SetBasePath(BuildDirectory)
-                                      .SetVersion(NugetVersion.Value)
+                                      .SetVersion(VersionFullSemver)
                                       .SetOutputDirectory(ArtifactsDirectory));
                   });
 
@@ -550,7 +567,7 @@ namespace Calamari.Build
                      {
                          Log.Information("Setting Calamari version in Octopus Server "
                                          + "project {ServerProjectFile} to {NugetVersion}",
-                                         serverProjectFile, NugetVersion.Value);
+                                         serverProjectFile, VersionFullSemver);
                          SetOctopusServerCalamariVersion(serverProjectFile);
                      }
                      else
@@ -558,13 +575,13 @@ namespace Calamari.Build
                          Log.Warning("Could not set Calamari version in Octopus Server project "
                                      + "{ServerProjectFile} to {NugetVersion} as could not find "
                                      + "project file",
-                                     serverProjectFile, NugetVersion.Value);
+                                     serverProjectFile, VersionFullSemver);
                      }
                  });
 
         Target SetTeamCityVersion => _ => _.Executes(() =>
         {
-            TeamCity.Instance?.SetBuildNumber(NugetVersion.Value);
+            TeamCity.Instance?.SetBuildNumber(VersionFullSemver);
         });
 
         Target BuildLocal => _ => _.DependsOn(PackCalamariConsolidatedNugetPackage)
@@ -604,7 +621,7 @@ namespace Calamari.Build
                                 .SetConfiguration(Configuration)
                                 .SetOutput(publishedTo)
                                 .SetFramework(framework)
-                                .SetVersion(NugetVersion.Value)
+                                .SetVersion(VersionFullSemver)
                                 .SetVerbosity(BuildVerbosity)
                                 .SetRuntime(runtimeId)
                                 .SetVersion(version));
@@ -674,7 +691,7 @@ namespace Calamari.Build
             NuGetTasks.NuGetPack(_ => _.SetBasePath(publishedTo)
                                        .SetOutputDirectory(ArtifactsDirectory)
                                        .SetTargetPath(nuspec)
-                                       .SetVersion(NugetVersion.Value)
+                                       .SetVersion(VersionFullSemver)
                                        .SetVerbosity(NuGetVerbosity.Normal)
                                        .SetProperties(nugetPackProperties));
         }
@@ -684,16 +701,8 @@ namespace Calamari.Build
         {
             var text = File.ReadAllText(projectFile);
             text = Regex.Replace(text, @"<PackageReference Include=""Calamari.Consolidated"" Version=""([\S])+"" />",
-                                 $"<PackageReference Include=\"Calamari.Consolidated\" Version=\"{NugetVersion.Value}\" />");
+                                 $"<PackageReference Include=\"Calamari.Consolidated\" Version=\"{VersionFullSemver}\" />");
             File.WriteAllText(projectFile, text);
-        }
-
-        string GetNugetVersion()
-        {
-            return AppendTimestamp
-                ? $"{GitVersionInfo?.NuGetVersion}-{DateTime.Now:yyyyMMddHHmmss}"
-                : GitVersionInfo?.NuGetVersion
-                  ?? throw new InvalidOperationException("Unable to retrieve valid Nuget Version");
         }
 
         IReadOnlyCollection<string> GetRuntimeIdentifiers(Project? project)
