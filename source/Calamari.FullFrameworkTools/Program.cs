@@ -8,21 +8,8 @@ namespace Calamari.FullFrameworkTools
 {
     public class Program
     {
-        public static int Main(string[] args)
+        public int Run(string cmd, string password, string file)
         {
-            var log = new SerializedLog();
-            if (!ExtractArgs(args, out var cmd, out var password, out var file))
-            {
-                WriteHelp();
-                return -1;
-            }
-            if (cmd == "version")
-            {
-                var fileVersionInfo = FileVersionInfo.GetVersionInfo(typeof(Program).Assembly.Location);
-                log.Info(fileVersionInfo.ProductVersion);
-                return 0;
-            }
-
             var commandLocator = new RequestTypeLocator();
             var commandHandler = new CommandHandler(new WindowsX509CertificateStore(log), new InternetInformationServer());
             var requestInvoker = new CommandRequestInvoker(commandLocator, commandHandler);
@@ -37,6 +24,25 @@ namespace Calamari.FullFrameworkTools
                 return -1;
             }
             return 0;
+        }
+
+        static readonly ILog log = new SerializedLog();
+        
+        public static int Main(string[] args)
+        {
+            if (!ExtractArgs(args, out var cmd, out var password, out var file))
+            {
+                WriteHelp();
+                return -1;
+            }
+            if (cmd == "version")
+            {
+                var fileVersionInfo = FileVersionInfo.GetVersionInfo(typeof(Program).Assembly.Location);
+                log.Info(fileVersionInfo.ProductVersion);
+                return 0;
+            }
+
+            return new Program().Run(cmd, password, file);
         }
 
         static void WriteHelp()

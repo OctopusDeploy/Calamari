@@ -42,10 +42,6 @@ public class CommandHandler : ICommandHandler
     }
 }
 
-public interface IFullFrameworkToolResponse
-    {
-    }
-
-    public class StringResponse : IFullFrameworkToolResponse { public string? Value { get; set; } }
-    public class VoidResponse : IFullFrameworkToolResponse { }
-    public class BoolResponse : IFullFrameworkToolResponse { public bool Value { get; set; } }
+    public class StringResponse { public string? Value { get; set; } }
+    public class VoidResponse  { }
+    public class BoolResponse { public bool Value { get; set; } }

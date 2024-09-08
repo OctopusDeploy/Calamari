@@ -16,9 +16,11 @@ public class FindCertificateStoreRequest : IRequest
     public string Thumbprint { get; }
     public StoreLocation StoreLocation { get; }
     
-    public VoidResponse DoIt(IWindowsX509CertificateStore certificateStore)
+    public StringResponse DoIt(IWindowsX509CertificateStore certificateStore)
     {
-        certificateStore.FindCertificateStore(Thumbprint, StoreLocation);
-        return new VoidResponse();
+        var result =certificateStore.FindCertificateStore(Thumbprint, StoreLocation);
+        return new StringResponse() {
+            Value = result
+        };
     }
 }
