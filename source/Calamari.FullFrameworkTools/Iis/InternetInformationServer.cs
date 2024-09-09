@@ -1,14 +1,14 @@
-﻿#if IIS_SUPPORT
-using System;
+﻿using System;
 using System.Linq;
 
-namespace Calamari.Integration.Iis
+namespace Calamari.FullFrameworkTools.Iis
 {
     /// <summary>
     /// Tools for working with IIS.
     /// </summary>
     public class InternetInformationServer : IInternetInformationServer
     {
+
         /// <summary>
         /// Sets the home directory (web root) of the given IIS website to the given path.
         /// </summary>
@@ -28,8 +28,8 @@ namespace Calamari.Integration.Iis
             var server = legacySupport 
                 ? WebServerSupport.Legacy() 
                 : WebServerSupport.AutoDetect();
-
+            
             return server.ChangeHomeDirectory(iisSiteName, virtualDirectory, path);
         }
-    } }
-#endif
+    }
+}

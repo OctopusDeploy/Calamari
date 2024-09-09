@@ -1,4 +1,4 @@
-﻿#if WINDOWS_CERTIFICATE_STORE_SUPPORT 
+﻿#nullable enable
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -8,23 +8,34 @@ using System.Security.AccessControl;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
-using Calamari.Common.Features.Processes.Semaphores;
-using Calamari.Common.Plumbing.Logging;
-using Calamari.Integration.Certificates.WindowsNative;
+using Calamari.FullFrameworkTools.Command;
+using Calamari.FullFrameworkTools.WindowsCertStore.WindowsNative;
 using Org.BouncyCastle.Pkcs;
 using Org.BouncyCastle.Security;
-using static Calamari.Integration.Certificates.WindowsNative.WindowsX509Native;
-using Native = Calamari.Integration.Certificates.WindowsNative.WindowsX509Native;
+using static  Calamari.FullFrameworkTools.WindowsCertStore.WindowsNative.WindowsX509Native;
+using Native =  Calamari.FullFrameworkTools.WindowsCertStore.WindowsNative.WindowsX509Native;
 
-namespace Calamari.Integration.Certificates
+namespace Calamari.FullFrameworkTools.WindowsCertStore
 {
+    public enum PrivateKeyAccess
+    {
+        ReadOnly,
+        FullControl 
+    }
+
     public class WindowsX509CertificateStore: IWindowsX509CertificateStore
     {
+        readonly ILog log;
         public static readonly ISemaphoreFactory Semaphores = new SystemSemaphoreManager();
         public static readonly string SemaphoreName = nameof(WindowsX509CertificateStore);
 
         const string IntermediateAuthorityStoreName = "CA";
         public static readonly string RootAuthorityStoreName = "Root";
+
+        public WindowsX509CertificateStore(ILog log)
+        {
+            this.log = log;
+        }
 
         private static IDisposable AcquireSemaphore()
         {
@@ -55,17 +66,17 @@ namespace Calamari.Integration.Certificates
         {
             using (AcquireSemaphore())
             {
-                CertificateSystemStoreLocation systemStoreLocation;
+                WindowsX509Native.CertificateSystemStoreLocation systemStoreLocation;
                 bool useUserKeyStore;
 
                 switch (storeLocation)
                 {
                     case StoreLocation.CurrentUser:
-                        systemStoreLocation = CertificateSystemStoreLocation.CurrentUser;
+                        systemStoreLocation = WindowsX509Native.CertificateSystemStoreLocation.CurrentUser;
                         useUserKeyStore = true;
                         break;
                     case StoreLocation.LocalMachine:
-                        systemStoreLocation = CertificateSystemStoreLocation.LocalMachine;
+                        systemStoreLocation = WindowsX509Native.CertificateSystemStoreLocation.LocalMachine;
                         useUserKeyStore = false;
                         break;
                     default:
@@ -91,13 +102,13 @@ namespace Calamari.Integration.Certificates
 
                 // Note we use the machine key-store. There is no way to store the private-key in 
                 // another user's key-store.  
-                var certificate = ImportPfxToStore(CertificateSystemStoreLocation.Users, userStoreName, pfxBytes,
+                var certificate = ImportPfxToStore(WindowsX509Native.CertificateSystemStoreLocation.Users, userStoreName, pfxBytes,
                     password, false, privateKeyExportable);
 
                 if (certificate.HasPrivateKey())
                 {
                     // Because we have to store the private-key in the machine key-store, we must grant the user access to it
-                    var keySecurity = new[] {new PrivateKeyAccessRule(userName, PrivateKeyAccess.FullControl)};
+                    var keySecurity = new[] {new PrivateKeyAccessRule(account.Value, PrivateKeyAccess.FullControl)};
                     AddPrivateKeyAccessRules(keySecurity, certificate);
                 }
             }
@@ -108,7 +119,7 @@ namespace Calamari.Integration.Certificates
                                                     ICollection<PrivateKeyAccessRule> privateKeyAccessRules)
         {
             var storeName = FindCertificateStore(thumbprint, StoreLocation.LocalMachine);
-            AddPrivateKeyAccessRules(thumbprint, storeLocation, storeName, privateKeyAccessRules);
+            AddPrivateKeyAccessRules(thumbprint, storeLocation, storeName!, privateKeyAccessRules);
         }
 
         public void AddPrivateKeyAccessRules(string thumbprint, StoreLocation storeLocation, string storeName,
@@ -156,7 +167,7 @@ namespace Calamari.Integration.Certificates
                     throw new Exception("Certificate does not have a private-key");
 
                 var keyProvInfo =
-                    certificate.GetCertificateProperty<KeyProviderInfo>(CertificateProperty.KeyProviderInfo);
+                    certificate.GetCertificateProperty<WindowsX509Native.KeyProviderInfo>(WindowsX509Native.CertificateProperty.KeyProviderInfo);
 
                 // If it is a CNG key
                 return keyProvInfo.dwProvType == 0
@@ -188,7 +199,7 @@ namespace Calamari.Integration.Certificates
                 if (certificateHandle.HasPrivateKey())
                 {
                     var keyProvInfo =
-                        certificateHandle.GetCertificateProperty<KeyProviderInfo>(CertificateProperty.KeyProviderInfo);
+                        certificateHandle.GetCertificateProperty<WindowsX509Native.KeyProviderInfo>(WindowsX509Native.CertificateProperty.KeyProviderInfo);
 
                     // If it is a CNG key
                     if (keyProvInfo.dwProvType == 0)
@@ -208,9 +219,9 @@ namespace Calamari.Integration.Certificates
                         try
                         {
                             IntPtr providerHandle;
-                            var acquireContextFlags = CryptAcquireContextFlags.Delete | CryptAcquireContextFlags.Silent;
+                            var acquireContextFlags = WindowsX509Native.CryptAcquireContextFlags.Delete | WindowsX509Native.CryptAcquireContextFlags.Silent;
                             if (storeLocation == StoreLocation.LocalMachine)
-                                acquireContextFlags = acquireContextFlags | CryptAcquireContextFlags.MachineKeySet;
+                                acquireContextFlags = acquireContextFlags | WindowsX509Native.CryptAcquireContextFlags.MachineKeySet;
 
                             var success = Native.CryptAcquireContext(out providerHandle, keyProvInfo.pwszContainerName,
                                 keyProvInfo.pwszProvName,
@@ -237,17 +248,17 @@ namespace Calamari.Integration.Certificates
 
         public static ICollection<string> GetStoreNames(StoreLocation location)
         {
-            var callback = new CertEnumSystemStoreCallBackProto(CertEnumSystemStoreCallBack);
+            var callback = new WindowsX509Native.CertEnumSystemStoreCallBackProto(CertEnumSystemStoreCallBack);
             var names = new List<string>();
-            CertificateSystemStoreLocation locationFlags;
+            WindowsX509Native.CertificateSystemStoreLocation locationFlags;
 
             switch (location)
             {
                 case StoreLocation.CurrentUser:
-                    locationFlags = CertificateSystemStoreLocation.CurrentUser;
+                    locationFlags = WindowsX509Native.CertificateSystemStoreLocation.CurrentUser;
                     break;
                 case StoreLocation.LocalMachine:
-                    locationFlags = CertificateSystemStoreLocation.LocalMachine;
+                    locationFlags = WindowsX509Native.CertificateSystemStoreLocation.LocalMachine;
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(location), location, null);
@@ -263,16 +274,16 @@ namespace Calamari.Integration.Certificates
             return names;
         }
 
-        static SafeCertContextHandle ImportPfxToStore(CertificateSystemStoreLocation storeLocation, string storeName, byte[] pfxBytes, string password,
+        SafeCertContextHandle ImportPfxToStore(WindowsX509Native.CertificateSystemStoreLocation storeLocation, string storeName, byte[] pfxBytes, string password,
             bool useUserKeyStore, bool privateKeyExportable)
         {
             var pfxImportFlags = useUserKeyStore
-                ? PfxImportFlags.CRYPT_USER_KEYSET
-                : PfxImportFlags.CRYPT_MACHINE_KEYSET;
+                ? WindowsX509Native.PfxImportFlags.CRYPT_USER_KEYSET
+                : WindowsX509Native.PfxImportFlags.CRYPT_MACHINE_KEYSET;
 
             if (privateKeyExportable)
             {
-                pfxImportFlags = pfxImportFlags | PfxImportFlags.CRYPT_EXPORTABLE;
+                pfxImportFlags = pfxImportFlags | WindowsX509Native.PfxImportFlags.CRYPT_EXPORTABLE;
             }
 
             var certificates = GetCertificatesFromPfx(pfxBytes, password, pfxImportFlags);
@@ -289,12 +300,12 @@ namespace Calamari.Integration.Certificates
                 // If it is the last certificate in the chain and is self-signed then it goes into the Root store
                 if (i == certificates.Count - 1 && IsSelfSigned(certificate))
                 {
-                    AddCertificateToStore(CertificateSystemStoreLocation.LocalMachine, RootAuthorityStoreName, certificate);
+                    AddCertificateToStore(WindowsX509Native.CertificateSystemStoreLocation.LocalMachine, RootAuthorityStoreName, certificate);
                     continue;
                 }
 
                 // Otherwise into the Intermediate Authority store
-                AddCertificateToStore(CertificateSystemStoreLocation.LocalMachine, IntermediateAuthorityStoreName, certificate);
+                AddCertificateToStore(WindowsX509Native.CertificateSystemStoreLocation.LocalMachine, IntermediateAuthorityStoreName, certificate);
             }
 
             return certificates.First();
@@ -319,31 +330,31 @@ namespace Calamari.Integration.Certificates
             return true;
         }
 
-        static void AddCertificateToStore(CertificateSystemStoreLocation storeLocation, string storeName, SafeCertContextHandle certificate)
+        void AddCertificateToStore(WindowsX509Native.CertificateSystemStoreLocation storeLocation, string storeName, SafeCertContextHandle certificate)
         {
             try
             {
-                using (var store = CertOpenStore(CertStoreProviders.CERT_STORE_PROV_SYSTEM, IntPtr.Zero, IntPtr.Zero,
+                using (var store = CertOpenStore(WindowsX509Native.CertStoreProviders.CERT_STORE_PROV_SYSTEM, IntPtr.Zero, IntPtr.Zero,
                     storeLocation, storeName))
                 {
                     var subjectName = CertificatePal.GetSubjectName(certificate);
                     
                     var storeContext = IntPtr.Zero;
                     if (!CertAddCertificateContextToStore(store, certificate,
-                        AddCertificateDisposition.CERT_STORE_ADD_NEW, ref storeContext))
+                        WindowsX509Native.AddCertificateDisposition.CERT_STORE_ADD_NEW, ref storeContext))
                     {
                         var error = Marshal.GetLastWin32Error();
 
-                        if (error == (int) CapiErrorCode.CRYPT_E_EXISTS)
+                        if (error == (int) WindowsX509Native.CapiErrorCode.CRYPT_E_EXISTS)
                         {
-                            Log.Info($"Certificate '{subjectName}' already exists in store '{storeName}'.");
+                            log.Info($"Certificate '{subjectName}' already exists in store '{storeName}'.");
                             return;
                         }
 
                         throw new CryptographicException(error);
                     }
 
-                    Log.Info($"Imported certificate '{subjectName}' into store '{storeName}'");
+                    log.Info($"Imported certificate '{subjectName}' into store '{storeName}'");
                 }
             }
             catch (Exception ex)
@@ -352,10 +363,10 @@ namespace Calamari.Integration.Certificates
             }
         }
 
-        static IList<SafeCertContextHandle> GetCertificatesFromPfx(byte[] pfxBytes, string password, PfxImportFlags pfxImportFlags)
+        static IList<SafeCertContextHandle> GetCertificatesFromPfx(byte[] pfxBytes, string password, WindowsX509Native.PfxImportFlags pfxImportFlags)
         {
             // Marshal PFX bytes into native data structure
-            var pfxData = new CryptoData
+            var pfxData = new WindowsX509Native.CryptoData
             {
                 cbData = pfxBytes.Length,
                 pbData = Marshal.AllocHGlobal(pfxBytes.Length)
@@ -378,7 +389,7 @@ namespace Calamari.Integration.Certificates
                     {
                         var thumbprint = CalculateThumbprint(certificate);
                         // Marshal PFX bytes into native data structure
-                        var thumbprintData = new CryptoData
+                        var thumbprintData = new WindowsX509Native.CryptoData
                         {
                             cbData = thumbprint.Length,
                             pbData = Marshal.AllocHGlobal(thumbprint.Length)
@@ -387,8 +398,8 @@ namespace Calamari.Integration.Certificates
                         Marshal.Copy(thumbprint, 0, thumbprintData.pbData, thumbprint.Length);
 
                         var certificateHandle = CertFindCertificateInStore(memoryStore,
-                            CertificateEncodingType.Pkcs7OrX509AsnEncoding,
-                            IntPtr.Zero, CertificateFindType.Sha1Hash, ref thumbprintData, IntPtr.Zero);
+                            WindowsX509Native.CertificateEncodingType.Pkcs7OrX509AsnEncoding,
+                            IntPtr.Zero, WindowsX509Native.CertificateFindType.Sha1Hash, ref thumbprintData, IntPtr.Zero);
 
                         if (certificateHandle == null || certificateHandle.IsInvalid)
                             throw new Exception("Could not find certificate");
@@ -415,8 +426,8 @@ namespace Calamari.Integration.Certificates
         {
             try
             {
-                var keyProvInfo = certificate.GetCertificateProperty<KeyProviderInfo>(
-                    CertificateProperty.KeyProviderInfo);
+                var keyProvInfo = certificate.GetCertificateProperty<WindowsX509Native.KeyProviderInfo>(
+                                                                                                        WindowsX509Native.CertificateProperty.KeyProviderInfo);
 
                 // If it is a CNG key
                 if (keyProvInfo.dwProvType == 0)
@@ -439,11 +450,11 @@ namespace Calamari.Integration.Certificates
             switch (rule.Access)
             {
                 case PrivateKeyAccess.ReadOnly:
-                    return new CryptoKeyAccessRule(rule.GetIdentityReference(), CryptoKeyRights.GenericRead, AccessControlType.Allow);
+                    return new CryptoKeyAccessRule(rule.Identity, CryptoKeyRights.GenericRead, AccessControlType.Allow);
 
                 case PrivateKeyAccess.FullControl:
                     // We use 'GenericAll' here rather than 'FullControl' as 'FullControl' doesn't correctly set the access for CNG keys
-                    return new CryptoKeyAccessRule(rule.GetIdentityReference(), CryptoKeyRights.GenericAll, AccessControlType.Allow);
+                    return new CryptoKeyAccessRule(rule.Identity, CryptoKeyRights.GenericAll, AccessControlType.Allow);
 
                 default:
                     throw new ArgumentOutOfRangeException(nameof(rule.Access));
@@ -465,10 +476,10 @@ namespace Calamari.Integration.Certificates
                 var gcHandle = GCHandle.Alloc(securityDescriptorBytes, GCHandleType.Pinned);
 
                 var errorCode = NCryptSetProperty(key,
-                    NCryptProperties.SecurityDescriptor,
+                    WindowsX509Native.NCryptProperties.SecurityDescriptor,
                     gcHandle.AddrOfPinnedObject(), securityDescriptorBytes.Length,
-                    (int)NCryptFlags.Silent |
-                    (int)SecurityDesciptorParts.DACL_SECURITY_INFORMATION);
+                    (int)WindowsX509Native.NCryptFlags.Silent |
+                    (int)WindowsX509Native.SecurityDesciptorParts.DACL_SECURITY_INFORMATION);
 
                 gcHandle.Free();
 
@@ -492,8 +503,8 @@ namespace Calamari.Integration.Certificates
 
                 var securityDescriptorBytes = security.GetSecurityDescriptorBinaryForm();
 
-                if (!CryptSetProvParam(cspHandle, CspProperties.SecurityDescriptor,
-                    securityDescriptorBytes, SecurityDesciptorParts.DACL_SECURITY_INFORMATION))
+                if (!CryptSetProvParam(cspHandle, WindowsX509Native.CspProperties.SecurityDescriptor,
+                    securityDescriptorBytes, WindowsX509Native.SecurityDesciptorParts.DACL_SECURITY_INFORMATION))
                 {
                     throw new CryptographicException(Marshal.GetLastWin32Error());
                 }
@@ -550,8 +561,8 @@ namespace Calamari.Integration.Certificates
 
         static bool IsSelfSigned(SafeCertContextHandle certificate)
         {
-            var certificateInfo = (CERT_INFO)Marshal.PtrToStructure(certificate.CertificateContext.pCertInfo, typeof(CERT_INFO));
-            return CertCompareCertificateName(CertificateEncodingType.Pkcs7OrX509AsnEncoding, ref certificateInfo.Subject, ref certificateInfo.Issuer);
+            var certificateInfo = (WindowsX509Native.CERT_INFO)Marshal.PtrToStructure(certificate.CertificateContext.pCertInfo, typeof(WindowsX509Native.CERT_INFO));
+            return CertCompareCertificateName(WindowsX509Native.CertificateEncodingType.Pkcs7OrX509AsnEncoding, ref certificateInfo.Subject, ref certificateInfo.Issuer);
         }
 
         static byte[] CalculateThumbprint(Org.BouncyCastle.X509.X509Certificate certificate)
@@ -561,4 +572,3 @@ namespace Calamari.Integration.Certificates
         }
     }
 }
-#endif

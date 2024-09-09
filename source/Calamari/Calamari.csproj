@@ -107,8 +107,41 @@
       <FSharpFiles Include="$(FSharpCompilerTools)" />
       <ScriptCSFiles Include="$(ScriptCS)" />
       <DotnetScriptFiles Include="$(MSBuildProjectDirectory)/../Calamari.Scripting/DotnetScript/dotnet-script.*.zip" Condition="'$(TargetFramework)' == 'net6.0'" />
+      
     </ItemGroup>
   </Target>
+
+
+
+  <Target Name="IncludeDALImplementation" BeforeTargets="BeforeBuild">
+    <!--<Exec Command="dotnet build ..\Calamari.FullFrameworkTools\Calamari.FullFrameworkTools.csproj &#45;&#45;output $(OutDir)\Calamari.FullFrameworkTools" />-->
+    <!--<Exec Command="dotnet build ..\Calamari.FullFrameworkTools\Calamari.FullFrameworkTools.csproj &#45;&#45;configuration $(Configuration)" />-->
+    <ItemGroup>
+      <FullFrameworkFiles Include="$(MSBuildProjectDirectory)/../Calamari.FullFrameworkTools/bin/Debug/net462/*" />
+    </ItemGroup>
+  </Target>
+
+  <ItemGroup Label="FilesToCopy">
+    <!--<Content Include="Calamari.FullFrameworkTools.Proxy.targets" PackagePath="build/Calamari.FullFrameworkTools.Proxy.targets" />-->
+
+    <!--<Content Include="..\Calamari.FullFrameworkTools\bin\$(Configuration)\net462\**" Pack="true" 
+             PackagePath="contentFiles/any/any/Calamari.FullFrameworkTools">-->
+    <Content Include="..\Calamari.FullFrameworkTools\bin\$(Configuration)\net462\**" Pack="true"
+             PackagePath="tools">
+
+      <PackageCopyToOutput>true</PackageCopyToOutput>
+      <Visible>false</Visible>
+    </Content>
+  </ItemGroup>
+  
+  
+  <Target Name="CopyExe1" AfterTargets="Build" DependsOnTargets="IncludeDALImplementation" >
+    <Copy SourceFiles="@(FullFrameworkFiles)" DestinationFolder="$(OutDir)/Calamari.FullFrameworkTools/" />
+  </Target>
+  <Target Name="CopyExe2" AfterTargets="Publish" DependsOnTargets="IncludeDALImplementation">
+    <Copy SourceFiles="@(FullFrameworkFiles)" DestinationFolder="$(PublishDir)/Calamari.FullFrameworkTools/" />
+  </Target>
+  
   <Target Name="CopyToolsAfterBuild" AfterTargets="Build" DependsOnTargets="GetToolFiles">
     <Copy SourceFiles="@(FSharpFiles)" DestinationFolder="$(OutDir)/FSharp/" />
     <Copy SourceFiles="@(ScriptCSFiles)" DestinationFolder="$(OutDir)/ScriptCS/" />

@@ -5,6 +5,7 @@ namespace Calamari.Common.FeatureToggles
     public static class OctopusFeatureToggles
     {
         public static readonly OctopusFeatureToggle NonPrimaryGitDependencySupportFeatureToggle = new OctopusFeatureToggle("non-primary-git-dependency-support");
+        public static readonly OctopusFeatureToggle FullFrameworkTasksExternalProcess = new OctopusFeatureToggle("full-framework-tasks-external-process");
         
         public class OctopusFeatureToggle
         {
