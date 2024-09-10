@@ -95,7 +95,7 @@ namespace Calamari.Integration.Certificates
                 if (certificate.HasPrivateKey())
                 {
                     // Because we have to store the private-key in the machine key-store, we must grant the user access to it
-                    var keySecurity = new[] {new PrivateKeyAccessRule(account, PrivateKeyAccess.FullControl)};
+                    var keySecurity = new[] {new PrivateKeyAccessRule(account.Value, PrivateKeyAccess.FullControl)};
                     AddPrivateKeyAccessRules(keySecurity, certificate);
                 }
             }
@@ -484,11 +484,11 @@ namespace Calamari.Integration.Certificates
             switch (privateKeyAccessRule.Access)
             {
                 case PrivateKeyAccess.ReadOnly:
-                    return new CryptoKeyAccessRule(privateKeyAccessRule.Identity, CryptoKeyRights.GenericRead, AccessControlType.Allow);
+                    return new CryptoKeyAccessRule(privateKeyAccessRule.GetIdentityReference(), CryptoKeyRights.GenericRead, AccessControlType.Allow);
 
                 case PrivateKeyAccess.FullControl:
                     // We use 'GenericAll' here rather than 'FullControl' as 'FullControl' doesn't correctly set the access for CNG keys
-                    return new CryptoKeyAccessRule(privateKeyAccessRule.Identity, CryptoKeyRights.GenericAll, AccessControlType.Allow);
+                    return new CryptoKeyAccessRule(privateKeyAccessRule.GetIdentityReference(), CryptoKeyRights.GenericAll, AccessControlType.Allow);
 
                 default:
                     throw new ArgumentOutOfRangeException(nameof(privateKeyAccessRule.Access));
@@ -556,4 +556,5 @@ namespace Calamari.Integration.Certificates
         }
     }
 }
+
 #endif

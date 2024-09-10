@@ -66,12 +66,11 @@ namespace Calamari.Deployment.Features
             }
 
             return new PrivateKeyAccessRule(
-                                            GetIdentityForApplicationPoolIdentity(appPoolIdentityType, variables),
+                                            GetIdentityForApplicationPoolIdentity(appPoolIdentityType, variables).Value,
                                             PrivateKeyAccess.FullControl);
         }
 
-        static IdentityReference GetIdentityForApplicationPoolIdentity(ApplicationPoolIdentityType applicationPoolIdentityType,
-                                                                       IVariables variables)
+        static IdentityReference GetIdentityForApplicationPoolIdentity(ApplicationPoolIdentityType applicationPoolIdentityType, IVariables variables)
         {
             switch (applicationPoolIdentityType)
             {
