@@ -13,6 +13,13 @@ namespace Calamari.Deployment.Features
 {
     public class IisWebSiteAfterPostDeployFeature : IisWebSiteFeature
     {
+        readonly IWindowsX509CertificateStore windowsX509CertificateStore;
+
+        public IisWebSiteAfterPostDeployFeature(IWindowsX509CertificateStore windowsX509CertificateStore)
+        {
+            this.windowsX509CertificateStore = windowsX509CertificateStore;
+        }
+        
         public override string DeploymentStage => DeploymentStages.AfterPostDeploy;
 
         public override void Execute(RunningDeployment deployment)
@@ -30,7 +37,7 @@ namespace Calamari.Deployment.Features
         }
 
 #if WINDOWS_CERTIFICATE_STORE_SUPPORT
-        static void EnsureApplicationPoolHasCertificatePrivateKeyAccess(IVariables variables)
+        void EnsureApplicationPoolHasCertificatePrivateKeyAccess(IVariables variables)
         {
             foreach (var binding in GetEnabledBindings(variables))
             {
@@ -42,7 +49,7 @@ namespace Calamari.Deployment.Features
                 var thumbprint = variables.Get($"{certificateVariable}.{CertificateVariables.Properties.Thumbprint}");
                 var privateKeyAccess = CreatePrivateKeyAccessForApplicationPoolAccount(variables);
 
-                WindowsX509CertificateStore.AddPrivateKeyAccessRules(thumbprint,
+                windowsX509CertificateStore.AddPrivateKeyAccessRules(thumbprint,
                                                                      StoreLocation.LocalMachine,
                                                                      new List<PrivateKeyAccessRule> { privateKeyAccess });
             }

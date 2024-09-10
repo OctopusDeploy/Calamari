@@ -18,7 +18,7 @@ using Native = Calamari.Integration.Certificates.WindowsNative.WindowsX509Native
 
 namespace Calamari.Integration.Certificates
 {
-    public class WindowsX509CertificateStore
+    public class WindowsX509CertificateStore: IWindowsX509CertificateStore
     {
         public static readonly ISemaphoreFactory Semaphores = new SystemSemaphoreManager();
         public static readonly string SemaphoreName = nameof(WindowsX509CertificateStore);
@@ -31,7 +31,7 @@ namespace Calamari.Integration.Certificates
             return Semaphores.Acquire(SemaphoreName, "Another process is working with the certificate store, please wait...");
         }
 
-        public static string? FindCertificateStore(string thumbprint, StoreLocation storeLocation)
+        public string? FindCertificateStore(string thumbprint, StoreLocation storeLocation)
         {
             foreach (var storeName in GetStoreNames(storeLocation))
             {
@@ -50,8 +50,7 @@ namespace Calamari.Integration.Certificates
             return null;
         }
         
-        public static void ImportCertificateToStore(byte[] pfxBytes, string password, StoreLocation storeLocation,
-            string storeName, bool privateKeyExportable)
+        public void ImportCertificateToStore(byte[] pfxBytes, string password, StoreLocation storeLocation, string storeName, bool privateKeyExportable)
         {
             using (AcquireSemaphore())
             {
@@ -80,8 +79,7 @@ namespace Calamari.Integration.Certificates
         /// <summary>
         /// Import a certificate into a specific user's store 
         /// </summary>
-        public static void ImportCertificateToStore(byte[] pfxBytes, string password, string userName,
-            string storeName, bool privateKeyExportable)
+        public void ImportCertificateToStore(byte[] pfxBytes, string password, string userName, string storeName, bool privateKeyExportable)
         {
             using (AcquireSemaphore())
             {
@@ -103,15 +101,13 @@ namespace Calamari.Integration.Certificates
             }
         }
 
-        public static void AddPrivateKeyAccessRules(string thumbprint,
-                                                    StoreLocation storeLocation,
-                                                    ICollection<PrivateKeyAccessRule> privateKeyAccessRules)
+        public void AddPrivateKeyAccessRules(string thumbprint, StoreLocation storeLocation, ICollection<PrivateKeyAccessRule> privateKeyAccessRules)
         {
             var storeName = FindCertificateStore(thumbprint, StoreLocation.LocalMachine);
             AddPrivateKeyAccessRules(thumbprint, storeLocation, storeName, privateKeyAccessRules);
         }
 
-        public static void AddPrivateKeyAccessRules(string thumbprint, StoreLocation storeLocation, string storeName,
+        public void AddPrivateKeyAccessRules(string thumbprint, StoreLocation storeLocation, string storeName,
             ICollection<PrivateKeyAccessRule> privateKeyAccessRules)
         {
             using (AcquireSemaphore())
@@ -136,7 +132,7 @@ namespace Calamari.Integration.Certificates
             }
         }
 
-        public static CryptoKeySecurity GetPrivateKeySecurity(string thumbprint, StoreLocation storeLocation, string storeName)
+        public CryptoKeySecurity GetPrivateKeySecurity(string thumbprint, StoreLocation storeLocation, string storeName)
         {
             using (AcquireSemaphore())
             {
@@ -168,7 +164,7 @@ namespace Calamari.Integration.Certificates
         /// <summary>
         /// Unlike X509Store.Remove() this function also cleans up private-keys
         /// </summary>
-        public static void RemoveCertificateFromStore(string thumbprint, StoreLocation storeLocation, string storeName)
+        public void RemoveCertificateFromStore(string thumbprint, StoreLocation storeLocation, string storeName)
         {
             using (AcquireSemaphore())
             {
@@ -439,7 +435,7 @@ namespace Calamari.Integration.Certificates
             {
                 var security = GetCngPrivateKeySecurity(certificate);
 
-                foreach (var cryptoKeyAccessRule in accessRules.Select(r => r.ToCryptoKeyAccessRule()))
+                foreach (var cryptoKeyAccessRule in accessRules.Select(ToCryptoKeyAccessRule))
                 {
                     security.AddAccessRule(cryptoKeyAccessRule);
                 }
@@ -468,7 +464,7 @@ namespace Calamari.Integration.Certificates
             {
                 var security = GetCspPrivateKeySecurity(certificate);
 
-                foreach (var cryptoKeyAccessRule in accessRules.Select(r => r.ToCryptoKeyAccessRule()))
+                foreach (var cryptoKeyAccessRule in accessRules.Select(ToCryptoKeyAccessRule))
                 {
                     security.AddAccessRule(cryptoKeyAccessRule);
                 }
@@ -480,6 +476,22 @@ namespace Calamari.Integration.Certificates
                 {
                     throw new CryptographicException(Marshal.GetLastWin32Error());
                 }
+            }
+        }
+
+        static CryptoKeyAccessRule ToCryptoKeyAccessRule(PrivateKeyAccessRule privateKeyAccessRule)
+        {
+            switch (privateKeyAccessRule.Access)
+            {
+                case PrivateKeyAccess.ReadOnly:
+                    return new CryptoKeyAccessRule(privateKeyAccessRule.Identity, CryptoKeyRights.GenericRead, AccessControlType.Allow);
+
+                case PrivateKeyAccess.FullControl:
+                    // We use 'GenericAll' here rather than 'FullControl' as 'FullControl' doesn't correctly set the access for CNG keys
+                    return new CryptoKeyAccessRule(privateKeyAccessRule.Identity, CryptoKeyRights.GenericAll, AccessControlType.Allow);
+
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(privateKeyAccessRule.Access));
             }
         }
 

@@ -102,7 +102,7 @@ namespace Calamari.Tests.Helpers.Certificates
             if (certificates.Count == 0)
                 return;
 
-            WindowsX509CertificateStore.RemoveCertificateFromStore(Thumbprint, store.Location, store.Name);
+            new WindowsX509CertificateStore().RemoveCertificateFromStore(Thumbprint, store.Location, store.Name);
         }
 
         public void AssertCertificateIsInStore(string storeName, StoreLocation storeLocation)

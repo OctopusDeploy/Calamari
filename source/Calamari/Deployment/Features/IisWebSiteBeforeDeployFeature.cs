@@ -11,6 +11,12 @@ namespace Calamari.Deployment.Features
 {
     public class IisWebSiteBeforeDeployFeature : IisWebSiteFeature
     {
+        readonly IWindowsX509CertificateStore windowsX509CertificateStore;
+
+        public IisWebSiteBeforeDeployFeature(IWindowsX509CertificateStore windowsX509CertificateStore)
+        {
+            this.windowsX509CertificateStore = windowsX509CertificateStore;
+        }
         public override string DeploymentStage => DeploymentStages.BeforeDeploy;
 
         public override void Execute(RunningDeployment deployment)
@@ -31,7 +37,7 @@ namespace Calamari.Deployment.Features
 
 
 #if WINDOWS_CERTIFICATE_STORE_SUPPORT
-        static void EnsureCertificatesUsedInBindingsAreInStore(IVariables variables)
+        void EnsureCertificatesUsedInBindingsAreInStore(IVariables variables)
         {
             foreach (var binding in GetEnabledBindings(variables))
             {
@@ -44,11 +50,11 @@ namespace Calamari.Deployment.Features
             }
         }
 
-        static void EnsureCertificateInStore(IVariables variables, string certificateVariable)
+        void EnsureCertificateInStore(IVariables variables, string certificateVariable)
         {
             var thumbprint = variables.Get($"{certificateVariable}.{CertificateVariables.Properties.Thumbprint}");
 
-            var storeName = WindowsX509CertificateStore.FindCertificateStore(thumbprint, StoreLocation.LocalMachine);
+            var storeName = windowsX509CertificateStore.FindCertificateStore(thumbprint, StoreLocation.LocalMachine);
             if (storeName != null)
             {
                 Log.Verbose($"Found existing certificate with thumbprint '{thumbprint}' in Cert:\\LocalMachine\\{storeName}");
@@ -66,9 +72,7 @@ namespace Calamari.Deployment.Features
             Log.SetOutputVariable(SpecialVariables.Action.IisWebSite.Output.CertificateStoreName, storeNamesVariable, variables);
         }
 
-       
-
-        static string AddCertificateToLocalMachineStore(IVariables variables, string certificateVariable)
+        string AddCertificateToLocalMachineStore(IVariables variables, string certificateVariable)
         {
             var pfxBytes = Convert.FromBase64String(variables.Get($"{certificateVariable}.{CertificateVariables.Properties.Pfx}"));
             var password = variables.Get($"{certificateVariable}.{CertificateVariables.Properties.Password}");
@@ -78,7 +82,7 @@ namespace Calamari.Deployment.Features
 
             try
             {
-                WindowsX509CertificateStore.ImportCertificateToStore(pfxBytes, password, StoreLocation.LocalMachine, "My", true);
+                windowsX509CertificateStore.ImportCertificateToStore(pfxBytes, password, StoreLocation.LocalMachine, "My", true);
                 return "My";
             }
             catch (Exception)
