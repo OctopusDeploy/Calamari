@@ -307,7 +307,13 @@ namespace Calamari.AzureAppService.Behaviors
 #pragma warning disable DE0003
                 Proxy = WebRequest.DefaultWebProxy
 #pragma warning restore DE0003
-            });
+        })
+        {
+            // Similar to the above increased timeout for sync uploads, we're increasing the timeout.
+            // In this case 10 minutes is selected over an hour as we're not waiting for the single request to complete.
+            // This is likely only relevant for the original upload request, the individual poll requests should always be quick.
+            Timeout = TimeSpan.FromMinutes(10)
+        };
 
             var authenticationHeader = await GetAuthenticationHeaderValue(azureAccount, publishingProfile, scmPublishEnabled);
 
