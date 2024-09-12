@@ -5,6 +5,7 @@ using Calamari.Common.Commands;
 using Calamari.Common.Features.Deployment;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.FullFrameworkTools.Contracts.WindowsCertStore;
 using Calamari.Integration.Certificates;
 
 namespace Calamari.Deployment.Features

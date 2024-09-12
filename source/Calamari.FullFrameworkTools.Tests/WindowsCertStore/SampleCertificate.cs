@@ -1,17 +1,15 @@
-﻿#if WINDOWS_CERTIFICATE_STORE_SUPPORT 
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Security.AccessControl;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
-using NUnit.Framework;
-using System.Linq;
 using Calamari.FullFrameworkTools.WindowsCertStore;
-using Calamari.Testing.Helpers;
+using NUnit.Framework;
 
-namespace Calamari.Tests.Helpers.Certificates
+namespace Calamari.FullFrameworkTools.Tests.WindowsCertStore
 {
     public class SampleCertificate
     {
@@ -102,7 +100,7 @@ namespace Calamari.Tests.Helpers.Certificates
             if (certificates.Count == 0)
                 return;
 
-            new WindowsX509CertificateStore(new NullFullFrameworkLog()).RemoveCertificateFromStore(Thumbprint, store.Location, store.Name);
+            new WindowsX509CertificateStore(new NullLog()).RemoveCertificateFromStore(Thumbprint, store.Location, store.Name);
         }
 
         public void AssertCertificateIsInStore(string storeName, StoreLocation storeLocation)
@@ -150,9 +148,7 @@ namespace Calamari.Tests.Helpers.Certificates
                 X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.Exportable | X509KeyStorageFlags.PersistKeySet);
         }
 
-        string FilePath => TestEnvironment.GetTestPath("Helpers", "Certificates", "SampleCertificateFiles", fileName);
+        string FilePath => TestEnvironment.GetTestPath("WindowsCertStore", "SampleCertificateFiles", fileName);
 
     }
 }
-
-#endif

@@ -8,6 +8,7 @@ using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
+using Calamari.FullFrameworkTools.Contracts.WindowsCertStore;
 using Calamari.Integration.Certificates;
 
 namespace Calamari.Commands
@@ -51,8 +52,12 @@ namespace Calamari.Commands
                 if (locationSpecified)
                 {
                     Log.Info(
-                        $"Importing certificate '{variables.Get($"{certificateVariable}.{CertificateVariables.Properties.Subject}")}' with thumbprint '{thumbprint}' into store '{storeLocation}\\{storeName}'");
-                    windowsX509CertificateStore.ImportCertificateToStore(pfxBytes, password, storeLocation, storeName, privateKeyExportable);
+                             $"Importing certificate '{variables.Get($"{certificateVariable}.{CertificateVariables.Properties.Subject}")}' with thumbprint '{thumbprint}' into store '{storeLocation}\\{storeName}'");
+                    windowsX509CertificateStore.ImportCertificateToStore(pfxBytes,
+                                                                         password,
+                                                                         storeLocation,
+                                                                         storeName,
+                                                                         privateKeyExportable);
 
                     if (storeLocation == StoreLocation.LocalMachine)
                     {
@@ -69,12 +74,16 @@ namespace Calamari.Commands
                     if (string.IsNullOrWhiteSpace(storeUser))
                     {
                         throw new CommandException(
-                            $"Either '{SpecialVariables.Action.Certificate.StoreLocation}' or '{SpecialVariables.Action.Certificate.StoreUser}' must be supplied");
+                                                   $"Either '{SpecialVariables.Action.Certificate.StoreLocation}' or '{SpecialVariables.Action.Certificate.StoreUser}' must be supplied");
                     }
 
                     Log.Info(
-                        $"Importing certificate '{variables.Get($"{certificateVariable}.{CertificateVariables.Properties.Subject}")}' with thumbprint '{thumbprint}' into store '{storeName}' for user '{storeUser}'");
-                    windowsX509CertificateStore.ImportCertificateToStore(pfxBytes, password, storeUser, storeName, privateKeyExportable);
+                             $"Importing certificate '{variables.Get($"{certificateVariable}.{CertificateVariables.Properties.Subject}")}' with thumbprint '{thumbprint}' into store '{storeName}' for user '{storeUser}'");
+                    windowsX509CertificateStore.ImportCertificateToStore(pfxBytes,
+                                                                         password,
+                                                                         storeUser,
+                                                                         storeName,
+                                                                         privateKeyExportable);
                 }
 
             }
@@ -101,7 +110,7 @@ namespace Calamari.Commands
             var unescaped = raw.Replace(@"\\", @"\");
             // Perform variable-substitution and re-escape
             var escapedAndSubstituted = variables.Evaluate(unescaped).Replace(@"\", @"\\");
-            return PrivateKeyAccessRule.FromJson(escapedAndSubstituted);
+            return PrivateKeyAccessRuleSerialization.FromJson(escapedAndSubstituted);
         }
 
         string GetMandatoryVariable(IVariables variables, string variableName)
@@ -121,12 +130,16 @@ namespace Calamari.Commands
             // Windows wants to launch an interactive confirmation dialog when importing into the Root store for a user.
             // https://github.com/OctopusDeploy/Issues/issues/3347
             if ((!storeLocation.HasValue || storeLocation.Value != StoreLocation.LocalMachine)
-                && storeName == WindowsX509CertificateStore.RootAuthorityStoreName)
+                && storeName == RootAuthorityStoreName)
             {
-                throw new CommandException($"When importing certificate into {WindowsX509CertificateStore.RootAuthorityStoreName} store, location must be '{StoreLocation.LocalMachine}'. " +
-                    $"Windows security restrictions prevent importing into the {WindowsX509CertificateStore.RootAuthorityStoreName} store for a user.");
+                throw new CommandException($"When importing certificate into {RootAuthorityStoreName} store, location must be '{StoreLocation.LocalMachine}'. " + $"Windows security restrictions prevent importing into the {RootAuthorityStoreName} store for a user.");
             }
         }
+
+        public static readonly string RootAuthorityStoreName = "Root";
+
+        
     }
 }
+
 #endif

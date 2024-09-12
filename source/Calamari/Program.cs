@@ -26,6 +26,15 @@ using Calamari.LaunchTools;
 using IContainer = Autofac.IContainer;
 using Calamari.Aws.Deployment;
 using Calamari.Azure.Kubernetes.Discovery;
+using Calamari.FullFrameworkTools.Contracts.Iis;
+using Calamari.FullFrameworkTools.Contracts.WindowsCertStore;
+#if IIS_SUPPORT
+using Calamari.FullFrameworkTools.Iis;
+#endif
+using Calamari.Integration.Iis;
+#if WINDOWS_CERTIFICATE_STORE_SUPPORT
+using Calamari.FullFrameworkTools.WindowsCertStore;
+#endif
 using Calamari.Kubernetes;
 using Calamari.Kubernetes.Commands.Executors;
 
@@ -81,11 +90,19 @@ namespace Calamari
             builder.RegisterType<KubectlGet>().As<IKubectlGet>().SingleInstance();
             builder.RegisterType<HelmTemplateValueSourcesParser>().AsSelf().SingleInstance();
 
-            
-#if WINDOWS_CERTIFICATE_STORE_SUPPORT 
+
+#if WINDOWS_CERTIFICATE_STORE_SUPPORT || IIS_SUPPORT
+            builder.RegisterType<FullFrameworkLog>().As<Calamari.FullFrameworkTools.Contracts.ILog>();
+#endif
+#if WINDOWS_CERTIFICATE_STORE_SUPPORT
             builder.RegisterType<WindowsX509CertificateStore>().As<IWindowsX509CertificateStore>().SingleInstance();
 #else
             builder.RegisterType<NoOpWindowsX509CertificateStore>().As<IWindowsX509CertificateStore>().SingleInstance();
+#endif
+#if IIS_SUPPORT
+            builder.RegisterType<InternetInformationServer>().As<IInternetInformationServer>().SingleInstance();
+#else
+            builder.RegisterType<NoOpInternetInformationServer>().As<IInternetInformationServer>().SingleInstance();
 #endif
             
             builder.RegisterType<KubernetesDiscovererFactory>()
@@ -147,6 +164,30 @@ namespace Calamari
             {
                 yield return extensionAssembly;
             }
+        }
+    }
+    
+    public class FullFrameworkLog: Calamari.FullFrameworkTools.Contracts.ILog
+    {
+        readonly ILog log;
+
+        public FullFrameworkLog(ILog log)
+        {
+            this.log = log;
+        }
+        public void Verbose(string message)
+        {
+            log.Verbose(message);
+        }
+
+        public void Info(string message)
+        {
+            log.Info(message);
+        }
+
+        public void ErrorFormat(string messageFormat, params object[] args)
+        {
+            log.ErrorFormat(messageFormat, args);
         }
     }
 }

@@ -6,8 +6,8 @@ using System.Text.RegularExpressions;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Deployment;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Integration.Certificates;
-using Calamari.Integration.Iis;
+using Calamari.FullFrameworkTools.Contracts.Iis;
+using Calamari.FullFrameworkTools.Contracts.WindowsCertStore;
 
 namespace Calamari.Deployment.Features
 {

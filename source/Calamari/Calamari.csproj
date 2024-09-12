@@ -41,6 +41,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
     <ProjectReference Include="..\Calamari.Common\Calamari.Common.csproj" />
+    <ProjectReference Include="..\Calamari.FullFrameworkTools.Contracts\Calamari.FullFrameworkTools.Contracts.csproj" />
     <ProjectReference Include="..\Calamari.Shared\Calamari.Shared.csproj" />
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies.net462" Version="1.0.2">
       <PrivateAssets>all</PrivateAssets>
@@ -72,6 +73,7 @@
     <Reference Include="WindowsBase" />
     <Reference Include="System" />
     <Reference Include="System.Security" />
+    <ProjectReference Include="..\Calamari.FullFrameworkTools\Calamari.FullFrameworkTools.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Autofac" Version="4.8.0" />

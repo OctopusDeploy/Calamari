@@ -221,6 +221,7 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="Fixtures\Iis\" />
     <Folder Include="Fixtures\Nginx\Approved" />
   </ItemGroup>
   <ItemGroup>

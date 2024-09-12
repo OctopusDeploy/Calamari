@@ -4,7 +4,7 @@ using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Integration.Iis;
+using Calamari.FullFrameworkTools.Contracts.Iis;
 
 namespace Calamari.Deployment.Conventions
 {
