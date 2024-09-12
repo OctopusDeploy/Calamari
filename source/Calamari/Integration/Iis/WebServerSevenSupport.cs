@@ -1,5 +1,4 @@
-﻿#if IIS_SUPPORT
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Web.Administration;
@@ -8,8 +7,6 @@ namespace Calamari.Integration.Iis
 {
     public class WebServerSevenSupport : WebServerSupport
     {
-        const string Localhost = "localhost";
-
         public override void CreateWebSiteOrVirtualDirectory(string webSiteName, string virtualDirectoryPath, string webRootPath, int port)
         {
             var virtualParts = (virtualDirectoryPath ?? String.Empty).Split('/', '\\').Select(x => x.Trim()).Where(x => x.Length > 0).ToArray();
@@ -155,7 +152,7 @@ namespace Calamari.Integration.Iis
             return virtualDirectory;
         }
 
-        public class VirtualDirectoryNode
+        class VirtualDirectoryNode
         {
             public string FullVirtualPath { get; set; }
             public VirtualDirectory VirtualDirectory { get; set; }
@@ -172,7 +169,7 @@ namespace Calamari.Integration.Iis
             return site;
         }
 
-        public Site FindWebSite(string webSiteName)
+        Site FindWebSite(string webSiteName)
         {
             return Execute(serverManager => serverManager.Sites.FirstOrDefault(x => String.Equals(x.Name, webSiteName, StringComparison.OrdinalIgnoreCase)));
         }
@@ -193,7 +190,7 @@ namespace Calamari.Integration.Iis
             return applicationPool;
         }
 
-        public ApplicationPool FindApplicationPool(string applicationPoolName)
+        ApplicationPool FindApplicationPool(string applicationPoolName)
         {
             return Execute(serverManager => serverManager.ApplicationPools.FirstOrDefault(x => String.Equals(x.Name, applicationPoolName, StringComparison.OrdinalIgnoreCase)));              
         }
@@ -203,15 +200,15 @@ namespace Calamari.Integration.Iis
             return FindApplicationPool(applicationPool) != null;
         }
 
-        private void Execute(Action<ServerManager> action)
+        void Execute(Action<ServerManager> action)
         {
-            using (var serverManager = ServerManager.OpenRemote(Localhost))
+            using (var serverManager = new ServerManager())
             {
                 action(serverManager);
             }
         }
 
-        private TResult Execute<TResult>(Func<ServerManager, TResult> func)
+        TResult Execute<TResult>(Func<ServerManager, TResult> func)
         {
             var result = default(TResult);
             Action<ServerManager> action = serverManager => result = func(serverManager);
@@ -220,4 +217,3 @@ namespace Calamari.Integration.Iis
         }
     }
 }
-#endif
