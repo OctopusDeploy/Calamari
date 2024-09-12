@@ -202,7 +202,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             // Create the website
             var originalWebRootPath = Path.Combine(Path.GetTempPath(), "CalamariTestIisSite");
             FileSystem.EnsureDirectoryExists(originalWebRootPath);
-            var webServer = WebServerSupport.AutoDetect();
+            var webServer = WebServerSupport.AutoDetect(new NullFullFrameworkLog());
             var siteName = "CalamariTest-" + Guid.NewGuid();
             webServer.CreateWebSiteOrVirtualDirectory(siteName, "/", originalWebRootPath, 1081);
 

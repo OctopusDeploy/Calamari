@@ -3,6 +3,7 @@ using System.Linq;
 using Calamari.Commands;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
+using Calamari.FullFrameworkTools.Contracts.WindowsCertStore;
 using Calamari.Integration.Certificates;
 using NUnit.Framework;
 
@@ -18,7 +19,7 @@ namespace Calamari.Tests.Fixtures.Certificates
                 {""Identity"": ""BUILTIN\\Administrators"", ""Access"": ""FullControl""},
                 {""Identity"": ""BUILTIN\\Users"", ""Access"": ""ReadOnly""}
             ]";
-            var result = PrivateKeyAccessRule.FromJson(json).ToList();
+            var result = PrivateKeyAccessRuleSerialization.FromJson(json).ToList();
 
             Assert.AreEqual(2, result.Count);
             Assert.AreEqual("BUILTIN\\Administrators", result[0].Identity);
@@ -45,4 +46,6 @@ namespace Calamari.Tests.Fixtures.Certificates
         }
     }
 }
+
+
 #endif

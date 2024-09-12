@@ -5,7 +5,7 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
-using Calamari.Integration.Iis;
+using Calamari.FullFrameworkTools.Contracts.Iis;
 using NSubstitute;
 using NUnit.Framework;
 
