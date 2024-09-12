@@ -6,8 +6,6 @@ namespace Calamari.Integration.Certificates
 {
     public interface IWindowsX509CertificateStore
     {
-        string? FindCertificateStore(string thumbprint, StoreLocation storeLocation);
-
         void ImportCertificateToStore(byte[] pfxBytes,
                                       string password,
                                       StoreLocation storeLocation,
