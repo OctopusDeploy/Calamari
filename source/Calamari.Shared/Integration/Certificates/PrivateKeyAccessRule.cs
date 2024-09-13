@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Security.AccessControl;
-using System.Security.Principal;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
@@ -9,19 +7,13 @@ namespace Calamari.Integration.Certificates
 {
     public class PrivateKeyAccessRule
     {
-        [JsonConstructor]
         public PrivateKeyAccessRule(string identity, PrivateKeyAccess access)
-            :this(new NTAccount(identity), access)
-        {
-        }
-
-        public PrivateKeyAccessRule(IdentityReference identity, PrivateKeyAccess access)
         {
             Identity = identity;
             Access = access;
         }
 
-        public IdentityReference Identity { get; }
+        public string Identity { get; }
         public PrivateKeyAccess Access { get; }
 
         public static ICollection<PrivateKeyAccessRule> FromJson(string json)
