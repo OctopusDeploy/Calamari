@@ -63,9 +63,7 @@ namespace Calamari.Deployment.Conventions
             var forceLegacySupport = deployment.Variables.GetFlag(SpecialVariables.UseLegacyIisSupportForce);
             if (!forceLegacySupport)
                 throw new CommandException($"Support for IIS6 is no longer supported.\r\n"
-                                           + $"Remove the {SpecialVariables.UseLegacyIisSupportForce} variable and ensure you are targeting IIS7+.\r\n"
-                                           + $"To provide a temporary work around set the `{SpecialVariables.UseLegacyIisSupportForce}` to `true`.\r\n"
-                                           + $"This capability will be very shortly removed without further warning.");
+                                           + $"Remove the {SpecialVariables.UseLegacyIisSupportForce} variable and ensure you are targeting IIS7+.");
 
             Log.Warn($"LegacyIIS support confirmed.\r\n"
                      + $"Support for IIS6 is no longer supported.\r\n"
