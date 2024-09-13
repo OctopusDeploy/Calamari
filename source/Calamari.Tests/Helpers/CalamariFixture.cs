@@ -109,10 +109,12 @@ namespace Calamari.Tests.Helpers
 
             additionalVariables?.ToList().ForEach(v => variables[v.Key] = v.Value);
 
+            using(var tempPath = TemporaryDirectory.Create())
             using (new TemporaryFile(variablesFile))
             {
                 var cmdBase = Calamari()
-                    .Action("run-script");
+                    .Action("run-script")
+                    .WithWorkingDirectory(tempPath.DirectoryPath);
 
                 if (sensitiveVariablesPassword == null)
                 {
