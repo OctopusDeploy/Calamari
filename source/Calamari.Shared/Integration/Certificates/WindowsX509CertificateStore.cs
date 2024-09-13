@@ -520,8 +520,11 @@ namespace Calamari.Integration.Certificates
         {
             using (var memoryStream = new MemoryStream(pfxBytes))
             {
-                var pkcs12Store = new Pkcs12Store(memoryStream, password?.ToCharArray() ?? "".ToCharArray());
-
+                var passwordBytes = password == "" ? null : password?.ToCharArray();
+                var pkcs12Store = new Pkcs12StoreBuilder()
+                    .Build();
+                pkcs12Store.Load(memoryStream, passwordBytes);
+                
                 if (pkcs12Store.Count < 1)
                     throw new Exception("No certificates were found in PFX");
 
