@@ -72,6 +72,21 @@ namespace Calamari.Kubernetes.Integration
             }
         }
 
+        public string GetEksClusterApiVersion(string clusterName, string region)
+        {
+            var result = ExecuteAwsCommand(
+                                                         "eks",
+                                                         "get-token",
+                                                         $"--cluster-name={clusterName}",
+                                                         $"--region={region}");
+            
+            result.Result.VerifySuccess();
+
+            var jsonString = string.Join("\n", result.Output.InfoLogs);
+            
+            return JObject.Parse(jsonString).SelectToken("apiVersion")?.ToString();
+        }
+
         CommandResultWithOutput ExecuteAwsCommand(params string[] arguments)
             => ExecuteCommandAndReturnOutput(ExecutableLocation, arguments);
     }

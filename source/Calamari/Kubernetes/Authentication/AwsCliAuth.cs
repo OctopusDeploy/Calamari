@@ -3,12 +3,16 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Calamari.CloudAccounts;
+using Calamari.Common.FeatureToggles;
+using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes.Integration;
+using Newtonsoft.Json.Linq;
 using Octopus.CoreUtilities;
 using Octopus.CoreUtilities.Extensions;
 using Octopus.Versioning.Semver;
+using InvalidOperationException = Amazon.CloudFormation.Model.InvalidOperationException;
 
 namespace Calamari.Kubernetes.Authentication
 {
@@ -66,7 +70,17 @@ namespace Calamari.Kubernetes.Authentication
                     var region = GetEksClusterRegion(clusterUrl);
                     if (!string.IsNullOrWhiteSpace(region))
                     {
-                        SetKubeConfigAuthenticationToAwsCli(user, clusterName, region);
+                        //Certain customers have had issues with the AWS Cli token only being a 15min fixed expiry
+                        //This feature toggle changes to use the kubectl config set-credentials using exec, which handles the expired token
+                        if (FeatureToggle.KubernetesAuthAwsCliWithExecFeatureToggle.IsEnabled(deploymentVariables))
+                        {
+                            SetKubeConfigAuthenticationToAwsCliUsingExec(user, clusterName, region);
+                        }
+                        else
+                        {
+                            SetKubeConfigAuthenticationToAwsCliUsingToken(user, clusterName, region);
+                        }
+                        
                         return true;
                     }
 
@@ -107,15 +121,14 @@ namespace Calamari.Kubernetes.Authentication
         {
             if (!environmentVars.ContainsKey("AWS_ACCESS_KEY_ID"))
             {
-                var awsEnvironmentGeneration =
-                    AwsEnvironmentGeneration.Create(log, deploymentVariables).GetAwaiter().GetResult();
-                environmentVars.AddRange(awsEnvironmentGeneration.EnvironmentVars);
+                var awsEnvironmentGeneration = AwsEnvironmentGeneration.Create(log, deploymentVariables).GetAwaiter().GetResult();
+                ListExtensions.AddRange(environmentVars, awsEnvironmentGeneration.EnvironmentVars);
             }
         }
 
-        string GetEksClusterRegion(string clusterUrl) => clusterUrl.Replace(".eks.amazonaws.com", "").Split('.').Last();
+        static string GetEksClusterRegion(string clusterUrl) => clusterUrl.Replace(".eks.amazonaws.com", "").Split('.').Last();
 
-        void SetKubeConfigAuthenticationToAwsCli(string user, string clusterName, string region)
+        void SetKubeConfigAuthenticationToAwsCliUsingToken(string user, string clusterName, string region)
         {
             var token = deploymentVariables.Get(AccountVariables.Jwt);
 
@@ -127,6 +140,39 @@ namespace Calamari.Kubernetes.Authentication
             var arguments = new List<string> { "config", "set-credentials", user, $"--token={token}" };
 
             log.AddValueToRedact(token, "<token>");
+            kubectl.ExecuteCommandAndAssertSuccess(arguments.ToArray());
+        }
+        
+        void SetKubeConfigAuthenticationToAwsCliUsingExec(string user, string clusterName, string region)
+        {
+            var oidcJwt = deploymentVariables.Get(AccountVariables.Jwt);
+
+            var apiVersion = awsCli.GetEksClusterApiVersion(clusterName, region);
+
+            if (apiVersion == null)
+            {
+                throw new InvalidOperationException($"Unable to determine API version for cluster {clusterName} in region {region}.");
+            }
+            
+            var arguments = new List<string>
+            {
+                "config",
+                "set-credentials",
+                user,
+                "--exec-command=aws",
+                "--exec-arg=eks",
+                "--exec-arg=get-token",
+                $"--exec-arg=--cluster-name={clusterName}",
+                $"--exec-arg=--region={region}",
+                $"--exec-api-version={apiVersion}"
+            };
+
+            if (!oidcJwt.IsNullOrEmpty())
+            {
+                arguments.Add($"--token={oidcJwt}");
+                log.AddValueToRedact(oidcJwt, "<token>");
+            }
+
             kubectl.ExecuteCommandAndAssertSuccess(arguments.ToArray());
         }
     }

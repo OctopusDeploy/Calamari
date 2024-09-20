@@ -37,7 +37,7 @@ namespace Calamari.Tests.KubernetesFixtures
         InMemoryLog log;
         InstallTools installTools;
         Dictionary<string, string> environmentVariables;
-        
+
         static readonly CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
         readonly CancellationToken cancellationToken = CancellationTokenSource.Token;
 
@@ -53,11 +53,31 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        [TestCase("Url", "", "", "",true)]
-        [TestCase("", "Name", "", "",true)]
-        [TestCase("", "", "Name", "",true)]
-        [TestCase("", "", "", "KubernetesTentacle",true)]
-        [TestCase("", "", "", "",false)]
+        [TestCase("Url",
+                     "",
+                     "",
+                     "",
+                     true)]
+        [TestCase("",
+                     "Name",
+                     "",
+                     "",
+                     true)]
+        [TestCase("",
+                     "",
+                     "Name",
+                     "",
+                     true)]
+        [TestCase("",
+                     "",
+                     "",
+                     "KubernetesTentacle",
+                     true)]
+        [TestCase("",
+                     "",
+                     "",
+                     "",
+                     false)]
         public void ShouldBeEnabledIfAnyVariablesAreProvided(string clusterUrl,
                                                              string aksClusterName,
                                                              string eksClusterName,
@@ -175,7 +195,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 File.WriteAllText(podServiceAccountToken.FilePath, "podServiceAccountToken");
                 variables.Set("Octopus.Action.Kubernetes.PodServiceAccountTokenPath", podServiceAccountToken.FilePath);
                 var wrapper = CreateWrapper();
-                TestScriptInReadOnlyMode(wrapper, redactMap: new Dictionary<string, string>(){{podServiceAccountToken.FilePath, "<podServiceAccountTokenPath>"}}).AssertSuccess();
+                TestScriptInReadOnlyMode(wrapper, redactMap: new Dictionary<string, string>() { { podServiceAccountToken.FilePath, "<podServiceAccountTokenPath>" } }).AssertSuccess();
             }
         }
 
@@ -269,6 +289,37 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
+        [WindowsTest] // This test requires the aws cli tools. Currently only configured to install on Windows
+        public async Task ExecutionWithEKS_AwsCLIAuthenticator_WithExecFeatureToggleEnabled()
+        {
+            await InstallTools(InstallAwsCli);
+
+            //set the feature toggle
+            variables.SetStrings(KnownVariables.EnabledFeatureToggles,
+                                 new[]
+                                 {
+                                     FeatureToggle.KubernetesAuthAwsCliWithExecFeatureToggle.ToString()
+                                 },
+                                 ",");
+
+            // Overriding the cluster url with a valid url. This is required to hit the aws eks get-token endpoint.
+            variables.Set(SpecialVariables.ClusterUrl, "https://someHash.gr7.ap-southeast-2.eks.amazonaws.com");
+            variables.Set(ScriptVariables.Syntax, ScriptSyntax.Bash.ToString());
+            variables.Set(PowerShellVariables.Edition, "Desktop");
+            variables.Set(Deployment.SpecialVariables.Account.AccountType, "AmazonWebServicesAccount");
+            variables.Set(SpecialVariables.EksClusterName, "my-eks-cluster");
+            var account = "eks_account";
+            variables.Set("Octopus.Action.AwsAccount.Variable", account);
+            variables.Set("Octopus.Action.Aws.Region", "eks_region");
+            variables.Set($"{account}.AccessKey", "eksAccessKey");
+            variables.Set($"{account}.SecretKey", "eksSecretKey");
+            
+            var wrapper = CreateWrapper();
+            
+            TestScriptInReadOnlyMode(wrapper).AssertSuccess();
+        }
+
+        [Test]
         [WindowsTest] // This test requires the GKE GCloud Auth plugin. Currently only configured to install on Windows
         public async Task ExecutionWithGoogleCloudAccount_WhenZoneIsProvided()
         {
@@ -351,7 +402,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 File.WriteAllText(tempExe.FilePath, string.Empty);
                 variables.Set("Octopus.Action.Kubernetes.CustomKubectlExecutable", tempExe.FilePath);
                 var wrapper = CreateWrapper();
-                TestScriptInReadOnlyMode(wrapper, redactMap: new Dictionary<string, string>(){{tempExe.FilePath, "<customkubectl>"}}).AssertSuccess();
+                TestScriptInReadOnlyMode(wrapper, redactMap: new Dictionary<string, string>() { { tempExe.FilePath, "<customkubectl>" } }).AssertSuccess();
             }
         }
 
@@ -397,6 +448,7 @@ namespace Calamari.Tests.KubernetesFixtures
                                                                                        const string tempPathMsg = "[Verbose] Temporary kubectl config set to <path>kubectl-octo.yml";
                                                                                        approval = approval.Replace(tempPathMsg, $"{chmodMsg}\n{tempPathMsg}");
                                                                                    }
+
                                                                                    return approval;
                                                                                });
 
