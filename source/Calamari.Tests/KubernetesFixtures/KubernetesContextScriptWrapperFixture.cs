@@ -53,31 +53,11 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
-        [TestCase("Url",
-                     "",
-                     "",
-                     "",
-                     true)]
-        [TestCase("",
-                     "Name",
-                     "",
-                     "",
-                     true)]
-        [TestCase("",
-                     "",
-                     "Name",
-                     "",
-                     true)]
-        [TestCase("",
-                     "",
-                     "",
-                     "KubernetesTentacle",
-                     true)]
-        [TestCase("",
-                     "",
-                     "",
-                     "",
-                     false)]
+        [TestCase("Url", "", "", "", true)]
+        [TestCase("", "Name", "", "", true)]
+        [TestCase("", "", "Name", "", true)]
+        [TestCase("", "", "", "KubernetesTentacle", true)]
+        [TestCase("", "", "", "", false)]
         public void ShouldBeEnabledIfAnyVariablesAreProvided(string clusterUrl,
                                                              string aksClusterName,
                                                              string eksClusterName,
@@ -313,9 +293,9 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set("Octopus.Action.Aws.Region", "eks_region");
             variables.Set($"{account}.AccessKey", "eksAccessKey");
             variables.Set($"{account}.SecretKey", "eksSecretKey");
-            
+
             var wrapper = CreateWrapper();
-            
+
             TestScriptInReadOnlyMode(wrapper).AssertSuccess();
         }
 
