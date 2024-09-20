@@ -47,9 +47,9 @@ namespace Calamari.Kubernetes.Integration
             result.Result.VerifySuccess();
 
             var awsCliVersion = result.Output.InfoLogs?.FirstOrDefault()
-                ?.Split()
-                .FirstOrDefault(versions => versions.StartsWith("aws-cli"))
-                ?.Replace("aws-cli/", string.Empty);
+                                      ?.Split()
+                                      .FirstOrDefault(versions => versions.StartsWith("aws-cli"))
+                                      ?.Replace("aws-cli/", string.Empty);
 
             return new SemanticVersion(awsCliVersion);
         }
@@ -74,16 +74,15 @@ namespace Calamari.Kubernetes.Integration
 
         public string GetEksClusterApiVersion(string clusterName, string region)
         {
-            var result = ExecuteAwsCommand(
-                                                         "eks",
-                                                         "get-token",
-                                                         $"--cluster-name={clusterName}",
-                                                         $"--region={region}");
-            
+            var result = ExecuteAwsCommand("eks",
+                                           "get-token",
+                                           $"--cluster-name={clusterName}",
+                                           $"--region={region}");
+
             result.Result.VerifySuccess();
 
             var jsonString = string.Join("\n", result.Output.InfoLogs);
-            
+
             return JObject.Parse(jsonString).SelectToken("apiVersion")?.ToString();
         }
 
