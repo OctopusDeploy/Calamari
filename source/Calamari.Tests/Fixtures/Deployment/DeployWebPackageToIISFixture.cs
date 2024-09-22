@@ -1,5 +1,4 @@
-﻿#if IIS_SUPPORT
-using System;
+﻿using System;
 using System.IO;
 using System.Linq;
 using System.Security.AccessControl;
@@ -7,11 +6,12 @@ using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Deployment;
 using Calamari.Integration.Iis;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Deployment.Packages;
+#if WINDOWS_CERTIFICATE_STORE_SUPPORT
 using Calamari.Tests.Helpers.Certificates;
+#endif
 using Microsoft.Web.Administration;
 using NUnit.Framework;
 using Polly;
@@ -630,4 +630,3 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
     }
 }
-#endif

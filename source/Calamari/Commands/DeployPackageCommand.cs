@@ -89,10 +89,10 @@ namespace Calamari.Commands
             var configurationTransformer = ConfigurationTransformer.FromVariables(variables, log);
             var transformFileLocator = new TransformFileLocator(fileSystem, log);
             var embeddedResources = new AssemblyEmbeddedResources();
-#if IIS_SUPPORT
+
             var iis = new InternetInformationServer();
             featureClasses.AddRange(new IFeature[] { new IisWebSiteBeforeDeployFeature(windowsX509CertificateStore), new IisWebSiteAfterPostDeployFeature(windowsX509CertificateStore) });
-#endif
+
             if (!CalamariEnvironment.IsRunningOnWindows)
             {
                 featureClasses.Add(new NginxFeature(NginxServer.AutoDetect(), fileSystem));
@@ -118,9 +118,7 @@ namespace Calamari.Commands
                 new PackagedScriptConvention(new DeployPackagedScriptBehaviour(log, fileSystem, scriptEngine, commandLineRunner)),
                 new ConfiguredScriptConvention(new DeployConfiguredScriptBehaviour(log, fileSystem, scriptEngine, commandLineRunner)),
                 new FeatureConvention(DeploymentStages.AfterDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
-#if IIS_SUPPORT
                 new LegacyIisWebSiteConvention(fileSystem, iis),
-#endif
                 new FeatureConvention(DeploymentStages.BeforePostDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
                 new PackagedScriptConvention(new PostDeployPackagedScriptBehaviour(log, fileSystem, scriptEngine, commandLineRunner)),
                 new ConfiguredScriptConvention(new PostDeployConfiguredScriptBehaviour( log, fileSystem, scriptEngine, commandLineRunner)),

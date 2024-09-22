@@ -192,7 +192,6 @@ namespace Calamari.Tests.Fixtures.Deployment
             result.AssertOutput("Hello World!");
         }
 
-#if IIS_SUPPORT
         [Test]
         [Category(TestCategory.CompatibleOS.OnlyWindows)]
         public void ShouldModifyIisWebsiteRoot()
@@ -202,7 +201,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             // Create the website
             var originalWebRootPath = Path.Combine(Path.GetTempPath(), "CalamariTestIisSite");
             FileSystem.EnsureDirectoryExists(originalWebRootPath);
-            var webServer = WebServerSupport.AutoDetect();
+            var webServer = new WebServerSevenSupport();
             var siteName = "CalamariTest-" + Guid.NewGuid();
             webServer.CreateWebSiteOrVirtualDirectory(siteName, "/", originalWebRootPath, 1081);
 
@@ -219,7 +218,6 @@ namespace Calamari.Tests.Fixtures.Deployment
             webServer.DeleteWebSite(siteName);
             FileSystem.DeleteDirectory(originalWebRootPath);
         }
-#endif
 
         [Test]
         public void ShouldRunConfiguredScripts()
