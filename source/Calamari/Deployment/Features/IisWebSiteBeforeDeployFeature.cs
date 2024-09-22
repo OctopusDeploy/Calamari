@@ -17,6 +17,7 @@ namespace Calamari.Deployment.Features
         {
             this.windowsX509CertificateStore = windowsX509CertificateStore;
         }
+
         public override string DeploymentStage => DeploymentStages.BeforeDeploy;
 
         public override void Execute(RunningDeployment deployment)
@@ -25,18 +26,14 @@ namespace Calamari.Deployment.Features
 
             if (variables.GetFlag(SpecialVariables.Action.IisWebSite.DeployAsWebSite, false))
             {
-
 #if WINDOWS_CERTIFICATE_STORE_SUPPORT
                 // Any certificate-variables used by IIS bindings must be placed in the
                 // LocalMachine certificate store
                 EnsureCertificatesUsedInBindingsAreInStore(variables);
 #endif
-
             }
         }
 
-
-#if WINDOWS_CERTIFICATE_STORE_SUPPORT
         void EnsureCertificatesUsedInBindingsAreInStore(IVariables variables)
         {
             foreach (var binding in GetEnabledBindings(variables))
@@ -53,8 +50,12 @@ namespace Calamari.Deployment.Features
         void EnsureCertificateInStore(IVariables variables, string certificateVariable)
         {
             var thumbprint = variables.Get($"{certificateVariable}.{CertificateVariables.Properties.Thumbprint}");
+            if (thumbprint == null)
+            {
+                return;
+            }
 
-            var storeName = windowsX509CertificateStore.FindCertificateStore(thumbprint, StoreLocation.LocalMachine);
+            var storeName = WindowsCertificateStoreLocator.FindCertificateStore(thumbprint, StoreLocation.LocalMachine);
             if (storeName != null)
             {
                 Log.Verbose($"Found existing certificate with thumbprint '{thumbprint}' in Cert:\\LocalMachine\\{storeName}");
@@ -82,7 +83,11 @@ namespace Calamari.Deployment.Features
 
             try
             {
-                windowsX509CertificateStore.ImportCertificateToStore(pfxBytes, password, StoreLocation.LocalMachine, "My", true);
+                windowsX509CertificateStore.ImportCertificateToStore(pfxBytes,
+                                                                     password,
+                                                                     StoreLocation.LocalMachine,
+                                                                     "My",
+                                                                     true);
                 return "My";
             }
             catch (Exception)
@@ -91,7 +96,5 @@ namespace Calamari.Deployment.Features
                 throw;
             }
         }
-#endif
-
     }
 }

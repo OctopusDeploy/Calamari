@@ -10,11 +10,6 @@ namespace Calamari.Integration.Certificates
     /// </summary>
     public class NoOpWindowsX509CertificateStore: IWindowsX509CertificateStore
     {
-        public string? FindCertificateStore(string thumbprint, StoreLocation storeLocation)
-        {
-            throw new System.NotImplementedException();
-        }
-
         public void ImportCertificateToStore(byte[] pfxBytes,
                                              string password,
                                              StoreLocation storeLocation,

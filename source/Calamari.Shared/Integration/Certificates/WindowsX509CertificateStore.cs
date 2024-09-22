@@ -33,7 +33,7 @@ namespace Calamari.Integration.Certificates
 
         public string? FindCertificateStore(string thumbprint, StoreLocation storeLocation)
         {
-            foreach (var storeName in GetStoreNames(storeLocation))
+            foreach (var storeName in WindowsCertificateStoreLocator.GetStoreNames(storeLocation))
             {
                 var store = new X509Store(storeName, storeLocation);
                 store.Open(OpenFlags.ReadOnly);
@@ -103,7 +103,7 @@ namespace Calamari.Integration.Certificates
 
         public void AddPrivateKeyAccessRules(string thumbprint, StoreLocation storeLocation, ICollection<PrivateKeyAccessRule> privateKeyAccessRules)
         {
-            var storeName = FindCertificateStore(thumbprint, StoreLocation.LocalMachine);
+            var storeName = WindowsCertificateStoreLocator.FindCertificateStore(thumbprint, StoreLocation.LocalMachine);
             AddPrivateKeyAccessRules(thumbprint, storeLocation, storeName, privateKeyAccessRules);
         }
 
@@ -230,34 +230,6 @@ namespace Calamari.Integration.Certificates
             }
         }
 
-        public static ICollection<string> GetStoreNames(StoreLocation location)
-        {
-            var callback = new CertEnumSystemStoreCallBackProto(CertEnumSystemStoreCallBack);
-            var names = new List<string>();
-            CertificateSystemStoreLocation locationFlags;
-
-            switch (location)
-            {
-                case StoreLocation.CurrentUser:
-                    locationFlags = CertificateSystemStoreLocation.CurrentUser;
-                    break;
-                case StoreLocation.LocalMachine:
-                    locationFlags = CertificateSystemStoreLocation.LocalMachine;
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(location), location, null);
-            }
-
-            lock (StoreNamesSyncLock)
-            {
-                EnumeratedStoreNames.Clear();
-                CertEnumSystemStore(locationFlags, IntPtr.Zero, IntPtr.Zero, callback);
-                names.AddRange(EnumeratedStoreNames);
-            }
-
-            return names;
-        }
-
         static SafeCertContextHandle ImportPfxToStore(CertificateSystemStoreLocation storeLocation, string storeName, byte[] pfxBytes, string password,
             bool useUserKeyStore, bool privateKeyExportable)
         {
@@ -293,25 +265,6 @@ namespace Calamari.Integration.Certificates
             }
 
             return certificates.First();
-        }
-
-        private static readonly IList<string> EnumeratedStoreNames = new List<string>();
-        private static readonly object StoreNamesSyncLock = new object();
-
-        /// <summary>
-        /// call back function used by CertEnumSystemStore
-        ///
-        /// Currently, there is no managed support for enumerating store
-        /// names on a machine. We use the win32 function CertEnumSystemStore()
-        /// to get a list of stores for a given context.
-        ///
-        /// Each time this callback is called, we add the passed store name
-        /// to the list of stores
-        /// </summary>
-        internal static bool CertEnumSystemStoreCallBack(string storeName, uint dwFlagsNotUsed, IntPtr notUsed1, IntPtr notUsed2, IntPtr notUsed3)
-        {
-            EnumeratedStoreNames.Add(storeName);
-            return true;
         }
 
         static void AddCertificateToStore(CertificateSystemStoreLocation storeLocation, string storeName, SafeCertContextHandle certificate)
