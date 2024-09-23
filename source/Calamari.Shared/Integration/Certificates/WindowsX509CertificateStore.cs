@@ -522,7 +522,7 @@ namespace Calamari.Integration.Certificates
             {
                 // The latest version of BouncyCastle fails if the cert doesn't require a key, but we pass an empty array key.
                 // Will issue a PR to make this configurable at least in a way that doesn't require writing environment variables.
-                Environment.SetEnvironmentVariable("Org.BouncyCastle.Pkcs12.IgnoreUselessPassword", "true");
+                Environment.SetEnvironmentVariable(Org.BouncyCastle.Pkcs.Pkcs12Store.IgnoreUselessPasswordProperty, "true");
                 var pkcs12Store = new Pkcs12StoreBuilder().Build();
                 pkcs12Store.Load(memoryStream, password?.ToCharArray() ?? "".ToCharArray());
 
