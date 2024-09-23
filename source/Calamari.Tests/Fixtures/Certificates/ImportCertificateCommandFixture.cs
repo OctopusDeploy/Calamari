@@ -1,4 +1,4 @@
-﻿#if NETFX
+﻿#if WINDOWS_CERTIFICATE_STORE_SUPPORT
 using System;
 using System.IO;
 using System.Security.Cryptography.X509Certificates;

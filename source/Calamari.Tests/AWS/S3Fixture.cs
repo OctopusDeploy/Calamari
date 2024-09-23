@@ -1,5 +1,4 @@
-﻿#if AWS
-using System.Linq;
+﻿using System.Linq;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Substitutions;
@@ -776,4 +775,3 @@ namespace Calamari.Tests.AWS
         }
     }
 }
-#endif

@@ -1,7 +1,5 @@
 using System;
-#if WINDOWS_USER_ACCOUNT_SUPPORT
 using System.DirectoryServices.AccountManagement;
-#endif
 using System.Linq;
 using System.Net;
 using System.Security.Principal;
@@ -14,7 +12,6 @@ namespace Calamari.Tests.Fixtures.Util
     {
         public TestUserPrincipal(string username, string password = null)
         {
-#if WINDOWS_USER_ACCOUNT_SUPPORT
             var usernameToUse = username;
             if (usernameToUse.Length > 20)
             {
@@ -49,12 +46,11 @@ namespace Calamari.Tests.Fixtures.Util
                 Console.WriteLine($"Failed to create the Windows User Account called '{username}': {ex.Message}");
                 throw;
             }
-#endif            
+       
         }
 
         void CreateOrUpdateUser(string username, string password)
         {
-#if WINDOWS_USER_ACCOUNT_SUPPORT
             using (var principalContext = new PrincipalContext(ContextType.Machine))
             {
                 UserPrincipal principal = null;
@@ -87,13 +83,13 @@ namespace Calamari.Tests.Fixtures.Util
                     principal?.Dispose();
                 }
             }
-#endif            
         }
 
         static void HideUserAccountFromLogonScreen(string username)
         {
-#if WINDOWS_REGISTRY_SUPPORT
+#pragma warning disable CA1416
             using (var winLogonSubKey = Registry.LocalMachine.OpenSubKey("SOFTWARE\\Microsoft\\Windows NT\\CUrrentVersion\\WinLogon", RegistryKeyPermissionCheck.ReadWriteSubTree))
+
             {
                 using (var specialAccountsSubKey = winLogonSubKey.GetSubKeyNames().Contains("SpecialAccounts")
                     ? winLogonSubKey.OpenSubKey("SpecialAccounts", RegistryKeyPermissionCheck.ReadWriteSubTree)
@@ -107,15 +103,16 @@ namespace Calamari.Tests.Fixtures.Util
                     }
                 }
             }
-#endif
+#pragma warning restore CA1416
         }
 
         public TestUserPrincipal EnsureIsMemberOfGroup(string groupName)
         {
-#if WINDOWS_REGISTRY_SUPPORT
             Console.WriteLine($"Ensuring the Windows User Account called '{UserName}' is a member of the '{groupName}' group...");
             using (var principalContext = new PrincipalContext(ContextType.Machine))
+#pragma warning disable CA1416
             using (var principal = UserPrincipal.FindByIdentity(principalContext, IdentityType.Sid, Sid.Value))
+
             {
                 if (principal == null) throw new Exception($"Couldn't find a user account for {UserName} by the SID {Sid.Value}");
                 using (var group = GroupPrincipal.FindByIdentity(principalContext, IdentityType.Name, groupName))
@@ -130,9 +127,7 @@ namespace Calamari.Tests.Fixtures.Util
 
                 return this;
             }
-#else
-            return null;
-#endif
+#pragma warning restore CA1416
         }
 
         public TestUserPrincipal GrantLogonAsAServiceRight()
@@ -162,7 +157,6 @@ namespace Calamari.Tests.Fixtures.Util
 
         public void Delete()
         {
-            #if WINDOWS_USER_ACCOUNT_SUPPORT
             using (var principalContext = new PrincipalContext(ContextType.Machine))
             {
                 UserPrincipal principal = null;
@@ -183,7 +177,6 @@ namespace Calamari.Tests.Fixtures.Util
                     principal?.Dispose();
                 }
             }
-            #endif          
         }
     }
 }
