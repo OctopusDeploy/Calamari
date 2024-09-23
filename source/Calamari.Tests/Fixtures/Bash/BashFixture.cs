@@ -83,8 +83,8 @@ namespace Calamari.Tests.Fixtures.Bash
                 ["Host"] = "Never",
             });
 
-            output.AssertSuccess();
             output.AssertOutput("Hello Paul");
+            output.AssertSuccess();
         }
 
 
