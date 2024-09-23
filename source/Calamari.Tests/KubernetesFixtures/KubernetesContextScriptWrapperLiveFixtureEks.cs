@@ -305,6 +305,31 @@ namespace Calamari.Tests.KubernetesFixtures
                 ExecuteCommandAndVerifyResult(TestableKubernetesDeploymentCommand.Name);
             }
         }
+        
+        [Test]
+        [TestCase(true)]
+        [TestCase(false)]
+        public void AuthorisingWithAmazonAccount_WithExecFeatureToggleEnabled(bool runAsScript)
+        {
+            SetVariablesToAuthoriseWithAmazonAccount();
+            
+            //set the feature toggle
+            variables.SetStrings(KnownVariables.EnabledFeatureToggles,
+                                 new[]
+                                 {
+                                     FeatureToggle.KubernetesAuthAwsCliWithExecFeatureToggle.ToString()
+                                 },
+                                 ",");
+
+            if (runAsScript)
+            {
+                DeployWithKubectlTestScriptAndVerifyResult();
+            }
+            else
+            {
+                ExecuteCommandAndVerifyResult(TestableKubernetesDeploymentCommand.Name);
+            }
+        }
 
         [Test]
         public void UnreachableK8Cluster_ShouldExecuteTargetScript()
