@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Calamari.Deployment;
 using Calamari.Testing.Requirements;
 using Calamari.Tests.Helpers;
@@ -83,6 +84,10 @@ namespace Calamari.Tests.Fixtures.Bash
                 ["Host"] = "Never",
             });
 
+            TestContext.Write("---------------");
+            TestContext.Write(string.Join(Environment.NewLine, output.CapturedOutput.Infos));
+            TestContext.Write("---------------");
+            TestContext.Write(string.Join(Environment.NewLine, output.CapturedOutput.Errors));
             output.AssertOutput("Hello Paul");
             output.AssertSuccess();
         }
