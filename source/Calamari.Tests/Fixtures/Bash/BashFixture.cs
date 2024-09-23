@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Calamari.Deployment;
 using Calamari.Testing.Requirements;
 using Calamari.Tests.Helpers;
@@ -16,8 +15,10 @@ namespace Calamari.Tests.Fixtures.Bash
         {
             var (output, _) = RunScript("print-encoded-variable.sh");
 
-            output.AssertSuccess();
-            output.AssertOutput("##octopus[setVariable name='U3VwZXI=' value='TWFyaW8gQnJvcw==']");
+            Assert.Multiple(() => {
+                output.AssertSuccess();
+                output.AssertOutput("##octopus[setVariable name='U3VwZXI=' value='TWFyaW8gQnJvcw==']");
+            });
         }
         
         [Test]
@@ -26,8 +27,10 @@ namespace Calamari.Tests.Fixtures.Bash
         {
             var (output, _) = RunScript("print-sensitive-variable.sh");
 
-            output.AssertSuccess();
-            output.AssertOutput("##octopus[setVariable name='UGFzc3dvcmQ=' value='Y29ycmVjdCBob3JzZSBiYXR0ZXJ5IHN0YXBsZQ==' sensitive='VHJ1ZQ==']");
+            Assert.Multiple(() => {
+                output.AssertSuccess();
+                output.AssertOutput("##octopus[setVariable name='UGFzc3dvcmQ=' value='Y29ycmVjdCBob3JzZSBiYXR0ZXJ5IHN0YXBsZQ==' sensitive='VHJ1ZQ==']");
+            });
         }
 
         [Test]
@@ -36,8 +39,10 @@ namespace Calamari.Tests.Fixtures.Bash
         {
             var (output, _) = RunScript("create-artifact.sh");
 
-            output.AssertSuccess();
-            output.AssertOutput("##octopus[createArtifact path='Li9zdWJkaXIvYW5vdGhlcmRpci9teWZpbGU=' name='bXlmaWxl' length='MA==']");
+            Assert.Multiple(() => {
+                output.AssertSuccess();
+                output.AssertOutput("##octopus[createArtifact path='Li9zdWJkaXIvYW5vdGhlcmRpci9teWZpbGU=' name='bXlmaWxl' length='MA==']");
+            });
         }
         
         [Test]
@@ -46,8 +51,10 @@ namespace Calamari.Tests.Fixtures.Bash
         {
             var (output, _) = RunScript("update-progress.sh");
 
-            output.AssertSuccess();
-            output.AssertOutput("##octopus[progress percentage='NTA=' message='SGFsZiBXYXk=']");
+            Assert.Multiple(() => {
+                output.AssertSuccess();
+                output.AssertOutput("##octopus[progress percentage='NTA=' message='SGFsZiBXYXk=']");
+            });
         }
 
         [Test]
@@ -57,8 +64,10 @@ namespace Calamari.Tests.Fixtures.Bash
             var (output, _) = RunScript("parameters.sh", new Dictionary<string, string>()
                 { [SpecialVariables.Action.Script.ScriptParameters] = "\"Para meter0\" 'Para meter1'" });
 
-            output.AssertSuccess();
-            output.AssertOutput("Parameters ($1='Para meter0' $2='Para meter1'");
+            Assert.Multiple(() => {
+                output.AssertSuccess();
+                output.AssertOutput("Parameters ($1='Para meter0' $2='Para meter1'");
+            });
         }
         
         [Test]
@@ -67,8 +76,10 @@ namespace Calamari.Tests.Fixtures.Bash
         {
             var (output, _) = RunScript("parameters.sh", sensitiveVariablesPassword: "5XETGOgqYR2bRhlfhDruEg==");
 
-            output.AssertSuccess();
-            output.AssertOutput("Parameters ($1='' $2='')");
+            Assert.Multiple(() => {
+                output.AssertSuccess();
+                output.AssertOutput("Parameters ($1='' $2='')");
+            });
         }
 
         [Test]
@@ -84,12 +95,10 @@ namespace Calamari.Tests.Fixtures.Bash
                 ["Host"] = "Never",
             });
 
-            TestContext.Write("---------------");
-            TestContext.Write(string.Join(Environment.NewLine, output.CapturedOutput.Infos));
-            TestContext.Write("---------------");
-            TestContext.Write(string.Join(Environment.NewLine, output.CapturedOutput.Errors));
-            output.AssertOutput("Hello Paul");
-            output.AssertSuccess();
+            Assert.Multiple(() => {
+                output.AssertSuccess();
+                output.AssertOutput("Hello Paul");
+            });
         }
 
 
@@ -100,8 +109,10 @@ namespace Calamari.Tests.Fixtures.Bash
             var (output, _) = RunScript("hello.sh", new Dictionary<string, string>()
                 { ["Name"] = "NameToEncrypt" }, sensitiveVariablesPassword: "5XETGOgqYR2bRhlfhDruEg==");
 
+            Assert.Multiple(() => {
                 output.AssertSuccess();
                 output.AssertOutput("Hello NameToEncrypt");
+            });
         }
 
 
@@ -112,8 +123,10 @@ namespace Calamari.Tests.Fixtures.Bash
             var (output, _) = RunScript("hello.sh", new Dictionary<string, string>()
                 {["Name"] = null});
 
-            output.AssertSuccess();
-            output.AssertOutput("Hello");
+            Assert.Multiple(() => {
+                output.AssertSuccess();
+                output.AssertOutput("Hello");
+            });
         }
 
         [Test]
@@ -123,8 +136,10 @@ namespace Calamari.Tests.Fixtures.Bash
             var (output, _) = RunScript("hello.sh", new Dictionary<string, string>()
                 { ["Name"] = null }, sensitiveVariablesPassword: "5XETGOgqYR2bRhlfhDruEg==");
 
-            output.AssertSuccess();
-            output.AssertOutput("Hello");
+            Assert.Multiple(() => {
+                output.AssertSuccess();
+                output.AssertOutput("Hello");
+            });
         }
 
         [Test]
@@ -132,9 +147,11 @@ namespace Calamari.Tests.Fixtures.Bash
         public void ShouldNotFailOnStdErr()
         {
             var (output, _) = RunScript("stderr.sh");
-
-            output.AssertSuccess();
-            output.AssertErrorOutput("hello");
+            
+            Assert.Multiple(() => {
+                output.AssertSuccess();
+                output.AssertErrorOutput("hello");
+            });
         }
 
         [Test]
@@ -144,8 +161,10 @@ namespace Calamari.Tests.Fixtures.Bash
             var (output, _) = RunScript("stderr.sh", new Dictionary<string, string>()
                 {[SpecialVariables.Action.FailScriptOnErrorOutput] = "True"});
 
-            output.AssertFailure();
-            output.AssertErrorOutput("hello");
+            Assert.Multiple(() => {
+                output.AssertFailure();
+                output.AssertErrorOutput("hello");
+            });
         }
 
         [Test]
@@ -164,8 +183,10 @@ namespace Calamari.Tests.Fixtures.Bash
         {
             var (output, _) = RunScript("strict-mode.sh");
 
-            output.AssertSuccess();
-            output.AssertOutput("##octopus[setVariable name='UGFzc3dvcmQ=' value='Y29ycmVjdCBob3JzZSBiYXR0ZXJ5IHN0YXBsZQ==']");
+            Assert.Multiple(() => {
+                output.AssertSuccess();
+                output.AssertOutput("##octopus[setVariable name='UGFzc3dvcmQ=' value='Y29ycmVjdCBob3JzZSBiYXR0ZXJ5IHN0YXBsZQ==']");
+            });
         }
     }
 }
