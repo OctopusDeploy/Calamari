@@ -8,6 +8,8 @@ using Calamari.Kubernetes.Authentication;
 using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
+using Octopus.CoreUtilities;
+using Octopus.Versioning.Semver;
 
 namespace Calamari.Tests.KubernetesFixtures.Authentication
 {
@@ -77,6 +79,8 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
             AddLogForWhichAws();
             AddLogForAwsVersion(CurrentAwsVersion);
 
+            kubectl.GetVersion().Returns(Maybe<SemanticVersion>.Some(new SemanticVersion(1, 29, 7)));
+
             variables.SetStrings(KnownVariables.EnabledFeatureToggles,
                                  new[]
                                  {
@@ -89,7 +93,6 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
             expectedInvocations.AddRange(
                                          new List<(string, string)>
                                          {
-                                             GetEksClusterApiVersionInvocation,
                                              SetKubectlCredentialsViaExecInvocation,
                                              GetNamespaceInvocation
                                          });
@@ -284,9 +287,6 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
 
         static (string, string) SetKubectlTokenInvocation
             => ("kubectl", "config set-credentials octouser --token=k8s-aws-v1.token");
-
-        static (string, string) GetEksClusterApiVersionInvocation
-            => ("aws", $"eks get-token --cluster-name={EksClusterName} --region={AwsRegion}");
 
         static (string, string) SetKubectlCredentialsViaExecInvocation
             => ("kubectl", $"config set-credentials octouser --exec-command=aws --exec-arg=eks --exec-arg=get-token --exec-arg=--cluster-name={EksClusterName} --exec-arg=--region={AwsRegion} --exec-api-version=client.authentication.k8s.io/v1beta1");
