@@ -101,20 +101,27 @@ namespace Calamari.Kubernetes.Authentication
 
         void SetKubeConfigAuthenticationToAwsIAm(string user, string clusterName)
         {
-            var kubectlVersion = kubectl.GetVersion();
-            var apiVersion = kubectlVersion.Some() && kubectlVersion.Value > new SemanticVersion("1.23.6")
-                ? "client.authentication.k8s.io/v1beta1"
-                : "client.authentication.k8s.io/v1alpha1";
+            var apiVersion = GetKubeCtlAuthApiVersion();
 
             kubectl.ExecuteCommandAndAssertSuccess(
-                "config",
-                "set-credentials",
-                user,
-                "--exec-command=aws-iam-authenticator",
-                $"--exec-api-version={apiVersion}",
-                "--exec-arg=token",
-                "--exec-arg=-i",
-                $"--exec-arg={clusterName}");
+                                                   "config",
+                                                   "set-credentials",
+                                                   user,
+                                                   "--exec-command=aws-iam-authenticator",
+                                                   $"--exec-api-version={apiVersion}",
+                                                   "--exec-arg=token",
+                                                   "--exec-arg=-i",
+                                                   $"--exec-arg={clusterName}");
+        }
+
+        string GetKubeCtlAuthApiVersion()
+        {
+            var kubectlVersion = kubectl.GetVersion();
+            
+            //v1alpha1 was deprecated in 1.24 of K8s
+            return kubectlVersion.Some() && kubectlVersion.Value > new SemanticVersion("1.23.6")
+                ? "client.authentication.k8s.io/v1beta1"
+                : "client.authentication.k8s.io/v1alpha1";
         }
 
         void ConfigureAwsCli()
@@ -146,13 +153,8 @@ namespace Calamari.Kubernetes.Authentication
         void SetKubeConfigAuthenticationToAwsCliUsingExec(string user, string clusterName, string region)
         {
             var oidcJwt = deploymentVariables.Get(AccountVariables.Jwt);
-
-            var apiVersion = awsCli.GetEksClusterApiVersion(clusterName, region);
-
-            if (apiVersion == null)
-            {
-                throw new InvalidOperationException($"Unable to determine API version for cluster {clusterName} in region {region}.");
-            }
+            
+            var apiVersion = GetKubeCtlAuthApiVersion();
             
             var arguments = new List<string>
             {
