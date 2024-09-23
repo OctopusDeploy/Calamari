@@ -516,11 +516,15 @@ namespace Calamari.Integration.Certificates
             }
         }
 
-        static IList<Org.BouncyCastle.X509.X509Certificate> GetCertificatesToImport(byte[] pfxBytes, string password)
+        static IList<Org.BouncyCastle.X509.X509Certificate> GetCertificatesToImport(byte[] pfxBytes, string? password)
         {
             using (var memoryStream = new MemoryStream(pfxBytes))
             {
-                var pkcs12Store = new Pkcs12Store(memoryStream, password?.ToCharArray() ?? "".ToCharArray());
+                // The latest version of BouncyCastle fails if the cert doesn't require a key, but we pass an empty array key.
+                // Will issue a PR to make this configurable at least in a way that doesn't require writing environment variables.
+                Environment.SetEnvironmentVariable(Org.BouncyCastle.Pkcs.Pkcs12Store.IgnoreUselessPasswordProperty, "true");
+                var pkcs12Store = new Pkcs12StoreBuilder().Build();
+                pkcs12Store.Load(memoryStream, password?.ToCharArray() ?? "".ToCharArray());
 
                 if (pkcs12Store.Count < 1)
                     throw new Exception("No certificates were found in PFX");
