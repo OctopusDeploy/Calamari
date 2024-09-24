@@ -154,6 +154,8 @@ namespace Calamari.Kubernetes.Authentication
         {
             var oidcJwt = deploymentVariables.Get(AccountVariables.Jwt);
             
+            var apiVersion = GetKubeCtlAuthApiVersion();
+            
             var arguments = new List<string>
             {
                 "config",
@@ -163,7 +165,8 @@ namespace Calamari.Kubernetes.Authentication
                 "--exec-arg=eks",
                 "--exec-arg=get-token",
                 $"--exec-arg=--cluster-name={clusterName}",
-                $"--exec-arg=--region={region}"
+                $"--exec-arg=--region={region}",
+                $"--exec-api-version={apiVersion}"
             };
 
             if (!oidcJwt.IsNullOrEmpty())
