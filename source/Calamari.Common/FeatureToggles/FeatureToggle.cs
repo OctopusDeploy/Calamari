@@ -13,6 +13,7 @@
         OidcAccountsFeatureToggle,
         AsynchronousAzureZipDeployFeatureToggle,
         FSharpDeprecationFeatureToggle,
-        AzureRMDeprecationFeatureToggle
+        AzureRMDeprecationFeatureToggle,
+        KubernetesAuthAwsCliWithExecFeatureToggle
     }
 }
