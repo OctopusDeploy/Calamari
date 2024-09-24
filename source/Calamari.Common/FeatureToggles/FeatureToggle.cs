@@ -13,6 +13,7 @@
         FSharpDeprecationFeatureToggle,
         AzureRMDeprecationFeatureToggle,
         PreventHelmV2DeploymentsFeatureToggle,
-        KubernetesLiveObjectStatusFeatureToggle
+        KubernetesLiveObjectStatusFeatureToggle,
+        KubernetesAuthAwsCliWithExecFeatureToggle
     }
 }
