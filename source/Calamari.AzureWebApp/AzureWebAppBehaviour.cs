@@ -66,7 +66,6 @@ namespace Calamari.AzureWebApp
                 log.Warn($"No Resource Group Name was provided. Checking 'SCM Basic Auth Publishing Credentials' configuration will be skipped. If authentication fails, ensure 'SCM Basic Auth Publishing Credentials' is enabled on '{targetSite.Site}'-{slotText}. To deploy Web Apps with SCM disabled, please use the 'Deploy an Azure App Service' step.");
             }
 
-
             log.Info($"Deploying to Azure WebApp '{targetSite.Site}'{slotText}{resourceGroupText}, using subscription-id '{subscriptionId}'");
             var publishSettings = await GetPublishProfile(variables, azureAccount);
             RemoteCertificateValidationCallback originalServerCertificateValidationCallback = null;
