@@ -4,6 +4,7 @@ branches:
     mode: ContinuousDelivery
     is-release-branch: false
     tag: hotfix
+    source-branches: [ 'release' ]
     increment: None
 ignore:
   sha: [

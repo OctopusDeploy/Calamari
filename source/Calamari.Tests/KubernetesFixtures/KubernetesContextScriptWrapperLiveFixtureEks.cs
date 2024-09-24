@@ -15,6 +15,7 @@ using Calamari.Deployment;
 using Calamari.Kubernetes.Commands;
 using Calamari.Testing;
 using Calamari.Testing.Helpers;
+using Calamari.Testing.Requirements;
 using Calamari.Tests.AWS;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
@@ -272,6 +273,32 @@ namespace Calamari.Tests.KubernetesFixtures
         public void AuthorisingWithAmazonAccount(bool runAsScript)
         {
             SetVariablesToAuthoriseWithAmazonAccount();
+
+            if (runAsScript)
+            {
+                DeployWithKubectlTestScriptAndVerifyResult();
+            }
+            else
+            {
+                ExecuteCommandAndVerifyResult(TestableKubernetesDeploymentCommand.Name);
+            }
+        }
+        
+        [Test]
+        [TestCase(true)]
+        [TestCase(false)]
+        [WindowsTest] // We are having an issue with this test running on Linux. The test successfully executes on Windows.
+        public void AuthorisingWithAmazonAccount_WithExecFeatureToggleEnabled(bool runAsScript)
+        {
+            SetVariablesToAuthoriseWithAmazonAccount();
+            
+            //set the feature toggle
+            variables.SetStrings(KnownVariables.EnabledFeatureToggles,
+                                 new[]
+                                 {
+                                     FeatureToggle.KubernetesAuthAwsCliWithExecFeatureToggle.ToString()
+                                 },
+                                 ",");
 
             if (runAsScript)
             {
