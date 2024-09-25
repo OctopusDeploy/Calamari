@@ -60,6 +60,14 @@ namespace Calamari.Tests.KubernetesFixtures
                                                             var jObject = JObject.Parse(await json.Content.ReadAsStringAsync());
                                                             var downloadBaseUrl = jObject["current_download_url"].Value<string>();
                                                             var version = jObject["current_version"].Value<string>();
+
+                                                            //TODO(tmm): AzureRM_provider and/or Terraform were causing flakey tests - this pins the required version of terraform
+                                                            var pinnedVersion = "1.7.5";
+                                                            downloadBaseUrl = downloadBaseUrl.Replace(version, pinnedVersion);
+                                                            version = pinnedVersion;
+
+                                                            log($"Found Terraform version {version} @ {downloadBaseUrl}");
+                                                            
                                                             return (version, downloadBaseUrl);
                                                         },
                                                         async (destinationDirectoryName, tuple) =>
@@ -160,6 +168,7 @@ namespace Calamari.Tests.KubernetesFixtures
                                                              {
                                                                  return GetAwsCliExecutablePath(destinationDirectoryName);
                                                              }
+
                                                              ExecuteCommandAndReturnResult("msiexec",
                                                                                            $"/a {awsInstaller} /qn TARGETDIR={destinationDirectoryName}\\extract",
                                                                                            destinationDirectoryName);

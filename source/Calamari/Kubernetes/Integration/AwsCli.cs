@@ -47,9 +47,9 @@ namespace Calamari.Kubernetes.Integration
             result.Result.VerifySuccess();
 
             var awsCliVersion = result.Output.InfoLogs?.FirstOrDefault()
-                ?.Split()
-                .FirstOrDefault(versions => versions.StartsWith("aws-cli"))
-                ?.Replace("aws-cli/", string.Empty);
+                                      ?.Split()
+                                      .FirstOrDefault(versions => versions.StartsWith("aws-cli"))
+                                      ?.Replace("aws-cli/", string.Empty);
 
             return new SemanticVersion(awsCliVersion);
         }
