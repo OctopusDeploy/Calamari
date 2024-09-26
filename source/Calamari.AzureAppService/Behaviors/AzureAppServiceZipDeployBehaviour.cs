@@ -50,8 +50,7 @@ namespace Calamari.AzureAppService.Behaviors
             Log.Verbose("Starting Azure App Service deployment.");
 
             var variables = context.Variables;
-            var hasJwt = !variables.Get(AccountVariables.Jwt).IsNullOrEmpty();
-            var account = hasJwt ? (IAzureAccount)new AzureOidcAccount(variables) : new AzureServicePrincipalAccount(variables);
+            var account = AzureAccountFactory.Create(variables);
             Log.Verbose($"Using Azure Tenant '{account.TenantId}'");
             Log.Verbose($"Using Azure Subscription '{account.SubscriptionNumber}'");
             Log.Verbose($"Using Azure ServicePrincipal AppId/ClientId '{account.ClientId}'");
@@ -62,23 +61,10 @@ namespace Calamari.AzureAppService.Behaviors
             var pollingTimeout = TimeSpan.FromMinutes(pollingTimeoutValue);
             var asyncZipDeployTimeoutPolicy = Policy.TimeoutAsync<HttpResponseMessage>(pollingTimeout, TimeoutStrategy.Optimistic);
 
-            string? resourceGroupName = variables.Get(SpecialVariables.Action.Azure.ResourceGroupName);
-            if (resourceGroupName == null)
-                throw new Exception("resource group name must be specified");
-            Log.Verbose($"Using Azure Resource Group '{resourceGroupName}'.");
-
-            string? webAppName = variables.Get(SpecialVariables.Action.Azure.WebAppName);
-            if (webAppName == null)
-                throw new Exception("Web App Name must be specified");
-            Log.Verbose($"Using App Service Name '{webAppName}'.");
-
-            string? slotName = variables.Get(SpecialVariables.Action.Azure.WebAppSlot);
-            Log.Verbose(slotName == null
-                            ? "No Deployment Slot specified"
-                            : $"Using Deployment Slot '{slotName}'");
-
             var armClient = account.CreateArmClient();
-            var targetSite = new AzureTargetSite(account.SubscriptionNumber, resourceGroupName, webAppName, slotName);
+            var targetSite = AzureTargetSite.Create(account, variables, Log);
+
+            var resourceGroupName = targetSite.ResourceGroupName;
 
             var resourceGroups = armClient
                                  .GetSubscriptionResource(SubscriptionResource.CreateResourceIdentifier(targetSite.SubscriptionId))

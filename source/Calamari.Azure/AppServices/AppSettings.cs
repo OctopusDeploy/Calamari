@@ -9,7 +9,7 @@ namespace Calamari.Azure.AppServices
 
         public bool SlotSetting { get; set; }
 
-        internal void Deconstruct(out string name, out string value, out bool isSlotSetting)
+        public void Deconstruct(out string name, out string value, out bool isSlotSetting)
         {
             name = Name;
             value = Value;

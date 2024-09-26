@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ClientModel.Primitives;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -21,6 +22,18 @@ namespace Calamari.Azure
     /// </remarks>
     public static class ArmClientExtensions
     {
+        public static async Task<WebSiteData> GetWebSiteDataAsync(this ArmClient armClient, AzureTargetSite targetSite)
+        {
+            return targetSite.HasSlot  switch
+                   {
+                       true => (await armClient.GetWebSiteSlotResource( targetSite.CreateResourceIdentifier())
+                                               .GetAsync()).Value.Data,
+                       false => (await armClient.GetWebSiteResource(targetSite.CreateResourceIdentifier())
+                                                .GetAsync()).Value.Data
+                   };
+        }
+        
+        
         public static async Task<SiteConfigData> GetSiteConfigDataAsync(this ArmClient armClient, AzureTargetSite targetSite)
         {
             return targetSite.HasSlot switch
