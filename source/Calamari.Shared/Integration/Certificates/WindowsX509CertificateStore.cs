@@ -1,5 +1,4 @@
-﻿#if WINDOWS_CERTIFICATE_STORE_SUPPORT 
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -18,14 +17,26 @@ using Native = Calamari.Integration.Certificates.WindowsNative.WindowsX509Native
 
 namespace Calamari.Integration.Certificates
 {
-    public class WindowsX509CertificateStore: IWindowsX509CertificateStore
+    public class WindowsX509CertificateStore : IWindowsX509CertificateStore
     {
+        readonly ILog log;
         public static readonly ISemaphoreFactory Semaphores = new SystemSemaphoreManager();
         public static readonly string SemaphoreName = nameof(WindowsX509CertificateStore);
 
         const string IntermediateAuthorityStoreName = "CA";
         public static readonly string RootAuthorityStoreName = "Root";
 
+        public WindowsX509CertificateStore(ILog log)
+        {
+            this.log = log;
+        }
+
+        // This should only be used in tests
+        public WindowsX509CertificateStore(): this(ConsoleLog.Instance)
+        {
+            
+        }
+        
         private static IDisposable AcquireSemaphore()
         {
             return Semaphores.Acquire(SemaphoreName, "Another process is working with the certificate store, please wait...");
@@ -96,7 +107,7 @@ namespace Calamari.Integration.Certificates
                 {
                     // Because we have to store the private-key in the machine key-store, we must grant the user access to it
                     var keySecurity = new[] {new PrivateKeyAccessRule(account.Value, PrivateKeyAccess.FullControl)};
-                    AddPrivateKeyAccessRules(keySecurity, certificate);
+                    CryptoKeySecurityAccessRules.AddPrivateKeyAccessRules(keySecurity, certificate);
                 }
             }
         }
@@ -126,38 +137,9 @@ namespace Calamari.Integration.Certificates
                 if (!certificate.HasPrivateKey())
                     throw new Exception("Certificate does not have a private-key");
 
-                AddPrivateKeyAccessRules(privateKeyAccessRules, certificate);
+                CryptoKeySecurityAccessRules.AddPrivateKeyAccessRules(privateKeyAccessRules, certificate);
 
                 store.Close();
-            }
-        }
-
-        public CryptoKeySecurity GetPrivateKeySecurity(string thumbprint, StoreLocation storeLocation, string storeName)
-        {
-            using (AcquireSemaphore())
-            {
-                var store = new X509Store(storeName, storeLocation);
-                store.Open(OpenFlags.ReadOnly);
-
-                var found = store.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, false);
-                store.Close();
-
-                if (found.Count == 0)
-                    throw new Exception(
-                        $"Could not find certificate with thumbprint '{thumbprint}' in store Cert:\\{storeLocation}\\{storeName}");
-
-                var certificate = new SafeCertContextHandle(found[0].Handle, false);
-
-                if (!certificate.HasPrivateKey())
-                    throw new Exception("Certificate does not have a private-key");
-
-                var keyProvInfo =
-                    certificate.GetCertificateProperty<KeyProviderInfo>(CertificateProperty.KeyProviderInfo);
-
-                // If it is a CNG key
-                return keyProvInfo.dwProvType == 0
-                    ? GetCngPrivateKeySecurity(certificate)
-                    : GetCspPrivateKeySecurity(certificate);
             }
         }
 
@@ -188,6 +170,7 @@ namespace Calamari.Integration.Certificates
                     // If it is a CNG key
                     if (keyProvInfo.dwProvType == 0)
                     {
+#if WINDOWS_CERTIFICATE_STORE_SUPPORT
                         try
                         {
                             var key = CertificatePal.GetCngPrivateKey(certificateHandle);
@@ -197,6 +180,7 @@ namespace Calamari.Integration.Certificates
                         {
                             throw new Exception("Exception while deleting CNG private key", ex);
                         }
+#endif
                     }
                     else // CAPI key
                     {
@@ -258,7 +242,7 @@ namespace Calamari.Integration.Certificates
             return names;
         }
 
-        static SafeCertContextHandle ImportPfxToStore(CertificateSystemStoreLocation storeLocation, string storeName, byte[] pfxBytes, string password,
+        SafeCertContextHandle ImportPfxToStore(CertificateSystemStoreLocation storeLocation, string storeName, byte[] pfxBytes, string password,
             bool useUserKeyStore, bool privateKeyExportable)
         {
             var pfxImportFlags = useUserKeyStore
@@ -314,7 +298,7 @@ namespace Calamari.Integration.Certificates
             return true;
         }
 
-        static void AddCertificateToStore(CertificateSystemStoreLocation storeLocation, string storeName, SafeCertContextHandle certificate)
+        void AddCertificateToStore(CertificateSystemStoreLocation storeLocation, string storeName, SafeCertContextHandle certificate)
         {
             try
             {
@@ -331,14 +315,14 @@ namespace Calamari.Integration.Certificates
 
                         if (error == (int) CapiErrorCode.CRYPT_E_EXISTS)
                         {
-                            Log.Info($"Certificate '{subjectName}' already exists in store '{storeName}'.");
+                            log.Info($"Certificate '{subjectName}' already exists in store '{storeName}'.");
                             return;
                         }
 
                         throw new CryptographicException(error);
                     }
 
-                    Log.Info($"Imported certificate '{subjectName}' into store '{storeName}'");
+                    log.Info($"Imported certificate '{subjectName}' into store '{storeName}'");
                 }
             }
             catch (Exception ex)
@@ -406,7 +390,55 @@ namespace Calamari.Integration.Certificates
             }
         }
 
-        static void AddPrivateKeyAccessRules(ICollection<PrivateKeyAccessRule> accessRules, SafeCertContextHandle certificate)
+        static IList<Org.BouncyCastle.X509.X509Certificate> GetCertificatesToImport(byte[] pfxBytes, string? password)
+        {
+            using (var memoryStream = new MemoryStream(pfxBytes))
+            {
+                // The latest version of BouncyCastle fails if the cert doesn't require a key, but we pass an empty array key.
+                // Will issue a PR to make this configurable at least in a way that doesn't require writing environment variables.
+                Environment.SetEnvironmentVariable(Org.BouncyCastle.Pkcs.Pkcs12Store.IgnoreUselessPasswordProperty, "true");
+                var pkcs12Store = new Pkcs12StoreBuilder().Build();
+                pkcs12Store.Load(memoryStream, password?.ToCharArray() ?? "".ToCharArray());
+
+                if (pkcs12Store.Count < 1)
+                    throw new Exception("No certificates were found in PFX");
+
+                var aliases = pkcs12Store.Aliases.Cast<string>().ToList();
+
+                // Find the first bag which contains a private-key
+                var keyAlias = aliases.FirstOrDefault(alias => pkcs12Store.IsKeyEntry(alias));
+
+                if (keyAlias != null)
+                {
+                    return pkcs12Store.GetCertificateChain(keyAlias).Select(x => x.Certificate).ToList();
+
+                }
+
+                return new List<Org.BouncyCastle.X509.X509Certificate>
+                {
+                    pkcs12Store.GetCertificate(aliases.First()).Certificate
+                };
+            }
+        }
+
+        static bool IsSelfSigned(SafeCertContextHandle certificate)
+        {
+            var certificateInfo = (CERT_INFO)Marshal.PtrToStructure(certificate.CertificateContext.pCertInfo, typeof(CERT_INFO));
+            return CertCompareCertificateName(CertificateEncodingType.Pkcs7OrX509AsnEncoding, ref certificateInfo.Subject, ref certificateInfo.Issuer);
+        }
+
+        static byte[] CalculateThumbprint(Org.BouncyCastle.X509.X509Certificate certificate)
+        {
+            var der = certificate.GetEncoded();
+            return DigestUtilities.CalculateDigest("SHA1", der);
+        }
+    }
+
+#if WINDOWS_CERTIFICATE_STORE_SUPPORT
+    public static class CryptoKeySecurityAccessRules
+    {
+        
+        internal static void AddPrivateKeyAccessRules(ICollection<PrivateKeyAccessRule> accessRules, SafeCertContextHandle certificate)
         {
             try
             {
@@ -515,50 +547,41 @@ namespace Calamari.Integration.Certificates
                 return security;
             }
         }
-
-        static IList<Org.BouncyCastle.X509.X509Certificate> GetCertificatesToImport(byte[] pfxBytes, string? password)
+        
+        
+        public static CryptoKeySecurity GetPrivateKeySecurity(string thumbprint, StoreLocation storeLocation, string storeName)
         {
-            using (var memoryStream = new MemoryStream(pfxBytes))
-            {
-                // The latest version of BouncyCastle fails if the cert doesn't require a key, but we pass an empty array key.
-                // Will issue a PR to make this configurable at least in a way that doesn't require writing environment variables.
-                Environment.SetEnvironmentVariable(Org.BouncyCastle.Pkcs.Pkcs12Store.IgnoreUselessPasswordProperty, "true");
-                var pkcs12Store = new Pkcs12StoreBuilder().Build();
-                pkcs12Store.Load(memoryStream, password?.ToCharArray() ?? "".ToCharArray());
+                var store = new X509Store(storeName, storeLocation);
+                store.Open(OpenFlags.ReadOnly);
 
-                if (pkcs12Store.Count < 1)
-                    throw new Exception("No certificates were found in PFX");
+                var found = store.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, false);
+                store.Close();
 
-                var aliases = pkcs12Store.Aliases.Cast<string>().ToList();
+                if (found.Count == 0)
+                    throw new Exception(
+                                        $"Could not find certificate with thumbprint '{thumbprint}' in store Cert:\\{storeLocation}\\{storeName}");
 
-                // Find the first bag which contains a private-key
-                var keyAlias = aliases.FirstOrDefault(alias => pkcs12Store.IsKeyEntry(alias));
+                var certificate = new SafeCertContextHandle(found[0].Handle, false);
 
-                if (keyAlias != null)
-                {
-                    return pkcs12Store.GetCertificateChain(keyAlias).Select(x => x.Certificate).ToList();
+                if (!certificate.HasPrivateKey())
+                    throw new Exception("Certificate does not have a private-key");
 
-                }
+                var keyProvInfo =
+                    certificate.GetCertificateProperty<KeyProviderInfo>(CertificateProperty.KeyProviderInfo);
 
-                return new List<Org.BouncyCastle.X509.X509Certificate>
-                {
-                    pkcs12Store.GetCertificate(aliases.First()).Certificate
-                };
-            }
-        }
-
-        static bool IsSelfSigned(SafeCertContextHandle certificate)
-        {
-            var certificateInfo = (CERT_INFO)Marshal.PtrToStructure(certificate.CertificateContext.pCertInfo, typeof(CERT_INFO));
-            return CertCompareCertificateName(CertificateEncodingType.Pkcs7OrX509AsnEncoding, ref certificateInfo.Subject, ref certificateInfo.Issuer);
-        }
-
-        static byte[] CalculateThumbprint(Org.BouncyCastle.X509.X509Certificate certificate)
-        {
-            var der = certificate.GetEncoded();
-            return DigestUtilities.CalculateDigest("SHA1", der);
+                // If it is a CNG key
+                return keyProvInfo.dwProvType == 0
+                    ? GetCngPrivateKeySecurity(certificate)
+                    : GetCspPrivateKeySecurity(certificate);
         }
     }
-}
-
+#else
+    public static class CryptoKeySecurityAccessRules
+    {
+        internal static void AddPrivateKeyAccessRules(ICollection<PrivateKeyAccessRule> accessRules, SafeCertContextHandle certificate)
+        {
+            throw new NotImplementedException("Not Yet Available For NetCore");
+        }
+    }
 #endif
+}

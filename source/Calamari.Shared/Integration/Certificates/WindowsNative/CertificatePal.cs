@@ -1,5 +1,4 @@
-﻿#if WINDOWS_CERTIFICATE_STORE_SUPPORT 
-using System;
+﻿using System;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
@@ -115,6 +114,8 @@ namespace Calamari.Integration.Certificates.WindowsNative
             return buffer;
         }
 
+        // At the moment these models are not in the Calamari Solution. This is the next step.
+#if WINDOWS_CERTIFICATE_STORE_SUPPORT
         public static byte[] GetCngPrivateKeySecurity(SafeNCryptKeyHandle hObject)
         {
             int bufferSize = 0;
@@ -179,6 +180,7 @@ namespace Calamari.Integration.Certificates.WindowsNative
                 throw new CryptographicException(errorCode);
         }
 
+#endif
         public static string GetSubjectName(SafeCertContextHandle certificate)
         {
             var flags = CertNameFlags.None;
@@ -195,4 +197,3 @@ namespace Calamari.Integration.Certificates.WindowsNative
         }
     }
 }
-#endif

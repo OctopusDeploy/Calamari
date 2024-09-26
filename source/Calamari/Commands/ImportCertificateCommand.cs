@@ -1,5 +1,4 @@
-﻿#if WINDOWS_CERTIFICATE_STORE_SUPPORT
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
@@ -17,11 +16,13 @@ namespace Calamari.Commands
     {
         readonly IVariables variables;
         readonly IWindowsX509CertificateStore windowsX509CertificateStore;
+        readonly ILog log;
 
-        public ImportCertificateCommand(IVariables variables, IWindowsX509CertificateStore windowsX509CertificateStore)
+        public ImportCertificateCommand(IVariables variables, IWindowsX509CertificateStore windowsX509CertificateStore, ILog log)
         {
             this.variables = variables;
             this.windowsX509CertificateStore = windowsX509CertificateStore;
+            this.log = log;
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -50,7 +51,7 @@ namespace Calamari.Commands
             {
                 if (locationSpecified)
                 {
-                    Log.Info(
+                    log.Info(
                         $"Importing certificate '{variables.Get($"{certificateVariable}.{CertificateVariables.Properties.Subject}")}' with thumbprint '{thumbprint}' into store '{storeLocation}\\{storeName}'");
                     windowsX509CertificateStore.ImportCertificateToStore(pfxBytes, password, storeLocation, storeName, privateKeyExportable);
 
@@ -80,7 +81,7 @@ namespace Calamari.Commands
             }
             catch (Exception)
             {
-                Log.Error("There was an error importing the certificate into the store");
+                log.Error("There was an error importing the certificate into the store");
                 throw;
             }
         }
@@ -129,4 +130,3 @@ namespace Calamari.Commands
         }
     }
 }
-#endif
