@@ -24,9 +24,7 @@ namespace Calamari.Tests.Fixtures.Certificates
         [TestCase(SampleCertificate.CngPrivateKeyId, StoreLocation.CurrentUser, "My")]
         [TestCase(SampleCertificate.CngPrivateKeyId, StoreLocation.LocalMachine, "Foo")]
         [TestCase(SampleCertificate.CapiWithPrivateKeyId, StoreLocation.LocalMachine, "My")]
-#if WINDOWS_CERTIFICATE_STORE_SUPPORT
         [TestCase(SampleCertificate.CapiWithPrivateKeyId, StoreLocation.CurrentUser, "My")]
-#endif
         [TestCase(SampleCertificate.CapiWithPrivateKeyId, StoreLocation.CurrentUser, "Foo")]
         [TestCase(SampleCertificate.CapiWithPrivateKeyNoPasswordId, StoreLocation.LocalMachine, "My")]
         public void CanImportCertificate(string sampleCertificateId, StoreLocation storeLocation, string storeName)
@@ -66,8 +64,7 @@ namespace Calamari.Tests.Fixtures.Certificates
 
             sampleCertificate.EnsureCertificateNotInStore(storeName, StoreLocation.CurrentUser);
         }
-        
-#if WINDOWS_CERTIFICATE_STORE_SUPPORT
+
         [Test]
         public void CanImportCertificateForSpecificUser()
         {
@@ -150,11 +147,6 @@ namespace Calamari.Tests.Fixtures.Certificates
                                     {
                                         new PrivateKeyAccessRule("BUILTIN\\Users", PrivateKeyAccess.FullControl)
                                     });
-                            }))
-                            .Concat(CreateThreads(numThreads, "GetPrivateKeySecurity", () =>
-                            {
-                                var unused = CryptoKeySecurityAccessRules.GetPrivateKeySecurity(
-                                    sampleCertificate.Thumbprint, StoreLocation.LocalMachine, "My");
                             })).ToArray();
 
                     allThreadsReady = new CountdownEvent(threads.Length);
@@ -175,7 +167,7 @@ namespace Calamari.Tests.Fixtures.Certificates
                         if (!thread.Join(TimeSpan.FromSeconds(1)))
                         {
                             Log($"Aborting {thread.Name}");
-                            thread.Abort();
+                            cts.Cancel();
                         }
                     }
 
@@ -227,22 +219,11 @@ namespace Calamari.Tests.Fixtures.Certificates
                 Convert.FromBase64String(sampleCertificate.Base64Bytes()), sampleCertificate.Password,
                 storeLocation, storeName, sampleCertificate.HasPrivateKey);
 
-            var privateKeySecurity = CryptoKeySecurityAccessRules.GetPrivateKeySecurity(sampleCertificate.Thumbprint,
-                                                                                        storeLocation, storeName);
-            AssertHasPrivateKeyRights(privateKeySecurity, "BUILTIN\\Users", CryptoKeyRights.GenericAll);
+            var privateKeySecurity = CryptoKeySecurityAccessRules.GetPrivateKeySecurity(sampleCertificate.Thumbprint, storeLocation, storeName);
+            SampleCertificate.AssertHasPrivateKeyRights(privateKeySecurity, new NTAccount("BUILTIN\\Users"), CryptoKeyRights.GenericAll);
 
             sampleCertificate.EnsureCertificateNotInStore(storeName, storeLocation);
         }
-        void AssertHasPrivateKeyRights(CryptoKeySecurity privateKeySecurity, string identifier, CryptoKeyRights right)
-        {
-            var accessRules = privateKeySecurity.GetAccessRules(true, false, typeof(NTAccount));
-
-            var found = accessRules.Cast<CryptoKeyAccessRule>()
-                                   .Any(x => x.IdentityReference.Value == identifier && x.CryptoKeyRights.HasFlag(right));
-
-            Assert.True(found, "Private-Key right was not set");
-        }
-#endif
 
         [Test]
         [TestCase(SampleCertificate.CertificateChainId, "2E5DEC036985A4028351FD8DF3532E49D7B34049", "CC7ED077F0F292595A8166B01709E20C0884A5F8", StoreLocation.LocalMachine, "My")]

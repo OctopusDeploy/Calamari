@@ -16,7 +16,7 @@
     <DefineConstants>$(DefineConstants);NETCORE;AZURE_CORE;JAVA_SUPPORT</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net462' ">
-    <DefineConstants>$(DefineConstants);NETFX;IIS_SUPPORT;USE_NUGET_V2_LIBS;USE_OCTODIFF_EXE;WINDOWS_CERTIFICATE_STORE_SUPPORT;</DefineConstants>
+    <DefineConstants>$(DefineConstants);NETFX;IIS_SUPPORT;USE_NUGET_V2_LIBS;USE_OCTODIFF_EXE;</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="System.DirectoryServices.AccountManagement" Version="4.7.0" />

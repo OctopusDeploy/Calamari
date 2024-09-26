@@ -6,6 +6,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Integration.Certificates;
 using Calamari.Integration.Iis;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Deployment.Packages;
@@ -14,6 +15,13 @@ using Microsoft.Web.Administration;
 using NUnit.Framework;
 using Polly;
 using FluentAssertions;
+
+#if  NETFX
+using CryptoKeyRights = System.Security.AccessControl.CryptoKeyRights;
+#else
+using CryptoKeyRights = Calamari.Integration.Certificates.CryptoKeyRights;
+#endif
+
 
 namespace Calamari.Tests.Fixtures.Deployment
 {
@@ -382,7 +390,6 @@ namespace Calamari.Tests.Fixtures.Deployment
             }
         }
 
-#if WINDOWS_CERTIFICATE_STORE_SUPPORT
         [Test]
         [Category(TestCategory.CompatibleOS.OnlyWindows)]
         public void ShouldCreateHttpsBindingUsingCertificatePassedAsVariable()
@@ -422,11 +429,13 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             // Assert the application-pool account was granted access to the certificate private-key
             var certificate = SampleCertificate.CapiWithPrivateKey.GetCertificateFromStore("MY", StoreLocation.LocalMachine);
-            SampleCertificate.AssertIdentityHasPrivateKeyAccess(certificate, new NTAccount("IIS AppPool\\" + uniqueValue), CryptoKeyRights.GenericAll);
+#pragma warning disable CA1416
+            var keysec = CryptoKeySecurityAccessRules.GetPrivateKeySecurity(certificate.Thumbprint, StoreLocation.LocalMachine, "My");
+            SampleCertificate.AssertHasPrivateKeyRights(keysec, new NTAccount("IIS APPPOOL\\" + uniqueValue), CryptoKeyRights.GenericAll);
+#pragma warning restore CA1416
 
             Assert.AreEqual(ObjectState.Started, website.State);
         }
-#endif
 
         [Test]
         [Category(TestCategory.CompatibleOS.OnlyWindows)]

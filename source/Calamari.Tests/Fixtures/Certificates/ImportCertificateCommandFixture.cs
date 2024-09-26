@@ -54,7 +54,6 @@ namespace Calamari.Tests.Fixtures.Certificates
             cert.EnsureCertificateNotInStore(storeName, certificateStoreLocation);
         }
 
-#if WINDOWS_CERTIFICATE_STORE_SUPPORT
         [Test]
         public void NoStoreLocationProvided_StoresInUserName()
         {
@@ -78,7 +77,6 @@ namespace Calamari.Tests.Fixtures.Certificates
             // Hygiene Cleanup
             cert.EnsureCertificateNotInStore(storeName, storeLocation);
         }
-#endif        
 
         CalamariResult Invoke(VariableDictionary variables)
         {

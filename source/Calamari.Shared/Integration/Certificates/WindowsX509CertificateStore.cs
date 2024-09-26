@@ -2,7 +2,10 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Security;
+using System.Security.AccessControl;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
@@ -169,7 +172,6 @@ namespace Calamari.Integration.Certificates
                     // If it is a CNG key
                     if (keyProvInfo.dwProvType == 0)
                     {
-#if WINDOWS_CERTIFICATE_STORE_SUPPORT
                         try
                         {
                             var key = CertificatePal.GetCngPrivateKey(certificateHandle);
@@ -179,7 +181,6 @@ namespace Calamari.Integration.Certificates
                         {
                             throw new Exception("Exception while deleting CNG private key", ex);
                         }
-#endif
                     }
                     else // CAPI key
                     {
@@ -195,12 +196,15 @@ namespace Calamari.Integration.Certificates
                                 keyProvInfo.dwProvType, acquireContextFlags);
 
                             if (!success)
-                                throw new CryptographicException(Marshal.GetLastWin32Error());
+                            {
+                                var err = Marshal.GetLastWin32Error();
+                                throw new CryptographicException(err);
+                            }
                         }
                         catch (Exception ex)
                         {
                             // Swallow keyset does not exist
-                            if (!(ex is CryptographicException && ex.Message.Contains("Keyset does not exist")))
+                            if (!(ex is CryptographicException && (ex.Message.Contains("Keyset does not exist") || ex.HResult == -2146893802)))
                             {
                                 throw new Exception("Exception while deleting CAPI private key", ex);
                             }

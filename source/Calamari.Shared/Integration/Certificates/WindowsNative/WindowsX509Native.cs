@@ -3,7 +3,6 @@ using System;
 using System.Runtime.InteropServices;
 using System.Text;
 using Microsoft.Win32.SafeHandles;
-
 namespace Calamari.Integration.Certificates.WindowsNative
 {
     internal static class WindowsX509Native
@@ -83,7 +82,6 @@ namespace Calamari.Integration.Certificates.WindowsNative
                 [MarshalAs(UnmanagedType.LPWStr)] string storeName, uint dwFlagsNotUsed, IntPtr notUsed1,
                 IntPtr notUsed2, IntPtr notUsed3);
 
-#if WINDOWS_CERTIFICATE_STORE_SUPPORT
         [DllImport("Ncrypt.dll", SetLastError = true, ExactSpelling = true)]
         internal static extern int NCryptGetProperty(SafeNCryptHandle hObject, [MarshalAs(UnmanagedType.LPWStr)] string szProperty, [Out, MarshalAs(UnmanagedType.LPArray)] byte[] pbOutput, int cbOutput, ref int pcbResult, int flags);
 
@@ -101,7 +99,6 @@ namespace Calamari.Integration.Certificates.WindowsNative
                                                                       [Out] out SafeNCryptKeyHandle phCryptProvOrNCryptKey,
                                                                       [Out] out int dwKeySpec,
                                                                       [Out, MarshalAs(UnmanagedType.Bool)] out bool pfCallerFreeProvOrNCryptKey);
-#endif
         
         [Flags]
         internal enum CertStoreProviders
