@@ -9,9 +9,7 @@ using Calamari.Common.Plumbing.Variables;
 using Calamari.Integration.Iis;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Deployment.Packages;
-#if WINDOWS_CERTIFICATE_STORE_SUPPORT
 using Calamari.Tests.Helpers.Certificates;
-#endif
 using Microsoft.Web.Administration;
 using NUnit.Framework;
 using Polly;
@@ -20,6 +18,7 @@ using FluentAssertions;
 namespace Calamari.Tests.Fixtures.Deployment
 {
     [TestFixture]
+    [Category(TestCategory.CompatibleOS.OnlyWindows)]
     public class DeployWebPackageToIISFixture : DeployPackageFixture
     {
         TemporaryFile packageV1;
@@ -47,9 +46,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             iis = new WebServerSevenSupport();
             uniqueValue = "Test_" + Guid.NewGuid().ToString("N");
 
-#if WINDOWS_CERTIFICATE_STORE_SUPPORT
             SampleCertificate.CapiWithPrivateKey.EnsureCertificateNotInStore(StoreName.My, StoreLocation.LocalMachine);
-#endif
 
             base.SetUp();
         }
@@ -60,9 +57,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             if (iis.WebSiteExists(uniqueValue)) iis.DeleteWebSite(uniqueValue);
             if (iis.ApplicationPoolExists(uniqueValue)) iis.DeleteApplicationPool(uniqueValue);
 
-#if WINDOWS_CERTIFICATE_STORE_SUPPORT
             SampleCertificate.CapiWithPrivateKey.EnsureCertificateNotInStore(StoreName.My, StoreLocation.LocalMachine);
-#endif
 
             base.CleanUp();
         }
@@ -387,7 +382,6 @@ namespace Calamari.Tests.Fixtures.Deployment
             }
         }
 
-
 #if WINDOWS_CERTIFICATE_STORE_SUPPORT
         [Test]
         [Category(TestCategory.CompatibleOS.OnlyWindows)]
@@ -432,6 +426,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             Assert.AreEqual(ObjectState.Started, website.State);
         }
+#endif
 
         [Test]
         [Category(TestCategory.CompatibleOS.OnlyWindows)]
@@ -587,7 +582,6 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             result.AssertSuccess();
         }
-#endif
 
         private string ToFirstLevelPath(string value)
         {

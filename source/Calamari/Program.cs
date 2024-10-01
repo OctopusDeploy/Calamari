@@ -80,13 +80,7 @@ namespace Calamari
             builder.RegisterType<Kubectl>().AsSelf().As<IKubectl>().InstancePerLifetimeScope();
             builder.RegisterType<KubectlGet>().As<IKubectlGet>().SingleInstance();
             builder.RegisterType<HelmTemplateValueSourcesParser>().AsSelf().SingleInstance();
-
-            
-#if WINDOWS_CERTIFICATE_STORE_SUPPORT 
             builder.RegisterType<WindowsX509CertificateStore>().As<IWindowsX509CertificateStore>().SingleInstance();
-#else
-            builder.RegisterType<NoOpWindowsX509CertificateStore>().As<IWindowsX509CertificateStore>().SingleInstance();
-#endif
             
             builder.RegisterType<KubernetesDiscovererFactory>()
                    .As<IKubernetesDiscovererFactory>()

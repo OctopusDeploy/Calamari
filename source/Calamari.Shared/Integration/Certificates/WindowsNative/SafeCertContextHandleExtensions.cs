@@ -1,6 +1,4 @@
-﻿#if WINDOWS_CERTIFICATE_STORE_SUPPORT 
-
-namespace Calamari.Integration.Certificates.WindowsNative
+﻿namespace Calamari.Integration.Certificates.WindowsNative
 {
     internal static class SafeCertContextHandleExtensions
     {
@@ -25,4 +23,3 @@ namespace Calamari.Integration.Certificates.WindowsNative
         }
     }
 }
-#endif

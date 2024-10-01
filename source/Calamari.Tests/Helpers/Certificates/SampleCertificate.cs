@@ -1,4 +1,4 @@
-﻿#if WINDOWS_CERTIFICATE_STORE_SUPPORT 
+﻿
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -123,6 +123,7 @@ namespace Calamari.Tests.Helpers.Certificates
                 : null;
         }
 
+#if WINDOWS_CERTIFICATE_STORE_SUPPORT
         public static void AssertIdentityHasPrivateKeyAccess(X509Certificate2 certificate, IdentityReference identity, CryptoKeyRights rights)
         {
             if (!certificate.HasPrivateKey)
@@ -143,6 +144,7 @@ namespace Calamari.Tests.Helpers.Certificates
 
             throw new Exception($"Identity '{identity.ToString()}' does not have access right '{rights}' to private-key");
         }
+#endif
 
         X509Certificate2 LoadAsX509Certificate2()
         {
@@ -154,4 +156,3 @@ namespace Calamari.Tests.Helpers.Certificates
 
     }
 }
-#endif
