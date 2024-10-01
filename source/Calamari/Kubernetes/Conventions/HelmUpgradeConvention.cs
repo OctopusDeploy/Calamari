@@ -331,10 +331,8 @@ namespace Calamari.Kubernetes.Conventions
                     log.Verbose($"Using chart found in configured directory '{chartDirectory}'");
                     return chartDirectory;
                 }
-                else
-                {
-                    throw new CommandException($"Chart was not found in '{chartDirectoryVariable}'");
-                }
+
+                throw new CommandException($"Chart was not found in '{chartDirectoryVariable}'");
             }
 
             // Try the root directory
@@ -343,7 +341,7 @@ namespace Calamari.Kubernetes.Conventions
             if (fileSystem.FileExists(Path.Combine(installDir, "Chart.yaml")))
             {
                 log.Verbose($"Using chart found at root of package installation directory '{installDir}'");
-                return Path.Combine(installDir, "Chart.yaml");
+                return installDir;
             }
 
             var packageId = deployment.Variables.Get(PackageVariables.IndexedPackageId(string.Empty));
