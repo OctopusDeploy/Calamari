@@ -73,7 +73,7 @@ namespace Calamari.Commands
                             $"Either '{SpecialVariables.Action.Certificate.StoreLocation}' or '{SpecialVariables.Action.Certificate.StoreUser}' must be supplied");
                     }
 
-                    Log.Info(
+                    log.Info(
                         $"Importing certificate '{variables.Get($"{certificateVariable}.{CertificateVariables.Properties.Subject}")}' with thumbprint '{thumbprint}' into store '{storeName}' for user '{storeUser}'");
                     windowsX509CertificateStore.ImportCertificateToStore(pfxBytes, password, storeUser, storeName, privateKeyExportable);
                 }
