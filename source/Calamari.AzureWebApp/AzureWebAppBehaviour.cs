@@ -86,9 +86,11 @@ namespace Calamari.AzureWebApp
                                  WebDeployPublishSettings publishSettings)
         {
             var retry = AzureRetryTracker.GetDefaultRetryTracker();
-            var outputXmlFile = $"{deployment.CurrentDirectory}\\msdeploy_output.xml";
+            var tempFolder = fileSystem.CreateTemporaryDirectory();
             while (retry.Try())
             {
+                //we create a new output file for _each_ loop. Just in case the delete fails
+                var outputXmlFile = $"{tempFolder}\\msdeploy_output_{Guid.NewGuid():N}.xml";
                 try
                 {
                     log.Verbose($"Using site '{targetSite.Site}'");
@@ -145,7 +147,7 @@ namespace Calamari.AzureWebApp
                 finally
                 {
                     //delete the output file, even on retry
-                    fileSystem.DeleteFile(outputXmlFile);
+                    fileSystem.DeleteFile(outputXmlFile, FailureOptions.IgnoreFailure);
                 }
             }
         }
@@ -296,7 +298,7 @@ namespace Calamari.AzureWebApp
         static string BuildPath(AzureTargetSite site, IVariables variables)
         {
             var relativePath = variables.Get(SpecialVariables.Action.Azure.PhysicalPath, string.Empty)?.TrimStart('\\');
-            return string.IsNullOrWhiteSpace(relativePath)
+            return !string.IsNullOrWhiteSpace(relativePath)
                 ? site.Site + "\\" + relativePath
                 : site.Site;
         }
