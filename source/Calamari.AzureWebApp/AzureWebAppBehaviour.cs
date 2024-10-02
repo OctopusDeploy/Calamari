@@ -86,6 +86,7 @@ namespace Calamari.AzureWebApp
                                  WebDeployPublishSettings publishSettings)
         {
             var retry = AzureRetryTracker.GetDefaultRetryTracker();
+            var outputXmlFile = $"{deployment.CurrentDirectory}\\msdeploy_output.xml";
             while (retry.Try())
             {
                 try
@@ -93,7 +94,6 @@ namespace Calamari.AzureWebApp
                     log.Verbose($"Using site '{targetSite.Site}'");
                     log.Verbose($"Using slot '{targetSite.Slot}'");
 
-                    var outputXmlFile = $"{deployment.CurrentDirectory}\\msdeploy_output.xml";
 
                     var msDeployArguments = BuildMsDeployArguments(
                                                                    deployment.CurrentDirectory,
@@ -108,9 +108,9 @@ namespace Calamari.AzureWebApp
                                                                            @"C:\Program Files\IIS\Microsoft Web Deploy V3\",
                                                                            _ => { },
                                                                            _ => { });
-                    
+
                     var changeSummary = ParseOutputXmlAndWriteTraces(outputXmlFile);
-                    
+
                     //if there was an error, we just blow up here as we will have written the errors in the above file
                     if (commandResult.ExitCode != 0)
                     {
@@ -141,6 +141,11 @@ namespace Calamari.AzureWebApp
                     {
                         throw;
                     }
+                }
+                finally
+                {
+                    //delete the output file, even on retry
+                    fileSystem.DeleteFile(outputXmlFile);
                 }
             }
         }
