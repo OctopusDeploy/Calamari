@@ -1,15 +1,20 @@
 ﻿using System;
-using System.Diagnostics;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using Calamari.Azure;
 using Calamari.Azure.AppServices;
 using Calamari.AzureWebApp.Integration.Websites.Publishing;
 using Calamari.AzureWebApp.Util;
 using Calamari.CloudAccounts;
 using Calamari.Common.Commands;
+using Calamari.Common.Features.Processes;
+using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Variables;
@@ -20,11 +25,13 @@ namespace Calamari.AzureWebApp
     {
         readonly ILog log;
         readonly ResourceManagerPublishProfileProvider resourceManagerPublishProfileProvider;
+        readonly ICalamariFileSystem fileSystem;
 
-        public AzureWebAppBehaviour(ILog log, ResourceManagerPublishProfileProvider resourceManagerPublishProfileProvider)
+        public AzureWebAppBehaviour(ILog log, ResourceManagerPublishProfileProvider resourceManagerPublishProfileProvider, ICalamariFileSystem fileSystem)
         {
             this.log = log;
             this.resourceManagerPublishProfileProvider = resourceManagerPublishProfileProvider;
+            this.fileSystem = fileSystem;
         }
 
         public bool IsEnabled(RunningDeployment context) => true;
@@ -85,14 +92,30 @@ namespace Calamari.AzureWebApp
                 {
                     log.Verbose($"Using site '{targetSite.Site}'");
                     log.Verbose($"Using slot '{targetSite.Slot}'");
-                    var changeSummary = DeploymentManager
-                                        .CreateObject("contentPath", deployment.CurrentDirectory)
-                                        .SyncTo(
-                                                "contentPath",
-                                                BuildPath(targetSite, variables),
-                                                DeploymentOptions(publishSettings),
-                                                DeploymentSyncOptions(variables)
-                                               );
+
+                    var outputXmlFile = $"{deployment.CurrentDirectory}\\msdeploy_output.xml";
+
+                    var msDeployArguments = BuildMsDeployArguments(
+                                                                   deployment.CurrentDirectory,
+                                                                   outputXmlFile,
+                                                                   BuildPath(targetSite, variables),
+                                                                   DestinationOptions(publishSettings),
+                                                                   DeploymentSyncCommandOptions(variables));
+
+                    var commandResult = SilentProcessRunner.ExecuteCommand(
+                                                                           @"C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe",
+                                                                           msDeployArguments,
+                                                                           @"C:\Program Files\IIS\Microsoft Web Deploy V3\",
+                                                                           _ => { },
+                                                                           _ => { });
+                    
+                    var changeSummary = ParseOutputXmlAndWriteTraces(outputXmlFile);
+                    
+                    //if there was an error, we just blow up here as we will have written the errors in the above file
+                    if (commandResult.ExitCode != 0)
+                    {
+                        throw new Exception(commandResult.ErrorOutput);
+                    }
 
                     log.InfoFormat(
                                    "Successfully deployed to Azure. {0} objects added. {1} objects updated. {2} objects deleted.",
@@ -101,7 +124,7 @@ namespace Calamari.AzureWebApp
                                    changeSummary.ObjectsDeleted);
                     break;
                 }
-                catch (DeploymentDetailedException ex)
+                catch (Exception ex)
                 {
                     if (retry.CanRetry())
                     {
@@ -122,6 +145,131 @@ namespace Calamari.AzureWebApp
             }
         }
 
+        DeploymentChangeSummary ParseOutputXmlAndWriteTraces(string outputXmlFile)
+        {
+            using var fileStream = fileSystem.OpenFile(outputXmlFile, FileAccess.Read);
+            {
+                var xDocument = XDocument.Load(fileStream, LoadOptions.None);
+
+                var outputElement = xDocument.Element("output");
+                if (outputElement is null)
+                {
+                    throw new InvalidOperationException("There was no output xml node");
+                }
+                
+                //find and log all trace events
+                var traceEvents = outputElement.Elements("traceEvent")
+                                               .Where(x => x.Attribute("type")?.Value == "Microsoft.Web.Deployment.DeploymentAgentTraceEvent")
+                                               .Select(x => (Level: x.Attribute("eventLevel")?.Value, Message: x.Attribute("message")?.Value));
+
+                foreach (var (level, message) in traceEvents)
+                {
+                    switch (level)
+                    {
+                        case"Verbose":
+                            log.Verbose(message);
+                            break;
+                        case"Info":
+                            // The deploy-log is noisy; we'll log info as verbose
+                            log.Verbose(message);
+                            break;
+                        case"Warning":
+                            log.Warn(message);
+                            break;
+                        case"Error":
+                            log.Error(message);
+                            break;
+                    }
+                }
+
+                return DeploymentChangeSummary.FromXElement(outputElement.Element("syncResults"));
+            }
+        }
+
+        static string BuildMsDeployArguments(string currentDirectory,
+                                             string outputXmlFile,
+                                             string path,
+                                             IEnumerable<string> destinationOptions,
+                                             IEnumerable<string> syncOptions)
+        {
+            var parts = new List<string>
+            {
+                //verb
+                "-verb:sync",
+                //source
+                $"-source:contentPath={currentDirectory}",
+                //destination
+                $"-dest:contentPath={path},{string.Join(",", destinationOptions)}",
+                //we write the output to XML for later parsing
+                $"-xml:{outputXmlFile}"
+            };
+
+            parts.AddRange(syncOptions);
+
+            return string.Join(" ", parts);
+        }
+
+        static IEnumerable<string> DestinationOptions(WebDeployPublishSettings settings)
+        {
+            var publishProfile = settings.PublishProfile;
+            var deploySite = settings.DeploymentSite;
+
+            var url = new Uri(publishProfile.Uri, $"/msdeploy.axd?site={deploySite}").ToString();
+
+            return new[]
+            {
+                "AuthType=Basic",
+                $"UserName={publishProfile.UserName}",
+                $"Password={publishProfile.Password}",
+                $"ComputerName={url}"
+            };
+        }
+
+        static IEnumerable<string> DeploymentSyncCommandOptions(IVariables variables)
+        {
+            var args = new List<string>
+            {
+                "-userAgent:OctopusDeploy/1.0",
+                "-retryAttempts:3",
+                "-retryInterval:1000",
+                "-verbose"
+            };
+
+            if (variables.GetFlag(SpecialVariables.Action.Azure.UseChecksum))
+            {
+                args.Add("-useChecksum");
+            }
+
+            if (!variables.GetFlag(SpecialVariables.Action.Azure.RemoveAdditionalFiles))
+            {
+                args.Add("-enableRule:DoNotDeleteRule");
+            }
+
+            if (variables.GetFlag(SpecialVariables.Action.Azure.AppOffline))
+            {
+                //TODO: How do we know if the Azure Deployment API does not support 'AppOffline' (which is something that can be true)?
+                args.Add("-enableRule:AppOffline");
+            }
+
+            // If PreservePaths variable set, then create SkipDelete rules for each path regex
+            var preservePaths = variables.GetStrings(SpecialVariables.Action.Azure.PreservePaths, ';');
+            foreach (var path in preservePaths)
+            {
+                args.Add($"-skip:skipAction=Delete,objectName=filePath,absolutePath={path}");
+                args.Add($"-skip:skipAction=Delete,objectName=dirPath,absolutePath={path}");
+            }
+
+            // If PreserveAppData variable set, then create SkipDelete rules for App_Data directory
+            // ReSharper disable once InvertIf
+            if (variables.GetFlag(SpecialVariables.Action.Azure.PreserveAppData))
+            {
+                args.Add(@"-skip:skipAction=Delete,objectName=filePath,absolutePath=\\App_Data\\.*");
+                args.Add(@"-skip:skipAction=Delete,objectName=dirPath,absolutePath=\\App_Data(\\.*|$)");
+            }
+
+            return args;
+        }
+
         bool WrapperForServerCertificateValidationCallback(object sender,
                                                            X509Certificate certificate,
                                                            X509Chain chain,
@@ -140,123 +288,32 @@ namespace Calamari.AzureWebApp
             return false;
         }
 
-        string BuildPath(AzureTargetSite site, IVariables variables)
+        static string BuildPath(AzureTargetSite site, IVariables variables)
         {
-            var relativePath = variables.Get(SpecialVariables.Action.Azure.PhysicalPath, String.Empty).TrimStart('\\');
-            return relativePath != String.Empty
+            var relativePath = variables.Get(SpecialVariables.Action.Azure.PhysicalPath, string.Empty)?.TrimStart('\\');
+            return string.IsNullOrWhiteSpace(relativePath)
                 ? site.Site + "\\" + relativePath
                 : site.Site;
         }
 
-        DeploymentBaseOptions DeploymentOptions(WebDeployPublishSettings settings)
+        class DeploymentChangeSummary
         {
-            var publishProfile = settings.PublishProfile;
-            var deploySite = settings.DeploymentSite;
-
-            var options = new DeploymentBaseOptions
+            DeploymentChangeSummary(int objectsAdded, int objectsDeleted, int objectsUpdated)
             {
-                AuthenticationType = "Basic",
-                RetryAttempts = 3,
-                RetryInterval = 1000,
-                TraceLevel = TraceLevel.Verbose,
-                UserName = publishProfile.UserName,
-                Password = publishProfile.Password,
-                UserAgent = "OctopusDeploy/1.0",
-                ComputerName = new Uri(publishProfile.Uri, $"/msdeploy.axd?site={deploySite}").ToString()
-            };
-            options.Trace += (sender, eventArgs) => LogDeploymentEvent(eventArgs);
-            return options;
-        }
-
-        DeploymentSyncOptions DeploymentSyncOptions(IVariables variables)
-        {
-            var syncOptions = new DeploymentSyncOptions
-            {
-                WhatIf = false,
-                UseChecksum = variables.GetFlag(SpecialVariables.Action.Azure.UseChecksum),
-                DoNotDelete = !variables.GetFlag(SpecialVariables.Action.Azure.RemoveAdditionalFiles)
-            };
-
-            ApplyAppOfflineDeploymentRule(syncOptions, variables);
-            ApplyPreserveAppDataDeploymentRule(syncOptions, variables);
-            ApplyPreservePathsDeploymentRule(syncOptions, variables);
-            return syncOptions;
-        }
-
-        void ApplyPreserveAppDataDeploymentRule(DeploymentSyncOptions syncOptions,
-                                                IVariables variables)
-        {
-            // If PreserveAppData variable set, then create SkipDelete rules for App_Data directory
-            // ReSharper disable once InvertIf
-            if (variables.GetFlag(SpecialVariables.Action.Azure.PreserveAppData))
-            {
-                syncOptions.Rules.Add(new DeploymentSkipRule("SkipDeleteDataFiles",
-                                                             "Delete",
-                                                             "filePath",
-                                                             "\\\\App_Data\\\\.*",
-                                                             null));
-                syncOptions.Rules.Add(new DeploymentSkipRule("SkipDeleteDataDir",
-                                                             "Delete",
-                                                             "dirPath",
-                                                             "\\\\App_Data(\\\\.*|$)",
-                                                             null));
+                ObjectsAdded = objectsAdded;
+                ObjectsDeleted = objectsDeleted;
+                ObjectsUpdated = objectsUpdated;
             }
-        }
 
-        void ApplyPreservePathsDeploymentRule(DeploymentSyncOptions syncOptions,
-                                              IVariables variables)
-        {
-            // If PreservePaths variable set, then create SkipDelete rules for each path regex
-            var preservePaths = variables.GetStrings(SpecialVariables.Action.Azure.PreservePaths, ';');
+            public int ObjectsAdded { get; }
+            public int ObjectsDeleted { get; }
+            public int ObjectsUpdated { get; }
 
-            for (var i = 0; i < preservePaths.Count; i++)
-            {
-                var path = preservePaths[i];
-                syncOptions.Rules.Add(new DeploymentSkipRule($"SkipDeleteFiles_{i}",
-                                                             "Delete",
-                                                             "filePath",
-                                                             path,
-                                                             null));
-                syncOptions.Rules.Add(new DeploymentSkipRule($"SkipDeleteDir_{i}",
-                                                             "Delete",
-                                                             "dirPath",
-                                                             path,
-                                                             null));
-            }
-        }
-
-        void ApplyAppOfflineDeploymentRule(DeploymentSyncOptions syncOptions,
-                                           IVariables variables)
-        {
-            // ReSharper disable once InvertIf
-            if (variables.GetFlag(SpecialVariables.Action.Azure.AppOffline))
-            {
-                var rules = Microsoft.Web.Deployment.DeploymentSyncOptions.GetAvailableRules();
-                if (rules.TryGetValue("AppOffline", out var rule))
-                    syncOptions.Rules.Add(rule);
-                else
-                    log.Verbose("Azure Deployment API does not support `AppOffline` deployment rule.");
-            }
-        }
-
-        void LogDeploymentEvent(DeploymentTraceEventArgs args)
-        {
-            switch (args.EventLevel)
-            {
-                case TraceLevel.Verbose:
-                    log.Verbose(args.Message);
-                    break;
-                case TraceLevel.Info:
-                    // The deploy-log is noisy; we'll log info as verbose
-                    log.Verbose(args.Message);
-                    break;
-                case TraceLevel.Warning:
-                    log.Warn(args.Message);
-                    break;
-                case TraceLevel.Error:
-                    log.Error(args.Message);
-                    break;
-            }
+            public static DeploymentChangeSummary FromXElement(XElement element)
+                => new DeploymentChangeSummary(
+                                               int.TryParse(element?.Attribute("objectsAdded")?.Value, out var added) ? added : -1,
+                                               int.TryParse(element?.Attribute("objectsDeleted")?.Value, out var deleted) ? deleted : -1,
+                                               int.TryParse(element?.Attribute("objectsUpdated")?.Value, out var updated) ? updated : -1);
         }
     }
 }
