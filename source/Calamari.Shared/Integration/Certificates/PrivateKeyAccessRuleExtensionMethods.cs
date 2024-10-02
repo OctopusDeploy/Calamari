@@ -1,6 +1,4 @@
-﻿#if WINDOWS_CERTIFICATE_STORE_SUPPORT
-
-using System;
+﻿using System;
 using System.Security.Principal;
 
 namespace Calamari.Integration.Certificates
@@ -21,4 +19,3 @@ namespace Calamari.Integration.Certificates
         }
     }
 }
-#endif

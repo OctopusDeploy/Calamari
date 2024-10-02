@@ -1,18 +1,21 @@
-﻿#if WINDOWS_CERTIFICATE_STORE_SUPPORT 
-using System.Security.Principal;
+﻿using System.Security.Principal;
 using Calamari.Integration.Certificates;
+using Calamari.Testing.Helpers;
 using FluentAssertions;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.Certificates
 {
+#pragma warning disable CA1416
     [TestFixture]
+    [Category(TestCategory.CompatibleOS.OnlyWindows)]
     public class PrivateKeyAccessRuleExtensionMethodsTests
     {
         [Test]
         public void GetIdentityReference_ShouldResolveNTAccount()
         {
             var originalIdentityReference = new NTAccount("Foo\\bar");
+
             var privateKeyAccessRule = new PrivateKeyAccessRule(originalIdentityReference.Value, PrivateKeyAccess.ReadOnly);
 
             var identityReference = privateKeyAccessRule.GetIdentityReference();
@@ -34,5 +37,5 @@ namespace Calamari.Tests.Fixtures.Certificates
                 
         }
     }
+#pragma warning restore CA1416
 }
-#endif
