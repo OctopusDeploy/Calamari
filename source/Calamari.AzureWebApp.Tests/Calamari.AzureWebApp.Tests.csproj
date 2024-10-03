@@ -2,7 +2,8 @@
   <PropertyGroup>
     <RootNamespace>Calamari.AzureWebApp.Tests</RootNamespace>
     <AssemblyName>Calamari.AzureWebApp.Tests</AssemblyName>
-    <TargetFramework>net462</TargetFramework>
+    <TargetFrameworks>net462;net6.0</TargetFrameworks>
+    <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
     <LangVersion>8.0</LangVersion>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
