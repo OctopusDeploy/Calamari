@@ -31,6 +31,19 @@ namespace Calamari.AzureWebApp
 
         public async Task ExecuteDeployment(RunningDeployment deployment, AzureTargetSite targetSite, IVariables variables, WebDeployPublishSettings publishSettings)
         {
+            if (!OperatingSystem.IsWindows())
+            {
+                throw new CommandException("Cannot execute on non-Windows operating systems as there is a required dependency on the Web Deploy tooling (msdeploy.exe).");
+            }
+            
+            var msDeployFolderPath = GetMsDeployExeFolder();
+            var msDeployExePath = Path.Combine(msDeployFolderPath, ToolName);
+
+            if (!fileSystem.FileExists(msDeployExePath))
+            {
+                throw new CommandException("Unable to find msdeploy.exe. The Web Deploy tooling must be installed.");
+            }
+            
             var retry = AzureRetryTracker.GetDefaultRetryTracker();
             var tempFolder = fileSystem.CreateTemporaryDirectory();
             while (retry.Try())
@@ -49,13 +62,7 @@ namespace Calamari.AzureWebApp
                                                                    DestinationOptions(publishSettings),
                                                                    DeploymentSyncCommandOptions(variables));
 
-                    var msDeployFolderPath = GetMsDeployExeFolder();
-                    var msDeployExePath = Path.Combine(msDeployFolderPath, ToolName);
 
-                    if (!fileSystem.FileExists(msDeployExePath))
-                    {
-                        throw new CommandException("Unable to find msdeploy.exe. The Web Deploy tooling must be installed.");
-                    }
 
                     var commandResult = SilentProcessRunner.ExecuteCommand(msDeployExePath,
                                                                            msDeployArguments,
