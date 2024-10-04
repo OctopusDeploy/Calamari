@@ -52,6 +52,11 @@ namespace Calamari.AzureWebApp
                     var msDeployFolderPath = GetMsDeployExeFolder();
                     var msDeployExePath = Path.Combine(msDeployFolderPath, ToolName);
 
+                    if (!fileSystem.FileExists(msDeployExePath))
+                    {
+                        throw new CommandException("Unable to find msdeploy.exe. The Web Deploy tooling must be installed.");
+                    }
+
                     var commandResult = SilentProcessRunner.ExecuteCommand(msDeployExePath,
                                                                            msDeployArguments,
                                                                            msDeployFolderPath,
