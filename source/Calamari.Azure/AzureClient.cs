@@ -21,9 +21,8 @@ namespace Calamari.Azure
         /// <returns></returns>
         public static ArmClient CreateArmClient(this IAzureAccount azureAccount, Action<RetryOptions> retryOptionsSetter = null)
         {
-            if (azureAccount.AccountType == AccountType.AzureOidc)
+            if (azureAccount is AzureOidcAccount oidcAccount)
             {
-                var oidcAccount = (AzureOidcAccount)azureAccount;
                 var (clientOptions, _) = GetArmClientOptions(azureAccount, retryOptionsSetter);
                 var clientAssertionCreds = new ClientAssertionCredential(oidcAccount.TenantId, oidcAccount.ClientId, () => oidcAccount.GetCredentials);
                 return new ArmClient(clientAssertionCreds, defaultSubscriptionId: azureAccount.SubscriptionNumber, clientOptions);
@@ -75,23 +74,6 @@ namespace Calamari.Azure
             armClientOptions.AddPolicy(new SlotConfigNamesInvalidIdFilterPolicy(), HttpPipelinePosition.PerRetry);
 
             return (armClientOptions, tokenCredentialOptions);
-        }
-        
-        public static async Task<string> GetAccessTokenAsync(this IAzureAccount azureAccount)
-        {
-           return azureAccount.AccountType == AccountType.AzureOidc
-                ? await AzureOidcAccountExtensions.GetAuthorizationToken(azureAccount.TenantId,
-                                                                         azureAccount.ClientId,
-                                                                         azureAccount.GetCredentials,
-                                                                         azureAccount.ResourceManagementEndpointBaseUri,
-                                                                         azureAccount.ActiveDirectoryEndpointBaseUri,
-                                                                         azureAccount.AzureEnvironment,
-                                                                         CancellationToken.None)
-                : await AzureServicePrincipalAccountExtensions.GetAuthorizationToken(azureAccount.TenantId,
-                                                                                     azureAccount.ClientId,
-                                                                                     azureAccount.GetCredentials,
-                                                                                     azureAccount.ResourceManagementEndpointBaseUri,
-                                                                                     azureAccount.ActiveDirectoryEndpointBaseUri);
         }
     }
 }
