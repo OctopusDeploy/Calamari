@@ -5,12 +5,14 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <IsPackable>false</IsPackable>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net462</TargetFramework>
+    <TargetFrameworks>net462;net6.0</TargetFrameworks>
+    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
+    <LangVersion>8.0</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Identity.Client" Version="4.65.0" />
-    <PackageReference Include="Microsoft.ServiceFabric" Version="5.4.145" />
+    <PackageReference Include="Microsoft.ServiceFabric" Version="10.1.2448" />
   </ItemGroup>
 
   <ItemGroup>

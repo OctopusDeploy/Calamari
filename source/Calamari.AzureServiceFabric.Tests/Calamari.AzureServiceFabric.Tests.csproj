@@ -4,7 +4,9 @@
         <RootNamespace>Calamari.AzureServiceFabric.Tests</RootNamespace>
         <AssemblyName>Calamari.AzureServiceFabric.Tests</AssemblyName>
         <IsPackable>false</IsPackable>
-        <TargetFramework>net462</TargetFramework>
+        <TargetFrameworks>net462;net6.0</TargetFrameworks>
+        <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
+        <LangVersion>8.0</LangVersion>
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="FluentAssertions" Version="5.10.3" />

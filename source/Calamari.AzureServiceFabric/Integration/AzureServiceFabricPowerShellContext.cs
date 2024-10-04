@@ -50,7 +50,7 @@ namespace Calamari.AzureServiceFabric.Integration
                     "This script wrapper hook is not enabled, and should not have been run");
             }
 
-            if (!Util.ServiceFabricHelper.IsServiceFabricSdkKeyInRegistry())
+            if (!Util.ServiceFabricHelper.IsServiceFabricSdkInstalled())
                 throw new Exception("Could not find the Azure Service Fabric SDK on this server. This SDK is required before running Service Fabric commands.");
 
             var workingDirectory = Path.GetDirectoryName(script.File);

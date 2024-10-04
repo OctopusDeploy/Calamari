@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using System.Security.AccessControl;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
@@ -141,7 +142,7 @@ namespace Calamari.AzureServiceFabric
         {
             try
             {
-                return certificate2.HasPrivateKey && certificate2.PrivateKey != null;
+                return certificate2.HasPrivateKey;
             }
             catch (Exception)
             {
@@ -170,6 +171,7 @@ namespace Calamari.AzureServiceFabric
             }
         }
 
+        [SupportedOSPlatform("windows")]
         static void GrantCurrentUserAccessToPrivateKeyDirectory(string privateKeyPath)
         {
             var folderPath = Path.GetDirectoryName(privateKeyPath);
