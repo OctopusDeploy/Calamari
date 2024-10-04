@@ -1,11 +1,10 @@
 ﻿using System;
-using System.Net.Http;
+using System.Threading;
+using System.Threading.Tasks;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
-using Microsoft.Azure.Management.Fluent;
-using Microsoft.Azure.Management.ResourceManager.Fluent;
+using Microsoft.Identity.Client;
 using Newtonsoft.Json;
-using AzureEnvironmentEnum = Microsoft.Azure.Management.ResourceManager.Fluent.AzureEnvironment;
-using NetWebRequest = System.Net.WebRequest;
 
 namespace Calamari.CloudAccounts
 {
@@ -37,39 +36,54 @@ namespace Calamari.CloudAccounts
             TenantId = variables.Get(AccountVariables.TenantId);
             Password = variables.Get(AccountVariables.Password);
             AzureEnvironment = variables.Get(AccountVariables.Environment);
-            ResourceManagementEndpointBaseUri = variables.Get(AccountVariables.ResourceManagementEndPoint, DefaultVariables.ResourceManagementEndpoint);
-            ActiveDirectoryEndpointBaseUri = variables.Get(AccountVariables.ActiveDirectoryEndPoint, DefaultVariables.ActiveDirectoryEndpoint);
+            ResourceManagementEndpointBaseUri = variables.Get(AccountVariables.ResourceManagementEndPoint, DefaultAccountEndpoints.ResourceManagementEndpoint);
+            ActiveDirectoryEndpointBaseUri = variables.Get(AccountVariables.ActiveDirectoryEndPoint, DefaultAccountEndpoints.ActiveDirectoryEndpoint);
         }
 
         public AccountType AccountType => AccountType.AzureServicePrincipal;
         public string GetCredentials => Password;
-        public string SubscriptionNumber { get;  }
+
+        public string SubscriptionNumber { get; }
         public string ClientId { get; }
+
         public string TenantId { get; }
+
         // Public for JsonDeserialization
         public string Password { get; }
         public string AzureEnvironment { get; }
         public string ResourceManagementEndpointBaseUri { get; }
         public string ActiveDirectoryEndpointBaseUri { get; }
 
-        public IAzure CreateAzureClient()
+        public async Task<string> GetAuthorizationToken(ILog log, CancellationToken cancellationToken)
         {
-            var environment = string.IsNullOrEmpty(AzureEnvironment) || AzureEnvironment == "AzureCloud"
-                ? AzureEnvironmentEnum.AzureGlobalCloud
-                : AzureEnvironmentEnum.FromName(AzureEnvironment) ??
-                  throw new InvalidOperationException($"Unknown environment name {AzureEnvironment}");
+            var authClientFactory = new AuthHttpClientFactory();
 
-            var credentials = SdkContext.AzureCredentialsFactory.FromServicePrincipal(ClientId,
-                                                                                      GetCredentials, TenantId, environment
-                                                                                     );
+            var authContext = GetContextUri(ActiveDirectoryEndpointBaseUri, TenantId);
+            log.Verbose($"Authentication Context: {authContext}");
 
-            // to ensure the Azure API uses the appropriate web proxy
-            var client = new HttpClient(new HttpClientHandler {Proxy = NetWebRequest.DefaultWebProxy});
+            var app = ConfidentialClientApplicationBuilder.Create(ClientId)
+                                                          .WithClientSecret(GetCredentials)
+                                                          .WithAuthority(authContext)
+                                                          .WithHttpClientFactory(authClientFactory)
+                                                          .Build();
 
-            return Microsoft.Azure.Management.Fluent.Azure.Configure()
-                                            .WithHttpClient(client)
-                                            .Authenticate(credentials)
-                                            .WithSubscription(SubscriptionNumber);
+            var result = await app.AcquireTokenForClient(
+                                                         new[] { $"{ResourceManagementEndpointBaseUri}/.default" })
+                                  .WithTenantId(TenantId)
+                                  .ExecuteAsync(cancellationToken)
+                                  .ConfigureAwait(false);
+
+            return result.AccessToken;
+        }
+
+        static string GetContextUri(string activeDirectoryEndPoint, string tenantId)
+        {
+            if (!activeDirectoryEndPoint.EndsWith("/"))
+            {
+                return $"{activeDirectoryEndPoint}/{tenantId}";
+            }
+
+            return $"{activeDirectoryEndPoint}{tenantId}";
         }
     }
 }
