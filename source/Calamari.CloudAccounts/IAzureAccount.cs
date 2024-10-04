@@ -1,7 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Azure.Management.Fluent;
+using Calamari.Common.Plumbing.Logging;
 
 namespace Calamari.CloudAccounts
 {
@@ -16,7 +16,8 @@ namespace Calamari.CloudAccounts
 
         AccountType AccountType { get; }
         string GetCredentials { get; }
-        IAzure CreateAzureClient();
+
+        Task<string> GetAuthorizationToken(ILog log, CancellationToken cancellationToken);
     }
 
     public enum AccountType

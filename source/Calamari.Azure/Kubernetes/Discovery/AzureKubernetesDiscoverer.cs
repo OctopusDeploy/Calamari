@@ -2,10 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using Azure;
+using Azure.ResourceManager.ContainerService;
+using Azure.ResourceManager.Resources;
 using Calamari.CloudAccounts;
 using Calamari.Common.Features.Discovery;
 using Calamari.Common.Plumbing.Logging;
-using Microsoft.Rest.Azure;
 using Newtonsoft.Json;
 
 namespace Calamari.Azure.Kubernetes.Discovery
@@ -39,38 +41,43 @@ namespace Calamari.Azure.Kubernetes.Discovery
             Log.Verbose($"  Subscription ID: {account.SubscriptionNumber}");
             Log.Verbose($"  Tenant ID: {account.TenantId}");
             Log.Verbose($"  Client ID: {account.ClientId}");
-            var azureClient = account.CreateAzureClient();
+
+            var armClient = account.CreateArmClient();
 
             var discoveredClusters = new List<KubernetesCluster>();
 
             // There appears to be an issue where the azure client returns stale data
             // We need to upgrade this to use the newer SDK, but we need to upgrade to .NET 4.6.2 to support that.
-            var resourceGroups = azureClient.ResourceGroups.List();
-            //we don't care about resource groups that are being deleted 
-            foreach (var resourceGroup in resourceGroups.Where(rg => rg.ProvisioningState != "Deleting"))
+            var subscriptionResource = armClient.GetSubscriptionResource(SubscriptionResource.CreateResourceIdentifier(account.SubscriptionNumber));
+            
+            //we don't care about resource groups that are being deleted (so filter them at the query level)
+            var resourceGroups = subscriptionResource.GetResourceGroups().GetAll("provisioningState ne 'Deleting'");
+            
+            foreach (var resourceGroupResource in resourceGroups)
             {
                 try
                 {
                     // There appears to be an issue where the azure client returns stale data
                     // to mitigate this, specifically for scenario's where the resource group doesn't exist anymore
                     // we specifically list the clusters in each resource group
-                    var clusters = azureClient.KubernetesClusters.ListByResourceGroup(resourceGroup.Name);
+                    var clusters = resourceGroupResource.GetContainerServiceManagedClusters().GetAll();
 
+                    
                     discoveredClusters.AddRange(
                                                 clusters
                                                     .Select(c => KubernetesCluster.CreateForAks(
-                                                                                                $"aks/{account.SubscriptionNumber}/{c.ResourceGroupName}/{c.Name}",
-                                                                                                c.Name,
-                                                                                                c.ResourceGroupName,
+                                                                                                $"aks/{account.SubscriptionNumber}/{resourceGroupResource.Data.Name}/{c.Data.Name}",
+                                                                                                c.Data.Name,
+                                                                                                resourceGroupResource.Data.Name,
                                                                                                 accountId,
-                                                                                                c.Tags.ToTargetTags())));
+                                                                                                c.Data.Tags.ToTargetTags())));
                 }
-                catch (CloudException ex)
+                catch (RequestFailedException ex)
                 {
-                    Log.Verbose($"Failed to list kubernetes clusters for resource group {resourceGroup.Name}. Response message: {ex.Message}, Status code: {ex.Response.StatusCode}");
+                    Log.Verbose($"Failed to list kubernetes clusters for resource group {resourceGroupResource.Data.Name}. Response message: {ex.Message}, Status code: {ex.Status}");
                     
                     // if the resource group was not found, we don't care and move on
-                    if (ex.Response.StatusCode == HttpStatusCode.NotFound && ex.Message.StartsWith("Resource group"))
+                    if (ex.Status == (int)HttpStatusCode.NotFound && ex.GetRawResponse()?.Content.ToString().StartsWith("Resource group") == true)
                         continue;
 
                     //throw in all other scenario's
