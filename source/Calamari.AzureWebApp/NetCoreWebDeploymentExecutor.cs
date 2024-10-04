@@ -18,6 +18,8 @@ namespace Calamari.AzureWebApp
 {
     public class NetCoreWebDeploymentExecutor : IWebDeploymentExecutor
     {
+        const string ToolName = "msdeploy.exe";
+
         readonly ILog log;
         readonly ICalamariFileSystem fileSystem;
 
@@ -47,10 +49,12 @@ namespace Calamari.AzureWebApp
                                                                    DestinationOptions(publishSettings),
                                                                    DeploymentSyncCommandOptions(variables));
 
-                    var commandResult = SilentProcessRunner.ExecuteCommand(
-                                                                           @"C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe",
+                    var msDeployFolderPath = GetMsDeployExeFolder();
+                    var msDeployExePath = Path.Combine(msDeployFolderPath, ToolName);
+
+                    var commandResult = SilentProcessRunner.ExecuteCommand(msDeployExePath,
                                                                            msDeployArguments,
-                                                                           @"C:\Program Files\IIS\Microsoft Web Deploy V3\",
+                                                                           msDeployFolderPath,
                                                                            _ => { },
                                                                            _ => { });
 
@@ -94,7 +98,36 @@ namespace Calamari.AzureWebApp
                 }
             }
         }
-        
+
+        string GetMsDeployExeFolder()
+        {
+            var programFiles = Environment.ExpandEnvironmentVariables("%ProgramFiles(x86)%");
+            var msdeployFolderPath = Path.Combine("IIS", "Microsoft Web Deploy V3");
+
+            var exeFolder = Path.Combine(programFiles, msdeployFolderPath);
+
+            //we first look in the x86 path, if it's not there, we check in the x64 program files
+            if (!fileSystem.FileExists(Path.Combine(exeFolder, ToolName)))
+            {
+                // On 32-bit Operating Systems, this will return C:\Program Files
+                // On 64-bit Operating Systems - regardless of process bitness, this will return C:\Program Files
+                if (!Environment.Is64BitOperatingSystem || Environment.Is64BitProcess)
+                {
+                    programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+                }
+                else
+                {
+                    // 32 bit process on a 64 bit OS can't use SpecialFolder.ProgramFiles to get the 64-bit program files folder
+                    programFiles = Environment.ExpandEnvironmentVariables("%ProgramW6432%");
+                }
+
+                //update the exeFolder with the new program files
+                exeFolder = Path.Combine(programFiles, msdeployFolderPath);
+            }
+
+            return exeFolder;
+        }
+
         DeploymentChangeSummary ParseOutputXmlAndWriteTraces(string outputXmlFile)
         {
             using var fileStream = fileSystem.OpenFile(outputXmlFile, FileAccess.Read);
@@ -106,7 +139,7 @@ namespace Calamari.AzureWebApp
                 {
                     throw new InvalidOperationException("There was no output xml node");
                 }
-                
+
                 //find and log all trace events
                 var traceEvents = outputElement.Elements("traceEvent")
                                                .Where(x => x.Attribute("type")?.Value == "Microsoft.Web.Deployment.DeploymentAgentTraceEvent")
@@ -116,17 +149,17 @@ namespace Calamari.AzureWebApp
                 {
                     switch (level)
                     {
-                        case"Verbose":
+                        case "Verbose":
                             log.Verbose(message);
                             break;
-                        case"Info":
+                        case "Info":
                             // The deploy-log is noisy; we'll log info as verbose
                             log.Verbose(message);
                             break;
-                        case"Warning":
+                        case "Warning":
                             log.Warn(message);
                             break;
-                        case"Error":
+                        case "Error":
                             log.Error(message);
                             break;
                     }
@@ -219,8 +252,7 @@ namespace Calamari.AzureWebApp
 
             return args;
         }
-        
-        
+
         static string BuildPath(AzureTargetSite site, IVariables variables)
         {
             var relativePath = variables.Get(SpecialVariables.Action.Azure.PhysicalPath, string.Empty)?.TrimStart('\\');
