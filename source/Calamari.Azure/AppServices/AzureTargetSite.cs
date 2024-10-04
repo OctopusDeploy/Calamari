@@ -5,7 +5,6 @@ using Azure.ResourceManager.AppService;
 using Calamari.CloudAccounts;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
-using Microsoft.Azure.Management.Fluent;
 
 namespace Calamari.Azure.AppServices
 {
