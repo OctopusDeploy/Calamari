@@ -132,6 +132,7 @@ namespace Calamari.AzureAppService.Behaviors
                 {
                     uploadFile = await packageProvider.ConvertToAzureSupportedFile(packageFileInfo);
                 }
+
                 uploadPath = uploadFile.FullName;
                 uploadFileNeedsCleaning = packageFileInfo.Extension != uploadFile.Extension;
 
@@ -156,14 +157,26 @@ namespace Calamari.AzureAppService.Behaviors
 
                 //Need to check if site turn off 
                 var scmPublishEnabled = await armClient.IsScmPublishEnabled(targetSite);
-                
+
                 if (packageProvider.SupportsAsynchronousDeployment && FeatureToggle.AsynchronousAzureZipDeployFeatureToggle.IsEnabled(context.Variables))
                 {
-                    await UploadZipAndPollAsync(account, publishingProfile, scmPublishEnabled, uploadPath, targetSite.ScmSiteAndSlot, packageProvider, pollingTimeout, asyncZipDeployTimeoutPolicy);
+                    await UploadZipAndPollAsync(account,
+                                                publishingProfile,
+                                                scmPublishEnabled,
+                                                uploadPath,
+                                                targetSite.ScmSiteAndSlot,
+                                                packageProvider,
+                                                pollingTimeout,
+                                                asyncZipDeployTimeoutPolicy);
                 }
                 else
                 {
-                    await UploadZipAsync(account, publishingProfile, scmPublishEnabled, uploadPath, targetSite.ScmSiteAndSlot, packageProvider);
+                    await UploadZipAsync(account,
+                                         publishingProfile,
+                                         scmPublishEnabled,
+                                         uploadPath,
+                                         targetSite.ScmSiteAndSlot,
+                                         packageProvider);
                 }
             }
             finally
@@ -237,7 +250,7 @@ namespace Calamari.AzureAppService.Behaviors
 #endif
                                                                                           using var streamContent = new StreamContent(fileStream);
                                                                                           streamContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-                                                                                          
+
                                                                                           //we have to create a new request message each time
                                                                                           var request = new HttpRequestMessage(HttpMethod.Post, zipUploadUrl)
                                                                                           {
@@ -259,7 +272,7 @@ namespace Calamari.AzureAppService.Behaviors
             Log.Verbose("Finished deploying");
         }
 
-        static async Task<AuthenticationHeaderValue> GetAuthenticationHeaderValue(IAzureAccount azureAccount, PublishingProfile publishingProfile, bool scmPublishEnabled)
+        async Task<AuthenticationHeaderValue> GetAuthenticationHeaderValue(IAzureAccount azureAccount, PublishingProfile publishingProfile, bool scmPublishEnabled)
         {
             AuthenticationHeaderValue authenticationHeader;
             if (scmPublishEnabled)
@@ -268,7 +281,7 @@ namespace Calamari.AzureAppService.Behaviors
             }
             else
             {
-                var accessToken = await azureAccount.GetAccessTokenAsync();
+                var accessToken = await azureAccount.GetAuthorizationToken(Log, CancellationToken.None);
                 authenticationHeader = new AuthenticationHeaderValue("Bearer", accessToken);
             }
 
