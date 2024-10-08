@@ -170,8 +170,7 @@ namespace Calamari.AzureServiceFabric
                 return null;
             }
         }
-
-        [SupportedOSPlatform("windows")]
+        
         static void GrantCurrentUserAccessToPrivateKeyDirectory(string privateKeyPath)
         {
             var folderPath = Path.GetDirectoryName(privateKeyPath);
