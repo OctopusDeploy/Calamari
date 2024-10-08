@@ -30,7 +30,7 @@ namespace Calamari.AzureServiceFabric
 
         public async Task Execute(RunningDeployment context)
         {
-            if (!ServiceFabricHelper.IsServiceFabricSdkKeyInRegistry())
+            if (!ServiceFabricHelper.IsServiceFabricSdkInstalled())
             {
                 throw new Exception("Could not find the Azure Service Fabric SDK on this server. This SDK is required before running health checks on Service Fabric targets.");
             }
