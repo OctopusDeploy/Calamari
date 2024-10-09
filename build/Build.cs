@@ -171,7 +171,7 @@ namespace Calamari.Build
 
                       DotNetBuild(_ => _.SetProjectFile(Solution)
                                         .SetConfiguration(Configuration)
-                                        .SetNoRestore(true)
+                                        .EnableNoRestore()
                                         .SetVersion(NugetVersion.Value)
                                         .SetInformationalVersion(GitVersionInfo?.InformationalVersion));
                   });
@@ -317,6 +317,8 @@ namespace Calamari.Build
                 .SetProject(project)
                 .SetFramework(calamariPackageMetadata.Framework)
                 .SetRuntime(calamariPackageMetadata.Architecture)
+                //explicitly mark all of these as self-contained (because they use a specific runtime)
+                .EnableSelfContained()
                 .SetOutput(outputDirectory)
             );
 
