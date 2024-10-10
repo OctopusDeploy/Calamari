@@ -10,7 +10,7 @@
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="FluentAssertions" Version="5.10.3" />
-        <PackageReference Include="nunit" Version="3.13.2" />
+        <PackageReference Include="nunit" Version="3.13.3" />
         <PackageReference Include="NUnit3TestAdapter" Version="3.17.0" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.10.0" />
         <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.25" />
@@ -19,5 +19,18 @@
     </ItemGroup>
     <ItemGroup>
       <ProjectReference Include="..\Calamari.AzureServiceFabric\Calamari.AzureServiceFabric.csproj" />
+      <ProjectReference Include="..\Calamari.Testing\Calamari.Testing.csproj" />
+    </ItemGroup>
+    <ItemGroup>
+      <None Remove="Packages\VotingApp-1.0.0.0.zip" />
+      <None Update="Packages\MarksServiceFabricAppOfAwesomeness.1.0.0.zip">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
+    <ItemGroup>
+      <None Remove="Scripts\Delete-ServiceFabricApp.ps1" />
+      <EmbeddedResource Include="Scripts\Delete-ServiceFabricApp.ps1">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </EmbeddedResource>
     </ItemGroup>
 </Project>

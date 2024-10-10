@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Fabric;
+using System.Security.Cryptography.X509Certificates;
 
 namespace Calamari.AzureServiceFabric
 {
@@ -42,6 +44,22 @@ namespace Calamari.AzureServiceFabric
 
 #endif
             return isInstalled;
+        }
+        
+        
+        public static X509Credentials GetX509Credentials(string clientCertThumbprint, string clientCertStoreLocation, string clientCertStoreName, string serverCertThumb, string commonName)
+        {
+            var xc = new X509Credentials
+            {
+                StoreLocation = (StoreLocation)Enum.Parse(typeof(StoreLocation), clientCertStoreLocation),
+                StoreName = clientCertStoreName,
+                FindType = X509FindType.FindByThumbprint,
+                FindValue = clientCertThumbprint
+            };
+            xc.RemoteCommonNames.Add(commonName);
+            xc.RemoteCertThumbprints.Add(serverCertThumb);
+            xc.ProtectionLevel = ProtectionLevel.EncryptAndSign;
+            return xc;
         }
     }
 }

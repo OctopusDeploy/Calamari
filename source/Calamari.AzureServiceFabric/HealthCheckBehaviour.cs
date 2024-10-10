@@ -65,7 +65,7 @@ namespace Calamari.AzureServiceFabric
 
                     CalamariCertificateStore.EnsureCertificateIsInstalled(variables, clientCertVariable, certificateStoreName, certificateStoreLocation);
 
-                    var xc = GetCredentials(clientCertThumbprint, certificateStoreLocation, certificateStoreName, serverCertThumbprint, commonName);
+                    var xc = ServiceFabricHelper.GetX509Credentials(clientCertThumbprint, certificateStoreLocation, certificateStoreName, serverCertThumbprint, commonName);
                     try
                     {
                         fabricClient = new FabricClient(xc, connectionEndpoint);
@@ -150,20 +150,6 @@ namespace Calamari.AzureServiceFabric
             return authResult.AccessToken;
         }
 
-        static X509Credentials GetCredentials(string clientCertThumbprint, string clientCertStoreLocation, string clientCertStoreName, string serverCertThumb, string commonName)
-        {
-            var xc = new X509Credentials
-            {
-                StoreLocation = (StoreLocation)Enum.Parse(typeof(StoreLocation), clientCertStoreLocation),
-                StoreName = clientCertStoreName,
-                FindType = X509FindType.FindByThumbprint,
-                FindValue = clientCertThumbprint
-            };
-            xc.RemoteCommonNames.Add(commonName);
-            xc.RemoteCertThumbprints.Add(serverCertThumb);
-            xc.ProtectionLevel = ProtectionLevel.EncryptAndSign;
-            return xc;
-        }
 
         #endregion
     }
