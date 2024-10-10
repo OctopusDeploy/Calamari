@@ -10,7 +10,6 @@ namespace Calamari.ConsolidateCalamariPackages
 
         public static List<string> FullFrameworkOnlyFlavours = new()
         {
-            "Calamari.AzureWebApp",
             "Calamari.AzureServiceFabric",
             "Calamari.AzureCloudService",
         };
@@ -21,6 +20,7 @@ namespace Calamari.ConsolidateCalamariPackages
             "Calamari.AzureResourceGroup",
             "Calamari.GoogleCloudScripting",
             "Calamari.AzureScripting",
+            "Calamari.AzureWebApp",
             "Calamari.Terraform"
         };
     }

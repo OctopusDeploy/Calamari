@@ -7,6 +7,8 @@ using Azure;
 using Azure.ResourceManager.AppService;
 using Azure.ResourceManager.AppService.Models;
 using Azure.ResourceManager.Resources;
+using Calamari.Azure;
+using Calamari.Azure.AppServices;
 using Calamari.AzureAppService.Azure;
 using Calamari.AzureAppService.Behaviors;
 using Calamari.Common.Commands;
