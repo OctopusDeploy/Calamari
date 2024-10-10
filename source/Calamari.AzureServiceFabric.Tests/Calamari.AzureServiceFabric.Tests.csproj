@@ -22,15 +22,8 @@
       <ProjectReference Include="..\Calamari.Testing\Calamari.Testing.csproj" />
     </ItemGroup>
     <ItemGroup>
-      <None Remove="Packages\VotingApp-1.0.0.0.zip" />
       <None Update="Packages\MarksServiceFabricAppOfAwesomeness.1.0.0.zip">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
-    </ItemGroup>
-    <ItemGroup>
-      <None Remove="Scripts\Delete-ServiceFabricApp.ps1" />
-      <EmbeddedResource Include="Scripts\Delete-ServiceFabricApp.ps1">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </EmbeddedResource>
     </ItemGroup>
 </Project>
