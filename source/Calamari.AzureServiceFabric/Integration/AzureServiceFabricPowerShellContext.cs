@@ -50,7 +50,7 @@ namespace Calamari.AzureServiceFabric.Integration
                     "This script wrapper hook is not enabled, and should not have been run");
             }
 
-            if (!Util.ServiceFabricHelper.IsServiceFabricSdkKeyInRegistry())
+            if (!ServiceFabricHelper.IsServiceFabricSdkInstalled())
                 throw new Exception("Could not find the Azure Service Fabric SDK on this server. This SDK is required before running Service Fabric commands.");
 
             var workingDirectory = Path.GetDirectoryName(script.File);
@@ -63,7 +63,7 @@ namespace Calamari.AzureServiceFabric.Integration
             // Read thumbprint from our client cert variable (if applicable).
             var securityMode = variables.Get(SpecialVariables.Action.ServiceFabric.SecurityMode);
             var clientCertThumbprint = string.Empty;
-            if (securityMode == Util.AzureServiceFabricSecurityMode.SecureClientCertificate.ToString())
+            if (securityMode == AzureServiceFabricSecurityMode.SecureClientCertificate.ToString())
             {
                 var certificateVariable = GetMandatoryVariable(SpecialVariables.Action.ServiceFabric.ClientCertVariable);
                 clientCertThumbprint = variables.Get($"{certificateVariable}.{CertificateVariables.Properties.Thumbprint}");

@@ -141,7 +141,7 @@ namespace Calamari.AzureServiceFabric
         {
             try
             {
-                return certificate2.HasPrivateKey && certificate2.PrivateKey != null;
+                return certificate2.HasPrivateKey;
             }
             catch (Exception)
             {

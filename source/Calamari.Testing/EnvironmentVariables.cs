@@ -81,6 +81,21 @@ namespace Calamari.Testing
         //TODO(tmm): not sure about this one - this is a copy of the github account above.
         [EnvironmentVariable("GitHub_RateLimitingPersonalAccessToken", "op://Calamari Secrets for Tests/GitHub Test Account/PAT")]
         GitHubRateLimitingPersonalAccessToken,
+        
+        [EnvironmentVariable("SERVICEFABRIC_CLIENTCERT_THUMBPRINT", "op://Calamari Secrets for Tests/Azure - Static Service Fabric Cluster/ClientCertThumbprint")]
+        ServiceFabricClientCertThumbprint,
+        [EnvironmentVariable("SERVICEFABRIC_CLIENTCERT_STORELOCATION", "op://Calamari Secrets for Tests/Azure - Static Service Fabric Cluster/ClientCertStoreLocation")]
+        ServiceFabricClientCertStoreLocation,
+        [EnvironmentVariable("SERVICEFABRIC_CLIENTCERT_STORENAME", "op://Calamari Secrets for Tests/Azure - Static Service Fabric Cluster/ClientCertStoreName")]
+        ServiceFabricClientCertStoreName,
+        [EnvironmentVariable("SERVICEFABRIC_CLIENTCERT_PFX", "op://Calamari Secrets for Tests/Azure - Static Service Fabric Cluster/ClientCertPfx")]
+        ServiceFabricClientCertPfx,
+        [EnvironmentVariable("SERVICEFABRIC_CLIENTCERT_SUBJECTCOMMONNAME", "op://Calamari Secrets for Tests/Azure - Static Service Fabric Cluster/ClientCertSubjectCommonName")]
+        ServiceFabricClientCertSubjectCommonName,
+        [EnvironmentVariable("SERVICEFABRIC_CONNECTIONENDPOINT", "op://Calamari Secrets for Tests/Azure - Static Service Fabric Cluster/ConnectionEndpoint")]
+        ServiceFabricConnectionEndpoint,
+        [EnvironmentVariable("SERVICEFABRIC_SERVERCERT_THUMBPRINT", "op://Calamari Secrets for Tests/Azure - Static Service Fabric Cluster/ServerCertThumbprint")]
+        ServiceFabricServerCertThumbprint,
     }
 
     public static class ExternalVariables

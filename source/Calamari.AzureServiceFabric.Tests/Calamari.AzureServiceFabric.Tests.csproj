@@ -4,11 +4,13 @@
         <RootNamespace>Calamari.AzureServiceFabric.Tests</RootNamespace>
         <AssemblyName>Calamari.AzureServiceFabric.Tests</AssemblyName>
         <IsPackable>false</IsPackable>
-        <TargetFramework>net462</TargetFramework>
+        <TargetFrameworks>net462;net6.0-windows</TargetFrameworks>
+        <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
+        <LangVersion>8.0</LangVersion>
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="FluentAssertions" Version="5.10.3" />
-        <PackageReference Include="nunit" Version="3.13.2" />
+        <PackageReference Include="nunit" Version="3.13.3" />
         <PackageReference Include="NUnit3TestAdapter" Version="3.17.0" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.10.0" />
         <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.25" />
@@ -17,5 +19,11 @@
     </ItemGroup>
     <ItemGroup>
       <ProjectReference Include="..\Calamari.AzureServiceFabric\Calamari.AzureServiceFabric.csproj" />
+      <ProjectReference Include="..\Calamari.Testing\Calamari.Testing.csproj" />
+    </ItemGroup>
+    <ItemGroup>
+      <None Update="Packages\MarksServiceFabricAppOfAwesomeness.1.0.0.zip">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
     </ItemGroup>
 </Project>

@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using Calamari.AzureServiceFabric.Behaviours;
 using Calamari.Common.Commands;
-using Calamari.Common.Features.Behaviours;
 using Calamari.Common.Plumbing.Pipeline;
 
 namespace Calamari.AzureServiceFabric.Commands
