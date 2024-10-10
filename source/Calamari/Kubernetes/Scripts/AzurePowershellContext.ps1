@@ -161,7 +161,11 @@ function ConnectAzAccount
 Write-Host "##octopus[stdout-verbose]"
 ConnectAzAccount
 
-Write-Verbose "Invoking target script $OctopusKubernetesTargetScript with $OctopusKubernetesTargetScriptParameters parameters"
+if ([string]::IsNullOrEmpty($OctopusKubernetesTargetScriptParameters)) {
+    Write-Verbose "Invoking target script '$OctopusKubernetesTargetScript'"
+} else {
+    Write-Verbose "Invoking target script '$OctopusKubernetesTargetScript' with parameters '$OctopusKubernetesTargetScriptParameters"
+}
 Write-Host "##octopus[stdout-default]"
 
 Invoke-Expression ". `"$OctopusKubernetesTargetScript`" $OctopusKubernetesTargetScriptParameters"
