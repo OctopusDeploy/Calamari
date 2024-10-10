@@ -62,10 +62,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.AzureServiceFabric
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.AzureServiceFabric.Tests", "Calamari.AzureServiceFabric.Tests\Calamari.AzureServiceFabric.Tests.csproj", "{900499FC-28CE-465F-A8B7-EB09540FC2E7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.AzureCloudService", "Calamari.AzureCloudService\Calamari.AzureCloudService.csproj", "{F4D51D8E-CA0E-4264-8BA9-7046E2189278}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.AzureCloudService.Tests", "Calamari.AzureCloudService.Tests\Calamari.AzureCloudService.Tests.csproj", "{7439161C-526F-426E-A420-25033D76C696}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.GoogleCloudScripting", "Calamari.GoogleCloudScripting\Calamari.GoogleCloudScripting.csproj", "{76C6A72B-0953-4536-9E1A-3E1C4948929C}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.GoogleCloudScripting.Tests", "Calamari.GoogleCloudScripting.Tests\Calamari.GoogleCloudScripting.Tests.csproj", "{12E0E726-F657-4D58-A4A6-406D6B3868B7}"
@@ -166,14 +162,6 @@ Global
 		{900499FC-28CE-465F-A8B7-EB09540FC2E7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{900499FC-28CE-465F-A8B7-EB09540FC2E7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{900499FC-28CE-465F-A8B7-EB09540FC2E7}.Release|Any CPU.Build.0 = Release|Any CPU
-		{F4D51D8E-CA0E-4264-8BA9-7046E2189278}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F4D51D8E-CA0E-4264-8BA9-7046E2189278}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F4D51D8E-CA0E-4264-8BA9-7046E2189278}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F4D51D8E-CA0E-4264-8BA9-7046E2189278}.Release|Any CPU.Build.0 = Release|Any CPU
-		{7439161C-526F-426E-A420-25033D76C696}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{7439161C-526F-426E-A420-25033D76C696}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{7439161C-526F-426E-A420-25033D76C696}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{7439161C-526F-426E-A420-25033D76C696}.Release|Any CPU.Build.0 = Release|Any CPU
 		{76C6A72B-0953-4536-9E1A-3E1C4948929C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{76C6A72B-0953-4536-9E1A-3E1C4948929C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{76C6A72B-0953-4536-9E1A-3E1C4948929C}.Release|Any CPU.ActiveCfg = Release|Any CPU
