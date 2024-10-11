@@ -12,8 +12,6 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Identity.Client" Version="4.65.0" />
-    <PackageReference Include="Microsoft.ServiceFabric" Version="5.4.145" />
-    <PackageReference Include="Microsoft.Identity.Client" Version="4.48.1" />
     
     <!-- IMPORTANT NOTE
     The version of this NuGet package is important. 
