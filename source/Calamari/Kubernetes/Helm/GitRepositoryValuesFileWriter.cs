@@ -5,6 +5,7 @@ using System.Linq;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Kubernetes.Helm
 {
@@ -15,12 +16,12 @@ namespace Calamari.Kubernetes.Helm
                                                                ILog log,
                                                                string valuesFilePaths,
                                                                bool logIncludedFiles = true)
-            => FindGitDependencyValuesFiles(deployment,
-                                            fileSystem,
-                                            log,
-                                            string.Empty,
-                                            valuesFilePaths,
-                                            logIncludedFiles);
+            => FindValuesFiles(deployment,
+                               fileSystem,
+                               log,
+                               string.Empty,
+                               valuesFilePaths,
+                               logIncludedFiles);
 
         public static IEnumerable<string> FindGitDependencyValuesFiles(RunningDeployment deployment,
                                                                        ICalamariFileSystem fileSystem,
@@ -37,6 +38,18 @@ namespace Calamari.Kubernetes.Helm
                 return null;
             }
 
+            return FindValuesFiles(deployment, fileSystem, log, gitDependencyName,
+                                   valuesFilePaths,
+                                   logIncludedFiles);
+        }
+
+        static IEnumerable<string> FindValuesFiles(RunningDeployment deployment,
+                                                   ICalamariFileSystem fileSystem,
+                                                   ILog log,
+                                                   string gitDependencyName,
+                                                   string valuesFilePaths,
+                                                   bool logIncludedFiles)
+        {
             var valuesPaths = HelmValuesFileUtils.SplitValuesFilePaths(valuesFilePaths);
             if (valuesPaths == null || !valuesPaths.Any())
                 return null;
@@ -46,6 +59,7 @@ namespace Calamari.Kubernetes.Helm
 
             var sanitizedPackageReferenceName = fileSystem.RemoveInvalidFileNameChars(gitDependencyName);
 
+            var variables = deployment.Variables;
             var repositoryUrl = variables.Get(Deployment.SpecialVariables.GitResources.RepositoryUrl(gitDependencyName));
             var commitHash = variables.Get(Deployment.SpecialVariables.GitResources.CommitHash(gitDependencyName));
 
