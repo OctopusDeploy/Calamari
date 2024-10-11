@@ -3,6 +3,13 @@ using System.IO;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using Azure;
+using Azure.Core;
+using Azure.ResourceManager;
+using Azure.ResourceManager.AppService;
+using Azure.ResourceManager.AppService.Models;
+using Azure.ResourceManager.Resources;
+using Calamari.Azure;
 using Calamari.CloudAccounts;
 using Calamari.Common.Features.Deployment;
 using Calamari.Common.Features.Scripts;
@@ -10,16 +17,12 @@ using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Testing;
 using Calamari.Testing.Helpers;
+using Calamari.Testing.Requirements;
 using FluentAssertions;
-using Microsoft.Azure.Management.AppService.Fluent;
-using Microsoft.Azure.Management.Fluent;
-using Microsoft.Azure.Management.ResourceManager.Fluent;
-using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
 using NUnit.Framework.Internal;
 using HttpClient = System.Net.Http.HttpClient;
-using OperatingSystem = Microsoft.Azure.Management.AppService.Fluent.OperatingSystem;
 using KnownVariables = Calamari.Common.Plumbing.Variables.KnownVariables;
 
 namespace Calamari.AzureWebApp.Tests
@@ -27,95 +30,131 @@ namespace Calamari.AzureWebApp.Tests
     [TestFixture]
     public class DeployAzureWebCommandFixture
     {
-        IAppServicePlan appServicePlan;
-        IResourceGroup resourceGroup;
-        IAzure azure;
         string clientId;
         string clientSecret;
         string tenantId;
         string subscriptionId;
-        TemporaryDirectory azureConfigPath;
-
+        
         readonly HttpClient client = new HttpClient();
+        
+        ArmClient armClient;
+        ResourceGroupResource resourceGroupResource;
+        WebSiteResource webSiteResource;    
+        
         static readonly CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
         readonly CancellationToken cancellationToken = CancellationTokenSource.Token;
 
         [OneTimeSetUp]
         public async Task Setup()
         {
-            azureConfigPath = TemporaryDirectory.Create();
-            Environment.SetEnvironmentVariable("AZURE_CONFIG_DIR", azureConfigPath.DirectoryPath);
-            
+            var resourceManagementEndpointBaseUri = Environment.GetEnvironmentVariable(AccountVariables.ResourceManagementEndPoint) ?? DefaultVariables.ResourceManagementEndpoint;
+            var activeDirectoryEndpointBaseUri = Environment.GetEnvironmentVariable(AccountVariables.ActiveDirectoryEndPoint) ?? DefaultVariables.ActiveDirectoryEndpoint;
+
+            var resourceGroupName = $"{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid():N}";
+
             clientId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId, cancellationToken);
             clientSecret = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword, cancellationToken);
             tenantId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId, cancellationToken);
             subscriptionId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionId, cancellationToken);
-            var resourceGroupName = SdkContext.RandomResourceName(nameof(DeployAzureWebCommandFixture), 60);
+            var resourceGroupLocation = Environment.GetEnvironmentVariable("AZURE_NEW_RESOURCE_REGION") ?? RandomAzureRegion.GetRandomRegionWithExclusions();
 
-            var credentials = SdkContext.AzureCredentialsFactory.FromServicePrincipal(clientId, clientSecret, tenantId,
-                AzureEnvironment.AzureGlobalCloud);
+            var servicePrincipalAccount = new AzureServicePrincipalAccount(subscriptionId,
+                                                                           clientId,
+                                                                           tenantId,
+                                                                           clientSecret,
+                                                                           "AzureGlobalCloud",
+                                                                           resourceManagementEndpointBaseUri,
+                                                                           activeDirectoryEndpointBaseUri);
 
-            azure = Microsoft.Azure.Management.Fluent.Azure
-                             .Configure()
-                             .WithLogLevel(HttpLoggingDelegatingHandler.Level.Basic)
-                             .Authenticate(credentials)
-                             .WithSubscription(subscriptionId);
+            armClient = servicePrincipalAccount.CreateArmClient(retryOptions =>
+                                                                {
+                                                                    retryOptions.MaxRetries = 5;
+                                                                    retryOptions.Mode = RetryMode.Exponential;
+                                                                    retryOptions.Delay = TimeSpan.FromSeconds(2);
+                                                                    // AzureAppServiceDeployContainerBehaviorFixture.AzureLinuxContainerSlotDeploy occasional timeout at default 100 seconds
+                                                                    retryOptions.NetworkTimeout = TimeSpan.FromSeconds(200);
+                                                                });
 
-            resourceGroup = await azure.ResourceGroups
-                .Define(resourceGroupName)
-                .WithRegion(Region.USWest)
-                .CreateAsync();
+            //create the resource group
+            var subscriptionResource = armClient.GetSubscriptionResource(SubscriptionResource.CreateResourceIdentifier(subscriptionId));
 
-            appServicePlan = await azure.AppServices.AppServicePlans
-                .Define(SdkContext.RandomResourceName(nameof(DeployAzureWebCommandFixture), 60))
-                .WithRegion(resourceGroup.Region)
-                .WithExistingResourceGroup(resourceGroup)
-                .WithPricingTier(PricingTier.PremiumP1v3)
-                .WithOperatingSystem(OperatingSystem.Windows)
-                .CreateAsync();
+            var response = await subscriptionResource
+                                 .GetResourceGroups()
+                                 .CreateOrUpdateAsync(WaitUntil.Completed,
+                                                      resourceGroupName,
+                                                      new ResourceGroupData(new AzureLocation(resourceGroupLocation))
+                                                      {
+                                                          Tags =
+                                                          {
+                                                              // give them an expiry of 14 days so if the tests fail to clean them up
+                                                              // they will be automatically cleaned up by the Sandbox cleanup process
+                                                              // We keep them for 14 days just in case we need to do debugging/investigation
+                                                              ["LifetimeInDays"] = "14"
+                                                          }
+                                                      },
+                                                      cancellationToken);
+
+            resourceGroupResource = response.Value;
+
+            var appServicePlanData = new AppServicePlanData(resourceGroupResource.Data.Location)
+            {
+                Sku = new AppServiceSkuDescription
+                {
+                    Name = "P1V3",
+                    Tier = "PremiumV3"
+                }
+            };
+
+            var servicePlanResponse = await resourceGroupResource.GetAppServicePlans()
+                                                                 .CreateOrUpdateAsync(WaitUntil.Completed,
+                                                                                      resourceGroupResource.Data.Name,
+                                                                                      appServicePlanData,
+                                                                                      cancellationToken);
+
+            var webSiteData = new WebSiteData(resourceGroupResource.Data.Location)
+            {
+                AppServicePlanId = servicePlanResponse.Value.Id
+            };
+
+            var webSiteResponse = await resourceGroupResource.GetWebSites()
+                                                             .CreateOrUpdateAsync(WaitUntil.Completed,
+                                                                                  resourceGroupResource.Data.Name,
+                                                                                  webSiteData,
+                                                                                  cancellationToken);
+
+            webSiteResource = webSiteResponse.Value;
         }
+        
 
         [OneTimeTearDown]
-        public async Task Cleanup()
+        public virtual async Task Cleanup()
         {
-            if (resourceGroup != null)
-            {
-                await azure.ResourceGroups.DeleteByNameAsync(resourceGroup.Name);
-            }
-            azureConfigPath.Dispose();
+            await resourceGroupResource.DeleteAsync(WaitUntil.Started, cancellationToken: cancellationToken);
         }
 
         [Test]
         public async Task Deploy_WebApp_Simple()
         {
-            var webAppName = SdkContext.RandomResourceName(nameof(DeployAzureWebCommandFixture), 60);
-
-            var webApp = await CreateWebApp(webAppName);
-
             using var tempPath = TemporaryDirectory.Create();
             const string actualText = "Hello World";
 
             File.WriteAllText(Path.Combine(tempPath.DirectoryPath, "index.html"), actualText);
 
             await CommandTestBuilder.CreateAsync<DeployAzureWebCommand, Program>()
-                .WithArrange(context =>
-                {
-                    AddDefaults(context, webAppName);
+                                    .WithArrange(context =>
+                                                 {
+                                                     AddDefaults(context);
 
-                    context.WithFilesToCopy(tempPath.DirectoryPath);
-                })
-                .Execute();
+                                                     context.WithFilesToCopy(tempPath.DirectoryPath);
+                                                 })
+                                    .Execute();
 
-            await AssertContent(webApp.DefaultHostName, actualText);
+            await AssertContent(webSiteResource.Data.DefaultHostName, actualText);
         }
 
         [Test]
         public async Task Deploy_WebApp_Using_AppOffline()
         {
-            var webAppName = SdkContext.RandomResourceName(nameof(DeployAzureWebCommandFixture), 60);
-
-            var webApp = await CreateWebApp(webAppName);
-
             using var tempPath = TemporaryDirectory.Create();
             const string actualText = "I'm broken";
 
@@ -123,27 +162,27 @@ namespace Calamari.AzureWebApp.Tests
             File.WriteAllText(Path.Combine(tempPath.DirectoryPath, "App_Offline.htm"), actualText);
 
             await CommandTestBuilder.CreateAsync<DeployAzureWebCommand, Program>()
-                .WithArrange(context =>
-                {
-                    AddDefaults(context, webAppName);
+                                    .WithArrange(context =>
+                                                 {
+                                                     AddDefaults(context);
 
-                    context.WithFilesToCopy(tempPath.DirectoryPath);
-                })
-                .Execute();
+                                                     context.WithFilesToCopy(tempPath.DirectoryPath);
+                                                 })
+                                    .Execute();
 
             var packagePath = TestEnvironment.GetTestPath("Packages", "BrokenApp");
 
             await CommandTestBuilder.CreateAsync<DeployAzureWebCommand, Program>()
-                .WithArrange(context =>
-                {
-                    AddDefaults(context, webAppName);
-                    context.Variables.Add(SpecialVariables.Action.Azure.AppOffline, bool.TrueString);
+                                    .WithArrange(context =>
+                                                 {
+                                                     AddDefaults(context);
+                                                     context.Variables.Add(SpecialVariables.Action.Azure.AppOffline, bool.TrueString);
 
-                    context.WithFilesToCopy(packagePath);
-                })
-                .Execute();
+                                                     context.WithFilesToCopy(packagePath);
+                                                 })
+                                    .Execute();
 
-            var response = await client.GetAsync($"https://{webApp.DefaultHostName}");
+            var response = await client.GetAsync($"https://{webSiteResource.Data.DefaultHostName}", cancellationToken);
             response.IsSuccessStatusCode.Should().BeFalse();
             response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
             var result = await response.Content.ReadAsStringAsync();
@@ -153,49 +192,41 @@ namespace Calamari.AzureWebApp.Tests
         [Test]
         public async Task Deploy_WebApp_Using_Checksum()
         {
-            var webAppName = SdkContext.RandomResourceName(nameof(DeployAzureWebCommandFixture), 60);
-
-            var webApp = await CreateWebApp(webAppName);
-
             using var tempPath = TemporaryDirectory.Create();
             const string actualText = "Hello World";
 
             File.WriteAllText(Path.Combine(tempPath.DirectoryPath, "index.html"), actualText);
 
             await CommandTestBuilder.CreateAsync<DeployAzureWebCommand, Program>()
-                .WithArrange(context =>
-                {
-                    AddDefaults(context, webAppName);
-                    context.WithFilesToCopy(tempPath.DirectoryPath);
-                })
-                .Execute();
+                                    .WithArrange(context =>
+                                                 {
+                                                     AddDefaults(context);
+                                                     context.WithFilesToCopy(tempPath.DirectoryPath);
+                                                 })
+                                    .Execute();
 
             // We write the file again with same content
             File.WriteAllText(Path.Combine(tempPath.DirectoryPath, "index.html"), actualText);
 
             await CommandTestBuilder.CreateAsync<DeployAzureWebCommand, Program>()
-                .WithArrange(context =>
-                {
-                    AddDefaults(context, webAppName);
-                    context.Variables.Add(SpecialVariables.Action.Azure.UseChecksum, bool.TrueString);
-                    context.WithFilesToCopy(tempPath.DirectoryPath);
-                })
-                .WithAssert(result =>
-                {
-                    result.FullLog.Should().Contain("Successfully deployed to Azure. 0 objects added. 0 objects updated. 0 objects deleted.");
-                })
-                .Execute();
+                                    .WithArrange(context =>
+                                                 {
+                                                     AddDefaults(context);
+                                                     context.Variables.Add(SpecialVariables.Action.Azure.UseChecksum, bool.TrueString);
+                                                     context.WithFilesToCopy(tempPath.DirectoryPath);
+                                                 })
+                                    .WithAssert(result =>
+                                                {
+                                                    result.FullLog.Should().Contain("Successfully deployed to Azure. 0 objects added. 0 objects updated. 0 objects deleted.");
+                                                })
+                                    .Execute();
 
-            await AssertContent(webApp.DefaultHostName, actualText);
+            await AssertContent(webSiteResource.Data.DefaultHostName, actualText);
         }
 
         [Test]
         public async Task Deploy_WebApp_Preserve_App_Data()
         {
-            var webAppName = SdkContext.RandomResourceName(nameof(DeployAzureWebCommandFixture), 60);
-
-            var webApp = await CreateWebApp(webAppName);
-
             using var tempPath = TemporaryDirectory.Create();
 
             Directory.CreateDirectory(Path.Combine(tempPath.DirectoryPath, "App_Data"));
@@ -203,36 +234,32 @@ namespace Calamari.AzureWebApp.Tests
             File.WriteAllText(Path.Combine(tempPath.DirectoryPath, "index.html"), "Hello World");
 
             await CommandTestBuilder.CreateAsync<DeployAzureWebCommand, Program>()
-                .WithArrange(context =>
-                {
-                    AddDefaults(context, webAppName);
-                    context.Variables.Add(SpecialVariables.Action.Azure.RemoveAdditionalFiles, bool.TrueString);
-                    context.WithFilesToCopy(tempPath.DirectoryPath);
-                })
-                .Execute();
+                                    .WithArrange(context =>
+                                                 {
+                                                     AddDefaults(context);
+                                                     context.Variables.Add(SpecialVariables.Action.Azure.RemoveAdditionalFiles, bool.TrueString);
+                                                     context.WithFilesToCopy(tempPath.DirectoryPath);
+                                                 })
+                                    .Execute();
 
             var packagePath = TestEnvironment.GetTestPath("Packages", "AppDataList");
 
             await CommandTestBuilder.CreateAsync<DeployAzureWebCommand, Program>()
-                .WithArrange(context =>
-                {
-                    AddDefaults(context, webAppName);
-                    context.Variables.Add(SpecialVariables.Action.Azure.RemoveAdditionalFiles, bool.TrueString);
-                    context.Variables.Add(SpecialVariables.Action.Azure.PreserveAppData, bool.TrueString);
-                    context.WithFilesToCopy(packagePath);
-                })
-                .Execute();
+                                    .WithArrange(context =>
+                                                 {
+                                                     AddDefaults(context);
+                                                     context.Variables.Add(SpecialVariables.Action.Azure.RemoveAdditionalFiles, bool.TrueString);
+                                                     context.Variables.Add(SpecialVariables.Action.Azure.PreserveAppData, bool.TrueString);
+                                                     context.WithFilesToCopy(packagePath);
+                                                 })
+                                    .Execute();
 
-            await AssertContent(webApp.DefaultHostName, "newfile1.txt\r\nnewfile2.txt\r\n");
+            await AssertContent(webSiteResource.Data.DefaultHostName, "newfile1.txt\r\nnewfile2.txt\r\n");
         }
 
         [Test]
         public async Task Deploy_WebApp_Preserve_Files()
         {
-            var webAppName = SdkContext.RandomResourceName(nameof(DeployAzureWebCommandFixture), 60);
-
-            var webApp = await CreateWebApp(webAppName);
-
             using var tempPath = TemporaryDirectory.Create();
             const string actualText = "Hello World";
 
@@ -242,33 +269,33 @@ namespace Calamari.AzureWebApp.Tests
             File.WriteAllText(Path.Combine(tempPath.DirectoryPath, "NotKeep", "index.html"), actualText);
 
             await CommandTestBuilder.CreateAsync<DeployAzureWebCommand, Program>()
-                .WithArrange(context =>
-                {
-                    AddDefaults(context, webAppName);
+                                    .WithArrange(context =>
+                                                 {
+                                                     AddDefaults(context);
 
-                    context.WithFilesToCopy(tempPath.DirectoryPath);
-                })
-                .Execute();
+                                                     context.WithFilesToCopy(tempPath.DirectoryPath);
+                                                 })
+                                    .Execute();
 
             using var tempPath2 = TemporaryDirectory.Create();
 
             File.WriteAllText(Path.Combine(tempPath2.DirectoryPath, "newfile.html"), actualText);
 
             await CommandTestBuilder.CreateAsync<DeployAzureWebCommand, Program>()
-                .WithArrange(context =>
-                {
-                    AddDefaults(context, webAppName);
-                    context.Variables.Add(SpecialVariables.Action.Azure.RemoveAdditionalFiles, bool.TrueString);
-                    context.Variables.Add(SpecialVariables.Action.Azure.PreservePaths, "\\\\Keep;\\\\Keep\\\\index.html");
+                                    .WithArrange(context =>
+                                                 {
+                                                     AddDefaults(context);
+                                                     context.Variables.Add(SpecialVariables.Action.Azure.RemoveAdditionalFiles, bool.TrueString);
+                                                     context.Variables.Add(SpecialVariables.Action.Azure.PreservePaths, @"\\Keep;\\Keep\\index.html");
 
-                    context.WithFilesToCopy(tempPath2.DirectoryPath);
-                })
-                .Execute();
+                                                     context.WithFilesToCopy(tempPath2.DirectoryPath);
+                                                 })
+                                    .Execute();
 
-            await AssertContent(webApp.DefaultHostName, actualText, "Keep");
-            await AssertContent(webApp.DefaultHostName, actualText, "newfile.html");
+            await AssertContent(webSiteResource.Data.DefaultHostName, actualText, "Keep");
+            await AssertContent(webSiteResource.Data.DefaultHostName, actualText, "newfile.html");
 
-            var response = await client.GetAsync($"https://{webApp.DefaultHostName}/NotKeep");
+            var response = await client.GetAsync($"https://{webSiteResource.Data.DefaultHostName}/NotKeep", cancellationToken);
             response.IsSuccessStatusCode.Should().BeFalse();
             response.StatusCode.Should().Be(HttpStatusCode.NotFound);
         }
@@ -276,14 +303,12 @@ namespace Calamari.AzureWebApp.Tests
         [Test]
         public async Task Deploy_WebApp_To_A_Slot()
         {
-            var webAppName = SdkContext.RandomResourceName(nameof(DeployAzureWebCommandFixture), 60);
             var slotName = "staging";
-
-            var webApp = await CreateWebApp(webAppName);
-            var deploymentSlot = await webApp.DeploymentSlots.Define(slotName)
-                .WithConfigurationFromParent()
-                .WithAutoSwapSlotName("production")
-                .CreateAsync();
+            
+            var slotResponse = await webSiteResource.GetWebSiteSlots()
+                                          .CreateOrUpdateAsync(WaitUntil.Completed, slotName, webSiteResource.Data, cancellationToken);
+            
+            var slotResource = slotResponse.Value;
 
             using var tempPath = TemporaryDirectory.Create();
             const string actualText = "Hello World";
@@ -291,48 +316,40 @@ namespace Calamari.AzureWebApp.Tests
             File.WriteAllText(Path.Combine(tempPath.DirectoryPath, "index.html"), actualText);
 
             await CommandTestBuilder.CreateAsync<DeployAzureWebCommand, Program>()
-                .WithArrange(context =>
-                {
-                    AddDefaults(context, webAppName);
-                    context.Variables.Add(SpecialVariables.Action.Azure.WebAppSlot, slotName);
+                                    .WithArrange(context =>
+                                                 {
+                                                     AddDefaults(context);
+                                                     context.Variables.Add(SpecialVariables.Action.Azure.WebAppSlot, slotName);
 
-                    context.WithFilesToCopy(tempPath.DirectoryPath);
-                })
-                .Execute();
+                                                     context.WithFilesToCopy(tempPath.DirectoryPath);
+                                                 })
+                                    .Execute();
 
-            await AssertContent(deploymentSlot.DefaultHostName, actualText);
+            await AssertContent(slotResource.Data.DefaultHostName, actualText);
         }
 
         [Test]
         public async Task Deploy_WebApp_From_Package()
         {
-            var webAppName = SdkContext.RandomResourceName(nameof(DeployAzureWebCommandFixture), 60);
-
-            var webApp = await CreateWebApp(webAppName);
-
             using var tempPath = TemporaryDirectory.Create();
             var actualText = "Hello World";
 
             File.WriteAllText(Path.Combine(tempPath.DirectoryPath, "index.html"), actualText);
 
             await CommandTestBuilder.CreateAsync<DeployAzureWebCommand, Program>()
-                .WithArrange(context =>
-                {
-                    AddDefaults(context, webAppName);
-                    context.WithNewNugetPackage(tempPath.DirectoryPath, "Hello", "1.0.0");
-                })
-                .Execute();
+                                    .WithArrange(context =>
+                                                 {
+                                                     AddDefaults(context);
+                                                     context.WithNewNugetPackage(tempPath.DirectoryPath, "Hello", "1.0.0");
+                                                 })
+                                    .Execute();
 
-            await AssertContent(webApp.DefaultHostName, actualText);
+            await AssertContent(webSiteResource.Data.DefaultHostName, actualText);
         }
 
         [Test]
         public async Task Deploy_WebApp_With_PhysicalPath()
         {
-            var webAppName = SdkContext.RandomResourceName(nameof(DeployAzureWebCommandFixture), 60);
-
-            var webApp = await CreateWebApp(webAppName);
-
             using var tempPath = TemporaryDirectory.Create();
             var actualText = "Hello World";
 
@@ -340,25 +357,22 @@ namespace Calamari.AzureWebApp.Tests
             const string rootPath = "Hello";
 
             await CommandTestBuilder.CreateAsync<DeployAzureWebCommand, Program>()
-                .WithArrange(context =>
-                {
-                    AddDefaults(context, webAppName);
-                    context.Variables.Add(SpecialVariables.Action.Azure.PhysicalPath, rootPath);
+                                    .WithArrange(context =>
+                                                 {
+                                                     AddDefaults(context);
+                                                     context.Variables.Add(SpecialVariables.Action.Azure.PhysicalPath, rootPath);
 
-                    context.WithFilesToCopy(tempPath.DirectoryPath);
-                })
-                .Execute();
+                                                     context.WithFilesToCopy(tempPath.DirectoryPath);
+                                                 })
+                                    .Execute();
 
-            await AssertContent(webApp.DefaultHostName, actualText, rootPath);
+            await AssertContent(webSiteResource.Data.DefaultHostName, actualText, rootPath);
         }
 
         [Test]
-        [RequiresPowerShell5OrAboveAttribute]
+        [RequiresPowerShell5OrAbove]
         public async Task Deploy_WebApp_Ensure_Tools_Are_Configured()
         {
-            var webAppName = SdkContext.RandomResourceName(nameof(DeployAzureWebCommandFixture), 60);
-            var webApp = await CreateWebApp(webAppName);
-
             using var tempPath = TemporaryDirectory.Create();
             const string actualText = "Hello World";
 
@@ -368,7 +382,7 @@ $ErrorActionPreference = 'Continue'
 az --version
 az group list";
             File.WriteAllText(Path.Combine(tempPath.DirectoryPath, "PreDeploy.ps1"), psScript);
-            
+
             // This should be references from Sashimi.Server.Contracts, since Calamari.AzureWebApp is a net461 project this cannot be included.
             var AccountType = "Octopus.Account.AccountType";
 
@@ -376,7 +390,7 @@ az group list";
                                     .WithArrange(context =>
                                                  {
                                                      context.Variables.Add(AccountType, "AzureServicePrincipal");
-                                                     AddDefaults(context, webAppName);
+                                                     AddDefaults(context);
                                                      context.Variables.Add(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.CustomScripts);
                                                      context.Variables.Add(KnownVariables.Action.CustomScripts.GetCustomScriptStage(DeploymentStages.Deploy, ScriptSyntax.PowerShell), psScript);
                                                      context.Variables.Add(KnownVariables.Action.CustomScripts.GetCustomScriptStage(DeploymentStages.PreDeploy, ScriptSyntax.CSharp), "Console.WriteLine(\"Hello from C#\");");
@@ -390,51 +404,24 @@ az group list";
                                                 })
                                     .Execute();
 
-            await AssertContent(webApp.DefaultHostName, actualText);
-        }
-
-        Task<IWebApp> CreateWebApp(string webAppName)
-        {
-            return azure.WebApps
-                .Define(webAppName)
-                .WithExistingWindowsPlan(appServicePlan)
-                .WithExistingResourceGroup(resourceGroup)
-                .WithRuntimeStack(WebAppRuntimeStack.NETCore)
-                .CreateAsync();
+            await AssertContent(webSiteResource.Data.DefaultHostName, actualText);
         }
 
         async Task AssertContent(string hostName, string actualText, string rootPath = null)
         {
-            var result= await client.GetStringAsync($"https://{hostName}/{rootPath}");
+            var result = await client.GetStringAsync($"https://{hostName}/{rootPath}");
 
             result.Should().Be(actualText);
         }
 
-        void AddDefaults(CommandTestBuilderContext context, string webAppName)
+        void AddDefaults(CommandTestBuilderContext context)
         {
-            context.Variables.Add(AzureAccountVariables.SubscriptionId,
-                subscriptionId);
-            context.Variables.Add(AzureAccountVariables.TenantId,
-                tenantId);
-            context.Variables.Add(AzureAccountVariables.ClientId,
-                clientId);
-            context.Variables.Add(AzureAccountVariables.Password,
-                clientSecret);
-            context.Variables.Add(SpecialVariables.Action.Azure.WebAppName, webAppName);
-            context.Variables.Add(SpecialVariables.Action.Azure.ResourceGroupName, resourceGroup.Name);
-        }
-        
-        // TODO: when migrating to Calamari repository remove this in favour of Calamari.Tests RequiresPowerShell5OrAboveAttribute attribute
-        private class RequiresPowerShell5OrAboveAttribute : NUnitAttribute, IApplyToTest
-        {
-            public void ApplyToTest(Test test)
-            {
-                if (ScriptingEnvironment.SafelyGetPowerShellVersion().Major < 5)
-                {
-                    test.RunState = RunState.Skipped;
-                    test.Properties.Set(PropertyNames.SkipReason, "This test requires PowerShell 5 or newer.");
-                }
-            }
+            context.Variables.Add(AzureAccountVariables.SubscriptionId, subscriptionId);
+            context.Variables.Add(AzureAccountVariables.TenantId, tenantId);
+            context.Variables.Add(AzureAccountVariables.ClientId, clientId);
+            context.Variables.Add(AzureAccountVariables.Password, clientSecret);
+            context.Variables.Add(SpecialVariables.Action.Azure.WebAppName, webSiteResource.Data.Name);
+            context.Variables.Add(SpecialVariables.Action.Azure.ResourceGroupName, resourceGroupResource.Data.Name);
         }
     }
 }

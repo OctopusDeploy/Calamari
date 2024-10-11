@@ -98,7 +98,8 @@ namespace Calamari.AzureAppService.Tests
                                                               // We keep them for 14 days just in case we need to do debugging/investigation
                                                               ["LifetimeInDays"] = "14"
                                                           }
-                                                      });
+                                                      },
+                                                      cancellationToken);
 
             ResourceGroupResource = response.Value;
 
@@ -111,7 +112,7 @@ namespace Calamari.AzureAppService.Tests
         public virtual async Task Cleanup()
         {
             await ArmClient.GetResourceGroupResource(ResourceGroupResource.CreateResourceIdentifier(SubscriptionId, ResourceGroupName))
-                           .DeleteAsync(WaitUntil.Started);
+                           .DeleteAsync(WaitUntil.Started, cancellationToken: cancellationToken);
         }
 
         protected async Task AssertContent(string hostName, string actualText, string rootPath = null)
