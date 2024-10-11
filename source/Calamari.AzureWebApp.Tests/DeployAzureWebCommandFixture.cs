@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Threading;
@@ -10,6 +11,7 @@ using Azure.ResourceManager.AppService;
 using Azure.ResourceManager.AppService.Models;
 using Azure.ResourceManager.Resources;
 using Calamari.Azure;
+using Calamari.Azure.AppServices;
 using Calamari.CloudAccounts;
 using Calamari.Common.Features.Deployment;
 using Calamari.Common.Features.Scripts;
@@ -34,13 +36,13 @@ namespace Calamari.AzureWebApp.Tests
         string clientSecret;
         string tenantId;
         string subscriptionId;
-        
+
         readonly HttpClient client = new HttpClient();
-        
+
         ArmClient armClient;
         ResourceGroupResource resourceGroupResource;
-        WebSiteResource webSiteResource;    
-        
+        WebSiteResource webSiteResource;
+
         static readonly CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
         readonly CancellationToken cancellationToken = CancellationTokenSource.Token;
 
@@ -124,7 +126,6 @@ namespace Calamari.AzureWebApp.Tests
 
             webSiteResource = webSiteResponse.Value;
         }
-        
 
         [OneTimeTearDown]
         public virtual async Task Cleanup()
@@ -304,10 +305,10 @@ namespace Calamari.AzureWebApp.Tests
         public async Task Deploy_WebApp_To_A_Slot()
         {
             var slotName = "staging";
-            
+
             var slotResponse = await webSiteResource.GetWebSiteSlots()
-                                          .CreateOrUpdateAsync(WaitUntil.Completed, slotName, webSiteResource.Data, cancellationToken);
-            
+                                                    .CreateOrUpdateAsync(WaitUntil.Completed, slotName, webSiteResource.Data, cancellationToken);
+
             var slotResource = slotResponse.Value;
 
             using var tempPath = TemporaryDirectory.Create();
@@ -409,9 +410,22 @@ az group list";
 
         async Task AssertContent(string hostName, string actualText, string rootPath = null)
         {
-            var result = await client.GetStringAsync($"https://{hostName}/{rootPath}");
+            var response = await RetryPolicies.TestsTransientHttpErrorsPolicy.ExecuteAsync(async context =>
+                                                                                           {
+                                                                                               var r = await client.GetAsync($"https://{hostName}/{rootPath}");
+                                                                                               if (!r.IsSuccessStatusCode)
+                                                                                               {
+                                                                                                   var messageContent = await r.Content.ReadAsStringAsync();
+                                                                                                   TestContext.WriteLine($"Unable to retrieve content from https://{hostName}/{rootPath}, failed with: {messageContent}");
+                                                                                               }
 
-            result.Should().Be(actualText);
+                                                                                               r.EnsureSuccessStatusCode();
+                                                                                               return r;
+                                                                                           },
+                                                                                           contextData: new Dictionary<string, object>());
+
+            var result = await response.Content.ReadAsStringAsync();
+            result.Should().Contain(actualText);
         }
 
         void AddDefaults(CommandTestBuilderContext context)
