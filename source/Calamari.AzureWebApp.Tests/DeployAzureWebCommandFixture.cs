@@ -412,7 +412,7 @@ az group list";
         {
             var response = await RetryPolicies.TestsTransientHttpErrorsPolicy.ExecuteAsync(async context =>
                                                                                            {
-                                                                                               var r = await client.GetAsync($"https://{hostName}/{rootPath}");
+                                                                                               var r = await client.GetAsync($"https://{hostName}/{rootPath}", cancellationToken);
                                                                                                if (!r.IsSuccessStatusCode)
                                                                                                {
                                                                                                    var messageContent = await r.Content.ReadAsStringAsync();
