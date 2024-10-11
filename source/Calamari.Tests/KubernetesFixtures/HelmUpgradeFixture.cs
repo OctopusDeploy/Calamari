@@ -361,6 +361,17 @@ namespace Calamari.Tests.KubernetesFixtures
             result.AssertFailure();
             result.AssertOutputContains("Chart was not found in 'specific/location/for/my/chart'");
         }
+        
+        [Test]
+        [RequiresNonFreeBSDPlatform]
+        [RequiresNon32BitWindows]
+        [RequiresNonMac]
+        [Category(TestCategory.PlatformAgnostic)]
+        public void WhenChartIsInRootOfPackage_ShouldUseTheRootStagingDirectory()
+        {
+            var result = DeployPackage("mychart-with-no-root-folder-0.3.8.tgz");
+            result.AssertSuccess();
+        }
 
         protected abstract string ExplicitExeVersion { get; }
 
