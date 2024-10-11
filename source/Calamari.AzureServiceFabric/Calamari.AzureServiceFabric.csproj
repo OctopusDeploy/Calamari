@@ -12,7 +12,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Identity.Client" Version="4.48.1" />
-    <PackageReference Include="Microsoft.ServiceFabric" Version="10.1.2448" />
+    <PackageReference Include="Microsoft.ServiceFabric" Version="10.1.2338" />
   </ItemGroup>
 
   <ItemGroup>
