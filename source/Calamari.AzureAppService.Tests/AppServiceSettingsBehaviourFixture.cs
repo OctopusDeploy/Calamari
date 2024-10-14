@@ -26,6 +26,8 @@ namespace Calamari.AzureAppService.Tests
 
         public override async Task SetUp()
         {
+            await base.SetUp();
+            
             WebSiteResource = await CreateWebApp(WindowsAppServicePlanResource);
             
             existingSettings = new AppServiceConfigurationDictionary

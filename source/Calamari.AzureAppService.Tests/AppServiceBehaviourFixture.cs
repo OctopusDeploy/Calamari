@@ -32,6 +32,8 @@ namespace Calamari.AzureAppService.Tests
         {
             public override async Task SetUp()
             {
+                await base.SetUp();
+                
                 WebSiteResource = await CreateWebApp(WindowsAppServicePlanResource);
             }
 
@@ -399,6 +401,8 @@ namespace Calamari.AzureAppService.Tests
         {
             public override async Task SetUp()
             {
+                await base.SetUp();
+                
                 var storageAccountName = ResourceGroupName.Replace("-", "").Substring(0, 20);
                 var storageAccountResponse = await ResourceGroupResource
                                                    .GetStorageAccounts()
