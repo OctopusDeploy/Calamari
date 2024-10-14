@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using Azure;
 using Azure.ResourceManager.AppService;
 using Azure.ResourceManager.AppService.Models;
-using Azure.ResourceManager.Resources;
 using Calamari.AzureAppService.Azure;
 using Calamari.AzureAppService.Behaviors;
 using Calamari.Common.Commands;
@@ -33,39 +32,23 @@ namespace Calamari.AzureAppService.Tests
             CalamariVariables newVariables;
             readonly HttpClient client = new HttpClient();
 
-            //We are having capacity issues in EastUS and WestUS2
-            protected override string DefaultResourceGroupLocation => RandomAzureRegion.GetRandomRegionWithExclusions("eastus", "westus2");
-            
-            protected override async Task ConfigureTestResources(ResourceGroupResource resourceGroup)
+            public override async Task SetUp()
             {
-                var (_, webSite) = await CreateAppServicePlanAndWebApp(resourceGroup,
-                                                                       new AppServicePlanData(resourceGroup.Data.Location)
-                                                                       {
-                                                                           IsXenon = true,
-                                                                           IsHyperV = true,
-                                                                           Sku = new AppServiceSkuDescription
-                                                                           {
-                                                                               Name = "P1V3",
-                                                                               Tier = "PremiumV3"
-                                                                           }
-                                                                       },
-                                                                       webSiteData: new WebSiteData(resourceGroup.Data.Location)
-                                                                       {
-                                                                           SiteConfig = new SiteConfigProperties
-                                                                           {
-                                                                               WindowsFxVersion = "DOCKER|mcr.microsoft.com/dotnet/samples:aspnetapp",
-                                                                               IsAlwaysOn = true,
-                                                                               AppSettings = new List<AppServiceNameValuePair>
-                                                                               {
-                                                                                   new AppServiceNameValuePair { Name = "DOCKER_REGISTRY_SERVER_URL", Value = "https://index.docker.io" },
-                                                                                   new AppServiceNameValuePair { Name = "WEBSITES_ENABLE_APP_SERVICE_STORAGE", Value = "false" },
-                                                                                   new AppServiceNameValuePair { Name = "WEBSITES_CONTAINER_START_TIME_LIMIT", Value = "460" }
-                                                                               }
-                                                                           }
-                                                                       });
-
-                WebSiteResource = webSite;
-
+                WebSiteResource = await CreateWebApp(WindowsContainerAppServicePlanResource,
+                                                     new WebSiteData(ResourceGroupResource.Data.Location)
+                                                     {
+                                                         SiteConfig = new SiteConfigProperties
+                                                         {
+                                                             WindowsFxVersion = "DOCKER|mcr.microsoft.com/dotnet/samples:aspnetapp",
+                                                             IsAlwaysOn = true,
+                                                             AppSettings = new List<AppServiceNameValuePair>
+                                                             {
+                                                                 new AppServiceNameValuePair { Name = "DOCKER_REGISTRY_SERVER_URL", Value = "https://index.docker.io" },
+                                                                 new AppServiceNameValuePair { Name = "WEBSITES_ENABLE_APP_SERVICE_STORAGE", Value = "false" },
+                                                                 new AppServiceNameValuePair { Name = "WEBSITES_CONTAINER_START_TIME_LIMIT", Value = "460" }
+                                                             }
+                                                         }
+                                                     });
                 await AssertSetupSuccessAsync();
             }
 
@@ -176,39 +159,24 @@ namespace Calamari.AzureAppService.Tests
             CalamariVariables newVariables;
             readonly HttpClient client = new HttpClient();
 
-            // For some reason we are having issues creating these linux resources on Standard in EastUS
-            protected override string DefaultResourceGroupLocation => RandomAzureRegion.GetRandomRegionWithExclusions("eastus");
-
-            protected override async Task ConfigureTestResources(ResourceGroupResource resourceGroup)
+            public override async Task SetUp()
             {
-                var (_, webSite) = await CreateAppServicePlanAndWebApp(resourceGroup,
-                                                                       new AppServicePlanData(resourceGroup.Data.Location)
-                                                                       {
-                                                                           Kind = "linux",
-                                                                           IsReserved = true,
-                                                                           Sku = new AppServiceSkuDescription
-                                                                           {
-                                                                               Name = "P1V3",
-                                                                               Tier = "PremiumV3"
-                                                                           }
-                                                                       },
-                                                                       new WebSiteData(resourceGroup.Data.Location)
-                                                                       {
-                                                                           Kind = "app,linux,container",
-                                                                           SiteConfig = new SiteConfigProperties
-                                                                           {
-                                                                               LinuxFxVersion = "DOCKER|mcr.microsoft.com/dotnet/samples:aspnetapp",
-                                                                               IsAlwaysOn = true,
-                                                                               AppSettings = new List<AppServiceNameValuePair>
-                                                                               {
-                                                                                   new AppServiceNameValuePair { Name = "DOCKER_REGISTRY_SERVER_URL", Value = "https://index.docker.io" },
-                                                                                   new AppServiceNameValuePair { Name = "WEBSITES_ENABLE_APP_SERVICE_STORAGE", Value = "false" },
-                                                                                   new AppServiceNameValuePair { Name = "WEBSITES_CONTAINER_START_TIME_LIMIT", Value = "460" }
-                                                                               }
-                                                                           }
-                                                                       });
-
-                WebSiteResource = webSite;
+                WebSiteResource = await CreateWebApp(LinuxAppServicePlanResource,
+                                                     new WebSiteData(ResourceGroupResource.Data.Location)
+                                                     {
+                                                         Kind = "app,linux,container",
+                                                         SiteConfig = new SiteConfigProperties
+                                                         {
+                                                             LinuxFxVersion = "DOCKER|mcr.microsoft.com/dotnet/samples:aspnetapp",
+                                                             IsAlwaysOn = true,
+                                                             AppSettings = new List<AppServiceNameValuePair>
+                                                             {
+                                                                 new AppServiceNameValuePair { Name = "DOCKER_REGISTRY_SERVER_URL", Value = "https://index.docker.io" },
+                                                                 new AppServiceNameValuePair { Name = "WEBSITES_ENABLE_APP_SERVICE_STORAGE", Value = "false" },
+                                                                 new AppServiceNameValuePair { Name = "WEBSITES_CONTAINER_START_TIME_LIMIT", Value = "460" }
+                                                             }
+                                                         }
+                                                     });
 
                 await AssertSetupSuccessAsync();
             }

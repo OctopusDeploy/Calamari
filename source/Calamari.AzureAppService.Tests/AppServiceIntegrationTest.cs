@@ -30,22 +30,23 @@ namespace Calamari.AzureAppService.Tests
         protected string ClientSecret { get; private set; }
         protected string TenantId { get; private set; }
         protected string SubscriptionId { get; private set; }
-        protected string ResourceGroupName { get; private set; }
-        protected string ResourceGroupLocation { get; private set; }
 
-        protected string greeting = "Calamari";
+        protected string Greeting = "Calamari";
+        
         protected ArmClient ArmClient { get; private set; }
-
-        protected SubscriptionResource SubscriptionResource { get; private set; }
         protected ResourceGroupResource ResourceGroupResource { get; private set; }
+        protected string ResourceGroupName => ResourceGroupResource.Data.Name;
+        protected AppServicePlanResource LinuxAppServicePlanResource { get; private set; }
+
+        protected AppServicePlanResource WindowsAppServicePlanResource { get; private set; }
+        protected AppServicePlanResource WindowsContainerAppServicePlanResource { get; private set; }
         protected WebSiteResource WebSiteResource { get; private protected set; }
 
-        private readonly HttpClient client = new HttpClient();
-
-        protected virtual string DefaultResourceGroupLocation => RandomAzureRegion.GetRandomRegionWithExclusions();
+        readonly HttpClient client = new HttpClient();
 
         static readonly CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
-        readonly CancellationToken cancellationToken = CancellationTokenSource.Token;
+        protected readonly CancellationToken CancellationToken = CancellationTokenSource.Token;
+        SubscriptionResource subscriptionResource;
 
         [OneTimeSetUp]
         public async Task Setup()
@@ -55,15 +56,10 @@ namespace Calamari.AzureAppService.Tests
             var activeDirectoryEndpointBaseUri =
                 Environment.GetEnvironmentVariable(AccountVariables.ActiveDirectoryEndPoint) ?? DefaultVariables.ActiveDirectoryEndpoint;
 
-            ResourceGroupName = $"{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid():N}";
-
-            ClientId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId, cancellationToken);
-            ClientSecret = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword, cancellationToken);
-            TenantId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId, cancellationToken);
-            SubscriptionId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionId, cancellationToken);
-            ResourceGroupLocation = Environment.GetEnvironmentVariable("AZURE_NEW_RESOURCE_REGION") ?? DefaultResourceGroupLocation;
-
-            TestContext.Progress.WriteLine($"Resource group location: {ResourceGroupLocation}");
+            ClientId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId, CancellationToken);
+            ClientSecret = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword, CancellationToken);
+            TenantId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId, CancellationToken);
+            SubscriptionId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionId, CancellationToken);
 
             var servicePrincipalAccount = new AzureServicePrincipalAccount(SubscriptionId,
                                                                            ClientId,
@@ -83,12 +79,27 @@ namespace Calamari.AzureAppService.Tests
                                                                 });
 
             //create the resource group
-            SubscriptionResource = ArmClient.GetSubscriptionResource(SubscriptionResource.CreateResourceIdentifier(SubscriptionId));
-            var response = await SubscriptionResource
+            subscriptionResource = ArmClient.GetSubscriptionResource(SubscriptionResource.CreateResourceIdentifier(SubscriptionId));
+            ResourceGroupResource staticResourceGroupResource = await subscriptionResource.GetResourceGroupAsync("calamari-testing-static-rg", CancellationToken);
+            
+            WindowsAppServicePlanResource = await staticResourceGroupResource.GetAppServicePlanAsync("calamari-testing-static-win-plan", CancellationToken);
+            LinuxAppServicePlanResource = await staticResourceGroupResource.GetAppServicePlanAsync("calamari-testing-static-linux-plan", CancellationToken);
+            WindowsContainerAppServicePlanResource = await staticResourceGroupResource.GetAppServicePlanAsync("calamari-testing-static-container-win-plan", CancellationToken);
+            LinuxAppServicePlanResource = await staticResourceGroupResource.GetAppServicePlanAsync("calamari-testing-static-linux-plan", CancellationToken);
+        }
+
+        [SetUp]
+        public virtual async Task SetUp()
+        {
+            var name = $"{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid():N}";
+            
+            TestContext.WriteLine($"Creating resource group {ResourceGroupName}");
+            
+            var response = await subscriptionResource
                                  .GetResourceGroups()
                                  .CreateOrUpdateAsync(WaitUntil.Completed,
-                                                      ResourceGroupName,
-                                                      new ResourceGroupData(new AzureLocation(ResourceGroupLocation))
+                                                      name,
+                                                      new ResourceGroupData(AzureLocation.AustraliaEast)
                                                       {
                                                           Tags =
                                                           {
@@ -97,20 +108,16 @@ namespace Calamari.AzureAppService.Tests
                                                               // We keep them for 14 days just in case we need to do debugging/investigation
                                                               ["LifetimeInDays"] = "14"
                                                           }
-                                                      });
+                                                      },
+                                                      CancellationToken);
 
             ResourceGroupResource = response.Value;
-
-            await ConfigureTestResources(ResourceGroupResource);
         }
 
-        protected abstract Task ConfigureTestResources(ResourceGroupResource resourceGroup);
-
-        [OneTimeTearDown]
-        public virtual async Task Cleanup()
+        [TearDown]
+        public virtual async Task TearDown()
         {
-            await ArmClient.GetResourceGroupResource(ResourceGroupResource.CreateResourceIdentifier(SubscriptionId, ResourceGroupName))
-                           .DeleteAsync(WaitUntil.Started);
+            await ResourceGroupResource.DeleteAsync(WaitUntil.Started, cancellationToken: CancellationToken);
         }
 
         protected async Task AssertContent(string hostName, string actualText, string rootPath = null)
@@ -167,34 +174,19 @@ namespace Calamari.AzureAppService.Tests
             variables.Add(SpecialVariables.Action.Azure.WebAppName, WebSiteResource.Data.Name);
         }
 
-        protected async Task<(AppServicePlanResource, WebSiteResource)> CreateAppServicePlanAndWebApp(
-            ResourceGroupResource resourceGroup,
-            AppServicePlanData appServicePlanData = null,
-            WebSiteData webSiteData = null)
+        protected async Task<WebSiteResource> CreateWebApp(AppServicePlanResource appServicePlanResource, WebSiteData webSiteData = null)
         {
-            appServicePlanData ??= new AppServicePlanData(resourceGroup.Data.Location)
-            {
-                Sku = new AppServiceSkuDescription
-                {
-                    Name = "P1V3",
-                    Tier = "PremiumV3"
-                }
-            };
+            webSiteData ??= new WebSiteData(ResourceGroupResource.Data.Location);
+            webSiteData.AppServicePlanId = appServicePlanResource.Id;
+            
+            TestContext.WriteLine($"Creating web app {ResourceGroupName}");
+            var webSiteResponse = await ResourceGroupResource.GetWebSites()
+                                                             .CreateOrUpdateAsync(WaitUntil.Completed,
+                                                                                  ResourceGroupName,
+                                                                                  webSiteData,
+                                                                                  CancellationToken);
 
-            var servicePlanResponse = await resourceGroup.GetAppServicePlans()
-                                                         .CreateOrUpdateAsync(WaitUntil.Completed,
-                                                                              resourceGroup.Data.Name,
-                                                                              appServicePlanData);
-
-            webSiteData ??= new WebSiteData(resourceGroup.Data.Location);
-            webSiteData.AppServicePlanId = servicePlanResponse.Value.Id;
-
-            var webSiteResponse = await resourceGroup.GetWebSites()
-                                                     .CreateOrUpdateAsync(WaitUntil.Completed,
-                                                                          resourceGroup.Data.Name,
-                                                                          webSiteData);
-
-            return (servicePlanResponse.Value, webSiteResponse.Value);
+            return webSiteResponse.Value;
         }
 
         protected (string json, IEnumerable<AppSetting> setting) BuildAppSettingsJson(IEnumerable<(string name, string value, bool isSlotSetting)> settings)

@@ -23,11 +23,10 @@ namespace Calamari.AzureAppService.Tests
         AppServiceConfigurationDictionary existingSettings;
         ConnectionStringDictionary existingConnectionStrings;
 
-        protected override async Task ConfigureTestResources(ResourceGroupResource resourceGroup)
+        public override async Task SetUp()
         {
-            var (_, webSiteResource) = await CreateAppServicePlanAndWebApp(resourceGroup);
-            WebSiteResource = webSiteResource;
-
+            WebSiteResource = await CreateWebApp(WindowsAppServicePlanResource);
+            
             existingSettings = new AppServiceConfigurationDictionary
             {
                 Properties =
