@@ -93,7 +93,7 @@ namespace Calamari.AzureAppService.Tests
         {
             var name = $"{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid():N}";
             
-            TestContext.WriteLine($"Creating resource group {ResourceGroupName}");
+            TestContext.WriteLine($"Creating resource group {name}");
             
             var response = await subscriptionResource
                                  .GetResourceGroups()
