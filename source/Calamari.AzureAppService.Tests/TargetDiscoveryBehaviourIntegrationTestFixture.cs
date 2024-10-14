@@ -28,6 +28,8 @@ namespace Calamari.AzureAppService.Tests
 
         public override async Task SetUp()
         {
+            await base.SetUp();
+            
             // Call update on the web app and each slot without and tags
             // to reset it for each test.
             WebSiteResource = await CreateWebApp(WindowsAppServicePlanResource);

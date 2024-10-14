@@ -34,6 +34,8 @@ namespace Calamari.AzureAppService.Tests
 
             public override async Task SetUp()
             {
+                await base.SetUp();
+                
                 WebSiteResource = await CreateWebApp(WindowsContainerAppServicePlanResource,
                                                      new WebSiteData(ResourceGroupResource.Data.Location)
                                                      {
@@ -161,6 +163,8 @@ namespace Calamari.AzureAppService.Tests
 
             public override async Task SetUp()
             {
+                await base.SetUp();
+                
                 WebSiteResource = await CreateWebApp(LinuxAppServicePlanResource,
                                                      new WebSiteData(ResourceGroupResource.Data.Location)
                                                      {
