@@ -117,6 +117,9 @@ namespace Calamari.AzureAppService.Tests
         [TearDown]
         public virtual async Task TearDown()
         {
+            //we explicitly delete the website so we can set deleteEmptyServerFarm to be false (otherwise cleaning up the resource group _sometimes_ deletes the app service plan
+            await WebSiteResource.DeleteAsync(WaitUntil.Completed, deleteEmptyServerFarm: false, cancellationToken: CancellationToken);
+            //delete the rest of the resources
             await ResourceGroupResource.DeleteAsync(WaitUntil.Started, cancellationToken: CancellationToken);
         }
 
