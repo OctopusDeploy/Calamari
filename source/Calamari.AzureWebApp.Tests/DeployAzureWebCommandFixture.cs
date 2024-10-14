@@ -15,15 +15,12 @@ using Calamari.Azure.AppServices;
 using Calamari.CloudAccounts;
 using Calamari.Common.Features.Deployment;
 using Calamari.Common.Features.Scripts;
-using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using Calamari.Testing.Requirements;
 using FluentAssertions;
 using NUnit.Framework;
-using NUnit.Framework.Interfaces;
-using NUnit.Framework.Internal;
 using HttpClient = System.Net.Http.HttpClient;
 using KnownVariables = Calamari.Common.Plumbing.Variables.KnownVariables;
 
@@ -32,6 +29,7 @@ namespace Calamari.AzureWebApp.Tests
     [TestFixture]
     public class DeployAzureWebCommandFixture
     {
+        int webAppCount = 0;
         string clientId;
         string clientSecret;
         string tenantId;
@@ -45,6 +43,7 @@ namespace Calamari.AzureWebApp.Tests
 
         static readonly CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
         readonly CancellationToken cancellationToken = CancellationTokenSource.Token;
+        AppServicePlanResource servicePlanResource;
 
         [OneTimeSetUp]
         public async Task Setup()
@@ -80,6 +79,8 @@ namespace Calamari.AzureWebApp.Tests
             //create the resource group
             var subscriptionResource = armClient.GetSubscriptionResource(SubscriptionResource.CreateResourceIdentifier(subscriptionId));
 
+            TestContext.WriteLine($"Creating resource group {resourceGroupName}");
+            
             var response = await subscriptionResource
                                  .GetResourceGroups()
                                  .CreateOrUpdateAsync(WaitUntil.Completed,
@@ -106,6 +107,8 @@ namespace Calamari.AzureWebApp.Tests
                     Tier = "PremiumV3"
                 }
             };
+            
+            TestContext.WriteLine($"Creating app service plan {resourceGroupResource.Data.Name}");
 
             var servicePlanResponse = await resourceGroupResource.GetAppServicePlans()
                                                                  .CreateOrUpdateAsync(WaitUntil.Completed,
@@ -113,23 +116,44 @@ namespace Calamari.AzureWebApp.Tests
                                                                                       appServicePlanData,
                                                                                       cancellationToken);
 
+            servicePlanResource = servicePlanResponse.Value;
+        }
+
+        [SetUp]
+        public async Task SetUp()
+        {
             var webSiteData = new WebSiteData(resourceGroupResource.Data.Location)
             {
-                AppServicePlanId = servicePlanResponse.Value.Id
+                AppServicePlanId = servicePlanResource.Id
             };
+
+            var newCount = Interlocked.Increment(ref webAppCount);
+            var name = $"{resourceGroupResource.Data.Name}-{newCount}";
+            
+            TestContext.WriteLine($"Creating web site {name}");
 
             var webSiteResponse = await resourceGroupResource.GetWebSites()
                                                              .CreateOrUpdateAsync(WaitUntil.Completed,
-                                                                                  resourceGroupResource.Data.Name,
+                                                                                  name,
                                                                                   webSiteData,
                                                                                   cancellationToken);
 
             webSiteResource = webSiteResponse.Value;
         }
 
+        [TearDown]
+        public async Task TearDown()
+        {
+            TestContext.WriteLine($"Deleting Azure Web Site {webSiteResource.Data.Name}");
+            
+            await webSiteResource.DeleteAsync(WaitUntil.Started, deleteEmptyServerFarm: false, cancellationToken: cancellationToken);
+        }
+
         [OneTimeTearDown]
         public virtual async Task Cleanup()
         {
+            TestContext.WriteLine($"Deleting resource group {resourceGroupResource.Data.Name}");
+            
             await resourceGroupResource.DeleteAsync(WaitUntil.Started, cancellationToken: cancellationToken);
         }
 
