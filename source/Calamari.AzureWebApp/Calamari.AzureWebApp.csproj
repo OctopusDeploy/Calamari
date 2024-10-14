@@ -1,30 +1,54 @@
 <Project Sdk="Microsoft.NET.Sdk" ToolsVersion="15.0">
-  <PropertyGroup>
-    <AssemblyName>Calamari.AzureWebApp</AssemblyName>
-    <RootNamespace>Calamari.AzureWebApp</RootNamespace>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <IsPackable>false</IsPackable>
-    <OutputType>Exe</OutputType>
-    <TargetFrameworks>net462;net6.0</TargetFrameworks>
-    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
-    <LangVersion>8.0</LangVersion>
-  </PropertyGroup>
+    <PropertyGroup>
+        <AssemblyName>Calamari.AzureWebApp</AssemblyName>
+        <RootNamespace>Calamari.AzureWebApp</RootNamespace>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <IsPackable>false</IsPackable>
+        <OutputType>Exe</OutputType>
+        <TargetFrameworks>net462;net6.0</TargetFrameworks>
+        <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
+        <LangVersion>8.0</LangVersion>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Azure.Core" Version="1.42.0" />
-    <PackageReference Include="Azure.ResourceManager" Version="1.12.0" />
-    <PackageReference Include="Azure.ResourceManager.AppService" Version="1.2.0" />
-    <PackageReference Include="Azure.ResourceManager.DeploymentManager" Version="1.0.0-beta.3" />
-    <PackageReference Include="Microsoft.Identity.Client" Version="4.65.0" />
-  </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Azure.Core" Version="1.42.0"/>
+        <PackageReference Include="Azure.ResourceManager" Version="1.12.0"/>
+        <PackageReference Include="Azure.ResourceManager.AppService" Version="1.2.0"/>
+        <PackageReference Include="Azure.ResourceManager.DeploymentManager" Version="1.0.0-beta.3"/>
+        <PackageReference Include="Microsoft.Identity.Client" Version="4.65.0"/>
+    </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Calamari.AzureScripting\Calamari.AzureScripting.csproj" />
-    <ProjectReference Include="..\Calamari.Azure\Calamari.Azure.csproj" />
-    <ProjectReference Include="..\Calamari.CloudAccounts\Calamari.CloudAccounts.csproj" />
-  </ItemGroup>
-  
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net462' ">
-    <PackageReference Include="Microsoft.Web.Deployment" Version="4.0.5"/>
-  </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\Calamari.AzureScripting\Calamari.AzureScripting.csproj"/>
+        <ProjectReference Include="..\Calamari.Azure\Calamari.Azure.csproj"/>
+        <ProjectReference Include="..\Calamari.CloudAccounts\Calamari.CloudAccounts.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup Condition=" '$(TargetFramework)' == 'net462' ">
+        <PackageReference Include="Microsoft.Web.Deployment" Version="4.0.5"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Content Include="WebDeployV3/*.*">
+            <LinkBase>WebDeployV3</LinkBase>
+            <Pack>true</Pack>
+            <Visible>false</Visible>
+            <PackagePath>contentFiles/any/any/WebDeployV3/</PackagePath>
+            <PackageCopyToOutput>true</PackageCopyToOutput>
+            <PackageFlatten>false</PackageFlatten>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+    </ItemGroup>
+    
+    <Target Name="GetToolFiles">
+        <ItemGroup>
+            <WebDeployToolFiles Include="$(MSBuildProjectDirectory)/WebDeployV3/WebDeployV3.zip" Condition="'$(TargetFramework)' == 'net6.0'" />
+        </ItemGroup>
+    </Target>
+    <Target Name="CopyWebDeployToolFilesAfterBuild" AfterTargets="Build" DependsOnTargets="GetToolFiles">
+        <Unzip SourceFiles="@(WebDeployToolFiles)" DestinationFolder="$(OutDir)/WebDeployV3" />
+    </Target>
+    <Target Name="CopyWebDeployToolFilesAfterPublish" AfterTargets="Publish" DependsOnTargets="GetToolFiles">
+        <Unzip SourceFiles="@(WebDeployToolFiles)" DestinationFolder="$(PublishDir)/WebDeployV3" />
+    </Target>
 </Project>

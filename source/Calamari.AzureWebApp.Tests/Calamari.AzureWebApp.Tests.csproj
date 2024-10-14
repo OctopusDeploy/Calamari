@@ -1,25 +1,32 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <RootNamespace>Calamari.AzureWebApp.Tests</RootNamespace>
-    <AssemblyName>Calamari.AzureWebApp.Tests</AssemblyName>
-    <TargetFrameworks>net462;net6.0</TargetFrameworks>
-    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
-    <LangVersion>8.0</LangVersion>
-    <IsPackable>false</IsPackable>
-  </PropertyGroup>
-  <ItemGroup>
-    <PackageReference Include="nunit" Version="3.13.3" />
-    <PackageReference Include="NUnit3TestAdapter" Version="3.17.0" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.10.0" />
-    <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.25" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Calamari.AzureWebApp\Calamari.AzureWebApp.csproj" />
-    <ProjectReference Include="..\Calamari.Testing\Calamari.Testing.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Update="Packages\**\*">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
+    <PropertyGroup>
+        <RootNamespace>Calamari.AzureWebApp.Tests</RootNamespace>
+        <AssemblyName>Calamari.AzureWebApp.Tests</AssemblyName>
+        <TargetFrameworks>net462;net6.0</TargetFrameworks>
+        <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
+        <LangVersion>8.0</LangVersion>
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="nunit" Version="3.13.3"/>
+        <PackageReference Include="NUnit3TestAdapter" Version="3.17.0"/>
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.10.0"/>
+        <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.25"/>
+    </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\Calamari.AzureWebApp\Calamari.AzureWebApp.csproj"/>
+        <ProjectReference Include="..\Calamari.Testing\Calamari.Testing.csproj"/>
+    </ItemGroup>
+    <ItemGroup>
+        <None Update="Packages\**\*">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
+    <Target Name="CopyTools" AfterTargets="Build">
+        <ItemGroup>
+            <WebDeployToolFiles Condition="'$(TargetFramework)' == 'net6.0'" Include="$(MSBuildProjectDirectory)/../Calamari.AzureWebApp/WebDeployV3/WebDeployV3.zip" />
+        </ItemGroup>
+        <Unzip SourceFiles="@(WebDeployToolFiles)" DestinationFolder="$(OutDir)/WebDeployV3" SkipUnchangedFiles="true" Condition="'$(TargetFramework)' == 'net6.0'"/>
+        <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(PublishDir)/" Condition="'$(PublishDir)' != '' And '$(TargetFramework)' == 'net6.0'" />
+    </Target>
 </Project>

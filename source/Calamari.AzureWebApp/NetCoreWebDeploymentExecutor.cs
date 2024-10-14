@@ -111,33 +111,11 @@ namespace Calamari.AzureWebApp
             }
         }
 
-        string GetMsDeployExeFolder()
+        static string GetMsDeployExeFolder()
         {
-            var programFiles = Environment.ExpandEnvironmentVariables("%ProgramFiles(x86)%");
-            var msdeployFolderPath = Path.Combine("IIS", "Microsoft Web Deploy V3");
-
-            var exeFolder = Path.Combine(programFiles, msdeployFolderPath);
-
-            //we first look in the x86 path, if it's not there, we check in the x64 program files
-            if (!fileSystem.FileExists(Path.Combine(exeFolder, ToolName)))
-            {
-                // On 32-bit Operating Systems, this will return C:\Program Files
-                // On 64-bit Operating Systems - regardless of process bitness, this will return C:\Program Files
-                if (!Environment.Is64BitOperatingSystem || Environment.Is64BitProcess)
-                {
-                    programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
-                }
-                else
-                {
-                    // 32 bit process on a 64 bit OS can't use SpecialFolder.ProgramFiles to get the 64-bit program files folder
-                    programFiles = Environment.ExpandEnvironmentVariables("%ProgramW6432%");
-                }
-
-                //update the exeFolder with the new program files
-                exeFolder = Path.Combine(programFiles, msdeployFolderPath);
-            }
-
-            return exeFolder;
+            var myPath = typeof(NetCoreWebDeploymentExecutor).Assembly.Location;
+            var parent = Path.GetDirectoryName(myPath);
+            return Path.GetFullPath(Path.Combine(parent, "WebDeployV3"));
         }
 
         DeploymentChangeSummary ParseOutputXmlAndWriteTraces(string outputXmlFile)
