@@ -22,34 +22,24 @@ namespace Calamari.AzureAppService.Tests
         readonly IWebProxy originalProxy = WebRequest.DefaultWebProxy;
         readonly string originalProxyHost = Environment.GetEnvironmentVariable(EnvironmentVariables.TentacleProxyHost);
         readonly string originalProxyPort = Environment.GetEnvironmentVariable(EnvironmentVariables.TentacleProxyPort);
-
-        protected override async Task ConfigureTestResources(ResourceGroupResource resourceGroup)
+        
+        public override async Task SetUp()
         {
-            var (_, webSiteResource) = await CreateAppServicePlanAndWebApp(resourceGroup,
-                                                                           new AppServicePlanData(resourceGroup.Data.Location)
-                                                                           {
-                                                                               Sku = new AppServiceSkuDescription
-                                                                               {
-                                                                                   Name = "B1",
-                                                                                   Tier = "Basic"
-                                                                               }
-                                                                           },
-                                                                           new WebSiteData(resourceGroup.Data.Location)
-                                                                           {
-                                                                               SiteConfig = new SiteConfigProperties
-                                                                               {
-                                                                                   NetFrameworkVersion = "v6.0"
-                                                                               }
-                                                                           });
-            WebSiteResource = webSiteResource;
+            WebSiteResource = await CreateWebApp(WindowsAppServicePlanResource,
+                                                 new WebSiteData(ResourceGroupResource.Data.Location)
+                                                 {
+                                                     SiteConfig = new SiteConfigProperties
+                                                     {
+                                                         NetFrameworkVersion = "v6.0"
+                                                     }
+                                                 });
         }
 
-        public override async Task Cleanup()
+        [OneTimeTearDown]
+        public void Cleanup()
         {
             RestoreLocalEnvironmentProxySettings();
             RestoreCiEnvironmentProxySettings();
-
-            await base.Cleanup();
         }
 
         [Test]

@@ -5,14 +5,12 @@ using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
 using Azure;
 using Azure.ResourceManager.AppService;
 using Azure.ResourceManager.AppService.Models;
-using Azure.ResourceManager.Resources;
 using Azure.ResourceManager.Storage;
 using Azure.ResourceManager.Storage.Models;
 using Calamari.AzureAppService.Azure;
@@ -32,14 +30,9 @@ namespace Calamari.AzureAppService.Tests
         [TestFixture]
         public class WhenUsingAWindowsDotNetAppService : AppServiceIntegrationTest
         {
-            private AppServicePlanResource appServicePlanResource;
-
-            protected override async Task ConfigureTestResources(ResourceGroupResource resourceGroup)
+            public override async Task SetUp()
             {
-                var (appServicePlan, webSite) = await CreateAppServicePlanAndWebApp(resourceGroup);
-
-                appServicePlanResource = appServicePlan;
-                WebSiteResource = webSite;
+                WebSiteResource = await CreateWebApp(WindowsAppServicePlanResource);
             }
 
             [Test]
@@ -55,7 +48,7 @@ namespace Calamari.AzureAppService.Tests
                                                      })
                                         .Execute();
 
-                await AssertContent(WebSiteResource.Data.DefaultHostName, $"Hello {greeting}");
+                await AssertContent(WebSiteResource.Data.DefaultHostName, $"Hello {Greeting}");
             }
 
             [Test]
@@ -72,7 +65,7 @@ namespace Calamari.AzureAppService.Tests
                                                      })
                                         .Execute();
 
-                await AssertContent(WebSiteResource.Data.DefaultHostName, $"Hello {greeting}");
+                await AssertContent(WebSiteResource.Data.DefaultHostName, $"Hello {Greeting}");
             }
 
             [Test]
@@ -95,14 +88,14 @@ namespace Calamari.AzureAppService.Tests
                                                      })
                                         .Execute();
 
-                await AssertContent(WebSiteResource.Data.DefaultHostName, $"Hello {greeting}");
+                await AssertContent(WebSiteResource.Data.DefaultHostName, $"Hello {Greeting}");
             }
 
             [Test]
             public async Task CanDeployWebAppZip_ToDeploymentSlot()
             {
                 const string slotName = "stage";
-                greeting = "stage";
+                Greeting = "stage";
 
                 (string packagePath, string packageName, string packageVersion) packageinfo;
 
@@ -130,7 +123,7 @@ namespace Calamari.AzureAppService.Tests
                                                      })
                                         .Execute();
 
-                await AssertContent(slotResource.Data.DefaultHostName, $"Hello {greeting}");
+                await AssertContent(slotResource.Data.DefaultHostName, $"Hello {Greeting}");
             }
 
             [Test]
@@ -147,7 +140,7 @@ namespace Calamari.AzureAppService.Tests
                                         .Execute();
 
                 //await new AzureAppServiceBehaviour(new InMemoryLog()).Execute(runningContext);
-                await AssertContent(WebSiteResource.Data.DefaultHostName, $"Hello {greeting}");
+                await AssertContent(WebSiteResource.Data.DefaultHostName, $"Hello {Greeting}");
             }
 
             [Test]
@@ -171,7 +164,7 @@ namespace Calamari.AzureAppService.Tests
                                         .Execute();
 
                 //await new AzureAppServiceBehaviour(new InMemoryLog()).Execute(runningContext);
-                await AssertContent(WebSiteResource.Data.DefaultHostName, $"Hello {greeting}");
+                await AssertContent(WebSiteResource.Data.DefaultHostName, $"Hello {Greeting}");
             }
 
             [Test]
@@ -181,10 +174,10 @@ namespace Calamari.AzureAppService.Tests
                 // Need java installed on the test runner (MJH 2022-05-06: is this actually true? I don't see why we'd need java on the test runner)
                 var javaSite = await ResourceGroupResource.GetWebSites()
                                                           .CreateOrUpdateAsync(WaitUntil.Completed,
-                                                                               $"{ResourceGroupName}-java",
+                                                                               $"{WebSiteResource.Data.Name}-java",
                                                                                new WebSiteData(ResourceGroupResource.Data.Location)
                                                                                {
-                                                                                   AppServicePlanId = appServicePlanResource.Data.Id,
+                                                                                   AppServicePlanId = WindowsAppServicePlanResource.Data.Id,
                                                                                    SiteConfig = new SiteConfigProperties
                                                                                    {
                                                                                        JavaVersion = "1.8",
@@ -203,7 +196,7 @@ namespace Calamari.AzureAppService.Tests
                 packageinfo.packagePath = Path.Combine(assemblyFileInfo.Directory.FullName, "sample.1.0.0.war");
                 packageinfo.packageVersion = "1.0.0";
                 packageinfo.packageName = "sample";
-                greeting = "java";
+                Greeting = "java";
 
                 await CommandTestBuilder.CreateAsync<DeployAzureAppServiceCommand, Program>()
                                         .WithArrange(context =>
@@ -214,15 +207,15 @@ namespace Calamari.AzureAppService.Tests
                                                          context.Variables[PackageVariables.SubstituteInFilesTargets] = "test.jsp";
                                                      })
                                         .Execute();
-                
+
                 await DoWithRetries(3,
                                     async () =>
                                     {
-                                        await AssertContent(javaSite.Value.Data.DefaultHostName, $"Hello! {greeting}", "test.jsp");
+                                        await AssertContent(javaSite.Value.Data.DefaultHostName, $"Hello! {Greeting}", "test.jsp");
                                     },
                                     secondsBetweenRetries: 10);
             }
-            
+
             [Test]
             public async Task CanDeployJarPackage()
             {
@@ -232,7 +225,7 @@ namespace Calamari.AzureAppService.Tests
                                                                                $"{ResourceGroupName}-java",
                                                                                new WebSiteData(ResourceGroupResource.Data.Location)
                                                                                {
-                                                                                   AppServicePlanId = appServicePlanResource.Data.Id,
+                                                                                   AppServicePlanId = WindowsAppServicePlanResource.Data.Id,
                                                                                    SiteConfig = new SiteConfigProperties
                                                                                    {
                                                                                        JavaVersion = "1.8",
@@ -251,8 +244,8 @@ namespace Calamari.AzureAppService.Tests
                 packageinfo.packagePath = Path.Combine(assemblyFileInfo.Directory.FullName, "sample4-1.0.0.jar");
                 packageinfo.packageVersion = "1.0.0";
                 packageinfo.packageName = "sample4";
-                greeting = "java";
-                
+                Greeting = "java";
+
                 var commandResult = await CommandTestBuilder.CreateAsync<DeployAzureAppServiceCommand, Program>()
                                         .WithArrange(context =>
                                                      {
@@ -261,7 +254,7 @@ namespace Calamari.AzureAppService.Tests
                                                          context.Variables[SpecialVariables.Action.Azure.WebAppName] = javaSite.Value.Data.Name;
                                                      })
                                         .Execute();
-                
+
                 commandResult.Outcome.Should().Be(TestExecutionOutcome.Successful);
             }
 
@@ -331,11 +324,10 @@ namespace Calamari.AzureAppService.Tests
                 return packageinfo;
             }
 
-
             async Task<(string packagePath, string packageName, string packageVersion)> PrepareNugetPackage()
             {
                 (string packagePath, string packageName, string packageVersion) packageinfo;
-                greeting = "nuget";
+                Greeting = "nuget";
 
                 var tempPath = TemporaryDirectory.Create();
                 new DirectoryInfo(tempPath.DirectoryPath).CreateSubdirectory("AzureZipDeployPackage");
@@ -369,7 +361,6 @@ namespace Calamari.AzureAppService.Tests
                 return packageinfo;
             }
 
-
             private static (string packagePath, string packageName, string packageVersion) PrepareFunctionAppZipPackage()
             {
                 (string packagePath, string packageName, string packageVersion) packageInfo;
@@ -387,36 +378,28 @@ namespace Calamari.AzureAppService.Tests
             private void AddVariables(CommandTestBuilderContext context)
             {
                 AddAzureVariables(context);
-                context.Variables.Add("Greeting", greeting);
+                context.Variables.Add("Greeting", Greeting);
                 context.Variables.Add(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.SubstituteInFiles);
                 context.Variables.Add(PackageVariables.SubstituteInFilesTargets, "index.html");
                 context.Variables.Add(SpecialVariables.Action.Azure.DeploymentType, "ZipDeploy");
-                
+
                 var settings = BuildAppSettingsJson(new[]
                 {
                     ("WEBSITES_CONTAINER_START_TIME_LIMIT", "460", false),
                     ("WEBSITE_SCM_ALWAYS_ON_ENABLED", "true", false)
                 });
-                
-                context.Variables[SpecialVariables.Action.Azure.AppSettings] =  settings.json;
-                context.Variables[SpecialVariables.Action.Azure.AsyncZipDeploymentTimeout] =  "3";
+
+                context.Variables[SpecialVariables.Action.Azure.AppSettings] = settings.json;
+                context.Variables[SpecialVariables.Action.Azure.AsyncZipDeploymentTimeout] = "3";
             }
         }
 
         [TestFixture]
         public class WhenUsingALinuxAppService : AppServiceIntegrationTest
         {
-            // For some reason we are having issues creating these linux resources on Standard in EastUS
-            protected override string DefaultResourceGroupLocation => RandomAzureRegion.GetRandomRegionWithExclusions("eastus");
-            
-            static readonly CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
-            readonly CancellationToken cancellationToken = CancellationTokenSource.Token;
-            AppServicePlanResource appServicePlanResource;
-
-            protected override async Task ConfigureTestResources(ResourceGroupResource resourceGroup)
+            public override async Task SetUp()
             {
                 var storageAccountName = ResourceGroupName.Replace("-", "").Substring(0, 20);
-
                 var storageAccountResponse = await ResourceGroupResource
                                                    .GetStorageAccounts()
                                                    .CreateOrUpdateAsync(WaitUntil.Completed,
@@ -427,56 +410,33 @@ namespace Calamari.AzureAppService.Tests
                                                                                                                 ResourceGroupResource.Data.Location)
                                                                        );
 
-                var keys = await storageAccountResponse
-                                 .Value
+                var storageAccountResource = storageAccountResponse.Value;
+
+                var keys = await storageAccountResource
                                  .GetKeysAsync()
                                  .ToListAsync();
 
-                var linuxAppServicePlan = await resourceGroup.GetAppServicePlans()
-                                                             .CreateOrUpdateAsync(WaitUntil.Completed,
-                                                                                  $"{resourceGroup.Data.Name}-linux-asp",
-                                                                                  new AppServicePlanData(resourceGroup.Data.Location)
-                                                                                  {
-                                                                                      Sku = new AppServiceSkuDescription
-                                                                                      {
-                                                                                          Name = "P1V3",
-                                                                                          Tier = "PremiumV3"
-                                                                                      },
-                                                                                      Kind = "linux",
-                                                                                      IsReserved = true
-                                                                                  });
-
-                await linuxAppServicePlan.WaitForCompletionAsync(cancellationToken);
-
-                appServicePlanResource = linuxAppServicePlan.Value;
-
-                var linuxWebSiteResponse = await resourceGroup.GetWebSites()
-                                                              .CreateOrUpdateAsync(WaitUntil.Completed,
-                                                                                   $"{resourceGroup.Data.Name}-linux",
-                                                                                   new WebSiteData(resourceGroup.Data.Location)
-                                                                                   {
-                                                                                       AppServicePlanId = linuxAppServicePlan.Value.Id,
-                                                                                       Kind = "functionapp,linux",
-                                                                                       IsReserved = true,
-                                                                                       SiteConfig = new SiteConfigProperties
-                                                                                       {
-                                                                                           IsAlwaysOn = true,
-                                                                                           LinuxFxVersion = "DOTNET|6.0",
-                                                                                           Use32BitWorkerProcess = true,
-                                                                                           AppSettings = new List<AppServiceNameValuePair>
-                                                                                           {
-                                                                                               new AppServiceNameValuePair { Name = "FUNCTIONS_WORKER_RUNTIME", Value = "dotnet" },
-                                                                                               new AppServiceNameValuePair { Name = "FUNCTIONS_EXTENSION_VERSION", Value = "~4" },
-                                                                                               new AppServiceNameValuePair { Name = "AzureWebJobsStorage", Value = $"DefaultEndpointsProtocol=https;AccountName={storageAccountName};AccountKey={keys.First().Value};EndpointSuffix=core.windows.net" },
-                                                                                               new AppServiceNameValuePair { Name = "WEBSITES_CONTAINER_START_TIME_LIMIT", Value = "460" },
-                                                                                               new AppServiceNameValuePair { Name = "WEBSITE_SCM_ALWAYS_ON_ENABLED", Value = "true"}
-                                                                                           }
-                                                                                       }
-                                                                                   });
-
-                await linuxWebSiteResponse.WaitForCompletionAsync(cancellationToken);
-                
-                WebSiteResource = linuxWebSiteResponse.Value;
+                WebSiteResource = await CreateWebApp(LinuxAppServicePlanResource,
+                                               new WebSiteData(ResourceGroupResource.Data.Location)
+                                               {
+                                                   AppServicePlanId = LinuxAppServicePlanResource.Id,
+                                                   Kind = "functionapp,linux",
+                                                   IsReserved = true,
+                                                   SiteConfig = new SiteConfigProperties
+                                                   {
+                                                       IsAlwaysOn = true,
+                                                       LinuxFxVersion = "DOTNET|6.0",
+                                                       Use32BitWorkerProcess = true,
+                                                       AppSettings = new List<AppServiceNameValuePair>
+                                                       {
+                                                           new AppServiceNameValuePair { Name = "FUNCTIONS_WORKER_RUNTIME", Value = "dotnet" },
+                                                           new AppServiceNameValuePair { Name = "FUNCTIONS_EXTENSION_VERSION", Value = "~4" },
+                                                           new AppServiceNameValuePair { Name = "AzureWebJobsStorage", Value = $"DefaultEndpointsProtocol=https;AccountName={storageAccountName};AccountKey={keys.First().Value};EndpointSuffix=core.windows.net" },
+                                                           new AppServiceNameValuePair { Name = "WEBSITES_CONTAINER_START_TIME_LIMIT", Value = "460" },
+                                                           new AppServiceNameValuePair { Name = "WEBSITE_SCM_ALWAYS_ON_ENABLED", Value = "true" }
+                                                       }
+                                                   }
+                                               });
             }
 
             [Test]
@@ -499,8 +459,8 @@ namespace Calamari.AzureAppService.Tests
                                     async () =>
                                     {
                                         await AssertContent(WebSiteResource.Data.DefaultHostName,
-                                                            rootPath: $"api/HttpExample?name={greeting}",
-                                                            actualText: $"Hello, {greeting}");
+                                                            rootPath: $"api/HttpExample?name={Greeting}",
+                                                            actualText: $"Hello, {Greeting}");
                                     },
                                     secondsBetweenRetries: 10);
             }
@@ -529,12 +489,11 @@ namespace Calamari.AzureAppService.Tests
                                     async () =>
                                     {
                                         await AssertContent(WebSiteResource.Data.DefaultHostName,
-                                                            rootPath: $"api/HttpExample?name={greeting}",
-                                                            actualText: $"Hello, {greeting}");
+                                                            rootPath: $"api/HttpExample?name={Greeting}",
+                                                            actualText: $"Hello, {Greeting}");
                                     },
                                     secondsBetweenRetries: 10);
             }
-
 
             [Test]
             public async Task CanDeployZip_ToLinuxFunctionApp_WithAsyncDeploymentAndPolling()
@@ -563,12 +522,12 @@ namespace Calamari.AzureAppService.Tests
                                     async () =>
                                     {
                                         await AssertContent(WebSiteResource.Data.DefaultHostName,
-                                                            rootPath: $"api/HttpExample?name={greeting}",
-                                                            actualText: $"Hello, {greeting}");
+                                                            rootPath: $"api/HttpExample?name={Greeting}",
+                                                            actualText: $"Hello, {Greeting}");
                                     },
                                     secondsBetweenRetries: 10);
             }
-            
+
             [Test]
             public async Task CanDeployJarPackage()
             {
@@ -578,7 +537,7 @@ namespace Calamari.AzureAppService.Tests
                                                                                $"{ResourceGroupName}-java",
                                                                                new WebSiteData(ResourceGroupResource.Data.Location)
                                                                                {
-                                                                                   AppServicePlanId = appServicePlanResource.Data.Id,
+                                                                                   AppServicePlanId = WebSiteResource.Data.Id,
                                                                                    SiteConfig = new SiteConfigProperties
                                                                                    {
                                                                                        IsAlwaysOn = true,
@@ -597,8 +556,8 @@ namespace Calamari.AzureAppService.Tests
                 packageinfo.packagePath = Path.Combine(assemblyFileInfo.Directory.FullName, "sample4-1.0.0.jar");
                 packageinfo.packageVersion = "1.0.0";
                 packageinfo.packageName = "sample4";
-                greeting = "java";
-                
+                Greeting = "java";
+
                 var commandResult = await CommandTestBuilder.CreateAsync<DeployAzureAppServiceCommand, Program>()
                                         .WithArrange(context =>
                                                      {
@@ -607,7 +566,7 @@ namespace Calamari.AzureAppService.Tests
                                                          context.Variables[SpecialVariables.Action.Azure.WebAppName] = javaSite.Value.Data.Name;
                                                      })
                                         .Execute();
-                
+
                 commandResult.Outcome.Should().Be(TestExecutionOutcome.Successful);
             }
 
@@ -636,14 +595,14 @@ namespace Calamari.AzureAppService.Tests
             {
                 AddAzureVariables(context);
                 context.Variables.Add(SpecialVariables.Action.Azure.DeploymentType, "ZipDeploy");
-                
+
                 var settings = BuildAppSettingsJson(new[]
                 {
                     ("WEBSITES_CONTAINER_START_TIME_LIMIT", "460", false),
                     ("WEBSITE_SCM_ALWAYS_ON_ENABLED", "true", false)
                 });
-                
-                context.Variables[SpecialVariables.Action.Azure.AppSettings] =  settings.json;
+
+                context.Variables[SpecialVariables.Action.Azure.AppSettings] = settings.json;
             }
         }
     }
