@@ -137,7 +137,7 @@ namespace Calamari.AzureAppService.Tests
                 var imageVersion = newVariables.Get(SpecialVariables.Action.Package.PackageVersion) ?? "latest";
                 
                 var config = await ArmClient.GetSiteConfigDataAsync(targetSite);
-                Assert.AreEqual($"DOCKER|{imageName}:{imageVersion}", config.LinuxFxVersion);
+                Assert.AreEqual($"DOCKER|{imageName}:{imageVersion}", config.WindowsFxVersion);
 
                 var appSettings = await ArmClient.GetAppSettingsListAsync(targetSite);
                 Assert.AreEqual("https://" + registryUrl, appSettings.FirstOrDefault(app => app.Name == "DOCKER_REGISTRY_SERVER_URL")?.Value);
