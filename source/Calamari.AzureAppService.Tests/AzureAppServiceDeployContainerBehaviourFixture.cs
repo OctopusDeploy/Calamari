@@ -135,9 +135,9 @@ namespace Calamari.AzureAppService.Tests
                 var imageName = newVariables.Get(SpecialVariables.Action.Package.PackageId);
                 var registryUrl = newVariables.Get(SpecialVariables.Action.Package.Registry);
                 var imageVersion = newVariables.Get(SpecialVariables.Action.Package.PackageVersion) ?? "latest";
-
-                var config = await WebSiteResource.GetWebSiteConfig().GetAsync();
-                Assert.AreEqual($@"DOCKER|{imageName}:{imageVersion}", config.Value.Data.WindowsFxVersion);
+                
+                var config = await ArmClient.GetSiteConfigDataAsync(targetSite);
+                Assert.AreEqual($"DOCKER|{imageName}:{imageVersion}", config.LinuxFxVersion);
 
                 var appSettings = await ArmClient.GetAppSettingsListAsync(targetSite);
                 Assert.AreEqual("https://" + registryUrl, appSettings.FirstOrDefault(app => app.Name == "DOCKER_REGISTRY_SERVER_URL")?.Value);
@@ -267,8 +267,8 @@ namespace Calamari.AzureAppService.Tests
                 var registryUrl = newVariables.Get(SpecialVariables.Action.Package.Registry);
                 var imageVersion = newVariables.Get(SpecialVariables.Action.Package.PackageVersion) ?? "latest";
 
-                var config = await ArmClient.GetWebSiteConfigResource(targetSite.CreateResourceIdentifier()).GetAsync();
-                Assert.AreEqual($@"DOCKER|{imageName}:{imageVersion}", config.Value.Data.LinuxFxVersion);
+                var config = await ArmClient.GetSiteConfigDataAsync(targetSite);
+                Assert.AreEqual($"DOCKER|{imageName}:{imageVersion}", config.LinuxFxVersion);
 
                 var appSettings = await ArmClient.GetAppSettingsListAsync(targetSite);
                 Assert.AreEqual("https://" + registryUrl, appSettings.FirstOrDefault(app => app.Name == "DOCKER_REGISTRY_SERVER_URL")?.Value);
