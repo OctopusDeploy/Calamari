@@ -114,7 +114,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             var exception = Assert.Throws<CommandException>(() => downloader.DownloadPackage("octopus-echo",
                 new SemanticVersion("1.1"), "docker-feed",
                 new Uri(AuthFeedUri),
-                FeedUsername, "SuperDooper",
+                "Nonexistantuser", "SuperDooper",
                 true, 
                 //we don't want to perform too many of these otherwise jfrog / artifactory gets sad at us
                 2,
