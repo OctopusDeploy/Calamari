@@ -18,13 +18,12 @@ namespace Calamari.AzureAppService.Tests
     [TestFixture]
     public class TargetDiscoveryBehaviourIntegrationTestFixture : AppServiceIntegrationTest
     {
-        private readonly string appName = Guid.NewGuid().ToString();
-        private readonly List<string> slotNames = new List<string> { "blue", "green" };
-        private static readonly string Type = "Azure";
-        private static readonly string AuthenticationMethod = "ServicePrincipal";
-        private static readonly string AccountId = "Accounts-1";
-        private static readonly string Role = "my-azure-app-role";
-        private static readonly string EnvironmentName = "dev";
+        readonly List<string> slotNames = new List<string> { "blue", "green" };
+        const string Type = "Azure";
+        const string AuthenticationMethod = "ServicePrincipal";
+        const string AccountId = "Accounts-1";
+        const string Role = "my-azure-app-role";
+        const string EnvironmentName = "dev";
 
         public override async Task SetUp()
         {
@@ -63,7 +62,7 @@ namespace Calamari.AzureAppService.Tests
 
                                                   // Assert
                                                   var serviceMessageToCreateWebAppTarget = TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(ResourceGroupName,
-                                                                                                                                                           appName,
+                                                                                                                                                           WebSiteResource.Data.Name,
                                                                                                                                                            AccountId,
                                                                                                                                                            Role,
                                                                                                                                                            null,
@@ -99,7 +98,7 @@ namespace Calamari.AzureAppService.Tests
 
             // Assert
             var serviceMessageToCreateWebAppTarget = TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(ResourceGroupName,
-                                                                                                                     appName,
+                                                                                                                     WebSiteResource.Data.Name,
                                                                                                                      AccountId,
                                                                                                                      "a-different-role",
                                                                                                                      null,
@@ -133,7 +132,7 @@ namespace Calamari.AzureAppService.Tests
                                                   await sut.Execute(context);
 
                                                   var serviceMessageToCreateWebAppTarget = TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(ResourceGroupName,
-                                                                                                                                                           appName,
+                                                                                                                                                           WebSiteResource.Data.Name,
                                                                                                                                                            AccountId,
                                                                                                                                                            Role,
                                                                                                                                                            null,
@@ -144,7 +143,7 @@ namespace Calamari.AzureAppService.Tests
                                                   foreach (var slotName in slotNames)
                                                   {
                                                       var serviceMessageToCreateTargetForSlot = TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(ResourceGroupName,
-                                                                                                                                                                appName,
+                                                                                                                                                                WebSiteResource.Data.Name,
                                                                                                                                                                 AccountId,
                                                                                                                                                                 Role,
                                                                                                                                                                 null,
@@ -183,7 +182,7 @@ namespace Calamari.AzureAppService.Tests
                                                   await sut.Execute(context);
 
                                                   var serviceMessageToCreateWebAppTarget = TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(ResourceGroupName,
-                                                                                                                                                           appName,
+                                                                                                                                                           WebSiteResource.Data.Name,
                                                                                                                                                            AccountId,
                                                                                                                                                            Role,
                                                                                                                                                            null,
@@ -194,7 +193,7 @@ namespace Calamari.AzureAppService.Tests
                                                   foreach (var slotName in slotNames)
                                                   {
                                                       var serviceMessageToCreateTargetForSlot = TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(ResourceGroupName,
-                                                                                                                                                                appName,
+                                                                                                                                                                WebSiteResource.Data.Name,
                                                                                                                                                                 AccountId,
                                                                                                                                                                 Role,
                                                                                                                                                                 null,
@@ -238,7 +237,7 @@ namespace Calamari.AzureAppService.Tests
 
                                                   var serviceMessageToCreateWebAppTarget =
                                                       TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(ResourceGroupName,
-                                                                                                                      appName,
+                                                                                                                      WebSiteResource.Data.Name,
                                                                                                                       AccountId,
                                                                                                                       Role,
                                                                                                                       null,
@@ -252,7 +251,7 @@ namespace Calamari.AzureAppService.Tests
                                                   {
                                                       var serviceMessageToCreateTargetForSlot =
                                                           TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(ResourceGroupName,
-                                                                                                                          appName,
+                                                                                                                          WebSiteResource.Data.Name,
                                                                                                                           AccountId,
                                                                                                                           Role,
                                                                                                                           null,
@@ -306,7 +305,7 @@ namespace Calamari.AzureAppService.Tests
             string targetDiscoveryContext = $@"{{
     ""scope"": {{
         ""spaceName"": ""default"",
-        ""environmentName"": ""{EnvironmentName}"",
+        ""EnvironmentName"": ""{EnvironmentName}"",
         ""projectName"": ""my-test-project"",
         ""tenantName"": null,
         ""roles"": [""{Role}""]

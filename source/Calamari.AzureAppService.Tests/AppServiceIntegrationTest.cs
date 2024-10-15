@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,7 +9,6 @@ using Azure;
 using Azure.Core;
 using Azure.ResourceManager;
 using Azure.ResourceManager.AppService;
-using Azure.ResourceManager.AppService.Models;
 using Azure.ResourceManager.Resources;
 using Calamari.Azure;
 using Calamari.AzureAppService.Azure;
@@ -91,9 +90,10 @@ namespace Calamari.AzureAppService.Tests
         [SetUp]
         public virtual async Task SetUp()
         {
+            var sw = Stopwatch.StartNew();
             var name = $"{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid():N}";
             
-            TestContext.WriteLine($"Creating resource group {name}");
+            TestContext.WriteLine($"Creating resource group '{name}'");
             
             var response = await subscriptionResource
                                  .GetResourceGroups()
@@ -112,22 +112,32 @@ namespace Calamari.AzureAppService.Tests
                                                       CancellationToken);
 
             ResourceGroupResource = response.Value;
+
+            sw.Stop();
+            TestContext.WriteLine($"Created resource group '{name}' in {sw.Elapsed:g}");
         }
 
         [TearDown]
         public virtual async Task TearDown()
         {
-            //we explicitly delete the website so we can set deleteEmptyServerFarm to be false (otherwise cleaning up the resource group _sometimes_ deletes the app service plan
+            var sw = Stopwatch.StartNew();
+            TestContext.WriteLine($"Deleting web app '{WebSiteResource.Data.Name}'");
+            
+            //we explicitly delete the website so we can set deleteEmptyServerFarm to be false (otherwise cleaning up the resource group _sometimes_ deletes the app service plan)
             await WebSiteResource.DeleteAsync(WaitUntil.Completed, deleteEmptyServerFarm: false, cancellationToken: CancellationToken);
+            sw.Stop();
+            TestContext.WriteLine($"Deleted web app '{WebSiteResource.Data.Name}' in {sw.Elapsed:g}");
+            
+            TestContext.WriteLine($"Deleting resource group '{ResourceGroupResource.Data.Name}' (with no waiting)");
             //delete the rest of the resources
             await ResourceGroupResource.DeleteAsync(WaitUntil.Started, cancellationToken: CancellationToken);
         }
 
         protected async Task AssertContent(string hostName, string actualText, string rootPath = null)
         {
-            var response = await RetryPolicies.TestsTransientHttpErrorsPolicy.ExecuteAsync(async context =>
+            var response = await RetryPolicies.TestsTransientHttpErrorsPolicy.ExecuteAsync(async (context, ct) =>
                                                                                            {
-                                                                                               var r = await client.GetAsync($"https://{hostName}/{rootPath}");
+                                                                                               var r = await client.GetAsync($"https://{hostName}/{rootPath}", CancellationToken);
                                                                                                if (!r.IsSuccessStatusCode)
                                                                                                {
                                                                                                    var messageContent = await r.Content.ReadAsStringAsync();
@@ -137,7 +147,8 @@ namespace Calamari.AzureAppService.Tests
                                                                                                r.EnsureSuccessStatusCode();
                                                                                                return r;
                                                                                            },
-                                                                                           contextData: new Dictionary<string, object>());
+                                                                                           contextData: new Dictionary<string, object>(),
+                                                                                           cancellationToken: CancellationToken);
 
             var result = await response.Content.ReadAsStringAsync();
             result.Should().Contain(actualText);
@@ -179,15 +190,21 @@ namespace Calamari.AzureAppService.Tests
 
         protected async Task<WebSiteResource> CreateWebApp(AppServicePlanResource appServicePlanResource, WebSiteData webSiteData = null)
         {
+            var sw = Stopwatch.StartNew();
+            
             webSiteData ??= new WebSiteData(ResourceGroupResource.Data.Location);
             webSiteData.AppServicePlanId = appServicePlanResource.Id;
             
-            TestContext.WriteLine($"Creating web app {ResourceGroupName}");
+            TestContext.WriteLine($"Creating web app '{ResourceGroupName}'");
             var webSiteResponse = await ResourceGroupResource.GetWebSites()
                                                              .CreateOrUpdateAsync(WaitUntil.Completed,
                                                                                   ResourceGroupName,
                                                                                   webSiteData,
                                                                                   CancellationToken);
+            
+            
+            sw.Stop();
+            TestContext.WriteLine($"Created web app '{ResourceGroupName}' in {sw.Elapsed:g}");
 
             return webSiteResponse.Value;
         }
