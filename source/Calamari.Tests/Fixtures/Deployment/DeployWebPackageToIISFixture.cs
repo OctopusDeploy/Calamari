@@ -1,5 +1,4 @@
-﻿#if IIS_SUPPORT
-using System;
+﻿using System;
 using System.IO;
 using System.Linq;
 using System.Security.AccessControl;
@@ -7,7 +6,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Deployment;
+using Calamari.Integration.Certificates;
 using Calamari.Integration.Iis;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Deployment.Packages;
@@ -17,9 +16,17 @@ using NUnit.Framework;
 using Polly;
 using FluentAssertions;
 
+#if  NETFX
+using CryptoKeyRights = System.Security.AccessControl.CryptoKeyRights;
+#else
+using CryptoKeyRights = Calamari.Integration.Certificates.CryptoKeyRights;
+#endif
+
+
 namespace Calamari.Tests.Fixtures.Deployment
 {
     [TestFixture]
+    [Category(TestCategory.CompatibleOS.OnlyWindows)]
     public class DeployWebPackageToIISFixture : DeployPackageFixture
     {
         TemporaryFile packageV1;
@@ -47,9 +54,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             iis = new WebServerSevenSupport();
             uniqueValue = "Test_" + Guid.NewGuid().ToString("N");
 
-#if WINDOWS_CERTIFICATE_STORE_SUPPORT
             SampleCertificate.CapiWithPrivateKey.EnsureCertificateNotInStore(StoreName.My, StoreLocation.LocalMachine);
-#endif
 
             base.SetUp();
         }
@@ -60,9 +65,7 @@ namespace Calamari.Tests.Fixtures.Deployment
             if (iis.WebSiteExists(uniqueValue)) iis.DeleteWebSite(uniqueValue);
             if (iis.ApplicationPoolExists(uniqueValue)) iis.DeleteApplicationPool(uniqueValue);
 
-#if WINDOWS_CERTIFICATE_STORE_SUPPORT
             SampleCertificate.CapiWithPrivateKey.EnsureCertificateNotInStore(StoreName.My, StoreLocation.LocalMachine);
-#endif
 
             base.CleanUp();
         }
@@ -387,8 +390,6 @@ namespace Calamari.Tests.Fixtures.Deployment
             }
         }
 
-
-#if WINDOWS_CERTIFICATE_STORE_SUPPORT
         [Test]
         [Category(TestCategory.CompatibleOS.OnlyWindows)]
         public void ShouldCreateHttpsBindingUsingCertificatePassedAsVariable()
@@ -428,7 +429,10 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             // Assert the application-pool account was granted access to the certificate private-key
             var certificate = SampleCertificate.CapiWithPrivateKey.GetCertificateFromStore("MY", StoreLocation.LocalMachine);
-            SampleCertificate.AssertIdentityHasPrivateKeyAccess(certificate, new NTAccount("IIS AppPool\\" + uniqueValue), CryptoKeyRights.GenericAll);
+#pragma warning disable CA1416
+            var keysec = CryptoKeySecurityAccessRules.GetPrivateKeySecurity(certificate.Thumbprint, StoreLocation.LocalMachine, "My");
+            SampleCertificate.AssertHasPrivateKeyRights(keysec, new NTAccount("IIS APPPOOL\\" + uniqueValue), CryptoKeyRights.GenericAll);
+#pragma warning restore CA1416
 
             Assert.AreEqual(ObjectState.Started, website.State);
         }
@@ -587,7 +591,6 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             result.AssertSuccess();
         }
-#endif
 
         private string ToFirstLevelPath(string value)
         {
@@ -630,4 +633,3 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
     }
 }
-#endif

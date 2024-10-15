@@ -1,21 +1,65 @@
-﻿using Microsoft.Win32;
+﻿using System;
+using System.Fabric;
+using System.Security.Cryptography.X509Certificates;
 
 namespace Calamari.AzureServiceFabric
 {
     static class ServiceFabricHelper
     {
-        public static bool IsServiceFabricSdkKeyInRegistry()
+        public static bool IsServiceFabricSdkInstalled()
         {
-            var keyFound = false;
-            using (var rootKey = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
-            using (var subKey = rootKey.OpenSubKey("SOFTWARE\\Microsoft\\Service Fabric SDK", false))
+            var isInstalled = false;
+#if NETFRAMEWORK
+            using (var rootKey =  Microsoft.Win32.RegistryKey.OpenBaseKey(Microsoft.Win32.RegistryHive.LocalMachine, Microsoft.Win32.RegistryView.Registry64))
+            using (var subKey = rootKey.OpenSubKey(@"SOFTWARE\Microsoft\Service Fabric SDK", false))
             {
                 if (subKey != null)
-                {
-                    keyFound = true;
-                }
+                    isInstalled = true;
             }
-            return keyFound;
+#else
+            var programFiles = Environment.ExpandEnvironmentVariables("%ProgramFiles(x86)%");
+            var sdkFolderPath = System.IO.Path.Combine("Microsoft SDKs", "Service Fabric");
+
+            //x86 first
+            isInstalled = System.IO.Directory.Exists(System.IO.Path.Combine(programFiles, sdkFolderPath));
+
+            //we first look in the x86 path, if it's not there, we check in the x64 program files
+            if (!isInstalled)
+            {
+                // On 32-bit Operating Systems, this will return C:\Program Files
+                // On 64-bit Operating Systems - regardless of process bitness, this will return C:\Program Files
+                if (!Environment.Is64BitOperatingSystem || Environment.Is64BitProcess)
+                {
+                    programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+                }
+                else
+                {
+                    // 32 bit process on a 64 bit OS can't use SpecialFolder.ProgramFiles to get the 64-bit program files folder
+                    programFiles = Environment.ExpandEnvironmentVariables("%ProgramW6432%");
+                }
+
+                //check to see if the directory exists again in the new program files
+                isInstalled = System.IO.Directory.Exists(System.IO.Path.Combine(programFiles, sdkFolderPath));
+            }
+
+#endif
+            return isInstalled;
+        }
+        
+        
+        public static X509Credentials GetX509Credentials(string clientCertThumbprint, string clientCertStoreLocation, string clientCertStoreName, string serverCertThumb, string commonName)
+        {
+            var xc = new X509Credentials
+            {
+                StoreLocation = (StoreLocation)Enum.Parse(typeof(StoreLocation), clientCertStoreLocation),
+                StoreName = clientCertStoreName,
+                FindType = X509FindType.FindByThumbprint,
+                FindValue = clientCertThumbprint
+            };
+            xc.RemoteCommonNames.Add(commonName);
+            xc.RemoteCertThumbprints.Add(serverCertThumb);
+            xc.ProtectionLevel = ProtectionLevel.EncryptAndSign;
+            return xc;
         }
     }
 }

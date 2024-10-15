@@ -1,11 +1,11 @@
-﻿#if NETFX
-using System;
+﻿using System;
 using System.IO;
 using System.Security.Cryptography.X509Certificates;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Testing.Helpers;
+using Calamari.Testing.Requirements;
 using Calamari.Tests.Helpers;
 using Calamari.Tests.Helpers.Certificates;
 using NUnit.Framework;
@@ -13,6 +13,7 @@ using Octostache;
 
 namespace Calamari.Tests.Fixtures.Certificates
 {
+    [Category(TestCategory.CompatibleOS.OnlyWindows)]
     public class ImportCertificateCommandFixture : CalamariFixture
     {
         readonly string certificateVariable = "FooCert";
@@ -58,7 +59,9 @@ namespace Calamari.Tests.Fixtures.Certificates
         {
             var storeName = StoreName.My.ToString();
             var storeLocation = StoreLocation.CurrentUser;
+#pragma warning disable CA1416
             var userName = System.Security.Principal.WindowsIdentity.GetCurrent().Name;
+#pragma warning restore CA1416
             var variables = CreateInitialVariables();
             variables.Add(SpecialVariables.Action.Certificate.StoreName, storeName);
             variables.Add(SpecialVariables.Action.Certificate.StoreUser, userName);
@@ -74,13 +77,13 @@ namespace Calamari.Tests.Fixtures.Certificates
             // Hygiene Cleanup
             cert.EnsureCertificateNotInStore(storeName, storeLocation);
         }
-        
+
         CalamariResult Invoke(VariableDictionary variables)
         {
             using (var variablesFile = new TemporaryFile(Path.GetTempFileName()))
             {
                 variables.Save(variablesFile.FilePath);
-                return Invoke(Calamari()
+                return InvokeInProcess(Calamari()
                               .Action("import-certificate")
                               .Argument("variables", variablesFile.FilePath));
             }
@@ -100,4 +103,3 @@ namespace Calamari.Tests.Fixtures.Certificates
         }
     }
 }
-#endif

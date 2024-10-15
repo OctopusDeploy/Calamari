@@ -13,12 +13,13 @@
     <TargetFrameworks>net462;net6.0</TargetFrameworks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net6.0' ">
-    <DefineConstants>$(DefineConstants);NETCORE;AWS;AZURE_CORE;JAVA_SUPPORT</DefineConstants>
+    <DefineConstants>$(DefineConstants);NETCORE;AZURE_CORE;JAVA_SUPPORT</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net462' ">
-    <DefineConstants>$(DefineConstants);NETFX;AWS;IIS_SUPPORT;USE_NUGET_V2_LIBS;USE_OCTODIFF_EXE;WINDOWS_CERTIFICATE_STORE_SUPPORT;WINDOWS_USER_ACCOUNT_SUPPORT;WINDOWS_REGISTRY_SUPPORT</DefineConstants>
+    <DefineConstants>$(DefineConstants);NETFX;IIS_SUPPORT;USE_NUGET_V2_LIBS;USE_OCTODIFF_EXE;</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="System.DirectoryServices.AccountManagement" Version="4.7.0" />
     <PackageReference Include="XPath2" Version="1.0.12" />
     <ProjectReference Include="..\Calamari.Testing\Calamari.Testing.csproj" />
     <ProjectReference Include="..\Calamari\Calamari.csproj" />
@@ -167,6 +168,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <Compile Remove="Fixtures\StructuredVariables\CalamariFlavourProgramReplacerSelectionFixture.cs" />
+    <None Update="KubernetesFixtures\Approved\KubernetesContextScriptWrapperFixture.ExecutionWithEKS_AwsCLIAuthenticator_WithExecFeatureToggleEnabled.approved.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <None Remove="TestResults\**" />

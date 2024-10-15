@@ -26,7 +26,7 @@
     <TargetFrameworks>net462;netstandard2.1</TargetFrameworks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net462' ">
-    <DefineConstants>$(DefineConstants);USE_NUGET_V2_LIBS;USE_OCTODIFF_EXE;WINDOWS_CERTIFICATE_STORE_SUPPORT</DefineConstants>
+    <DefineConstants>$(DefineConstants);NETFX;USE_NUGET_V2_LIBS;USE_OCTODIFF_EXE;</DefineConstants>
     <PlatformTarget>anycpu</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(TargetFramework)' == 'netstandard2.1' ">
@@ -39,6 +39,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Calamari.Common\Calamari.Common.csproj" />
     <PackageReference Include="AWSSDK.S3" Version="3.7.8.8" />
+    <PackageReference Include="BouncyCastle.Cryptography" Version="2.4.0" />
     <PackageReference Include="FSharp.Compiler.Tools" Version="4.0.0.1" />
     <PackageReference Include="Microsoft.DotNet.Analyzers.Compatibility" Version="0.2.12-alpha">
       <PrivateAssets>all</PrivateAssets>
@@ -66,9 +67,9 @@
     <PackageReference Include="System.IO.FileSystem.AccessControl" Version="4.3.0" />
     <PackageReference Include="System.IO.Packaging" Version="4.3.0" />
     <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="4.5.0" />
+    <PackageReference Include="System.Security.Cryptography.Cng" Version="4.3.0" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net462' ">
-    <PackageReference Include="BouncyCastle" Version="1.8.1-octopus" />
     <PackageReference Include="MarkdownSharp" Version="1.13.0.0" />
     <PackageReference Include="Microsoft.Net.Http" Version="2.2.29" />
     <PackageReference Include="Microsoft.Web.Administration" Version="7.0.0.0" />

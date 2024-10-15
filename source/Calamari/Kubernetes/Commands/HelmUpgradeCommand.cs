@@ -136,7 +136,7 @@ namespace Calamari.Kubernetes.Commands
 
                 foreach (var path in paths)
                 {
-                    yield return Path.Combine(PackageDirectory(packageReferenceName), path);
+                    yield return Path.Combine(PackageDirectory(prn), path);
                 }
             }
         }
@@ -149,7 +149,7 @@ namespace Calamari.Kubernetes.Commands
             var packageRoot = packageReferenceName;
             if (string.IsNullOrEmpty(packageReferenceName))
             {
-                packageRoot = variables.Get(PackageVariables.IndexedPackageId(packageReferenceName ?? ""));
+                packageRoot = PackageName.ExtractPackageNameFromPathedPackageId(variables.Get(PackageVariables.IndexedPackageId(packageReferenceName ?? "")));
             }
 
             return fileSystem.RemoveInvalidFileNameChars(packageRoot ?? string.Empty);

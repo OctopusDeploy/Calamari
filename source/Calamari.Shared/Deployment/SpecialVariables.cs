@@ -34,6 +34,7 @@ namespace Calamari.Deployment
         }
 
         public const string UseLegacyIisSupport = "OctopusUseLegacyIisSupport";
+        public const string UseLegacyIisSupportForce = "OctopusForceUseLegacyIisSupport";
 
         public static readonly string RetentionPolicyItemsToKeep = "OctopusRetentionPolicyItemsToKeep";
         public static readonly string RetentionPolicyDaysToKeep = "OctopusRetentionPolicyDaysToKeep";

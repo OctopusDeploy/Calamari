@@ -44,6 +44,8 @@ namespace Calamari.Tests.Fixtures.Util
         [TestCase("$MARIO_BROTHERZZ/blah", "/blah", Description = "Variables terminate at last non alpha numeric character")]
         [TestCase("IMA$MARIO_BROTHER", "IMALUIGI", Description = "Variables begin from dollar character")]
         [TestCase("\\$MARIO_BROTHER/blah", "\\$MARIO_BROTHER/blah", Description = "Escaped dollar preserved")]
+        [TestCase("$MARIO_BROTHER/blah%2fblah.zip", "LUIGI/blah%2fblah.zip", Description = "Linux-style variable ($VAR) is expanded, but URL-encoded slash (%2f) in filename is preserved")]
+        [TestCase("%MARIO_BROTHER%/blah%2fblah.zip", "LUIGI/blah%2fblah.zip", Description = "Windows-style variable (%VAR%) is expanded, and URL-encoded slash (%2f) in filename is preserved")]
         [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
         public void NixEnvironmentVariableReplaced(string inputValue, string expectedResult)
         {
