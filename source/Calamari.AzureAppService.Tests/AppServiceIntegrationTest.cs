@@ -120,14 +120,11 @@ namespace Calamari.AzureAppService.Tests
         [TearDown]
         public virtual async Task TearDown()
         {
-            var sw = Stopwatch.StartNew();
-            TestContext.WriteLine($"Deleting web app '{WebSiteResource.Data.Name}'");
+            TestContext.WriteLine($"Deleting web app '{WebSiteResource.Data.Name}' (with no waiting)");
             
             //we explicitly delete the website so we can set deleteEmptyServerFarm to be false (otherwise cleaning up the resource group _sometimes_ deletes the app service plan)
-            await WebSiteResource.DeleteAsync(WaitUntil.Completed, deleteEmptyServerFarm: false, cancellationToken: CancellationToken);
-            sw.Stop();
-            TestContext.WriteLine($"Deleted web app '{WebSiteResource.Data.Name}' in {sw.Elapsed:g}");
-            
+            await WebSiteResource.DeleteAsync(WaitUntil.Started, deleteEmptyServerFarm: false, cancellationToken: CancellationToken);
+
             TestContext.WriteLine($"Deleting resource group '{ResourceGroupResource.Data.Name}' (with no waiting)");
             //delete the rest of the resources
             await ResourceGroupResource.DeleteAsync(WaitUntil.Started, cancellationToken: CancellationToken);
