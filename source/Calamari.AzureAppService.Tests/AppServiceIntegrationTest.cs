@@ -123,11 +123,11 @@ namespace Calamari.AzureAppService.Tests
             TestContext.WriteLine($"Deleting web app '{WebSiteResource.Data.Name}' (with no waiting)");
             
             //we explicitly delete the website so we can set deleteEmptyServerFarm to be false (otherwise cleaning up the resource group _sometimes_ deletes the app service plan)
-            await WebSiteResource.DeleteAsync(WaitUntil.Started, deleteEmptyServerFarm: false, cancellationToken: CancellationToken);
+            await RetryPolicies.TestsTransientArmOperationsErrorsPolicy.ExecuteAsync(async ct => await WebSiteResource.DeleteAsync(WaitUntil.Started, deleteEmptyServerFarm: false, cancellationToken: ct), CancellationToken);
 
             TestContext.WriteLine($"Deleting resource group '{ResourceGroupResource.Data.Name}' (with no waiting)");
             //delete the rest of the resources
-            await ResourceGroupResource.DeleteAsync(WaitUntil.Started, cancellationToken: CancellationToken);
+            await RetryPolicies.TestsTransientArmOperationsErrorsPolicy.ExecuteAsync(async ct => await ResourceGroupResource.DeleteAsync(WaitUntil.Started, cancellationToken: ct), CancellationToken);
         }
 
         protected async Task AssertContent(string hostName, string actualText, string rootPath = null)

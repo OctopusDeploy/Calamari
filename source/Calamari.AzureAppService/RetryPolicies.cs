@@ -2,6 +2,8 @@
 using System.Net;
 using System.Net.Http;
 using System.Net.Sockets;
+using Azure;
+using Azure.ResourceManager;
 using Calamari.Common.Plumbing.Logging;
 using Polly;
 using Polly.Retry;
@@ -31,8 +33,14 @@ namespace Calamari.AzureAppService
         public static AsyncRetryPolicy<HttpResponseMessage> TestsTransientHttpErrorsPolicy { get; } = Policy.Handle<HttpRequestException>()
                                                                                                             .Or<SocketException>()
                                                                                                             .OrResult<HttpResponseMessage>(r => (int)r.StatusCode >= 500 || r.StatusCode == HttpStatusCode.RequestTimeout)
+                                                                                                            .Or<RequestFailedException>()
                                                                                                             .WaitAndRetryAsync(4,
                                                                                                                                retryAttempt => TimeSpan.FromSeconds(Math.Pow(3.5, retryAttempt)) + TimeSpan.FromMilliseconds(Jitterer.Next(0, 10000)));
+
+        public static AsyncRetryPolicy<ArmOperation> TestsTransientArmOperationsErrorsPolicy { get; } = Policy<ArmOperation>
+                                                                                                        .Handle<RequestFailedException>()
+                                                                                                        .WaitAndRetryAsync(4,
+                                                                                                                           retryAttempt => TimeSpan.FromSeconds(Math.Pow(3.5, retryAttempt)) + TimeSpan.FromMilliseconds(Jitterer.Next(0, 10000)));
 
         public static AsyncRetryPolicy<HttpResponseMessage> AsynchronousZipDeploymentOperationPolicy { get; } = Policy.HandleResult<HttpResponseMessage>(r => r.StatusCode == HttpStatusCode.Accepted)
                                                                                                                       .WaitAndRetryForeverAsync((_1, ctx) => TimeSpan.FromSeconds(4),
