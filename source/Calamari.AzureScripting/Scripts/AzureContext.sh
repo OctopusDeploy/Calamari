@@ -82,9 +82,9 @@ OctopusAzureTargetScript=$(get_octopusvariable "OctopusAzureTargetScript")
 OctopusAzureTargetScriptParameters=$(get_octopusvariable "OctopusAzureTargetScriptParameters")
 
 if [ "x$OctopusAzureTargetScriptParameters" = "x" ]; then
-    echo "Invoking target script \"$OctopusAzureTargetScript\""
+    echo "Invoking target script \"$OctopusAzureTargetScript\"."
 else
-    echo "Invoking target script \"$OctopusAzureTargetScript\" with parameters \"$OctopusAzureTargetScriptParameters\"" 
+    echo "Invoking target script \"$OctopusAzureTargetScript\" with parameters \"$OctopusAzureTargetScriptParameters\"." 
 fi
 echo "##octopus[stdout-default]"
 
