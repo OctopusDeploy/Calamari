@@ -47,7 +47,7 @@ namespace Calamari.AzureWebApp.NetCoreShim
                                                                  Formatting.None);
 
                     logger.Information("RESULT|{JSON:l}", resultJson);
-                    
+
                     //big success!
                     break;
                 }
@@ -75,7 +75,7 @@ namespace Calamari.AzureWebApp.NetCoreShim
             var encryption = new AesEncryption(options.EncryptionKey);
             var decryptedUserName = encryption.Decrypt(Convert.FromBase64String(options.DestinationUserName));
             var decryptedPassword = encryption.Decrypt(Convert.FromBase64String(options.DestinationPassword));
-            
+
             var deploymentOptions = new DeploymentBaseOptions
             {
                 AuthenticationType = "Basic",
@@ -87,7 +87,7 @@ namespace Calamari.AzureWebApp.NetCoreShim
                 UserAgent = "OctopusDeploy/1.0",
                 ComputerName = new Uri(options.DestinationUri, $"/msdeploy.axd?site={options.DestinationDeploymentSite}").ToString()
             };
-            
+
             deploymentOptions.Trace += (sender, args) =>
                                        {
                                            switch (args.EventLevel)
@@ -107,7 +107,7 @@ namespace Calamari.AzureWebApp.NetCoreShim
                                                    break;
                                            }
                                        };
-            
+
             return deploymentOptions;
         }
 
@@ -120,14 +120,17 @@ namespace Calamari.AzureWebApp.NetCoreShim
                 DoNotDelete = options.DoNotDelete,
             };
 
-            var rules = Microsoft.Web.Deployment.DeploymentSyncOptions.GetAvailableRules();
-            if (options.UseAppOffline && rules.TryGetValue("AppOffline", out var rule))
+            if (options.UseAppOffline)
             {
-                syncOptions.Rules.Add(rule);
-            }
-            else
-            {
-                logger.Verbose("Azure Deployment API does not support `AppOffline` deployment rule.");
+                var rules = Microsoft.Web.Deployment.DeploymentSyncOptions.GetAvailableRules();
+                if (rules.TryGetValue("AppOffline", out var rule))
+                {
+                    syncOptions.Rules.Add(rule);
+                }
+                else
+                {
+                    logger.Verbose("Azure Deployment API does not support `AppOffline` deployment rule.");
+                }
             }
 
             ApplyPreserveAppDataDeploymentRule(syncOptions, options);
