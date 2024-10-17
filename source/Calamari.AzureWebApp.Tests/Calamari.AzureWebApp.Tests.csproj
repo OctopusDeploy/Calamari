@@ -22,10 +22,19 @@
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
     </ItemGroup>
-    <Target Name="CopyTools" AfterTargets="Build">
+
+
+    <Target Name="GetNetCoreShimFiles">
         <ItemGroup>
-            <NetCoreShimFiles Condition="'$(TargetFramework)' == 'net6.0'" Include="$(MSBuildProjectDirectory)/../Calamari.AzureWebApp/netcoreshim/netcoreshim.zip" />
+            <NetCoreShimFiles Include="$(MSBuildProjectDirectory)/../Calamari.AzureWebApp/netcoreshim/netcoreshim.zip" Condition="'$(TargetFramework)' == 'net6.0'" />
         </ItemGroup>
-        <Unzip SourceFiles="@(NetCoreShimFiles)" DestinationFolder="$(OutDir)/netcoreshim" SkipUnchangedFiles="true" Condition="'$(TargetFramework)' == 'net6.0'"/>
+    </Target>
+
+    <Target Name="CopyNetCoreShimFilesAfterBuild" AfterTargets="Build" DependsOnTargets="GetNetCoreShimFiles">
+        <Unzip SourceFiles="@(NetCoreShimFiles)" DestinationFolder="$(OutDir)/netcoreshim" SkipUnchangedFiles="true" Condition="'$(TargetFramework)' == 'net6.0'" />
+    </Target>
+    
+    <Target Name="CopyNetCoreShimFilesAfterPublish" AfterTargets="Publish" DependsOnTargets="GetNetCoreShimFiles">
+        <Unzip SourceFiles="@(NetCoreShimFiles)" DestinationFolder="$(PublishDir)/netcoreshim" SkipUnchangedFiles="true" Condition="'$(TargetFramework)' == 'net6.0'" />
     </Target>
 </Project>

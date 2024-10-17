@@ -43,15 +43,15 @@
         <None Remove="netcoreshim/**"/>
     </ItemGroup>
     
-    <Target Name="GetToolFiles">
+    <Target Name="GetNetCoreShimFiles">
         <ItemGroup>
             <NetCoreShimFiles Include="$(MSBuildProjectDirectory)/netcoreshim/netcoreshim.zip" Condition="'$(TargetFramework)' == 'net6.0'" />
         </ItemGroup>
     </Target>
-    <Target Name="CopyWebDeployToolFilesAfterBuild" AfterTargets="Build" DependsOnTargets="GetToolFiles">
+    <Target Name="CopyNetCoreShimFilesAfterBuild" AfterTargets="Build" DependsOnTargets="GetNetCoreShimFiles">
         <Unzip SourceFiles="@(NetCoreShimFiles)" DestinationFolder="$(OutDir)/netcoreshim" />
     </Target>
-    <Target Name="CopyWebDeployToolFilesAfterPublish" AfterTargets="Publish" DependsOnTargets="GetToolFiles">
+    <Target Name="CopyNetCoreShimFilesAfterPublish" AfterTargets="Publish" DependsOnTargets="GetNetCoreShimFiles">
         <Unzip SourceFiles="@(NetCoreShimFiles)" DestinationFolder="$(PublishDir)/netcoreshim" />
     </Target>
 </Project>

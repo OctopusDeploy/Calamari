@@ -42,7 +42,7 @@ namespace Calamari.AzureWebApp
 
             if (!fileSystem.FileExists(netCoreShimExePath))
             {
-                throw new CommandException("Unable to find Calamari.AzureWebApp.NetCoreShim.exe.");
+                throw new CommandException($"Unable to find {netCoreShimExePath}");
             }
 
             var retry = AzureRetryTracker.GetDefaultRetryTracker();
