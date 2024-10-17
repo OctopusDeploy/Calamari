@@ -4,21 +4,22 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Xml.Linq;
 using Calamari.Azure.AppServices;
 using Calamari.AzureWebApp.Integration.Websites.Publishing;
 using Calamari.AzureWebApp.Util;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Processes;
+using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
+using Newtonsoft.Json;
 
 namespace Calamari.AzureWebApp
 {
     public class NetCoreWebDeploymentExecutor : IWebDeploymentExecutor
     {
-        const string ToolName = "msdeploy.exe";
+        const string ToolName = "Calamari.AzureWebApp.NetCoreShim.exe";
 
         readonly ILog log;
         readonly ICalamariFileSystem fileSystem;
@@ -35,42 +36,46 @@ namespace Calamari.AzureWebApp
             {
                 throw new CommandException("Cannot execute on non-Windows operating systems as there is a required dependency on the Web Deploy tooling (msdeploy.exe).");
             }
-            
-            var msDeployFolderPath = GetMsDeployExeFolder();
-            var msDeployExePath = Path.Combine(msDeployFolderPath, ToolName);
 
-            if (!fileSystem.FileExists(msDeployExePath))
+            var netCoreShimExeFolder = GetNetCoreShimExeFolder();
+            var netCoreShimExePath = Path.Combine(netCoreShimExeFolder, ToolName);
+
+            if (!fileSystem.FileExists(netCoreShimExePath))
             {
-                throw new CommandException("Unable to find msdeploy.exe. The Web Deploy tooling must be installed.");
+                throw new CommandException("Unable to find Calamari.AzureWebApp.NetCoreShim.exe.");
             }
-            
+
             var retry = AzureRetryTracker.GetDefaultRetryTracker();
-            var tempFolder = fileSystem.CreateTemporaryDirectory();
             while (retry.Try())
             {
-                //we create a new output file for _each_ loop. Just in case the delete fails
-                var outputXmlFile = $"{tempFolder}\\msdeploy_output_{Guid.NewGuid():N}.xml";
                 try
                 {
                     log.Verbose($"Using site '{targetSite.Site}'");
                     log.Verbose($"Using slot '{targetSite.Slot}'");
 
-                    var msDeployArguments = BuildMsDeployArguments(
-                                                                   deployment.CurrentDirectory,
-                                                                   outputXmlFile,
-                                                                   BuildPath(targetSite, variables),
-                                                                   DestinationOptions(publishSettings),
-                                                                   DeploymentSyncCommandOptions(variables));
+                    var netCoreShimArguments = BuildNetCoreShimArguments(
+                                                                         deployment.CurrentDirectory,
+                                                                         BuildPath(targetSite, variables),
+                                                                         DestinationOptions(publishSettings),
+                                                                         DeploymentSyncCommandOptions(variables));
 
+                    string resultMessage = null; 
 
+                    log.Verbose($"Executing {netCoreShimExePath}");
+                    var commandResult = SilentProcessRunner.ExecuteCommand(netCoreShimExePath,
+                                                                           netCoreShimArguments,
+                                                                           netCoreShimExeFolder,
+                                                                           s =>
+                                                                           {
+                                                                               //if this is the result message
+                                                                               if (s.StartsWith("INF|RESULT|"))
+                                                                               {
+                                                                                   resultMessage = s;
+                                                                               }
+                                                                               LogOutputMessage(s);
+                                                                           },
+                                                                           LogOutputMessage);
 
-                    var commandResult = SilentProcessRunner.ExecuteCommand(msDeployExePath,
-                                                                           msDeployArguments,
-                                                                           msDeployFolderPath,
-                                                                           _ => { },
-                                                                           _ => { });
-
-                    var changeSummary = ParseOutputXmlAndWriteTraces(outputXmlFile);
 
                     //if there was an error, we just blow up here as we will have written the errors in the above file
                     if (commandResult.ExitCode != 0)
@@ -78,8 +83,22 @@ namespace Calamari.AzureWebApp
                         throw new Exception(commandResult.ErrorOutput);
                     }
 
-                    log.InfoFormat(
-                                   "Successfully deployed to Azure. {0} objects added. {1} objects updated. {2} objects deleted.",
+                    if (resultMessage == null)
+                    {
+                        log.Warn("Successfully deployed to Azure but was unable to determine the objects that changed.");
+                        break;
+                    }
+
+                    var changeSummaryJson = resultMessage.Split("|").Last();
+                    var changeSummary = JsonConvert.DeserializeAnonymousType(changeSummaryJson,
+                                                                             new
+                                                                             {
+                                                                                 ObjectsAdded = 0,
+                                                                                 ObjectsUpdated = 0,
+                                                                                 ObjectsDeleted = 0
+                                                                             });
+
+                    log.InfoFormat("Successfully deployed to Azure. {0} objects added. {1} objects updated. {2} objects deleted.",
                                    changeSummary.ObjectsAdded,
                                    changeSummary.ObjectsUpdated,
                                    changeSummary.ObjectsDeleted);
@@ -103,79 +122,60 @@ namespace Calamari.AzureWebApp
                         throw;
                     }
                 }
-                finally
-                {
-                    //delete the output file, even on retry
-                    fileSystem.DeleteFile(outputXmlFile, FailureOptions.IgnoreFailure);
-                }
             }
         }
 
-        static string GetMsDeployExeFolder()
+        void LogOutputMessage(string msg)
+        {
+            var firstIndex = msg.IndexOf("|", StringComparison.Ordinal);
+            var level = msg[..firstIndex];
+            var message = msg[(firstIndex + 1)..];
+
+            //if this is the result message, do nothing
+            if (message.StartsWith("RESULT|"))
+            {
+                return;
+            }
+
+            switch (level)
+            {
+                case "VRB":
+                case "DBG":
+                    log.Verbose(message);
+                    break;
+                case "INF":
+                    log.Info(message);
+                    break;
+                case "WRN":
+                    log.Warn(message);
+                    break;
+                case "ERR":
+                case "FTL":
+                    log.Error(message);
+                    break;
+            }
+        }
+
+        static string GetNetCoreShimExeFolder()
         {
             var myPath = typeof(NetCoreWebDeploymentExecutor).Assembly.Location;
             var parent = Path.GetDirectoryName(myPath);
-            return Path.GetFullPath(Path.Combine(parent, "WebDeployV3"));
+            return Path.GetFullPath(Path.Combine(parent, "netcoreshim"));
         }
 
-        DeploymentChangeSummary ParseOutputXmlAndWriteTraces(string outputXmlFile)
-        {
-            using var fileStream = fileSystem.OpenFile(outputXmlFile, FileAccess.Read);
-            {
-                var xDocument = XDocument.Load(fileStream, LoadOptions.None);
-
-                var outputElement = xDocument.Element("output");
-                if (outputElement is null)
-                {
-                    throw new InvalidOperationException("There was no output xml node");
-                }
-
-                //find and log all trace events
-                var traceEvents = outputElement.Elements("traceEvent")
-                                               .Where(x => x.Attribute("type")?.Value == "Microsoft.Web.Deployment.DeploymentAgentTraceEvent")
-                                               .Select(x => (Level: x.Attribute("eventLevel")?.Value, Message: x.Attribute("message")?.Value));
-
-                foreach (var (level, message) in traceEvents)
-                {
-                    switch (level)
-                    {
-                        case "Verbose":
-                            log.Verbose(message);
-                            break;
-                        case "Info":
-                            // The deploy-log is noisy; we'll log info as verbose
-                            log.Verbose(message);
-                            break;
-                        case "Warning":
-                            log.Warn(message);
-                            break;
-                        case "Error":
-                            log.Error(message);
-                            break;
-                    }
-                }
-
-                return DeploymentChangeSummary.FromXElement(outputElement.Element("syncResults"));
-            }
-        }
-
-        static string BuildMsDeployArguments(string currentDirectory,
-                                             string outputXmlFile,
-                                             string path,
-                                             IEnumerable<string> destinationOptions,
-                                             IEnumerable<string> syncOptions)
+        static string BuildNetCoreShimArguments(string currentDirectory,
+                                                string path,
+                                                IEnumerable<string> destinationOptions,
+                                                IEnumerable<string> syncOptions)
         {
             var parts = new List<string>
             {
-                //verb
-                "-verb:sync",
-                //source
-                $"-source:contentPath={currentDirectory}",
-                //destination
-                $"-dest:contentPath={path},{string.Join(",", destinationOptions)}",
-                //we write the output to XML for later parsing
-                $"-xml:{outputXmlFile}"
+                "sync",
+                $"--sourcePath=\"{currentDirectory}\"",
+                $"--destPath=\"{path}\"",
             };
+
+            parts.AddRange(destinationOptions);
 
             parts.AddRange(syncOptions);
 
@@ -185,59 +185,54 @@ namespace Calamari.AzureWebApp
         static IEnumerable<string> DestinationOptions(WebDeployPublishSettings settings)
         {
             var publishProfile = settings.PublishProfile;
-            var deploySite = settings.DeploymentSite;
 
-            var url = new Uri(publishProfile.Uri, $"/msdeploy.axd?site={deploySite}").ToString();
+            var encryptionKey = AesEncryption.RandomString(16);
+            var encryptor = new AesEncryption(encryptionKey);
+
+            //we enc
+            var encryptedUserName = Convert.ToBase64String(encryptor.Encrypt(publishProfile.UserName));
+            var encryptedPassword = Convert.ToBase64String(encryptor.Encrypt(publishProfile.Password));
 
             return new[]
             {
-                "AuthType=Basic",
-                $"UserName={publishProfile.UserName}",
-                $"Password={publishProfile.Password}",
-                $"ComputerName={url}"
+                $"--destUserName=\"{encryptedUserName}\"",
+                $"--destPassword=\"{encryptedPassword}\"",
+                $"--destUri=\"{publishProfile.Uri}\"",
+                $"--destSite=\"{settings.DeploymentSite}\"",
+                $"--encryptionKey=\"{encryptionKey}\""
             };
         }
 
         static IEnumerable<string> DeploymentSyncCommandOptions(IVariables variables)
         {
-            var args = new List<string>
-            {
-                "-userAgent:OctopusDeploy/1.0",
-                "-retryAttempts:3",
-                "-retryInterval:1000",
-                "-verbose"
-            };
+            var args = new List<string>();
 
             if (variables.GetFlag(SpecialVariables.Action.Azure.UseChecksum))
             {
-                args.Add("-useChecksum");
+                args.Add("--useChecksum");
             }
 
             if (!variables.GetFlag(SpecialVariables.Action.Azure.RemoveAdditionalFiles))
             {
-                args.Add("-enableRule:DoNotDeleteRule");
+                args.Add("--doNotDelete");
             }
 
             if (variables.GetFlag(SpecialVariables.Action.Azure.AppOffline))
             {
                 //TODO: How do we know if the Azure Deployment API does not support 'AppOffline' (which is something that can be true)?
-                args.Add("-enableRule:AppOffline");
+                args.Add("--useAppOffline");
             }
 
-            // If PreservePaths variable set, then create SkipDelete rules for each path regex
             var preservePaths = variables.GetStrings(SpecialVariables.Action.Azure.PreservePaths, ';');
-            foreach (var path in preservePaths)
+            if (preservePaths.Count > 0)
             {
-                args.Add($"-skip:skipAction=Delete,objectName=filePath,absolutePath={path}");
-                args.Add($"-skip:skipAction=Delete,objectName=dirPath,absolutePath={path}");
+                args.Add($"--preservePaths={string.Join("|",preservePaths.Select(s => $"\"{s}\""))}");
             }
 
-            // If PreserveAppData variable set, then create SkipDelete rules for App_Data directory
             // ReSharper disable once InvertIf
             if (variables.GetFlag(SpecialVariables.Action.Azure.PreserveAppData))
             {
-                args.Add(@"-skip:skipAction=Delete,objectName=filePath,absolutePath=\\App_Data\\.*");
-                args.Add(@"-skip:skipAction=Delete,objectName=dirPath,absolutePath=\\App_Data(\\.*|$)");
+                args.Add("--preserveAppData");
             }
 
             return args;
@@ -249,26 +244,6 @@ namespace Calamari.AzureWebApp
             return !string.IsNullOrWhiteSpace(relativePath)
                 ? site.Site + "\\" + relativePath
                 : site.Site;
-        }
-
-        class DeploymentChangeSummary
-        {
-            DeploymentChangeSummary(int objectsAdded, int objectsDeleted, int objectsUpdated)
-            {
-                ObjectsAdded = objectsAdded;
-                ObjectsDeleted = objectsDeleted;
-                ObjectsUpdated = objectsUpdated;
-            }
-
-            public int ObjectsAdded { get; }
-            public int ObjectsDeleted { get; }
-            public int ObjectsUpdated { get; }
-
-            public static DeploymentChangeSummary FromXElement(XElement element)
-                => new DeploymentChangeSummary(
-                                               int.TryParse(element?.Attribute("objectsAdded")?.Value, out var added) ? added : -1,
-                                               int.TryParse(element?.Attribute("objectsDeleted")?.Value, out var deleted) ? deleted : -1,
-                                               int.TryParse(element?.Attribute("objectsUpdated")?.Value, out var updated) ? updated : -1);
         }
     }
 }

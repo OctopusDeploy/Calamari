@@ -24,9 +24,8 @@
     </ItemGroup>
     <Target Name="CopyTools" AfterTargets="Build">
         <ItemGroup>
-            <WebDeployToolFiles Condition="'$(TargetFramework)' == 'net6.0'" Include="$(MSBuildProjectDirectory)/../Calamari.AzureWebApp/WebDeployV3/WebDeployV3.zip" />
+            <NetCoreShimFiles Condition="'$(TargetFramework)' == 'net6.0'" Include="$(MSBuildProjectDirectory)/../Calamari.AzureWebApp/netcoreshim/netcoreshim.zip" />
         </ItemGroup>
-        <Unzip SourceFiles="@(WebDeployToolFiles)" DestinationFolder="$(OutDir)/WebDeployV3" SkipUnchangedFiles="true" Condition="'$(TargetFramework)' == 'net6.0'"/>
-        <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(PublishDir)/" Condition="'$(PublishDir)' != '' And '$(TargetFramework)' == 'net6.0'" />
+        <Unzip SourceFiles="@(NetCoreShimFiles)" DestinationFolder="$(OutDir)/netcoreshim" SkipUnchangedFiles="true" Condition="'$(TargetFramework)' == 'net6.0'"/>
     </Target>
 </Project>

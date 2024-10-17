@@ -29,11 +29,11 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Content Include="WebDeployV3/*.*">
-            <LinkBase>WebDeployV3</LinkBase>
+        <Content Include="netcoreshim/*.*">
+            <LinkBase>netcoreshim</LinkBase>
             <Pack>true</Pack>
             <Visible>false</Visible>
-            <PackagePath>contentFiles/any/any/WebDeployV3/</PackagePath>
+            <PackagePath>contentFiles/any/any/netcoreshim/</PackagePath>
             <PackageCopyToOutput>true</PackageCopyToOutput>
             <PackageFlatten>false</PackageFlatten>
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -42,13 +42,13 @@
     
     <Target Name="GetToolFiles">
         <ItemGroup>
-            <WebDeployToolFiles Include="$(MSBuildProjectDirectory)/WebDeployV3/WebDeployV3.zip" Condition="'$(TargetFramework)' == 'net6.0'" />
+            <NetCoreShimFiles Include="$(MSBuildProjectDirectory)/netcoreshim/netcoreshim.zip" Condition="'$(TargetFramework)' == 'net6.0'" />
         </ItemGroup>
     </Target>
     <Target Name="CopyWebDeployToolFilesAfterBuild" AfterTargets="Build" DependsOnTargets="GetToolFiles">
-        <Unzip SourceFiles="@(WebDeployToolFiles)" DestinationFolder="$(OutDir)/WebDeployV3" />
+        <Unzip SourceFiles="@(NetCoreShimFiles)" DestinationFolder="$(OutDir)/netcoreshim" />
     </Target>
     <Target Name="CopyWebDeployToolFilesAfterPublish" AfterTargets="Publish" DependsOnTargets="GetToolFiles">
-        <Unzip SourceFiles="@(WebDeployToolFiles)" DestinationFolder="$(PublishDir)/WebDeployV3" />
+        <Unzip SourceFiles="@(NetCoreShimFiles)" DestinationFolder="$(PublishDir)/netcoreshim" />
     </Target>
 </Project>
