@@ -248,6 +248,6 @@ Execute-WithRetry {
 if ([string]::IsNullOrEmpty($OctopusFabricTargetScriptParameters)) {
     Write-Verbose "Invoking target script '$OctopusFabricTargetScript'"
 } else {
-    Write-Verbose "Invoking target script '$OctopusFabricTargetScript' with parameters '$OctopusFabricTargetScriptParameters"
+    Write-Verbose "Invoking target script '$OctopusFabricTargetScript' with parameters '$OctopusFabricTargetScriptParameters'."
 }
 Invoke-Expression ". `"$OctopusFabricTargetScript`" $OctopusFabricTargetScriptParameters"
