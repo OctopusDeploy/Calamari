@@ -1,26 +1,40 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <RootNamespace>Calamari.AzureWebApp.Tests</RootNamespace>
-    <AssemblyName>Calamari.AzureWebApp.Tests</AssemblyName>
-    <TargetFramework>net462</TargetFramework>
-    <LangVersion>8.0</LangVersion>
-    <IsPackable>false</IsPackable>
-  </PropertyGroup>
-  <ItemGroup>
-    <PackageReference Include="Microsoft.Azure.Management.ResourceManager.Fluent" Version="1.37.1" />
-    <PackageReference Include="Microsoft.Azure.Management.Fluent" Version="1.37.1" />
-    <PackageReference Include="nunit" Version="3.13.3" />
-    <PackageReference Include="NUnit3TestAdapter" Version="3.17.0" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.10.0" />
-    <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.25" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Calamari.AzureWebApp\Calamari.AzureWebApp.csproj" />
-    <ProjectReference Include="..\Calamari.Testing\Calamari.Testing.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Update="Packages\**\*">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
+    <PropertyGroup>
+        <RootNamespace>Calamari.AzureWebApp.Tests</RootNamespace>
+        <AssemblyName>Calamari.AzureWebApp.Tests</AssemblyName>
+        <TargetFrameworks>net462;net6.0</TargetFrameworks>
+        <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
+        <LangVersion>8.0</LangVersion>
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="nunit" Version="3.13.3"/>
+        <PackageReference Include="NUnit3TestAdapter" Version="3.17.0"/>
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.10.0"/>
+        <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.25"/>
+    </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\Calamari.AzureWebApp\Calamari.AzureWebApp.csproj"/>
+        <ProjectReference Include="..\Calamari.Testing\Calamari.Testing.csproj"/>
+    </ItemGroup>
+    <ItemGroup>
+        <None Update="Packages\**\*">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
+
+
+    <Target Name="GetNetCoreShimFiles">
+        <ItemGroup>
+            <NetCoreShimFiles Include="$(MSBuildProjectDirectory)/../Calamari.AzureWebApp/netcoreshim/netcoreshim.zip" Condition="'$(TargetFramework)' == 'net6.0'" />
+        </ItemGroup>
+    </Target>
+
+    <Target Name="CopyNetCoreShimFilesAfterBuild" AfterTargets="Build" DependsOnTargets="GetNetCoreShimFiles">
+        <Unzip SourceFiles="@(NetCoreShimFiles)" DestinationFolder="$(OutDir)/netcoreshim" SkipUnchangedFiles="true" Condition="'$(TargetFramework)' == 'net6.0'" />
+    </Target>
+    
+    <Target Name="CopyNetCoreShimFilesAfterPublish" AfterTargets="Publish" DependsOnTargets="GetNetCoreShimFiles">
+        <Unzip SourceFiles="@(NetCoreShimFiles)" DestinationFolder="$(PublishDir)/netcoreshim" SkipUnchangedFiles="true" Condition="'$(TargetFramework)' == 'net6.0'" />
+    </Target>
 </Project>

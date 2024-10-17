@@ -12,7 +12,7 @@
     <TargetFrameworks>net462;net6.0</TargetFrameworks>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Azure.ResourceManager.AppService" Version="1.0.2" />
+    <PackageReference Include="Azure.ResourceManager.AppService" Version="1.2.0" />
     <PackageReference Include="Azure.ResourceManager.ResourceGraph" Version="1.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.WebUtilities" Version="2.2.0" />
     <PackageReference Include="Microsoft.DotNet.Analyzers.Compatibility" Version="0.2.12-alpha">
