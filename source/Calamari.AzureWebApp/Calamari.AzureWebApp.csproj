@@ -24,11 +24,11 @@
         <ProjectReference Include="..\Calamari.CloudAccounts\Calamari.CloudAccounts.csproj"/>
     </ItemGroup>
 
-    <ItemGroup Condition=" '$(TargetFramework)' == 'net462' ">
+    <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
         <PackageReference Include="Microsoft.Web.Deployment" Version="4.0.5"/>
     </ItemGroup>
 
-    <ItemGroup>
+    <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
         <Content Include="netcoreshim/*.*">
             <LinkBase>netcoreshim</LinkBase>
             <Pack>true</Pack>
@@ -38,6 +38,9 @@
             <PackageFlatten>false</PackageFlatten>
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
+    </ItemGroup>
+    <ItemGroup  Condition="'$(TargetFramework)' == 'net462'">
+        <None Remove="netcoreshim/**"/>
     </ItemGroup>
     
     <Target Name="GetToolFiles">
