@@ -152,7 +152,7 @@ namespace Calamari.AzureResourceGroup
         async Task FinalizeDeployment(ArmOperation<ArmDeploymentResource> operation, IVariables variables)
         {
             await LogOperationResults(operation);
-            CaptureOutputs(operation.Value.Data.Properties.Outputs.ToString(), variables);
+            CaptureOutputs(operation.Value.Data.Properties.Outputs?.ToString(), variables);
         }
 
         async Task LogOperationResults(ArmOperation<ArmDeploymentResource> operation)
@@ -178,7 +178,7 @@ namespace Calamari.AzureResourceGroup
             log.Info(sb.ToString());
         }
 
-        void CaptureOutputs(string outputsJson, IVariables variables)
+        void CaptureOutputs(string? outputsJson, IVariables variables)
         {
             if (string.IsNullOrWhiteSpace(outputsJson))
                 return;
