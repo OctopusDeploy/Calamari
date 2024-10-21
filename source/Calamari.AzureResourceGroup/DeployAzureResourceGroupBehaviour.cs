@@ -135,7 +135,7 @@ namespace Calamari.AzureResourceGroup
             {
                 var deploymentResult = await AsyncResourceGroupPollingTimeoutPolicy.ExecuteAsync(async timeoutCancellationToken =>
                                                                                                  {
-                                                                                                     var delayStrategy = DelayStrategy.CreateExponentialDelayStrategy(TimeSpan.FromSeconds(1), PollingTimeout);
+                                                                                                     var delayStrategy = DelayStrategy.CreateExponentialDelayStrategy(TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(30));
                                                                                                      var result = await deploymentOperation.WaitForCompletionAsync(delayStrategy, timeoutCancellationToken);
                                                                                                      return result;
                                                                                                  },
