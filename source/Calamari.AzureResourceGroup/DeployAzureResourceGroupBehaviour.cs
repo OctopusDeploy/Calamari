@@ -127,7 +127,7 @@ namespace Calamari.AzureResourceGroup
         {
             var pollingTimeoutVariableValue = variables.Get(SpecialVariables.Action.Azure.ArmDeploymentTimeout, "30");
             int.TryParse(pollingTimeoutVariableValue, out var pollingTimeoutValue);
-            var pollingTimeout = TimeSpan.FromMinutes(pollingTimeoutValue);
+            var pollingTimeout = TimeSpan.FromMinutes(pollingTimeoutValue > 0 ? pollingTimeoutValue: 30);
             var asyncResourceGroupPollingTimeoutPolicy = Policy.TimeoutAsync<ArmDeploymentResource>(pollingTimeout, TimeoutStrategy.Optimistic);
             
             log.Info("Polling for deployment completion...");
