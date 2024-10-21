@@ -33,12 +33,13 @@ namespace Calamari.Tests.KubernetesFixtures
             }
         }
         
-        [Test]
-        public void GivenValidYaml_ShouldPostSingleServiceMessage()
+        [TestCase(nameof(FeatureToggle.KubernetesLiveObjectStatusFeatureToggle))]
+        [TestCase( OctopusFeatureToggles.KnownSlugs.KubernetesObjectManifestInspection)]
+        public void GivenValidYaml_ShouldPostSingleServiceMessage(string enabledFeatureToggle)
         {
             var memoryLog = new InMemoryLog();
             var variables = new CalamariVariables();
-            variables.Set(KnownVariables.EnabledFeatureToggles, nameof(FeatureToggle.KubernetesLiveObjectStatusFeatureToggle));
+            variables.Set(KnownVariables.EnabledFeatureToggles, enabledFeatureToggle);
 
             var yaml = @"foo: bar";
             var expectedJson = "{\"foo\": \"bar\"}";
@@ -53,12 +54,13 @@ namespace Calamari.Tests.KubernetesFixtures
             }
         }
 
-        [Test]
-        public void GivenInValidManifest_ShouldNotPostServiceMessage()
+        [TestCase(nameof(FeatureToggle.KubernetesLiveObjectStatusFeatureToggle))]
+        [TestCase( OctopusFeatureToggles.KnownSlugs.KubernetesObjectManifestInspection)]
+        public void GivenInValidManifest_ShouldNotPostServiceMessage(string enabledFeatureToggle)
         {
             var memoryLog = new InMemoryLog();
             var variables = new CalamariVariables();
-            variables.Set(KnownVariables.EnabledFeatureToggles, nameof(FeatureToggle.KubernetesLiveObjectStatusFeatureToggle));
+            variables.Set(KnownVariables.EnabledFeatureToggles, enabledFeatureToggle);
 
             var yaml = @"text - Bar";
             using (CreateFile(yaml, out var filePath))
@@ -71,12 +73,13 @@ namespace Calamari.Tests.KubernetesFixtures
             }
         }
 
-        [Test]
-        public void GivenNamespaceInManifest_ShouldReportManifestNamespace()
+        [TestCase(nameof(FeatureToggle.KubernetesLiveObjectStatusFeatureToggle))]
+        [TestCase( OctopusFeatureToggles.KnownSlugs.KubernetesObjectManifestInspection)]
+        public void GivenNamespaceInManifest_ShouldReportManifestNamespace(string enabledFeatureToggle)
         {
             var memoryLog = new InMemoryLog();
             var variables = new CalamariVariables();
-            variables.Set(KnownVariables.EnabledFeatureToggles, nameof(FeatureToggle.KubernetesLiveObjectStatusFeatureToggle));
+            variables.Set(KnownVariables.EnabledFeatureToggles, enabledFeatureToggle);
             var yaml = @"metadata:
   name: game-demo
   namespace: XXX";
@@ -92,12 +95,13 @@ namespace Calamari.Tests.KubernetesFixtures
             }
         }
 
-        [Test]
-        public void GivenNamespaceNotInManifest_ShouldReportVariableNamespace()
+        [TestCase(nameof(FeatureToggle.KubernetesLiveObjectStatusFeatureToggle))]
+        [TestCase( OctopusFeatureToggles.KnownSlugs.KubernetesObjectManifestInspection)]
+        public void GivenNamespaceNotInManifest_ShouldReportVariableNamespace(string enabledFeatureToggle)
         {
             var memoryLog = new InMemoryLog();
             var variables = new CalamariVariables();
-            variables.Set(KnownVariables.EnabledFeatureToggles, nameof(FeatureToggle.KubernetesLiveObjectStatusFeatureToggle));
+            variables.Set(KnownVariables.EnabledFeatureToggles, enabledFeatureToggle);
             var yaml = @"foo: bar";
             using (CreateFile(yaml, out var filePath))
             {
@@ -111,12 +115,13 @@ namespace Calamari.Tests.KubernetesFixtures
             }
         }
 
-        [Test]
-        public void GiveNoNamespaces_ShouldDefaultNamespace()
+        [TestCase(nameof(FeatureToggle.KubernetesLiveObjectStatusFeatureToggle))]
+        [TestCase( OctopusFeatureToggles.KnownSlugs.KubernetesObjectManifestInspection)]
+        public void GiveNoNamespaces_ShouldDefaultNamespace(string enabledFeatureToggle)
         {
             var memoryLog = new InMemoryLog();
             var variables = new CalamariVariables();
-            variables.Set(KnownVariables.EnabledFeatureToggles, nameof(FeatureToggle.KubernetesLiveObjectStatusFeatureToggle));
+            variables.Set(KnownVariables.EnabledFeatureToggles, enabledFeatureToggle);
             var yaml = @"foo: bar";
             using (CreateFile(yaml, out var filePath))
             {
@@ -128,7 +133,7 @@ namespace Calamari.Tests.KubernetesFixtures
             }
         }
 
-        IDisposable CreateFile(string yaml, out string filePath)
+        static IDisposable CreateFile(string yaml, out string filePath)
         {
             var tempDir = TemporaryDirectory.Create();
             filePath = Path.Combine(tempDir.DirectoryPath, $"{Guid.NewGuid():d}.tmp");

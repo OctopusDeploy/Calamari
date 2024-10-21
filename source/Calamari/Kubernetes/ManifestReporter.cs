@@ -42,9 +42,7 @@ namespace Calamari.Kubernetes
         {
             var implicitNamespace = variables.Get(SpecialVariables.Namespace) ?? "default";
 
-            if (yamlRoot.Children.TryGetValue("metadata", out var metadataNode) && metadataNode is YamlMappingNode metadataMappingNode &&
-                metadataMappingNode.Children.TryGetValue("namespace", out var namespaceNode) && namespaceNode is YamlScalarNode namespaceScalarNode &&
-                !string.IsNullOrWhiteSpace(namespaceScalarNode.Value))
+            if (yamlRoot.Children.TryGetValue("metadata", out var metadataNode) && metadataNode is YamlMappingNode metadataMappingNode && metadataMappingNode.Children.TryGetValue("namespace", out var namespaceNode) && namespaceNode is YamlScalarNode namespaceScalarNode && !string.IsNullOrWhiteSpace(namespaceScalarNode.Value))
             {
                 implicitNamespace = namespaceScalarNode.Value;
             }
@@ -54,9 +52,9 @@ namespace Calamari.Kubernetes
 
         public void ReportManifestApplied(string filePath)
         {
-            if (!FeatureToggle.KubernetesLiveObjectStatusFeatureToggle.IsEnabled(variables))
+            if (!FeatureToggle.KubernetesLiveObjectStatusFeatureToggle.IsEnabled(variables) && !OctopusFeatureToggles.KubernetesObjectManifestInspectionFeatureToggle.IsEnabled(variables))
                 return;
-            
+
             using (var yamlFile = fileSystem.OpenFile(filePath, FileAccess.ReadWrite))
             {
                 try
