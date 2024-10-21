@@ -14,6 +14,6 @@
         AzureRMDeprecationFeatureToggle,
         PreventHelmV2DeploymentsFeatureToggle,
         KubernetesLiveObjectStatusFeatureToggle,
-        KubernetesAuthAwsCliWithExecFeatureToggle,
+        KubernetesAuthAwsCliWithExecFeatureToggle
     }
 }
