@@ -25,11 +25,6 @@ namespace Calamari.AzureResourceGroup
 {
     class DeployAzureResourceGroupBehaviour : IDeployBehaviour
     {
-        static readonly TimeSpan PollingTimeout = TimeSpan.FromMinutes(3);
-
-        static readonly AsyncTimeoutPolicy<ArmDeploymentResource> AsyncResourceGroupPollingTimeoutPolicy =
-            Policy.TimeoutAsync<ArmDeploymentResource>(PollingTimeout, TimeoutStrategy.Optimistic);
-
         readonly TemplateService templateService;
         readonly IResourceGroupTemplateNormalizer parameterNormalizer;
         readonly ILog log;
@@ -89,7 +84,7 @@ namespace Calamari.AzureResourceGroup
                                                              deploymentMode,
                                                              template,
                                                              parameters);
-            await PollForCompletion(deploymentOperation);
+            await PollForCompletion(deploymentOperation, variables);
             await FinalizeDeployment(deploymentOperation, variables);
         }
 
@@ -128,14 +123,19 @@ namespace Calamari.AzureResourceGroup
             }
         }
 
-        async Task PollForCompletion(ArmOperation<ArmDeploymentResource> deploymentOperation)
+        async Task PollForCompletion(ArmOperation<ArmDeploymentResource> deploymentOperation, IVariables variables)
         {
+            var pollingTimeoutVariableValue = variables.Get(SpecialVariables.Action.Azure.ArmDeploymentTimeout, "30");
+            int.TryParse(pollingTimeoutVariableValue, out var pollingTimeoutValue);
+            var pollingTimeout = TimeSpan.FromMinutes(pollingTimeoutValue > 0 ? pollingTimeoutValue: 30);
+            var asyncResourceGroupPollingTimeoutPolicy = Policy.TimeoutAsync<ArmDeploymentResource>(pollingTimeout, TimeoutStrategy.Optimistic);
+            
             log.Info("Polling for deployment completion...");
             try
             {
-                var deploymentResult = await AsyncResourceGroupPollingTimeoutPolicy.ExecuteAsync(async timeoutCancellationToken =>
+                var deploymentResult = await asyncResourceGroupPollingTimeoutPolicy.ExecuteAsync(async timeoutCancellationToken =>
                                                                                                  {
-                                                                                                     var delayStrategy = DelayStrategy.CreateExponentialDelayStrategy(TimeSpan.FromSeconds(1), PollingTimeout);
+                                                                                                     var delayStrategy = DelayStrategy.CreateExponentialDelayStrategy(TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(30));
                                                                                                      var result = await deploymentOperation.WaitForCompletionAsync(delayStrategy, timeoutCancellationToken);
                                                                                                      return result;
                                                                                                  },
