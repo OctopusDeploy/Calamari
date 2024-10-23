@@ -42,14 +42,14 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set(KnownVariables.EnabledFeatureToggles, enabledFeatureToggle);
 
             var yaml = @"foo: bar";
-            var expectedJson = "{\"foo\": \"bar\"}";
+            //var expectedJson = "{\"foo\": \"bar\"}";
             using (CreateFile(yaml, out var filePath))
             {
                 var mr = new ManifestReporter(variables, CalamariPhysicalFileSystem.GetPhysicalFileSystem(), memoryLog);
 
                 mr.ReportManifestApplied(filePath);
 
-                var expected = ServiceMessage.Create(SpecialVariables.ServiceMessageNames.ManifestApplied.Name, ("ns", "default"), ("manifest", expectedJson));
+                var expected = ServiceMessage.Create(SpecialVariables.ServiceMessageNames.ManifestApplied.Name, ("ns", "default"), ("manifest", yaml));
                 memoryLog.ServiceMessages.Should().BeEquivalentTo(new List<ServiceMessage> { expected });
             }
         }
