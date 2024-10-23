@@ -1,6 +1,7 @@
 ﻿using System;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Processes;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Deployment.Conventions;
 using Calamari.Kubernetes.Integration;
@@ -24,6 +25,10 @@ namespace Calamari.Kubernetes.Conventions
 
         public void Install(RunningDeployment deployment)
         {
+            if (!FeatureToggle.KubernetesLiveObjectStatusFeatureToggle.IsEnabled(deployment.Variables)
+                && !OctopusFeatureToggles.KubernetesObjectManifestInspectionFeatureToggle.IsEnabled(deployment.Variables))
+                return;
+
             var releaseName = deployment.Variables.Get("ReleaseName");
 
             var helm = new HelmCli(log, commandLineRunner, deployment.CurrentDirectory, deployment.EnvironmentVariables)
