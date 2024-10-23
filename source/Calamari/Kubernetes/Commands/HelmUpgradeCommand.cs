@@ -36,6 +36,7 @@ namespace Calamari.Kubernetes.Commands
         readonly IExtractPackage extractPackage;
         readonly HelmTemplateValueSourcesParser templateValueSourcesParser;
         readonly ICommandLineRunner commandLineRunner;
+        readonly IManifestReporter manifestReporter;
 
         public HelmUpgradeCommand(
             ILog log,
@@ -45,8 +46,8 @@ namespace Calamari.Kubernetes.Commands
             ICalamariFileSystem fileSystem,
             ISubstituteInFiles substituteInFiles,
             IExtractPackage extractPackage,
-            HelmTemplateValueSourcesParser templateValueSourcesParser
-        )
+            HelmTemplateValueSourcesParser templateValueSourcesParser,
+            IManifestReporter manifestReporter)
         {
             Options.Add("package=", "Path to the NuGet package to install.", v => pathToPackage = new PathToPackage(Path.GetFullPath(v)));
             this.log = log;
@@ -56,6 +57,7 @@ namespace Calamari.Kubernetes.Commands
             this.substituteInFiles = substituteInFiles;
             this.extractPackage = extractPackage;
             this.templateValueSourcesParser = templateValueSourcesParser;
+            this.manifestReporter = manifestReporter;
             this.commandLineRunner = commandLineRunner;
         }
 
@@ -99,6 +101,7 @@ namespace Calamari.Kubernetes.Commands
                 new DelegateInstallConvention(d => substituteInFiles.Substitute(d.CurrentDirectory, TemplateValuesFiles(d)  , true)),
                 new ConfiguredScriptConvention(new DeployConfiguredScriptBehaviour(log, fileSystem, scriptEngine, commandLineRunner)),
                 new HelmUpgradeConvention(log, scriptEngine, commandLineRunner, fileSystem, templateValueSourcesParser),
+                new ReportHelmManifestConvention(log, commandLineRunner, manifestReporter),
                 new ConfiguredScriptConvention(new PostDeployConfiguredScriptBehaviour(log, fileSystem, scriptEngine, commandLineRunner))
             });
             

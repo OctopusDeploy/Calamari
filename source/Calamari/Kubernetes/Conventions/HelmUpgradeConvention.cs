@@ -62,6 +62,7 @@ namespace Calamari.Kubernetes.Conventions
             }
         }
 
+        // This could/should be refactored to use `HelmCli` at somepoint
         string BuildHelmCommand(RunningDeployment deployment, ScriptSyntax syntax)
         {
             var releaseName = GetReleaseName(deployment.Variables);
