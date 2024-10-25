@@ -40,13 +40,9 @@ namespace Calamari.Tests.KubernetesFixtures
             var memoryLog = new InMemoryLog();
             var variables = new CalamariVariables();
             variables.Set(KnownVariables.EnabledFeatureToggles, enabledFeatureToggle);
-
-            var yaml = @"name: George Washington
-alphafield: ""fgdsfsd""
-age: 89
-height_in_inches: ""5.75""
-";
-            //var expectedJson = "{\"foo\": \"bar\"}";
+            
+            var yaml = "name: George Washington\nalphafield: \"fgdsfsd\"\nage: 89\nheight_in_inches: \"5.75\"\n";
+            
             using (CreateFile(yaml, out var filePath))
             {
                 var mr = new ManifestReporter(variables, CalamariPhysicalFileSystem.GetPhysicalFileSystem(), memoryLog);
