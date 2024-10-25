@@ -56,7 +56,7 @@ namespace Calamari.Kubernetes.Integration
 
         public string GetManifest(string releaseName)
         {
-            var result = ExecuteCommandAndReturnOutput("get", "manifest", $"\"{releaseName}\"");
+            var result = ExecuteCommandAndReturnOutput("get", "manifest", releaseName);
             result.Result.VerifySuccess();
 
             return result.Output.MergeInfoLogs();

@@ -119,6 +119,8 @@ namespace Calamari.Kubernetes.Conventions
         {
             if (customHelmExecutable != null)
             {
+                // Not fixing this in my current change but the chmod here is redundant as we already try to run
+                // the exe as part of CheckHelmToolVersion() early in the script.
                 // With PowerShell we need to invoke custom executables
                 sb.Append(syntax == ScriptSyntax.PowerShell ? ". " : $"chmod +x \"{customHelmExecutable}\"\n");
                 sb.Append($"\"{customHelmExecutable}\"");
