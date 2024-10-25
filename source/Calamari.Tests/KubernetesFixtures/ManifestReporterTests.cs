@@ -140,7 +140,35 @@ quoted_float: ""5.75""
                 memoryLog.ServiceMessages.First().Properties.Should().Contain(new KeyValuePair<string, string>("ns", "default"));
             }
         }
+        
+        [TestCase(nameof(FeatureToggle.KubernetesLiveObjectStatusFeatureToggle))]
+        [TestCase( OctopusFeatureToggles.KnownSlugs.KubernetesObjectManifestInspection)]
+        public void SecretManifest_ShouldRedactDataValues(string enabledFeatureToggle)
+        {
+            var memoryLog = new InMemoryLog();
+            var variables = new CalamariVariables();
+            variables.Set(KnownVariables.EnabledFeatureToggles, enabledFeatureToggle);
+            
+            const string yaml = @"apiVersion: v1
+kind: Secret
+metadata:
+  name: dotfile-secret
+data:
+  .secret-file: dmFsdWUtMg0KDQo=
+  another-secret: ""this-is-not-a-base64-value""";
+            const string expectedJson = "{\"apiVersion\": \"v1\", \"kind\": \"Secret\", \"metadata\": {\"name\": \"dotfile-secret\"}, \"data\": {\".secret-file\": \"<redacted-HTIOeIP7rD4Wa4OGFOrZDOgzs/Ns7RxxQUSMW5AM9zM=>\", \"another-secret\": \"<redacted-LjxWWuTodgQ0Z95zOPbBWpkk9icLpHtGBa9sm2Z/U4k=>\"}}";
+            
+            using (CreateFile(yaml, out var filePath))
+            {
+                var mr = new ManifestReporter(variables, CalamariPhysicalFileSystem.GetPhysicalFileSystem(), memoryLog);
 
+                mr.ReportManifestApplied(filePath);
+
+                var expected = ServiceMessage.Create(SpecialVariables.ServiceMessageNames.ManifestApplied.Name, ("ns", "default"), ("manifest", expectedJson));
+                memoryLog.ServiceMessages.Should().BeEquivalentTo(new List<ServiceMessage> { expected });
+            }
+        }
+        
         static IDisposable CreateFile(string yaml, out string filePath)
         {
             var tempDir = TemporaryDirectory.Create();

@@ -86,6 +86,9 @@ namespace Calamari.Kubernetes
 
         static string SerializeManifest(YamlMappingNode node)
         {
+            //mask any sensitive data in the manifest
+            ManifestDataMasker.MaskSensitiveData(node);
+
            return YamlSerializer.Serialize(node);
         }
     }
