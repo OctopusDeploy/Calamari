@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using Calamari.Kubernetes;
+using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NUnit.Framework;
 using YamlDotNet.RepresentationModel;
@@ -25,6 +26,8 @@ namespace Calamari.Tests.KubernetesFixtures
                 node = (YamlMappingNode)doc.RootNode;
             }
 
+            expectedYaml = expectedYaml.ReplaceLineEndings();
+
             //Act
             ManifestDataMasker.MaskSensitiveData(node);
 
@@ -36,7 +39,8 @@ namespace Calamari.Tests.KubernetesFixtures
 
                 var outputYaml = writer.ToString()
                                        //The yaml stream adds a document separator (...) to the end of the yaml (even for a single document), so strip it as we don't care for the test assertion
-                                       .TrimEnd('\r', '\n', '.');
+                                       .TrimEnd('\r', '\n', '.')
+                                       .ReplaceLineEndings();
 
                 outputYaml.Should().Be(expectedYaml);
             }
