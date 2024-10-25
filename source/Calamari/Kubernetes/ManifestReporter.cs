@@ -24,11 +24,8 @@ namespace Calamari.Kubernetes
         readonly ICalamariFileSystem fileSystem;
         readonly ILog log;
 
-        static readonly IDeserializer YamlDeserializer = new Deserializer();
-
         static readonly ISerializer YamlSerializer = new SerializerBuilder()
                                                      .WithNamingConvention(CamelCaseNamingConvention.Instance)
-                                                     //.JsonCompatible()
                                                      .Build();
 
         public ManifestReporter(IVariables variables, ICalamariFileSystem fileSystem, ILog log)
