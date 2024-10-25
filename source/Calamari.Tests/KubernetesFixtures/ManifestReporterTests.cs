@@ -41,7 +41,7 @@ namespace Calamari.Tests.KubernetesFixtures
             var variables = new CalamariVariables();
             variables.Set(KnownVariables.EnabledFeatureToggles, enabledFeatureToggle);
             
-            var yaml = "name: George Washington\nalphafield: \"fgdsfsd\"\nage: 89\nheight_in_inches: \"5.75\"\n";
+            var yaml = "name: George Washington\nalphafield: \"fgdsfsd\"\nage: 89\nheight_in_inches: \"5.75\"\n".Replace("\n", Environment.NewLine);
             
             using (CreateFile(yaml, out var filePath))
             {
