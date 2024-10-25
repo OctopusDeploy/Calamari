@@ -8,6 +8,7 @@ using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes;
 using Calamari.Testing.Helpers;
+using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NUnit.Framework;
 
@@ -41,7 +42,12 @@ namespace Calamari.Tests.KubernetesFixtures
             var variables = new CalamariVariables();
             variables.Set(KnownVariables.EnabledFeatureToggles, enabledFeatureToggle);
             
-            var yaml = "name: George Washington\nalphafield: \"fgdsfsd\"\nage: 89\nheight_in_inches: \"5.75\"\n".Replace("\n", Environment.NewLine);
+            //Test that quotes are preserved, especially for numbers
+            var yaml = @"name: George Washington
+alphafield: ""fgdsfsd""
+age: 89
+height_in_inches: ""5.75""
+".ReplaceLineEndings();
             
             using (CreateFile(yaml, out var filePath))
             {

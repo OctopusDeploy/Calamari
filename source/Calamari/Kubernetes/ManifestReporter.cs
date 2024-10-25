@@ -70,7 +70,7 @@ namespace Calamari.Kubernetes
                             continue;
                         }
 
-                        var updatedDocument = YamlNodeToJson(rootNode);
+                        var updatedDocument = SerializeManifest(rootNode);
 
                         var ns = GetNamespace(rootNode);
                         log.WriteServiceMessage(new ServiceMessage(SpecialVariables.ServiceMessageNames.ManifestApplied.Name,
@@ -88,20 +88,9 @@ namespace Calamari.Kubernetes
             }
         }
 
-        static string YamlNodeToJson(YamlNode node)
+        static string SerializeManifest(YamlMappingNode node)
         {
            return YamlSerializer.Serialize(node);
-            // var stream = new YamlStream { new YamlDocument(node) };
-            // using (var writer = new StringWriter())
-            // {
-            //     stream.Save(writer);
-            //
-            //     using (var reader = new StringReader(writer.ToString()))
-            //     {
-            //         var yamlObject = YamlDeserializer.Deserialize(reader);
-            //         return yamlObject is null ? string.Empty : YamlSerializer.Serialize(yamlObject).Trim();
-            //     }
-            // }
         }
     }
 }
