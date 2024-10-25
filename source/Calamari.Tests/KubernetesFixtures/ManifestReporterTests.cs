@@ -41,7 +41,11 @@ namespace Calamari.Tests.KubernetesFixtures
             var variables = new CalamariVariables();
             variables.Set(KnownVariables.EnabledFeatureToggles, enabledFeatureToggle);
 
-            var yaml = @"foo: bar";
+            var yaml = @"name: George Washington
+alphafield: ""fgdsfsd""
+age: 89
+height_in_inches: ""5.75""
+";
             //var expectedJson = "{\"foo\": \"bar\"}";
             using (CreateFile(yaml, out var filePath))
             {
