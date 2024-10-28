@@ -51,7 +51,7 @@ namespace Calamari.Kubernetes
             if (!FeatureToggle.KubernetesLiveObjectStatusFeatureToggle.IsEnabled(variables) && !OctopusFeatureToggles.KubernetesObjectManifestInspectionFeatureToggle.IsEnabled(variables))
                 return;
 
-            using (var yamlFile = fileSystem.OpenFile(filePath, FileAccess.ReadWrite))
+            using (var yamlFile = fileSystem.OpenFile(filePath, FileAccess.Read, FileShare.Read))
             {
                 try
                 {
