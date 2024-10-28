@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Calamari.Azure;
+using Calamari.Azure.AppServices;
 using Calamari.AzureAppService.Azure;
 using Calamari.CloudAccounts;
 using Calamari.Common.Commands;
