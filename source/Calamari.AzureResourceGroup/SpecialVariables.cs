@@ -14,6 +14,7 @@
                 public static readonly string Template = "Octopus.Action.Azure.Template";
                 public static readonly string TemplateParameters = "Octopus.Action.Azure.TemplateParameters";
                 public static readonly string TemplateSource = "Octopus.Action.Azure.TemplateSource";
+                public static readonly string ArmDeploymentTimeout = "Octopus.Action.Azure.ArmDeploymentTimeout";
             }
         }
     }
