@@ -45,8 +45,10 @@ namespace Calamari.Tests.KubernetesFixtures
             //Test that quotes are preserved, especially for numbers
             var yaml = @"name: George Washington
 alphafield: ""fgdsfsd""
-age: 89
-height_in_inches: ""5.75""
+unquoted_int: 89
+quoted_int: ""89""
+unquoted_float: 5.75
+quoted_float: ""5.75""
 ".ReplaceLineEndings();
             
             using (CreateFile(yaml, out var filePath))
