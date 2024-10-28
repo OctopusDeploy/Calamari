@@ -2,8 +2,7 @@
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
-using Calamari.Common.Plumbing.Extensions;
-using Calamari.Common.Plumbing.Retry;
+using Calamari.AzureWebApp.NetCoreShim.Retry;
 using Microsoft.Web.Deployment;
 using Newtonsoft.Json;
 using Serilog;
