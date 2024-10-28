@@ -1,28 +1,57 @@
 <Project Sdk="Microsoft.NET.Sdk" ToolsVersion="15.0">
-  <PropertyGroup>
-    <AssemblyName>Calamari.AzureWebApp</AssemblyName>
-    <RootNamespace>Calamari.AzureWebApp</RootNamespace>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <IsPackable>false</IsPackable>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net462</TargetFramework>
-  </PropertyGroup>
+    <PropertyGroup>
+        <AssemblyName>Calamari.AzureWebApp</AssemblyName>
+        <RootNamespace>Calamari.AzureWebApp</RootNamespace>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <IsPackable>false</IsPackable>
+        <OutputType>Exe</OutputType>
+        <TargetFrameworks>net462;net6.0</TargetFrameworks>
+        <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
+        <LangVersion>8.0</LangVersion>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Microsoft.Azure.Management.ResourceManager" Version="3.7.3-preview" />
-    <PackageReference Include="Microsoft.Azure.Management.Websites" Version="4.0.0" />
-    <PackageReference Include="Microsoft.Rest.ClientRuntime" Version="2.3.23" />
-    <PackageReference Include="Microsoft.Web.Deployment" Version="4.0.5" />
-    <PackageReference Include="Microsoft.Identity.Client" Version="4.56.0" />
-    <PackageReference Include="Microsoft.DotNet.Analyzers.Compatibility" Version="0.2.12-alpha">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
-    </PackageReference>
-  </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Azure.Core" Version="1.42.0"/>
+        <PackageReference Include="Azure.ResourceManager" Version="1.12.0"/>
+        <PackageReference Include="Azure.ResourceManager.AppService" Version="1.2.0"/>
+        <PackageReference Include="Azure.ResourceManager.DeploymentManager" Version="1.0.0-beta.3"/>
+        <PackageReference Include="Microsoft.Identity.Client" Version="4.65.0"/>
+    </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Calamari.AzureScripting\Calamari.AzureScripting.csproj" />
-    <ProjectReference Include="..\Calamari.Azure\Calamari.Azure.csproj" />
-    <ProjectReference Include="..\Calamari.CloudAccounts\Calamari.CloudAccounts.csproj" />
-  </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\Calamari.AzureScripting\Calamari.AzureScripting.csproj"/>
+        <ProjectReference Include="..\Calamari.Azure\Calamari.Azure.csproj"/>
+        <ProjectReference Include="..\Calamari.CloudAccounts\Calamari.CloudAccounts.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
+        <PackageReference Include="Microsoft.Web.Deployment" Version="4.0.5"/>
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
+        <Content Include="netcoreshim/*.*">
+            <LinkBase>netcoreshim</LinkBase>
+            <Pack>true</Pack>
+            <Visible>false</Visible>
+            <PackagePath>contentFiles/any/any/netcoreshim/</PackagePath>
+            <PackageCopyToOutput>true</PackageCopyToOutput>
+            <PackageFlatten>false</PackageFlatten>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+    </ItemGroup>
+    <ItemGroup  Condition="'$(TargetFramework)' == 'net462'">
+        <None Remove="netcoreshim/**"/>
+    </ItemGroup>
+    
+    <Target Name="GetNetCoreShimFiles">
+        <ItemGroup>
+            <NetCoreShimFiles Include="$(MSBuildProjectDirectory)/netcoreshim/netcoreshim.zip" Condition="'$(TargetFramework)' == 'net6.0'" />
+        </ItemGroup>
+    </Target>
+    <Target Name="CopyNetCoreShimFilesAfterBuild" AfterTargets="Build" DependsOnTargets="GetNetCoreShimFiles">
+        <Unzip SourceFiles="@(NetCoreShimFiles)" DestinationFolder="$(OutDir)/netcoreshim" />
+    </Target>
+    <Target Name="CopyNetCoreShimFilesAfterPublish" AfterTargets="Publish" DependsOnTargets="GetNetCoreShimFiles">
+        <Unzip SourceFiles="@(NetCoreShimFiles)" DestinationFolder="$(PublishDir)/netcoreshim" />
+    </Target>
 </Project>

@@ -62,12 +62,12 @@ namespace Calamari.ConsolidateCalamariPackages
         static IReadOnlyList<IPackageReference> GetPackages(Hasher hasher, IEnumerable<BuildPackageReference> packageReferences)
         {
             var calamariPackages = packageReferences
-                .Where(p => !MigratedCalamariFlavours.Flavours.Contains(p.Name))
+                .Where(p => !CalamariPackages.Flavours.Contains(p.Name))
                 .Where(p => p.Name.StartsWith("Calamari"))
                 .Select(p => new CalamariPackageReference(hasher, p));
             
             var calamariFlavourPackages = packageReferences
-                .Where(p => MigratedCalamariFlavours.Flavours.Contains(p.Name))
+                .Where(p => CalamariPackages.Flavours.Contains(p.Name))
                 .Select(p => new CalamariFlavourPackageReference(hasher, p));
 
             var sashimiPackages = packageReferences
