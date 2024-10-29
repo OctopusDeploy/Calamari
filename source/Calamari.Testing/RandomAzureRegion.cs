@@ -5,24 +5,24 @@ namespace Calamari.Testing
 {
     public static class RandomAzureRegion
     {
-        static Random random = new Random();
+        static readonly Random Random = new();
 
-        static string[] regions = new[]
-        {
+        static readonly string[] Regions = {
             "southeastasia",
             "centralus",
             "eastus",
             "eastus2",
             "westus",
             "westus2",
-            "australiaeast"
+            "australiaeast",
+            "australiasoutheast"
         };
 
         public static string GetRandomRegionWithExclusions(params string[] excludedRegions)
         {
-            var possibleRegions = regions.Except(excludedRegions).ToArray();
+            var possibleRegions = Regions.Except(excludedRegions).ToArray();
 
-            return possibleRegions[random.Next(0, possibleRegions.Length)];
+            return possibleRegions[Random.Next(0, possibleRegions.Length)];
         }
     }
 }
