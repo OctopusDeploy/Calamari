@@ -12,9 +12,9 @@ using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Variables;
 using Microsoft.Azure.Management.ResourceManager;
 using Microsoft.Azure.Management.ResourceManager.Models;
+using Microsoft.Rest;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Octopus.CoreUtilities.Extensions;
 using AzureResourceManagerDeployment = Microsoft.Azure.Management.ResourceManager.Models.Deployment;
 
 namespace Calamari.AzureResourceGroup
@@ -31,9 +31,9 @@ namespace Calamari.AzureResourceGroup
             this.parameterNormalizer = parameterNormalizer;
             this.log = log;
         }
-        
+
         public bool IsEnabled(RunningDeployment context) => !FeatureToggle.ModernAzureSdkFeatureToggle.IsEnabled(context.Variables);
-        
+
         public async Task Execute(RunningDeployment deployment)
         {
             var variables = deployment.Variables;
@@ -49,6 +49,7 @@ namespace Calamari.AzureResourceGroup
                 templateFile = variables.Get(SpecialVariables.Action.Azure.ResourceGroupTemplate);
                 templateParametersFile = variables.Get(SpecialVariables.Action.Azure.ResourceGroupTemplateParameters);
             }
+
             var resourceManagementEndpoint = variables.Get(AzureAccountVariables.ResourceManagementEndPoint, DefaultVariables.ResourceManagementEndpoint);
 
             if (resourceManagementEndpoint != DefaultVariables.ResourceManagementEndpoint)
@@ -62,7 +63,7 @@ namespace Calamari.AzureResourceGroup
                 ? variables[SpecialVariables.Action.Azure.ResourceGroupDeploymentName]
                 : GenerateDeploymentNameFromStepName(variables[ActionVariables.Name]);
             var deploymentMode = (DeploymentMode)Enum.Parse(typeof(DeploymentMode),
-                                                             variables[SpecialVariables.Action.Azure.ResourceGroupDeploymentMode]);
+                                                            variables[SpecialVariables.Action.Azure.ResourceGroupDeploymentMode]);
             var template = templateService.GetSubstitutedTemplateContent(templateFile, filesInPackageOrRepository, variables);
             var parameters = !string.IsNullOrWhiteSpace(templateParametersFile)
                 ? parameterNormalizer.Normalize(templateService.GetSubstitutedTemplateContent(templateParametersFile, filesInPackageOrRepository, variables))
@@ -72,21 +73,25 @@ namespace Calamari.AzureResourceGroup
 
             // We re-create the client each time it is required in order to get a new authorization-token. Else, the token can expire during long-running deployments.
             Func<Task<IResourceManagementClient>> createArmClient = async () =>
-                                                              {
-                                                                  var token = !jwt.IsNullOrEmpty()
-                                                                      ? await new AzureOidcAccount(variables).Credentials(CancellationToken.None)
-                                                                      : await new AzureServicePrincipalAccount(variables).Credentials();
-                                                                  var resourcesClient = new ResourceManagementClient(token, AuthHttpClientFactory.ProxyClientHandler())
-                                                                  {
-                                                                      SubscriptionId = subscriptionId,
-                                                                      BaseUri = new Uri(resourceManagementEndpoint),
-                                                                  };
-                                                                  resourcesClient.HttpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
-                                                                  resourcesClient.HttpClient.BaseAddress = new Uri(resourceManagementEndpoint);
-                                                                  return resourcesClient;
-                                                              };
+                                                                    {
+                                                                        var account = AzureAccountFactory.Create(variables);
+                                                                        var token = new TokenCredentials(await account.GetAuthorizationToken(log, CancellationToken.None));
+                                                                        var resourcesClient = new ResourceManagementClient(token, AuthHttpClientFactory.ProxyClientHandler())
+                                                                        {
+                                                                            SubscriptionId = subscriptionId,
+                                                                            BaseUri = new Uri(resourceManagementEndpoint),
+                                                                        };
+                                                                        resourcesClient.HttpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
+                                                                        resourcesClient.HttpClient.BaseAddress = new Uri(resourceManagementEndpoint);
+                                                                        return resourcesClient;
+                                                                    };
 
-            await CreateDeployment(createArmClient, resourceGroupName, deploymentName, deploymentMode, template, parameters);
+            await CreateDeployment(createArmClient,
+                                   resourceGroupName,
+                                   deploymentName,
+                                   deploymentMode,
+                                   template,
+                                   parameters);
             await PollForCompletion(createArmClient, resourceGroupName, deploymentName, variables);
         }
 
@@ -104,8 +109,12 @@ namespace Calamari.AzureResourceGroup
             return deploymentName;
         }
 
-        async Task CreateDeployment(Func<Task<IResourceManagementClient>> createArmClient, string resourceGroupName, string deploymentName,
-                                     DeploymentMode deploymentMode, string template, string parameters)
+        async Task CreateDeployment(Func<Task<IResourceManagementClient>> createArmClient,
+                                    string resourceGroupName,
+                                    string deploymentName,
+                                    DeploymentMode deploymentMode,
+                                    string template,
+                                    string parameters)
         {
             log.Verbose($"Template:\n{template}\n");
             if (parameters != null)
@@ -141,8 +150,10 @@ namespace Calamari.AzureResourceGroup
             }
         }
 
-        async Task PollForCompletion(Func<Task<IResourceManagementClient>> createArmClient, string resourceGroupName,
-                                      string deploymentName, IVariables variables)
+        async Task PollForCompletion(Func<Task<IResourceManagementClient>> createArmClient,
+                                     string resourceGroupName,
+                                     string deploymentName,
+                                     IVariables variables)
         {
             // While the deployment is running, we poll to check its state.
             // We increase the poll interval according to the Fibonacci sequence, up to a maximum of 30 seconds.
@@ -250,14 +261,17 @@ namespace Calamari.AzureResourceGroup
                 {
                     log.Error($"{indent}Message: {error.Message}");
                 }
+
                 if (!string.IsNullOrEmpty(error.Code))
                 {
                     log.Error($"{indent}Code: {error.Code}");
                 }
+
                 if (!string.IsNullOrEmpty(error.Target))
                 {
                     log.Error($"{indent}Target: {error.Target}");
                 }
+
                 foreach (var errorDetail in error.Details)
                 {
                     LogCloudError(errorDetail, ++count);

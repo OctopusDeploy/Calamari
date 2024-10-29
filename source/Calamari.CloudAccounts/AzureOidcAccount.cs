@@ -1,15 +1,10 @@
 using System;
-using System.Net;
-using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
-using Microsoft.Azure.Management.Fluent;
-using Microsoft.Azure.Management.ResourceManager.Fluent.Authentication;
-using Microsoft.Rest;
+using Microsoft.Identity.Client;
 using Newtonsoft.Json;
-using NetWebRequest = System.Net.WebRequest;
-using AzureEnvironmentEnum = Microsoft.Azure.Management.ResourceManager.Fluent.AzureEnvironment;
 
 namespace Calamari.CloudAccounts
 {
@@ -41,13 +36,14 @@ namespace Calamari.CloudAccounts
             TenantId = variables.Get(AccountVariables.TenantId);
             Jwt = variables.Get(AccountVariables.Jwt);
             AzureEnvironment = variables.Get(AccountVariables.Environment);
-            ResourceManagementEndpointBaseUri = variables.Get(AccountVariables.ResourceManagementEndPoint, DefaultVariables.ResourceManagementEndpoint);
-            ActiveDirectoryEndpointBaseUri = variables.Get(AccountVariables.ActiveDirectoryEndPoint, DefaultVariables.OidcAuthContextUri);
+            ResourceManagementEndpointBaseUri = variables.Get(AccountVariables.ResourceManagementEndPoint, DefaultAccountEndpoints.ResourceManagementEndpoint);
+            ActiveDirectoryEndpointBaseUri = variables.Get(AccountVariables.ActiveDirectoryEndPoint, DefaultAccountEndpoints.OidcAuthContextUri);
         }
 
         public AccountType AccountType => AccountType.AzureOidc;
         public string GetCredentials => Jwt;
-        public string SubscriptionNumber { get;  }
+
+        public string SubscriptionNumber { get; }
         public string ClientId { get; }
         public string TenantId { get; }
         public string Jwt { get; }
@@ -55,7 +51,47 @@ namespace Calamari.CloudAccounts
         public string ResourceManagementEndpointBaseUri { get; }
         public string ActiveDirectoryEndpointBaseUri { get; }
 
-        internal static string GetDefaultScope(string environmentName)
+        public async Task<string> GetAuthorizationToken(ILog log, CancellationToken cancellationToken)
+        {
+            var authClientFactory = new AuthHttpClientFactory();
+
+            var authContext = GetOidcContextUri(string.IsNullOrEmpty(ActiveDirectoryEndpointBaseUri) ? "https://login.microsoftonline.com/" : ActiveDirectoryEndpointBaseUri, TenantId);
+            log.Verbose($"Authentication Context: {authContext}");
+
+            var app = ConfidentialClientApplicationBuilder.Create(ClientId)
+                                                          .WithClientAssertion(GetCredentials)
+                                                          .WithAuthority(authContext)
+                                                          .WithHttpClientFactory(authClientFactory)
+                                                          .Build();
+
+            var result = await app.AcquireTokenForClient(
+                                                         // Default values set on a per cloud basis on AzureOidcAccount, if managementEndPoint is set on the account /.default is required.
+                                                         new[]
+                                                         {
+                                                             ResourceManagementEndpointBaseUri == DefaultAccountEndpoints.ResourceManagementEndpoint || string.IsNullOrEmpty(ResourceManagementEndpointBaseUri)
+                                                                 ? AzureOidcAccount.GetDefaultScope(AzureEnvironment)
+                                                                 : ResourceManagementEndpointBaseUri.EndsWith(".default")
+                                                                     ? ResourceManagementEndpointBaseUri
+                                                                     : $"{ResourceManagementEndpointBaseUri}/.default"
+                                                         })
+                                  .WithTenantId(TenantId)
+                                  .ExecuteAsync(cancellationToken)
+                                  .ConfigureAwait(false);
+
+            return result.AccessToken;
+        }
+
+        static string GetOidcContextUri(string activeDirectoryEndPoint, string tenantId)
+        {
+            if (!activeDirectoryEndPoint.EndsWith("/"))
+            {
+                return $"{activeDirectoryEndPoint}/{tenantId}/v2.0";
+            }
+
+            return $"{activeDirectoryEndPoint}{tenantId}/v2.0";
+        }
+
+        static string GetDefaultScope(string environmentName)
         {
             switch (environmentName)
             {
@@ -71,29 +107,6 @@ namespace Calamari.CloudAccounts
                     // The double slash is intentional for public cloud.
                     return "https://management.azure.com//.default";
             }
-        }
-
-        public IAzure CreateAzureClient()
-        {
-            var environment = string.IsNullOrEmpty(AzureEnvironment) || AzureEnvironment == "AzureCloud"
-                ? AzureEnvironmentEnum.AzureGlobalCloud
-                : AzureEnvironmentEnum.FromName(AzureEnvironment) ??
-                  throw new InvalidOperationException($"Unknown environment name {AzureEnvironment}");
-
-            var accessToken = this.GetAuthorizationToken(CancellationToken.None).GetAwaiter().GetResult();
-            var credentials = new AzureCredentials(
-                                                   new TokenCredentials(accessToken),
-                                                   new TokenCredentials(accessToken),
-                                                   TenantId,
-                                                   environment);
-
-            // to ensure the Azure API uses the appropriate web proxy
-            var client = new HttpClient(new HttpClientHandler {Proxy = NetWebRequest.DefaultWebProxy});
-
-            return Microsoft.Azure.Management.Fluent.Azure.Configure()
-                            .WithHttpClient(client)
-                            .Authenticate(credentials)
-                            .WithSubscription(SubscriptionNumber);
         }
     }
 }

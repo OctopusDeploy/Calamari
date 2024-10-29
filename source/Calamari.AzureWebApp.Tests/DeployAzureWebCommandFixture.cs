@@ -58,6 +58,8 @@ namespace Calamari.AzureWebApp.Tests
             tenantId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId, cancellationToken);
             subscriptionId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionId, cancellationToken);
             var resourceGroupLocation = Environment.GetEnvironmentVariable("AZURE_NEW_RESOURCE_REGION") ?? RandomAzureRegion.GetRandomRegionWithExclusions();
+            
+            TestContext.WriteLine($"Resource Group Location: {resourceGroupLocation}");
 
             var servicePrincipalAccount = new AzureServicePrincipalAccount(subscriptionId,
                                                                            clientId,
@@ -110,11 +112,20 @@ namespace Calamari.AzureWebApp.Tests
             
             TestContext.WriteLine($"Creating app service plan {resourceGroupResource.Data.Name}");
 
-            var servicePlanResponse = await resourceGroupResource.GetAppServicePlans()
+            ArmOperation<AppServicePlanResource> servicePlanResponse;
+            try
+            {
+                servicePlanResponse = await resourceGroupResource.GetAppServicePlans()
                                                                  .CreateOrUpdateAsync(WaitUntil.Completed,
                                                                                       resourceGroupResource.Data.Name,
                                                                                       appServicePlanData,
                                                                                       cancellationToken);
+            }
+            catch (RequestFailedException e)
+            {
+                //try and catch errors so we can filter out bad regions
+                throw new Exception($"Failed to create app service plan in resource group {resourceGroupResource.Data.Name} in region {resourceGroupLocation}.", e);
+            }
 
             servicePlanResource = servicePlanResponse.Value;
         }
