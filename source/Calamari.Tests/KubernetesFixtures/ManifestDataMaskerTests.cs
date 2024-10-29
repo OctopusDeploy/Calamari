@@ -86,7 +86,7 @@ kind: Secret
 metadata:
   name: dotfile-secret
 data:
-  .secret-file: ""<redacted-HTIOeIP7rD4Wa4OGFOrZDOgzs/Ns7RxxQUSMW5AM9zM=>""
+  .secret-file: <redacted-HTIOeIP7rD4Wa4OGFOrZDOgzs/Ns7RxxQUSMW5AM9zM=>
   another-secret: ""<redacted-LjxWWuTodgQ0Z95zOPbBWpkk9icLpHtGBa9sm2Z/U4k=>"""
                             )
                 .SetName("Secret manifest has data values masked")
