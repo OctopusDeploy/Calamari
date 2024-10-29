@@ -45,15 +45,13 @@ namespace Calamari.Azure.Kubernetes.Discovery
             var armClient = account.CreateArmClient();
 
             var discoveredClusters = new List<KubernetesCluster>();
-
-            // There appears to be an issue where the azure client returns stale data
-            // We need to upgrade this to use the newer SDK, but we need to upgrade to .NET 4.6.2 to support that.
+            
             var subscriptionResource = armClient.GetSubscriptionResource(SubscriptionResource.CreateResourceIdentifier(account.SubscriptionNumber));
             
-            //we don't care about resource groups that are being deleted (so filter them at the query level)
-            var resourceGroups = subscriptionResource.GetResourceGroups().GetAll("provisioningState ne 'Deleting'");
+            var resourceGroups = subscriptionResource.GetResourceGroups().GetAll();//.GetAll("provisioningState ne 'Deleting'");
             
-            foreach (var resourceGroupResource in resourceGroups)
+            //we don't care about resource groups that are being deleted
+            foreach (var resourceGroupResource in resourceGroups.Where(rg => !string.Equals(rg.Data.ResourceGroupProvisioningState,"Deleting", StringComparison.OrdinalIgnoreCase)))
             {
                 try
                 {
