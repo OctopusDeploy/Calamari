@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.ServiceMessages;
@@ -9,13 +8,12 @@ using Calamari.Common.Plumbing.Variables;
 using YamlDotNet.Core;
 using YamlDotNet.RepresentationModel;
 using YamlDotNet.Serialization;
-using YamlDotNet.Serialization.NamingConventions;
 
 namespace Calamari.Kubernetes
 {
     public interface IManifestReporter
     {
-        void ReportManifestApplied(string filePath);
+        void ReportManifestApplied(string filePath, string implicitNamespace);
     }
 
     public class ManifestReporter : IManifestReporter
@@ -25,7 +23,7 @@ namespace Calamari.Kubernetes
         readonly ILog log;
 
         static readonly ISerializer YamlSerializer = new SerializerBuilder()
-                                                     .Build();
+            .Build();
 
         public ManifestReporter(IVariables variables, ICalamariFileSystem fileSystem, ILog log)
         {
@@ -34,23 +32,8 @@ namespace Calamari.Kubernetes
             this.log = log;
         }
 
-        string GetNamespace(YamlMappingNode yamlRoot)
+        public void ReportManifestApplied(string filePath, string implicitNamespace)
         {
-            var implicitNamespace = variables.Get(SpecialVariables.Namespace) ?? "default";
-
-            if (yamlRoot.Children.TryGetValue("metadata", out var metadataNode) && metadataNode is YamlMappingNode metadataMappingNode && metadataMappingNode.Children.TryGetValue("namespace", out var namespaceNode) && namespaceNode is YamlScalarNode namespaceScalarNode && !string.IsNullOrWhiteSpace(namespaceScalarNode.Value))
-            {
-                implicitNamespace = namespaceScalarNode.Value;
-            }
-
-            return implicitNamespace;
-        }
-
-        public void ReportManifestApplied(string filePath)
-        {
-            if (!FeatureToggle.KubernetesLiveObjectStatusFeatureToggle.IsEnabled(variables) && !OctopusFeatureToggles.KubernetesObjectManifestInspectionFeatureToggle.IsEnabled(variables))
-                return;
-
             using (var yamlFile = fileSystem.OpenFile(filePath, FileAccess.Read, FileShare.Read))
             {
                 try
@@ -68,13 +51,18 @@ namespace Calamari.Kubernetes
 
                         var updatedDocument = SerializeManifest(rootNode);
 
-                        var ns = GetNamespace(rootNode);
-                        log.WriteServiceMessage(new ServiceMessage(SpecialVariables.ServiceMessageNames.ManifestApplied.Name,
-                                                                   new Dictionary<string, string>
-                                                                   {
-                                                                       { SpecialVariables.ServiceMessageNames.ManifestApplied.ManifestAttribute, updatedDocument },
-                                                                       { SpecialVariables.ServiceMessageNames.ManifestApplied.NamespaceAttribute, ns }
-                                                                   }));
+                        var dict = new Dictionary<string, string>
+                        {
+                            [SpecialVariables.ServiceMessageNames.ManifestApplied.ManifestAttribute] = updatedDocument,
+                        };
+                        
+                        var ns = GetNamespaceFromManifest(rootNode) ?? implicitNamespace;
+                        if (!string.IsNullOrWhiteSpace(ns))
+                        {
+                            dict[SpecialVariables.ServiceMessageNames.ManifestApplied.NamespaceAttribute] = ns;
+                        }
+
+                        log.WriteServiceMessage(new ServiceMessage(SpecialVariables.ServiceMessageNames.ManifestApplied.Name, dict));
                     }
                 }
                 catch (SemanticErrorException)
@@ -84,12 +72,19 @@ namespace Calamari.Kubernetes
             }
         }
 
+        static string GetNamespaceFromManifest(YamlMappingNode yamlRoot)
+        {
+            return yamlRoot.Children.TryGetValue("metadata", out var metadataNode) && metadataNode is YamlMappingNode metadataMappingNode && metadataMappingNode.Children.TryGetValue("namespace", out var namespaceNode) && namespaceNode is YamlScalarNode namespaceScalarNode && !string.IsNullOrWhiteSpace(namespaceScalarNode.Value)
+                ? namespaceScalarNode.Value
+                : null;
+        }
+
         static string SerializeManifest(YamlMappingNode node)
         {
             //mask any sensitive data in the manifest
             ManifestDataMasker.MaskSensitiveData(node);
 
-           return YamlSerializer.Serialize(node);
+            return YamlSerializer.Serialize(node);
         }
     }
 }

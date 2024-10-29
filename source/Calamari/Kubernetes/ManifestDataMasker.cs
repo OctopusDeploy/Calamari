@@ -38,8 +38,6 @@ namespace Calamari.Kubernetes
                 var redactedString = $"<redacted-{Convert.ToBase64String(hashedBytes)}>";
 
                 valueScalarNode.Value = redactedString;
-                //forcibly double quote to make it clear it's now a string
-                valueScalarNode.Style = ScalarStyle.DoubleQuoted;
             }
         }
     }
