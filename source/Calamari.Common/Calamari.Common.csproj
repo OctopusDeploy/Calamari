@@ -39,6 +39,7 @@
         <PackageReference Include="Globfish" Version="1.0.4" />
         <PackageReference Include="JavaPropertiesParser" Version="0.2.1" />
         <PackageReference Include="Microsoft.Web.Xdt" Version="3.1.0" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
         <PackageReference Include="Octopus.Versioning" Version="5.1.876" />
         <PackageReference Include="Octopus.TinyTypes" Version="2.2.1156" />
         <PackageReference Include="Octopus.CoreUtilities" Version="2.1.449" />

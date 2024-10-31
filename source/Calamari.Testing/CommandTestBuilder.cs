@@ -154,6 +154,9 @@ namespace Calamari.Testing
 
                 context.Variables.Save(varPath);
                 args.Add($"--variables={varPath}");
+                
+                //add any extra args
+                args.AddRange(context.Args);
 
                 return args;
             }
