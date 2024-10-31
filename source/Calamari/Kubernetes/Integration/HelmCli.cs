@@ -49,8 +49,15 @@ namespace Calamari.Kubernetes.Integration
             }
         }
 
-        public HelmCli WithNamespace(string @namespace)
+        public HelmCli WithNamespace(IVariables variables)
         {
+            var @namespace = variables.Get(SpecialVariables.Helm.Namespace);
+            if (string.IsNullOrWhiteSpace(@namespace))
+            {
+                //fallback to any specified kubernetes namespace
+                @namespace = variables.Get(SpecialVariables.Namespace);
+            }
+            
             if (!string.IsNullOrWhiteSpace(@namespace))
             {
                 builtInArguments.Add($"--namespace {@namespace}");

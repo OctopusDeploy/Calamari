@@ -33,7 +33,7 @@ namespace Calamari.Kubernetes.Conventions
 
             var helm = new HelmCli(log, commandLineRunner, deployment.CurrentDirectory, deployment.EnvironmentVariables)
                        .WithExecutable(deployment.Variables)
-                       .WithNamespace(deployment.Variables.Get(SpecialVariables.Helm.Namespace));
+                       .WithNamespace(deployment.Variables);
 
             var manifest = helm.GetManifest(releaseName, 1);
             manifestReporter.ReportManifestApplied(manifest);
