@@ -68,7 +68,7 @@ namespace Calamari.Kubernetes.Conventions
 
             var currentRevisionNumber = helmCli.GetCurrentRevision(releaseName);
 
-            var newRevisionNumber = (currentRevisionNumber ?? 1) + 1;
+            var newRevisionNumber = (currentRevisionNumber ?? 0) + 1;
 
             IRunningResourceStatusCheck statusCheck = null;
             if (runResourceStatusCheck)
@@ -104,7 +104,7 @@ namespace Calamari.Kubernetes.Conventions
                 {
                     manifest = helmCli.GetManifest(releaseName, revisionNumber);
                 }
-                catch (CommandException)
+                catch (CommandLineException)
                 {
                     log.Verbose("Helm manifest was not ready for retrieval. Retrying in 1s");
                     await Task.Delay(TimeSpan.FromSeconds(1), ct.Token);
