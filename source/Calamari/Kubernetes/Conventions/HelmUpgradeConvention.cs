@@ -103,6 +103,7 @@ namespace Calamari.Kubernetes.Conventions
                 try
                 {
                     manifest = helmCli.GetManifest(releaseName, revisionNumber);
+                    break;
                 }
                 catch (CommandLineException)
                 {
@@ -158,7 +159,7 @@ namespace Calamari.Kubernetes.Conventions
             using (new TemporaryFile(fileName))
             {
                 fileSystem.OverwriteFile(fileName, cmd);
-                var result = scriptEngine.Execute(new Script(fileName), deployment.Variables, commandLineRunner);
+                var result = scriptEngine.Execute(new Script(fileName), deployment.Variables, commandLineRunner,deployment.EnvironmentVariables);
                 if (result.ExitCode != 0)
                 {
                     throw new CommandException(

@@ -76,7 +76,7 @@ namespace Calamari.Kubernetes.Integration
                 return null; //
             
             //parse the output
-            var json = result.Output.MergeInfoLogs();;
+            var json = result.Output.MergeInfoLogs();
             var metadata = JsonConvert.DeserializeAnonymousType(json,
                                                                 new
                                                                 {
@@ -97,6 +97,6 @@ namespace Calamari.Kubernetes.Integration
         }
 
         public CommandResultWithOutput ExecuteCommandAndReturnOutput(params string[] arguments) =>
-            base.ExecuteCommandAndReturnOutput(ExecutableLocation, builtInArguments.Concat(arguments).ToArray());
+            base.ExecuteCommandAndReturnOutput(ExecutableLocation, arguments.Concat(builtInArguments).ToArray());
     }
 }

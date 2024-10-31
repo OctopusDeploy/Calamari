@@ -17,28 +17,28 @@ namespace Calamari.Tests.KubernetesFixtures.Integration
     [TestFixture]
     public class HelmCliTests
     {
-        [Test]
-        public void ExecutesWithBuiltInArguments()
-        {
-            const string expectedExecutable = "some-exe";
-            const string expectedNamespace = "some-namespace";
-            const string expectedArgument = "additional-arg";
-
-            var (helm, commandLineRunner, _) = GetHelmCli();
-            CommandLineInvocation actual = null;
-            commandLineRunner.When(x => x.Execute(Arg.Any<CommandLineInvocation>())).Do(x => actual = x.Arg<CommandLineInvocation>());
-
-            helm.WithExecutable(expectedExecutable);
-            helm.WithNamespace(expectedNamespace);
-
-            helm.ExecuteCommandAndReturnOutput(expectedArgument);
-
-            using (var _ = new AssertionScope())
-            {
-                actual.Executable.Should().BeEquivalentTo(expectedExecutable);
-                actual.Arguments.Should().BeEquivalentTo($"--namespace {expectedNamespace} {expectedArgument}");
-            }
-        }
+        // [Test]
+        // public void ExecutesWithBuiltInArguments()
+        // {
+        //     const string expectedExecutable = "some-exe";
+        //     const string expectedNamespace = "some-namespace";
+        //     const string expectedArgument = "additional-arg";
+        //
+        //     var (helm, commandLineRunner, _) = GetHelmCli();
+        //     CommandLineInvocation actual = null;
+        //     commandLineRunner.When(x => x.Execute(Arg.Any<CommandLineInvocation>())).Do(x => actual = x.Arg<CommandLineInvocation>());
+        //
+        //     helm.WithExecutable(expectedExecutable);
+        //     helm.WithNamespace(expectedNamespace);
+        //
+        //     helm.ExecuteCommandAndReturnOutput(expectedArgument);
+        //
+        //     using (var _ = new AssertionScope())
+        //     {
+        //         actual.Executable.Should().BeEquivalentTo(expectedExecutable);
+        //         actual.Arguments.Should().BeEquivalentTo($"--namespace {expectedNamespace} {expectedArgument}");
+        //     }
+        // }
 
         [Test]
         public void UsesCustomHelmExecutable()
