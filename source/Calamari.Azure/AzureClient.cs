@@ -29,7 +29,8 @@ namespace Calamari.Azure
                 return new ArmClient(clientAssertionCreds, defaultSubscriptionId: azureAccount.SubscriptionNumber, clientOptions);
             }
 
-            var clientSecret = azureAccount.GetCredentials;
+            string clientSecret;
+            clientSecret = azureAccount.GetCredentials;
 
             var (armClientOptions, tokenCredentialOptions) = GetArmClientOptions(azureAccount, retryOptionsSetter);
             var credential = new ClientSecretCredential(azureAccount.TenantId, azureAccount.ClientId, clientSecret, tokenCredentialOptions);
@@ -40,7 +41,7 @@ namespace Calamari.Azure
         {
             var azureKnownEnvironment = new AzureKnownEnvironment(azureAccount.AzureEnvironment);
 
-            // Configure the specific transport that will pick up the proxy settings set by Calamari
+            // Configure a specific transport that will pick up the proxy settings set by Calamari
 #pragma warning disable DE0003
             var httpClientTransport = new HttpClientTransport(new HttpClientHandler { Proxy = WebRequest.DefaultWebProxy });
 #pragma warning restore DE0003

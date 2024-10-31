@@ -20,14 +20,7 @@ namespace Calamari.AzureWebApp
         protected override void ConfigureContainer(ContainerBuilder builder, CommonOptions options)
         {
             base.ConfigureContainer(builder, options);
-
             builder.RegisterType<ResourceManagerPublishProfileProvider>().SingleInstance();
-
-#if NETFRAMEWORK
-            builder.RegisterType<NetFxWebDeploymentExecutor>().As<IWebDeploymentExecutor>();
-#else
-            builder.RegisterType<NetCoreWebDeploymentExecutor>().As<IWebDeploymentExecutor>();
-#endif
         }
 
         protected override IEnumerable<Assembly> GetProgramAssembliesToRegister()

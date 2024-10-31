@@ -1,21 +1,23 @@
 ﻿using System;
-using Azure.ResourceManager.AppService.Models;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using Newtonsoft.Json;
 
-namespace Calamari.Azure.AppServices
+namespace Calamari.AzureAppService.Json
 {
-    public class ConnectionStringSetting
+    public class AppSetting
     {
         public string Name { get; set; }
         public string Value { get; set; }
-        public ConnectionStringType Type { get; set; }
 
         public bool SlotSetting { get; set; }
 
-        internal void Deconstruct(out string name, out string value, out ConnectionStringType type, out bool isSlotSetting)
+        internal void Deconstruct(out string name, out string value, out bool isSlotSetting)
         {
             name = Name;
             value = Value;
-            type = Type;
             isSlotSetting = SlotSetting;
         }
 
@@ -30,7 +32,7 @@ namespace Calamari.Azure.AppServices
         {
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
-            return obj.GetType() == this.GetType() && Equals((AppSetting)obj);
+            return obj.GetType() == this.GetType() && Equals((AppSetting) obj);
         }
 
         public override int GetHashCode()
@@ -39,14 +41,13 @@ namespace Calamari.Azure.AppServices
             {
                 Name,
                 Value,
-                SlotSetting,
-                Type
+                SlotSetting
             }.GetHashCode();
         }
 
         public override string ToString()
         {
-            return $"\nName: {Name}\nValue: {Value}\nType: {Type}\nIsSlotSetting: {SlotSetting}\n";
+            return $"\nName: {Name}\nValue: {Value}\nIsSlotSetting: {SlotSetting}\n";
         }
     }
 }

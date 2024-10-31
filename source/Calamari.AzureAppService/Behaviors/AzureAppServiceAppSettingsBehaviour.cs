@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using Azure.ResourceManager;
 using Azure.ResourceManager.AppService.Models;
 using Calamari.Azure;
-using Calamari.Azure.AppServices;
 using Calamari.AzureAppService.Azure;
 using Calamari.AzureAppService.Json;
 using Calamari.CloudAccounts;

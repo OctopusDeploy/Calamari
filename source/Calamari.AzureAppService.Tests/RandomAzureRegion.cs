@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
 
-namespace Calamari.Testing
+namespace Calamari.AzureAppService.Tests
 {
     public static class RandomAzureRegion
     {

@@ -5,8 +5,9 @@ using System.Net.Sockets;
 using Calamari.Common.Plumbing.Logging;
 using Polly;
 using Polly.Retry;
+using Polly.Timeout;
 
-namespace Calamari.Azure.AppServices
+namespace Calamari.AzureAppService
 {
     public static class RetryPolicies
     {

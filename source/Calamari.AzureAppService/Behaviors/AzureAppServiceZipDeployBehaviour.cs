@@ -14,7 +14,6 @@ using Azure.ResourceManager;
 using Azure.ResourceManager.AppService;
 using Azure.ResourceManager.Resources;
 using Calamari.Azure;
-using Calamari.Azure.AppServices;
 using Calamari.AzureAppService.Azure;
 using Calamari.CloudAccounts;
 using Calamari.Common.Commands;
@@ -50,7 +49,8 @@ namespace Calamari.AzureAppService.Behaviors
             Log.Verbose("Starting Azure App Service deployment.");
 
             var variables = context.Variables;
-            var account = AzureAccountFactory.Create(variables);
+            var hasJwt = !variables.Get(AccountVariables.Jwt).IsNullOrEmpty();
+            var account = hasJwt ? (IAzureAccount)new AzureOidcAccount(variables) : new AzureServicePrincipalAccount(variables);
             Log.Verbose($"Using Azure Tenant '{account.TenantId}'");
             Log.Verbose($"Using Azure Subscription '{account.SubscriptionNumber}'");
             Log.Verbose($"Using Azure ServicePrincipal AppId/ClientId '{account.ClientId}'");
@@ -61,10 +61,23 @@ namespace Calamari.AzureAppService.Behaviors
             var pollingTimeout = TimeSpan.FromMinutes(pollingTimeoutValue);
             var asyncZipDeployTimeoutPolicy = Policy.TimeoutAsync<HttpResponseMessage>(pollingTimeout, TimeoutStrategy.Optimistic);
 
-            var armClient = account.CreateArmClient();
-            var targetSite = AzureTargetSite.Create(account, variables, Log);
+            string? resourceGroupName = variables.Get(SpecialVariables.Action.Azure.ResourceGroupName);
+            if (resourceGroupName == null)
+                throw new Exception("resource group name must be specified");
+            Log.Verbose($"Using Azure Resource Group '{resourceGroupName}'.");
 
-            var resourceGroupName = targetSite.ResourceGroupName;
+            string? webAppName = variables.Get(SpecialVariables.Action.Azure.WebAppName);
+            if (webAppName == null)
+                throw new Exception("Web App Name must be specified");
+            Log.Verbose($"Using App Service Name '{webAppName}'.");
+
+            string? slotName = variables.Get(SpecialVariables.Action.Azure.WebAppSlot);
+            Log.Verbose(slotName == null
+                            ? "No Deployment Slot specified"
+                            : $"Using Deployment Slot '{slotName}'");
+
+            var armClient = account.CreateArmClient();
+            var targetSite = new AzureTargetSite(account.SubscriptionNumber, resourceGroupName, webAppName, slotName);
 
             var resourceGroups = armClient
                                  .GetSubscriptionResource(SubscriptionResource.CreateResourceIdentifier(targetSite.SubscriptionId))
