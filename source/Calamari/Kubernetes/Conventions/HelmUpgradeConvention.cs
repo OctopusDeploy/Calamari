@@ -98,11 +98,12 @@ namespace Calamari.Kubernetes.Conventions
                 try
                 {
                     manifest = helmCli.GetManifest(releaseName, revisionNumber);
+                    log.Verbose($"Retrieved manifest for {releaseName}, revision {revisionNumber}.");
                     break;
                 }
                 catch (CommandLineException)
                 {
-                    log.Verbose("Helm manifest was not ready for retrieval. Retrying in 1s");
+                    log.Verbose("Helm manifest was not ready for retrieval. Retrying in 1s.");
                     await Task.Delay(TimeSpan.FromSeconds(1), ct.Token);
                 }
             }
