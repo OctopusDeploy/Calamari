@@ -17,6 +17,8 @@ namespace Calamari.Testing
 
         public VariableDictionary Variables { get; } = new VariableDictionary();
 
+        public IList<string> Args { get; } = new List<string>();
+
         public CommandTestBuilderContext WithStagedPackageArgument()
         {
             withStagedPackageArgument = true;
@@ -56,6 +58,12 @@ namespace Calamari.Testing
         public CommandTestBuilderContext WithTool(IDeploymentTool tool)
         {
             Tools.Add(tool);
+            return this;
+        }
+
+        public CommandTestBuilderContext WithArg(string arg)
+        {
+            Args.Add(arg);
             return this;
         }
     }

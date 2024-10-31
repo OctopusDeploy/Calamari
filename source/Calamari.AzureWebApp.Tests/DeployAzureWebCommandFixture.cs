@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
+using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure;
@@ -15,11 +16,13 @@ using Calamari.Azure.AppServices;
 using Calamari.CloudAccounts;
 using Calamari.Common.Features.Deployment;
 using Calamari.Common.Features.Scripts;
+using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using Calamari.Testing.Requirements;
 using FluentAssertions;
+using Newtonsoft.Json;
 using NUnit.Framework;
 using HttpClient = System.Net.Http.HttpClient;
 using KnownVariables = Calamari.Common.Plumbing.Variables.KnownVariables;
@@ -80,7 +83,7 @@ namespace Calamari.AzureWebApp.Tests
             var subscriptionResource = armClient.GetSubscriptionResource(SubscriptionResource.CreateResourceIdentifier(subscriptionId));
 
             TestContext.WriteLine($"Creating resource group {resourceGroupName}");
-            
+
             var response = await subscriptionResource
                                  .GetResourceGroups()
                                  .CreateOrUpdateAsync(WaitUntil.Completed,
@@ -107,7 +110,7 @@ namespace Calamari.AzureWebApp.Tests
                     Tier = "PremiumV3"
                 }
             };
-            
+
             TestContext.WriteLine($"Creating app service plan {resourceGroupResource.Data.Name}");
 
             var servicePlanResponse = await resourceGroupResource.GetAppServicePlans()
@@ -129,7 +132,7 @@ namespace Calamari.AzureWebApp.Tests
 
             var newCount = Interlocked.Increment(ref webAppCount);
             var name = $"{resourceGroupResource.Data.Name}-{newCount}";
-            
+
             TestContext.WriteLine($"Creating web site {name}");
 
             var webSiteResponse = await resourceGroupResource.GetWebSites()
@@ -145,7 +148,7 @@ namespace Calamari.AzureWebApp.Tests
         public async Task TearDown()
         {
             TestContext.WriteLine($"Deleting Azure Web Site {webSiteResource.Data.Name}");
-            
+
             await webSiteResource.DeleteAsync(WaitUntil.Started, deleteEmptyServerFarm: false, cancellationToken: cancellationToken);
         }
 
@@ -153,7 +156,7 @@ namespace Calamari.AzureWebApp.Tests
         public virtual async Task Cleanup()
         {
             TestContext.WriteLine($"Deleting resource group {resourceGroupResource.Data.Name}");
-            
+
             await resourceGroupResource.DeleteAsync(WaitUntil.Started, cancellationToken: cancellationToken);
         }
 
@@ -164,10 +167,27 @@ namespace Calamari.AzureWebApp.Tests
             const string actualText = "Hello World";
 
             File.WriteAllText(Path.Combine(tempPath.DirectoryPath, "index.html"), actualText);
+            
+            var sensitiveVariables = new Dictionary<string, string>
+            {
+                ["MyCoolSensitiveVariable"] = "i-am-a-secret",
+                ["Another.Secret"] = "abc123"
+            };
+            var serialized = JsonConvert.SerializeObject(sensitiveVariables);
+            var encryptionPassword = AesEncryption.RandomString(10);
+            var aesEncryption = new AesEncryption(encryptionPassword);
+            var encryptedBytes = aesEncryption.Encrypt(serialized);
+
+            var sensitiveVariablesFilePath = Path.Combine(tempPath.DirectoryPath, Path.GetRandomFileName());
+            File.WriteAllBytes(sensitiveVariablesFilePath, encryptedBytes);
 
             await CommandTestBuilder.CreateAsync<DeployAzureWebCommand, Program>()
                                     .WithArrange(context =>
                                                  {
+                                                     context
+                                                         .WithArg($"--sensitiveVariables={sensitiveVariablesFilePath}")
+                                                         .WithArg($"--sensitiveVariablesPassword={encryptionPassword}");
+                                                     
                                                      AddDefaults(context);
 
                                                      context.WithFilesToCopy(tempPath.DirectoryPath);
