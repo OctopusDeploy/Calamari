@@ -56,8 +56,6 @@ namespace Calamari.Kubernetes.Conventions
 
         public void Install(RunningDeployment deployment)
         {
-            var runResourceStatusCheck = deployment.Variables.GetFlag(SpecialVariables.ResourceStatusCheck);
-
             var syntax = ScriptSyntaxHelper.GetPreferredScriptSyntaxForEnvironment();
 
             var releaseName = GetReleaseName(deployment.Variables);
@@ -70,30 +68,27 @@ namespace Calamari.Kubernetes.Conventions
 
             var newRevisionNumber = (currentRevisionNumber ?? 0) + 1;
 
-            IRunningResourceStatusCheck statusCheck = null;
-            if (runResourceStatusCheck)
-            {
-                var timeoutSeconds = deployment.Variables.GetInt32(SpecialVariables.Timeout) ?? 0;
-                var waitForJobs = deployment.Variables.GetFlag(SpecialVariables.WaitForJobs);
-
-                statusCheck = statusReporter.Start(timeoutSeconds, waitForJobs);
-            }
-
             var helmUpgradeTask = Task.Run(() => ExecuteHelmUpgrade(deployment, syntax, releaseName));
-            var getManifestTask = Task.Run(() => PollForManifest(helmCli,
-                                                                 releaseName,
-                                                                 newRevisionNumber,
-                                                                 statusCheck));
+            var manifestAndStatusCheckTask = Task.Run(async () =>
+                                                      {
+                                                          var manifest = await PollForManifest(helmCli, releaseName, newRevisionNumber);
 
-            var statusReporterTask = statusCheck?.WaitForCompletionOrTimeout() ?? Task.CompletedTask;
+                                                          //report the manifest has been applied
+                                                          manifestReporter.ReportManifestApplied(manifest);
 
-            Task.WhenAll(helmUpgradeTask, getManifestTask, statusReporterTask).GetAwaiter().GetResult();
+                                                          //if resource status (KOS) is enabled, parse the manifest and start monitored the resources
+                                                          if (deployment.Variables.GetFlag(SpecialVariables.ResourceStatusCheck))
+                                                          {
+                                                              await ParseManifestAndMonitorResourceStatuses(deployment, manifest);
+                                                          }
+                                                      });
+            //we run both the helm upgrade and the manifest & status in parallel
+            Task.WhenAll(helmUpgradeTask, manifestAndStatusCheckTask).GetAwaiter().GetResult();
         }
 
-        async Task PollForManifest(HelmCli helmCli,
-                                   string releaseName,
-                                   int revisionNumber,
-                                   IRunningResourceStatusCheck statusCheck)
+        async Task<string> PollForManifest(HelmCli helmCli,
+                                           string releaseName,
+                                           int revisionNumber)
         {
             var ct = new CancellationTokenSource();
             ct.CancelAfter(TimeSpan.FromMinutes(10));
@@ -117,38 +112,41 @@ namespace Calamari.Kubernetes.Conventions
                 throw new CommandException("Failed to retrieve helm manifest in a timely manner");
             }
 
-            if (statusCheck != null)
+            return manifest;
+        }
+
+        async Task ParseManifestAndMonitorResourceStatuses(RunningDeployment deployment, string manifest)
+        {
+            var timeoutSeconds = deployment.Variables.GetInt32(SpecialVariables.Timeout) ?? 0;
+            var waitForJobs = deployment.Variables.GetFlag(SpecialVariables.WaitForJobs);
+
+            var resources = new List<ResourceIdentifier>();
+            using (var reader = new StringReader(manifest))
             {
-                var resources = new List<ResourceIdentifier>();
-                using (var reader = new StringReader(manifest))
+                var yamlStream = new YamlStream();
+                yamlStream.Load(reader);
+
+                foreach (var document in yamlStream.Documents)
                 {
-                    var yamlStream = new YamlStream();
-                    yamlStream.Load(reader);
-
-                    foreach (var document in yamlStream.Documents)
+                    if (!(document.RootNode is YamlMappingNode rootNode))
                     {
-                        if (!(document.RootNode is YamlMappingNode rootNode))
-                        {
-                            log.Warn("Could not parse manifest, resources will not be added to kubernetes object status");
-                            continue;
-                        }
-
-                        var kind = rootNode.GetChildNode<YamlScalarNode>("kind").Value;
-
-                        var metadataNode = rootNode.GetChildNode<YamlMappingNode>("metadata");
-                        var name = metadataNode.GetChildNode<YamlScalarNode>("name").Value;
-                        var @namespace = metadataNode.GetChildNodeIfExists<YamlScalarNode>("namespace")?.Value;
-
-                        var resourceIdentifier = new ResourceIdentifier(kind, name, @namespace);
-                        resources.Add(resourceIdentifier);
+                        log.Warn("Could not parse manifest, resources will not be added to kubernetes object status");
+                        continue;
                     }
-                }
 
-                await statusCheck.AddResources(resources.ToArray());
+                    var kind = rootNode.GetChildNode<YamlScalarNode>("kind").Value;
+
+                    var metadataNode = rootNode.GetChildNode<YamlMappingNode>("metadata");
+                    var name = metadataNode.GetChildNode<YamlScalarNode>("name").Value;
+                    var @namespace = metadataNode.GetChildNodeIfExists<YamlScalarNode>("namespace")?.Value;
+
+                    var resourceIdentifier = new ResourceIdentifier(kind, name, @namespace);
+                    resources.Add(resourceIdentifier);
+                }
             }
 
-            //report the manifest has been applied
-            manifestReporter.ReportManifestApplied(manifest);
+            var statusCheck = statusReporter.Start(timeoutSeconds, waitForJobs, resources);
+            await statusCheck.WaitForCompletionOrTimeout();
         }
 
         void ExecuteHelmUpgrade(RunningDeployment deployment, ScriptSyntax syntax, string releaseName)
@@ -159,17 +157,15 @@ namespace Calamari.Kubernetes.Conventions
             using (new TemporaryFile(fileName))
             {
                 fileSystem.OverwriteFile(fileName, cmd);
-                var result = scriptEngine.Execute(new Script(fileName), deployment.Variables, commandLineRunner,deployment.EnvironmentVariables);
+                var result = scriptEngine.Execute(new Script(fileName), deployment.Variables, commandLineRunner, deployment.EnvironmentVariables);
                 if (result.ExitCode != 0)
                 {
-                    throw new CommandException(
-                                               $"Helm Upgrade returned non-zero exit code: {result.ExitCode}. Deployment terminated.");
+                    throw new CommandException($"Helm Upgrade returned non-zero exit code: {result.ExitCode}. Deployment terminated.");
                 }
 
-                if (result.HasErrors && deployment.Variables.GetFlag(Deployment.SpecialVariables.Action.FailScriptOnErrorOutput, false))
+                if (result.HasErrors && deployment.Variables.GetFlag(Deployment.SpecialVariables.Action.FailScriptOnErrorOutput))
                 {
-                    throw new CommandException(
-                                               "Helm Upgrade returned zero exit code but had error output. Deployment terminated.");
+                    throw new CommandException("Helm Upgrade returned zero exit code but had error output. Deployment terminated.");
                 }
             }
         }
