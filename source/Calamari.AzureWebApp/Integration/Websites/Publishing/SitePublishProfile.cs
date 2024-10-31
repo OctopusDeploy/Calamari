@@ -2,7 +2,7 @@
 
 namespace Calamari.AzureWebApp.Integration.Websites.Publishing
 {
-    public class SitePublishProfile
+    class SitePublishProfile
     {
         public SitePublishProfile(string userName, string password, Uri uri)
         {

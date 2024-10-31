@@ -78,8 +78,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.Scripting", "Calam
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.Scripting.Tests", "Calamari.Scripting.Tests\Calamari.Scripting.Tests.csproj", "{D8DEC40C-948F-4806-AE87-1A7502E41A06}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.AzureWebApp.NetCoreShim", "Calamari.AzureWebApp.NetCoreShim\Calamari.AzureWebApp.NetCoreShim.csproj", "{B4EB8110-50D8-4C7E-8DBF-102AE57FD943}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -204,10 +202,6 @@ Global
 		{D8DEC40C-948F-4806-AE87-1A7502E41A06}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D8DEC40C-948F-4806-AE87-1A7502E41A06}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D8DEC40C-948F-4806-AE87-1A7502E41A06}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B4EB8110-50D8-4C7E-8DBF-102AE57FD943}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B4EB8110-50D8-4C7E-8DBF-102AE57FD943}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B4EB8110-50D8-4C7E-8DBF-102AE57FD943}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B4EB8110-50D8-4C7E-8DBF-102AE57FD943}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
