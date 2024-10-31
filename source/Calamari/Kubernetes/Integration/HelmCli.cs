@@ -5,6 +5,7 @@ using System.Linq;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
+using Newtonsoft.Json;
 
 namespace Calamari.Kubernetes.Integration
 {
@@ -50,13 +51,39 @@ namespace Calamari.Kubernetes.Integration
 
         public HelmCli WithNamespace(string @namespace)
         {
-            builtInArguments.Add($"--namespace {@namespace}");
+            if (!string.IsNullOrWhiteSpace(@namespace))
+            {
+                builtInArguments.Add($"--namespace {@namespace}");
+            }
+
             return this;
         }
 
-        public string GetManifest(string releaseName)
+        public int? GetCurrentRevision(string releaseName)
         {
-            var result = ExecuteCommandAndReturnOutput("get", "manifest", releaseName);
+            var result = ExecuteCommandAndReturnOutput("get", "metadata", releaseName, "-o json");
+
+
+            //if we get _any_ error back, assume it probably hasn't been installed yet
+            if (result.Result.ExitCode != 0)
+                return null; //
+            
+            //parse the output
+            var json = result.Output.MergeInfoLogs();;
+            var metadata = JsonConvert.DeserializeAnonymousType(json,
+                                                                new
+                                                                {
+                                                                    //we only care about parsing the revision
+                                                                    revision = 0
+                                                                });
+
+            //the next revision 
+            return metadata.revision;
+        }
+
+        public string GetManifest(string releaseName, int revisionNumber)
+        {
+            var result = ExecuteCommandAndReturnOutput("get", "manifest", releaseName, $"--revision {revisionNumber}");
             result.Result.VerifySuccess();
 
             return result.Output.MergeInfoLogs();

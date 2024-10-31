@@ -21,6 +21,7 @@ using Calamari.Deployment.Conventions;
 using Calamari.Deployment.Conventions.DependencyVariables;
 using Calamari.Kubernetes.Conventions;
 using Calamari.Kubernetes.Helm;
+using Calamari.Kubernetes.ResourceStatus;
 
 namespace Calamari.Kubernetes.Commands
 {
@@ -35,6 +36,7 @@ namespace Calamari.Kubernetes.Commands
         readonly ISubstituteInFiles substituteInFiles;
         readonly IExtractPackage extractPackage;
         readonly HelmTemplateValueSourcesParser templateValueSourcesParser;
+        readonly IResourceStatusReportExecutor statusExecutor;
         readonly ICommandLineRunner commandLineRunner;
         readonly IManifestReporter manifestReporter;
 
@@ -47,6 +49,7 @@ namespace Calamari.Kubernetes.Commands
             ISubstituteInFiles substituteInFiles,
             IExtractPackage extractPackage,
             HelmTemplateValueSourcesParser templateValueSourcesParser,
+            IResourceStatusReportExecutor statusExecutor,
             IManifestReporter manifestReporter)
         {
             Options.Add("package=", "Path to the NuGet package to install.", v => pathToPackage = new PathToPackage(Path.GetFullPath(v)));
@@ -57,6 +60,7 @@ namespace Calamari.Kubernetes.Commands
             this.substituteInFiles = substituteInFiles;
             this.extractPackage = extractPackage;
             this.templateValueSourcesParser = templateValueSourcesParser;
+            this.statusExecutor = statusExecutor;
             this.manifestReporter = manifestReporter;
             this.commandLineRunner = commandLineRunner;
         }
@@ -100,8 +104,14 @@ namespace Calamari.Kubernetes.Commands
                 new DelegateInstallConvention(d => substituteInFiles.Substitute(d.CurrentDirectory, ExplicitlySpecifiedValuesFiles().ToList(), true)),
                 new DelegateInstallConvention(d => substituteInFiles.Substitute(d.CurrentDirectory, TemplateValuesFiles(d)  , true)),
                 new ConfiguredScriptConvention(new DeployConfiguredScriptBehaviour(log, fileSystem, scriptEngine, commandLineRunner)),
-                new HelmUpgradeConvention(log, scriptEngine, commandLineRunner, fileSystem, templateValueSourcesParser),
-                new ReportHelmManifestConvention(log, commandLineRunner, manifestReporter),
+                new HelmUpgradeConvention(log, 
+                                          scriptEngine, 
+                                          commandLineRunner,
+                                          fileSystem, 
+                                          templateValueSourcesParser,
+                                          statusExecutor,
+                                          manifestReporter),
+                //new ReportHelmManifestConvention(log, commandLineRunner, manifestReporter),
                 new ConfiguredScriptConvention(new PostDeployConfiguredScriptBehaviour(log, fileSystem, scriptEngine, commandLineRunner))
             });
             

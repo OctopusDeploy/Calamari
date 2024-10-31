@@ -4,6 +4,8 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
@@ -15,9 +17,13 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.Conventions;
 using Calamari.Kubernetes.Helm;
+using Calamari.Kubernetes.Integration;
+using Calamari.Kubernetes.ResourceStatus;
+using Calamari.Kubernetes.ResourceStatus.Resources;
 using Calamari.Util;
 using Newtonsoft.Json;
 using Octopus.CoreUtilities.Extensions;
+using YamlDotNet.RepresentationModel;
 
 namespace Calamari.Kubernetes.Conventions
 {
@@ -28,20 +34,125 @@ namespace Calamari.Kubernetes.Conventions
         readonly ICommandLineRunner commandLineRunner;
         readonly ICalamariFileSystem fileSystem;
         readonly HelmTemplateValueSourcesParser valueSourcesParser;
+        readonly IResourceStatusReportExecutor statusReporter;
+        readonly IManifestReporter manifestReporter;
 
-        public HelmUpgradeConvention(ILog log, IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner, ICalamariFileSystem fileSystem, HelmTemplateValueSourcesParser valueSourcesParser)
+        public HelmUpgradeConvention(ILog log,
+                                     IScriptEngine scriptEngine,
+                                     ICommandLineRunner commandLineRunner,
+                                     ICalamariFileSystem fileSystem,
+                                     HelmTemplateValueSourcesParser valueSourcesParser,
+                                     IResourceStatusReportExecutor statusReporter,
+                                     IManifestReporter manifestReporter)
         {
             this.log = log;
             this.scriptEngine = scriptEngine;
             this.commandLineRunner = commandLineRunner;
             this.fileSystem = fileSystem;
             this.valueSourcesParser = valueSourcesParser;
+            this.statusReporter = statusReporter;
+            this.manifestReporter = manifestReporter;
         }
 
         public void Install(RunningDeployment deployment)
         {
-            ScriptSyntax syntax = ScriptSyntaxHelper.GetPreferredScriptSyntaxForEnvironment();
-            var cmd = BuildHelmCommand(deployment, syntax);
+            var runResourceStatusCheck = deployment.Variables.GetFlag(SpecialVariables.ResourceStatusCheck);
+
+            var syntax = ScriptSyntaxHelper.GetPreferredScriptSyntaxForEnvironment();
+
+            var releaseName = GetReleaseName(deployment.Variables);
+
+            var helmCli = new HelmCli(log, commandLineRunner, deployment.CurrentDirectory, deployment.EnvironmentVariables)
+                          .WithExecutable(deployment.Variables)
+                          .WithNamespace(deployment.Variables.Get(SpecialVariables.Helm.Namespace));
+
+            var currentRevisionNumber = helmCli.GetCurrentRevision(releaseName);
+
+            var newRevisionNumber = (currentRevisionNumber ?? 1) + 1;
+
+            IRunningResourceStatusCheck statusCheck = null;
+            if (runResourceStatusCheck)
+            {
+                var timeoutSeconds = deployment.Variables.GetInt32(SpecialVariables.Timeout) ?? 0;
+                var waitForJobs = deployment.Variables.GetFlag(SpecialVariables.WaitForJobs);
+
+                statusCheck = statusReporter.Start(timeoutSeconds, waitForJobs);
+            }
+
+            var helmUpgradeTask = Task.Run(() => ExecuteHelmUpgrade(deployment, syntax, releaseName));
+            var getManifestTask = Task.Run(() => PollForManifest(helmCli,
+                                                                 releaseName,
+                                                                 newRevisionNumber,
+                                                                 statusCheck));
+
+            var statusReporterTask = statusCheck?.WaitForCompletionOrTimeout() ?? Task.CompletedTask;
+
+            Task.WhenAll(helmUpgradeTask, getManifestTask, statusReporterTask).GetAwaiter().GetResult();
+        }
+
+        async Task PollForManifest(HelmCli helmCli,
+                                   string releaseName,
+                                   int revisionNumber,
+                                   IRunningResourceStatusCheck statusCheck)
+        {
+            var ct = new CancellationTokenSource();
+            ct.CancelAfter(TimeSpan.FromMinutes(10));
+            string manifest = null;
+            while (!ct.IsCancellationRequested)
+            {
+                try
+                {
+                    manifest = helmCli.GetManifest(releaseName, revisionNumber);
+                }
+                catch (CommandException)
+                {
+                    log.Verbose("Helm manifest was not ready for retrieval. Retrying in 1s");
+                    await Task.Delay(TimeSpan.FromSeconds(1), ct.Token);
+                }
+            }
+
+            if (string.IsNullOrWhiteSpace(manifest))
+            {
+                throw new CommandException("Failed to retrieve helm manifest in a timely manner");
+            }
+
+            if (statusCheck != null)
+            {
+                var resources = new List<ResourceIdentifier>();
+                using (var reader = new StringReader(manifest))
+                {
+                    var yamlStream = new YamlStream();
+                    yamlStream.Load(reader);
+
+                    foreach (var document in yamlStream.Documents)
+                    {
+                        if (!(document.RootNode is YamlMappingNode rootNode))
+                        {
+                            log.Warn("Could not parse manifest, resources will not be added to kubernetes object status");
+                            continue;
+                        }
+
+                        var kind = rootNode.GetChildNode<YamlScalarNode>("kind").Value;
+
+                        var metadataNode = rootNode.GetChildNode<YamlMappingNode>("metadata");
+                        var name = metadataNode.GetChildNode<YamlScalarNode>("name").Value;
+                        var @namespace = metadataNode.GetChildNodeIfExists<YamlScalarNode>("namespace")?.Value;
+
+                        var resourceIdentifier = new ResourceIdentifier(kind, name, @namespace);
+                        resources.Add(resourceIdentifier);
+                    }
+                }
+
+                await statusCheck.AddResources(resources.ToArray());
+            }
+
+            //report the manifest has been applied
+            manifestReporter.ReportManifestApplied(manifest);
+        }
+
+        void ExecuteHelmUpgrade(RunningDeployment deployment, ScriptSyntax syntax, string releaseName)
+        {
+            var cmd = BuildHelmCommand(deployment, syntax, releaseName);
             var fileName = SyntaxSpecificFileName(deployment, syntax);
 
             using (new TemporaryFile(fileName))
@@ -63,9 +174,8 @@ namespace Calamari.Kubernetes.Conventions
         }
 
         // This could/should be refactored to use `HelmCli` at somepoint
-        string BuildHelmCommand(RunningDeployment deployment, ScriptSyntax syntax)
+        string BuildHelmCommand(RunningDeployment deployment, ScriptSyntax syntax, string releaseName)
         {
-            var releaseName = GetReleaseName(deployment.Variables);
             var packagePath = GetChartLocation(deployment);
 
             var customHelmExecutable = CustomHelmExecutableFullPath(deployment.Variables, deployment.CurrentDirectory);
@@ -105,7 +215,7 @@ namespace Calamari.Kubernetes.Conventions
             return sb.ToString();
         }
 
-        HelmVersion GetVersion(IVariables variables)
+        static HelmVersion GetVersion(IVariables variables)
         {
             var clientVersionText = variables.Get(SpecialVariables.Helm.ClientVersion);
 
@@ -249,10 +359,12 @@ namespace Calamari.Kubernetes.Conventions
             sb.Append($" --tiller-connection-timeout \"{tillerTimeout}\"");
         }
 
-        string SyntaxSpecificFileName(RunningDeployment deployment, ScriptSyntax syntax)
+        static string SyntaxSpecificFileName(RunningDeployment deployment, ScriptSyntax syntax)
         {
-            return Path.Combine(deployment.CurrentDirectory, syntax == ScriptSyntax.PowerShell ? "Calamari.HelmUpgrade.ps1" : "Calamari.HelmUpgrade.sh");
+            return Path.Combine(deployment.CurrentDirectory, $"Calamari.HelmUpgrade.{SyntaxSpecificFileExtension(syntax)}");
         }
+
+        static string SyntaxSpecificFileExtension(ScriptSyntax syntax) => syntax == ScriptSyntax.PowerShell ? "ps1" : "sh";
 
         string GetReleaseName(IVariables variables)
         {

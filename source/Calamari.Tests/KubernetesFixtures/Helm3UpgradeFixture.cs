@@ -1,4 +1,7 @@
 ﻿using System.Threading.Tasks;
+using Calamari.Common.FeatureToggles;
+using Calamari.Common.Plumbing.Variables;
+using Calamari.Kubernetes;
 using Calamari.Testing.Helpers;
 using Calamari.Testing.Requirements;
 using Calamari.Tests.Fixtures;
@@ -17,6 +20,27 @@ namespace Calamari.Tests.KubernetesFixtures
         [Category(TestCategory.PlatformAgnostic)]
         public void Upgrade_Succeeds()
         {
+            var result = DeployPackage();
+
+            result.AssertSuccess();
+            result.AssertOutputMatches($"NAMESPACE: {Namespace}");
+            result.AssertOutputMatches("STATUS: deployed");
+            result.AssertOutputMatches($"release \"{ReleaseName}\" uninstalled");
+            result.AssertOutput("Using custom helm executable at " + HelmExePath);
+
+            Assert.AreEqual(ReleaseName.ToLower(), result.CapturedOutput.OutputVariables["ReleaseName"]);
+        }
+        
+        [Test]
+        [RequiresNonFreeBSDPlatform]
+        [RequiresNon32BitWindows]
+        [RequiresNonMac]
+        [Category(TestCategory.PlatformAgnostic)]
+        public void ReportsObjectStatus()
+        {
+            Variables.AddFlag(SpecialVariables.ResourceStatusCheck, true);
+            Variables.Set(KnownVariables.EnabledFeatureToggles, OctopusFeatureToggles.KnownSlugs.KubernetesObjectManifestInspection);
+            
             var result = DeployPackage();
 
             result.AssertSuccess();

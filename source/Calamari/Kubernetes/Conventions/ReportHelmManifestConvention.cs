@@ -35,7 +35,7 @@ namespace Calamari.Kubernetes.Conventions
                        .WithExecutable(deployment.Variables)
                        .WithNamespace(deployment.Variables.Get(SpecialVariables.Helm.Namespace));
 
-            var manifest = helm.GetManifest(releaseName);
+            var manifest = helm.GetManifest(releaseName, 1);
             manifestReporter.ReportManifestApplied(manifest);
         }
     }
