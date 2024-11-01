@@ -43,6 +43,13 @@ namespace Calamari.Kubernetes.ResourceStatus
                 return false;
             }
 
+            //helm performs its own resource status tracking, even though it uses the script engine
+            //we look for the release name as it's a required helm field
+            if (!string.IsNullOrWhiteSpace(variables.Get(SpecialVariables.Helm.ReleaseName)))
+            {
+                return false;
+            }
+
             // At this point, we only care about the status of the resource status check
             // If someone has set this variable manually then it might blow up, but that's not a supported configuration
             return variables.GetFlag(SpecialVariables.ResourceStatusCheck);

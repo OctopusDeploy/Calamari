@@ -21,6 +21,7 @@ using Calamari.Deployment.Conventions;
 using Calamari.Deployment.Conventions.DependencyVariables;
 using Calamari.Kubernetes.Conventions;
 using Calamari.Kubernetes.Helm;
+using Calamari.Kubernetes.Integration;
 using Calamari.Kubernetes.ResourceStatus;
 
 namespace Calamari.Kubernetes.Commands
@@ -39,6 +40,7 @@ namespace Calamari.Kubernetes.Commands
         readonly IResourceStatusReportExecutor statusExecutor;
         readonly ICommandLineRunner commandLineRunner;
         readonly IManifestReporter manifestReporter;
+        readonly Kubectl kubectl;
 
         public HelmUpgradeCommand(
             ILog log,
@@ -50,7 +52,8 @@ namespace Calamari.Kubernetes.Commands
             IExtractPackage extractPackage,
             HelmTemplateValueSourcesParser templateValueSourcesParser,
             IResourceStatusReportExecutor statusExecutor,
-            IManifestReporter manifestReporter)
+            IManifestReporter manifestReporter,
+            Kubectl kubectl)
         {
             Options.Add("package=", "Path to the NuGet package to install.", v => pathToPackage = new PathToPackage(Path.GetFullPath(v)));
             this.log = log;
@@ -62,6 +65,7 @@ namespace Calamari.Kubernetes.Commands
             this.templateValueSourcesParser = templateValueSourcesParser;
             this.statusExecutor = statusExecutor;
             this.manifestReporter = manifestReporter;
+            this.kubectl = kubectl;
             this.commandLineRunner = commandLineRunner;
         }
 
@@ -110,7 +114,8 @@ namespace Calamari.Kubernetes.Commands
                                           fileSystem, 
                                           templateValueSourcesParser,
                                           statusExecutor,
-                                          manifestReporter),
+                                          manifestReporter,
+                                          kubectl),
                 //new ReportHelmManifestConvention(log, commandLineRunner, manifestReporter),
                 new ConfiguredScriptConvention(new PostDeployConfiguredScriptBehaviour(log, fileSystem, scriptEngine, commandLineRunner))
             });

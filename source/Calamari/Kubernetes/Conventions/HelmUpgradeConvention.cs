@@ -36,6 +36,7 @@ namespace Calamari.Kubernetes.Conventions
         readonly HelmTemplateValueSourcesParser valueSourcesParser;
         readonly IResourceStatusReportExecutor statusReporter;
         readonly IManifestReporter manifestReporter;
+        readonly Kubectl kubectl;
 
         public HelmUpgradeConvention(ILog log,
                                      IScriptEngine scriptEngine,
@@ -43,7 +44,8 @@ namespace Calamari.Kubernetes.Conventions
                                      ICalamariFileSystem fileSystem,
                                      HelmTemplateValueSourcesParser valueSourcesParser,
                                      IResourceStatusReportExecutor statusReporter,
-                                     IManifestReporter manifestReporter)
+                                     IManifestReporter manifestReporter,
+                                     Kubectl kubectl)
         {
             this.log = log;
             this.scriptEngine = scriptEngine;
@@ -52,6 +54,7 @@ namespace Calamari.Kubernetes.Conventions
             this.valueSourcesParser = valueSourcesParser;
             this.statusReporter = statusReporter;
             this.manifestReporter = manifestReporter;
+            this.kubectl = kubectl;
         }
 
         public void Install(RunningDeployment deployment)
@@ -63,6 +66,8 @@ namespace Calamari.Kubernetes.Conventions
             var helmCli = new HelmCli(log, commandLineRunner, deployment.CurrentDirectory, deployment.EnvironmentVariables)
                           .WithExecutable(deployment.Variables)
                           .WithNamespace(deployment.Variables);
+            
+            kubectl.SetKubectl();
 
             var currentRevisionNumber = helmCli.GetCurrentRevision(releaseName);
 
@@ -120,6 +125,8 @@ namespace Calamari.Kubernetes.Conventions
         {
             var timeoutSeconds = deployment.Variables.GetInt32(SpecialVariables.Timeout) ?? 0;
             var waitForJobs = deployment.Variables.GetFlag(SpecialVariables.WaitForJobs);
+            
+            var namespacedApiResourceDict = GetNamespacedApiResourceDictionary();
 
             var resources = new List<ResourceIdentifier>();
             using (var reader = new StringReader(manifest))
@@ -140,6 +147,23 @@ namespace Calamari.Kubernetes.Conventions
                     var metadataNode = rootNode.GetChildNode<YamlMappingNode>("metadata");
                     var name = metadataNode.GetChildNode<YamlScalarNode>("name").Value;
                     var @namespace = metadataNode.GetChildNodeIfExists<YamlScalarNode>("namespace")?.Value;
+                    
+                    var apiResourceIdentifier = GetApiResourceIdentifier(rootNode);
+                    
+                    // If we can't find the resource in the dictionary, we assume it is namespaced
+                    // Otherwise, we use the value in the dictionary
+                    var isNamespaced = !namespacedApiResourceDict.TryGetValue(apiResourceIdentifier, out var isNamespacedValue) | isNamespacedValue;
+
+                    if (isNamespaced && string.IsNullOrWhiteSpace(@namespace))
+                    {
+                        @namespace = deployment.Variables.Get(SpecialVariables.Helm.Namespace);
+                        //if we don't have a custom helm namespace
+                        if (string.IsNullOrWhiteSpace(@namespace))
+                        {
+                            //use the defined namespace
+                            @namespace = deployment.Variables.Get(SpecialVariables.Namespace);
+                        }
+                    }
 
                     var resourceIdentifier = new ResourceIdentifier(kind, name, @namespace);
                     resources.Add(resourceIdentifier);
@@ -533,6 +557,24 @@ namespace Calamari.Kubernetes.Conventions
 
             if (toolVersion.Value != selectedVersion)
                 log.Warn($"The Helm tool version '{toolVersion.Value}' ('{stdout}') doesn't match the Helm version selected '{selectedVersion}'");
+        }
+        
+        Dictionary<ApiResourceIdentifier, bool> GetNamespacedApiResourceDictionary()
+        {
+            var apiResourceLines = kubectl.ExecuteCommandAndReturnOutput("api-resources");
+            apiResourceLines.Result.VerifySuccess();
+            return apiResourceLines
+                   .Output.InfoLogs.Skip(1)
+                   .Select(line => line.Split(Array.Empty<char>(), StringSplitOptions.RemoveEmptyEntries).Reverse().ToArray())
+                   .Where(parts => parts.Length > 3)
+                   .ToDictionary( parts => new ApiResourceIdentifier(parts[2], parts[0]), parts => bool.Parse(parts[1]));
+        }
+        
+        static ApiResourceIdentifier GetApiResourceIdentifier(YamlMappingNode node)
+        {
+            var apiVersion = node.GetChildNode<YamlScalarNode>("apiVersion").Value;
+            var kind = node.GetChildNode<YamlScalarNode>("kind").Value;
+            return new ApiResourceIdentifier(apiVersion, kind);
         }
     }
 }
