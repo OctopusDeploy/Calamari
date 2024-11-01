@@ -43,7 +43,19 @@ This will add the following setting to your Octopus Server configuration file:
 
 ```
   <set key="Octopus.Deployment.CustomBundledPackageDirectory">C:\GitHub\Calamari\built-packages</set>
+```e <instance> --start --nologo --console
 ```
+
+where `<directory>` is the directory containing the `Calamari.*.nupkg` files. If your server is setup as the default instance, you may ommit the `--instance <instance>` parameter.
+
+This will add the following setting to your Octopus Server configuration file:
+
+```
+  <set key="Octopus.Deployment.CustomBundledPackageDirectory">C:\GitHub\Calamari\built-packages</set>
+```
+
+The exe and configuration file can normally be found at:
+
 
 The exe and configuration file can normally be found at:
 

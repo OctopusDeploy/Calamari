@@ -15,7 +15,7 @@ namespace Calamari.Kubernetes
 {
     public interface IManifestReporter
     {
-        void ReportManifestApplied(string filePath);
+        void ReportManifestApplied(string filePath, Dictionary<ApiResourceIdentifier, bool> namespacedApiResourceDict);
     }
 
     public class ManifestReporter : IManifestReporter
@@ -46,7 +46,7 @@ namespace Calamari.Kubernetes
             return implicitNamespace;
         }
 
-        public void ReportManifestApplied(string filePath)
+        public void ReportManifestApplied(string filePath, Dictionary<ApiResourceIdentifier, bool> namespacedApiResourceDict)
         {
             if (!FeatureToggle.KubernetesLiveObjectStatusFeatureToggle.IsEnabled(variables) && !OctopusFeatureToggles.KubernetesObjectManifestInspectionFeatureToggle.IsEnabled(variables))
                 return;
@@ -69,11 +69,18 @@ namespace Calamari.Kubernetes
                         var updatedDocument = SerializeManifest(rootNode);
 
                         var ns = GetNamespace(rootNode);
+
+                        var apiResourceIdentifier = GetApiResourceIdentifier(rootNode);
+
+                        // If we can't find the resource in the dictionary, we assume it is namespaced
+                        // Otherwise, we use the value in the dictionary
+                        var isNamespaced = !namespacedApiResourceDict.TryGetValue(apiResourceIdentifier, out var isNamespacedValue) || isNamespacedValue;
+
                         log.WriteServiceMessage(new ServiceMessage(SpecialVariables.ServiceMessageNames.ManifestApplied.Name,
                                                                    new Dictionary<string, string>
                                                                    {
                                                                        { SpecialVariables.ServiceMessageNames.ManifestApplied.ManifestAttribute, updatedDocument },
-                                                                       { SpecialVariables.ServiceMessageNames.ManifestApplied.NamespaceAttribute, ns }
+                                                                       { SpecialVariables.ServiceMessageNames.ManifestApplied.NamespaceAttribute, isNamespaced ? ns : null }
                                                                    }));
                     }
                 }
@@ -82,6 +89,13 @@ namespace Calamari.Kubernetes
                     log.Warn("Invalid YAML syntax found, resources will not be added to live object status");
                 }
             }
+        }
+
+        static ApiResourceIdentifier GetApiResourceIdentifier(YamlMappingNode node)
+        {
+            var apiVersion = node.Children.TryGetValue("apiVersion", out var apiVersionNode) && apiVersionNode is YamlScalarNode apiVersionScalarNode ? apiVersionScalarNode.Value : null;
+            var kind = node.Children.TryGetValue("kind", out var kindNode) && kindNode is YamlScalarNode kindScalarNode ? kindScalarNode.Value : null;
+            return new ApiResourceIdentifier(apiVersion, kind);
         }
 
         static string SerializeManifest(YamlMappingNode node)
