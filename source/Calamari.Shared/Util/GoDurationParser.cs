@@ -16,7 +16,7 @@ namespace Calamari.Util
         static readonly Regex DurationRegex = new Regex(@"^[+-]?(\d+(\.\d+)?(ns|us|µs|ms|s|m|h)?)+$");
 
         public static bool ValidateDuration(string? duration)
-            => !string.IsNullOrWhiteSpace(duration) && DurationRegex.IsMatch(duration);
+            => !string.IsNullOrWhiteSpace(duration) && DurationRegex.IsMatch(duration.Trim());
 
         static List<(string Abbreviation, TimeSpan InitialTimeSpan)> timeSpanInfos = new List<(string Abbreviation, TimeSpan InitialTimeSpan)>
         {

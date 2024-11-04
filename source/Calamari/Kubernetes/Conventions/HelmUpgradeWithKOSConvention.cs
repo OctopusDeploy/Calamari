@@ -54,7 +54,6 @@ namespace Calamari.Kubernetes.Conventions
 
         public void Install(RunningDeployment deployment)
         {
-            var waitForJobs = deployment.Variables.GetFlag(SpecialVariables.WaitForJobs);
             var isKOSEnabled = deployment.Variables.GetFlag(SpecialVariables.ResourceStatusCheck);
 
             var releaseName = GetReleaseName(deployment.Variables);
@@ -75,7 +74,6 @@ namespace Calamari.Kubernetes.Conventions
                                                                     helmCli,
                                                                     releaseName,
                                                                     isKOSEnabled,
-                                                                    waitForJobs,
                                                                     kosCts));
 
             var manifestAndStatusCheckTask = Task.Run(async () =>
@@ -190,15 +188,13 @@ namespace Calamari.Kubernetes.Conventions
                                 HelmCli helmCli,
                                 string releaseName,
                                 bool isKOSEnabled,
-                                bool waitForJobs,
                                 CancellationTokenSource cts)
         {
             var packagePath = GetChartLocation(deployment);
 
             var args = GetUpgradeCommandArgs(deployment,
                                              helmCli,
-                                             isKOSEnabled,
-                                             waitForJobs);
+                                             isKOSEnabled);
 
             var result = helmCli.Upgrade(releaseName, packagePath, args);
 
@@ -222,9 +218,7 @@ namespace Calamari.Kubernetes.Conventions
 
         List<string> GetUpgradeCommandArgs(RunningDeployment deployment,
                                            HelmCli helmCli,
-                                           bool isKOSEnabled,
-                                           bool waitForJobs
-        )
+                                           bool isKOSEnabled)
         {
             var args = new List<string>();
 
@@ -257,13 +251,13 @@ namespace Calamari.Kubernetes.Conventions
             //Adjust args based on KOS
             if (isKOSEnabled)
             {
-                AddKOSArgs(waitForJobs, hasAdditionalArgs, args);
+                AddKOSArgs(deployment.Variables, hasAdditionalArgs, args);
             }
 
             return args;
         }
 
-        static void AddKOSArgs(bool waitForJobs, bool hasAdditionalArgs, List<string> args)
+        static void AddKOSArgs(IVariables variables, bool hasAdditionalArgs, List<string> args)
         {
             var additionalArgs = string.Empty;
             if (hasAdditionalArgs)
@@ -273,6 +267,7 @@ namespace Calamari.Kubernetes.Conventions
             }
 
             //if wait for jobs is enabled in KOS and the helm flag is not set by the user, set it
+            var waitForJobs = variables.GetFlag(SpecialVariables.WaitForJobs);
             if (!additionalArgs.Contains("--wait-for-jobs") && waitForJobs)
             {
                 additionalArgs = $"{additionalArgs} --wait-for-jobs";
