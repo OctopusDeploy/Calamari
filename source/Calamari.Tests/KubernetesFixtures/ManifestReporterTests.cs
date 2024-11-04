@@ -8,6 +8,7 @@ using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes;
 using Calamari.Testing.Helpers;
+using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NUnit.Framework;
 
@@ -40,16 +41,23 @@ namespace Calamari.Tests.KubernetesFixtures
             var memoryLog = new InMemoryLog();
             var variables = new CalamariVariables();
             variables.Set(KnownVariables.EnabledFeatureToggles, enabledFeatureToggle);
-
-            var yaml = @"foo: bar";
-            var expectedJson = "{\"foo\": \"bar\"}";
+            
+            //Test that quotes are preserved, especially for numbers
+            var yaml = @"name: George Washington
+alphafield: ""fgdsfsd""
+unquoted_int: 89
+quoted_int: ""89""
+unquoted_float: 5.75
+quoted_float: ""5.75""
+".ReplaceLineEndings();
+            
             using (CreateFile(yaml, out var filePath))
             {
                 var mr = new ManifestReporter(variables, CalamariPhysicalFileSystem.GetPhysicalFileSystem(), memoryLog);
 
                 mr.ReportManifestFileApplied(filePath);
 
-                var expected = ServiceMessage.Create(SpecialVariables.ServiceMessageNames.ManifestApplied.Name, ("ns", "default"), ("manifest", expectedJson));
+                var expected = ServiceMessage.Create(SpecialVariables.ServiceMessageNames.ManifestApplied.Name, ("ns", "default"), ("manifest", yaml));
                 memoryLog.ServiceMessages.Should().BeEquivalentTo(new List<ServiceMessage> { expected });
             }
         }

@@ -25,11 +25,7 @@ namespace Calamari.Kubernetes
         readonly ICalamariFileSystem fileSystem;
         readonly ILog log;
 
-        static readonly IDeserializer YamlDeserializer = new Deserializer();
-
         static readonly ISerializer YamlSerializer = new SerializerBuilder()
-                                                     .WithNamingConvention(CamelCaseNamingConvention.Instance)
-                                                     .JsonCompatible()
                                                      .Build();
 
         public ManifestReporter(IVariables variables, ICalamariFileSystem fileSystem, ILog log)
@@ -57,7 +53,7 @@ namespace Calamari.Kubernetes
                 && !OctopusFeatureToggles.KubernetesObjectManifestInspectionFeatureToggle.IsEnabled(variables))
                 return;
 
-            using (var yamlFile = fileSystem.OpenFile(filePath, FileAccess.ReadWrite))
+            using (var yamlFile = fileSystem.OpenFile(filePath, FileAccess.Read, FileShare.Read))
             {
                 try
                 {
@@ -100,7 +96,7 @@ namespace Calamari.Kubernetes
                     continue;
                 }
 
-                var updatedDocument = YamlNodeToJson(rootNode);
+                var updatedDocument = SerializeManifest(rootNode);
 
                 var ns = GetNamespace(rootNode);
                 var message = new ServiceMessage(
@@ -115,19 +111,9 @@ namespace Calamari.Kubernetes
             }
         }
 
-        static string YamlNodeToJson(YamlNode node)
+        static string SerializeManifest(YamlMappingNode node)
         {
-            var stream = new YamlStream { new YamlDocument(node) };
-            using (var writer = new StringWriter())
-            {
-                stream.Save(writer);
-
-                using (var reader = new StringReader(writer.ToString()))
-                {
-                    var yamlObject = YamlDeserializer.Deserialize(reader);
-                    return yamlObject is null ? string.Empty : YamlSerializer.Serialize(yamlObject).Trim();
-                }
-            }
+           return YamlSerializer.Serialize(node);
         }
     }
 }
