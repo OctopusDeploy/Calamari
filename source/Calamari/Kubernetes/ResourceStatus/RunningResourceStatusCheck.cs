@@ -36,7 +36,8 @@ namespace Calamari.Kubernetes.ResourceStatus
         private readonly HashSet<ResourceIdentifier> resources = new HashSet<ResourceIdentifier>();
 
         private CancellationTokenSource taskCancellationTokenSource;
-        private Task<ResourceStatusCheckTask.Result> statusCheckTask;
+        private ResourceStatusCheckTask statusCheckTask;
+        private Task<ResourceStatusCheckTask.Result> statusCheckTaskTask;
 
 
         public RunningResourceStatusCheck(
@@ -60,21 +61,21 @@ namespace Calamari.Kubernetes.ResourceStatus
             {
                 log.Verbose("Resource Status Check: Waiting for resources to be applied.");
             }
-            statusCheckTask = RunNewStatusCheck(initialResources);
+            statusCheckTaskTask = RunNewStatusCheck(initialResources);
         }
 
         public async Task<bool> WaitForCompletionOrTimeout(CancellationToken cancellationToken)
         {
-            //when the passed cancellation token is cancelled, cancel the task
+            //when the passed cancellation token is cancelled, ask the task to stop
             cancellationToken.Register(() =>
                                        {
-                                           taskCancellationTokenSource.Cancel();
+                                           statusCheckTask.Stop();
                                        });
             
-            await taskLock.WaitAsync(cancellationToken);
+            await taskLock.WaitAsync();
             try
             {
-                var result = await statusCheckTask;
+                var result = await statusCheckTaskTask;
 
                 switch (result.DeploymentStatus)
                 {
@@ -107,8 +108,8 @@ namespace Calamari.Kubernetes.ResourceStatus
             try
             {
                 taskCancellationTokenSource.Cancel();
-                await statusCheckTask;
-                statusCheckTask = RunNewStatusCheck(newResources);
+                await statusCheckTaskTask;
+                statusCheckTaskTask = RunNewStatusCheck(newResources);
                 log.Verbose($"Resource Status Check: {newResources.Length} new resources have been added:");
                 log.LogResources(newResources);
             }
@@ -122,8 +123,9 @@ namespace Calamari.Kubernetes.ResourceStatus
         {
             taskCancellationTokenSource = new CancellationTokenSource();
             resources.UnionWith(newResources);
-            return await statusCheckTaskFactory()
-                .Run(resources, options, timeout, taskCancellationTokenSource.Token);
+
+            statusCheckTask = statusCheckTaskFactory();
+            return await statusCheckTask.Run(resources, options, timeout, taskCancellationTokenSource.Token);
         }
 
         private void LogFailedResources(Dictionary<string, Resource> resourceDictionary)

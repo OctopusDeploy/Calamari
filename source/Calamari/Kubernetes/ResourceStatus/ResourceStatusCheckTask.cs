@@ -17,6 +17,7 @@ namespace Calamari.Kubernetes.ResourceStatus
         private readonly IResourceUpdateReporter reporter;
         private readonly IKubectl kubectl;
         private readonly Timer.Factory timerFactory;
+        bool stopAfterNextStatusCheck = false;
 
         public ResourceStatusCheckTask(
             IResourceRetriever resourceRetriever,
@@ -72,11 +73,23 @@ namespace Calamari.Kubernetes.ResourceStatus
                         definedResourceStatuses,
                         resourceStatuses);
 
+                    //if we have been asked to stop, jump out after the last check
+                    if (stopAfterNextStatusCheck)
+                    {
+                        return result;
+                    }
+
                     await timer.WaitForInterval();
                 } while (!timer.HasCompleted() && result.DeploymentStatus == DeploymentStatus.InProgress);
 
                 return result;
             }, cancellationToken);
+        }
+
+        //Stops the 
+        public void Stop()
+        {
+            stopAfterNextStatusCheck = true;    
         }
 
         private static DeploymentStatus GetDeploymentStatus(Resource[] resources, ResourceIdentifier[] definedResources)
