@@ -36,7 +36,8 @@ namespace Calamari.Kubernetes.ResourceStatus
             return runningResourceStatusCheckFactory(timeout, new Options
             {
                 WaitForJobs = waitForJobs, 
-                PrintVerboseKubectlOutputOnError = variables.GetFlag(SpecialVariables.PrintVerboseKubectlOutputOnError)
+                PrintVerboseKubectlOutputOnError = variables.GetFlag(SpecialVariables.PrintVerboseKubectlOutputOnError),
+                PrintVerboseOutput = variables.GetFlag(SpecialVariables.PrintVerboseOutput)
             }, initialResources);
         }
     }

@@ -69,10 +69,11 @@ namespace Calamari.Kubernetes.ResourceStatus
             //when the passed cancellation token is cancelled, ask the task to stop
             cancellationToken.Register(() =>
                                        {
-                                           statusCheckTask.Stop();
+                                           log.Verbose("Resource Status Check: Stopping after next status check.");
+                                           statusCheckTask.StopAfterNextCheck();
                                        });
             
-            await taskLock.WaitAsync();
+            await taskLock.WaitAsync(cancellationToken);
             try
             {
                 var result = await statusCheckTaskTask;
@@ -125,7 +126,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             resources.UnionWith(newResources);
 
             statusCheckTask = statusCheckTaskFactory();
-            return await statusCheckTask.Run(resources, options, timeout, taskCancellationTokenSource.Token);
+            return await statusCheckTask.Run(resources, options, timeout, log, taskCancellationTokenSource.Token);
         }
 
         private void LogFailedResources(Dictionary<string, Resource> resourceDictionary)

@@ -149,13 +149,13 @@ quoted_float: ""5.75""
             var variables = new CalamariVariables();
             variables.Set(KnownVariables.EnabledFeatureToggles, enabledFeatureToggle);
 
-            var yaml = @"foo: bar";
-            var expectedJson = "{\"foo\": \"bar\"}";
+            const string yaml = "foo: bar";
+            var expectedYaml = $"foo: bar{Environment.NewLine}";
             var mr = new ManifestReporter(variables, CalamariPhysicalFileSystem.GetPhysicalFileSystem(), memoryLog);
 
             mr.ReportManifestApplied(yaml);
 
-            var expected = ServiceMessage.Create(SpecialVariables.ServiceMessageNames.ManifestApplied.Name, ("ns", "default"), ("manifest", expectedJson));
+            var expected = ServiceMessage.Create(SpecialVariables.ServiceMessageNames.ManifestApplied.Name, ("ns", "default"), ("manifest", expectedYaml));
             memoryLog.ServiceMessages.Should().BeEquivalentTo(new List<ServiceMessage> { expected });
         }
 

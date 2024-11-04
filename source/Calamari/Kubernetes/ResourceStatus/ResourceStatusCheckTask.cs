@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Kubernetes.Integration;
 using Calamari.Kubernetes.ResourceStatus.Resources;
+using Newtonsoft.Json;
 using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Kubernetes.ResourceStatus
@@ -31,7 +33,11 @@ namespace Calamari.Kubernetes.ResourceStatus
             this.timerFactory = timerFactory;
         }
 
-        public async Task<Result> Run(IEnumerable<ResourceIdentifier> resources, Options options, TimeSpan timeout,
+        public async Task<Result> Run(
+            IEnumerable<ResourceIdentifier> resources, 
+            Options options,
+            TimeSpan timeout,
+            ILog log, 
             CancellationToken cancellationToken)
         {
             kubectl.SetKubectl();
@@ -76,6 +82,10 @@ namespace Calamari.Kubernetes.ResourceStatus
                     //if we have been asked to stop, jump out after the last check
                     if (stopAfterNextStatusCheck)
                     {
+                        if (options.PrintVerboseOutput)
+                        {
+                            log.Verbose($"Final Result: {JsonConvert.SerializeObject(result)}");
+                        }
                         return result;
                     }
 
@@ -86,8 +96,10 @@ namespace Calamari.Kubernetes.ResourceStatus
             }, cancellationToken);
         }
 
-        //Stops the 
-        public void Stop()
+        /// <summary>
+        /// Stops the status check loop after the next resource status checks occur.
+        /// </summary> 
+        public void StopAfterNextCheck()
         {
             stopAfterNextStatusCheck = true;    
         }
