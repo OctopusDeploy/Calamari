@@ -41,6 +41,7 @@ namespace Calamari.Tests.KubernetesFixtures
             Variables.AddFlag(SpecialVariables.ResourceStatusCheck, true);
             Variables.Set(KnownVariables.EnabledFeatureToggles, OctopusFeatureToggles.KnownSlugs.KubernetesObjectManifestInspection);
             Variables.Set(KnownVariables.EnabledFeatureToggles, OctopusFeatureToggles.KnownSlugs.KOSForHelm);
+            Variables.Set(SpecialVariables.Helm.Timeout, "2m30s");
             
             var result = DeployPackage();
 

@@ -102,11 +102,25 @@ namespace Calamari.Kubernetes.Integration
             buildArgs.Add(releaseName);
             buildArgs.Add(packagePath);
 
-            var result = ExecuteCommandAndReturnOutput(buildArgs.ToArray());
-            return result.Result;
+            var result = ExecuteCommandAndLogOutput(buildArgs);
+            return result;
         }
 
-        public CommandResultWithOutput ExecuteCommandAndReturnOutput(params string[] arguments)
+        CommandResultWithOutput ExecuteCommandAndReturnOutput(params string[] arguments)
+        {
+            ChmodExecutable();
+            return base.ExecuteCommandAndReturnOutput(ExecutableLocation, SanitiseCommandLineArgs(arguments));
+        }
+        
+        CommandResult ExecuteCommandAndLogOutput(IEnumerable<string> arguments)
+        {
+            ChmodExecutable();
+            return base.ExecuteCommandAndLogOutput(new CommandLineInvocation(ExecutableLocation, SanitiseCommandLineArgs(arguments)));
+        }
+
+        static string[] SanitiseCommandLineArgs(IEnumerable<string> arguments) => arguments.Where(s => !string.IsNullOrWhiteSpace(s)).ToArray();
+
+        void ChmodExecutable()
         {
             if (isCustomExecutable && !CalamariEnvironment.IsRunningOnWindows)
             {
@@ -115,8 +129,6 @@ namespace Calamari.Kubernetes.Integration
                                                                      "+x",
                                                                      ExecutableLocation));
             }
-            
-            return base.ExecuteCommandAndReturnOutput(ExecutableLocation, arguments.Where(s => !string.IsNullOrWhiteSpace(s)).ToArray());
         }
     }
 }

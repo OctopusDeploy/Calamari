@@ -121,6 +121,12 @@ namespace Calamari.Kubernetes.Commands
                 //if the feature toggle _is_ enabled, use different conventions
                 new ConditionalInstallationConvention<AggregateInstallationConvention>(d => OctopusFeatureToggles.KOSForHelmFeatureToggle.IsEnabled(d.Variables),
                                                                                        new AggregateInstallationConvention(
+                                                                                                                           new DelegateInstallConvention(d =>
+                                                                                                                                                         {
+                                                                                                                                                             //make sure the kubectl tool is configured correctly
+                                                                                                                                                             kubectl.SetWorkingDirectory(d.CurrentDirectory);
+                                                                                                                                                             kubectl.SetEnvironmentVariables(d.EnvironmentVariables);
+                                                                                                                                                         }),
                                                                                                                            new ConditionalInstallationConvention<AwsAuthConvention>(
                                                                                                                                                                                     runningDeployment => runningDeployment.Variables.Get(Deployment.SpecialVariables.Account.AccountType) == "AmazonWebServicesAccount",
                                                                                                                                                                                     new AwsAuthConvention(log, variables)),

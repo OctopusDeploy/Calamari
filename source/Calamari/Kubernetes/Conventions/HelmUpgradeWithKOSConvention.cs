@@ -77,10 +77,10 @@ namespace Calamari.Kubernetes.Conventions
                                                                     isKOSEnabled,
                                                                     waitForJobs,
                                                                     kosCts));
-            
+
             var manifestAndStatusCheckTask = Task.Run(async () =>
                                                       {
-                                                          var manifest = await PollForManifest(helmCli, releaseName, newRevisionNumber);
+                                                          var manifest = await PollForManifest(deployment, helmCli, releaseName, newRevisionNumber);
 
                                                           //report the manifest has been applied
                                                           manifestReporter.ReportManifestApplied(manifest);
@@ -97,12 +97,14 @@ namespace Calamari.Kubernetes.Conventions
             Task.WhenAll(helmUpgradeTask, manifestAndStatusCheckTask).GetAwaiter().GetResult();
         }
 
-        async Task<string> PollForManifest(HelmCli helmCli,
+        async Task<string> PollForManifest(RunningDeployment deployment,
+                                           HelmCli helmCli,
                                            string releaseName,
                                            int revisionNumber)
         {
             var ct = new CancellationTokenSource();
-            ct.CancelAfter(TimeSpan.FromMinutes(10));
+            var timeout = GoDurationParser.TryParseDuration(deployment.Variables.Get(SpecialVariables.Helm.Timeout), out var timespan) ? timespan : TimeSpan.FromMinutes(5);
+            ct.CancelAfter(timeout);
             string manifest = null;
             while (!ct.IsCancellationRequested)
             {
@@ -175,7 +177,13 @@ namespace Calamari.Kubernetes.Conventions
 
             //We are using helm as the deployment verification so an infinite timeout and wait for jobs makes sense
             var statusCheck = statusReporter.Start(0, false, resources);
-            await statusCheck.WaitForCompletionOrTimeout(cancellationToken);
+            try
+            {
+                await statusCheck.WaitForCompletionOrTimeout(cancellationToken);
+            }
+            catch (TaskCanceledException)
+            {
+            }
         }
 
         void ExecuteHelmUpgrade(RunningDeployment deployment,
@@ -194,18 +202,22 @@ namespace Calamari.Kubernetes.Conventions
 
             var result = helmCli.Upgrade(releaseName, packagePath, args);
 
-            if (result.ExitCode != 0)
+            try
             {
-                throw new CommandException($"Helm Upgrade returned non-zero exit code: {result.ExitCode}. Deployment terminated.");
-            }
+                if (result.ExitCode != 0)
+                {
+                    throw new CommandException($"Helm Upgrade returned non-zero exit code: {result.ExitCode}. Deployment terminated.");
+                }
 
-            if (result.HasErrors && deployment.Variables.GetFlag(Deployment.SpecialVariables.Action.FailScriptOnErrorOutput))
-            {
-                throw new CommandException("Helm Upgrade returned zero exit code but had error output. Deployment terminated.");
+                if (result.HasErrors && deployment.Variables.GetFlag(Deployment.SpecialVariables.Action.FailScriptOnErrorOutput))
+                {
+                    throw new CommandException("Helm Upgrade returned zero exit code but had error output. Deployment terminated.");
+                }
             }
-            
-            //once the helm command has finished, cancel KOS
-            cts.Cancel();
+            finally
+            {
+                cts.Cancel();
+            }
         }
 
         List<string> GetUpgradeCommandArgs(RunningDeployment deployment,
@@ -259,7 +271,7 @@ namespace Calamari.Kubernetes.Conventions
                 //the additional args are always the last in the list
                 additionalArgs = args.Last();
             }
-                
+
             //if wait for jobs is enabled in KOS and the helm flag is not set by the user, set it
             if (!additionalArgs.Contains("--wait-for-jobs") && waitForJobs)
             {
@@ -360,7 +372,7 @@ namespace Calamari.Kubernetes.Conventions
 
             var timeout = deployment.Variables.Get(SpecialVariables.Helm.Timeout);
 
-            if (!GoDurationParser.ValidateTimeout(timeout))
+            if (!GoDurationParser.ValidateDuration(timeout))
             {
                 throw new CommandException($"Timeout period is not a valid duration: {timeout}");
             }

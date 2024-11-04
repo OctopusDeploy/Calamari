@@ -18,7 +18,7 @@ namespace Calamari.Tests.KubernetesFixtures
         [TestCase("2h45m")]
         public void ValidateTimeouts(string timeout)
         {
-            GoDurationParser.ValidateTimeout(timeout).Should().BeTrue();
+            GoDurationParser.ValidateDuration(timeout).Should().BeTrue();
         }
 
         [TestCase("")]
@@ -26,7 +26,7 @@ namespace Calamari.Tests.KubernetesFixtures
         [TestCase("100blah")]
         public void InvalidateTimeouts(string timeout)
         {
-            GoDurationParser.ValidateTimeout(timeout).Should().BeFalse();
+            GoDurationParser.ValidateDuration(timeout).Should().BeFalse();
         }
     }
 }
