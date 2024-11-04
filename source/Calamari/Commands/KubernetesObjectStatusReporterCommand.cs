@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Proxies;
@@ -60,7 +61,7 @@ namespace Calamari.Commands
                     KubernetesYaml.GetDefinedResources(new[] { File.ReadAllText(manifestPath) }, defaultNamespace);
 
                 var statusResult = statusReportExecutor.Start(inputs.Timeout, inputs.WaitForJobs, resources)
-                                                       .WaitForCompletionOrTimeout()
+                                                       .WaitForCompletionOrTimeout(CancellationToken.None)
                                                        .GetAwaiter()
                                                        .GetResult();
                 if (!statusResult)

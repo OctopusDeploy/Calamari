@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
@@ -80,7 +81,7 @@ namespace Calamari.Kubernetes.ResourceStatus
                 var resources = resourceFinder.FindResources(workingDirectory);
                 var timeoutSeconds = variables.GetInt32(SpecialVariables.Timeout) ?? 0;
                 var waitForJobs = variables.GetFlag(SpecialVariables.WaitForJobs);
-                var statusResult = statusReportExecutor.Start(timeoutSeconds, waitForJobs, resources).WaitForCompletionOrTimeout()
+                var statusResult = statusReportExecutor.Start(timeoutSeconds, waitForJobs, resources).WaitForCompletionOrTimeout(CancellationToken.None)
                                                        .GetAwaiter().GetResult();
                 if (!statusResult)
                 {

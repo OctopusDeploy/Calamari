@@ -4,8 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
@@ -17,13 +15,9 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.Conventions;
 using Calamari.Kubernetes.Helm;
-using Calamari.Kubernetes.Integration;
-using Calamari.Kubernetes.ResourceStatus;
-using Calamari.Kubernetes.ResourceStatus.Resources;
 using Calamari.Util;
 using Newtonsoft.Json;
 using Octopus.CoreUtilities.Extensions;
-using YamlDotNet.RepresentationModel;
 
 namespace Calamari.Kubernetes.Conventions
 {
@@ -34,170 +28,43 @@ namespace Calamari.Kubernetes.Conventions
         readonly ICommandLineRunner commandLineRunner;
         readonly ICalamariFileSystem fileSystem;
         readonly HelmTemplateValueSourcesParser valueSourcesParser;
-        readonly IResourceStatusReportExecutor statusReporter;
-        readonly IManifestReporter manifestReporter;
-        readonly Kubectl kubectl;
 
-        public HelmUpgradeConvention(ILog log,
-                                     IScriptEngine scriptEngine,
-                                     ICommandLineRunner commandLineRunner,
-                                     ICalamariFileSystem fileSystem,
-                                     HelmTemplateValueSourcesParser valueSourcesParser,
-                                     IResourceStatusReportExecutor statusReporter,
-                                     IManifestReporter manifestReporter,
-                                     Kubectl kubectl)
+        public HelmUpgradeConvention(ILog log, IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner, ICalamariFileSystem fileSystem, HelmTemplateValueSourcesParser valueSourcesParser)
         {
             this.log = log;
             this.scriptEngine = scriptEngine;
             this.commandLineRunner = commandLineRunner;
             this.fileSystem = fileSystem;
             this.valueSourcesParser = valueSourcesParser;
-            this.statusReporter = statusReporter;
-            this.manifestReporter = manifestReporter;
-            this.kubectl = kubectl;
         }
 
         public void Install(RunningDeployment deployment)
         {
-            var syntax = ScriptSyntaxHelper.GetPreferredScriptSyntaxForEnvironment();
-
-            var releaseName = GetReleaseName(deployment.Variables);
-
-            var helmCli = new HelmCli(log, commandLineRunner, deployment.CurrentDirectory, deployment.EnvironmentVariables)
-                          .WithExecutable(deployment.Variables)
-                          .WithNamespace(deployment.Variables);
-            
-            kubectl.SetKubectl();
-
-            var currentRevisionNumber = helmCli.GetCurrentRevision(releaseName);
-
-            var newRevisionNumber = (currentRevisionNumber ?? 0) + 1;
-
-            var helmUpgradeTask = Task.Run(() => ExecuteHelmUpgrade(deployment, syntax, releaseName));
-            var manifestAndStatusCheckTask = Task.Run(async () =>
-                                                      {
-                                                          var manifest = await PollForManifest(helmCli, releaseName, newRevisionNumber);
-
-                                                          //report the manifest has been applied
-                                                          manifestReporter.ReportManifestApplied(manifest);
-
-                                                          //if resource status (KOS) is enabled, parse the manifest and start monitored the resources
-                                                          if (deployment.Variables.GetFlag(SpecialVariables.ResourceStatusCheck))
-                                                          {
-                                                              await ParseManifestAndMonitorResourceStatuses(deployment, manifest);
-                                                          }
-                                                      });
-            //we run both the helm upgrade and the manifest & status in parallel
-            Task.WhenAll(helmUpgradeTask, manifestAndStatusCheckTask).GetAwaiter().GetResult();
-        }
-
-        async Task<string> PollForManifest(HelmCli helmCli,
-                                           string releaseName,
-                                           int revisionNumber)
-        {
-            var ct = new CancellationTokenSource();
-            ct.CancelAfter(TimeSpan.FromMinutes(10));
-            string manifest = null;
-            while (!ct.IsCancellationRequested)
-            {
-                try
-                {
-                    manifest = helmCli.GetManifest(releaseName, revisionNumber);
-                    log.Verbose($"Retrieved manifest for {releaseName}, revision {revisionNumber}.");
-                    break;
-                }
-                catch (CommandLineException)
-                {
-                    log.Verbose("Helm manifest was not ready for retrieval. Retrying in 1s.");
-                    await Task.Delay(TimeSpan.FromSeconds(1), ct.Token);
-                }
-            }
-
-            if (string.IsNullOrWhiteSpace(manifest))
-            {
-                throw new CommandException("Failed to retrieve helm manifest in a timely manner");
-            }
-
-            return manifest;
-        }
-
-        async Task ParseManifestAndMonitorResourceStatuses(RunningDeployment deployment, string manifest)
-        {
-            var timeoutSeconds = deployment.Variables.GetInt32(SpecialVariables.Timeout) ?? 0;
-            var waitForJobs = deployment.Variables.GetFlag(SpecialVariables.WaitForJobs);
-            
-            var namespacedApiResourceDict = GetNamespacedApiResourceDictionary();
-
-            var resources = new List<ResourceIdentifier>();
-            using (var reader = new StringReader(manifest))
-            {
-                var yamlStream = new YamlStream();
-                yamlStream.Load(reader);
-
-                foreach (var document in yamlStream.Documents)
-                {
-                    if (!(document.RootNode is YamlMappingNode rootNode))
-                    {
-                        log.Warn("Could not parse manifest, resources will not be added to kubernetes object status");
-                        continue;
-                    }
-
-                    var kind = rootNode.GetChildNode<YamlScalarNode>("kind").Value;
-
-                    var metadataNode = rootNode.GetChildNode<YamlMappingNode>("metadata");
-                    var name = metadataNode.GetChildNode<YamlScalarNode>("name").Value;
-                    var @namespace = metadataNode.GetChildNodeIfExists<YamlScalarNode>("namespace")?.Value;
-                    
-                    var apiResourceIdentifier = GetApiResourceIdentifier(rootNode);
-                    
-                    // If we can't find the resource in the dictionary, we assume it is namespaced
-                    // Otherwise, we use the value in the dictionary
-                    var isNamespaced = !namespacedApiResourceDict.TryGetValue(apiResourceIdentifier, out var isNamespacedValue) | isNamespacedValue;
-
-                    if (isNamespaced && string.IsNullOrWhiteSpace(@namespace))
-                    {
-                        @namespace = deployment.Variables.Get(SpecialVariables.Helm.Namespace);
-                        //if we don't have a custom helm namespace
-                        if (string.IsNullOrWhiteSpace(@namespace))
-                        {
-                            //use the defined namespace
-                            @namespace = deployment.Variables.Get(SpecialVariables.Namespace);
-                        }
-                    }
-
-                    var resourceIdentifier = new ResourceIdentifier(kind, name, @namespace);
-                    resources.Add(resourceIdentifier);
-                }
-            }
-
-            var statusCheck = statusReporter.Start(timeoutSeconds, waitForJobs, resources);
-            await statusCheck.WaitForCompletionOrTimeout();
-        }
-
-        void ExecuteHelmUpgrade(RunningDeployment deployment, ScriptSyntax syntax, string releaseName)
-        {
-            var cmd = BuildHelmCommand(deployment, syntax, releaseName);
+            ScriptSyntax syntax = ScriptSyntaxHelper.GetPreferredScriptSyntaxForEnvironment();
+            var cmd = BuildHelmCommand(deployment, syntax);
             var fileName = SyntaxSpecificFileName(deployment, syntax);
 
             using (new TemporaryFile(fileName))
             {
                 fileSystem.OverwriteFile(fileName, cmd);
-                var result = scriptEngine.Execute(new Script(fileName), deployment.Variables, commandLineRunner, deployment.EnvironmentVariables);
+                var result = scriptEngine.Execute(new Script(fileName), deployment.Variables, commandLineRunner);
                 if (result.ExitCode != 0)
                 {
-                    throw new CommandException($"Helm Upgrade returned non-zero exit code: {result.ExitCode}. Deployment terminated.");
+                    throw new CommandException(
+                                               $"Helm Upgrade returned non-zero exit code: {result.ExitCode}. Deployment terminated.");
                 }
 
-                if (result.HasErrors && deployment.Variables.GetFlag(Deployment.SpecialVariables.Action.FailScriptOnErrorOutput))
+                if (result.HasErrors && deployment.Variables.GetFlag(Deployment.SpecialVariables.Action.FailScriptOnErrorOutput, false))
                 {
-                    throw new CommandException("Helm Upgrade returned zero exit code but had error output. Deployment terminated.");
+                    throw new CommandException(
+                                               "Helm Upgrade returned zero exit code but had error output. Deployment terminated.");
                 }
             }
         }
 
-        // This could/should be refactored to use `HelmCli` at somepoint
-        string BuildHelmCommand(RunningDeployment deployment, ScriptSyntax syntax, string releaseName)
+        string BuildHelmCommand(RunningDeployment deployment, ScriptSyntax syntax)
         {
+            var releaseName = GetReleaseName(deployment.Variables);
             var packagePath = GetChartLocation(deployment);
 
             var customHelmExecutable = CustomHelmExecutableFullPath(deployment.Variables, deployment.CurrentDirectory);
@@ -237,7 +104,7 @@ namespace Calamari.Kubernetes.Conventions
             return sb.ToString();
         }
 
-        static HelmVersion GetVersion(IVariables variables)
+        HelmVersion GetVersion(IVariables variables)
         {
             var clientVersionText = variables.Get(SpecialVariables.Helm.ClientVersion);
 
@@ -251,8 +118,6 @@ namespace Calamari.Kubernetes.Conventions
         {
             if (customHelmExecutable != null)
             {
-                // Not fixing this in my current change but the chmod here is redundant as we already try to run
-                // the exe as part of CheckHelmToolVersion() early in the script.
                 // With PowerShell we need to invoke custom executables
                 sb.Append(syntax == ScriptSyntax.PowerShell ? ". " : $"chmod +x \"{customHelmExecutable}\"\n");
                 sb.Append($"\"{customHelmExecutable}\"");
@@ -381,12 +246,10 @@ namespace Calamari.Kubernetes.Conventions
             sb.Append($" --tiller-connection-timeout \"{tillerTimeout}\"");
         }
 
-        static string SyntaxSpecificFileName(RunningDeployment deployment, ScriptSyntax syntax)
+        string SyntaxSpecificFileName(RunningDeployment deployment, ScriptSyntax syntax)
         {
-            return Path.Combine(deployment.CurrentDirectory, $"Calamari.HelmUpgrade.{SyntaxSpecificFileExtension(syntax)}");
+            return Path.Combine(deployment.CurrentDirectory, syntax == ScriptSyntax.PowerShell ? "Calamari.HelmUpgrade.ps1" : "Calamari.HelmUpgrade.sh");
         }
-
-        static string SyntaxSpecificFileExtension(ScriptSyntax syntax) => syntax == ScriptSyntax.PowerShell ? "ps1" : "sh";
 
         string GetReleaseName(IVariables variables)
         {
@@ -557,24 +420,6 @@ namespace Calamari.Kubernetes.Conventions
 
             if (toolVersion.Value != selectedVersion)
                 log.Warn($"The Helm tool version '{toolVersion.Value}' ('{stdout}') doesn't match the Helm version selected '{selectedVersion}'");
-        }
-        
-        Dictionary<ApiResourceIdentifier, bool> GetNamespacedApiResourceDictionary()
-        {
-            var apiResourceLines = kubectl.ExecuteCommandAndReturnOutput("api-resources");
-            apiResourceLines.Result.VerifySuccess();
-            return apiResourceLines
-                   .Output.InfoLogs.Skip(1)
-                   .Select(line => line.Split(Array.Empty<char>(), StringSplitOptions.RemoveEmptyEntries).Reverse().ToArray())
-                   .Where(parts => parts.Length > 3)
-                   .ToDictionary( parts => new ApiResourceIdentifier(parts[2], parts[0]), parts => bool.Parse(parts[1]));
-        }
-        
-        static ApiResourceIdentifier GetApiResourceIdentifier(YamlMappingNode node)
-        {
-            var apiVersion = node.GetChildNode<YamlScalarNode>("apiVersion").Value;
-            var kind = node.GetChildNode<YamlScalarNode>("kind").Value;
-            return new ApiResourceIdentifier(apiVersion, kind);
         }
     }
 }

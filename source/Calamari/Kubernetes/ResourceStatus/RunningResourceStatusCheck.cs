@@ -10,7 +10,7 @@ namespace Calamari.Kubernetes.ResourceStatus
 {
     public interface IRunningResourceStatusCheck
     {
-        Task<bool> WaitForCompletionOrTimeout();
+        Task<bool> WaitForCompletionOrTimeout(CancellationToken cancellationToken);
 
         Task AddResources(ResourceIdentifier[] newResources);
     }
@@ -63,9 +63,15 @@ namespace Calamari.Kubernetes.ResourceStatus
             statusCheckTask = RunNewStatusCheck(initialResources);
         }
 
-        public async Task<bool> WaitForCompletionOrTimeout()
+        public async Task<bool> WaitForCompletionOrTimeout(CancellationToken cancellationToken)
         {
-            await taskLock.WaitAsync();
+            //when the passed cancellation token is cancelled, cancel the task
+            cancellationToken.Register(() =>
+                                       {
+                                           taskCancellationTokenSource.Cancel();
+                                       });
+            
+            await taskLock.WaitAsync(cancellationToken);
             try
             {
                 var result = await statusCheckTask;

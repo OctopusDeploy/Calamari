@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
@@ -338,7 +339,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             CheckedResources.UnionWith(initialResources);
         }
 
-        public async Task<bool> WaitForCompletionOrTimeout()
+        public async Task<bool> WaitForCompletionOrTimeout(CancellationToken cancellationToken)
         {
             return await Task.FromResult(true);
         }

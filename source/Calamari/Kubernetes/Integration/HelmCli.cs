@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Calamari.Common.Commands;
 using Calamari.Common.Features.Processes;
+using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Newtonsoft.Json;
@@ -11,27 +13,26 @@ namespace Calamari.Kubernetes.Integration
 {
     public class HelmCli : CommandLineTool
     {
-        public HelmCli(ILog log, ICommandLineRunner commandLineRunner, string workingDirectory, Dictionary<string, string> environmentVars)
-            : base(log, commandLineRunner, workingDirectory, environmentVars)
+        readonly IVariables variables;
+        bool isCustomExecutable;
+
+        public HelmCli(ILog log, ICommandLineRunner commandLineRunner, RunningDeployment runningDeployment)
+            : base(log, commandLineRunner, runningDeployment.CurrentDirectory, runningDeployment.EnvironmentVariables)
         {
-            ExecutableLocation = "helm";
+            variables = runningDeployment.Variables;
+            ExecutableLocation = SetExecutable();
         }
 
-        readonly List<string> builtInArguments = new List<string>();
-
-        public HelmCli WithExecutable(string customExecutable)
-        {
-            ExecutableLocation = customExecutable;
-            return this;
-        }
-
-        public HelmCli WithExecutable(IVariables variables)
+        string SetExecutable()
         {
             var helmExecutable = variables.Get(SpecialVariables.Helm.CustomHelmExecutable);
             if (string.IsNullOrWhiteSpace(helmExecutable))
             {
-                return this;
+                //no custom exe, just return standard helm
+                return "helm";
             }
+            
+            isCustomExecutable = true;
 
             if (variables.GetIndexes(PackageVariables.PackageCollection)
                          .Contains(SpecialVariables.Helm.Packages.CustomHelmExePackageKey)
@@ -40,29 +41,27 @@ namespace Calamari.Kubernetes.Integration
                 var fullPath = Path.GetFullPath(Path.Combine(workingDirectory, SpecialVariables.Helm.Packages.CustomHelmExePackageKey, helmExecutable));
                 log.Info($"Using custom helm executable at {helmExecutable} from inside package. Full path at {fullPath}");
 
-                return WithExecutable(fullPath);
+                return fullPath;
             }
-            else
-            {
-                log.Info($"Using custom helm executable at {helmExecutable}");
-                return WithExecutable(helmExecutable);
-            }
-        }
 
-        public HelmCli WithNamespace(IVariables variables)
+            log.Info($"Using custom helm executable at {helmExecutable}");
+            return helmExecutable;
+        }
+        string NamespaceArg()
         {
             var @namespace = variables.Get(SpecialVariables.Helm.Namespace);
-            if (!string.IsNullOrWhiteSpace(@namespace))
-            {
-                builtInArguments.Add($"--namespace {@namespace}");
-            }
-
-            return this;
+            return !string.IsNullOrWhiteSpace(@namespace) ? $"--namespace {@namespace}" : null;
+        }
+        
+        public (int ExitCode, string InfoOutput) GetExecutableVersion()
+        {
+            var result = ExecuteCommandAndReturnOutput("version", "--client", "--short");
+            return (result.Result.ExitCode, result.Output.MergeInfoLogs());
         }
 
         public int? GetCurrentRevision(string releaseName)
         {
-            var result = ExecuteCommandAndReturnOutput("get", "metadata", releaseName, "-o json");
+            var result = ExecuteCommandAndReturnOutput("get", "metadata", releaseName, "-o json", NamespaceArg());
 
 
             //if we get _any_ error back, assume it probably hasn't been installed yet
@@ -84,13 +83,40 @@ namespace Calamari.Kubernetes.Integration
 
         public string GetManifest(string releaseName, int revisionNumber)
         {
-            var result = ExecuteCommandAndReturnOutput("get", "manifest", releaseName, $"--revision {revisionNumber}");
+            var result = ExecuteCommandAndReturnOutput("get", "manifest", releaseName, $"--revision {revisionNumber}", NamespaceArg());
             result.Result.VerifySuccess();
 
             return result.Output.MergeInfoLogs();
         }
+        
+        public CommandResult Upgrade(string releaseName, string packagePath, IEnumerable<string> upgradeArgs)
+        {
+            var buildArgs = new List<string>
+            {
+                "upgrade",
+                "--install"
+            };
 
-        public CommandResultWithOutput ExecuteCommandAndReturnOutput(params string[] arguments) =>
-            base.ExecuteCommandAndReturnOutput(ExecutableLocation, arguments.Concat(builtInArguments).ToArray());
+            buildArgs.AddRange(upgradeArgs);
+            buildArgs.Add(NamespaceArg());
+            buildArgs.Add(releaseName);
+            buildArgs.Add(packagePath);
+
+            var result = ExecuteCommandAndReturnOutput(buildArgs.ToArray());
+            return result.Result;
+        }
+
+        public CommandResultWithOutput ExecuteCommandAndReturnOutput(params string[] arguments)
+        {
+            if (isCustomExecutable && !CalamariEnvironment.IsRunningOnWindows)
+            {
+                //if this is a custom executable, chmod the exe before we run it
+                ExecuteCommandAndLogOutput(new CommandLineInvocation("chmod",
+                                                                     "+x",
+                                                                     ExecutableLocation));
+            }
+            
+            return base.ExecuteCommandAndReturnOutput(ExecutableLocation, arguments.Where(s => !string.IsNullOrWhiteSpace(s)).ToArray());
+        }
     }
 }

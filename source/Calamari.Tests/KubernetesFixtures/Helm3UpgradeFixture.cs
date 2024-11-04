@@ -40,6 +40,7 @@ namespace Calamari.Tests.KubernetesFixtures
         {
             Variables.AddFlag(SpecialVariables.ResourceStatusCheck, true);
             Variables.Set(KnownVariables.EnabledFeatureToggles, OctopusFeatureToggles.KnownSlugs.KubernetesObjectManifestInspection);
+            Variables.Set(KnownVariables.EnabledFeatureToggles, OctopusFeatureToggles.KnownSlugs.KOSForHelm);
             
             var result = DeployPackage();
 
@@ -62,6 +63,6 @@ namespace Calamari.Tests.KubernetesFixtures
             await TestCustomHelmExeInPackage_RelativePath("3.0.1");
         }
 
-        protected override string ExplicitExeVersion => "3.0.2";
+        protected override string ExplicitExeVersion => "3.16.2";
     }
 }
