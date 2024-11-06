@@ -65,6 +65,7 @@ namespace Calamari.Kubernetes.ResourceStatus
                     var definedResourceStatuses = resourceRetriever
                                                   .GetAllOwnedResources(definedResources, kubectl, options)
                                                   .ToArray();
+                    
                     var resourceStatuses = definedResourceStatuses
                                            .SelectMany(IterateResourceTree)
                                            .ToDictionary(resource => resource.Uid, resource => resource);
@@ -82,14 +83,11 @@ namespace Calamari.Kubernetes.ResourceStatus
                     //if we have been asked to stop, jump out after the last check
                     if (stopAfterNextStatusCheck)
                     {
-                        if (options.PrintVerboseOutput)
-                        {
-                            log.Verbose($"Final Result: {JsonConvert.SerializeObject(result)}");
-                        }
                         return result;
                     }
 
                     await timer.WaitForInterval();
+                    
                 } while (!timer.HasCompleted() && result.DeploymentStatus == DeploymentStatus.InProgress);
 
                 return result;
@@ -99,7 +97,7 @@ namespace Calamari.Kubernetes.ResourceStatus
         /// <summary>
         /// Stops the status check loop after the next resource status checks occur.
         /// </summary> 
-        public void StopAfterNextCheck()
+        public void StopAfterNextResourceCheck()
         {
             stopAfterNextStatusCheck = true;    
         }

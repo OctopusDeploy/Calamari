@@ -24,7 +24,6 @@ namespace Calamari.Util
             ("m", TimeSpan.FromMinutes(1)), // Minute
             ("s", TimeSpan.FromSeconds(1)), // Second
             ("ms", TimeSpan.FromMilliseconds(1)), //Millisecond
-            ("t", TimeSpan.FromTicks(1)) // Tick
         };
 
         public static TimeSpan ParseDuration(string duration)

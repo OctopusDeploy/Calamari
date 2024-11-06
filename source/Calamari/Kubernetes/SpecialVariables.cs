@@ -25,8 +25,7 @@ namespace Calamari.Kubernetes
         
         public const string Timeout = "Octopus.Action.Kubernetes.DeploymentTimeout";
         public const string WaitForJobs = "Octopus.Action.Kubernetes.WaitForJobs";
-        public const string PrintVerboseKubectlOutputOnError = "Octopus.Action.Kubernetes.PrintVerboseKubectlOutputOnError";  
-        public const string PrintVerboseOutput = "Octopus.Action.Kubernetes.PrintVerboseOutput";  
+        public const string PrintVerboseKubectlOutputOnError = "Octopus.Action.Kubernetes.PrintVerboseKubectlOutputOnError";
         public const string ClientCertificate = "Octopus.Action.Kubernetes.ClientCertificate";
         public const string CertificateAuthorityPath = "Octopus.Action.Kubernetes.CertificateAuthorityPath";
         public const string PodServiceAccountTokenPath = "Octopus.Action.Kubernetes.PodServiceAccountTokenPath";

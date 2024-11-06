@@ -70,10 +70,11 @@ namespace Calamari.Kubernetes.ResourceStatus
             cancellationToken.Register(() =>
                                        {
                                            log.Verbose("Resource Status Check: Stopping after next status check.");
-                                           statusCheckTask.StopAfterNextCheck();
+                                           statusCheckTask.StopAfterNextResourceCheck();
                                        });
-            
-            await taskLock.WaitAsync(cancellationToken);
+            // we use CancellationToken.None as we don't want to use the passed cancellation token
+            // as it causes the status check task to abort early without retrieving the statuses.
+            await taskLock.WaitAsync(CancellationToken.None);
             try
             {
                 var result = await statusCheckTaskTask;
