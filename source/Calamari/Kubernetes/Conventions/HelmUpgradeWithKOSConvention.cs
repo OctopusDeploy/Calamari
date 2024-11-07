@@ -175,13 +175,7 @@ namespace Calamari.Kubernetes.Conventions
 
             //We are using helm as the deployment verification so an infinite timeout and wait for jobs makes sense
             var statusCheck = statusReporter.Start(0, false, resources);
-            try
-            {
-                await statusCheck.WaitForCompletionOrTimeout(cancellationToken);
-            }
-            catch (TaskCanceledException)
-            {
-            }
+            await statusCheck.WaitForCompletionOrTimeout(cancellationToken);
         }
 
         void ExecuteHelmUpgrade(RunningDeployment deployment,

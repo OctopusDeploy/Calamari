@@ -30,6 +30,18 @@ namespace Calamari.Tests.KubernetesFixtures
 
             Assert.AreEqual(ReleaseName.ToLower(), result.CapturedOutput.OutputVariables["ReleaseName"]);
         }
+
+        [Test]
+        [RequiresNonFreeBSDPlatform]
+        [RequiresNon32BitWindows]
+        [RequiresNonMac]
+        [Category(TestCategory.PlatformAgnostic)]
+        public async Task CustomHelmExeInPackage_RelativePath()
+        {
+            await TestCustomHelmExeInPackage_RelativePath("3.0.1");
+        }
+        
+        
         
         [Test]
         [RequiresNonFreeBSDPlatform]
@@ -52,16 +64,6 @@ namespace Calamari.Tests.KubernetesFixtures
             result.AssertOutput("Using custom helm executable at " + HelmExePath);
 
             Assert.AreEqual(ReleaseName.ToLower(), result.CapturedOutput.OutputVariables["ReleaseName"]);
-        }
-
-        [Test]
-        [RequiresNonFreeBSDPlatform]
-        [RequiresNon32BitWindows]
-        [RequiresNonMac]
-        [Category(TestCategory.PlatformAgnostic)]
-        public async Task CustomHelmExeInPackage_RelativePath()
-        {
-            await TestCustomHelmExeInPackage_RelativePath("3.0.1");
         }
 
         protected override string ExplicitExeVersion => "3.16.2";

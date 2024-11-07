@@ -64,20 +64,29 @@ namespace Calamari.Kubernetes.ResourceStatus
             statusCheckTaskTask = RunNewStatusCheck(initialResources);
         }
 
-        public async Task<bool> WaitForCompletionOrTimeout(CancellationToken cancellationToken)
+        public async Task<bool> WaitForCompletionOrTimeout(CancellationToken shutdownCancellationToken)
         {
             //when the passed cancellation token is cancelled, ask the task to stop
-            cancellationToken.Register(() =>
+            shutdownCancellationToken.Register(() =>
                                        {
                                            log.Verbose("Resource Status Check: Stopping after next status check.");
                                            statusCheckTask.StopAfterNextResourceCheck();
                                        });
+            
             // we use CancellationToken.None as we don't want to use the passed cancellation token
             // as it causes the status check task to abort early without retrieving the statuses.
             await taskLock.WaitAsync(CancellationToken.None);
+            
             try
             {
                 var result = await statusCheckTaskTask;
+
+                //if the shutdown cancellation token is marked as a shutdown, we just log that it stopped and was "success"
+                if (shutdownCancellationToken.IsCancellationRequested)
+                {
+                    log.Verbose("Resource Status Check: Stopped.");
+                    return true;
+                }
 
                 switch (result.DeploymentStatus)
                 {
