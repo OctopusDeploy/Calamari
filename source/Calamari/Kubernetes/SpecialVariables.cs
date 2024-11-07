@@ -77,6 +77,7 @@ namespace Calamari.Kubernetes
                 public const string Name = "k8s-manifest-applied";
                 public const string ManifestAttribute = "manifest";
                 public const string NamespaceAttribute = "ns";
+                public const string NamespaceScope = "ns-scope";
             }
         }
     }

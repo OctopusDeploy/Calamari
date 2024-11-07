@@ -86,25 +86,12 @@ namespace Calamari.Kubernetes.Commands.Executors
         void ReportEachManifestBeingApplied(GlobDirectory globDirectory, string[] files)
         {
             var directoryWithTrailingSlash = globDirectory.Directory + Path.DirectorySeparatorChar;
-            var namespacedApiResourceDict = GetNamespacedApiResourceDictionary();
             foreach (var file in files)
             {
                 var fullFilePath = fileSystem.GetRelativePath(directoryWithTrailingSlash, file);
                 log.Verbose($"Matched file: {fullFilePath}");
-                manifestReporter.ReportManifestApplied(file, namespacedApiResourceDict);
+                manifestReporter.ReportManifestApplied(file);
             }
-        }
-
-        Dictionary<ApiResourceIdentifier, bool> GetNamespacedApiResourceDictionary()
-        {
-            var apiResourceLines = kubectl.ExecuteCommandAndReturnOutput("api-resources");
-            apiResourceLines.Result.VerifySuccess();
-
-            return apiResourceLines
-                                     .Output.InfoLogs.Skip(1)
-                                     .Select(line => line.Split(Array.Empty<char>(), StringSplitOptions.RemoveEmptyEntries).Reverse().ToArray())
-                                     .Where(parts => parts.Length > 3)
-                                     .ToDictionary( parts => new ApiResourceIdentifier(parts[2], parts[0]), parts => bool.Parse(parts[1]));
         }
     }
 }

@@ -15,23 +15,25 @@ namespace Calamari.Kubernetes
 {
     public interface IManifestReporter
     {
-        void ReportManifestApplied(string filePath, Dictionary<ApiResourceIdentifier, bool> namespacedApiResourceDict);
+        void ReportManifestApplied(string filePath);
     }
 
     public class ManifestReporter : IManifestReporter
     {
         readonly IVariables variables;
         readonly ICalamariFileSystem fileSystem;
+        readonly IApiResourceScopeLookup apiResourceScopeLookup;
         readonly ILog log;
 
         static readonly ISerializer YamlSerializer = new SerializerBuilder()
                                                      .Build();
 
-        public ManifestReporter(IVariables variables, ICalamariFileSystem fileSystem, ILog log)
+        public ManifestReporter(IVariables variables, ICalamariFileSystem fileSystem, ILog log, IApiResourceScopeLookup apiResourceScopeLookup)
         {
             this.variables = variables;
             this.fileSystem = fileSystem;
             this.log = log;
+            this.apiResourceScopeLookup = apiResourceScopeLookup;
         }
 
         string GetNamespace(YamlMappingNode yamlRoot)
@@ -46,7 +48,7 @@ namespace Calamari.Kubernetes
             return implicitNamespace;
         }
 
-        public void ReportManifestApplied(string filePath, Dictionary<ApiResourceIdentifier, bool> namespacedApiResourceDict)
+        public void ReportManifestApplied(string filePath)
         {
             if (!FeatureToggle.KubernetesLiveObjectStatusFeatureToggle.IsEnabled(variables) && !OctopusFeatureToggles.KubernetesObjectManifestInspectionFeatureToggle.IsEnabled(variables))
                 return;
@@ -72,15 +74,21 @@ namespace Calamari.Kubernetes
 
                         var apiResourceIdentifier = GetApiResourceIdentifier(rootNode);
 
+                        var wasFound = apiResourceScopeLookup.TryGetIsClusterScoped(apiResourceIdentifier, out var isNamespaced);
+
+                        var namespaceScope = wasFound ? isNamespaced ? "namespaced" : "cluster" : "unknown";
+
                         // If we can't find the resource in the dictionary, we assume it is namespaced
-                        // Otherwise, we use the value in the dictionary
-                        var isNamespaced = !namespacedApiResourceDict.TryGetValue(apiResourceIdentifier, out var isNamespacedValue) || isNamespacedValue;
+                        var namespaceToReturn = wasFound ?  isNamespaced ? ns : null : ns;
+
+
 
                         log.WriteServiceMessage(new ServiceMessage(SpecialVariables.ServiceMessageNames.ManifestApplied.Name,
                                                                    new Dictionary<string, string>
                                                                    {
                                                                        { SpecialVariables.ServiceMessageNames.ManifestApplied.ManifestAttribute, updatedDocument },
-                                                                       { SpecialVariables.ServiceMessageNames.ManifestApplied.NamespaceAttribute, isNamespaced ? ns : null }
+                                                                       { SpecialVariables.ServiceMessageNames.ManifestApplied.NamespaceAttribute, namespaceToReturn },
+                                                                       { SpecialVariables.ServiceMessageNames.ManifestApplied.NamespaceScope, namespaceScope },
                                                                    }));
                     }
                 }
