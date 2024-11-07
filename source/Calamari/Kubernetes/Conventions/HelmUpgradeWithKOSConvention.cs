@@ -129,8 +129,6 @@ namespace Calamari.Kubernetes.Conventions
 
         async Task ParseManifestAndMonitorResourceStatuses(RunningDeployment deployment, string manifest, CancellationToken cancellationToken)
         {
-            var namespacedApiResourceDict = GetNamespacedApiResourceDictionary();
-
             var resources = new List<ResourceIdentifier>();
             using (var reader = new StringReader(manifest))
             {
@@ -151,21 +149,14 @@ namespace Calamari.Kubernetes.Conventions
                     var name = metadataNode.GetChildNode<YamlScalarNode>("name").Value;
                     var @namespace = metadataNode.GetChildNodeIfExists<YamlScalarNode>("namespace")?.Value;
 
-                    var apiResourceIdentifier = GetApiResourceIdentifier(rootNode);
-
-                    // If we can't find the resource in the dictionary, we assume it is namespaced
-                    // Otherwise, we use the value in the dictionary
-                    var isNamespaced = !namespacedApiResourceDict.TryGetValue(apiResourceIdentifier, out var isNamespacedValue) | isNamespacedValue;
-
-                    if (isNamespaced && string.IsNullOrWhiteSpace(@namespace))
+                    //if the resource doesn't have a namespace set in the manifest set it to the helm namespace.
+                    //This is because namespaced resources that don't have the namespace defined in the manifest will be set in the namespace set in the helm command
+                    //if this is null, we'll fall back on the namespace defined for the kubectl tool (which is the default target namespace)
+                    //we aren't changing the manifest here, just changing where the kubectl looks for our resource.
+                    //Conveniently, kubectl will ignore the -n parameter if the resource is not namespaced (e.g. PV's)
+                    if (string.IsNullOrWhiteSpace(@namespace))
                     {
-                        @namespace = deployment.Variables.Get(SpecialVariables.Helm.Namespace);
-                        //if we don't have a custom helm namespace
-                        if (string.IsNullOrWhiteSpace(@namespace))
-                        {
-                            //use the defined namespace
-                            @namespace = deployment.Variables.Get(SpecialVariables.Namespace);
-                        }
+                        @namespace = deployment.Variables.Get(SpecialVariables.Helm.Namespace)?.Trim();
                     }
 
                     var resourceIdentifier = new ResourceIdentifier(kind, name, @namespace);
@@ -558,24 +549,6 @@ namespace Calamari.Kubernetes.Conventions
             {
                 log.Warn($"The Helm tool version '{toolVersion.Value}' ('{infoOutput}') doesn't match the Helm version selected '{selectedVersion}'");
             }
-        }
-
-        Dictionary<ApiResourceIdentifier, bool> GetNamespacedApiResourceDictionary()
-        {
-            var apiResourceLines = kubectl.ExecuteCommandAndReturnOutput("api-resources");
-            apiResourceLines.Result.VerifySuccess();
-            return apiResourceLines
-                   .Output.InfoLogs.Skip(1)
-                   .Select(line => line.Split(Array.Empty<char>(), StringSplitOptions.RemoveEmptyEntries).Reverse().ToArray())
-                   .Where(parts => parts.Length > 3)
-                   .ToDictionary(parts => new ApiResourceIdentifier(parts[2], parts[0]), parts => bool.Parse(parts[1]));
-        }
-
-        static ApiResourceIdentifier GetApiResourceIdentifier(YamlMappingNode node)
-        {
-            var apiVersion = node.GetChildNode<YamlScalarNode>("apiVersion").Value;
-            var kind = node.GetChildNode<YamlScalarNode>("kind").Value;
-            return new ApiResourceIdentifier(apiVersion, kind);
         }
     }
 }
