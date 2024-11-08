@@ -153,8 +153,8 @@ namespace Calamari.Kubernetes.Conventions
                     //This is because namespaced resources that don't have the namespace defined in the manifest will be set in the namespace set in the helm command
                     //if this is null, we'll fall back on the namespace defined for the kubectl tool (which is the default target namespace)
                     //we aren't changing the manifest here, just changing where the kubectl looks for our resource.
-                    //Conveniently, kubectl will ignore the -n parameter if the resource is not namespaced (e.g. PV's)
-                    if (string.IsNullOrWhiteSpace(@namespace))
+                    //We also try and filter out known non-namespaced resources
+                    if (string.IsNullOrWhiteSpace(@namespace) && !KubernetesApiResources.NonNamespacedKinds.Contains(kind))
                     {
                         @namespace = deployment.Variables.Get(SpecialVariables.Helm.Namespace)?.Trim();
                     }
