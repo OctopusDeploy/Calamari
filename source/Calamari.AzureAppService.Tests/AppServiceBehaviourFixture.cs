@@ -222,6 +222,55 @@ namespace Calamari.AzureAppService.Tests
                                     },
                                     secondsBetweenRetries: 10);
             }
+            
+            [Test]
+            public async Task CanDeployJarPackage()
+            {
+                // Need to spin up a specific app service with Tomcat installed
+                // Need java installed on the test runner (MJH 2022-05-06: is this actually true? I don't see why we'd need java on the test runner)
+                var javaSite = await ResourceGroupResource.GetWebSites()
+                                                          .CreateOrUpdateAsync(WaitUntil.Completed,
+                                                                               $"{ResourceGroupName}-java",
+                                                                               new WebSiteData(ResourceGroupResource.Data.Location)
+                                                                               {
+                                                                                   AppServicePlanId = appServicePlanResource.Data.Id,
+                                                                                   SiteConfig = new SiteConfigProperties
+                                                                                   {
+                                                                                       JavaVersion = "1.8",
+                                                                                       JavaContainer = "TOMCAT",
+                                                                                       JavaContainerVersion = "9.0",
+                                                                                       AppSettings = new List<AppServiceNameValuePair>
+                                                                                       {
+                                                                                           new AppServiceNameValuePair { Name = "WEBSITES_CONTAINER_START_TIME_LIMIT", Value = "600" },
+                                                                                           new AppServiceNameValuePair { Name = "WEBSITE_SCM_ALWAYS_ON_ENABLED", Value = "true" }
+                                                                                       }
+                                                                                   }
+                                                                               });
+
+                (string packagePath, string packageName, string packageVersion) packageinfo;
+                var assemblyFileInfo = new FileInfo(Assembly.GetExecutingAssembly().Location);
+                packageinfo.packagePath = Path.Combine(assemblyFileInfo.Directory.FullName, "sample.1.0.0.jar");
+                packageinfo.packageVersion = "1.0.0";
+                packageinfo.packageName = "sample";
+                greeting = "java";
+
+                await CommandTestBuilder.CreateAsync<DeployAzureAppServiceCommand, Program>()
+                                        .WithArrange(context =>
+                                                     {
+                                                         context.WithPackage(packageinfo.packagePath, packageinfo.packageName, packageinfo.packageVersion);
+                                                         AddVariables(context);
+                                                         context.Variables[SpecialVariables.Action.Azure.WebAppName] = javaSite.Value.Data.Name;
+                                                         context.Variables[PackageVariables.SubstituteInFilesTargets] = "test.jsp";
+                                                     })
+                                        .Execute();
+                
+                await DoWithRetries(3,
+                                    async () =>
+                                    {
+                                        await AssertContent(javaSite.Value.Data.DefaultHostName, $"Hello! {greeting}", "test.jsp");
+                                    },
+                                    secondsBetweenRetries: 10);
+            }
 
             [Test]
             public async Task DeployingWithInvalidEnvironment_ThrowsAnException()
