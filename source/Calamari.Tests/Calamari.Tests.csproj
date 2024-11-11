@@ -226,7 +226,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Fixtures\Nginx\Approved" />
-    <Folder Include="KubernetesFixtures\Conventions\" />
   </ItemGroup>
   <ItemGroup>
     <None Remove="NewPipeline\Config\json.txt" />
