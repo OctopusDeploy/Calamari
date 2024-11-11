@@ -42,9 +42,8 @@ namespace Calamari.Tests.KubernetesFixtures
 
         static string HelmOsPlatform => CalamariEnvironment.IsRunningOnWindows ? "windows-amd64" : "linux-amd64";
 
-        HelmVersion? helmVersion;
         TemporaryDirectory explicitVersionTempDirectory;
-        
+
         static readonly CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
         readonly CancellationToken cancellationToken = CancellationTokenSource.Token;
 
@@ -53,15 +52,10 @@ namespace Calamari.Tests.KubernetesFixtures
         {
             ServerUrl = await ExternalVariables.Get(ExternalVariable.KubernetesClusterUrl, cancellationToken);
             ClusterToken = await ExternalVariables.Get(ExternalVariable.KubernetesClusterToken, cancellationToken);
-            
+
             if (ExplicitExeVersion != null)
             {
                 await DownloadExplicitHelmExecutable();
-                helmVersion = new SemanticVersion(ExplicitExeVersion).Major == 2 ? HelmVersion.V2 : HelmVersion.V3;
-            }
-            else
-            {
-                helmVersion = GetVersion();
             }
 
             async Task DownloadExplicitHelmExecutable()
@@ -99,7 +93,7 @@ namespace Calamari.Tests.KubernetesFixtures
             FileSystem.PurgeDirectory(packageExtractionDirectory, FailureOptions.ThrowOnFailure);
 
             Environment.SetEnvironmentVariable("TentacleJournal",
-                Path.Combine(StagingDirectory, "DeploymentJournal.xml"));
+                                               Path.Combine(StagingDirectory, "DeploymentJournal.xml"));
 
             Variables = new VariablesFactory(FileSystem).Create(new CommonOptions("test"));
             Variables.Set(TentacleVariables.Agent.ApplicationDirectoryPath, StagingDirectory);
@@ -191,7 +185,6 @@ namespace Calamari.Tests.KubernetesFixtures
             Assert.AreEqual("Hello Variable Replaced In Package", result.CapturedOutput.OutputVariables["Message"]);
         }
 
-
         [Test]
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
@@ -251,7 +244,7 @@ namespace Calamari.Tests.KubernetesFixtures
             Variables.Set(PackageVariables.IndexedPackageId("Pack-1"), "CustomValues");
             Variables.Set(PackageVariables.IndexedPackageVersion("Pack-1"), "2.0.0");
             Variables.Set(PackageVariables.IndexedOriginalPath("Pack-1"),
-                GetFixtureResource("Charts", "CustomValues.2.0.0.zip"));
+                          GetFixtureResource("Charts", "CustomValues.2.0.0.zip"));
             Variables.Set(Kubernetes.SpecialVariables.Helm.Packages.ValuesFilePath("Pack-1"), "values.yaml");
 
             //Variable that will replace packaged value in package
@@ -357,7 +350,7 @@ namespace Calamari.Tests.KubernetesFixtures
             result.AssertFailure();
             result.AssertOutputContains("Chart was not found in 'specific/location/for/my/chart'");
         }
-        
+
         [Test]
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
@@ -398,18 +391,8 @@ namespace Calamari.Tests.KubernetesFixtures
             Variables.Set(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.CustomScripts);
         }
 
-        string DeleteCommand(string @namespace, string releaseName)
-        {
-            switch (helmVersion)
-            {
-                case HelmVersion.V2:
-                    return $"delete {releaseName} --purge";
-                case HelmVersion.V3:
-                    return $"uninstall {releaseName} --namespace {@namespace}";
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(helmVersion), helmVersion, "Unrecognized Helm version");
-            }
-        }
+        static string DeleteCommand(string @namespace, string releaseName) 
+            => $"uninstall {releaseName} --namespace {@namespace}";
 
         protected CalamariResult DeployPackage(string packageName = null)
         {
@@ -419,14 +402,15 @@ namespace Calamari.Tests.KubernetesFixtures
                 {
                     packageName = $"{Variables.Get(PackageVariables.PackageId)}-{Variables.Get(PackageVariables.PackageVersion)}.tgz";
                 }
+
                 Log.VerboseFormat("Deploying test chart from package: {0}", packageName);
                 var pkg = GetFixtureResource("Charts", packageName);
                 Variables.Save(variablesFile.FilePath);
 
                 return InvokeInProcess(Calamari()
-                    .Action("helm-upgrade")
-                    .Argument("package", pkg)
-                    .Argument("variables", variablesFile.FilePath));
+                                       .Action("helm-upgrade")
+                                       .Argument("package", pkg)
+                                       .Argument("variables", variablesFile.FilePath));
             }
         }
 
@@ -440,18 +424,6 @@ namespace Calamari.Tests.KubernetesFixtures
                     await stream.CopyToAsync(fileStream);
                 }
             }
-        }
-
-        static HelmVersion GetVersion()
-        {
-            StringBuilder stdout = new StringBuilder();
-            var result = SilentProcessRunner.ExecuteCommand("helm", "version --client --short", Environment.CurrentDirectory, output => stdout.AppendLine(output), error => { });
-
-            result.ExitCode.Should().Be(0, $"Failed to retrieve version from Helm (Exit code {result.ExitCode}). Error output: \r\n{result.ErrorOutput}");
-
-            var version = stdout.ToString();
-            return HelmVersionParser.ParseVersion(version)
-                ?? throw new InvalidOperationException($"Unsupported helm version '{version}'");
         }
     }
 }

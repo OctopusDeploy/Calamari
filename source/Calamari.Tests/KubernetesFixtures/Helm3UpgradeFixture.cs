@@ -38,6 +38,6 @@ namespace Calamari.Tests.KubernetesFixtures
             await TestCustomHelmExeInPackage_RelativePath("3.0.1");
         }
 
-        protected override string ExplicitExeVersion => "3.0.2";
+        protected override string ExplicitExeVersion => "3.16.2";
     }
 }
