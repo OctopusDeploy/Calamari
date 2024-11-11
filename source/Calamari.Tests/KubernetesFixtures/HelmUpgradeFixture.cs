@@ -105,7 +105,8 @@ namespace Calamari.Tests.KubernetesFixtures
             //Helm Options
             Variables.Set(Kubernetes.SpecialVariables.Helm.ReleaseName, ReleaseName);
 
-            //K8S AuthVariables.Set(Kubernetes.SpecialVariables.ClusterUrl, ServerUrl);
+            //K8S Auth
+            Variables.Set(Kubernetes.SpecialVariables.ClusterUrl, ServerUrl);
             Variables.Set(Kubernetes.SpecialVariables.SkipTlsVerification, "True");
             Variables.Set(Kubernetes.SpecialVariables.Namespace, Namespace);
             Variables.Set(SpecialVariables.Account.AccountType, "Token");
