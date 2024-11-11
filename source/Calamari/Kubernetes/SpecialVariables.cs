@@ -49,10 +49,7 @@ namespace Calamari.Kubernetes
             public const string TemplateValuesSources = "Octopus.Action.Helm.TemplateValuesSources";
             public const string AdditionalArguments = "Octopus.Action.Helm.AdditionalArgs";
             public const string CustomHelmExecutable = "Octopus.Action.Helm.CustomHelmExecutable";
-            public const string ClientVersion = "Octopus.Action.Helm.ClientVersion";
             public const string Timeout = "Octopus.Action.Helm.Timeout";
-            public const string TillerNamespace = "Octopus.Action.Helm.TillerNamespace";
-            public const string TillerTimeout = "Octopus.Action.Helm.TillerTimeout";
             public const string ChartDirectory = "Octopus.Action.Helm.ChartDirectory";
 
             public static class Packages

@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading;
@@ -18,7 +17,6 @@ using Calamari.Deployment;
 using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using Calamari.Testing.Requirements;
-using Calamari.Tests.Fixtures;
 using Calamari.Tests.Helpers;
 using Calamari.Util;
 using FluentAssertions;
@@ -112,10 +110,8 @@ namespace Calamari.Tests.KubernetesFixtures
 
             //Helm Options
             Variables.Set(Kubernetes.SpecialVariables.Helm.ReleaseName, ReleaseName);
-            Variables.Set(Kubernetes.SpecialVariables.Helm.ClientVersion, helmVersion.ToString());
 
-            //K8S Auth
-            Variables.Set(Kubernetes.SpecialVariables.ClusterUrl, ServerUrl);
+            //K8S AuthVariables.Set(Kubernetes.SpecialVariables.ClusterUrl, ServerUrl);
             Variables.Set(Kubernetes.SpecialVariables.SkipTlsVerification, "True");
             Variables.Set(Kubernetes.SpecialVariables.Namespace, Namespace);
             Variables.Set(SpecialVariables.Account.AccountType, "Token");
@@ -453,33 +449,9 @@ namespace Calamari.Tests.KubernetesFixtures
 
             result.ExitCode.Should().Be(0, $"Failed to retrieve version from Helm (Exit code {result.ExitCode}). Error output: \r\n{result.ErrorOutput}");
 
-            return ParseVersion(stdout.ToString());
-        }
-
-        //versionString from "helm version --client --short"
-        static HelmVersion ParseVersion(string versionString)
-        {
-            //eg of output for helm 2: Client: v2.16.1+gbbdfe5e
-            //eg of output for helm 3: v3.0.1+g7c22ef9
-
-            var indexOfVersionIdentifier = versionString.IndexOf('v');
-            if (indexOfVersionIdentifier == -1)
-                throw new FormatException($"Failed to find version identifier from '{versionString}'.");
-
-            var indexOfVersionNumber = indexOfVersionIdentifier + 1;
-            if (indexOfVersionNumber >= versionString.Length)
-                throw new FormatException($"Failed to find version number from '{versionString}'.");
-
-            var version = versionString[indexOfVersionNumber];
-            switch (version)
-            {
-                case '3':
-                    return HelmVersion.V3;
-                case '2':
-                    return HelmVersion.V2;
-                default:
-                    throw new InvalidOperationException($"Unsupported helm version '{version}'");
-            }
+            var version = stdout.ToString();
+            return HelmVersionParser.ParseVersion(version)
+                ?? throw new InvalidOperationException($"Unsupported helm version '{version}'");
         }
     }
 }
