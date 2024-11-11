@@ -30,6 +30,9 @@
     <None Update="sample.1.0.0.war">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="sample4-1.0.0.jar">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="functionapp.1.0.0.zip">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
