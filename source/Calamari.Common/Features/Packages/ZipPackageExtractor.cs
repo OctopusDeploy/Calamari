@@ -5,6 +5,7 @@ using SharpCompress.Archives;
 using SharpCompress.Archives.Zip;
 using SharpCompress.Common;
 using Polly;
+using SharpCompress.Readers;
 
 namespace Calamari.Common.Features.Packages
 {
@@ -25,7 +26,9 @@ namespace Calamari.Common.Features.Packages
             
             var filesExtracted = 0;
             using var inStream = new FileStream(packageFile, FileMode.Open, FileAccess.Read);
-            using var archive = ZipArchive.Open(inStream);
+            var readerOptions = new ReaderOptions();
+            readerOptions.ArchiveEncoding.Forced = System.Text.Encoding.UTF8;
+            using var archive = ZipArchive.Open(inStream, readerOptions);
             
             foreach (var entry in archive.Entries)
             {
