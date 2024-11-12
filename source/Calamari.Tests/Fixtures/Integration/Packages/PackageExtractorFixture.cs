@@ -47,6 +47,29 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             Assert.AreEqual(9, filesExtracted, "Mismatch in the number of files extracted"); //If you edit the nupkg file with Nuget Package Explorer it will add a _._ file to EmptyFolder and you'll get 5 here.
             Assert.AreEqual("Im in a package!", text.TrimEnd('\n'), "The contents of the extractd file do not match the expected value");
         }
+        
+        
+        [Test]
+        public void MyExtract()
+        {
+            var fileName = GetFixtureResource("Samples", string.Format("blah-1.0.0.zip"));
+            var timeBeforeExtraction = DateTime.Now.AddSeconds(-1);
+
+            Type extractorType = typeof(ZipPackageExtractor);
+            
+            var extractor = (IPackageExtractor) Activator.CreateInstance(extractorType, ConsoleLog.Instance);
+            var targetDir = GetTargetDir(extractorType, fileName);
+
+            var filesExtracted = extractor.Extract(fileName, targetDir);
+            var textFileName = Path.Combine(targetDir, "my resource.txt");
+            var text = File.ReadAllText(textFileName);
+            var fileInfo = new FileInfo(textFileName);
+            
+
+            Assert.AreEqual(9, filesExtracted, "Mismatch in the number of files extracted"); //If you edit the nupkg file with Nuget Package Explorer it will add a _._ file to EmptyFolder and you'll get 5 here.
+            Assert.AreEqual("Im in a package!", text.TrimEnd('\n'), "The contents of the extractd file do not match the expected value");
+        }
+        
 
         [Test]
         [TestCase(typeof(TarGzipPackageExtractor), "tar.gz", true)]
