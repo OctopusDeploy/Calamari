@@ -12,10 +12,12 @@ namespace Calamari.Common.Features.Packages
     public class ZipPackageExtractor : IPackageEntryExtractor
     {
         readonly ILog log;
+        readonly bool forceUtf8ZipFiles; //to be removed once transitioned to netcore
 
-        public ZipPackageExtractor(ILog log)
+        public ZipPackageExtractor(ILog log, bool forceUtf8ZipFiles)
         {
             this.log = log;
+            this.forceUtf8ZipFiles = forceUtf8ZipFiles;
         }
 
         public string[] Extensions => new[] { ".zip" };
@@ -28,13 +30,12 @@ namespace Calamari.Common.Features.Packages
             using var inStream = new FileStream(packageFile, FileMode.Open, FileAccess.Read);
             
 #if NETFRAMEWORK
-            var readerOptions = new ReaderOptions
+            var readerOptions = new ReaderOptions();
+            if (forceUtf8ZipFiles)
             {
-                ArchiveEncoding =
-                {
-                    Forced = System.Text.Encoding.UTF8
-                }
-            };
+                readerOptions.ArchiveEncoding.Forced = System.Text.Encoding.UTF8;
+            }
+
             using var archive = ZipArchive.Open(inStream, readerOptions);
 #else
             using var archive = ZipArchive.Open(inStream);
