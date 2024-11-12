@@ -50,10 +50,9 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         
         
         [Test]
-        public void MyExtract()
+        public void CanExtractZipFileContainingSpecialCharacters()
         {
-            var fileName = GetFixtureResource("Samples", string.Format("blah-1.0.0.zip"));
-            var timeBeforeExtraction = DateTime.Now.AddSeconds(-1);
+            var fileName = GetFixtureResource("Samples", string.Format("utf8.Filenames-1.0.0.zip"));
 
             Type extractorType = typeof(ZipPackageExtractor);
             
@@ -61,13 +60,12 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             var targetDir = GetTargetDir(extractorType, fileName);
 
             var filesExtracted = extractor.Extract(fileName, targetDir);
-            var textFileName = Path.Combine(targetDir, "my resource.txt");
+            var textFileName = Path.Combine(targetDir, "á_ó_í_çø.txt");
             var text = File.ReadAllText(textFileName);
-            var fileInfo = new FileInfo(textFileName);
             
 
-            Assert.AreEqual(9, filesExtracted, "Mismatch in the number of files extracted"); //If you edit the nupkg file with Nuget Package Explorer it will add a _._ file to EmptyFolder and you'll get 5 here.
-            Assert.AreEqual("Im in a package!", text.TrimEnd('\n'), "The contents of the extractd file do not match the expected value");
+            Assert.AreEqual(1, filesExtracted, "Mismatch in the number of files extracted");
+            Assert.AreEqual("Im in a package!", text.TrimEnd('\n'), "The contents of the extracted file do not match the expected value");
         }
         
 
