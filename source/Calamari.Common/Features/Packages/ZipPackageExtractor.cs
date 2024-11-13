@@ -15,10 +15,8 @@ namespace Calamari.Common.Features.Packages
         readonly bool forceUtf8ZipFiles; //to be removed once transitioned to netcore
 
         //used during testing only
-        public ZipPackageExtractor(ILog log)
+        public ZipPackageExtractor(ILog log) : this(log, false)
         {
-            this.log = log;
-            this.forceUtf8ZipFiles = false;
         }
         
         public ZipPackageExtractor(ILog log, bool forceUtf8ZipFiles)
