@@ -17,22 +17,22 @@ namespace Calamari.Tests.KubernetesFixtures
     [TestFixture]
     public class ManifestReporterTests
     {
-        [Test]
-        public void GivenDisabledFeatureToggle_ShouldNotPostServiceMessage()
-        {
-            var memoryLog = new InMemoryLog();
-            var variables = new CalamariVariables();
-
-            var yaml = @"foo: bar";
-            using (CreateFile(yaml, out var filePath))
-            {
-                var mr = new ManifestReporter(variables, CalamariPhysicalFileSystem.GetPhysicalFileSystem(), memoryLog);
-
-                mr.ReportManifestApplied(filePath);
-
-                memoryLog.ServiceMessages.Should().BeEmpty();
-            }
-        }
+        // [Test]
+        // public void GivenDisabledFeatureToggle_ShouldNotPostServiceMessage()
+        // {
+        //     var memoryLog = new InMemoryLog();
+        //     var variables = new CalamariVariables();
+        //
+        //     var yaml = @"foo: bar";
+        //     using (CreateFile(yaml, out var filePath))
+        //     {
+        //         var mr = new ManifestReporter(variables, CalamariPhysicalFileSystem.GetPhysicalFileSystem(), memoryLog);
+        //
+        //         mr.ReportManifestApplied(filePath, "default");
+        //
+        //         memoryLog.ServiceMessages.Should().BeEmpty();
+        //     }
+        // }
         
         [TestCase(nameof(FeatureToggle.KubernetesLiveObjectStatusFeatureToggle))]
         [TestCase( OctopusFeatureToggles.KnownSlugs.KubernetesObjectManifestInspection)]
@@ -55,7 +55,7 @@ quoted_float: ""5.75""
             {
                 var mr = new ManifestReporter(variables, CalamariPhysicalFileSystem.GetPhysicalFileSystem(), memoryLog);
 
-                mr.ReportManifestApplied(filePath);
+                mr.ReportManifestApplied(filePath, "default");
 
                 var expected = ServiceMessage.Create(SpecialVariables.ServiceMessageNames.ManifestApplied.Name, ("ns", "default"), ("manifest", yaml));
                 memoryLog.ServiceMessages.Should().BeEquivalentTo(new List<ServiceMessage> { expected });
@@ -75,7 +75,7 @@ quoted_float: ""5.75""
             {
                 var mr = new ManifestReporter(variables, CalamariPhysicalFileSystem.GetPhysicalFileSystem(), memoryLog);
 
-                mr.ReportManifestApplied(filePath);
+                mr.ReportManifestApplied(filePath, "default");
 
                 memoryLog.ServiceMessages.Should().BeEmpty();
             }
@@ -97,7 +97,7 @@ quoted_float: ""5.75""
                 variables.Set(SpecialVariables.Namespace, variableNs);
                 var mr = new ManifestReporter(variables, CalamariPhysicalFileSystem.GetPhysicalFileSystem(), memoryLog);
 
-                mr.ReportManifestApplied(filePath);
+                mr.ReportManifestApplied(filePath, "default");
 
                 memoryLog.ServiceMessages.First().Properties.Should().Contain(new KeyValuePair<string, string>("ns", "XXX"));
             }
@@ -117,7 +117,7 @@ quoted_float: ""5.75""
                 variables.Set(SpecialVariables.Namespace, variableNs);
                 var mr = new ManifestReporter(variables, CalamariPhysicalFileSystem.GetPhysicalFileSystem(), memoryLog);
 
-                mr.ReportManifestApplied(filePath);
+                mr.ReportManifestApplied(filePath, variableNs);
 
                 memoryLog.ServiceMessages.First().Properties.Should().Contain(new KeyValuePair<string, string>("ns", variableNs));
             }
@@ -135,12 +135,47 @@ quoted_float: ""5.75""
             {
                 var mr = new ManifestReporter(variables, CalamariPhysicalFileSystem.GetPhysicalFileSystem(), memoryLog);
 
-                mr.ReportManifestApplied(filePath);
+                mr.ReportManifestApplied(filePath, "default");
 
                 memoryLog.ServiceMessages.First().Properties.Should().Contain(new KeyValuePair<string, string>("ns", "default"));
             }
         }
+        
+        [TestCase(nameof(FeatureToggle.KubernetesLiveObjectStatusFeatureToggle))]
+        [TestCase( OctopusFeatureToggles.KnownSlugs.KubernetesObjectManifestInspection)]
+        public void SecretManifest_ShouldRedactDataValues(string enabledFeatureToggle)
+        {
+            var memoryLog = new InMemoryLog();
+            var variables = new CalamariVariables();
+            variables.Set(KnownVariables.EnabledFeatureToggles, enabledFeatureToggle);
+            
+            const string yaml = @"apiVersion: v1
+kind: Secret
+metadata:
+  name: dotfile-secret
+data:
+  .secret-file: dmFsdWUtMg0KDQo=
+  another-secret: ""this-is-not-a-base64-value""";
+            var expectedYaml =  @"apiVersion: v1
+kind: Secret
+metadata:
+  name: dotfile-secret
+data:
+  .secret-file: <redacted-HTIOeIP7rD4Wa4OGFOrZDOgzs/Ns7RxxQUSMW5AM9zM=>
+  another-secret: ""<redacted-LjxWWuTodgQ0Z95zOPbBWpkk9icLpHtGBa9sm2Z/U4k=>""
+".ReplaceLineEndings();
+            
+            using (CreateFile(yaml, out var filePath))
+            {
+                var mr = new ManifestReporter(variables, CalamariPhysicalFileSystem.GetPhysicalFileSystem(), memoryLog);
 
+                mr.ReportManifestApplied(filePath, "default");
+
+                var expected = ServiceMessage.Create(SpecialVariables.ServiceMessageNames.ManifestApplied.Name, ("ns", "default"), ("manifest", expectedYaml));
+                memoryLog.ServiceMessages.Should().BeEquivalentTo(new List<ServiceMessage> { expected });
+            }
+        }
+        
         static IDisposable CreateFile(string yaml, out string filePath)
         {
             var tempDir = TemporaryDirectory.Create();

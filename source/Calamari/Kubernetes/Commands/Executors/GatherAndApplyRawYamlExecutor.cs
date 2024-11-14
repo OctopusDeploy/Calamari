@@ -4,8 +4,10 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Calamari.Common.Commands;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes.Integration;
 using Calamari.Kubernetes.ResourceStatus.Resources;
 using Octopus.CoreUtilities.Extensions;
@@ -51,14 +53,14 @@ namespace Calamari.Kubernetes.Commands.Executors
             for (int i = 0; i < globDirectories.Count(); i++)
             {
                 var directory = globDirectories[i];
-                log.Info($"Applying Batch #{i+1} for YAML matching '{directory.Glob}'");
+                log.Info($"Applying Batch #{i + 1} for YAML matching '{directory.Glob}'");
                 var res = ApplyBatchAndReturnResourceIdentifiers(deployment, directory).ToArray();
 
                 if (appliedResourcesCallback != null)
                 {
                     await appliedResourcesCallback(res);
                 }
-                
+
                 resourcesIdentifiers.UnionWith(res);
             }
 
@@ -73,24 +75,30 @@ namespace Calamari.Kubernetes.Commands.Executors
                 log.Warn($"No files found matching '{globDirectory.Glob}'");
                 return Array.Empty<ResourceIdentifier>();
             }
-            
-            ReportEachManifestBeingApplied(globDirectory, files);
 
-            string[] executeArgs = {"apply", "-f", $@"""{globDirectory.Directory}""", "--recursive", "-o", "json"};
+            ReportEachManifestBeingApplied(deployment.Variables, globDirectory, files);
+
+            string[] executeArgs = { "apply", "-f", $@"""{globDirectory.Directory}""", "--recursive", "-o", "json" };
             executeArgs = executeArgs.AddOptionsForServerSideApply(deployment.Variables, log);
             var result = kubectl.ExecuteCommandAndReturnOutput(executeArgs);
 
             return ProcessKubectlCommandOutput(deployment, result, globDirectory.Directory);
         }
 
-        void ReportEachManifestBeingApplied(GlobDirectory globDirectory, string[] files)
+        void ReportEachManifestBeingApplied(IVariables variables, GlobDirectory globDirectory, string[] files)
         {
+            if (!FeatureToggle.KubernetesLiveObjectStatusFeatureToggle.IsEnabled(variables) && !OctopusFeatureToggles.KubernetesObjectManifestInspectionFeatureToggle.IsEnabled(variables))
+                return;
+            
             var directoryWithTrailingSlash = globDirectory.Directory + Path.DirectorySeparatorChar;
             foreach (var file in files)
             {
                 var fullFilePath = fileSystem.GetRelativePath(directoryWithTrailingSlash, file);
                 log.Verbose($"Matched file: {fullFilePath}");
-                manifestReporter.ReportManifestApplied(file);
+
+                var implicitNamespace = variables.Get(SpecialVariables.Namespace) ?? "default";
+                
+                manifestReporter.ReportManifestApplied(file, implicitNamespace);
             }
         }
     }
