@@ -56,15 +56,12 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         {
             var fileName = GetFixtureResource("Samples", string.Format(filename));
 
-            Type extractorType = typeof(ZipPackageExtractor);
-            
-            var extractor = (IPackageExtractor) Activator.CreateInstance(extractorType, ConsoleLog.Instance);
-            var targetDir = GetTargetDir(extractorType, fileName);
+            var extractor = new ZipPackageExtractor(ConsoleLog.Instance, true);
+            var targetDir = GetTargetDir(extractor.GetType(), fileName);
 
             var filesExtracted = extractor.Extract(fileName, targetDir);
             var textFileName = Path.Combine(targetDir, "á_ó_í_çø.txt");
             var text = File.ReadAllText(textFileName);
-            
 
             Assert.AreEqual(1, filesExtracted, "Mismatch in the number of files extracted");
             Assert.AreEqual("Im in a package!", text.TrimEnd('\n'), "The contents of the extracted file do not match the expected value");
