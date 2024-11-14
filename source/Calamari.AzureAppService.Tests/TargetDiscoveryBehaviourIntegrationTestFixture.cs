@@ -1,5 +1,4 @@
-﻿using Azure.ResourceManager.Resources;
-using Calamari.AzureAppService.Behaviors;
+﻿using Calamari.AzureAppService.Behaviors;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Discovery;
 using Calamari.Common.Plumbing.Variables;
@@ -12,49 +11,27 @@ using System.Threading;
 using System.Threading.Tasks;
 using Azure;
 using Azure.ResourceManager.AppService;
-using Azure.ResourceManager.AppService.Models;
 using Calamari.Common.Plumbing.Extensions;
-using Polly.Retry;
 
 namespace Calamari.AzureAppService.Tests
 {
     [TestFixture]
     public class TargetDiscoveryBehaviourIntegrationTestFixture : AppServiceIntegrationTest
     {
-        private readonly string appName = Guid.NewGuid().ToString();
-        private readonly List<string> slotNames = new List<string> { "blue", "green" };
-        private static readonly string Type = "Azure";
-        private static readonly string AuthenticationMethod = "ServicePrincipal";
-        private static readonly string AccountId = "Accounts-1";
-        private static readonly string Role = "my-azure-app-role";
-        private static readonly string EnvironmentName = "dev";
-        private RetryPolicy retryPolicy;
+        readonly List<string> slotNames = new List<string> { "blue", "green" };
+        const string Type = "Azure";
+        const string AuthenticationMethod = "ServicePrincipal";
+        const string AccountId = "Accounts-1";
+        const string Role = "my-azure-app-role";
+        const string EnvironmentName = "dev";
 
-        private AppServicePlanResource appServicePlanResource;
-
-        protected override async Task ConfigureTestResources(ResourceGroupResource resourceGroup)
+        public override async Task SetUp()
         {
-            var response = await resourceGroup.GetAppServicePlans()
-                                              .CreateOrUpdateAsync(WaitUntil.Completed,
-                                                                   ResourceGroupName,
-                                                                   new AppServicePlanData(resourceGroup.Data.Location)
-                                                                   {
-                                                                       Sku = new AppServiceSkuDescription
-                                                                       {
-                                                                           Name = "P1V3",
-                                                                           Tier = "PremiumV3"
-                                                                       }
-                                                                   });
-
-            appServicePlanResource = response.Value;
-        }
-
-        [SetUp]
-        public async Task CreateOrResetWebAppAndSlots()
-        {
+            await base.SetUp();
+            
             // Call update on the web app and each slot without and tags
             // to reset it for each test.
-            WebSiteResource = await CreateOrUpdateTestWebApp();
+            WebSiteResource = await CreateWebApp(WindowsAppServicePlanResource);
             await CreateOrUpdateTestWebAppSlots(WebSiteResource);
         }
 
@@ -75,7 +52,7 @@ namespace Calamari.AzureAppService.Tests
                 { TargetTags.RoleTagName, Role },
             };
 
-            await CreateOrUpdateTestWebApp(tags);
+            await UpdateTestWebApp(tags);
             var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromMinutes(15));
 
             await Eventually.ShouldEventually(async () =>
@@ -85,7 +62,7 @@ namespace Calamari.AzureAppService.Tests
 
                                                   // Assert
                                                   var serviceMessageToCreateWebAppTarget = TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(ResourceGroupName,
-                                                                                                                                                           appName,
+                                                                                                                                                           WebSiteResource.Data.Name,
                                                                                                                                                            AccountId,
                                                                                                                                                            Role,
                                                                                                                                                            null,
@@ -114,14 +91,14 @@ namespace Calamari.AzureAppService.Tests
                 { TargetTags.RoleTagName, Role },
             };
 
-            await CreateOrUpdateTestWebApp(tags);
+            await UpdateTestWebApp(tags);
 
             // Act
             await sut.Execute(context);
 
             // Assert
             var serviceMessageToCreateWebAppTarget = TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(ResourceGroupName,
-                                                                                                                     appName,
+                                                                                                                     WebSiteResource.Data.Name,
                                                                                                                      AccountId,
                                                                                                                      "a-different-role",
                                                                                                                      null,
@@ -155,7 +132,7 @@ namespace Calamari.AzureAppService.Tests
                                                   await sut.Execute(context);
 
                                                   var serviceMessageToCreateWebAppTarget = TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(ResourceGroupName,
-                                                                                                                                                           appName,
+                                                                                                                                                           WebSiteResource.Data.Name,
                                                                                                                                                            AccountId,
                                                                                                                                                            Role,
                                                                                                                                                            null,
@@ -166,7 +143,7 @@ namespace Calamari.AzureAppService.Tests
                                                   foreach (var slotName in slotNames)
                                                   {
                                                       var serviceMessageToCreateTargetForSlot = TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(ResourceGroupName,
-                                                                                                                                                                appName,
+                                                                                                                                                                WebSiteResource.Data.Name,
                                                                                                                                                                 AccountId,
                                                                                                                                                                 Role,
                                                                                                                                                                 null,
@@ -195,8 +172,8 @@ namespace Calamari.AzureAppService.Tests
                 { TargetTags.RoleTagName, Role },
             };
 
-            var webSiteResource =await CreateOrUpdateTestWebApp(tags);
-            await CreateOrUpdateTestWebAppSlots(webSiteResource,tags);
+            var webSiteResource = await UpdateTestWebApp(tags);
+            await CreateOrUpdateTestWebAppSlots(webSiteResource, tags);
             var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromMinutes(15));
 
             await Eventually.ShouldEventually(async () =>
@@ -205,7 +182,7 @@ namespace Calamari.AzureAppService.Tests
                                                   await sut.Execute(context);
 
                                                   var serviceMessageToCreateWebAppTarget = TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(ResourceGroupName,
-                                                                                                                                                           appName,
+                                                                                                                                                           WebSiteResource.Data.Name,
                                                                                                                                                            AccountId,
                                                                                                                                                            Role,
                                                                                                                                                            null,
@@ -216,7 +193,7 @@ namespace Calamari.AzureAppService.Tests
                                                   foreach (var slotName in slotNames)
                                                   {
                                                       var serviceMessageToCreateTargetForSlot = TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(ResourceGroupName,
-                                                                                                                                                                appName,
+                                                                                                                                                                WebSiteResource.Data.Name,
                                                                                                                                                                 AccountId,
                                                                                                                                                                 Role,
                                                                                                                                                                 null,
@@ -249,7 +226,7 @@ namespace Calamari.AzureAppService.Tests
                 { TargetTags.RoleTagName, Role },
             };
 
-            var webSiteResource = await CreateOrUpdateTestWebApp(webAppTags);
+            var webSiteResource = await UpdateTestWebApp(webAppTags);
             await CreateOrUpdateTestWebAppSlots(webSiteResource, slotTags);
             var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromMinutes(15));
 
@@ -260,7 +237,7 @@ namespace Calamari.AzureAppService.Tests
 
                                                   var serviceMessageToCreateWebAppTarget =
                                                       TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(ResourceGroupName,
-                                                                                                                      appName,
+                                                                                                                      WebSiteResource.Data.Name,
                                                                                                                       AccountId,
                                                                                                                       Role,
                                                                                                                       null,
@@ -274,7 +251,7 @@ namespace Calamari.AzureAppService.Tests
                                                   {
                                                       var serviceMessageToCreateTargetForSlot =
                                                           TargetDiscoveryHelpers.CreateWebAppTargetCreationServiceMessage(ResourceGroupName,
-                                                                                                                          appName,
+                                                                                                                          WebSiteResource.Data.Name,
                                                                                                                           AccountId,
                                                                                                                           Role,
                                                                                                                           null,
@@ -288,25 +265,20 @@ namespace Calamari.AzureAppService.Tests
                                               cancellationTokenSource.Token);
         }
 
-        private async Task<WebSiteResource> CreateOrUpdateTestWebApp(IDictionary<string, string> tags = null)
+        async Task<WebSiteResource> UpdateTestWebApp(IDictionary<string, string> tags = null)
         {
-            var data = new WebSiteData(ResourceGroupResource.Data.Location)
-            {
-                AppServicePlanId = appServicePlanResource.Id
-            };
-
             if (tags != null)
-                data.Tags.AddRange(tags);
+                WebSiteResource.Data.Tags.AddRange(tags);
 
             var response = await ResourceGroupResource.GetWebSites()
-                                       .CreateOrUpdateAsync(WaitUntil.Completed,
-                                                            appName,
-                                                            data);
+                                                      .CreateOrUpdateAsync(WaitUntil.Completed,
+                                                                           WebSiteResource.Data.Name,
+                                                                           WebSiteResource.Data);
 
             return response.Value;
         }
 
-        private async Task CreateOrUpdateTestWebAppSlots(WebSiteResource webSiteResource, Dictionary<string, string> tags = null)
+        async Task CreateOrUpdateTestWebAppSlots(WebSiteResource webSiteResource, Dictionary<string, string> tags = null)
         {
             var webSiteData = webSiteResource.Data;
 
@@ -314,14 +286,14 @@ namespace Calamari.AzureAppService.Tests
                 webSiteData.Tags.AddRange(tags);
 
             var slotTasks = new List<Task>();
-            
+
             foreach (var slotName in slotNames)
             {
                 var task = webSiteResource.GetWebSiteSlots()
-                               .CreateOrUpdateAsync(WaitUntil.Completed,
-                                                    slotName,
-                                                    webSiteData
-                                                   );
+                                          .CreateOrUpdateAsync(WaitUntil.Completed,
+                                                               slotName,
+                                                               webSiteData
+                                                              );
                 slotTasks.Add(task);
             }
 
@@ -333,7 +305,7 @@ namespace Calamari.AzureAppService.Tests
             string targetDiscoveryContext = $@"{{
     ""scope"": {{
         ""spaceName"": ""default"",
-        ""environmentName"": ""{EnvironmentName}"",
+        ""EnvironmentName"": ""{EnvironmentName}"",
         ""projectName"": ""my-test-project"",
         ""tenantName"": null,
         ""roles"": [""{Role}""]
