@@ -171,6 +171,9 @@
     <None Update="KubernetesFixtures\Approved\KubernetesContextScriptWrapperFixture.ExecutionWithEKS_AwsCLIAuthenticator_WithExecFeatureToggleEnabled.approved.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="Fixtures\Integration\Packages\Samples\utf8.Filenámes-1.0.0.zip">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <None Remove="TestResults\**" />

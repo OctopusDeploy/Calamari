@@ -50,9 +50,11 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         
         
         [Test]
-        public void CanExtractZipFileContainingSpecialCharacters()
+        [TestCase("utf8.Filenames-1.0.0.zip")]
+        [TestCase("utf8.Filenámes-1.0.0.zip")]
+        public void CanExtractZipFileContainingSpecialCharacters(string filename)
         {
-            var fileName = GetFixtureResource("Samples", string.Format("utf8.Filenames-1.0.0.zip"));
+            var fileName = GetFixtureResource("Samples", string.Format(filename));
 
             Type extractorType = typeof(ZipPackageExtractor);
             
