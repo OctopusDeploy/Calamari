@@ -13,11 +13,6 @@ namespace Calamari.Common.Features.Packages
     {
         readonly ILog log;
         readonly bool forceUtf8ZipFiles; //to be removed once transitioned to netcore
-
-        //used during testing only - force use of the utf8 decoding.
-        public ZipPackageExtractor(ILog log) : this(log, true)
-        {
-        }
         
         public ZipPackageExtractor(ILog log, bool forceUtf8ZipFiles)
         {
