@@ -5,16 +5,19 @@ using SharpCompress.Archives;
 using SharpCompress.Archives.Zip;
 using SharpCompress.Common;
 using Polly;
+using SharpCompress.Readers;
 
 namespace Calamari.Common.Features.Packages
 {
     public class ZipPackageExtractor : IPackageEntryExtractor
     {
         readonly ILog log;
-
-        public ZipPackageExtractor(ILog log)
+        readonly bool forceUtf8ZipFiles; //to be removed once transitioned to netcore
+        
+        public ZipPackageExtractor(ILog log, bool forceUtf8ZipFiles)
         {
             this.log = log;
+            this.forceUtf8ZipFiles = forceUtf8ZipFiles;
         }
 
         public string[] Extensions => new[] { ".zip" };
@@ -25,7 +28,18 @@ namespace Calamari.Common.Features.Packages
             
             var filesExtracted = 0;
             using var inStream = new FileStream(packageFile, FileMode.Open, FileAccess.Read);
+            
+#if NETFRAMEWORK
+            var readerOptions = new ReaderOptions();
+            if (forceUtf8ZipFiles)
+            {
+                readerOptions.ArchiveEncoding.Forced = System.Text.Encoding.UTF8;
+            }
+
+            using var archive = ZipArchive.Open(inStream, readerOptions);
+#else
             using var archive = ZipArchive.Open(inStream);
+#endif
             
             foreach (var entry in archive.Entries)
             {
