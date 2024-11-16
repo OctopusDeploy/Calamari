@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes;
@@ -40,9 +41,7 @@ namespace Calamari.Tests.KubernetesFixtures
         {
             await TestCustomHelmExeInPackage_RelativePath("3.0.1");
         }
-        
-        
-        
+
         [Test]
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
@@ -53,7 +52,7 @@ namespace Calamari.Tests.KubernetesFixtures
             Variables.AddFlag(SpecialVariables.ResourceStatusCheck, true);
             Variables.Set(KnownVariables.EnabledFeatureToggles, OctopusFeatureToggles.KnownSlugs.KOSForHelm);
             Variables.Set(SpecialVariables.Helm.Timeout, "2m30s");
-            
+
             var result = DeployPackage();
 
             result.AssertSuccess();
@@ -63,6 +62,20 @@ namespace Calamari.Tests.KubernetesFixtures
             result.AssertOutput("Using custom helm executable at " + HelmExePath);
 
             Assert.AreEqual(ReleaseName.ToLower(), result.CapturedOutput.OutputVariables["ReleaseName"]);
+
+            result.AssertOutputMatches("Resource Status Check: Performing resource status checks on the following resources:");
+            result.AssertOutputContains("- ConfigMap/Thing");
+            result.AssertOutputMatches("Resource Status Check: Stopping after next status check.");
+            result.AssertOutputMatches("Resource Status Check: reported 1 updates, 0 removals");
+            result.AssertOutputMatches("Resource Status Check: Stopped.");
+
+            result.AssertServiceMessage(SpecialVariables.ServiceMessageNames.ResourceStatus.Name,
+                                        Is.True,
+                                        properties: new Dictionary<string, object>
+                                        {
+                                            ["name"] = "",
+                                            ["checkCount"] = 1
+                                        });
         }
 
         protected override string ExplicitExeVersion => "3.16.2";
