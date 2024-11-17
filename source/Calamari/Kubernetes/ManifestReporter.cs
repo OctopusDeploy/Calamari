@@ -100,11 +100,11 @@ namespace Calamari.Kubernetes
 
                 var ns = GetNamespace(rootNode);
                 var message = new ServiceMessage(
-                                                 SpecialVariables.ServiceMessageNames.ManifestApplied.Name,
+                                                 SpecialVariables.ServiceMessages.ManifestApplied.Name,
                                                  new Dictionary<string, string>
                                                  {
-                                                     { SpecialVariables.ServiceMessageNames.ManifestApplied.ManifestAttribute, updatedDocument },
-                                                     { SpecialVariables.ServiceMessageNames.ManifestApplied.NamespaceAttribute, ns }
+                                                     { SpecialVariables.ServiceMessages.ManifestApplied.ManifestAttribute, updatedDocument },
+                                                     { SpecialVariables.ServiceMessages.ManifestApplied.NamespaceAttribute, ns }
                                                  });
 
                 log.WriteServiceMessage(message);

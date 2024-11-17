@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Variables;
@@ -7,6 +8,7 @@ using Calamari.Testing.Helpers;
 using Calamari.Testing.Requirements;
 using Calamari.Tests.Fixtures;
 using Calamari.Tests.Helpers;
+using FluentAssertions;
 using NUnit.Framework;
 
 namespace Calamari.Tests.KubernetesFixtures
@@ -64,18 +66,22 @@ namespace Calamari.Tests.KubernetesFixtures
             Assert.AreEqual(ReleaseName.ToLower(), result.CapturedOutput.OutputVariables["ReleaseName"]);
 
             result.AssertOutputMatches("Resource Status Check: Performing resource status checks on the following resources:");
-            result.AssertOutputContains("- ConfigMap/Thing");
+            result.AssertOutputMatches($"- ConfigMap/mychart-configmap-{ReleaseName}");
             result.AssertOutputMatches("Resource Status Check: Stopping after next status check.");
             result.AssertOutputMatches("Resource Status Check: reported 1 updates, 0 removals");
             result.AssertOutputMatches("Resource Status Check: Stopped.");
 
-            result.AssertServiceMessage(SpecialVariables.ServiceMessageNames.ResourceStatus.Name,
-                                        Is.True,
-                                        properties: new Dictionary<string, object>
-                                        {
-                                            ["name"] = "",
-                                            ["checkCount"] = 1
-                                        });
+            result.CapturedOutput.ServiceMessages
+                  .Where(sm => sm.Name == SpecialVariables.ServiceMessages.ResourceStatus.Name)
+                  .Should()
+                  .HaveCountGreaterOrEqualTo(1);
+
+            result.CapturedOutput.ServiceMessages
+                  .Where(sm => sm.Name == SpecialVariables.ServiceMessages.ResourceStatus.Name)
+                  .Should()
+                  .Contain(sm => sm.Properties[SpecialVariables.ServiceMessages.ResourceStatus.Attributes.Name] == $"mychart-configmap-{ReleaseName}" && 
+                                 sm.Properties[SpecialVariables.ServiceMessages.ResourceStatus.Attributes.Namespace] == Namespace && 
+                                 sm.Properties[SpecialVariables.ServiceMessages.ResourceStatus.Attributes.Status] == Kubernetes.ResourceStatus.Resources.ResourceStatus.Successful.ToString());
         }
 
         protected override string ExplicitExeVersion => "3.16.2";

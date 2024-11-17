@@ -57,7 +57,7 @@ quoted_float: ""5.75""
 
                 mr.ReportManifestFileApplied(filePath);
 
-                var expected = ServiceMessage.Create(SpecialVariables.ServiceMessageNames.ManifestApplied.Name, ("ns", "default"), ("manifest", yaml));
+                var expected = ServiceMessage.Create(SpecialVariables.ServiceMessages.ManifestApplied.Name, ("ns", "default"), ("manifest", yaml));
                 memoryLog.ServiceMessages.Should().BeEquivalentTo(new List<ServiceMessage> { expected });
             }
         }
@@ -155,7 +155,7 @@ quoted_float: ""5.75""
 
             mr.ReportManifestApplied(yaml);
 
-            var expected = ServiceMessage.Create(SpecialVariables.ServiceMessageNames.ManifestApplied.Name, ("ns", "default"), ("manifest", expectedYaml));
+            var expected = ServiceMessage.Create(SpecialVariables.ServiceMessages.ManifestApplied.Name, ("ns", "default"), ("manifest", expectedYaml));
             memoryLog.ServiceMessages.Should().BeEquivalentTo(new List<ServiceMessage> { expected });
         }
 
