@@ -279,7 +279,7 @@ secondary.Development.yaml"
                                                                             },
                                                                             new HelmTemplateValueSourcesParser.InlineYamlTemplateValuesSource
                                                                             {
-                                                                                Value = @"yes: '1234'"
+                                                                                Value = @"#{Service.HelmYaml}"
                                                                             },
                                                                             new HelmTemplateValueSourcesParser.KeyValuesTemplateValuesSource
                                                                             {
@@ -293,6 +293,7 @@ secondary.Development.yaml"
 
             var variables = new CalamariVariables
             {
+                ["Service.HelmYaml"] = @"{""Foo"": [""SOMETHING""]}",
                 [SpecialVariables.Helm.TemplateValuesSources] = templateValuesSourcesJson,
                 [KnownVariables.OriginalPackageDirectoryPath] = RootDir,
                 [ScriptVariables.ScriptSource] = ScriptVariables.ScriptSourceOptions.GitRepository,

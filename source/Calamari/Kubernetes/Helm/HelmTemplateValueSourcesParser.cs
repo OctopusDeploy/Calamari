@@ -34,7 +34,7 @@ namespace Calamari.Kubernetes.Helm
 
         public IEnumerable<string> ParseTemplateValuesFilesFromDependencies(RunningDeployment deployment, bool logIncludedFiles = true)
         {
-            var templateValueSources = deployment.Variables.Get(SpecialVariables.Helm.TemplateValuesSources);
+            var templateValueSources = deployment.Variables.GetRaw(SpecialVariables.Helm.TemplateValuesSources);
 
             if (string.IsNullOrWhiteSpace(templateValueSources))
                 return Enumerable.Empty<string>();
@@ -115,7 +115,9 @@ namespace Calamari.Kubernetes.Helm
 
                     case TemplateValuesSourceType.InlineYaml:
                         var inlineYamlTvs = json.ToObject<InlineYamlTemplateValuesSource>();
-                        var inlineYamlFilename = InlineYamlValuesFileWriter.WriteToFile(deployment, fileSystem, inlineYamlTvs.Value, index);
+
+                        var val = deployment.Variables.Evaluate(inlineYamlTvs.Value);
+                        var inlineYamlFilename = InlineYamlValuesFileWriter.WriteToFile(deployment, fileSystem, val, index);
 
                         AddIfNotNull(filenames, inlineYamlFilename);
                         break;
