@@ -237,8 +237,7 @@ namespace Calamari.CloudAccounts
                         payload = await client.GetStringAsync($"{RoleUri}{instanceRole}");
                     }
 
-                    dynamic instanceRoleKeys = JsonConvert.DeserializeObject(payload);
-
+                    var instanceRoleKeys = JsonConvert.DeserializeObject<InstanceRoleKeys>(payload);
                     EnvironmentVars["AWS_ACCESS_KEY_ID"] = instanceRoleKeys.AccessKeyId;
                     EnvironmentVars["AWS_SECRET_ACCESS_KEY"] = instanceRoleKeys.SecretAccessKey;
                     EnvironmentVars["AWS_SESSION_TOKEN"] = instanceRoleKeys.Token;
@@ -252,6 +251,14 @@ namespace Calamari.CloudAccounts
             }
 
             return false;
+        }
+
+
+        class InstanceRoleKeys
+        {
+            public string AccessKeyId { get; set; }
+            public string SecretAccessKey { get; set; }
+            public string Token { get; set; }
         }
 
         /// <summary>
