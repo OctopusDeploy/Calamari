@@ -24,7 +24,6 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Calamari.Common\Calamari.Common.csproj" />
-      <ProjectReference Include="..\Calamari\Calamari.csproj" />
     </ItemGroup>
 
     <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
