@@ -37,7 +37,7 @@ namespace Calamari.Kubernetes.ResourceStatus
 
         private CancellationTokenSource taskCancellationTokenSource;
         private ResourceStatusCheckTask statusCheckTask;
-        private Task<ResourceStatusCheckTask.Result> statusCheckTaskTask;
+        private Task<ResourceStatusCheckTask.Result> backgroundStatusCheckTask;
 
 
         public RunningResourceStatusCheck(
@@ -61,7 +61,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             {
                 log.Verbose("Resource Status Check: Waiting for resources to be applied.");
             }
-            statusCheckTaskTask = RunNewStatusCheck(initialResources);
+            backgroundStatusCheckTask = RunNewStatusCheck(initialResources);
         }
 
         public async Task<bool> WaitForCompletionOrTimeout(CancellationToken shutdownCancellationToken)
@@ -79,7 +79,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             
             try
             {
-                var result = await statusCheckTaskTask;
+                var result = await backgroundStatusCheckTask;
 
                 //if the shutdown cancellation token is marked as a shutdown, we just log that it stopped and was "success"
                 if (shutdownCancellationToken.IsCancellationRequested)
@@ -119,8 +119,8 @@ namespace Calamari.Kubernetes.ResourceStatus
             try
             {
                 taskCancellationTokenSource.Cancel();
-                await statusCheckTaskTask;
-                statusCheckTaskTask = RunNewStatusCheck(newResources);
+                await backgroundStatusCheckTask;
+                backgroundStatusCheckTask = RunNewStatusCheck(newResources);
                 log.Verbose($"Resource Status Check: {newResources.Length} new resources have been added:");
                 log.LogResources(newResources);
             }
