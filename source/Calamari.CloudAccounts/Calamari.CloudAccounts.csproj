@@ -18,8 +18,8 @@
       <PackageReference Include="AWSSDK.Core" Version="3.3.104.14" />
       <PackageReference Include="AWSSDK.SecurityToken" Version="3.3.4.34" />
       <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-      <PackageReference Include="Microsoft.Identity.Client" Version="4.48.1" />
-      <PackageReference Include="Microsoft.Rest.ClientRuntime" Version="2.3.23" />
+      <PackageReference Include="Microsoft.Identity.Client" Version="4.66.2" />
+      <PackageReference Include="Microsoft.Rest.ClientRuntime" Version="2.3.24" />
       <PackageReference Include="Microsoft.Azure.Management.Fluent" Version="1.37.1" />
     </ItemGroup>
 
