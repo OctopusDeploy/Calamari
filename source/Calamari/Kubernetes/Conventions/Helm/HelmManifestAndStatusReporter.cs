@@ -12,45 +12,48 @@ using Calamari.Kubernetes.ResourceStatus.Resources;
 using Calamari.Util;
 using YamlDotNet.RepresentationModel;
 
-namespace Calamari.Kubernetes.Conventions
+namespace Calamari.Kubernetes.Conventions.Helm
 {
     public class HelmManifestAndStatusReporter
     {
         readonly ILog log;
         readonly IResourceStatusReportExecutor statusReporter;
         readonly IManifestReporter manifestReporter;
+        readonly HelmCli helmCli;
 
         public HelmManifestAndStatusReporter(ILog log,
-            IResourceStatusReportExecutor statusReporter,
-            IManifestReporter manifestReporter)
+                                             IResourceStatusReportExecutor statusReporter,
+                                             IManifestReporter manifestReporter,
+                                             HelmCli helmCli)
         {
             this.log = log;
             this.statusReporter = statusReporter;
             this.manifestReporter = manifestReporter;
+            this.helmCli = helmCli;
         }
-        
-        
-        public async Task StartMonitoringManifestAndReportingStatus(
+
+        public async Task StartBackgroundMonitoringAndReporting(
             RunningDeployment deployment,
-            HelmCli helmCli,
             string releaseName,
             int revisionNumber,
-            
             CancellationToken cancellationToken)
         {
-            var manifest = await PollForManifest(deployment, helmCli, releaseName, revisionNumber);
+            await Task.Run(async () =>
+                           {
+                               var manifest = await PollForManifest(deployment, helmCli, releaseName, revisionNumber);
 
-            //report the manifest has been applied
-            manifestReporter.ReportManifestApplied(manifest);
+                               //report the manifest has been applied
+                               manifestReporter.ReportManifestApplied(manifest);
 
-            //if resource status (KOS) is enabled, parse the manifest and start monitored the resources
-            if (deployment.Variables.GetFlag(SpecialVariables.ResourceStatusCheck))
-            {
-                await ParseManifestAndMonitorResourceStatuses(deployment, manifest, cancellationToken);
-            }
-            
+                               //if resource status (KOS) is enabled, parse the manifest and start monitored the resources
+                               if (deployment.Variables.GetFlag(SpecialVariables.ResourceStatusCheck))
+                               {
+                                   await ParseManifestAndMonitorResourceStatuses(deployment, manifest, cancellationToken);
+                               }
+                           },
+                           cancellationToken);
         }
-        
+
         async Task<string> PollForManifest(RunningDeployment deployment,
                                            HelmCli helmCli,
                                            string releaseName,
@@ -82,7 +85,7 @@ namespace Calamari.Kubernetes.Conventions
 
             return manifest;
         }
-        
+
         async Task ParseManifestAndMonitorResourceStatuses(RunningDeployment deployment, string manifest, CancellationToken cancellationToken)
         {
             var resources = new List<ResourceIdentifier>();
@@ -124,6 +127,5 @@ namespace Calamari.Kubernetes.Conventions
             var statusCheck = statusReporter.Start(0, false, resources);
             await statusCheck.WaitForCompletionOrTimeout(cancellationToken);
         }
-
     }
 }
