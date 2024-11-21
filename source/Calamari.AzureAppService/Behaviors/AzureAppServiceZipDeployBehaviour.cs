@@ -112,7 +112,8 @@ namespace Calamari.AzureAppService.Behaviors
                                                {
                                                    ".zip" => new ZipPackageProvider(),
                                                    ".nupkg" => new NugetPackageProvider(),
-                                                   ".war" => new WarPackageProvider(Log, fileSystem, variables, context),
+                                                   ".war" => new JavaPackageProvider(Log, fileSystem, variables, context, "/api/wardeploy"),
+                                                   ".jar" => new JavaPackageProvider(Log, fileSystem, variables, context, "/api/publish?type=jar"),
                                                    _ => throw new Exception("Unsupported archive type")
                                                };
 
