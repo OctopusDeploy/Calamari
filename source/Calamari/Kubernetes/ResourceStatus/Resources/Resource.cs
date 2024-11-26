@@ -15,6 +15,8 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         [JsonIgnore] public IEnumerable<string> OwnerUids { get; }
 
         [JsonIgnore] public string Uid { get; set; }
+        [JsonIgnore] public string Group { get; set; }
+        [JsonIgnore] public string Version { get; set; }
         [JsonIgnore] public string Kind { get; set; }
         [JsonIgnore] public string Name { get; }
         [JsonIgnore] public string Namespace { get; }
@@ -31,10 +33,14 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
 
         public Resource(JObject json, Options options)
         {
+            var groupVersionKind  = json.ToResourceGroupVersionKind();
+            
             data = json;
             OwnerUids = data.SelectTokens("$.metadata.ownerReferences[*].uid").Values<string>();
             Uid = Field("$.metadata.uid");
-            Kind = Field("$.kind");
+            Group = groupVersionKind.Group;
+            Version = groupVersionKind.Version;
+            Kind = groupVersionKind.Kind;
             Name = Field("$.metadata.name");
             Namespace = Field("$.metadata.namespace");
         }

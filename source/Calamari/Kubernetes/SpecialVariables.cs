@@ -81,6 +81,8 @@ namespace Calamari.Kubernetes
                     public const string TargetName = "targetName";
                     public const string SpaceId = "spaceId";
                     public const string Uuid = "uuid";
+                    public const string Group = "group";
+                    public const string Version = "version";
                     public const string Kind = "kind";
                     public const string Name = "name";
                     public const string Namespace = "namespace";

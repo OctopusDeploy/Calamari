@@ -12,6 +12,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
         public void ShouldCollectCorrectProperties()
         {
             const string input = @"{
+    ""apiVersion"": ""networking.k8s.io/v1"",
     ""kind"": ""Ingress"",
     ""metadata"": {
         ""name"": ""my-ingress"",
@@ -55,6 +56,8 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
             
             ingress.Should().BeEquivalentTo(new
             {
+                Group = "networking.k8s.io",
+                Version = "v1",
                 Kind = "Ingress",
                 Name = "my-ingress",
                 Namespace = "default",

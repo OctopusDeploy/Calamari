@@ -23,6 +23,8 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
             
             job.Should().BeEquivalentTo(new
             {
+                Group = "batch",
+                Version = "v1",
                 Kind = "Job",
                 Name = "my-job",
                 Namespace = "default",
@@ -93,6 +95,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
     public class JobResponseBuilder
     {
         private const string Template = @"{{
+    ""apiVersion"": ""batch/v1"",
     ""kind"": ""Job"",
     ""metadata"": {{
         ""name"": ""my-job"",

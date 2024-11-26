@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json.Linq;
@@ -16,8 +17,8 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         
         public static Resource FromJObject(JObject data, Options options)
         {
-            var kind = data.SelectToken("$.kind")?.Value<string>();
-            switch (kind)
+            var gvk = data.ToResourceGroupVersionKind();
+            switch (gvk.Kind)
             {   
                 case "Pod": 
                     return new Pod(data, options);

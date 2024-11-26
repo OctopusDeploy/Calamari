@@ -91,6 +91,8 @@ namespace Calamari.Kubernetes.ResourceStatus
                 {ResourceStatusAttributes.TargetName, variables.Get("Octopus.Machine.Name")},
                 {ResourceStatusAttributes.SpaceId, variables.Get("Octopus.Space.Id")},
                 {ResourceStatusAttributes.Uuid, resource.Uid},
+                {ResourceStatusAttributes.Group, resource.Group},
+                {ResourceStatusAttributes.Version, resource.Version},
                 {ResourceStatusAttributes.Kind, resource.Kind},
                 {ResourceStatusAttributes.Name, resource.Name},
                 {ResourceStatusAttributes.Namespace, resource.Namespace},

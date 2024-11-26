@@ -12,6 +12,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
         public void ShouldCollectCorrectProperties()
         {
             const string input = @"{
+    ""apiVersion"": ""v1"",
     ""kind"": ""PersistentVolumeClaim"",
     ""metadata"": {
         ""name"": ""my-pvc"",
@@ -36,6 +37,8 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
             
             persistentVolumeClaim.Should().BeEquivalentTo(new
             {
+                Group = "",
+                Version = "v1",
                 Kind = "PersistentVolumeClaim",
                 Name = "my-pvc",
                 Namespace = "default",

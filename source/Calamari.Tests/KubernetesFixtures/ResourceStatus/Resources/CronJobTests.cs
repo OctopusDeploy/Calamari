@@ -12,6 +12,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
         public void ShouldCollectCorrectProperties()
         {
             const string input = @"{
+    ""apiVersion"": ""batch/v1"",
     ""kind"": ""CronJob"",
     ""metadata"": {
         ""name"": ""my-cj"",
@@ -27,6 +28,8 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
             
             cronJob.Should().BeEquivalentTo(new
             {
+                Group = "batch",
+                Version = "v1",
                 Kind = "CronJob",
                 Name = "my-cj",
                 Namespace = "default",

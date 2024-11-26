@@ -36,6 +36,8 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
             
             pod.Should().BeEquivalentTo(new
             {
+                Group = "",
+                Version = "v1",
                 Kind = "Pod",
                 Name = "Test",
                 Namespace = "test",
@@ -254,6 +256,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
     {
         private const string Template = @"
 {{
+    ""apiVersion"": ""v1"",
     ""kind"": ""Pod"",
     ""metadata"": {{
         ""name"": ""Test"",

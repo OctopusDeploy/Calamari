@@ -12,6 +12,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
         public void ShouldCollectCorrectProperties()
         {
             const string input = @"{
+    ""apiVersion"": ""apps/v1"",
     ""kind"": ""DaemonSet"",
     ""metadata"": {
         ""name"": ""my-ds"",
@@ -40,6 +41,8 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
             
             daemonSet.Should().BeEquivalentTo(new
             {
+                Group = "apps",
+                Version = "v1",
                 Kind = "DaemonSet",
                 Name = "my-ds",
                 Namespace = "default",

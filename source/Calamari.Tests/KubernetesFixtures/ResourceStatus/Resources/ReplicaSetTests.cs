@@ -12,6 +12,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
         public void ShouldCollectCorrectProperties()
         {
             const string input = @"{
+    ""apiVersion"": ""apps/v1"",
     ""kind"": ""ReplicaSet"",
     ""metadata"": {
         ""name"": ""nginx"",
@@ -28,6 +29,8 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
             
             replicaSet.Should().BeEquivalentTo(new
             {
+                Group = "apps",
+                Version = "v1",
                 Kind = "ReplicaSet",
                 Name = "nginx",
                 Namespace = "default",
