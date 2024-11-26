@@ -1,5 +1,7 @@
 using System;
 using Newtonsoft.Json.Linq;
+using Octopus.CoreUtilities.Extensions;
+using YamlDotNet.RepresentationModel;
 
 namespace Calamari.Kubernetes.ResourceStatus.Resources
 {
@@ -19,27 +21,46 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
 
     public static class ResourceGroupVersionKindExtensionMethods
     {
-        public static ResourceGroupVersionKind ToResourceGroupVersionKind(this JObject data)
+        public static ResourceGroupVersionKind ToResourceGroupVersionKind(this JObject jObject)
         {
-            var kind = FieldOrDefault(data, "$.kind", "");
-            
-            var apiVersion = FieldOrDefault(data, "$.apiVersion", "");
-            var apiVersionParts = apiVersion.Split('/');
+            var kind = FieldOrDefault(jObject, "$.kind", "");
+            var apiVersion = FieldOrDefault(jObject, "$.apiVersion", "");
+            var (group, version) = ParseApiVersion(apiVersion);
 
+            return new ResourceGroupVersionKind(group, version, kind);
+        }
+        
+        public static ResourceGroupVersionKind ToResourceGroupVersionKind(this YamlMappingNode rootNode)
+        {
+            var kind = rootNode.GetChildNodeIfExists<YamlScalarNode>("kind")?.Value ?? "";
+            var apiVersion = rootNode.GetChildNodeIfExists<YamlScalarNode>("apiVersion")?.Value ?? "";
+            var (group, version) = ParseApiVersion(apiVersion);
+
+            return new ResourceGroupVersionKind(group, version, kind);
+        }
+
+        public static (string Group, string Version) ParseApiVersion(string apiVersion)
+        {
+            if (apiVersion.IsNullOrEmpty())
+            {
+                return (null, null);
+            }
+            
+            var apiVersionParts = apiVersion.Split('/');
             switch (apiVersionParts.Length)
             {
                 case 1:
-                    return new ResourceGroupVersionKind("", apiVersionParts[0], kind);
+                    return ("", apiVersionParts[0]);
                 case 2:
-                    return new ResourceGroupVersionKind(apiVersionParts[0], apiVersionParts[1], kind);
+                    return (apiVersionParts[0], apiVersionParts[1]);
                 default:
-                    return new ResourceGroupVersionKind("", "", kind);
+                    return (null, null);
             }
-        }
+        } 
         
-        static string FieldOrDefault(JObject data, string jsonPath, string defaultValue)
+        static string FieldOrDefault(JObject jObject, string jsonPath, string defaultValue)
         {
-            var result = data.SelectToken(jsonPath);
+            var result = jObject.SelectToken(jsonPath);
             if (result == null)
             {
                 return defaultValue;

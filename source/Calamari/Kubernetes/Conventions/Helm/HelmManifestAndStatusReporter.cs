@@ -101,8 +101,7 @@ namespace Calamari.Kubernetes.Conventions.Helm
                         log.Warn("Could not parse manifest, resources will not be added to kubernetes object status");
                         continue;
                     }
-
-                    var kind = rootNode.GetChildNode<YamlScalarNode>("kind").Value;
+                    var gvk = rootNode.ToResourceGroupVersionKind();
 
                     var metadataNode = rootNode.GetChildNode<YamlMappingNode>("metadata");
                     var name = metadataNode.GetChildNode<YamlScalarNode>("name").Value;
@@ -113,12 +112,12 @@ namespace Calamari.Kubernetes.Conventions.Helm
                     //if this is null, we'll fall back on the namespace defined for the kubectl tool (which is the default target namespace)
                     //we aren't changing the manifest here, just changing where the kubectl looks for our resource.
                     //We also try and filter out known non-namespaced resources
-                    if (string.IsNullOrWhiteSpace(@namespace) && !KubernetesApiResources.NonNamespacedKinds.Contains(kind))
+                    if (string.IsNullOrWhiteSpace(@namespace) && !KubernetesApiResources.NonNamespacedKinds.Contains(gvk.Kind))
                     {
                         @namespace = deployment.Variables.Get(SpecialVariables.Helm.Namespace)?.Trim();
                     }
 
-                    var resourceIdentifier = new ResourceIdentifier(kind, name, @namespace);
+                    var resourceIdentifier = new ResourceIdentifier(gvk.Group, gvk.Kind, name, @namespace);
                     resources.Add(resourceIdentifier);
                 }
             }

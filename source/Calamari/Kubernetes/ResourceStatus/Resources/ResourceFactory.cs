@@ -18,6 +18,17 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         public static Resource FromJObject(JObject data, Options options)
         {
             var gvk = data.ToResourceGroupVersionKind();
+
+            if (gvk == new ResourceGroupVersionKind("", "v1", "Pod"))
+            {
+                return new Pod(data, options);
+            }
+
+            if (gvk == new ResourceGroupVersionKind("apps", "v1", "ReplicaSet"))
+            {
+                return new ReplicaSet(data, options);
+            }
+            
             switch (gvk.Kind)
             {   
                 case "Pod": 

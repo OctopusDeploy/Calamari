@@ -160,7 +160,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
             receivedCallbacks.Should()
                              .BeEquivalentTo(new List<ResourceIdentifier>
                              {
-                                 new ResourceIdentifier("Deployment", "basic-deployment", "dev"), new ResourceIdentifier("Service", "basic-service", "dev")
+                                 new ResourceIdentifier("apps","Deployment", "basic-deployment", "dev"), new ResourceIdentifier("","Service", "basic-service", "dev")
                              });
         }
 
@@ -288,6 +288,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
                 ""kind"": ""List"",
                 ""items"": [
                     {
+                        ""apiVersion"": ""v1"",
                         ""kind"": ""Service"",
                         ""metadata"": {
                             ""name"": ""basic-service"",
@@ -295,6 +296,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
                         }
                     },
                     {
+                        ""apiVersion"": ""apps/v1"",
                         ""kind"": ""Deployment"",
                         ""metadata"": {
                             ""name"": ""basic-deployment"",

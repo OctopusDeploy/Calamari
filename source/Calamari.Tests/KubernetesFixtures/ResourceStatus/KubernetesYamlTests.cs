@@ -15,7 +15,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             var got = KubernetesYaml.GetDefinedResources(new string[] { input }, string.Empty);
             var expected = new ResourceIdentifier[]
             {
-                new ResourceIdentifier(
+                new ResourceIdentifier("apps",
                     "Deployment",
                     "nginx",
                     "test"
@@ -40,9 +40,9 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             var got = KubernetesYaml.GetDefinedResources(new string[] { input }, string.Empty);
             var expected = new ResourceIdentifier[]
             {
-                new ResourceIdentifier("Deployment", "nginx", "default"),
-                new ResourceIdentifier("ConfigMap", "config", "default"),
-                new ResourceIdentifier("Pod", "curl", "default")
+                new ResourceIdentifier("apps","Deployment", "nginx", "default"),
+                new ResourceIdentifier("", "ConfigMap", "config", "default"),
+                new ResourceIdentifier("","Pod", "curl", "default")
             };
 
             got.Should().BeEquivalentTo(expected);
@@ -56,7 +56,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             var got = KubernetesYaml.GetDefinedResources(new string[] { input }, defaultNamespace);
             var expected = new ResourceIdentifier[]
             {
-                new ResourceIdentifier(
+                new ResourceIdentifier("apps",
                     "Deployment",
                     "nginx",
                     defaultNamespace
@@ -74,11 +74,11 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             var got = KubernetesYaml.GetDefinedResources(multipleFileInput, string.Empty);
             var expected = new ResourceIdentifier[]
             {
-                new ResourceIdentifier(
+                new ResourceIdentifier("apps",
                     "Deployment",
                     "nginx",
                     "test"),
-                new ResourceIdentifier(
+                new ResourceIdentifier("apps",
                     "Deployment",
                     "nginx",
                     "test"),

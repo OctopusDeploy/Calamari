@@ -100,12 +100,14 @@ namespace Calamari.Kubernetes.Commands.Executors
 
         class Resource
         {
+            public string ApiVersion { get; set; }
             public string Kind { get; set; }
             public ResourceMetadata Metadata { get; set; }
 
             public ResourceIdentifier ToResourceIdentifier()
             {
-                return new ResourceIdentifier(Kind, Metadata.Name, Metadata.Namespace);
+                var (group, _) = ResourceGroupVersionKindExtensionMethods.ParseApiVersion(ApiVersion);
+                return new ResourceIdentifier(group, Kind, Metadata.Name, Metadata.Namespace);
             }
         }
     }
