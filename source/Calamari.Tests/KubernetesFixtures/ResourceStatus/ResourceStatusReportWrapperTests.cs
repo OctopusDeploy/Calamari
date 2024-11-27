@@ -123,11 +123,11 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
 
              statusChecker.Should().NotBeNull();
              statusChecker.CheckedResources.Should().BeEquivalentTo(
-                 new ResourceIdentifier("apps", "v1", "Deployment", "deployment", "default"),
-                 new ResourceIdentifier("networking.k8s.io", "v1", "Ingress", "ingress", "default"),
-                 new ResourceIdentifier("", "v1", "Secret", "secret", "default"),
-                 new ResourceIdentifier("", "v1", "Service", "service", "default"),
-                 new ResourceIdentifier(null, null, "CustomResource", "custom-resource", "default"));
+                 new ResourceIdentifier(SupportedResourceGroupVersionKinds.DeploymentV1, "deployment", "default"),
+                 new ResourceIdentifier(SupportedResourceGroupVersionKinds.IngressV1, "ingress", "default"),
+                 new ResourceIdentifier(SupportedResourceGroupVersionKinds.SecretV1, "secret", "default"),
+                 new ResourceIdentifier(SupportedResourceGroupVersionKinds.ServiceV1, "service", "default"),
+                 new ResourceIdentifier(new ResourceGroupVersionKind(null, null, "CustomResource"), "custom-resource", "default"));
          }
 
          [Test]
@@ -162,7 +162,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                      new Dictionary<string, string>());
 
                  statusChecker.Should().NotBeNull();
-                 statusChecker.CheckedResources.Should().BeEquivalentTo(new ResourceIdentifier("", "v1", "ConfigMap", configMapName, "default"));
+                 statusChecker.CheckedResources.Should().BeEquivalentTo(new ResourceIdentifier(SupportedResourceGroupVersionKinds.ConfigMapV1, configMapName, "default"));
              }
              finally
              {
@@ -243,7 +243,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                  statusChecker.Should().NotBeNull();
                  statusChecker.CheckedResources.Should().BeEquivalentTo(new[]
                  {
-                     new ResourceIdentifier("", "v1", "Secret", secret, "default")
+                     new ResourceIdentifier(SupportedResourceGroupVersionKinds.SecretV1, secret, "default")
                  });
              }
              finally
@@ -321,7 +321,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                  new Dictionary<string, string>());
 
              statusChecker.Should().NotBeNull();
-             statusChecker.CheckedResources.Should().BeEquivalentTo(new ResourceIdentifier("apps", "v1", "Deployment", "deployment", "default"));
+             statusChecker.CheckedResources.Should().BeEquivalentTo(new ResourceIdentifier(SupportedResourceGroupVersionKinds.DeploymentV1, "deployment", "default"));
          }
 
          static void AddKubernetesStatusCheckVariables(IVariables variables)

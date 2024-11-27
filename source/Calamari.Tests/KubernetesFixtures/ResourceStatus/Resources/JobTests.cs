@@ -23,9 +23,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
             
             job.Should().BeEquivalentTo(new
             {
-                Group = "batch",
-                Version = "v1",
-                Kind = "Job",
+                GroupVersionKind = SupportedResourceGroupVersionKinds.JobV1,
                 Name = "my-job",
                 Namespace = "default",
                 Uid = "01695a39-5865-4eea-b4bf-1a4783cbce62",

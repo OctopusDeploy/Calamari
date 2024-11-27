@@ -2,22 +2,27 @@ using System.Collections.Generic;
 using System.Linq;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Kubernetes.Integration;
+using Calamari.Kubernetes.ResourceStatus.Resources;
 
 namespace Calamari.Kubernetes.ResourceStatus
 {
     public interface IKubectlGet
     {
-        KubectlGetResult Resource(string group, string kind, string name, string @namespace, IKubectl kubectl);
-        KubectlGetResult AllResources(string group, string kind, string @namespace, IKubectl kubectl);
+        KubectlGetResult Resource(IResourceIdentity resourceIdentity, IKubectl kubectl);
+        KubectlGetResult AllResources(ResourceGroupVersionKind groupVersionKind, string @namespace, IKubectl kubectl);
     }
 
     public class KubectlGet : IKubectlGet
     {
-        public KubectlGetResult Resource(string group, string kind, string name, string @namespace, IKubectl kubectl)
+        public KubectlGetResult Resource(IResourceIdentity resourceIdentity, IKubectl kubectl)
         {
             var output = kubectl.ExecuteCommandAndReturnOutput(new[]
                                 {
-                                    "get", $"{kind}.{group}", name, "-o=jsonpath=\"{@}\"", string.IsNullOrEmpty(@namespace) ? "" : $"-n {@namespace}"
+                                    "get", 
+                                    $"{resourceIdentity.GroupVersionKind.Kind}.{resourceIdentity.GroupVersionKind.Version}.{resourceIdentity.GroupVersionKind.Group}", 
+                                    resourceIdentity.Name, 
+                                    "-o=jsonpath=\"{@}\"", 
+                                    string.IsNullOrEmpty(resourceIdentity.Namespace) ? "" : $"-n {resourceIdentity.Namespace}"
                                 })
                                 .Output;
 
@@ -25,11 +30,14 @@ namespace Calamari.Kubernetes.ResourceStatus
                                         output.Messages.Select(msg => $"{msg.Level}: {msg.Text}").ToList());
         }
 
-        public KubectlGetResult AllResources(string group, string kind, string @namespace, IKubectl kubectl)
+        public KubectlGetResult AllResources(ResourceGroupVersionKind groupVersionKind, string @namespace, IKubectl kubectl)
         {
             var output = kubectl.ExecuteCommandAndReturnOutput(new[]
                                 {
-                                    "get", $"{kind}.{group}", "-o=jsonpath=\"{@}\"", string.IsNullOrEmpty(@namespace) ? "" : $"-n {@namespace}"
+                                    "get", 
+                                    $"{groupVersionKind.Kind}.{groupVersionKind.Version}.{groupVersionKind.Group}", 
+                                    "-o=jsonpath=\"{@}\"", 
+                                    string.IsNullOrEmpty(@namespace) ? "" : $"-n {@namespace}"
                                 })
                                 .Output;
 

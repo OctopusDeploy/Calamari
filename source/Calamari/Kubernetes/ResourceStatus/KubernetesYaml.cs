@@ -44,9 +44,8 @@ namespace Calamari.Kubernetes.ResourceStatus
                 yamlObject["metadata"].TryGetValue("namespace", out object @namespace);
                 yamlObject.TryGetValue("apiVersion", out object apiVersion);
                 var groupAndVersion = ResourceGroupVersionKindExtensionMethods.ParseApiVersion(apiVersion?.ToString());
-                return new ResourceIdentifier(groupAndVersion.Item1,
-                                              groupAndVersion.Item2,
-                                              yamlObject["kind"],
+                var gvk = new ResourceGroupVersionKind(groupAndVersion.Item1, groupAndVersion.Item2, yamlObject["kind"]);
+                return new ResourceIdentifier(gvk,
                                               yamlObject["metadata"]["name"],
                                               @namespace == null ? defaultNamespace : (string)@namespace);
             }

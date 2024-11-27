@@ -40,6 +40,11 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
                 return hashCode;
             }
         }
+
+        public override string ToString()
+        {
+            return $"{Group}/{Version}/{Kind}";
+        }
     }
 
     public static class ResourceGroupVersionKindExtensionMethods

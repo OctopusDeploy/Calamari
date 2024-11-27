@@ -28,9 +28,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
             
             statefulSet.Should().BeEquivalentTo(new
             {
-                Group = "apps",
-                Version = "v1",
-                Kind = "StatefulSet",
+                GroupVersionKind = SupportedResourceGroupVersionKinds.StatefulSetV1,
                 Name = "my-sts",
                 Namespace = "default",
                 Uid = "01695a39-5865-4eea-b4bf-1a4783cbce62",

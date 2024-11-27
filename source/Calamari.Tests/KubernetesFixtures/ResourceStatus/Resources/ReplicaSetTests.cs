@@ -29,9 +29,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
             
             replicaSet.Should().BeEquivalentTo(new
             {
-                Group = "apps",
-                Version = "v1",
-                Kind = "ReplicaSet",
+                GroupVersionKind = SupportedResourceGroupVersionKinds.ReplicaSetV1,
                 Name = "nginx",
                 Namespace = "default",
                 Uid = "01695a39-5865-4eea-b4bf-1a4783cbce62",

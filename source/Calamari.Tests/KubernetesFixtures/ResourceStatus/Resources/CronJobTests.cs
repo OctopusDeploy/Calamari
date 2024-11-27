@@ -28,9 +28,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
             
             cronJob.Should().BeEquivalentTo(new
             {
-                Group = "batch",
-                Version = "v1",
-                Kind = "CronJob",
+                GroupVersionKind = SupportedResourceGroupVersionKinds.CronJobV1,
                 Name = "my-cj",
                 Namespace = "default",
                 Uid = "01695a39-5865-4eea-b4bf-1a4783cbce62",

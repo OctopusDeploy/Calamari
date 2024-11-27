@@ -57,7 +57,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             var got = resourceRetriever.GetAllOwnedResources(
                 new List<ResourceIdentifier>
                 {
-                    new ResourceIdentifier("apps", "v1", "Deployment", "nginx", "octopus")
+                    new ResourceIdentifier(SupportedResourceGroupVersionKinds.DeploymentV1, "nginx", "octopus")
                 },
                 null, new Options());
 
@@ -65,20 +65,18 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             {
                 new
                 {
-                    Group = "apps",
-                    Kind = "Deployment",
+                    GroupVersionKind = SupportedResourceGroupVersionKinds.DeploymentV1,
                     Name = "nginx",
                     Children = new object[]
                     {
                         new
                         {
-                            Group = "apps",
-                            Kind = "ReplicaSet",
+                            GroupVersionKind = SupportedResourceGroupVersionKinds.ReplicaSetV1,
                             Name = "nginx-replicaset",
                             Children = new object[]
                             {
-                                new { Group = "", Kind = "Pod", Name = "nginx-pod-1"},
-                                new { Group = "", Kind = "Pod", Name = "nginx-pod-2"},
+                                new { GroupVersionKind = SupportedResourceGroupVersionKinds.PodV1, Name = "nginx-pod-1"},
+                                new { GroupVersionKind = SupportedResourceGroupVersionKinds.PodV1, Name = "nginx-pod-2"},
                             }
                         }
                     }
@@ -127,8 +125,8 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             var got = resourceRetriever.GetAllOwnedResources(
                 new List<ResourceIdentifier>
                 {
-                    new ResourceIdentifier("apps", "v1", "Deployment", "deployment-1", "octopus"),
-                    new ResourceIdentifier("apps", "v1", "Deployment", "deployment-2", "octopus")
+                    new ResourceIdentifier(SupportedResourceGroupVersionKinds.DeploymentV1, "deployment-1", "octopus"),
+                    new ResourceIdentifier(SupportedResourceGroupVersionKinds.DeploymentV1, "deployment-2", "octopus")
                 },
                 null, new Options());
 
@@ -136,30 +134,26 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             {
                 new
                 {
-                    Group = "apps",
-                    Kind = "Deployment",
+                    GroupVersionKind = SupportedResourceGroupVersionKinds.DeploymentV1,
                     Name = "deployment-1",
                     Children = new object[]
                     {
                         new
                         {
-                            Group = "apps",
-                            Kind = "ReplicaSet",
+                            GroupVersionKind = SupportedResourceGroupVersionKinds.ReplicaSetV1,
                             Name = "replicaset-1",
                         }
                     }
                 },
                 new
                 {
-                    Group = "apps",
-                    Kind = "Deployment",
+                    GroupVersionKind = SupportedResourceGroupVersionKinds.DeploymentV1,
                     Name = "deployment-2",
                     Children = new object[]
                     {
                         new
                         {
-                            Group = "apps",
-                            Kind = "ReplicaSet",
+                            GroupVersionKind = SupportedResourceGroupVersionKinds.ReplicaSetV1,
                             Name = "replicaset-2",
                         }
                     }
@@ -199,7 +193,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             var got = resourceRetriever.GetAllOwnedResources(
                 new List<ResourceIdentifier>
                 {
-                    new ResourceIdentifier("apps", "v1", "ReplicaSet", "rs", "octopus"),
+                    new ResourceIdentifier(SupportedResourceGroupVersionKinds.ReplicaSetV1, "rs", "octopus"),
                 },
                 null, new Options());
 
@@ -207,12 +201,11 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             {
                 new
                 {
-                    Group = "apps",
-                    Kind = "ReplicaSet",
+                    GroupVersionKind = SupportedResourceGroupVersionKinds.ReplicaSetV1,
                     Name = "rs",
                     Children = new object[]
                     {
-                        new { Group = "", Kind = "Pod", Name = "pod-1" }
+                        new { GroupVersionKind = SupportedResourceGroupVersionKinds.PodV1, Name = "pod-1" }
                     }
                 }
             });
@@ -235,19 +228,19 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         }
 
 
-        public KubectlGetResult Resource(string group, string kind, string name, string @namespace, IKubectl kubectl)
+        public KubectlGetResult Resource(IResourceIdentity resourceIdentity, IKubectl kubectl)
         {
-            return new KubectlGetResult(resourceEntries[name], new List<string>
+            return new KubectlGetResult(resourceEntries[resourceIdentity.Name], new List<string>
             {
-                $"{Level.Info}: {resourceEntries[name]}"
+                $"{Level.Info}: {resourceEntries[resourceIdentity.Name]}"
             });
         }
 
-        public KubectlGetResult AllResources(string group, string kind, string @namespace, IKubectl kubectl)
+        public KubectlGetResult AllResources(ResourceGroupVersionKind groupVersionKind, string @namespace, IKubectl kubectl)
         {
-            return new KubectlGetResult(resourcesByKind[kind], new List<string>
+            return new KubectlGetResult(resourcesByKind[groupVersionKind.Kind], new List<string>
             {
-                $"{Level.Info}: {resourcesByKind[kind]}"
+                $"{Level.Info}: {resourcesByKind[groupVersionKind.Kind]}"
             });
         }
     }

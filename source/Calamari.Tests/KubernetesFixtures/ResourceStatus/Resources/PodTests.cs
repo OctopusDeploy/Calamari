@@ -36,9 +36,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
             
             pod.Should().BeEquivalentTo(new
             {
-                Group = "",
-                Version = "v1",
-                Kind = "Pod",
+                GroupVersionKind = SupportedResourceGroupVersionKinds.PodV1,
                 Name = "Test",
                 Namespace = "test",
                 Ready = "1/2",

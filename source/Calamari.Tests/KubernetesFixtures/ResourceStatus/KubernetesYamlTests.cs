@@ -1,3 +1,4 @@
+using System;
 using Calamari.Kubernetes.ResourceStatus;
 using Calamari.Kubernetes.ResourceStatus.Resources;
 using FluentAssertions;
@@ -12,12 +13,10 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         public void ShouldGenerateCorrectIdentifiers()
         {
             var input = TestFileLoader.Load("single-deployment.yaml");
-            var got = KubernetesYaml.GetDefinedResources(new string[] { input }, string.Empty);
-            var expected = new ResourceIdentifier[]
+            var got = KubernetesYaml.GetDefinedResources(new[] { input }, string.Empty);
+            var expected = new[]
             {
-                new ResourceIdentifier("apps",
-                                       "v1",
-                                       "Deployment",
+                new ResourceIdentifier(SupportedResourceGroupVersionKinds.DeploymentV1,
                                        "nginx",
                                        "test"
                                       )
@@ -30,20 +29,20 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         public void ShouldOmitDefinitionIfTheMetadataSectionIsNotSet()
         {
             var input = TestFileLoader.Load("invalid.yaml");
-            var got = KubernetesYaml.GetDefinedResources(new string[] { input }, string.Empty);
+            var got = KubernetesYaml.GetDefinedResources(new[] { input }, string.Empty);
             got.Should().BeEmpty();
         }
-        
+
         [Test]
         public void ShouldHandleMultipleResourcesDefinedInTheSameFile()
         {
             var input = TestFileLoader.Load("multiple-resources.yaml");
-            var got = KubernetesYaml.GetDefinedResources(new string[] { input }, string.Empty);
-            var expected = new ResourceIdentifier[]
+            var got = KubernetesYaml.GetDefinedResources(new[] { input }, string.Empty);
+            var expected = new[]
             {
-                new ResourceIdentifier("apps", "v1", "Deployment", "nginx", "default"),
-                new ResourceIdentifier("", "v1", "ConfigMap", "config", "default"),
-                new ResourceIdentifier("", "v1", "Pod", "curl", "default")
+                new ResourceIdentifier(SupportedResourceGroupVersionKinds.DeploymentV1, "nginx", "default"),
+                new ResourceIdentifier(SupportedResourceGroupVersionKinds.ConfigMapV1, "config", "default"),
+                new ResourceIdentifier(SupportedResourceGroupVersionKinds.PodV1, "curl", "default")
             };
 
             got.Should().BeEquivalentTo(expected);
@@ -54,12 +53,10 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         {
             const string defaultNamespace = "DefaultNamespace";
             var input = TestFileLoader.Load("no-namespace.yaml");
-            var got = KubernetesYaml.GetDefinedResources(new string[] { input }, defaultNamespace);
-            var expected = new ResourceIdentifier[]
+            var got = KubernetesYaml.GetDefinedResources(new[] { input }, defaultNamespace);
+            var expected = new[]
             {
-                new ResourceIdentifier("apps",
-                                       "v1",
-                                       "Deployment",
+                new ResourceIdentifier(SupportedResourceGroupVersionKinds.DeploymentV1,
                                        "nginx",
                                        defaultNamespace
                                       )
@@ -72,20 +69,16 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         public void ShouldHandleMultipleYamlFiles()
         {
             var manifest = TestFileLoader.Load("single-deployment.yaml");
-            var multipleFileInput = new string[] {manifest, manifest};
+            var multipleFileInput = new[] { manifest, manifest };
             var got = KubernetesYaml.GetDefinedResources(multipleFileInput, string.Empty);
-            var expected = new ResourceIdentifier[]
+            var expected = new[]
             {
-                new ResourceIdentifier("apps",
-                                       "v1",
-                                       "Deployment",
+                new ResourceIdentifier(SupportedResourceGroupVersionKinds.DeploymentV1,
                                        "nginx",
                                        "test"),
-                new ResourceIdentifier("apps",
-                                       "v1",
-                                       "Deployment",
+                new ResourceIdentifier(SupportedResourceGroupVersionKinds.DeploymentV1,
                                        "nginx",
-                                       "test"),
+                                       "test")
             };
 
             got.Should().BeEquivalentTo(expected);

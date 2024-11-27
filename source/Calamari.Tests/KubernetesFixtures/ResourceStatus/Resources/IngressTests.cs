@@ -56,9 +56,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
             
             ingress.Should().BeEquivalentTo(new
             {
-                Group = "networking.k8s.io",
-                Version = "v1",
-                Kind = "Ingress",
+                GroupVersionKind = SupportedResourceGroupVersionKinds.IngressV1,
                 Name = "my-ingress",
                 Namespace = "default",
                 Uid = "01695a39-5865-4eea-b4bf-1a4783cbce62",

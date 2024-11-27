@@ -37,9 +37,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
             
             persistentVolumeClaim.Should().BeEquivalentTo(new
             {
-                Group = "",
-                Version = "v1",
-                Kind = "PersistentVolumeClaim",
+                GroupVersionKind = SupportedResourceGroupVersionKinds.PersistentVolumeClaimV1,
                 Name = "my-pvc",
                 Namespace = "default",
                 Uid = "01695a39-5865-4eea-b4bf-1a4783cbce62",

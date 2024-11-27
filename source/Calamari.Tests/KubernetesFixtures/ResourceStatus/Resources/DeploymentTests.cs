@@ -23,9 +23,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
             
             deployment.Should().BeEquivalentTo(new
             {
-                Group = "apps",
-                Version = "v1",
-                Kind = "Deployment",
+                GroupVersionKind = SupportedResourceGroupVersionKinds.DeploymentV1,
                 Name = "nginx",
                 Namespace = "default",
                 Uid = "01695a39-5865-4eea-b4bf-1a4783cbce62",

@@ -35,7 +35,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
 
             var resourceStatusChecker = new RunningResourceStatusCheck(statusCheckTaskFactory, log, new TimeSpan(), new Options(), new[]
             {
-                new ResourceIdentifier("", "v1", "Pod", "my-pod", "default")
+                new ResourceIdentifier(SupportedResourceGroupVersionKinds.PodV1, "my-pod", "default")
             });
 
             await resourceStatusChecker.WaitForCompletionOrTimeout(CancellationToken.None);
@@ -58,7 +58,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
 
             var resourceStatusChecker = new RunningResourceStatusCheck(statusCheckTaskFactory, log, new TimeSpan(), new Options(), new[]
             {
-                new ResourceIdentifier("", "v1", "Pod", "my-pod", "default")
+                new ResourceIdentifier(SupportedResourceGroupVersionKinds.PodV1, "my-pod", "default")
             });
 
             var result = await resourceStatusChecker.WaitForCompletionOrTimeout(CancellationToken.None);
@@ -83,7 +83,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
 
             var resourceStatusChecker = new RunningResourceStatusCheck(statusCheckTaskFactory, log, new TimeSpan(), new Options(), new[]
             {
-                new ResourceIdentifier("", "v1", "Pod", "my-pod", "default")
+                new ResourceIdentifier(SupportedResourceGroupVersionKinds.PodV1, "my-pod", "default")
             });
 
             var result = await resourceStatusChecker.WaitForCompletionOrTimeout(CancellationToken.None);
@@ -110,7 +110,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
 
             var resourceStatusChecker = new RunningResourceStatusCheck(statusCheckTaskFactory, log, new TimeSpan(), new Options(), new[]
             {
-                new ResourceIdentifier("", "v1", "Pod", "my-pod", "default")
+                new ResourceIdentifier(SupportedResourceGroupVersionKinds.PodV1, "my-pod", "default")
             });
 
             var result = await resourceStatusChecker.WaitForCompletionOrTimeout(CancellationToken.None);
@@ -140,7 +140,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
 
             var resourceStatusChecker = new RunningResourceStatusCheck(statusCheckTaskFactory, log, new TimeSpan(), new Options(), new[]
             {
-                new ResourceIdentifier("", "v1", "ReplicaSet", "my-rs", "default")
+                new ResourceIdentifier(SupportedResourceGroupVersionKinds.ReplicaSetV1, "my-rs", "default")
             });
 
             var result = await resourceStatusChecker.WaitForCompletionOrTimeout(CancellationToken.None);
@@ -166,8 +166,8 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
 
             var resourceStatusChecker = new RunningResourceStatusCheck(statusCheckTaskFactory, log, new TimeSpan(), new Options(), new[]
             {
-                new ResourceIdentifier("", "v1", "Pod", "my-pod", "default"),
-                new ResourceIdentifier("", "v1", "Service", "my-service", "default")
+                new ResourceIdentifier(SupportedResourceGroupVersionKinds.PodV1, "my-pod", "default"),
+                new ResourceIdentifier(SupportedResourceGroupVersionKinds.ServiceV1, "my-service", "default")
             });
 
             var result = await resourceStatusChecker.WaitForCompletionOrTimeout(CancellationToken.None);
@@ -237,9 +237,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         public TestResource(string kind, Kubernetes.ResourceStatus.Resources.ResourceStatus status, params Resource[] children)
         {
             Uid = Guid.NewGuid().ToString();
-            Group = "";
-            Version = "v1";
-            Kind = kind;
+            GroupVersionKind = new ResourceGroupVersionKind("", "v1", kind);
             ResourceStatus = status;
             Children = children.ToList();
         }

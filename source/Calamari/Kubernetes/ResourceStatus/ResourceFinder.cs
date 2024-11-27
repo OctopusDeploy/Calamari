@@ -93,7 +93,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             }
 
             var configMapName = variables.Get("Octopus.Action.KubernetesContainers.ComputedConfigMapName");
-            return string.IsNullOrEmpty(configMapName) ? (ResourceIdentifier?)null : new ResourceIdentifier("", "v1", "ConfigMap", configMapName, defaultNamespace);
+            return string.IsNullOrEmpty(configMapName) ? (ResourceIdentifier?)null : new ResourceIdentifier(SupportedResourceGroupVersionKinds.ConfigMapV1, configMapName, defaultNamespace);
         }
 
         private ResourceIdentifier? GetSecret(string defaultNamespace)
@@ -110,7 +110,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             }
 
             var secretName = variables.Get("Octopus.Action.KubernetesContainers.ComputedSecretName");
-            return string.IsNullOrEmpty(secretName) ? (ResourceIdentifier?)null : new ResourceIdentifier("", "v1","Secret", secretName, defaultNamespace);
+            return string.IsNullOrEmpty(secretName) ? (ResourceIdentifier?)null : new ResourceIdentifier(SupportedResourceGroupVersionKinds.SecretV1, secretName, defaultNamespace);
         }
     }
 }

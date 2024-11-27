@@ -117,7 +117,7 @@ namespace Calamari.Kubernetes.Conventions.Helm
                         @namespace = deployment.Variables.Get(SpecialVariables.Helm.Namespace)?.Trim();
                     }
 
-                    var resourceIdentifier = new ResourceIdentifier(gvk.Group, gvk.Version, gvk.Kind, name, @namespace);
+                    var resourceIdentifier = new ResourceIdentifier(gvk, name, @namespace);
                     resources.Add(resourceIdentifier);
                 }
             }

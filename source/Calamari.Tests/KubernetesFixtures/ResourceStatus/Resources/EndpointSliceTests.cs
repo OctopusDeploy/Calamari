@@ -50,9 +50,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
             
             service.Should().BeEquivalentTo(new
             {
-                Group = "discovery.k8s.io",
-                Version = "v1",
-                Kind = "EndpointSlice",
+                GroupVersionKind = SupportedResourceGroupVersionKinds.EndpointSliceV1,
                 Name = "my-svc-abcde",
                 Namespace = "default",
                 Uid = "01695a39-5865-4eea-b4bf-1a4783cbce62",

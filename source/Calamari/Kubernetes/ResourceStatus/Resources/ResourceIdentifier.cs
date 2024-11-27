@@ -7,26 +7,20 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
    /// </summary>
    public struct ResourceIdentifier : IResourceIdentity, IEquatable<ResourceIdentifier>
    {
-       public string Group { get; }
-       public string Version { get; }
-       public string Kind { get; }
+       public ResourceGroupVersionKind GroupVersionKind { get; }
        public string Name { get; }
        public string Namespace { get; }
 
-       public ResourceIdentifier(string group, string version, string kind, string name, string @namespace)
+       public ResourceIdentifier(ResourceGroupVersionKind groupVersionKind, string name, string @namespace)
        {
-           Group = group;
-           Version = version;
-           Kind = kind;
+           GroupVersionKind = groupVersionKind;
            Name = name;
            Namespace = @namespace;
        }
 
        public bool Equals(ResourceIdentifier other)
        {
-           return Group == other.Group
-                  && Version == other.Version
-                  && Kind == other.Kind
+           return GroupVersionKind.Equals(other.GroupVersionKind)
                   && Name == other.Name
                   && Namespace == other.Namespace;
        }
@@ -40,9 +34,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
        {
            unchecked
            {
-               var hashCode = (Group != null ? Group.GetHashCode() : 0);
-               hashCode = (hashCode * 397) ^ (Version != null ? Version.GetHashCode() : 0);
-               hashCode = (hashCode * 397) ^ (Kind != null ? Kind.GetHashCode() : 0);
+               var hashCode = (GroupVersionKind != null ? GroupVersionKind.GetHashCode() : 0);
                hashCode = (hashCode * 397) ^ (Name != null ? Name.GetHashCode() : 0);
                hashCode = (hashCode * 397) ^ (Namespace != null ? Namespace.GetHashCode() : 0);
                return hashCode;
