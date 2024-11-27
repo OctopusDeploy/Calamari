@@ -106,8 +106,8 @@ namespace Calamari.Kubernetes.Commands.Executors
 
             public ResourceIdentifier ToResourceIdentifier()
             {
-                var (group, _) = ResourceGroupVersionKindExtensionMethods.ParseApiVersion(ApiVersion);
-                return new ResourceIdentifier(group, Kind, Metadata.Name, Metadata.Namespace);
+                var (group, version) = ResourceGroupVersionKindExtensionMethods.ParseApiVersion(ApiVersion);
+                return new ResourceIdentifier(group, version, Kind, Metadata.Name, Metadata.Namespace);
             }
         }
     }

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using Calamari.Kubernetes.ResourceStatus.Resources;
@@ -9,7 +10,7 @@ namespace Calamari.Kubernetes.ResourceStatus
 {
     public static class KubernetesYaml
     {
-        private static readonly IDeserializer Deserializer = new DeserializerBuilder().Build();
+        static readonly IDeserializer Deserializer = new DeserializerBuilder().Build();
 
         /// <summary>
         /// Gets resource identifiers which are defined in a YAML file.
@@ -35,7 +36,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             }
         }
 
-        private static ResourceIdentifier? GetDefinedResource(IParser parser, string defaultNamespace)
+        static ResourceIdentifier? GetDefinedResource(IParser parser, string defaultNamespace)
         {
             try
             {
@@ -44,9 +45,10 @@ namespace Calamari.Kubernetes.ResourceStatus
                 yamlObject.TryGetValue("apiVersion", out object apiVersion);
                 var groupAndVersion = ResourceGroupVersionKindExtensionMethods.ParseApiVersion(apiVersion?.ToString());
                 return new ResourceIdentifier(groupAndVersion.Item1,
-                    yamlObject["kind"],
-                    yamlObject["metadata"]["name"],
-                    @namespace == null ? defaultNamespace : (string) @namespace);
+                                              groupAndVersion.Item2,
+                                              yamlObject["kind"],
+                                              yamlObject["metadata"]["name"],
+                                              @namespace == null ? defaultNamespace : (string)@namespace);
             }
             catch
             {

@@ -35,7 +35,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
 
             var resourceStatusChecker = new RunningResourceStatusCheck(statusCheckTaskFactory, log, new TimeSpan(), new Options(), new[]
             {
-                new ResourceIdentifier("", "Pod", "my-pod", "default")
+                new ResourceIdentifier("", "v1", "Pod", "my-pod", "default")
             });
 
             await resourceStatusChecker.WaitForCompletionOrTimeout(CancellationToken.None);
@@ -58,7 +58,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
 
             var resourceStatusChecker = new RunningResourceStatusCheck(statusCheckTaskFactory, log, new TimeSpan(), new Options(), new[]
             {
-                new ResourceIdentifier("","Pod", "my-pod", "default")
+                new ResourceIdentifier("", "v1", "Pod", "my-pod", "default")
             });
 
             var result = await resourceStatusChecker.WaitForCompletionOrTimeout(CancellationToken.None);
@@ -83,7 +83,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
 
             var resourceStatusChecker = new RunningResourceStatusCheck(statusCheckTaskFactory, log, new TimeSpan(), new Options(), new[]
             {
-                new ResourceIdentifier("","Pod", "my-pod", "default")
+                new ResourceIdentifier("", "v1", "Pod", "my-pod", "default")
             });
 
             var result = await resourceStatusChecker.WaitForCompletionOrTimeout(CancellationToken.None);
@@ -110,7 +110,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
 
             var resourceStatusChecker = new RunningResourceStatusCheck(statusCheckTaskFactory, log, new TimeSpan(), new Options(), new[]
             {
-                new ResourceIdentifier("","Pod", "my-pod", "default")
+                new ResourceIdentifier("", "v1", "Pod", "my-pod", "default")
             });
 
             var result = await resourceStatusChecker.WaitForCompletionOrTimeout(CancellationToken.None);
@@ -140,7 +140,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
 
             var resourceStatusChecker = new RunningResourceStatusCheck(statusCheckTaskFactory, log, new TimeSpan(), new Options(), new[]
             {
-                new ResourceIdentifier("","ReplicaSet", "my-rs", "default")
+                new ResourceIdentifier("", "v1", "ReplicaSet", "my-rs", "default")
             });
 
             var result = await resourceStatusChecker.WaitForCompletionOrTimeout(CancellationToken.None);
@@ -166,8 +166,8 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
 
             var resourceStatusChecker = new RunningResourceStatusCheck(statusCheckTaskFactory, log, new TimeSpan(), new Options(), new[]
             {
-                new ResourceIdentifier("","Pod", "my-pod", "default"),
-                new ResourceIdentifier("","Service", "my-service", "default")
+                new ResourceIdentifier("", "v1", "Pod", "my-pod", "default"),
+                new ResourceIdentifier("", "v1", "Service", "my-service", "default")
             });
 
             var result = await resourceStatusChecker.WaitForCompletionOrTimeout(CancellationToken.None);

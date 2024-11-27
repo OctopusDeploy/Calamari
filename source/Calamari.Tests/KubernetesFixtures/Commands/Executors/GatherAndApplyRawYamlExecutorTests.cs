@@ -104,7 +104,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
             receivedCallbacks.Should()
                              .BeEquivalentTo(new List<ResourceIdentifier>
                              {
-                                 new ResourceIdentifier("apps", "Deployment", "basic-deployment", "dev"), new ResourceIdentifier("","Service", "basic-service", "dev"), new ResourceIdentifier("apps","Deployment", "basic-deployment", "dev")
+                                 new ResourceIdentifier("apps", "v1", "Deployment", "basic-deployment", "dev"), new ResourceIdentifier("", "v1", "Service", "basic-service", "dev"), new ResourceIdentifier("apps", "v1", "Deployment", "basic-deployment", "dev")
                              });
         }
 

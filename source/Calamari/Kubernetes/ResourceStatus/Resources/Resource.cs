@@ -25,6 +25,9 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
 
         [JsonIgnore]
         public virtual string ChildKind => "";
+        
+        [JsonIgnore]
+        public virtual ResourceGroupVersionKind ChildGroupVersionKind => default;
 
         [JsonIgnore]
         public IEnumerable<Resource> Children { get; internal set; }

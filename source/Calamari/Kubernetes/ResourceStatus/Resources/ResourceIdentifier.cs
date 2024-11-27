@@ -7,17 +7,16 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
    /// </summary>
    public struct ResourceIdentifier : IResourceIdentity, IEquatable<ResourceIdentifier>
    {
-       // API version is irrelevant for identifying a resource,
-       // since the resource name must be unique across all api versions.
-       // https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
        public string Group { get; }
+       public string Version { get; }
        public string Kind { get; }
        public string Name { get; }
        public string Namespace { get; }
 
-       public ResourceIdentifier(string group, string kind, string name, string @namespace)
+       public ResourceIdentifier(string group, string version, string kind, string name, string @namespace)
        {
            Group = group;
+           Version = version;
            Kind = kind;
            Name = name;
            Namespace = @namespace;
@@ -26,6 +25,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
        public bool Equals(ResourceIdentifier other)
        {
            return Group == other.Group
+                  && Version == other.Version
                   && Kind == other.Kind
                   && Name == other.Name
                   && Namespace == other.Namespace;
@@ -41,6 +41,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
            unchecked
            {
                var hashCode = (Group != null ? Group.GetHashCode() : 0);
+               hashCode = (hashCode * 397) ^ (Version != null ? Version.GetHashCode() : 0);
                hashCode = (hashCode * 397) ^ (Kind != null ? Kind.GetHashCode() : 0);
                hashCode = (hashCode * 397) ^ (Name != null ? Name.GetHashCode() : 0);
                hashCode = (hashCode * 397) ^ (Namespace != null ? Namespace.GetHashCode() : 0);

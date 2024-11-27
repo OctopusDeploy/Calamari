@@ -50,7 +50,7 @@ namespace Calamari.Kubernetes.ResourceStatus
 
         private Resource GetResource(ResourceIdentifier resourceIdentifier, IKubectl kubectl, Options options)
         {
-            var result = kubectlGet.Resource(resourceIdentifier.Kind, resourceIdentifier.Name, resourceIdentifier.Namespace, kubectl);
+            var result = kubectlGet.Resource(resourceIdentifier.Group, resourceIdentifier.Kind, resourceIdentifier.Name, resourceIdentifier.Namespace, kubectl);
             
             return result.RawOutput.IsNullOrEmpty() ? null : TryParse(ResourceFactory.FromJson, result, options);
         }
@@ -63,7 +63,7 @@ namespace Calamari.Kubernetes.ResourceStatus
                 return Enumerable.Empty<Resource>();
             }
 
-            var result = kubectlGet.AllResources(childKind, parentResource.Namespace, kubectl);
+            var result = kubectlGet.AllResources(, childKind, parentResource.Namespace, kubectl);
 
             var resources = TryParse(ResourceFactory.FromListJson, result, options);
             return resources.Where(resource => resource.OwnerUids.Contains(parentResource.Uid))

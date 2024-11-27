@@ -57,7 +57,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             var got = resourceRetriever.GetAllOwnedResources(
                 new List<ResourceIdentifier>
                 {
-                    new ResourceIdentifier("apps", "Deployment", "nginx", "octopus")
+                    new ResourceIdentifier("apps", "v1", "Deployment", "nginx", "octopus")
                 },
                 null, new Options());
 
@@ -127,8 +127,8 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             var got = resourceRetriever.GetAllOwnedResources(
                 new List<ResourceIdentifier>
                 {
-                    new ResourceIdentifier("apps", "Deployment", "deployment-1", "octopus"),
-                    new ResourceIdentifier("apps","Deployment", "deployment-2", "octopus")
+                    new ResourceIdentifier("apps", "v1", "Deployment", "deployment-1", "octopus"),
+                    new ResourceIdentifier("apps", "v1", "Deployment", "deployment-2", "octopus")
                 },
                 null, new Options());
 
@@ -199,7 +199,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             var got = resourceRetriever.GetAllOwnedResources(
                 new List<ResourceIdentifier>
                 {
-                    new ResourceIdentifier("apps", "ReplicaSet", "rs", "octopus"),
+                    new ResourceIdentifier("apps", "v1", "ReplicaSet", "rs", "octopus"),
                 },
                 null, new Options());
 
@@ -235,7 +235,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         }
 
 
-        public KubectlGetResult Resource(string kind, string name, string @namespace, IKubectl kubectl)
+        public KubectlGetResult Resource(string group, string kind, string name, string @namespace, IKubectl kubectl)
         {
             return new KubectlGetResult(resourceEntries[name], new List<string>
             {
@@ -243,7 +243,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             });
         }
 
-        public KubectlGetResult AllResources(string kind, string @namespace, IKubectl kubectl)
+        public KubectlGetResult AllResources(string group, string kind, string @namespace, IKubectl kubectl)
         {
             return new KubectlGetResult(resourcesByKind[kind], new List<string>
             {

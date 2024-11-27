@@ -16,10 +16,11 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             var expected = new ResourceIdentifier[]
             {
                 new ResourceIdentifier("apps",
-                    "Deployment",
-                    "nginx",
-                    "test"
-                )
+                                       "v1",
+                                       "Deployment",
+                                       "nginx",
+                                       "test"
+                                      )
             };
 
             got.Should().BeEquivalentTo(expected);
@@ -40,9 +41,9 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             var got = KubernetesYaml.GetDefinedResources(new string[] { input }, string.Empty);
             var expected = new ResourceIdentifier[]
             {
-                new ResourceIdentifier("apps","Deployment", "nginx", "default"),
-                new ResourceIdentifier("", "ConfigMap", "config", "default"),
-                new ResourceIdentifier("","Pod", "curl", "default")
+                new ResourceIdentifier("apps", "v1", "Deployment", "nginx", "default"),
+                new ResourceIdentifier("", "v1", "ConfigMap", "config", "default"),
+                new ResourceIdentifier("", "v1", "Pod", "curl", "default")
             };
 
             got.Should().BeEquivalentTo(expected);
@@ -57,10 +58,11 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             var expected = new ResourceIdentifier[]
             {
                 new ResourceIdentifier("apps",
-                    "Deployment",
-                    "nginx",
-                    defaultNamespace
-                )
+                                       "v1",
+                                       "Deployment",
+                                       "nginx",
+                                       defaultNamespace
+                                      )
             };
 
             got.Should().BeEquivalentTo(expected);
@@ -75,13 +77,15 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             var expected = new ResourceIdentifier[]
             {
                 new ResourceIdentifier("apps",
-                    "Deployment",
-                    "nginx",
-                    "test"),
+                                       "v1",
+                                       "Deployment",
+                                       "nginx",
+                                       "test"),
                 new ResourceIdentifier("apps",
-                    "Deployment",
-                    "nginx",
-                    "test"),
+                                       "v1",
+                                       "Deployment",
+                                       "nginx",
+                                       "test"),
             };
 
             got.Should().BeEquivalentTo(expected);

@@ -7,17 +7,17 @@ namespace Calamari.Kubernetes.ResourceStatus
 {
     public interface IKubectlGet
     {
-        KubectlGetResult Resource(string kind, string name, string @namespace, IKubectl kubectl);
-        KubectlGetResult AllResources(string kind, string @namespace, IKubectl kubectl);
+        KubectlGetResult Resource(string group, string kind, string name, string @namespace, IKubectl kubectl);
+        KubectlGetResult AllResources(string group, string kind, string @namespace, IKubectl kubectl);
     }
 
     public class KubectlGet : IKubectlGet
     {
-        public KubectlGetResult Resource(string kind, string name, string @namespace, IKubectl kubectl)
+        public KubectlGetResult Resource(string group, string kind, string name, string @namespace, IKubectl kubectl)
         {
             var output = kubectl.ExecuteCommandAndReturnOutput(new[]
                                 {
-                                    "get", kind, name, "-o=jsonpath=\"{@}\"", string.IsNullOrEmpty(@namespace) ? "" : $"-n {@namespace}"
+                                    "get", $"{kind}.{group}", name, "-o=jsonpath=\"{@}\"", string.IsNullOrEmpty(@namespace) ? "" : $"-n {@namespace}"
                                 })
                                 .Output;
 
@@ -25,11 +25,11 @@ namespace Calamari.Kubernetes.ResourceStatus
                                         output.Messages.Select(msg => $"{msg.Level}: {msg.Text}").ToList());
         }
 
-        public KubectlGetResult AllResources(string kind, string @namespace, IKubectl kubectl)
+        public KubectlGetResult AllResources(string group, string kind, string @namespace, IKubectl kubectl)
         {
             var output = kubectl.ExecuteCommandAndReturnOutput(new[]
                                 {
-                                    "get", kind, "-o=jsonpath=\"{@}\"", string.IsNullOrEmpty(@namespace) ? "" : $"-n {@namespace}"
+                                    "get", $"{kind}.{group}", "-o=jsonpath=\"{@}\"", string.IsNullOrEmpty(@namespace) ? "" : $"-n {@namespace}"
                                 })
                                 .Output;
 
