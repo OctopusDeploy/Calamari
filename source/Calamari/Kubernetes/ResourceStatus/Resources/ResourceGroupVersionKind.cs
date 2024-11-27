@@ -43,7 +43,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
 
         public override string ToString()
         {
-            return $"{Group}/{Version}/{Kind}";
+            return !Group.IsNullOrEmpty() ? $"{Group}/{Version}/{Kind}" : $"{Version}/{Kind}";
         }
     }
 

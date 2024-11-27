@@ -10,17 +10,17 @@ Resource Status Check: 2 new resources have been added:
 Applying Batch #2 for YAML matching 'services/myapp-service.yml'
 Matched file: services/myapp-service.yml
 Created Resources:
- - /v1/Service/nginx-service in namespace calamari-testing
+ - v1/Service/nginx-service in namespace calamari-testing
 Resource Status Check: reported 9 updates, 0 removals
 Resource Status Check: 1 new resources have been added:
- - /v1/Service/nginx-service in namespace calamari-testing
+ - v1/Service/nginx-service in namespace calamari-testing
 Applying Batch #3 for YAML matching 'configmaps/*.yml'
 Matched file: configmaps/myapp-configmap2.yml
 Matched file: configmaps/myapp-configmap1.yml
 Created Resources:
- - /v1/ConfigMap/game-demo in namespace calamari-testing
- - /v1/ConfigMap/game-demo2 in namespace calamari-testing
+ - v1/ConfigMap/game-demo in namespace calamari-testing
+ - v1/ConfigMap/game-demo2 in namespace calamari-testing
 Resource Status Check: reported 11 updates, 0 removals
 Resource Status Check: 2 new resources have been added:
- - /v1/ConfigMap/game-demo in namespace calamari-testing
- - /v1/ConfigMap/game-demo2 in namespace calamari-testing
+ - v1/ConfigMap/game-demo in namespace calamari-testing
+ - v1/ConfigMap/game-demo2 in namespace calamari-testing
