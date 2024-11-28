@@ -66,7 +66,7 @@ namespace Calamari.Tests.KubernetesFixtures
             Assert.AreEqual(ReleaseName.ToLower(), result.CapturedOutput.OutputVariables["ReleaseName"]);
 
             result.AssertOutputMatches("Resource Status Check: Performing resource status checks on the following resources:");
-            result.AssertOutputMatches($"- ConfigMap/mychart-configmap-{ReleaseName}");
+            result.AssertOutputMatches($"- v1/ConfigMap/mychart-configmap-{ReleaseName}");
             result.AssertOutputMatches("Resource Status Check: Stopping after next status check.");
             result.AssertOutputMatches("Resource Status Check: reported 1 updates, 0 removals");
             result.AssertOutputMatches("Resource Status Check: Stopped.");
@@ -81,6 +81,9 @@ namespace Calamari.Tests.KubernetesFixtures
                   .Should()
                   .Contain(sm => sm.Properties[SpecialVariables.ServiceMessages.ResourceStatus.Attributes.Name] == $"mychart-configmap-{ReleaseName}" && 
                                  sm.Properties[SpecialVariables.ServiceMessages.ResourceStatus.Attributes.Namespace] == Namespace && 
+                                 sm.Properties[SpecialVariables.ServiceMessages.ResourceStatus.Attributes.Group] == "" &&
+                                 sm.Properties[SpecialVariables.ServiceMessages.ResourceStatus.Attributes.Version] == "v1" &&
+                                 sm.Properties[SpecialVariables.ServiceMessages.ResourceStatus.Attributes.Kind] == "ConfigMap" &&
                                  sm.Properties[SpecialVariables.ServiceMessages.ResourceStatus.Attributes.Status] == Kubernetes.ResourceStatus.Resources.ResourceStatus.Successful.ToString());
         }
 
