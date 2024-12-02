@@ -18,7 +18,7 @@ namespace Calamari.Kubernetes.Commands.Executors
     
     class KustomizeExecutor : BaseKubernetesApplyExecutor, IKustomizeKubernetesApplyExecutor
     {
-        const string HydratedKustomizeManifestFilename = "hydrated-kustomize-manifest.yaml";
+        public const string HydratedKustomizeManifestFilename = "hydrated-kustomize-manifest.yaml";
         const int MinimumKubectlVersionMajor = 1;
         const int MinimumKubectlVersionMinor = 24;
         readonly ILog log;
