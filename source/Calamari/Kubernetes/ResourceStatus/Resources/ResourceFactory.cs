@@ -35,7 +35,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         public static Resource FromJObject(JObject data, Options options)
         {
             var gvk = data.ToResourceGroupVersionKind();
-            return resourceFactories.ContainsKey(gvk) ? resourceFactories[gvk](data, options) : new Resource(data, options);
+            return resourceFactories.TryGetValue(gvk, out var factory) ? factory(data, options) : new Resource(data, options);
         }
     }
 }
