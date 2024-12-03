@@ -308,10 +308,10 @@
 <hash>\Microsoft.WindowsAzure.Packaging.dll
 <hash>\Microsoft.WindowsAzure.ServiceModel.Common.dll
 <hash>\Microsoft.WindowsAzure.Storage.dll
-<hash>\mscordaccore.dll
-<hash>\mscordaccore.dll
 <hash>\mscordaccore_amd64_amd64_<version>.dll
 <hash>\mscordaccore_amd64_amd64_<version>.dll
+<hash>\mscordaccore.dll
+<hash>\mscordaccore.dll
 <hash>\mscordbi.dll
 <hash>\mscordbi.dll
 <hash>\mscorlib.dll
