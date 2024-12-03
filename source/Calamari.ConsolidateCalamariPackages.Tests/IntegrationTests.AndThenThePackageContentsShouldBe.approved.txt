@@ -416,12 +416,12 @@
 <hash>\SharpCompress.dll
 <hash>\SharpCompress.dll
 <hash>\sos_amd64_amd64_<version>.dll
+<hash>\SOS_README.md
+<hash>\SOS_README.md
 <hash>\sos.dll
 <hash>\SOS.NETCore.dll
 <hash>\SOS.NETCore.dll
 <hash>\SOS.NETCore.dll
-<hash>\SOS_README.md
-<hash>\SOS_README.md
 <hash>\sosdocsunix.txt
 <hash>\Sprache.dll
 <hash>\Sprache.dll
