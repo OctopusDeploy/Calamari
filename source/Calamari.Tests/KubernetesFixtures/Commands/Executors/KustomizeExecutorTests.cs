@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing.FileSystem;
-using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes;
 using Calamari.Kubernetes.Commands.Executors;
@@ -27,6 +26,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
         const string OverlayPath = "/kustomize-example/overlays/dev/";
         readonly ICalamariFileSystem fileSystem = TestCalamariPhysicalFileSystem.GetPhysicalFileSystem();
         readonly ICommandLineRunner commandLineRunner = Substitute.For<ICommandLineRunner>();
+        readonly IManifestReporter manifestReporter = Substitute.For<IManifestReporter>();
 
         InMemoryLog log;
         List<ResourceIdentifier> receivedCallbacks;
@@ -47,6 +47,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
         {
             fileSystem.DeleteDirectory(tempDirectory, FailureOptions.IgnoreFailure);
             commandLineRunner.ClearSubstitute();
+            manifestReporter.ClearReceivedCalls();
         }
 
         [Test]
@@ -70,6 +71,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
             receivedCallbacks.Should().BeEmpty();
             log.ServiceMessages.Should().BeEmpty();
             log.StandardError[0].Should().Contain("Kustomization directory not specified");
+            AssertNoManifestsReported();
         }
 
         [Test]
@@ -100,6 +102,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
             receivedCallbacks.Should().BeEmpty();
             log.ServiceMessages.Should().BeEmpty();
             log.StandardError[0].Should().Contain("Could not determine the kubectl version");
+            AssertNoManifestsReported();
         }
 
         [Test]
@@ -133,6 +136,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
             receivedCallbacks.Should().BeEmpty();
             log.ServiceMessages.Should().BeEmpty();
             log.StandardError[0].Should().Contain("it needs to be v1.24");
+            AssertNoManifestsReported();
         }
 
         [Test]
@@ -153,16 +157,18 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
 
             // Assert
             result.Should().BeTrue();
-            commandLineRunner.ReceivedCalls().Count().Should().Be(2);
+            commandLineRunner.ReceivedCalls().Count().Should().Be(3);
             var commandLineArgs = commandLineRunner.ReceivedCalls().SelectMany(call => call.GetArguments().Select(arg => arg.ToString())).ToArray();
             commandLineArgs[0].Should().Contain("version").And.Contain("--client").And.Contain("-o json");
-            commandLineArgs[1].Should().Contain("apply -k").And.Contain("-o json").And.Contain(OverlayPath);
+            commandLineArgs[1].Should().Contain("kustomize").And.Contain(OverlayPath).And.Contain("-o").And.Contain(KustomizeExecutor.HydratedKustomizeManifestFilename);
+            commandLineArgs[2].Should().Contain("apply -f").And.Contain(KustomizeExecutor.HydratedKustomizeManifestFilename).And.Contain("-o json");
             receivedCallbacks.Should()
                              .BeEquivalentTo(new List<ResourceIdentifier>
                              {
                                  new ResourceIdentifier(SupportedResourceGroupVersionKinds.DeploymentV1, "basic-deployment", "dev"), 
                                  new ResourceIdentifier(SupportedResourceGroupVersionKinds.ServiceV1, "basic-service", "dev")
                              });
+            AssertManifestsReported();
         }
 
         [Test]
@@ -184,16 +190,18 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
 
             // Assert
             result.Should().BeTrue();
-            commandLineRunner.ReceivedCalls().Count().Should().Be(2);
+            commandLineRunner.ReceivedCalls().Count().Should().Be(3);
             var commandLineArgs = commandLineRunner.ReceivedCalls().SelectMany(call => call.GetArguments().Select(arg => arg.ToString())).ToArray();
-            commandLineArgs[1]
+            commandLineArgs[1].Should().Contain("kustomize").And.Contain(OverlayPath).And.Contain("-o").And.Contain(KustomizeExecutor.HydratedKustomizeManifestFilename);
+            commandLineArgs[2]
                 .Should()
-                .Contain("apply -k")
+                .Contain("apply -f")
+                .And.Contain(KustomizeExecutor.HydratedKustomizeManifestFilename)
                 .And.Contain("-o json")
-                .And.Contain(OverlayPath)
                 .And.Contain("--server-side")
                 .And.Contain("--field-manager octopus")
                 .And.NotContain("--force-conflicts");
+            AssertManifestsReported();
         }
 
         [Test]
@@ -213,19 +221,24 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
 
             // Act
             var result = await executor.Execute(runningDeployment, RecordingCallback);
+            
+            var expectedKustomizeBuildArgs = $@"kustomize ""{Path.Combine(StagingDirectory, OverlayPath)}"" -o ""{Path.Combine(StagingDirectory, KustomizeExecutor.HydratedKustomizeManifestFilename)}""";
+            var expectedKubectlApplyArgs = $@"apply -f ""{Path.Combine(StagingDirectory, KustomizeExecutor.HydratedKustomizeManifestFilename)}"" -o json";
 
             // Assert
             result.Should().BeTrue();
-            commandLineRunner.ReceivedCalls().Count().Should().Be(2);
+            commandLineRunner.ReceivedCalls().Count().Should().Be(3);
             var commandLineArgs = commandLineRunner.ReceivedCalls().SelectMany(call => call.GetArguments().Select(arg => arg.ToString())).ToArray();
-            commandLineArgs[1]
+            commandLineArgs[1].Should().Contain("kustomize").And.Contain(OverlayPath).And.Contain("-o").And.Contain(KustomizeExecutor.HydratedKustomizeManifestFilename);
+            commandLineArgs[2]
                 .Should()
-                .Contain("apply -k")
+                .Contain("apply -f")
+                .And.Contain(KustomizeExecutor.HydratedKustomizeManifestFilename)
                 .And.Contain("-o json")
-                .And.Contain(OverlayPath)
                 .And.Contain("--server-side")
                 .And.Contain("--field-manager octopus")
                 .And.Contain("--force-conflicts");
+            AssertManifestsReported();
         }
 
         [Test]
@@ -248,16 +261,18 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
 
             // Assert
             result.Should().BeTrue();
-            commandLineRunner.ReceivedCalls().Count().Should().Be(2);
+            commandLineRunner.ReceivedCalls().Count().Should().Be(3);
             var commandLineArgs = commandLineRunner.ReceivedCalls().SelectMany(call => call.GetArguments().Select(arg => arg.ToString())).ToArray();
-            commandLineArgs[1]
+            commandLineArgs[1].Should().Contain("kustomize").And.Contain(OverlayPath).And.Contain("-o").And.Contain(KustomizeExecutor.HydratedKustomizeManifestFilename);
+            commandLineArgs[2]
                 .Should()
-                .Contain("apply -k")
+                .Contain("apply -f")
+                .And.Contain(KustomizeExecutor.HydratedKustomizeManifestFilename)
                 .And.Contain("-o json")
-                .And.Contain(OverlayPath)
                 .And.NotContain("--server-side")
                 .And.NotContain("--field-manager octopus")
                 .And.NotContain("--force-conflicts");
+            AssertManifestsReported();
         }
 
         [Test]
@@ -281,6 +296,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
             commandLineRunner.ReceivedCalls().Should().NotBeEmpty();
             receivedCallbacks.Should().BeEmpty();
             log.ServiceMessages.Should().BeEmpty();
+            AssertNoManifestsReported();
         }
 
         void SetupCommandLineRunnerMock()
@@ -307,13 +323,17 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
                 ]
             }";
 
-            commandLineRunner.Execute(Arg.Is<CommandLineInvocation>(invocation => invocation.Arguments.Contains(OverlayPath)))
+            commandLineRunner.Execute(Arg.Is<CommandLineInvocation>(invocation => invocation.Arguments.Contains("kustomize")))
+                             .Returns(info => new CommandResult("kubectl kustomize result", 0));
+
+            commandLineRunner.Execute(Arg.Is<CommandLineInvocation>(invocation => invocation.Arguments.Contains("apply")))
                              .Returns(info =>
                                       {
                                           var invocation = (CommandLineInvocation)info[0];
                                           invocation.AdditionalInvocationOutputSink?.WriteInfo(resourceJson);
-                                          return new CommandResult("kustomize result", 0);
+                                          return new CommandResult("kubectl apply result", 0);
                                       });
+            
             commandLineRunner.Execute(Arg.Is<CommandLineInvocation>(invocation => invocation.Arguments.Contains("version --client")))
                              .Returns(info =>
                                       {
@@ -340,7 +360,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
         IKustomizeKubernetesApplyExecutor CreateExecutor(IVariables variables)
         {
             var kubectl = new Kubectl(variables, log, commandLineRunner);
-            return new KustomizeExecutor(log, kubectl);
+            return new KustomizeExecutor(log, kubectl, manifestReporter);
         }
 
         Task RecordingCallback(ResourceIdentifier[] identifiers)
@@ -348,5 +368,9 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
             receivedCallbacks.AddRange(identifiers.ToList());
             return Task.CompletedTask;
         }
+        
+        void AssertManifestsReported() => manifestReporter.Received().ReportManifestFileApplied(Path.Combine(StagingDirectory, KustomizeExecutor.HydratedKustomizeManifestFilename));
+        
+        void AssertNoManifestsReported() => manifestReporter.DidNotReceiveWithAnyArgs().ReportManifestFileApplied(default);
     }
 }
