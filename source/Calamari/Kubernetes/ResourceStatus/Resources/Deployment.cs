@@ -7,8 +7,8 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
 {
     public class Deployment : Resource
     {
-        public override string ChildKind => "ReplicaSet";
-        
+        public override ResourceGroupVersionKind ChildGroupVersionKind => SupportedResourceGroupVersionKinds.ReplicaSetV1;
+
         public int UpToDate { get; }
         public string Ready { get; }
         public int Available { get; }

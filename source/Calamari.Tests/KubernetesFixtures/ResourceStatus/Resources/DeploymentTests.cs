@@ -23,7 +23,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
             
             deployment.Should().BeEquivalentTo(new
             {
-                Kind = "Deployment",
+                GroupVersionKind = SupportedResourceGroupVersionKinds.DeploymentV1,
                 Name = "nginx",
                 Namespace = "default",
                 Uid = "01695a39-5865-4eea-b4bf-1a4783cbce62",
@@ -87,6 +87,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
     internal class DeploymentResponseBuilder
     {
         private const string Template = @"{{
+    ""apiVersion"": ""apps/v1"",
     ""kind"": ""Deployment"",
     ""metadata"": {{
         ""name"": ""nginx"",

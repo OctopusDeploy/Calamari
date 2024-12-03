@@ -111,6 +111,9 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                     new KeyValuePair<string, string>("name", "redis"),
                     new KeyValuePair<string, string>("removed", bool.TrueString),
                     new KeyValuePair<string, string>("checkCount", "1"),
+                    new KeyValuePair<string, string>("group", "apps"),
+                    new KeyValuePair<string, string>("version", "v1"),
+                    new KeyValuePair<string, string>("kind", "Deployment"),
                 });
         }
         
@@ -137,6 +140,9 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                 {
                     new KeyValuePair<string, string>("name", "app"),
                     new KeyValuePair<string, string>("checkCount", "1"),
+                    new KeyValuePair<string, string>("group", "apps"),
+                    new KeyValuePair<string, string>("version", "v1"),
+                    new KeyValuePair<string, string>("kind", "Deployment"),
                 });
         }
     }

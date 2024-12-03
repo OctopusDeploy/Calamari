@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Amazon.IdentityManagement.Model;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Kubernetes.Integration;
 using Calamari.Kubernetes.ResourceStatus;
@@ -20,26 +21,26 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             var deploymentUid = Guid.NewGuid().ToString();
             var replicaSetUid = Guid.NewGuid().ToString();
 
-            var nginxDeployment = new ResourceResponseBuilder()
+            var nginxDeployment = new ResourceResponseBuilder().WithApiVersion("apps/v1")
                 .WithKind("Deployment")
                 .WithName("nginx")
                 .WithUid(deploymentUid)
                 .Build();
 
-            var nginxReplicaSet = new ResourceResponseBuilder()
+            var nginxReplicaSet = new ResourceResponseBuilder().WithApiVersion("apps/v1")
                 .WithKind("ReplicaSet")
                 .WithName("nginx-replicaset")
                 .WithUid(replicaSetUid)
                 .WithOwnerUid(deploymentUid)
                 .Build();
 
-            var pod1 = new ResourceResponseBuilder()
+            var pod1 = new ResourceResponseBuilder().WithApiVersion("v1")
                 .WithKind("Pod")
                 .WithName("nginx-pod-1")
                 .WithOwnerUid(replicaSetUid)
                 .Build();
 
-            var pod2 = new ResourceResponseBuilder()
+            var pod2 = new ResourceResponseBuilder().WithApiVersion("v1")
                 .WithKind("Pod")
                 .WithName("nginx-pod-2")
                 .WithOwnerUid(replicaSetUid)
@@ -56,7 +57,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             var got = resourceRetriever.GetAllOwnedResources(
                 new List<ResourceIdentifier>
                 {
-                    new ResourceIdentifier("Deployment", "nginx", "octopus")
+                    new ResourceIdentifier(SupportedResourceGroupVersionKinds.DeploymentV1, "nginx", "octopus")
                 },
                 null, new Options());
 
@@ -64,18 +65,18 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             {
                 new
                 {
-                    Kind = "Deployment",
+                    GroupVersionKind = SupportedResourceGroupVersionKinds.DeploymentV1,
                     Name = "nginx",
                     Children = new object[]
                     {
                         new
                         {
-                            Kind = "ReplicaSet",
+                            GroupVersionKind = SupportedResourceGroupVersionKinds.ReplicaSetV1,
                             Name = "nginx-replicaset",
                             Children = new object[]
                             {
-                                new { Kind = "Pod", Name = "nginx-pod-1"},
-                                new { Kind = "Pod", Name = "nginx-pod-2"},
+                                new { GroupVersionKind = SupportedResourceGroupVersionKinds.PodV1, Name = "nginx-pod-1"},
+                                new { GroupVersionKind = SupportedResourceGroupVersionKinds.PodV1, Name = "nginx-pod-2"},
                             }
                         }
                     }
@@ -89,25 +90,25 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             var deployment1Uid = Guid.NewGuid().ToString();
             var deployment2Uid = Guid.NewGuid().ToString();
 
-            var deployment1 = new ResourceResponseBuilder()
+            var deployment1 = new ResourceResponseBuilder().WithApiVersion("apps/v1")
                 .WithKind("Deployment")
                 .WithName("deployment-1")
                 .WithUid(deployment1Uid)
                 .Build();
 
-            var replicaSet1 = new ResourceResponseBuilder()
+            var replicaSet1 = new ResourceResponseBuilder().WithApiVersion("apps/v1")
                 .WithKind("ReplicaSet")
                 .WithName("replicaset-1")
                 .WithOwnerUid(deployment1Uid)
                 .Build();
 
-            var deployment2 = new ResourceResponseBuilder()
+            var deployment2 = new ResourceResponseBuilder().WithApiVersion("apps/v1")
                 .WithKind("Deployment")
                 .WithName("deployment-2")
                 .WithUid(deployment2Uid)
                 .Build();
 
-            var replicaSet2 = new ResourceResponseBuilder()
+            var replicaSet2 = new ResourceResponseBuilder().WithApiVersion("apps/v1")
                 .WithKind("ReplicaSet")
                 .WithName("replicaset-2")
                 .WithOwnerUid(deployment2Uid)
@@ -124,8 +125,8 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             var got = resourceRetriever.GetAllOwnedResources(
                 new List<ResourceIdentifier>
                 {
-                    new ResourceIdentifier("Deployment", "deployment-1", "octopus"),
-                    new ResourceIdentifier("Deployment", "deployment-2", "octopus")
+                    new ResourceIdentifier(SupportedResourceGroupVersionKinds.DeploymentV1, "deployment-1", "octopus"),
+                    new ResourceIdentifier(SupportedResourceGroupVersionKinds.DeploymentV1, "deployment-2", "octopus")
                 },
                 null, new Options());
 
@@ -133,26 +134,26 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             {
                 new
                 {
-                    Kind = "Deployment",
+                    GroupVersionKind = SupportedResourceGroupVersionKinds.DeploymentV1,
                     Name = "deployment-1",
                     Children = new object[]
                     {
                         new
                         {
-                            Kind = "ReplicaSet",
+                            GroupVersionKind = SupportedResourceGroupVersionKinds.ReplicaSetV1,
                             Name = "replicaset-1",
                         }
                     }
                 },
                 new
                 {
-                    Kind = "Deployment",
+                    GroupVersionKind = SupportedResourceGroupVersionKinds.DeploymentV1,
                     Name = "deployment-2",
                     Children = new object[]
                     {
                         new
                         {
-                            Kind = "ReplicaSet",
+                            GroupVersionKind = SupportedResourceGroupVersionKinds.ReplicaSetV1,
                             Name = "replicaset-2",
                         }
                     }
@@ -165,19 +166,19 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         {
             var replicaSetUid = Guid.NewGuid().ToString();
 
-            var replicaSet = new ResourceResponseBuilder()
+            var replicaSet = new ResourceResponseBuilder().WithApiVersion("apps/v1")
                 .WithKind("ReplicaSet")
                 .WithName("rs")
                 .WithUid(replicaSetUid)
                 .Build();
 
-            var childPod = new ResourceResponseBuilder()
+            var childPod = new ResourceResponseBuilder().WithApiVersion("v1")
                 .WithKind("Pod")
                 .WithName("pod-1")
                 .WithOwnerUid(replicaSetUid)
                 .Build();
 
-            var irrelevantPod = new ResourceResponseBuilder()
+            var irrelevantPod = new ResourceResponseBuilder().WithApiVersion("v1")
                 .WithKind("Pod")
                 .WithName("pod-x")
                 .Build();
@@ -192,7 +193,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             var got = resourceRetriever.GetAllOwnedResources(
                 new List<ResourceIdentifier>
                 {
-                    new ResourceIdentifier("ReplicaSet", "rs", "octopus"),
+                    new ResourceIdentifier(SupportedResourceGroupVersionKinds.ReplicaSetV1, "rs", "octopus"),
                 },
                 null, new Options());
 
@@ -200,11 +201,11 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             {
                 new
                 {
-                    Kind = "ReplicaSet",
+                    GroupVersionKind = SupportedResourceGroupVersionKinds.ReplicaSetV1,
                     Name = "rs",
                     Children = new object[]
                     {
-                        new { Kind = "Pod", Name = "pod-1" }
+                        new { GroupVersionKind = SupportedResourceGroupVersionKinds.PodV1, Name = "pod-1" }
                     }
                 }
             });
@@ -227,44 +228,52 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         }
 
 
-        public KubectlGetResult Resource(string kind, string name, string @namespace, IKubectl kubectl)
+        public KubectlGetResult Resource(IResourceIdentity resourceIdentity, IKubectl kubectl)
         {
-            return new KubectlGetResult(resourceEntries[name], new List<string>
+            return new KubectlGetResult(resourceEntries[resourceIdentity.Name], new List<string>
             {
-                $"{Level.Info}: {resourceEntries[name]}"
+                $"{Level.Info}: {resourceEntries[resourceIdentity.Name]}"
             });
         }
 
-        public KubectlGetResult AllResources(string kind, string @namespace, IKubectl kubectl)
+        public KubectlGetResult AllResources(ResourceGroupVersionKind groupVersionKind, string @namespace, IKubectl kubectl)
         {
-            return new KubectlGetResult(resourcesByKind[kind], new List<string>
+            return new KubectlGetResult(resourcesByKind[groupVersionKind.Kind], new List<string>
             {
-                $"{Level.Info}: {resourcesByKind[kind]}"
+                $"{Level.Info}: {resourcesByKind[groupVersionKind.Kind]}"
             });
         }
     }
 
     public class ResourceResponseBuilder
     {
-        private static string template = @"
+        static string template = @"
 {{
-    ""kind"": ""{0}"",
+    ""apiVersion"": ""{0}"",
+    ""kind"": ""{1}"",
     ""metadata"": {{
-        ""name"": ""{1}"",
-        ""uid"": ""{2}"",
+        ""name"": ""{2}"",
+        ""uid"": ""{3}"",
         ""ownerReferences"": [
             {{
-                ""uid"": ""{3}""
+                ""uid"": ""{4}""
             }}
         ]
     }}
 }}";
 
-        private string kind = "";
-        private string name = "";
-        private string uid = Guid.NewGuid().ToString();
-        private string ownerUid = Guid.NewGuid().ToString();
-
+        string apiVersion = "";
+        string kind = "";
+        string name = "";
+        string uid = Guid.NewGuid().ToString();
+        string ownerUid = Guid.NewGuid().ToString();
+        
+        public ResourceResponseBuilder WithApiVersion(string apiVersion)
+        {
+            this.apiVersion = apiVersion;
+            return this;
+        }
+        
         public ResourceResponseBuilder WithKind(string kind)
         {
             this.kind = kind;
@@ -289,6 +298,14 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             return this;
         }
 
-        public string Build() => string.Format(template, kind, name, uid, ownerUid).ReplaceLineEndings().Replace(Environment.NewLine, string.Empty);
+        public string Build() =>
+            string.Format(template,
+                          apiVersion,
+                          kind,
+                          name,
+                          uid,
+                          ownerUid)
+                  .ReplaceLineEndings()
+                  .Replace(Environment.NewLine, string.Empty);
     }
 }
