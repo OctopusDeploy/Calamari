@@ -10,14 +10,14 @@ using Calamari.Kubernetes.Integration;
 
 namespace Calamari.Kubernetes.ResourceStatus
 {
-    public class ResourceStatusReportWrapper : IScriptWrapper
+    public class ResourceStatusReportScriptWrapper : IScriptWrapper
     {
         readonly Kubectl kubectl;
         readonly IVariables variables;
         readonly IResourceFinder resourceFinder;
         readonly IResourceStatusReportExecutor statusReportExecutor;
 
-        public ResourceStatusReportWrapper(
+        public ResourceStatusReportScriptWrapper(
             Kubectl kubectl,
             IVariables variables,
             IResourceFinder resourceFinder,

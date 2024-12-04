@@ -20,7 +20,7 @@ using NUnit.Framework;
 namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
 {
     [TestFixture]
-    public class ResourceStatusReportWrapperTests
+    public class ResourceStatusReportScriptWrapperTests
     {
         const ScriptSyntax Syntax = ScriptSyntax.Bash;
 
@@ -263,7 +263,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             variables.Set(SpecialVariables.ResourceStatusCheck, "True");
         }
 
-        static (ResourceStatusReportWrapper, RunningStatusCheckContainer) CreateResourceStatusReportWrapperAndStatusCheckContainer(IVariables variables, ICalamariFileSystem fileSystem = null)
+        static (ResourceStatusReportScriptWrapper, RunningStatusCheckContainer) CreateResourceStatusReportWrapperAndStatusCheckContainer(IVariables variables, ICalamariFileSystem fileSystem = null)
         {
             var log = new SilentLog();
             fileSystem = fileSystem ?? new TestCalamariPhysicalFileSystem();
@@ -278,12 +278,10 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                                                  });
             var resourceFinder = new ResourceFinder(variables, new ManifestRetriever(variables, fileSystem));
 
-            var wrapper = new ResourceStatusReportWrapper(kubectl,
-                                                          variables,
-                                                          resourceFinder,
-                                                          reportExecutor);
-
-            wrapper.NextWrapper = new StubScriptWrapper().Enable();
+            var wrapper = new ResourceStatusReportScriptWrapper(kubectl, variables, resourceFinder, reportExecutor)
+            {
+                NextWrapper = new StubScriptWrapper().Enable()
+            };
 
             return (wrapper, statusCheckerContainer);
         }
@@ -313,36 +311,6 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         {
             await Task.CompletedTask;
             CheckedResources.UnionWith(newResources);
-        }
-    }
-
-    class StubScriptWrapper : IScriptWrapper
-    {
-        bool isEnabled;
-
-        public int Priority { get; } = 1;
-        public IScriptWrapper NextWrapper { get; set; }
-
-        public bool IsEnabled(ScriptSyntax syntax)
-        {
-            return isEnabled;
-        }
-
-        // We manually enable this wrapper when needed,
-        // to avoid this wrapper being auto-registered and called from real programs
-        public StubScriptWrapper Enable()
-        {
-            isEnabled = true;
-            return this;
-        }
-
-        public CommandResult ExecuteScript(
-            Script script,
-            ScriptSyntax scriptSyntax,
-            ICommandLineRunner commandLineRunner,
-            Dictionary<string, string> environmentVars)
-        {
-            return new CommandResult("stub", 0);
         }
     }
 }
