@@ -73,6 +73,8 @@ namespace Calamari
             builder.RegisterType<ResourceStatusCheckTask>().AsSelf();
             builder.RegisterType<ResourceUpdateReporter>().As<IResourceUpdateReporter>().SingleInstance();
             builder.RegisterType<ManifestReporter>().As<IManifestReporter>().SingleInstance();
+            builder.RegisterType<ManifestRetriever>().As<IManifestRetriever>().SingleInstance();
+            builder.RegisterType<ResourceFinder>().As<IResourceFinder>().SingleInstance();
             builder.RegisterType<ResourceStatusReportExecutor>().As<IResourceStatusReportExecutor>();
             builder.RegisterType<GatherAndApplyRawYamlExecutor>().As<IRawYamlKubernetesApplyExecutor>();
             builder.RegisterType<KustomizeExecutor>().As<IKustomizeKubernetesApplyExecutor>();

@@ -10,7 +10,12 @@ namespace Calamari.Common.Features.Scripting
         /// <summary>
         /// The priority for the script wrapper that checks deployed Kubernetes resources status
         /// </summary>
-        public const int KubernetesStatusCheckPriority = 1002;
+        public const int KubernetesStatusCheckPriority = 1003;
+        
+        /// <summary>
+        /// The priority for the script wrapper that reports applied Kubernetes manifests
+        /// </summary>
+        public const int KubernetesManifestReportPriority = 1002;
         
         /// <summary>
         /// The priority for script wrappers that configure kubernetes authentication
