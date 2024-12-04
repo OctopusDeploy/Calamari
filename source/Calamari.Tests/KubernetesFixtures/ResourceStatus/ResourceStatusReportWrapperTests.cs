@@ -1,9 +1,11 @@
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
+using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes;
 using Calamari.Kubernetes.Integration;
@@ -20,21 +22,15 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
     [TestFixture]
     public class ResourceStatusReportWrapperTests
     {
-        private const ScriptSyntax Syntax = ScriptSyntax.Bash;
+        const ScriptSyntax Syntax = ScriptSyntax.Bash;
 
         [Test]
         public void Enabled_WhenDeployingToAKubernetesClusterWithStatusCheckEnabled()
         {
             var variables = new CalamariVariables();
-            var log = new SilentLog();
-            var fileSystem = new TestCalamariPhysicalFileSystem();
-            var kubectl = new Kubectl(variables, log, new CommandLineRunner(log, variables));
-            var reportExecutor =
-                new ResourceStatusReportExecutor(variables, (_, __, rs) => new MockResourceStatusChecker(rs));
-
             AddKubernetesStatusCheckVariables(variables);
 
-            var wrapper = new ResourceStatusReportWrapper(kubectl, variables, fileSystem, reportExecutor);
+            var (wrapper, _) = CreateResourceStatusReportWrapperAndStatusCheckContainer(variables);
 
             wrapper.IsEnabled(Syntax).Should().BeTrue();
         }
@@ -43,16 +39,10 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         public void NotEnabled_WhenDeployingToAKubernetesClusterWithStatusCheckDisabled()
         {
             var variables = new CalamariVariables();
-            var log = new SilentLog();
-            var fileSystem = new TestCalamariPhysicalFileSystem();
-            var kubectl = new Kubectl(variables, log, new CommandLineRunner(log, variables));
-            var reportExecutor =
-                new ResourceStatusReportExecutor(variables, (_, __, rs) => new MockResourceStatusChecker(rs));
-
             variables.Set(KnownVariables.EnabledFeatureToggles, "KubernetesDeploymentStatusFeatureToggle");
             variables.Set(SpecialVariables.ClusterUrl, "https://localhost");
 
-            var wrapper = new ResourceStatusReportWrapper(kubectl, variables, fileSystem, reportExecutor);
+            var (wrapper, _) = CreateResourceStatusReportWrapperAndStatusCheckContainer(variables);
 
             wrapper.IsEnabled(Syntax).Should().BeFalse();
         }
@@ -61,16 +51,10 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         public void NotEnabled_WhenDoingABlueGreenDeployment()
         {
             var variables = new CalamariVariables();
-            var log = new SilentLog();
-            var fileSystem = new TestCalamariPhysicalFileSystem();
-            var kubectl = new Kubectl(variables, log, new CommandLineRunner(log, variables));
-            var reportExecutor =
-                new ResourceStatusReportExecutor(variables, (_, __, rs) => new MockResourceStatusChecker(rs));
-
             AddKubernetesStatusCheckVariables(variables);
             variables.Set(SpecialVariables.DeploymentStyle, "bluegreen");
 
-            var wrapper = new ResourceStatusReportWrapper(kubectl, variables, fileSystem, reportExecutor);
+            var (wrapper, _) = CreateResourceStatusReportWrapperAndStatusCheckContainer(variables);
 
             wrapper.IsEnabled(Syntax).Should().BeFalse();
         }
@@ -79,265 +63,246 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         public void NotEnabled_WhenWaitForDeploymentIsSelected()
         {
             var variables = new CalamariVariables();
-            var log = new SilentLog();
-            var fileSystem = new TestCalamariPhysicalFileSystem();
-            var kubectl = new Kubectl(variables, log, new CommandLineRunner(log, variables));
-            var reportExecutor =
-                new ResourceStatusReportExecutor(variables, (_, __, rs) => new MockResourceStatusChecker(rs));
-
             AddKubernetesStatusCheckVariables(variables);
             variables.Set(SpecialVariables.DeploymentWait, "wait");
 
-            var wrapper = new ResourceStatusReportWrapper(kubectl, variables, fileSystem, reportExecutor);
+            var (wrapper, _) = CreateResourceStatusReportWrapperAndStatusCheckContainer(variables);
 
             wrapper.IsEnabled(Syntax).Should().BeFalse();
         }
 
-         [Test]
-         public void FindsCorrectManifestFiles()
-         {
-             var variables = new CalamariVariables();
-             var log = new SilentLog();
-             var fileSystem = new TestCalamariPhysicalFileSystem();
-             var kubectl = new Kubectl(variables, log, new CommandLineRunner(log, variables));
-             MockResourceStatusChecker statusChecker = null;
-             var reportExecutor =
-                 new ResourceStatusReportExecutor(variables, (_, __, rs) => statusChecker = new MockResourceStatusChecker(rs));
+        [Test]
+        public void FindsCorrectManifestFiles()
+        {
+            var variables = new CalamariVariables();
+            AddKubernetesStatusCheckVariables(variables);
+            variables.Set(SpecialVariables.CustomResourceYamlFileName, "custom.yml");
 
-             AddKubernetesStatusCheckVariables(variables);
-             variables.Set(SpecialVariables.CustomResourceYamlFileName, "custom.yml");
+            var fileSystem = new TestCalamariPhysicalFileSystem();
+            var testDirectory = TestEnvironment.GetTestPath("KubernetesFixtures", "ResourceStatus", "assets", "manifests");
+            fileSystem.SetFileBasePath(testDirectory);
 
-             var testDirectory =
-                 TestEnvironment.GetTestPath("KubernetesFixtures", "ResourceStatus", "assets", "manifests");
+            var (wrapper, statusCheckContainer) = CreateResourceStatusReportWrapperAndStatusCheckContainer(variables, fileSystem);
 
-             fileSystem.SetFileBasePath(testDirectory);
+            wrapper.ExecuteScript(
+                                  new Script("stub"),
+                                  Syntax,
+                                  new CommandLineRunner(new SilentLog(), variables),
+                                  new Dictionary<string, string>());
 
-             var wrapper = new ResourceStatusReportWrapper(kubectl, variables, fileSystem, reportExecutor);
-             wrapper.NextWrapper = new StubScriptWrapper().Enable();
+            statusCheckContainer.StatusCheck.Should().NotBeNull();
+            statusCheckContainer.StatusCheck.CheckedResources.Should()
+                                .BeEquivalentTo(
+                                                new ResourceIdentifier(SupportedResourceGroupVersionKinds.DeploymentV1, "deployment", "default"),
+                                                new ResourceIdentifier(SupportedResourceGroupVersionKinds.IngressV1, "ingress", "default"),
+                                                new ResourceIdentifier(SupportedResourceGroupVersionKinds.SecretV1, "secret", "default"),
+                                                new ResourceIdentifier(SupportedResourceGroupVersionKinds.ServiceV1, "service", "default"),
+                                                new ResourceIdentifier(new ResourceGroupVersionKind(null, null, "CustomResource"), "custom-resource", "default"));
+        }
 
-             wrapper.ExecuteScript(
-                 new Script("stub"),
-                 Syntax,
-                 new CommandLineRunner(log, variables),
-                 new Dictionary<string, string>());
+        [Test]
+        public void FindsConfigMapsDeployedInADeployContainerStepWhenConfigMapDataIsNotEmpty()
+        {
+            var variables = new CalamariVariables();
+            const string configMapName = "ConfigMap-Deployment-01";
+            AddKubernetesStatusCheckVariables(variables);
+            variables.Set("Octopus.Action.KubernetesContainers.KubernetesConfigMapEnabled", "True");
+            variables.Set("Octopus.Action.KubernetesContainers.ComputedConfigMapName", configMapName);
+            variables.Set("Octopus.Action.KubernetesContainers.ConfigMapData[1].FileName", "1");
 
-             statusChecker.Should().NotBeNull();
-             statusChecker.CheckedResources.Should().BeEquivalentTo(
-                 new ResourceIdentifier(SupportedResourceGroupVersionKinds.DeploymentV1, "deployment", "default"),
-                 new ResourceIdentifier(SupportedResourceGroupVersionKinds.IngressV1, "ingress", "default"),
-                 new ResourceIdentifier(SupportedResourceGroupVersionKinds.SecretV1, "secret", "default"),
-                 new ResourceIdentifier(SupportedResourceGroupVersionKinds.ServiceV1, "service", "default"),
-                 new ResourceIdentifier(new ResourceGroupVersionKind(null, null, "CustomResource"), "custom-resource", "default"));
-         }
+            var fileSystem = new TestCalamariPhysicalFileSystem();
+            var tempDirectory = fileSystem.CreateTemporaryDirectory();
+            fileSystem.SetFileBasePath(tempDirectory);
 
-         [Test]
-         public void FindsConfigMapsDeployedInADeployContainerStepWhenConfigMapDataIsNotEmpty()
-         {
-             var variables = new CalamariVariables();
-             var log = new SilentLog();
-             var fileSystem = new TestCalamariPhysicalFileSystem();
-             var kubectl = new Kubectl(variables, log, new CommandLineRunner(log, variables));
-             MockResourceStatusChecker statusChecker = null;
-             var reportExecutor =
-                 new ResourceStatusReportExecutor(variables, (_, __, rs) => statusChecker = new MockResourceStatusChecker(rs));
+            var (wrapper, statusCheckContainer) = CreateResourceStatusReportWrapperAndStatusCheckContainer(variables, fileSystem);
 
-             const string configMapName = "ConfigMap-Deployment-01";
-             AddKubernetesStatusCheckVariables(variables);
-             variables.Set("Octopus.Action.KubernetesContainers.KubernetesConfigMapEnabled", "True");
-             variables.Set("Octopus.Action.KubernetesContainers.ComputedConfigMapName", configMapName);
-             variables.Set("Octopus.Action.KubernetesContainers.ConfigMapData[1].FileName", "1");
+            try
+            {
+                wrapper.ExecuteScript(
+                                      new Script("stub"),
+                                      Syntax,
+                                      new CommandLineRunner(new SilentLog(), variables),
+                                      new Dictionary<string, string>());
 
-             var tempDirectory = fileSystem.CreateTemporaryDirectory();
-             try
-             {
-                 fileSystem.SetFileBasePath(tempDirectory);
+                statusCheckContainer.StatusCheck.Should().NotBeNull();
+                statusCheckContainer.StatusCheck.CheckedResources.Should().BeEquivalentTo(new ResourceIdentifier(SupportedResourceGroupVersionKinds.ConfigMapV1, configMapName, "default"));
+            }
+            finally
+            {
+                fileSystem.DeleteDirectory(tempDirectory);
+            }
+        }
 
-                 var wrapper = new ResourceStatusReportWrapper(kubectl, variables, fileSystem, reportExecutor);
-                 wrapper.NextWrapper = new StubScriptWrapper().Enable();
+        [Test]
+        public void SkipsConfigMapsInADeployContainerStepWhenConfigMapDataIsNotSet()
+        {
+            var variables = new CalamariVariables();
+            const string configMapName = "ConfigMap-Deployment-01";
+            AddKubernetesStatusCheckVariables(variables);
+            variables.Set("Octopus.Action.KubernetesContainers.KubernetesConfigMapEnabled", "True");
+            variables.Set("Octopus.Action.KubernetesContainers.ComputedConfigMapName", configMapName);
 
-                 wrapper.ExecuteScript(
-                     new Script("stub"),
-                     Syntax,
-                     new CommandLineRunner(log, variables),
-                     new Dictionary<string, string>());
+            var fileSystem = new TestCalamariPhysicalFileSystem();
+            var tempDirectory = fileSystem.CreateTemporaryDirectory();
+            fileSystem.SetFileBasePath(tempDirectory);
 
-                 statusChecker.Should().NotBeNull();
-                 statusChecker.CheckedResources.Should().BeEquivalentTo(new ResourceIdentifier(SupportedResourceGroupVersionKinds.ConfigMapV1, configMapName, "default"));
-             }
-             finally
-             {
-                 fileSystem.DeleteDirectory(tempDirectory);
-             }
-         }
+            var (wrapper, statusCheckContainer) = CreateResourceStatusReportWrapperAndStatusCheckContainer(variables, fileSystem);
 
-         [Test]
-         public void SkipsConfigMapsInADeployContainerStepWhenConfigMapDataIsNotSet()
-         {
-             var variables = new CalamariVariables();
-             var log = new SilentLog();
-             var fileSystem = new TestCalamariPhysicalFileSystem();
-             var kubectl = new Kubectl(variables, log, new CommandLineRunner(log, variables));
-             MockResourceStatusChecker statusChecker = null;
-             var reportExecutor =
-                 new ResourceStatusReportExecutor(variables, (_, __, rs) => statusChecker = new MockResourceStatusChecker(rs));
+            try
+            {
+                wrapper.ExecuteScript(
+                                      new Script("stub"),
+                                      Syntax,
+                                      new CommandLineRunner(new SilentLog(), variables),
+                                      new Dictionary<string, string>());
 
-             const string configMapName = "ConfigMap-Deployment-01";
-             AddKubernetesStatusCheckVariables(variables);
-             variables.Set("Octopus.Action.KubernetesContainers.KubernetesConfigMapEnabled", "True");
-             variables.Set("Octopus.Action.KubernetesContainers.ComputedConfigMapName", configMapName);
+                statusCheckContainer.StatusCheck.Should().NotBeNull();
+                statusCheckContainer.StatusCheck.CheckedResources.Should().BeEmpty();
+            }
+            finally
+            {
+                fileSystem.DeleteDirectory(tempDirectory);
+            }
+        }
 
-             var tempDirectory = fileSystem.CreateTemporaryDirectory();
-             try
-             {
-                 fileSystem.SetFileBasePath(tempDirectory);
+        [Test]
+        public void FindsSecretsDeployedInADeployContainerStepWhenSecretDataIsSet()
+        {
+            var variables = new CalamariVariables();
+            const string secret = "Secret-Deployment-01";
+            AddKubernetesStatusCheckVariables(variables);
+            variables.Set("Octopus.Action.KubernetesContainers.KubernetesSecretEnabled", "True");
+            variables.Set("Octopus.Action.KubernetesContainers.ComputedSecretName", secret);
+            variables.Set("Octopus.Action.KubernetesContainers.SecretData[1].FileName", "1");
 
-                 var wrapper = new ResourceStatusReportWrapper(kubectl, variables, fileSystem, reportExecutor);
-                 wrapper.NextWrapper = new StubScriptWrapper().Enable();
+            var fileSystem = new TestCalamariPhysicalFileSystem();
+            var tempDirectory = fileSystem.CreateTemporaryDirectory();
+            fileSystem.SetFileBasePath(tempDirectory);
 
-                 wrapper.ExecuteScript(
-                     new Script("stub"),
-                     Syntax,
-                     new CommandLineRunner(log, variables),
-                     new Dictionary<string, string>());
+            var (wrapper, statusCheckContainer) = CreateResourceStatusReportWrapperAndStatusCheckContainer(variables, fileSystem);
 
-                 statusChecker.Should().NotBeNull();
-                 statusChecker.CheckedResources.Should().BeEmpty();
-             }
-             finally
-             {
-                 fileSystem.DeleteDirectory(tempDirectory);
-             }
-         }
+            try
+            {
+                wrapper.ExecuteScript(
+                                      new Script("stub"),
+                                      Syntax,
+                                      new CommandLineRunner(new SilentLog(), variables),
+                                      new Dictionary<string, string>());
 
-         [Test]
-         public void FindsSecretsDeployedInADeployContainerStepWhenSecretDataIsSet()
-         {
-             var variables = new CalamariVariables();
-             var log = new SilentLog();
-             var fileSystem = new TestCalamariPhysicalFileSystem();
-             var kubectl = new Kubectl(variables, log, new CommandLineRunner(log, variables));
-             MockResourceStatusChecker statusChecker = null;
-             var reportExecutor =
-                 new ResourceStatusReportExecutor(variables, (_, __, rs) => statusChecker = new MockResourceStatusChecker(rs));
+                statusCheckContainer.StatusCheck.Should().NotBeNull();
+                statusCheckContainer.StatusCheck.CheckedResources.Should()
+                                    .BeEquivalentTo(new[]
+                                    {
+                                        new ResourceIdentifier(SupportedResourceGroupVersionKinds.SecretV1, secret, "default")
+                                    });
+            }
+            finally
+            {
+                fileSystem.DeleteDirectory(tempDirectory);
+            }
+        }
 
-             const string secret = "Secret-Deployment-01";
-             AddKubernetesStatusCheckVariables(variables);
-             variables.Set("Octopus.Action.KubernetesContainers.KubernetesSecretEnabled", "True");
-             variables.Set("Octopus.Action.KubernetesContainers.ComputedSecretName", secret);
-             variables.Set("Octopus.Action.KubernetesContainers.SecretData[1].FileName", "1");
+        [Test]
+        public void SkipsSecretsInADeployContainerStepWhenSecretDataIsNotSet()
+        {
+            var variables = new CalamariVariables();
+            const string secret = "Secret-Deployment-01";
+            AddKubernetesStatusCheckVariables(variables);
+            variables.Set("Octopus.Action.KubernetesContainers.KubernetesSecretEnabled", "True");
+            variables.Set("Octopus.Action.KubernetesContainers.ComputedSecretName", secret);
 
-             var tempDirectory = fileSystem.CreateTemporaryDirectory();
-             try
-             {
-                 fileSystem.SetFileBasePath(tempDirectory);
+            var fileSystem = new TestCalamariPhysicalFileSystem();
+            var tempDirectory = fileSystem.CreateTemporaryDirectory();
+            fileSystem.SetFileBasePath(tempDirectory);
 
-                 var wrapper = new ResourceStatusReportWrapper(kubectl, variables, fileSystem, reportExecutor);
-                 wrapper.NextWrapper = new StubScriptWrapper().Enable();
+            var (wrapper, statusCheckContainer) = CreateResourceStatusReportWrapperAndStatusCheckContainer(variables, fileSystem);
 
-                 wrapper.ExecuteScript(
-                     new Script("stub"),
-                     Syntax,
-                     new CommandLineRunner(log, variables),
-                     new Dictionary<string, string>());
+            try
+            {
+                wrapper.ExecuteScript(
+                                      new Script("stub"),
+                                      Syntax,
+                                      new CommandLineRunner(new SilentLog(), variables),
+                                      new Dictionary<string, string>());
 
-                 statusChecker.Should().NotBeNull();
-                 statusChecker.CheckedResources.Should().BeEquivalentTo(new[]
-                 {
-                     new ResourceIdentifier(SupportedResourceGroupVersionKinds.SecretV1, secret, "default")
-                 });
-             }
-             finally
-             {
-                 fileSystem.DeleteDirectory(tempDirectory);
-             }
-         }
+                statusCheckContainer.StatusCheck.Should().NotBeNull();
+                statusCheckContainer.StatusCheck.CheckedResources.Should().BeEmpty();
+            }
+            finally
+            {
+                fileSystem.DeleteDirectory(tempDirectory);
+            }
+        }
 
-         [Test]
-         public void SkipsSecretsInADeployContainerStepWhenSecretDataIsNotSet()
-         {
-             var variables = new CalamariVariables();
-             var log = new SilentLog();
-             var fileSystem = new TestCalamariPhysicalFileSystem();
-             var kubectl = new Kubectl(variables, log, new CommandLineRunner(log, variables));
-             MockResourceStatusChecker statusChecker = null;
-             var reportExecutor =
-                 new ResourceStatusReportExecutor(variables, (_, __, rs) => statusChecker = new MockResourceStatusChecker(rs));
+        [TestCase(null)]
+        [TestCase("")]
+        public void SetNamespaceToDefaultWhenTheDefaultNamespaceIsNullOrAnEmptyString(string @namespace)
+        {
+            var variables = new CalamariVariables();
+            AddKubernetesStatusCheckVariables(variables);
+            variables.Set(SpecialVariables.Namespace, @namespace);
 
-             const string secret = "Secret-Deployment-01";
-             AddKubernetesStatusCheckVariables(variables);
-             variables.Set("Octopus.Action.KubernetesContainers.KubernetesSecretEnabled", "True");
-             variables.Set("Octopus.Action.KubernetesContainers.ComputedSecretName", secret);
+            var fileSystem = new TestCalamariPhysicalFileSystem();
+            var testDirectory = TestEnvironment.GetTestPath("KubernetesFixtures", "ResourceStatus", "assets", "no-namespace");
+            fileSystem.SetFileBasePath(testDirectory);
 
-             var tempDirectory = fileSystem.CreateTemporaryDirectory();
-             try
-             {
-                 fileSystem.SetFileBasePath(tempDirectory);
+            var (wrapper, statusCheckContainer) = CreateResourceStatusReportWrapperAndStatusCheckContainer(variables, fileSystem);
 
-                 var wrapper = new ResourceStatusReportWrapper(kubectl, variables, fileSystem, reportExecutor);
-                 wrapper.NextWrapper = new StubScriptWrapper().Enable();
+            wrapper.ExecuteScript(
+                                  new Script("stub"),
+                                  Syntax,
+                                  new CommandLineRunner(new SilentLog(), variables),
+                                  new Dictionary<string, string>());
 
-                 wrapper.ExecuteScript(
-                     new Script("stub"),
-                     Syntax,
-                     new CommandLineRunner(log, variables),
-                     new Dictionary<string, string>());
+            statusCheckContainer.StatusCheck.Should().NotBeNull();
+            statusCheckContainer.StatusCheck.CheckedResources.Should().BeEquivalentTo(new ResourceIdentifier(SupportedResourceGroupVersionKinds.DeploymentV1, "deployment", "default"));
+        }
 
-                 statusChecker.Should().NotBeNull();
-                 statusChecker.CheckedResources.Should().BeEmpty();
-             }
-             finally
-             {
-                 fileSystem.DeleteDirectory(tempDirectory);
-             }
-         }
+        static void AddKubernetesStatusCheckVariables(IVariables variables)
+        {
+            variables.Set(SpecialVariables.ResourceStatusCheck, "True");
+        }
 
-         [TestCase(null)]
-         [TestCase("")]
-         public void SetNamespaceToDefaultWhenTheDefaultNamespaceIsNullOrAnEmptyString(string @namespace)
-         {
-             var variables = new CalamariVariables();
-             var log = new SilentLog();
-             var fileSystem = new TestCalamariPhysicalFileSystem();
-             var kubectl = new Kubectl(variables, log, new CommandLineRunner(log, variables));
-             MockResourceStatusChecker statusChecker = null;
-             var reportExecutor =
-                 new ResourceStatusReportExecutor(variables, (_, __, rs) => statusChecker = new MockResourceStatusChecker(rs));
+        static (ResourceStatusReportWrapper, RunningStatusCheckContainer) CreateResourceStatusReportWrapperAndStatusCheckContainer(IVariables variables, ICalamariFileSystem fileSystem = null)
+        {
+            var log = new SilentLog();
+            fileSystem = fileSystem ?? new TestCalamariPhysicalFileSystem();
+            var kubectl = new Kubectl(variables, log, new CommandLineRunner(log, variables));
+            var statusCheckerContainer = new RunningStatusCheckContainer();
+            var reportExecutor =
+                new ResourceStatusReportExecutor(variables,
+                                                 (_, __, rs) =>
+                                                 {
+                                                     statusCheckerContainer.StatusCheck = new MockRunningResourceStatusCheck(rs);
+                                                     return statusCheckerContainer.StatusCheck;
+                                                 });
+            var resourceFinder = new ResourceFinder(variables, new ManifestRetriever(variables, fileSystem));
 
-             AddKubernetesStatusCheckVariables(variables);
-             variables.Set(SpecialVariables.Namespace, @namespace);
+            var wrapper = new ResourceStatusReportWrapper(kubectl,
+                                                          variables,
+                                                          resourceFinder,
+                                                          reportExecutor);
 
-             var testDirectory =
-                 TestEnvironment.GetTestPath("KubernetesFixtures", "ResourceStatus", "assets", "no-namespace");
+            wrapper.NextWrapper = new StubScriptWrapper().Enable();
 
-             fileSystem.SetFileBasePath(testDirectory);
-
-             var wrapper = new ResourceStatusReportWrapper(kubectl, variables, fileSystem, reportExecutor);
-             wrapper.NextWrapper = new StubScriptWrapper().Enable();
-
-             wrapper.ExecuteScript(
-                 new Script("stub"),
-                 Syntax,
-                 new CommandLineRunner(log, variables),
-                 new Dictionary<string, string>());
-
-             statusChecker.Should().NotBeNull();
-             statusChecker.CheckedResources.Should().BeEquivalentTo(new ResourceIdentifier(SupportedResourceGroupVersionKinds.DeploymentV1, "deployment", "default"));
-         }
-
-         static void AddKubernetesStatusCheckVariables(IVariables variables)
-         {
-             variables.Set(SpecialVariables.ResourceStatusCheck, "True");
-         }
+            return (wrapper, statusCheckerContainer);
+        }
     }
 
-    internal class MockResourceStatusChecker : IRunningResourceStatusCheck
+    // This class is used for capturing the status check which is created by a factory delegate.
+    class RunningStatusCheckContainer
     {
-        public HashSet<ResourceIdentifier> CheckedResources { get; } = new HashSet<ResourceIdentifier>();
+        public MockRunningResourceStatusCheck StatusCheck { get; set; }
+    }
 
-        public MockResourceStatusChecker(IEnumerable<ResourceIdentifier> initialResources)
+    class MockRunningResourceStatusCheck : IRunningResourceStatusCheck
+    {
+        public MockRunningResourceStatusCheck(IEnumerable<ResourceIdentifier> initialResources)
         {
             CheckedResources.UnionWith(initialResources);
         }
+
+        public HashSet<ResourceIdentifier> CheckedResources { get; } = new HashSet<ResourceIdentifier>();
 
         public async Task<bool> WaitForCompletionOrTimeout(CancellationToken cancellationToken)
         {
@@ -351,13 +316,17 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         }
     }
 
-    internal class StubScriptWrapper : IScriptWrapper
+    class StubScriptWrapper : IScriptWrapper
     {
-        private bool isEnabled = false;
+        bool isEnabled;
 
         public int Priority { get; } = 1;
         public IScriptWrapper NextWrapper { get; set; }
-        public bool IsEnabled(ScriptSyntax syntax) => isEnabled;
+
+        public bool IsEnabled(ScriptSyntax syntax)
+        {
+            return isEnabled;
+        }
 
         // We manually enable this wrapper when needed,
         // to avoid this wrapper being auto-registered and called from real programs

@@ -5,7 +5,6 @@ using System.Threading;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
-using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes.Integration;
 
@@ -13,20 +12,20 @@ namespace Calamari.Kubernetes.ResourceStatus
 {
     public class ResourceStatusReportWrapper : IScriptWrapper
     {
-        private readonly Kubectl kubectl;
-        private readonly IVariables variables;
-        private readonly ICalamariFileSystem fileSystem;
-        private readonly IResourceStatusReportExecutor statusReportExecutor;
+        readonly Kubectl kubectl;
+        readonly IVariables variables;
+        readonly IResourceFinder resourceFinder;
+        readonly IResourceStatusReportExecutor statusReportExecutor;
 
         public ResourceStatusReportWrapper(
             Kubectl kubectl,
             IVariables variables,
-            ICalamariFileSystem fileSystem,
+            IResourceFinder resourceFinder,
             IResourceStatusReportExecutor statusReportExecutor)
         {
             this.kubectl = kubectl;
             this.variables = variables;
-            this.fileSystem = fileSystem;
+            this.resourceFinder = resourceFinder;
             this.statusReportExecutor = statusReportExecutor;
         }
 
@@ -65,7 +64,6 @@ namespace Calamari.Kubernetes.ResourceStatus
             var workingDirectory = Path.GetDirectoryName(script.File);
             kubectl.SetWorkingDirectory(workingDirectory);
             kubectl.SetEnvironmentVariables(environmentVars);
-            var resourceFinder = new ResourceFinder(variables, fileSystem);
 
             var result = NextWrapper.ExecuteScript(script, scriptSyntax, commandLineRunner, environmentVars);
             if (result.ExitCode != 0)
