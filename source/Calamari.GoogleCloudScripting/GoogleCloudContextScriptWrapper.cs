@@ -95,9 +95,8 @@ namespace Calamari.GoogleCloudScripting
                 var gcloudConfigPath = Path.Combine(workingDirectory, "gcloud-cli");
                 environmentVars.Add("CLOUDSDK_CONFIG", gcloudConfigPath);
                 Directory.CreateDirectory(gcloudConfigPath);
-
-                var isGcloudSet = SetGcloudExecutable();
-                if (!isGcloudSet)
+                
+                if (!TrySetGcloudExecutable())
                 {
                     return errorResult;
                 }
@@ -121,16 +120,14 @@ namespace Calamari.GoogleCloudScripting
 
                     if (!string.IsNullOrWhiteSpace(jsonKey))
                     {
-                        var isServiceAccountAuthValid = AuthenticateWithServiceAccount(jsonKey);
-                        if (!isServiceAccountAuthValid)
+                        if (!TryAuthenticateWithServiceAccount(jsonKey))
                         {
                             return errorResult;
                         }
                     }
                     else if (!string.IsNullOrWhiteSpace(jwtToken))
                     {
-                        var isOidcAuthValid = AuthenticateWithOidc(accountVariable, jwtToken, impersonationEmails);
-                        if (!isOidcAuthValid)
+                        if (!TryAuthenticateWithOidc(accountVariable, jwtToken, impersonationEmails))
                         {
                             return errorResult;
                         }
@@ -205,7 +202,7 @@ namespace Calamari.GoogleCloudScripting
                 return result;
             }
 
-            bool SetGcloudExecutable()
+            bool TrySetGcloudExecutable()
             {
                 gcloud = variables.Get("Octopus.Action.GoogleCloud.CustomExecutable");
                 if (!string.IsNullOrEmpty(gcloud))
@@ -253,7 +250,7 @@ namespace Calamari.GoogleCloudScripting
                 }
             }
 
-            bool AuthenticateWithServiceAccount(string jsonKey)
+            bool TryAuthenticateWithServiceAccount(string jsonKey)
             {
                 log.Verbose("Authenticating to gcloud with key file");
                 var bytes = Convert.FromBase64String(jsonKey);
@@ -272,7 +269,7 @@ namespace Calamari.GoogleCloudScripting
                 return true;
             }
 
-            bool AuthenticateWithOidc(string accountVariable, string jwtToken, string? impersonationEmails)
+            bool TryAuthenticateWithOidc(string accountVariable, string jwtToken, string? impersonationEmails)
             {
                 log.Verbose("Authenticating to gcloud with JWT token.");
                 var serverUri = variables.Get("Octopus.Web.ServerUri");
