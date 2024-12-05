@@ -6,7 +6,6 @@ using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing;
-using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Proxies;
@@ -64,7 +63,7 @@ namespace Calamari.GoogleCloudScripting
             readonly string workingDirectory;
             readonly string jwtFilePath;
             readonly string jsonAuthFilePath;
-            private string? gcloud = String.Empty;
+            private string gcloud = String.Empty;
 
             public SetupGCloudAuthentication(IVariables variables,
                 ILog log,
@@ -97,26 +96,10 @@ namespace Calamari.GoogleCloudScripting
                 environmentVars.Add("CLOUDSDK_CONFIG", gcloudConfigPath);
                 Directory.CreateDirectory(gcloudConfigPath);
 
-                gcloud = variables.Get("Octopus.Action.GoogleCloud.CustomExecutable");
-                if (!string.IsNullOrEmpty(gcloud))
+                var isGcloudSet = SetGcloudExecutable();
+                if (!isGcloudSet)
                 {
-                    if (!File.Exists(gcloud))
-                    {
-                        log.Error($"The custom gcloud location of {gcloud} does not exist. Please make sure gcloud is installed in that location.");
-                        return errorResult;
-                    }
-                }
-                else
-                {
-                    gcloud = CalamariEnvironment.IsRunningOnWindows
-                        ? ExecuteCommandAndReturnOutput("where", "gcloud.cmd")
-                        : ExecuteCommandAndReturnOutput("which", "gcloud");
-
-                    if (gcloud == null)
-                    {
-                        log.Error("Could not find gcloud. Make sure gcloud is on the PATH.");
-                        return errorResult;
-                    }
+                    return errorResult;
                 }
 
                 log.Verbose($"Using gcloud from {gcloud}.");
@@ -128,97 +111,34 @@ namespace Calamari.GoogleCloudScripting
                     impersonationEmails = variables.Get("Octopus.Action.GoogleCloud.ServiceAccountEmails");
                 }
 
-                var project = variables.Get("Octopus.Action.GoogleCloud.Project") ?? string.Empty;
-                var region = variables.Get("Octopus.Action.GoogleCloud.Region") ?? string.Empty;
-                var zone = variables.Get("Octopus.Action.GoogleCloud.Zone") ?? string.Empty;
-                if (!string.IsNullOrEmpty(project))
-                {
-                    environmentVars.Add("CLOUDSDK_CORE_PROJECT", project);
-                }
-                if (!string.IsNullOrEmpty(region))
-                {
-                    environmentVars.Add("CLOUDSDK_COMPUTE_REGION", region);
-                }
-                if (!string.IsNullOrEmpty(zone))
-                {
-                    environmentVars.Add("CLOUDSDK_COMPUTE_ZONE", zone);
-                }
+                ConfigureGcloudEnvironmentVariables();
 
                 if (!useVmServiceAccount)
                 {
                     var accountVariable = variables.Get("Octopus.Action.GoogleCloudAccount.Variable");
                     var jsonKey = variables.Get($"{accountVariable}.JsonKey");
-                    
                     var jwtToken = variables.Get($"{accountVariable}.OpenIdConnect.Jwt");
-                    var serverUri = variables.Get("Octopus.Web.ServerUri");
-                    var audience = variables.Get($"{accountVariable}.Audience");
 
-                    if (jsonKey == null && jwtToken == null)
+                    if (!string.IsNullOrWhiteSpace(jsonKey))
                     {
-                        log.Error("Failed to authenticate with gcloud. Key file and JWT token are both empty.");
-                        return errorResult;
+                        var isServiceAccountAuthValid = AuthenticateWithServiceAccount(jsonKey);
+                        if (!isServiceAccountAuthValid)
+                        {
+                            return errorResult;
+                        }
                     }
-
-                    if (jwtToken != null)
+                    else if (!string.IsNullOrWhiteSpace(jwtToken))
                     {
-                        log.Verbose("Authenticating to gcloud with JWT token.");
-
-                        if (serverUri == null)
+                        var isOidcAuthValid = AuthenticateWithOidc(accountVariable, jwtToken, impersonationEmails);
+                        if (!isOidcAuthValid)
                         {
-                            log.Error("Failed to authenticate with gcloud. ServerUri is empty.");
                             return errorResult;
-                        }
-
-                        if (audience == null)
-                        {
-                            log.Error("Failed to authenticate with gcloud. Audience is empty.");
-                            return errorResult;
-                        }
-    
-                        File.WriteAllText(jwtFilePath, jwtToken);  
-
-                        var createConfigResult = ExecuteCommand("iam",
-                                                                "workload-identity-pools",
-                                                                "create-cred-config",
-                                                                audience.Substring(audience.IndexOf("iam.googleapis.com/", StringComparison.Ordinal) + "iam.googleapis.com/".Length),
-                                                                $"--service-account={impersonationEmails}",
-                                                                "--service-account-token-lifetime-seconds=3600",
-                                                                "--subject-token-type=urn:ietf:params:oauth:token-type:jwt",
-                                                                "--credential-source-type=text",
-                                                                $"--credential-source-file={jwtFilePath}",
-                                                                "--app-id-uri",
-                                                                serverUri,
-                                                                $"--output-file={jsonAuthFilePath}");
-                        if (createConfigResult.ExitCode != 0)  
-                        {  
-                            log.Error("Failed to create credential config with gcloud.");  
-                            return errorResult;  
-                        }  
-
-                        if (ExecuteCommand("auth",  
-                                           "login",  
-                                           $"--cred-file={jsonAuthFilePath}")  
-                                .ExitCode != 0)  
-                        {  
-                            log.Error("Failed to authenticate with gcloud.");  
-                            return errorResult;  
                         }
                     }
                     else
                     {
-                        log.Verbose("Authenticating to gcloud with key file");
-                        var bytes = Convert.FromBase64String(jsonKey);
-                        using (var keyFile = new TemporaryFile(Path.Combine(workingDirectory, Path.GetRandomFileName())))
-                        {
-                            File.WriteAllBytes(keyFile.FilePath, bytes);
-                            if (ExecuteCommand("auth", "activate-service-account", $"--key-file=\"{keyFile.FilePath}\"")
-                                    .ExitCode
-                                != 0)
-                            {
-                                log.Error("Failed to authenticate with gcloud.");
-                                return errorResult;
-                            }
-                        }
+                        log.Error("Failed to authenticate with gcloud. Key file and JWT token are both empty.");
+                        return errorResult;
                     }
 
                     log.Verbose("Successfully authenticated with gcloud");
@@ -283,6 +203,124 @@ namespace Calamari.GoogleCloudScripting
                 }
 
                 return result;
+            }
+
+            bool SetGcloudExecutable()
+            {
+                gcloud = variables.Get("Octopus.Action.GoogleCloud.CustomExecutable");
+                if (!string.IsNullOrEmpty(gcloud))
+                {
+                    if (!File.Exists(gcloud))
+                    {
+                        log.Error($"The custom gcloud location of {gcloud} does not exist. Please make sure gcloud is installed in that location.");
+                        return false;
+                    }
+                }
+                else
+                {
+                    gcloud = CalamariEnvironment.IsRunningOnWindows
+                        ? ExecuteCommandAndReturnOutput("where", "gcloud.cmd")
+                        : ExecuteCommandAndReturnOutput("which", "gcloud");
+
+                    if (string.IsNullOrEmpty(gcloud))
+                    {
+                        log.Error("Could not find gcloud. Make sure gcloud is on the PATH.");
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+
+            void ConfigureGcloudEnvironmentVariables()
+            {
+                var project = variables.Get("Octopus.Action.GoogleCloud.Project") ?? string.Empty;
+                var region = variables.Get("Octopus.Action.GoogleCloud.Region") ?? string.Empty;
+                var zone = variables.Get("Octopus.Action.GoogleCloud.Zone") ?? string.Empty;
+                if (!string.IsNullOrEmpty(project))
+                {
+                    environmentVars.Add("CLOUDSDK_CORE_PROJECT", project);
+                }
+
+                if (!string.IsNullOrEmpty(region))
+                {
+                    environmentVars.Add("CLOUDSDK_COMPUTE_REGION", region);
+                }
+
+                if (!string.IsNullOrEmpty(zone))
+                {
+                    environmentVars.Add("CLOUDSDK_COMPUTE_ZONE", zone);
+                }
+            }
+
+            bool AuthenticateWithServiceAccount(string jsonKey)
+            {
+                log.Verbose("Authenticating to gcloud with key file");
+                var bytes = Convert.FromBase64String(jsonKey);
+                using (var keyFile = new TemporaryFile(Path.Combine(workingDirectory, Path.GetRandomFileName())))
+                {
+                    File.WriteAllBytes(keyFile.FilePath, bytes);
+                    if (ExecuteCommand("auth", "activate-service-account", $"--key-file=\"{keyFile.FilePath}\"")
+                            .ExitCode
+                        != 0)
+                    {
+                        log.Error("Failed to authenticate with gcloud.");
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+
+            bool AuthenticateWithOidc(string accountVariable, string jwtToken, string? impersonationEmails)
+            {
+                log.Verbose("Authenticating to gcloud with JWT token.");
+                var serverUri = variables.Get("Octopus.Web.ServerUri");
+                var audience = variables.Get($"{accountVariable}.Audience");
+
+                if (serverUri == null)
+                {
+                    log.Error("Failed to authenticate with gcloud. ServerUri is empty.");
+                    return false;
+                }
+
+                if (audience == null)
+                {
+                    log.Error("Failed to authenticate with gcloud. Audience is empty.");
+                    return false;
+                }
+
+                File.WriteAllText(jwtFilePath, jwtToken);
+
+                var createConfigResult = ExecuteCommand("iam",
+                                                        "workload-identity-pools",
+                                                        "create-cred-config",
+                                                        audience.Substring(audience.IndexOf("iam.googleapis.com/", StringComparison.Ordinal) + "iam.googleapis.com/".Length),
+                                                        $"--service-account={impersonationEmails}",
+                                                        "--service-account-token-lifetime-seconds=3600",
+                                                        "--subject-token-type=urn:ietf:params:oauth:token-type:jwt",
+                                                        "--credential-source-type=text",
+                                                        $"--credential-source-file={jwtFilePath}",
+                                                        "--app-id-uri",
+                                                        serverUri,
+                                                        $"--output-file={jsonAuthFilePath}");
+                if (createConfigResult.ExitCode != 0)
+                {
+                    log.Error("Failed to create credential config with gcloud.");
+                    return false;
+                }
+
+                if (ExecuteCommand("auth",
+                                   "login",
+                                   $"--cred-file={jsonAuthFilePath}")
+                        .ExitCode
+                    != 0)
+                {
+                    log.Error("Failed to authenticate with gcloud.");
+                    return false;
+                }
+
+                return true;
             }
 
             string? ExecuteCommandAndReturnOutput(string exe, params string[] arguments)
