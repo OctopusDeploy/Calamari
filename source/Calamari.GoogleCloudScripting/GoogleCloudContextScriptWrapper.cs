@@ -292,10 +292,15 @@ namespace Calamari.GoogleCloudScripting
 
                 File.WriteAllText(jwtFilePath, jwtToken);
 
+                if (audience.Contains("iam.googleapis.com/"))
+                {
+                    audience = audience.Substring(audience.IndexOf("iam.googleapis.com/", StringComparison.Ordinal) + "iam.googleapis.com/".Length);
+                }
+
                 var createConfigResult = ExecuteCommand("iam",
                                                         "workload-identity-pools",
                                                         "create-cred-config",
-                                                        audience.Substring(audience.IndexOf("iam.googleapis.com/", StringComparison.Ordinal) + "iam.googleapis.com/".Length),
+                                                        audience,
                                                         $"--service-account={impersonationEmails}",
                                                         "--service-account-token-lifetime-seconds=3600",
                                                         "--subject-token-type=urn:ietf:params:oauth:token-type:jwt",
