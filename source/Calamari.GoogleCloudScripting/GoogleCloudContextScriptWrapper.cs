@@ -135,6 +135,11 @@ namespace Calamari.GoogleCloudScripting
                             return errorResult;
                         }
                     }
+                    else
+                    {
+                        log.Error("Failed to authenticate with gcloud. Key file and JWT token are both empty.");
+                        return errorResult;
+                    }
 
                     log.Verbose("Successfully authenticated with gcloud");
                 }
