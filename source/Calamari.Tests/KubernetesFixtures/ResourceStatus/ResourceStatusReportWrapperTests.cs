@@ -126,6 +126,8 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                  new ResourceIdentifier(SupportedResourceGroupVersionKinds.DeploymentV1, "deployment", "default"),
                  new ResourceIdentifier(SupportedResourceGroupVersionKinds.IngressV1, "ingress", "default"),
                  new ResourceIdentifier(SupportedResourceGroupVersionKinds.SecretV1, "secret", "default"),
+                 new ResourceIdentifier(SupportedResourceGroupVersionKinds.SecretV1, "feed-secret", "default"),
+                 new ResourceIdentifier(SupportedResourceGroupVersionKinds.ConfigMapV1, "configmap", "default"),
                  new ResourceIdentifier(SupportedResourceGroupVersionKinds.ServiceV1, "service", "default"),
                  new ResourceIdentifier(new ResourceGroupVersionKind(null, null, "CustomResource"), "custom-resource", "default"));
          }
