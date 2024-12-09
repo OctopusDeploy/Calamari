@@ -37,7 +37,6 @@ namespace Calamari.Tests.KubernetesFixtures
             var wrapper = CreateManifestReportScriptWrapper(variables);
             
             wrapper.IsEnabled(Syntax).Should().BeFalse();
-            manifestReporter.DidNotReceive().ReportManifestApplied(Arg.Any<string>());
         }
         
         [TestCase(SpecialVariables.ClusterUrl, "MyClusterUrl")]
@@ -53,7 +52,6 @@ namespace Calamari.Tests.KubernetesFixtures
             var wrapper = CreateManifestReportScriptWrapper(variables);
 
             wrapper.IsEnabled(Syntax).Should().BeTrue();
-            manifestReporter.DidNotReceive().ReportManifestApplied(Arg.Any<string>());
         }
         
         [Test]
@@ -74,7 +72,9 @@ namespace Calamari.Tests.KubernetesFixtures
                                   new CommandLineRunner(new SilentLog(), variables),
                                   new Dictionary<string, string>());
 
-            foreach (var expectedManifest in GetExpectedManifests(testDirectory))
+            var expectedManifests = GetExpectedManifests(testDirectory).ToArray();
+            expectedManifests.Count().Should().BePositive();
+            foreach (var expectedManifest in expectedManifests)
             {
                 manifestReporter.Received().ReportManifestApplied(expectedManifest);
             }
