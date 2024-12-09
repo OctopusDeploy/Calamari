@@ -45,7 +45,7 @@ namespace Calamari.Kubernetes
 
             return new[]
             {
-                "secret.yml", customResourceFileName, "deployment.yml", "service.yml", "ingress.yml",
+                "secret.yml", "feedsecrets.yml", customResourceFileName, "deployment.yml", "service.yml", "ingress.yml", "configmap.yml"
             }.Select(p => Path.Combine(workingDirectory, p));
         }
 

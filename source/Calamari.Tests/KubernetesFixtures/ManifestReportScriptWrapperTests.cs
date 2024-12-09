@@ -13,6 +13,7 @@ using Calamari.Tests.Fixtures.Integration.FileSystem;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NSubstitute;
+using NSubstitute.Core;
 using NUnit.Framework;
 
 namespace Calamari.Tests.KubernetesFixtures
@@ -72,15 +73,17 @@ namespace Calamari.Tests.KubernetesFixtures
                                   new CommandLineRunner(new SilentLog(), variables),
                                   new Dictionary<string, string>());
 
-            var expectedManifests = GetExpectedManifests(testDirectory).ToArray();
-            expectedManifests.Count().Should().BePositive();
-            foreach (var expectedManifest in expectedManifests)
-            {
-                manifestReporter.Received().ReportManifestApplied(expectedManifest);
-            }
+            var testManifests = GetTestManifests(testDirectory).ToArray();
+            testManifests.Length.Should().BePositive();
+            manifestReporter.ReceivedCalls().Select(x => x.GetArguments()[0] as string).Should().BeEquivalentTo(testManifests);
         }
 
-        static IEnumerable<string> GetExpectedManifests(string testDirectory) => Directory.GetFiles(testDirectory).Select(File.ReadAllText);
+        static IEnumerable<string> GetTestManifests(string testDirectory)
+        {
+            var knownFilenames = new HashSet<string>{ "configmap.yml", "custom.yml", "deployment.yml", "feedsecrets.yml", "ingress.yml", "secret.yml", "service.yml" };
+            
+            return Directory.GetFiles(testDirectory).Where(f => knownFilenames.Contains(Path.GetFileName(f))).Select(File.ReadAllText);
+        }
 
         ManifestReportScriptWrapper CreateManifestReportScriptWrapper(IVariables variables, ICalamariFileSystem fileSystem = null)
         {
