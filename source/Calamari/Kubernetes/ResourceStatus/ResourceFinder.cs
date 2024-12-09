@@ -67,8 +67,7 @@ namespace Calamari.Kubernetes.ResourceStatus
 
             return new[]
             {
-                "secret.yml", customResourceFileName, "deployment.yml", "service.yml", "ingress.yml",
-            }.Select(p => Path.Combine(workingDirectory, p));
+                "secret.yml", "feedsecrets.yml", customResourceFileName, "deployment.yml", "service.yml", "ingress.yml", "configmap.yml"            }.Select(p => Path.Combine(workingDirectory, p));
         }
 
         private IEnumerable<string> GetGroupedYamlDirectories(string workingDirectory)
