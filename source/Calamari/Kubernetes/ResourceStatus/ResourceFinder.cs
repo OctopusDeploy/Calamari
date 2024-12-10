@@ -1,21 +1,24 @@
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes.ResourceStatus.Resources;
 
 namespace Calamari.Kubernetes.ResourceStatus
 {
-    public class ResourceFinder
+    public interface IResourceFinder
     {
-        private readonly IVariables variables;
-        private readonly ICalamariFileSystem fileSystem;
+        IEnumerable<ResourceIdentifier> FindResources(string workingDirectory);
+    }
+    
+    public class ResourceFinder : IResourceFinder
+    {
+        readonly IVariables variables;
+        readonly IManifestRetriever manifestRetriever;
 
-        public ResourceFinder(IVariables variables, ICalamariFileSystem fileSystem)
+        public ResourceFinder(IVariables variables, IManifestRetriever manifestRetriever)
         {
             this.variables = variables;
-            this.fileSystem = fileSystem;
+            this.manifestRetriever = manifestRetriever;
         }
 
         public IEnumerable<ResourceIdentifier> FindResources(string workingDirectory)
@@ -27,7 +30,7 @@ namespace Calamari.Kubernetes.ResourceStatus
                 defaultNamespace = "default";
             }
 
-            var manifests = ReadManifestFiles(workingDirectory).ToList();
+            var manifests = manifestRetriever.GetManifests(workingDirectory).ToList();
             var definedResources = KubernetesYaml.GetDefinedResources(manifests, defaultNamespace).ToList();
 
             var secret = GetSecret(defaultNamespace);
@@ -45,41 +48,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             return definedResources;
         }
 
-        private IEnumerable<string> ReadManifestFiles(string workingDirectory)
-        {
-            var groupedFiles = GetGroupedYamlDirectories(workingDirectory).ToList();
-            if (groupedFiles.Any())
-            {
-                return from file in groupedFiles
-                       where fileSystem.FileExists(file)
-                       select fileSystem.ReadFile(file);
-            }
-
-            return from file in GetManifestFileNames(workingDirectory)
-                   where fileSystem.FileExists(file)
-                   select fileSystem.ReadFile(file);
-        }
-
-        private IEnumerable<string> GetManifestFileNames(string workingDirectory)
-        {
-            var customResourceFileName =
-                variables.Get(SpecialVariables.CustomResourceYamlFileName) ?? "customresource.yml";
-
-            return new[]
-            {
-                "secret.yml", "feedsecrets.yml", customResourceFileName, "deployment.yml", "service.yml", "ingress.yml", "configmap.yml"
-            }.Select(p => Path.Combine(workingDirectory, p));
-        }
-
-        private IEnumerable<string> GetGroupedYamlDirectories(string workingDirectory)
-        {
-            var groupedDirectories = variables.Get(SpecialVariables.GroupedYamlDirectories);
-            return groupedDirectories != null
-                ? groupedDirectories.Split(';').SelectMany(d => fileSystem.EnumerateFilesRecursively(Path.Combine(workingDirectory, d)))
-                : Enumerable.Empty<string>();
-        }
-
-        private ResourceIdentifier? GetConfigMap(string defaultNamespace)
+        ResourceIdentifier? GetConfigMap(string defaultNamespace)
         {
             if (!variables.GetFlag("Octopus.Action.KubernetesContainers.KubernetesConfigMapEnabled"))
             {
@@ -96,7 +65,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             return string.IsNullOrEmpty(configMapName) ? (ResourceIdentifier?)null : new ResourceIdentifier(SupportedResourceGroupVersionKinds.ConfigMapV1, configMapName, defaultNamespace);
         }
 
-        private ResourceIdentifier? GetSecret(string defaultNamespace)
+        ResourceIdentifier? GetSecret(string defaultNamespace)
         {
             if (!variables.GetFlag("Octopus.Action.KubernetesContainers.KubernetesSecretEnabled"))
             {
