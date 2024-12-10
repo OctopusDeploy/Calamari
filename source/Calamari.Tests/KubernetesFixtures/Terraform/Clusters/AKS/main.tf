@@ -2,13 +2,8 @@ variable "test_namespace" {
   type = string
 }
 
-variable "aks_client_id" {
+variable "static_resource_prefix" {
   type = string
-}
-
-variable "aks_client_secret" {
-  type = string
-  sensitive = true
 }
 
 resource "random_pet" "prefix" {}
