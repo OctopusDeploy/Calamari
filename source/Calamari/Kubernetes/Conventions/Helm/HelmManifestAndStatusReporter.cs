@@ -41,7 +41,9 @@ namespace Calamari.Kubernetes.Conventions.Helm
         {
             await Task.Run(async () =>
                            {
-                               if (deployment.Variables.GetFlag(SpecialVariables.ResourceStatusCheck)
+                               var resourceStatusCheckIsEnabled = deployment.Variables.GetFlag(SpecialVariables.ResourceStatusCheck);
+                               
+                               if (resourceStatusCheckIsEnabled
                                    || FeatureToggle.KubernetesLiveObjectStatusFeatureToggle.IsEnabled(deployment.Variables)
                                    || OctopusFeatureToggles.KubernetesObjectManifestInspectionFeatureToggle.IsEnabled(deployment.Variables))
                                {
@@ -51,7 +53,7 @@ namespace Calamari.Kubernetes.Conventions.Helm
                                    manifestReporter.ReportManifestApplied(manifest);
 
                                    //if resource status (KOS) is enabled, parse the manifest and start monitoring the resources
-                                   if (deployment.Variables.GetFlag(SpecialVariables.ResourceStatusCheck))
+                                   if (resourceStatusCheckIsEnabled)
                                    {
                                        await ParseManifestAndMonitorResourceStatuses(deployment, manifest, cancellationToken);
                                    }
