@@ -18,7 +18,7 @@ namespace Calamari.ConsolidateCalamariPackages.Tests
     [TestFixture]
     public class IntegrationTests
     {
-        readonly Assent.Configuration assentConfiguration = new Assent.Configuration().UsingSanitiser(s => Sanitise4PartVersions(SanitiseHashes(s)));
+        readonly Assent.Configuration assentConfiguration = new Assent.Configuration().UsingSanitiser(s => Sanitise4PartVersions(SanitiseFilenamesInIndex(s)));
         static readonly string TestPackagesDirectory = "../../../testPackages";
 
         private string temp;
@@ -85,7 +85,7 @@ namespace Calamari.ConsolidateCalamariPackages.Tests
         public void AndThenThePackageContentsShouldBe()
         {
             using (var zip = ZipFile.Open(expectedZip, ZipArchiveMode.Read))
-                this.Assent(string.Join("\r\n", zip.Entries.Select(e => SanitiseHashes(e.FullName)).OrderBy(k => k)), assentConfiguration);
+                this.Assent(string.Join("\r\n", zip.Entries.Select(e => SanitiseHashesInPackageList(e.FullName)).OrderBy(k => k)), assentConfiguration);
         }
 
         public void AndThenTheIndexShouldBe()
@@ -96,8 +96,12 @@ namespace Calamari.ConsolidateCalamariPackages.Tests
                 this.Assent(sr.ReadToEnd(), assentConfiguration);
         }
 
-        private static string SanitiseHashes(string s)
-            => Regex.Replace(s, "[a-z0-9]{32}", "<hash>");
+        private static string SanitiseFilenamesInIndex(string s)
+            => Regex.Replace(s, "[a-z0-9]{32}\\\\[^\"]*", "<hash>");
+        
+        private static string SanitiseHashesInPackageList(string s) 
+        => Regex.Replace(s, "[a-z0-9]{32}", "<hash>");
+        
 
         private static string Sanitise4PartVersions(string s)
             => Regex.Replace(s, @"[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+", "<version>");
