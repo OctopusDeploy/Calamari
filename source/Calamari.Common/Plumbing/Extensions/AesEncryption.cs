@@ -12,7 +12,7 @@ namespace Calamari.Common.Plumbing.Extensions
         const int KeySizeBytes = KeySizeBits / 8;
 
         const int BlockSizeBits = 128;
-        const int BlockSizeBytes = KeySizeBits / 8;
+        const int BlockSizeBytes = BlockSizeBits / 8;
 
         const int PasswordSaltIterations = 1000;
         public const string SaltRaw = "Octopuss";
