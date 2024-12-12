@@ -67,7 +67,7 @@ namespace Calamari.Common.Plumbing.Extensions
             {
                 Mode = CipherMode.CBC,
                 Padding = PaddingMode.PKCS7,
-                KeySize = 128,
+                KeySize = 256,
                 BlockSize = 128,
                 Key = key
             };
