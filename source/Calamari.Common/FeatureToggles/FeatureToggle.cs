@@ -10,7 +10,6 @@
         ModernAzureSdkFeatureToggle,
         OidcAccountsFeatureToggle,
         AsynchronousAzureZipDeployFeatureToggle,
-        FSharpDeprecationFeatureToggle,
         AzureRMDeprecationFeatureToggle,
         KubernetesLiveObjectStatusFeatureToggle,
         KubernetesAuthAwsCliWithExecFeatureToggle,

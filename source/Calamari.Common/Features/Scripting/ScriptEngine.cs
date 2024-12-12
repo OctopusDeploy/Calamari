@@ -4,7 +4,6 @@ using System.Linq;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting.Bash;
 using Calamari.Common.Features.Scripting.DotnetScript;
-using Calamari.Common.Features.Scripting.FSharp;
 using Calamari.Common.Features.Scripting.Python;
 using Calamari.Common.Features.Scripting.ScriptCS;
 using Calamari.Common.Features.Scripting.WindowsPowerShell;
@@ -106,8 +105,6 @@ namespace Calamari.Common.Features.Scripting
                     return runDotnetScript ? (IScriptExecutor) new DotnetScriptExecutor(commandLineRunner, log) : new ScriptCSScriptExecutor(log);
                 case ScriptSyntax.Bash:
                     return new BashScriptExecutor(log);
-                case ScriptSyntax.FSharp:
-                    return new FSharpExecutor(log);
                 case ScriptSyntax.Python:
                     return new PythonScriptExecutor(log);
                 default:
