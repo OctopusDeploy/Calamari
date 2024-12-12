@@ -149,7 +149,6 @@ namespace Calamari.Tests.Fixtures.Deployment
                 result.AssertOutput("I have failed! DeployFailed.sh");
             else
                 result.AssertOutput("I have failed! DeployFailed.ps1");
-            result.AssertNoOutput("I have failed! DeployFailed.fsx");
             result.AssertNoOutput("I have failed! DeployFailed.csx");
         }
 
@@ -159,7 +158,6 @@ namespace Calamari.Tests.Fixtures.Deployment
             var result = DeployPackage();
             result.AssertNoOutput("I have failed! DeployFailed.ps1");
             result.AssertNoOutput("I have failed! DeployFailed.sh");
-            result.AssertNoOutput("I have failed! DeployFailed.fsx");
             result.AssertNoOutput("I have failed! DeployFailed.csx");
         }
 
