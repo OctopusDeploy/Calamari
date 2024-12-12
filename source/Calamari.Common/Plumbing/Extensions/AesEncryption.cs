@@ -8,6 +8,12 @@ namespace Calamari.Common.Plumbing.Extensions
 {
     public class AesEncryption
     {
+        const int KeySizeBits = 256;
+        const int KeySizeBytes = KeySizeBits / 8;
+
+        const int BlockSizeBits = 128;
+        const int BlockSizeBytes = KeySizeBits / 8;
+
         const int PasswordSaltIterations = 1000;
         public const string SaltRaw = "Octopuss";
         static readonly byte[] PasswordPaddingSalt = Encoding.UTF8.GetBytes(SaltRaw);
@@ -67,18 +73,19 @@ namespace Calamari.Common.Plumbing.Extensions
             {
                 Mode = CipherMode.CBC,
                 Padding = PaddingMode.PKCS7,
-                KeySize = 256,
-                BlockSize = 128,
+                KeySize = KeySizeBits,
+                BlockSize = BlockSizeBits,
                 Key = key
             };
             if (iv != null)
                 provider.IV = iv;
+            
             return provider;
         }
 
         public static byte[] ExtractIV(byte[] encrypted, out byte[] iv)
         {
-            var ivLength = 16;
+            var ivLength = BlockSizeBytes;
             iv = new byte[ivLength];
             Buffer.BlockCopy(encrypted,
                 IvPrefix.Length,
@@ -100,7 +107,7 @@ namespace Calamari.Common.Plumbing.Extensions
         public static byte[] GetEncryptionKey(string encryptionPassword)
         {
             var passwordGenerator = new Rfc2898DeriveBytes(encryptionPassword, PasswordPaddingSalt, PasswordSaltIterations);
-            return passwordGenerator.GetBytes(16);
+            return passwordGenerator.GetBytes(KeySizeBytes);
         }
 
         public static string RandomString(int length)
