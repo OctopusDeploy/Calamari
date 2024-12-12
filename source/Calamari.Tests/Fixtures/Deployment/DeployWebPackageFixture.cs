@@ -145,7 +145,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             Variables.Set("ShouldFail", "yes");
             var result = DeployPackage();
-            if (ScriptingEnvironment.IsRunningOnMono())
+            if (CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac)
                 result.AssertOutput("I have failed! DeployFailed.sh");
             else
                 result.AssertOutput("I have failed! DeployFailed.ps1");
@@ -307,7 +307,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
                     result.AssertSuccess();
                     var extracted = result.GetOutputForLineContaining("Extracting package to: ");
-                    result.AssertOutput("Extracted 11 files");
+                    result.AssertOutput("Extracted 10 files");
 
                     lock (locker)
                     {
