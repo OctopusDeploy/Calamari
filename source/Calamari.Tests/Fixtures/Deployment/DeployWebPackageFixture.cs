@@ -140,7 +140,6 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        [Category(TestCategory.ScriptingSupport.FSharp)]
         [Category(TestCategory.ScriptingSupport.DotnetScript)]
         public void ShouldInvokeDeployFailedOnError()
         {

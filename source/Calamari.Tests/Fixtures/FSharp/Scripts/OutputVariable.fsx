@@ -1,2 +1,0 @@
-﻿Octopus.setVariable "Donkey" "Kong"
-
