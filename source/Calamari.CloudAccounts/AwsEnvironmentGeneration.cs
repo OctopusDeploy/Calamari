@@ -26,6 +26,7 @@ namespace Calamari.CloudAccounts
 
         readonly ILog log;
         readonly Func<Task<bool>> verifyLogin;
+        readonly string accountType;
         readonly string region;
         readonly string accessKey;
         readonly string secretKey;
@@ -94,6 +95,7 @@ namespace Calamari.CloudAccounts
                         // The lack of any keys means we rely on an EC2 instance role.
                         variables.Get("Octopus.Action.Amazon.AccessKey")?.Trim();
             secretKey = variables.Get(account + ".SecretKey")?.Trim() ?? variables.Get("Octopus.Action.Amazon.SecretKey")?.Trim();
+            accountType = variables.Get("Octopus.Account.AccountType")?.Trim();
             
             roleArn = variables.Get($"{account}.RoleArn")?.Trim() ??
                       variables.Get("Octopus.Action.Amazon.RoleArn")?.Trim();
@@ -161,7 +163,7 @@ namespace Calamari.CloudAccounts
         {
             EnvironmentVars["AWS_DEFAULT_REGION"] = region;
             EnvironmentVars["AWS_REGION"] = region;
-        }
+        } 
 
         /// <summary>
         /// If the keys were explicitly supplied, use them directly
@@ -169,54 +171,59 @@ namespace Calamari.CloudAccounts
         /// <exception cref="Exception">The supplied keys were not valid</exception>
         async Task<bool> PopulateSuppliedKeys()
         {
-            if (!String.IsNullOrEmpty(accessKey))
+            switch (accountType)
             {
-                EnvironmentVars["AWS_ACCESS_KEY_ID"] = accessKey;
-                EnvironmentVars["AWS_SECRET_ACCESS_KEY"] = secretKey;
+                case "AmazonWebServicesAccount": return await PopulateKeysDirectly();
+                case "AmazonWebServicesOidcAccount": return await PopulateKeysUsingOidc();
+                default: return false;
+            }
+        }
+
+        async Task<bool> PopulateKeysDirectly()
+        {
+            EnvironmentVars["AWS_ACCESS_KEY_ID"] = accessKey;
+            EnvironmentVars["AWS_SECRET_ACCESS_KEY"] = secretKey;
+            if (!await verifyLogin())
+            {
+                throw new Exception("AWS-LOGIN-ERROR-0005: Failed to verify the credentials. "
+                                    + "Please check the keys assigned to the Amazon Web Services Account associated with this step. "
+                                    + $"For more information visit {log.FormatLink("https://oc.to/U4WA8x")}");
+            }
+
+            return true;
+        }
+
+        async Task<bool> PopulateKeysUsingOidc()
+        {
+            try
+            {
+                var client = new AmazonSecurityTokenServiceClient(new AnonymousAWSCredentials());
+                var assumeRoleWithWebIdentityResponse = await client.AssumeRoleWithWebIdentityAsync(new AssumeRoleWithWebIdentityRequest
+                {
+                    RoleArn = roleArn,
+                    DurationSeconds = int.TryParse(sessionDuration, out var seconds) ? seconds : 3600,
+                    RoleSessionName = DefaultSessionName,
+                    WebIdentityToken = oidcJwt
+                });
+
+                EnvironmentVars["AWS_ACCESS_KEY_ID"] = assumeRoleWithWebIdentityResponse.Credentials.AccessKeyId;
+                EnvironmentVars["AWS_SECRET_ACCESS_KEY"] = assumeRoleWithWebIdentityResponse.Credentials.SecretAccessKey;
+                EnvironmentVars["AWS_SESSION_TOKEN"] = assumeRoleWithWebIdentityResponse.Credentials.SessionToken;
                 if (!await verifyLogin())
                 {
                     throw new Exception("AWS-LOGIN-ERROR-0005: Failed to verify the credentials. "
-                                        + "Please check the keys assigned to the Amazon Web Services Account associated with this step. "
+                                        + "Please check the Role ARN assigned to the Amazon Web Services Account associated with this step. "
                                         + $"For more information visit {log.FormatLink("https://oc.to/U4WA8x")}");
                 }
 
                 return true;
             }
-
-            if (!string.IsNullOrEmpty(oidcJwt))
+            catch (Exception ex)
             {
-                try
-                {
-                    var client = new AmazonSecurityTokenServiceClient(new AnonymousAWSCredentials());
-                    var assumeRoleWithWebIdentityResponse = await client.AssumeRoleWithWebIdentityAsync(new AssumeRoleWithWebIdentityRequest
-                    {
-                        RoleArn = roleArn,
-                        DurationSeconds = int.TryParse(sessionDuration, out var seconds) ? seconds : 3600,
-                        RoleSessionName = DefaultSessionName,
-                        WebIdentityToken = oidcJwt
-                    });
-
-                    EnvironmentVars["AWS_ACCESS_KEY_ID"] = assumeRoleWithWebIdentityResponse.Credentials.AccessKeyId;
-                    EnvironmentVars["AWS_SECRET_ACCESS_KEY"] = assumeRoleWithWebIdentityResponse.Credentials.SecretAccessKey;
-                    EnvironmentVars["AWS_SESSION_TOKEN"] = assumeRoleWithWebIdentityResponse.Credentials.SessionToken;
-                    if (!await verifyLogin())
-                    {
-                        throw new Exception("AWS-LOGIN-ERROR-0005: Failed to verify the credentials. "
-                                            + "Please check the Role ARN assigned to the Amazon Web Services Account associated with this step. "
-                                            + $"For more information visit {log.FormatLink("https://oc.to/U4WA8x")}");
-                    }
-
-                    return true;
-                }
-                catch (Exception ex)
-                {
-                    // catch the exception and fallback to returning false
-                    throw new Exception("AWS-LOGIN-ERROR-0005.1: Failed to verify OIDC credentials. "
-                                        + $"Error: {ex}");
-                }
+                // catch the exception and fallback to returning false
+                throw new Exception("AWS-LOGIN-ERROR-0005.1: Failed to verify OIDC credentials. "
+                                    + $"Error: {ex}");
             }
-            
-            return false;
         }
 
         /// <summary>
