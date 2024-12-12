@@ -48,7 +48,6 @@
     </PackageReference>
     <PackageReference Include="Microsoft.Web.Administration" Version="11.1.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="FSharp.Compiler.Tools" Version="4.0.0.1" />
     <PackageReference Include="Octopus.Versioning" Version="5.1.876" />
     <PackageReference Include="Octopus.TinyTypes" Version="2.2.1156" />
     <PackageReference Include="Octopus.CoreUtilities" Version="2.1.449" />
@@ -93,28 +92,21 @@
   -->
   <Target Name="RunResolvePackageDependencies" Condition="'$(RunResolvePackageDependencies)' != ''" />
   <Target Name="GetToolFiles" DependsOnTargets="RunResolvePackageDependencies">
-    <CreateItem Include="@(PackageDefinitions)" Condition="'%(Name)' == 'FSharp.Compiler.Tools'">
-      <Output TaskParameter="Include" ItemName="FSharpCompilerToolsRef" />
-    </CreateItem>
     <CreateItem Include="@(PackageDefinitions)" Condition="'%(Name)' == 'ScriptCS'">
       <Output TaskParameter="Include" ItemName="ScriptCSRef" />
     </CreateItem>
     <PropertyGroup>
-      <FSharpCompilerTools>@(FSharpCompilerToolsRef->'%(ResolvedPath)')/tools/*.*</FSharpCompilerTools>
       <ScriptCS>@(ScriptCSRef->'%(ResolvedPath)')/tools/*.*</ScriptCS>
     </PropertyGroup>
     <ItemGroup>
-      <FSharpFiles Include="$(FSharpCompilerTools)" />
       <ScriptCSFiles Include="$(ScriptCS)" />
       <DotnetScriptFiles Include="$(MSBuildProjectDirectory)/../Calamari.Scripting/DotnetScript/dotnet-script.*.zip"/>
     </ItemGroup>
   </Target>
   <Target Name="CopyToolsAfterBuild" AfterTargets="Build" DependsOnTargets="GetToolFiles">
-    <Copy SourceFiles="@(FSharpFiles)" DestinationFolder="$(OutDir)/FSharp/" />
     <Copy SourceFiles="@(ScriptCSFiles)" DestinationFolder="$(OutDir)/ScriptCS/" />
   </Target>
   <Target Name="CopyToolsAfterPublish" AfterTargets="Publish" DependsOnTargets="GetToolFiles">
-    <Copy SourceFiles="@(FSharpFiles)" DestinationFolder="$(PublishDir)/FSharp/" />
     <Copy SourceFiles="@(ScriptCSFiles)" DestinationFolder="$(PublishDir)/ScriptCS/" />
   </Target>
   <Target Name="CopyDotnetScriptFilesAfterBuild" AfterTargets="Build" Condition="'$(IsCrossTargetingBuild)' == 'false'">
