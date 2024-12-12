@@ -18,7 +18,6 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
             ScriptSyntax.Bash,
             ScriptSyntax.Python,
             ScriptSyntax.CSharp,
-            ScriptSyntax.FSharp,
             ScriptSyntax.PowerShell
         };
 
@@ -27,7 +26,6 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
             ScriptSyntax.PowerShell,
             ScriptSyntax.Python,
             ScriptSyntax.CSharp,
-            ScriptSyntax.FSharp,
             ScriptSyntax.Bash
         };
 
