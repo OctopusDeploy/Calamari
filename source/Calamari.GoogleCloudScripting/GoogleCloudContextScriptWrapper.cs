@@ -31,7 +31,7 @@ namespace Calamari.GoogleCloudScripting
         public bool IsEnabled(ScriptSyntax syntax) => supportedScriptSyntax.Contains(syntax);
 
         public IScriptWrapper? NextWrapper { get; set; }
-
+    
         public CommandResult ExecuteScript(Script script,
             ScriptSyntax scriptSyntax,
             ICommandLineRunner commandLineRunner,
