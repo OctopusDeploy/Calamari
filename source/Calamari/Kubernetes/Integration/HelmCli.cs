@@ -4,7 +4,13 @@ using System.IO;
 using System.Linq;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Processes;
+using Calamari.Common.Features.Scripting;
+using Calamari.Common.Features.Scripting.Bash;
+using Calamari.Common.Features.Scripting.WindowsPowerShell;
+using Calamari.Common.Features.Scripts;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing;
+using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Newtonsoft.Json;
@@ -13,12 +19,16 @@ namespace Calamari.Kubernetes.Integration
 {
     public class HelmCli : CommandLineTool
     {
+        readonly ICommandLineRunner commandLineRunner;
+        readonly ICalamariFileSystem fileSystem;
         readonly IVariables variables;
         bool isCustomExecutable;
 
-        public HelmCli(ILog log, ICommandLineRunner commandLineRunner, RunningDeployment runningDeployment)
+        public HelmCli(ILog log, ICommandLineRunner commandLineRunner, RunningDeployment runningDeployment, ICalamariFileSystem fileSystem)
             : base(log, commandLineRunner, runningDeployment.CurrentDirectory, runningDeployment.EnvironmentVariables)
         {
+            this.commandLineRunner = commandLineRunner;
+            this.fileSystem = fileSystem;
             variables = runningDeployment.Variables;
             ExecutableLocation = SetExecutable();
         }
@@ -102,6 +112,12 @@ namespace Calamari.Kubernetes.Integration
             buildArgs.Add(releaseName);
             buildArgs.Add(packagePath);
 
+            if (OctopusFeatureToggles.ExecuteHelmUpgradeCommandViaShellScriptFeatureToggle.IsEnabled(variables))
+            {
+                log.Warn("Backwards compatibility for Helm command execution via bash scripts is temporary and will be removed in a future release. Provide arguments compatible with direct Helm invocation, avoiding bash-specific formatting.");
+                return ExecuteCommandViaScript(buildArgs);
+            }
+
             var result = ExecuteCommandAndLogOutput(buildArgs);
             return result;
         }
@@ -128,6 +144,61 @@ namespace Calamari.Kubernetes.Integration
                 ExecuteCommandAndLogOutput(new CommandLineInvocation("chmod",
                                                                      "+x",
                                                                      ExecutableLocation));
+            }
+        }
+
+        CommandResult ExecuteCommandViaScript(IEnumerable<string> arguments)
+        {
+            var syntax = ScriptSyntaxHelper.GetPreferredScriptSyntaxForEnvironment();
+            var command = BuildHelmScriptCommand(arguments, syntax);
+            var fileName = SyntaxSpecificFileName(syntax);
+            var scriptExecutor = GetScriptExecutor(syntax);
+            
+            using (new TemporaryFile(fileName))
+            {
+                fileSystem.OverwriteFile(fileName, command);
+                
+                return scriptExecutor.Execute(new Script(fileName), variables, commandLineRunner, environmentVars);
+            }
+        }
+
+        string BuildHelmScriptCommand(IEnumerable<string> arguments, ScriptSyntax syntax)
+        {
+            var cmd = new List<string>();
+            
+            SetExecutable(cmd, syntax);
+            cmd.AddRange(arguments.Where(s => !string.IsNullOrWhiteSpace(s)));
+
+            var command = string.Join(" ", cmd);
+            log.Verbose(command);
+            return command;
+        }
+        
+        void SetExecutable(List<string> commandBuilder, ScriptSyntax syntax)
+        {
+            if (isCustomExecutable)
+            {
+                commandBuilder.Add(syntax == ScriptSyntax.PowerShell ? ". " : $"chmod +x \"{ExecutableLocation}\";");
+            }
+            
+            commandBuilder.Add(ExecutableLocation);
+        }
+        
+        string SyntaxSpecificFileName(ScriptSyntax syntax)
+        {
+            return Path.Combine(workingDirectory, syntax == ScriptSyntax.PowerShell ? "Calamari.HelmUpgrade.ps1" : "Calamari.HelmUpgrade.sh");
+        }
+        
+        IScriptExecutor GetScriptExecutor(ScriptSyntax syntax)
+        {
+            switch (syntax)
+            {
+                case ScriptSyntax.PowerShell:
+                    return new PowerShellScriptExecutor();
+                case ScriptSyntax.Bash:
+                    return new BashScriptExecutor();
+                default:
+                    throw new NotSupportedException($"{syntax} script is not supported for Helm upgrade execution");
             }
         }
     }
