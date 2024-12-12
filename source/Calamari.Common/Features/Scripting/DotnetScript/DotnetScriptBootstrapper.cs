@@ -84,9 +84,6 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
 
         public static string FindBundledExecutable()
         {
-            if (ScriptingEnvironment.IsNetFramework())
-                throw new CommandException("dotnet-script requires .NET Core 6 or later");
-
             var exeName = $"dotnet-script.{(CalamariEnvironment.IsRunningOnWindows ? "cmd" : "dll")}";
             var myPath = typeof(DotnetScriptExecutor).Assembly.Location;
             var parent = Path.GetDirectoryName(myPath);
