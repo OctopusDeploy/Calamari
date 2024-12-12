@@ -1,4 +1,3 @@
-#if !NET40
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -19,15 +18,21 @@ namespace Calamari.Kubernetes.Commands.Executors
     
     class KustomizeExecutor : BaseKubernetesApplyExecutor, IKustomizeKubernetesApplyExecutor
     {
+        public const string HydratedKustomizeManifestFilename = "hydrated-kustomize-manifest.yaml";
         const int MinimumKubectlVersionMajor = 1;
         const int MinimumKubectlVersionMinor = 24;
         readonly ILog log;
         readonly Kubectl kubectl;
+        readonly IManifestReporter manifestReporter;
 
-        public KustomizeExecutor(ILog log, Kubectl kubectl) : base(log, kubectl)
+        string KustomizationDirectory(string currentDirectory, string overlayPath) => Path.Combine(currentDirectory, KubernetesDeploymentCommandBase.PackageDirectoryName, overlayPath);
+        string HydratedManifestFilepath(string currentDirectory) => Path.Combine(currentDirectory, HydratedKustomizeManifestFilename);
+
+        public KustomizeExecutor(ILog log, Kubectl kubectl, IManifestReporter manifestReporter) : base(log)
         {
             this.log = log;
             this.kubectl = kubectl;
+            this.manifestReporter = manifestReporter;
         }
 
         protected override async Task<IEnumerable<ResourceIdentifier>> ApplyAndGetResourceIdentifiers(RunningDeployment deployment, Func<ResourceIdentifier[], Task> appliedResourcesCallback = null)
@@ -41,14 +46,17 @@ namespace Calamari.Kubernetes.Commands.Executors
             }
 
             ValidateKubectlVersion(deployment.CurrentDirectory);
-
-            var kustomizationDirectory = Path.Combine(deployment.CurrentDirectory, KubernetesDeploymentCommandBase.PackageDirectoryName, overlayPath);
-            string[] executeArgs = {"apply", "-k", $@"""{kustomizationDirectory}""", "-o", "json"};
+            
+            BuildKustomization(deployment.CurrentDirectory, overlayPath);
+            
+            manifestReporter.ReportManifestFileApplied(HydratedManifestFilepath(deployment.CurrentDirectory));
+            
+            string[] executeArgs = {"apply", "-f", $@"""{HydratedManifestFilepath(deployment.CurrentDirectory)}""", "-o", "json"};
             executeArgs = executeArgs.AddOptionsForServerSideApply(deployment.Variables, log);
             
             var result = kubectl.ExecuteCommandAndReturnOutput(executeArgs);
             
-            var resourceIdentifiers = ProcessKubectlCommandOutput(deployment, result, kustomizationDirectory).ToArray();
+            var resourceIdentifiers = ProcessKubectlCommandOutput(deployment, result, KustomizationDirectory(deployment.CurrentDirectory, overlayPath)).ToArray();
             
             if (appliedResourcesCallback != null)
             {
@@ -58,10 +66,27 @@ namespace Calamari.Kubernetes.Commands.Executors
             return resourceIdentifiers;
         }
 
+        void BuildKustomization(string currentDirectory, string overlayPath)
+        {
+            string[] executeArgs = {"kustomize", $@"""{KustomizationDirectory(currentDirectory, overlayPath)}""", "-o", $@"""{HydratedManifestFilepath(currentDirectory)}"""};
+            
+            var commandResult = kubectl.ExecuteCommandAndReturnOutput(executeArgs);
+            commandResult.LogErrorsWithSanitizedDirectory(log, currentDirectory);
+            if (commandResult.Result.ExitCode != 0)
+            {
+                throw new KubectlException("Failed to build kustomization");
+            }
+        }
+
         void ValidateKubectlVersion(string currentDirectory)
         {
             var commandResult = kubectl.ExecuteCommandAndReturnOutput("version", "--client", "-o", "json");
-            CheckResultForErrors(commandResult, currentDirectory);
+            commandResult.LogErrorsWithSanitizedDirectory(log, currentDirectory);
+            if (commandResult.Result.ExitCode != 0)
+            {
+                throw new KubectlException("Failed to check kubectl version");
+            }
+            
             var outputJson = commandResult.Output.InfoLogs.Join(Environment.NewLine);
 
             if (!TryParseVersion(outputJson, out var major, out var minor))
@@ -99,4 +124,3 @@ namespace Calamari.Kubernetes.Commands.Executors
         }
     }
 }
-#endif

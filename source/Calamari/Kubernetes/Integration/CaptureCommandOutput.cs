@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Calamari.Common.Plumbing.Commands;
 
@@ -8,13 +9,17 @@ namespace Calamari.Kubernetes.Integration
     {
         Message[] Messages { get; }
         IEnumerable<string> InfoLogs { get; }
+        string MergeInfoLogs();
     }
+
     public class CaptureCommandOutput : ICommandInvocationOutputSink, ICommandOutput
     {
         private readonly List<Message> messages = new List<Message>();
         public Message[] Messages => messages.ToArray();
 
-        public IEnumerable<string> InfoLogs => Messages.Where(m => m.Level == Level.Info).Select(m => m.Text);
+        public IEnumerable<string> InfoLogs => Messages.Where(m => m.Level == Level.Info).Select(m => m.Text).ToArray();
+
+        public string MergeInfoLogs() => string.Join(Environment.NewLine, InfoLogs);
 
         public void WriteInfo(string line)
         {

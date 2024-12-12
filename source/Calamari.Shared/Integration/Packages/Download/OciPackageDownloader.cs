@@ -24,23 +24,26 @@ namespace Calamari.Integration.Packages.Download
         HelmChart,
         Unknown
     }
-    
+
     public class OciPackageDownloader : IPackageDownloader
     {
         static readonly IPackageDownloaderUtils PackageDownloaderUtils = new PackageDownloaderUtils();
         readonly ICalamariFileSystem fileSystem;
         readonly ICombinedPackageExtractor combinedPackageExtractor;
+        readonly ILog log;
         readonly HttpClient client;
 
         public OciPackageDownloader(
             ICalamariFileSystem fileSystem,
-            ICombinedPackageExtractor combinedPackageExtractor)
+            ICombinedPackageExtractor combinedPackageExtractor,
+            ILog log)
         {
             this.fileSystem = fileSystem;
             this.combinedPackageExtractor = combinedPackageExtractor;
+            this.log = log;
             client = new HttpClient(new HttpClientHandler { AutomaticDecompression = DecompressionMethods.None });
         }
-        
+
         public PackagePhysicalFileMetadata DownloadPackage(string packageId,
             IVersion version,
             string feedId,
@@ -59,7 +62,7 @@ namespace Calamari.Integration.Packages.Download
                 var downloaded = SourceFromCache(packageId, version, cacheDirectory);
                 if (downloaded != null)
                 {
-                    Log.VerboseFormat("Package was found in cache. No need to download. Using file: '{0}'", downloaded.FullFilePath);
+                    log.VerboseFormat("Package was found in cache. No need to download. Using file: '{0}'", downloaded.FullFilePath);
                     return downloaded;
                 }
             }
@@ -89,7 +92,14 @@ namespace Calamari.Integration.Packages.Download
                 var cachedFileName = PackageName.ToCachedFileName(packageId, version, extension);
                 var downloadPath = Path.Combine(Path.Combine(stagingDir, cachedFileName));
 
-                DownloadPackage(apiUrl, packageId, digest, feedUsername, feedPassword, downloadPath);
+                var retryStrategy = PackageDownloaderRetryUtils.CreateRetryStrategy<CommandException>(maxDownloadAttempts, downloadAttemptBackoff, log);
+                retryStrategy.Execute(() => DownloadPackage(apiUrl,
+                                                       packageId,
+                                                       digest,
+                                                       feedUsername,
+                                                       feedPassword,
+                                                       downloadPath));
+;
 
                 var localDownloadName = Path.Combine(cacheDirectory, cachedFileName);
                 fileSystem.MoveFile(downloadPath, localDownloadName);
@@ -148,13 +158,13 @@ namespace Calamari.Integration.Packages.Download
                 throw new CommandException(
                     $"Failed to download artifact (Status Code {(int)response.StatusCode}). Reason: {response.ReasonPhrase}");
             }
-            
+
             response.Content.CopyToAsync(fileStream).GetAwaiter().GetResult();
         }
-        
+
         PackagePhysicalFileMetadata? SourceFromCache(string packageId, IVersion version, string cacheDirectory)
         {
-            Log.VerboseFormat("Checking package cache for package {0} v{1}", packageId, version.ToString());
+            log.VerboseFormat("Checking package cache for package {0} v{1}", packageId, version.ToString());
 
             var files = fileSystem.EnumerateFilesRecursively(cacheDirectory, PackageName.ToSearchPatterns(packageId, version, combinedPackageExtractor.Extensions));
 

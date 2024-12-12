@@ -37,7 +37,7 @@ namespace Calamari.Commands
             if (packageFile == null) // required: true in the above call means it will throw rather than return null, but there's no way to tell the compiler that. And ! doesn't work in older frameworks
                 throw new CommandException("Package File path could not be determined");
 
-            var journal = new DeploymentJournal(fileSystem, SemaphoreFactory.Get(), variables);
+            var journal = new DeploymentJournal(fileSystem, new SystemSemaphoreManager(), variables);
 
             var conventions = new List<IConvention>
             {

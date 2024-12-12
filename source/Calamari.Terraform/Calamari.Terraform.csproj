@@ -15,7 +15,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="NuGet.Versioning" Version="5.9.1" />
+    <PackageReference Include="NuGet.Versioning" Version="5.11.6" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Calamari.CloudAccounts\Calamari.CloudAccounts.csproj" />

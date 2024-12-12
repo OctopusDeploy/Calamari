@@ -1,4 +1,4 @@
-#if !NET40
+using System.Threading;
 using System.Threading.Tasks;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Packages;
@@ -54,9 +54,8 @@ namespace Calamari.Kubernetes.Commands
             
             var statusCheck = statusReporter.Start(timeoutSeconds, waitForJobs);
 
-            return await kubernetesApplyExecutor.Execute(runningDeployment, statusCheck.AddResources) &&
-                await statusCheck.WaitForCompletionOrTimeout();
+            return await kubernetesApplyExecutor.Execute(runningDeployment, (newResources) => statusCheck.AddResources(newResources)) &&
+                await statusCheck.WaitForCompletionOrTimeout(CancellationToken.None);
         }
     }
 }
-#endif

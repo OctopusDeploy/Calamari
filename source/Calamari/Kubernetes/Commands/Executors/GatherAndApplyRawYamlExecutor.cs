@@ -1,4 +1,3 @@
-#if !NET40
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -6,9 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
-using Calamari.Common.Plumbing.FileSystem.GlobExpressions;
 using Calamari.Common.Plumbing.Logging;
-using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes.Integration;
 using Calamari.Kubernetes.ResourceStatus.Resources;
 using Octopus.CoreUtilities.Extensions;
@@ -18,22 +15,23 @@ namespace Calamari.Kubernetes.Commands.Executors
     public interface IRawYamlKubernetesApplyExecutor : IKubernetesApplyExecutor
     {
     }
-    
+
     class GatherAndApplyRawYamlExecutor : BaseKubernetesApplyExecutor, IRawYamlKubernetesApplyExecutor
     {
-        const string GroupedDirectoryName = "grouped";
-
         readonly ILog log;
         readonly ICalamariFileSystem fileSystem;
+        readonly IManifestReporter manifestReporter;
         readonly Kubectl kubectl;
 
         public GatherAndApplyRawYamlExecutor(
             ILog log,
             ICalamariFileSystem fileSystem,
-            Kubectl kubectl) : base(log, kubectl)
+            IManifestReporter manifestReporter,
+            Kubectl kubectl) : base(log)
         {
             this.log = log;
             this.fileSystem = fileSystem;
+            this.manifestReporter = manifestReporter;
             this.kubectl = kubectl;
         }
 
@@ -41,15 +39,19 @@ namespace Calamari.Kubernetes.Commands.Executors
         {
             var variables = deployment.Variables;
             var globs = variables.GetPaths(SpecialVariables.CustomResourceYamlFileName);
-            
+
             if (globs.IsNullOrEmpty())
                 return Enumerable.Empty<ResourceIdentifier>();
-            
-            var directories = GroupFilesIntoDirectories(deployment, globs, variables);
-            
+
+            var globberGrouping = new GlobberGrouping(fileSystem);
+            var globDirectories = globberGrouping.Group(deployment.CurrentDirectory, globs);
+            variables.Set(SpecialVariables.GroupedYamlDirectories, string.Join(";", globDirectories.Select(d => d.Directory)));
+
             var resourcesIdentifiers = new HashSet<ResourceIdentifier>();
-            foreach (var directory in directories)
+            for (int i = 0; i < globDirectories.Count(); i++)
             {
+                var directory = globDirectories[i];
+                log.Info($"Applying Batch #{i+1} for YAML matching '{directory.Glob}'");
                 var res = ApplyBatchAndReturnResourceIdentifiers(deployment, directory).ToArray();
 
                 if (appliedResourcesCallback != null)
@@ -63,82 +65,33 @@ namespace Calamari.Kubernetes.Commands.Executors
             return resourcesIdentifiers;
         }
 
-        IEnumerable<GlobDirectory> GroupFilesIntoDirectories(RunningDeployment deployment, List<string> globs, IVariables variables)
-        {
-            var stagingDirectory = deployment.CurrentDirectory;
-            var packageDirectory =
-                Path.Combine(stagingDirectory, KubernetesDeploymentCommandBase.PackageDirectoryName) +
-                Path.DirectorySeparatorChar;
-
-            var directories = new List<GlobDirectory>();
-            for (var i = 1; i <= globs.Count; i ++)
-            {
-                var glob = globs[i-1];
-                var directoryPath = Path.Combine(stagingDirectory, GroupedDirectoryName, i.ToString());
-                var directory = new GlobDirectory(i, glob, directoryPath);
-                fileSystem.CreateDirectory(directoryPath);
-
-                var globMode = GlobModeRetriever.GetFromVariables(variables);
-                var results = fileSystem.EnumerateFilesWithGlob(packageDirectory, globMode, glob);
-                foreach (var file in results)
-                {
-                    var relativeFilePath = fileSystem.GetRelativePath(packageDirectory, file);
-                    var targetPath = Path.Combine(directoryPath, relativeFilePath);
-                    var targetDirectory = Path.GetDirectoryName(targetPath);
-                    if (targetDirectory != null)
-                    {
-                        fileSystem.CreateDirectory(targetDirectory);
-                    }
-                    fileSystem.CopyFile(file, targetPath);
-                }
-
-                directories.Add(directory);
-            }
-
-            variables.Set(SpecialVariables.GroupedYamlDirectories,
-                string.Join(";", directories.Select(d => d.Directory)));
-            return directories;
-        }
-
         IEnumerable<ResourceIdentifier> ApplyBatchAndReturnResourceIdentifiers(RunningDeployment deployment, GlobDirectory globDirectory)
         {
-            var index = globDirectory.Index;
-            var directoryWithTrailingSlash = globDirectory.Directory + Path.DirectorySeparatorChar;
-            log.Info($"Applying Batch #{index} for YAML matching '{globDirectory.Glob}'");
-
             var files = fileSystem.EnumerateFilesRecursively(globDirectory.Directory).ToArray();
             if (!files.Any())
             {
                 log.Warn($"No files found matching '{globDirectory.Glob}'");
-                return Enumerable.Empty<ResourceIdentifier>();
+                return Array.Empty<ResourceIdentifier>();
             }
-
-            foreach (var file in files)
-            {
-                log.Verbose($"Matched file: {fileSystem.GetRelativePath(directoryWithTrailingSlash, file)}");
-            }
+            
+            ReportEachManifestBeingApplied(globDirectory, files);
 
             string[] executeArgs = {"apply", "-f", $@"""{globDirectory.Directory}""", "--recursive", "-o", "json"};
             executeArgs = executeArgs.AddOptionsForServerSideApply(deployment.Variables, log);
-
             var result = kubectl.ExecuteCommandAndReturnOutput(executeArgs);
 
             return ProcessKubectlCommandOutput(deployment, result, globDirectory.Directory);
         }
 
-        private class GlobDirectory
+        void ReportEachManifestBeingApplied(GlobDirectory globDirectory, string[] files)
         {
-            public GlobDirectory(int index, string glob, string directory)
+            var directoryWithTrailingSlash = globDirectory.Directory + Path.DirectorySeparatorChar;
+            foreach (var file in files)
             {
-                Index = index;
-                Glob = glob;
-                Directory = directory;
+                var fullFilePath = fileSystem.GetRelativePath(directoryWithTrailingSlash, file);
+                log.Verbose($"Matched file: {fullFilePath}");
+                manifestReporter.ReportManifestFileApplied(file);
             }
-
-            public int Index { get; }
-            public string Glob { get; }
-            public string Directory { get; }
         }
     }
 }
-#endif

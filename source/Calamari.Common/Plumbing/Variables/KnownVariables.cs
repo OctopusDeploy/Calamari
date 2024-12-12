@@ -32,6 +32,12 @@ namespace Calamari.Common.Plumbing.Variables
                     return $"{Prefix}{deploymentStage}.{scriptSyntax.FileExtension()}";
                 }
             }
+            
+
+            public static class GitResource
+            {
+                public const string CommitHash = "Octopus.Action.GitResource.CommitHash";
+            }
         }
 
         public static class Calamari

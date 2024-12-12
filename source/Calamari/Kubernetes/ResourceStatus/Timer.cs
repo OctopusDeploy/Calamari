@@ -1,4 +1,3 @@
-#if !NET40
 using System;
 using System.Diagnostics;
 using System.Threading;
@@ -34,4 +33,3 @@ namespace Calamari.Kubernetes.ResourceStatus
         public async Task WaitForInterval() => await Task.Delay(interval);
     }
 }
-#endif

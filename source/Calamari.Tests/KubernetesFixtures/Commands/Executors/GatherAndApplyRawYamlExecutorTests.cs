@@ -5,9 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Processes;
-using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.FileSystem;
-using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes;
 using Calamari.Kubernetes.Commands;
@@ -28,6 +26,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
     {
         readonly ICalamariFileSystem fileSystem = TestCalamariPhysicalFileSystem.GetPhysicalFileSystem();
         readonly ICommandLineRunner commandLineRunner = Substitute.For<ICommandLineRunner>();
+        readonly IManifestReporter manifestReporter = Substitute.For<IManifestReporter>();
 
         InMemoryLog log;
         List<ResourceIdentifier> receivedCallbacks;
@@ -59,7 +58,6 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
             SetupCommandLineRunnerMocks();
             var variables = new CalamariVariables
             {
-                [KnownVariables.EnabledFeatureToggles] = FeatureToggle.GlobPathsGroupSupportFeatureToggle.ToString(),
                 [KnownVariables.OriginalPackageDirectoryPath] = StagingDirectory
             };
             var runningDeployment = new RunningDeployment(variables);
@@ -84,7 +82,6 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
             SetupCommandLineRunnerMocks();
             var variables = new CalamariVariables
             {
-                [KnownVariables.EnabledFeatureToggles] = FeatureToggle.GlobPathsGroupSupportFeatureToggle.ToString(),
                 [KnownVariables.OriginalPackageDirectoryPath] = StagingDirectory,
                 [SpecialVariables.CustomResourceYamlFileName] = "dirA/*\ndirB/*"
             };
@@ -99,24 +96,18 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
             result.Should().BeTrue();
             variables.Get(SpecialVariables.GroupedYamlDirectories).Should().Be(expectedYamlGrouping);
 
-            commandLineRunner.ReceivedCalls().Count().Should().Be(4);
+            commandLineRunner.ReceivedCalls().Count().Should().Be(2);
             var commandLineArgs = commandLineRunner.ReceivedCalls().SelectMany(call => call.GetArguments().Select(arg => arg.ToString())).ToArray();
             commandLineArgs[0].Should().Contain("apply -f").And.Contain("--recursive").And.Contain("-o json").And.Contain($"{Path.Combine("grouped", "1")}");
             commandLineArgs[1].Should().Contain("apply -f").And.Contain("--recursive").And.Contain("-o json").And.Contain($"{Path.Combine("grouped", "2")}");
-            commandLineArgs[2].Should().Contain("get").And.Contain("basic-deployment");
-            commandLineArgs[3].Should().Contain("get").And.Contain("basic-service");
 
             receivedCallbacks.Should()
                              .BeEquivalentTo(new List<ResourceIdentifier>
                              {
-                                 new ResourceIdentifier("Deployment", "basic-deployment", "dev"), new ResourceIdentifier("Service", "basic-service", "dev"), new ResourceIdentifier("Deployment", "basic-deployment", "dev")
+                                 new ResourceIdentifier(SupportedResourceGroupVersionKinds.DeploymentV1, "basic-deployment", "dev"), 
+                                 new ResourceIdentifier(SupportedResourceGroupVersionKinds.ServiceV1, "basic-service", "dev"), 
+                                 new ResourceIdentifier(SupportedResourceGroupVersionKinds.DeploymentV1, "basic-deployment", "dev")
                              });
-
-            log.ServiceMessages.Count.Should().Be(2);
-            log.ServiceMessages[0].Name.Should().Be(ServiceMessageNames.SetVariable.Name);
-            log.ServiceMessages[0].Properties.Should().Contain(new KeyValuePair<string, string>("name", "CustomResources(basic-deployment)"));
-            log.ServiceMessages[1].Name.Should().Be(ServiceMessageNames.SetVariable.Name);
-            log.ServiceMessages[1].Properties.Should().Contain(new KeyValuePair<string, string>("name", "CustomResources(basic-service)"));
         }
 
         [Test]
@@ -127,7 +118,6 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
             SetupCommandLineRunnerMocks();
             var variables = new CalamariVariables
             {
-                [KnownVariables.EnabledFeatureToggles] = FeatureToggle.GlobPathsGroupSupportFeatureToggle.ToString(),
                 [KnownVariables.OriginalPackageDirectoryPath] = StagingDirectory,
                 [SpecialVariables.CustomResourceYamlFileName] = "dirA/*\ndirB/*",
                 [SpecialVariables.ServerSideApplyEnabled] = "true"
@@ -143,7 +133,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
             result.Should().BeTrue();
             variables.Get(SpecialVariables.GroupedYamlDirectories).Should().Be(expectedYamlGrouping);
 
-            commandLineRunner.ReceivedCalls().Count().Should().Be(4);
+            commandLineRunner.ReceivedCalls().Count().Should().Be(2);
             var commandLineArgs = commandLineRunner.ReceivedCalls().SelectMany(call => call.GetArguments().Select(arg => arg.ToString())).ToArray();
             commandLineArgs[0]
                 .Should()
@@ -173,7 +163,6 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
             SetupCommandLineRunnerMocks();
             var variables = new CalamariVariables
             {
-                [KnownVariables.EnabledFeatureToggles] = FeatureToggle.GlobPathsGroupSupportFeatureToggle.ToString(),
                 [KnownVariables.OriginalPackageDirectoryPath] = StagingDirectory,
                 [SpecialVariables.CustomResourceYamlFileName] = "dirA/*\ndirB/*",
                 [SpecialVariables.ServerSideApplyEnabled] = "true",
@@ -190,7 +179,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
             result.Should().BeTrue();
             variables.Get(SpecialVariables.GroupedYamlDirectories).Should().Be(expectedYamlGrouping);
 
-            commandLineRunner.ReceivedCalls().Count().Should().Be(4);
+            commandLineRunner.ReceivedCalls().Count().Should().Be(2);
             var commandLineArgs = commandLineRunner.ReceivedCalls().SelectMany(call => call.GetArguments().Select(arg => arg.ToString())).ToArray();
             commandLineArgs[0]
                 .Should()
@@ -220,7 +209,6 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
             SetupCommandLineRunnerMocks();
             var variables = new CalamariVariables
             {
-                [KnownVariables.EnabledFeatureToggles] = FeatureToggle.GlobPathsGroupSupportFeatureToggle.ToString(),
                 [KnownVariables.OriginalPackageDirectoryPath] = StagingDirectory,
                 [SpecialVariables.CustomResourceYamlFileName] = "dirA/*\ndirB/*",
                 [SpecialVariables.ServerSideApplyEnabled] = "false",
@@ -237,7 +225,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
             result.Should().BeTrue();
             variables.Get(SpecialVariables.GroupedYamlDirectories).Should().Be(expectedYamlGrouping);
 
-            commandLineRunner.ReceivedCalls().Count().Should().Be(4);
+            commandLineRunner.ReceivedCalls().Count().Should().Be(2);
             var commandLineArgs = commandLineRunner.ReceivedCalls().SelectMany(call => call.GetArguments().Select(arg => arg.ToString())).ToArray();
             commandLineArgs[0]
                 .Should()
@@ -268,7 +256,6 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
             commandLineRunner.Execute(Arg.Any<CommandLineInvocation>()).Returns(new CommandResult("blah", 1));
             var variables = new CalamariVariables
             {
-                [KnownVariables.EnabledFeatureToggles] = FeatureToggle.GlobPathsGroupSupportFeatureToggle.ToString(),
                 [KnownVariables.OriginalPackageDirectoryPath] = StagingDirectory,
                 [SpecialVariables.CustomResourceYamlFileName] = "dirA/*\ndirB/*"
             };
@@ -307,6 +294,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
         void SetupCommandLineRunnerMocks()
         {
             const string deploymentJson = @"{
+                ""apiVersion"": ""apps/v1"",
                 ""kind"": ""Deployment"",
                 ""metadata"": {
                     ""name"": ""basic-deployment"",
@@ -318,6 +306,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
                 ""kind"": ""List"",
                 ""items"": [
                     {
+                        ""apiVersion"": ""v1"",
                         ""kind"": ""Service"",
                         ""metadata"": {
                             ""name"": ""basic-service"",
@@ -325,6 +314,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
                         }
                     },
                     {
+                        ""apiVersion"": ""apps/v1"",
                         ""kind"": ""Deployment"",
                         ""metadata"": {
                             ""name"": ""basic-deployment"",
@@ -352,7 +342,8 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
         IRawYamlKubernetesApplyExecutor CreateExecutor(IVariables variables, ICalamariFileSystem fs)
         {
             var kubectl = new Kubectl(variables, log, commandLineRunner);
-            return new GatherAndApplyRawYamlExecutor(log, fs, kubectl);
+            
+            return new GatherAndApplyRawYamlExecutor(log, fs, manifestReporter, kubectl);
         }
 
         Task RecordingCallback(ResourceIdentifier[] identifiers)

@@ -25,6 +25,7 @@ using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Deployment.Features;
 using Calamari.Deployment.PackageRetention;
+using Calamari.Integration.Certificates;
 using Calamari.Integration.Iis;
 using Calamari.Integration.Nginx;
 
@@ -42,6 +43,7 @@ namespace Calamari.Commands
         readonly IExtractPackage extractPackage;
         readonly IStructuredConfigVariablesService structuredConfigVariablesService;
         readonly IDeploymentJournalWriter deploymentJournalWriter;
+        readonly IWindowsX509CertificateStore windowsX509CertificateStore;
         PathToPackage pathToPackage;
 
         public DeployPackageCommand(
@@ -53,7 +55,8 @@ namespace Calamari.Commands
             ISubstituteInFiles substituteInFiles,
             IExtractPackage extractPackage,
             IStructuredConfigVariablesService structuredConfigVariablesService,
-            IDeploymentJournalWriter deploymentJournalWriter)
+            IDeploymentJournalWriter deploymentJournalWriter,
+            IWindowsX509CertificateStore windowsX509CertificateStore)
         {
             Options.Add("package=", "Path to the deployment package to install.", v => pathToPackage = new PathToPackage(Path.GetFullPath(v)));
 
@@ -66,6 +69,7 @@ namespace Calamari.Commands
             this.extractPackage = extractPackage;
             this.structuredConfigVariablesService = structuredConfigVariablesService;
             this.deploymentJournalWriter = deploymentJournalWriter;
+            this.windowsX509CertificateStore = windowsX509CertificateStore;
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -85,16 +89,16 @@ namespace Calamari.Commands
             var configurationTransformer = ConfigurationTransformer.FromVariables(variables, log);
             var transformFileLocator = new TransformFileLocator(fileSystem, log);
             var embeddedResources = new AssemblyEmbeddedResources();
-#if IIS_SUPPORT
+
             var iis = new InternetInformationServer();
-            featureClasses.AddRange(new IFeature[] { new IisWebSiteBeforeDeployFeature(), new IisWebSiteAfterPostDeployFeature() });
-#endif
+            featureClasses.AddRange(new IFeature[] { new IisWebSiteBeforeDeployFeature(windowsX509CertificateStore), new IisWebSiteAfterPostDeployFeature(windowsX509CertificateStore) });
+
             if (!CalamariEnvironment.IsRunningOnWindows)
             {
                 featureClasses.Add(new NginxFeature(NginxServer.AutoDetect(), fileSystem));
             }
 
-            var semaphore = SemaphoreFactory.Get();
+            var semaphore = new SystemSemaphoreManager();
             var journal = new DeploymentJournal(fileSystem, semaphore, variables);
 
             var conventions = new List<IConvention>
@@ -114,9 +118,7 @@ namespace Calamari.Commands
                 new PackagedScriptConvention(new DeployPackagedScriptBehaviour(log, fileSystem, scriptEngine, commandLineRunner)),
                 new ConfiguredScriptConvention(new DeployConfiguredScriptBehaviour(log, fileSystem, scriptEngine, commandLineRunner)),
                 new FeatureConvention(DeploymentStages.AfterDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
-#if IIS_SUPPORT
                 new LegacyIisWebSiteConvention(fileSystem, iis),
-#endif
                 new FeatureConvention(DeploymentStages.BeforePostDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
                 new PackagedScriptConvention(new PostDeployPackagedScriptBehaviour(log, fileSystem, scriptEngine, commandLineRunner)),
                 new ConfiguredScriptConvention(new PostDeployConfiguredScriptBehaviour( log, fileSystem, scriptEngine, commandLineRunner)),

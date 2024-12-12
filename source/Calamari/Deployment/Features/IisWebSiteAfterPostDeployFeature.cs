@@ -11,8 +11,16 @@ using Calamari.Integration.Iis;
 
 namespace Calamari.Deployment.Features
 {
+#pragma warning disable CA1416
     public class IisWebSiteAfterPostDeployFeature : IisWebSiteFeature
     {
+        readonly IWindowsX509CertificateStore windowsX509CertificateStore;
+
+        public IisWebSiteAfterPostDeployFeature(IWindowsX509CertificateStore windowsX509CertificateStore)
+        {
+            this.windowsX509CertificateStore = windowsX509CertificateStore;
+        }
+        
         public override string DeploymentStage => DeploymentStages.AfterPostDeploy;
 
         public override void Execute(RunningDeployment deployment)
@@ -21,16 +29,13 @@ namespace Calamari.Deployment.Features
 
             if (variables.GetFlag(SpecialVariables.Action.IisWebSite.DeployAsWebSite, false))
             {
-#if WINDOWS_CERTIFICATE_STORE_SUPPORT
                 // For any bindings using certificate variables, the application pool account
                 // must have access to the private-key.
                 EnsureApplicationPoolHasCertificatePrivateKeyAccess(variables);
-#endif
             }
         }
 
-#if WINDOWS_CERTIFICATE_STORE_SUPPORT
-        static void EnsureApplicationPoolHasCertificatePrivateKeyAccess(IVariables variables)
+        void EnsureApplicationPoolHasCertificatePrivateKeyAccess(IVariables variables)
         {
             foreach (var binding in GetEnabledBindings(variables))
             {
@@ -41,12 +46,9 @@ namespace Calamari.Deployment.Features
 
                 var thumbprint = variables.Get($"{certificateVariable}.{CertificateVariables.Properties.Thumbprint}");
                 var privateKeyAccess = CreatePrivateKeyAccessForApplicationPoolAccount(variables);
- 
-                var storeName = IisWebSiteBeforeDeployFeature.FindCertificateInLocalMachineStore(thumbprint);
 
-                WindowsX509CertificateStore.AddPrivateKeyAccessRules(thumbprint,
+                windowsX509CertificateStore.AddPrivateKeyAccessRules(thumbprint,
                                                                      StoreLocation.LocalMachine,
-                                                                     storeName,
                                                                      new List<PrivateKeyAccessRule> { privateKeyAccess });
             }
         }
@@ -62,12 +64,12 @@ namespace Calamari.Deployment.Features
             }
 
             return new PrivateKeyAccessRule(
-                                            GetIdentityForApplicationPoolIdentity(appPoolIdentityType, variables),
+
+                                            GetIdentityForApplicationPoolIdentity(appPoolIdentityType, variables).Value,
                                             PrivateKeyAccess.FullControl);
         }
 
-        static IdentityReference GetIdentityForApplicationPoolIdentity(ApplicationPoolIdentityType applicationPoolIdentityType,
-                                                                       IVariables variables)
+        static IdentityReference GetIdentityForApplicationPoolIdentity(ApplicationPoolIdentityType applicationPoolIdentityType, IVariables variables)
         {
             switch (applicationPoolIdentityType)
             {
@@ -98,6 +100,6 @@ namespace Calamari.Deployment.Features
             //The following expression is to remove .\ from the beginning of usernames, we still allow for usernames in the format of machine\user or domain\user
             return Regex.Replace(username, "\\.\\\\(.*)", "$1", RegexOptions.None);
         }
-#endif
     }
+#pragma warning restore CA1416
 }

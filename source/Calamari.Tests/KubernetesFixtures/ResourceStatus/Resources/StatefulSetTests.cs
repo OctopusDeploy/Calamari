@@ -12,6 +12,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
         public void ShouldCollectCorrectProperties()
         {
             const string input = @"{
+    ""apiVersion"": ""apps/v1"",
     ""kind"": ""StatefulSet"",
     ""metadata"": {
         ""name"": ""my-sts"",
@@ -27,7 +28,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
             
             statefulSet.Should().BeEquivalentTo(new
             {
-                Kind = "StatefulSet",
+                GroupVersionKind = SupportedResourceGroupVersionKinds.StatefulSetV1,
                 Name = "my-sts",
                 Namespace = "default",
                 Uid = "01695a39-5865-4eea-b4bf-1a4783cbce62",

@@ -58,21 +58,9 @@ namespace Calamari.Common.Plumbing.Proxies
             string proxyUsername,
             string proxyPassword)
         {
-            string proxyUri;
-            if (!string.IsNullOrEmpty(proxyUsername))
-            {
-#if NET40
-                proxyUri =
-                    $"http://{System.Web.HttpUtility.UrlEncode(proxyUsername)}:{System.Web.HttpUtility.UrlEncode(proxyPassword)}@{host}:{port}";
-#else
-                proxyUri =
-                    $"http://{WebUtility.UrlEncode(proxyUsername)}:{WebUtility.UrlEncode(proxyPassword)}@{host}:{port}";
-#endif
-            }
-            else
-            {
-                proxyUri = $"http://{host}:{port}";
-            }
+            var proxyUri = !string.IsNullOrEmpty(proxyUsername) ?
+                $"http://{WebUtility.UrlEncode(proxyUsername)}:{WebUtility.UrlEncode(proxyPassword)}@{host}:{port}" :
+                $"http://{host}:{port}";
 
             yield return new EnvironmentVariable(HttpProxyVariableName, proxyUri);
             yield return new EnvironmentVariable(HttpProxyVariableName.ToLowerInvariant(), proxyUri);

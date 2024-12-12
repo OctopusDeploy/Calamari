@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Kubernetes.Integration;
 using Calamari.Kubernetes.ResourceStatus.Resources;
@@ -49,19 +50,20 @@ namespace Calamari.Kubernetes.ResourceStatus
 
         private Resource GetResource(ResourceIdentifier resourceIdentifier, IKubectl kubectl, Options options)
         {
-            var result = kubectlGet.Resource(resourceIdentifier.Kind, resourceIdentifier.Name, resourceIdentifier.Namespace, kubectl);
-            return result.IsNullOrEmpty() ? null : TryParse(ResourceFactory.FromJson, result, options);
+            var result = kubectlGet.Resource(resourceIdentifier, kubectl);
+            
+            return result.RawOutput.IsNullOrEmpty() ? null : TryParse(ResourceFactory.FromJson, result, options);
         }
 
         private IEnumerable<Resource> GetChildrenResources(Resource parentResource, IKubectl kubectl, Options options)
         {
-            var childKind = parentResource.ChildKind;
-            if (string.IsNullOrEmpty(childKind))
+            var childGvk = parentResource.ChildGroupVersionKind;
+            if (childGvk is null)
             {
                 return Enumerable.Empty<Resource>();
             }
 
-            var result = kubectlGet.AllResources(childKind, parentResource.Namespace, kubectl);
+            var result = kubectlGet.AllResources(childGvk, parentResource.Namespace, kubectl);
 
             var resources = TryParse(ResourceFactory.FromListJson, result, options);
             return resources.Where(resource => resource.OwnerUids.Contains(parentResource.Uid))
@@ -72,26 +74,34 @@ namespace Calamari.Kubernetes.ResourceStatus
                             }).ToList();
         }
 
-        T TryParse<T>(Func<string, Options, T> function, string jsonString, Options options)
+        T TryParse<T>(Func<string, Options, T> function, KubectlGetResult getResult, Options options)
         {
             try
             {
-                return function(jsonString, options);
+                
+                return function(getResult.ResourceJson, options);
             }
             catch (JsonException)
             {
-                LogJsonStringError(jsonString, options);
+                LogJsonStringError(getResult.ResourceJson, getResult, options);
                 throw;
             }
         }
 
-        void LogJsonStringError(string jsonString, Options options)
+        void LogJsonStringError(string jsonString, KubectlGetResult getResult, Options options)
         {
             if (options.PrintVerboseKubectlOutputOnError)
             {
                 log.Error("Failed to parse JSON:");
                 log.Error("---------------------------");
                 log.Error(jsonString);
+                log.Error("---------------------------");
+                log.Error("Full command output:");
+                log.Error("---------------------------");
+                foreach (var msg in getResult.RawOutput)
+                {
+                    log.Error(msg);
+                }
                 log.Error("---------------------------");
             }
             else

@@ -9,11 +9,12 @@ using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.FileSystem;
-using Calamari.Common.Plumbing.FileSystem.GlobExpressions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.Conventions;
+using Calamari.Kubernetes.Helm;
 using Calamari.Util;
 using Newtonsoft.Json;
 using Octopus.CoreUtilities.Extensions;
@@ -26,13 +27,15 @@ namespace Calamari.Kubernetes.Conventions
         readonly IScriptEngine scriptEngine;
         readonly ICommandLineRunner commandLineRunner;
         readonly ICalamariFileSystem fileSystem;
+        readonly HelmTemplateValueSourcesParser valueSourcesParser;
 
-        public HelmUpgradeConvention(ILog log, IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner, ICalamariFileSystem fileSystem)
+        public HelmUpgradeConvention(ILog log, IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner, ICalamariFileSystem fileSystem, HelmTemplateValueSourcesParser valueSourcesParser)
         {
             this.log = log;
             this.scriptEngine = scriptEngine;
             this.commandLineRunner = commandLineRunner;
             this.fileSystem = fileSystem;
+            this.valueSourcesParser = valueSourcesParser;
         }
 
         public void Install(RunningDeployment deployment)
@@ -70,7 +73,14 @@ namespace Calamari.Kubernetes.Conventions
 
             if (helmVersion == HelmVersion.V2)
             {
-                log.Warn("This step is currently configured to use Helm V2. Support for Helm V2 will be removed in Octopus Server 2024.3. Please migrate to Helm V3 as soon as possible");
+                if (FeatureToggle.PreventHelmV2DeploymentsFeatureToggle.IsEnabled(deployment.Variables))
+                {
+                    throw new CommandException("Helm V2 is no longer supported. Please migrate to Helm V3.");
+                }
+                else
+                {
+                    log.Warn("This step is currently configured to use Helm V2. Support for Helm V2 will be completely removed in Octopus Server 2025.1. Please migrate to Helm V3 as soon as possible.");
+                }
             }
 
             var sb = new StringBuilder();
@@ -162,6 +172,9 @@ namespace Calamari.Kubernetes.Conventions
 
         void SetValuesParameters(RunningDeployment deployment, StringBuilder sb)
         {
+            SetOrderedTemplateValues(deployment, sb);
+
+            //We leave the remaining values here as the users may not have migrated to the new structure
             foreach (var additionalValuesFile in AdditionalValuesFiles(deployment))
             {
                 sb.Append($" --values \"{additionalValuesFile}\"");
@@ -175,6 +188,16 @@ namespace Calamari.Kubernetes.Conventions
             if (TryGenerateVariablesFile(deployment, out var valuesFile))
             {
                 sb.Append($" --values \"{valuesFile}\"");
+            }
+        }
+
+        void SetOrderedTemplateValues(RunningDeployment deployment, StringBuilder sb)
+        {
+            var filenames = valueSourcesParser.ParseAndWriteTemplateValuesFilesFromAllSources(deployment);
+
+            foreach (var filename in filenames)
+            {
+                sb.Append($" --values \"{filename}\"");
             }
         }
 
@@ -202,7 +225,7 @@ namespace Calamari.Kubernetes.Conventions
 
             var timeout = deployment.Variables.Get(SpecialVariables.Helm.Timeout);
 
-            if (!GoDurationParser.ValidateTimeout(timeout))
+            if (!GoDurationParser.ValidateDuration(timeout))
             {
                 throw new CommandException($"Timeout period is not a valid duration: {timeout}");
             }
@@ -260,14 +283,13 @@ namespace Calamari.Kubernetes.Conventions
                     var packageId = PackageName.ExtractPackageNameFromPathedPackageId(variables.Get(PackageVariables.IndexedPackageId(packageReferenceName)));
                     var version = variables.Get(PackageVariables.IndexedPackageVersion(packageReferenceName));
                     var relativePath = Path.Combine(sanitizedPackageReferenceName, valuePath);
-                    var globMode = GlobModeRetriever.GetFromVariables(variables);
-                    var currentFiles = fileSystem.EnumerateFilesWithGlob(deployment.CurrentDirectory, globMode, relativePath).ToList();
+                    var currentFiles = fileSystem.EnumerateFilesWithGlob(deployment.CurrentDirectory, relativePath).ToList();
 
                     if (!currentFiles.Any() && string.IsNullOrEmpty(packageReferenceName)) // Chart archives have chart name root directory
                     {
                         log.Verbose($"Unable to find values files at path `{valuePath}`. Chart package contains root directory with chart name, so looking for values in there.");
                         var chartRelativePath = Path.Combine(packageId, relativePath);
-                        currentFiles = fileSystem.EnumerateFilesWithGlob(deployment.CurrentDirectory, globMode, chartRelativePath).ToList();
+                        currentFiles = fileSystem.EnumerateFilesWithGlob(deployment.CurrentDirectory, chartRelativePath).ToList();
                     }
 
                     if (!currentFiles.Any())
@@ -279,7 +301,7 @@ namespace Calamari.Kubernetes.Conventions
                     {
                         var relative = file.Substring(Path.Combine(deployment.CurrentDirectory, sanitizedPackageReferenceName).Length);
                         log.Info($"Including values file `{relative}` from package {packageId} v{version}");
-                        files.AddRange(currentFiles);
+                        files.Add(file);
                     }
                 }
             }
@@ -309,10 +331,8 @@ namespace Calamari.Kubernetes.Conventions
                     log.Verbose($"Using chart found in configured directory '{chartDirectory}'");
                     return chartDirectory;
                 }
-                else
-                {
-                    throw new CommandException($"Chart was not found in '{chartDirectoryVariable}'");
-                }
+
+                throw new CommandException($"Chart was not found in '{chartDirectoryVariable}'");
             }
 
             // Try the root directory
@@ -321,7 +341,7 @@ namespace Calamari.Kubernetes.Conventions
             if (fileSystem.FileExists(Path.Combine(installDir, "Chart.yaml")))
             {
                 log.Verbose($"Using chart found at root of package installation directory '{installDir}'");
-                return Path.Combine(installDir, "Chart.yaml");
+                return installDir;
             }
 
             var packageId = deployment.Variables.Get(PackageVariables.IndexedPackageId(string.Empty));
@@ -359,34 +379,25 @@ namespace Calamari.Kubernetes.Conventions
             throw new CommandException($"Unexpected error. Chart.yaml was not found in any directories inside '{installDir}'");
         }
 
-        static bool TryAddRawValuesYaml(RunningDeployment deployment, out string fileName)
+        bool TryAddRawValuesYaml(RunningDeployment deployment, out string fileName)
         {
             fileName = null;
             var yaml = deployment.Variables.Get(SpecialVariables.Helm.YamlValues);
-            if (!string.IsNullOrWhiteSpace(yaml))
-            {
-                fileName = Path.Combine(deployment.CurrentDirectory, "rawYamlValues.yaml");
-                File.WriteAllText(fileName, yaml);
-                return true;
-            }
 
-            return false;
+            fileName = InlineYamlValuesFileWriter.WriteToFile(deployment, fileSystem, yaml);
+
+            return fileName != null;
         }
 
-        static bool TryGenerateVariablesFile(RunningDeployment deployment, out string fileName)
+        bool TryGenerateVariablesFile(RunningDeployment deployment, out string fileName)
         {
             fileName = null;
             var variables = deployment.Variables.Get(SpecialVariables.Helm.KeyValues, "{}");
             var values = JsonConvert.DeserializeObject<Dictionary<string, object>>(variables);
 
-            if (!values.Any())
-            {
-                return false;
-            }
+            fileName = KeyValuesValuesFileWriter.WriteToFile(deployment, fileSystem, values);
 
-            fileName = Path.Combine(deployment.CurrentDirectory, "explicitVariableValues.yaml");
-            File.WriteAllText(fileName, RawValuesToYamlConverter.Convert(values));
-            return true;
+            return fileName != null;
         }
 
         void CheckHelmToolVersion(string customHelmExecutable, HelmVersion selectedVersion)

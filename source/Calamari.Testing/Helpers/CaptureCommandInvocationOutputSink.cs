@@ -14,12 +14,14 @@ namespace Calamari.Testing.Helpers
         readonly List<string> all = new List<string>();
         readonly List<string> infos = new List<string>();
         readonly List<string> errors = new List<string>();
+        readonly List<ServiceMessage> serviceMessages;
         readonly ServiceMessageParser serviceMessageParser;
         readonly IVariables outputVariables = new CalamariVariables();
 
         public CaptureCommandInvocationOutputSink()
         {
             serviceMessageParser = new ServiceMessageParser(ParseServiceMessage);
+            serviceMessages = new List<ServiceMessage>();
         }
 
         public void WriteInfo(string line)
@@ -43,6 +45,8 @@ namespace Calamari.Testing.Helpers
 
         public IList<string> AllMessages => all;
 
+        public IReadOnlyList<ServiceMessage> ServiceMessages => serviceMessages;
+
         public bool CalamariFoundPackage { get; protected set; }
 
         public FoundPackage? FoundPackage { get; protected set; }
@@ -53,6 +57,8 @@ namespace Calamari.Testing.Helpers
 
         void ParseServiceMessage(ServiceMessage message)
         {
+            serviceMessages.Add(message);
+            
             switch (message.Name)
             {
                 case ServiceMessageNames.SetVariable.Name:

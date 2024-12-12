@@ -64,7 +64,9 @@ namespace Calamari.Integration.Packages.Download
                                    version,
                                    feedUri,
                                    GetFeedCredentials(feedUsername, feedPassword),
-                                   cacheDirectory);
+                                   cacheDirectory,
+                                   maxDownloadAttempts,
+                                   downloadAttemptBackoff);
         }
 
         PackagePhysicalFileMetadata? AttemptToGetPackageFromCache(string packageId, IVersion version, string cacheDirectory)
@@ -90,12 +92,13 @@ namespace Calamari.Integration.Packages.Download
             return null;
         }
 
-        public PackagePhysicalFileMetadata DownloadPackage(
-            string packageId,
-            IVersion version,
-            Uri feedUri,
-            ICredentials feedCredentials,
-            string cacheDirectory)
+        public PackagePhysicalFileMetadata DownloadPackage(string packageId,
+                                                           IVersion version,
+                                                           Uri feedUri,
+                                                           ICredentials feedCredentials,
+                                                           string cacheDirectory,
+                                                           int maxDownloadAttempts,
+                                                           TimeSpan downloadAttemptBackoff)
         {
             Log.Info("Downloading package {0} v{1} from feed: '{2}'", packageId, version, feedUri);
             Log.VerboseFormat("Downloaded package will be stored in: '{0}'", cacheDirectory);
@@ -113,22 +116,22 @@ namespace Calamari.Integration.Packages.Download
                 
                 var cachedFileName = PackageName.ToCachedFileName(packageId, version, fileExtension);
                 var downloadPath = Path.Combine(Path.Combine(stagingDir, cachedFileName));
+                
+                var retryStrategy = PackageDownloaderRetryUtils.CreateRetryStrategy<CommandException>(maxDownloadAttempts, downloadAttemptBackoff, log);
+                retryStrategy.Execute(() =>
+                                      {
+                                          using var response = DownloadPackage(downloadUri, feedCredentials);
+                                          if (!response.IsSuccessStatusCode)
+                                          {
+                                              throw new CommandException(
+                                                                         $"Failed to download artifact (Status Code {(int)response.StatusCode}). Reason: {response.ReasonPhrase}");
+                                          }
+                                          
+                                          using var fileStream = fileSystem.OpenFile(downloadPath, FileAccess.Write);
+                                          response.Content.CopyToAsync(fileStream).GetAwaiter().GetResult();
+                                      });
+                
 
-                using (var fileStream = fileSystem.OpenFile(downloadPath, FileAccess.Write))
-                {
-                    using var response = DownloadPackage(downloadUri, feedCredentials);
-                    if (!response.IsSuccessStatusCode)
-                    {
-                        throw new CommandException(
-                                                   $"Failed to download artifact (Status Code {(int)response.StatusCode}). Reason: {response.ReasonPhrase}");
-                    }
-
-#if NET40
-                    response.Content.CopyToAsync(fileStream).Wait();
-#else
-                    response.Content.CopyToAsync(fileStream).GetAwaiter().GetResult();
-#endif
-                }
 
                 var localDownloadName = Path.Combine(cacheDirectory, cachedFileName);
                 fileSystem.MoveFile(downloadPath, localDownloadName);
@@ -150,12 +153,8 @@ namespace Calamari.Integration.Packages.Download
             HttpContent content = new StringContent(contentString, Encoding.UTF8);
 
             var response = Post(new Uri(url, "artifactory/api/search/aql"), content, credentials);
-
-#if NET40
-            var allPackagesRaw = response.Content.ReadAsStringAsync().Result;
-#else
+            
             var allPackagesRaw = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-#endif
 
             var allPackagesJson = JsonConvert.DeserializeObject<JObject>(allPackagesRaw);
             var packagesCollection = allPackagesJson["results"].ToArray();
@@ -274,20 +273,12 @@ namespace Calamari.Integration.Packages.Download
             var queryStringValues = new Dictionary<string, string>();
             if (details.TryGetValue("service", out var service))
             {
-#if NET40
-                var encodedScope = System.Web.HttpUtility.UrlEncode(service);
-#else
                 var encodedScope = WebUtility.UrlEncode(service);
-#endif
             }
 
             if (details.TryGetValue("scope", out var scope))
             {
-#if NET40
-                var encodedScope = System.Web.HttpUtility.UrlEncode(scope);
-#else
                 var encodedScope = WebUtility.UrlEncode(scope);
-#endif
             }
 
             oathUrl.Query = "?" + string.Join("&", queryStringValues.Select(kvp => $"{kvp.Key}={kvp.Value}").ToArray());
@@ -336,14 +327,7 @@ namespace Calamari.Integration.Packages.Download
             throw new Exception("Unable to retrieve authentication token required to perform operation.");
         }
 
-        static string? GetContent(HttpResponseMessage response)
-        {
-#if NET40
-            return response.Content.ReadAsStringAsync().Result;
-#else
-            return response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-#endif
-        }
+        static string? GetContent(HttpResponseMessage response) => response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
 
         AuthenticationHeaderValue CreateAuthenticationHeader(NetworkCredential credential)
         {
@@ -351,14 +335,7 @@ namespace Calamari.Integration.Packages.Download
             return new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
         }
 
-        HttpResponseMessage SendRequest(HttpRequestMessage request)
-        {
-#if NET40
-            return client.SendAsync(request).Result;
-#else
-            return client.SendAsync(request).GetAwaiter().GetResult();
-#endif
-        }
+        HttpResponseMessage SendRequest(HttpRequestMessage request) => client.SendAsync(request).GetAwaiter().GetResult();
 
         static ICredentials GetFeedCredentials(string? feedUsername, string? feedPassword)
         {

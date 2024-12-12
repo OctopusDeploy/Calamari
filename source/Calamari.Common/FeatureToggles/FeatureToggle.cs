@@ -7,12 +7,14 @@
     /// </summary>
     public enum FeatureToggle {
         SkunkworksFeatureToggle,
-        KubernetesAksKubeloginFeatureToggle,
-        GlobPathsGroupSupportFeatureToggle,
         ModernAzureSdkFeatureToggle,
         OidcAccountsFeatureToggle,
         AsynchronousAzureZipDeployFeatureToggle,
         FSharpDeprecationFeatureToggle,
-        AzureRMDeprecationFeatureToggle
+        AzureRMDeprecationFeatureToggle,
+        PreventHelmV2DeploymentsFeatureToggle,
+        KubernetesLiveObjectStatusFeatureToggle,
+        KubernetesAuthAwsCliWithExecFeatureToggle,
+        ForceUtf8ZipFileDecodingFeatureToggle
     }
 }

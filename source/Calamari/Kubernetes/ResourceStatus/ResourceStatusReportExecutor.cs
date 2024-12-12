@@ -1,4 +1,3 @@
-#if !NET40
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -34,8 +33,11 @@ namespace Calamari.Kubernetes.ResourceStatus
                 ? Timeout.InfiniteTimeSpan
                 : TimeSpan.FromSeconds(timeoutSeconds);
 
-            return runningResourceStatusCheckFactory(timeout, new Options {  WaitForJobs = waitForJobs, PrintVerboseKubectlOutputOnError = variables.GetFlag(SpecialVariables.PrintVerboseKubectlOutputOnError)}, initialResources);
+            return runningResourceStatusCheckFactory(timeout, new Options
+            {
+                WaitForJobs = waitForJobs, 
+                PrintVerboseKubectlOutputOnError = variables.GetFlag(SpecialVariables.PrintVerboseKubectlOutputOnError)
+            }, initialResources);
         }
     }
 }
-#endif

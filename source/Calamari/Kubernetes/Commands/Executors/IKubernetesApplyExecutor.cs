@@ -1,4 +1,3 @@
-#if !NET40
 using System;
 using System.Threading.Tasks;
 using Calamari.Common.Commands;
@@ -11,4 +10,3 @@ namespace Calamari.Kubernetes.Commands.Executors
         Task<bool> Execute(RunningDeployment deployment, Func<ResourceIdentifier[], Task> appliedResourcesCallback = null);
     }
 }
-#endif

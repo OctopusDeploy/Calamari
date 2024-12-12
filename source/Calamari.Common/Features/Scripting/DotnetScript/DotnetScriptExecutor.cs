@@ -32,10 +32,12 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
             var configurationFile = DotnetScriptBootstrapper.PrepareConfigurationFile(workingDirectory, variables);
             var (bootstrapFile, otherTemporaryFiles) = DotnetScriptBootstrapper.PrepareBootstrapFile(script.File, configurationFile, workingDirectory, variables);
             var arguments = DotnetScriptBootstrapper.FormatCommandArguments(bootstrapFile, script.Parameters);
+            bool.TryParse(variables.Get("Octopus.Action.Script.CSharp.BypassIsolation", "false"), out var bypassDotnetScriptIsolation);
 
             var cli = CreateCommandLineInvocation(executable, arguments, !string.IsNullOrWhiteSpace(localDotnetScriptPath));
             cli.EnvironmentVars = environmentVars;
             cli.WorkingDirectory = workingDirectory;
+            cli.Isolate = !bypassDotnetScriptIsolation;
 
             yield return new ScriptExecution(cli, otherTemporaryFiles.Concat(new[] { bootstrapFile, configurationFile }));
         }

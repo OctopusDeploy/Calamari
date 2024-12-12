@@ -36,7 +36,7 @@ namespace Calamari.Common.Features.Scripting
                 try
                 {
                     if (execution.CommandLineInvocation.Isolate)
-                        using (SemaphoreFactory.Get()
+                        using (new SystemSemaphoreManager()
                             .Acquire("CalamariSynchronizeProcess",
                                 "Waiting for other process to finish executing script"))
                         {

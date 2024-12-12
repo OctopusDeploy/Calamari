@@ -1,5 +1,4 @@
-﻿#if IIS_SUPPORT
-using System;
+﻿using System;
 using Calamari.Integration.Iis;
 using Calamari.Testing.Helpers;
 using NUnit.Framework;
@@ -10,7 +9,7 @@ namespace Calamari.Tests.Fixtures.Iis
     [Category(TestCategory.CompatibleOS.OnlyWindows)]
     public class IisFixture
     {
-        readonly WebServerSupport webServer = WebServerSupport.AutoDetect();
+        readonly WebServerSupport webServer = new WebServerSevenSupport();
         string siteName;
 
         [SetUp]
@@ -62,4 +61,3 @@ namespace Calamari.Tests.Fixtures.Iis
         }
     }
 }
-#endif

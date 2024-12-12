@@ -1,6 +1,8 @@
 using System;
 using System.Net;
 using System.Net.Http;
+using System.Threading;
+using System.Threading.Tasks;
 using Azure.Core;
 using Azure.Core.Pipeline;
 using Azure.Identity;
@@ -74,6 +76,23 @@ namespace Calamari.Azure
             armClientOptions.AddPolicy(new SlotConfigNamesInvalidIdFilterPolicy(), HttpPipelinePosition.PerRetry);
 
             return (armClientOptions, tokenCredentialOptions);
+        }
+        
+        public static async Task<string> GetAccessTokenAsync(this IAzureAccount azureAccount)
+        {
+           return azureAccount.AccountType == AccountType.AzureOidc
+                ? await AzureOidcAccountExtensions.GetAuthorizationToken(azureAccount.TenantId,
+                                                                         azureAccount.ClientId,
+                                                                         azureAccount.GetCredentials,
+                                                                         azureAccount.ResourceManagementEndpointBaseUri,
+                                                                         azureAccount.ActiveDirectoryEndpointBaseUri,
+                                                                         azureAccount.AzureEnvironment,
+                                                                         CancellationToken.None)
+                : await AzureServicePrincipalAccountExtensions.GetAuthorizationToken(azureAccount.TenantId,
+                                                                                     azureAccount.ClientId,
+                                                                                     azureAccount.GetCredentials,
+                                                                                     azureAccount.ResourceManagementEndpointBaseUri,
+                                                                                     azureAccount.ActiveDirectoryEndpointBaseUri);
         }
     }
 }

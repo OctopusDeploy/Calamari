@@ -14,7 +14,7 @@ namespace Calamari.Common.Plumbing.Variables
             if (string.IsNullOrWhiteSpace(policySet))
                 return;
 
-            var journal = new DeploymentJournal(fileSystem, SemaphoreFactory.Get(), variables);
+            var journal = new DeploymentJournal(fileSystem, new SystemSemaphoreManager(), variables);
             Previous(variables, journal, policySet);
             PreviousSuccessful(variables, journal, policySet);
         }

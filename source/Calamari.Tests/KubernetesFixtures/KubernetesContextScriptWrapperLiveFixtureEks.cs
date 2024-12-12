@@ -13,8 +13,10 @@ using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Kubernetes.Commands;
+using Calamari.Kubernetes.ResourceStatus.Resources;
 using Calamari.Testing;
 using Calamari.Testing.Helpers;
+using Calamari.Testing.Requirements;
 using Calamari.Tests.AWS;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
@@ -39,7 +41,7 @@ namespace Calamari.Tests.KubernetesFixtures
         private const string ConfigMapFileName = "myapp-configmap1.yml";
         private const string ConfigMapFileName2 = "myapp-configmap2.yml";
 
-        private const string SimpleDeploymentResourceType = "Deployment";
+        private readonly ResourceGroupVersionKind simpleDeploymentResourceGvk = new ResourceGroupVersionKind("apps", "v1", "Deployment");
         private const string SimpleDeploymentResourceName = "nginx-deployment";
         private const string SimpleDeploymentResource =
             "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: nginx-deployment\nspec:\n  selector:\n    matchLabels:\n      app: nginx\n  replicas: 3\n  template:\n    metadata:\n      labels:\n        app: nginx\n    spec:\n      containers:\n      - name: nginx\n        image: nginx:1.14.2\n        ports:\n        - containerPort: 80";
@@ -65,6 +67,10 @@ namespace Calamari.Tests.KubernetesFixtures
         private const string SimpleConfigMap2ResourceName = "game-demo2";
         private const string SimpleConfigMap2 =
             "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: game-demo2\ndata:\n  player_initial_lives: '1'\n  ui_properties_file_name: 'user-interface.properties'\n  game.properties: |\n    enemy.types=blobs,foxes\n    player.maximum-lives=10\n  user-interface.properties: |\n    color.good=orange\n    color.bad=pink\n    allow.textmode=false";
+
+        string awsAccessKey;
+        string awsSecretKey;
+        
         string eksClientID;
         string eksSecretKey;
         string eksClusterEndpoint;
@@ -81,7 +87,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
         protected override async Task PreInitialise()
         {
-            region = RegionRandomiser.GetARegion();
+            region = "ap-southeast-1";
             await TestContext.Progress.WriteLineAsync($"Aws Region chosen: {region}");
         }
 
@@ -112,12 +118,16 @@ namespace Calamari.Tests.KubernetesFixtures
 
         protected override async Task<Dictionary<string, string>> GetEnvironmentVars(CancellationToken cancellationToken)
         {
+            awsAccessKey = await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3AccessKey, cancellationToken);
+            awsSecretKey = await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3SecretKey, cancellationToken);
+            
             return new Dictionary<string, string>
             {
-                { "AWS_ACCESS_KEY_ID", await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3AccessKey, cancellationToken) },
-                { "AWS_SECRET_ACCESS_KEY", await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3SecretKey, cancellationToken) },
+                { "AWS_ACCESS_KEY_ID", awsAccessKey },
+                { "AWS_SECRET_ACCESS_KEY", awsSecretKey },
                 { "AWS_DEFAULT_REGION", region },
-                { "TF_VAR_tests_source_dir", testFolder }
+                { "TF_VAR_tests_source_dir", testFolder },
+                { "TF_VAR_static_resource_prefix", StaticTestResourcePrefix }
             };
         }
 
@@ -130,47 +140,24 @@ namespace Calamari.Tests.KubernetesFixtures
 
             var rawLogs = Log.Messages.Select(m => m.FormattedMessage).ToArray();
 
-            var scrubbedJson = AssertResourceCreatedAndGetJson(SimpleDeploymentResourceName);
-
-            this.Assent(scrubbedJson, configuration: AssentConfiguration.Default);
-
-            AssertObjectStatusMonitoringStarted(rawLogs, (SimpleDeploymentResourceType, SimpleDeploymentResourceName));
+            AssertObjectStatusMonitoringStarted(rawLogs, (simpleDeploymentResourceGvk, SimpleDeploymentResourceName));
 
             var objectStatusUpdates = Log.Messages.GetServiceMessagesOfType("k8s-status");
 
-            objectStatusUpdates.Where(m => m.Properties["status"] == "Successful").Should().HaveCount(5);
+            objectStatusUpdates.Where(m => m.Properties["status"] == "Successful").Should().HaveCount(6);
 
             rawLogs.Should().ContainSingle(m =>
                 m.Contains("Resource status check completed successfully because all resources are deployed successfully"));
         }
 
-        private static void AssertObjectStatusMonitoringStarted(string[] rawLogs, params (string Type, string Name)[] resources)
+        private static void AssertObjectStatusMonitoringStarted(string[] rawLogs, params (ResourceGroupVersionKind Gvk, string Name)[] resources)
         {
             var resourceStatusCheckLog = "Resource Status Check: 1 new resources have been added:";
             var idx = Array.IndexOf(rawLogs, resourceStatusCheckLog);
-            foreach (var (i, type, name) in resources.Select((t, i) => (i, t.Type, t.Name)))
+            foreach (var (i, gvk, name) in resources.Select((t, i) => (i, t.Gvk, t.Name)))
             {
-                rawLogs[idx + i + 1].Should().Be($" - {type}/{name} in namespace calamari-testing");
+                rawLogs[idx + i + 1].Should().Be($" - {gvk}/{name} in namespace calamari-testing");
             }
-        }
-
-        private string AssertResourceCreatedAndGetJson(string resourceName)
-        {
-            var variableMessages = Log.Messages.GetServiceMessagesOfType("setVariable");
-
-            var variableMessage =
-                variableMessages.Should().ContainSingle(m => m.Properties["name"] == $"CustomResources({resourceName})")
-                                .Subject;
-
-            return KubernetesJsonResourceScrubber.ScrubRawJson(variableMessage.Properties["value"], p =>
-                p.Name.Contains("Time") ||
-                p.Name == "annotations" ||
-                p.Name == "uid" ||
-                p.Name == "conditions" ||
-                p.Name == "resourceVersion" ||
-                p.Name == "status" ||
-                p.Name == "generation" ||
-                p.Name.StartsWith("clusterIP"));
         }
 
         [Test]
@@ -198,11 +185,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
             var rawLogs = Log.Messages.Select(m => m.FormattedMessage).ToArray();
 
-            var scrubbedJson = AssertResourceCreatedAndGetJson(SimpleDeploymentResourceName);
-
-            this.Assent(scrubbedJson, configuration: AssentConfiguration.Default);
-
-            AssertObjectStatusMonitoringStarted(rawLogs, (SimpleDeploymentResourceType, SimpleDeploymentResourceName));
+            AssertObjectStatusMonitoringStarted(rawLogs, (simpleDeploymentResourceGvk, SimpleDeploymentResourceName));
 
             rawLogs.Should().ContainSingle(l =>
                 l ==
@@ -277,10 +260,6 @@ namespace Calamari.Tests.KubernetesFixtures
 
             foreach (var (name, label) in resources)
             {
-                // Check that each resource was created and the appropriate setvariable service message was created.
-                var resource = AssertResourceCreatedAndGetJson(name);
-                this.Assent(resource, configuration: AssentConfiguration.DefaultWithPostfix(label));
-
                 // Check that each deployed resource has a "Successful" status reported.
                 statusMessages.Should().Contain(m => m.Properties["name"] == name && m.Properties["status"] == "Successful");
             }
@@ -295,6 +274,32 @@ namespace Calamari.Tests.KubernetesFixtures
         public void AuthorisingWithAmazonAccount(bool runAsScript)
         {
             SetVariablesToAuthoriseWithAmazonAccount();
+
+            if (runAsScript)
+            {
+                DeployWithKubectlTestScriptAndVerifyResult();
+            }
+            else
+            {
+                ExecuteCommandAndVerifyResult(TestableKubernetesDeploymentCommand.Name);
+            }
+        }
+        
+        [Test]
+        [TestCase(true)]
+        [TestCase(false)]
+        [WindowsTest] // We are having an issue with this test running on Linux. The test successfully executes on Windows.
+        public void AuthorisingWithAmazonAccount_WithExecFeatureToggleEnabled(bool runAsScript)
+        {
+            SetVariablesToAuthoriseWithAmazonAccount();
+            
+            //set the feature toggle
+            variables.SetStrings(KnownVariables.EnabledFeatureToggles,
+                                 new[]
+                                 {
+                                     FeatureToggle.KubernetesAuthAwsCliWithExecFeatureToggle.ToString()
+                                 },
+                                 ",");
 
             if (runAsScript)
             {
@@ -414,8 +419,8 @@ namespace Calamari.Tests.KubernetesFixtures
 
             try
             {
-                Environment.SetEnvironmentVariable(accessKeyEnvVar, eksClientID);
-                Environment.SetEnvironmentVariable(secretKeyEnvVar, eksSecretKey);
+                Environment.SetEnvironmentVariable(accessKeyEnvVar, awsAccessKey);
+                Environment.SetEnvironmentVariable(secretKeyEnvVar, awsSecretKey);
 
                 var authenticationDetails = new AwsAuthenticationDetails<AwsWorkerCredentials>
                 {
@@ -459,8 +464,8 @@ namespace Calamari.Tests.KubernetesFixtures
                 {
                     Account = new AwsAccessKeyCredentials
                     {
-                        AccessKey = eksClientID,
-                        SecretKey = eksSecretKey
+                        AccessKey = awsAccessKey,
+                        SecretKey = awsSecretKey
                     },
                     AccountId = "Accounts-1",
                     Type = "account"
@@ -639,15 +644,15 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set(KubernetesSpecialVariables.EksClusterName, eksClusterName);
             variables.Set("Octopus.Action.Aws.Region", region);
             variables.Set("Octopus.Action.AwsAccount.Variable", account);
-            variables.Set($"{account}.AccessKey", eksClientID);
-            variables.Set($"{account}.SecretKey", eksSecretKey);
+            variables.Set($"{account}.AccessKey", awsAccessKey);
+            variables.Set($"{account}.SecretKey", awsSecretKey);
             variables.Set("Octopus.Action.Kubernetes.CertificateAuthority", certificateAuthority);
             variables.Set($"{certificateAuthority}.CertificatePem", eksClusterCaCertificate);
         }
 
         private void SetVariablesForRawYamlCommand(string globPaths)
         {
-            variables.Set("Octopus.Action.KubernetesContainers.Namespace", "nginx");
+            variables.Set("Octopus.Action.KubernetesContainers.Namespace", "nginx-2");
             variables.Set(KnownVariables.Package.JsonConfigurationVariablesTargets, "**/*.{yml,yaml}");
             variables.Set(KubernetesSpecialVariables.CustomResourceYamlFileName, globPaths);
         }
@@ -657,6 +662,7 @@ namespace Calamari.Tests.KubernetesFixtures
             variables.Set("Octopus.Action.Kubernetes.ResourceStatusCheck", "True");
             variables.Set("Octopus.Action.KubernetesContainers.DeploymentWait", "NoWait");
             variables.Set("Octopus.Action.Kubernetes.DeploymentTimeout", timeout.ToString());
+            variables.Set("Octopus.Action.Kubernetes.PrintVerboseKubectlOutputOnError", "True");
         }
 
         private static string CreateResourceYamlFile(string directory, string fileName, string content)

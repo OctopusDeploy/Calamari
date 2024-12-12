@@ -174,8 +174,7 @@ namespace Calamari.Commands
             if (parsedMaxDownloadAttempts <= 0)
                 throw new CommandException("The requested number of download attempts should be more than zero");
 
-            int parsedAttemptBackoffSeconds;
-            if (!int.TryParse(attemptBackoffSeconds, out parsedAttemptBackoffSeconds))
+            if (!int.TryParse(attemptBackoffSeconds, out var parsedAttemptBackoffSeconds))
                 throw new CommandException($"Retry requested download attempt retry backoff '{attemptBackoffSeconds}' is not a valid integer number of seconds");
 
             if (parsedAttemptBackoffSeconds < 0)

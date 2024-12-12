@@ -27,6 +27,7 @@ namespace Calamari.Tests.KubernetesFixtures
     public abstract class KubernetesContextScriptWrapperLiveFixtureBase : CalamariFixture
     {
         protected const string TestNamespace = "calamari-testing";
+        protected const string StaticTestResourcePrefix = "calamari-testing-static";
 
         protected IVariables variables;
         protected string testFolder;
@@ -41,7 +42,6 @@ namespace Calamari.Tests.KubernetesFixtures
         public void Setup()
         {
             variables = new CalamariVariables();
-            variables.Set(KnownVariables.EnabledFeatureToggles, FeatureToggle.KubernetesAksKubeloginFeatureToggle.ToString());
 
             Log = new DoNotDoubleLog();
 

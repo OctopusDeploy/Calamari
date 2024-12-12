@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Packages.NuGet;
+using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Util;
@@ -72,7 +73,8 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         {
             var log = new InMemoryLog();
             var variables = new CalamariVariables();
-            var combinedExtractor = new CombinedPackageExtractor(log, variables, new TestCommandLineRunner(log, variables));
+            var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
+            var combinedExtractor = new CombinedPackageExtractor(log, fileSystem, variables, new TestCommandLineRunner(log, variables));
             return combinedExtractor;
         }
     }
