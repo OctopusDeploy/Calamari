@@ -26,7 +26,7 @@ namespace Calamari.Common.Features.Scripting.FSharp
             //if the feature toggle to disable FSharp scripts is enabled, just blow up
             if (FeatureToggle.DisableFSharpScriptExecutionFeatureToggle.IsEnabled(variables))
             {
-                throw new CommandException("FSharp scripts are no longer supported");
+                throw new CommandException($"FSharp scripts are no longer supported. Please read our deprecation {log.FormatLink("https://oc.to/fsharp-deprecation", "blog post")} for more details.");
             }
             
             LogFSharpDeprecationWarning(variables);
