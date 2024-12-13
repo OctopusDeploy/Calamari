@@ -13,9 +13,6 @@ namespace Calamari.Common.Features.Scripts
         [FileExtension("sh")]
         Bash,
 
-        [FileExtension("fsx")]
-        FSharp,
-
         [FileExtension("py")]
         Python
     }

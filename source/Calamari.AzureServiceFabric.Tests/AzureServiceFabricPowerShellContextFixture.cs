@@ -13,7 +13,6 @@ namespace Calamari.AzureServiceFabric.Tests
         [Test]
         [TestCase("Endpoint", ScriptSyntax.PowerShell, true)]
         [TestCase("", ScriptSyntax.PowerShell, false)]
-        [TestCase("Endpoint", ScriptSyntax.FSharp, false)]
         public void ShouldBeEnabled(string connectionEndpoint, ScriptSyntax syntax, bool expected)
         {
             var variables = new CalamariVariables
