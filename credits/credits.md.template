@@ -1,0 +1,19 @@
+﻿---
+title: Credits
+description: Calamari is made possible thanks to many great third-party products.
+position: 200
+---
+
+Calamari is made possible thanks to the following great third-party products.
+
+|                      Package                      |                         Authors and/or maintainers                        |                                                                                                        Find it at...                                                                                                        |                                                       License                                                       |
+| ------------------------------------------------- | ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+{{ for dependency in dependencies ~}}
+| {{ dependency.id | string.pad_right 49 }} | {{ dependency.authors | string.pad_right 73}} | {{ "[" + dependency.project_url + "]" + "(" + dependency.project_url + ")" | string.pad_right 219 }} | {{ for descriptor in dependency.licenses.descriptors }}{{ "[" + descriptor.name + "]" + "(" + descriptor.url + ")" | string.pad_right 115 }}{{ end }} |
+{{~ end }}
+
+Each project listed here is the property of its respective copyright owner.
+
+:::div{.hint}
+Have we missed something from this list? Typos or inaccuracies? Please let us know via our [support forum](https://octopus.com/support) so that we can fix it. Thanks!
+:::
