@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Calamari.Common.Commands;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Logging;
@@ -22,6 +23,12 @@ namespace Calamari.Common.Features.Scripting.FSharp
             IVariables variables,
             Dictionary<string, string>? environmentVars = null)
         {
+            //if the feature toggle to disable FSharp scripts is enabled, just blow up
+            if (FeatureToggle.DisableFSharpScriptExecutionFeatureToggle.IsEnabled(variables))
+            {
+                throw new CommandException("FSharp scripts are no longer supported");
+            }
+            
             LogFSharpDeprecationWarning(variables);
             
             var workingDirectory = Path.GetDirectoryName(script.File);
