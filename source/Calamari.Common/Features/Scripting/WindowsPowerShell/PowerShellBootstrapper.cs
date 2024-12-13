@@ -162,7 +162,7 @@ namespace Calamari.Common.Features.Scripting.WindowsPowerShell
         static readonly string BootstrapScriptTemplate;
         static readonly string DebugBootstrapScriptTemplate;
         static readonly string SensitiveVariablePassword = AesEncryption.RandomString(16);
-        static readonly AesEncryption VariableEncryptor = new AesEncryption(SensitiveVariablePassword);
+        static readonly AesEncryption VariableEncryptor = new AesEncryption(SensitiveVariablePassword, AesEncryption.ScriptBootstrapKeySize);
         static readonly ICalamariFileSystem CalamariFileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
         static PowerShellBootstrapper()
@@ -177,7 +177,7 @@ namespace Calamari.Common.Features.Scripting.WindowsPowerShell
 
         public string FormatCommandArguments(string bootstrapFile, string debuggingBootstrapFile, IVariables variables)
         {
-            var encryptionKey = Convert.ToBase64String(AesEncryption.GetEncryptionKey(SensitiveVariablePassword));
+            var encryptionKey = Convert.ToBase64String(AesEncryption.GetEncryptionKey(SensitiveVariablePassword, AesEncryption.ScriptBootstrapKeySize));
             var commandArguments = new StringBuilder();
             var executeWithoutProfile = variables[PowerShellVariables.ExecuteWithoutProfile];
             var traceCommand = GetPsDebugCommand(variables);

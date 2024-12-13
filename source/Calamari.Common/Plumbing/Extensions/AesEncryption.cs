@@ -8,11 +8,20 @@ namespace Calamari.Common.Plumbing.Extensions
 {
     public class AesEncryption
     {
-        const int KeySizeBits = 256;
-        const int KeySizeBytes = KeySizeBits / 8;
+        //Key size used to encrypt variables for scripts (bash/powershell etc.)
+        //The variables are decrypted in the respective bootstrapper scripts
+        public static readonly int ScriptBootstrapKeySize = 256;
+        
+        //Key size used to decrypt the variables file sent by Octopus Server
+        public static readonly int VariablesFileKeySize = 128;
+        
+        //Key size used to encrypt variables for step packages (step-api bootstrapper)
+        //The variables are decrypted in the step package bootstrapper
+        public static readonly int StepPackageBootstrapKeySize = 128;
+        
+        readonly int keySizeBits;
 
         const int BlockSizeBits = 128;
-        const int BlockSizeBytes = BlockSizeBits / 8;
 
         const int PasswordSaltIterations = 1000;
         public const string SaltRaw = "Octopuss";
@@ -23,9 +32,10 @@ namespace Calamari.Common.Plumbing.Extensions
 
         readonly byte[] key;
 
-        public AesEncryption(string password)
+        public AesEncryption(string password, int keySizeBits)
         {
-            key = GetEncryptionKey(password);
+            this.keySizeBits = keySizeBits;
+            key = GetEncryptionKey(password, this.keySizeBits);
         }
 
         public string Decrypt(byte[] encrypted)
@@ -73,7 +83,7 @@ namespace Calamari.Common.Plumbing.Extensions
             {
                 Mode = CipherMode.CBC,
                 Padding = PaddingMode.PKCS7,
-                KeySize = KeySizeBits,
+                KeySize = keySizeBits,
                 BlockSize = BlockSizeBits,
                 Key = key
             };
@@ -85,7 +95,7 @@ namespace Calamari.Common.Plumbing.Extensions
 
         public static byte[] ExtractIV(byte[] encrypted, out byte[] iv)
         {
-            var ivLength = BlockSizeBytes;
+            var ivLength = BlockSizeBits / 8;
             iv = new byte[ivLength];
             Buffer.BlockCopy(encrypted,
                 IvPrefix.Length,
@@ -104,10 +114,10 @@ namespace Calamari.Common.Plumbing.Extensions
             return aesData;
         }
 
-        public static byte[] GetEncryptionKey(string encryptionPassword)
+        public static byte[] GetEncryptionKey(string encryptionPassword, int keySizeBits)
         {
             var passwordGenerator = new Rfc2898DeriveBytes(encryptionPassword, PasswordPaddingSalt, PasswordSaltIterations);
-            return passwordGenerator.GetBytes(KeySizeBytes);
+            return passwordGenerator.GetBytes(keySizeBits / 8);
         }
 
         public static string RandomString(int length)
