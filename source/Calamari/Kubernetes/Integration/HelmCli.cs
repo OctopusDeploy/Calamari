@@ -114,7 +114,7 @@ namespace Calamari.Kubernetes.Integration
 
             if (OctopusFeatureToggles.ExecuteHelmUpgradeCommandViaShellScriptFeatureToggle.IsEnabled(variables))
             {
-                log.Warn("Backwards compatibility for Helm command execution via bash scripts is temporary and will be removed in a future release. Provide arguments compatible with direct Helm invocation, avoiding bash-specific formatting.");
+                log.Warn("Backwards compatibility for Helm command execution via shell scripts is temporary and will be removed in a future release. Provide arguments compatible with direct Helm invocation, avoiding shell-specific formatting.");
                 return ExecuteCommandViaScript(buildArgs);
             }
 
