@@ -20,7 +20,8 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="System.DirectoryServices.AccountManagement" Version="4.7.0" />
-    <PackageReference Include="XPath2" Version="1.0.12" />
+    <PackageReference Include="WireMock.Net" Version="1.6.9" />
+    <PackageReference Include="XPath2" Version="1.1.5" />
     <ProjectReference Include="..\Calamari.Testing\Calamari.Testing.csproj" />
     <ProjectReference Include="..\Calamari\Calamari.csproj" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.3.0" />
