@@ -173,14 +173,19 @@ namespace Calamari.CloudAccounts
         {
             switch (accountType)
             {
-                case "AmazonWebServicesAccount": return await PopulateKeysDirectly();
-                case "AmazonWebServicesOidcAccount": return await PopulateKeysUsingOidc();
-                default: return false;
+                // Prioritise auth flows based on account type
+                case "AmazonWebServicesAccount" when await TryPopulateKeysDirectly():
+                case "AmazonWebServicesOidcAccount" when await TryPopulateKeysUsingOidc():
+                    return true; 
+                default:
+                    // Default priority if no matching account type
+                    return await TryPopulateKeysDirectly() || await TryPopulateKeysUsingOidc();
             }
         }
 
-        async Task<bool> PopulateKeysDirectly()
+        async Task<bool> TryPopulateKeysDirectly()
         {
+            if(string.IsNullOrEmpty(accessKey)) return false;
             EnvironmentVars["AWS_ACCESS_KEY_ID"] = accessKey;
             EnvironmentVars["AWS_SECRET_ACCESS_KEY"] = secretKey;
             if (!await verifyLogin())
@@ -193,8 +198,9 @@ namespace Calamari.CloudAccounts
             return true;
         }
 
-        async Task<bool> PopulateKeysUsingOidc()
+        async Task<bool> TryPopulateKeysUsingOidc()
         {
+            if(string.IsNullOrEmpty(oidcJwt)) return false;
             try
             {
                 var client = new AmazonSecurityTokenServiceClient(new AnonymousAWSCredentials());
