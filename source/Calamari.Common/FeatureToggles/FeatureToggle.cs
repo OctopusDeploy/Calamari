@@ -15,6 +15,7 @@
         PreventHelmV2DeploymentsFeatureToggle,
         KubernetesLiveObjectStatusFeatureToggle,
         KubernetesAuthAwsCliWithExecFeatureToggle,
-        ForceUtf8ZipFileDecodingFeatureToggle
+        ForceUtf8ZipFileDecodingFeatureToggle,
+        DisableFSharpScriptExecutionFeatureToggle
     }
 }
