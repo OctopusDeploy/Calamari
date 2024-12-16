@@ -27,46 +27,7 @@ namespace Calamari.Common.Features.Processes.Semaphores
 
         public IDisposable Acquire(string name, string waitMessage)
         {
-            return CalamariEnvironment.IsRunningOnWindows
-                ? AcquireSemaphore(name, waitMessage)
-                : AcquireMutex(name, waitMessage);
-        }
-
-        IDisposable AcquireSemaphore(string name, string waitMessage)
-        {
-            Semaphore semaphore;
-            var globalName = $"Global\\{name}";
-            try
-            {
-                semaphore = CreateGlobalSemaphoreAccessibleToEveryone(globalName);
-            }
-            catch (Exception ex)
-            {
-                log.Verbose($"Acquiring semaphore failed: {ex.PrettyPrint()}");
-                log.Verbose("Retrying without setting access controls...");
-                semaphore = new Semaphore(1, 1, globalName);
-            }
-
-            try
-            {
-                if (!semaphore.WaitOne(initialWaitBeforeShowingLogMessage))
-                {
-                    log.Verbose(waitMessage);
-                    semaphore.WaitOne();
-                }
-            }
-            catch (AbandonedMutexException)
-            {
-                // We are now the owners of the mutex
-                // If a thread terminates while owning a mutex, the mutex is said to be abandoned.
-                // The state of the mutex is set to signaled and the next waiting thread gets ownership.
-            }
-
-            return new Releaser(() =>
-            {
-                semaphore.Release();
-                semaphore.Dispose();
-            });
+            return AcquireMutex(name, waitMessage);
         }
 
         IDisposable AcquireMutex(string name, string waitMessage)
@@ -94,21 +55,6 @@ namespace Calamari.Common.Features.Processes.Semaphores
                 mutex.ReleaseMutex();
                 mutex.Dispose();
             });
-        }
-
-        static Semaphore CreateGlobalSemaphoreAccessibleToEveryone(string name)
-        {
-            var semaphoreSecurity = new SemaphoreSecurity();
-            var everyone = new SecurityIdentifier(WellKnownSidType.WorldSid, null);
-            var rule = new SemaphoreAccessRule(everyone, SemaphoreRights.FullControl, AccessControlType.Allow);
-
-            semaphoreSecurity.AddAccessRule(rule);
-
-            bool createdNew;
-
-            var semaphore = new Semaphore(1, 1, name, out createdNew);
-            semaphore.SetAccessControl(semaphoreSecurity);
-            return semaphore;
         }
 
         class Releaser : IDisposable
