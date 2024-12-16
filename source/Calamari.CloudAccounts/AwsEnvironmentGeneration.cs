@@ -73,8 +73,10 @@ namespace Calamari.CloudAccounts
         /// <returns>true if the login was successful, false otherwise</returns>
         async Task<bool> LoginFallback()
         {
-            // Inherit role from web auth tokens
-            return await PopulateKeysFromWebRole()
+            // Inherit role from pod identity manager
+            return await PopulateKeysFromContainerIdentity()
+                   // Inherit role from web auth tokens
+                   || await PopulateKeysFromWebRole()
                    // Inherit the role via the IMDS web endpoint exposed by VMs
                    || await PopulateKeysFromInstanceRole();
         }
@@ -305,6 +307,36 @@ namespace Calamari.CloudAccounts
                 return await body.Content.ReadAsStringAsync();
             }
         }
+        
+        /// <summary>
+        /// This method reads the AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE environment variable, loads the token
+        /// from the associated file, and then assumes the role using the credentials provided by the pod identity
+        /// manager located in the AWS_CONTAINER_CREDENTIALS_FULL_URI environment variable. This is used when a tentacle is
+        /// running in an EKS cluster. The docs at https://docs.aws.amazon.com/sdkref/latest/guide/feature-container-credentials.html
+        /// have more details.
+        /// </summary>
+        async Task<bool> PopulateKeysFromContainerIdentity()
+        {
+            if (String.IsNullOrEmpty(accessKey))
+            {
+                try
+                {
+                    var credentials = new GenericContainerCredentials();
+                    var immutableCredentials = await credentials.GetCredentialsAsync();
+                    EnvironmentVars["AWS_ACCESS_KEY_ID"] = immutableCredentials.AccessKey;
+                    EnvironmentVars["AWS_SECRET_ACCESS_KEY"] = immutableCredentials.SecretKey;
+                    EnvironmentVars["AWS_SESSION_TOKEN"] = immutableCredentials.Token;
+                    return true;
+                }
+                catch
+                {
+                    // catch the exception and fallback to returning false
+                }
+            }
+
+            return false;
+        }
+
 
         /// <summary>
         /// If we assume a secondary role, do it here
