@@ -15,9 +15,9 @@ namespace Calamari.Common.Plumbing.Extensions
         //Key size used to decrypt the variables file sent by Octopus Server
         public static readonly int VariablesFileKeySize = 128;
         
-        //Key size used to encrypt variables for step packages (step-api bootstrapper)
+        //Key size used to encrypt variables for step packages (`step-bootstrapper` package referenced by Server)
         //The variables are decrypted in the step package bootstrapper
-        public static readonly int StepPackageBootstrapKeySize = 128;
+        public static readonly int StepPackageBootstrapKeySize = 256;
         
         readonly int keySizeBits;
 
