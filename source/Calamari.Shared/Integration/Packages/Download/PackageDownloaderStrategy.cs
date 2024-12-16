@@ -5,6 +5,7 @@ using Calamari.Common.Features.Scripting;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Integration.Packages.Download.Oci;
 using Octopus.Versioning;
 
 namespace Calamari.Integration.Packages.Download
@@ -63,14 +64,14 @@ namespace Calamari.Integration.Packages.Download
                     downloader = new HelmChartPackageDownloader(fileSystem, log);
                     break;
                 case FeedType.OciRegistry:
-                    downloader = new OciPackageDownloader(fileSystem, new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner), log);
+                    downloader = new OciPackageDownloader(fileSystem, new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner), new OciClient(), log);
                     break;
                 case FeedType.AwsElasticContainerRegistry:
-                    var x = new OciArtifactManifestRetriever();
-                    if (x.TryGetArtifactType(packageId, version, feedUri, feedUsername, feedPassword)
-                        == OciArtifactTypes.HelmChart)
+                    var ociClient = new OciClient();
+                    var ociArtifactManifestRetriever = new OciArtifactManifestRetriever(ociClient, log);
+                    if (ociArtifactManifestRetriever.TryGetArtifactType(packageId, version, feedUri, feedUsername, feedPassword) == OciArtifactTypes.HelmChart)
                     {
-                        downloader = new OciPackageDownloader(fileSystem, new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner), log);
+                        downloader = new OciPackageDownloader(fileSystem, new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner), ociClient, log);
                     }
                     else
                     {

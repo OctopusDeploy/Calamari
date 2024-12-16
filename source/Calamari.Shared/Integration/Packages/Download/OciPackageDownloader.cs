@@ -1,18 +1,13 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Web;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
-using Newtonsoft.Json;
+using Calamari.Integration.Packages.Download.Oci;
 using Newtonsoft.Json.Linq;
 using Octopus.Versioning;
 
@@ -31,20 +26,22 @@ namespace Calamari.Integration.Packages.Download
         readonly ICalamariFileSystem fileSystem;
         readonly ICombinedPackageExtractor combinedPackageExtractor;
         readonly ILog log;
-        readonly HttpClient client;
+        readonly OciClient ociClient;
 
         public OciPackageDownloader(
             ICalamariFileSystem fileSystem,
             ICombinedPackageExtractor combinedPackageExtractor,
+            OciClient ociClient,
             ILog log)
         {
             this.fileSystem = fileSystem;
             this.combinedPackageExtractor = combinedPackageExtractor;
+            this.ociClient = ociClient;
             this.log = log;
-            client = new HttpClient(new HttpClientHandler { AutomaticDecompression = DecompressionMethods.None });
         }
 
-        public PackagePhysicalFileMetadata DownloadPackage(string packageId,
+        public PackagePhysicalFileMetadata DownloadPackage(
+            string packageId,
             IVersion version,
             string feedId,
             Uri feedUri,
@@ -83,23 +80,15 @@ namespace Calamari.Integration.Packages.Download
                     Directory.CreateDirectory(stagingDir);
                 }
 
-                var versionString = Oci.FixVersion(version);
-
-                var apiUrl = Oci.GetApiUri(feedUri);
-                var (digest, size, extension) = GetPackageDetails(apiUrl, packageId, versionString, feedUsername, feedPassword);
-                var hash = Oci.GetPackageHashFromDigest(digest);
+                var (digest, size, extension) = GetPackageDetails(feedUri, packageId, version, feedUsername, feedPassword);
+                var hash = OciClient.GetPackageHashFromDigest(digest);
 
                 var cachedFileName = PackageName.ToCachedFileName(packageId, version, extension);
                 var downloadPath = Path.Combine(Path.Combine(stagingDir, cachedFileName));
 
                 var retryStrategy = PackageDownloaderRetryUtils.CreateRetryStrategy<CommandException>(maxDownloadAttempts, downloadAttemptBackoff, log);
-                retryStrategy.Execute(() => DownloadPackage(apiUrl,
-                                                       packageId,
-                                                       digest,
-                                                       feedUsername,
-                                                       feedPassword,
-                                                       downloadPath));
-;
+                retryStrategy.Execute(
+                    () => DownloadPackage(feedUri, packageId, digest, feedUsername, feedPassword, downloadPath));
 
                 var localDownloadName = Path.Combine(cacheDirectory, cachedFileName);
                 fileSystem.MoveFile(downloadPath, localDownloadName);
@@ -110,23 +99,23 @@ namespace Calamari.Integration.Packages.Download
                         localDownloadName,
                         hash,
                         size)
-                    : PackagePhysicalFileMetadata.Build(localDownloadName) 
+                    : PackagePhysicalFileMetadata.Build(localDownloadName)
                       ?? throw new CommandException($"Unable to retrieve metadata for package {packageId}, version {version}");
             }
         }
 
         (string digest, int size, string extension) GetPackageDetails(
-            Uri url,
+            Uri feedUri,
             string packageId,
-            string version,
-            string? feedUserName, 
+            IVersion version,
+            string? feedUserName,
             string? feedPassword)
         {
-            var manifest = Oci.GetManifest(client, url, packageId, version, feedUserName, feedPassword);
+            var manifest = ociClient.GetManifest(feedUri, packageId, version, feedUserName, feedPassword);
 
-            var layer = manifest.Value<JArray>(Oci.Manifest.Layers.PropertyName)[0];
-            var digest = layer.Value<string>(Oci.Manifest.Layers.DigestPropertyName);
-            var size = layer.Value<int>(Oci.Manifest.Layers.SizePropertyName);
+            var layer = manifest.Value<JArray>(OciConstants.Manifest.Layers.PropertyName)[0];
+            var digest = layer.Value<string>(OciConstants.Manifest.Layers.DigestPropertyName);
+            var size = layer.Value<int>(OciConstants.Manifest.Layers.SizePropertyName);
             var extension = GetExtensionFromManifest(layer);
 
             return (digest, size, extension);
@@ -134,17 +123,18 @@ namespace Calamari.Integration.Packages.Download
 
         string GetExtensionFromManifest(JToken layer)
         {
-            var artifactTitle = layer.Value<JObject>(Oci.Manifest.Layers.AnnotationsPropertyName)?[Oci.Manifest.Image.TitleAnnotationKey]?.Value<string>() ?? "";
+            var artifactTitle = layer.Value<JObject>(OciConstants.Manifest.Layers.AnnotationsPropertyName)?[OciConstants.Manifest.Image.TitleAnnotationKey]?.Value<string>() ?? "";
             var extension = combinedPackageExtractor
-                .Extensions
-                .FirstOrDefault(ext => 
-                    Path.GetExtension(artifactTitle).Equals(ext, StringComparison.OrdinalIgnoreCase));
+                            .Extensions
+                            .FirstOrDefault(
+                                ext =>
+                                    Path.GetExtension(artifactTitle).Equals(ext, StringComparison.OrdinalIgnoreCase));
 
-            return extension ?? (layer.Value<string>(Oci.Manifest.Layers.MediaTypePropertyName).EndsWith("tar+gzip") ? ".tgz" : ".tar");
+            return extension ?? (layer.Value<string>(OciConstants.Manifest.Layers.MediaTypePropertyName).EndsWith("tar+gzip") ? ".tgz" : ".tar");
         }
 
         void DownloadPackage(
-            Uri url,
+            Uri feedUri,
             string packageId,
             string digest,
             string? feedUsername,
@@ -152,12 +142,7 @@ namespace Calamari.Integration.Packages.Download
             string downloadPath)
         {
             using var fileStream = fileSystem.OpenFile(downloadPath, FileAccess.Write);
-            using var response = Oci.Get(client, new Uri($"{url}/{packageId}/blobs/{digest}"), new NetworkCredential(feedUsername, feedPassword));
-            if (!response.IsSuccessStatusCode)
-            {
-                throw new CommandException(
-                    $"Failed to download artifact (Status Code {(int)response.StatusCode}). Reason: {response.ReasonPhrase}");
-            }
+            using var response = ociClient.GetPackage(feedUri, packageId, digest, feedUsername, feedPassword);
 
             response.Content.CopyToAsync(fileStream).GetAwaiter().GetResult();
         }
