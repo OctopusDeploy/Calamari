@@ -35,16 +35,17 @@ namespace Calamari.Integration.Packages.Download
             this.variables = variables;
         }
 
-        public PackagePhysicalFileMetadata DownloadPackage(string packageId,
-                                                           IVersion version,
-                                                           string feedId,
-                                                           Uri feedUri,
-                                                           FeedType feedType,
-                                                           string feedUsername,
-                                                           string feedPassword,
-                                                           bool forcePackageDownload,
-                                                           int maxDownloadAttempts,
-                                                           TimeSpan downloadAttemptBackoff)
+        public PackagePhysicalFileMetadata DownloadPackage(
+            string packageId,
+            IVersion version,
+            string feedId,
+            Uri feedUri,
+            FeedType feedType,
+            string feedUsername,
+            string feedPassword,
+            bool forcePackageDownload,
+            int maxDownloadAttempts,
+            TimeSpan downloadAttemptBackoff)
         {
             IPackageDownloader? downloader = null;
             switch (feedType)
@@ -66,19 +67,16 @@ namespace Calamari.Integration.Packages.Download
                     break;
                 case FeedType.AwsElasticContainerRegistry:
                     var x = new OciArtifactManifestRetriever();
-                    if (x.TryGetArtifactType(packageId,
-                                             version,
-                                             feedUri,
-                                             feedUsername,
-                                             feedPassword)
+                    if (x.TryGetArtifactType(packageId, version, feedUri, feedUsername, feedPassword)
                         == OciArtifactTypes.HelmChart)
                     {
-                        downloader = new OciPackageDownloader(fileSystem, new CombinedPackageExtractor(log, variables, commandLineRunner));
+                        downloader = new OciPackageDownloader(fileSystem, new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner), log);
                     }
                     else
-                    {                   
+                    {
                         downloader = new DockerImagePackageDownloader(engine, fileSystem, commandLineRunner, variables, log);
                     }
+
                     break;
                 case FeedType.Docker:
                 case FeedType.AzureContainerRegistry:
@@ -94,6 +92,7 @@ namespace Calamari.Integration.Packages.Download
                 default:
                     throw new NotImplementedException($"No Calamari downloader exists for feed type `{feedType}`.");
             }
+
             Log.Verbose($"Feed type provided `{feedType}` using {downloader.GetType().Name}");
 
             return downloader.DownloadPackage(
