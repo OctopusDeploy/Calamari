@@ -49,8 +49,7 @@ namespace Calamari.Common.Features.Processes.Semaphores
         {
             var globalName = $"Global\\{name}";
 
-            //we try and create/acquire a global semaphore with some retry
-            var semaphore = semaphoreAcquisitionPipeline.Execute(() => CreateGlobalSemaphoreAccessibleToEveryone(globalName));
+            var semaphore = CreateGlobalSemaphoreAccessibleToEveryone(globalName);
 
             try
             {
@@ -109,7 +108,8 @@ namespace Calamari.Common.Features.Processes.Semaphores
 
             semaphoreSecurity.AddAccessRule(rule);
 
-            var semaphore = new Semaphore(1, 1, name);
+            //we try and create/acquire a global semaphore with some retry
+            var semaphore = semaphoreAcquisitionPipeline.Execute(() => new Semaphore(1,1, name));
 
             try
             {
