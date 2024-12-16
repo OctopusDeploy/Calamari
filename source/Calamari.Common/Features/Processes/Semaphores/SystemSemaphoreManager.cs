@@ -49,8 +49,14 @@ namespace Calamari.Common.Features.Processes.Semaphores
         {
             var globalName = $"Global\\{name}";
 
-            var semaphore = CreateGlobalSemaphoreAccessibleToEveryone(globalName);
-
+            //we try and create/acquire a global semaphore with some retry
+            //this is done to (hopefully) avoid situations where two instances of Calamari are trying to acquire the same semaphore
+            //this could happen in the case of parallel steps being executed on the same machine
+            var semaphore = semaphoreAcquisitionPipeline.Execute(() => new Semaphore(1,1, name));
+            
+            //assign full control for all use
+            SetFullAccessControlForAllUsers(semaphore, globalName);
+            
             try
             {
                 if (!semaphore.WaitOne(initialWaitBeforeShowingLogMessage))
@@ -100,16 +106,14 @@ namespace Calamari.Common.Features.Processes.Semaphores
                                 });
         }
 
-        Semaphore CreateGlobalSemaphoreAccessibleToEveryone(string name)
+
+        void SetFullAccessControlForAllUsers(Semaphore semaphore, string name)
         {
             var semaphoreSecurity = new SemaphoreSecurity();
             var everyone = new SecurityIdentifier(WellKnownSidType.WorldSid, null);
             var rule = new SemaphoreAccessRule(everyone, SemaphoreRights.FullControl, AccessControlType.Allow);
 
             semaphoreSecurity.AddAccessRule(rule);
-
-            //we try and create/acquire a global semaphore with some retry
-            var semaphore = semaphoreAcquisitionPipeline.Execute(() => new Semaphore(1,1, name));
 
             try
             {
@@ -118,10 +122,7 @@ namespace Calamari.Common.Features.Processes.Semaphores
             catch (Exception e)
             {
                 log.Verbose($"Failed to set access controls on semaphore '{name}': {e.PrettyPrint()}");
-                //at this point we have a valid semaphore, which is what we'd end up doing anyway
             }
-
-            return semaphore;
         }
 
         class Releaser : IDisposable
