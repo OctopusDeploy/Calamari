@@ -68,15 +68,7 @@ namespace Calamari.Integration.Packages.Download
                     downloader = OciPackageDownloader();
                     break;
                 case FeedType.AwsElasticContainerRegistry:
-                    if (OctopusFeatureToggles.OciForContainerRegistriesFeatureToggle.IsEnabled(variables))
-                    {
-                        downloader = new OciOrDockerImagePackageDownloader(OciPackageDownloader(), DockerImagePackageDownloader(), new OciClient(), log);
-                    }
-                    else
-                    {
-                        downloader = DockerImagePackageDownloader();
-                    }
-
+                    downloader = new OciOrDockerImagePackageDownloader(OciPackageDownloader(), DockerImagePackageDownloader(), new OciClient(), log);
                     break;
                 case FeedType.Docker:
                 case FeedType.AzureContainerRegistry:
