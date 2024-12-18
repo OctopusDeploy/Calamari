@@ -46,7 +46,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
         HelmVersion? helmVersion;
         TemporaryDirectory explicitVersionTempDirectory;
-        
+
         static readonly CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
         readonly CancellationToken cancellationToken = CancellationTokenSource.Token;
 
@@ -55,7 +55,7 @@ namespace Calamari.Tests.KubernetesFixtures
         {
             ServerUrl = await ExternalVariables.Get(ExternalVariable.KubernetesClusterUrl, cancellationToken);
             ClusterToken = await ExternalVariables.Get(ExternalVariable.KubernetesClusterToken, cancellationToken);
-            
+
             if (ExplicitExeVersion != null)
             {
                 await DownloadExplicitHelmExecutable();
@@ -101,7 +101,7 @@ namespace Calamari.Tests.KubernetesFixtures
             FileSystem.PurgeDirectory(packageExtractionDirectory, FailureOptions.ThrowOnFailure);
 
             Environment.SetEnvironmentVariable("TentacleJournal",
-                Path.Combine(StagingDirectory, "DeploymentJournal.xml"));
+                                               Path.Combine(StagingDirectory, "DeploymentJournal.xml"));
 
             Variables = new VariablesFactory(FileSystem).Create(new CommonOptions("test"));
             Variables.Set(TentacleVariables.Agent.ApplicationDirectoryPath, StagingDirectory);
@@ -195,7 +195,6 @@ namespace Calamari.Tests.KubernetesFixtures
             Assert.AreEqual("Hello Variable Replaced In Package", result.CapturedOutput.OutputVariables["Message"]);
         }
 
-
         [Test]
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
@@ -255,7 +254,7 @@ namespace Calamari.Tests.KubernetesFixtures
             Variables.Set(PackageVariables.IndexedPackageId("Pack-1"), "CustomValues");
             Variables.Set(PackageVariables.IndexedPackageVersion("Pack-1"), "2.0.0");
             Variables.Set(PackageVariables.IndexedOriginalPath("Pack-1"),
-                GetFixtureResource("Charts", "CustomValues.2.0.0.zip"));
+                          GetFixtureResource("Charts", "CustomValues.2.0.0.zip"));
             Variables.Set(Kubernetes.SpecialVariables.Helm.Packages.ValuesFilePath("Pack-1"), "values.yaml");
 
             //Variable that will replace packaged value in package
@@ -282,28 +281,34 @@ namespace Calamari.Tests.KubernetesFixtures
 
         protected async Task TestCustomHelmExeInPackage_RelativePath(string version)
         {
-            var fileName = Path.Combine(Path.GetTempPath(), $"helm-v{version}-{HelmOsPlatform}.tgz");
-
-            using (new TemporaryFile(fileName))
+            using (await UseCustomHelmExeInPackage(version))
             {
-                await DownloadHelmPackage(version, fileName);
-
-                var customHelmExePackageId = Kubernetes.SpecialVariables.Helm.Packages.CustomHelmExePackageKey;
-                Variables.Set(PackageVariables.IndexedOriginalPath(customHelmExePackageId), fileName);
-                Variables.Set(PackageVariables.IndexedExtract(customHelmExePackageId), "True");
-                Variables.Set(PackageVariables.IndexedPackageId(customHelmExePackageId), "helmexe");
-                Variables.Set(PackageVariables.IndexedPackageVersion(customHelmExePackageId), version);
-
-                // If package is provided then it should be treated as a relative path
-                var customLocation = HelmOsPlatform + Path.DirectorySeparatorChar + "helm";
-                Variables.Set(Kubernetes.SpecialVariables.Helm.CustomHelmExecutable, customLocation);
-
                 AddPostDeployMessageCheckAndCleanup();
 
                 var result = DeployPackage();
                 result.AssertSuccess();
                 result.AssertOutput($"Using custom helm executable at {HelmOsPlatform}\\helm from inside package. Full path at");
             }
+        }
+
+        protected async Task<IDisposable> UseCustomHelmExeInPackage(string version)
+        {
+            var fileName = Path.Combine(Path.GetTempPath(), $"helm-v{version}-{HelmOsPlatform}.tgz");
+            var tempFile = new TemporaryFile(fileName);
+            
+            await DownloadHelmPackage(version, fileName);
+
+            var customHelmExePackageId = Kubernetes.SpecialVariables.Helm.Packages.CustomHelmExePackageKey;
+            Variables.Set(PackageVariables.IndexedOriginalPath(customHelmExePackageId), fileName);
+            Variables.Set(PackageVariables.IndexedExtract(customHelmExePackageId), "True");
+            Variables.Set(PackageVariables.IndexedPackageId(customHelmExePackageId), "helmexe");
+            Variables.Set(PackageVariables.IndexedPackageVersion(customHelmExePackageId), version);
+
+            // If package is provided then it should be treated as a relative path
+            var customLocation = HelmOsPlatform + Path.DirectorySeparatorChar + "helm";
+            Variables.Set(Kubernetes.SpecialVariables.Helm.CustomHelmExecutable, customLocation);
+            
+            return tempFile;
         }
 
         [Test]
@@ -361,7 +366,7 @@ namespace Calamari.Tests.KubernetesFixtures
             result.AssertFailure();
             result.AssertOutputContains("Chart was not found in 'specific/location/for/my/chart'");
         }
-        
+
         [Test]
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
@@ -423,14 +428,15 @@ namespace Calamari.Tests.KubernetesFixtures
                 {
                     packageName = $"{Variables.Get(PackageVariables.PackageId)}-{Variables.Get(PackageVariables.PackageVersion)}.tgz";
                 }
+
                 Log.VerboseFormat("Deploying test chart from package: {0}", packageName);
                 var pkg = GetFixtureResource("Charts", packageName);
                 Variables.Save(variablesFile.FilePath);
 
                 return InvokeInProcess(Calamari()
-                    .Action("helm-upgrade")
-                    .Argument("package", pkg)
-                    .Argument("variables", variablesFile.FilePath));
+                                       .Action("helm-upgrade")
+                                       .Argument("package", pkg)
+                                       .Argument("variables", variablesFile.FilePath));
             }
         }
 
@@ -449,7 +455,11 @@ namespace Calamari.Tests.KubernetesFixtures
         static HelmVersion GetVersion()
         {
             StringBuilder stdout = new StringBuilder();
-            var result = SilentProcessRunner.ExecuteCommand("helm", "version --client --short", Environment.CurrentDirectory, output => stdout.AppendLine(output), error => { });
+            var result = SilentProcessRunner.ExecuteCommand("helm",
+                                                            "version --client --short",
+                                                            Environment.CurrentDirectory,
+                                                            output => stdout.AppendLine(output),
+                                                            error => { });
 
             result.ExitCode.Should().Be(0, $"Failed to retrieve version from Helm (Exit code {result.ExitCode}). Error output: \r\n{result.ErrorOutput}");
 

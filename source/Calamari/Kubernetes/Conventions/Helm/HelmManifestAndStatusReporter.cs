@@ -11,6 +11,8 @@ using Calamari.Kubernetes.Integration;
 using Calamari.Kubernetes.ResourceStatus;
 using Calamari.Kubernetes.ResourceStatus.Resources;
 using Calamari.Util;
+using Octopus.Versioning;
+using Octopus.Versioning.Semver;
 using YamlDotNet.RepresentationModel;
 
 namespace Calamari.Kubernetes.Conventions.Helm
@@ -39,15 +41,22 @@ namespace Calamari.Kubernetes.Conventions.Helm
             int revisionNumber,
             CancellationToken cancellationToken)
         {
+            if (!DoesHelmCliSupportManifestRetrieval(out var helmVersion))
+            {
+                log.Warn($"Helm manifest retrieval requires Helm v3.13 or newer. The current version {helmVersion} does not support the required commands. Please update your Helm executable or execution container.");
+                return;
+            }
+            
             await Task.Run(async () =>
                            {
                                var resourceStatusCheckIsEnabled = deployment.Variables.GetFlag(SpecialVariables.ResourceStatusCheck);
-                               
-                               if (resourceStatusCheckIsEnabled
+                      
+                               if (
+                                   resourceStatusCheckIsEnabled
                                    || FeatureToggle.KubernetesLiveObjectStatusFeatureToggle.IsEnabled(deployment.Variables)
                                    || OctopusFeatureToggles.KubernetesObjectManifestInspectionFeatureToggle.IsEnabled(deployment.Variables))
                                {
-                                   var manifest = await PollForManifest(deployment, helmCli, releaseName, revisionNumber);
+                                   var manifest = await PollForManifest(deployment, releaseName, revisionNumber);
 
                                    //report the manifest has been applied
                                    manifestReporter.ReportManifestApplied(manifest);
@@ -62,8 +71,22 @@ namespace Calamari.Kubernetes.Conventions.Helm
                            cancellationToken);
         }
 
+        static readonly SemanticVersion MinimumHelmVersion = new SemanticVersion(3, 13, 0);
+        bool DoesHelmCliSupportManifestRetrieval(out string helmVersion)
+        {
+            var parsedExecutableVersion = helmCli.GetParsedExecutableVersion();
+
+            if (parsedExecutableVersion == null)
+            {
+                helmVersion = "UNKNOWN";
+                return false;
+            }
+
+            helmVersion = parsedExecutableVersion.Version.ToString();
+            return parsedExecutableVersion >= MinimumHelmVersion;
+        }
+
         async Task<string> PollForManifest(RunningDeployment deployment,
-                                           HelmCli helmCli,
                                            string releaseName,
                                            int revisionNumber)
         {
