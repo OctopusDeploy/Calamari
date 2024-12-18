@@ -102,7 +102,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
                 Assert.AreEqual(ReleaseName.ToLower(), result.CapturedOutput.OutputVariables["ReleaseName"]);
 
-                result.AssertOutputMatches("Helm manifest retrieval requires Helm v3.13 or newer.");
+                result.AssertOutputMatches("Octopus needs Helm v3.13 or later to display object status and manifests.");
 
                 result.CapturedOutput.ServiceMessages
                       .Where(sm => sm.Name == SpecialVariables.ServiceMessages.ResourceStatus.Name)
