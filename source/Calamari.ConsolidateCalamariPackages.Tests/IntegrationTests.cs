@@ -97,7 +97,7 @@ namespace Calamari.ConsolidateCalamariPackages.Tests
         }
 
         private static string SanitiseFilenamesInIndex(string s)
-            => Regex.Replace(s, "[a-z0-9]{32}/[^\"]*", "<hash>");
+            => Regex.Replace(s, "[a-z0-9]{32}", "<hash>");
         
         private static string SanitiseHashesInPackageList(string s) 
         => Regex.Replace(s, "[a-z0-9]{32}", "<hash>");
