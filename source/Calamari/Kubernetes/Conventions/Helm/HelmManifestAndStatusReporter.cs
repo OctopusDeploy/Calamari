@@ -103,7 +103,11 @@ namespace Calamari.Kubernetes.Conventions.Helm
                 {
                     if (!(document.RootNode is YamlMappingNode rootNode))
                     {
-                        log.Warn("Could not parse manifest, resources will not be added to kubernetes object status");
+                        if (document.RootNode.Tag != null)
+                        {
+                            log.Verbose("Could not parse manifest, resources will not be added to Kubernetes Object Status");
+                        }
+                        
                         continue;
                     }
 
