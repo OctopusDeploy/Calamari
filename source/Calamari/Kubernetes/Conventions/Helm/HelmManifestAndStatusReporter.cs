@@ -11,6 +11,8 @@ using Calamari.Kubernetes.Integration;
 using Calamari.Kubernetes.ResourceStatus;
 using Calamari.Kubernetes.ResourceStatus.Resources;
 using Calamari.Util;
+using Octopus.Versioning;
+using Octopus.Versioning.Semver;
 using YamlDotNet.RepresentationModel;
 
 namespace Calamari.Kubernetes.Conventions.Helm
@@ -42,12 +44,19 @@ namespace Calamari.Kubernetes.Conventions.Helm
             await Task.Run(async () =>
                            {
                                var resourceStatusCheckIsEnabled = deployment.Variables.GetFlag(SpecialVariables.ResourceStatusCheck);
-                               
-                               if (resourceStatusCheckIsEnabled
+                      
+                               if (
+                                   resourceStatusCheckIsEnabled
                                    || FeatureToggle.KubernetesLiveObjectStatusFeatureToggle.IsEnabled(deployment.Variables)
                                    || OctopusFeatureToggles.KubernetesObjectManifestInspectionFeatureToggle.IsEnabled(deployment.Variables))
                                {
-                                   var manifest = await PollForManifest(deployment, helmCli, releaseName, revisionNumber);
+                                   if (!DoesHelmCliSupportManifestRetrieval(out var helmVersion))
+                                   {
+                                       log.Warn($"Octopus needs Helm v3.13 or later to display object status and manifests. Your current version is {helmVersion}. Please update your Helm executable or container to enable our new Kubernetes capabilities. Learn more in our {log.FormatShortLink("KOS", "documentation")}.");
+                                       return;
+                                   }
+                                   
+                                   var manifest = await PollForManifest(deployment, releaseName, revisionNumber);
 
                                    //report the manifest has been applied
                                    manifestReporter.ReportManifestApplied(manifest);
@@ -62,8 +71,22 @@ namespace Calamari.Kubernetes.Conventions.Helm
                            cancellationToken);
         }
 
+        static readonly SemanticVersion MinimumHelmVersion = new SemanticVersion(3, 13, 0);
+        bool DoesHelmCliSupportManifestRetrieval(out string helmVersion)
+        {
+            var parsedExecutableVersion = helmCli.GetParsedExecutableVersion();
+
+            if (parsedExecutableVersion == null)
+            {
+                helmVersion = "UNKNOWN";
+                return false;
+            }
+
+            helmVersion = parsedExecutableVersion.Version.ToString();
+            return parsedExecutableVersion >= MinimumHelmVersion;
+        }
+
         async Task<string> PollForManifest(RunningDeployment deployment,
-                                           HelmCli helmCli,
                                            string releaseName,
                                            int revisionNumber)
         {
@@ -103,7 +126,11 @@ namespace Calamari.Kubernetes.Conventions.Helm
                 {
                     if (!(document.RootNode is YamlMappingNode rootNode))
                     {
-                        log.Warn("Could not parse manifest, resources will not be added to kubernetes object status");
+                        if (document.RootNode.Tag != null)
+                        {
+                            log.Verbose("Could not parse manifest, resources will not be added to Kubernetes Object Status");
+                        }
+                        
                         continue;
                     }
 

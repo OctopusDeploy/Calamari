@@ -226,6 +226,8 @@ namespace Calamari.Common.Plumbing.Logging
             return $"[{description ?? uri}]({uri})";
         }
 
+        public string FormatShortLink(string shortSlug, string? description = null) => FormatLink($"https://oc.to/{shortSlug}", description);
+
         public static string ConvertServiceMessageValue(string value)
         {
             return Convert.ToBase64String(Encoding.UTF8.GetBytes(value));

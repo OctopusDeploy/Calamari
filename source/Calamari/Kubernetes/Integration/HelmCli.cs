@@ -14,6 +14,8 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Newtonsoft.Json;
+using Octopus.Versioning;
+using Octopus.Versioning.Semver;
 
 namespace Calamari.Kubernetes.Integration
 {
@@ -67,6 +69,22 @@ namespace Calamari.Kubernetes.Integration
         {
             var result = ExecuteCommandAndReturnOutput("version", "--client", "--short");
             return (result.Result.ExitCode, result.Output.MergeInfoLogs());
+        }
+
+        public SemanticVersion GetParsedExecutableVersion()
+        {
+            var (exitCode, infoOutput) = GetExecutableVersion();
+
+            if (exitCode != 0)
+            {
+                log.Warn("Unable to retrieve the Helm tool version");
+                return null;
+            }
+            
+            //helm v3 output looks like: v3.14.2+gc309b6f
+            var vStripped = infoOutput.TrimStart('v');
+
+            return SemVerFactory.CreateVersion(vStripped);
         }
 
         public int? GetCurrentRevision(string releaseName)
