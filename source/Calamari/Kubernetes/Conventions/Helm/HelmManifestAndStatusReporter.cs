@@ -41,12 +41,6 @@ namespace Calamari.Kubernetes.Conventions.Helm
             int revisionNumber,
             CancellationToken cancellationToken)
         {
-            if (!DoesHelmCliSupportManifestRetrieval(out var helmVersion))
-            {
-                log.Warn($"Helm manifest retrieval requires Helm v3.13 or newer. The current version {helmVersion} does not support the required commands. Please update your Helm executable or execution container.");
-                return;
-            }
-            
             await Task.Run(async () =>
                            {
                                var resourceStatusCheckIsEnabled = deployment.Variables.GetFlag(SpecialVariables.ResourceStatusCheck);
@@ -56,6 +50,12 @@ namespace Calamari.Kubernetes.Conventions.Helm
                                    || FeatureToggle.KubernetesLiveObjectStatusFeatureToggle.IsEnabled(deployment.Variables)
                                    || OctopusFeatureToggles.KubernetesObjectManifestInspectionFeatureToggle.IsEnabled(deployment.Variables))
                                {
+                                   if (!DoesHelmCliSupportManifestRetrieval(out var helmVersion))
+                                   {
+                                       log.Warn($"Helm manifest retrieval requires Helm v3.13 or later. Your current version is {helmVersion}. Please update your Helm executable or container.");
+                                       return;
+                                   }
+                                   
                                    var manifest = await PollForManifest(deployment, releaseName, revisionNumber);
 
                                    //report the manifest has been applied
