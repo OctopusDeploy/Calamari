@@ -44,7 +44,7 @@ namespace Calamari.Kubernetes.Conventions.Helm
             await Task.Run(async () =>
                            {
                                var resourceStatusCheckIsEnabled = deployment.Variables.GetFlag(SpecialVariables.ResourceStatusCheck);
-                      
+
                                if (
                                    resourceStatusCheckIsEnabled
                                    || FeatureToggle.KubernetesLiveObjectStatusFeatureToggle.IsEnabled(deployment.Variables)
@@ -55,8 +55,15 @@ namespace Calamari.Kubernetes.Conventions.Helm
                                        log.Warn($"Octopus needs Helm v3.13 or later to display object status and manifests. Your current version is {helmVersion}. Please update your Helm executable or container to enable our new Kubernetes capabilities. Learn more in our {log.FormatShortLink("KOS", "documentation")}.");
                                        return;
                                    }
-                                   
+
                                    var manifest = await PollForManifest(deployment, releaseName, revisionNumber);
+
+                                   //it's possible that we have no manifest as charts with just hooks don't produce a manifest
+                                   //in this case, there is nothing to do, so we are done :)
+                                   if (string.IsNullOrWhiteSpace(manifest))
+                                   {
+                                       return;
+                                   }
 
                                    //report the manifest has been applied
                                    manifestReporter.ReportManifestApplied(manifest);
@@ -72,6 +79,7 @@ namespace Calamari.Kubernetes.Conventions.Helm
         }
 
         static readonly SemanticVersion MinimumHelmVersion = new SemanticVersion(3, 13, 0);
+
         bool DoesHelmCliSupportManifestRetrieval(out string helmVersion)
         {
             var parsedExecutableVersion = helmCli.GetParsedExecutableVersion();
@@ -95,11 +103,15 @@ namespace Calamari.Kubernetes.Conventions.Helm
             ct.CancelAfter(timeout);
             string manifest = null;
             log.Verbose($"Retrieving manifest for {releaseName}, revision {revisionNumber}.");
+            var didSuccessfullyExecuteCliCall = false;
             while (!ct.IsCancellationRequested)
                 try
                 {
                     manifest = helmCli.GetManifest(releaseName, revisionNumber);
-                    log.Verbose($"Retrieved manifest for {releaseName}, revision {revisionNumber}.");
+                    
+                    //flag if we successfully executed the get manifest call
+                    //this is important because some helm charts just have hooks that don't have any manifests, so we receive null/empty string here
+                    didSuccessfullyExecuteCliCall = true;
                     break;
                 }
                 catch (CommandLineException)
@@ -108,8 +120,14 @@ namespace Calamari.Kubernetes.Conventions.Helm
                     await Task.Delay(TimeSpan.FromSeconds(1), ct.Token);
                 }
 
-            if (string.IsNullOrWhiteSpace(manifest))
+            //it's possible that some manifests doesn't
+            if (string.IsNullOrWhiteSpace(manifest) && !didSuccessfullyExecuteCliCall)
                 throw new CommandException("Failed to retrieve helm manifest in a timely manner");
+
+            //Log if we found a manifest, or not
+            log.Verbose(string.IsNullOrWhiteSpace(manifest)
+                            ? $"Retrieve an empty manifest for {releaseName}, revision {revisionNumber}."
+                            : $"Retrieved manifest for {releaseName}, revision {revisionNumber}.");
 
             return manifest;
         }
@@ -130,7 +148,7 @@ namespace Calamari.Kubernetes.Conventions.Helm
                         {
                             log.Verbose("Could not parse manifest, resources will not be added to Kubernetes Object Status");
                         }
-                        
+
                         continue;
                     }
 

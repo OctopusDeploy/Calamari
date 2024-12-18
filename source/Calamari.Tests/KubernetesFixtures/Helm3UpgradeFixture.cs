@@ -111,6 +111,66 @@ namespace Calamari.Tests.KubernetesFixtures
             }
         }
 
+        [Test]
+        [RequiresNonFreeBSDPlatform]
+        [RequiresNon32BitWindows]
+        [RequiresNonMac]
+        [Category(TestCategory.PlatformAgnostic)]
+        public void HooksOnlyPackage_RetrievesEmptyManifestButDoesNotReportObjectStatus()
+        {
+            Variables.AddFlag(SpecialVariables.ResourceStatusCheck, true);
+            Variables.Set(KnownVariables.EnabledFeatureToggles, OctopusFeatureToggles.KnownSlugs.KOSForHelm);
+            Variables.Set(SpecialVariables.Helm.Timeout, "2m30s");
+
+            var result = DeployPackage("hooks-only-1.0.0.tgz");
+
+            result.AssertSuccess();
+            result.AssertOutputMatches($"NAMESPACE: {Namespace}");
+            result.AssertOutputMatches("STATUS: deployed");
+            result.AssertOutputMatches($"release \"{ReleaseName}\" uninstalled");
+
+            Assert.AreEqual(ReleaseName.ToLower(), result.CapturedOutput.OutputVariables["ReleaseName"]);
+
+            result.AssertOutputMatches($"Retrieving manifest for {ReleaseName}");
+            result.AssertOutputMatches($"Retrieve an empty manifest for {ReleaseName}");
+
+            //we should not have received any KOS service messages
+            result.CapturedOutput.ServiceMessages
+                  .Where(sm => sm.Name == SpecialVariables.ServiceMessages.ResourceStatus.Name)
+                  .Should()
+                  .BeEmpty();
+        }
+        
+        [Test]
+        [RequiresNonFreeBSDPlatform]
+        [RequiresNon32BitWindows]
+        [RequiresNonMac]
+        [Category(TestCategory.PlatformAgnostic)]
+        public void EmptyChart_RetrievesEmptyManifestButDoesNotReportObjectStatus()
+        {
+            Variables.AddFlag(SpecialVariables.ResourceStatusCheck, true);
+            Variables.Set(KnownVariables.EnabledFeatureToggles, OctopusFeatureToggles.KnownSlugs.KOSForHelm);
+            Variables.Set(SpecialVariables.Helm.Timeout, "2m30s");
+
+            var result = DeployPackage("empty-chart-1.0.0.tgz");
+
+            result.AssertSuccess();
+            result.AssertOutputMatches($"NAMESPACE: {Namespace}");
+            result.AssertOutputMatches("STATUS: deployed");
+            result.AssertOutputMatches($"release \"{ReleaseName}\" uninstalled");
+
+            Assert.AreEqual(ReleaseName.ToLower(), result.CapturedOutput.OutputVariables["ReleaseName"]);
+
+            result.AssertOutputMatches($"Retrieving manifest for {ReleaseName}");
+            result.AssertOutputMatches($"Retrieve an empty manifest for {ReleaseName}");
+
+            //we should not have received any KOS service messages
+            result.CapturedOutput.ServiceMessages
+                  .Where(sm => sm.Name == SpecialVariables.ServiceMessages.ResourceStatus.Name)
+                  .Should()
+                  .BeEmpty();
+        }
+
         protected override string ExplicitExeVersion => "3.16.2";
     }
 }
