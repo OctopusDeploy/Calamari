@@ -25,11 +25,11 @@ namespace Calamari.ConsolidateCalamariPackages
         private static void WriteUniqueFilesToZip(IEnumerable<SourceFile> sourceFiles, ZipArchive zip)
         {
             var uniqueFiles = sourceFiles
-                .GroupBy(sourceFile => new {sourceFile.FullNameInDestinationArchive, sourceFile.Hash})
+                .GroupBy(sourceFile => sourceFile.Hash)
                 .Select(g => new
                 {
-                    g.Key.FullNameInDestinationArchive,
-                    g.Key.Hash,
+                    g.First().FileName,
+                    Hash = g.Key,
                     g.First().FullNameInSourceArchive,
                     g.First().ArchivePath
                 });
@@ -39,7 +39,7 @@ namespace Calamari.ConsolidateCalamariPackages
                 using (var sourceZip = ZipFile.OpenRead(groupedBySourceArchive.Key))
                     foreach (var uniqueFile in groupedBySourceArchive)
                     {
-                        var entryName = $"{uniqueFile.Hash}/{uniqueFile.FullNameInDestinationArchive}";
+                        var entryName = $"{uniqueFile.Hash}/{uniqueFile.FileName}";
                         var entry = zip.CreateEntry(entryName, CompressionLevel.Fastest);
 
                         using (var destStream = entry.Open())
@@ -48,15 +48,15 @@ namespace Calamari.ConsolidateCalamariPackages
                     }
             }
         }
-
+        
         private static void WriteIndexTo(Stream stream, IEnumerable<SourceFile> sourceFiles)
         {
-            Dictionary<string, string[]> GroupByPlatform(IEnumerable<SourceFile> filesForPackage)
+            Dictionary<string, FileTransfer[]> GroupByPlatform(IEnumerable<SourceFile> filesForPackage)
                 => filesForPackage
-                    .GroupBy(f => f.Platform)
-                    .ToDictionary(
-                        g => g.Key,
-                        g => g.Select(f => Path.Combine(f.Hash, f.FullNameInDestinationArchive).Replace('\\', '/')).OrderBy(h => h).ToArray()
+                   .GroupBy(f => f.Platform)
+                   .ToDictionary(
+                                 g => g.Key,
+                                 g => g.Select(f => new FileTransfer($"{f.Hash}/{f.FileName}", f.FullNameInDestinationArchive)).ToArray() 
                     );
             
             var index = new ConsolidatedPackageIndex(

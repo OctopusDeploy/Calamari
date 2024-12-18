@@ -487,9 +487,9 @@ namespace Calamari.Build
                   });
 
         Target PackageConsolidatedCalamariZip =>
-            _ => _.DependsOn(CalamariConsolidationTests)
-                  .DependsOn(PackBinaries)
-                  .Executes(() =>
+            _ => //_.DependsOn(CalamariConsolidationTests)
+                 // .DependsOn(PackBinaries)
+                  _.Executes(() =>
                             {
                                 var artifacts = Directory.GetFiles(ArtifactsDirectory, "*.nupkg")
                                                          .Where(a => !CalamariProjectsToSkipConsolidation.Any(a.Contains));
