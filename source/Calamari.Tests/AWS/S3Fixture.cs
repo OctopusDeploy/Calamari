@@ -662,6 +662,7 @@ namespace Calamari.Tests.AWS
             var variablesFile = Path.GetTempFileName();
 
             variables.Set("Octopus.Action.AwsAccount.Variable", "AWSAccount");
+            variables.Set("Octopus.Account.AccountType", "AmazonWebServicesAccount");
             variables.Set("AWSAccount.AccessKey", await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3AccessKey, cancellationToken));
             variables.Set("AWSAccount.SecretKey", await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3SecretKey, cancellationToken));
             variables.Set("Octopus.Action.Aws.Region", region);
