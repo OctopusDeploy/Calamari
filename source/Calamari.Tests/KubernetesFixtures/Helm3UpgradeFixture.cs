@@ -132,7 +132,7 @@ namespace Calamari.Tests.KubernetesFixtures
             Assert.AreEqual(ReleaseName.ToLower(), result.CapturedOutput.OutputVariables["ReleaseName"]);
 
             result.AssertOutputMatches($"Retrieving manifest for {ReleaseName}");
-            result.AssertOutputMatches($"Retrieve an empty manifest for {ReleaseName}");
+            result.AssertOutputMatches($"Retrieved an empty manifest for {ReleaseName}");
 
             //we should not have received any KOS service messages
             result.CapturedOutput.ServiceMessages
@@ -162,7 +162,7 @@ namespace Calamari.Tests.KubernetesFixtures
             Assert.AreEqual(ReleaseName.ToLower(), result.CapturedOutput.OutputVariables["ReleaseName"]);
 
             result.AssertOutputMatches($"Retrieving manifest for {ReleaseName}");
-            result.AssertOutputMatches($"Retrieve an empty manifest for {ReleaseName}");
+            result.AssertOutputMatches($"Retrieved an empty manifest for {ReleaseName}");
 
             //we should not have received any KOS service messages
             result.CapturedOutput.ServiceMessages

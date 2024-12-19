@@ -11,7 +11,6 @@ using Calamari.Kubernetes.Integration;
 using Calamari.Kubernetes.ResourceStatus;
 using Calamari.Kubernetes.ResourceStatus.Resources;
 using Calamari.Util;
-using Octopus.Versioning;
 using Octopus.Versioning.Semver;
 using YamlDotNet.RepresentationModel;
 
@@ -121,12 +120,12 @@ namespace Calamari.Kubernetes.Conventions.Helm
                 }
 
             //it's possible that some manifests doesn't
-            if (string.IsNullOrWhiteSpace(manifest) && !didSuccessfullyExecuteCliCall)
+            if (!didSuccessfullyExecuteCliCall)
                 throw new CommandException("Failed to retrieve helm manifest in a timely manner");
 
             //Log if we found a manifest, or not
             log.Verbose(string.IsNullOrWhiteSpace(manifest)
-                            ? $"Retrieve an empty manifest for {releaseName}, revision {revisionNumber}."
+                            ? $"Retrieved an empty manifest for {releaseName}, revision {revisionNumber}."
                             : $"Retrieved manifest for {releaseName}, revision {revisionNumber}.");
 
             return manifest;
