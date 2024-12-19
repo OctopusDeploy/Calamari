@@ -10,19 +10,19 @@ namespace Calamari.Integration.Packages.Download
     {
         readonly OciPackageDownloader ociPackageDownloader;
         readonly DockerImagePackageDownloader dockerImagePackageDownloader;
-        readonly OciClient ociClient;
+        readonly OciRegistryClient ociRegistryClient;
         readonly ILog log;
 
         public OciOrDockerImagePackageDownloader(
             OciPackageDownloader ociPackageDownloader,
             DockerImagePackageDownloader dockerImagePackageDownloader,
-            OciClient ociClient,
+            OciRegistryClient ociRegistryClient,
             ILog log)
         {
             this.ociPackageDownloader = ociPackageDownloader;
             this.dockerImagePackageDownloader = dockerImagePackageDownloader;
             this.log = log;
-            this.ociClient = ociClient;
+            this.ociRegistryClient = ociRegistryClient;
         }
 
         public PackagePhysicalFileMetadata DownloadPackage(
@@ -52,7 +52,7 @@ namespace Calamari.Integration.Packages.Download
 
         IPackageDownloader GetInnerDownloader(string packageId, IVersion version, Uri feedUri, string? feedUsername, string? feedPassword)
         {
-            var ociArtifactManifestRetriever = new OciArtifactManifestRetriever(ociClient, log);
+            var ociArtifactManifestRetriever = new OciArtifactManifestRetriever(ociRegistryClient, log);
             if (ociArtifactManifestRetriever.TryGetArtifactType(packageId, version, feedUri, feedUsername, feedPassword) == OciArtifactTypes.HelmChart)
             {
                 return ociPackageDownloader;

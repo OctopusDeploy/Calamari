@@ -24,17 +24,17 @@ namespace Calamari.Integration.Packages.Download
         readonly ICalamariFileSystem fileSystem;
         readonly ICombinedPackageExtractor combinedPackageExtractor;
         readonly ILog log;
-        readonly OciClient ociClient;
+        readonly OciRegistryClient ociRegistryClient;
 
         public OciPackageDownloader(
             ICalamariFileSystem fileSystem,
             ICombinedPackageExtractor combinedPackageExtractor,
-            OciClient ociClient,
+            OciRegistryClient ociRegistryClient,
             ILog log)
         {
             this.fileSystem = fileSystem;
             this.combinedPackageExtractor = combinedPackageExtractor;
-            this.ociClient = ociClient;
+            this.ociRegistryClient = ociRegistryClient;
             this.log = log;
         }
 
@@ -79,14 +79,13 @@ namespace Calamari.Integration.Packages.Download
                 }
 
                 var (digest, size, extension) = GetPackageDetails(feedUri, packageId, version, feedUsername, feedPassword);
-                var hash = OciClient.GetPackageHashFromDigest(digest);
+                var hash = OciRegistryClient.GetPackageHashFromDigest(digest);
 
                 var cachedFileName = PackageName.ToCachedFileName(packageId, version, extension);
                 var downloadPath = Path.Combine(Path.Combine(stagingDir, cachedFileName));
 
                 var retryStrategy = PackageDownloaderRetryUtils.CreateRetryStrategy<CommandException>(maxDownloadAttempts, downloadAttemptBackoff, log);
-                retryStrategy.Execute(
-                    () => DownloadPackage(feedUri, packageId, digest, feedUsername, feedPassword, downloadPath));
+                retryStrategy.Execute(() => ociRegistryClient.DownloadPackage(feedUri, packageId, digest, feedUsername, feedPassword, downloadPath));
 
                 var localDownloadName = Path.Combine(cacheDirectory, cachedFileName);
                 fileSystem.MoveFile(downloadPath, localDownloadName);
@@ -109,7 +108,7 @@ namespace Calamari.Integration.Packages.Download
             string? feedUserName,
             string? feedPassword)
         {
-            var manifest = ociClient.GetManifest(feedUri, packageId, version, feedUserName, feedPassword);
+            var manifest = ociRegistryClient.GetManifest(feedUri, packageId, version, feedUserName, feedPassword);
 
             var layer = manifest.Value<JArray>(OciConstants.Manifest.Layers.PropertyName)[0];
             var digest = layer.Value<string>(OciConstants.Manifest.Layers.DigestPropertyName);
@@ -129,20 +128,6 @@ namespace Calamari.Integration.Packages.Download
                                     Path.GetExtension(artifactTitle).Equals(ext, StringComparison.OrdinalIgnoreCase));
 
             return extension ?? (layer.Value<string>(OciConstants.Manifest.Layers.MediaTypePropertyName).EndsWith("tar+gzip") ? ".tgz" : ".tar");
-        }
-
-        void DownloadPackage(
-            Uri feedUri,
-            string packageId,
-            string digest,
-            string? feedUsername,
-            string? feedPassword,
-            string downloadPath)
-        {
-            using var fileStream = fileSystem.OpenFile(downloadPath, FileAccess.Write);
-            using var response = ociClient.GetPackage(feedUri, packageId, digest, feedUsername, feedPassword);
-
-            response.Content.CopyToAsync(fileStream).GetAwaiter().GetResult();
         }
 
         PackagePhysicalFileMetadata? SourceFromCache(string packageId, IVersion version, string cacheDirectory)

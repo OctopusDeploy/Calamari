@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -7,15 +8,22 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.RegularExpressions;
 using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.FileSystem;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Octopus.Versioning;
 
 namespace Calamari.Integration.Packages.Download.Oci
 {
-    public class OciClient
+    public class OciRegistryClient
     {
         readonly HttpClient httpClient = new HttpClient(new HttpClientHandler { AutomaticDecompression = DecompressionMethods.None });
+        readonly ICalamariFileSystem fileSystem;
+
+        public OciRegistryClient(ICalamariFileSystem fileSystem)
+        {
+            this.fileSystem = fileSystem;
+        }
 
         public JObject? GetManifest(Uri feedUri, string packageId, IVersion version, string? feedUsername, string? feedPassword)
         {
@@ -27,26 +35,24 @@ namespace Calamari.Integration.Packages.Download.Oci
             void ApplyAcceptHeaderFunc(HttpRequestMessage request) => request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(OciConstants.Manifest.Config.OciImageMediaTypeValue));
         }
 
-        public HttpResponseMessage GetPackage(Uri feedUri, string packageId, string digest, string? feedUsername, string? feedPassword)
+        public void DownloadPackage(
+            Uri feedUri,
+            string packageId,
+            string digest,
+            string? feedUsername,
+            string? feedPassword,
+            string downloadPath)
         {
             var url = GetApiUri(feedUri);
-            HttpResponseMessage? response = null;
-            try
-            {
-                response = Get(new Uri($"{url}/{packageId}/blobs/{digest}"), new NetworkCredential(feedUsername, feedPassword));
+            using var fileStream = fileSystem.OpenFile(downloadPath, FileAccess.Write);
+            using var response = Get(new Uri($"{url}/{packageId}/blobs/{digest}"), new NetworkCredential(feedUsername, feedPassword));
 
-                if (!response.IsSuccessStatusCode)
-                {
-                    throw new CommandException($"Failed to download artifact (Status Code {(int)response.StatusCode}). Reason: {response.ReasonPhrase}");
-                }
-
-                return response;
-            }
-            catch
+            if (!response.IsSuccessStatusCode)
             {
-                response?.Dispose();
-                throw;
+                throw new CommandException($"Failed to download artifact (Status Code {(int)response.StatusCode}). Reason: {response.ReasonPhrase}");
             }
+
+            response.Content.CopyToAsync(fileStream).GetAwaiter().GetResult();
         }
 
         HttpResponseMessage Get(Uri url, ICredentials credentials, Action<HttpRequestMessage>? customAcceptHeader = null)

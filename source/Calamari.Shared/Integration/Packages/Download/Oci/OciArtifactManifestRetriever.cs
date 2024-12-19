@@ -6,12 +6,12 @@ namespace Calamari.Integration.Packages.Download.Oci
 {
     public class OciArtifactManifestRetriever
     {
-        readonly OciClient ociClient;
+        readonly OciRegistryClient ociRegistryClient;
         readonly ILog log;
 
-        public OciArtifactManifestRetriever(OciClient ociClient, ILog log)
+        public OciArtifactManifestRetriever(OciRegistryClient ociRegistryClient, ILog log)
         {
-            this.ociClient = ociClient;
+            this.ociRegistryClient = ociRegistryClient;
             this.log = log;
         }
 
@@ -24,7 +24,7 @@ namespace Calamari.Integration.Packages.Download.Oci
         {
             try
             {
-                var jsonManifest = ociClient.GetManifest(feedUri, packageId, version, feedUsername, feedPassword);
+                var jsonManifest = ociRegistryClient.GetManifest(feedUri, packageId, version, feedUsername, feedPassword);
 
                 // Check for Helm chart annotations
                 var isHelmChart =
