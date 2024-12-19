@@ -7,13 +7,14 @@ namespace Calamari.Tests.Fixtures.Util
     [TestFixture]
     class ScriptVariableEncryptorFixture
     {
-        [Test]
-        public void EncryptionIsSymmetrical()
+        [TestCase(128)]
+        [TestCase(256)]
+        public void EncryptionIsSymmetrical(int keySize)
         {
             var passphrase = "PurpleMonkeyDishwasher";
             var text = "Put It In H!";
 
-            var encryptor = new AesEncryption(passphrase);
+            var encryptor = new AesEncryption(passphrase, keySize);
             Assert.AreEqual(text, encryptor.Decrypt(encryptor.Encrypt(text)));
         }
     }

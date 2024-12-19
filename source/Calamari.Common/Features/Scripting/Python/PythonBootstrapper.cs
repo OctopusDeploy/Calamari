@@ -20,7 +20,7 @@ namespace Calamari.Common.Features.Scripting.Python
         static readonly string ConfigurationScriptTemplate;
         static readonly string InstallDependenciesScriptTemplate;
         static readonly string SensitiveVariablePassword = AesEncryption.RandomString(16);
-        static readonly AesEncryption VariableEncryptor = new AesEncryption(SensitiveVariablePassword);
+        static readonly AesEncryption VariableEncryptor = new AesEncryption(SensitiveVariablePassword, AesEncryption.ScriptBootstrapKeySize);
         static readonly ICalamariFileSystem CalamariFileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
         static PythonBootstrapper()
@@ -31,7 +31,7 @@ namespace Calamari.Common.Features.Scripting.Python
 
         public static string FormatCommandArguments(string bootstrapFile, string? scriptParameters)
         {
-            var encryptionKey = ToHex(AesEncryption.GetEncryptionKey(SensitiveVariablePassword));
+            var encryptionKey = ToHex(AesEncryption.GetEncryptionKey(SensitiveVariablePassword, AesEncryption.ScriptBootstrapKeySize));
             var commandArguments = new StringBuilder();
             commandArguments.Append($"\"-u\" \"{bootstrapFile}\" {scriptParameters} \"{encryptionKey}\"");
             return commandArguments.ToString();
