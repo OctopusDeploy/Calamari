@@ -19,6 +19,7 @@
     <DefineConstants>$(DefineConstants);NETFX;IIS_SUPPORT;USE_NUGET_V2_LIBS;USE_OCTODIFF_EXE;</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="AWSSDK.ECR" Version="3.7.302.8" />
     <PackageReference Include="System.DirectoryServices.AccountManagement" Version="4.7.0" />
     <PackageReference Include="WireMock.Net" Version="1.6.9" />
     <PackageReference Include="XPath2" Version="1.1.5" />
