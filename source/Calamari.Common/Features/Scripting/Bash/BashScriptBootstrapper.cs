@@ -20,7 +20,7 @@ namespace Calamari.Common.Features.Scripting.Bash
 
         static readonly string BootstrapScriptTemplate;
         static readonly string SensitiveVariablePassword = AesEncryption.RandomString(16);
-        static readonly AesEncryption VariableEncryptor = new AesEncryption(SensitiveVariablePassword);
+        static readonly AesEncryption VariableEncryptor = AesEncryption.ForScripts(SensitiveVariablePassword);
         static readonly ICalamariFileSystem CalamariFileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
         static BashScriptBootstrapper()
@@ -30,7 +30,7 @@ namespace Calamari.Common.Features.Scripting.Bash
 
         public static string FormatCommandArguments(string bootstrapFile)
         {
-            var encryptionKey = ToHex(AesEncryption.GetEncryptionKey(SensitiveVariablePassword));
+            var encryptionKey = ToHex(VariableEncryptor.EncryptionKey);
             var commandArguments = new StringBuilder();
             commandArguments.AppendFormat("\"{0}\" \"{1}\"", bootstrapFile, encryptionKey);
             return commandArguments.ToString();
