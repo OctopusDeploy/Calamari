@@ -132,7 +132,7 @@ namespace Calamari.Common.Plumbing.Variables
         {
             try
             {
-                return new AesEncryption(encryptionPassword, AesEncryption.VariablesFileKeySize).Decrypt(encryptedVariables);
+                return AesEncryption.ForServerVariables(encryptionPassword).Decrypt(encryptedVariables);
             }
             catch (CryptographicException)
             {

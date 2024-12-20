@@ -40,7 +40,7 @@ namespace Calamari.LaunchTools
                 var jsonInputs = variables.GetRaw(instructions.InputsVariable) ?? string.Empty;
                 variables.Set(instructions.InputsVariable, InputSubstitution.SubstituteAndEscapeAllVariablesInJson(jsonInputs, variables, log));
                 var variablesAsJson = variables.CloneAndEvaluate().SaveAsString();
-                File.WriteAllBytes(variableFile.FilePath, new AesEncryption(options.InputVariables.SensitiveVariablesPassword, AesEncryption.StepPackageBootstrapKeySize).Encrypt(variablesAsJson));
+                File.WriteAllBytes(variableFile.FilePath, AesEncryption.ForStepPackages(options.InputVariables.SensitiveVariablesPassword).Encrypt(variablesAsJson));
                 var pathToNode = variables.Get(instructions.NodePathVariable);
                 var nodeExecutablePath = BuildNodePath(pathToNode);
                 var parameters = BuildParams(instructions, variableFile.FilePath);

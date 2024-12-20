@@ -119,13 +119,13 @@ namespace Calamari.Tests.Fixtures.Variables
             {
                 {"firstSensitiveVariableName", "firstSensitiveVariableValue"}
             };
-            File.WriteAllBytes(firstSensitiveVariablesFileName, new AesEncryption(encryptionPassword, AesEncryption.VariablesFileKeySize).Encrypt(JsonConvert.SerializeObject(firstSensitiveVariablesSet)));
+            File.WriteAllBytes(firstSensitiveVariablesFileName, AesEncryption.ForServerVariables(encryptionPassword).Encrypt(JsonConvert.SerializeObject(firstSensitiveVariablesSet)));
 
             var secondSensitiveVariablesSet = new Dictionary<string, string>
             {
                 {"secondSensitiveVariableName", "secondSensitiveVariableValue"}
             };
-            File.WriteAllBytes(secondSensitiveVariablesFileName, new AesEncryption(encryptionPassword, AesEncryption.VariablesFileKeySize).Encrypt(JsonConvert.SerializeObject(secondSensitiveVariablesSet)));
+            File.WriteAllBytes(secondSensitiveVariablesFileName, AesEncryption.ForServerVariables(encryptionPassword).Encrypt(JsonConvert.SerializeObject(secondSensitiveVariablesSet)));
         }
 
         [Test]

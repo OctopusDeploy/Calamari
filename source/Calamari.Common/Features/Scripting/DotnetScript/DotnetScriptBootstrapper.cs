@@ -22,7 +22,7 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
         static readonly string BootstrapScriptTemplate;
         static readonly string ClassBasedBootstrapScriptTemplate;
         static readonly string SensitiveVariablePassword = AesEncryption.RandomString(16);
-        static readonly AesEncryption VariableEncryptor = new AesEncryption(SensitiveVariablePassword, AesEncryption.ScriptBootstrapKeySize);
+        static readonly AesEncryption VariableEncryptor = AesEncryption.ForScripts(SensitiveVariablePassword);
         static readonly ICalamariFileSystem CalamariFileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
         static readonly Regex ScriptParameterArgumentsRegex = new Regex(@"^(?<scriptCommandArgs>.*)\s*--\s(?<scriptArgs>.*)$", RegexOptions.Compiled);
         static DotnetScriptBootstrapper()
@@ -101,7 +101,7 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
         public static string FormatCommandArguments(string bootstrapFile, string? scriptParameters)
         {
             var (scriptCommandArguments, scriptArguments) = RetrieveParameterValues(scriptParameters);
-            var encryptionKey = Convert.ToBase64String(AesEncryption.GetEncryptionKey(SensitiveVariablePassword, AesEncryption.ScriptBootstrapKeySize));
+            var encryptionKey = Convert.ToBase64String(VariableEncryptor.EncryptionKey);
             var commandArguments = new StringBuilder();
             commandArguments.Append("-s https://api.nuget.org/v3/index.json ");
             if (!string.IsNullOrWhiteSpace(scriptCommandArguments)) commandArguments.Append($"{scriptCommandArguments} ");
