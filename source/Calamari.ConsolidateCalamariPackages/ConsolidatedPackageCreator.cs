@@ -34,7 +34,7 @@ namespace Calamari.ConsolidateCalamariPackages
                 using (var sourceZip = ZipFile.OpenRead(groupedBySourceArchive.Key))
                     foreach (var uniqueFile in groupedBySourceArchive)
                     {
-                        var entry = zip.CreateEntry(uniqueFile.EntryNameInConsolidationArchive(), CompressionLevel.SmallestSize);
+                        var entry = zip.CreateEntry(uniqueFile.EntryNameInConsolidationArchive(), CompressionLevel.Fastest);
                         using (var destStream = entry.Open())
                         using (var sourceStream = sourceZip.Entries.First(e => e.FullName == uniqueFile.FullNameInSourceArchive).Open())
                             sourceStream.CopyTo(destStream);
