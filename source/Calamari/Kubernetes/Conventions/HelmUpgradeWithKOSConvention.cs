@@ -46,7 +46,7 @@ namespace Calamari.Kubernetes.Conventions
         {
             var releaseName = GetReleaseName(deployment.Variables);
 
-            var helmCli = new HelmCli(log, commandLineRunner, deployment);
+            var helmCli = new HelmCli(log, commandLineRunner, deployment, fileSystem);
 
             kubectl.SetKubectl();
 

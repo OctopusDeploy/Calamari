@@ -8,7 +8,19 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
 {
     public abstract class SemaphoreFixtureBase
     {
-        protected void ShouldIsolate(ISemaphoreFactory semaphore)
+        [Test]
+        public void SystemSemaphoreWaitsUntilFirstSemaphoreIsReleased()
+        {
+            SecondSemaphoreWaitsUntilFirstSemaphoreIsReleased(new SystemSemaphoreManager());
+        }
+
+        [Test]
+        public void SystemSemaphoreShouldIsolate()
+        {
+            ShouldIsolate(new SystemSemaphoreManager());
+        }
+
+        static void ShouldIsolate(ISemaphoreFactory semaphore)
         {
             var result = 0;
             var threads = new List<Thread>();
@@ -37,7 +49,7 @@ namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
             Assert.That(result, Is.EqualTo(3));
         }
 
-        protected void SecondSemaphoreWaitsUntilFirstSemaphoreIsReleased(ISemaphoreFactory semaphore)
+        static void SecondSemaphoreWaitsUntilFirstSemaphoreIsReleased(ISemaphoreFactory semaphore)
         {
             AutoResetEvent autoEvent = new AutoResetEvent(false);
             var threadTwoShouldGetSemaphore = true;

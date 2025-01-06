@@ -161,7 +161,7 @@ namespace Calamari.Kubernetes.ResourceStatus
         {
             var notCreated = definedResources.Where(definedResource =>
                 !definedResourceStatuses.Any(resource =>
-                    resource.Kind == definedResource.Kind
+                    resource.GroupVersionKind.Equals(definedResource.GroupVersionKind)
                     && resource.Name == definedResource.Name
                     && resource.Namespace == definedResource.Namespace)).ToList();
 

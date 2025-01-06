@@ -13,6 +13,7 @@ using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Kubernetes.Commands;
+using Calamari.Kubernetes.ResourceStatus.Resources;
 using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using Calamari.Testing.Requirements;
@@ -40,7 +41,7 @@ namespace Calamari.Tests.KubernetesFixtures
         private const string ConfigMapFileName = "myapp-configmap1.yml";
         private const string ConfigMapFileName2 = "myapp-configmap2.yml";
 
-        private const string SimpleDeploymentResourceType = "Deployment";
+        private readonly ResourceGroupVersionKind simpleDeploymentResourceGvk = new ResourceGroupVersionKind("apps", "v1", "Deployment");
         private const string SimpleDeploymentResourceName = "nginx-deployment";
         private const string SimpleDeploymentResource =
             "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: nginx-deployment\nspec:\n  selector:\n    matchLabels:\n      app: nginx\n  replicas: 3\n  template:\n    metadata:\n      labels:\n        app: nginx\n    spec:\n      containers:\n      - name: nginx\n        image: nginx:1.14.2\n        ports:\n        - containerPort: 80";
@@ -139,7 +140,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
             var rawLogs = Log.Messages.Select(m => m.FormattedMessage).ToArray();
 
-            AssertObjectStatusMonitoringStarted(rawLogs, (SimpleDeploymentResourceType, SimpleDeploymentResourceName));
+            AssertObjectStatusMonitoringStarted(rawLogs, (simpleDeploymentResourceGvk, SimpleDeploymentResourceName));
 
             var objectStatusUpdates = Log.Messages.GetServiceMessagesOfType("k8s-status");
 
@@ -149,13 +150,13 @@ namespace Calamari.Tests.KubernetesFixtures
                 m.Contains("Resource status check completed successfully because all resources are deployed successfully"));
         }
 
-        private static void AssertObjectStatusMonitoringStarted(string[] rawLogs, params (string Type, string Name)[] resources)
+        private static void AssertObjectStatusMonitoringStarted(string[] rawLogs, params (ResourceGroupVersionKind Gvk, string Name)[] resources)
         {
             var resourceStatusCheckLog = "Resource Status Check: 1 new resources have been added:";
             var idx = Array.IndexOf(rawLogs, resourceStatusCheckLog);
-            foreach (var (i, type, name) in resources.Select((t, i) => (i, t.Type, t.Name)))
+            foreach (var (i, gvk, name) in resources.Select((t, i) => (i, t.Gvk, t.Name)))
             {
-                rawLogs[idx + i + 1].Should().Be($" - {type}/{name} in namespace calamari-testing");
+                rawLogs[idx + i + 1].Should().Be($" - {gvk}/{name} in namespace calamari-testing");
             }
         }
 
@@ -184,7 +185,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
             var rawLogs = Log.Messages.Select(m => m.FormattedMessage).ToArray();
 
-            AssertObjectStatusMonitoringStarted(rawLogs, (SimpleDeploymentResourceType, SimpleDeploymentResourceName));
+            AssertObjectStatusMonitoringStarted(rawLogs, (simpleDeploymentResourceGvk, SimpleDeploymentResourceName));
 
             rawLogs.Should().ContainSingle(l =>
                 l ==

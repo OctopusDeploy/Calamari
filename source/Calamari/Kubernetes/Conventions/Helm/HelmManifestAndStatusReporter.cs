@@ -5,11 +5,13 @@ using System.Threading;
 using System.Threading.Tasks;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Processes;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Kubernetes.Integration;
 using Calamari.Kubernetes.ResourceStatus;
 using Calamari.Kubernetes.ResourceStatus.Resources;
 using Calamari.Util;
+using Octopus.Versioning.Semver;
 using YamlDotNet.RepresentationModel;
 
 namespace Calamari.Kubernetes.Conventions.Helm
@@ -40,22 +42,58 @@ namespace Calamari.Kubernetes.Conventions.Helm
         {
             await Task.Run(async () =>
                            {
-                               var manifest = await PollForManifest(deployment, helmCli, releaseName, revisionNumber);
+                               var resourceStatusCheckIsEnabled = deployment.Variables.GetFlag(SpecialVariables.ResourceStatusCheck);
 
-                               //report the manifest has been applied
-                               manifestReporter.ReportManifestApplied(manifest);
-
-                               //if resource status (KOS) is enabled, parse the manifest and start monitored the resources
-                               if (deployment.Variables.GetFlag(SpecialVariables.ResourceStatusCheck))
+                               if (
+                                   resourceStatusCheckIsEnabled
+                                   || FeatureToggle.KubernetesLiveObjectStatusFeatureToggle.IsEnabled(deployment.Variables)
+                                   || OctopusFeatureToggles.KubernetesObjectManifestInspectionFeatureToggle.IsEnabled(deployment.Variables))
                                {
-                                   await ParseManifestAndMonitorResourceStatuses(deployment, manifest, cancellationToken);
+                                   if (!DoesHelmCliSupportManifestRetrieval(out var helmVersion))
+                                   {
+                                       log.Warn($"Octopus needs Helm v3.13 or later to display object status and manifests. Your current version is {helmVersion}. Please update your Helm executable or container to enable our new Kubernetes capabilities. Learn more in our {log.FormatShortLink("KOS", "documentation")}.");
+                                       return;
+                                   }
+
+                                   var manifest = await PollForManifest(deployment, releaseName, revisionNumber);
+
+                                   //it's possible that we have no manifest as charts with just hooks don't produce a manifest
+                                   //in this case, there is nothing to do, so we are done :)
+                                   if (string.IsNullOrWhiteSpace(manifest))
+                                   {
+                                       return;
+                                   }
+
+                                   //report the manifest has been applied
+                                   manifestReporter.ReportManifestApplied(manifest);
+
+                                   //if resource status (KOS) is enabled, parse the manifest and start monitoring the resources
+                                   if (resourceStatusCheckIsEnabled)
+                                   {
+                                       await ParseManifestAndMonitorResourceStatuses(deployment, manifest, cancellationToken);
+                                   }
                                }
                            },
                            cancellationToken);
         }
 
+        static readonly SemanticVersion MinimumHelmVersion = new SemanticVersion(3, 13, 0);
+
+        bool DoesHelmCliSupportManifestRetrieval(out string helmVersion)
+        {
+            var parsedExecutableVersion = helmCli.GetParsedExecutableVersion();
+
+            if (parsedExecutableVersion == null)
+            {
+                helmVersion = "UNKNOWN";
+                return false;
+            }
+
+            helmVersion = parsedExecutableVersion.Version.ToString();
+            return parsedExecutableVersion >= MinimumHelmVersion;
+        }
+
         async Task<string> PollForManifest(RunningDeployment deployment,
-                                           HelmCli helmCli,
                                            string releaseName,
                                            int revisionNumber)
         {
@@ -63,25 +101,32 @@ namespace Calamari.Kubernetes.Conventions.Helm
             var timeout = GoDurationParser.TryParseDuration(deployment.Variables.Get(SpecialVariables.Helm.Timeout), out var timespan) ? timespan : TimeSpan.FromMinutes(5);
             ct.CancelAfter(timeout);
             string manifest = null;
+            log.Verbose($"Retrieving manifest for {releaseName}, revision {revisionNumber}.");
+            var didSuccessfullyExecuteCliCall = false;
             while (!ct.IsCancellationRequested)
-            {
                 try
                 {
                     manifest = helmCli.GetManifest(releaseName, revisionNumber);
-                    log.Verbose($"Retrieved manifest for {releaseName}, revision {revisionNumber}.");
+                    
+                    //flag if we successfully executed the get manifest call
+                    //this is important because some helm charts just have hooks that don't have any manifests, so we receive null/empty string here
+                    didSuccessfullyExecuteCliCall = true;
                     break;
                 }
                 catch (CommandLineException)
                 {
-                    log.Verbose("Helm manifest was not ready for retrieval. Retrying in 1s.");
+                    log.Verbose($"Manifest could not be retrieved for {releaseName}, revision {revisionNumber}. Retrying in 1s.");
                     await Task.Delay(TimeSpan.FromSeconds(1), ct.Token);
                 }
-            }
 
-            if (string.IsNullOrWhiteSpace(manifest))
-            {
+            //it's possible that some manifests doesn't
+            if (!didSuccessfullyExecuteCliCall)
                 throw new CommandException("Failed to retrieve helm manifest in a timely manner");
-            }
+
+            //Log if we found a manifest, or not
+            log.Verbose(string.IsNullOrWhiteSpace(manifest)
+                            ? $"Retrieved an empty manifest for {releaseName}, revision {revisionNumber}."
+                            : $"Retrieved manifest for {releaseName}, revision {revisionNumber}.");
 
             return manifest;
         }
@@ -98,11 +143,15 @@ namespace Calamari.Kubernetes.Conventions.Helm
                 {
                     if (!(document.RootNode is YamlMappingNode rootNode))
                     {
-                        log.Warn("Could not parse manifest, resources will not be added to kubernetes object status");
+                        if (document.RootNode.Tag != null)
+                        {
+                            log.Verbose("Could not parse manifest, resources will not be added to Kubernetes Object Status");
+                        }
+
                         continue;
                     }
 
-                    var kind = rootNode.GetChildNode<YamlScalarNode>("kind").Value;
+                    var gvk = rootNode.ToResourceGroupVersionKind();
 
                     var metadataNode = rootNode.GetChildNode<YamlMappingNode>("metadata");
                     var name = metadataNode.GetChildNode<YamlScalarNode>("name").Value;
@@ -113,12 +162,10 @@ namespace Calamari.Kubernetes.Conventions.Helm
                     //if this is null, we'll fall back on the namespace defined for the kubectl tool (which is the default target namespace)
                     //we aren't changing the manifest here, just changing where the kubectl looks for our resource.
                     //We also try and filter out known non-namespaced resources
-                    if (string.IsNullOrWhiteSpace(@namespace) && !KubernetesApiResources.NonNamespacedKinds.Contains(kind))
-                    {
+                    if (string.IsNullOrWhiteSpace(@namespace) && !KubernetesApiResources.NonNamespacedKinds.Contains(gvk.Kind))
                         @namespace = deployment.Variables.Get(SpecialVariables.Helm.Namespace)?.Trim();
-                    }
 
-                    var resourceIdentifier = new ResourceIdentifier(kind, name, @namespace);
+                    var resourceIdentifier = new ResourceIdentifier(gvk, name, @namespace);
                     resources.Add(resourceIdentifier);
                 }
             }
