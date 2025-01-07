@@ -6,7 +6,6 @@ using Calamari.Common.Features.EmbeddedResources;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
-using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
@@ -82,7 +81,6 @@ namespace Calamari.Kubernetes
             {
                 variables.Set("OctopusKubernetesTargetScript", $"{script.File}");
                 variables.Set("OctopusKubernetesTargetScriptParameters", script.Parameters);
-                variables.Set("OctopusAzureRmIsDeprecated", FeatureToggle.AzureRMDeprecationFeatureToggle.IsEnabled(variables).ToString());
 
                 using (var contextScriptFile = new TemporaryFile(CreateContextScriptFile(workingDirectory)))
                 {

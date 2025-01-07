@@ -9,7 +9,9 @@ $OctopusAzureADClientId = $OctopusParameters["Octopus.Action.Azure.ClientId"]
 $OctopusAzureADPassword = $OctopusParameters["Octopus.Action.Azure.Password"]
 $OctopusAzureEnvironment = $OctopusParameters["Octopus.Action.Azure.Environment"]
 $OctopusOpenIdJwt = $OctopusParameters["Octopus.OpenIdConnect.Jwt"]
+$OctopusAzureRmIsDeprecated = $OctopusParameters["OctopusEnabledFeatureToggles"].Contains("AzureRMDeprecationFeatureToggle")
 $OctopusUseOidc = ![string]::IsNullOrEmpty($OctopusOpenIdJwt)
+
 
 if ($null -eq $OctopusAzureEnvironment)
 {
@@ -21,23 +23,19 @@ function EnsureDirectoryExists([string] $path)
     New-Item -ItemType Directory -Force -Path $path *> $null
 }
 
-function Get-AzureRmModuleInstalled
-{
+function Get-AzureRmModuleInstalled {
     return $null -ne (Get-Command "Login-AzureRmAccount" -ErrorAction SilentlyContinue)
 }
 
-function Get-AzModuleInstalled
-{
+function Get-AzModuleInstalled {
     return $null -ne (Get-Command "Connect-AzAccount" -ErrorAction SilentlyContinue)
 }
 
-function Get-RunningInPowershellCore
-{
+function Get-RunningInPowershellCore {
     return $PSVersionTable.PSVersion.Major -gt 5
 }
 
-function Initialize-AzureRmContext
-{
+function Initialize-AzureRmContext {
     # Turn off context autosave, as this will make all authentication occur in memory, and isolate each session from the context changes in other sessions
     Write-Host "##octopus[stdout-verbose]"
     Disable-AzureRMContextAutosave -Scope Process
@@ -74,8 +72,7 @@ function Initialize-AzureRmContext
     }
 }
 
-function Initialize-AzContext
-{
+function Initialize-AzContext {
     $tempWarningPreference = $WarningPreference
     $WarningPreference = 'SilentlyContinue'
     if (-Not(Get-Command "Disable-AzureRMContextAutosave" -errorAction SilentlyContinue))
@@ -132,27 +129,21 @@ function ConnectAzAccount
     # and dependencies. If we then test for the other module (e.g. Az) then it also loads it's module and assemblies which then
     # creates havoc when you try and call any context methods such as Disable-AzContextAutosave due to version differences etc.
     # For this reason we'll only test the module we prefer and then if it exists initialize it and not the other one.
-    if (Get-RunningInPowershellCore)
-    {
-        if (Get-AzModuleInstalled)
-        {
+    if (Get-RunningInPowershellCore) {
+        if (Get-AzModuleInstalled) {
             Initialize-AzContext
         }
-        elseif (Get-AzureRmModuleInstalled)
-        {
+        elseif (Get-AzureRmModuleInstalled) { 
             # AzureRM is not supported on powershell core
             Write-Warning "AzureRM module is not compatible with Powershell Core, authentication will not be performed with AzureRM"
         }
     }
-    else
-    {
+    else {
         # Windows Powershell
-        if (Get-AzModuleInstalled)
-        {
+        if (Get-AzModuleInstalled) {
             Initialize-AzContext
         }
-        elseif (Get-AzureRmModuleInstalled)
-        {
+        elseif (Get-AzureRmModuleInstalled) {
             if($OctopusAzureRmIsDeprecated -like [Boolean]::TrueString) {
                 Write-Error "Azure Resource Manager modules are no longer available for authenticating with Azure, you are required to move to Azure CLI or the Az powershell modules."
                 exit 2
