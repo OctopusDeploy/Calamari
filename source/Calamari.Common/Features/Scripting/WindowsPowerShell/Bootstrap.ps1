@@ -373,7 +373,7 @@ function Decrypt-Variables($iv, $Encrypted)
 
 	$algorithm.Mode = [System.Security.Cryptography.CipherMode]::CBC
 	$algorithm.Padding = [System.Security.Cryptography.PaddingMode]::PKCS7
-	$algorithm.KeySize = 128
+	$algorithm.KeySize = 256
 	$algorithm.BlockSize = 128 # AES is just Rijndael with a fixed block size
 	$algorithm.Key = [System.Convert]::FromBase64String($OctopusKey)
 	$algorithm.IV =[System.Convert]::FromBase64String($iv)

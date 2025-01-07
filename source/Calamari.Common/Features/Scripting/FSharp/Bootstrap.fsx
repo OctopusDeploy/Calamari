@@ -33,7 +33,7 @@ let private getCustomCredentials proxyUserName =
 
 let private decryptString encrypted iv =
     let key =  fsi.CommandLineArgs.[fsi.CommandLineArgs.Length - 1]
-    use algorithm = new AesCryptoServiceProvider(Mode = CipherMode.CBC, Padding = PaddingMode.PKCS7, KeySize = 128, BlockSize = 128, Key = Convert.FromBase64String(key), IV =  Convert.FromBase64String(iv))
+    use algorithm = new AesCryptoServiceProvider(Mode = CipherMode.CBC, Padding = PaddingMode.PKCS7, KeySize = 256, BlockSize = 128, Key = Convert.FromBase64String(key), IV =  Convert.FromBase64String(iv))
     use decryptor = algorithm.CreateDecryptor()
     use memoryStream = new MemoryStream(Convert.FromBase64String(encrypted))
     use cryptoStream = new CryptoStream(memoryStream, decryptor, CryptoStreamMode.Read)
