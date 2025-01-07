@@ -242,6 +242,12 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
         void AssertAuthenticatedSystemProxyUsed(IEnumerable<EnvironmentVariable> output)
         {
 #if !NETCORE
+            Console.WriteLine("AssertAuthenticatedSystemProxyUsed Running without NETCORE");
+#else
+                Console.WriteLine("AssertAuthenticatedSystemProxyUsed Running with NETCORE");
+#endif                
+
+#if !NETCORE
             AssertAuthenticatedProxyUsed(output);
 #else
             AssertNoProxyChanges(output);
