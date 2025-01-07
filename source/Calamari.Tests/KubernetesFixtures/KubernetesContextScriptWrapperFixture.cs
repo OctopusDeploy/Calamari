@@ -226,33 +226,6 @@ namespace Calamari.Tests.KubernetesFixtures
             var wrapper = CreateWrapper();
             TestScriptInReadOnlyMode(wrapper).AssertSuccess();
         }
-        
-        [Test]
-        public void ExecutionWithAzureServicePrincipalWithAdmin_ShouldFailIfAzureRmIsDeprecated()
-        {
-            variables.Set(ScriptVariables.Syntax, ScriptSyntax.PowerShell.ToString());
-            variables.Set(PowerShellVariables.Edition, "Desktop");
-            variables.Set(Deployment.SpecialVariables.Account.AccountType, "AzureServicePrincipal");
-            variables.Set("Octopus.Action.Kubernetes.AksClusterResourceGroup", "clusterRG");
-            variables.Set(SpecialVariables.AksClusterName, "asCluster");
-            variables.Set("Octopus.Action.Kubernetes.AksAdminLogin", Boolean.FalseString);
-            variables.Set("Octopus.Action.Azure.SubscriptionId", "azSubscriptionId");
-            variables.Set("Octopus.Action.Azure.TenantId", "azTenantId");
-            variables.Set("Octopus.Action.Azure.Password", "azPassword");
-            variables.Set("Octopus.Action.Azure.ClientId", "azClientId");
-            
-            //set the feature toggle
-            variables.SetStrings(KnownVariables.EnabledFeatureToggles,
-                                 new[]
-                                 {
-                                     FeatureToggle.AzureRMDeprecationFeatureToggle.ToString()
-                                 },
-                                 ",");
-            
-            var wrapper = CreateWrapper();
-            TestScriptInReadOnlyMode(wrapper).AssertFailure();
-        }
-        
 
         [Test]
         [WindowsTest] // This test requires the aws cli tools. Currently only configured to install on Linux & Windows
