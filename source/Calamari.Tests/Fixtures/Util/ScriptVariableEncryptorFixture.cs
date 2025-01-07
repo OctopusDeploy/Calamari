@@ -13,7 +13,7 @@ namespace Calamari.Tests.Fixtures.Util
             var passphrase = "PurpleMonkeyDishwasher";
             var text = "Put It In H!";
 
-            var encryptor = new AesEncryption(passphrase);
+            var encryptor = AesEncryption.ForScripts(passphrase);
             Assert.AreEqual(text, encryptor.Decrypt(encryptor.Encrypt(text)));
         }
     }

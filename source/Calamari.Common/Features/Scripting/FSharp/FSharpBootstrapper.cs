@@ -17,7 +17,7 @@ namespace Calamari.Common.Features.Scripting.FSharp
     {
         static readonly string BootstrapScriptTemplate;
         static readonly string SensitiveVariablePassword = AesEncryption.RandomString(16);
-        static readonly AesEncryption VariableEncryptor = new AesEncryption(SensitiveVariablePassword);
+        static readonly AesEncryption VariableEncryptor = AesEncryption.ForScripts(SensitiveVariablePassword);
         static readonly ICalamariFileSystem CalamariFileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
         static FSharpBootstrapper()
@@ -42,7 +42,7 @@ namespace Calamari.Common.Features.Scripting.FSharp
 
         public static string FormatCommandArguments(string bootstrapFile, string? scriptParameters)
         {
-            var encryptionKey = Convert.ToBase64String(AesEncryption.GetEncryptionKey(SensitiveVariablePassword));
+            var encryptionKey = Convert.ToBase64String(VariableEncryptor.EncryptionKey);
             var commandArguments = new StringBuilder();
             commandArguments.AppendFormat("\"{0}\" {1} \"{2}\"", bootstrapFile, scriptParameters, encryptionKey);
             return commandArguments.ToString();
