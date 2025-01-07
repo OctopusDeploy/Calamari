@@ -228,9 +228,9 @@ namespace Calamari.Tests.KubernetesFixtures
         }
         
         [Test]
-        public void TryingToUseAzureRmModule()
+        public void ExecutionWithAzureServicePrincipalWithAdmin_ShouldFailIfAzureRmIsDeprecated()
         {
-            variables.Set(ScriptVariables.Syntax, ScriptSyntax.Bash.ToString());
+            variables.Set(ScriptVariables.Syntax, ScriptSyntax.PowerShell.ToString());
             variables.Set(PowerShellVariables.Edition, "Desktop");
             variables.Set(Deployment.SpecialVariables.Account.AccountType, "AzureServicePrincipal");
             variables.Set("Octopus.Action.Kubernetes.AksClusterResourceGroup", "clusterRG");
@@ -250,7 +250,7 @@ namespace Calamari.Tests.KubernetesFixtures
                                  ",");
             
             var wrapper = CreateWrapper();
-            ExecuteScriptInRecordOnlyMode(wrapper, "blah.ps1").AssertSuccess();
+            TestScriptInReadOnlyMode(wrapper).AssertFailure();
         }
         
 
