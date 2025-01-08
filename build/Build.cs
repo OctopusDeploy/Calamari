@@ -181,7 +181,7 @@ namespace Calamari.Build
 
         Target CalamariConsolidationTests =>
             _ => _.DependsOn(Compile)
-                  //.OnlyWhenStatic(() => !IsLocalBuild)
+                  .OnlyWhenStatic(() => !IsLocalBuild)
                   .Executes(() =>
                             {
                                 DotNetTest(_ => _
