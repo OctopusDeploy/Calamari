@@ -717,7 +717,7 @@ namespace Calamari.Build
                 return Encoding.UTF8.GetBytes(result);
             }
 
-            var allFiles = Directory.GetFiles(directory, "*.*", SearchOption.AllDirectories);
+            var allFiles = Directory.GetFiles(directory, "*.*", SearchOption.AllDirectories).OrderBy(f => f);
 
             var concatFileHashes = allFiles.SelectMany(f => GetHashOfFileContent(f, directory));
 
