@@ -14,18 +14,18 @@ namespace Calamari.ConsolidateCalamariPackages
 
         public class Package
         {
-            public Package(string packageId, string version, bool isNupkg, Dictionary<string, FileTransfer[]> platformHashes)
+            public Package(string packageId, string version, bool isNupkg, Dictionary<string, FileTransfer[]> platformFiles)
             {
                 PackageId = packageId;
                 Version = version;
                 IsNupkg = isNupkg;
-                PlatformHashes = new Dictionary<string, FileTransfer[]>(platformHashes, StringComparer.OrdinalIgnoreCase);
+                PlatformFiles = new Dictionary<string, FileTransfer[]>(platformFiles, StringComparer.OrdinalIgnoreCase);
             }
 
             public string PackageId { get; }
             public string Version { get; }
             public bool IsNupkg { get; }
-            public Dictionary<string, FileTransfer[]> PlatformHashes { get; }
+            public Dictionary<string, FileTransfer[]> PlatformFiles { get; }
         }
     }
     
