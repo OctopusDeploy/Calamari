@@ -35,13 +35,17 @@ namespace Calamari.Build
         readonly Configuration Configuration =
             IsLocalBuild ? Configuration.Debug : Configuration.Release;
 
-        [Required] readonly Solution Solution = SolutionModelTasks.ParseSolution(SourceDirectory / "Calamari.sln");
+        [Required]
+        readonly Solution Solution = SolutionModelTasks.ParseSolution(SourceDirectory / "Calamari.sln");
 
-        [Parameter("Run packing step in parallel")] readonly bool PackInParallel;
+        [Parameter("Run packing step in parallel")]
+        readonly bool PackInParallel;
 
-        [Parameter] readonly DotNetVerbosity BuildVerbosity = DotNetVerbosity.Minimal;
+        [Parameter]
+        readonly DotNetVerbosity BuildVerbosity = DotNetVerbosity.Minimal;
 
-        [Parameter] readonly bool SignBinaries;
+        [Parameter]
+        readonly bool SignBinaries;
 
         // When building locally signing isn't really necessary and it could take
         // up to 3-4 minutes to sign all the binaries as we build for many, many
@@ -49,29 +53,44 @@ namespace Calamari.Build
         // when doing local development.
         bool WillSignBinaries => !IsLocalBuild || SignBinaries;
 
-        [Parameter] readonly bool AppendTimestamp;
+        [Parameter]
+        readonly bool AppendTimestamp;
 
-        [Parameter("Set Calamari Version on OctopusServer")] readonly bool SetOctopusServerVersion;
+        [Parameter("Set Calamari Version on OctopusServer")]
+        readonly bool SetOctopusServerVersion;
 
-        [Parameter] readonly string? AzureKeyVaultUrl;
+        [Parameter]
+        readonly string? AzureKeyVaultUrl;
 
-        [Parameter] readonly string? AzureKeyVaultAppId;
+        [Parameter]
+        readonly string? AzureKeyVaultAppId;
 
-        [Parameter] [Secret] readonly string? AzureKeyVaultAppSecret;
+        [Parameter]
+        [Secret]
+        readonly string? AzureKeyVaultAppSecret;
 
-        [Parameter] [Secret] readonly string? AzureKeyVaultTenantId;
+        [Parameter]
+        [Secret]
+        readonly string? AzureKeyVaultTenantId;
 
-        [Parameter] readonly string? AzureKeyVaultCertificateName;
+        [Parameter]
+        readonly string? AzureKeyVaultCertificateName;
 
-        [Parameter(Name = "signing_certificate_path")] readonly string SigningCertificatePath = RootDirectory / "certificates" / "OctopusDevelopment.pfx";
+        [Parameter(Name = "signing_certificate_path")]
+        readonly string SigningCertificatePath = RootDirectory / "certificates" / "OctopusDevelopment.pfx";
 
-        [Parameter(Name = "signing_certificate_password")] [Secret] readonly string SigningCertificatePassword = "Password01!";
+        [Parameter(Name = "signing_certificate_password")]
+        [Secret]
+        readonly string SigningCertificatePassword = "Password01!";
 
-        [Parameter] readonly string? TargetFramework;
+        [Parameter]
+        readonly string? TargetFramework;
 
-        [Parameter] readonly string? TargetRuntime;
+        [Parameter]
+        readonly string? TargetRuntime;
 
-        [GitVersion] readonly GitVersion? GitVersionInfo;
+        [GitVersion]
+        readonly GitVersion? GitVersionInfo;
 
         static readonly List<string> CalamariProjectsToSkipConsolidation = new() { "Calamari.CloudAccounts", "Calamari.Common", "Calamari.ConsolidateCalamariPackages" };
 
@@ -101,63 +120,63 @@ namespace Calamari.Build
 
         Target CheckForbiddenWords =>
             _ => _.Executes(() =>
-                            {
-                                Log.Information("Checking codebase for forbidden words");
+            {
+                Log.Information("Checking codebase for forbidden words");
 
-                                const string arguments =
-                                    "grep -i -I -n -f ForbiddenWords.txt -- \"./*\" \":(exclude)ForbiddenWords.txt\"";
-                                var process =
-                                    ProcessTasks.StartProcess(GitPath, arguments)
-                                                .AssertWaitForExit();
+                const string arguments =
+                    "grep -i -I -n -f ForbiddenWords.txt -- \"./*\" \":(exclude)ForbiddenWords.txt\"";
+                var process =
+                    ProcessTasks.StartProcess(GitPath, arguments)
+                                .AssertWaitForExit();
 
-                                if (process.ExitCode == 1)
-                                {
-                                    Log.Information("Sanity check passed");
-                                    return;
-                                }
+                if (process.ExitCode == 1)
+                {
+                    Log.Information("Sanity check passed");
+                    return;
+                }
 
-                                var filesContainingForbiddenWords = process.Output.Select(o => o.Text).ToArray();
-                                if (filesContainingForbiddenWords.Any())
-                                    throw new Exception("Found forbidden words in the following files, "
-                                                        + "please clean them up:\r\n"
-                                                        + string.Join("\r\n", filesContainingForbiddenWords));
-                            });
+                var filesContainingForbiddenWords = process.Output.Select(o => o.Text).ToArray();
+                if (filesContainingForbiddenWords.Any())
+                    throw new Exception("Found forbidden words in the following files, "
+                                        + "please clean them up:\r\n"
+                                        + string.Join("\r\n", filesContainingForbiddenWords));
+            });
 
         Target Clean =>
             _ => _.Executes(() =>
-                            {
-                                SourceDirectory.GlobDirectories("**/bin", "**/obj", "**/TestResults").ForEach(DeleteDirectory);
-                                EnsureCleanDirectory(ArtifactsDirectory);
-                                EnsureCleanDirectory(PublishDirectory);
-                            });
+            {
+                SourceDirectory.GlobDirectories("**/bin", "**/obj", "**/TestResults").ForEach(DeleteDirectory);
+                EnsureCleanDirectory(ArtifactsDirectory);
+                EnsureCleanDirectory(PublishDirectory);
+            });
 
         Target Restore =>
             _ => _.DependsOn(Clean)
                   .Executes(() =>
-                            {
-                                var localRuntime = FixedRuntimes.Windows;
+                  {
+                      var localRuntime = FixedRuntimes.Windows;
 
-                                if (!OperatingSystem.IsWindows())
-                                    localRuntime = FixedRuntimes.Linux;
+                      if (!OperatingSystem.IsWindows())
+                          localRuntime = FixedRuntimes.Linux;
 
-                                DotNetRestore(_ => _.SetProjectFile(Solution)
-                                                    .SetRuntime(localRuntime)
-                                                    .SetProperty("DisableImplicitNuGetFallbackFolder", true));
-                            });
+                      DotNetRestore(_ => _.SetProjectFile(Solution)
+                                          .SetRuntime(localRuntime)
+                                          .SetProperty("DisableImplicitNuGetFallbackFolder", true));
+                  });
 
         Target Compile =>
-            _ => //_.DependsOn(CheckForbiddenWords)
-                //.DependsOn(Restore)
-                _.Executes(() =>
-                           {
-                               Log.Information("Compiling Calamari v{CalamariVersion}", NugetVersion.Value);
+            _ => _.DependsOn(CheckForbiddenWords)
+                  .DependsOn(Restore)
+                  .Executes(() =>
+                  {
+                      Log.Information("Compiling Calamari v{CalamariVersion}", NugetVersion.Value);
 
-                               DotNetBuild(_ => _.SetProjectFile(Solution)
-                                                 .SetConfiguration(Configuration)
-                                                 .SetNoRestore(true)
-                                                 .SetVersion(NugetVersion.Value)
-                                                 .SetInformationalVersion(GitVersionInfo?.InformationalVersion));
-                           });
+                      DotNetBuild(_ => _.SetProjectFile(Solution)
+                                        .SetConfiguration(Configuration)
+                                        .SetNoRestore(true)
+                                        .SetVersion(NugetVersion.Value)
+                                        .SetInformationalVersion(GitVersionInfo?.InformationalVersion));
+                  });
 
         Target CalamariConsolidationTests =>
             _ => _.DependsOn(Compile)
@@ -202,33 +221,33 @@ namespace Calamari.Build
                                           nugetVersion,
                                           FixedRuntimes.Cloud);
 
-                                // Create the self-contained Calamari packages for each runtime ID defined in Calamari.csproj
-                                foreach (var rid in GetRuntimeIdentifiers(Solution.GetProject(RootProjectName)!)!)
-                                    DoPublish(RootProjectName, Frameworks.Net60, nugetVersion, rid);
-                            });
+                      // Create the self-contained Calamari packages for each runtime ID defined in Calamari.csproj
+                      foreach (var rid in GetRuntimeIdentifiers(Solution.GetProject(RootProjectName)!)!)
+                          DoPublish(RootProjectName, Frameworks.Net60, nugetVersion, rid);
+                  });
 
         Target PublishCalamariFlavourProjects =>
             _ => _
                  .DependsOn(Compile)
                  .Executes(async () =>
-                           {
-                               var flavours = GetCalamariFlavours();
-                               var migratedCalamariFlavoursTests = flavours.Select(f => $"{f}.Tests");
-                               var calamariFlavourProjects = Solution.Projects
-                                                                     .Where(project => flavours.Contains(project.Name)
-                                                                                       || migratedCalamariFlavoursTests.Contains(project.Name));
+                 {
+                     var flavours = GetCalamariFlavours();
+                     var migratedCalamariFlavoursTests = flavours.Select(f => $"{f}.Tests");
+                     var calamariFlavourProjects = Solution.Projects
+                         .Where(project => flavours.Contains(project.Name)
+                                           || migratedCalamariFlavoursTests.Contains(project.Name));
 
-                               // Calamari.Scripting is a library that other calamari flavours depend on; not a flavour on its own right.
-                               // Unlike other *Calamari* tests, we would still want to produce Calamari.Scripting.Zip and its tests, like its flavours.
-                               var calamariScripting = "Calamari.Scripting";
-                               var calamariScriptingProjectAndTest = Solution.Projects.Where(project => project.Name == calamariScripting || project.Name == $"{calamariScripting}.Tests");
+                     // Calamari.Scripting is a library that other calamari flavours depend on; not a flavour on its own right.
+                     // Unlike other *Calamari* tests, we would still want to produce Calamari.Scripting.Zip and its tests, like its flavours.
+                     var calamariScripting = "Calamari.Scripting";
+                     var calamariScriptingProjectAndTest = Solution.Projects.Where(project => project.Name == calamariScripting || project.Name == $"{calamariScripting}.Tests");
 
-                               var calamariProjects = calamariFlavourProjects
-                                                      .Concat(calamariScriptingProjectAndTest)
-                                                      .ToList();
+                     var calamariProjects = calamariFlavourProjects
+                                            .Concat(calamariScriptingProjectAndTest)
+                                            .ToList();
 
-                               await PublishCalamariProjects(calamariProjects);
-                           });
+                     await PublishCalamariProjects(calamariProjects);
+                 });
 
         async Task PublishCalamariProjects(List<Project> projects)
         {
@@ -237,38 +256,37 @@ namespace Calamari.Build
             bool IsCrossPlatform(string targetFramework) => targetFramework.Contains('.');
 
             var calamariPackages = projects
-                                   .SelectMany(project => project.GetTargetFrameworks()!, (p, f) => new
-                                   {
-                                       Project = p,
-                                       Framework = f,
-                                       CrossPlatform = IsCrossPlatform(f)
-                                   })
-                                   .ToList();
+                .SelectMany(project => project.GetTargetFrameworks()!, (p, f) => new
+                {
+                    Project = p,
+                    Framework = f,
+                    CrossPlatform = IsCrossPlatform(f)
+                }).ToList();
 
             // for NetFx target frameworks, we use "netfx" as the architecture, and ignore defined runtime identifiers
             var netFxPackages = calamariPackages
-                                .Where(p => !p.CrossPlatform)
-                                .Select(packageToBuild => new CalamariPackageMetadata()
-                                {
-                                    Project = packageToBuild.Project,
-                                    Framework = packageToBuild.Framework,
-                                    Architecture = null,
-                                    IsCrossPlatform = packageToBuild.CrossPlatform
-                                });
+                .Where(p => !p.CrossPlatform)
+                .Select(packageToBuild => new CalamariPackageMetadata()
+                {
+                    Project = packageToBuild.Project,
+                    Framework = packageToBuild.Framework,
+                    Architecture = null,
+                    IsCrossPlatform = packageToBuild.CrossPlatform
+                });
 
             // for cross-platform frameworks, we combine each runtime identifier with each target framework
             var crossPlatformPackages = calamariPackages
-                                        .Where(p => p.CrossPlatform)
-                                        .Where(p => string.IsNullOrWhiteSpace(TargetFramework) || p.Framework == TargetFramework)
-                                        .SelectMany(packageToBuild => GetRuntimeIdentifiers(packageToBuild.Project) ?? Enumerable.Empty<string>(),
-                                                    (packageToBuild, runtimeIdentifier) => new CalamariPackageMetadata()
-                                                    {
-                                                        Project = packageToBuild.Project,
-                                                        Framework = packageToBuild.Framework,
-                                                        Architecture = runtimeIdentifier,
-                                                        IsCrossPlatform = packageToBuild.CrossPlatform
-                                                    })
-                                        .Distinct(t => new { t.Project?.Name, t.Architecture, t.Framework });
+                .Where(p => p.CrossPlatform)
+                .Where(p => string.IsNullOrWhiteSpace(TargetFramework) || p.Framework == TargetFramework)
+                .SelectMany(packageToBuild => GetRuntimeIdentifiers(packageToBuild.Project) ?? Enumerable.Empty<string>(),
+                    (packageToBuild, runtimeIdentifier) => new CalamariPackageMetadata()
+                    {
+                        Project = packageToBuild.Project,
+                        Framework = packageToBuild.Framework,
+                        Architecture = runtimeIdentifier,
+                        IsCrossPlatform = packageToBuild.CrossPlatform
+                    })
+                .Distinct(t => new {t.Project?.Name, t.Architecture, t.Framework});
 
             var packagesToPublish = crossPlatformPackages.Concat(netFxPackages).ToArray();
 
@@ -290,18 +308,19 @@ namespace Calamari.Build
             }
 
             Log.Information(
-                            $"Building {calamariPackageMetadata.Project?.Name} for framework '{calamariPackageMetadata.Framework}' and arch '{calamariPackageMetadata.Architecture}'");
+                $"Building {calamariPackageMetadata.Project?.Name} for framework '{calamariPackageMetadata.Framework}' and arch '{calamariPackageMetadata.Architecture}'");
 
             var project = calamariPackageMetadata.Project;
-            var outputDirectory = PublishDirectory / project?.Name / (calamariPackageMetadata.IsCrossPlatform ? calamariPackageMetadata.Architecture : "netfx");
+            var outputDirectory = PublishDirectory / project?.Name /
+                                  (calamariPackageMetadata.IsCrossPlatform ? calamariPackageMetadata.Architecture : "netfx");
 
             DotNetPublish(s => s
-                               .SetConfiguration(Configuration)
-                               .SetProject(project)
-                               .SetFramework(calamariPackageMetadata.Framework)
-                               .SetRuntime(calamariPackageMetadata.Architecture)
-                               .SetOutput(outputDirectory)
-                         );
+                .SetConfiguration(Configuration)
+                .SetProject(project)
+                .SetFramework(calamariPackageMetadata.Framework)
+                .SetRuntime(calamariPackageMetadata.Architecture)
+                .SetOutput(outputDirectory)
+            );
 
             if (!project.Name.Contains("Tests"))
             {
@@ -311,10 +330,11 @@ namespace Calamari.Build
             }
 
             File.Copy(RootDirectory / "global.json", outputDirectory / "global.json");
-        }
 
-        static void StageLegacyCalamariAssemblies(CalamariPackageMetadata[] packagesToPublish)
-        {
+        }
+        
+        static void StageLegacyCalamariAssemblies(CalamariPackageMetadata[] packagesToPublish) {
+
             if (!OperatingSystem.IsWindows())
             {
                 Log.Warning($"Skipping the bundling of Calamari projects into the Calamari.Legacy bundle. "
@@ -357,7 +377,6 @@ namespace Calamari.Build
                                 {
                                     return;
                                 }
-
                                 Log.Verbose($"Compressing Calamari.Legacy");
                                 LegacyCalamariDirectory.ZipTo(ArtifactsDirectory / $"Calamari.Legacy.{NugetVersion.Value}.zip");
                             });
@@ -413,45 +432,45 @@ namespace Calamari.Build
             _ => _.DependsOn(Publish)
                   .DependsOn(PublishCalamariFlavourProjects)
                   .Executes(async () =>
-                            {
-                                var nugetVersion = NugetVersion.Value;
-                                var defaultTarget = OperatingSystem.IsWindows() ? Frameworks.Net462 : Frameworks.Net60;
-                                AbsolutePath binFolder = SourceDirectory / "Calamari.Tests" / "bin" / Configuration / defaultTarget;
-                                Directory.Exists(binFolder);
-                                var actions = new List<Action>
-                                {
-                                    () =>
-                                    {
-                                        CompressionTasks.Compress(binFolder, ArtifactsDirectory / "Binaries.zip");
-                                    }
-                                };
+                  {
+                      var nugetVersion = NugetVersion.Value;
+                      var defaultTarget = OperatingSystem.IsWindows() ? Frameworks.Net462 : Frameworks.Net60;
+                      AbsolutePath binFolder = SourceDirectory / "Calamari.Tests" / "bin" / Configuration / defaultTarget;
+                      Directory.Exists(binFolder);
+                      var actions = new List<Action>
+                      {
+                          () =>
+                          {
+                              CompressionTasks.Compress(binFolder, ArtifactsDirectory / "Binaries.zip");
+                          }
+                      };
 
-                                // Create a Zip for each runtime for testing
-                                // ReSharper disable once LoopCanBeConvertedToQuery
-                                foreach (var rid in GetRuntimeIdentifiers(Solution.GetProject("Calamari.Tests")!)!)
-                                    actions.Add(() =>
-                                                {
-                                                    var publishedLocation =
-                                                        DoPublish("Calamari.Tests", Frameworks.Net60, nugetVersion, rid);
-                                                    var zipName = $"Calamari.Tests.{rid}.{nugetVersion}.zip";
-                                                    File.Copy(RootDirectory / "global.json", publishedLocation / "global.json");
-                                                    CompressionTasks.Compress(publishedLocation, ArtifactsDirectory / zipName);
-                                                });
+                      // Create a Zip for each runtime for testing
+                      // ReSharper disable once LoopCanBeConvertedToQuery
+                      foreach (var rid in GetRuntimeIdentifiers(Solution.GetProject("Calamari.Tests")!)!)
+                          actions.Add(() =>
+                          {
+                              var publishedLocation =
+                                  DoPublish("Calamari.Tests", Frameworks.Net60, nugetVersion, rid);
+                              var zipName = $"Calamari.Tests.{rid}.{nugetVersion}.zip";
+                              File.Copy(RootDirectory / "global.json", publishedLocation / "global.json");
+                              CompressionTasks.Compress(publishedLocation, ArtifactsDirectory / zipName);
+                          });
 
-                                actions.Add(() =>
-                                            {
-                                                var testingProjectPath = SourceDirectory / "Calamari.Testing" / "Calamari.Testing.csproj";
-                                                DotNetPack(new DotNetPackSettings().SetConfiguration(Configuration)
-                                                                                   .SetProject(testingProjectPath)
-                                                                                   .SetOutputDirectory(ArtifactsDirectory)
-                                                                                   .EnableNoBuild()
-                                                                                   .EnableIncludeSource()
-                                                                                   .SetVersion(nugetVersion)
-                                                                                   .SetNoRestore(true));
-                                            });
+                      actions.Add(() =>
+                      {
+                          var testingProjectPath = SourceDirectory / "Calamari.Testing" / "Calamari.Testing.csproj";
+                          DotNetPack(new DotNetPackSettings().SetConfiguration(Configuration)
+                                                             .SetProject(testingProjectPath)
+                                                             .SetOutputDirectory(ArtifactsDirectory)
+                                                             .EnableNoBuild()
+                                                             .EnableIncludeSource()
+                                                             .SetVersion(nugetVersion)
+                                                             .SetNoRestore(true));
+                      });
 
-                                await RunPackActions(actions);
-                            });
+                      await RunPackActions(actions);
+                  });
 
         Target Pack =>
             _ => _.DependsOn(PackTests)
@@ -462,11 +481,11 @@ namespace Calamari.Build
             _ => _.Requires(() => IsLocalBuild)
                   .DependsOn(PackBinaries)
                   .Executes(() =>
-                            {
-                                Directory.CreateDirectory(LocalPackagesDirectory);
-                                foreach (var file in Directory.GetFiles(ArtifactsDirectory, "Calamari.*.nupkg"))
-                                    CopyFile(file, LocalPackagesDirectory / Path.GetFileName(file), FileExistsPolicy.Overwrite);
-                            });
+                  {
+                      Directory.CreateDirectory(LocalPackagesDirectory);
+                      foreach (var file in Directory.GetFiles(ArtifactsDirectory, "Calamari.*.nupkg"))
+                          CopyFile(file, LocalPackagesDirectory / Path.GetFileName(file), FileExistsPolicy.Overwrite);
+                  });
 
         Target PackageConsolidatedCalamariZip =>
             _ => _.DependsOn(CalamariConsolidationTests)
@@ -515,12 +534,12 @@ namespace Calamari.Build
         Target PackCalamariConsolidatedNugetPackage =>
             _ => _.DependsOn(PackageConsolidatedCalamariZip)
                   .Executes(() =>
-                            {
-                                NuGetPack(s => s.SetTargetPath(BuildDirectory / "Calamari.Consolidated.nuspec")
-                                                .SetBasePath(BuildDirectory)
-                                                .SetVersion(NugetVersion.Value)
-                                                .SetOutputDirectory(ArtifactsDirectory));
-                            });
+                  {
+                      NuGetPack(s => s.SetTargetPath(BuildDirectory / "Calamari.Consolidated.nuspec")
+                                      .SetBasePath(BuildDirectory)
+                                      .SetVersion(NugetVersion.Value)
+                                      .SetOutputDirectory(ArtifactsDirectory));
+                  });
 
         Target UpdateCalamariVersionOnOctopusServer =>
             _ =>
@@ -528,28 +547,28 @@ namespace Calamari.Build
                  .Requires(() => IsLocalBuild)
                  .DependsOn(CopyToLocalPackages)
                  .Executes(() =>
-                           {
-                               var serverProjectFile = RootDirectory / ".." / "OctopusDeploy" / "source" / "Octopus.Server" / "Octopus.Server.csproj";
-                               if (File.Exists(serverProjectFile))
-                               {
-                                   Log.Information("Setting Calamari version in Octopus Server "
-                                                   + "project {ServerProjectFile} to {NugetVersion}",
-                                                   serverProjectFile, NugetVersion.Value);
-                                   SetOctopusServerCalamariVersion(serverProjectFile);
-                               }
-                               else
-                               {
-                                   Log.Warning("Could not set Calamari version in Octopus Server project "
-                                               + "{ServerProjectFile} to {NugetVersion} as could not find "
-                                               + "project file",
-                                               serverProjectFile, NugetVersion.Value);
-                               }
-                           });
+                 {
+                     var serverProjectFile = RootDirectory / ".." / "OctopusDeploy" / "source" / "Octopus.Server" / "Octopus.Server.csproj";
+                     if (File.Exists(serverProjectFile))
+                     {
+                         Log.Information("Setting Calamari version in Octopus Server "
+                                         + "project {ServerProjectFile} to {NugetVersion}",
+                                         serverProjectFile, NugetVersion.Value);
+                         SetOctopusServerCalamariVersion(serverProjectFile);
+                     }
+                     else
+                     {
+                         Log.Warning("Could not set Calamari version in Octopus Server project "
+                                     + "{ServerProjectFile} to {NugetVersion} as could not find "
+                                     + "project file",
+                                     serverProjectFile, NugetVersion.Value);
+                     }
+                 });
 
         Target SetTeamCityVersion => _ => _.Executes(() =>
-                                                     {
-                                                         TeamCity.Instance?.SetBuildNumber(NugetVersion.Value);
-                                                     });
+        {
+            TeamCity.Instance?.SetBuildNumber(NugetVersion.Value);
+        });
 
         Target BuildLocal => _ => _.DependsOn(PackCalamariConsolidatedNugetPackage)
                                    .DependsOn(UpdateCalamariVersionOnOctopusServer);
