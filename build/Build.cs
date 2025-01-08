@@ -5,6 +5,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Calamari.ConsolidateCalamariPackages;
@@ -703,16 +704,22 @@ namespace Calamari.Build
 
         void CreateHashFileForProject(string directory)
         {
-            byte[] GetHashOfFileContent(string f)
+            byte[] GetHashOfFileContent(string f, string projDir)
             {
                 using var md5 = MD5.Create();
-                using var stream = File.OpenRead(f); 
-                return md5.ComputeHash(stream);
+                using var stream = File.OpenRead(f);
+                var hash = md5.ComputeHash(stream);
+                var hashHexString = Convert.ToHexString(hash);
+                
+                var containingDir = Path.GetDirectoryName(f);
+                var relativePath = Path.GetRelativePath(projDir, containingDir);
+                var result = Path.Combine(relativePath, hashHexString); 
+                return Encoding.UTF8.GetBytes(result);
             }
 
             var allFiles = Directory.GetFiles(directory, "*.*", SearchOption.AllDirectories);
 
-            var concatFileHashes = allFiles.SelectMany(GetHashOfFileContent);
+            var concatFileHashes = allFiles.SelectMany(f => GetHashOfFileContent(f, directory));
 
             var hashFilename = Path.Combine(directory, "hash.md5");
             using (var md5 = MD5.Create())
