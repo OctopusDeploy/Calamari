@@ -721,7 +721,7 @@ namespace Calamari.Build
 
             var concatFileHashes = allFiles.SelectMany(f => GetHashOfFileContent(f, directory));
 
-            var hashFilename = Path.Combine(directory, "hash.md5");
+            var hashFilename = Path.Combine(directory, "content.md5");
             using (var md5 = MD5.Create())
             {
                 var hashOfHashes = md5.ComputeHash(concatFileHashes.ToArray());
