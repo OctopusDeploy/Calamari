@@ -704,29 +704,27 @@ namespace Calamari.Build
 
         void CreateHashFileForProject(string directory)
         {
-            byte[] GetHashOfFileContent(string f, string projDir)
+            byte[] GetPathedHashOfFileContent(string fileToHash, string rootDirectory)
             {
                 using var md5 = MD5.Create();
-                using var stream = File.OpenRead(f);
+                using var stream = File.OpenRead(fileToHash);
                 var hash = md5.ComputeHash(stream);
                 var hashHexString = Convert.ToHexString(hash);
                 
-                var containingDir = Path.GetDirectoryName(f);
-                var relativePath = Path.GetRelativePath(projDir, containingDir);
+                var containingDir = Path.GetDirectoryName(fileToHash);
+                var relativePath = Path.GetRelativePath(rootDirectory, containingDir!);
                 var result = Path.Combine(relativePath, hashHexString); 
                 return Encoding.UTF8.GetBytes(result);
             }
 
             var allFiles = Directory.GetFiles(directory, "*.*", SearchOption.AllDirectories).OrderBy(f => f);
 
-            var concatFileHashes = allFiles.SelectMany(f => GetHashOfFileContent(f, directory));
+            var concatFileHashes = allFiles.SelectMany(f => GetPathedHashOfFileContent(f, directory));
 
             var hashFilename = Path.Combine(directory, "content.md5");
-            using (var md5 = MD5.Create())
-            {
-                var hashOfHashes = md5.ComputeHash(concatFileHashes.ToArray());
-                File.AppendAllText(hashFilename, Convert.ToBase64String(hashOfHashes));
-            }
+            using var md5 = MD5.Create();
+            var hashOfHashes = md5.ComputeHash(concatFileHashes.ToArray());
+            File.AppendAllText(hashFilename, Convert.ToHexString(hashOfHashes));
         }
 
         IReadOnlyCollection<string> GetRuntimeIdentifiers(Project? project)
