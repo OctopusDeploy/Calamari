@@ -147,18 +147,17 @@ namespace Calamari.Build
 
         Target Compile =>
             _ => //_.DependsOn(CheckForbiddenWords)
-                  //.DependsOn(Restore)
-                  _.Executes(() =>
-                            {
-                                Log.Information("Compiling Calamari v{CalamariVersion}", NugetVersion.Value);
+                //.DependsOn(Restore)
+                _.Executes(() =>
+                           {
+                               Log.Information("Compiling Calamari v{CalamariVersion}", NugetVersion.Value);
 
-                                DotNetBuild(_ => _.SetProjectFile(Solution)
-                                                  .SetConfiguration(Configuration)
-                                                  .SetNoRestore(true)
-                                                  .SetVersion(NugetVersion.Value)
-                                                  .SetInformationalVersion(GitVersionInfo?.InformationalVersion));
-                                CreateHashFileForProject();
-                            });
+                               DotNetBuild(_ => _.SetProjectFile(Solution)
+                                                 .SetConfiguration(Configuration)
+                                                 .SetNoRestore(true)
+                                                 .SetVersion(NugetVersion.Value)
+                                                 .SetInformationalVersion(GitVersionInfo?.InformationalVersion));
+                           });
 
         Target CalamariConsolidationTests =>
             _ => _.DependsOn(Compile)
@@ -598,6 +597,8 @@ namespace Calamari.Build
                                                  AzureKeyVaultAppSecret, AzureKeyVaultTenantId, AzureKeyVaultCertificateName,
                                                  SigningCertificatePath, SigningCertificatePassword);
 
+            CreateHashFileForProject(publishedTo);
+
             return publishedTo;
         }
 
@@ -680,43 +681,25 @@ namespace Calamari.Build
                   ?? throw new InvalidOperationException("Unable to retrieve valid Nuget Version");
         }
 
-        void CreateHashFileForProject()
+        void CreateHashFileForProject(string directory)
         {
-            //Create Hashes
-            var flavours = GetCalamariFlavours();
-            var calamariFlavourProjects = Solution.Projects
-                                                  .Where(project => flavours.Contains(project.Name));
-            calamariFlavourProjects.ForEach(p =>
-                                            {
-                                                var binaryDir = p.GetMSBuildProject(Configuration).GetPropertyValue("OutputPath");
-                                                var allFiles = Directory.GetFiles(binaryDir, "*.*", SearchOption.AllDirectories);
+            byte[] GetHashOfFileContent(string f)
+            {
+                using var md5 = MD5.Create();
+                using var stream = File.OpenRead(f); 
+                return md5.ComputeHash(stream);
+            }
 
-                                                var concatFileHashes = allFiles.Select(f =>
-                                                                                       {
-                                                                                           using (var md5 = MD5.Create())
-                                                                                           {
-                                                                                               using (var stream = File.OpenRead(f))
-                                                                                               {
-                                                                                                   return md5.ComputeHash(stream);
-                                                                                               }
-                                                                                           }
-                                                                                       })
-                                                                               .Aggregate(new List<byte>(),
-                                                                                          (current, next) =>
-                                                                                          {
-                                                                                              current.AddRange(next);
-                                                                                              return current;
-                                                                                          },
-                                                                                          current => current);
+            var allFiles = Directory.GetFiles(directory, "*.*", SearchOption.AllDirectories);
 
-                                                var hashFilename = Path.Combine(binaryDir, "hash.md5");
-                                                using (var md5 = MD5.Create())
-                                                {
-                                                    var hashOfHashes = md5.ComputeHash(concatFileHashes.ToArray());
-                                                    //write hash as base64
-                                                    File.AppendAllText(hashFilename, Convert.ToBase64String(hashOfHashes));
-                                                }
-                                            });
+            var concatFileHashes = allFiles.SelectMany(GetHashOfFileContent);
+
+            var hashFilename = Path.Combine(directory, "hash.md5");
+            using (var md5 = MD5.Create())
+            {
+                var hashOfHashes = md5.ComputeHash(concatFileHashes.ToArray());
+                File.AppendAllText(hashFilename, Convert.ToBase64String(hashOfHashes));
+            }
         }
 
         IReadOnlyCollection<string> GetRuntimeIdentifiers(Project? project)
