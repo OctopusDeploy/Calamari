@@ -4,6 +4,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Text;
+using Calamari.ConsolidatedCalamariCommon;
 using Newtonsoft.Json;
 
 namespace Calamari.ConsolidateCalamariPackages

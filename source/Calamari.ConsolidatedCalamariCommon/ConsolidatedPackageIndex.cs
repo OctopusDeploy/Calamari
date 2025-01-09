@@ -1,7 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+using System;
 
-namespace Calamari.ConsolidateCalamariPackages
+namespace Calamari.ConsolidatedCalamariCommon
 {
     public class ConsolidatedPackageIndex
     {
@@ -11,6 +10,17 @@ namespace Calamari.ConsolidateCalamariPackages
         }
 
         public IReadOnlyDictionary<string, Package> Packages { get; }
+        public IEnumerable<(string packageId, string version)> PackageVersions => Packages.Values.Select(v => (v.PackageId, v.Version));
+
+        public Package GetEntryFromIndex(string id)
+        {
+            if (!Packages.TryGetValue(id, out var indexPackage))
+            {
+                throw new Exception($"Package {id} not found in the consolidated package");
+            }
+
+            return indexPackage;
+        }
 
         public class Package
         {
