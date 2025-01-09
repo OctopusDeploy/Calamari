@@ -1,15 +1,19 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 
-namespace Calamari.ConsolidateCalamariPackages
+namespace Calamari.ConsolidateCalamariPackages.Transferrable
 {
     public class ConsolidatedPackageIndex
     {
-        public ConsolidatedPackageIndex(Dictionary<string, Package> packages)
+        public ConsolidatedPackageIndex(Dictionary<string, ConsolidatedPackageIndex.Package> packages)
         {
-            Packages = new Dictionary<string, Package>(packages, StringComparer.OrdinalIgnoreCase);
+            Packages  = new Dictionary<string, Package>(packages, StringComparer.OrdinalIgnoreCase);
         }
-        
+
+        public IReadOnlyDictionary<string, Package> Packages { get; init;  } 
+        public IEnumerable<(string, string)> PackageVersions => Packages.Values.Select(v => (v.PackageId, v.Version));
+
         public Package GetEntryFromIndex(string id)
         {
             if (!Packages.TryGetValue(id, out var indexPackage))
@@ -19,8 +23,6 @@ namespace Calamari.ConsolidateCalamariPackages
 
             return indexPackage;
         }
-
-        public IReadOnlyDictionary<string, Package> Packages { get; }
 
         public class Package
         {

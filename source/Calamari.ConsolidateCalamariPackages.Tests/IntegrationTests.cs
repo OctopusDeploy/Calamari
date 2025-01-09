@@ -6,12 +6,16 @@ using System.IO.Compression;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Assent;
+using Calamari.ConsolidateCalamariPackages.Transferrable;
 using FluentAssertions;
 using NSubstitute;
 using NuGet.Packaging;
 using NUnit.Framework;
 using Serilog;
+using SharpCompress.Writers;
+using SharpCompress.Writers.Zip;
 using TestStack.BDDfy;
+using CompressionLevel = SharpCompress.Compressors.Deflate.CompressionLevel;
 
 namespace Calamari.ConsolidateCalamariPackages.Tests
 {
@@ -94,6 +98,21 @@ namespace Calamari.ConsolidateCalamariPackages.Tests
             using (var entry = zip.Entries.First(e => e.FullName == "index.json").Open())
             using (var sr = new StreamReader(entry))
                 this.Assent(sr.ReadToEnd(), assentConfiguration);
+        }
+
+        public void RegeneratedPackageShouldBeIdenticalToInputs()
+        {
+            var consolidatedPackage = ConsolidatedPackage.Create(expectedZip);
+            foreach (var reference in packageReferences)
+            {
+                var calPackage = new CalamariPackage(new CalamariFlavour(reference.Name), reference.Name, "noExe");
+                var outputFilename = Path.Combine(temp, $"{reference.Name}_output.zip");
+                using (var outputStream = File.OpenWrite(outputFilename))
+                using (var dest = new ZipWriter(outputStream, new ZipWriterOptions(SharpCompress.Common.CompressionType.Deflate) { DeflateCompressionLevel = CompressionLevel.BestSpeed }))
+                {
+                    consolidatedPackage.PopulateArchive(calPackage, (name, size, source) => dest.Write(name, source));
+                }
+            }
         }
 
         private static string SanitiseHashes(string s)
