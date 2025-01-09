@@ -1,13 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using Calamari.CloudAccounts;
 using Calamari.Common.Commands;
+using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.GoogleCloudAccounts;
 using Newtonsoft.Json;
 
 namespace Calamari.Terraform.Behaviours
@@ -47,7 +50,8 @@ namespace Calamari.Terraform.Behaviours
 
             if (useGoogleCloudAccount)
             {
-                environmentVariables.AddRange(GoogleCloudEnvironmentVariables(variables));
+                var oauthFileConfiguration = new GcloudOAuthFileConfiguration(context.CurrentDirectory);
+                environmentVariables.AddRange(GoogleCloudEnvironmentVariables(variables, oauthFileConfiguration));
             }
 
             environmentVariables.AddRange(GetEnvironmentVariableArgs(variables));
@@ -66,21 +70,14 @@ namespace Calamari.Terraform.Behaviours
 
         protected abstract Task Execute(RunningDeployment deployment, Dictionary<string, string> environmentVariables);
 
-        static Dictionary<string, string> GoogleCloudEnvironmentVariables(IVariables variables)
+        Dictionary<string, string> GoogleCloudEnvironmentVariables(IVariables variables, GcloudOAuthFileConfiguration oauthFileConfiguration)
         {
             // See https://registry.terraform.io/providers/hashicorp/google/latest/docs/guides/provider_reference#full-reference
             var googleCloudEnvironmentVariables = new Dictionary<string, string>();
             var useVmServiceAccount = variables.GetFlag("Octopus.Action.GoogleCloud.UseVMServiceAccount");
             var account = variables.Get("Octopus.Action.GoogleCloudAccount.Variable")?.Trim();
             var keyFile = variables.Get($"{account}.JsonKey")?.Trim() ?? variables.Get("Octopus.Action.GoogleCloudAccount.JsonKey")?.Trim();
-
-            if (!useVmServiceAccount && !string.IsNullOrEmpty(keyFile))
-            {
-                var bytes = Convert.FromBase64String(keyFile);
-                var json = Encoding.UTF8.GetString(bytes);
-                googleCloudEnvironmentVariables.Add("GOOGLE_CLOUD_KEYFILE_JSON", json);
-                Log.Verbose($"A JSON key has been set to GOOGLE_CLOUD_KEYFILE_JSON environment variable");
-            }
+            var jwtToken = variables.Get($"{account}.OpenIdConnect.Jwt");
 
             var impersonateServiceAccount = variables.GetFlag("Octopus.Action.GoogleCloud.ImpersonateServiceAccount");
             if (impersonateServiceAccount)
@@ -88,6 +85,37 @@ namespace Calamari.Terraform.Behaviours
                 var serviceAccountEmails = variables.Get("Octopus.Action.GoogleCloud.ServiceAccountEmails") ?? string.Empty;
                 googleCloudEnvironmentVariables.Add("GOOGLE_IMPERSONATE_SERVICE_ACCOUNT", serviceAccountEmails);
                 Log.Verbose($"{serviceAccountEmails} has been set to GOOGLE_IMPERSONATE_SERVICE_ACCOUNT environment variable");
+            }
+
+            if (!useVmServiceAccount)
+            {
+                if (!string.IsNullOrWhiteSpace(keyFile))
+                {
+                    var bytes = Convert.FromBase64String(keyFile);
+                    var json = Encoding.UTF8.GetString(bytes);
+                    googleCloudEnvironmentVariables.Add("GOOGLE_CLOUD_KEYFILE_JSON", json);
+                    Log.Verbose($"A JSON key has been set to GOOGLE_CLOUD_KEYFILE_JSON environment variable");
+                }
+                else if (!string.IsNullOrWhiteSpace(jwtToken))
+                {
+                    // Gcloud Oidc accounts require the gcloud CLI to be installed and configured
+                    var commandLineRunner = new CommandLineRunner(log, variables);
+                    var setupGCloudAuthentication = new SetupGCloudAuthentication(variables,
+                                                                                  log,
+                                                                                  commandLineRunner,
+                                                                                  googleCloudEnvironmentVariables,
+                                                                                  oauthFileConfiguration);
+
+                    var result = setupGCloudAuthentication.Execute();
+                    if (result.ExitCode != 0)
+                    {
+                        throw new CommandException(result.Errors ?? "Could not authenticate using gcloud OpenId Connect");
+                    }
+
+                    var jsonAuthContent = File.ReadAllText(oauthFileConfiguration.JsonAuthFile.FilePath);
+                    googleCloudEnvironmentVariables.Add("GOOGLE_CLOUD_KEYFILE_JSON", jsonAuthContent);
+                    Log.Verbose($"A JSON key has been set to GOOGLE_CLOUD_KEYFILE_JSON environment variable");
+                }
             }
 
             var project = variables.Get("Octopus.Action.GoogleCloud.Project")?.Trim();
