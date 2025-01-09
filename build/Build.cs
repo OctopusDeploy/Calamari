@@ -4,9 +4,12 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Calamari.ConsolidateCalamariPackages;
+using NuGet.ContentModel;
 using NuGet.Packaging;
 using Nuke.Common;
 using Nuke.Common.CI.TeamCity;
@@ -40,7 +43,7 @@ namespace Calamari.Build
         readonly bool PackInParallel;
 
         [Parameter]
-        readonly DotNetVerbosity BuildVerbosity = DotNetVerbosity.Minimal;
+        readonly DotNetVerbosity BuildVerbosity = DotNetVerbosity.minimal;
 
         [Parameter]
         readonly bool SignBinaries;
@@ -322,7 +325,11 @@ namespace Calamari.Build
 
             if (!project.Name.Contains("Tests"))
             {
-                var signDirectoryTask = Task.Run(() => SignDirectory(outputDirectory));
+                var signDirectoryTask = Task.Run(() =>
+                                                 {
+                                                     SignDirectory(outputDirectory);
+                                                     CreateHashFileForProject(outputDirectory);
+                                                 });
                 SignDirectoriesTasks.Add(signDirectoryTask);
             }
 
@@ -614,6 +621,8 @@ namespace Calamari.Build
                                                  AzureKeyVaultAppSecret, AzureKeyVaultTenantId, AzureKeyVaultCertificateName,
                                                  SigningCertificatePath, SigningCertificatePassword);
 
+            CreateHashFileForProject(publishedTo);
+
             return publishedTo;
         }
 
@@ -694,6 +703,31 @@ namespace Calamari.Build
                 ? $"{GitVersionInfo?.NuGetVersion}-{DateTime.Now:yyyyMMddHHmmss}"
                 : GitVersionInfo?.NuGetVersion
                   ?? throw new InvalidOperationException("Unable to retrieve valid Nuget Version");
+        }
+
+        void CreateHashFileForProject(string directory)
+        {
+            byte[] GetPathedHashOfFileContent(string fileToHash, string rootDirectory)
+            {
+                using var md5 = MD5.Create();
+                using var stream = File.OpenRead(fileToHash);
+                var hash = md5.ComputeHash(stream);
+                var hashHexString = Convert.ToHexString(hash);
+                
+                var containingDir = Path.GetDirectoryName(fileToHash);
+                var relativePath = Path.GetRelativePath(rootDirectory, containingDir!);
+                var result = Path.Combine(relativePath, hashHexString); 
+                return Encoding.UTF8.GetBytes(result);
+            }
+
+            var allFiles = Directory.GetFiles(directory, "*.*", SearchOption.AllDirectories).OrderBy(f => f);
+
+            var concatFileHashes = allFiles.SelectMany(f => GetPathedHashOfFileContent(f, directory));
+
+            var hashFilename = Path.Combine(directory, "content.md5");
+            using var md5 = MD5.Create();
+            var hashOfHashes = md5.ComputeHash(concatFileHashes.ToArray());
+            File.AppendAllText(hashFilename, Convert.ToHexString(hashOfHashes));
         }
 
         IReadOnlyCollection<string> GetRuntimeIdentifiers(Project? project)

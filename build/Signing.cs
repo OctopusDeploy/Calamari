@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
+using Nuke.Common.Tooling;
 using Nuke.Common.Tools.AzureSignTool;
 using Nuke.Common.Tools.SignTool;
 using Nuke.Common.Utilities.Collections;
@@ -122,6 +123,7 @@ namespace Calamari.Build
                      .SetFileDigest("sha256")
                      .SetDescription(display)
                      .SetDescriptionUrl(displayUrl)
+                     .SetVerbose(true)
                      .SetTimestampRfc3161Url(url)
                      .SetTimestampDigest(AzureSignToolDigestAlgorithm.sha256)
                      .SetFiles(files)));
