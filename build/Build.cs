@@ -325,9 +325,12 @@ namespace Calamari.Build
 
             if (!project.Name.Contains("Tests"))
             {
-                var signDirectoryTask = Task.Run(() => SignDirectory(outputDirectory));
+                var signDirectoryTask = Task.Run(() =>
+                                                 {
+                                                     SignDirectory(outputDirectory);
+                                                     CreateHashFileForProject(outputDirectory);
+                                                 });
                 SignDirectoriesTasks.Add(signDirectoryTask);
-                CreateHashFileForProject(outputDirectory);
             }
 
             File.Copy(RootDirectory / "global.json", outputDirectory / "global.json");
