@@ -20,6 +20,10 @@ namespace Calamari.GoogleCloudAccounts
         public readonly TemporaryFile JsonAuthFile;
         public readonly string WorkingDirectory;
 
+        /// <summary>
+        /// Configures the auth file locations of the gcloud cli oauth flows.
+        /// </summary>
+        /// <param name="workingDirectory">The provided workingDirectory should always be within the Work folder and be cleaned up post deployment.</param>
         public GcloudOAuthFileConfiguration(string workingDirectory)
         {
             // Create temporary files for JWT authentication

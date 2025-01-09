@@ -288,14 +288,17 @@ namespace Calamari.GoogleCloudAccounts
             {
                 var captureCommandOutput = new CaptureCommandOutput();
                 var envVars = Environment.GetEnvironmentVariables();
+                // The environment variables are not always populated in upstream calling methods.
+                // Here we just care about the path variable for Nix/Windows for the where/which calls.
+                var envDict = new Dictionary<string, string>();
                 foreach (var key in envVars.Keys)
                 {
-                    environmentVars.Add(key.ToString(), envVars[key].ToString());
+                    envDict.Add(key.ToString(), envVars[key].ToString());
                 }
 
                 var invocation = new CommandLineInvocation(exe, arguments)
                 {
-                    EnvironmentVars = environmentVars,
+                    EnvironmentVars = envDict,
                     WorkingDirectory = workingDirectory,
                     OutputAsVerbose = false,
                     OutputToLog = false,
