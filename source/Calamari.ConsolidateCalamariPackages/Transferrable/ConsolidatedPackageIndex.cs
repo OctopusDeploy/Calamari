@@ -6,13 +6,16 @@ namespace Calamari.ConsolidateCalamariPackages.Transferrable
 {
     public class ConsolidatedPackageIndex
     {
-        public ConsolidatedPackageIndex(Dictionary<string, ConsolidatedPackageIndex.Package> packages)
+        public ConsolidatedPackageIndex(Dictionary<string, Package> packages)
         {
             Packages  = new Dictionary<string, Package>(packages, StringComparer.OrdinalIgnoreCase);
         }
 
         public IReadOnlyDictionary<string, Package> Packages { get; init;  } 
-        public IEnumerable<(string, string)> PackageVersions => Packages.Values.Select(v => (v.PackageId, v.Version));
+        public IEnumerable<(string, string)> GetPackageVersions()
+        { 
+            return Packages.Values.Select(v => (v.PackageId, v.Version));
+        }
 
         public Package GetEntryFromIndex(string id)
         {

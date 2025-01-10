@@ -100,19 +100,43 @@ namespace Calamari.ConsolidateCalamariPackages.Tests
                 this.Assent(sr.ReadToEnd(), assentConfiguration);
         }
 
-        public void RegeneratedPackageShouldBeIdenticalToInputs()
+        public void AndTheRegeneratedPackageShouldBeIdenticalToInputs()
         {
             var consolidatedPackage = ConsolidatedPackage.Create(expectedZip);
-            foreach (var reference in packageReferences)
+            
+            foreach (var keyValuePair in consolidatedPackage.Index.Packages)
             {
-                var calPackage = new CalamariPackage(new CalamariFlavour(reference.Name), reference.Name, "noExe");
-                var outputFilename = Path.Combine(temp, $"{reference.Name}_output.zip");
-                using (var outputStream = File.OpenWrite(outputFilename))
-                using (var dest = new ZipWriter(outputStream, new ZipWriterOptions(SharpCompress.Common.CompressionType.Deflate) { DeflateCompressionLevel = CompressionLevel.BestSpeed }))
+                var package = keyValuePair.Value;
+                foreach (var platform in package.PlatformHashes.Keys)
                 {
-                    consolidatedPackage.PopulateArchive(calPackage, (name, size, source) => dest.Write(name, source));
+                    var outputFilename = $"{package.PackageId}.{platform}.zip";
+                    var outputFilepath = Path.Combine(temp, outputFilename);
+                    var calPackage = new CalamariPackage(new CalamariFlavour(keyValuePair.Key), $"{keyValuePair.Key}.{platform}", "noExe");
+                    using (var outputStream = File.OpenWrite(outputFilepath))
+                    using (var dest = new ZipWriter(outputStream, new ZipWriterOptions(SharpCompress.Common.CompressionType.Deflate) { DeflateCompressionLevel = CompressionLevel.BestSpeed }))
+                    {
+                        consolidatedPackage.PopulateArchive(calPackage, (name, size, source) => dest.Write(name, source));
+                    }
                 }
             }
+            //
+            // foreach (var reference in packageReferences)
+            // {
+            //     var packageId = IsNetfx(reference.Name) ? $"{reference.Name}.netfx" : reference.Name;
+            //     var flavour = IsNetfx(reference.Name) ? reference.Name : reference.Name.Split(".")[0];
+            //     var calPackage = new CalamariPackage(new CalamariFlavour(flavour), packageId, "noExe");
+            //     var outputFilename = Path.Combine(temp, $"{packageId}_output.zip");
+            //     using (var outputStream = File.OpenWrite(outputFilename))
+            //     using (var dest = new ZipWriter(outputStream, new ZipWriterOptions(SharpCompress.Common.CompressionType.Deflate) { DeflateCompressionLevel = CompressionLevel.BestSpeed }))
+            //     {
+            //         consolidatedPackage.PopulateArchive(calPackage, (name, size, source) => dest.Write(name, source));
+            //     }
+            // }
+        }
+
+        public bool IsNetfx(string platformId)
+        {
+            return platformId.Equals("Calamari") || platformId.Equals("Calamari.Cloud");
         }
 
         private static string SanitiseHashes(string s)
