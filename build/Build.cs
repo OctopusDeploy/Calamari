@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
@@ -17,7 +17,6 @@ using Nuke.Common.Tools.DotNet;
 using Nuke.Common.Tools.GitVersion;
 using Nuke.Common.Tools.NuGet;
 using Nuke.Common.Utilities.Collections;
-using Octopus.Server.Extensibility.Sashimi.Server.Contracts.Calamari;
 using Serilog;
 using static Nuke.Common.IO.FileSystemTasks;
 using static Nuke.Common.Tools.DotNet.DotNetTasks;
@@ -113,7 +112,6 @@ namespace Calamari.Build
         static AbsolutePath LocalPackagesDirectory => RootDirectory / "../LocalPackages";
         static AbsolutePath ConsolidateCalamariPackagesProject => SourceDirectory / "Calamari.ConsolidateCalamariPackages.Tests" / "Calamari.ConsolidateCalamariPackages.Tests.csproj";
         static AbsolutePath ConsolidatedPackageDirectory => ArtifactsDirectory / "consolidated";
-        static AbsolutePath ConsolidatedZipFilepath; 
         static AbsolutePath LegacyCalamariDirectory = PublishDirectory / "Calamari.Legacy";
 
         Lazy<string> NugetVersion { get; }
@@ -489,9 +487,9 @@ namespace Calamari.Build
                   });
 
         Target PackageConsolidatedCalamariZip =>
-            _ => //_.DependsOn(CalamariConsolidationTests)
-                 // .DependsOn(PackBinaries)
-                  _.Executes(() =>
+            _ => _.DependsOn(CalamariConsolidationTests)
+                  .DependsOn(PackBinaries)
+                  .Executes(() =>
                             {
                                 var artifacts = Directory.GetFiles(ArtifactsDirectory, "*.nupkg")
                                                          .Where(a => !CalamariProjectsToSkipConsolidation.Any(a.Contains));
@@ -525,26 +523,13 @@ namespace Calamari.Build
 
                                 Directory.CreateDirectory(ConsolidatedPackageDirectory);
                                 var (result, packageFilename) = new Consolidate(Log.Logger).Execute(ConsolidatedPackageDirectory, packageReferences);
-                                ConsolidatedZipFilepath = packageFilename;
+
                                 if (!result)
                                     throw new Exception("Failed to consolidate calamari Packages");
 
                                 Log.Information($"Created consolidated package zip: {packageFilename}");
                             });
 
-        Target TestConsolidatedCalamariZip =>
-            _ => //_.DependsOn(PackageConsolidatedCalamariZip)
-                  _.Executes(() =>
-                            {
-                                var thePath = "/Users/trent/projects/Calamari/artifacts/consolidated/Calamari.fb388f63e855810eb04b661244146cf1.zip";
-                                //var thePath = ConsolidatedPackageDirectory
-                                var packageSource = ConsolidatedPackageBundledPackageSource.Create(thePath);
-                                var package = new CalamariPackage(new CalamariFlavour("Calamari.AzureAppService"),
-                                                                  "Calamari.AzureAppService.linux-x64",
-                                                                  "");
-                                packageSource.ConsolidatedZipFilepath(package, "/Users/trent/junk/fromBuild.zip");
-                            });
-        
         Target PackCalamariConsolidatedNugetPackage =>
             _ => _.DependsOn(PackageConsolidatedCalamariZip)
                   .Executes(() =>
