@@ -9,6 +9,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Octopus.Versioning;
@@ -19,20 +20,12 @@ namespace Calamari.Integration.Packages.Download.Oci
     {
         readonly HttpClient httpClient = new HttpClient(new HttpClientHandler { AutomaticDecompression = DecompressionMethods.None });
         readonly ICalamariFileSystem fileSystem;
+        readonly ILog log;
 
-        public OciRegistryClient(ICalamariFileSystem fileSystem)
+        public OciRegistryClient(ICalamariFileSystem fileSystem, ILog log)
         {
             this.fileSystem = fileSystem;
-        }
-
-        public JObject? GetManifest(Uri feedUri, string packageId, IVersion version, string? feedUsername, string? feedPassword)
-        {
-            var url = GetApiUri(feedUri);
-            var fixedVersion = FixVersion(version);
-            using var response = Get(new Uri($"{url}/{packageId}/manifests/{fixedVersion}"), new NetworkCredential(feedUsername, feedPassword), ApplyAcceptHeaderFunc);
-            return JsonConvert.DeserializeObject<JObject>(response.Content.ReadAsStringAsync().Result);
-
-            void ApplyAcceptHeaderFunc(HttpRequestMessage request) => request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(OciConstants.Manifest.Config.OciImageMediaTypeValue));
+            this.log = log;
         }
 
         public void DownloadPackage(
@@ -53,6 +46,48 @@ namespace Calamari.Integration.Packages.Download.Oci
             }
 
             response.Content.CopyToAsync(fileStream).GetAwaiter().GetResult();
+        }
+
+        public OciArtifactTypes TryGetArtifactType(
+            string packageId,
+            IVersion version,
+            Uri feedUri,
+            string? feedUsername,
+            string? feedPassword)
+        {
+            try
+            {
+                var jsonManifest = GetManifest(feedUri, packageId, version, feedUsername, feedPassword);
+
+                // Check for Helm chart annotations
+                var isHelmChart =
+                    jsonManifest.HasConfigMediaTypeContaining(OciConstants.Manifest.Config.OciImageMediaTypeValue)
+                    || jsonManifest.HasLayersMediaTypeContaining(OciConstants.Manifest.Layers.HelmChartMediaTypeValue);
+
+                if (isHelmChart)
+                    return OciArtifactTypes.HelmChart;
+
+                var isDockerImage = jsonManifest.HasMediaTypeContaining(OciConstants.Manifest.DockerImageMediaTypeValue)
+                                    || jsonManifest.HasConfigMediaTypeContaining(OciConstants.Manifest.Config.DockerImageMediaTypeValue)
+                                    || jsonManifest.HasLayersMediaTypeContaining(OciConstants.Manifest.Layers.DockerImageMediaTypeValue);
+
+                return isDockerImage ? OciArtifactTypes.DockerImage : OciArtifactTypes.Unknown;
+            }
+            catch (Exception ex)
+            {
+                log.ErrorFormat("Failed to get artifact type: {Message}", ex.Message);
+                return OciArtifactTypes.Unknown;
+            }
+        }
+
+        public JObject? GetManifest(Uri feedUri, string packageId, IVersion version, string? feedUsername, string? feedPassword)
+        {
+            var url = GetApiUri(feedUri);
+            var fixedVersion = FixVersion(version);
+            using var response = Get(new Uri($"{url}/{packageId}/manifests/{fixedVersion}"), new NetworkCredential(feedUsername, feedPassword), ApplyAcceptHeaderFunc);
+            return JsonConvert.DeserializeObject<JObject>(response.Content.ReadAsStringAsync().Result);
+
+            void ApplyAcceptHeaderFunc(HttpRequestMessage request) => request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(OciConstants.Manifest.AcceptHeader));
         }
 
         HttpResponseMessage Get(Uri url, ICredentials credentials, Action<HttpRequestMessage>? customAcceptHeader = null)

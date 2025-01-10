@@ -27,6 +27,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
     {
         static readonly string Home = Path.GetTempPath();
         readonly CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+        const string OciRegistryFeatureToggle = "use-oci-registry-package-feeds";
 
         [OneTimeSetUp]
         public void TestFixtureSetUp()
@@ -35,13 +36,13 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         }
 
         [Test]
-        public async Task HelmChartIsSuccessfullyDownloaded()
+        public async Task HelmChartIsSuccessfullyDownloadedWithFeatureToggleEnabled()
         {
             var regionEndpoint = RegionEndpoint.USWest2;
             const string repositoryName = "calamari-testing-helm-chart";
             const string imageTag = "0.1.0";
 
-            var packagePhysicalFileMetadata = await DoDownload(regionEndpoint, repositoryName, imageTag, cancellationTokenSource.Token);
+            var packagePhysicalFileMetadata = await DoDownload(regionEndpoint, repositoryName, imageTag, OciRegistryFeatureToggle, cancellationTokenSource.Token);
 
             packagePhysicalFileMetadata.Should().NotBeNull();
 
@@ -56,14 +57,14 @@ namespace Calamari.Tests.Fixtures.PackageDownload
 
         [Test]
         [RequiresDockerInstalled]
-        public async Task DockerImageIsSuccessfullyDownloaded()
+        public async Task DockerImageIsSuccessfullyDownloadedWithFeatureToggleEnabled()
         {
             const string repositoryName = "calamari-testing-container-image";
             const string imageTag = "1.0.0";
 
             var regionEndpoint = RegionEndpoint.USWest2;
 
-            var packagePhysicalFileMetadata = await DoDownload(regionEndpoint, repositoryName, imageTag, cancellationTokenSource.Token);
+            var packagePhysicalFileMetadata = await DoDownload(regionEndpoint, repositoryName, imageTag, OciRegistryFeatureToggle, cancellationTokenSource.Token);
 
             packagePhysicalFileMetadata.Should().NotBeNull();
 
@@ -75,8 +76,32 @@ namespace Calamari.Tests.Fixtures.PackageDownload
             }
         }
 
-        static async Task<PackagePhysicalFileMetadata> DoDownload(RegionEndpoint regionEndpoint, string repositoryName, string imageTag, CancellationToken cancellationToken)
+        [Test]
+        [RequiresDockerInstalled]
+        public async Task DockerImageIsSuccessfullyDownloadedWithFeatureToggleDisabled()
         {
+            const string repositoryName = "calamari-testing-container-image";
+            const string imageTag = "1.0.0";
+
+            var regionEndpoint = RegionEndpoint.USWest2;
+
+            var packagePhysicalFileMetadata = await DoDownload(regionEndpoint, repositoryName, imageTag, "", cancellationTokenSource.Token);
+
+            packagePhysicalFileMetadata.Should().NotBeNull();
+
+            using (new AssertionScope())
+            {
+                packagePhysicalFileMetadata.PackageId.Should().Be(repositoryName);
+                packagePhysicalFileMetadata.Version.ToString().Should().Be(imageTag);
+                packagePhysicalFileMetadata.FullFilePath.Should().BeEmpty();
+            }
+        }
+
+        static async Task<PackagePhysicalFileMetadata> DoDownload(RegionEndpoint regionEndpoint, string repositoryName, string imageTag, string enabledFeatureToggles, CancellationToken cancellationToken)
+        {
+            var variables = new CalamariVariables();
+            variables.Set(KnownVariables.EnabledFeatureToggles, enabledFeatureToggles);
+
             var log = Substitute.For<ILog>();
             var runner = new CommandLineRunner(log, new CalamariVariables());
             var engine = new ScriptEngine(Enumerable.Empty<IScriptWrapper>(), log);

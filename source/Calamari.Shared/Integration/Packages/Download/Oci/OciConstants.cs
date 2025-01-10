@@ -8,6 +8,7 @@ namespace Calamari.Integration.Packages.Download.Oci
         {
             internal const string MediaTypePropertyName = "mediaType";
             internal const string DockerImageMediaTypeValue = "application/vnd.docker.distribution.manifest.v2+json";
+            internal const string AcceptHeader = "application/vnd.oci.image.manifest.v1+json";
 
             public class Config
             {

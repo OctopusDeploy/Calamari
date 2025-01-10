@@ -52,8 +52,7 @@ namespace Calamari.Integration.Packages.Download
 
         IPackageDownloader GetInnerDownloader(string packageId, IVersion version, Uri feedUri, string? feedUsername, string? feedPassword)
         {
-            var ociArtifactManifestRetriever = new OciArtifactManifestRetriever(ociRegistryClient, log);
-            if (ociArtifactManifestRetriever.TryGetArtifactType(packageId, version, feedUri, feedUsername, feedPassword) == OciArtifactTypes.HelmChart)
+            if (ociRegistryClient.TryGetArtifactType(packageId, version, feedUri, feedUsername, feedPassword) == OciArtifactTypes.HelmChart)
             {
                 return ociPackageDownloader;
             }
