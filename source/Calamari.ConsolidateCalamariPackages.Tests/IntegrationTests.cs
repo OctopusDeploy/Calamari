@@ -104,39 +104,64 @@ namespace Calamari.ConsolidateCalamariPackages.Tests
         {
             var consolidatedPackage = ConsolidatedPackage.Create(expectedZip);
             
-            foreach (var keyValuePair in consolidatedPackage.Index.Packages)
+            // foreach (var keyValuePair in consolidatedPackage.Index.Packages)
+            // {
+            //     var package = keyValuePair.Value;
+            //     foreach (var platform in package.PlatformHashes.Keys)
+            //     {
+            //         var outputFilename = $"{package.PackageId}.{platform}.zip";
+            //         var outputFilepath = Path.Combine(temp, outputFilename);
+            //         var calPackage = new CalamariPackage(new CalamariFlavour(keyValuePair.Key), $"{keyValuePair.Key}.{platform}", "noExe");
+            //         using (var outputStream = File.OpenWrite(outputFilepath))
+            //         using (var dest = new ZipWriter(outputStream, new ZipWriterOptions(SharpCompress.Common.CompressionType.Deflate) { DeflateCompressionLevel = CompressionLevel.BestSpeed }))
+            //         {
+            //             consolidatedPackage.PopulateArchive(calPackage, (name, size, source) => dest.Write(name, source));
+            //         }
+            //     }
+            // }
+            
+            foreach (var reference in packageReferences)
             {
-                var package = keyValuePair.Value;
-                foreach (var platform in package.PlatformHashes.Keys)
+                var calPackages = ToCalamariPackage(reference);
+                foreach (var package in calPackages)
                 {
-                    var outputFilename = $"{package.PackageId}.{platform}.zip";
-                    var outputFilepath = Path.Combine(temp, outputFilename);
-                    var calPackage = new CalamariPackage(new CalamariFlavour(keyValuePair.Key), $"{keyValuePair.Key}.{platform}", "noExe");
-                    using (var outputStream = File.OpenWrite(outputFilepath))
+                    var outputFilename = Path.Combine(temp, $"{package.Id}_output.zip");
+                    using (var outputStream = File.OpenWrite(outputFilename))
                     using (var dest = new ZipWriter(outputStream, new ZipWriterOptions(SharpCompress.Common.CompressionType.Deflate) { DeflateCompressionLevel = CompressionLevel.BestSpeed }))
                     {
-                        consolidatedPackage.PopulateArchive(calPackage, (name, size, source) => dest.Write(name, source));
+                        consolidatedPackage.PopulateArchive(package, (name, size, source) => dest.Write(name, source));
                     }
                 }
             }
-            //
-            // foreach (var reference in packageReferences)
-            // {
-            //     var packageId = IsNetfx(reference.Name) ? $"{reference.Name}.netfx" : reference.Name;
-            //     var flavour = IsNetfx(reference.Name) ? reference.Name : reference.Name.Split(".")[0];
-            //     var calPackage = new CalamariPackage(new CalamariFlavour(flavour), packageId, "noExe");
-            //     var outputFilename = Path.Combine(temp, $"{packageId}_output.zip");
-            //     using (var outputStream = File.OpenWrite(outputFilename))
-            //     using (var dest = new ZipWriter(outputStream, new ZipWriterOptions(SharpCompress.Common.CompressionType.Deflate) { DeflateCompressionLevel = CompressionLevel.BestSpeed }))
-            //     {
-            //         consolidatedPackage.PopulateArchive(calPackage, (name, size, source) => dest.Write(name, source));
-            //     }
-            // }
         }
 
-        public bool IsNetfx(string platformId)
+        static IReadOnlyList<CalamariPackage> ToCalamariPackage(BuildPackageReference packReference)
         {
-            return platformId.Equals("Calamari") || platformId.Equals("Calamari.Cloud");
+            if (IsNetfx(packReference.Name))
+            {
+                return new List<CalamariPackage>() { new CalamariPackage(new CalamariFlavour(packReference.Name), $"{packReference.Name}.netfx", "noExe") };
+            }
+            
+            //SOMEHOW need to manage sashimi things here ...no idea.
+            var packageName = packReference.Name; 
+            if (packageName.StartsWith("Sashimi"))
+            {
+                packageName = packageName.Replace("Sashimi", "Calamari");
+                return new List<CalamariPackage>()
+                {
+                    new CalamariPackage(new CalamariFlavour(packageName), $"{packageName}.netfx", "noExe"),
+                    new CalamariPackage(new CalamariFlavour(packageName), $"{packageName}.linux-x64", "noExe"),
+                    new CalamariPackage(new CalamariFlavour(packageName), $"{packageName}.osx-x64", "noExe"),
+                    new CalamariPackage(new CalamariFlavour(packageName), $"{packageName}.win-x64", "noExe"),
+                };
+            }
+            var flavour = packageName.Split(".")[0];
+            return new List<CalamariPackage>() { new CalamariPackage(new CalamariFlavour(flavour), packReference.Name, "noExe") };
+        }
+
+        static bool IsNetfx(string packageId)
+        {
+            return packageId.Equals("Calamari") || packageId.Equals("Calamari.Cloud");
         }
 
         private static string SanitiseHashes(string s)
