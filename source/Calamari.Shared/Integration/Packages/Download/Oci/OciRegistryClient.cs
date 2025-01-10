@@ -87,7 +87,8 @@ namespace Calamari.Integration.Packages.Download.Oci
             using var response = Get(new Uri($"{url}/{packageId}/manifests/{fixedVersion}"), new NetworkCredential(feedUsername, feedPassword), ApplyAcceptHeaderFunc);
             return JsonConvert.DeserializeObject<JObject>(response.Content.ReadAsStringAsync().Result);
 
-            void ApplyAcceptHeaderFunc(HttpRequestMessage request) => request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(OciConstants.Manifest.AcceptHeader));
+            // void ApplyAcceptHeaderFunc(HttpRequestMessage request) => request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(OciConstants.Manifest.AcceptHeader));
+            void ApplyAcceptHeaderFunc(HttpRequestMessage request) => request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(OciConstants.Manifest.Config.OciImageMediaTypeValue));
         }
 
         HttpResponseMessage Get(Uri url, ICredentials credentials, Action<HttpRequestMessage>? customAcceptHeader = null)

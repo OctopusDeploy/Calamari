@@ -110,7 +110,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
                 engine,
                 CalamariPhysicalFileSystem.GetPhysicalFileSystem(),
                 runner,
-                new CalamariVariables());
+                variables);
 
             var authDetails = await GetEcrAuthDetails(regionEndpoint, cancellationToken);
             var registryUri = new Uri(authDetails.RegistryUri);
