@@ -128,7 +128,7 @@ namespace Calamari.ConsolidateCalamariPackages.Tests
         {
             using (var inputZip = ZipFile.OpenRead(inputFilename))
             {
-                var sourceEntries = inputZip.Entries.Where(e => !e.Name.StartsWith("_rels") || !e.Name.StartsWith("package")).ToList();
+                var sourceEntries = inputZip.Entries.Where(e => !e.FullName.StartsWith("_rels") && !e.FullName.StartsWith("package")).ToList();
                 using (var regenZip = ZipFile.OpenRead(regeneratedZipFilename))
                 {
                     sourceEntries.Should().Equal(regenZip.Entries);
