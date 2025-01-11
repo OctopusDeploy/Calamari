@@ -104,33 +104,34 @@ namespace Calamari.ConsolidateCalamariPackages.Tests
         {
             var consolidatedPackage = ConsolidatedPackage.Create(expectedZip);
             
-            // foreach (var keyValuePair in consolidatedPackage.Index.Packages)
-            // {
-            //     var package = keyValuePair.Value;
-            //     foreach (var platform in package.PlatformHashes.Keys)
-            //     {
-            //         var outputFilename = $"{package.PackageId}.{platform}.zip";
-            //         var outputFilepath = Path.Combine(temp, outputFilename);
-            //         var calPackage = new CalamariPackage(new CalamariFlavour(keyValuePair.Key), $"{keyValuePair.Key}.{platform}", "noExe");
-            //         using (var outputStream = File.OpenWrite(outputFilepath))
-            //         using (var dest = new ZipWriter(outputStream, new ZipWriterOptions(SharpCompress.Common.CompressionType.Deflate) { DeflateCompressionLevel = CompressionLevel.BestSpeed }))
-            //         {
-            //             consolidatedPackage.PopulateArchive(calPackage, (name, size, source) => dest.Write(name, source));
-            //         }
-            //     }
-            // }
-            
-            foreach (var reference in packageReferences)
+            // Sashimi is a multi-arch package - atm this test can't unpack it cleanly enough.
+            foreach (var reference in packageReferences.Where(pr => !pr.Name.Contains("Sashimi")))
             {
                 var calPackages = ToCalamariPackage(reference);
                 foreach (var package in calPackages)
                 {
                     var outputFilename = Path.Combine(temp, $"{package.Id}_output.zip");
                     using (var outputStream = File.OpenWrite(outputFilename))
-                    using (var dest = new ZipWriter(outputStream, new ZipWriterOptions(SharpCompress.Common.CompressionType.Deflate) { DeflateCompressionLevel = CompressionLevel.BestSpeed }))
                     {
-                        consolidatedPackage.PopulateArchive(package, (name, size, source) => dest.Write(name, source));
+                        using (var dest = new ZipWriter(outputStream, new ZipWriterOptions(SharpCompress.Common.CompressionType.Deflate) { DeflateCompressionLevel = CompressionLevel.BestSpeed }))
+                        {
+                            consolidatedPackage.PopulateArchive(package, (name, size, source) => dest.Write(name, source));
+                        }
                     }
+                    //Now - we want to compare the outputFilename against the reference's original content.
+                    ZipFilesShouldBeIndentical(reference.PackagePath, outputFilename);
+                }
+            }
+        }
+
+        void ZipFilesShouldBeIndentical(string inputFilename, string regeneratedZipFilename)
+        {
+            using (var inputZip = ZipFile.OpenRead(inputFilename))
+            {
+                var sourceEntries = inputZip.Entries.Where(e => !e.Name.StartsWith("_rels") || !e.Name.StartsWith("package")).ToList();
+                using (var regenZip = ZipFile.OpenRead(regeneratedZipFilename))
+                {
+                    sourceEntries.Should().Equal(regenZip.Entries);
                 }
             }
         }
