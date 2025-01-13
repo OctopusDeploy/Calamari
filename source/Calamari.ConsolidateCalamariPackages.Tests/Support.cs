@@ -9,7 +9,6 @@ namespace Calamari.ConsolidateCalamariPackages.Tests
 {
     public class Support
     {
-        
         public static ConsolidatedPackageIndex LoadIndex(string filename)
         {
             using (var zipStream = File.OpenRead(filename))
