@@ -82,7 +82,7 @@ namespace Calamari.ConsolidateCalamariPackages.Tests
 
         public void AndThenThePackageIsCreated()
         {
-            Directory.GetFiles(temp).Should().BeEquivalentTo(new[] {expectedZip});
+            Directory.GetFiles(temp).Should().BeEquivalentTo(new[] { expectedZip });
             Console.WriteLine($"Package Size: {new FileInfo(expectedZip).Length / 1024 / 1024}MB");
         }
 
@@ -110,34 +110,30 @@ namespace Calamari.ConsolidateCalamariPackages.Tests
                 // Sashimi is a multi-arch package - atm this test can't unpack it cleanly enough.
                 foreach (var reference in packageReferences.Where(pr => !pr.Name.Contains("Sashimi")))
                 {
-                    var calPackages = ToCalamariPackage(reference);
-                    foreach (var package in calPackages)
+                    var (flavour, package) = ExtractFlavourAndPackage(reference);
+                    var outputFilename = Path.Combine(temp, $"{package}_output.zip");
+                    using (var outputStream = File.OpenWrite(outputFilename))
                     {
-                        var outputFilename = Path.Combine(temp, $"{package.Item2}_output.zip");
-                        using (var outputStream = File.OpenWrite(outputFilename))
+                        var dest = new ZipWriter(outputStream, new ZipWriterOptions(SharpCompress.Common.CompressionType.Deflate) { DeflateCompressionLevel = CompressionLevel.BestSpeed });
+                        foreach (var entry in packageReader.GetPackageFiles(flavour, package, index, zipStream))
                         {
-                            var dest = new ZipWriter(outputStream, new ZipWriterOptions(SharpCompress.Common.CompressionType.Deflate) { DeflateCompressionLevel = CompressionLevel.BestSpeed });
-                            foreach (var entry in packageReader.GetPackageFiles(package.Item1, package.Item2, index, zipStream))
-                            {
-                                dest.Write(entry.destinationEntry, entry.entryStream);
-                            }
+                            dest.Write(entry.destinationEntry, entry.entryStream);
                         }
-
-                        ZipFilesShouldBeIdentical(reference.PackagePath, outputFilename);
                     }
+
+                    ZipFilesShouldBeIdentical(reference.PackagePath, outputFilename);
                 }
             }
         }
-        
+
         void ZipFilesShouldBeIdentical(string inputFilename, string regeneratedZipFilename)
         {
             using (var inputZip = ZipFile.OpenRead(inputFilename))
             {
-                var sourceEntries = inputZip.Entries.Where(e => 
-                                                               !e.FullName.StartsWith("_rels") && 
-                                                               !e.FullName.StartsWith("package") &&
-                                                               !e.FullName.Equals("[Content_Types].xml")
-                                                          ).ToList();
+                var sourceEntries = inputZip.Entries.Where(e =>
+                                                               !e.FullName.StartsWith("_rels") && !e.FullName.StartsWith("package") && !e.FullName.Equals("[Content_Types].xml")
+                                                          )
+                                            .ToList();
                 using (var regenZip = ZipFile.OpenRead(regeneratedZipFilename))
                 {
                     //NOTE: some files appear multiple times in the regenerated zip file
@@ -149,33 +145,18 @@ namespace Calamari.ConsolidateCalamariPackages.Tests
                 }
             }
         }
-        
-        static IReadOnlyList<(string,string)> ToCalamariPackage(BuildPackageReference packReference)
+
+        static (string flavour, string packageId) ExtractFlavourAndPackage(BuildPackageReference packReference)
         {
             if (IsNetfx(packReference.Name))
             {
-                return new List<(string, string)>
-                {
-                    (packReference.Name, $"{packReference.Name}.netfx")
-                };
+                return (packReference.Name, $"{packReference.Name}.netfx");
             }
-            
-            //SOMEHOW need to manage sashimi things here ...no idea.
-            var packageName = packReference.Name; 
-            if (packageName.StartsWith("Sashimi"))
-            {
-                packageName = packageName.Replace("Sashimi", "Calamari");
-                return new List<(String,string)>()
-                {
-                    (packageName, $"{packageName}.netfx"),
-                    (packageName, $"{packageName}.linux-x64"),
-                    (packageName, $"{packageName}.osx-x64"),
-                    (packageName, $"{packageName}.win-x64"),
-                };
-            }
+
+            var packageName = packReference.Name;
             var flavour = packageName.Split(".")[0];
-            
-            return new List<(string,string)> { (flavour, packReference.Name) };
+
+            return (flavour, packReference.Name);
         }
 
         static bool IsNetfx(string packageId)
