@@ -27,7 +27,6 @@
     </ItemGroup>
     <ItemGroup>
       <ProjectReference Include="..\Calamari.ConsolidateCalamariPackages\Calamari.ConsolidateCalamariPackages.csproj" />
-      <ProjectReference Include="..\Calamari.ConsolidatedPackagesCommon\Calamari.ConsolidatedPackagesCommon.csproj" />
     </ItemGroup>
 
     <Target Name="RemoveDirectories" BeforeTargets="CopyPackages">

@@ -1,7 +1,10 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using SharpCompress.Archives.Zip;
 
-namespace Calamari.ConsolidatedPackagesCommon
+namespace Calamari.ConsolidateCalamariPackages
 {
     public interface IConsolidatedPackage
     {
@@ -9,16 +12,16 @@ namespace Calamari.ConsolidatedPackagesCommon
 
         public IEnumerable<(string package, string version)> GetAvailablePackages();
 
-        public ConsolidatedPackageIndex.Package GetPackage(string calamariFlavour);
+        public ConsolidateCalamariPackages.ConsolidatedPackageIndex.Package GetPackage(string calamariFlavour);
 
     }
     
     public class ConsolidatedPackage : IConsolidatedPackage
     {
-        readonly ConsolidatedPackageIndex index;
+        readonly ConsolidateCalamariPackages.ConsolidatedPackageIndex index;
         readonly IConsolidatedPackageStreamProvider packageStreamProvider;
         
-        public ConsolidatedPackage(IConsolidatedPackageStreamProvider packageStreamProvider, ConsolidatedPackageIndex index)
+        public ConsolidatedPackage(IConsolidatedPackageStreamProvider packageStreamProvider, ConsolidateCalamariPackages.ConsolidatedPackageIndex index)
         {
             this.packageStreamProvider = packageStreamProvider;
             this.index = index;
@@ -29,7 +32,7 @@ namespace Calamari.ConsolidatedPackagesCommon
             return index.Packages.Values.Select(v => (v.PackageId, v.Version));
         }
 
-        public ConsolidatedPackageIndex.Package GetPackage(string calamariFlavour) => index.GetEntryFromIndex(calamariFlavour);
+        public ConsolidateCalamariPackages.ConsolidatedPackageIndex.Package GetPackage(string calamariFlavour) => index.GetEntryFromIndex(calamariFlavour);
 
         public IEnumerable<(string destinationEntry, long size, Stream sourceStream)> ExtractCalamariPackage(string calamariFlavour, string platform)
         {

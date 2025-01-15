@@ -1,6 +1,7 @@
+using System;
 using System.IO;
 
-namespace Calamari.ConsolidatedPackagesCommon
+namespace Calamari.ConsolidateCalamariPackages
 {
     public interface IConsolidatedPackageStreamProvider
     {

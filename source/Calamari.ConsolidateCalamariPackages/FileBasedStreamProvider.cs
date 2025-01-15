@@ -1,4 +1,7 @@
-namespace Calamari.ConsolidatedPackagesCommon;
+using System;
+using System.IO;
+
+namespace Calamari.ConsolidateCalamariPackages;
 
 public class FileBasedStreamProvider : IConsolidatedPackageStreamProvider
 {

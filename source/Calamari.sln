@@ -78,7 +78,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.Scripting", "Calam
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.Scripting.Tests", "Calamari.Scripting.Tests\Calamari.Scripting.Tests.csproj", "{D8DEC40C-948F-4806-AE87-1A7502E41A06}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.ConsolidatedPackagesCommon", "Calamari.ConsolidatedPackagesCommon\Calamari.ConsolidatedPackagesCommon.csproj", "{EA1CA436-1BD7-410A-878C-14A0A58AF6AB}"
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calamari.GoogleCloudAccounts", "Calamari.GoogleCloudAccounts\Calamari.GoogleCloudAccounts.csproj", "{74F2739F-A501-4F30-BF9E-75A087C3B917}"
 EndProject
 Global
@@ -202,10 +201,6 @@ Global
 		{D8DEC40C-948F-4806-AE87-1A7502E41A06}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D8DEC40C-948F-4806-AE87-1A7502E41A06}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D8DEC40C-948F-4806-AE87-1A7502E41A06}.Release|Any CPU.Build.0 = Release|Any CPU
-		{EA1CA436-1BD7-410A-878C-14A0A58AF6AB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{EA1CA436-1BD7-410A-878C-14A0A58AF6AB}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{EA1CA436-1BD7-410A-878C-14A0A58AF6AB}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{EA1CA436-1BD7-410A-878C-14A0A58AF6AB}.Release|Any CPU.Build.0 = Release|Any CPU
 		{74F2739F-A501-4F30-BF9E-75A087C3B917}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{74F2739F-A501-4F30-BF9E-75A087C3B917}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{74F2739F-A501-4F30-BF9E-75A087C3B917}.Release|Any CPU.ActiveCfg = Release|Any CPU
