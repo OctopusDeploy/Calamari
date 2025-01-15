@@ -48,8 +48,7 @@ namespace Calamari.ConsolidateCalamariPackages
                               IsNupkg = true,
                               FullNameInDestinationArchive = entry.FullName,
                               FullNameInSourceArchive = entry.FullName,
-                              Hash = hasher.Hash(entry),
-                              FileName = entry.FullName.Split("/").Last()
+                              Hash = hasher.Hash(entry)
                           })
                           .ToArray();
         }
