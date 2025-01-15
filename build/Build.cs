@@ -164,7 +164,7 @@ namespace Calamari.Build
 
         Target Compile =>
             _ => _.DependsOn(CheckForbiddenWords)
-                  .DependsOn(Restore)
+                  //.DependsOn(Restore)
                   .Executes(() =>
                   {
                       Log.Information("Compiling Calamari v{CalamariVersion}", NugetVersion.Value);
@@ -242,11 +242,11 @@ namespace Calamari.Build
                      
                      //Also want to publish the ConsolidatedPackages library
                      var consolidateCalamariPackages = "Calamari.ConsolidateCalamariPackages";
-                     var consolidatedCalamariProjectAndTest = Solution.Projects.Where(project => project.Name == consolidateCalamariPackages || project.Name == $"{consolidateCalamariPackages}.Tests");
+                     var consolidateCalamariProjectAndTest = Solution.Projects.Where(project => project.Name == consolidateCalamariPackages || project.Name == $"{consolidateCalamariPackages}.Tests");
 
                      var calamariProjects = calamariFlavourProjects
                                             .Concat(calamariScriptingProjectAndTest)
-                                            .Concat(consolidatedCalamariProjectAndTest)
+                                            .Concat(consolidateCalamariProjectAndTest)
                                             .ToList();
 
                      await PublishCalamariProjects(calamariProjects);
