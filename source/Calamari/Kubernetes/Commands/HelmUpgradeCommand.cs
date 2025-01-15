@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Calamari.Aws.Integration;
 using Calamari.Commands;
 using Calamari.Commands.Support;
 using Calamari.Common.Commands;
@@ -21,6 +22,8 @@ using Calamari.Deployment.Conventions;
 using Calamari.Deployment.Conventions.DependencyVariables;
 using Calamari.Kubernetes.Conventions;
 using Calamari.Kubernetes.Helm;
+using Calamari.Kubernetes.Integration;
+using Calamari.Kubernetes.ResourceStatus;
 
 namespace Calamari.Kubernetes.Commands
 {
@@ -35,7 +38,10 @@ namespace Calamari.Kubernetes.Commands
         readonly ISubstituteInFiles substituteInFiles;
         readonly IExtractPackage extractPackage;
         readonly HelmTemplateValueSourcesParser templateValueSourcesParser;
+        readonly IResourceStatusReportExecutor statusExecutor;
         readonly ICommandLineRunner commandLineRunner;
+        readonly IManifestReporter manifestReporter;
+        readonly Kubectl kubectl;
 
         public HelmUpgradeCommand(
             ILog log,
@@ -45,8 +51,10 @@ namespace Calamari.Kubernetes.Commands
             ICalamariFileSystem fileSystem,
             ISubstituteInFiles substituteInFiles,
             IExtractPackage extractPackage,
-            HelmTemplateValueSourcesParser templateValueSourcesParser
-        )
+            HelmTemplateValueSourcesParser templateValueSourcesParser,
+            IResourceStatusReportExecutor statusExecutor,
+            IManifestReporter manifestReporter,
+            Kubectl kubectl)
         {
             Options.Add("package=", "Path to the NuGet package to install.", v => pathToPackage = new PathToPackage(Path.GetFullPath(v)));
             this.log = log;
@@ -56,6 +64,9 @@ namespace Calamari.Kubernetes.Commands
             this.substituteInFiles = substituteInFiles;
             this.extractPackage = extractPackage;
             this.templateValueSourcesParser = templateValueSourcesParser;
+            this.statusExecutor = statusExecutor;
+            this.manifestReporter = manifestReporter;
+            this.kubectl = kubectl;
             this.commandLineRunner = commandLineRunner;
         }
 
@@ -74,40 +85,82 @@ namespace Calamari.Kubernetes.Commands
             if (OctopusFeatureToggles.NonPrimaryGitDependencySupportFeatureToggle.IsEnabled(variables))
             {
                 conventions.Add(new StageDependenciesConvention(null,
-                                                                      fileSystem,
-                                                                      new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner),
-                                                                      new PackageVariablesFactory(),
-                                                                      true));
+                                                                fileSystem,
+                                                                new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner),
+                                                                new PackageVariablesFactory(),
+                                                                true));
                 conventions.Add(new StageDependenciesConvention(null,
-                                                                      fileSystem,
-                                                                      new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner),
-                                                                      new GitDependencyVariablesFactory(),
-                                                                      true));
+                                                                fileSystem,
+                                                                new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner),
+                                                                new GitDependencyVariablesFactory(),
+                                                                true));
             }
             else
             {
                 conventions.Add(new StageScriptPackagesConvention(null, fileSystem, new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner), true));
             }
-            
+
             conventions.AddRange(new IInstallConvention[]
             {
                 new ConfiguredScriptConvention(new PreDeployConfiguredScriptBehaviour(log, fileSystem, scriptEngine, commandLineRunner)),
                 // Any values.yaml files in any packages referenced by the step will automatically have variable substitution applied (we won't log a warning if these aren't present)
                 new DelegateInstallConvention(d => substituteInFiles.Substitute(d.CurrentDirectory, DefaultValuesFiles().ToList(), false)),
-                // Any values files explicitly specified by the user will also have variable substitution applied
+                // Any values file explicitly specified by the user will also have variable substitution applied
                 new DelegateInstallConvention(d => substituteInFiles.Substitute(d.CurrentDirectory, ExplicitlySpecifiedValuesFiles().ToList(), true)),
-                new DelegateInstallConvention(d => substituteInFiles.Substitute(d.CurrentDirectory, TemplateValuesFiles(d)  , true)),
+                new DelegateInstallConvention(d => substituteInFiles.Substitute(d.CurrentDirectory, TemplateValuesFiles(d), true)),
                 new ConfiguredScriptConvention(new DeployConfiguredScriptBehaviour(log, fileSystem, scriptEngine, commandLineRunner)),
-                new HelmUpgradeConvention(log, scriptEngine, commandLineRunner, fileSystem, templateValueSourcesParser),
-                new ConfiguredScriptConvention(new PostDeployConfiguredScriptBehaviour(log, fileSystem, scriptEngine, commandLineRunner))
             });
             
+            conventions.AddRange(AddHelmUpgradeConventions());
+            
+            conventions.Add(new ConfiguredScriptConvention(new PostDeployConfiguredScriptBehaviour(log, fileSystem, scriptEngine, commandLineRunner)));
+
             var deployment = new RunningDeployment(pathToPackage, variables);
 
             var conventionRunner = new ConventionProcessor(deployment, conventions, log);
             conventionRunner.RunConventions();
 
             return 0;
+        }
+
+        IInstallConvention[] AddHelmUpgradeConventions()
+        {
+            //if the feature toggle _is_ enabled, use different conventions (as the HelmCli doesn't use the script authentication)
+            if (OctopusFeatureToggles.KOSForHelmFeatureToggle.IsEnabled(variables))
+            {
+                return new IInstallConvention[]
+                {
+                    new DelegateInstallConvention(d =>
+                                                  {
+                                                      //make sure the kubectl tool is configured correctly
+                                                      kubectl.SetWorkingDirectory(d.CurrentDirectory);
+                                                      kubectl.SetEnvironmentVariables(d.EnvironmentVariables);
+                                                  }),
+                    new ConditionalInstallationConvention<AwsAuthConvention>(runningDeployment => runningDeployment.Variables.Get(Deployment.SpecialVariables.Account.AccountType) == "AmazonWebServicesAccount",
+                                                                             new AwsAuthConvention(log, variables)),
+
+                    new KubernetesAuthContextConvention(log, new CommandLineRunner(log, variables), kubectl, fileSystem),
+
+                    new HelmUpgradeWithKOSConvention(log,
+                                                     commandLineRunner,
+                                                     fileSystem,
+                                                     templateValueSourcesParser,
+                                                     statusExecutor,
+                                                     manifestReporter,
+                                                     kubectl)
+                };
+            }
+
+            //if the feature toggle _is not_ enabled, use the old convention
+            return new IInstallConvention[]
+            {
+                new HelmUpgradeConvention(
+                                          log,
+                                          scriptEngine,
+                                          commandLineRunner,
+                                          fileSystem,
+                                          templateValueSourcesParser)
+            };
         }
 
         /// <summary>
@@ -140,7 +193,7 @@ namespace Calamari.Kubernetes.Commands
                 }
             }
         }
-        
+
         //we don't log the included files as they will have been done separately
         IList<string> TemplateValuesFiles(RunningDeployment deployment) => templateValueSourcesParser.ParseTemplateValuesFilesFromDependencies(deployment, false).ToList();
 

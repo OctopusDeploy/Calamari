@@ -6,6 +6,7 @@ using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes.ResourceStatus.Resources;
 using Newtonsoft.Json;
+using ResourceStatusAttributes = Calamari.Kubernetes.SpecialVariables.ServiceMessages.ResourceStatus.Attributes;
 
 namespace Calamari.Kubernetes.ResourceStatus
 {
@@ -82,24 +83,26 @@ namespace Calamari.Kubernetes.ResourceStatus
             
             var parameters = new Dictionary<string, string>
             {
-                {"type", "k8s-status"},
-                {"actionId", variables.Get("Octopus.Action.Id")},
-                {"stepName", $"Step {stepNumber}: {stepName}"},
-                {"taskId", variables.Get(KnownVariables.ServerTask.Id)},
-                {"targetId", variables.Get("Octopus.Machine.Id")},
-                {"targetName", variables.Get("Octopus.Machine.Name")},
-                {"spaceId", variables.Get("Octopus.Space.Id")},
-                {"uuid", resource.Uid},
-                {"kind", resource.Kind},
-                {"name", resource.Name},
-                {"namespace", resource.Namespace},
-                {"status", resource.ResourceStatus.ToString()},
-                {"data", JsonConvert.SerializeObject(resource)},
-                {"removed", removed.ToString()},
-                {"checkCount", checkCount.ToString()}
+                {ResourceStatusAttributes.Type, "k8s-status"},
+                {ResourceStatusAttributes.ActionId, variables.Get("Octopus.Action.Id")},
+                {ResourceStatusAttributes.StepName, $"Step {stepNumber}: {stepName}"},
+                {ResourceStatusAttributes.TaskId, variables.Get(KnownVariables.ServerTask.Id)},
+                {ResourceStatusAttributes.TargetId, variables.Get("Octopus.Machine.Id")},
+                {ResourceStatusAttributes.TargetName, variables.Get("Octopus.Machine.Name")},
+                {ResourceStatusAttributes.SpaceId, variables.Get("Octopus.Space.Id")},
+                {ResourceStatusAttributes.Uuid, resource.Uid},
+                {ResourceStatusAttributes.Group, resource.GroupVersionKind.Group},
+                {ResourceStatusAttributes.Version, resource.GroupVersionKind.Version},
+                {ResourceStatusAttributes.Kind, resource.GroupVersionKind.Kind},
+                {ResourceStatusAttributes.Name, resource.Name},
+                {ResourceStatusAttributes.Namespace, resource.Namespace},
+                {ResourceStatusAttributes.Status, resource.ResourceStatus.ToString()},
+                {ResourceStatusAttributes.Data, JsonConvert.SerializeObject(resource)},
+                {ResourceStatusAttributes.Removed, removed.ToString()},
+                {ResourceStatusAttributes.CheckCount, checkCount.ToString()}
             };
 
-            var message = new ServiceMessage(SpecialVariables.ServiceMessageNames.ResourceStatus.Name, parameters);
+            var message = new ServiceMessage(SpecialVariables.ServiceMessages.ResourceStatus.Name, parameters);
             log.WriteServiceMessage(message);
         }
     }

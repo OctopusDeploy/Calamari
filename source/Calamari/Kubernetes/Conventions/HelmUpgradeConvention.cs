@@ -189,7 +189,7 @@ namespace Calamari.Kubernetes.Conventions
 
             var timeout = deployment.Variables.Get(SpecialVariables.Helm.Timeout);
 
-            if (!GoDurationParser.ValidateTimeout(timeout))
+            if (!GoDurationParser.ValidateDuration(timeout))
             {
                 throw new CommandException($"Timeout period is not a valid duration: {timeout}");
             }

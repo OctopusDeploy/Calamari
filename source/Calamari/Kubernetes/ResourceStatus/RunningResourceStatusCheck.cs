@@ -10,7 +10,7 @@ namespace Calamari.Kubernetes.ResourceStatus
 {
     public interface IRunningResourceStatusCheck
     {
-        Task<bool> WaitForCompletionOrTimeout();
+        Task<bool> WaitForCompletionOrTimeout(CancellationToken cancellationToken);
 
         Task AddResources(ResourceIdentifier[] newResources);
     }
@@ -36,7 +36,8 @@ namespace Calamari.Kubernetes.ResourceStatus
         private readonly HashSet<ResourceIdentifier> resources = new HashSet<ResourceIdentifier>();
 
         private CancellationTokenSource taskCancellationTokenSource;
-        private Task<ResourceStatusCheckTask.Result> statusCheckTask;
+        private ResourceStatusCheckTask statusCheckTask;
+        private Task<ResourceStatusCheckTask.Result> backgroundStatusCheckTask;
 
 
         public RunningResourceStatusCheck(
@@ -60,15 +61,32 @@ namespace Calamari.Kubernetes.ResourceStatus
             {
                 log.Verbose("Resource Status Check: Waiting for resources to be applied.");
             }
-            statusCheckTask = RunNewStatusCheck(initialResources);
+            backgroundStatusCheckTask = RunNewStatusCheck(initialResources);
         }
 
-        public async Task<bool> WaitForCompletionOrTimeout()
+        public async Task<bool> WaitForCompletionOrTimeout(CancellationToken shutdownCancellationToken)
         {
-            await taskLock.WaitAsync();
+            //when the passed cancellation token is cancelled, ask the task to stop
+            shutdownCancellationToken.Register(() =>
+                                       {
+                                           log.Verbose("Resource Status Check: Stopping after next status check.");
+                                           statusCheckTask.StopAfterNextResourceCheck();
+                                       });
+            
+            // we use CancellationToken.None as we don't want to use the passed cancellation token
+            // as it causes the status check task to abort early without retrieving the statuses.
+            await taskLock.WaitAsync(CancellationToken.None);
+            
             try
             {
-                var result = await statusCheckTask;
+                var result = await backgroundStatusCheckTask;
+
+                //if the shutdown cancellation token is marked as a shutdown, we just log that it stopped and was "success"
+                if (shutdownCancellationToken.IsCancellationRequested)
+                {
+                    log.Verbose("Resource Status Check: Stopped.");
+                    return true;
+                }
 
                 switch (result.DeploymentStatus)
                 {
@@ -101,8 +119,8 @@ namespace Calamari.Kubernetes.ResourceStatus
             try
             {
                 taskCancellationTokenSource.Cancel();
-                await statusCheckTask;
-                statusCheckTask = RunNewStatusCheck(newResources);
+                await backgroundStatusCheckTask;
+                backgroundStatusCheckTask = RunNewStatusCheck(newResources);
                 log.Verbose($"Resource Status Check: {newResources.Length} new resources have been added:");
                 log.LogResources(newResources);
             }
@@ -116,8 +134,9 @@ namespace Calamari.Kubernetes.ResourceStatus
         {
             taskCancellationTokenSource = new CancellationTokenSource();
             resources.UnionWith(newResources);
-            return await statusCheckTaskFactory()
-                .Run(resources, options, timeout, taskCancellationTokenSource.Token);
+
+            statusCheckTask = statusCheckTaskFactory();
+            return await statusCheckTask.Run(resources, options, timeout, log, taskCancellationTokenSource.Token);
         }
 
         private void LogFailedResources(Dictionary<string, Resource> resourceDictionary)
@@ -142,7 +161,7 @@ namespace Calamari.Kubernetes.ResourceStatus
         {
             var notCreated = definedResources.Where(definedResource =>
                 !definedResourceStatuses.Any(resource =>
-                    resource.Kind == definedResource.Kind
+                    resource.GroupVersionKind.Equals(definedResource.GroupVersionKind)
                     && resource.Name == definedResource.Name
                     && resource.Namespace == definedResource.Namespace)).ToList();
 

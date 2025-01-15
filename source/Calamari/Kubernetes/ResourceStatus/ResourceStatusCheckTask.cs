@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Kubernetes.Integration;
 using Calamari.Kubernetes.ResourceStatus.Resources;
+using Newtonsoft.Json;
 using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Kubernetes.ResourceStatus
@@ -17,6 +19,7 @@ namespace Calamari.Kubernetes.ResourceStatus
         private readonly IResourceUpdateReporter reporter;
         private readonly IKubectl kubectl;
         private readonly Timer.Factory timerFactory;
+        bool stopAfterNextStatusCheck = false;
 
         public ResourceStatusCheckTask(
             IResourceRetriever resourceRetriever,
@@ -30,7 +33,11 @@ namespace Calamari.Kubernetes.ResourceStatus
             this.timerFactory = timerFactory;
         }
 
-        public async Task<Result> Run(IEnumerable<ResourceIdentifier> resources, Options options, TimeSpan timeout,
+        public async Task<Result> Run(
+            IEnumerable<ResourceIdentifier> resources, 
+            Options options,
+            TimeSpan timeout,
+            ILog log, 
             CancellationToken cancellationToken)
         {
             kubectl.SetKubectl();
@@ -58,6 +65,7 @@ namespace Calamari.Kubernetes.ResourceStatus
                     var definedResourceStatuses = resourceRetriever
                                                   .GetAllOwnedResources(definedResources, kubectl, options)
                                                   .ToArray();
+                    
                     var resourceStatuses = definedResourceStatuses
                                            .SelectMany(IterateResourceTree)
                                            .ToDictionary(resource => resource.Uid, resource => resource);
@@ -72,11 +80,26 @@ namespace Calamari.Kubernetes.ResourceStatus
                         definedResourceStatuses,
                         resourceStatuses);
 
+                    //if we have been asked to stop, jump out after the last check
+                    if (stopAfterNextStatusCheck)
+                    {
+                        return result;
+                    }
+
                     await timer.WaitForInterval();
+                    
                 } while (!timer.HasCompleted() && result.DeploymentStatus == DeploymentStatus.InProgress);
 
                 return result;
             }, cancellationToken);
+        }
+
+        /// <summary>
+        /// Stops the status check loop after the next resource status checks occur.
+        /// </summary> 
+        public void StopAfterNextResourceCheck()
+        {
+            stopAfterNextStatusCheck = true;    
         }
 
         private static DeploymentStatus GetDeploymentStatus(Resource[] resources, ResourceIdentifier[] definedResources)

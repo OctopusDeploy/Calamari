@@ -13,6 +13,8 @@
         FSharpDeprecationFeatureToggle,
         AzureRMDeprecationFeatureToggle,
         KubernetesLiveObjectStatusFeatureToggle,
-        KubernetesAuthAwsCliWithExecFeatureToggle
+        KubernetesAuthAwsCliWithExecFeatureToggle,
+        ForceUtf8ZipFileDecodingFeatureToggle,
+        DisableFSharpScriptExecutionFeatureToggle
     }
 }

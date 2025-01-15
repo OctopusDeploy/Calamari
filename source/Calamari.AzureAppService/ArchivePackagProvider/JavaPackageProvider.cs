@@ -11,23 +11,23 @@ using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.AzureAppService
 {
-    public class WarPackageProvider : IPackageProvider
+    public class JavaPackageProvider : IPackageProvider
     {
         readonly ICalamariFileSystem fileSystem;
         public bool SupportsAsynchronousDeployment => false;
         private ILog Log { get; }
         private IVariables Variables { get; }
         private RunningDeployment Deployment { get; }
+        public string UploadUrlPath { get; }
 
-        public WarPackageProvider(ILog log, ICalamariFileSystem fileSystem, IVariables variables, RunningDeployment deployment)
+        public JavaPackageProvider(ILog log, ICalamariFileSystem fileSystem, IVariables variables, RunningDeployment deployment, string uploadUrlPath)
         {
             this.fileSystem = fileSystem;
             Log = log;
             Variables = variables;
             Deployment = deployment;
+            UploadUrlPath = uploadUrlPath;
         }
-
-        public string UploadUrlPath => @"/api/wardeploy";
 
         public async Task<FileInfo> PackageArchive(string sourceDirectory, string targetDirectory)
         {

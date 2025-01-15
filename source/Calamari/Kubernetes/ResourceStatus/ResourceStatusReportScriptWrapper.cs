@@ -1,31 +1,31 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
-using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes.Integration;
 
 namespace Calamari.Kubernetes.ResourceStatus
 {
-    public class ResourceStatusReportWrapper : IScriptWrapper
+    public class ResourceStatusReportScriptWrapper : IScriptWrapper
     {
-        private readonly Kubectl kubectl;
-        private readonly IVariables variables;
-        private readonly ICalamariFileSystem fileSystem;
-        private readonly IResourceStatusReportExecutor statusReportExecutor;
+        readonly Kubectl kubectl;
+        readonly IVariables variables;
+        readonly IResourceFinder resourceFinder;
+        readonly IResourceStatusReportExecutor statusReportExecutor;
 
-        public ResourceStatusReportWrapper(
+        public ResourceStatusReportScriptWrapper(
             Kubectl kubectl,
             IVariables variables,
-            ICalamariFileSystem fileSystem,
+            IResourceFinder resourceFinder,
             IResourceStatusReportExecutor statusReportExecutor)
         {
             this.kubectl = kubectl;
             this.variables = variables;
-            this.fileSystem = fileSystem;
+            this.resourceFinder = resourceFinder;
             this.statusReportExecutor = statusReportExecutor;
         }
 
@@ -39,6 +39,13 @@ namespace Calamari.Kubernetes.ResourceStatus
 
             //A blue/green or deployment wait is waiting for other things, so we don't run resource status check 
             if (isBlueGreen || isWaitDeployment)
+            {
+                return false;
+            }
+
+            //helm performs its own resource status tracking, even though it uses the script engine
+            //we look for the release name as it's a required helm field
+            if (!string.IsNullOrWhiteSpace(variables.Get(SpecialVariables.Helm.ReleaseName)))
             {
                 return false;
             }
@@ -57,7 +64,6 @@ namespace Calamari.Kubernetes.ResourceStatus
             var workingDirectory = Path.GetDirectoryName(script.File);
             kubectl.SetWorkingDirectory(workingDirectory);
             kubectl.SetEnvironmentVariables(environmentVars);
-            var resourceFinder = new ResourceFinder(variables, fileSystem);
 
             var result = NextWrapper.ExecuteScript(script, scriptSyntax, commandLineRunner, environmentVars);
             if (result.ExitCode != 0)
@@ -73,7 +79,7 @@ namespace Calamari.Kubernetes.ResourceStatus
                 var resources = resourceFinder.FindResources(workingDirectory);
                 var timeoutSeconds = variables.GetInt32(SpecialVariables.Timeout) ?? 0;
                 var waitForJobs = variables.GetFlag(SpecialVariables.WaitForJobs);
-                var statusResult = statusReportExecutor.Start(timeoutSeconds, waitForJobs, resources).WaitForCompletionOrTimeout()
+                var statusResult = statusReportExecutor.Start(timeoutSeconds, waitForJobs, resources).WaitForCompletionOrTimeout(CancellationToken.None)
                                                        .GetAwaiter().GetResult();
                 if (!statusResult)
                 {
