@@ -134,6 +134,31 @@ quoted_float: ""5.75""
                 memoryLog.ServiceMessages.First().Properties.Should().Contain(new KeyValuePair<string, string>("ns", variableNs));
             }
         }
+        
+        [TestCase(nameof(FeatureToggle.KubernetesLiveObjectStatusFeatureToggle))]
+        [TestCase(OctopusFeatureToggles.KnownSlugs.KubernetesObjectManifestInspection)]
+        public void GivenNamespaceNotInManifest_ShouldUseHelmVariableNamespace(string enabledFeatureToggle)
+        {
+            var memoryLog = new InMemoryLog();
+            var variables = new CalamariVariables();
+            variables.Set(KnownVariables.EnabledFeatureToggles, enabledFeatureToggle);
+
+            var apiResourceScopeLookup = new ApiResourcesScopeLookupBuilder().WithDefaults().Build();
+
+            var yaml = @"foo: bar";
+            using (CreateFile(yaml, out var filePath))
+            {
+                var helmNs = Some.String();
+                var variableNs = Some.String();
+                variables.Set(SpecialVariables.Helm.Namespace, helmNs);
+                variables.Set(SpecialVariables.Namespace, variableNs);
+                var mr = new ManifestReporter(variables, CalamariPhysicalFileSystem.GetPhysicalFileSystem(), memoryLog, apiResourceScopeLookup);
+
+                mr.ReportManifestFileApplied(filePath);
+
+                memoryLog.ServiceMessages.First().Properties.Should().Contain(new KeyValuePair<string, string>("ns", helmNs));
+            }
+        }
 
         [TestCase(nameof(FeatureToggle.KubernetesLiveObjectStatusFeatureToggle))]
         [TestCase(OctopusFeatureToggles.KnownSlugs.KubernetesObjectManifestInspection)]
@@ -190,6 +215,27 @@ kind: Namespace
 metadata:
   name: test
 ";
+            var mr = new ManifestReporter(variables, CalamariPhysicalFileSystem.GetPhysicalFileSystem(), memoryLog, apiResourceScopeLookup);
+
+            mr.ReportManifestApplied(yaml);
+
+            memoryLog.ServiceMessages.First().Properties.Should().Contain(new KeyValuePair<string, string>("ns", null));
+        }
+
+        [TestCase(nameof(FeatureToggle.KubernetesLiveObjectStatusFeatureToggle))]
+        [TestCase(OctopusFeatureToggles.KnownSlugs.KubernetesObjectManifestInspection)]
+        public void GivenGlobalKind_ButManifestHasNamespace_NamespaceShouldBeNull(string enabledFeatureToggle)
+        {
+            var memoryLog = new InMemoryLog();
+            var variables = new CalamariVariables();
+            variables.Set(KnownVariables.EnabledFeatureToggles, enabledFeatureToggle);
+            var apiResourceScopeLookup = new ApiResourcesScopeLookupBuilder().WithDefaults().Build();
+
+            const string yaml = @"apiVersion: v1
+kind: Namespace
+metadata:
+  name: test
+  namspace: my-cool-namespace";
             var mr = new ManifestReporter(variables, CalamariPhysicalFileSystem.GetPhysicalFileSystem(), memoryLog, apiResourceScopeLookup);
 
             mr.ReportManifestApplied(yaml);
