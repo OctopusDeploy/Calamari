@@ -11,7 +11,7 @@ namespace Calamari.ConsolidatedPackagesCommon
         }
 
         public IReadOnlyDictionary<string, Package> Packages { get; init;  } 
-        public IEnumerable<(string package, string version)> PackageVersions => Packages.Values.Select(v => (v.PackageId, v.Version));
+        public IEnumerable<(string package, string version)> GetPackageVersions() => Packages.Values.Select(v => (v.PackageId, v.Version));
 
         public Package GetEntryFromIndex(string id)
         {

@@ -109,12 +109,12 @@ namespace Calamari.ConsolidateCalamariPackages.Tests
             // Sashimi is a multi-arch package - atm this test can't unpack it cleanly enough.
             foreach (var reference in packageReferences.Where(pr => !pr.Name.Contains("Sashimi")))
             {
-                var (flavour, package) = ExtractFlavourAndPackage(reference);
-                var outputFilename = Path.Combine(temp, $"{package}_output.zip");
+                var (flavour, platform) = ExtractFlavourAndPlatform(reference);
+                var outputFilename = Path.Combine(temp, $"{flavour}_{platform}_output.zip");
                 using (var outputStream = File.OpenWrite(outputFilename))
                 {
                     var dest = new ZipWriter(outputStream, new ZipWriterOptions(SharpCompress.Common.CompressionType.Deflate) { DeflateCompressionLevel = CompressionLevel.BestSpeed });
-                    foreach (var entry in consolidatedPackage.ExtractCalamariPackage(flavour, package))
+                    foreach (var entry in consolidatedPackage.ExtractCalamariPackage(flavour, platform))
                     {
                         dest.Write(entry.destinationEntry, entry.sourceStream);
                     }
@@ -144,15 +144,16 @@ namespace Calamari.ConsolidateCalamariPackages.Tests
             }
         }
 
-        static (string flavour, string packageId) ExtractFlavourAndPackage(BuildPackageReference packReference)
+        static (string flavour, string platform) ExtractFlavourAndPlatform(BuildPackageReference packReference)
         {
             if (IsNetfx(packReference.Name))
             {
-                return (packReference.Name, $"{packReference.Name}.netfx");
+                return (packReference.Name, "netfx");
             }
 
             var packageName = packReference.Name;
             var flavour = packageName.Split(".")[0];
+            var platform = packageName.Substring(flavour.Length).Trim('.');
 
             return (flavour, packReference.Name);
         }

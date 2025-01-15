@@ -1869,19 +1869,5 @@
         ]
       }
     }
-  },
-  "PackageVersions": [
-    {
-      "Item1": "Calamari",
-      "Item2": "12.0.2"
-    },
-    {
-      "Item1": "Calamari.Cloud",
-      "Item2": "12.0.2"
-    },
-    {
-      "Item1": "Calamari.Terraform",
-      "Item2": "0.1.7-enh-packcalamari0002"
-    }
-  ]
+  }
 }
