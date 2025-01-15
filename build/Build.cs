@@ -223,7 +223,7 @@ namespace Calamari.Build
                       foreach (var rid in GetRuntimeIdentifiers(Solution.GetProject(RootProjectName)!)!)
                           DoPublish(RootProjectName, Frameworks.Net60, nugetVersion, rid);
                   });
-
+        
         Target PublishCalamariFlavourProjects =>
             _ => _
                  .DependsOn(Compile)
@@ -239,9 +239,14 @@ namespace Calamari.Build
                      // Unlike other *Calamari* tests, we would still want to produce Calamari.Scripting.Zip and its tests, like its flavours.
                      var calamariScripting = "Calamari.Scripting";
                      var calamariScriptingProjectAndTest = Solution.Projects.Where(project => project.Name == calamariScripting || project.Name == $"{calamariScripting}.Tests");
+                     
+                     //Also want to publish the ConsolidatedPackages library
+                     var consolidateCalamariPackages = "Calamari.ConsolidateCalamariPackages";
+                     var consolidatedCalamariProjectAndTest = Solution.Projects.Where(project => project.Name == consolidateCalamariPackages || project.Name == $"{consolidateCalamariPackages}.Tests");
 
                      var calamariProjects = calamariFlavourProjects
                                             .Concat(calamariScriptingProjectAndTest)
+                                            .Concat(consolidatedCalamariProjectAndTest)
                                             .ToList();
 
                      await PublishCalamariProjects(calamariProjects);
