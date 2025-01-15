@@ -276,7 +276,7 @@ namespace Calamari.Build
                     Architecture = null,
                     IsCrossPlatform = packageToBuild.CrossPlatform
                 });
-
+            
             // for cross-platform frameworks, we combine each runtime identifier with each target framework
             var crossPlatformPackages = calamariPackages
                 .Where(p => p.CrossPlatform)
