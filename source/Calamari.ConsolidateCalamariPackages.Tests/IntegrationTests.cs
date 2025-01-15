@@ -113,10 +113,12 @@ namespace Calamari.ConsolidateCalamariPackages.Tests
                 var outputFilename = Path.Combine(temp, $"{flavour}_{platform}_output.zip");
                 using (var outputStream = File.OpenWrite(outputFilename))
                 {
-                    var dest = new ZipWriter(outputStream, new ZipWriterOptions(SharpCompress.Common.CompressionType.Deflate) { DeflateCompressionLevel = CompressionLevel.BestSpeed });
-                    foreach (var entry in consolidatedPackage.ExtractCalamariPackage(flavour, platform))
+                    using (var dest = new ZipWriter(outputStream, new ZipWriterOptions(SharpCompress.Common.CompressionType.Deflate) { DeflateCompressionLevel = CompressionLevel.BestSpeed, LeaveStreamOpen = false }))
                     {
-                        dest.Write(entry.destinationEntry, entry.sourceStream);
+                        foreach (var entry in consolidatedPackage.ExtractCalamariPackage(flavour, platform))
+                        {
+                            dest.Write(entry.destinationEntry, entry.sourceStream);
+                        }
                     }
                 }
 
@@ -155,7 +157,7 @@ namespace Calamari.ConsolidateCalamariPackages.Tests
             var flavour = packageName.Split(".")[0];
             var platform = packageName.Substring(flavour.Length).Trim('.');
 
-            return (flavour, packReference.Name);
+            return (flavour, platform);
         }
 
         static bool IsNetfx(string packageId)

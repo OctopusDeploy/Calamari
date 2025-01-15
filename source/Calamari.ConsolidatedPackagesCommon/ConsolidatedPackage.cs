@@ -40,17 +40,21 @@ namespace Calamari.ConsolidatedPackagesCommon
                 throw new Exception($"Could not find platform {platform} for {calamariFlavour}");
             }
 
-            using var sourceStream = packageStreamProvider.OpenStream();
-            using var source = ZipArchive.Open(sourceStream);
-            foreach (var hash in hashes)
+            using (var sourceStream = packageStreamProvider.OpenStream())
             {
-                foreach (var sourceEntry in source.Entries)
+                using (var source = ZipArchive.Open(sourceStream))
                 {
-                    if (sourceEntry.Key == null || !sourceEntry.Key.StartsWith(hash)) continue;
-
-                    using (var sourceEntryStream = sourceEntry.OpenEntryStream())
+                    foreach (var hash in hashes)
                     {
-                        yield return (sourceEntry.Key.Substring(hash.Length + 1), sourceEntry.Size, sourceEntryStream);
+                        foreach (var sourceEntry in source.Entries)
+                        {
+                            if (sourceEntry.Key == null || !sourceEntry.Key.StartsWith(hash)) continue;
+
+                            using (var sourceEntryStream = sourceEntry.OpenEntryStream())
+                            {
+                                yield return (sourceEntry.Key.Substring(hash.Length + 1), sourceEntry.Size, sourceEntryStream);
+                            }
+                        }
                     }
                 }
             }
