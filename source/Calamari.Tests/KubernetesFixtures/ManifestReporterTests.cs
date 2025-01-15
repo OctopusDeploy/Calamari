@@ -9,6 +9,7 @@ using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Helpers;
+using Calamari.Tests.KubernetesFixtures.Builders;
 using FluentAssertions;
 using NUnit.Framework;
 
@@ -22,11 +23,12 @@ namespace Calamari.Tests.KubernetesFixtures
         {
             var memoryLog = new InMemoryLog();
             var variables = new CalamariVariables();
+            var apiResourceScopeLookup = new ApiResourcesScopeLookupBuilder().WithDefaults().Build();
 
             var yaml = @"foo: bar";
             using (CreateFile(yaml, out var filePath))
             {
-                var mr = new ManifestReporter(variables, CalamariPhysicalFileSystem.GetPhysicalFileSystem(), memoryLog);
+                var mr = new ManifestReporter(variables, CalamariPhysicalFileSystem.GetPhysicalFileSystem(), memoryLog, apiResourceScopeLookup);
 
                 mr.ReportManifestFileApplied(filePath);
 
@@ -41,7 +43,9 @@ namespace Calamari.Tests.KubernetesFixtures
             var memoryLog = new InMemoryLog();
             var variables = new CalamariVariables();
             variables.Set(KnownVariables.EnabledFeatureToggles, enabledFeatureToggle);
-            
+
+            var apiResourceScopeLookup = new ApiResourcesScopeLookupBuilder().WithDefaults().Build();
+
             //Test that quotes are preserved, especially for numbers
             var yaml = @"name: George Washington
 alphafield: ""fgdsfsd""
@@ -50,10 +54,10 @@ quoted_int: ""89""
 unquoted_float: 5.75
 quoted_float: ""5.75""
 ".ReplaceLineEndings();
-            
+
             using (CreateFile(yaml, out var filePath))
             {
-                var mr = new ManifestReporter(variables, CalamariPhysicalFileSystem.GetPhysicalFileSystem(), memoryLog);
+                var mr = new ManifestReporter(variables, CalamariPhysicalFileSystem.GetPhysicalFileSystem(), memoryLog, apiResourceScopeLookup);
 
                 mr.ReportManifestFileApplied(filePath);
 
@@ -70,10 +74,12 @@ quoted_float: ""5.75""
             var variables = new CalamariVariables();
             variables.Set(KnownVariables.EnabledFeatureToggles, enabledFeatureToggle);
 
+            var apiResourceScopeLookup = new ApiResourcesScopeLookupBuilder().WithDefaults().Build();
+
             var yaml = @"text - Bar";
             using (CreateFile(yaml, out var filePath))
             {
-                var mr = new ManifestReporter(variables, CalamariPhysicalFileSystem.GetPhysicalFileSystem(), memoryLog);
+                var mr = new ManifestReporter(variables, CalamariPhysicalFileSystem.GetPhysicalFileSystem(), memoryLog, apiResourceScopeLookup);
 
                 mr.ReportManifestFileApplied(filePath);
 
@@ -88,6 +94,9 @@ quoted_float: ""5.75""
             var memoryLog = new InMemoryLog();
             var variables = new CalamariVariables();
             variables.Set(KnownVariables.EnabledFeatureToggles, enabledFeatureToggle);
+
+            var apiResourceScopeLookup = new ApiResourcesScopeLookupBuilder().WithDefaults().Build();
+
             var yaml = @"metadata:
   name: game-demo
   namespace: XXX";
@@ -95,7 +104,7 @@ quoted_float: ""5.75""
             {
                 var variableNs = Some.String();
                 variables.Set(SpecialVariables.Namespace, variableNs);
-                var mr = new ManifestReporter(variables, CalamariPhysicalFileSystem.GetPhysicalFileSystem(), memoryLog);
+                var mr = new ManifestReporter(variables, CalamariPhysicalFileSystem.GetPhysicalFileSystem(), memoryLog, apiResourceScopeLookup);
 
                 mr.ReportManifestFileApplied(filePath);
 
@@ -110,12 +119,15 @@ quoted_float: ""5.75""
             var memoryLog = new InMemoryLog();
             var variables = new CalamariVariables();
             variables.Set(KnownVariables.EnabledFeatureToggles, enabledFeatureToggle);
+
+            var apiResourceScopeLookup = new ApiResourcesScopeLookupBuilder().WithDefaults().Build();
+
             var yaml = @"foo: bar";
             using (CreateFile(yaml, out var filePath))
             {
                 var variableNs = Some.String();
                 variables.Set(SpecialVariables.Namespace, variableNs);
-                var mr = new ManifestReporter(variables, CalamariPhysicalFileSystem.GetPhysicalFileSystem(), memoryLog);
+                var mr = new ManifestReporter(variables, CalamariPhysicalFileSystem.GetPhysicalFileSystem(), memoryLog, apiResourceScopeLookup);
 
                 mr.ReportManifestFileApplied(filePath);
 
@@ -130,10 +142,13 @@ quoted_float: ""5.75""
             var memoryLog = new InMemoryLog();
             var variables = new CalamariVariables();
             variables.Set(KnownVariables.EnabledFeatureToggles, enabledFeatureToggle);
+
+            var apiResourceScopeLookup = new ApiResourcesScopeLookupBuilder().WithDefaults().Build();
+
             var yaml = @"foo: bar";
             using (CreateFile(yaml, out var filePath))
             {
-                var mr = new ManifestReporter(variables, CalamariPhysicalFileSystem.GetPhysicalFileSystem(), memoryLog);
+                var mr = new ManifestReporter(variables, CalamariPhysicalFileSystem.GetPhysicalFileSystem(), memoryLog, apiResourceScopeLookup);
 
                 mr.ReportManifestFileApplied(filePath);
 
@@ -149,14 +164,104 @@ quoted_float: ""5.75""
             var variables = new CalamariVariables();
             variables.Set(KnownVariables.EnabledFeatureToggles, enabledFeatureToggle);
 
+            var apiResourceScopeLookup = new ApiResourcesScopeLookupBuilder().WithDefaults().Build();
+
             const string yaml = "foo: bar";
             var expectedYaml = $"foo: bar{Environment.NewLine}";
-            var mr = new ManifestReporter(variables, CalamariPhysicalFileSystem.GetPhysicalFileSystem(), memoryLog);
+            var mr = new ManifestReporter(variables, CalamariPhysicalFileSystem.GetPhysicalFileSystem(), memoryLog, apiResourceScopeLookup);
 
             mr.ReportManifestApplied(yaml);
 
             var expected = ServiceMessage.Create(SpecialVariables.ServiceMessages.ManifestApplied.Name, ("ns", "default"), ("manifest", expectedYaml));
             memoryLog.ServiceMessages.Should().BeEquivalentTo(new List<ServiceMessage> { expected });
+        }
+
+        [TestCase(nameof(FeatureToggle.KubernetesLiveObjectStatusFeatureToggle))]
+        [TestCase(OctopusFeatureToggles.KnownSlugs.KubernetesObjectManifestInspection)]
+        public void GivenGlobalKind_NamespaceShouldBeNull(string enabledFeatureToggle)
+        {
+            var memoryLog = new InMemoryLog();
+            var variables = new CalamariVariables();
+            variables.Set(KnownVariables.EnabledFeatureToggles, enabledFeatureToggle);
+            var apiResourceScopeLookup = new ApiResourcesScopeLookupBuilder().WithDefaults().Build();
+
+            const string yaml = @"apiVersion: v1
+kind: Namespace
+metadata:
+  name: test
+";
+            var mr = new ManifestReporter(variables, CalamariPhysicalFileSystem.GetPhysicalFileSystem(), memoryLog, apiResourceScopeLookup);
+
+            mr.ReportManifestApplied(yaml);
+
+            memoryLog.ServiceMessages.First().Properties.Should().Contain(new KeyValuePair<string, string>("ns", null));
+        }
+
+        [TestCase(nameof(FeatureToggle.KubernetesLiveObjectStatusFeatureToggle))]
+        [TestCase(OctopusFeatureToggles.KnownSlugs.KubernetesObjectManifestInspection)]
+        public void GivenNamespacedKind_NamespaceShouldBeDefault(string enabledFeatureToggle)
+        {
+            var memoryLog = new InMemoryLog();
+            var variables = new CalamariVariables();
+            variables.Set(KnownVariables.EnabledFeatureToggles, enabledFeatureToggle);
+            var apiResourceScopeLookup = new ApiResourcesScopeLookupBuilder().WithDefaults().Build();
+
+            const string yaml = @"apiVersion: apps/v1
+kind: Pod
+metadata:
+  name: test
+";
+
+            var mr = new ManifestReporter(variables, CalamariPhysicalFileSystem.GetPhysicalFileSystem(), memoryLog, apiResourceScopeLookup);
+
+            mr.ReportManifestApplied(yaml);
+
+            memoryLog.ServiceMessages.First().Properties.Should().Contain(new KeyValuePair<string, string>("ns", "default"));
+        }
+
+        [TestCase(nameof(FeatureToggle.KubernetesLiveObjectStatusFeatureToggle))]
+        [TestCase(OctopusFeatureToggles.KnownSlugs.KubernetesObjectManifestInspection)]
+        public void GivenUnknownKind_NamespaceShouldBeDefault(string enabledFeatureToggle)
+        {
+            var memoryLog = new InMemoryLog();
+            var variables = new CalamariVariables();
+            variables.Set(KnownVariables.EnabledFeatureToggles, enabledFeatureToggle);
+            var apiResourceScopeLookup = new ApiResourcesScopeLookupBuilder().WithDefaults().Build();
+
+            const string yaml = @"apiVersion: foo.bar
+kind: Unknown
+metadata:
+  name: test
+";
+
+            var mr = new ManifestReporter(variables, CalamariPhysicalFileSystem.GetPhysicalFileSystem(), memoryLog, apiResourceScopeLookup);
+
+            mr.ReportManifestApplied(yaml);
+
+            memoryLog.ServiceMessages.First().Properties.Should().Contain(new KeyValuePair<string, string>("ns", "default"));
+        }
+
+        [TestCase(nameof(FeatureToggle.KubernetesLiveObjectStatusFeatureToggle))]
+        [TestCase(OctopusFeatureToggles.KnownSlugs.KubernetesObjectManifestInspection)]
+        public void GivenExplicitNamespace_NamespaceShouldBeExplicit(string enabledFeatureToggle)
+        {
+            var memoryLog = new InMemoryLog();
+            var variables = new CalamariVariables();
+            variables.Set(KnownVariables.EnabledFeatureToggles, enabledFeatureToggle);
+            var apiResourceScopeLookup = new ApiResourcesScopeLookupBuilder().WithDefaults().Build();
+
+            const string yaml = @"apiVersion: apps/v1
+kind: Pod
+metadata:
+  name: test
+  namespace: test
+";
+
+            var mr = new ManifestReporter(variables, CalamariPhysicalFileSystem.GetPhysicalFileSystem(), memoryLog, apiResourceScopeLookup);
+
+            mr.ReportManifestApplied(yaml);
+
+            memoryLog.ServiceMessages.First().Properties.Should().Contain(new KeyValuePair<string, string>("ns", "test"));
         }
 
         static IDisposable CreateFile(string yaml, out string filePath)
