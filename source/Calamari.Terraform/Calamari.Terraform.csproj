@@ -20,5 +20,6 @@
   <ItemGroup>
     <ProjectReference Include="..\Calamari.CloudAccounts\Calamari.CloudAccounts.csproj" />
     <ProjectReference Include="..\Calamari.Common\Calamari.Common.csproj" />
+    <ProjectReference Include="..\Calamari.GoogleCloudAccounts\Calamari.GoogleCloudAccounts.csproj" />
   </ItemGroup>
 </Project>
