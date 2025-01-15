@@ -81,7 +81,7 @@ namespace Calamari.Common
             }
             catch (Exception ex)
             {
-                return ConsoleFormatter.PrintError(Log, ex);
+                return ConsoleFormatter.PrintError(ConsoleLog.Instance, ex);
             }
         }
 

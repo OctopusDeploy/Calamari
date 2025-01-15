@@ -25,18 +25,20 @@ namespace Calamari.ConsolidatedPackagesCommon
 
         public class Package
         {
-            public Package(string packageId, string version, bool isNupkg, Dictionary<string, string[]> platformHashes)
+            public Package(string packageId, string version, bool isNupkg, Dictionary<string, FileTransfer[]> platformFiles)
             {
                 PackageId = packageId;
                 Version = version;
                 IsNupkg = isNupkg;
-                PlatformHashes = new Dictionary<string, string[]>(platformHashes, StringComparer.OrdinalIgnoreCase);
+                PlatformFiles = new Dictionary<string, FileTransfer[]>(platformFiles, StringComparer.OrdinalIgnoreCase);
             }
 
             public string PackageId { get; }
             public string Version { get; }
             public bool IsNupkg { get; }
-            public Dictionary<string, string[]> PlatformHashes { get; }
+            public Dictionary<string, FileTransfer[]> PlatformFiles { get; }
         }
     }
+    
+    public record FileTransfer(string Source, string Destination);
 }

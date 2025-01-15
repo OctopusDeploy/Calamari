@@ -35,7 +35,7 @@ namespace Calamari.ConsolidatedPackagesCommon
         {
             var entry = index.GetEntryFromIndex(calamariFlavour);
 
-            if (!entry.PlatformHashes.TryGetValue(platform, out var hashes))
+            if (!entry.PlatformFiles.TryGetValue(platform, out var platformFiles))
             {
                 throw new Exception($"Could not find platform {platform} for {calamariFlavour}");
             }
@@ -44,16 +44,14 @@ namespace Calamari.ConsolidatedPackagesCommon
             {
                 using (var source = ZipArchive.Open(sourceStream))
                 {
-                    foreach (var hash in hashes)
+                    foreach (var fileTransfer in platformFiles)
                     {
-                        foreach (var sourceEntry in source.Entries)
+                        var sourceEntry = source.Entries.FirstOrDefault(e => e.Key is not null && e.Key.Equals(fileTransfer.Source));
+                        if(sourceEntry is null) continue;
+                    
+                        using (var sourceEntryStream = sourceEntry.OpenEntryStream())
                         {
-                            if (sourceEntry.Key == null || !sourceEntry.Key.StartsWith(hash)) continue;
-
-                            using (var sourceEntryStream = sourceEntry.OpenEntryStream())
-                            {
-                                yield return (sourceEntry.Key.Substring(hash.Length + 1), sourceEntry.Size, sourceEntryStream);
-                            }
+                            yield return (fileTransfer.Destination, sourceEntry.Size, sourceEntryStream);
                         }
                     }
                 }
