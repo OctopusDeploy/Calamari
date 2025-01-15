@@ -40,7 +40,7 @@ namespace Calamari.Kubernetes.Conventions.Helm
         {
             var packagePath = GetChartLocation(deployment);
 
-            var args = GetUpgradeCommandArgs(deployment, helmCli);
+            var args = GetUpgradeCommandArgs(deployment);
 
             var result = helmCli.Upgrade(releaseName, packagePath, args);
 
@@ -62,30 +62,13 @@ namespace Calamari.Kubernetes.Conventions.Helm
             }
         }
 
-        List<string> GetUpgradeCommandArgs(RunningDeployment deployment, HelmCli helmCli)
+        List<string> GetUpgradeCommandArgs(RunningDeployment deployment)
         {
             var args = new List<string>();
-
-            var helmVersion = GetVersion(deployment.Variables);
-            CheckHelmToolVersion(helmCli, helmVersion);
-
-            if (helmVersion == HelmVersion.V2)
-            {
-                if (FeatureToggle.PreventHelmV2DeploymentsFeatureToggle.IsEnabled(deployment.Variables))
-                {
-                    throw new CommandException("Helm V2 is no longer supported. Please migrate to Helm V3.");
-                }
-
-                log.Warn("This step is currently configured to use Helm V2. Support for Helm V2 will be completely removed in Octopus Server 2025.1. Please migrate to Helm V3 as soon as possible.");
-            }
+            
+            AssertHelmV3();
 
             SetResetValuesParameter(deployment, args);
-            if (helmVersion == HelmVersion.V2)
-            {
-                SetTillerTimeoutParameter(deployment, args);
-                SetTillerNamespaceParameter(deployment, args);
-            }
-
             SetTimeoutParameter(deployment, args);
             SetValuesParameters(deployment, args);
             var hasAdditionalArgs = SetAdditionalArguments(deployment, args);
@@ -198,16 +181,6 @@ namespace Calamari.Kubernetes.Conventions.Helm
             throw new CommandException($"Unexpected error. Chart.yaml was not found in any directories inside '{installDir}'");
         }
 
-        static HelmVersion GetVersion(IVariables variables)
-        {
-            var clientVersionText = variables.Get(SpecialVariables.Helm.ClientVersion);
-
-            if (Enum.TryParse(clientVersionText, out HelmVersion version))
-                return version;
-
-            throw new CommandException($"Unrecognized Helm version: '{clientVersionText}'");
-        }
-
         static void SetResetValuesParameter(RunningDeployment deployment, List<string> args)
         {
             if (deployment.Variables.GetFlag(SpecialVariables.Helm.ResetValues, true))
@@ -281,14 +254,6 @@ namespace Calamari.Kubernetes.Conventions.Helm
             return false;
         }
 
-        static void SetTillerNamespaceParameter(RunningDeployment deployment, List<string> args)
-        {
-            if (deployment.Variables.IsSet(SpecialVariables.Helm.TillerNamespace))
-            {
-                args.Add($"--tiller-namespace \"{deployment.Variables.Get(SpecialVariables.Helm.TillerNamespace)}\"");
-            }
-        }
-
         static void SetTimeoutParameter(RunningDeployment deployment, List<string> args)
         {
             if (!deployment.Variables.IsSet(SpecialVariables.Helm.Timeout)) return;
@@ -301,19 +266,6 @@ namespace Calamari.Kubernetes.Conventions.Helm
             }
 
             args.Add($"--timeout \"{timeout}\"");
-        }
-
-        static void SetTillerTimeoutParameter(RunningDeployment deployment, List<string> args)
-        {
-            if (!deployment.Variables.IsSet(SpecialVariables.Helm.TillerTimeout)) return;
-
-            var tillerTimeout = deployment.Variables.Get(SpecialVariables.Helm.TillerTimeout);
-            if (!int.TryParse(tillerTimeout, out _))
-            {
-                throw new CommandException($"Tiller timeout period is not a valid integer: {tillerTimeout}");
-            }
-
-            args.Add($"--tiller-connection-timeout \"{tillerTimeout}\"");
         }
 
         IEnumerable<string> AdditionalValuesFiles(RunningDeployment deployment)
@@ -363,11 +315,9 @@ namespace Calamari.Kubernetes.Conventions.Helm
 
             return files;
         }
-
-        void CheckHelmToolVersion(HelmCli helmCli, HelmVersion selectedVersion)
+        
+        void AssertHelmV3()
         {
-            log.Verbose($"Helm version selected: {selectedVersion}");
-
             var (exitCode, infoOutput) = helmCli.GetExecutableVersion();
             if (exitCode != 0)
             {
@@ -380,9 +330,9 @@ namespace Calamari.Kubernetes.Conventions.Helm
             {
                 log.Warn("Unable to parse the Helm tool version text: " + infoOutput);
             }
-            else if (toolVersion.Value != selectedVersion)
+            else if (toolVersion.Value != HelmVersion.V3)
             {
-                log.Warn($"The Helm tool version '{toolVersion.Value}' ('{infoOutput}') doesn't match the Helm version selected '{selectedVersion}'");
+                throw new CommandException("Helm V2 is no longer supported. Please migrate to Helm V3.");
             }
         }
     }
