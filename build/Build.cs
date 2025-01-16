@@ -426,6 +426,12 @@ namespace Calamari.Build
                                 foreach (var project in commonProjects)
                                     packageActions.Add(() => SignAndPack(project.ToString(), dotNetCorePackSettings));
 
+                                // Pack the Consolidation Library
+                                var consolidateCalamariPackagesProjectName = "Calamari.ConsolidateCalamariPackages";
+                                var consolidationCalamariProject = Solution.Projects.First(project => project.Name == consolidateCalamariPackagesProjectName);
+                                packageActions.Add(() => SignAndPack(consolidationCalamariProject, dotNetCorePackSettings));
+                                
+                                
                                 var sourceProjectPath =
                                     SourceDirectory / "Calamari.CloudAccounts" / "Calamari.CloudAccounts.csproj";
                                 packageActions.Add(() => SignAndPack(sourceProjectPath,
@@ -478,27 +484,27 @@ namespace Calamari.Build
                                 await RunPackActions(actions);
                             });
 
-        Target PackConsolidatedCalamari => 
-            _ => _.Description("Packs the NuGet package for Consolidated Calamari library.")
-                  .DependsOn(CalamariConsolidationTests)
-                  .Executes(() =>
-                            {
-                                (ArtifactsDirectory / "nuget").CreateDirectory();
-                                using var versionInfoFile = ModifyTemplatedVersionAndProductFilesWithValues();
-
-                                DotNetPack(p => p
-                                                .SetProject(RootDirectory / "source" / "Calamari.ConsolidateCalamariPackages" / "Calamari.ConsolidateCalamariPackages.csproj")
-                                                .SetVersion(FullSemVer)
-                                                .SetOutputDirectory(ArtifactsDirectory / "nuget")
-                                                .DisableIncludeSymbols()
-                                                .SetVerbosity(DotNetVerbosity.Normal)
-                                                .SetProperty("NuspecProperties", $"Version={FullSemVer}"));
-                            });
+        // Target PackConsolidatedCalamari => 
+        //     _ => _.Description("Packs the NuGet package for Consolidated Calamari library.")
+        //           .DependsOn(CalamariConsolidationTests)
+        //           .Executes(() =>
+        //                     {
+        //                         (ArtifactsDirectory / "nuget").CreateDirectory();
+        //                         using var versionInfoFile = ModifyTemplatedVersionAndProductFilesWithValues();
+        //
+        //                         DotNetPack(p => p
+        //                                         .SetProject(RootDirectory / "source" / "Calamari.ConsolidateCalamariPackages" / "Calamari.ConsolidateCalamariPackages.csproj")
+        //                                         .SetVersion(FullSemVer)
+        //                                         .SetOutputDirectory(ArtifactsDirectory / "nuget")
+        //                                         .DisableIncludeSymbols()
+        //                                         .SetVerbosity(DotNetVerbosity.Normal)
+        //                                         .SetProperty("NuspecProperties", $"Version={FullSemVer}"));
+        //                     });
         
         Target Pack =>
             _ => _.DependsOn(PackTests)
                   .DependsOn(PackBinaries)
-                  .DependsOn(PackConsolidatedCalamari)
+                  //.DependsOn(PackConsolidatedCalamari)
                   .DependsOn(PackLegacyCalamari);
 
         Target CopyToLocalPackages =>
