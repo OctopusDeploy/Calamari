@@ -1,9 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
+        <RootNamespace>Octopus.Calamari.ConsolidatedPackage</RootNamespace>
+        <AssemblyName>Octopus.Calamari.ConsolidatedPackage</AssemblyName>
         <TargetFramework>net6.0</TargetFramework>
         <LangVersion>default</LangVersion>
         <IsPackable>true</IsPackable>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     </PropertyGroup>
 
     <ItemGroup>
