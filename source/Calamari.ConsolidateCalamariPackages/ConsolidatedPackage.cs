@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using SharpCompress.Archives.Zip;
 
-namespace Calamari.ConsolidateCalamariPackages
+namespace Octopus.Calamari.ConsolidatedPackage
 {
     public interface IConsolidatedPackage
     {
@@ -12,16 +12,16 @@ namespace Calamari.ConsolidateCalamariPackages
 
         public IEnumerable<(string package, string version)> GetAvailablePackages();
 
-        public ConsolidateCalamariPackages.ConsolidatedPackageIndex.Package GetPackage(string calamariFlavour);
+        public ConsolidatedPackageIndex.Package GetPackage(string calamariFlavour);
 
     }
     
     public class ConsolidatedPackage : IConsolidatedPackage
     {
-        readonly ConsolidateCalamariPackages.ConsolidatedPackageIndex index;
+        readonly ConsolidatedPackageIndex index;
         readonly IConsolidatedPackageStreamProvider packageStreamProvider;
         
-        public ConsolidatedPackage(IConsolidatedPackageStreamProvider packageStreamProvider, ConsolidateCalamariPackages.ConsolidatedPackageIndex index)
+        public ConsolidatedPackage(IConsolidatedPackageStreamProvider packageStreamProvider, ConsolidatedPackageIndex index)
         {
             this.packageStreamProvider = packageStreamProvider;
             this.index = index;
@@ -32,7 +32,7 @@ namespace Calamari.ConsolidateCalamariPackages
             return index.Packages.Values.Select(v => (v.PackageId, v.Version));
         }
 
-        public ConsolidateCalamariPackages.ConsolidatedPackageIndex.Package GetPackage(string calamariFlavour) => index.GetEntryFromIndex(calamariFlavour);
+        public ConsolidatedPackageIndex.Package GetPackage(string calamariFlavour) => index.GetEntryFromIndex(calamariFlavour);
 
         public IEnumerable<(string destinationEntry, long size, Stream sourceStream)> ExtractCalamariPackage(string calamariFlavour, string platform)
         {

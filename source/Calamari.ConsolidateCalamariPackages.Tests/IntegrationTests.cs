@@ -10,6 +10,7 @@ using FluentAssertions;
 using NSubstitute;
 using NuGet.Packaging;
 using NUnit.Framework;
+using Octopus.Calamari.ConsolidatedPackage;
 using Serilog;
 using SharpCompress.Writers;
 using SharpCompress.Writers.Zip;

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Calamari.ConsolidateCalamariPackages
+namespace Octopus.Calamari.ConsolidatedPackage
 {
     class SourceFile
     {

@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 
-namespace Calamari.ConsolidateCalamariPackages;
+namespace Octopus.Calamari.ConsolidatedPackage;
 
 public class FileBasedStreamProvider : IConsolidatedPackageStreamProvider
 {
