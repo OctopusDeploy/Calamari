@@ -16,6 +16,7 @@ using Nuke.Common.Tooling;
 using Nuke.Common.Tools.DotNet;
 using Nuke.Common.Tools.GitVersion;
 using Nuke.Common.Tools.NuGet;
+using Nuke.Common.Tools.OctoVersion;
 using Nuke.Common.Utilities.Collections;
 using Serilog;
 using static Nuke.Common.IO.FileSystemTasks;
@@ -77,6 +78,19 @@ namespace Calamari.Build
 
         List<Task> ProjectCompressionTasks = new();
 
+        
+        [Parameter("Branch name for OctoVersion to use to calculate the version number. Can be set via the environment variable OCTOVERSION_CurrentBranch.",
+                      Name = "OCTOVERSION_CurrentBranch")]
+#pragma warning disable CS0414
+        readonly string BranchName = null!;
+#pragma warning restore CS0414
+        
+        [Parameter("Whether to auto-detect the branch name - this is okay for a local build, but should not be used under CI.")] readonly bool AutoDetectBranch = IsLocalBuild;
+        
+        [OctoVersion(UpdateBuildNumber = true, BranchMember = nameof(BranchName),
+                        AutoDetectBranchMember = nameof(AutoDetectBranch), Framework = "net6.0")]
+        readonly OctoVersionInfo OctoVersionInfo = null!;
+        
         public Build()
         {
             NugetVersion = new Lazy<string>(GetNugetVersion);
@@ -718,6 +732,29 @@ namespace Calamari.Build
             return IsLocalBuild && !OperatingSystem.IsWindows()
                 ? MigratedCalamariFlavours.CrossPlatformFlavours
                 : MigratedCalamariFlavours.Flavours;
+        }
+        
+        static readonly string Timestamp = DateTime.Now.ToString("yyyyMMddHHmmss");
+        
+        string FullSemVer =>
+            !IsLocalBuild
+                ? OctoVersionInfo.FullSemVer
+                : $"{OctoVersionInfo.FullSemVer}-{Timestamp}";
+        
+        //Modifies VersionInfo.cs to embed version information into the shipped product.
+        ModifiableFileWithRestoreContentsOnDispose ModifyTemplatedVersionAndProductFilesWithValues()
+        {
+            var versionInfoFilePath = SourceDirectory / "Solution Items" / "VersionInfo.cs";
+
+            var versionInfoFile = new ModifiableFileWithRestoreContentsOnDispose(versionInfoFilePath);
+
+            versionInfoFile.ReplaceRegexInFiles("AssemblyVersion\\(\".*?\"\\)", $"AssemblyVersion(\"{OctoVersionInfo.MajorMinorPatch}\")");
+            versionInfoFile.ReplaceRegexInFiles("AssemblyFileVersion\\(\".*?\"\\)", $"AssemblyFileVersion(\"{OctoVersionInfo.MajorMinorPatch}\")");
+            versionInfoFile.ReplaceRegexInFiles("AssemblyInformationalVersion\\(\".*?\"\\)", $"AssemblyInformationalVersion(\"{OctoVersionInfo.InformationalVersion}\")");
+            versionInfoFile.ReplaceRegexInFiles("AssemblyGitBranch\\(\".*?\"\\)", $"AssemblyGitBranch(\"{Git.DeriveGitBranch()}\")");
+            versionInfoFile.ReplaceRegexInFiles("AssemblyNuGetVersion\\(\".*?\"\\)", $"AssemblyNuGetVersion(\"{FullSemVer}\")");
+
+            return versionInfoFile;
         }
     }
 }
