@@ -24,32 +24,17 @@ namespace Calamari.Kubernetes
         readonly IVariables variables;
         readonly ICalamariFileSystem fileSystem;
         readonly ILog log;
-        readonly IApiResourceScopeLookup resourceScopeLookup;
+        readonly IKubernetesManifestNamespaceResolver namespaceResolver;
 
         static readonly ISerializer YamlSerializer = new SerializerBuilder()
             .Build();
 
-        public ManifestReporter(IVariables variables, ICalamariFileSystem fileSystem, ILog log, IApiResourceScopeLookup resourceScopeLookup)
+        public ManifestReporter(IVariables variables, ICalamariFileSystem fileSystem, ILog log, IKubernetesManifestNamespaceResolver namespaceResolver)
         {
             this.variables = variables;
             this.fileSystem = fileSystem;
             this.log = log;
-            this.resourceScopeLookup = resourceScopeLookup;
-        }
-
-        string GetNamespace(YamlMappingNode yamlRoot)
-        {
-            //we check to see if there is an explicit helm namespace defined first
-            //then fallback on the action/target default namespace
-            //otherwise fallback on default
-            var implicitNamespace = variables.Get(SpecialVariables.Helm.Namespace) ?? variables.Get(SpecialVariables.Namespace) ?? "default";
-
-            if (yamlRoot.Children.TryGetValue("metadata", out var metadataNode) && metadataNode is YamlMappingNode metadataMappingNode && metadataMappingNode.Children.TryGetValue("namespace", out var namespaceNode) && namespaceNode is YamlScalarNode namespaceScalarNode && !string.IsNullOrWhiteSpace(namespaceScalarNode.Value))
-            {
-                implicitNamespace = namespaceScalarNode.Value;
-            }
-
-            return implicitNamespace;
+            this.namespaceResolver = namespaceResolver;
         }
 
         public void ReportManifestFileApplied(string filePath)
@@ -103,23 +88,7 @@ namespace Calamari.Kubernetes
 
                 var updatedDocument = SerializeManifest(rootNode);
 
-                var apiResourceIdentifier = GetApiResourceIdentifier(rootNode);
-
-                var ns = GetNamespace(rootNode);
-
-                if (resourceScopeLookup.TryGetIsNamespaceScoped(apiResourceIdentifier, out var isNamespaceScoped))
-                {
-                    //if the resource is cluster scoped, remove the namespace
-                    if (!isNamespaceScoped)
-                    {
-                        ns = null;
-                    }
-                }
-                else
-                {
-                    //if we can't determine the resource scope, log a verbose message
-                    log.Verbose($"Unable to determine if resource type {apiResourceIdentifier} is namespaced. Using namespace value on the manifest.");
-                }
+                var ns = namespaceResolver.ResolveNamespace(rootNode, variables);
 
                 var message = new ServiceMessage(
                                                  SpecialVariables.ServiceMessages.ManifestApplied.Name,

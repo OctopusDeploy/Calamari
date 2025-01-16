@@ -21,16 +21,19 @@ namespace Calamari.Kubernetes.Conventions.Helm
         readonly ILog log;
         readonly IResourceStatusReportExecutor statusReporter;
         readonly IManifestReporter manifestReporter;
+        readonly IKubernetesManifestNamespaceResolver namespaceResolver;
         readonly HelmCli helmCli;
 
         public HelmManifestAndStatusReporter(ILog log,
                                              IResourceStatusReportExecutor statusReporter,
                                              IManifestReporter manifestReporter,
+                                             IKubernetesManifestNamespaceResolver namespaceResolver,
                                              HelmCli helmCli)
         {
             this.log = log;
             this.statusReporter = statusReporter;
             this.manifestReporter = manifestReporter;
+            this.namespaceResolver = namespaceResolver;
             this.helmCli = helmCli;
         }
 
@@ -155,15 +158,8 @@ namespace Calamari.Kubernetes.Conventions.Helm
 
                     var metadataNode = rootNode.GetChildNode<YamlMappingNode>("metadata");
                     var name = metadataNode.GetChildNode<YamlScalarNode>("name").Value;
-                    var @namespace = metadataNode.GetChildNodeIfExists<YamlScalarNode>("namespace")?.Value;
 
-                    //if the resource doesn't have a namespace set in the manifest set it to the helm namespace.
-                    //This is because namespaced resources that don't have the namespace defined in the manifest will be set in the namespace set in the helm command
-                    //if this is null, we'll fall back on the namespace defined for the kubectl tool (which is the default target namespace)
-                    //we aren't changing the manifest here, just changing where the kubectl looks for our resource.
-                    //We also try and filter out known non-namespaced resources
-                    if (string.IsNullOrWhiteSpace(@namespace) && !KubernetesApiResources.NonNamespacedKinds.Contains(gvk.Kind))
-                        @namespace = deployment.Variables.Get(SpecialVariables.Helm.Namespace)?.Trim();
+                    var @namespace = namespaceResolver.ResolveNamespace(rootNode, deployment.Variables);
 
                     var resourceIdentifier = new ResourceIdentifier(gvk, name, @namespace);
                     resources.Add(resourceIdentifier);

@@ -6,7 +6,7 @@ using NUnit.Framework;
 namespace Calamari.Tests.KubernetesFixtures
 {
     [TestFixture]
-    public class ApiResourceOutputParserFixture
+    public class ApiResourceOutputParserTests
     {
         [Test]
         public void ShouldParseCorrectly()
