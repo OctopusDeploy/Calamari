@@ -102,13 +102,6 @@ namespace Calamari.Kubernetes
             }
         }
 
-        static ApiResourceIdentifier GetApiResourceIdentifier(YamlMappingNode node)
-        {
-            var apiVersion = node.Children.TryGetValue("apiVersion", out var apiVersionNode) && apiVersionNode is YamlScalarNode apiVersionScalarNode ? apiVersionScalarNode.Value : null;
-            var kind = node.Children.TryGetValue("kind", out var kindNode) && kindNode is YamlScalarNode kindScalarNode ? kindScalarNode.Value : null;
-            return new ApiResourceIdentifier(apiVersion, kind);
-        }
-
         static string SerializeManifest(YamlMappingNode node)
         {
             return YamlSerializer.Serialize(node);
