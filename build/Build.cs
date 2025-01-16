@@ -246,15 +246,6 @@ namespace Calamari.Build
                                await PublishCalamariProjects(calamariProjects);
                            });
 
-        // Target PublishConsolidatedCalamari =>
-        //     _ => _.DependsOn(CalamariConsolidationTests)
-        //           .Executes(() =>
-        //                     {
-        //                         var consolidateCalamariPackages = "Calamari.ConsolidateCalamariPackages";
-        //                         var consolidateCalamariProjectAndTest = Solution.Projects.Where(project => project.Name == consolidateCalamariPackages || project.Name == $"{consolidateCalamariPackages}.Tests");
-        //                         
-        //                     })
-
         async Task PublishCalamariProjects(List<Project> projects)
         {
             // All cross-platform Target Frameworks contain dots, all NetFx Target Frameworks don't
@@ -487,9 +478,27 @@ namespace Calamari.Build
                                 await RunPackActions(actions);
                             });
 
+        Target PackConsolidatedCalamari => 
+            _ => _.Description("Packs the NuGet package for Consolidated Calamari library.")
+                  .DependsOn(CalamariConsolidationTests)
+                  .Executes(() =>
+                            {
+                                (ArtifactsDirectory / "nuget").CreateDirectory();
+                                using var versionInfoFile = ModifyTemplatedVersionAndProductFilesWithValues();
+
+                                DotNetPack(p => p
+                                                .SetProject(RootDirectory / "source" / "Calamari.ConsolidateCalamariPackages" / "Calamari.ConsolidateCalamariPackages.csproj")
+                                                .SetVersion(FullSemVer)
+                                                .SetOutputDirectory(ArtifactsDirectory / "nuget")
+                                                .DisableIncludeSymbols()
+                                                .SetVerbosity(DotNetVerbosity.Normal)
+                                                .SetProperty("NuspecProperties", $"Version={FullSemVer}"));
+                            });
+        
         Target Pack =>
             _ => _.DependsOn(PackTests)
                   .DependsOn(PackBinaries)
+                  .DependsOn(PackConsolidatedCalamari)
                   .DependsOn(PackLegacyCalamari);
 
         Target CopyToLocalPackages =>
@@ -744,7 +753,7 @@ namespace Calamari.Build
         //Modifies VersionInfo.cs to embed version information into the shipped product.
         ModifiableFileWithRestoreContentsOnDispose ModifyTemplatedVersionAndProductFilesWithValues()
         {
-            var versionInfoFilePath = SourceDirectory / "Solution Items" / "VersionInfo.cs";
+            var versionInfoFilePath = SourceDirectory / "SolutionItems" / "VersionInfo.cs";
 
             var versionInfoFile = new ModifiableFileWithRestoreContentsOnDispose(versionInfoFilePath);
 
