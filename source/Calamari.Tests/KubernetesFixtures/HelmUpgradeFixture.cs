@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading;
@@ -18,7 +17,6 @@ using Calamari.Deployment;
 using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using Calamari.Testing.Requirements;
-using Calamari.Tests.Fixtures;
 using Calamari.Tests.Helpers;
 using Calamari.Util;
 using FluentAssertions;
@@ -44,7 +42,6 @@ namespace Calamari.Tests.KubernetesFixtures
 
         static string HelmOsPlatform => CalamariEnvironment.IsRunningOnWindows ? "windows-amd64" : "linux-amd64";
 
-        HelmVersion? helmVersion;
         TemporaryDirectory explicitVersionTempDirectory;
 
         static readonly CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
@@ -59,11 +56,6 @@ namespace Calamari.Tests.KubernetesFixtures
             if (ExplicitExeVersion != null)
             {
                 await DownloadExplicitHelmExecutable();
-                helmVersion = new SemanticVersion(ExplicitExeVersion).Major == 2 ? HelmVersion.V2 : HelmVersion.V3;
-            }
-            else
-            {
-                helmVersion = GetVersion();
             }
 
             async Task DownloadExplicitHelmExecutable()
@@ -112,7 +104,6 @@ namespace Calamari.Tests.KubernetesFixtures
 
             //Helm Options
             Variables.Set(Kubernetes.SpecialVariables.Helm.ReleaseName, ReleaseName);
-            Variables.Set(Kubernetes.SpecialVariables.Helm.ClientVersion, helmVersion.ToString());
 
             //K8S Auth
             Variables.Set(Kubernetes.SpecialVariables.ClusterUrl, ServerUrl);
@@ -407,18 +398,8 @@ namespace Calamari.Tests.KubernetesFixtures
             Variables.Set(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.CustomScripts);
         }
 
-        string DeleteCommand(string @namespace, string releaseName)
-        {
-            switch (helmVersion)
-            {
-                case HelmVersion.V2:
-                    return $"delete {releaseName} --purge";
-                case HelmVersion.V3:
-                    return $"uninstall {releaseName} --namespace {@namespace}";
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(helmVersion), helmVersion, "Unrecognized Helm version");
-            }
-        }
+        static string DeleteCommand(string @namespace, string releaseName) 
+            => $"uninstall {releaseName} --namespace {@namespace}";
 
         protected CalamariResult DeployPackage(string packageName = null)
         {
@@ -451,7 +432,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 }
             }
         }
-
+        
         static HelmVersion GetVersion()
         {
             StringBuilder stdout = new StringBuilder();

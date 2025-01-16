@@ -68,20 +68,8 @@ namespace Calamari.Kubernetes.Conventions
             var packagePath = GetChartLocation(deployment);
 
             var customHelmExecutable = CustomHelmExecutableFullPath(deployment.Variables, deployment.CurrentDirectory);
-            var helmVersion = GetVersion(deployment.Variables);
-            CheckHelmToolVersion(customHelmExecutable, helmVersion);
 
-            if (helmVersion == HelmVersion.V2)
-            {
-                if (FeatureToggle.PreventHelmV2DeploymentsFeatureToggle.IsEnabled(deployment.Variables))
-                {
-                    throw new CommandException("Helm V2 is no longer supported. Please migrate to Helm V3.");
-                }
-                else
-                {
-                    log.Warn("This step is currently configured to use Helm V2. Support for Helm V2 will be completely removed in Octopus Server 2025.1. Please migrate to Helm V3 as soon as possible.");
-                }
-            }
+            AssertHelmV3(customHelmExecutable);
 
             var sb = new StringBuilder();
 
@@ -89,12 +77,6 @@ namespace Calamari.Kubernetes.Conventions
             sb.Append($" upgrade --install");
             SetNamespaceParameter(deployment, sb);
             SetResetValuesParameter(deployment, sb);
-            if (helmVersion == HelmVersion.V2)
-            {
-                SetTillerTimeoutParameter(deployment, sb);
-                SetTillerNamespaceParameter(deployment, sb);
-            }
-
             SetTimeoutParameter(deployment, sb);
             SetValuesParameters(deployment, sb);
             SetAdditionalArguments(deployment, sb);
@@ -102,16 +84,6 @@ namespace Calamari.Kubernetes.Conventions
 
             log.Verbose(sb.ToString());
             return sb.ToString();
-        }
-
-        HelmVersion GetVersion(IVariables variables)
-        {
-            var clientVersionText = variables.Get(SpecialVariables.Helm.ClientVersion);
-
-            if (Enum.TryParse(clientVersionText, out HelmVersion version))
-                return version;
-
-            throw new CommandException($"Unrecognized Helm version: '{clientVersionText}'");
         }
 
         void SetExecutable(StringBuilder sb, ScriptSyntax syntax, string customHelmExecutable)
@@ -211,14 +183,6 @@ namespace Calamari.Kubernetes.Conventions
             }
         }
 
-        static void SetTillerNamespaceParameter(RunningDeployment deployment, StringBuilder sb)
-        {
-            if (deployment.Variables.IsSet(SpecialVariables.Helm.TillerNamespace))
-            {
-                sb.Append($" --tiller-namespace \"{deployment.Variables.Get(SpecialVariables.Helm.TillerNamespace)}\"");
-            }
-        }
-
         static void SetTimeoutParameter(RunningDeployment deployment, StringBuilder sb)
         {
             if (!deployment.Variables.IsSet(SpecialVariables.Helm.Timeout)) return;
@@ -233,20 +197,7 @@ namespace Calamari.Kubernetes.Conventions
             sb.Append($" --timeout \"{timeout}\"");
         }
 
-        static void SetTillerTimeoutParameter(RunningDeployment deployment, StringBuilder sb)
-        {
-            if (!deployment.Variables.IsSet(SpecialVariables.Helm.TillerTimeout)) return;
-
-            var tillerTimeout = deployment.Variables.Get(SpecialVariables.Helm.TillerTimeout);
-            if (!int.TryParse(tillerTimeout, out _))
-            {
-                throw new CommandException($"Tiller timeout period is not a valid integer: {tillerTimeout}");
-            }
-
-            sb.Append($" --tiller-connection-timeout \"{tillerTimeout}\"");
-        }
-
-        string SyntaxSpecificFileName(RunningDeployment deployment, ScriptSyntax syntax)
+        static string SyntaxSpecificFileName(RunningDeployment deployment, ScriptSyntax syntax)
         {
             return Path.Combine(deployment.CurrentDirectory, syntax == ScriptSyntax.PowerShell ? "Calamari.HelmUpgrade.ps1" : "Calamari.HelmUpgrade.sh");
         }
@@ -399,12 +350,10 @@ namespace Calamari.Kubernetes.Conventions
 
             return fileName != null;
         }
-
-        void CheckHelmToolVersion(string customHelmExecutable, HelmVersion selectedVersion)
+        
+        void AssertHelmV3(string customHelmExecutable)
         {
-            log.Verbose($"Helm version selected: {selectedVersion}");
-
-            StringBuilder stdout = new StringBuilder();
+            var stdout = new StringBuilder();
             var result = SilentProcessRunner.ExecuteCommand(customHelmExecutable ?? "helm",
                                                             "version --client --short",
                                                             Environment.CurrentDirectory,
@@ -412,14 +361,22 @@ namespace Calamari.Kubernetes.Conventions
                                                             error => { });
 
             if (result.ExitCode != 0)
+            {
                 log.Warn("Unable to retrieve the Helm tool version");
-
+                return;
+            }
+            
             var toolVersion = HelmVersionParser.ParseVersion(stdout.ToString());
             if (!toolVersion.HasValue)
+            {
                 log.Warn("Unable to parse the Helm tool version text: " + stdout);
+                return;
+            }
 
-            if (toolVersion.Value != selectedVersion)
-                log.Warn($"The Helm tool version '{toolVersion.Value}' ('{stdout}') doesn't match the Helm version selected '{selectedVersion}'");
+            if (toolVersion.Value != HelmVersion.V3)
+            {
+                throw new CommandException("Helm V2 is no longer supported. Please migrate to Helm V3.");
+            }
         }
     }
 }
