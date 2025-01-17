@@ -1,5 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
+using Azure.ResourceManager.AppService;
+using Azure.ResourceManager.Resources;
+using Calamari.Azure;
+using Calamari.Azure.AppServices;
 using Calamari.CloudAccounts;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Logging;
@@ -13,7 +18,7 @@ namespace Calamari.AzureWebApp
     {
         readonly ILog log;
 
-        Dictionary<string, string> portalLinks = new Dictionary<string, string>
+        readonly Dictionary<string, string> portalLinks = new Dictionary<string, string>
         {
             { "AzureGlobalCloud", "portal.azure.com" },
             { "AzureChinaCloud", "portal.azure.cn" },

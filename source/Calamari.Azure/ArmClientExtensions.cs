@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -6,11 +7,10 @@ using Azure;
 using Azure.ResourceManager;
 using Azure.ResourceManager.AppService;
 using Azure.ResourceManager.AppService.Models;
-using Calamari.AzureAppService.Azure;
-using Calamari.AzureAppService.Json;
+using Calamari.Azure.AppServices;
 using Octopus.CoreUtilities.Extensions;
 
-namespace Calamari.AzureAppService
+namespace Calamari.Azure
 {
     ///<summary>
     /// Provides a set of static methods for interacting with an <see cref="ArmClient"/> using an <see cref="AzureTargetSite"/>.

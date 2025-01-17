@@ -112,7 +112,7 @@ namespace Calamari.Build
         static AbsolutePath LocalPackagesDirectory => RootDirectory / "../LocalPackages";
         static AbsolutePath ConsolidateCalamariPackagesProject => SourceDirectory / "Calamari.ConsolidateCalamariPackages.Tests" / "Calamari.ConsolidateCalamariPackages.Tests.csproj";
         static AbsolutePath ConsolidatedPackageDirectory => ArtifactsDirectory / "consolidated";
-        static AbsolutePath LegacyCalamariDirectory = PublishDirectory / "Calamari.Legacy";
+        static AbsolutePath LegacyCalamariDirectory => PublishDirectory / "Calamari.Legacy";
 
         Lazy<string> NugetVersion { get; }
 
@@ -189,6 +189,7 @@ namespace Calamari.Build
 
         Target Publish =>
             _ => _.DependsOn(Compile)
+                  .DependsOn(PublishAzureWebAppNetCoreShim)
                   .Executes(() =>
                             {
                                 if (!OperatingSystem.IsWindows())
@@ -329,11 +330,10 @@ namespace Calamari.Build
             }
 
             File.Copy(RootDirectory / "global.json", outputDirectory / "global.json");
-
         }
-        
-        static void StageLegacyCalamariAssemblies(CalamariPackageMetadata[] packagesToPublish) {
 
+        static void StageLegacyCalamariAssemblies(CalamariPackageMetadata[] packagesToPublish)
+        {
             if (!OperatingSystem.IsWindows())
             {
                 Log.Warning($"Skipping the bundling of Calamari projects into the Calamari.Legacy bundle. "
@@ -367,6 +367,33 @@ namespace Calamari.Build
             ProjectCompressionTasks.Add(compressionTask);
         }
 
+        Target PublishAzureWebAppNetCoreShim =>
+            _ => _.DependsOn(Compile)
+                  .Executes(() =>
+                            {
+                                if (!OperatingSystem.IsWindows())
+                                {
+                                    Log.Warning("Unable to build Calamari.AzureWebApp.NetCoreShim as it's a Full Framework application and can only be compiled on Windows");
+                                    return;
+                                }
+
+                                var project = Solution.GetProject("Calamari.AzureWebApp.NetCoreShim");
+
+                                var outputPath = PublishDirectory / project.Name;
+
+                                DotNetPublish(s => s
+                                                   .SetConfiguration(Configuration)
+                                                   .SetProject(project.Path)
+                                                   .SetFramework(Frameworks.Net462)
+                                                   .EnableNoBuild()
+                                                   .SetOutput(outputPath));
+
+                                var archivePath = SourceDirectory / "Calamari.AzureWebApp" / "netcoreshim" / "netcoreshim.zip";
+                                archivePath.DeleteFile();
+
+                                outputPath.CompressTo(archivePath);
+                            });
+
         Target PackLegacyCalamari =>
             _ => _.DependsOn(Publish)
                   .DependsOn(PublishCalamariFlavourProjects)
@@ -376,6 +403,7 @@ namespace Calamari.Build
                                 {
                                     return;
                                 }
+
                                 Log.Verbose($"Compressing Calamari.Legacy");
                                 LegacyCalamariDirectory.ZipTo(ArtifactsDirectory / $"Calamari.Legacy.{NugetVersion.Value}.zip");
                             });
@@ -615,7 +643,8 @@ namespace Calamari.Build
                                 .SetVersion(NugetVersion.Value)
                                 .SetVerbosity(BuildVerbosity)
                                 .SetRuntime(runtimeId)
-                                .SetVersion(version));
+                                .SetVersion(version)
+                                .EnableSelfContained());
 
             if (WillSignBinaries)
                 Signing.SignAndTimestampBinaries(publishedTo, AzureKeyVaultUrl, AzureKeyVaultAppId,
@@ -691,8 +720,8 @@ namespace Calamari.Build
         void SetOctopusServerCalamariVersion(string projectFile)
         {
             var text = File.ReadAllText(projectFile);
-            text = Regex.Replace(text, @"<PackageReference Include=""Calamari.Consolidated"" Version=""([\S])+""",
-                                 $"<PackageReference Include=\"Calamari.Consolidated\" Version=\"{NugetVersion.Value}\"");
+            text = Regex.Replace(text, @"<PackageReference Include=""Calamari.Consolidated"" Version=""([\S])+"" />",
+                                 $"<PackageReference Include=\"Calamari.Consolidated\" Version=\"{NugetVersion.Value}\" />");
             File.WriteAllText(projectFile, text);
         }
 
@@ -717,11 +746,7 @@ namespace Calamari.Build
             return runtimes ?? Array.Empty<string>();
         }
 
-        static List<string> GetCalamariFlavours()
-        {
-            return IsLocalBuild && !OperatingSystem.IsWindows()
-                ? MigratedCalamariFlavours.CrossPlatformFlavours
-                : MigratedCalamariFlavours.Flavours;
-        }
+        //All libraries/flavours now support .NET Core
+        static List<string> GetCalamariFlavours() => CalamariPackages.Flavours;
     }
 }
