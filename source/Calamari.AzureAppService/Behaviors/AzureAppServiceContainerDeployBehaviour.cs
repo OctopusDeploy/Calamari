@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Azure.ResourceManager;
 using Azure.ResourceManager.AppService;
 using Calamari.Azure;
+using Calamari.Azure.AppServices;
 using Calamari.AzureAppService.Azure;
 using Calamari.CloudAccounts;
 using Calamari.Common.Commands;
