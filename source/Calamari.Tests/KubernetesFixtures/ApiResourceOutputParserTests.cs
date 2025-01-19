@@ -43,7 +43,17 @@ namespace Calamari.Tests.KubernetesFixtures
             var parsedResult = ApiResourceOutputParser.ParseKubectlApiResourceOutput(outputLines);
 
             parsedResult.Should()
-                        .NotBeEmpty();
+                        .Contain(new ApiResourceIdentifier("v1", "Binding"), true)
+                        .And
+                        .Contain(new ApiResourceIdentifier("v1", "Namespace"), false)
+                        .And
+                        .Contain(new ApiResourceIdentifier("v1", "ResourceQuota"), true)
+                        .And
+                        .Contain(new ApiResourceIdentifier("admissionregistration.k8s.io/v1", "MutatingWebhookConfiguration"), false)
+                        .And
+                        .Contain(new ApiResourceIdentifier("apiextensions.k8s.io/v1", "CustomResourceDefinition"), false)
+                        .And
+                        .Contain(new ApiResourceIdentifier("apps/v1", "ControllerRevision"), true);
         }
     }
 }
