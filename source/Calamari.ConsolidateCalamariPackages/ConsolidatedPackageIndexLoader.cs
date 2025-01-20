@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using Calamari.ConsolidateCalamariPackages.Api;
 using Newtonsoft.Json;
 using SharpCompress.Archives.Zip;
 
@@ -8,7 +9,7 @@ namespace Octopus.Calamari.ConsolidatedPackage
 {
     public class ConsolidatedPackageIndexLoader
     {
-        public ConsolidatedPackageIndex Load(Stream zipStream)
+        public IConsolidatedPackageIndex Load(Stream zipStream)
         {
             using var zip = ZipArchive.Open(zipStream);
             var entry = zip.Entries.First(e => e.Key == "index.json");
@@ -21,7 +22,7 @@ namespace Octopus.Calamari.ConsolidatedPackage
             return From(entryStream);
         }
 
-        ConsolidatedPackageIndex From(Stream inputStream)
+        IConsolidatedPackageIndex From(Stream inputStream)
         {
             using (var sr = new StreamReader(inputStream))
             {

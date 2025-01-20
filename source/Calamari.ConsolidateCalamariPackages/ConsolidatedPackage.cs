@@ -2,41 +2,26 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Calamari.ConsolidateCalamariPackages.Api;
 using SharpCompress.Archives.Zip;
 
 namespace Octopus.Calamari.ConsolidatedPackage
 {
-    public interface IConsolidatedPackage
-    {
-        public IEnumerable<(string destinationEntry, long size, Stream sourceStream)> ExtractCalamariPackage(string calamariFlavour, string platform);
-
-        public IEnumerable<(string package, string version)> GetAvailablePackages();
-
-        public ConsolidatedPackageIndex.Package GetPackage(string calamariFlavour);
-
-    }
-    
     public class ConsolidatedPackage : IConsolidatedPackage
     {
-        readonly ConsolidatedPackageIndex index;
         readonly IConsolidatedPackageStreamProvider packageStreamProvider;
         
-        public ConsolidatedPackage(IConsolidatedPackageStreamProvider packageStreamProvider, ConsolidatedPackageIndex index)
+        public ConsolidatedPackage(IConsolidatedPackageStreamProvider packageStreamProvider, IConsolidatedPackageIndex index)
         {
             this.packageStreamProvider = packageStreamProvider;
-            this.index = index;
-        }
-        
-        public IEnumerable<(string package, string version)> GetAvailablePackages()
-        {
-            return index.Packages.Values.Select(v => (v.PackageId, v.Version));
+            Index = index;
         }
 
-        public ConsolidatedPackageIndex.Package GetPackage(string calamariFlavour) => index.GetEntryFromIndex(calamariFlavour);
+        public IConsolidatedPackageIndex Index { get; }
 
-        public IEnumerable<(string destinationEntry, long size, Stream sourceStream)> ExtractCalamariPackage(string calamariFlavour, string platform)
+        public IEnumerable<(string entryName, long size, Stream sourceStream)> ExtractCalamariPackage(string calamariFlavour, string platform)
         {
-            var entry = index.GetEntryFromIndex(calamariFlavour);
+            var entry = Index.GetPackage(calamariFlavour);
 
             if (!entry.PlatformFiles.TryGetValue(platform, out var platformFiles))
             {

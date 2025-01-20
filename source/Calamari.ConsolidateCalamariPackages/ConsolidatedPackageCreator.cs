@@ -4,6 +4,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Text;
+using Calamari.ConsolidateCalamariPackages.Api;
 using Newtonsoft.Json;
 
 namespace Octopus.Calamari.ConsolidatedPackage
@@ -45,12 +46,12 @@ namespace Octopus.Calamari.ConsolidatedPackage
         private static void WriteIndexTo(Stream stream, IEnumerable<SourceFile> sourceFiles)
         {
             // SHould break out entryName to a function - make first class
-            Dictionary<string, FileTransfer[]> GroupByPlatform(IEnumerable<SourceFile> filesForPackage)
+            Dictionary<string, IConsolidatedPackageIndex.FileTransfer[]> GroupByPlatform(IEnumerable<SourceFile> filesForPackage)
                 => filesForPackage
                    .GroupBy(f => f.Platform)
                    .ToDictionary(
                                  g => g.Key,
-                                 g => g.Select(f => new FileTransfer(f.EntryNameInConsolidationArchive(), f.FullNameInDestinationArchive)).ToArray() 
+                                 g => g.Select(f => new IConsolidatedPackageIndex.FileTransfer(f.EntryNameInConsolidationArchive(), f.FullNameInDestinationArchive)).ToArray() 
                     );
             
             var index = new ConsolidatedPackageIndex(
@@ -58,7 +59,7 @@ namespace Octopus.Calamari.ConsolidatedPackage
                     .GroupBy(i => new {i.PackageId, i.Version, i.IsNupkg })
                     .ToDictionary(
                         g => g.Key.PackageId,
-                        g => new ConsolidatedPackageIndex.Package(
+                        g => new IConsolidatedPackageIndex.Package(
                             g.Key.PackageId,
                             g.Key.Version,
                             g.Key.IsNupkg,

@@ -117,7 +117,7 @@ namespace Calamari.ConsolidateCalamariPackages.Tests
                     {
                         foreach (var entry in consolidatedPackage.ExtractCalamariPackage(flavour, platform))
                         {
-                            dest.Write(entry.destinationEntry, entry.sourceStream);
+                            dest.Write(entry.entryName, entry.sourceStream);
                         }
                     }
                 }

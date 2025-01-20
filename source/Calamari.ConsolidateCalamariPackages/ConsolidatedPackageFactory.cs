@@ -1,5 +1,5 @@
-
 using System;
+using Calamari.ConsolidateCalamariPackages.Api;
 using Octopus.Calamari.ConsolidatedPackage;
 
 namespace Octopus.Calamari.ConsolidatedPackage
@@ -7,8 +7,8 @@ namespace Octopus.Calamari.ConsolidatedPackage
     public class ConsolidatedPackageFactory
     {
         readonly ConsolidatedPackageIndexLoader indexLoader = new();
-        
-        public ConsolidatedPackage LoadFrom(IConsolidatedPackageStreamProvider streamProvider)
+
+        public IConsolidatedPackage LoadFrom(IConsolidatedPackageStreamProvider streamProvider)
         {
             using (var stream = streamProvider.OpenStream())
             {

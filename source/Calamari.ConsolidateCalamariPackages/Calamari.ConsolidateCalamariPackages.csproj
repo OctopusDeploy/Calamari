@@ -13,5 +13,8 @@
       <PackageReference Include="Serilog" Version="2.10.0" />
       <PackageReference Include="SharpCompress" Version="0.37.2" />
     </ItemGroup>
+    <ItemGroup>
+      <ProjectReference Include="..\Calamari.ConsolidateCalamariPackages.Api\Calamari.ConsolidateCalamariPackages.Api.csproj" />
+    </ItemGroup>
 
 </Project>

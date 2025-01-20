@@ -1,20 +1,20 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Calamari.ConsolidateCalamariPackages.Api;
 
 namespace Octopus.Calamari.ConsolidatedPackage
 {
-    public class ConsolidatedPackageIndex
+    public class ConsolidatedPackageIndex : IConsolidatedPackageIndex
     {
-        public ConsolidatedPackageIndex(Dictionary<string, Package> packages)
+        public ConsolidatedPackageIndex(Dictionary<string, IConsolidatedPackageIndex.Package> packages)
         {
-            Packages  = new Dictionary<string, Package>(packages, StringComparer.OrdinalIgnoreCase);
+            Packages  = new Dictionary<string, IConsolidatedPackageIndex.Package>(packages, StringComparer.OrdinalIgnoreCase);
         }
 
-        public IReadOnlyDictionary<string, Package> Packages { get; init;  } 
-        public IEnumerable<(string package, string version)> GetPackageVersions() => Packages.Values.Select(v => (v.PackageId, v.Version));
+        IReadOnlyDictionary<string, IConsolidatedPackageIndex.Package> Packages { get; init;  } 
 
-        public Package GetEntryFromIndex(string id)
+        public IConsolidatedPackageIndex.Package GetPackage(string id)
         {
             if (!Packages.TryGetValue(id, out var indexPackage))
             {
@@ -23,23 +23,10 @@ namespace Octopus.Calamari.ConsolidatedPackage
 
             return indexPackage;
         }
-
-        public class Package
+        
+        public IEnumerable<(string package, string version)> GetAvailablePackages()
         {
-            public Package(string packageId, string version, bool isNupkg, Dictionary<string, FileTransfer[]> platformFiles)
-            {
-                PackageId = packageId;
-                Version = version;
-                IsNupkg = isNupkg;
-                PlatformFiles = new Dictionary<string, FileTransfer[]>(platformFiles, StringComparer.OrdinalIgnoreCase);
-            }
-
-            public string PackageId { get; }
-            public string Version { get; }
-            public bool IsNupkg { get; }
-            public Dictionary<string, FileTransfer[]> PlatformFiles { get; }
+            return Packages.Values.Select(v => (v.PackageId, v.Version));
         }
     }
-    
-    public record FileTransfer(string Source, string Destination);
 }
