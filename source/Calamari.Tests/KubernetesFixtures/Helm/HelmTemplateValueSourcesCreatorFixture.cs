@@ -22,6 +22,20 @@ namespace Calamari.Tests.KubernetesFixtures.Helm
     public class HelmTemplateValueSourcesCreatorFixture
     {
         static readonly string RootDir = Path.Combine("root", "staging");
+        
+        const string ExampleJson = @"{
+  ""name"": ""Test User"",
+  ""id"": 1
+}";
+
+        const string ExampleYaml = @"replicas: 3
+config:
+  'min-replicas-to-write': 1
+  ""string-quoted-key"": ""string-quoted-value""
+  numbers:
+   - 42
+   - 3
+";
 
         [Test]
         public void ParseTemplateValuesFilesFromAllSources_ChartSourceButIncorrectScriptSource_ShouldThrowArgumentException()
@@ -172,6 +186,71 @@ secondary.Development.yaml"
                          }.Select(f => Path.Combine(RootDir, f)));
             }
         }
+        
+        [Test]
+        public void ParseTemplateValuesFilesFromAllSources_InlineYaml_CorrectlyParsesWithVariableSubstitution()
+        {
+            // Arrange
+            var templateValuesSourcesJson = JsonConvert.SerializeObject(new HelmTemplateValueSourcesParser.TemplateValuesSource[]
+                                                                        {
+                                                                            new HelmTemplateValueSourcesParser.InlineYamlTemplateValuesSource
+                                                                            {
+                                                                                Value = "#{MyExampleJson}"
+                                                                            },
+                                                                            new HelmTemplateValueSourcesParser.InlineYamlTemplateValuesSource
+                                                                            {
+                                                                                Value = "colors: #{JsonArray}"
+                                                                            },
+                                                                            new HelmTemplateValueSourcesParser.InlineYamlTemplateValuesSource
+                                                                            {
+                                                                                Value = "#{Service.HelmYaml}"
+                                                                            },
+                                                                        },
+                                                                        Formatting.None);
+            
+            
+            var variables = new CalamariVariables
+            {
+                ["MyExampleJson"] = ExampleJson,
+                ["JsonArray"] = @"[""red"",""green"",""blue""]",
+                ["Service.HelmYaml"] = ExampleYaml,
+                [SpecialVariables.Helm.TemplateValuesSources] = templateValuesSourcesJson,
+                [KnownVariables.OriginalPackageDirectoryPath] = RootDir,
+                [ScriptVariables.ScriptSource] = ScriptVariables.ScriptSourceOptions.Package,
+                [PackageVariables.IndexedPackageId(string.Empty)] = "mychart",
+                [PackageVariables.IndexedPackageVersion(string.Empty)] = "0.3.8"
+            };
+
+            var deployment = new RunningDeployment(variables)
+            {
+                CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory
+            };
+
+            var fileSystem = Substitute.For<ICalamariFileSystem>();
+            fileSystem.EnumerateFilesWithGlob(Arg.Any<string>(), Arg.Any<string>())
+                      .Returns(ci => ci.ArgAt<string[]>(1)
+                                       ?.Select(x => Path.Combine(deployment.CurrentDirectory, x))
+                                       .ToArray());
+            
+            var sut = new HelmTemplateValueSourcesParser(fileSystem, new SilentLog());
+
+            // Act
+            var filenames = sut.ParseAndWriteTemplateValuesFilesFromAllSources(deployment);
+
+            // Assert
+            using (var _ = new AssertionScope())
+            {
+                var filename1 = Path.Combine(RootDir, InlineYamlValuesFileWriter.GetFileName(0));
+                var filename2 = Path.Combine(RootDir, InlineYamlValuesFileWriter.GetFileName(1));
+                var filename3 = Path.Combine(RootDir, InlineYamlValuesFileWriter.GetFileName(2));
+                
+                filenames.Should().BeEquivalentTo(filename1, filename2, filename3);
+                
+                fileSystem.Received().WriteAllText(filename1,ExampleJson);
+                fileSystem.Received().WriteAllText(filename2, @"colors: [""red"",""green"",""blue""]");
+                fileSystem.Received().WriteAllText(filename3, ExampleYaml);
+            }
+        }
 
         [Test]
         public void ParseTemplateValuesFilesFromAllSources_ChartGitRepositoryAndInlineAndKeyValues_CorrectlyParsesAndWritesAndOrdersFiles()
@@ -281,6 +360,10 @@ secondary.Development.yaml"
                                                                             {
                                                                                 Value = @"yes: '1234'"
                                                                             },
+                                                                            new HelmTemplateValueSourcesParser.InlineYamlTemplateValuesSource
+                                                                            {
+                                                                                Value = @"#{MyExampleJson}"
+                                                                            },
                                                                             new HelmTemplateValueSourcesParser.KeyValuesTemplateValuesSource
                                                                             {
                                                                                 Value = new Dictionary<string, object>
@@ -293,6 +376,7 @@ secondary.Development.yaml"
 
             var variables = new CalamariVariables
             {
+                ["MyExampleJson"] = ExampleJson,
                 [SpecialVariables.Helm.TemplateValuesSources] = templateValuesSourcesJson,
                 [KnownVariables.OriginalPackageDirectoryPath] = RootDir,
                 [ScriptVariables.ScriptSource] = ScriptVariables.ScriptSourceOptions.GitRepository,
