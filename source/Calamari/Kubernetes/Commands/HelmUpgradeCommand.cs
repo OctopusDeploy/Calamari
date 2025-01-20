@@ -41,6 +41,7 @@ namespace Calamari.Kubernetes.Commands
         readonly IResourceStatusReportExecutor statusExecutor;
         readonly ICommandLineRunner commandLineRunner;
         readonly IManifestReporter manifestReporter;
+        readonly IKubernetesManifestNamespaceResolver namespaceResolver;
         readonly Kubectl kubectl;
 
         public HelmUpgradeCommand(
@@ -54,6 +55,7 @@ namespace Calamari.Kubernetes.Commands
             HelmTemplateValueSourcesParser templateValueSourcesParser,
             IResourceStatusReportExecutor statusExecutor,
             IManifestReporter manifestReporter,
+            IKubernetesManifestNamespaceResolver namespaceResolver,
             Kubectl kubectl)
         {
             Options.Add("package=", "Path to the NuGet package to install.", v => pathToPackage = new PathToPackage(Path.GetFullPath(v)));
@@ -66,6 +68,7 @@ namespace Calamari.Kubernetes.Commands
             this.templateValueSourcesParser = templateValueSourcesParser;
             this.statusExecutor = statusExecutor;
             this.manifestReporter = manifestReporter;
+            this.namespaceResolver = namespaceResolver;
             this.kubectl = kubectl;
             this.commandLineRunner = commandLineRunner;
         }
@@ -147,6 +150,7 @@ namespace Calamari.Kubernetes.Commands
                                                      templateValueSourcesParser,
                                                      statusExecutor,
                                                      manifestReporter,
+                                                     namespaceResolver,
                                                      kubectl)
                 };
             }

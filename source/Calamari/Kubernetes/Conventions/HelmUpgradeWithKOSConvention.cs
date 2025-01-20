@@ -23,6 +23,7 @@ namespace Calamari.Kubernetes.Conventions
         readonly HelmTemplateValueSourcesParser valueSourcesParser;
         readonly IResourceStatusReportExecutor statusReporter;
         readonly IManifestReporter manifestReporter;
+        readonly IKubernetesManifestNamespaceResolver namespaceResolver;
         readonly Kubectl kubectl;
 
         public HelmUpgradeWithKOSConvention(ILog log,
@@ -31,6 +32,7 @@ namespace Calamari.Kubernetes.Conventions
                                             HelmTemplateValueSourcesParser valueSourcesParser,
                                             IResourceStatusReportExecutor statusReporter,
                                             IManifestReporter manifestReporter,
+                                            IKubernetesManifestNamespaceResolver namespaceResolver,
                                             Kubectl kubectl)
         {
             this.log = log;
@@ -39,6 +41,7 @@ namespace Calamari.Kubernetes.Conventions
             this.valueSourcesParser = valueSourcesParser;
             this.statusReporter = statusReporter;
             this.manifestReporter = manifestReporter;
+            this.namespaceResolver = namespaceResolver;
             this.kubectl = kubectl;
         }
 
@@ -70,7 +73,7 @@ namespace Calamari.Kubernetes.Conventions
 
             var manifestAndStatusCheckTask = Task.Run(async () =>
                                                       {
-                                                          var runner = new HelmManifestAndStatusReporter(log, statusReporter, manifestReporter, helmCli);
+                                                          var runner = new HelmManifestAndStatusReporter(log, statusReporter, manifestReporter, namespaceResolver, helmCli);
 
                                                           await runner.StartBackgroundMonitoringAndReporting(deployment,
                                                                                releaseName,
