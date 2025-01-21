@@ -419,11 +419,9 @@ namespace Calamari.Build
                                 foreach (var project in commonProjects)
                                     packageActions.Add(() => SignAndPack(project.ToString(), dotNetCorePackSettings));
 
-                                // Pack the Consolidation Library
-                                var consolidateCalamariPackagesProjectName = "Calamari.ConsolidateCalamariPackages";
-                                var consolidationCalamariProject = Solution.Projects.First(project => project.Name == consolidateCalamariPackagesProjectName);
-                                packageActions.Add(() => SignAndPack(consolidationCalamariProject, dotNetCorePackSettings));
-                                
+                                // Pack the Consolidation Libraries
+                                var consolidateCalamariPackagesProjectPrefix = "Calamari.ConsolidateCalamariPackages";
+                                Solution.Projects.Where(project => project.Name.StartsWith(consolidateCalamariPackagesProjectPrefix)).ForEach(p => packageActions.Add(() => SignAndPack(p, dotNetCorePackSettings)));
                                 
                                 var sourceProjectPath =
                                     SourceDirectory / "Calamari.CloudAccounts" / "Calamari.CloudAccounts.csproj";
