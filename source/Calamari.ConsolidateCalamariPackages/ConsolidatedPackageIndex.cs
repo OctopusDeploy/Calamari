@@ -12,7 +12,7 @@ namespace Octopus.Calamari.ConsolidatedPackage
             Packages  = new Dictionary<string, IConsolidatedPackageIndex.Package>(packages, StringComparer.OrdinalIgnoreCase);
         }
 
-        IReadOnlyDictionary<string, IConsolidatedPackageIndex.Package> Packages { get; init;  } 
+        public IReadOnlyDictionary<string, IConsolidatedPackageIndex.Package> Packages { get; init; }
 
         public IConsolidatedPackageIndex.Package GetPackage(string id)
         {
