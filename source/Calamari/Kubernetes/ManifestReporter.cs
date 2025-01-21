@@ -24,27 +24,17 @@ namespace Calamari.Kubernetes
         readonly IVariables variables;
         readonly ICalamariFileSystem fileSystem;
         readonly ILog log;
+        readonly IKubernetesManifestNamespaceResolver namespaceResolver;
 
         static readonly ISerializer YamlSerializer = new SerializerBuilder()
-                                                     .Build();
+            .Build();
 
-        public ManifestReporter(IVariables variables, ICalamariFileSystem fileSystem, ILog log)
+        public ManifestReporter(IVariables variables, ICalamariFileSystem fileSystem, ILog log, IKubernetesManifestNamespaceResolver namespaceResolver)
         {
             this.variables = variables;
             this.fileSystem = fileSystem;
             this.log = log;
-        }
-
-        string GetNamespace(YamlMappingNode yamlRoot)
-        {
-            var implicitNamespace = variables.Get(SpecialVariables.Namespace) ?? "default";
-
-            if (yamlRoot.Children.TryGetValue("metadata", out var metadataNode) && metadataNode is YamlMappingNode metadataMappingNode && metadataMappingNode.Children.TryGetValue("namespace", out var namespaceNode) && namespaceNode is YamlScalarNode namespaceScalarNode && !string.IsNullOrWhiteSpace(namespaceScalarNode.Value))
-            {
-                implicitNamespace = namespaceScalarNode.Value;
-            }
-
-            return implicitNamespace;
+            this.namespaceResolver = namespaceResolver;
         }
 
         public void ReportManifestFileApplied(string filePath)
@@ -98,7 +88,8 @@ namespace Calamari.Kubernetes
 
                 var updatedDocument = SerializeManifest(rootNode);
 
-                var ns = GetNamespace(rootNode);
+                var ns = namespaceResolver.ResolveNamespace(rootNode, variables);
+
                 var message = new ServiceMessage(
                                                  SpecialVariables.ServiceMessages.ManifestApplied.Name,
                                                  new Dictionary<string, string>
@@ -113,7 +104,7 @@ namespace Calamari.Kubernetes
 
         static string SerializeManifest(YamlMappingNode node)
         {
-           return YamlSerializer.Serialize(node);
+            return YamlSerializer.Serialize(node);
         }
     }
 }

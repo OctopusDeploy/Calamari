@@ -12,7 +12,9 @@ namespace Calamari.Kubernetes
         
         string ApiVersion { get; }
         string Kind { get; }
-        
+
+        public override string ToString() => $"{ApiVersion}/{Kind}";
+
         public bool Equals(ApiResourceIdentifier other)
         {
             if (other is null)

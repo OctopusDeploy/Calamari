@@ -83,6 +83,8 @@ namespace Calamari
             builder.RegisterType<KubectlGet>().As<IKubectlGet>().SingleInstance();
             builder.RegisterType<HelmTemplateValueSourcesParser>().AsSelf().SingleInstance();
             builder.RegisterType<WindowsX509CertificateStore>().As<IWindowsX509CertificateStore>().SingleInstance();
+            builder.RegisterType<ApiResourceScopeLookup>().As<IApiResourceScopeLookup>().SingleInstance();
+            builder.RegisterType<KubernetesManifestNamespaceResolver>().As<IKubernetesManifestNamespaceResolver>().InstancePerLifetimeScope();
             
             builder.RegisterType<KubernetesDiscovererFactory>()
                    .As<IKubernetesDiscovererFactory>()
