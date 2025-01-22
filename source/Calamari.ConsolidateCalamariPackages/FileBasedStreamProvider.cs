@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using Octopus.Calamari.ConsolidatedPackage.Api;
 
 namespace Octopus.Calamari.ConsolidatedPackage;
 
