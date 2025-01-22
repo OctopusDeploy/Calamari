@@ -1,8 +1,8 @@
 using System;
 using System.IO;
 using System.Linq;
-using Calamari.ConsolidateCalamariPackages.Api;
 using Newtonsoft.Json;
+using Octopus.Calamari.ConsolidatedPackage.Api;
 using SharpCompress.Archives.Zip;
 
 namespace Octopus.Calamari.ConsolidatedPackage

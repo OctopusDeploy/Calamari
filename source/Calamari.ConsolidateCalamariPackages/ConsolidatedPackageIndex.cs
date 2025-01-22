@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Calamari.ConsolidateCalamariPackages.Api;
+using Octopus.Calamari.ConsolidatedPackage.Api;
 
 namespace Octopus.Calamari.ConsolidatedPackage
 {

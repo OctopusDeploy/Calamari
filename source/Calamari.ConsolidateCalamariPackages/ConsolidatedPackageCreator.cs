@@ -4,8 +4,8 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Text;
-using Calamari.ConsolidateCalamariPackages.Api;
 using Newtonsoft.Json;
+using Octopus.Calamari.ConsolidatedPackage.Api;
 
 namespace Octopus.Calamari.ConsolidatedPackage
 {

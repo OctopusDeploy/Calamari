@@ -1,6 +1,6 @@
 using System;
-using Calamari.ConsolidateCalamariPackages.Api;
 using Octopus.Calamari.ConsolidatedPackage;
+using Octopus.Calamari.ConsolidatedPackage.Api;
 
 namespace Octopus.Calamari.ConsolidatedPackage
 {

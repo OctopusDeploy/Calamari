@@ -1,6 +1,6 @@
 using System;
 
-namespace Calamari.ConsolidateCalamariPackages.Api
+namespace Octopus.Calamari.ConsolidatedPackage.Api
 {
     public interface IConsolidatedPackageIndex
     {

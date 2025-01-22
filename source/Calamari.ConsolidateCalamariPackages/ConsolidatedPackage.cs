@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Calamari.ConsolidateCalamariPackages.Api;
+using Octopus.Calamari.ConsolidatedPackage.Api;
 using SharpCompress.Archives.Zip;
 
 namespace Octopus.Calamari.ConsolidatedPackage
