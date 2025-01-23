@@ -34,6 +34,9 @@ namespace Calamari.Kubernetes
         {
             try
             {
+                //make sure kubectl is correctly configured
+                kubectl.SetKubectl();
+                
                 var apiResourceLines = kubectl.ExecuteCommandAndReturnOutput("api-resources", "-o", "wide");
                 apiResourceLines.Result.VerifySuccess();
 
