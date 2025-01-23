@@ -159,7 +159,8 @@ namespace Calamari.AzureAppService.Behaviors
                     context.Authentication!.AccountId,
                     matchResult.Role,
                     context.Scope!.WorkerPoolId,
-                    slotName));
+                    slotName,
+                    matchResult.TenantedDeploymentMode));
         }
 
         private TargetDiscoveryContext<AccountAuthenticationDetails<IAzureAccount>>? GetTargetDiscoveryContext<T>(
@@ -190,7 +191,7 @@ namespace Calamari.AzureAppService.Behaviors
 
     public static class TargetDiscoveryHelpers
     {
-        public static ServiceMessage CreateWebAppTargetCreationServiceMessage(string? resourceGroupName, string webAppName, string accountId, string role, string? workerPoolId, string? slotName)
+        public static ServiceMessage CreateWebAppTargetCreationServiceMessage(string? resourceGroupName, string webAppName, string accountId, string role, string? workerPoolId, string? slotName, string? tenantedMode)
         {
             var parameters = new Dictionary<string, string?> {
                     { "azureWebApp", webAppName },
@@ -201,7 +202,8 @@ namespace Calamari.AzureAppService.Behaviors
                     { "octopusRoles", role },
                     { "updateIfExisting", "True" },
                     { "octopusDefaultWorkerPoolIdOrName", workerPoolId },
-                    { "isDynamic", "True" }
+                    { "isDynamic", "True" },
+                    { "tenantedDeploymentParticipation", tenantedMode },
                 };
 
             return new ServiceMessage(
