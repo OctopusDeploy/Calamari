@@ -12,6 +12,47 @@ namespace Calamari.Tests.KubernetesFixtures.Helm
     [TestFixture]
     public class HelmTemplateValueSourcesFixture
     {
+        const string ExampleJson = @"{
+  ""name"": ""Test User"",
+  ""id"": 1
+}";
+
+        const string ExampleYaml = @"replicas: 3
+config:
+  'min-replicas-to-write': 1
+  ""string-quoted-key"": ""string-quoted-value""
+  numbers:
+   - 42
+   - 3
+";
+
+        public static IEnumerable<TestCaseData> InlineYamlTestCases
+        {
+            get
+            {
+                yield return new TestCaseData("#{MyExampleJson}",
+                                              new CalamariVariables
+                                              {
+                                                  ["MyExampleJson"] = ExampleJson
+                                              },
+                                              ExampleJson);
+
+                yield return new TestCaseData("#{Service.HelmYaml}",
+                                              new CalamariVariables
+                                              {
+                                                  ["Service.HelmYaml"] = ExampleYaml
+                                              },
+                                              ExampleYaml);
+
+                yield return new TestCaseData("colors: #{JsonArray}",
+                                              new CalamariVariables
+                                              {
+                                                  ["JsonArray"] = @"[""red"",""green"",""blue""]"
+                                              },
+                                              @"colors: [""red"",""green"",""blue""]");
+            }
+        }
+
         [Test]
         public void FromJTokenWithEvaluation_KeyValuesTvs_VariablesAreEvaluated()
         {
@@ -52,21 +93,18 @@ namespace Calamari.Tests.KubernetesFixtures.Helm
         }
 
         [Test]
-        public void FromJTokenWithEvaluation_InlineYamlTvs_VariablesAreEvaluated()
+        [TestCaseSource(nameof(InlineYamlTestCases))]
+        public void FromJTokenWithEvaluation_InlineYamlTvs_VariablesAreEvaluated(string value, IVariables variables, string expectedValue)
         {
             // Arrange
             var keyValuesTvs = new HelmTemplateValueSourcesParser.InlineYamlTemplateValuesSource
             {
-                Value = "colors: #{JsonArray}"
-            };
-            var variables = new CalamariVariables
-            {
-                ["JsonArray"] = @"[""red"",""green"",""blue""]"
+                Value = value
             };
 
             var expectedTvs = new HelmTemplateValueSourcesParser.InlineYamlTemplateValuesSource
             {
-                Value = @"colors: [""red"",""green"",""blue""]"
+                Value = expectedValue
             };
 
             // Act
@@ -75,7 +113,7 @@ namespace Calamari.Tests.KubernetesFixtures.Helm
             // Assert
             evaluatedTvs.Should().BeEquivalentTo(expectedTvs);
         }
-        
+
         [Test]
         public void FromJTokenWithEvaluation_ChartTvs_VariablesAreEvaluated()
         {
@@ -131,12 +169,12 @@ namespace Calamari.Tests.KubernetesFixtures.Helm
             // Assert
             evaluatedTvs.Should().BeEquivalentTo(expectedTvs);
         }
-        
+
         [Test]
         public void FromJTokenWithEvaluation_GitRepositoryTvs_VariablesAreEvaluated()
         {
             // Arrange
-            var keyValuesTvs = new HelmTemplateValueSourcesParser.GitRepositoryTemplateValuesSource()
+            var keyValuesTvs = new HelmTemplateValueSourcesParser.GitRepositoryTemplateValuesSource
             {
                 GitDependencyName = "#{MyGitDependency}",
                 ValuesFilePaths = "values/#{Octopus.Environment.Name | ToLower}.yaml"
@@ -159,7 +197,7 @@ namespace Calamari.Tests.KubernetesFixtures.Helm
             // Assert
             evaluatedTvs.Should().BeEquivalentTo(expectedTvs);
         }
-        
+
         static JObject ConvertToJObject(object value)
         {
             return JObject.Parse(JsonConvert.SerializeObject(value));

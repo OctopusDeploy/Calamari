@@ -195,15 +195,7 @@ secondary.Development.yaml"
                                                                         {
                                                                             new HelmTemplateValueSourcesParser.InlineYamlTemplateValuesSource
                                                                             {
-                                                                                Value = "#{MyExampleJson}"
-                                                                            },
-                                                                            new HelmTemplateValueSourcesParser.InlineYamlTemplateValuesSource
-                                                                            {
                                                                                 Value = "colors: #{JsonArray}"
-                                                                            },
-                                                                            new HelmTemplateValueSourcesParser.InlineYamlTemplateValuesSource
-                                                                            {
-                                                                                Value = "#{Service.HelmYaml}"
                                                                             },
                                                                             new HelmTemplateValueSourcesParser.ChartTemplateValuesSource
                                                                             {
@@ -216,23 +208,31 @@ secondary.Development.yaml"
                                                                                     ["#{MyKey}"] = "#{MyValue}",
                                                                                     ["KeyWithNumberValue"] = 3
                                                                                 }
+                                                                            },
+                                                                            new HelmTemplateValueSourcesParser.PackageTemplateValuesSource
+                                                                            {
+                                                                                PackageId = "#{MyPackage.Id}",
+                                                                                PackageName = "#{MyPackage.Name}",
+                                                                                ValuesFilePaths = "packages/#{Octopus.Environment.Name | ToLower}.yaml"
                                                                             }
                                                                         },
                                                                         Formatting.None);
             
             var variables = new CalamariVariables
             {
-                ["MyExampleJson"] = ExampleJson,
                 ["JsonArray"] = @"[""red"",""green"",""blue""]",
-                ["Service.HelmYaml"] = ExampleYaml,
                 ["Octopus.Environment.Name"] = "Dev",
                 ["MyKey"] = "key-1",
                 ["MyValue"] = "value-1",
+                ["MyPackage.Name"] = "helm-package",
+                ["MyPackage.Id"] = "5ec01a18",
                 [SpecialVariables.Helm.TemplateValuesSources] = templateValuesSourcesJson,
                 [KnownVariables.OriginalPackageDirectoryPath] = RootDir,
-                [ScriptVariables.ScriptSource] = ScriptVariables.ScriptSourceOptions.Package,
+                [ScriptVariables.ScriptSource] = ScriptVariables.ScriptSourceOptions.GitRepository,
                 [PackageVariables.IndexedPackageId(string.Empty)] = "mychart",
-                [PackageVariables.IndexedPackageVersion(string.Empty)] = "0.3.8"
+                [PackageVariables.IndexedPackageVersion(string.Empty)] = "0.3.8",
+                [PackageVariables.PackageCollection] = @"[""helm-package""]",
+                [PackageVariables.IndexedPackageId("helm-package")] = "5ec01a18"
             };
 
             var deployment = new RunningDeployment(variables)
@@ -254,17 +254,14 @@ secondary.Development.yaml"
             // Assert
             using (var _ = new AssertionScope())
             {
-                var inlineTvsFilename1 = Path.Combine(RootDir, InlineYamlValuesFileWriter.GetFileName(0));
-                var inlineTvsFilename2 = Path.Combine(RootDir, InlineYamlValuesFileWriter.GetFileName(1));
-                var inlineTvsFilename3 = Path.Combine(RootDir, InlineYamlValuesFileWriter.GetFileName(2));
+                var inlineTvsFilename = Path.Combine(RootDir, InlineYamlValuesFileWriter.GetFileName(0));
                 var chartTvsFilename = Path.Combine(RootDir, "values/dev.yaml");
-                var keyValuesTvsFilename = Path.Combine(RootDir, KeyValuesValuesFileWriter.GetFileName(4));
+                var keyValuesTvsFilename = Path.Combine(RootDir, KeyValuesValuesFileWriter.GetFileName(2));
+                var packageTvsFilename = Path.Combine(RootDir, "packages/dev.yaml");
                 
-                filenames.Should().BeEquivalentTo(inlineTvsFilename1, inlineTvsFilename2, inlineTvsFilename3, chartTvsFilename, keyValuesTvsFilename);
+                filenames.Should().BeEquivalentTo(inlineTvsFilename, chartTvsFilename, keyValuesTvsFilename, packageTvsFilename);
                 
-                fileSystem.Received().WriteAllText(inlineTvsFilename1,ExampleJson);
-                fileSystem.Received().WriteAllText(inlineTvsFilename2, @"colors: [""red"",""green"",""blue""]");
-                fileSystem.Received().WriteAllText(inlineTvsFilename3, ExampleYaml);
+                fileSystem.Received().WriteAllText(inlineTvsFilename, @"colors: [""red"",""green"",""blue""]");
                 fileSystem.Received().WriteAllText(keyValuesTvsFilename, "key-1: value-1\nKeyWithNumberValue: 3\n");
             }
         }
