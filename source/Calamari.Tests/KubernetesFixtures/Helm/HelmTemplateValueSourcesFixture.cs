@@ -75,6 +75,31 @@ namespace Calamari.Tests.KubernetesFixtures.Helm
             // Assert
             evaluatedTvs.Should().BeEquivalentTo(expectedTvs);
         }
+        
+        [Test]
+        public void FromJTokenWithEvaluation_ChartTvs_VariablesAreEvaluated()
+        {
+            // Arrange
+            var keyValuesTvs = new HelmTemplateValueSourcesParser.ChartTemplateValuesSource
+            {
+                ValuesFilePaths = "values/#{Octopus.Environment.Name | ToLower}.yaml"
+            };
+            var variables = new CalamariVariables
+            {
+                ["Octopus.Environment.Name"] = "Dev"
+            };
+
+            var expectedTvs = new HelmTemplateValueSourcesParser.ChartTemplateValuesSource
+            {
+                ValuesFilePaths = "values/dev.yaml"
+            };
+
+            // Act
+            var evaluatedTvs = HelmTemplateValueSourcesParser.ChartTemplateValuesSource.FromJTokenWithEvaluation(ConvertToJObject(keyValuesTvs), variables);
+
+            // Assert
+            evaluatedTvs.Should().BeEquivalentTo(expectedTvs);
+        }
 
         static JObject ConvertToJObject(object value)
         {

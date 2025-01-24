@@ -63,18 +63,17 @@ namespace Calamari.Kubernetes.Helm
                 switch (tvs.Type)
                 {
                     case TemplateValuesSourceType.Chart:
-                        var chartTvs = json.ToObject<ChartTemplateValuesSource>();
-                        var evaluatedChartTvsValueFilePaths = deployment.Variables.Evaluate(chartTvs.ValuesFilePaths);
-
+                        var chartTvs = ChartTemplateValuesSource.FromJTokenWithEvaluation(json, deployment.Variables);
+                        
                         IEnumerable<string> chartFilenames;
                         var scriptSource = deployment.Variables.Get(ScriptVariables.ScriptSource);
                         switch (scriptSource)
                         {
                             case ScriptVariables.ScriptSourceOptions.Package:
-                                chartFilenames = PackageValuesFileWriter.FindChartValuesFiles(deployment, fileSystem, log, evaluatedChartTvsValueFilePaths, logIncludedFiles);
+                                chartFilenames = PackageValuesFileWriter.FindChartValuesFiles(deployment, fileSystem, log, chartTvs.ValuesFilePaths, logIncludedFiles);
                                 break;
                             case ScriptVariables.ScriptSourceOptions.GitRepository:
-                                chartFilenames = GitRepositoryValuesFileWriter.FindChartValuesFiles(deployment, fileSystem, log, evaluatedChartTvsValueFilePaths, logIncludedFiles);
+                                chartFilenames = GitRepositoryValuesFileWriter.FindChartValuesFiles(deployment, fileSystem, log, chartTvs.ValuesFilePaths, logIncludedFiles);
                                 break;
                             default:
                                 if (scriptSource is null)
@@ -174,6 +173,23 @@ namespace Calamari.Kubernetes.Helm
             public ChartTemplateValuesSource()
             {
                 Type = TemplateValuesSourceType.Chart;
+            }
+
+            public static ChartTemplateValuesSource FromJTokenWithEvaluation(JToken jToken, IVariables variables)
+            {
+                var tvs = jToken.ToObject<TemplateValuesSource>();
+                if (tvs.Type != TemplateValuesSourceType.Chart)
+                {
+                    throw new Exception($"Expected {TemplateValuesSourceType.Chart}, but got {tvs.Type}");
+                }
+                
+                var chartTvs = jToken.ToObject<ChartTemplateValuesSource>();
+                var evaluatedValueFilePaths = variables.Evaluate(chartTvs.ValuesFilePaths);
+
+                return new ChartTemplateValuesSource
+                {
+                    ValuesFilePaths = evaluatedValueFilePaths
+                };
             }
         }
 
