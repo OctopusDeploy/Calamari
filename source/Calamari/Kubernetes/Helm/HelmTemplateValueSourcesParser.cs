@@ -115,10 +115,8 @@ namespace Calamari.Kubernetes.Helm
                         break;
 
                     case TemplateValuesSourceType.InlineYaml:
-                        var inlineYamlTvs = json.ToObject<InlineYamlTemplateValuesSource>();
-                        
-                        var evaluatedInlineYamlTvsValue = deployment.Variables.Evaluate(inlineYamlTvs.Value);
-                        var inlineYamlFilename = InlineYamlValuesFileWriter.WriteToFile(deployment, fileSystem, evaluatedInlineYamlTvsValue, index);
+                        var inlineYamlTvs = InlineYamlTemplateValuesSource.FromJTokenWithEvaluation(json, deployment.Variables);
+                        var inlineYamlFilename = InlineYamlValuesFileWriter.WriteToFile(deployment, fileSystem, inlineYamlTvs.Value, index);
 
                         AddIfNotNull(filenames, inlineYamlFilename);
                         break;
@@ -186,6 +184,23 @@ namespace Calamari.Kubernetes.Helm
             public InlineYamlTemplateValuesSource()
             {
                 Type = TemplateValuesSourceType.InlineYaml;
+            }
+
+            public static InlineYamlTemplateValuesSource FromJTokenWithEvaluation(JToken jToken, IVariables variables)
+            {
+                var tvs = jToken.ToObject<TemplateValuesSource>();
+                if (tvs.Type != TemplateValuesSourceType.InlineYaml)
+                {
+                    throw new Exception($"Expected {TemplateValuesSourceType.InlineYaml}, but got {tvs.Type}");
+                }
+                
+                var inlineYamlTvs = jToken.ToObject<InlineYamlTemplateValuesSource>();
+                var evaluatedValue = variables.Evaluate(inlineYamlTvs.Value);
+
+                return new InlineYamlTemplateValuesSource
+                {
+                    Value = evaluatedValue
+                };
             }
         }
 

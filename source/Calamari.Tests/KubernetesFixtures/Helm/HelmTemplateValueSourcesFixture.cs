@@ -22,7 +22,7 @@ namespace Calamari.Tests.KubernetesFixtures.Helm
                 {
                     { "#{MyKey1}", "#{MyValue1}" },
                     { "#{MyKey2}", "environments/#{MyValue2}" },
-                    { "non-string-value", 42 },
+                    { "non-string-value", 42 }
                 }
             };
             var variables = new CalamariVariables
@@ -40,17 +40,45 @@ namespace Calamari.Tests.KubernetesFixtures.Helm
                 {
                     { "name", "octopus" },
                     { "env", "environments/dev" },
-                    { "non-string-value", 42 },
+                    { "non-string-value", 42 }
                 }
             };
 
             // Act
             var evaluatedTvs = HelmTemplateValueSourcesParser.KeyValuesTemplateValuesSource.FromJTokenWithEvaluation(ConvertToJObject(keyValuesTvs), variables);
-            
+
             // Assert
             evaluatedTvs.Should().BeEquivalentTo(expectedTvs);
         }
-        
-        static JObject ConvertToJObject(object value) => JObject.Parse(JsonConvert.SerializeObject(value));
+
+        [Test]
+        public void FromJTokenWithEvaluation_InlineYamlTvs_VariablesAreEvaluated()
+        {
+            // Arrange
+            var keyValuesTvs = new HelmTemplateValueSourcesParser.InlineYamlTemplateValuesSource
+            {
+                Value = "colors: #{JsonArray}"
+            };
+            var variables = new CalamariVariables
+            {
+                ["JsonArray"] = @"[""red"",""green"",""blue""]"
+            };
+
+            var expectedTvs = new HelmTemplateValueSourcesParser.InlineYamlTemplateValuesSource
+            {
+                Value = @"colors: [""red"",""green"",""blue""]"
+            };
+
+            // Act
+            var evaluatedTvs = HelmTemplateValueSourcesParser.InlineYamlTemplateValuesSource.FromJTokenWithEvaluation(ConvertToJObject(keyValuesTvs), variables);
+
+            // Assert
+            evaluatedTvs.Should().BeEquivalentTo(expectedTvs);
+        }
+
+        static JObject ConvertToJObject(object value)
+        {
+            return JObject.Parse(JsonConvert.SerializeObject(value));
+        }
     }
 }
