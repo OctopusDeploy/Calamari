@@ -132,6 +132,34 @@ namespace Calamari.Tests.KubernetesFixtures.Helm
             evaluatedTvs.Should().BeEquivalentTo(expectedTvs);
         }
         
+        [Test]
+        public void FromJTokenWithEvaluation_GitRepositoryTvs_VariablesAreEvaluated()
+        {
+            // Arrange
+            var keyValuesTvs = new HelmTemplateValueSourcesParser.GitRepositoryTemplateValuesSource()
+            {
+                GitDependencyName = "#{MyGitDependency}",
+                ValuesFilePaths = "values/#{Octopus.Environment.Name | ToLower}.yaml"
+            };
+            var variables = new CalamariVariables
+            {
+                ["MyGitDependency"] = "helm-git-repository",
+                ["Octopus.Environment.Name"] = "Dev"
+            };
+
+            var expectedTvs = new HelmTemplateValueSourcesParser.GitRepositoryTemplateValuesSource
+            {
+                GitDependencyName = "helm-git-repository",
+                ValuesFilePaths = "values/dev.yaml"
+            };
+
+            // Act
+            var evaluatedTvs = HelmTemplateValueSourcesParser.GitRepositoryTemplateValuesSource.FromJTokenWithEvaluation(ConvertToJObject(keyValuesTvs), variables);
+
+            // Assert
+            evaluatedTvs.Should().BeEquivalentTo(expectedTvs);
+        }
+        
         static JObject ConvertToJObject(object value)
         {
             return JObject.Parse(JsonConvert.SerializeObject(value));
