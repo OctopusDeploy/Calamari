@@ -188,7 +188,7 @@ secondary.Development.yaml"
         }
         
         [Test]
-        public void ParseTemplateValuesFilesFromAllSources_InlineYaml_CorrectlyParsesWithVariableSubstitution()
+        public void ParseTemplateValuesFilesFromAllSources_CorrectlyParsesWithVariableSubstitution()
         {
             // Arrange
             var templateValuesSourcesJson = JsonConvert.SerializeObject(new HelmTemplateValueSourcesParser.TemplateValuesSource[]
@@ -205,15 +205,19 @@ secondary.Development.yaml"
                                                                             {
                                                                                 Value = "#{Service.HelmYaml}"
                                                                             },
+                                                                            new HelmTemplateValueSourcesParser.ChartTemplateValuesSource
+                                                                            {
+                                                                                ValuesFilePaths = "values/#{Octopus.Environment.Name | ToLower}.yaml"
+                                                                            }
                                                                         },
                                                                         Formatting.None);
-            
             
             var variables = new CalamariVariables
             {
                 ["MyExampleJson"] = ExampleJson,
                 ["JsonArray"] = @"[""red"",""green"",""blue""]",
                 ["Service.HelmYaml"] = ExampleYaml,
+                ["Octopus.Environment.Name"] = "Dev",
                 [SpecialVariables.Helm.TemplateValuesSources] = templateValuesSourcesJson,
                 [KnownVariables.OriginalPackageDirectoryPath] = RootDir,
                 [ScriptVariables.ScriptSource] = ScriptVariables.ScriptSourceOptions.Package,
@@ -240,15 +244,16 @@ secondary.Development.yaml"
             // Assert
             using (var _ = new AssertionScope())
             {
-                var filename1 = Path.Combine(RootDir, InlineYamlValuesFileWriter.GetFileName(0));
-                var filename2 = Path.Combine(RootDir, InlineYamlValuesFileWriter.GetFileName(1));
-                var filename3 = Path.Combine(RootDir, InlineYamlValuesFileWriter.GetFileName(2));
+                var inlineTvsFilename1 = Path.Combine(RootDir, InlineYamlValuesFileWriter.GetFileName(0));
+                var inlineTvsFilename2 = Path.Combine(RootDir, InlineYamlValuesFileWriter.GetFileName(1));
+                var inlineTvsFilename3 = Path.Combine(RootDir, InlineYamlValuesFileWriter.GetFileName(2));
+                var chartTvsFilename = Path.Combine(RootDir, "values/dev.yaml");
                 
-                filenames.Should().BeEquivalentTo(filename1, filename2, filename3);
+                filenames.Should().BeEquivalentTo(inlineTvsFilename1, inlineTvsFilename2, inlineTvsFilename3, chartTvsFilename);
                 
-                fileSystem.Received().WriteAllText(filename1,ExampleJson);
-                fileSystem.Received().WriteAllText(filename2, @"colors: [""red"",""green"",""blue""]");
-                fileSystem.Received().WriteAllText(filename3, ExampleYaml);
+                fileSystem.Received().WriteAllText(inlineTvsFilename1,ExampleJson);
+                fileSystem.Received().WriteAllText(inlineTvsFilename2, @"colors: [""red"",""green"",""blue""]");
+                fileSystem.Received().WriteAllText(inlineTvsFilename3, ExampleYaml);
             }
         }
 

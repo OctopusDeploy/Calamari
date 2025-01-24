@@ -64,16 +64,17 @@ namespace Calamari.Kubernetes.Helm
                 {
                     case TemplateValuesSourceType.Chart:
                         var chartTvs = json.ToObject<ChartTemplateValuesSource>();
+                        var evaluatedChartTvsValueFilePaths = deployment.Variables.Evaluate(chartTvs.ValuesFilePaths);
 
                         IEnumerable<string> chartFilenames;
                         var scriptSource = deployment.Variables.Get(ScriptVariables.ScriptSource);
                         switch (scriptSource)
                         {
                             case ScriptVariables.ScriptSourceOptions.Package:
-                                chartFilenames = PackageValuesFileWriter.FindChartValuesFiles(deployment, fileSystem, log, chartTvs.ValuesFilePaths, logIncludedFiles);
+                                chartFilenames = PackageValuesFileWriter.FindChartValuesFiles(deployment, fileSystem, log, evaluatedChartTvsValueFilePaths, logIncludedFiles);
                                 break;
                             case ScriptVariables.ScriptSourceOptions.GitRepository:
-                                chartFilenames = GitRepositoryValuesFileWriter.FindChartValuesFiles(deployment, fileSystem, log, chartTvs.ValuesFilePaths, logIncludedFiles);
+                                chartFilenames = GitRepositoryValuesFileWriter.FindChartValuesFiles(deployment, fileSystem, log, evaluatedChartTvsValueFilePaths, logIncludedFiles);
                                 break;
                             default:
                                 if (scriptSource is null)
@@ -116,8 +117,8 @@ namespace Calamari.Kubernetes.Helm
                     case TemplateValuesSourceType.InlineYaml:
                         var inlineYamlTvs = json.ToObject<InlineYamlTemplateValuesSource>();
                         
-                        var val = deployment.Variables.Evaluate(inlineYamlTvs.Value);
-                        var inlineYamlFilename = InlineYamlValuesFileWriter.WriteToFile(deployment, fileSystem, val, index);
+                        var evaluatedInlineYamlTvsValue = deployment.Variables.Evaluate(inlineYamlTvs.Value);
+                        var inlineYamlFilename = InlineYamlValuesFileWriter.WriteToFile(deployment, fileSystem, evaluatedInlineYamlTvsValue, index);
 
                         AddIfNotNull(filenames, inlineYamlFilename);
                         break;
