@@ -91,23 +91,8 @@ namespace Calamari.Kubernetes.Helm
                         break;
 
                     case TemplateValuesSourceType.KeyValues:
-                        var keyValuesTvs = json.ToObject<KeyValuesTemplateValuesSource>();
-
-                        var evaluatedKeyValues = new Dictionary<string, object>();
-                        foreach (var kvp in keyValuesTvs.Value)
-                        {
-                            var evaluatedKey = deployment.Variables.Evaluate(kvp.Key);
-                            var value = kvp.Value;
-                            
-                            var jToken = JToken.FromObject(kvp.Value);
-                            if (jToken.Type == JTokenType.String)
-                            {
-                                value = deployment.Variables.Evaluate(jToken.Value<string>());
-                            }
-                            evaluatedKeyValues.Add(evaluatedKey, value);
-                        }
-                        
-                        var keyValueFilename = KeyValuesValuesFileWriter.WriteToFile(deployment, fileSystem, evaluatedKeyValues, index);
+                        var keyValuesTvs = KeyValuesTemplateValuesSource.FromJTokenWithEvaluation(json, deployment.Variables);
+                        var keyValueFilename = KeyValuesValuesFileWriter.WriteToFile(deployment, fileSystem, keyValuesTvs.Value, index);
 
                         AddIfNotNull(filenames, keyValueFilename);
                         break;
@@ -234,6 +219,33 @@ namespace Calamari.Kubernetes.Helm
             public KeyValuesTemplateValuesSource()
             {
                 Type = TemplateValuesSourceType.KeyValues;
+            }
+            
+            public static KeyValuesTemplateValuesSource FromJTokenWithEvaluation(JToken jToken, IVariables variables)
+            {
+                var tvs = jToken.ToObject<TemplateValuesSource>();
+                if (tvs.Type != TemplateValuesSourceType.KeyValues)
+                {
+                    throw new Exception($"Expected {TemplateValuesSourceType.KeyValues}, but got {tvs.Type}");
+                }
+                
+                var keyValuesTvs = jToken.ToObject<KeyValuesTemplateValuesSource>();
+                
+                var evaluatedKeyValues = new Dictionary<string, object>();
+                foreach (var kvp in keyValuesTvs.Value)
+                {
+                    var evaluatedKey = variables.Evaluate(kvp.Key);
+                    var value = kvp.Value;
+                            
+                    var val = JToken.FromObject(kvp.Value);
+                    if (val.Type == JTokenType.String)
+                    {
+                        value = variables.Evaluate(val.Value<string>());
+                    }
+                    evaluatedKeyValues.Add(evaluatedKey, value);
+                }
+                
+                return new KeyValuesTemplateValuesSource { Value = evaluatedKeyValues };
             }
         }
     }
