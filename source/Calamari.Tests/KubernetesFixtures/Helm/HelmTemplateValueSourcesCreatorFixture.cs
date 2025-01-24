@@ -254,6 +254,11 @@ secondary.Development.yaml"
             // Assert
             using (var _ = new AssertionScope())
             {
+                // defined as verbatim text to avoid line ending issues when tests are run on both Windows & Linux
+                var expectedKeyValueContent = @"key-1: value-1
+KeyWithNumberValue: 3
+";
+                
                 var inlineTvsFilename = Path.Combine(RootDir, InlineYamlValuesFileWriter.GetFileName(0));
                 var chartTvsFilename = Path.Combine(RootDir, "values/dev.yaml");
                 var keyValuesTvsFilename = Path.Combine(RootDir, KeyValuesValuesFileWriter.GetFileName(2));
@@ -262,7 +267,7 @@ secondary.Development.yaml"
                 filenames.Should().BeEquivalentTo(inlineTvsFilename, chartTvsFilename, keyValuesTvsFilename, packageTvsFilename);
                 
                 fileSystem.Received().WriteAllText(inlineTvsFilename, @"colors: [""red"",""green"",""blue""]");
-                fileSystem.Received().WriteAllText(keyValuesTvsFilename, "key-1: value-1\nKeyWithNumberValue: 3\n");
+                fileSystem.Received().WriteAllText(keyValuesTvsFilename, expectedKeyValueContent);
             }
         }
 
