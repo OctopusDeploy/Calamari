@@ -132,7 +132,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 { "updateIfExisting", bool.TrueString },
                 { "isDynamic", bool.TrueString },
                 { "awsUseWorkerCredentials", bool.FalseString },
-                { "awsAssumeRole", bool.FalseString }
+                { "awsAssumeRole", bool.FalseString },
             };
 
             if (scope.HealthCheckContainer != null)

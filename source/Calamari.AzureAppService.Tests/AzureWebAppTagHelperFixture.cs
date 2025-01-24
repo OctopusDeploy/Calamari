@@ -21,6 +21,7 @@ namespace Calamari.AzureAppService.Tests
                 { "OctOpuS-ProJecT", "taggedProject" },
                 { "oCtoPus-sPacE", "taggedSpace" },
                 { "ocTopUs-teNanT", "taggedTenant" },
+                { "ocTopUs-TeNanTedDeployMentMode", "Tenanted"}, 
             };
 
             // Act
@@ -34,6 +35,7 @@ namespace Calamari.AzureAppService.Tests
                 foundTags.Project.Should().Be("taggedProject");
                 foundTags.Space.Should().Be("taggedSpace");
                 foundTags.Tenant.Should().Be("taggedTenant");
+                foundTags.TenantedDeploymentMode.Should().Be("Tenanted");
             }
         }
     }
