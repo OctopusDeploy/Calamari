@@ -208,6 +208,14 @@ secondary.Development.yaml"
                                                                             new HelmTemplateValueSourcesParser.ChartTemplateValuesSource
                                                                             {
                                                                                 ValuesFilePaths = "values/#{Octopus.Environment.Name | ToLower}.yaml"
+                                                                            },
+                                                                            new HelmTemplateValueSourcesParser.KeyValuesTemplateValuesSource
+                                                                            {
+                                                                                Value = new Dictionary<string, object>
+                                                                                {
+                                                                                    ["#{MyKey}"] = "#{MyValue}",
+                                                                                    ["KeyWithNumberValue"] = 3
+                                                                                }
                                                                             }
                                                                         },
                                                                         Formatting.None);
@@ -218,6 +226,8 @@ secondary.Development.yaml"
                 ["JsonArray"] = @"[""red"",""green"",""blue""]",
                 ["Service.HelmYaml"] = ExampleYaml,
                 ["Octopus.Environment.Name"] = "Dev",
+                ["MyKey"] = "key-1",
+                ["MyValue"] = "value-1",
                 [SpecialVariables.Helm.TemplateValuesSources] = templateValuesSourcesJson,
                 [KnownVariables.OriginalPackageDirectoryPath] = RootDir,
                 [ScriptVariables.ScriptSource] = ScriptVariables.ScriptSourceOptions.Package,
@@ -248,12 +258,14 @@ secondary.Development.yaml"
                 var inlineTvsFilename2 = Path.Combine(RootDir, InlineYamlValuesFileWriter.GetFileName(1));
                 var inlineTvsFilename3 = Path.Combine(RootDir, InlineYamlValuesFileWriter.GetFileName(2));
                 var chartTvsFilename = Path.Combine(RootDir, "values/dev.yaml");
+                var keyValuesTvsFilename = Path.Combine(RootDir, KeyValuesValuesFileWriter.GetFileName(4));
                 
-                filenames.Should().BeEquivalentTo(inlineTvsFilename1, inlineTvsFilename2, inlineTvsFilename3, chartTvsFilename);
+                filenames.Should().BeEquivalentTo(inlineTvsFilename1, inlineTvsFilename2, inlineTvsFilename3, chartTvsFilename, keyValuesTvsFilename);
                 
                 fileSystem.Received().WriteAllText(inlineTvsFilename1,ExampleJson);
                 fileSystem.Received().WriteAllText(inlineTvsFilename2, @"colors: [""red"",""green"",""blue""]");
                 fileSystem.Received().WriteAllText(inlineTvsFilename3, ExampleYaml);
+                fileSystem.Received().WriteAllText(keyValuesTvsFilename, "key-1: value-1\nKeyWithNumberValue: 3\n");
             }
         }
 

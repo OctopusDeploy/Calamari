@@ -92,7 +92,22 @@ namespace Calamari.Kubernetes.Helm
 
                     case TemplateValuesSourceType.KeyValues:
                         var keyValuesTvs = json.ToObject<KeyValuesTemplateValuesSource>();
-                        var keyValueFilename = KeyValuesValuesFileWriter.WriteToFile(deployment, fileSystem, keyValuesTvs.Value, index);
+
+                        var evaluatedKeyValues = new Dictionary<string, object>();
+                        foreach (var kvp in keyValuesTvs.Value)
+                        {
+                            var evaluatedKey = deployment.Variables.Evaluate(kvp.Key);
+                            var value = kvp.Value;
+                            
+                            var jToken = JToken.FromObject(kvp.Value);
+                            if (jToken.Type == JTokenType.String)
+                            {
+                                value = deployment.Variables.Evaluate(jToken.Value<string>());
+                            }
+                            evaluatedKeyValues.Add(evaluatedKey, value);
+                        }
+                        
+                        var keyValueFilename = KeyValuesValuesFileWriter.WriteToFile(deployment, fileSystem, evaluatedKeyValues, index);
 
                         AddIfNotNull(filenames, keyValueFilename);
                         break;
