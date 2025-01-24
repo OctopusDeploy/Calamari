@@ -32,7 +32,16 @@ namespace Calamari.Common.Features.Substitutions
             var result = variables.Evaluate(source, out var error, false);
 
             if (!string.IsNullOrEmpty(error))
-                log.VerboseFormat("Parsing file '{0}' with Octostache returned the following error: `{1}`", sourceFile, error);
+            {
+                if (variables.GetFlag(KnownVariables.ShouldFailDeploymentOnSubstitutionFails))
+                {
+                    throw new Exception($"Parsing file '{sourceFile}' with Octostache returned the following error: `{error}`");
+                }
+                else
+                {
+                    log.WarnFormat("Parsing file '{0}' with Octostache returned the following error: `{1}`", sourceFile, error);
+                }
+            }
 
             fileSystem.OverwriteFile(targetFile, result, encoding);
         }
