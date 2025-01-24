@@ -19,7 +19,7 @@ using NUnit.Framework;
 namespace Calamari.Tests.KubernetesFixtures.Helm
 {
     [TestFixture]
-    public class HelmTemplateValueSourcesCreatorFixture
+    public class HelmTemplateValueSourcesParserFixture
     {
         static readonly string RootDir = Path.Combine("root", "staging");
         
@@ -27,15 +27,6 @@ namespace Calamari.Tests.KubernetesFixtures.Helm
   ""name"": ""Test User"",
   ""id"": 1
 }";
-
-        const string ExampleYaml = @"replicas: 3
-config:
-  'min-replicas-to-write': 1
-  ""string-quoted-key"": ""string-quoted-value""
-  numbers:
-   - 42
-   - 3
-";
 
         [Test]
         public void ParseTemplateValuesFilesFromAllSources_ChartSourceButIncorrectScriptSource_ShouldThrowArgumentException()
@@ -254,11 +245,6 @@ secondary.Development.yaml"
             // Assert
             using (var _ = new AssertionScope())
             {
-                // defined as verbatim text to avoid line ending issues when tests are run on both Windows & Linux
-                var expectedKeyValueContent = @"key-1: value-1
-KeyWithNumberValue: 3
-";
-                
                 var inlineTvsFilename = Path.Combine(RootDir, InlineYamlValuesFileWriter.GetFileName(0));
                 var chartTvsFilename = Path.Combine(RootDir, "values/dev.yaml");
                 var keyValuesTvsFilename = Path.Combine(RootDir, KeyValuesValuesFileWriter.GetFileName(2));
@@ -267,7 +253,7 @@ KeyWithNumberValue: 3
                 filenames.Should().BeEquivalentTo(inlineTvsFilename, chartTvsFilename, keyValuesTvsFilename, packageTvsFilename);
                 
                 fileSystem.Received().WriteAllText(inlineTvsFilename, @"colors: [""red"",""green"",""blue""]");
-                fileSystem.Received().WriteAllText(keyValuesTvsFilename, expectedKeyValueContent);
+                fileSystem.Received().WriteAllText(keyValuesTvsFilename, "key-1: value-1\nKeyWithNumberValue: 3\n".ReplaceLineEndings());
             }
         }
 
