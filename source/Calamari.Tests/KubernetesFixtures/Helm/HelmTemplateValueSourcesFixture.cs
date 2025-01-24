@@ -63,7 +63,8 @@ config:
                 {
                     { "#{MyKey1}", "#{MyValue1}" },
                     { "#{MyKey2}", "environments/#{MyValue2}" },
-                    { "non-string-value", 42 }
+                    { "non-string-value", 42 },
+                    { "jsonBlob", "#{JsonBlob}" },
                 }
             };
             var variables = new CalamariVariables
@@ -72,7 +73,8 @@ config:
                 ["MyValue1"] = "octopus",
                 ["MyKey2"] = "env",
                 ["MyValue2"] = "#{Environment}",
-                ["Environment"] = "dev"
+                ["Environment"] = "dev",
+                ["JsonBlob"] = ExampleJson
             };
 
             var expectedTvs = new HelmTemplateValueSourcesParser.KeyValuesTemplateValuesSource
@@ -81,7 +83,8 @@ config:
                 {
                     { "name", "octopus" },
                     { "env", "environments/dev" },
-                    { "non-string-value", 42 }
+                    { "non-string-value", 42 },
+                    { "jsonBlob", ExampleJson },
                 }
             };
 
