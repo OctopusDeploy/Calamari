@@ -28,6 +28,7 @@ namespace Calamari.AzureAppService.Tests
         private static readonly string AccountId = "Accounts-1";
         private static readonly string Role = "my-azure-app-role";
         private static readonly string EnvironmentName = "dev";
+        static readonly string TenantedDeploymentModeName = "TenantedOrUntenanted";
         private RetryPolicy retryPolicy;
 
         private AppServicePlanResource appServicePlanResource;
@@ -73,6 +74,7 @@ namespace Calamari.AzureAppService.Tests
             {
                 { TargetTags.EnvironmentTagName, EnvironmentName },
                 { TargetTags.RoleTagName, Role },
+                { TargetTags.TenantedDeploymentModeTagName, TenantedDeploymentModeName}
             };
 
             await CreateOrUpdateTestWebApp(tags);
@@ -90,7 +92,7 @@ namespace Calamari.AzureAppService.Tests
                                                                                                                                                            Role,
                                                                                                                                                            null,
                                                                                                                                                            null,
-                                                                                                                                                           "TenantedOrUntenanted");
+                                                                                                                                                           TenantedDeploymentModeName);
                                                   var serviceMessageString = serviceMessageToCreateWebAppTarget.ToString();
                                                   log.StandardOut.Should().Contain(serviceMessageString);
                                               },
