@@ -97,7 +97,7 @@ config:
         public void FromJTokenWithEvaluation_InlineYamlTvs_VariablesAreEvaluated(string value, IVariables variables, string expectedValue)
         {
             // Arrange
-            var keyValuesTvs = new HelmTemplateValueSourcesParser.InlineYamlTemplateValuesSource
+            var inlineYamlTvs = new HelmTemplateValueSourcesParser.InlineYamlTemplateValuesSource
             {
                 Value = value
             };
@@ -108,7 +108,7 @@ config:
             };
 
             // Act
-            var evaluatedTvs = HelmTemplateValueSourcesParser.InlineYamlTemplateValuesSource.FromJTokenWithEvaluation(ConvertToJObject(keyValuesTvs), variables);
+            var evaluatedTvs = HelmTemplateValueSourcesParser.InlineYamlTemplateValuesSource.FromJTokenWithEvaluation(ConvertToJObject(inlineYamlTvs), variables);
 
             // Assert
             evaluatedTvs.Should().BeEquivalentTo(expectedTvs);
@@ -118,7 +118,7 @@ config:
         public void FromJTokenWithEvaluation_ChartTvs_VariablesAreEvaluated()
         {
             // Arrange
-            var keyValuesTvs = new HelmTemplateValueSourcesParser.ChartTemplateValuesSource
+            var chartTvs = new HelmTemplateValueSourcesParser.ChartTemplateValuesSource
             {
                 ValuesFilePaths = "values/#{Octopus.Environment.Name | ToLower}.yaml"
             };
@@ -133,7 +133,7 @@ config:
             };
 
             // Act
-            var evaluatedTvs = HelmTemplateValueSourcesParser.ChartTemplateValuesSource.FromJTokenWithEvaluation(ConvertToJObject(keyValuesTvs), variables);
+            var evaluatedTvs = HelmTemplateValueSourcesParser.ChartTemplateValuesSource.FromJTokenWithEvaluation(ConvertToJObject(chartTvs), variables);
 
             // Assert
             evaluatedTvs.Should().BeEquivalentTo(expectedTvs);
@@ -143,7 +143,7 @@ config:
         public void FromJTokenWithEvaluation_PackageTvs_VariablesAreEvaluated()
         {
             // Arrange
-            var keyValuesTvs = new HelmTemplateValueSourcesParser.PackageTemplateValuesSource
+            var packageTvs = new HelmTemplateValueSourcesParser.PackageTemplateValuesSource
             {
                 PackageId = "#{Package.Id}",
                 PackageName = "#{Package.Name}",
@@ -164,7 +164,7 @@ config:
             };
 
             // Act
-            var evaluatedTvs = HelmTemplateValueSourcesParser.PackageTemplateValuesSource.FromJTokenWithEvaluation(ConvertToJObject(keyValuesTvs), variables);
+            var evaluatedTvs = HelmTemplateValueSourcesParser.PackageTemplateValuesSource.FromJTokenWithEvaluation(ConvertToJObject(packageTvs), variables);
 
             // Assert
             evaluatedTvs.Should().BeEquivalentTo(expectedTvs);
@@ -174,7 +174,7 @@ config:
         public void FromJTokenWithEvaluation_GitRepositoryTvs_VariablesAreEvaluated()
         {
             // Arrange
-            var keyValuesTvs = new HelmTemplateValueSourcesParser.GitRepositoryTemplateValuesSource
+            var gitRepoTvs = new HelmTemplateValueSourcesParser.GitRepositoryTemplateValuesSource
             {
                 GitDependencyName = "#{MyGitDependency}",
                 ValuesFilePaths = "values/#{Octopus.Environment.Name | ToLower}.yaml"
@@ -192,7 +192,7 @@ config:
             };
 
             // Act
-            var evaluatedTvs = HelmTemplateValueSourcesParser.GitRepositoryTemplateValuesSource.FromJTokenWithEvaluation(ConvertToJObject(keyValuesTvs), variables);
+            var evaluatedTvs = HelmTemplateValueSourcesParser.GitRepositoryTemplateValuesSource.FromJTokenWithEvaluation(ConvertToJObject(gitRepoTvs), variables);
 
             // Assert
             evaluatedTvs.Should().BeEquivalentTo(expectedTvs);
