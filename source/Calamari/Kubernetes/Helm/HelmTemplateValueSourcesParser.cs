@@ -97,7 +97,7 @@ namespace Calamari.Kubernetes.Helm
                         break;
 
                     case TemplateValuesSourceType.Package:
-                        var packageTvs = json.ToObject<PackageTemplateValuesSource>();
+                        var packageTvs = PackageTemplateValuesSource.FromJTokenWithEvaluation(json, deployment.Variables);
                         var packageFilenames = PackageValuesFileWriter.FindPackageValuesFiles(deployment,
                                                                                               fileSystem,
                                                                                               log,
@@ -184,11 +184,10 @@ namespace Calamari.Kubernetes.Helm
                 }
                 
                 var chartTvs = jToken.ToObject<ChartTemplateValuesSource>();
-                var evaluatedValueFilePaths = variables.Evaluate(chartTvs.ValuesFilePaths);
 
                 return new ChartTemplateValuesSource
                 {
-                    ValuesFilePaths = evaluatedValueFilePaths
+                    ValuesFilePaths = variables.Evaluate(chartTvs.ValuesFilePaths)
                 };
             }
         }
@@ -211,11 +210,10 @@ namespace Calamari.Kubernetes.Helm
                 }
                 
                 var inlineYamlTvs = jToken.ToObject<InlineYamlTemplateValuesSource>();
-                var evaluatedValue = variables.Evaluate(inlineYamlTvs.Value);
 
                 return new InlineYamlTemplateValuesSource
                 {
-                    Value = evaluatedValue
+                    Value = variables.Evaluate(inlineYamlTvs.Value)
                 };
             }
         }
@@ -229,6 +227,24 @@ namespace Calamari.Kubernetes.Helm
             public PackageTemplateValuesSource()
             {
                 Type = TemplateValuesSourceType.Package;
+            }
+
+            public static PackageTemplateValuesSource FromJTokenWithEvaluation(JToken jToken, IVariables variables)
+            {
+                var tvs = jToken.ToObject<TemplateValuesSource>();
+                if (tvs.Type != TemplateValuesSourceType.Package)
+                {
+                    throw new Exception($"Expected {TemplateValuesSourceType.Package}, but got {tvs.Type}");
+                }
+                
+                var packageTvs = jToken.ToObject<PackageTemplateValuesSource>();
+
+                return new PackageTemplateValuesSource
+                {
+                    PackageId = variables.Evaluate(packageTvs.PackageId),
+                    PackageName = variables.Evaluate(packageTvs.PackageName),
+                    ValuesFilePaths = variables.Evaluate(packageTvs.ValuesFilePaths)
+                };
             }
         }
 

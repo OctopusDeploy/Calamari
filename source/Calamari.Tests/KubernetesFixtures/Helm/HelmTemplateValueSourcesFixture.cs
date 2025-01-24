@@ -101,6 +101,37 @@ namespace Calamari.Tests.KubernetesFixtures.Helm
             evaluatedTvs.Should().BeEquivalentTo(expectedTvs);
         }
 
+        [Test]
+        public void FromJTokenWithEvaluation_PackageTvs_VariablesAreEvaluated()
+        {
+            // Arrange
+            var keyValuesTvs = new HelmTemplateValueSourcesParser.PackageTemplateValuesSource
+            {
+                PackageId = "#{Package.Id}",
+                PackageName = "#{Package.Name}",
+                ValuesFilePaths = "values/#{Octopus.Environment.Name | ToLower}.yaml"
+            };
+            var variables = new CalamariVariables
+            {
+                ["Package.Id"] = "0a5c0b5d70e6",
+                ["Package.Name"] = "my-helm-package",
+                ["Octopus.Environment.Name"] = "Dev"
+            };
+
+            var expectedTvs = new HelmTemplateValueSourcesParser.PackageTemplateValuesSource
+            {
+                PackageId = "0a5c0b5d70e6",
+                PackageName = "my-helm-package",
+                ValuesFilePaths = "values/dev.yaml"
+            };
+
+            // Act
+            var evaluatedTvs = HelmTemplateValueSourcesParser.PackageTemplateValuesSource.FromJTokenWithEvaluation(ConvertToJObject(keyValuesTvs), variables);
+
+            // Assert
+            evaluatedTvs.Should().BeEquivalentTo(expectedTvs);
+        }
+        
         static JObject ConvertToJObject(object value)
         {
             return JObject.Parse(JsonConvert.SerializeObject(value));
