@@ -177,12 +177,6 @@ namespace Calamari.Kubernetes.Helm
 
             public static ChartTemplateValuesSource FromJTokenWithEvaluation(JToken jToken, IVariables variables)
             {
-                var tvs = jToken.ToObject<TemplateValuesSource>();
-                if (tvs.Type != TemplateValuesSourceType.Chart)
-                {
-                    throw new Exception($"Expected {TemplateValuesSourceType.Chart}, but got {tvs.Type}");
-                }
-                
                 var chartTvs = jToken.ToObject<ChartTemplateValuesSource>();
 
                 return new ChartTemplateValuesSource
@@ -203,12 +197,6 @@ namespace Calamari.Kubernetes.Helm
 
             public static InlineYamlTemplateValuesSource FromJTokenWithEvaluation(JToken jToken, IVariables variables)
             {
-                var tvs = jToken.ToObject<TemplateValuesSource>();
-                if (tvs.Type != TemplateValuesSourceType.InlineYaml)
-                {
-                    throw new Exception($"Expected {TemplateValuesSourceType.InlineYaml}, but got {tvs.Type}");
-                }
-                
                 var inlineYamlTvs = jToken.ToObject<InlineYamlTemplateValuesSource>();
 
                 return new InlineYamlTemplateValuesSource
@@ -231,12 +219,6 @@ namespace Calamari.Kubernetes.Helm
 
             public static PackageTemplateValuesSource FromJTokenWithEvaluation(JToken jToken, IVariables variables)
             {
-                var tvs = jToken.ToObject<TemplateValuesSource>();
-                if (tvs.Type != TemplateValuesSourceType.Package)
-                {
-                    throw new Exception($"Expected {TemplateValuesSourceType.Package}, but got {tvs.Type}");
-                }
-                
                 var packageTvs = jToken.ToObject<PackageTemplateValuesSource>();
 
                 return new PackageTemplateValuesSource
@@ -260,12 +242,6 @@ namespace Calamari.Kubernetes.Helm
 
             public static GitRepositoryTemplateValuesSource FromJTokenWithEvaluation(JToken jToken, IVariables variables)
             {
-                var tvs = jToken.ToObject<TemplateValuesSource>();
-                if (tvs.Type != TemplateValuesSourceType.GitRepository)
-                {
-                    throw new Exception($"Expected {TemplateValuesSourceType.GitRepository}, but got {tvs.Type}");
-                }
-                
                 var gitRepositoryTvs = jToken.ToObject<GitRepositoryTemplateValuesSource>();
 
                 return new GitRepositoryTemplateValuesSource
@@ -287,12 +263,6 @@ namespace Calamari.Kubernetes.Helm
             
             public static KeyValuesTemplateValuesSource FromJTokenWithEvaluation(JToken jToken, IVariables variables)
             {
-                var tvs = jToken.ToObject<TemplateValuesSource>();
-                if (tvs.Type != TemplateValuesSourceType.KeyValues)
-                {
-                    throw new Exception($"Expected {TemplateValuesSourceType.KeyValues}, but got {tvs.Type}");
-                }
-                
                 var keyValuesTvs = jToken.ToObject<KeyValuesTemplateValuesSource>();
                 
                 var evaluatedKeyValues = new Dictionary<string, object>();
