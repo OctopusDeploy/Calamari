@@ -396,8 +396,7 @@ namespace Calamari.Tests.KubernetesFixtures
                         { "isDynamic", bool.TrueString },
                         { "awsUseWorkerCredentials", bool.TrueString },
                         { "awsAssumeRole", bool.TrueString },
-                        { "awsAssumeRoleArn", eksIamRolArn },
-                        { "tenantedDeploymentParticipation", "TenantedOrUntenanted" },
+                        { "awsAssumeRoleArn", eksIamRolArn }
                     };
 
                 DoDiscoveryAndAssertReceivedServiceMessageWithMatchingProperties(authenticationDetails,
@@ -442,8 +441,7 @@ namespace Calamari.Tests.KubernetesFixtures
                         { "updateIfExisting", bool.TrueString },
                         { "isDynamic", bool.TrueString },
                         { "awsUseWorkerCredentials", bool.TrueString },
-                        { "awsAssumeRole", bool.FalseString },
-                        { "tenantedDeploymentParticipation", "TenantedOrUntenanted" },
+                        { "awsAssumeRole", bool.FalseString }
                     };
 
                 DoDiscoveryAndAssertReceivedServiceMessageWithMatchingProperties(authenticationDetails,
@@ -537,7 +535,6 @@ namespace Calamari.Tests.KubernetesFixtures
                 { "awsAssumeRoleArn", eksIamRolArn },
                 { "awsAssumeRoleSession", "ThisIsASessionName" },
                 { "awsAssumeRoleSessionDurationSeconds", sessionDuration.ToString() },
-                { "tenantedDeploymentParticipation", "TenantedOrUntenanted" },
             };
 
             DoDiscoveryAndAssertReceivedServiceMessageWithMatchingProperties(authenticationDetails, serviceMessageProperties);
