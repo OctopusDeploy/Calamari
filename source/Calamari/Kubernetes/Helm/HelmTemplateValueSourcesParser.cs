@@ -57,14 +57,14 @@ namespace Calamari.Kubernetes.Helm
             var filenames = new List<string>();
             // we reverse the order of the array so that we maintain the order that sources at the top take higher precendences (i.e. are adding to the --values list later),
             // however, within a source, the file path order must be maintained (for consistency) so that later file paths take higher precendence 
-            foreach (var (json, index) in parsedJsonArray.Select((json, index) => (json, index)).Reverse())
+            foreach (var (jToken, index) in parsedJsonArray.Select((json, index) => (json, index)).Reverse())
             {
-                var tvs = json.ToObject<TemplateValuesSource>();
+                var tvs = jToken.ToObject<TemplateValuesSource>();
                 switch (tvs.Type)
                 {
                     case TemplateValuesSourceType.Chart:
-                        var chartTvs = json.ToObject<ChartTemplateValuesSource>();
-
+                        var chartTvs = ChartTemplateValuesSource.FromJTokenWithEvaluation(jToken, deployment.Variables);
+                        
                         IEnumerable<string> chartFilenames;
                         var scriptSource = deployment.Variables.Get(ScriptVariables.ScriptSource);
                         switch (scriptSource)
@@ -90,14 +90,14 @@ namespace Calamari.Kubernetes.Helm
                         break;
 
                     case TemplateValuesSourceType.KeyValues:
-                        var keyValuesTvs = json.ToObject<KeyValuesTemplateValuesSource>();
+                        var keyValuesTvs = KeyValuesTemplateValuesSource.FromJTokenWithEvaluation(jToken, deployment.Variables);
                         var keyValueFilename = KeyValuesValuesFileWriter.WriteToFile(deployment, fileSystem, keyValuesTvs.Value, index);
 
                         AddIfNotNull(filenames, keyValueFilename);
                         break;
 
                     case TemplateValuesSourceType.Package:
-                        var packageTvs = json.ToObject<PackageTemplateValuesSource>();
+                        var packageTvs = PackageTemplateValuesSource.FromJTokenWithEvaluation(jToken, deployment.Variables);
                         var packageFilenames = PackageValuesFileWriter.FindPackageValuesFiles(deployment,
                                                                                               fileSystem,
                                                                                               log,
@@ -114,16 +114,14 @@ namespace Calamari.Kubernetes.Helm
                         break;
 
                     case TemplateValuesSourceType.InlineYaml:
-                        var inlineYamlTvs = json.ToObject<InlineYamlTemplateValuesSource>();
-                        
-                        var val = deployment.Variables.Evaluate(inlineYamlTvs.Value);
-                        var inlineYamlFilename = InlineYamlValuesFileWriter.WriteToFile(deployment, fileSystem, val, index);
+                        var inlineYamlTvs = InlineYamlTemplateValuesSource.FromJTokenWithEvaluation(jToken, deployment.Variables);
+                        var inlineYamlFilename = InlineYamlValuesFileWriter.WriteToFile(deployment, fileSystem, inlineYamlTvs.Value, index);
 
                         AddIfNotNull(filenames, inlineYamlFilename);
                         break;
 
                     case TemplateValuesSourceType.GitRepository:
-                        var gitRepTvs = json.ToObject<GitRepositoryTemplateValuesSource>();
+                        var gitRepTvs = GitRepositoryTemplateValuesSource.FromJTokenWithEvaluation(jToken, deployment.Variables);
                         var gitRepositoryFilenames = GitRepositoryValuesFileWriter.FindGitDependencyValuesFiles(deployment,
                                                                                                                 fileSystem,
                                                                                                                 log,
@@ -176,6 +174,16 @@ namespace Calamari.Kubernetes.Helm
             {
                 Type = TemplateValuesSourceType.Chart;
             }
+
+            public static ChartTemplateValuesSource FromJTokenWithEvaluation(JToken jToken, IVariables variables)
+            {
+                var chartTvs = jToken.ToObject<ChartTemplateValuesSource>();
+
+                return new ChartTemplateValuesSource
+                {
+                    ValuesFilePaths = variables.Evaluate(chartTvs.ValuesFilePaths)
+                };
+            }
         }
 
         internal class InlineYamlTemplateValuesSource : TemplateValuesSource
@@ -185,6 +193,16 @@ namespace Calamari.Kubernetes.Helm
             public InlineYamlTemplateValuesSource()
             {
                 Type = TemplateValuesSourceType.InlineYaml;
+            }
+
+            public static InlineYamlTemplateValuesSource FromJTokenWithEvaluation(JToken jToken, IVariables variables)
+            {
+                var inlineYamlTvs = jToken.ToObject<InlineYamlTemplateValuesSource>();
+
+                return new InlineYamlTemplateValuesSource
+                {
+                    Value = variables.Evaluate(inlineYamlTvs.Value)
+                };
             }
         }
 
@@ -198,6 +216,18 @@ namespace Calamari.Kubernetes.Helm
             {
                 Type = TemplateValuesSourceType.Package;
             }
+
+            public static PackageTemplateValuesSource FromJTokenWithEvaluation(JToken jToken, IVariables variables)
+            {
+                var packageTvs = jToken.ToObject<PackageTemplateValuesSource>();
+
+                return new PackageTemplateValuesSource
+                {
+                    PackageId = variables.Evaluate(packageTvs.PackageId),
+                    PackageName = variables.Evaluate(packageTvs.PackageName),
+                    ValuesFilePaths = variables.Evaluate(packageTvs.ValuesFilePaths)
+                };
+            }
         }
 
         internal class GitRepositoryTemplateValuesSource : TemplateValuesSource
@@ -209,6 +239,17 @@ namespace Calamari.Kubernetes.Helm
             {
                 Type = TemplateValuesSourceType.GitRepository;
             }
+
+            public static GitRepositoryTemplateValuesSource FromJTokenWithEvaluation(JToken jToken, IVariables variables)
+            {
+                var gitRepositoryTvs = jToken.ToObject<GitRepositoryTemplateValuesSource>();
+
+                return new GitRepositoryTemplateValuesSource
+                {
+                    GitDependencyName = variables.Evaluate(gitRepositoryTvs.GitDependencyName),
+                    ValuesFilePaths = variables.Evaluate(gitRepositoryTvs.ValuesFilePaths)
+                };
+            }
         }
 
         internal class KeyValuesTemplateValuesSource : TemplateValuesSource
@@ -218,6 +259,27 @@ namespace Calamari.Kubernetes.Helm
             public KeyValuesTemplateValuesSource()
             {
                 Type = TemplateValuesSourceType.KeyValues;
+            }
+            
+            public static KeyValuesTemplateValuesSource FromJTokenWithEvaluation(JToken jToken, IVariables variables)
+            {
+                var keyValuesTvs = jToken.ToObject<KeyValuesTemplateValuesSource>();
+                
+                var evaluatedKeyValues = new Dictionary<string, object>();
+                foreach (var kvp in keyValuesTvs.Value)
+                {
+                    var evaluatedKey = variables.Evaluate(kvp.Key);
+                    var value = kvp.Value;
+                            
+                    var val = JToken.FromObject(kvp.Value);
+                    if (val.Type == JTokenType.String)
+                    {
+                        value = variables.Evaluate(val.Value<string>());
+                    }
+                    evaluatedKeyValues.Add(evaluatedKey, value);
+                }
+                
+                return new KeyValuesTemplateValuesSource { Value = evaluatedKeyValues };
             }
         }
     }
