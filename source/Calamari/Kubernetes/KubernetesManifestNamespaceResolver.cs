@@ -7,6 +7,7 @@ namespace Calamari.Kubernetes
     public interface IKubernetesManifestNamespaceResolver
     {
         string ResolveNamespace(YamlMappingNode rootManifestNode, IVariables variables);
+        string GetImplicitNamespace(IVariables variables);
     }
 
     public class KubernetesManifestNamespaceResolver : IKubernetesManifestNamespaceResolver
@@ -44,7 +45,15 @@ namespace Calamari.Kubernetes
             return ns;
         }
 
-        static string GetNamespace(YamlMappingNode metadataNode, IVariables variables)
+        public string GetImplicitNamespace(IVariables variables)
+        {
+            //we check to see if there is an explicit helm namespace defined first
+            //then fallback on the action/target default namespace
+            //otherwise fallback on default
+            return variables.Get(SpecialVariables.Helm.Namespace) ?? variables.Get(SpecialVariables.Namespace) ?? "default";
+        }
+
+        string GetNamespace(YamlMappingNode metadataNode, IVariables variables)
         {
             //if we have a namespace node and it's not empty, just use that value
             var ns = metadataNode.GetChildNodeIfExists<YamlScalarNode>("namespace")?.Value;
@@ -54,10 +63,7 @@ namespace Calamari.Kubernetes
             }
             
             //if we don't, then fallback on variables
-            //we check to see if there is an explicit helm namespace defined first
-            //then fallback on the action/target default namespace
-            //otherwise fallback on default
-            return variables.Get(SpecialVariables.Helm.Namespace) ?? variables.Get(SpecialVariables.Namespace) ?? "default";
+            return GetImplicitNamespace(variables);
         }
         
         static ApiResourceIdentifier GetApiResourceIdentifier(YamlMappingNode node)

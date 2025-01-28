@@ -15,7 +15,7 @@ namespace Calamari.Kubernetes
         {
             if (!node.Children.TryGetValue(key, out var childNode))
             {
-                return default;
+                return null;
             }
 
             if (!(childNode is TNode typedChildNode))
