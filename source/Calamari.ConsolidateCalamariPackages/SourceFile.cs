@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Calamari.ConsolidateCalamariPackages
+namespace Octopus.Calamari.ConsolidatedPackage
 {
     class SourceFile
     {
@@ -12,5 +12,9 @@ namespace Calamari.ConsolidateCalamariPackages
         public string FullNameInDestinationArchive { get; set; }
         public string FullNameInSourceArchive { get; set; }
         public string Hash { get; set; }
+        public string FileName { get; set; }
+        public string EntryNameInConsolidationArchive() {
+            return $"{Hash}/{FileName}";
+        }
     }
 }

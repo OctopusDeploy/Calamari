@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Calamari.ConsolidateCalamariPackages
+namespace Octopus.Calamari.ConsolidatedPackage
 {
     public class MigratedCalamariFlavours
     {

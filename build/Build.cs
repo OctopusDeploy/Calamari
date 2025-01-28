@@ -6,7 +6,6 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Calamari.ConsolidateCalamariPackages;
 using NuGet.Packaging;
 using Nuke.Common;
 using Nuke.Common.CI.TeamCity;
@@ -17,6 +16,7 @@ using Nuke.Common.Tools.DotNet;
 using Nuke.Common.Tools.GitVersion;
 using Nuke.Common.Tools.NuGet;
 using Nuke.Common.Utilities.Collections;
+using Octopus.Calamari.ConsolidatedPackage;
 using Serilog;
 using static Nuke.Common.IO.FileSystemTasks;
 using static Nuke.Common.Tools.DotNet.DotNetTasks;
@@ -419,6 +419,10 @@ namespace Calamari.Build
                                 foreach (var project in commonProjects)
                                     packageActions.Add(() => SignAndPack(project.ToString(), dotNetCorePackSettings));
 
+                                // Pack the Consolidation Libraries
+                                var consolidateCalamariPackagesProjectPrefix = "Calamari.ConsolidateCalamariPackages";
+                                Solution.Projects.Where(project => project.Name.StartsWith(consolidateCalamariPackagesProjectPrefix)).ForEach(p => packageActions.Add(() => SignAndPack(p, dotNetCorePackSettings)));
+                                
                                 var sourceProjectPath =
                                     SourceDirectory / "Calamari.CloudAccounts" / "Calamari.CloudAccounts.csproj";
                                 packageActions.Add(() => SignAndPack(sourceProjectPath,
