@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes.ResourceStatus.Resources;
 
@@ -9,30 +10,30 @@ namespace Calamari.Kubernetes.ResourceStatus
     {
         IEnumerable<ResourceIdentifier> FindResources(string workingDirectory);
     }
-    
+
     public class ResourceFinder : IResourceFinder
     {
         readonly IVariables variables;
         readonly IManifestRetriever manifestRetriever;
+        readonly IKubernetesManifestNamespaceResolver namespaceResolver;
+        readonly ILog log;
 
-        public ResourceFinder(IVariables variables, IManifestRetriever manifestRetriever)
+        public ResourceFinder(IVariables variables, IManifestRetriever manifestRetriever, IKubernetesManifestNamespaceResolver namespaceResolver, ILog log)
         {
             this.variables = variables;
             this.manifestRetriever = manifestRetriever;
+            this.namespaceResolver = namespaceResolver;
+            this.log = log;
         }
 
         public IEnumerable<ResourceIdentifier> FindResources(string workingDirectory)
         {
-            var defaultNamespace = variables.Get(SpecialVariables.Namespace, "default");
-            // When the namespace on a target was set and then cleared, it's going to be "" instead of null
-            if (string.IsNullOrEmpty(defaultNamespace))
-            {
-                defaultNamespace = "default";
-            }
-
+            //discover resources in the manifests
             var manifests = manifestRetriever.GetManifests(workingDirectory).ToList();
-            var definedResources = KubernetesYaml.GetDefinedResources(manifests, defaultNamespace).ToList();
+            var definedResources = KubernetesYaml.GetDefinedResources(manifests, namespaceResolver, variables, log).ToList();
 
+            //look for the computed configmaps and secrets
+            var defaultNamespace = namespaceResolver.GetImplicitNamespace(variables);
             var secret = GetSecret(defaultNamespace);
             if (secret.HasValue)
             {

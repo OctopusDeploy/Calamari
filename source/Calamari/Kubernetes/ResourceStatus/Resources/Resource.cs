@@ -37,7 +37,8 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
             Uid = Field("$.metadata.uid");
             GroupVersionKind  = json.ToResourceGroupVersionKind();
             Name = Field("$.metadata.name");
-            Namespace = Field("$.metadata.namespace");
+            //we explicitly want null if there is no namespace
+            Namespace = FieldOrDefault<string>("$.metadata.namespace", null);
         }
 
         public virtual bool HasUpdate(Resource lastStatus) => false;

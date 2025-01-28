@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes.ResourceStatus.Resources;
 using YamlDotNet.Core;
-using YamlDotNet.Core.Events;
+using YamlDotNet.RepresentationModel;
 using YamlDotNet.Serialization;
 
 namespace Calamari.Kubernetes.ResourceStatus
@@ -16,42 +18,42 @@ namespace Calamari.Kubernetes.ResourceStatus
         /// Gets resource identifiers which are defined in a YAML file.
         /// A YAML file can define multiple resources, separated by '---'.
         /// </summary>
-        public static IEnumerable<ResourceIdentifier> GetDefinedResources(IEnumerable<string> manifests, string defaultNamespace)
+        public static IEnumerable<ResourceIdentifier> GetDefinedResources(IEnumerable<string> manifests,
+                                                                          IKubernetesManifestNamespaceResolver namespaceResolver,
+                                                                          IVariables variables,
+                                                                          ILog log)
         {
             foreach (var manifest in manifests)
             {
-                var input = new StringReader(manifest);
+                var yamlStream = new YamlStream();
+                yamlStream.Load(new StringReader(manifest));
 
-                var parser = new Parser(input);
-                parser.Consume<StreamStart>();
-
-                while (!parser.Accept<StreamEnd>(out _))
+                foreach (var document in yamlStream.Documents)
                 {
-                    var definedResource = GetDefinedResource(parser, defaultNamespace);
-                    if (!definedResource.HasValue)
-                        break;
+                    if (!(document.RootNode is YamlMappingNode rootNode))
+                    {
+                        log.Warn("Could not parse manifest, resources will not be added to object status");
+                        continue;
+                    }
 
-                    yield return definedResource.Value;
+                    ResourceGroupVersionKind gvk;
+                    string name;
+                    string @namespace;
+                    try
+                    {
+                        gvk = rootNode.ToResourceGroupVersionKind();
+                        var metadataNode = rootNode.GetChildNode<YamlMappingNode>("metadata");
+                        name = metadataNode.GetChildNode<YamlScalarNode>("name").Value;
+                        @namespace = namespaceResolver.ResolveNamespace(rootNode, variables);
+                    }
+                    catch (YamlException)
+                    {
+                        log.Warn("Could not parse manifest, resources will not be added to object status");
+                        continue;
+                    }
+                    
+                    yield return new ResourceIdentifier(gvk, name, @namespace);
                 }
-            }
-        }
-
-        static ResourceIdentifier? GetDefinedResource(IParser parser, string defaultNamespace)
-        {
-            try
-            {
-                var yamlObject = Deserializer.Deserialize<dynamic>(parser);
-                yamlObject["metadata"].TryGetValue("namespace", out object @namespace);
-                yamlObject.TryGetValue("apiVersion", out object apiVersion);
-                var groupAndVersion = ResourceGroupVersionKindExtensionMethods.ParseApiVersion(apiVersion?.ToString());
-                var gvk = new ResourceGroupVersionKind(groupAndVersion.Item1, groupAndVersion.Item2, yamlObject["kind"]);
-                return new ResourceIdentifier(gvk,
-                                              yamlObject["metadata"]["name"],
-                                              @namespace == null ? defaultNamespace : (string)@namespace);
-            }
-            catch
-            {
-                return null;
             }
         }
     }
