@@ -50,20 +50,20 @@ namespace Calamari.Kubernetes.ResourceStatus
 
         private Resource GetResource(ResourceIdentifier resourceIdentifier, IKubectl kubectl, Options options)
         {
-            var result = kubectlGet.Resource(resourceIdentifier.Kind, resourceIdentifier.Name, resourceIdentifier.Namespace, kubectl);
+            var result = kubectlGet.Resource(resourceIdentifier, kubectl);
             
             return result.RawOutput.IsNullOrEmpty() ? null : TryParse(ResourceFactory.FromJson, result, options);
         }
 
         private IEnumerable<Resource> GetChildrenResources(Resource parentResource, IKubectl kubectl, Options options)
         {
-            var childKind = parentResource.ChildKind;
-            if (string.IsNullOrEmpty(childKind))
+            var childGvk = parentResource.ChildGroupVersionKind;
+            if (childGvk is null)
             {
                 return Enumerable.Empty<Resource>();
             }
 
-            var result = kubectlGet.AllResources(childKind, parentResource.Namespace, kubectl);
+            var result = kubectlGet.AllResources(childGvk, parentResource.Namespace, kubectl);
 
             var resources = TryParse(ResourceFactory.FromListJson, result, options);
             return resources.Where(resource => resource.OwnerUids.Contains(parentResource.Uid))

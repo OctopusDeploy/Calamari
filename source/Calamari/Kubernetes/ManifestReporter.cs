@@ -15,7 +15,8 @@ namespace Calamari.Kubernetes
 {
     public interface IManifestReporter
     {
-        void ReportManifestApplied(string filePath);
+        void ReportManifestFileApplied(string filePath);
+        void ReportManifestApplied(string yaml);
     }
 
     public class ManifestReporter : IManifestReporter
@@ -23,65 +24,32 @@ namespace Calamari.Kubernetes
         readonly IVariables variables;
         readonly ICalamariFileSystem fileSystem;
         readonly ILog log;
-
-        static readonly IDeserializer YamlDeserializer = new Deserializer();
+        readonly IKubernetesManifestNamespaceResolver namespaceResolver;
 
         static readonly ISerializer YamlSerializer = new SerializerBuilder()
-                                                     .WithNamingConvention(CamelCaseNamingConvention.Instance)
-                                                     .JsonCompatible()
-                                                     .Build();
+            .Build();
 
-        public ManifestReporter(IVariables variables, ICalamariFileSystem fileSystem, ILog log)
+        public ManifestReporter(IVariables variables, ICalamariFileSystem fileSystem, ILog log, IKubernetesManifestNamespaceResolver namespaceResolver)
         {
             this.variables = variables;
             this.fileSystem = fileSystem;
             this.log = log;
+            this.namespaceResolver = namespaceResolver;
         }
 
-        string GetNamespace(YamlMappingNode yamlRoot)
+        public void ReportManifestFileApplied(string filePath)
         {
-            var implicitNamespace = variables.Get(SpecialVariables.Namespace) ?? "default";
-
-            if (yamlRoot.Children.TryGetValue("metadata", out var metadataNode) && metadataNode is YamlMappingNode metadataMappingNode &&
-                metadataMappingNode.Children.TryGetValue("namespace", out var namespaceNode) && namespaceNode is YamlScalarNode namespaceScalarNode &&
-                !string.IsNullOrWhiteSpace(namespaceScalarNode.Value))
-            {
-                implicitNamespace = namespaceScalarNode.Value;
-            }
-
-            return implicitNamespace;
-        }
-
-        public void ReportManifestApplied(string filePath)
-        {
-            if (!FeatureToggle.KubernetesLiveObjectStatusFeatureToggle.IsEnabled(variables))
+            if (!FeatureToggle.KubernetesLiveObjectStatusFeatureToggle.IsEnabled(variables)
+                && !OctopusFeatureToggles.KubernetesObjectManifestInspectionFeatureToggle.IsEnabled(variables))
                 return;
-            
-            using (var yamlFile = fileSystem.OpenFile(filePath, FileAccess.ReadWrite))
+
+            using (var yamlFile = fileSystem.OpenFile(filePath, FileAccess.Read, FileShare.Read))
             {
                 try
                 {
                     var yamlStream = new YamlStream();
                     yamlStream.Load(new StreamReader(yamlFile));
-
-                    foreach (var document in yamlStream.Documents)
-                    {
-                        if (!(document.RootNode is YamlMappingNode rootNode))
-                        {
-                            log.Warn("Could not parse manifest, resources will not be added to live object status");
-                            continue;
-                        }
-
-                        var updatedDocument = YamlNodeToJson(rootNode);
-
-                        var ns = GetNamespace(rootNode);
-                        log.WriteServiceMessage(new ServiceMessage(SpecialVariables.ServiceMessageNames.ManifestApplied.Name,
-                                                                   new Dictionary<string, string>
-                                                                   {
-                                                                       { SpecialVariables.ServiceMessageNames.ManifestApplied.ManifestAttribute, updatedDocument },
-                                                                       { SpecialVariables.ServiceMessageNames.ManifestApplied.NamespaceAttribute, ns }
-                                                                   }));
-                    }
+                    ReportManifestStreamApplied(yamlStream);
                 }
                 catch (SemanticErrorException)
                 {
@@ -90,19 +58,53 @@ namespace Calamari.Kubernetes
             }
         }
 
-        static string YamlNodeToJson(YamlNode node)
+        public void ReportManifestApplied(string yamlManifest)
         {
-            var stream = new YamlStream { new YamlDocument(node) };
-            using (var writer = new StringWriter())
-            {
-                stream.Save(writer);
+            if (!FeatureToggle.KubernetesLiveObjectStatusFeatureToggle.IsEnabled(variables)
+                && !OctopusFeatureToggles.KubernetesObjectManifestInspectionFeatureToggle.IsEnabled(variables))
+                return;
 
-                using (var reader = new StringReader(writer.ToString()))
-                {
-                    var yamlObject = YamlDeserializer.Deserialize(reader);
-                    return yamlObject is null ? string.Empty : YamlSerializer.Serialize(yamlObject).Trim();
-                }
+            try
+            {
+                var yamlStream = new YamlStream();
+                yamlStream.Load(new StringReader(yamlManifest));
+                ReportManifestStreamApplied(yamlStream);
             }
+            catch (SemanticErrorException)
+            {
+                log.Warn("Invalid YAML syntax found, resources will not be added to live object status");
+            }
+        }
+
+        void ReportManifestStreamApplied(YamlStream yamlStream)
+        {
+            foreach (var document in yamlStream.Documents)
+            {
+                if (!(document.RootNode is YamlMappingNode rootNode))
+                {
+                    log.Warn("Could not parse manifest, resources will not be added to live object status");
+                    continue;
+                }
+
+                var updatedDocument = SerializeManifest(rootNode);
+
+                var ns = namespaceResolver.ResolveNamespace(rootNode, variables);
+
+                var message = new ServiceMessage(
+                                                 SpecialVariables.ServiceMessages.ManifestApplied.Name,
+                                                 new Dictionary<string, string>
+                                                 {
+                                                     { SpecialVariables.ServiceMessages.ManifestApplied.ManifestAttribute, updatedDocument },
+                                                     { SpecialVariables.ServiceMessages.ManifestApplied.NamespaceAttribute, ns }
+                                                 });
+
+                log.WriteServiceMessage(message);
+            }
+        }
+
+        static string SerializeManifest(YamlMappingNode node)
+        {
+            return YamlSerializer.Serialize(node);
         }
     }
 }

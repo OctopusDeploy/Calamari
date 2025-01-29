@@ -26,6 +26,7 @@ namespace Calamari.CloudAccounts
 
         readonly ILog log;
         readonly Func<Task<bool>> verifyLogin;
+        readonly string accountType;
         readonly string region;
         readonly string accessKey;
         readonly string secretKey;
@@ -73,8 +74,10 @@ namespace Calamari.CloudAccounts
         /// <returns>true if the login was successful, false otherwise</returns>
         async Task<bool> LoginFallback()
         {
-            // Inherit role from web auth tokens
-            return await PopulateKeysFromWebRole()
+            // Inherit role from pod identity manager
+            return await PopulateKeysFromContainerIdentity()
+                   // Inherit role from web auth tokens
+                   || await PopulateKeysFromWebRole()
                    // Inherit the role via the IMDS web endpoint exposed by VMs
                    || await PopulateKeysFromInstanceRole();
         }
@@ -94,6 +97,7 @@ namespace Calamari.CloudAccounts
                         // The lack of any keys means we rely on an EC2 instance role.
                         variables.Get("Octopus.Action.Amazon.AccessKey")?.Trim();
             secretKey = variables.Get(account + ".SecretKey")?.Trim() ?? variables.Get("Octopus.Action.Amazon.SecretKey")?.Trim();
+            accountType = variables.Get("Octopus.Account.AccountType")?.Trim();
             
             roleArn = variables.Get($"{account}.RoleArn")?.Trim() ??
                       variables.Get("Octopus.Action.Amazon.RoleArn")?.Trim();
@@ -161,7 +165,7 @@ namespace Calamari.CloudAccounts
         {
             EnvironmentVars["AWS_DEFAULT_REGION"] = region;
             EnvironmentVars["AWS_REGION"] = region;
-        }
+        } 
 
         /// <summary>
         /// If the keys were explicitly supplied, use them directly
@@ -169,54 +173,65 @@ namespace Calamari.CloudAccounts
         /// <exception cref="Exception">The supplied keys were not valid</exception>
         async Task<bool> PopulateSuppliedKeys()
         {
-            if (!String.IsNullOrEmpty(accessKey))
+            switch (accountType)
             {
-                EnvironmentVars["AWS_ACCESS_KEY_ID"] = accessKey;
-                EnvironmentVars["AWS_SECRET_ACCESS_KEY"] = secretKey;
+                // Prioritise auth flows based on account type
+                case "AmazonWebServicesAccount" when await TryPopulateKeysDirectly():
+                case "AmazonWebServicesOidcAccount" when await TryPopulateKeysUsingOidc():
+                    return true; 
+                default:
+                    // Default priority if no matching account type
+                    return await TryPopulateKeysDirectly() || await TryPopulateKeysUsingOidc();
+            }
+        }
+
+        async Task<bool> TryPopulateKeysDirectly()
+        {
+            if(string.IsNullOrEmpty(accessKey)) return false;
+            EnvironmentVars["AWS_ACCESS_KEY_ID"] = accessKey;
+            EnvironmentVars["AWS_SECRET_ACCESS_KEY"] = secretKey;
+            if (!await verifyLogin())
+            {
+                throw new Exception("AWS-LOGIN-ERROR-0005: Failed to verify the credentials. "
+                                    + "Please check the keys assigned to the Amazon Web Services Account associated with this step. "
+                                    + $"For more information visit {log.FormatLink("https://oc.to/U4WA8x")}");
+            }
+
+            return true;
+        }
+
+        async Task<bool> TryPopulateKeysUsingOidc()
+        {
+            if(string.IsNullOrEmpty(oidcJwt)) return false;
+            try
+            {
+                var client = new AmazonSecurityTokenServiceClient(new AnonymousAWSCredentials());
+                var assumeRoleWithWebIdentityResponse = await client.AssumeRoleWithWebIdentityAsync(new AssumeRoleWithWebIdentityRequest
+                {
+                    RoleArn = roleArn,
+                    DurationSeconds = int.TryParse(sessionDuration, out var seconds) ? seconds : 3600,
+                    RoleSessionName = DefaultSessionName,
+                    WebIdentityToken = oidcJwt
+                });
+
+                EnvironmentVars["AWS_ACCESS_KEY_ID"] = assumeRoleWithWebIdentityResponse.Credentials.AccessKeyId;
+                EnvironmentVars["AWS_SECRET_ACCESS_KEY"] = assumeRoleWithWebIdentityResponse.Credentials.SecretAccessKey;
+                EnvironmentVars["AWS_SESSION_TOKEN"] = assumeRoleWithWebIdentityResponse.Credentials.SessionToken;
                 if (!await verifyLogin())
                 {
                     throw new Exception("AWS-LOGIN-ERROR-0005: Failed to verify the credentials. "
-                                        + "Please check the keys assigned to the Amazon Web Services Account associated with this step. "
+                                        + "Please check the Role ARN assigned to the Amazon Web Services Account associated with this step. "
                                         + $"For more information visit {log.FormatLink("https://oc.to/U4WA8x")}");
                 }
 
                 return true;
             }
-
-            if (!string.IsNullOrEmpty(oidcJwt))
+            catch (Exception ex)
             {
-                try
-                {
-                    var client = new AmazonSecurityTokenServiceClient(new AnonymousAWSCredentials());
-                    var assumeRoleWithWebIdentityResponse = await client.AssumeRoleWithWebIdentityAsync(new AssumeRoleWithWebIdentityRequest
-                    {
-                        RoleArn = roleArn,
-                        DurationSeconds = int.TryParse(sessionDuration, out var seconds) ? seconds : 3600,
-                        RoleSessionName = DefaultSessionName,
-                        WebIdentityToken = oidcJwt
-                    });
-
-                    EnvironmentVars["AWS_ACCESS_KEY_ID"] = assumeRoleWithWebIdentityResponse.Credentials.AccessKeyId;
-                    EnvironmentVars["AWS_SECRET_ACCESS_KEY"] = assumeRoleWithWebIdentityResponse.Credentials.SecretAccessKey;
-                    EnvironmentVars["AWS_SESSION_TOKEN"] = assumeRoleWithWebIdentityResponse.Credentials.SessionToken;
-                    if (!await verifyLogin())
-                    {
-                        throw new Exception("AWS-LOGIN-ERROR-0005: Failed to verify the credentials. "
-                                            + "Please check the Role ARN assigned to the Amazon Web Services Account associated with this step. "
-                                            + $"For more information visit {log.FormatLink("https://oc.to/U4WA8x")}");
-                    }
-
-                    return true;
-                }
-                catch (Exception ex)
-                {
-                    // catch the exception and fallback to returning false
-                    throw new Exception("AWS-LOGIN-ERROR-0005.1: Failed to verify OIDC credentials. "
-                                        + $"Error: {ex}");
-                }
+                // catch the exception and fallback to returning false
+                throw new Exception("AWS-LOGIN-ERROR-0005.1: Failed to verify OIDC credentials. "
+                                    + $"Error: {ex}");
             }
-            
-            return false;
         }
 
         /// <summary>
@@ -237,8 +252,7 @@ namespace Calamari.CloudAccounts
                         payload = await client.GetStringAsync($"{RoleUri}{instanceRole}");
                     }
 
-                    dynamic instanceRoleKeys = JsonConvert.DeserializeObject(payload);
-
+                    var instanceRoleKeys = JsonConvert.DeserializeObject<InstanceRoleKeys>(payload);
                     EnvironmentVars["AWS_ACCESS_KEY_ID"] = instanceRoleKeys.AccessKeyId;
                     EnvironmentVars["AWS_SECRET_ACCESS_KEY"] = instanceRoleKeys.SecretAccessKey;
                     EnvironmentVars["AWS_SESSION_TOKEN"] = instanceRoleKeys.Token;
@@ -252,6 +266,14 @@ namespace Calamari.CloudAccounts
             }
 
             return false;
+        }
+
+
+        class InstanceRoleKeys
+        {
+            public string AccessKeyId { get; set; }
+            public string SecretAccessKey { get; set; }
+            public string Token { get; set; }
         }
 
         /// <summary>
@@ -298,6 +320,36 @@ namespace Calamari.CloudAccounts
                 return await body.Content.ReadAsStringAsync();
             }
         }
+        
+        /// <summary>
+        /// This method reads the AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE environment variable, loads the token
+        /// from the associated file, and then assumes the role using the credentials provided by the pod identity
+        /// manager located in the AWS_CONTAINER_CREDENTIALS_FULL_URI environment variable. This is used when a tentacle is
+        /// running in an EKS cluster. The docs at https://docs.aws.amazon.com/sdkref/latest/guide/feature-container-credentials.html
+        /// have more details.
+        /// </summary>
+        async Task<bool> PopulateKeysFromContainerIdentity()
+        {
+            if (String.IsNullOrEmpty(accessKey))
+            {
+                try
+                {
+                    var credentials = new GenericContainerCredentials();
+                    var immutableCredentials = await credentials.GetCredentialsAsync();
+                    EnvironmentVars["AWS_ACCESS_KEY_ID"] = immutableCredentials.AccessKey;
+                    EnvironmentVars["AWS_SECRET_ACCESS_KEY"] = immutableCredentials.SecretKey;
+                    EnvironmentVars["AWS_SESSION_TOKEN"] = immutableCredentials.Token;
+                    return true;
+                }
+                catch
+                {
+                    // catch the exception and fallback to returning false
+                }
+            }
+
+            return false;
+        }
+
 
         /// <summary>
         /// If we assume a secondary role, do it here

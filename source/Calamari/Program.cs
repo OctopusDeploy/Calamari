@@ -73,6 +73,8 @@ namespace Calamari
             builder.RegisterType<ResourceStatusCheckTask>().AsSelf();
             builder.RegisterType<ResourceUpdateReporter>().As<IResourceUpdateReporter>().SingleInstance();
             builder.RegisterType<ManifestReporter>().As<IManifestReporter>().SingleInstance();
+            builder.RegisterType<ManifestRetriever>().As<IManifestRetriever>().SingleInstance();
+            builder.RegisterType<ResourceFinder>().As<IResourceFinder>().SingleInstance();
             builder.RegisterType<ResourceStatusReportExecutor>().As<IResourceStatusReportExecutor>();
             builder.RegisterType<GatherAndApplyRawYamlExecutor>().As<IRawYamlKubernetesApplyExecutor>();
             builder.RegisterType<KustomizeExecutor>().As<IKustomizeKubernetesApplyExecutor>();
@@ -81,6 +83,8 @@ namespace Calamari
             builder.RegisterType<KubectlGet>().As<IKubectlGet>().SingleInstance();
             builder.RegisterType<HelmTemplateValueSourcesParser>().AsSelf().SingleInstance();
             builder.RegisterType<WindowsX509CertificateStore>().As<IWindowsX509CertificateStore>().SingleInstance();
+            builder.RegisterType<ApiResourceScopeLookup>().As<IApiResourceScopeLookup>().SingleInstance();
+            builder.RegisterType<KubernetesManifestNamespaceResolver>().As<IKubernetesManifestNamespaceResolver>().InstancePerLifetimeScope();
             
             builder.RegisterType<KubernetesDiscovererFactory>()
                    .As<IKubernetesDiscovererFactory>()

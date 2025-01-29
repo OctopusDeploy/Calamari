@@ -171,7 +171,7 @@ namespace Calamari.Build
 
                       DotNetBuild(_ => _.SetProjectFile(Solution)
                                         .SetConfiguration(Configuration)
-                                        .SetNoRestore(true)
+                                        .EnableNoRestore()
                                         .SetVersion(NugetVersion.Value)
                                         .SetInformationalVersion(GitVersionInfo?.InformationalVersion));
                   });
@@ -317,6 +317,8 @@ namespace Calamari.Build
                 .SetProject(project)
                 .SetFramework(calamariPackageMetadata.Framework)
                 .SetRuntime(calamariPackageMetadata.Architecture)
+                //explicitly mark all of these as self-contained (because they use a specific runtime)
+                .EnableSelfContained()
                 .SetOutput(outputDirectory)
             );
 
@@ -683,8 +685,8 @@ namespace Calamari.Build
         void SetOctopusServerCalamariVersion(string projectFile)
         {
             var text = File.ReadAllText(projectFile);
-            text = Regex.Replace(text, @"<PackageReference Include=""Calamari.Consolidated"" Version=""([\S])+"" />",
-                                 $"<PackageReference Include=\"Calamari.Consolidated\" Version=\"{NugetVersion.Value}\" />");
+            text = Regex.Replace(text, @"<PackageReference Include=""Calamari.Consolidated"" Version=""([\S])+""",
+                                 $"<PackageReference Include=\"Calamari.Consolidated\" Version=\"{NugetVersion.Value}\"");
             File.WriteAllText(projectFile, text);
         }
 

@@ -152,16 +152,6 @@ namespace Calamari.Testing.LogParser
                     public const string WebAppSlotNameAttribute = "webAppSlot";
                 }
 
-                public static class CreateAzureCloudServiceTarget
-                {
-                    [ServiceMessageName] public const string Name = "create-azurecloudservicetarget";
-                    public const string AzureCloudServiceNameAttribute = "azureCloudServiceName";
-                    public const string AzureStorageAccountAttribute = "azureStorageAccount";
-                    public const string AzureDeploymentSlotAttribute = "azureDeploymentSlot";
-                    public const string SwapAttribute = "swap";
-                    public const string InstanceCountAttribute = "instanceCount";
-                }
-
                 public static class CreateAzureServiceFabricTarget
                 {
                     [ServiceMessageName] public const string Name = "create-azureservicefabrictarget";

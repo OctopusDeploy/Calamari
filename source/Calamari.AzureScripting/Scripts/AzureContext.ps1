@@ -280,7 +280,11 @@ Execute-WithRetry{
     }
 }
 
-Write-Verbose "Invoking target script $OctopusAzureTargetScript with $OctopusAzureTargetScriptParameters parameters"
+if ([string]::IsNullOrEmpty($OctopusAzureTargetScriptParameters)) {
+    Write-Verbose "Invoking target script '$OctopusAzureTargetScript'."
+} else {
+    Write-Verbose "Invoking target script '$OctopusAzureTargetScript' with parameters '$OctopusAzureTargetScriptParameters'."
+}
 
 try {
     Invoke-Expression ". `"$OctopusAzureTargetScript`" $OctopusAzureTargetScriptParameters"

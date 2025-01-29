@@ -8,8 +8,11 @@ using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes;
 using Calamari.Testing.Helpers;
+using Calamari.Tests.Helpers;
 using FluentAssertions;
+using NSubstitute;
 using NUnit.Framework;
+using YamlDotNet.RepresentationModel;
 
 namespace Calamari.Tests.KubernetesFixtures
 {
@@ -21,114 +24,123 @@ namespace Calamari.Tests.KubernetesFixtures
         {
             var memoryLog = new InMemoryLog();
             var variables = new CalamariVariables();
+            var namespaceResolver = Substitute.For<IKubernetesManifestNamespaceResolver>();
 
             var yaml = @"foo: bar";
             using (CreateFile(yaml, out var filePath))
             {
-                var mr = new ManifestReporter(variables, CalamariPhysicalFileSystem.GetPhysicalFileSystem(), memoryLog);
+                var mr = new ManifestReporter(variables, CalamariPhysicalFileSystem.GetPhysicalFileSystem(), memoryLog, namespaceResolver);
 
-                mr.ReportManifestApplied(filePath);
+                mr.ReportManifestFileApplied(filePath);
 
                 memoryLog.ServiceMessages.Should().BeEmpty();
             }
         }
-        
-        [Test]
-        public void GivenValidYaml_ShouldPostSingleServiceMessage()
+
+        [TestCase(nameof(FeatureToggle.KubernetesLiveObjectStatusFeatureToggle))]
+        [TestCase(OctopusFeatureToggles.KnownSlugs.KubernetesObjectManifestInspection)]
+        public void GivenValidYaml_ShouldPostSingleServiceMessage(string enabledFeatureToggle)
         {
             var memoryLog = new InMemoryLog();
             var variables = new CalamariVariables();
-            variables.Set(KnownVariables.EnabledFeatureToggles, nameof(FeatureToggle.KubernetesLiveObjectStatusFeatureToggle));
+            variables.Set(KnownVariables.EnabledFeatureToggles, enabledFeatureToggle);
 
-            var yaml = @"foo: bar";
-            var expectedJson = "{\"foo\": \"bar\"}";
+            var namespaceResolver = Substitute.For<IKubernetesManifestNamespaceResolver>();
+            namespaceResolver.ResolveNamespace(Arg.Any<YamlMappingNode>(), Arg.Any<IVariables>())
+                             .Returns("default");
+
+            //Test that quotes are preserved, especially for numbers
+            var yaml = @"name: George Washington
+alphafield: ""fgdsfsd""
+unquoted_int: 89
+quoted_int: ""89""
+unquoted_float: 5.75
+quoted_float: ""5.75""
+".ReplaceLineEndings();
+
             using (CreateFile(yaml, out var filePath))
             {
-                var mr = new ManifestReporter(variables, CalamariPhysicalFileSystem.GetPhysicalFileSystem(), memoryLog);
+                var mr = new ManifestReporter(variables, CalamariPhysicalFileSystem.GetPhysicalFileSystem(), memoryLog, namespaceResolver);
 
-                mr.ReportManifestApplied(filePath);
+                mr.ReportManifestFileApplied(filePath);
 
-                var expected = ServiceMessage.Create(SpecialVariables.ServiceMessageNames.ManifestApplied.Name, ("ns", "default"), ("manifest", expectedJson));
+                var expected = ServiceMessage.Create(SpecialVariables.ServiceMessages.ManifestApplied.Name, ("ns", "default"), ("manifest", yaml));
                 memoryLog.ServiceMessages.Should().BeEquivalentTo(new List<ServiceMessage> { expected });
             }
         }
 
-        [Test]
-        public void GivenInValidManifest_ShouldNotPostServiceMessage()
+        [TestCase(nameof(FeatureToggle.KubernetesLiveObjectStatusFeatureToggle))]
+        [TestCase(OctopusFeatureToggles.KnownSlugs.KubernetesObjectManifestInspection)]
+        public void GivenInvalidManifest_ShouldNotPostServiceMessage(string enabledFeatureToggle)
         {
             var memoryLog = new InMemoryLog();
             var variables = new CalamariVariables();
-            variables.Set(KnownVariables.EnabledFeatureToggles, nameof(FeatureToggle.KubernetesLiveObjectStatusFeatureToggle));
+            variables.Set(KnownVariables.EnabledFeatureToggles, enabledFeatureToggle);
+
+            var namespaceResolver = Substitute.For<IKubernetesManifestNamespaceResolver>();
 
             var yaml = @"text - Bar";
             using (CreateFile(yaml, out var filePath))
             {
-                var mr = new ManifestReporter(variables, CalamariPhysicalFileSystem.GetPhysicalFileSystem(), memoryLog);
+                var mr = new ManifestReporter(variables, CalamariPhysicalFileSystem.GetPhysicalFileSystem(), memoryLog, namespaceResolver);
 
-                mr.ReportManifestApplied(filePath);
+                mr.ReportManifestFileApplied(filePath);
 
                 memoryLog.ServiceMessages.Should().BeEmpty();
             }
         }
 
-        [Test]
-        public void GivenNamespaceInManifest_ShouldReportManifestNamespace()
+        [TestCase(nameof(FeatureToggle.KubernetesLiveObjectStatusFeatureToggle))]
+        [TestCase(OctopusFeatureToggles.KnownSlugs.KubernetesObjectManifestInspection)]
+        public void NamespacedResolved_ShouldReportResolvedNamespace(string enabledFeatureToggle)
         {
             var memoryLog = new InMemoryLog();
             var variables = new CalamariVariables();
-            variables.Set(KnownVariables.EnabledFeatureToggles, nameof(FeatureToggle.KubernetesLiveObjectStatusFeatureToggle));
+            variables.Set(KnownVariables.EnabledFeatureToggles, enabledFeatureToggle);
+
+            var namespaceResolver = Substitute.For<IKubernetesManifestNamespaceResolver>();
+            namespaceResolver.ResolveNamespace(Arg.Any<YamlMappingNode>(), Arg.Any<IVariables>())
+                             .Returns("my-cool-namespace");
+
             var yaml = @"metadata:
   name: game-demo
-  namespace: XXX";
+  namespace: my-cool-namespace";
             using (CreateFile(yaml, out var filePath))
             {
                 var variableNs = Some.String();
                 variables.Set(SpecialVariables.Namespace, variableNs);
-                var mr = new ManifestReporter(variables, CalamariPhysicalFileSystem.GetPhysicalFileSystem(), memoryLog);
+                var mr = new ManifestReporter(variables, CalamariPhysicalFileSystem.GetPhysicalFileSystem(), memoryLog, namespaceResolver);
 
-                mr.ReportManifestApplied(filePath);
+                mr.ReportManifestFileApplied(filePath);
 
-                memoryLog.ServiceMessages.First().Properties.Should().Contain(new KeyValuePair<string, string>("ns", "XXX"));
+                memoryLog.ServiceMessages.First().Properties.Should().Contain(new KeyValuePair<string, string>("ns", "my-cool-namespace"));
             }
         }
 
-        [Test]
-        public void GivenNamespaceNotInManifest_ShouldReportVariableNamespace()
+
+        [TestCase(nameof(FeatureToggle.KubernetesLiveObjectStatusFeatureToggle))]
+        [TestCase(OctopusFeatureToggles.KnownSlugs.KubernetesObjectManifestInspection)]
+        public void GivenValidYamlString_ShouldPostSingleServiceMessage(string enabledFeatureToggle)
         {
             var memoryLog = new InMemoryLog();
             var variables = new CalamariVariables();
-            variables.Set(KnownVariables.EnabledFeatureToggles, nameof(FeatureToggle.KubernetesLiveObjectStatusFeatureToggle));
-            var yaml = @"foo: bar";
-            using (CreateFile(yaml, out var filePath))
-            {
-                var variableNs = Some.String();
-                variables.Set(SpecialVariables.Namespace, variableNs);
-                var mr = new ManifestReporter(variables, CalamariPhysicalFileSystem.GetPhysicalFileSystem(), memoryLog);
+            variables.Set(KnownVariables.EnabledFeatureToggles, enabledFeatureToggle);
 
-                mr.ReportManifestApplied(filePath);
+            var namespaceResolver = Substitute.For<IKubernetesManifestNamespaceResolver>();
+            namespaceResolver.ResolveNamespace(Arg.Any<YamlMappingNode>(), Arg.Any<IVariables>())
+                             .Returns("default");
 
-                memoryLog.ServiceMessages.First().Properties.Should().Contain(new KeyValuePair<string, string>("ns", variableNs));
-            }
+            const string yaml = "foo: bar";
+            var expectedYaml = $"foo: bar{Environment.NewLine}";
+            var mr = new ManifestReporter(variables, CalamariPhysicalFileSystem.GetPhysicalFileSystem(), memoryLog, namespaceResolver);
+
+            mr.ReportManifestApplied(yaml);
+
+            var expected = ServiceMessage.Create(SpecialVariables.ServiceMessages.ManifestApplied.Name, ("ns", "default"), ("manifest", expectedYaml));
+            memoryLog.ServiceMessages.Should().BeEquivalentTo(new List<ServiceMessage> { expected });
         }
 
-        [Test]
-        public void GiveNoNamespaces_ShouldDefaultNamespace()
-        {
-            var memoryLog = new InMemoryLog();
-            var variables = new CalamariVariables();
-            variables.Set(KnownVariables.EnabledFeatureToggles, nameof(FeatureToggle.KubernetesLiveObjectStatusFeatureToggle));
-            var yaml = @"foo: bar";
-            using (CreateFile(yaml, out var filePath))
-            {
-                var mr = new ManifestReporter(variables, CalamariPhysicalFileSystem.GetPhysicalFileSystem(), memoryLog);
-
-                mr.ReportManifestApplied(filePath);
-
-                memoryLog.ServiceMessages.First().Properties.Should().Contain(new KeyValuePair<string, string>("ns", "default"));
-            }
-        }
-
-        IDisposable CreateFile(string yaml, out string filePath)
+        static IDisposable CreateFile(string yaml, out string filePath)
         {
             var tempDir = TemporaryDirectory.Create();
             filePath = Path.Combine(tempDir.DirectoryPath, $"{Guid.NewGuid():d}.tmp");

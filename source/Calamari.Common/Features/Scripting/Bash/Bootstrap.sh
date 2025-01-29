@@ -46,7 +46,7 @@ __mask_sensitive_value $sensitiveVariableKey
 # -----------------------------------------------------------------------------
 function decrypt_variable
 {
-	echo $1 | openssl enc -a -A -d -aes-128-cbc -nosalt -K $sensitiveVariableKey -iv $2
+	echo $1 | openssl enc -a -A -d -aes-256-cbc -nosalt -K $sensitiveVariableKey -iv $2
 }
 
 #	---------------------------------------------------------------------------

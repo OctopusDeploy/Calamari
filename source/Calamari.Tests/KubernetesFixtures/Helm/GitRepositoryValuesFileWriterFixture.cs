@@ -174,5 +174,23 @@ namespace Calamari.Tests.KubernetesFixtures.Helm
                       Path.Combine(deployment.CurrentDirectory, "MyRepo", "values.Development.yaml")
                   });
         }
+        
+        [Test]
+        public void GitRepositoryValuesFileWriter_ChartSourcedValues_ShouldFindChartValuesFiles()
+        {
+            // Arrange
+            fileSystem.EnumerateFilesWithGlob(Arg.Any<string>(), Arg.Any<string[]>())
+                      .Returns(ci =>
+                               {
+                                   return ci.ArgAt<string[]>(1)
+                                            .Select(filename => Path.Combine(ci.ArgAt<string>(0), filename))
+                                            .ToList();
+                               });
+            //Act
+            var result = GitRepositoryValuesFileWriter.FindChartValuesFiles(deployment, fileSystem, log, "values.yaml");
+
+            // Assert
+            result.Should().BeEquivalentTo(new List<string> { Path.Combine(deployment.CurrentDirectory, "values.yaml") });
+        } 
     }
 }

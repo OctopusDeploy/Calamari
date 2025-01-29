@@ -12,8 +12,9 @@
         AsynchronousAzureZipDeployFeatureToggle,
         FSharpDeprecationFeatureToggle,
         AzureRMDeprecationFeatureToggle,
-        PreventHelmV2DeploymentsFeatureToggle,
         KubernetesLiveObjectStatusFeatureToggle,
-        KubernetesAuthAwsCliWithExecFeatureToggle
+        KubernetesAuthAwsCliWithExecFeatureToggle,
+        ForceUtf8ZipFileDecodingFeatureToggle,
+        DisableFSharpScriptExecutionFeatureToggle
     }
 }

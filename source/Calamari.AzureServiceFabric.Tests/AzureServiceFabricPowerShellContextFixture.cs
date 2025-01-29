@@ -23,7 +23,6 @@ namespace Calamari.AzureServiceFabric.Tests
             var target = new AzureServiceFabricPowerShellContext(variables, ConsoleLog.Instance);
             var actual = target.IsEnabled(syntax);
             actual.Should().Be(expected);
-
         }
     }
 }

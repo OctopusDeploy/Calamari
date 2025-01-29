@@ -45,7 +45,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Octodiff" Version="1.1.2" />
+    <PackageReference Include="Octopus.Octodiff" Version="2.0.547" />
     <PackageReference Include="Octopus.Versioning" Version="5.1.876" />
     <PackageReference Include="Octopus.CoreUtilities" Version="2.1.449" />
     <PackageReference Include="scriptcs" Version="0.17.1" />
@@ -59,7 +59,7 @@
     <PackageReference Include="Polly" Version="8.3.1" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
-    <PackageReference Include="NuGet.Commands" Version="3.5.0" />
+    <PackageReference Include="NuGet.Commands" Version="5.11.5" />
     <PackageReference Include="Markdown" Version="2.1.0" />
     <PackageReference Include="System.Text.Encoding.CodePages" Version="8.0.0" />
     <PackageReference Include="System.Threading.AccessControl" Version="4.3.0" />
@@ -67,7 +67,7 @@
     <PackageReference Include="System.IO.FileSystem.AccessControl" Version="4.3.0" />
     <PackageReference Include="System.IO.Packaging" Version="4.3.0" />
     <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="4.5.0" />
-    <PackageReference Include="System.Security.Cryptography.Cng" Version="4.3.0" />
+    <PackageReference Include="System.Security.Cryptography.Cng" Version="5.0.0" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net462' ">
     <PackageReference Include="MarkdownSharp" Version="1.13.0.0" />
