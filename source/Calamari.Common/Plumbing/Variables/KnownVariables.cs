@@ -12,7 +12,7 @@ namespace Calamari.Common.Plumbing.Variables
         public static readonly string OriginalPackageDirectoryPath = "OctopusOriginalPackageDirectoryPath";
         public static readonly string DeleteScriptsOnCleanup = "OctopusDeleteScriptsOnCleanup";
         public static readonly string AppliedXmlConfigTransforms = "OctopusAppliedXmlConfigTransforms";
-        public static readonly string ShouldFailDeploymentOnSubstitutionFails = "ShouldFailDeploymentOnSubstitutionFails";
+        public static readonly string ShouldFailDeploymentOnSubstitutionFails = "OctopusShouldFailDeploymentOnSubstitutionFails";
 
         public static readonly string NugetHttpTimeout = "OctopusNugetHttpTimeout";
 
