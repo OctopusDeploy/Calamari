@@ -28,6 +28,7 @@ namespace Calamari.AzureAppService.Tests
         private static readonly string AccountId = "Accounts-1";
         private static readonly string Role = "my-azure-app-role";
         private static readonly string EnvironmentName = "dev";
+        static readonly string TenantedDeploymentModeName = "TenantedOrUntenanted";
         private RetryPolicy retryPolicy;
 
         private AppServicePlanResource appServicePlanResource;
@@ -73,6 +74,7 @@ namespace Calamari.AzureAppService.Tests
             {
                 { TargetTags.EnvironmentTagName, EnvironmentName },
                 { TargetTags.RoleTagName, Role },
+                { TargetTags.TenantedDeploymentModeTagName, TenantedDeploymentModeName}
             };
 
             await CreateOrUpdateTestWebApp(tags);
@@ -89,7 +91,8 @@ namespace Calamari.AzureAppService.Tests
                                                                                                                                                            AccountId,
                                                                                                                                                            Role,
                                                                                                                                                            null,
-                                                                                                                                                           null);
+                                                                                                                                                           null,
+                                                                                                                                                           TenantedDeploymentModeName);
                                                   var serviceMessageString = serviceMessageToCreateWebAppTarget.ToString();
                                                   log.StandardOut.Should().Contain(serviceMessageString);
                                               },
@@ -125,6 +128,7 @@ namespace Calamari.AzureAppService.Tests
                                                                                                                      AccountId,
                                                                                                                      "a-different-role",
                                                                                                                      null,
+                                                                                                                     null,
                                                                                                                      null);
             log.StandardOut.Should().NotContain(serviceMessageToCreateWebAppTarget.ToString(), "The web app target should not be created as the role tag did not match");
         }
@@ -159,6 +163,7 @@ namespace Calamari.AzureAppService.Tests
                                                                                                                                                            AccountId,
                                                                                                                                                            Role,
                                                                                                                                                            null,
+                                                                                                                                                           null,
                                                                                                                                                            null);
                                                   log.StandardOut.Should().NotContain(serviceMessageToCreateWebAppTarget.ToString(), "A target should not be created for the web app itself, only for slots within the web app");
 
@@ -170,7 +175,8 @@ namespace Calamari.AzureAppService.Tests
                                                                                                                                                                 AccountId,
                                                                                                                                                                 Role,
                                                                                                                                                                 null,
-                                                                                                                                                                slotName);
+                                                                                                                                                                slotName,
+                                                                                                                                                                null);
                                                       log.StandardOut.Should().Contain(serviceMessageToCreateTargetForSlot.ToString());
                                                   }
                                               },
@@ -209,6 +215,7 @@ namespace Calamari.AzureAppService.Tests
                                                                                                                                                            AccountId,
                                                                                                                                                            Role,
                                                                                                                                                            null,
+                                                                                                                                                           null,
                                                                                                                                                            null);
                                                   log.StandardOut.Should().Contain(serviceMessageToCreateWebAppTarget.ToString(), "A target should be created for the web app itself as well as for the slots");
 
@@ -220,7 +227,8 @@ namespace Calamari.AzureAppService.Tests
                                                                                                                                                                 AccountId,
                                                                                                                                                                 Role,
                                                                                                                                                                 null,
-                                                                                                                                                                slotName);
+                                                                                                                                                                slotName,
+                                                                                                                                                                null);
                                                       log.StandardOut.Should().Contain(serviceMessageToCreateTargetForSlot.ToString());
                                                   }
                                               },
@@ -264,6 +272,7 @@ namespace Calamari.AzureAppService.Tests
                                                                                                                       AccountId,
                                                                                                                       Role,
                                                                                                                       null,
+                                                                                                                      null,
                                                                                                                       null);
                                                   log.StandardOut.Should()
                                                      .NotContain(serviceMessageToCreateWebAppTarget.ToString(),
@@ -278,7 +287,8 @@ namespace Calamari.AzureAppService.Tests
                                                                                                                           AccountId,
                                                                                                                           Role,
                                                                                                                           null,
-                                                                                                                          slotName);
+                                                                                                                          slotName,
+                                                                                                                          null);
                                                       log.StandardOut.Should()
                                                          .NotContain(serviceMessageToCreateTargetForSlot.ToString(),
                                                                      "A target should not be created for the web app slot as the tags directly on the slot do not match, even though when combined with the web app tags they do");

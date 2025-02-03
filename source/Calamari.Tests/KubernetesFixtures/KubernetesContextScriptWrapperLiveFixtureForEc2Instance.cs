@@ -113,7 +113,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 { "updateIfExisting", bool.TrueString },
                 { "isDynamic", bool.TrueString },
                 { "awsUseWorkerCredentials", bool.TrueString },
-                { "awsAssumeRole", bool.FalseString }
+                { "awsAssumeRole", bool.FalseString },
             };
 
             DoDiscoveryAndAssertReceivedServiceMessageWithMatchingProperties(authenticationDetails,
