@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using Serilog;
 
-namespace Calamari.ConsolidateCalamariPackages
+namespace Octopus.Calamari.ConsolidatedPackage
 {
     interface IPackageReference
     {

@@ -1,31 +1,32 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using Octopus.Calamari.ConsolidatedPackage.Api;
 
-namespace Calamari.ConsolidateCalamariPackages
+namespace Octopus.Calamari.ConsolidatedPackage
 {
-    public class ConsolidatedPackageIndex
+    public class ConsolidatedPackageIndex : IConsolidatedPackageIndex
     {
-        public ConsolidatedPackageIndex(Dictionary<string, Package> packages)
+        public ConsolidatedPackageIndex(Dictionary<string, IConsolidatedPackageIndex.Package> packages)
         {
-            Packages = new Dictionary<string, Package>(packages, StringComparer.OrdinalIgnoreCase);
+            Packages  = new Dictionary<string, IConsolidatedPackageIndex.Package>(packages, StringComparer.OrdinalIgnoreCase);
         }
 
-        public IReadOnlyDictionary<string, Package> Packages { get; }
+        public IReadOnlyDictionary<string, IConsolidatedPackageIndex.Package> Packages { get; init; }
 
-        public class Package
+        public IConsolidatedPackageIndex.Package GetPackage(string id)
         {
-            public Package(string packageId, string version, bool isNupkg, Dictionary<string, string[]> platformHashes)
+            if (!Packages.TryGetValue(id, out var indexPackage))
             {
-                PackageId = packageId;
-                Version = version;
-                IsNupkg = isNupkg;
-                PlatformHashes = new Dictionary<string, string[]>(platformHashes, StringComparer.OrdinalIgnoreCase);
+                throw new Exception($"Package {id} not found in the consolidated package");
             }
 
-            public string PackageId { get; }
-            public string Version { get; }
-            public bool IsNupkg { get; }
-            public Dictionary<string, string[]> PlatformHashes { get; }
+            return indexPackage;
+        }
+        
+        public IEnumerable<(string package, string version)> GetAvailablePackages()
+        {
+            return Packages.Values.Select(v => (v.PackageId, v.Version));
         }
     }
 }
