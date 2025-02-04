@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Fabric;
+using System.Fabric.Security;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.EmbeddedResources;
 using Calamari.Common.Features.Processes;
@@ -10,6 +13,7 @@ using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
+using Microsoft.Identity.Client;
 
 namespace Calamari.AzureServiceFabric.Integration
 {
@@ -75,6 +79,7 @@ namespace Calamari.AzureServiceFabric.Integration
             SetOutputVariable("OctopusFabricServerCertThumbprint", variables.Get(SpecialVariables.Action.ServiceFabric.ServerCertThumbprint));
             SetOutputVariable("OctopusFabricClientCertThumbprint", clientCertThumbprint);
             SetOutputVariable("OctopusFabricCertificateFindType", variables.Get(SpecialVariables.Action.ServiceFabric.CertificateFindType, "FindByThumbprint"));
+            Enum.TryParse(variables.Get(SpecialVariables.Action.ServiceFabric.CertificateFindType, "FindByThumbprint"), out X509FindType findType)
             SetOutputVariable("OctopusFabricCertificateFindValueOverride", variables.Get(SpecialVariables.Action.ServiceFabric.CertificateFindValueOverride));
             SetOutputVariable("OctopusFabricCertificateStoreLocation", variables.Get(SpecialVariables.Action.ServiceFabric.CertificateStoreLocation, "LocalMachine"));
             SetOutputVariable("OctopusFabricCertificateStoreName", variables.Get(SpecialVariables.Action.ServiceFabric.CertificateStoreName, "MY"));
@@ -86,6 +91,46 @@ namespace Calamari.AzureServiceFabric.Integration
             using (new TemporaryFile(Path.Combine(workingDirectory, "AzureProfile.json")))
             using (var contextScriptFile = new TemporaryFile(CreateContextScriptFile(workingDirectory)))
             {
+                SecurityCredentials? credentials = null;
+                
+                var securityMode = variables.Get(SpecialVariables.Action.ServiceFabric.SecurityMode);
+                    
+                if (securityMode == "SecureClientCertificate")
+                {
+                    credentials = new X509Credentials()
+                    {
+                        StoreName = variables.Get(SpecialVariables.Action.ServiceFabric.CertificateStoreName, "MY"),
+                        StoreLocation = variables.Get(SpecialVariables.Action.ServiceFabric.CertificateStoreLocation, "LocalMachine") == "LocalMachine" ? StoreLocation.LocalMachine : StoreLocation.CurrentUser,
+                        FindType = findType,
+                        //RemoteCertThumbprints = new List<string>(variables.Get(SpecialVariables.Action.ServiceFabric.ServerCertThumbprint)),
+                    };
+                } else if(securityMode == "SecureAzureAD")
+                {
+                    AzureActiveDirectoryMetadata
+                    {
+                        
+                    }
+                    
+                }
+                else if (securityMode == "AzureAD")
+                {
+                    credentials = new WindowsCredentials()
+                } else
+                {
+                    throw new Exception("Need to put the Azure stuff here")
+                }
+
+
+                FabricClient client = new FabricClient(credentials, new string[] {variables.Get(SpecialVariables.Action.ServiceFabric.ConnectionEndpoint)});
+                
+                client.
+                
+                 Connect-ServiceFabricCluster
+                 PublicClientApplicationOptions options = new PublicClientApplicationOptions()
+                 {
+                     clientId = 
+                 }
+                 PublicClientApplicationBuilder.CreateWithApplicationOptions()
                 return NextWrapper.ExecuteScript(new Script(contextScriptFile.FilePath), scriptSyntax, commandLineRunner, environmentVars);
             }
         }

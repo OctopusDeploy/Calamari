@@ -692,10 +692,12 @@ namespace Calamari.Build
 
         string GetNugetVersion()
         {
-            return AppendTimestamp
-                ? $"{GitVersionInfo?.NuGetVersion}-{DateTime.Now:yyyyMMddHHmmss}"
-                : GitVersionInfo?.NuGetVersion
-                  ?? throw new InvalidOperationException("Unable to retrieve valid Nuget Version");
+            return "99.9.9";
+            
+            // return AppendTimestamp
+            //     ? $"{GitVersionInfo?.NuGetVersion}-{DateTime.Now:yyyyMMddHHmmss}"
+            //     : GitVersionInfo?.NuGetVersion
+            //       ?? throw new InvalidOperationException("Unable to retrieve valid Nuget Version");
         }
 
         IReadOnlyCollection<string> GetRuntimeIdentifiers(Project? project)
@@ -713,6 +715,7 @@ namespace Calamari.Build
 
         static List<string> GetCalamariFlavours()
         {
+            return new List<string>() { "Calamari.AzureServiceFabric", "Calamari.AzureAppService" };
             return IsLocalBuild && !OperatingSystem.IsWindows()
                 ? MigratedCalamariFlavours.CrossPlatformFlavours
                 : MigratedCalamariFlavours.Flavours;
