@@ -1,7 +1,13 @@
 using System;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
+using Calamari.Kubernetes;
 using Calamari.Kubernetes.ResourceStatus;
 using Calamari.Kubernetes.ResourceStatus.Resources;
+using Calamari.Testing.Helpers;
+using Calamari.Tests.KubernetesFixtures.Builders;
 using FluentAssertions;
+using NSubstitute;
 using NUnit.Framework;
 
 namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
@@ -9,17 +15,30 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
     [TestFixture]
     public class KubernetesYamlTests
     {
+        readonly IKubernetesManifestNamespaceResolver namespaceResolver;
+        readonly IVariables variables;
+        readonly ILog log;
+
+        public KubernetesYamlTests()
+        {
+            log = new InMemoryLog();
+            namespaceResolver = new KubernetesManifestNamespaceResolver(new ApiResourcesScopeLookupBuilder()
+                                                                            .Build(),
+                                                                        log);
+
+            variables = new CalamariVariables();
+        }
+
         [Test]
         public void ShouldGenerateCorrectIdentifiers()
         {
             var input = TestFileLoader.Load("single-deployment.yaml");
-            var got = KubernetesYaml.GetDefinedResources(new[] { input }, string.Empty);
+            var got = KubernetesYaml.GetDefinedResources(new[] { input }, namespaceResolver, variables, log);
             var expected = new[]
             {
                 new ResourceIdentifier(SupportedResourceGroupVersionKinds.DeploymentV1,
                                        "nginx",
-                                       "test"
-                                      )
+                                       "test")
             };
 
             got.Should().BeEquivalentTo(expected);
@@ -29,7 +48,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         public void ShouldOmitDefinitionIfTheMetadataSectionIsNotSet()
         {
             var input = TestFileLoader.Load("invalid.yaml");
-            var got = KubernetesYaml.GetDefinedResources(new[] { input }, string.Empty);
+            var got = KubernetesYaml.GetDefinedResources(new[] { input }, namespaceResolver, variables, log);
             got.Should().BeEmpty();
         }
 
@@ -37,7 +56,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         public void ShouldHandleMultipleResourcesDefinedInTheSameFile()
         {
             var input = TestFileLoader.Load("multiple-resources.yaml");
-            var got = KubernetesYaml.GetDefinedResources(new[] { input }, string.Empty);
+            var got = KubernetesYaml.GetDefinedResources(new[] { input }, namespaceResolver, variables, log);
             var expected = new[]
             {
                 new ResourceIdentifier(SupportedResourceGroupVersionKinds.DeploymentV1, "nginx", "default"),
@@ -52,8 +71,9 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         public void ShouldUseDefaultNamespaceWhenNoNamespaceIsSuppliedInYaml()
         {
             const string defaultNamespace = "DefaultNamespace";
+            variables.Set(SpecialVariables.Namespace, defaultNamespace);
             var input = TestFileLoader.Load("no-namespace.yaml");
-            var got = KubernetesYaml.GetDefinedResources(new[] { input }, defaultNamespace);
+            var got = KubernetesYaml.GetDefinedResources(new[] { input }, namespaceResolver, variables, log);
             var expected = new[]
             {
                 new ResourceIdentifier(SupportedResourceGroupVersionKinds.DeploymentV1,
@@ -70,7 +90,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         {
             var manifest = TestFileLoader.Load("single-deployment.yaml");
             var multipleFileInput = new[] { manifest, manifest };
-            var got = KubernetesYaml.GetDefinedResources(multipleFileInput, string.Empty);
+            var got = KubernetesYaml.GetDefinedResources(multipleFileInput, namespaceResolver, variables, log);
             var expected = new[]
             {
                 new ResourceIdentifier(SupportedResourceGroupVersionKinds.DeploymentV1,
