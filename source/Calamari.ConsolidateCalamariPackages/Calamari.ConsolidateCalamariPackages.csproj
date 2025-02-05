@@ -7,6 +7,14 @@
         <LangVersion>default</LangVersion>
         <IsPackable>true</IsPackable>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <Authors>Octopus Deploy</Authors>
+        <Copyright>Octopus Deploy Pty Ltd</Copyright>
+        <Description>
+            Octopus Deploy is an automated release management tool for modern developers and DevOps teams.
+
+            This package contains a compression process which flattens and expands multiple zips
+            into a single archive.
+        </Description>
     </PropertyGroup>
     <ItemGroup>
       <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
