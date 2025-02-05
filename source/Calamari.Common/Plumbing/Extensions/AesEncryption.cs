@@ -13,7 +13,7 @@ namespace Calamari.Common.Plumbing.Extensions
         const int ScriptBootstrapKeySize = 256;
         
         //Key size used to decrypt the variables file sent by Octopus Server
-        const int ServerVariablesKeySize = 256;
+        const int ServerVariablesKeySize = 128;
         
         //Key size used to encrypt variables for step packages (`step-bootstrapper` package referenced by Server)
         //The variables are decrypted in the step package bootstrapper
