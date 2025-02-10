@@ -106,7 +106,7 @@
     <ItemGroup>
       <FSharpFiles Include="$(FSharpCompilerTools)" />
       <ScriptCSFiles Include="$(ScriptCS)" />
-      <DotnetScriptFiles Include="$(MSBuildProjectDirectory)/../Calamari.Scripting/DotnetScript/dotnet-script.*.zip" Condition="'$(TargetFramework)' == 'net6.0'" />
+      <DotnetScriptFiles Include="$(MSBuildProjectDirectory)/../Calamari.Scripting/DotnetScript/dotnet-script.*.zip"/>
     </ItemGroup>
   </Target>
   <Target Name="CopyToolsAfterBuild" AfterTargets="Build" DependsOnTargets="GetToolFiles">
