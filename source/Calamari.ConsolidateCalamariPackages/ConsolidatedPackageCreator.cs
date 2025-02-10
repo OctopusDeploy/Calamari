@@ -56,7 +56,7 @@ namespace Calamari.ConsolidateCalamariPackages
                     .GroupBy(f => f.Platform)
                     .ToDictionary(
                         g => g.Key,
-                        g => g.Select(f => f.Hash).OrderBy(h => h).ToArray()
+                        g => g.Select(f => Path.Combine(f.Hash, f.FullNameInDestinationArchive.Replace('/', Path.DirectorySeparatorChar))).OrderBy(h => h).ToArray()
                     );
             
             var index = new ConsolidatedPackageIndex(
