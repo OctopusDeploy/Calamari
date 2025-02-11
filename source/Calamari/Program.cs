@@ -79,12 +79,12 @@ namespace Calamari
             builder.RegisterType<GatherAndApplyRawYamlExecutor>().As<IRawYamlKubernetesApplyExecutor>();
             builder.RegisterType<KustomizeExecutor>().As<IKustomizeKubernetesApplyExecutor>();
             builder.RegisterType<Timer>().As<ITimer>();
-            builder.RegisterType<Kubectl>().AsSelf().As<IKubectl>().InstancePerLifetimeScope();
+            builder.RegisterType<Kubectl>().AsSelf().As<IKubectl>().SingleInstance();
             builder.RegisterType<KubectlGet>().As<IKubectlGet>().SingleInstance();
             builder.RegisterType<HelmTemplateValueSourcesParser>().AsSelf().SingleInstance();
             builder.RegisterType<WindowsX509CertificateStore>().As<IWindowsX509CertificateStore>().SingleInstance();
             builder.RegisterType<ApiResourceScopeLookup>().As<IApiResourceScopeLookup>().SingleInstance();
-            builder.RegisterType<KubernetesManifestNamespaceResolver>().As<IKubernetesManifestNamespaceResolver>().InstancePerLifetimeScope();
+            builder.RegisterType<KubernetesManifestNamespaceResolver>().As<IKubernetesManifestNamespaceResolver>().SingleInstance();
             
             builder.RegisterType<KubernetesDiscovererFactory>()
                    .As<IKubernetesDiscovererFactory>()
