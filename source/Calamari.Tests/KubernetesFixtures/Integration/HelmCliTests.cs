@@ -137,7 +137,7 @@ namespace Calamari.Tests.KubernetesFixtures.Integration
                 actual.Arguments.Should().Contain(BashScriptFilename);
             }
 
-            scriptContents.Should().Be("helm upgrade --install --reset-values --set something='SomeValue' myReleaseName myPackagePath");
+            scriptContents.Should().Be("helm upgrade --install --reset-values --set something='SomeValue' \"myReleaseName\" \"myPackagePath\"");
         }
         
         [Test]
@@ -165,7 +165,7 @@ namespace Calamari.Tests.KubernetesFixtures.Integration
                 actual.Arguments.Should().Contain(BashScriptFilename);
             }
 
-            scriptContents.Should().Be($"chmod +x \"{expectedExecutable}\"; {expectedExecutable} upgrade --install --reset-values --set something='SomeValue' myReleaseName myPackagePath");
+            scriptContents.Should().Be($"chmod +x \"{expectedExecutable}\"; {expectedExecutable} upgrade --install --reset-values --set something='SomeValue' \"myReleaseName\" \"myPackagePath\"");
         }
         
         [Test]
@@ -203,7 +203,7 @@ namespace Calamari.Tests.KubernetesFixtures.Integration
             
             var expectedExecutablePath = Path.Combine(workingDirectory.DirectoryPath, SpecialVariables.Helm.Packages.CustomHelmExePackageKey, expectedExecutable);
 
-            scriptContents.Should().Be($"chmod +x \"{expectedExecutablePath}\"; {expectedExecutablePath} upgrade --install --reset-values --set something='SomeValue' myReleaseName myPackagePath");
+            scriptContents.Should().Be($"chmod +x \"{expectedExecutablePath}\"; {expectedExecutablePath} upgrade --install --reset-values --set something='SomeValue' \"myReleaseName\" \"myPackagePath\"");
         }
         
         [Test]
@@ -239,7 +239,7 @@ namespace Calamari.Tests.KubernetesFixtures.Integration
                 actual.Arguments.Should().Contain(BashScriptFilename);
             }
             
-            scriptContents.Should().Be($"chmod +x \"{expectedExecutable}\"; {expectedExecutable} upgrade --install --reset-values --set something='SomeValue' myReleaseName myPackagePath");
+            scriptContents.Should().Be($"chmod +x \"{expectedExecutable}\"; {expectedExecutable} upgrade --install --reset-values --set something='SomeValue' \"myReleaseName\" \"myPackagePath\"");
         }
 
         static (HelmCli, ICommandLineRunner, TemporaryDirectory, RunningDeployment) GetHelmCli(string customHelmExe = null, CalamariVariables additionalVariables = null)
