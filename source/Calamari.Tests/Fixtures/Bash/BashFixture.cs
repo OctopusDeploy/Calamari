@@ -205,7 +205,8 @@ namespace Calamari.Tests.Fixtures.Bash
                 ["VariableName, {8}"] = "Value {8}",
                 ["VariableName\t9"] = "Value\t9",
                 ["VariableName 10 !@#$%^&*()_+1234567890-="] = "Value 10 !@#$%^&*()_+1234567890-=",
-                ["VariableName, \n 11"] = "Value \n 11",
+                ["VariableName \n 11"] = "Value \n 11",
+                ["VariableName.prop.anotherprop 12"] = "Value.prop.11",
             });
 
             output.AssertSuccess();
@@ -220,6 +221,7 @@ namespace Calamari.Tests.Fixtures.Bash
             output.AssertOutput(@"Key: VariableName\t9, Value: Value\t9");
             output.AssertOutput(@"Key: VariableName 10 !@#$%^&*()_+1234567890-=, Value: Value 10 !@#$%^&*()_+1234567890-=");
             output.AssertOutput("Key: VariableName \n 11, Value: Value \n 11");
+            output.AssertOutput("Key: VariableName.prop.anotherprop 12, Value: Value.prop.11");
         }
     }
 }

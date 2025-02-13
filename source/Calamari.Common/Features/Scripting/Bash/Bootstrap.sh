@@ -265,7 +265,8 @@ function log_environment_information
 
 log_environment_information
 
-#	---------------------------------------------------------------------------
-# Function for declaring array of octopus variable names
-#	---------------------------------------------------------------------------
-declare -rA octopus_parameters=(#### VariableNamesArrayDeclarations ####)
+if (( ${BASH_VERSINFO[0]} > 4 || (${BASH_VERSINFO[0]} == 4 && ${BASH_VERSINFO[1]} > 2) )); then
+  declare -grA example_array=(#### VariableNamesArrayDeclarations ####)
+else
+  echo "Bash version 4.2 or later is required to use octopus_parameters"
+fi
