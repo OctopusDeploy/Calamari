@@ -198,14 +198,28 @@ namespace Calamari.Tests.Fixtures.Bash
                 ["VariableName1"] = "Value 1",
                 ["VariableName 2"] = "Value 2",
                 ["VariableName3"] = "Value 3",
-                ["VariableName '4'"] = "Value 4"
+                ["VariableName '4'"] = "Value '4'",
+                ["VariableName \"5\""] = "Value \"5\"",
+                ["VariableName, 6"] = "Value, 6",
+                ["VariableName, [7]"] = "Value [7]",
+                ["VariableName, {8}"] = "Value {8}",
+                ["VariableName\t9"] = "Value\t9",
+                ["VariableName 10 !@#$%^&*()_+1234567890-="] = "Value 10 !@#$%^&*()_+1234567890-=",
+                ["VariableName, \n 11"] = "Value \n 11",
             });
 
             output.AssertSuccess();
             output.AssertOutput(@"Key: VariableName1, Value: Value 1");
             output.AssertOutput(@"Key: VariableName 2, Value: Value 2");
             output.AssertOutput(@"Key: VariableName3, Value: Value 3");
-            output.AssertOutput(@"Key: VariableName '4', Value: Value 4");
+            output.AssertOutput(@"Key: VariableName '4', Value: Value '4'");
+            output.AssertOutput("Key: VariableName \"5\", Value: Value \"5\"");
+            output.AssertOutput(@"Key: VariableName, 6, Value: Value, 6");
+            output.AssertOutput(@"Key: VariableName [7], Value: Value [7]");
+            output.AssertOutput(@"Key: VariableName {8}, Value: Value {8}");
+            output.AssertOutput(@"Key: VariableName\t9, Value: Value\t9");
+            output.AssertOutput(@"Key: VariableName 10 !@#$%^&*()_+1234567890-=, Value: Value 10 !@#$%^&*()_+1234567890-=");
+            output.AssertOutput("Key: VariableName \n 11, Value: Value \n 11");
         }
     }
 }
