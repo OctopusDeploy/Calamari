@@ -66,6 +66,24 @@ function get_octopusvariable
     esac
 }
 
+# -----------------------------------------------------------------------------
+# Function to base64 decode an octopus variable name
+#		Accepts 1 argument:
+#			string: the value to decode
+# -----------------------------------------------------------------------------
+function decode_octopusvariablename
+{
+	echo -n "$1" | openssl enc -base64 -A -d
+}
+
+#	---------------------------------------------------------------------------
+# Function for declaring array of octopus variable names
+#	---------------------------------------------------------------------------
+function declare_variablenames
+{
+  export declare -rA octopus_parameters=(#### VariableNamesArrayDeclarations ####)
+}
+
 #	---------------------------------------------------------------------------
 # Function for failing a step with an optional message
 #   Accepts 1 argument:
@@ -264,3 +282,5 @@ function log_environment_information
 }
 
 log_environment_information
+
+declare_variablenames

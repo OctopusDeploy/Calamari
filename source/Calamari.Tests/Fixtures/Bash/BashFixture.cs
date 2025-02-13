@@ -188,5 +188,24 @@ namespace Calamari.Tests.Fixtures.Bash
                 output.AssertOutput("##octopus[setVariable name='UGFzc3dvcmQ=' value='Y29ycmVjdCBob3JzZSBiYXR0ZXJ5IHN0YXBsZQ==']");
             });
         }
+
+        [Test]
+        [RequiresBashDotExeIfOnWindows]
+        public void ShouldBeAbleToEnumerateVariableValues()
+        {
+            var (output, _) = RunScript("enumerate-variables.sh", new Dictionary<string, string>()
+            {
+                ["VariableName1"] = "Value 1",
+                ["VariableName 2"] = "Value 2",
+                ["VariableName3"] = "Value 3",
+                ["VariableName '4'"] = "Value 4"
+            });
+
+            output.AssertSuccess();
+            output.AssertOutput(@"Key: VariableName1, Value: Value 1");
+            output.AssertOutput(@"Key: VariableName 2, Value: Value 2");
+            output.AssertOutput(@"Key: VariableName3, Value: Value 3");
+            output.AssertOutput(@"Key: VariableName '4', Value: Value 4");
+        }
     }
 }

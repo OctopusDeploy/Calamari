@@ -43,6 +43,7 @@ namespace Calamari.Common.Features.Scripting.Bash
             var builder = new StringBuilder(BootstrapScriptTemplate);
             var encryptedVariables = EncryptVariables(variables);
             builder.Replace("#### VariableDeclarations ####", string.Join(LinuxNewLine, GetVariableSwitchConditions(encryptedVariables)));
+            builder.Replace("#### VariableNamesArrayDeclarations ####", string.Join(", ", GetVariableNameAndValueDeclaration(encryptedVariables)));
 
             using (var file = new FileStream(configurationFile, FileMode.CreateNew, FileAccess.Write))
             using (var writer = new StreamWriter(file, Encoding.ASCII))
@@ -53,6 +54,15 @@ namespace Calamari.Common.Features.Scripting.Bash
 
             File.SetAttributes(configurationFile, FileAttributes.Hidden);
             return configurationFile;
+        }
+
+        static IEnumerable<string> GetVariableNameAndValueDeclaration(IEnumerable<EncryptedVariable> variables)
+        {
+            return variables.Select(variable =>
+                                    {
+                                        var variableValue = $@"decrypt_variable ""{variable.EncryptedValue}"" ""{variable.Iv}""";
+                                        return $"[\"{variable}\"]={variableValue}";
+                                    });
         }
 
         static IList<EncryptedVariable> EncryptVariables(IVariables variables)
