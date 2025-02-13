@@ -266,7 +266,7 @@ function log_environment_information
 log_environment_information
 
 if (( ${BASH_VERSINFO[0]} > 4 || (${BASH_VERSINFO[0]} == 4 && ${BASH_VERSINFO[1]} > 2) )); then
-  declare -grA example_array=(#### VariableNamesArrayDeclarations ####)
+  declare -grA octopus_parameters=(#### VariableNamesArrayDeclarations ####)
 else
   echo "Bash version 4.2 or later is required to use octopus_parameters"
 fi
