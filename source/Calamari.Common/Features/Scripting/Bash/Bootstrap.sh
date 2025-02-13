@@ -77,14 +77,6 @@ function decode_octopusvariablename
 }
 
 #	---------------------------------------------------------------------------
-# Function for declaring array of octopus variable names
-#	---------------------------------------------------------------------------
-function declare_variablenames
-{
-  export declare -rA octopus_parameters=(#### VariableNamesArrayDeclarations ####)
-}
-
-#	---------------------------------------------------------------------------
 # Function for failing a step with an optional message
 #   Accepts 1 argument:
 #     string: reason for failing
@@ -283,4 +275,7 @@ function log_environment_information
 
 log_environment_information
 
-declare_variablenames
+#	---------------------------------------------------------------------------
+# Function for declaring array of octopus variable names
+#	---------------------------------------------------------------------------
+declare -rA octopus_parameters=(#### VariableNamesArrayDeclarations ####)

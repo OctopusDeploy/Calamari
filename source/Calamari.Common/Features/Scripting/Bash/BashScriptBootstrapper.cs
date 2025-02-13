@@ -60,8 +60,8 @@ namespace Calamari.Common.Features.Scripting.Bash
         {
             return variables.Select(variable =>
                                     {
-                                        var variableValue = $@"decrypt_variable ""{variable.EncryptedValue}"" ""{variable.Iv}""";
-                                        return $"[\"{variable}\"]={variableValue}";
+                                        var variableValue = $@"$(decrypt_variable ""{variable.EncryptedValue}"" ""{variable.Iv}"")";
+                                        return $"[{variable.Name}]={variableValue}";
                                     });
         }
 
