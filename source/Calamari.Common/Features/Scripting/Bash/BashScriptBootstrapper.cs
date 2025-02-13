@@ -43,7 +43,7 @@ namespace Calamari.Common.Features.Scripting.Bash
             var builder = new StringBuilder(BootstrapScriptTemplate);
             var encryptedVariables = EncryptVariables(variables);
             builder.Replace("#### VariableDeclarations ####", string.Join(LinuxNewLine, GetVariableSwitchConditions(encryptedVariables)));
-            builder.Replace("#### VariableNamesArrayDeclarations ####", string.Join(", ", GetVariableNameAndValueDeclaration(encryptedVariables)));
+            builder.Replace("#### VariableNamesArrayDeclarations ####", string.Join(" ", GetVariableNameAndValueDeclaration(encryptedVariables)));
 
             using (var file = new FileStream(configurationFile, FileMode.CreateNew, FileAccess.Write))
             using (var writer = new StreamWriter(file, Encoding.ASCII))
