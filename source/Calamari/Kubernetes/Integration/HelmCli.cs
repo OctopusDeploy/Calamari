@@ -127,8 +127,9 @@ namespace Calamari.Kubernetes.Integration
 
             buildArgs.AddRange(upgradeArgs);
             buildArgs.Add(NamespaceArg());
-            buildArgs.Add(releaseName);
-            buildArgs.Add(packagePath);
+            //properly quote the release name and package path (consistent with previous code)
+            buildArgs.Add($"\"{releaseName}\"");
+            buildArgs.Add($"\"{packagePath}\"");
 
             if (OctopusFeatureToggles.ExecuteHelmUpgradeCommandViaShellScriptFeatureToggle.IsEnabled(variables))
             {
