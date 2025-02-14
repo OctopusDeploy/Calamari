@@ -63,9 +63,14 @@ namespace Calamari.Common.Features.Scripting.Bash
         {
             return variables.Select(variable =>
                                     {
-                                        var variableValue = $@"$(get_octopusvariable ""{variable.Name.Replace("\"", "\\\"")}"")";
-                                        return $"[\"{variable.Name.Replace("\"", "\\\"")}\"]=\"{variableValue}\"";
+                                        var variableValue = $@"$(get_octopusvariable ""{EscapeNixCharacter(variable.Name)}"")";
+                                        return $"[\"{EscapeNixCharacter(variable.Name)}\"]=\"{variableValue}\"";
                                     });
+        }
+
+        private static string EscapeNixCharacter(string stringToEscape)
+        {
+            return stringToEscape.Replace("\"", "\\\"").Replace("`", "\\`");
         }
 
         static IList<EncryptedVariable> EncryptVariables(IVariables variables)

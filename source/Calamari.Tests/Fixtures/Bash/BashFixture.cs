@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
@@ -246,12 +247,20 @@ namespace Calamari.Tests.Fixtures.Bash
                                             ["VariableName\t9"] = "Value\t9",
                                             ["VariableName 10 !@#$%^&*()_+1234567890-="] = "Value 10 !@#$%^&*()_+1234567890-=",
                                             ["VariableName \n 11"] = "Value \n 11",
-                                            ["VariableName.prop.anotherprop 12"] = "Value.prop.11",
+                                            ["VariableName.prop.anotherprop 12"] = "Value.prop.12",
+                                            ["VariableName`prop`anotherprop` 13"] = "Value`prop`13"
                                         }.AddFeatureToggleToDictionary(new List<FeatureToggle?>{ featureToggle }));
 
             output.AssertSuccess();
             if (featureToggle == FeatureToggle.BashParametersArrayFeatureToggle)
             {
+                var fullOutput = string.Join(Environment.NewLine, output.CapturedOutput.Infos);
+                if (fullOutput.Contains("Bash version 4.2 or later is required to use octopus_parameters"))
+                {
+                    output.AssertOutput("Still ran this script");
+                    return;
+                }
+
                 output.AssertOutput(@"Key: VariableName1, Value: Value 1");
                 output.AssertOutput(@"Key: VariableName 2, Value: Value 2");
                 output.AssertOutput(@"Key: VariableName3, Value: Value 3");
@@ -263,7 +272,8 @@ namespace Calamari.Tests.Fixtures.Bash
                 output.AssertOutput("Key: VariableName\t9, Value: Value\t9");
                 output.AssertOutput(@"Key: VariableName 10 !@#$%^&*()_+1234567890-=, Value: Value 10 !@#$%^&*()_+1234567890-=");
                 output.AssertOutput("Key: VariableName \n 11, Value: Value \n 11");
-                output.AssertOutput("Key: VariableName.prop.anotherprop 12, Value: Value.prop.11");
+                output.AssertOutput("Key: VariableName.prop.anotherprop 12, Value: Value.prop.12");
+                output.AssertOutput("Key: VariableName`prop`anotherprop` 13, Value: Value`prop`13");
             }
         }
     }
