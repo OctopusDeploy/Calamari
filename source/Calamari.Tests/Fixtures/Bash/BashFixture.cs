@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using Calamari.Common.FeatureToggles;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Testing.Requirements;
 using Calamari.Tests.Helpers;
@@ -9,205 +11,243 @@ namespace Calamari.Tests.Fixtures.Bash
     [TestFixture]
     public class BashFixture : CalamariFixture
     {
-        [Test]
+        [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
+        [TestCase(null)]
         [RequiresBashDotExeIfOnWindows]
-        public void ShouldPrintEncodedVariable()
+        public void ShouldPrintEncodedVariable(FeatureToggle? featureToggle)
         {
-            var (output, _) = RunScript("print-encoded-variable.sh");
+            var (output, _) = RunScript("print-encoded-variable.sh", new Dictionary<string, string>().AddFeatureToggleToDictionary(new List<FeatureToggle?> { featureToggle }));
 
-            Assert.Multiple(() => {
-                output.AssertSuccess();
-                output.AssertOutput("##octopus[setVariable name='U3VwZXI=' value='TWFyaW8gQnJvcw==']");
-            });
-        }
-        
-        [Test]
-        [RequiresBashDotExeIfOnWindows]
-        public void ShouldPrintSensitiveVariable()
-        {
-            var (output, _) = RunScript("print-sensitive-variable.sh");
-
-            Assert.Multiple(() => {
-                output.AssertSuccess();
-                output.AssertOutput("##octopus[setVariable name='UGFzc3dvcmQ=' value='Y29ycmVjdCBob3JzZSBiYXR0ZXJ5IHN0YXBsZQ==' sensitive='VHJ1ZQ==']");
-            });
+            Assert.Multiple(() =>
+                            {
+                                output.AssertSuccess();
+                                output.AssertOutput("##octopus[setVariable name='U3VwZXI=' value='TWFyaW8gQnJvcw==']");
+                            });
         }
 
-        [Test]
+        [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
+        [TestCase(null)]
         [RequiresBashDotExeIfOnWindows]
-        public void ShouldCreateArtifact()
+        public void ShouldPrintSensitiveVariable(FeatureToggle? featureToggle)
         {
-            var (output, _) = RunScript("create-artifact.sh");
+            var (output, _) = RunScript("print-sensitive-variable.sh", new Dictionary<string, string>().AddFeatureToggleToDictionary(new List<FeatureToggle?>{ featureToggle }));
 
-            Assert.Multiple(() => {
-                output.AssertSuccess();
-                output.AssertOutput("##octopus[createArtifact path='Li9zdWJkaXIvYW5vdGhlcmRpci9teWZpbGU=' name='bXlmaWxl' length='MA==']");
-            });
-        }
-        
-        [Test]
-        [RequiresBashDotExeIfOnWindows]
-        public void ShouldUpdateProgress()
-        {
-            var (output, _) = RunScript("update-progress.sh");
-
-            Assert.Multiple(() => {
-                output.AssertSuccess();
-                output.AssertOutput("##octopus[progress percentage='NTA=' message='SGFsZiBXYXk=']");
-            });
+            Assert.Multiple(() =>
+                            {
+                                output.AssertSuccess();
+                                output.AssertOutput("##octopus[setVariable name='UGFzc3dvcmQ=' value='Y29ycmVjdCBob3JzZSBiYXR0ZXJ5IHN0YXBsZQ==' sensitive='VHJ1ZQ==']");
+                            });
         }
 
-        [Test]
+        [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
+        [TestCase(null)]
         [RequiresBashDotExeIfOnWindows]
-        public void ShouldConsumeParametersWithQuotes()
+        public void ShouldCreateArtifact(FeatureToggle? featureToggle)
         {
-            var (output, _) = RunScript("parameters.sh", new Dictionary<string, string>()
-                { [SpecialVariables.Action.Script.ScriptParameters] = "\"Para meter0\" 'Para meter1'" });
+            var (output, _) = RunScript("create-artifact.sh", new Dictionary<string, string>().AddFeatureToggleToDictionary(new List<FeatureToggle?>{ featureToggle }));
 
-            Assert.Multiple(() => {
-                output.AssertSuccess();
-                output.AssertOutput("Parameters ($1='Para meter0' $2='Para meter1'");
-            });
-        }
-        
-        [Test]
-        [RequiresBashDotExeIfOnWindows]
-        public void ShouldNotReceiveParametersIfNoneProvided()
-        {
-            var (output, _) = RunScript("parameters.sh", sensitiveVariablesPassword: "5XETGOgqYR2bRhlfhDruEg==");
-
-            Assert.Multiple(() => {
-                output.AssertSuccess();
-                output.AssertOutput("Parameters ($1='' $2='')");
-            });
+            Assert.Multiple(() =>
+                            {
+                                output.AssertSuccess();
+                                output.AssertOutput("##octopus[createArtifact path='Li9zdWJkaXIvYW5vdGhlcmRpci9teWZpbGU=' name='bXlmaWxl' length='MA==']");
+                            });
         }
 
-        [Test]
+        [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
+        [TestCase(null)]
         [RequiresBashDotExeIfOnWindows]
-        public void ShouldCallHello()
+        public void ShouldUpdateProgress(FeatureToggle? featureToggle)
         {
-            var (output, _) = RunScript("hello.sh", new Dictionary<string, string>()
-            {
-                ["Name"] = "Paul",
-                ["Variable2"] = "DEF",
-                ["Variable3"] = "GHI",
-                ["Foo_bar"] = "Hello",
-                ["Host"] = "Never",
-            });
+            var (output, _) = RunScript("update-progress.sh", new Dictionary<string, string>().AddFeatureToggleToDictionary(new List<FeatureToggle?>{ featureToggle }));
 
-            Assert.Multiple(() => {
-                output.AssertSuccess();
-                output.AssertOutput("Hello Paul");
-            });
+            Assert.Multiple(() =>
+                            {
+                                output.AssertSuccess();
+                                output.AssertOutput("##octopus[progress percentage='NTA=' message='SGFsZiBXYXk=']");
+                            });
         }
 
-
-        [Test]
+        [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
+        [TestCase(null)]
         [RequiresBashDotExeIfOnWindows]
-        public void ShouldCallHelloWithSensitiveVariable()
+        public void ShouldConsumeParametersWithQuotes(FeatureToggle? featureToggle)
         {
-            var (output, _) = RunScript("hello.sh", new Dictionary<string, string>()
-                { ["Name"] = "NameToEncrypt" }, sensitiveVariablesPassword: "5XETGOgqYR2bRhlfhDruEg==");
+            var (output, _) = RunScript("parameters.sh",
+                                        new Dictionary<string, string>()
+                                            { [SpecialVariables.Action.Script.ScriptParameters] = "\"Para meter0\" 'Para meter1'" }.AddFeatureToggleToDictionary(new List<FeatureToggle?>{ featureToggle }));
 
-            Assert.Multiple(() => {
-                output.AssertSuccess();
-                output.AssertOutput("Hello NameToEncrypt");
-            });
+            Assert.Multiple(() =>
+                            {
+                                output.AssertSuccess();
+                                output.AssertOutput("Parameters ($1='Para meter0' $2='Para meter1'");
+                            });
         }
 
-
-        [Test]
+        [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
+        [TestCase(null)]
         [RequiresBashDotExeIfOnWindows]
-        public void ShouldCallHelloWithNullVariable()
+        public void ShouldNotReceiveParametersIfNoneProvided(FeatureToggle? featureToggle)
         {
-            var (output, _) = RunScript("hello.sh", new Dictionary<string, string>()
-                {["Name"] = null});
+            var (output, _) = RunScript("parameters.sh", new Dictionary<string, string>().AddFeatureToggleToDictionary(new List<FeatureToggle?>{ featureToggle }), sensitiveVariablesPassword:
+            "5XETGOgqYR2bRhlfhDruEg==");
 
-            Assert.Multiple(() => {
-                output.AssertSuccess();
-                output.AssertOutput("Hello");
-            });
+            Assert.Multiple(() =>
+                            {
+                                output.AssertSuccess();
+                                output.AssertOutput("Parameters ($1='' $2='')");
+                            });
         }
 
-        [Test]
+        [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
+        [TestCase(null)]
         [RequiresBashDotExeIfOnWindows]
-        public void ShouldCallHelloWithNullSensitiveVariable()
+        public void ShouldCallHello(FeatureToggle? featureToggle)
         {
-            var (output, _) = RunScript("hello.sh", new Dictionary<string, string>()
-                { ["Name"] = null }, sensitiveVariablesPassword: "5XETGOgqYR2bRhlfhDruEg==");
+            var (output, _) = RunScript("hello.sh",
+                                        new Dictionary<string, string>()
+                                        {
+                                            ["Name"] = "Paul",
+                                            ["Variable2"] = "DEF",
+                                            ["Variable3"] = "GHI",
+                                            ["Foo_bar"] = "Hello",
+                                            ["Host"] = "Never",
+                                        }.AddFeatureToggleToDictionary(new List<FeatureToggle?>{ featureToggle }));
 
-            Assert.Multiple(() => {
-                output.AssertSuccess();
-                output.AssertOutput("Hello");
-            });
+            Assert.Multiple(() =>
+                            {
+                                output.AssertSuccess();
+                                output.AssertOutput("Hello Paul");
+                            });
         }
 
-        [Test]
         [RequiresBashDotExeIfOnWindows]
-        public void ShouldNotFailOnStdErr()
+        [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
+        [TestCase(null)]
+        public void ShouldCallHelloWithSensitiveVariable(FeatureToggle? featureToggle)
         {
-            var (output, _) = RunScript("stderr.sh");
-            
-            Assert.Multiple(() => {
-                output.AssertSuccess();
-                output.AssertErrorOutput("hello");
-            });
+            var (output, _) = RunScript("hello.sh",
+                                        new Dictionary<string, string>()
+                                            { ["Name"] = "NameToEncrypt" }.AddFeatureToggleToDictionary(new List<FeatureToggle?>{ featureToggle }), sensitiveVariablesPassword:
+            "5XETGOgqYR2bRhlfhDruEg==");
+
+            Assert.Multiple(() =>
+                            {
+                                output.AssertSuccess();
+                                output.AssertOutput("Hello NameToEncrypt");
+                            });
         }
 
-        [Test]
         [RequiresBashDotExeIfOnWindows]
-        public void ShouldFailOnStdErrWithTreatScriptWarningsAsErrors()
+        [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
+        [TestCase(null)]
+        public void ShouldCallHelloWithNullVariable(FeatureToggle? featureToggle)
         {
-            var (output, _) = RunScript("stderr.sh", new Dictionary<string, string>()
-                {[SpecialVariables.Action.FailScriptOnErrorOutput] = "True"});
+            var (output, _) = RunScript("hello.sh",
+                                        new Dictionary<string, string>()
+                                            { ["Name"] = null }.AddFeatureToggleToDictionary(new List<FeatureToggle?>{ featureToggle }));
 
-            Assert.Multiple(() => {
-                output.AssertFailure();
-                output.AssertErrorOutput("hello");
-            });
+            Assert.Multiple(() =>
+                            {
+                                output.AssertSuccess();
+                                output.AssertOutput("Hello");
+                            });
         }
 
-        [Test]
         [RequiresBashDotExeIfOnWindows]
-        public void ShouldNotFailOnStdErrFromServiceMessagesWithTreatScriptWarningsAsErrors()
+        [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
+        [TestCase(null)]
+        public void ShouldCallHelloWithNullSensitiveVariable(FeatureToggle? featureToggle)
         {
-            var (output, _) = RunScript("hello.sh", new Dictionary<string, string>()
-            {[SpecialVariables.Action.FailScriptOnErrorOutput] = "True"});
+            var (output, _) = RunScript("hello.sh",
+                                        new Dictionary<string, string>()
+                                            { ["Name"] = null }.AddFeatureToggleToDictionary(new List<FeatureToggle?>{ featureToggle }), sensitiveVariablesPassword:
+            "5XETGOgqYR2bRhlfhDruEg==");
+
+            Assert.Multiple(() =>
+                            {
+                                output.AssertSuccess();
+                                output.AssertOutput("Hello");
+                            });
+        }
+
+        [RequiresBashDotExeIfOnWindows]
+        [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
+        [TestCase(null)]
+        public void ShouldNotFailOnStdErr(FeatureToggle? featureToggle)
+        {
+            var (output, _) = RunScript("stderr.sh",
+                                        new Dictionary<string, string>().AddFeatureToggleToDictionary(new List<FeatureToggle?>{ featureToggle }));
+
+            Assert.Multiple(() =>
+                            {
+                                output.AssertSuccess();
+                                output.AssertErrorOutput("hello");
+                            });
+        }
+
+        [RequiresBashDotExeIfOnWindows]
+        [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
+        [TestCase(null)]
+        public void ShouldFailOnStdErrWithTreatScriptWarningsAsErrors(FeatureToggle? featureToggle)
+        {
+            var (output, _) = RunScript("stderr.sh",
+                                        new Dictionary<string, string>()
+                                            { [SpecialVariables.Action.FailScriptOnErrorOutput] = "True" }.AddFeatureToggleToDictionary(new List<FeatureToggle?>{ featureToggle }));
+
+            Assert.Multiple(() =>
+                            {
+                                output.AssertFailure();
+                                output.AssertErrorOutput("hello");
+                            });
+        }
+
+        [RequiresBashDotExeIfOnWindows]
+        [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
+        [TestCase(null)]
+        public void ShouldNotFailOnStdErrFromServiceMessagesWithTreatScriptWarningsAsErrors(FeatureToggle? featureToggle)
+        {
+            var (output, _) = RunScript("hello.sh",
+                                        new Dictionary<string, string>()
+                                            { [SpecialVariables.Action.FailScriptOnErrorOutput] = "True" }.AddFeatureToggleToDictionary(new List<FeatureToggle?>{ featureToggle }));
 
             output.AssertSuccess();
         }
 
-        [Test]
         [RequiresBashDotExeIfOnWindows]
-        public void ShouldSupportStrictVariableUnset()
+        [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
+        [TestCase(null)]
+        public void ShouldSupportStrictVariableUnset(FeatureToggle? featureToggle)
         {
-            var (output, _) = RunScript("strict-mode.sh");
+            var (output, _) = RunScript("strict-mode.sh", new Dictionary<string, string>().AddFeatureToggleToDictionary(new List<FeatureToggle?>{ featureToggle }));
 
-            Assert.Multiple(() => {
-                output.AssertSuccess();
-                output.AssertOutput("##octopus[setVariable name='UGFzc3dvcmQ=' value='Y29ycmVjdCBob3JzZSBiYXR0ZXJ5IHN0YXBsZQ==']");
-            });
+            Assert.Multiple(() =>
+                            {
+                                output.AssertSuccess();
+                                output.AssertOutput("##octopus[setVariable name='UGFzc3dvcmQ=' value='Y29ycmVjdCBob3JzZSBiYXR0ZXJ5IHN0YXBsZQ==']");
+                            });
         }
 
-        [Test]
+        [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
+        [TestCase(null)]
         [RequiresBashDotExeIfOnWindows]
-        public void ShouldBeAbleToEnumerateVariableValues()
+        public void ShouldBeAbleToEnumerateVariableValues(FeatureToggle? featureToggle)
         {
-            var (output, _) = RunScript("enumerate-variables.sh", new Dictionary<string, string>()
-            {
-                ["VariableName1"] = "Value 1",
-                ["VariableName 2"] = "Value 2",
-                ["VariableName3"] = "Value 3",
-                ["VariableName '4'"] = "Value '4'",
-                ["VariableName \"5\""] = "Value \"5\"",
-                ["VariableName, 6"] = "Value, 6",
-                ["VariableName, [7]"] = "Value [7]",
-                ["VariableName, {8}"] = "Value {8}",
-                ["VariableName\t9"] = "Value\t9",
-                ["VariableName 10 !@#$%^&*()_+1234567890-="] = "Value 10 !@#$%^&*()_+1234567890-=",
-                ["VariableName \n 11"] = "Value \n 11",
-                ["VariableName.prop.anotherprop 12"] = "Value.prop.11",
-            });
+            var (output, _) = RunScript("enumerate-variables.sh",
+                                        new Dictionary<string, string>()
+                                        {
+                                            ["VariableName1"] = "Value 1",
+                                            ["VariableName 2"] = "Value 2",
+                                            ["VariableName3"] = "Value 3",
+                                            ["VariableName '4'"] = "Value '4'",
+                                            ["VariableName \"5\""] = "Value \"5\"",
+                                            ["VariableName, 6"] = "Value, 6",
+                                            ["VariableName, [7]"] = "Value [7]",
+                                            ["VariableName, {8}"] = "Value {8}",
+                                            ["VariableName\t9"] = "Value\t9",
+                                            ["VariableName 10 !@#$%^&*()_+1234567890-="] = "Value 10 !@#$%^&*()_+1234567890-=",
+                                            ["VariableName \n 11"] = "Value \n 11",
+                                            ["VariableName.prop.anotherprop 12"] = "Value.prop.11",
+                                        }.AddFeatureToggleToDictionary(new List<FeatureToggle?>{ featureToggle }));
 
             output.AssertSuccess();
             output.AssertOutput(@"Key: VariableName1, Value: Value 1");
@@ -222,6 +262,15 @@ namespace Calamari.Tests.Fixtures.Bash
             output.AssertOutput(@"Key: VariableName 10 !@#$%^&*()_+1234567890-=, Value: Value 10 !@#$%^&*()_+1234567890-=");
             output.AssertOutput("Key: VariableName \n 11, Value: Value \n 11");
             output.AssertOutput("Key: VariableName.prop.anotherprop 12, Value: Value.prop.11");
+        }
+    }
+
+    public static class AdditionalVariablesExtensions
+    {
+        public static Dictionary<string, string> AddFeatureToggleToDictionary(this Dictionary<string, string> variables, List<FeatureToggle?> featureToggles)
+        {
+            variables.Add(KnownVariables.EnabledFeatureToggles, string.Join(", ", featureToggles));
+            return variables;
         }
     }
 }

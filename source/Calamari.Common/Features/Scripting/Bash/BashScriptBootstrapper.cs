@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripts;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
@@ -43,7 +44,9 @@ namespace Calamari.Common.Features.Scripting.Bash
             var builder = new StringBuilder(BootstrapScriptTemplate);
             var encryptedVariables = EncryptVariables(variables);
             builder.Replace("#### VariableDeclarations ####", string.Join(LinuxNewLine, GetVariableSwitchConditions(encryptedVariables)));
-            builder.Replace("#### VariableNamesArrayDeclarations ####", string.Join(" ", GetVariableNameAndValueDeclaration(encryptedVariables)));
+
+            builder.Replace("#### BashParametersArrayFeatureToggle ####", FeatureToggle.BashParametersArrayFeatureToggle.IsEnabled(variables) ? "true" : "false");
+            builder.Replace("#### VariableNamesArrayDeclarations ####", FeatureToggle.BashParametersArrayFeatureToggle.IsEnabled(variables) ? string.Join(" ", GetVariableNameAndValueDeclaration(encryptedVariables)) : string.Empty);
 
             using (var file = new FileStream(configurationFile, FileMode.CreateNew, FileAccess.Write))
             using (var writer = new StreamWriter(file, Encoding.ASCII))
@@ -60,8 +63,8 @@ namespace Calamari.Common.Features.Scripting.Bash
         {
             return variables.Select(variable =>
                                     {
-                                        var variableValue = $@"$(decrypt_variable ""{variable.EncryptedValue}"" ""{variable.Iv}"")";
-                                        return $"[{variable.Name}]={variableValue}";
+                                        var variableValue = $@"$(get_octopusvariable ""{variable.Name.Replace("\"", "\\\"")}"")";
+                                        return $"[\"{variable.Name.Replace("\"", "\\\"")}\"]=\"{variableValue}\"";
                                     });
         }
 
