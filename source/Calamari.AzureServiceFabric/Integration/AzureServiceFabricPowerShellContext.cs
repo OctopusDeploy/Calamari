@@ -1,15 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Fabric;
+using System.Fabric.Security;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.EmbeddedResources;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
+using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
+using Microsoft.Identity.Client;
 
 namespace Calamari.AzureServiceFabric.Integration
 {
@@ -20,7 +25,7 @@ namespace Calamari.AzureServiceFabric.Integration
         readonly IVariables variables;
         readonly ILog log;
 
-        readonly ScriptSyntax[] supportedScriptSyntax = {ScriptSyntax.PowerShell};
+        readonly ScriptSyntax[] supportedScriptSyntax = { ScriptSyntax.PowerShell };
 
         public AzureServiceFabricPowerShellContext(IVariables variables, ILog log)
         {
@@ -33,21 +38,20 @@ namespace Calamari.AzureServiceFabric.Integration
         public int Priority => ScriptWrapperPriorities.CloudAuthenticationPriority;
 
         public bool IsEnabled(ScriptSyntax syntax) =>
-            !string.IsNullOrEmpty(variables.Get(SpecialVariables.Action.ServiceFabric.ConnectionEndpoint)) &&
-            supportedScriptSyntax.Contains(syntax);
+            !string.IsNullOrEmpty(variables.Get(SpecialVariables.Action.ServiceFabric.ConnectionEndpoint)) && supportedScriptSyntax.Contains(syntax);
 
         public IScriptWrapper NextWrapper { get; set; }
 
         public CommandResult ExecuteScript(Script script,
-            ScriptSyntax scriptSyntax,
-            ICommandLineRunner commandLineRunner,
-            Dictionary<string, string> environmentVars)
+                                           ScriptSyntax scriptSyntax,
+                                           ICommandLineRunner commandLineRunner,
+                                           Dictionary<string, string> environmentVars)
         {
             // We only execute this hook if the connection endpoint has been set
             if (!IsEnabled(scriptSyntax))
             {
                 throw new InvalidOperationException(
-                    "This script wrapper hook is not enabled, and should not have been run");
+                                                    "This script wrapper hook is not enabled, and should not have been run");
             }
 
             if (!ServiceFabricHelper.IsServiceFabricSdkInstalled())
@@ -65,7 +69,7 @@ namespace Calamari.AzureServiceFabric.Integration
             var clientCertThumbprint = string.Empty;
             if (securityMode == AzureServiceFabricSecurityMode.SecureClientCertificate.ToString())
             {
-                var certificateVariable = GetMandatoryVariable(SpecialVariables.Action.ServiceFabric.ClientCertVariable);
+                var certificateVariable = variables.GetMandatoryVariable(SpecialVariables.Action.ServiceFabric.ClientCertVariable);
                 clientCertThumbprint = variables.Get($"{certificateVariable}.{CertificateVariables.Properties.Thumbprint}");
             }
 
@@ -90,6 +94,122 @@ namespace Calamari.AzureServiceFabric.Integration
             }
         }
 
+        async Task<string> GetAzureADAccessToken(string serverCertThumbprint, string connectionEndpoint, string aadUserCredentialUsername, string aadUserCredentialPassword)
+        {
+            log.Info("Connecting with Secure Azure Active Directory");
+            var claimsCredentials = new ClaimsCredentials();
+            claimsCredentials.ServerThumbprints.Add(serverCertThumbprint);
+            using var fabricClient = new FabricClient(claimsCredentials, connectionEndpoint);
+
+            /*
+            //Microsoft.ServiceFabric.Client.ServiceFabricClientBuilder
+            l
+            Microsoft.Identity.Client.PublicClientApplicationBuilder.CreateWithApplicationOptions(
+                                                                                                  new PublicClientApplicationOptions()
+                                                                                                  {
+                                                                                                  })         */
+            string accessToken = null;
+            fabricClient.ClaimsRetrieval += (o, e) =>
+                                            {
+                                                try
+                                                {
+                                                    accessToken = GetAccessToken(e.AzureActiveDirectoryMetadata, aadUserCredentialUsername, aadUserCredentialPassword);
+                                                    return accessToken;
+                                                }
+                                                catch (Exception ex)
+                                                {
+                                                    log.Error($"Connect failed: {ex.PrettyPrint()}");
+                                                    throw;
+                                                    //return "BAD_TOKEN";
+                                                }
+                                            };
+
+            try
+            {
+                await fabricClient.ClusterManager.GetClusterManifestAsync();
+                log.Verbose("Successfully received a response from the Service Fabric client");
+            }
+            catch (Exception ex)
+            {
+                log.Error($"Failed to get cluster manifest: {ex.PrettyPrint()}");
+                throw;
+            }
+
+            return accessToken;
+        }
+
+        static string GetAccessToken(AzureActiveDirectoryMetadata aad, string aadUsername, string aadPassword)
+        {
+            var app = PublicClientApplicationBuilder
+                      .Create(aad.ClientApplication)
+                      .WithAuthority(aad.Authority)
+                      .Build();
+
+            var authResult = app.AcquireTokenByUsernamePassword(new[] { $"{aad.ClusterApplication}/.default" }, aadUsername, aadPassword)
+                                .ExecuteAsync()
+                                .GetAwaiter()
+                                .GetResult();
+
+            return authResult.AccessToken;
+        }
+
+        /*
+        class ClusterConnectionParameters
+        {
+            public ClusterConnectionParameters(string connectionEndpoint, string serverCertificateThumbprint)
+            {
+                ConnectionEndpoint = connectionEndpoint;
+                ServerCertificateThumbprint = serverCertificateThumbprint;
+            }
+
+            public string ConnectionEndpoint { get; }
+            public string ServerCertificateThumbprint { get; }
+            public bool AzureActiveDirectory => true;
+            public bool GetMetadata => true;
+        }
+
+        class ApplicationOptions
+        {
+            public ApplicationOptions(IVariables variables)
+            {
+            }
+
+            void DetermineSecrets(IVariables variables)
+            {
+                var securityMode = variables.Get(SpecialVariables.Action.ServiceFabric.SecurityMode);
+                var clientCertThumbprint = string.Empty;
+                if (securityMode == AzureServiceFabricSecurityMode.SecureClientCertificate.ToString())
+                {
+                    var certificateVariable = variables.GetMandatoryVariable(SpecialVariables.Action.ServiceFabric.ClientCertVariable);
+                    clientCertThumbprint = variables.Get($"{certificateVariable}.{CertificateVariables.Properties.Thumbprint}");
+                }
+            }
+
+            string clientId;
+            string clientSecret;
+            string
+        }
+
+        void GetAzureADAccessToken(ClusterConnectionParameters clusterConnectionParameters,
+                                   string tenantId,
+                                   string clusterApplicationId,
+                                   string clientApplicationId,
+                                   string clientRedirect,
+                                   string authorityUrl,
+                                   string aadClientCredentialSecret)
+        {
+            log.VerboseFormat("Using TenantId: {0}", tenantId);
+            log.VerboseFormat("Using ClusterApplicationId: {0}", clusterApplicationId);
+            log.VerboseFormat("Using ClientApplicationId: {0}", clientApplicationId);
+            log.VerboseFormat("Using ClientRedirect: {0}", clientRedirect);
+            log.VerboseFormat("Using AuthorityUrl: {0}", authorityUrl);
+
+            var clientApplicationContext = ConfidentialClientApplicationBuilder.Create(clientApplicationId)
+                                                                               .WithClientSecret(aadClientCredentialSecret)
+                                                                               .WithAuthority(new Uri(authorityUrl))
+                                                                               .Build();
+        }
+                  */
         string CreateContextScriptFile(string workingDirectory)
         {
             var azureContextScriptFile = Path.Combine(workingDirectory, "Octopus.AzureServiceFabricContext.ps1");
@@ -111,16 +231,6 @@ namespace Calamari.AzureServiceFabric.Integration
             {
                 log.SetOutputVariable(name, value, variables);
             }
-        }
-
-        string GetMandatoryVariable(string variableName)
-        {
-            var value = variables.Get(variableName);
-
-            if (string.IsNullOrWhiteSpace(value))
-                throw new CommandException($"Variable {variableName} was not supplied");
-
-            return value;
         }
     }
 }
