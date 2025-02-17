@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripts;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
@@ -44,6 +45,9 @@ namespace Calamari.Common.Features.Scripting.Bash
             var encryptedVariables = EncryptVariables(variables);
             builder.Replace("#### VariableDeclarations ####", string.Join(LinuxNewLine, GetVariableSwitchConditions(encryptedVariables)));
 
+            builder.Replace("#### BashParametersArrayFeatureToggle ####", FeatureToggle.BashParametersArrayFeatureToggle.IsEnabled(variables) ? "true" : "false");
+            builder.Replace("#### VariableNamesArrayDeclarations ####", FeatureToggle.BashParametersArrayFeatureToggle.IsEnabled(variables) ? string.Join(" ", GetVariableNameAndValueDeclaration(encryptedVariables)) : string.Empty);
+
             using (var file = new FileStream(configurationFile, FileMode.CreateNew, FileAccess.Write))
             using (var writer = new StreamWriter(file, Encoding.ASCII))
             {
@@ -53,6 +57,20 @@ namespace Calamari.Common.Features.Scripting.Bash
 
             File.SetAttributes(configurationFile, FileAttributes.Hidden);
             return configurationFile;
+        }
+
+        static IEnumerable<string> GetVariableNameAndValueDeclaration(IEnumerable<EncryptedVariable> variables)
+        {
+            return variables.Select(variable =>
+                                    {
+                                        var variableValue = $@"$(get_octopusvariable ""{EscapeNixCharacter(variable.Name)}"")";
+                                        return $"[\"{EscapeNixCharacter(variable.Name)}\"]=\"{variableValue}\"";
+                                    });
+        }
+
+        private static string EscapeNixCharacter(string stringToEscape)
+        {
+            return stringToEscape.Replace("\"", "\\\"").Replace("`", "\\`");
         }
 
         static IList<EncryptedVariable> EncryptVariables(IVariables variables)
