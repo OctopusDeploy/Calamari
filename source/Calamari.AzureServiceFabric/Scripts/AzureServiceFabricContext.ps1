@@ -84,6 +84,9 @@ function ValidationMessageForAzureADParameters() {
 }
 
 function GetAzureADAccessToken() {
+
+    return $OctopusFabricAadToken
+    
     # Ensure we can load the ActiveDirectory lib and add it to our PowerShell session.
     Try
     {
