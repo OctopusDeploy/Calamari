@@ -18,7 +18,7 @@ using Microsoft.Identity.Client;
 
 namespace Calamari.AzureServiceFabric.Integration
 {
-    class AzureServiceFabricPowerShellContext : IScriptWrapper
+    public class AzureServiceFabricPowerShellContext : IScriptWrapper
     {
         readonly ICalamariFileSystem fileSystem;
         readonly ICalamariEmbeddedResources embeddedResources;
@@ -64,6 +64,11 @@ namespace Calamari.AzureServiceFabric.Integration
             // Azure PS modules are required for looking up Azure environments (needed for AAD url lookup in Service Fabric world).
             SetAzureModulesLoadingMethod();
 
+            var serverCertThumbprint = variables.Get(SpecialVariables.Action.ServiceFabric.ServerCertThumbprint);
+            var connectionEndpoint = variables.Get(SpecialVariables.Action.ServiceFabric.ConnectionEndpoint);
+            var aadUserCredUsername = variables.Get(SpecialVariables.Action.ServiceFabric.AadUserCredentialUsername);
+            var aadUserCredPassword = variables.Get(SpecialVariables.Action.ServiceFabric.AadUserCredentialPassword);
+
             // Read thumbprint from our client cert variable (if applicable).
             var securityMode = variables.Get(SpecialVariables.Action.ServiceFabric.SecurityMode);
             var clientCertThumbprint = string.Empty;
@@ -72,11 +77,19 @@ namespace Calamari.AzureServiceFabric.Integration
                 var certificateVariable = variables.GetMandatoryVariable(SpecialVariables.Action.ServiceFabric.ClientCertVariable);
                 clientCertThumbprint = variables.Get($"{certificateVariable}.{CertificateVariables.Properties.Thumbprint}");
             }
+            else if (securityMode == AzureServiceFabricSecurityMode.SecureAzureAD.ToString())
+            {
+                //Get token
+                var aadTokenTask = GetAzureADAccessToken(serverCertThumbprint, connectionEndpoint, aadUserCredUsername, aadUserCredPassword);
+                var aadToken = Task.Run(() => aadTokenTask).GetAwaiter().GetResult();
+
+                SetOutputVariable("OctopusFabricAadToken", aadToken);
+            }
 
             // Set output variables for our script to access.
-            SetOutputVariable("OctopusFabricConnectionEndpoint", variables.Get(SpecialVariables.Action.ServiceFabric.ConnectionEndpoint));
-            SetOutputVariable("OctopusFabricSecurityMode", variables.Get(SpecialVariables.Action.ServiceFabric.SecurityMode));
-            SetOutputVariable("OctopusFabricServerCertThumbprint", variables.Get(SpecialVariables.Action.ServiceFabric.ServerCertThumbprint));
+            SetOutputVariable("OctopusFabricConnectionEndpoint", connectionEndpoint);
+            SetOutputVariable("OctopusFabricSecurityMode", securityMode);
+            SetOutputVariable("OctopusFabricServerCertThumbprint", serverCertThumbprint);
             SetOutputVariable("OctopusFabricClientCertThumbprint", clientCertThumbprint);
             SetOutputVariable("OctopusFabricCertificateFindType", variables.Get(SpecialVariables.Action.ServiceFabric.CertificateFindType, "FindByThumbprint"));
             SetOutputVariable("OctopusFabricCertificateFindValueOverride", variables.Get(SpecialVariables.Action.ServiceFabric.CertificateFindValueOverride));

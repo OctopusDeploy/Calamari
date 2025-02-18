@@ -34,11 +34,11 @@ namespace Calamari.Commands
 
         void ImportCertificate()
         {
-            var certificateVariable = variables.GetMandatoryVariable(SpecialVariables.Action.Certificate.CertificateVariable);
-            var pfxBytes = Convert.FromBase64String(variables.GetMandatoryVariable($"{certificateVariable}.{CertificateVariables.Properties.Pfx}"));
+            var certificateVariable = GetMandatoryVariable(variables, SpecialVariables.Action.Certificate.CertificateVariable);
+            var pfxBytes = Convert.FromBase64String(GetMandatoryVariable(variables, $"{certificateVariable}.{CertificateVariables.Properties.Pfx}"));
             var password = variables.Get($"{certificateVariable}.{CertificateVariables.Properties.Password}");
             var thumbprint = variables.Get($"{certificateVariable}.{CertificateVariables.Properties.Thumbprint}");
-            var storeName = variables.GetMandatoryVariable(SpecialVariables.Action.Certificate.StoreName);
+            var storeName = GetMandatoryVariable(variables, SpecialVariables.Action.Certificate.StoreName);
             var privateKeyExportable = variables.GetFlag(SpecialVariables.Action.Certificate.PrivateKeyExportable, false);
 
             // Either a store-location (LocalMachine or CurrentUser) or a user can be supplied
@@ -103,6 +103,18 @@ namespace Calamari.Commands
             // Perform variable-substitution and re-escape
             var escapedAndSubstituted = variables.Evaluate(unescaped).Replace(@"\", @"\\");
             return PrivateKeyAccessRule.FromJson(escapedAndSubstituted);
+        }
+
+        string GetMandatoryVariable(IVariables variables, string variableName)
+        {
+            var value = variables.Get(variableName);
+
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                throw new CommandException($"Variable {variableName} was not supplied");
+            }
+
+            return value;
         }
 
         static void ValidateStore(StoreLocation? storeLocation, string storeName)
