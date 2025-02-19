@@ -20,6 +20,7 @@
     <ItemGroup>
       <ProjectReference Include="..\Calamari.AzureServiceFabric\Calamari.AzureServiceFabric.csproj" />
       <ProjectReference Include="..\Calamari.Testing\Calamari.Testing.csproj" />
+      <ProjectReference Include="..\Calamari.Tests\Calamari.Tests.csproj" />
     </ItemGroup>
     <ItemGroup>
       <None Update="Packages\MarksServiceFabricAppOfAwesomeness.1.0.0.zip">
