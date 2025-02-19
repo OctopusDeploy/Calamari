@@ -274,15 +274,12 @@ function decrypt_and_parse_variables {
     declare -gA octopus_parameters=()
 
     key_byte_lengths=()
-    value_byte_lengths=()
     concatenated_hex=""
-    while IFS='$' read -r hex_key hex_value; do
-        hex_value="${hex_value//$'\n'/}"
+    while IFS= read -r hex_key; do
+        hex_key="${hex_key//$'\n'/}"
         key_byte_len=$(( ${#hex_key} / 2 ))
-        value_byte_len=$(( ${#hex_value} / 2 ))
         key_byte_lengths+=("$key_byte_len")
-        value_byte_lengths+=("$value_byte_len")
-        concatenated_hex+="${hex_key}${hex_value}"
+        concatenated_hex+="${hex_key}"
     done <<< "$decrypted"
     decoded_output=$(hex_to_ascii "$concatenated_hex")
     
@@ -290,38 +287,30 @@ function decrypt_and_parse_variables {
 
     section_start=$(date +%s%3N)
     decoded_keys=()
-    decoded_values=()
 
-    # Use a temporary file to avoid subshell issues 
     tmp_file=$(mktemp)
-    
     printf "%s" "$decoded_output" > "$tmp_file"
     exec 3<"$tmp_file"
 
     for idx in "${!key_byte_lengths[@]}"; do
         key_byte_len="${key_byte_lengths[idx]}"
-        value_byte_len="${value_byte_lengths[idx]}"
-
         read -r -N "$key_byte_len" decoded_key <&3
-        read -r -N "$value_byte_len" decoded_value <&3
-
-        [[ "$decoded_value" == "nul" ]] && decoded_value=""
         decoded_keys+=("$decoded_key")
-        decoded_values+=("$decoded_value")
     done
 
     exec 3<&-
     rm -f "$tmp_file"
 
-    for i in "${!decoded_keys[@]}"; do
-        octopus_parameters["${decoded_keys[$i]}"]="${decoded_values[$i]}"
+    for key in "${decoded_keys[@]}"; do
+        # Value is empty for now, since we write the hex encoded key/values to disk we don't want to write the values
+        # https://github.com/OctopusDeploy/Calamari/pull/1441/files is an example implementation that includes the values
+        octopus_parameters["$key"]=""
     done
 }
 
 hex_to_ascii() {
     local hex_string="$1"
     hex_string="${hex_string//[$'\t\r\n ']/}"
-    # If the length is odd, pad with a leading zero
     if (( ${#hex_string} % 2 )); then
         hex_string="0$hex_string"
     fi

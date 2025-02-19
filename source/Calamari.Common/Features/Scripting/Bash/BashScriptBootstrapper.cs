@@ -77,8 +77,7 @@ namespace Calamari.Common.Features.Scripting.Bash
             var sb = new StringBuilder();
             foreach (var variable in variables.Where(v => !ScriptVariables.IsLibraryScriptModule(v.Key)))
             {
-                var value = variable.Value ?? "nul";
-                sb.Append($"{EncodeAsHex(variable.Key)}").Append("$").AppendLine(EncodeAsHex(value));
+                sb.AppendLine(EncodeAsHex(variable.Key));
             }
 
             var encrypted = VariableEncryptor.Encrypt(sb.ToString());
