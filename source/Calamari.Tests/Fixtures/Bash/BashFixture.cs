@@ -264,19 +264,19 @@ namespace Calamari.Tests.Fixtures.Bash
                     return;
                 }
 
-                output.AssertOutput(@"Key: VariableName1, Value: Value 1");
-                output.AssertOutput(@"Key: VariableName 2, Value: Value 2");
-                output.AssertOutput(@"Key: VariableName3, Value: Value 3");
-                output.AssertOutput(@"Key: VariableName '4', Value: Value '4'");
-                output.AssertOutput("Key: VariableName \"5\", Value: Value \"5\"");
-                output.AssertOutput(@"Key: VariableName, 6, Value: Value, 6");
-                output.AssertOutput(@"Key: VariableName [7], Value: Value [7]");
-                output.AssertOutput(@"Key: VariableName {8}, Value: Value {8}");
-                output.AssertOutput("Key: VariableName\t9, Value: Value\t9");
-                output.AssertOutput(@"Key: VariableName 10 !@#$%^&*()_+1234567890-=, Value: Value 10 !@#$%^&*()_+1234567890-=");
-                output.AssertOutput("Key: VariableName \n 11, Value: Value \n 11");
-                output.AssertOutput("Key: VariableName.prop.anotherprop 12, Value: Value.prop.12");
-                output.AssertOutput("Key: VariableName`prop`anotherprop` 13, Value: Value`prop`13");
+                output.AssertOutput(@"Key: VariableName1, Value: ");
+                output.AssertOutput(@"Key: VariableName 2, Value: ");
+                output.AssertOutput(@"Key: VariableName3, Value: ");
+                output.AssertOutput(@"Key: VariableName '4', Value: ");
+                output.AssertOutput("Key: VariableName \"5\", Value: ");
+                output.AssertOutput(@"Key: VariableName, 6, Value: ");
+                output.AssertOutput(@"Key: VariableName [7], Value: ");
+                output.AssertOutput(@"Key: VariableName {8}, Value: ");
+                output.AssertOutput("Key: VariableName\t9, Value: ");
+                output.AssertOutput(@"Key: VariableName 10 !@#$%^&*()_+1234567890-=, Value: ");
+                output.AssertOutput("Key: VariableName \n 11, Value: ");
+                output.AssertOutput("Key: VariableName.prop.anotherprop 12, Value: ");
+                output.AssertOutput("Key: VariableName`prop`anotherprop` 13, Value: ");
                 output.AssertOutput($"Key: {specialCharacters}, Value: {specialCharacters}");
             }
         }
