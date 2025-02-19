@@ -281,7 +281,7 @@ function decrypt_and_parse_variables {
         key_byte_lengths+=("$key_byte_len")
         concatenated_hex+="${hex_key}"
     done <<< "$decrypted"
-    decoded_output=$(hex_to_ascii "$concatenated_hex")
+    decoded_output=$(hex_to_string "$concatenated_hex")
     
     section_end=$(date +%s%3N)
 
@@ -308,7 +308,7 @@ function decrypt_and_parse_variables {
     done
 }
 
-hex_to_ascii() {
+hex_to_string() {
     local hex_string="$1"
     hex_string="${hex_string//[$'\t\r\n ']/}"
     if (( ${#hex_string} % 2 )); then
