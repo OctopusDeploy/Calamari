@@ -228,6 +228,8 @@ namespace Calamari.Tests.Fixtures.Bash
                             });
         }
 
+        static string specialCharacters => "! \" # $ % & ' ( ) * + , - . / : ; < = > ? @ [ \\ ] ^ _ ` { | } ~  \n\u00b1 \u00d7 \u00f7 \u2211 \u220f \u2202 \u221e \u222b \u2248 \u2260 \u2264 \u2265 \u221a \u221b \u2206 \u2207 \u221d  \n$ \u00a2 \u00a3 \u00a5 \u20ac \u20b9 \u20a9 \u20b1 \u20aa \u20bf  \n• ‣ … ′ ″ ‘ ’ “ ” ‽ ¡ ¿ – — ―  \n( ) [ ] { } ⟨ ⟩ « » ‘ ’ “ ”  \n\u2190 \u2191 \u2192 \u2193 \u2194 \u2195 \u2196 \u2197 \u2198 \u2199 \u2b05 \u2b06 \u2b07 \u27a1 \u27f3  \nα β γ δ ε ζ η θ ι κ λ μ ν ξ ο π ρ σ τ υ φ χ ψ ω  \n\u00a9 \u00ae \u2122 § ¶ † ‡ µ #\n";
+
         [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
         [TestCase(null)]
         [RequiresBashDotExeIfOnWindows]
@@ -248,7 +250,8 @@ namespace Calamari.Tests.Fixtures.Bash
                                             ["VariableName 10 !@#$%^&*()_+1234567890-="] = "Value 10 !@#$%^&*()_+1234567890-=",
                                             ["VariableName \n 11"] = "Value \n 11",
                                             ["VariableName.prop.anotherprop 12"] = "Value.prop.12",
-                                            ["VariableName`prop`anotherprop` 13"] = "Value`prop`13"
+                                            ["VariableName`prop`anotherprop` 13"] = "Value`prop`13",
+                                            [specialCharacters] = specialCharacters
                                         }.AddFeatureToggleToDictionary(new List<FeatureToggle?>{ featureToggle }));
 
             output.AssertSuccess();
@@ -274,6 +277,7 @@ namespace Calamari.Tests.Fixtures.Bash
                 output.AssertOutput("Key: VariableName \n 11, Value: Value \n 11");
                 output.AssertOutput("Key: VariableName.prop.anotherprop 12, Value: Value.prop.12");
                 output.AssertOutput("Key: VariableName`prop`anotherprop` 13, Value: Value`prop`13");
+                output.AssertOutput($"Key: {specialCharacters}, Value: {specialCharacters}");
             }
         }
     }

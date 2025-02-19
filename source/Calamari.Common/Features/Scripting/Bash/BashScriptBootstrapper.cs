@@ -43,10 +43,17 @@ namespace Calamari.Common.Features.Scripting.Bash
 
             var builder = new StringBuilder(BootstrapScriptTemplate);
             var encryptedVariables = EncryptVariables(variables);
+
+            var variableString = GetEncryptedVariablesKvp(variables);
+
             builder.Replace("#### VariableDeclarations ####", string.Join(LinuxNewLine, GetVariableSwitchConditions(encryptedVariables)));
 
             builder.Replace("#### BashParametersArrayFeatureToggle ####", FeatureToggle.BashParametersArrayFeatureToggle.IsEnabled(variables) ? "true" : "false");
-            builder.Replace("#### VariableNamesArrayDeclarations ####", FeatureToggle.BashParametersArrayFeatureToggle.IsEnabled(variables) ? string.Join(" ", GetVariableNameAndValueDeclaration(encryptedVariables)) : string.Empty);
+            if (FeatureToggle.BashParametersArrayFeatureToggle.IsEnabled(variables))
+            {
+                builder.Replace("#### VARIABLESTRING.IV ####", variableString.iv);
+                builder.Replace("#### VARIABLESTRING.ENCRYPTED ####", variableString.encrypted);
+            }
 
             using (var file = new FileStream(configurationFile, FileMode.CreateNew, FileAccess.Write))
             using (var writer = new StreamWriter(file, Encoding.ASCII))
@@ -58,19 +65,28 @@ namespace Calamari.Common.Features.Scripting.Bash
             File.SetAttributes(configurationFile, FileAttributes.Hidden);
             return configurationFile;
         }
-
-        static IEnumerable<string> GetVariableNameAndValueDeclaration(IEnumerable<EncryptedVariable> variables)
+        
+        static string EncodeAsHex(string value)
         {
-            return variables.Select(variable =>
-                                    {
-                                        var variableValue = $@"$(get_octopusvariable ""{EscapeNixCharacter(variable.Name)}"")";
-                                        return $"[\"{EscapeNixCharacter(variable.Name)}\"]=\"{variableValue}\"";
-                                    });
+            var bytes = Encoding.UTF8.GetBytes(value);
+            return BitConverter.ToString(bytes).Replace("-", "");
         }
-
-        private static string EscapeNixCharacter(string stringToEscape)
+        
+        static (string encrypted, string iv) GetEncryptedVariablesKvp(IVariables variables)
         {
-            return stringToEscape.Replace("\"", "\\\"").Replace("`", "\\`");
+            var sb = new StringBuilder();
+            foreach (var variable in variables.Where(v => !ScriptVariables.IsLibraryScriptModule(v.Key)))
+            {
+                var value = variable.Value ?? "nul";
+                sb.Append($"{EncodeAsHex(variable.Key)}").Append("$").AppendLine(EncodeAsHex(value));
+            }
+
+            var encrypted = VariableEncryptor.Encrypt(sb.ToString());
+            var rawEncrypted = AesEncryption.ExtractIV(encrypted, out var iv);
+            return (
+                Convert.ToBase64String(rawEncrypted),
+                ToHex(iv)
+            );
         }
 
         static IList<EncryptedVariable> EncryptVariables(IVariables variables)
