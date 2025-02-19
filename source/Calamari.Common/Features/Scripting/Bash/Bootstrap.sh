@@ -284,50 +284,33 @@ function decrypt_and_parse_variables {
         value_byte_lengths+=("$value_byte_len")
         concatenated_hex+="${hex_key}${hex_value}"
     done <<< "$decrypted"
-    decoded_output=$(hex_to_ascii "$concatenated_hex")
-    
-    section_end=$(date +%s%3N)
 
-    section_start=$(date +%s%3N)
-    decoded_keys=()
-    decoded_values=()
+    decoded_output=$(hex_to_string "$concatenated_hex")
 
-    # Use a temporary file to avoid subshell issues 
-    tmp_file=$(mktemp)
-    
-    printf "%s" "$decoded_output" > "$tmp_file"
-    exec 3<"$tmp_file"
+    exec 3< <(printf "%s" "$decoded_output")
 
     for idx in "${!key_byte_lengths[@]}"; do
         key_byte_len="${key_byte_lengths[idx]}"
         value_byte_len="${value_byte_lengths[idx]}"
 
-        read -r -N "$key_byte_len" decoded_key <&3
-        read -r -N "$value_byte_len" decoded_value <&3
+        LC_ALL=C read -r -N "$key_byte_len" decoded_key <&3
+        LC_ALL=C read -r -N "$value_byte_len" decoded_value <&3
 
         [[ "$decoded_value" == "nul" ]] && decoded_value=""
-        decoded_keys+=("$decoded_key")
-        decoded_values+=("$decoded_value")
+        octopus_parameters["$decoded_key"]="$decoded_value"
     done
 
     exec 3<&-
-    rm -f "$tmp_file"
-
-    for i in "${!decoded_keys[@]}"; do
-        octopus_parameters["${decoded_keys[$i]}"]="${decoded_values[$i]}"
-    done
 }
 
-hex_to_ascii() {
+hex_to_string() {
     local hex_string="$1"
     hex_string="${hex_string//[$'\t\r\n ']/}"
-    # If the length is odd, pad with a leading zero
     if (( ${#hex_string} % 2 )); then
         hex_string="0$hex_string"
     fi
     echo "$hex_string" | awk '
     BEGIN {
-      # Build a lookup table for hex digits
       hexmap["0"] = 0; hexmap["1"] = 1; hexmap["2"] = 2; hexmap["3"] = 3;
       hexmap["4"] = 4; hexmap["5"] = 5; hexmap["6"] = 6; hexmap["7"] = 7;
       hexmap["8"] = 8; hexmap["9"] = 9; hexmap["A"] = 10; hexmap["B"] = 11;
@@ -335,7 +318,6 @@ hex_to_ascii() {
       hexmap["a"] = 10; hexmap["b"] = 11; hexmap["c"] = 12; hexmap["d"] = 13;
       hexmap["e"] = 14; hexmap["f"] = 15;
     }
-    # Define a generic function to convert a hex string to decimal
     function hex2dec(hex,    i, n, d) {
       n = 0;
       for (i = 1; i <= length(hex); i++) {
@@ -345,7 +327,6 @@ hex_to_ascii() {
       return n;
     }
     {
-      # Process the input string two characters at a time
       for (i = 1; i <= length($0); i += 2)
         printf "%c", hex2dec(substr($0, i, 2));
     }'
