@@ -305,7 +305,6 @@ function decrypt_and_parse_variables {
     exec 3<&-
 }
 
-
 bashParametersArrayFeatureToggle=#### BashParametersArrayFeatureToggle ####
 
 if [ "$bashParametersArrayFeatureToggle" = true ]; then
@@ -313,7 +312,7 @@ if [ "$bashParametersArrayFeatureToggle" = true ]; then
         if command -v xxd > /dev/null; then
             decrypt_and_parse_variables "#### VARIABLESTRING.ENCRYPTED ####" "#### VARIABLESTRING.IV ####"
         else
-            echo "xxd is not installed"
+            echo "xxd is not installed, this is required to use octopus_parameters"
         fi
     else
         echo "Bash version 4.2 or later is required to use octopus_parameters"
