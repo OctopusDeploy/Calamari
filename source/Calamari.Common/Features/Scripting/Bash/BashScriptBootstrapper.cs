@@ -75,7 +75,9 @@ namespace Calamari.Common.Features.Scripting.Bash
         static (string encrypted, string iv) GetEncryptedVariablesKvp(IVariables variables)
         {
             var sb = new StringBuilder();
-            foreach (var variable in variables.Where(v => !ScriptVariables.IsLibraryScriptModule(v.Key)))
+            foreach (var variable in variables
+                         .Where(v => !ScriptVariables.IsLibraryScriptModule(v.Key))
+                         .Where(v => !ScriptVariables.IsBuildInformationVariable(v.Key)))
             {
                 var value = variable.Value ?? "nul";
                 sb.Append($"{EncodeAsHex(variable.Key)}").Append("$").AppendLine(EncodeAsHex(value));
