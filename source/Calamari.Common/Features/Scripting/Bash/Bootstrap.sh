@@ -273,25 +273,27 @@ function decrypt_and_parse_variables {
     decrypted=$(decrypt_variable "$encrypted" "$iv")
     declare -gA octopus_parameters=()
 
-    key_byte_lengths=()
-    value_byte_lengths=()
-    concatenated_hex=""
+    local -a key_byte_lengths=()
+    local -a value_byte_lengths=()
+    local -a hex_parts=()
+
     while IFS='$' read -r hex_key hex_value; do
         hex_value="${hex_value//$'\n'/}"
-        key_byte_len=$(( ${#hex_key} / 2 ))
-        value_byte_len=$(( ${#hex_value} / 2 ))
-        key_byte_lengths+=("$key_byte_len")
-        value_byte_lengths+=("$value_byte_len")
-        concatenated_hex+="${hex_key}${hex_value}"
+        key_byte_lengths+=( $(( ${#hex_key} / 2 )) )
+        value_byte_lengths+=( $(( ${#hex_value} / 2 )) )
+        hex_parts+=( "${hex_key}${hex_value}" )
     done <<< "$decrypted"
 
-    decoded_output=$(hex_to_string "$concatenated_hex")
+    local concatenated_hex
+    concatenated_hex=$(printf "%s" "${hex_parts[@]}")
 
-    exec 3< <(printf "%s" "$decoded_output")
+    exec 3< <(echo -n "$concatenated_hex" | xxd -r -p)
 
+    local idx
     for idx in "${!key_byte_lengths[@]}"; do
-        key_byte_len="${key_byte_lengths[idx]}"
-        value_byte_len="${value_byte_lengths[idx]}"
+        local key_byte_len="${key_byte_lengths[idx]}"
+        local value_byte_len="${value_byte_lengths[idx]}"
+        local decoded_key decoded_value
 
         LC_ALL=C read -r -N "$key_byte_len" decoded_key <&3
         LC_ALL=C read -r -N "$value_byte_len" decoded_value <&3
@@ -303,40 +305,16 @@ function decrypt_and_parse_variables {
     exec 3<&-
 }
 
-hex_to_string() {
-    local hex_string="$1"
-    hex_string="${hex_string//[$'\t\r\n ']/}"
-    if (( ${#hex_string} % 2 )); then
-        hex_string="0$hex_string"
-    fi
-    echo "$hex_string" | awk '
-    BEGIN {
-      hexmap["0"] = 0; hexmap["1"] = 1; hexmap["2"] = 2; hexmap["3"] = 3;
-      hexmap["4"] = 4; hexmap["5"] = 5; hexmap["6"] = 6; hexmap["7"] = 7;
-      hexmap["8"] = 8; hexmap["9"] = 9; hexmap["A"] = 10; hexmap["B"] = 11;
-      hexmap["C"] = 12; hexmap["D"] = 13; hexmap["E"] = 14; hexmap["F"] = 15;
-      hexmap["a"] = 10; hexmap["b"] = 11; hexmap["c"] = 12; hexmap["d"] = 13;
-      hexmap["e"] = 14; hexmap["f"] = 15;
-    }
-    function hex2dec(hex,    i, n, d) {
-      n = 0;
-      for (i = 1; i <= length(hex); i++) {
-         d = substr(hex, i, 1);
-         n = n * 16 + hexmap[d];
-      }
-      return n;
-    }
-    {
-      for (i = 1; i <= length($0); i += 2)
-        printf "%c", hex2dec(substr($0, i, 2));
-    }'
-}
 
 bashParametersArrayFeatureToggle=#### BashParametersArrayFeatureToggle ####
 
 if [ "$bashParametersArrayFeatureToggle" = true ]; then
     if (( ${BASH_VERSINFO[0]:-0} > 4 || (${BASH_VERSINFO[0]:-0} == 4 && ${BASH_VERSINFO[1]:-0} > 2) )); then
-        decrypt_and_parse_variables "#### VARIABLESTRING.ENCRYPTED ####" "#### VARIABLESTRING.IV ####"
+        if command -v xxd > /dev/null; then
+            decrypt_and_parse_variables "#### VARIABLESTRING.ENCRYPTED ####" "#### VARIABLESTRING.IV ####"
+        else
+            echo "xxd is not installed"
+        fi
     else
         echo "Bash version 4.2 or later is required to use octopus_parameters"
     fi
