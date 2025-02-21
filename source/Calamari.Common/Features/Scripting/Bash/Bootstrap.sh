@@ -299,7 +299,9 @@ function decrypt_and_parse_variables {
         LC_ALL=C read -r -N "$value_byte_len" decoded_value <&3
 
         [[ "$decoded_value" == "nul" ]] && decoded_value=""
-        octopus_parameters["$decoded_key"]="$decoded_value"
+        if [[ -n "$decoded_key" ]]; then
+            octopus_parameters["$decoded_key"]="$decoded_value"
+        fi
     done
 
     exec 3<&-
