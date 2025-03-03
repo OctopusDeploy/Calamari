@@ -5,7 +5,6 @@ using System.Fabric.Security;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using Calamari.Common.Commands;
 using Calamari.Common.Features.EmbeddedResources;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
@@ -25,7 +24,7 @@ namespace Calamari.AzureServiceFabric.Integration
         readonly IVariables variables;
         readonly ILog log;
 
-        readonly ScriptSyntax[] supportedScriptSyntax = { ScriptSyntax.PowerShell };
+        readonly ScriptSyntax[] supportedScriptSyntax = {ScriptSyntax.PowerShell};
 
         public AzureServiceFabricPowerShellContext(IVariables variables, ILog log)
         {
@@ -38,20 +37,21 @@ namespace Calamari.AzureServiceFabric.Integration
         public int Priority => ScriptWrapperPriorities.CloudAuthenticationPriority;
 
         public bool IsEnabled(ScriptSyntax syntax) =>
-            !string.IsNullOrEmpty(variables.Get(SpecialVariables.Action.ServiceFabric.ConnectionEndpoint)) && supportedScriptSyntax.Contains(syntax);
+            !string.IsNullOrEmpty(variables.Get(SpecialVariables.Action.ServiceFabric.ConnectionEndpoint)) &&
+            supportedScriptSyntax.Contains(syntax);
 
         public IScriptWrapper NextWrapper { get; set; }
 
         public CommandResult ExecuteScript(Script script,
-                                           ScriptSyntax scriptSyntax,
-                                           ICommandLineRunner commandLineRunner,
-                                           Dictionary<string, string> environmentVars)
+            ScriptSyntax scriptSyntax,
+            ICommandLineRunner commandLineRunner,
+            Dictionary<string, string> environmentVars)
         {
             // We only execute this hook if the connection endpoint has been set
             if (!IsEnabled(scriptSyntax))
             {
                 throw new InvalidOperationException(
-                                                    "This script wrapper hook is not enabled, and should not have been run");
+                    "This script wrapper hook is not enabled, and should not have been run");
             }
 
             if (!ServiceFabricHelper.IsServiceFabricSdkInstalled())
@@ -60,9 +60,6 @@ namespace Calamari.AzureServiceFabric.Integration
             var workingDirectory = Path.GetDirectoryName(script.File);
             variables.Set("OctopusFabricTargetScript", script.File);
             variables.Set("OctopusFabricTargetScriptParameters", script.Parameters);
-
-            // Azure PS modules are required for looking up Azure environments (needed for AAD url lookup in Service Fabric world).
-            SetAzureModulesLoadingMethod();
 
             var serverCertThumbprint = variables.Get(SpecialVariables.Action.ServiceFabric.ServerCertThumbprint);
             var connectionEndpoint = variables.Get(SpecialVariables.Action.ServiceFabric.ConnectionEndpoint);
@@ -79,7 +76,9 @@ namespace Calamari.AzureServiceFabric.Integration
             }
             else if (securityMode == AzureServiceFabricSecurityMode.SecureAzureAD.ToString())
             {
-                //Get token
+                if (string.IsNullOrWhiteSpace(aadUserCredUsername))  return new CommandResult("Failed to find a value for the AAD username.", 0);
+                if (string.IsNullOrWhiteSpace(aadUserCredPassword))  return new CommandResult("Failed to find a value for the AAD password.", 0);
+
                 var aadTokenTask = GetAzureADAccessToken(serverCertThumbprint, connectionEndpoint, aadUserCredUsername, aadUserCredPassword);
                 var aadToken = Task.Run(() => aadTokenTask).GetAwaiter().GetResult();
 
@@ -95,10 +94,6 @@ namespace Calamari.AzureServiceFabric.Integration
             SetOutputVariable("OctopusFabricCertificateFindValueOverride", variables.Get(SpecialVariables.Action.ServiceFabric.CertificateFindValueOverride));
             SetOutputVariable("OctopusFabricCertificateStoreLocation", variables.Get(SpecialVariables.Action.ServiceFabric.CertificateStoreLocation, "LocalMachine"));
             SetOutputVariable("OctopusFabricCertificateStoreName", variables.Get(SpecialVariables.Action.ServiceFabric.CertificateStoreName, "MY"));
-            SetOutputVariable("OctopusFabricAadCredentialType", variables.Get(SpecialVariables.Action.ServiceFabric.AadCredentialType));
-            SetOutputVariable("OctopusFabricAadClientCredentialSecret", variables.Get(SpecialVariables.Action.ServiceFabric.AadClientCredentialSecret));
-            SetOutputVariable("OctopusFabricAadUserCredentialUsername", variables.Get(SpecialVariables.Action.ServiceFabric.AadUserCredentialUsername));
-            SetOutputVariable("OctopusFabricAadUserCredentialPassword", variables.Get(SpecialVariables.Action.ServiceFabric.AadUserCredentialPassword));
 
             using (new TemporaryFile(Path.Combine(workingDirectory, "AzureProfile.json")))
             using (var contextScriptFile = new TemporaryFile(CreateContextScriptFile(workingDirectory)))
@@ -176,13 +171,6 @@ namespace Calamari.AzureServiceFabric.Integration
             var contextScript = embeddedResources.GetEmbeddedResourceText(GetType().Assembly, $"{GetType().Assembly.GetName().Name}.Scripts.AzureServiceFabricContext.ps1");
             fileSystem.OverwriteFile(azureContextScriptFile, contextScript);
             return azureContextScriptFile;
-        }
-
-        void SetAzureModulesLoadingMethod()
-        {
-            // We don't bundle the standard Azure PS module for Service Fabric work. We do however need
-            // a certain Active Directory library that is bundled with Calamari.
-            SetOutputVariable("OctopusFabricActiveDirectoryLibraryPath", Path.GetDirectoryName(typeof(AzureServiceFabricPowerShellContext).Assembly.Location));
         }
 
         void SetOutputVariable(string name, string value)
