@@ -109,18 +109,22 @@ namespace Calamari.AzureServiceFabric.Integration
 
         async Task<string> GetAzureADAccessToken(string serverCertThumbprint, string connectionEndpoint, string aadUserCredentialUsername, string aadUserCredentialPassword)
         {
+            // Note that the following approach to retrieving the token is a little clunky - we're doing a 'GetClusterManifestAsync()' call, and nabbing the access token
+            //  via the claim retrieval event handler.
+            // Unfortunately, the FabricClient class is designed to hide the token (or at least the AzureActiveDirectoryMetadata used to get the token), outside the aforementioned event handler.
+            // From what I can tell, there _is_ a REST call available to do this, and may well be what's used under the covers here, but I didn't want to add the complexity which that may involve.
+            // This code is more-or-less the same as what is used for SF health checks, so we know that this approach does work.
+            // Do note that if an AAD user is configured with MFA, these calls will fail with a message indicating such - we are unable to support MFA due to the requirement of user interaction
+            //  and a redirect URI. That isn't new though.
+
+            // This also doesn't implement support for AAD SecureClientCertificate, but AFAIK Service Fabric doesn't support that anyway, and we filter that out at our endpoint: https://github.com/OctopusDeploy/OctopusDeploy/blob/3ec629d30a8d820449460c4a05bd96a2fe63502f/source/Octopus.Server.Extensibility.Sashimi.AzureServiceFabric/Endpoints/AzureServiceFabricClusterEndpointValidator.cs#L28
+
+
             log.Info("Connecting with Secure Azure Active Directory");
             var claimsCredentials = new ClaimsCredentials();
             claimsCredentials.ServerThumbprints.Add(serverCertThumbprint);
-            using var fabricClient = new FabricClient(claimsCredentials, connectionEndpoint);
+            using var fabricClient = new FabricClient(claimsCredentials, connectionEndpoint); 
 
-            /*
-            //Microsoft.ServiceFabric.Client.ServiceFabricClientBuilder
-            l
-            Microsoft.Identity.Client.PublicClientApplicationBuilder.CreateWithApplicationOptions(
-                                                                                                  new PublicClientApplicationOptions()
-                                                                                                  {
-                                                                                                  })         */
             string accessToken = null;
             fabricClient.ClaimsRetrieval += (o, e) =>
                                             {
@@ -158,71 +162,14 @@ namespace Calamari.AzureServiceFabric.Integration
                       .WithAuthority(aad.Authority)
                       .Build();
 
-            var authResult = app.AcquireTokenByUsernamePassword(new[] { $"{aad.ClusterApplication}/.default" }, aadUsername, aadPassword)
-                                .ExecuteAsync()
-                                .GetAwaiter()
-                                .GetResult();
+            var scope = new[] { $"{aad.ClusterApplication}/.default" };
+            var authResultTask = app.AcquireTokenByUsernamePassword(scope, aadUsername, aadPassword).ExecuteAsync();
+
+            var authResult = authResultTask.GetAwaiter().GetResult();
 
             return authResult.AccessToken;
         }
 
-        /*
-        class ClusterConnectionParameters
-        {
-            public ClusterConnectionParameters(string connectionEndpoint, string serverCertificateThumbprint)
-            {
-                ConnectionEndpoint = connectionEndpoint;
-                ServerCertificateThumbprint = serverCertificateThumbprint;
-            }
-
-            public string ConnectionEndpoint { get; }
-            public string ServerCertificateThumbprint { get; }
-            public bool AzureActiveDirectory => true;
-            public bool GetMetadata => true;
-        }
-
-        class ApplicationOptions
-        {
-            public ApplicationOptions(IVariables variables)
-            {
-            }
-
-            void DetermineSecrets(IVariables variables)
-            {
-                var securityMode = variables.Get(SpecialVariables.Action.ServiceFabric.SecurityMode);
-                var clientCertThumbprint = string.Empty;
-                if (securityMode == AzureServiceFabricSecurityMode.SecureClientCertificate.ToString())
-                {
-                    var certificateVariable = variables.GetMandatoryVariable(SpecialVariables.Action.ServiceFabric.ClientCertVariable);
-                    clientCertThumbprint = variables.Get($"{certificateVariable}.{CertificateVariables.Properties.Thumbprint}");
-                }
-            }
-
-            string clientId;
-            string clientSecret;
-            string
-        }
-
-        void GetAzureADAccessToken(ClusterConnectionParameters clusterConnectionParameters,
-                                   string tenantId,
-                                   string clusterApplicationId,
-                                   string clientApplicationId,
-                                   string clientRedirect,
-                                   string authorityUrl,
-                                   string aadClientCredentialSecret)
-        {
-            log.VerboseFormat("Using TenantId: {0}", tenantId);
-            log.VerboseFormat("Using ClusterApplicationId: {0}", clusterApplicationId);
-            log.VerboseFormat("Using ClientApplicationId: {0}", clientApplicationId);
-            log.VerboseFormat("Using ClientRedirect: {0}", clientRedirect);
-            log.VerboseFormat("Using AuthorityUrl: {0}", authorityUrl);
-
-            var clientApplicationContext = ConfidentialClientApplicationBuilder.Create(clientApplicationId)
-                                                                               .WithClientSecret(aadClientCredentialSecret)
-                                                                               .WithAuthority(new Uri(authorityUrl))
-                                                                               .Build();
-        }
-                  */
         string CreateContextScriptFile(string workingDirectory)
         {
             var azureContextScriptFile = Path.Combine(workingDirectory, "Octopus.AzureServiceFabricContext.ps1");
