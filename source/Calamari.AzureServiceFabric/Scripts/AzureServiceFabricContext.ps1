@@ -14,7 +14,7 @@
 ##   OctopusFabricCertificateFindType                        // The certificate lookup type (should be 'FindByThumbprint' by default)
 ##   OctopusFabricCertificateFindValueOverride               // The type of FindValue for searching the certificate in the Azure certificate store (use this if you specify a FindType different to 'FindByThumbprint' and do NOT wish to use the client certificate thumbprint value)
 ##   OctopusFabricCertificateStoreLocation                   // The certificate store location (should be 'LocalMachine' by default)
-##   OctopusFabricCertificateStoreName                       // The certificate store name (should be 'MY' by default)\
+##   OctopusFabricCertificateStoreName                       // The certificate store name (should be 'MY' by default)
 ##   OctopusFabricAadToken                                   // The AzureAD token for authentication
 
 $ErrorActionPreference = "Stop"
