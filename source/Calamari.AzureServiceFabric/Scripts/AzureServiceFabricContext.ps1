@@ -14,12 +14,8 @@
 ##   OctopusFabricCertificateFindType                        // The certificate lookup type (should be 'FindByThumbprint' by default)
 ##   OctopusFabricCertificateFindValueOverride               // The type of FindValue for searching the certificate in the Azure certificate store (use this if you specify a FindType different to 'FindByThumbprint' and do NOT wish to use the client certificate thumbprint value)
 ##   OctopusFabricCertificateStoreLocation                   // The certificate store location (should be 'LocalMachine' by default)
-##   OctopusFabricCertificateStoreName                       // The certificate store name (should be 'MY' by default)
-##   OctopusFabricAadCredentialType                          // The credential type for authentication
-##   OctopusFabricAadClientCredentialSecret                  // The client application secret for authentication
-##   OctopusFabricAadUserCredentialUsername                  // The username for authentication
-##   OctopusFabricAadUserCredentialPassword                  // The password for authentication
-##   OctopusFabricActiveDirectoryLibraryPath                 // The path to Microsoft.Identity.Client.dll
+##   OctopusFabricCertificateStoreName                       // The certificate store name (should be 'MY' by default)\
+##   OctopusFabricAadToken                                   // The AzureAD token for authentication
 
 $ErrorActionPreference = "Stop"
 
@@ -65,19 +61,6 @@ function ValidationMessageForClientCertificateParameters() {
 function ValidationMessageForAzureADParameters() {
     if (!$OctopusFabricServerCertThumbprint) {
         return "Failed to find a value for the server certificate."
-    }
-
-    if ($OctopusFabricAadCredentialType -eq "ClientCredential") {
-        if (!$OctopusFabricAadClientCredentialSecret) {
-            return "Failed to find a value for the AAD client certificate."
-        }
-    } Elseif ($OctopusFabricAadCredentialType -eq "UserCredential") {
-        if (!$OctopusFabricAadUserCredentialUsername) {
-            return "Failed to find a value for the AAD username."
-        }
-        if (!$OctopusFabricAadUserCredentialPassword) {
-            return "Failed to find a value for the AAD password."
-        }
     }
 
     return $null
