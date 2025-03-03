@@ -83,84 +83,6 @@ function ValidationMessageForAzureADParameters() {
     return $null
 }
 
-function GetAzureADAccessToken() {
-
-    return $OctopusFabricAadToken
-    
-    # Ensure we can load the ActiveDirectory lib and add it to our PowerShell session.
-    Try
-    {
-        $FilePath = Join-Path $OctopusFabricActiveDirectoryLibraryPath "Microsoft.Identity.Client.dll"
-        Add-Type -Path $FilePath
-    }
-    Catch
-    {
-        Write-Error "Unable to load the Microsoft.Identity.Client.dll. Please ensure this library file exists at $($OctopusFabricActiveDirectoryLibraryPath)."
-        Exit
-    }
-
-    # ActiveDirectoryAuthority will change depending on which Azure environment the user belongs to.
-    # Get metadata for the cluster so we can determine the correct ActiveDirectoryAuthority to use.
-    $TenantId = ""
-    $ClusterApplicationId = ""
-    $ClientApplicationId = ""
-    $ClientRedirect = ""
-    $AuthorityUrl = ""
-    try
-    {
-        $ClusterConnectionParameters = @{}
-        $ClusterConnectionParameters["ConnectionEndpoint"] = $OctopusFabricConnectionEndpoint
-        $ClusterConnectionParameters["ServerCertThumbprint"] = $OctopusFabricServerCertThumbprint
-        $ClusterConnectionParameters["AzureActiveDirectory"] = $true
-        $ClusterConnectionParameters["GetMetadata"] = $true
-
-        $ClusterMetaData = Connect-ServiceFabricCluster @ClusterConnectionParameters
-
-        $TenantId = $ClusterMetaData.AzureActiveDirectoryMetadata.TenantId
-        $ClusterApplicationId = $ClusterMetaData.AzureActiveDirectoryMetadata.ClusterApplication
-        $ClientApplicationId = $ClusterMetaData.AzureActiveDirectoryMetadata.ClientApplication
-        $ClientRedirect = $ClusterMetaData.AzureActiveDirectoryMetadata.ClientRedirect
-        $AuthorityUrl = $ClusterMetaData.AzureActiveDirectoryMetadata.Authority
-    }
-    catch [System.Fabric.FabricException]
-    {
-        Write-Error "Unable to get metadata for cluster (required for AAD)."
-        Exit
-    }
-    Write-Verbose "Using TenantId $($TenantId)."
-    Write-Verbose "Using ClusterApplicationId $($ClusterApplicationId)."
-    Write-Verbose "Using ClientApplicationId $($ClientApplicationId)."
-    Write-Verbose "Using ClientRedirect $($ClientRedirect)."
-    Write-Verbose "Using AuthorityUrl $($AuthorityUrl)."
-
-    if ($OctopusFabricAadCredentialType -eq "ClientCredential") {
-        $AppOptions = New-Object Microsoft.Identity.Client.PublicClientApplicationOptions
-        $AppOptions.ClientId = $ClientApplicationId
-        $AppOptions.ClientSecret = $OctopusFabricAadClientCredentialSecret
-        
-        $ClientApplicationContext = [Microsoft.Identity.Client.ConfidentialClientApplicationBuilder]::CreateWithApplicationOptions($AppOptions).WithAuthority($AuthorityUrl).Build()
-        
-        $Scopes = New-Object System.Collections.Generic.List[string]
-        $Scopes.Add("$($ClusterApplicationId)/.default")
-        
-        $AuthenticationContext = $ClientApplicationContext.AcquireTokenForClient($Scopes).ExecuteAsync().GetAwaiter().GetResult()
-        $AccessToken = $AuthenticationContext.AccessToken
-    } Else { # Fallback to username/password
-        $AppOptions = New-Object Microsoft.Identity.Client.PublicClientApplicationOptions
-        $AppOptions.ClientId = $ClientApplicationId
-
-        $ClientApplicationContext = [Microsoft.Identity.Client.PublicClientApplicationBuilder]::CreateWithApplicationOptions($AppOptions).WithAuthority($AuthorityUrl).Build()
-        
-        $Scopes = New-Object System.Collections.Generic.List[string]
-        $Scopes.Add("$($ClusterApplicationId)/.default")
-        
-        $AuthContext = $ClientApplicationContext.AcquireTokenByUsernamePassword($Scopes, $OctopusFabricAadUserCredentialUsername, $OctopusFabricAadUserCredentialPassword).ExecuteAsync().GetAwaiter().GetResult()
-        $AccessToken = $AuthContext.AccessToken
-    }
-
-    return $AccessToken
-}
-
 Execute-WithRetry {
 
     # Prepare a dictionary of connection parameters that we'll use to connect below.
@@ -171,7 +93,7 @@ Execute-WithRetry {
 
         # Secure client certificate
         Write-Verbose "Loading connection parameters for the 'Client Certificate' security mode."
-
+            
         $validationMsg = ValidationMessageForClientCertificateParameters
         if ($validationMsg) {
             Write-Error $validationMsg
@@ -201,7 +123,7 @@ Execute-WithRetry {
             Exit
         }
 
-        $AccessToken = GetAzureADAccessToken
+        $AccessToken = $OctopusFabricAadToken
         if (!$AccessToken)
         {
             Write-Error "No access token could be found for Service Fabric to connect with."
