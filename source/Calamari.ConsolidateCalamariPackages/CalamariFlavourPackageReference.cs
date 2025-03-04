@@ -5,7 +5,7 @@ using System.IO.Compression;
 using System.Linq;
 using Serilog;
 
-namespace Calamari.ConsolidateCalamariPackages
+namespace Octopus.Calamari.ConsolidatedPackage
 {
     class CalamariFlavourPackageReference : IPackageReference
     {
@@ -39,7 +39,8 @@ namespace Calamari.ConsolidateCalamariPackages
                                           IsNupkg = false,
                                           FullNameInDestinationArchive = string.Join("/", parts.Skip(1)),
                                           FullNameInSourceArchive = entry.FullName,
-                                          Hash = hasher.Hash(entry)
+                                          Hash = hasher.Hash(entry),
+                                          FileName = parts.Last(),
                                       };
                                   })
                           .ToArray();

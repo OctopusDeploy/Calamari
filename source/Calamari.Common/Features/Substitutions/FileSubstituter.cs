@@ -39,7 +39,7 @@ namespace Calamari.Common.Features.Substitutions
                 }
                 else
                 {
-                    log.WarnFormat("Parsing file '{0}' with Octostache returned the following error: `{1}`", sourceFile, error);
+                    log.VerboseFormat("Parsing file '{0}' with Octostache returned the following error: `{1}`", sourceFile, error);
                 }
             }
 

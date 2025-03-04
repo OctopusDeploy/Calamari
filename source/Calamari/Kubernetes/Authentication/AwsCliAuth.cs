@@ -136,12 +136,7 @@ namespace Calamari.Kubernetes.Authentication
 
         void SetKubeConfigAuthenticationToAwsCliUsingToken(string user, string clusterName, string region)
         {
-            var token = deploymentVariables.Get(AccountVariables.Jwt);
-
-            if (string.IsNullOrEmpty(token))
-            {
-                token = awsCli.GetEksClusterToken(clusterName, region);
-            }
+            var token = awsCli.GetEksClusterToken(clusterName, region);
 
             var arguments = new List<string> { "config", "set-credentials", user, $"--token={token}" };
 
@@ -151,8 +146,6 @@ namespace Calamari.Kubernetes.Authentication
         
         void SetKubeConfigAuthenticationToAwsCliUsingExec(string user, string clusterName, string region)
         {
-            var oidcJwt = deploymentVariables.Get(AccountVariables.Jwt);
-            
             var apiVersion = GetKubeCtlAuthApiVersion();
             
             var arguments = new List<string>
@@ -167,12 +160,6 @@ namespace Calamari.Kubernetes.Authentication
                 $"--exec-arg=--region={region}",
                 $"--exec-api-version={apiVersion}"
             };
-
-            if (!oidcJwt.IsNullOrEmpty())
-            {
-                arguments.Add($"--token={oidcJwt}");
-                log.AddValueToRedact(oidcJwt, "<token>");
-            }
 
             kubectl.ExecuteCommandAndAssertSuccess(arguments.ToArray());
         }
