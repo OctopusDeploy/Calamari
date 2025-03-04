@@ -92,6 +92,12 @@ namespace Calamari.AzureServiceFabric
                                                         {
                                                             return GetAccessToken(e.AzureActiveDirectoryMetadata, aadUserCredentialUsername, aadUserCredentialPassword);
                                                         }
+                                                        catch (MsalUiRequiredException ex)
+                                                        {
+                                                            log.Error($"Unable to retrieve authentication token: User interaction is required to use the provided account to connect to the Service Fabric cluster. Please either change the account settings, or use a different account.");
+                                                            log.Error($"Details: {ex.PrettyPrint()}");
+                                                            return "BAD_TOKEN";
+                                                        }
                                                         catch (Exception ex)
                                                         {
                                                             log.Error($"Connect failed: {ex.PrettyPrint()}");
