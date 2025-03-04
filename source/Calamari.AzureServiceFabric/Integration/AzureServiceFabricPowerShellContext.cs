@@ -114,40 +114,44 @@ namespace Calamari.AzureServiceFabric.Integration
 
             // This also doesn't implement support for AAD SecureClientCertificate, but AFAIK Service Fabric doesn't support that anyway, and we filter that out at our endpoint: https://github.com/OctopusDeploy/OctopusDeploy/blob/3ec629d30a8d820449460c4a05bd96a2fe63502f/source/Octopus.Server.Extensibility.Sashimi.AzureServiceFabric/Endpoints/AzureServiceFabricClusterEndpointValidator.cs#L28
 
-
             log.Info("Connecting with Secure Azure Active Directory");
-            var claimsCredentials = new ClaimsCredentials();
-            claimsCredentials.ServerThumbprints.Add(serverCertThumbprint);
-            using var fabricClient = new FabricClient(claimsCredentials, connectionEndpoint); 
-
-            string accessToken = null;
-            fabricClient.ClaimsRetrieval += (o, e) =>
-                                            {
-                                                try
-                                                {
-                                                    accessToken = GetAccessToken(e.AzureActiveDirectoryMetadata, aadUserCredentialUsername, aadUserCredentialPassword);
-                                                    return accessToken;
-                                                }
-                                                catch (Exception ex)
-                                                {
-                                                    log.Error($"Connect failed: {ex.PrettyPrint()}");
-                                                    throw;
-                                                    //return "BAD_TOKEN";
-                                                }
-                                            };
 
             try
             {
+                var claimsCredentials = new ClaimsCredentials();
+                claimsCredentials.ServerThumbprints.Add(serverCertThumbprint);
+                using var fabricClient = new FabricClient(claimsCredentials, connectionEndpoint); 
+                
+                string accessToken = null;
+                fabricClient.ClaimsRetrieval += (o, e) =>
+                {
+                    try
+                    {
+                        accessToken = GetAccessToken(e.AzureActiveDirectoryMetadata, aadUserCredentialUsername, aadUserCredentialPassword);
+                        return accessToken;
+                    }
+                    catch (MsalUiRequiredException ex)
+                    {
+                        log.Error($"Unable to retrieve authentication token: User interaction is required to use the provided account to connect to the Service Fabric cluster. Please either change the account settings, or use a different account."); 
+                        log.Error($"Details: {ex.PrettyPrint()}");
+                        return "BAD_TOKEN"; // This is required according to HealthCheckBehaviour.cs
+                    }
+                    catch (Exception ex)
+                    {
+                        log.Error($"Connect failed: {ex.PrettyPrint()}");
+                        return "BAD_TOKEN";
+                    }
+                };
+
                 await fabricClient.ClusterManager.GetClusterManifestAsync();
                 log.Verbose("Successfully received a response from the Service Fabric client");
+                return accessToken;
             }
             catch (Exception ex)
             {
                 log.Error($"Failed to get cluster manifest: {ex.PrettyPrint()}");
                 throw;
-            }
-
-            return accessToken;
+            } 
         }
 
         static string GetAccessToken(AzureActiveDirectoryMetadata aad, string aadUsername, string aadPassword)
