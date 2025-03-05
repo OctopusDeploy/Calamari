@@ -125,22 +125,8 @@ namespace Calamari.AzureServiceFabric.Integration
                 string accessToken = null;
                 fabricClient.ClaimsRetrieval += (o, e) =>
                 {
-                    try
-                    {
-                        accessToken = GetAccessToken(e.AzureActiveDirectoryMetadata, aadUserCredentialUsername, aadUserCredentialPassword);
-                        return accessToken;
-                    }
-                    catch (MsalUiRequiredException ex)
-                    {
-                        log.Error($"Unable to retrieve authentication token: User interaction is required to use the provided account to connect to the Service Fabric cluster. Please either change the account settings, or use a different account."); 
-                        log.Error($"Details: {ex.PrettyPrint()}");
-                        return "BAD_TOKEN"; // This is required according to HealthCheckBehaviour.cs
-                    }
-                    catch (Exception ex)
-                    {
-                        log.Error($"Connect failed: {ex.PrettyPrint()}");
-                        return "BAD_TOKEN";
-                    }
+                    accessToken = AzureADUsernamePasswordTokenRetriever.GetAccessToken(e.AzureActiveDirectoryMetadata, aadUserCredentialUsername, aadUserCredentialPassword, log);
+                    return accessToken;
                 };
 
                 await fabricClient.ClusterManager.GetClusterManifestAsync();
@@ -153,21 +139,7 @@ namespace Calamari.AzureServiceFabric.Integration
                 throw;
             } 
         }
-
-        static string GetAccessToken(AzureActiveDirectoryMetadata aad, string aadUsername, string aadPassword)
-        {
-            var app = PublicClientApplicationBuilder
-                      .Create(aad.ClientApplication)
-                      .WithAuthority(aad.Authority)
-                      .Build();
-
-            var scope = new[] { $"{aad.ClusterApplication}/.default" };
-            var authResultTask = app.AcquireTokenByUsernamePassword(scope, aadUsername, aadPassword).ExecuteAsync();
-
-            var authResult = authResultTask.GetAwaiter().GetResult();
-
-            return authResult.AccessToken;
-        }
+      
 
         string CreateContextScriptFile(string workingDirectory)
         {
