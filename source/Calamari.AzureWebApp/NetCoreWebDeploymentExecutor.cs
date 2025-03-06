@@ -187,7 +187,7 @@ namespace Calamari.AzureWebApp
             var publishProfile = settings.PublishProfile;
 
             var encryptionKey = AesEncryption.RandomString(16);
-            var encryptor = new AesEncryption(encryptionKey);
+            var encryptor = AesEncryption.ForServerVariables(encryptionKey);
 
             //we enc
             var encryptedUserName = Convert.ToBase64String(encryptor.Encrypt(publishProfile.UserName));

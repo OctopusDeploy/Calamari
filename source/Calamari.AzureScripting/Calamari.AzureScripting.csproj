@@ -28,6 +28,5 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.Identity.Client" Version="4.66.2" />
-        <PackageReference Include="Microsoft.Identity.Client" Version="4.65.0" />
     </ItemGroup>
 </Project>
