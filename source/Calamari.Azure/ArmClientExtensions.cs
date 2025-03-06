@@ -1,5 +1,4 @@
 ﻿using System;
-using System.ClientModel.Primitives;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -32,7 +31,6 @@ namespace Calamari.Azure
                                                 .GetAsync()).Value.Data
                    };
         }
-        
         
         public static async Task<SiteConfigData> GetSiteConfigDataAsync(this ArmClient armClient, AzureTargetSite targetSite)
         {

@@ -33,13 +33,17 @@ namespace Calamari.Build
         readonly Configuration Configuration =
             IsLocalBuild ? Configuration.Debug : Configuration.Release;
 
-        [Required] readonly Solution Solution = SolutionModelTasks.ParseSolution(SourceDirectory / "Calamari.sln");
+        [Required]
+        readonly Solution Solution = SolutionModelTasks.ParseSolution(SourceDirectory / "Calamari.sln");
 
-        [Parameter("Run packing step in parallel")] readonly bool PackInParallel;
+        [Parameter("Run packing step in parallel")]
+        readonly bool PackInParallel;
 
-        [Parameter] readonly DotNetVerbosity BuildVerbosity = DotNetVerbosity.Minimal;
+        [Parameter]
+        readonly DotNetVerbosity BuildVerbosity = DotNetVerbosity.Minimal;
 
-        [Parameter] readonly bool SignBinaries;
+        [Parameter]
+        readonly bool SignBinaries;
 
         // When building locally signing isn't really necessary and it could take
         // up to 3-4 minutes to sign all the binaries as we build for many, many
@@ -47,29 +51,44 @@ namespace Calamari.Build
         // when doing local development.
         bool WillSignBinaries => !IsLocalBuild || SignBinaries;
 
-        [Parameter] readonly bool AppendTimestamp;
+        [Parameter]
+        readonly bool AppendTimestamp;
 
-        [Parameter("Set Calamari Version on OctopusServer")] readonly bool SetOctopusServerVersion;
+        [Parameter("Set Calamari Version on OctopusServer")]
+        readonly bool SetOctopusServerVersion;
 
-        [Parameter] readonly string? AzureKeyVaultUrl;
+        [Parameter]
+        readonly string? AzureKeyVaultUrl;
 
-        [Parameter] readonly string? AzureKeyVaultAppId;
+        [Parameter]
+        readonly string? AzureKeyVaultAppId;
 
-        [Parameter] [Secret] readonly string? AzureKeyVaultAppSecret;
+        [Parameter]
+        [Secret]
+        readonly string? AzureKeyVaultAppSecret;
 
-        [Parameter] [Secret] readonly string? AzureKeyVaultTenantId;
+        [Parameter]
+        [Secret]
+        readonly string? AzureKeyVaultTenantId;
 
-        [Parameter] readonly string? AzureKeyVaultCertificateName;
+        [Parameter]
+        readonly string? AzureKeyVaultCertificateName;
 
-        [Parameter(Name = "signing_certificate_path")] readonly string SigningCertificatePath = RootDirectory / "certificates" / "OctopusDevelopment.pfx";
+        [Parameter(Name = "signing_certificate_path")]
+        readonly string SigningCertificatePath = RootDirectory / "certificates" / "OctopusDevelopment.pfx";
 
-        [Parameter(Name = "signing_certificate_password")] [Secret] readonly string SigningCertificatePassword = "Password01!";
+        [Parameter(Name = "signing_certificate_password")]
+        [Secret]
+        readonly string SigningCertificatePassword = "Password01!";
 
-        [Parameter] readonly string? TargetFramework;
+        [Parameter]
+        readonly string? TargetFramework;
 
-        [Parameter] readonly string? TargetRuntime;
+        [Parameter]
+        readonly string? TargetRuntime;
 
-        [GitVersion] readonly GitVersion? GitVersionInfo;
+        [GitVersion]
+        readonly GitVersion? GitVersionInfo;
 
         static readonly List<string> CalamariProjectsToSkipConsolidation = new() { "Calamari.CloudAccounts", "Calamari.Common", "Calamari.ConsolidateCalamariPackages" };
 
@@ -93,7 +112,7 @@ namespace Calamari.Build
         static AbsolutePath LocalPackagesDirectory => RootDirectory / "../LocalPackages";
         static AbsolutePath ConsolidateCalamariPackagesProject => SourceDirectory / "Calamari.ConsolidateCalamariPackages.Tests" / "Calamari.ConsolidateCalamariPackages.Tests.csproj";
         static AbsolutePath ConsolidatedPackageDirectory => ArtifactsDirectory / "consolidated";
-        static AbsolutePath LegacyCalamariDirectory => PublishDirectory / "Calamari.Legacy";
+        static AbsolutePath LegacyCalamariDirectory = PublishDirectory / "Calamari.Legacy";
 
         Lazy<string> NugetVersion { get; }
 
@@ -241,8 +260,7 @@ namespace Calamari.Build
                                        Project = p,
                                        Framework = f,
                                        CrossPlatform = IsCrossPlatform(f)
-                                   })
-                                   .ToList();
+                }).ToList();
 
             // for NetFx target frameworks, we use "netfx" as the architecture, and ignore defined runtime identifiers
             var netFxPackages = calamariPackages
@@ -292,7 +310,8 @@ namespace Calamari.Build
                             $"Building {calamariPackageMetadata.Project?.Name} for framework '{calamariPackageMetadata.Framework}' and arch '{calamariPackageMetadata.Architecture}'");
 
             var project = calamariPackageMetadata.Project;
-            var outputDirectory = PublishDirectory / project?.Name / (calamariPackageMetadata.IsCrossPlatform ? calamariPackageMetadata.Architecture : "netfx");
+            var outputDirectory = PublishDirectory / project?.Name /
+                                  (calamariPackageMetadata.IsCrossPlatform ? calamariPackageMetadata.Architecture : "netfx");
 
             DotNetPublish(s => s
                                .SetConfiguration(Configuration)
@@ -312,10 +331,11 @@ namespace Calamari.Build
             }
 
             File.Copy(RootDirectory / "global.json", outputDirectory / "global.json");
+
         }
 
-        static void StageLegacyCalamariAssemblies(CalamariPackageMetadata[] packagesToPublish)
-        {
+        static void StageLegacyCalamariAssemblies(CalamariPackageMetadata[] packagesToPublish) {
+
             if (!OperatingSystem.IsWindows())
             {
                 Log.Warning($"Skipping the bundling of Calamari projects into the Calamari.Legacy bundle. "
@@ -385,7 +405,6 @@ namespace Calamari.Build
                                 {
                                     return;
                                 }
-
                                 Log.Verbose($"Compressing Calamari.Legacy");
                                 LegacyCalamariDirectory.ZipTo(ArtifactsDirectory / $"Calamari.Legacy.{NugetVersion.Value}.zip");
                             });
@@ -479,7 +498,7 @@ namespace Calamari.Build
                                                                                    .EnableNoBuild()
                                                                                    .EnableIncludeSource()
                                                                                    .SetVersion(nugetVersion)
-                                                                                   .EnableNoRestore());
+                                                             .SetNoRestore(true));
                                             });
 
                                 await RunPackActions(actions);
