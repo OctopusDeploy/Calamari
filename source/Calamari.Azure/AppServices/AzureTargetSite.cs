@@ -1,9 +1,9 @@
-﻿using System;
+﻿#nullable enable
+using System;
 using Azure.Core;
 using Azure.ResourceManager.AppService;
 
-#nullable enable
-namespace Calamari.AzureAppService.Azure
+namespace Calamari.Azure.AppServices
 {
     public class AzureTargetSite
     {
