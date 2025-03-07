@@ -40,7 +40,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
                 case 2:
                     return (apiVersionParts[0], apiVersionParts[1]);
                 default:
-                    return (null, null);
+                    throw new InvalidOperationException($"Invalid API Version: {apiVersion}, must conform to <group>/<version> naming convention.");
             }
         } 
         
