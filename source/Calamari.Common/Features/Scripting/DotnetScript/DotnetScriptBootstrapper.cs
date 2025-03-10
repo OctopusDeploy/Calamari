@@ -65,7 +65,7 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
             return null;
         }
 
-        static (bool wasSuccessful, CaptureCommandOutput) ExecuteCommandAndReturnOutput(ICommandLineRunner commandLineRunner, Dictionary<string, string> envVars, string exe, params string[] arguments)
+        static (bool wasSuccessful, CaptureCommandOutput) ExecuteCommandAndReturnOutput(ICommandLineRunner commandLineRunner, Dictionary<string, string>? envVars, string exe, params string[] arguments)
         {
             var captureCommandOutput = new CaptureCommandOutput();
             var invocation = new CommandLineInvocation(exe, arguments)
