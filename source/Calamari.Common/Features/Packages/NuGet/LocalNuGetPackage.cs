@@ -61,9 +61,9 @@ namespace Calamari.Common.Features.Packages.NuGet
             }
         }
 
-        static bool IsManifest(string path)
+        static bool IsManifest(string? path)
         {
-            return Path.GetExtension(path).Equals(".nuspec", StringComparison.OrdinalIgnoreCase);
+            return path != null && Path.GetExtension(path).Equals(".nuspec", StringComparison.OrdinalIgnoreCase);
         }
     }
 }
