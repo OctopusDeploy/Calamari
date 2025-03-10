@@ -502,7 +502,7 @@ namespace Calamari.Common.Plumbing.FileSystem
                     try
                     {
                         Log.VerboseFormat("Attempting to access with OpenOrCreate file mode, Read/Write Access and No file share {0}", filePath);
-                        using (File.Open(filePath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None));
+                        using (File.Open(filePath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None)) { }
                         Log.VerboseFormat("Succeeded accessing {0}", filePath);
                     }
                     catch (Exception fileAccessException)
