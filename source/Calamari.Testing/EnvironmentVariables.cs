@@ -10,8 +10,7 @@ using Serilog.Extensions.Logging;
 namespace Calamari.Testing
 {
     public enum ExternalVariable
-    {
-        
+    {   
         [EnvironmentVariable("Azure_OctopusAPITester_SubscriptionId", "op://Calamari Secrets for Tests/Azure - OctopusApiTester/subscription id")]
         AzureSubscriptionId,
 
@@ -115,18 +114,32 @@ namespace Calamari.Testing
             return new SecretManagerClient(SecretManagerAccount, microsoftLogger);
         }
 
+        public static void LogVariablesMissingEnvironmentVariableAttribute()
+        {
+            var missingAttribute = Enum.GetValues(typeof(ExternalVariable))
+                                                                           .Cast<ExternalVariable>()
+                                                                           .Where(prop => EnvironmentVariableAttribute.Get(prop) == null)
+                                                                           .ToArray();
+            if (missingAttribute.Length > 0)
+            {
+                Log.Warn($"The following {nameof(ExternalVariables)} are missing an {nameof(EnvironmentVariableAttribute)}: " + Environment.NewLine 
+                         + $"{string.Join(Environment.NewLine, missingAttribute.Select(var => $" - {var}"))}" + Environment.NewLine + Environment.NewLine
+                         + "Tests that rely on these variables may fail.");                      
+            }
+        }
+
         public static void LogMissingVariables()
         {
             var missingVariables = Enum.GetValues(typeof(ExternalVariable))
                                        .Cast<ExternalVariable>()
                                        .Select(prop => EnvironmentVariableAttribute.Get(prop))
-                                       .Where(attr => Environment.GetEnvironmentVariable(attr.Name) == null)
+                                       .Where(attr => attr != null && Environment.GetEnvironmentVariable(attr.Name) == null)
                                        .ToList();
 
             if (!missingVariables.Any())
                 return;
 
-            Log.Warn($"The following environment variables could not be found: " + $"\n{string.Join("\n", missingVariables.Select(var => $" - {var.Name}"))}" + $"\n\nTests that rely on these variables are likely to fail.");
+            Log.Warn($"The following environment variables could not be found: " + $"\n{string.Join("\n", missingVariables.Select(var => $" - {var!.Name}"))}" + $"\n\nTests that rely on these variables are likely to fail.");
         }
 
         public static async Task<string> Get(ExternalVariable property, CancellationToken cancellationToken)
