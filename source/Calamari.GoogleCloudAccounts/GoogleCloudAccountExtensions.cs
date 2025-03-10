@@ -1,3 +1,4 @@
+#nullable enable
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -24,7 +25,7 @@ namespace Calamari.GoogleCloudAccounts
             readonly string workingDirectory;
             readonly string jwtFilePath;
             readonly string jsonAuthFilePath;
-            private string gcloud = String.Empty;
+            string? gcloud = string.Empty;
 
             public SetupGCloudAuthentication(IVariables variables,
                 ILog log,
@@ -79,14 +80,20 @@ namespace Calamari.GoogleCloudAccounts
 
                     if (!string.IsNullOrWhiteSpace(jsonKey))
                     {
-                        if (!TryAuthenticateWithServiceAccount(jsonKey))
+                        if (!TryAuthenticateWithServiceAccount(jsonKey!))
                         {
                             return errorResult;
                         }
                     }
                     else if (!string.IsNullOrWhiteSpace(jwtToken))
                     {
-                        if (!TryAuthenticateWithOidc(accountVariable, jwtToken, impersonationEmails))
+                        if (accountVariable == null)
+                        {
+                            log.Error("Failed to authenticate with gcloud. Account variable was not provided.");
+                            return errorResult;
+                        }
+                        
+                        if (!TryAuthenticateWithOidc(accountVariable, jwtToken!, impersonationEmails))
                         {
                             return errorResult;
                         }
