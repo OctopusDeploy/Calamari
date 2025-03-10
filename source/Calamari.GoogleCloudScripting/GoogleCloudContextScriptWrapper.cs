@@ -1,11 +1,11 @@
-﻿using System;
+﻿#nullable enable
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
-using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.GoogleCloudAccounts;
@@ -14,7 +14,7 @@ namespace Calamari.GoogleCloudScripting
 {
     public class GoogleCloudContextScriptWrapper : IScriptWrapper
     {
-        private readonly ILog log;
+        readonly ILog log;
         readonly IVariables variables;
         readonly ScriptSyntax[] supportedScriptSyntax = {ScriptSyntax.PowerShell, ScriptSyntax.Bash};
 
@@ -42,12 +42,9 @@ namespace Calamari.GoogleCloudScripting
             var setupGCloudAuthentication = new SetupGCloudAuthentication(variables, log, commandLineRunner, environmentVars, oAuthConfiguration);
 
             var result = setupGCloudAuthentication.Execute();
-            if (result.ExitCode != 0)
-            {
-                return result;
-            }
-
-            return NextWrapper!.ExecuteScript(script, scriptSyntax, commandLineRunner, environmentVars);
+            return result.ExitCode != 0 
+                ? result 
+                : NextWrapper!.ExecuteScript(script, scriptSyntax, commandLineRunner, environmentVars);
         }
     }
 }
