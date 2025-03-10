@@ -4,6 +4,7 @@ namespace Calamari.Common.Features.Scripting
 {
     public class Script
     {
+#pragma warning disable CS8618 // Protected by guard clause
         public Script(string? file, string? parameters = null)
         {
             if (string.IsNullOrEmpty(file))
@@ -11,6 +12,7 @@ namespace Calamari.Common.Features.Scripting
             File = file;
             Parameters = parameters;
         }
+#pragma warning restore CS8618
 
         public string File { get; }
         public string? Parameters { get; }
