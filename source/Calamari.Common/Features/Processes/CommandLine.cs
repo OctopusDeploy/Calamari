@@ -12,9 +12,9 @@ namespace Calamari.Common.Features.Processes
         readonly List<Arg> args = new List<Arg>();
         string? action;
         bool useDotnet;
-        private Dictionary<string,string>? environmentVariables = null;
-        private bool outputToLog = true;
-        private string workingDirectory;
+        Dictionary<string,string>? environmentVariables;
+        bool outputToLog = true;
+        string? workingDirectory;
 
         public CommandLine(Func<string[], int> func)
         {
