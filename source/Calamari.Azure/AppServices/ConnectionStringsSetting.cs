@@ -1,7 +1,7 @@
 ﻿using System;
 using Azure.ResourceManager.AppService.Models;
 
-namespace Calamari.AzureAppService.Json
+namespace Calamari.Azure.AppServices
 {
     public class ConnectionStringSetting
     {

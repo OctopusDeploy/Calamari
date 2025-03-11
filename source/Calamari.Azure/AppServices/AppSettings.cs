@@ -1,11 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Newtonsoft.Json;
 
-namespace Calamari.AzureAppService.Json
+namespace Calamari.Azure.AppServices
 {
     public class AppSetting
     {
@@ -14,7 +9,7 @@ namespace Calamari.AzureAppService.Json
 
         public bool SlotSetting { get; set; }
 
-        internal void Deconstruct(out string name, out string value, out bool isSlotSetting)
+        public void Deconstruct(out string name, out string value, out bool isSlotSetting)
         {
             name = Name;
             value = Value;
