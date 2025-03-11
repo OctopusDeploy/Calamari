@@ -81,8 +81,7 @@ namespace Calamari.Build
         [Secret]
         readonly string SigningCertificatePassword = "Password01!";
 
-        [Parameter]
-        readonly string? TargetFramework;
+        [Parameter] readonly string? TargetFramework = "net6.0";
 
         [Parameter]
         readonly string? TargetRuntime;
@@ -172,6 +171,7 @@ namespace Calamari.Build
                       DotNetBuild(_ => _.SetProjectFile(Solution)
                                         .SetConfiguration(Configuration)
                                         .EnableNoRestore()
+                                        .SetFramework(TargetFramework)
                                         .SetVersion(NugetVersion.Value)
                                         .SetInformationalVersion(GitVersionInfo?.InformationalVersion));
                   });
