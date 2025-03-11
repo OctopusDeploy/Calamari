@@ -109,9 +109,6 @@
       <DotnetScriptFiles Include="$(MSBuildProjectDirectory)/../Calamari.Scripting/DotnetScript/dotnet-script.*.zip"/>
     </ItemGroup>
   </Target>
-<!--  <Target Name="Hahahahhaa" BeforeTargets="Build">-->
-<!--    <Exec Command="echo THIS IS BEFORE HHHHHHHHHHHHH $(OutDir) $(TargetFramework) $(Target)"/>-->
-<!--  </Target>-->
   <Target Name="CopyToolsAfterBuild" AfterTargets="Build" DependsOnTargets="GetToolFiles">
     <Copy SourceFiles="@(FSharpFiles)" DestinationFolder="$(OutDir)/FSharp/" />
     <Copy SourceFiles="@(ScriptCSFiles)" DestinationFolder="$(OutDir)/ScriptCS/" />
@@ -120,8 +117,7 @@
     <Copy SourceFiles="@(FSharpFiles)" DestinationFolder="$(PublishDir)/FSharp/" />
     <Copy SourceFiles="@(ScriptCSFiles)" DestinationFolder="$(PublishDir)/ScriptCS/" />
   </Target>
-  <Target Name="CopyDotnetScriptFilesAfterBuild" AfterTargets="Build" Condition="'$(IsCrossTargetedBuild)' != 'true'">
-    <Exec Command="echo HHHHHHHHHHHHH $(OutDir) $(TargetFramework)"/>
+  <Target Name="CopyDotnetScriptFilesAfterBuild" AfterTargets="Build">
     <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(OutDir)/" />
   </Target>
   <Target Name="CopyDotnetScriptFilesAfterPublish" AfterTargets="Publish">
