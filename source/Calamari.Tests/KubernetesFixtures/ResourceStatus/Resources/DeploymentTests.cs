@@ -50,8 +50,8 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
             // More pods remaining than desired
             var children = Enumerable.Range(0, 4) 
                 .Select(_ => ResourceFactory.FromJson(pod, new Options()));
-            
-            var replicaSet = ResourceFactory.FromJson("{}", new Options());
+
+            var replicaSet = new Resource();
             replicaSet.UpdateChildren(children);
             
             deployment.UpdateChildren(new Resource[] { replicaSet });
@@ -75,7 +75,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
             var children = Enumerable.Range(0, 3)
                 .Select(_ => ResourceFactory.FromJson(pod, new Options()));
             
-            var replicaSet = ResourceFactory.FromJson("{}", new Options());
+            var replicaSet = new Resource();
             replicaSet.UpdateChildren(children);
             
             deployment.UpdateChildren(new Resource[] { replicaSet });
