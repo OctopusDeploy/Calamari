@@ -17,7 +17,7 @@ using Microsoft.Identity.Client;
 
 namespace Calamari.AzureServiceFabric.Integration
 {
-    public class AzureServiceFabricPowerShellContext : IScriptWrapper
+    class AzureServiceFabricPowerShellContext : IScriptWrapper
     {
         readonly ICalamariFileSystem fileSystem;
         readonly ICalamariEmbeddedResources embeddedResources;
