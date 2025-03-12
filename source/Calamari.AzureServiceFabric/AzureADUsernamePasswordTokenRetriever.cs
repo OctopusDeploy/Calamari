@@ -33,13 +33,13 @@ namespace Calamari.AzureServiceFabric
             {
                 log.Error($"Unable to retrieve authentication token: User interaction is required to connect to the Service Fabric cluster with the provided account. Please change the account's settings, or use a different account.");
                 log.Error($"Details: {ex.PrettyPrint()}");
-                return "BAD_TOKEN"; // You cannot return null or an empty value here or the Azure lib fails trying to call a lib that doesn't exist "System.Fabric.AzureActiveDirectory.Client" 
             }
             catch (Exception ex)
             {
                 log.Error($"Connect failed: {ex.PrettyPrint()}");
-                return "BAD_TOKEN";
             }
+
+            return "BAD_TOKEN"; // You cannot return null or an empty value here or the Azure lib fails trying to call a lib that doesn't exist: "System.Fabric.AzureActiveDirectory.Client" 
         }
     }
 }
