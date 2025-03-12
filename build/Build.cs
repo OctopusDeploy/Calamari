@@ -117,8 +117,8 @@ namespace Calamari.Build
         Lazy<string> NugetVersion { get; }
 
         Target CheckForbiddenWords =>
-            _ => _.Executes(() =>
-            {
+            d => d.Executes(() =>
+            {         
                 Log.Information("Checking codebase for forbidden words");
 
                 const string arguments =
@@ -137,11 +137,11 @@ namespace Calamari.Build
                 if (filesContainingForbiddenWords.Any())
                     throw new Exception("Found forbidden words in the following files, "
                                         + "please clean them up:\r\n"
-                                        + string.Join("\r\n", filesContainingForbiddenWords));
+                                        + string.Join("\r\n", filesContainingForbiddenWords));        
             });
 
         Target Clean =>
-            _ => _.Executes(() =>
+            d => d.Executes(() =>
             {
                 SourceDirectory.GlobDirectories("**/bin", "**/obj", "**/TestResults").ForEach(DeleteDirectory);
                 EnsureCleanDirectory(ArtifactsDirectory);
@@ -149,7 +149,7 @@ namespace Calamari.Build
             });
 
         Target Restore =>
-            _ => _.DependsOn(Clean)
+            d => d.DependsOn(Clean)
                   .Executes(() =>
                   {
                       var localRuntime = FixedRuntimes.Windows;
@@ -157,19 +157,19 @@ namespace Calamari.Build
                       if (!OperatingSystem.IsWindows())
                           localRuntime = FixedRuntimes.Linux;
 
-                      DotNetRestore(_ => _.SetProjectFile(Solution)
+                      DotNetRestore(s => s.SetProjectFile(Solution)
                                           .SetRuntime(localRuntime)
                                           .SetProperty("DisableImplicitNuGetFallbackFolder", true));
                   });
 
         Target Compile =>
-            _ => _.DependsOn(CheckForbiddenWords)
+            d => d.DependsOn(CheckForbiddenWords)
                   .DependsOn(Restore)
                   .Executes(() =>
                   {
                       Log.Information("Compiling Calamari v{CalamariVersion}", NugetVersion.Value);
 
-                      DotNetBuild(_ => _.SetProjectFile(Solution)
+                      DotNetBuild(s => s.SetProjectFile(Solution)
                                         .SetConfiguration(Configuration)
                                         .EnableNoRestore()
                                         .SetVersion(NugetVersion.Value)
@@ -177,55 +177,55 @@ namespace Calamari.Build
                   });
 
         Target CalamariConsolidationTests =>
-            _ => _.DependsOn(Compile)
+            d => d.DependsOn(Compile)
                   .OnlyWhenStatic(() => !IsLocalBuild)
                   .Executes(() =>
                             {
-                                DotNetTest(_ => _
+                                DotNetTest(s => s
                                                 .SetProjectFile(ConsolidateCalamariPackagesProject)
                                                 .SetConfiguration(Configuration)
                                                 .EnableNoBuild());
                             });
 
         Target Publish =>
-            _ => _.DependsOn(Compile)
+            d => d.DependsOn(Compile)
                   .Executes(() =>
-                            {
-                                if (!OperatingSystem.IsWindows())
-                                    Log.Warning("Building Calamari on a non-windows machine will result "
-                                                + "in the {DefaultNugetPackageName} and {CloudNugetPackageName} "
-                                                + "nuget packages being built as .Net Core 6.0 packages "
-                                                + "instead of as .Net Framework. "
-                                                + "This can cause compatibility issues when running certain "
-                                                + "deployment steps in Octopus Server",
-                                                RootProjectName, $"{RootProjectName}.{FixedRuntimes.Cloud}");
+                    {
+                        if (!OperatingSystem.IsWindows())
+                            Log.Warning("Building Calamari on a non-windows machine will result "
+                                        + "in the {DefaultNugetPackageName} and {CloudNugetPackageName} "
+                                        + "nuget packages being built as .Net Core 6.0 packages "
+                                        + "instead of as .Net Framework. "
+                                        + "This can cause compatibility issues when running certain "
+                                        + "deployment steps in Octopus Server",
+                                        RootProjectName, $"{RootProjectName}.{FixedRuntimes.Cloud}");
 
-                                var nugetVersion = NugetVersion.Value;
-                                var outputDirectory = DoPublish(RootProjectName,
-                                                                OperatingSystem.IsWindows() ? Frameworks.Net462 : Frameworks.Net60,
-                                                                nugetVersion);
-                                if (OperatingSystem.IsWindows())
-                                {
-                                    CopyDirectoryRecursively(outputDirectory, (LegacyCalamariDirectory / RootProjectName), DirectoryExistsPolicy.Merge);
-                                }
-                                else
-                                {
-                                    Log.Warning($"Skipping the bundling of {RootProjectName} into the Calamari.Legacy bundle. "
-                                                + "This is required for providing .Net Framework executables for legacy Target Operating Systems");
-                                }
+                        var nugetVersion = NugetVersion.Value;
+                        var outputDirectory = DoPublish(RootProjectName,
+                                                        OperatingSystem.IsWindows() ? Frameworks.Net462 : Frameworks.Net60,
+                                                        nugetVersion);
+                        if (OperatingSystem.IsWindows())
+                        {
+                            CopyDirectoryRecursively(outputDirectory, (LegacyCalamariDirectory / RootProjectName), DirectoryExistsPolicy.Merge);
+                        }
+                        else
+                        {
+                            Log.Warning($"Skipping the bundling of {RootProjectName} into the Calamari.Legacy bundle. "
+                                        + "This is required for providing .Net Framework executables for legacy Target Operating Systems");
+                        }
 
-                                DoPublish(RootProjectName,
-                                          OperatingSystem.IsWindows() ? Frameworks.Net462 : Frameworks.Net60,
-                                          nugetVersion,
-                                          FixedRuntimes.Cloud);
+                        DoPublish(RootProjectName,
+                                  OperatingSystem.IsWindows() ? Frameworks.Net462 : Frameworks.Net60,
+                                  nugetVersion,
+                                  FixedRuntimes.Cloud);
 
                       // Create the self-contained Calamari packages for each runtime ID defined in Calamari.csproj
                       foreach (var rid in GetRuntimeIdentifiers(Solution.GetProject(RootProjectName)!)!)
                           DoPublish(RootProjectName, Frameworks.Net60, nugetVersion, rid);
-                  });
+                    });
 
         Target PublishCalamariFlavourProjects =>
-            _ => _
+            d => d
                  .DependsOn(Compile)
                  .Executes(async () =>
                  {
@@ -368,7 +368,7 @@ namespace Calamari.Build
         }
 
         Target PackLegacyCalamari =>
-            _ => _.DependsOn(Publish)
+            d => d.DependsOn(Publish)
                   .DependsOn(PublishCalamariFlavourProjects)
                   .Executes(() =>
                             {
@@ -381,7 +381,7 @@ namespace Calamari.Build
                             });
 
         Target PackBinaries =>
-            _ => _.DependsOn(Publish)
+            d => d.DependsOn(Publish)
                   .DependsOn(PublishCalamariFlavourProjects)
                   .Executes(async () =>
                             {
@@ -432,7 +432,7 @@ namespace Calamari.Build
                             });
 
         Target PackTests =>
-            _ => _.DependsOn(Publish)
+            d => d.DependsOn(Publish)
                   .DependsOn(PublishCalamariFlavourProjects)
                   .Executes(async () =>
                   {
@@ -476,12 +476,12 @@ namespace Calamari.Build
                   });
 
         Target Pack =>
-            _ => _.DependsOn(PackTests)
+            d => d.DependsOn(PackTests)
                   .DependsOn(PackBinaries)
                   .DependsOn(PackLegacyCalamari);
 
         Target CopyToLocalPackages =>
-            _ => _.Requires(() => IsLocalBuild)
+            d => d.Requires(() => IsLocalBuild)
                   .DependsOn(PackBinaries)
                   .Executes(() =>
                   {
@@ -491,7 +491,7 @@ namespace Calamari.Build
                   });
 
         Target PackageConsolidatedCalamariZip =>
-            _ => _.DependsOn(CalamariConsolidationTests)
+            d => d.DependsOn(CalamariConsolidationTests)
                   .DependsOn(PackBinaries)
                   .Executes(() =>
                             {
@@ -535,7 +535,7 @@ namespace Calamari.Build
                             });
 
         Target PackCalamariConsolidatedNugetPackage =>
-            _ => _.DependsOn(PackageConsolidatedCalamariZip)
+            d => d.DependsOn(PackageConsolidatedCalamariZip)
                   .Executes(() =>
                   {
                       NuGetPack(s => s.SetTargetPath(BuildDirectory / "Calamari.Consolidated.nuspec")
@@ -545,8 +545,8 @@ namespace Calamari.Build
                   });
 
         Target UpdateCalamariVersionOnOctopusServer =>
-            _ =>
-                _.OnlyWhenStatic(() => SetOctopusServerVersion)
+            d =>
+                d.OnlyWhenStatic(() => SetOctopusServerVersion)
                  .Requires(() => IsLocalBuild)
                  .DependsOn(CopyToLocalPackages)
                  .Executes(() =>
