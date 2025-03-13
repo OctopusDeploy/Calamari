@@ -86,18 +86,7 @@ namespace Calamari.AzureServiceFabric
                     var claimsCredentials = new ClaimsCredentials();
                     claimsCredentials.ServerThumbprints.Add(serverCertThumbprint);
                     fabricClient = new FabricClient(claimsCredentials, connectionEndpoint);
-                    fabricClient.ClaimsRetrieval += (o, e) =>
-                                                    {
-                                                        try
-                                                        {
-                                                            return GetAccessToken(e.AzureActiveDirectoryMetadata, aadUserCredentialUsername, aadUserCredentialPassword);
-                                                        }
-                                                        catch (Exception ex)
-                                                        {
-                                                            log.Error($"Connect failed: {ex.PrettyPrint()}");
-                                                            return "BAD_TOKEN"; //TODO: mark.siedle - You cannot return null or an empty value here or the Azure lib spazzes out trying to call a lib that doesn't exist "System.Fabric.AzureActiveDirectory.Client"  :(
-                                                        }
-                                                    };
+                    fabricClient.ClaimsRetrieval += (o, e) => AzureADUsernamePasswordTokenRetriever.GetAccessToken(e.AzureActiveDirectoryMetadata, aadUserCredentialUsername, aadUserCredentialPassword, log);
                     break;
                 }
 
@@ -133,24 +122,5 @@ namespace Calamari.AzureServiceFabric
                 fabricClient.Dispose();
             }
         }
-
-        #region Auth helpers
-        static string GetAccessToken(AzureActiveDirectoryMetadata aad, string aadUsername, string aadPassword)
-        {
-            var app = PublicClientApplicationBuilder
-                      .Create(aad.ClientApplication)
-                      .WithAuthority(aad.Authority)
-                      .Build();
-
-            var authResult = app.AcquireTokenByUsernamePassword(new[] { $"{aad.ClusterApplication}/.default" }, aadUsername, aadPassword)
-                                .ExecuteAsync()
-                                .GetAwaiter()
-                                .GetResult();
-
-            return authResult.AccessToken;
-        }
-
-
-        #endregion
     }
 }
