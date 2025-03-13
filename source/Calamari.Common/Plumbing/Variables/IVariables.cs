@@ -32,5 +32,7 @@ namespace Calamari.Common.Plumbing.Variables
         IVariables Clone();
         IVariables CloneAndEvaluate();
         string SaveAsString();
+
+        string GetMandatoryVariable(string variableName);
     }
 }
