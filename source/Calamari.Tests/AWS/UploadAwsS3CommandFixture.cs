@@ -37,7 +37,7 @@ namespace Calamari.Tests.AWS
 {
     [TestFixture]
     [Category(TestCategory.RunOnceOnWindowsAndLinux)]
-    public class S3FixtureForExistingBucket : S3Fixture
+    public class UploadAwsS3FixtureForExistingBucket : UploadAwsS3CommandFixture
     {
         // S3 Bucket operations are only eventually consistent (https://docs.aws.amazon.com/AmazonS3/latest/userguide/Welcome.html#ConsistencyModel),
         // For this fixture, we pre-create the bucket to avoid any timing issues where we get told "Bucket does not exist" when trying to validate
@@ -520,7 +520,7 @@ namespace Calamari.Tests.AWS
 
     [TestFixture]
     [Category(TestCategory.RunOnceOnWindowsAndLinux)]
-    public class S3FixtureForNewBucket : S3Fixture
+    public class UploadAwsS3FixtureForNewBucket : UploadAwsS3CommandFixture
     {
         [Test]
         public async Task UploadPackage1()
@@ -580,14 +580,14 @@ namespace Calamari.Tests.AWS
         }
     }
 
-    public abstract class S3Fixture
+    public abstract class UploadAwsS3CommandFixture
     {
         protected string region;
         protected string bucketName;
         static readonly CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
         readonly CancellationToken cancellationToken = CancellationTokenSource.Token;
 
-        public S3Fixture()
+        public UploadAwsS3CommandFixture()
         {
             region = RegionRandomiser.GetARegion();
             bucketName = $"calamari-s3fixture-{Guid.NewGuid():N}";

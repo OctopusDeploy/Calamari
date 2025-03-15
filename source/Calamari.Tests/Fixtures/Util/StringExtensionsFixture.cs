@@ -43,5 +43,14 @@ namespace Calamari.Tests.Fixtures.Util
         {
             Assert.AreEqual(expected, source.AsRelativePathFrom(baseDirectory));
         }
+
+        [TestCase("to_camel_case_function", "toCamelCaseFunction")]
+        [TestCase("My S3 Bucket", "myS3Bucket")]
+        [TestCase("-only-$AlphaNUMERIC-characters%^",  "onlyAlphanumericCharacters")]
+        [Test]
+        public void ToCamelCase_ReturnsCorrectCamelCase(string input, string expected)
+        {
+            input.ToCamelCase().Should().Be(expected);
+        }
     }
 }
