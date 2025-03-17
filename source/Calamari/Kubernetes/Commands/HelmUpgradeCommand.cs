@@ -113,9 +113,9 @@ namespace Calamari.Kubernetes.Commands
                 new DelegateInstallConvention(d => substituteInFiles.Substitute(d.CurrentDirectory, TemplateValuesFiles(d), true)),
                 new ConfiguredScriptConvention(new DeployConfiguredScriptBehaviour(log, fileSystem, scriptEngine, commandLineRunner)),
             });
-            
+
             conventions.AddRange(AddHelmUpgradeConventions());
-            
+
             conventions.Add(new ConfiguredScriptConvention(new PostDeployConfiguredScriptBehaviour(log, fileSystem, scriptEngine, commandLineRunner)));
 
             var deployment = new RunningDeployment(pathToPackage, variables);
@@ -128,42 +128,27 @@ namespace Calamari.Kubernetes.Commands
 
         IInstallConvention[] AddHelmUpgradeConventions()
         {
-            //if the feature toggle _is_ enabled, use different conventions (as the HelmCli doesn't use the script authentication)
-            if (OctopusFeatureToggles.KOSForHelmFeatureToggle.IsEnabled(variables))
-            {
-                return new IInstallConvention[]
-                {
-                    new DelegateInstallConvention(d =>
-                                                  {
-                                                      //make sure the kubectl tool is configured correctly
-                                                      kubectl.SetWorkingDirectory(d.CurrentDirectory);
-                                                      kubectl.SetEnvironmentVariables(d.EnvironmentVariables);
-                                                  }),
-                    new ConditionalInstallationConvention<AwsAuthConvention>(runningDeployment => runningDeployment.Variables.Get(Deployment.SpecialVariables.Account.AccountType) == "AmazonWebServicesAccount",
-                                                                             new AwsAuthConvention(log, variables)),
-
-                    new KubernetesAuthContextConvention(log, new CommandLineRunner(log, variables), kubectl, fileSystem),
-
-                    new HelmUpgradeWithKOSConvention(log,
-                                                     commandLineRunner,
-                                                     fileSystem,
-                                                     templateValueSourcesParser,
-                                                     statusExecutor,
-                                                     manifestReporter,
-                                                     namespaceResolver,
-                                                     kubectl)
-                };
-            }
-
-            //if the feature toggle _is not_ enabled, use the old convention
             return new IInstallConvention[]
             {
-                new HelmUpgradeConvention(
-                                          log,
-                                          scriptEngine,
-                                          commandLineRunner,
-                                          fileSystem,
-                                          templateValueSourcesParser)
+                new DelegateInstallConvention(d =>
+                                              {
+                                                  //make sure the kubectl tool is configured correctly
+                                                  kubectl.SetWorkingDirectory(d.CurrentDirectory);
+                                                  kubectl.SetEnvironmentVariables(d.EnvironmentVariables);
+                                              }),
+                new ConditionalInstallationConvention<AwsAuthConvention>(runningDeployment => runningDeployment.Variables.Get(Deployment.SpecialVariables.Account.AccountType) == "AmazonWebServicesAccount",
+                                                                         new AwsAuthConvention(log, variables)),
+
+                new KubernetesAuthContextConvention(log, new CommandLineRunner(log, variables), kubectl, fileSystem),
+
+                new HelmUpgradeWithKOSConvention(log,
+                                                 commandLineRunner,
+                                                 fileSystem,
+                                                 templateValueSourcesParser,
+                                                 statusExecutor,
+                                                 manifestReporter,
+                                                 namespaceResolver,
+                                                 kubectl)
             };
         }
 
