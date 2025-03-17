@@ -32,6 +32,7 @@ namespace Calamari.Tests.AWS
         readonly string stackName;
         readonly string bucketName;
         readonly CalamariVariables variables;
+
         readonly List<KeyValuePair<string, string>> customTags = new List<KeyValuePair<string, string>>
         {
             new KeyValuePair<string, string>("VantaOwner", "modern-deployments-team@octopus.com"),
@@ -65,16 +66,16 @@ namespace Calamari.Tests.AWS
         public async Task TearDownInfrastructure()
         {
             await ExecuteAwsClient(async (s3Client, cfClient) =>
-                           {
-                               var response = await s3Client.ListObjectsAsync(bucketName, cancellationToken);
-                               foreach (var s3Object in response.S3Objects)
-                                   await s3Client.DeleteObjectAsync(bucketName, s3Object.Key, cancellationToken);
-                               await cfClient.DeleteStackAsync(new DeleteStackRequest
-                                                               {
-                                                                   StackName = stackName
-                                                               },
-                                                               cancellationToken);
-                           });
+                                   {
+                                       var response = await s3Client.ListObjectsAsync(bucketName, cancellationToken);
+                                       foreach (var s3Object in response.S3Objects)
+                                           await s3Client.DeleteObjectAsync(bucketName, s3Object.Key, cancellationToken);
+                                       await cfClient.DeleteStackAsync(new DeleteStackRequest
+                                                                       {
+                                                                           StackName = stackName
+                                                                       },
+                                                                       cancellationToken);
+                                   });
         }
 
         [Test]
@@ -116,6 +117,7 @@ namespace Calamari.Tests.AWS
             // Assert
             result.Should().Be(0);
             await ValidateS3(ObjectOwnership.BucketOwnerPreferred);
+            CheckForOutputVariables();
         }
 
         [Test]
@@ -139,45 +141,47 @@ namespace Calamari.Tests.AWS
                 "--stackName", stackName,
                 "--objectWriterOwnership", "True"
             });
-            
+
             // Assert
             result.Should().Be(0);
             await ValidateS3(ObjectOwnership.ObjectWriter);
+            CheckForOutputVariables();
         }
 
         async Task ValidateS3(ObjectOwnership expectedObjectOwnership)
         {
             await ExecuteAwsClient(async (s3Client, cfClient) =>
-                           {
-                               var resourcesResponse = await cfClient.ListStackResourcesAsync(new ListStackResourcesRequest
-                               {
-                                   StackName = stackName
-                               }, cancellationToken);
-                               resourcesResponse.StackResourceSummaries.Should().HaveCount(1);
-                               resourcesResponse.StackResourceSummaries[0].ResourceType.Should().Be("AWS::S3::Bucket");
-                               resourcesResponse.StackResourceSummaries[0].LogicalResourceId.Should().StartWith("BucketcalamariCreateS3Bucket");
-                               
-                               var bucketTagsResponse = await s3Client.GetBucketTaggingAsync(new GetBucketTaggingRequest
-                                                                                             {
-                                                                                                 BucketName = bucketName
-                                                                                             },
-                                                                                             cancellationToken);
-                               var tagList = customTags.Select(t => new Tag { Key = t.Key, Value = t.Value }).ToList();
-                               bucketTagsResponse.TagSet.Where(t => tagList.Exists(x => x.Key == t.Key)).Should().BeEquivalentTo(tagList);
+                                   {
+                                       var resourcesResponse = await cfClient.ListStackResourcesAsync(new ListStackResourcesRequest
+                                                                                                      {
+                                                                                                          StackName = stackName
+                                                                                                      },
+                                                                                                      cancellationToken);
+                                       resourcesResponse.StackResourceSummaries.Should().HaveCount(1);
+                                       resourcesResponse.StackResourceSummaries[0].ResourceType.Should().Be("AWS::S3::Bucket");
+                                       resourcesResponse.StackResourceSummaries[0].LogicalResourceId.Should().StartWith("BucketcalamariCreateS3Bucket");
 
-                               var bucketOwnershipControlsResponse = await s3Client.GetBucketOwnershipControlsAsync(new GetBucketOwnershipControlsRequest
-                                                                                                                    {
-                                                                                                                        BucketName = bucketName
-                                                                                                                    },
-                                                                                                                    cancellationToken);
-                               bucketOwnershipControlsResponse.OwnershipControls.Rules.Should()
-                                                              .BeEquivalentTo(new OwnershipControlsRule
-                                                              {
-                                                                  ObjectOwnership = expectedObjectOwnership
-                                                              });
-                           });
+                                       var bucketTagsResponse = await s3Client.GetBucketTaggingAsync(new GetBucketTaggingRequest
+                                                                                                     {
+                                                                                                         BucketName = bucketName
+                                                                                                     },
+                                                                                                     cancellationToken);
+                                       var tagList = customTags.Select(t => new Tag { Key = t.Key, Value = t.Value }).ToList();
+                                       bucketTagsResponse.TagSet.Where(t => tagList.Exists(x => x.Key == t.Key)).Should().BeEquivalentTo(tagList);
+
+                                       var bucketOwnershipControlsResponse = await s3Client.GetBucketOwnershipControlsAsync(new GetBucketOwnershipControlsRequest
+                                                                                                                            {
+                                                                                                                                BucketName = bucketName
+                                                                                                                            },
+                                                                                                                            cancellationToken);
+                                       bucketOwnershipControlsResponse.OwnershipControls.Rules.Should()
+                                                                      .BeEquivalentTo(new OwnershipControlsRule
+                                                                      {
+                                                                          ObjectOwnership = expectedObjectOwnership
+                                                                      });
+                                   });
         }
-        
+
         async Task ExecuteAwsClient(Func<AmazonS3Client, AmazonCloudFormationClient, Task> execute)
         {
             var credentials = new BasicAWSCredentials(
@@ -192,6 +196,11 @@ namespace Calamari.Tests.AWS
             {
                 await execute(s3Client, cfClient);
             }
+        }
+
+        void CheckForOutputVariables()
+        {
+            variables.Select(x => x.Key).Should().Contain("StackName", "StackId", "BucketName", "Region");
         }
     }
 }

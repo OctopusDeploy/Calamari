@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using Amazon.CloudFormation;
 using Amazon.CloudFormation.Model;
@@ -52,7 +51,7 @@ namespace Calamari.Aws.Commands
 
             var tags = JsonConvert.DeserializeObject<List<KeyValuePair<string, string>>>(variables.Get(AwsSpecialVariables.CloudFormation.Tags) ?? "[]");
             ValidateTags(tags);
-            
+
             var environment = AwsEnvironmentGeneration.Create(log, variables).GetAwaiter().GetResult();
 
             IAmazonCloudFormation ClientFactory()
@@ -60,7 +59,10 @@ namespace Calamari.Aws.Commands
                 return ClientHelpers.CreateCloudFormationClient(environment);
             }
 
-            StackArn StackProvider(RunningDeployment _) => new StackArn(stackName);
+            StackArn StackProvider(RunningDeployment _)
+            {
+                return new StackArn(stackName);
+            }
 
             ICloudFormationRequestBuilder TemplateFactory()
             {
@@ -89,17 +91,17 @@ namespace Calamari.Aws.Commands
                                                       _ => null,
                                                       true,
                                                       stackName,
-                                                      environment)
+                                                      environment),
+                new DescribeAwsCloudFormationStackConvention(ClientFactory,
+                                                             StackProvider,
+                                                             ExtractBucketName,
+                                                             stackEventLogger)
             };
-            
+
             var conventionRunner = new ConventionProcessor(new RunningDeployment(variables), conventions, log);
             conventionRunner.RunConventions();
+
             return 0;
-
-            // if stack is in update progress, fail step -- we might not need it manually but let the AWS error message bubble up
-            // deploy stack with strategy: create or update or delete+recreate (for unrecoverable states)
-
-            // print output variables
         }
 
         void ValidateTags(List<KeyValuePair<string, string>> tags)
@@ -135,7 +137,7 @@ namespace Calamari.Aws.Commands
                             },
                             OwnershipControls = new
                             {
-                                Rules = new object []
+                                Rules = new object[]
                                 {
                                     new
                                     {
@@ -149,6 +151,15 @@ namespace Calamari.Aws.Commands
             };
 
             return JsonConvert.SerializeObject(template);
+        }
+
+        List<KeyValuePair<string, string>> ExtractBucketName(List<StackResourceSummary> resourceSummaries)
+        {
+            var result = new List<KeyValuePair<string, string>>();
+            var bucket = resourceSummaries.FirstOrDefault(x => x.ResourceType == "AWS::S3::Bucket");
+            if (bucket != null)
+                result.Add(new KeyValuePair<string, string>("BucketName", bucket.PhysicalResourceId));
+            return result;
         }
     }
 }

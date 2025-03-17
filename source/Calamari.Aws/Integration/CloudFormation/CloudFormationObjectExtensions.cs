@@ -222,6 +222,18 @@ namespace Calamari.Aws.Integration.CloudFormation
             var response = await clientFactory().DescribeStacksAsync(new DescribeStacksRequest { StackName = stack.Value });
             return response.Stacks.FirstOrDefault();
         }
+        
+        /// <summary>
+        /// Lists the stack resources
+        /// </summary>
+        /// <param name="clientFactory"></param>
+        /// <param name="stack"></param>
+        /// <returns></returns>
+        public static async Task<List<StackResourceSummary>> ListStackResourcesAsync(this Func<IAmazonCloudFormation> clientFactory, StackArn stack)
+        {
+            var response = await clientFactory().ListStackResourcesAsync(new ListStackResourcesRequest { StackName = stack.Value });
+            return response.StackResourceSummaries;
+        }
 
 
         /// <summary>
