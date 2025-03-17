@@ -264,3 +264,62 @@ function log_environment_information
 }
 
 log_environment_information
+
+function decrypt_and_parse_variables {
+    local encrypted="$1"
+    local iv="$2"
+
+    local decrypted
+    decrypted=$(decrypt_variable "$encrypted" "$iv")
+    declare -gA octopus_parameters=()
+
+    local -a key_byte_lengths=()
+    local -a value_byte_lengths=()
+    local -a hex_parts=()
+
+    while IFS='$' read -r hex_key hex_value; do
+        hex_value="${hex_value//$'\n'/}"
+        key_byte_lengths+=( $(( ${#hex_key} / 2 )) )
+        value_byte_lengths+=( $(( ${#hex_value} / 2 )) )
+        hex_parts+=( "${hex_key}${hex_value}" )
+    done <<< "$decrypted"
+
+    local concatenated_hex
+    concatenated_hex=$(printf "%s" "${hex_parts[@]}")
+
+    exec 3< <(echo -n "$concatenated_hex" | xxd -r -p)
+
+    local idx
+    for idx in "${!key_byte_lengths[@]}"; do
+        local key_byte_len="${key_byte_lengths[idx]}"
+        local value_byte_len="${value_byte_lengths[idx]}"
+        local decoded_key decoded_value
+
+        LC_ALL=C read -r -N "$key_byte_len" decoded_key <&3
+        LC_ALL=C read -r -N "$value_byte_len" decoded_value <&3
+
+        [[ "$decoded_value" == "nul" ]] && decoded_value=""
+        if [[ -n "$decoded_key" ]]; then
+            octopus_parameters["$decoded_key"]="$decoded_value"
+        fi
+    done
+
+    exec 3<&-
+}
+
+bashParametersArrayFeatureToggle=#### BashParametersArrayFeatureToggle ####
+
+if [ "$bashParametersArrayFeatureToggle" = true ]; then
+    if (( ${BASH_VERSINFO[0]:-0} > 4 || (${BASH_VERSINFO[0]:-0} == 4 && ${BASH_VERSINFO[1]:-0} > 2) )); then
+        if command -v xxd > /dev/null; then
+            decrypt_and_parse_variables "#### VARIABLESTRING.ENCRYPTED ####" "#### VARIABLESTRING.IV ####"
+        else
+            echo "xxd is not installed, this is required to use octopus_parameters"
+        fi
+    else
+        echo "Bash version 4.2 or later is required to use octopus_parameters"
+    fi
+fi
+
+
+
