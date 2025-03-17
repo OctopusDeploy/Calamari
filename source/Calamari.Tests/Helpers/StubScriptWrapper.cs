@@ -6,7 +6,7 @@ using Calamari.Common.Features.Scripts;
 
 namespace Calamari.Tests.Helpers
 {
-    class StubScriptWrapper : IScriptWrapper
+    public class StubScriptWrapper : IScriptWrapper
     {
         bool isEnabled;
 
