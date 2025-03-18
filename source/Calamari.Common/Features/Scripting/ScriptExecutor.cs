@@ -30,7 +30,7 @@ namespace Calamari.Common.Features.Scripting
             {
                 if (variables.IsSet(CopyWorkingDirectoryVariable))
                     CopyWorkingDirectory(variables,
-                        execution.CommandLineInvocation.WorkingDirectory,
+                        execution.CommandLineInvocation.GetWorkingDirectory(),
                         execution.CommandLineInvocation.Arguments);
 
                 try
