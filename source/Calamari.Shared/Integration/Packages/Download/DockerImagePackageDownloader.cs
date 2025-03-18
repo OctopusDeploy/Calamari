@@ -3,6 +3,14 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
+using System.Threading.Tasks;
+using Amazon;
+using Amazon.ECR;
+using Amazon.ECR.Model;
+using Amazon.Runtime;
+using Amazon.SecurityToken;
+using Amazon.SecurityToken.Model;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.EmbeddedResources;
 using Calamari.Common.Features.Packages;
@@ -60,6 +68,27 @@ namespace Calamari.Integration.Packages.Download
                                                            int maxDownloadAttempts,
                                                            TimeSpan downloadAttemptBackoff)
         {
+            var usingOidc = !string.IsNullOrWhiteSpace(variables.Get("Jwt"));
+
+            if (usingOidc && variables.Get("FeedType") == FeedType.AwsElasticContainerRegistry.ToString())
+            {
+        
+                try
+                {
+                    var oidcCredentials = GetAwsOidcCredentials().GetAwaiter().GetResult();
+                    username = oidcCredentials.Username;
+                    password = oidcCredentials.Password;
+                    feedUri = new Uri(oidcCredentials.RegistryUri);
+            
+                    log.Verbose("Successfully obtained ECR credentials using OIDC token");
+                }
+                catch (Exception ex)
+                {
+                    log.Error($"Failed to get ECR credentials using OIDC: {ex.Message}");
+                    throw;
+                }
+            }
+            
             //Always try re-pull image, docker engine can take care of the rest
             var fullImageName = GetFullImageName(packageId, version, feedUri);
 
@@ -81,6 +110,55 @@ namespace Calamari.Integration.Packages.Download
 
             var (hash, size) = GetImageDetails(fullImageName);
             return new PackagePhysicalFileMetadata(new PackageFileNameMetadata(packageId, version, version, ""), string.Empty, hash, size);
+        }
+
+        // TODO: move this somewhere else later
+        async Task<(string Username, string Password, string RegistryUri)> GetAwsOidcCredentials()
+        {
+            try
+            {
+                var jwt = variables.Get("Jwt");
+                var roleArn = variables.Get("RoleArn");
+                var region = variables.Get("Region");
+                var sessionDuration = variables.Get("SessionDuration");
+                
+                var client = new AmazonSecurityTokenServiceClient(new AnonymousAWSCredentials());
+                var assumeRoleWithWebIdentityResponse = await client.AssumeRoleWithWebIdentityAsync(new AssumeRoleWithWebIdentityRequest
+                {
+                    RoleArn = roleArn,
+                    DurationSeconds = int.TryParse(sessionDuration, out var seconds) ? seconds : 3600,
+                    RoleSessionName = "OctopusAwsAuthentication",
+                    WebIdentityToken = jwt
+                });
+                var credentials = new SessionAWSCredentials(assumeRoleWithWebIdentityResponse.Credentials.AccessKeyId,
+                                                            assumeRoleWithWebIdentityResponse.Credentials.SecretAccessKey,
+                                                            assumeRoleWithWebIdentityResponse.Credentials.SessionToken);
+            
+                var regionEndpoint = RegionEndpoint.GetBySystemName(region);
+                var ecrClient = new AmazonECRClient(credentials, regionEndpoint);
+                var tokenResponse = await ecrClient.GetAuthorizationTokenAsync(new GetAuthorizationTokenRequest());
+        
+                var authToken = tokenResponse.AuthorizationData.FirstOrDefault();
+                if (authToken == null)
+                {
+                    throw new Exception("No AuthToken found");
+                }
+                var decodedToken = Encoding.UTF8.GetString(Convert.FromBase64String(authToken.AuthorizationToken));
+                var parts = decodedToken.Split(':');
+        
+                if (parts.Length != 2)
+                {
+                    throw new Exception("Token returned by AWS is in an unexpected format");
+                }
+        
+                return (parts[0], parts[1], authToken.ProxyEndpoint);
+            }
+            catch (Exception ex)
+            {
+                // catch the exception and fallback to returning false
+                throw new Exception("AWS-LOGIN-ERROR-0005.1: Failed to verify OIDC credentials. "
+                                    + $"Error: {ex}");
+            }
         }
 
         static string GetFullImageName(string packageId, IVersion version, Uri feedUri)
