@@ -85,7 +85,7 @@ namespace Calamari.Build
         [Parameter]
         readonly string? TargetRuntime;
 
-        [GitVersion]
+        [GitVersion(UpdateBuildNumber = false)]
         readonly GitVersion? GitVersionInfo;
 
         static readonly List<string> CalamariProjectsToSkipConsolidation = new() { "Calamari.CloudAccounts", "Calamari.Common", "Calamari.ConsolidateCalamariPackages" };
