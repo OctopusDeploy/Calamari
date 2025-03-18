@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Security.Authentication;
 using System.Text;
 using System.Threading.Tasks;
 using Amazon;
@@ -70,22 +71,31 @@ namespace Calamari.Integration.Packages.Download
         {
             var usingOidc = !string.IsNullOrWhiteSpace(variables.Get("Jwt"));
 
-            if (usingOidc && variables.Get("FeedType") == FeedType.AwsElasticContainerRegistry.ToString())
+            if (variables.Get("FeedType") == FeedType.AwsElasticContainerRegistry.ToString())
             {
-        
-                try
+                if (usingOidc)
                 {
-                    var oidcCredentials = GetAwsOidcCredentials().GetAwaiter().GetResult();
-                    username = oidcCredentials.Username;
-                    password = oidcCredentials.Password;
-                    feedUri = new Uri(oidcCredentials.RegistryUri);
-            
-                    log.Verbose("Successfully obtained ECR credentials using OIDC token");
+                    try
+                    {
+                        var oidcCredentials = GetAwsOidcCredentials().GetAwaiter().GetResult();
+                        username = oidcCredentials.Username;
+                        password = oidcCredentials.Password;
+                        feedUri = new Uri(oidcCredentials.RegistryUri);
+
+                        log.Verbose("Successfully obtained ECR credentials using OIDC token");
+                    }
+                    catch (Exception ex)
+                    {
+                        log.Error($"Failed to get ECR credentials using OIDC: {ex.Message}");
+                        throw;
+                    }
                 }
-                catch (Exception ex)
+                else if (!string.IsNullOrWhiteSpace(username))
                 {
-                    log.Error($"Failed to get ECR credentials using OIDC: {ex.Message}");
-                    throw;
+                    var accessKeyCreds = GetAwsAccessKeyCredentials(username, password);
+                    username = accessKeyCreds.Username;
+                    password = accessKeyCreds.Password;
+                    feedUri = new Uri(accessKeyCreds.RegistryUri);
                 }
             }
             
@@ -110,6 +120,49 @@ namespace Calamari.Integration.Packages.Download
 
             var (hash, size) = GetImageDetails(fullImageName);
             return new PackagePhysicalFileMetadata(new PackageFileNameMetadata(packageId, version, version, ""), string.Empty, hash, size);
+        }
+
+        (string Username, string Password, string RegistryUri) GetAwsAccessKeyCredentials(string accessKey, string? secretKey)
+        {
+            var region = variables.Get("Region");
+            var regionEndpoint = RegionEndpoint.GetBySystemName(region);
+            var credentials = new BasicAWSCredentials(accessKey, secretKey);
+            var client = new AmazonECRClient(credentials, regionEndpoint);
+            try
+            {
+                var token = client.GetAuthorizationTokenAsync(new GetAuthorizationTokenRequest()).GetAwaiter().GetResult();
+                var authToken = token.AuthorizationData.FirstOrDefault();
+                if (authToken == null)
+                {
+                    throw new Exception("No AuthToken found");
+                }
+
+                var creds = DecodeCredentials(authToken);
+                return (creds.Username, creds.Password, authToken.ProxyEndpoint);
+            }
+            catch (Exception ex)
+            {
+                throw new AuthenticationException($"Unable to retrieve AWS Authorization token:\r\n\t{ex.Message}");
+            }
+        }
+        
+        (string Username, string Password) DecodeCredentials(AuthorizationData authToken)
+        {
+            try
+            {
+                var decodedToken = Encoding.UTF8.GetString(Convert.FromBase64String(authToken.AuthorizationToken));
+                var parts = decodedToken.Split(':');
+                if (parts.Length != 2)
+                {
+                    throw new AuthenticationException("Token returned by AWS is in an unexpected format");
+                }
+
+                return (parts[0], parts[1]);
+            }
+            catch (Exception)
+            {
+                throw new AuthenticationException("Token returned by AWS is in an unexpected format");
+            }
         }
 
         // TODO: move this somewhere else later
