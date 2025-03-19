@@ -163,7 +163,7 @@ namespace Calamari.Commands
             var usingOidc = !string.IsNullOrWhiteSpace(variables.Get("Jwt"));
             // Add validation for roleArn and region?
             
-            if (feedType != FeedType.S3 && !usingOidc)
+            if (feedType != FeedType.S3 && feedType != FeedType.AwsElasticContainerRegistry && !usingOidc)
             {
                 Guard.NotNullOrWhiteSpace(feedUri, "No feed URI was specified. Please pass --feedUri https://url/to/nuget/feed");
             }
@@ -174,7 +174,7 @@ namespace Calamari.Commands
                 throw new CommandException($"Package version '{packageVersion}' specified is not a valid {versionFormat.ToString()} version string");
             }
 
-            if (feedType == FeedType.S3 || usingOidc)
+            if (feedType == FeedType.S3 || feedType != FeedType.AwsElasticContainerRegistry || usingOidc)
             {
                 uri = null;
             } 
