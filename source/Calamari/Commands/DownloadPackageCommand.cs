@@ -156,6 +156,14 @@ namespace Calamari.Commands
             out int parsedMaxDownloadAttempts,
             out TimeSpan parsedAttemptBackoff)
         {
+            var proc = Process.GetCurrentProcess();
+            Log.Info($"Waiting for debugger to attach... (PID: {proc.Id})");
+
+            while (!Debugger.IsAttached)
+            {
+                Thread.Sleep(1000);
+            }
+            
             Guard.NotNullOrWhiteSpace(packageId, "No package ID was specified. Please pass --packageId YourPackage");
             Guard.NotNullOrWhiteSpace(packageVersion, "No package version was specified. Please pass --packageVersion 1.0.0.0");
             Guard.NotNullOrWhiteSpace(feedId, "No feed ID was specified. Please pass --feedId feed-id");
@@ -174,7 +182,7 @@ namespace Calamari.Commands
                 throw new CommandException($"Package version '{packageVersion}' specified is not a valid {versionFormat.ToString()} version string");
             }
 
-            if (feedType == FeedType.S3 || feedType != FeedType.AwsElasticContainerRegistry || usingOidc)
+            if (feedType == FeedType.S3 || feedType == FeedType.AwsElasticContainerRegistry || usingOidc)
             {
                 uri = null;
             } 
