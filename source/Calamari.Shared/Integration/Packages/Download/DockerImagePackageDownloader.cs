@@ -3,15 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Security.Authentication;
-using System.Text;
-using System.Threading.Tasks;
-using Amazon;
-using Amazon.ECR;
-using Amazon.ECR.Model;
-using Amazon.Runtime;
-using Amazon.SecurityToken;
-using Amazon.SecurityToken.Model;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.EmbeddedResources;
 using Calamari.Common.Features.Packages;
@@ -36,6 +27,7 @@ namespace Calamari.Integration.Packages.Download
         readonly ICommandLineRunner commandLineRunner;
         readonly IVariables variables;
         readonly ILog log;
+        readonly IFeedLoginDetailsProvider feedLoginDetailsProvider;
         const string DockerHubRegistry = "index.docker.io";
 
         // Ensures that any credential details are only available for the duration of the acquisition
@@ -50,13 +42,15 @@ namespace Calamari.Integration.Packages.Download
                                             ICalamariFileSystem fileSystem,
                                             ICommandLineRunner commandLineRunner,
                                             IVariables variables,
-                                            ILog log)
+                                            ILog log,
+                                            IFeedLoginDetailsProvider feedLoginDetailsProvider)
         {
             this.scriptEngine = scriptEngine;
             this.fileSystem = fileSystem;
             this.commandLineRunner = commandLineRunner;
             this.variables = variables;
             this.log = log;
+            this.feedLoginDetailsProvider = feedLoginDetailsProvider;
         }
 
         public PackagePhysicalFileMetadata DownloadPackage(string packageId,
@@ -70,32 +64,14 @@ namespace Calamari.Integration.Packages.Download
                                                            TimeSpan downloadAttemptBackoff)
         {
             var usingOidc = !string.IsNullOrWhiteSpace(variables.Get("Jwt"));
-
             if (variables.Get("FeedType") == FeedType.AwsElasticContainerRegistry.ToString())
             {
-                if (usingOidc)
+                if (usingOidc || !string.IsNullOrWhiteSpace(username))
                 {
-                    try
-                    {
-                        var oidcCredentials = GetAwsOidcCredentials().GetAwaiter().GetResult();
-                        username = oidcCredentials.Username;
-                        password = oidcCredentials.Password;
-                        feedUri = new Uri(oidcCredentials.RegistryUri);
-
-                        log.Verbose("Successfully obtained ECR credentials using OIDC token");
-                    }
-                    catch (Exception ex)
-                    {
-                        log.Error($"Failed to get ECR credentials using OIDC: {ex.Message}");
-                        throw;
-                    }
-                }
-                else if (!string.IsNullOrWhiteSpace(username))
-                {
-                    var accessKeyCreds = GetAwsAccessKeyCredentials(username, password);
-                    username = accessKeyCreds.Username;
-                    password = accessKeyCreds.Password;
-                    feedUri = new Uri(accessKeyCreds.RegistryUri);
+                    var loginDetails = feedLoginDetailsProvider.GetFeedLoginDetails(variables, username, password);
+                    username = loginDetails.Username;
+                    password = loginDetails.Password;
+                    feedUri = new Uri(loginDetails.FeedUri);
                 }
             }
             
@@ -120,98 +96,6 @@ namespace Calamari.Integration.Packages.Download
 
             var (hash, size) = GetImageDetails(fullImageName);
             return new PackagePhysicalFileMetadata(new PackageFileNameMetadata(packageId, version, version, ""), string.Empty, hash, size);
-        }
-
-        (string Username, string Password, string RegistryUri) GetAwsAccessKeyCredentials(string accessKey, string? secretKey)
-        {
-            var region = variables.Get("Region");
-            var regionEndpoint = RegionEndpoint.GetBySystemName(region);
-            var credentials = new BasicAWSCredentials(accessKey, secretKey);
-            var client = new AmazonECRClient(credentials, regionEndpoint);
-            try
-            {
-                var token = client.GetAuthorizationTokenAsync(new GetAuthorizationTokenRequest()).GetAwaiter().GetResult();
-                var authToken = token.AuthorizationData.FirstOrDefault();
-                if (authToken == null)
-                {
-                    throw new Exception("No AuthToken found");
-                }
-
-                var creds = DecodeCredentials(authToken);
-                return (creds.Username, creds.Password, authToken.ProxyEndpoint);
-            }
-            catch (Exception ex)
-            {
-                throw new AuthenticationException($"Unable to retrieve AWS Authorization token:\r\n\t{ex.Message}");
-            }
-        }
-        
-        (string Username, string Password) DecodeCredentials(AuthorizationData authToken)
-        {
-            try
-            {
-                var decodedToken = Encoding.UTF8.GetString(Convert.FromBase64String(authToken.AuthorizationToken));
-                var parts = decodedToken.Split(':');
-                if (parts.Length != 2)
-                {
-                    throw new AuthenticationException("Token returned by AWS is in an unexpected format");
-                }
-
-                return (parts[0], parts[1]);
-            }
-            catch (Exception)
-            {
-                throw new AuthenticationException("Token returned by AWS is in an unexpected format");
-            }
-        }
-
-        // TODO: move this somewhere else later
-        async Task<(string Username, string Password, string RegistryUri)> GetAwsOidcCredentials()
-        {
-            try
-            {
-                var jwt = variables.Get("Jwt");
-                var roleArn = variables.Get("RoleArn");
-                var region = variables.Get("Region");
-                var sessionDuration = variables.Get("SessionDuration");
-                
-                var client = new AmazonSecurityTokenServiceClient(new AnonymousAWSCredentials());
-                var assumeRoleWithWebIdentityResponse = await client.AssumeRoleWithWebIdentityAsync(new AssumeRoleWithWebIdentityRequest
-                {
-                    RoleArn = roleArn,
-                    DurationSeconds = int.TryParse(sessionDuration, out var seconds) ? seconds : 3600,
-                    RoleSessionName = "OctopusAwsAuthentication",
-                    WebIdentityToken = jwt
-                });
-                var credentials = new SessionAWSCredentials(assumeRoleWithWebIdentityResponse.Credentials.AccessKeyId,
-                                                            assumeRoleWithWebIdentityResponse.Credentials.SecretAccessKey,
-                                                            assumeRoleWithWebIdentityResponse.Credentials.SessionToken);
-            
-                var regionEndpoint = RegionEndpoint.GetBySystemName(region);
-                var ecrClient = new AmazonECRClient(credentials, regionEndpoint);
-                var tokenResponse = await ecrClient.GetAuthorizationTokenAsync(new GetAuthorizationTokenRequest());
-        
-                var authToken = tokenResponse.AuthorizationData.FirstOrDefault();
-                if (authToken == null)
-                {
-                    throw new Exception("No AuthToken found");
-                }
-                var decodedToken = Encoding.UTF8.GetString(Convert.FromBase64String(authToken.AuthorizationToken));
-                var parts = decodedToken.Split(':');
-        
-                if (parts.Length != 2)
-                {
-                    throw new Exception("Token returned by AWS is in an unexpected format");
-                }
-        
-                return (parts[0], parts[1], authToken.ProxyEndpoint);
-            }
-            catch (Exception ex)
-            {
-                // catch the exception and fallback to returning false
-                throw new Exception("AWS-LOGIN-ERROR-0005.1: Failed to verify OIDC credentials. "
-                                    + $"Error: {ex}");
-            }
         }
 
         static string GetFullImageName(string packageId, IVersion version, Uri feedUri)
