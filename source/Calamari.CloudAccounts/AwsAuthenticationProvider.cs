@@ -37,7 +37,7 @@ namespace Calamari.CloudAccounts
                                                             assumeRoleWithWebIdentityResponse.Credentials.SecretAccessKey,
                                                             assumeRoleWithWebIdentityResponse.Credentials.SessionToken);
             
-                var authToken = GetAuthorizationData(credentials, region);
+                var authToken = await GetAuthorizationData(credentials, region);
                 var creds = DecodeCredentials(authToken);
                 return (creds.Username, creds.Password, authToken.ProxyEndpoint);
             }
@@ -49,13 +49,13 @@ namespace Calamari.CloudAccounts
             }
         }
         
-        public static (string Username, string Password, string RegistryUri) GetEcrAccessKeyCredentials(IVariables variables, string accessKey, string secretKey)
+        public static async Task<(string Username, string Password, string RegistryUri)> GetEcrAccessKeyCredentials(IVariables variables, string accessKey, string secretKey)
         {
             var region = variables.Get(AuthenticationVariables.Aws.Region);
             var credentials = new BasicAWSCredentials(accessKey, secretKey);
             try
             {
-                var authToken = GetAuthorizationData(credentials, region);
+                var authToken = await GetAuthorizationData(credentials, region);
                 var creds = DecodeCredentials(authToken);
                 return (creds.Username, creds.Password, authToken.ProxyEndpoint);
             }
@@ -65,11 +65,11 @@ namespace Calamari.CloudAccounts
             }
         }
 
-        static AuthorizationData GetAuthorizationData(AWSCredentials credentials, string region)
+        static async Task<AuthorizationData> GetAuthorizationData(AWSCredentials credentials, string region)
         {
             var regionEndpoint = RegionEndpoint.GetBySystemName(region);
             var client = new AmazonECRClient(credentials, regionEndpoint);
-            var token = client.GetAuthorizationTokenAsync(new GetAuthorizationTokenRequest()).GetAwaiter().GetResult();
+            var token = await client.GetAuthorizationTokenAsync(new GetAuthorizationTokenRequest());
             var authToken = token.AuthorizationData.FirstOrDefault();
             if (authToken == null)
             {

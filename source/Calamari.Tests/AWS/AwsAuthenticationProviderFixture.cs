@@ -39,7 +39,7 @@ namespace Calamari.Tests.AWS
                 return;
             }
 
-            var credentials = AwsAuthenticationProvider.GetEcrAccessKeyCredentials(variables, accessKey, secretKey);
+            var credentials = await AwsAuthenticationProvider.GetEcrAccessKeyCredentials(variables, accessKey, secretKey);
 
             credentials.Should().NotBeNull();
             credentials.Username.Should().Be("AWS");
@@ -53,9 +53,7 @@ namespace Calamari.Tests.AWS
             var accessKey = "AKIAINVALID";
             var secretKey = "invalidSecretKey";
 
-            Assert.Throws<AuthenticationException>(() => 
-                AwsAuthenticationProvider.GetEcrAccessKeyCredentials(variables, accessKey, secretKey)
-            );
+            Assert.ThrowsAsync<AuthenticationException>(async () => await AwsAuthenticationProvider.GetEcrAccessKeyCredentials(variables, accessKey, secretKey));
         }
     }
 }

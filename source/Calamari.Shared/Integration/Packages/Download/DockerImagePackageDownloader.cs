@@ -27,7 +27,7 @@ namespace Calamari.Integration.Packages.Download
         readonly ICommandLineRunner commandLineRunner;
         readonly IVariables variables;
         readonly ILog log;
-        readonly IFeedLoginDetailsProvider feedLoginDetailsProvider;
+        readonly IEcrFeedLoginDetailsProvider ecrFeedLoginDetailsProvider;
         const string DockerHubRegistry = "index.docker.io";
 
         // Ensures that any credential details are only available for the duration of the acquisition
@@ -43,14 +43,14 @@ namespace Calamari.Integration.Packages.Download
                                             ICommandLineRunner commandLineRunner,
                                             IVariables variables,
                                             ILog log,
-                                            IFeedLoginDetailsProvider feedLoginDetailsProvider)
+                                            IEcrFeedLoginDetailsProvider ecrFeedLoginDetailsProvider)
         {
             this.scriptEngine = scriptEngine;
             this.fileSystem = fileSystem;
             this.commandLineRunner = commandLineRunner;
             this.variables = variables;
             this.log = log;
-            this.feedLoginDetailsProvider = feedLoginDetailsProvider;
+            this.ecrFeedLoginDetailsProvider = ecrFeedLoginDetailsProvider;
         }
 
         public PackagePhysicalFileMetadata DownloadPackage(string packageId,
@@ -68,7 +68,7 @@ namespace Calamari.Integration.Packages.Download
             {
                 if (usingOidc || !string.IsNullOrWhiteSpace(username))
                 {
-                    var loginDetails = feedLoginDetailsProvider.GetFeedLoginDetails(variables, username ?? string.Empty, password ?? string.Empty);
+                    var loginDetails = ecrFeedLoginDetailsProvider.GetFeedLoginDetails(variables, username ?? string.Empty, password ?? string.Empty).GetAwaiter().GetResult();
                     username = loginDetails.Username;
                     password = loginDetails.Password;
                     feedUri = new Uri(loginDetails.FeedUri);
