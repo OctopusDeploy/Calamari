@@ -15,45 +15,31 @@ namespace Calamari.CloudAccounts
 {
     public static class AwsAuthenticationProvider
     {
-           public static async Task<(string Username, string Password, string RegistryUri)> GetAwsOidcCredentials(IVariables variables)
+        const string DefaultSessionName = "OctopusAwsAuthentication";
+           public static async Task<(string Username, string Password, string RegistryUri)> GetEcrOidcCredentials(IVariables variables)
         {
             try
             {
-                var jwt = variables.Get("Jwt");
-                var roleArn = variables.Get("RoleArn");
-                var region = variables.Get("Region");
-                var sessionDuration = variables.Get("SessionDuration");
+                var jwt = variables.Get(AuthenticationVariables.Jwt);
+                var roleArn = variables.Get(AuthenticationVariables.Aws.RoleArn);
+                var region = variables.Get(AuthenticationVariables.Aws.Region);
+                var sessionDuration = variables.Get(AuthenticationVariables.Aws.SessionDuration);
                 
                 var client = new AmazonSecurityTokenServiceClient(new AnonymousAWSCredentials());
                 var assumeRoleWithWebIdentityResponse = await client.AssumeRoleWithWebIdentityAsync(new AssumeRoleWithWebIdentityRequest
                 {
                     RoleArn = roleArn,
                     DurationSeconds = int.TryParse(sessionDuration, out var seconds) ? seconds : 3600,
-                    RoleSessionName = "OctopusAwsAuthentication",
+                    RoleSessionName = DefaultSessionName,
                     WebIdentityToken = jwt
                 });
                 var credentials = new SessionAWSCredentials(assumeRoleWithWebIdentityResponse.Credentials.AccessKeyId,
                                                             assumeRoleWithWebIdentityResponse.Credentials.SecretAccessKey,
                                                             assumeRoleWithWebIdentityResponse.Credentials.SessionToken);
             
-                var regionEndpoint = RegionEndpoint.GetBySystemName(region);
-                var ecrClient = new AmazonECRClient(credentials, regionEndpoint);
-                var tokenResponse = await ecrClient.GetAuthorizationTokenAsync(new GetAuthorizationTokenRequest());
-        
-                var authToken = tokenResponse.AuthorizationData.FirstOrDefault();
-                if (authToken == null)
-                {
-                    throw new Exception("No AuthToken found");
-                }
-                var decodedToken = Encoding.UTF8.GetString(Convert.FromBase64String(authToken.AuthorizationToken));
-                var parts = decodedToken.Split(':');
-        
-                if (parts.Length != 2)
-                {
-                    throw new Exception("Token returned by AWS is in an unexpected format");
-                }
-        
-                return (parts[0], parts[1], authToken.ProxyEndpoint);
+                var authToken = GetAuthorizationData(credentials, region);
+                var creds = DecodeCredentials(authToken);
+                return (creds.Username, creds.Password, authToken.ProxyEndpoint);
             }
             catch (Exception ex)
             {
@@ -63,21 +49,13 @@ namespace Calamari.CloudAccounts
             }
         }
         
-        public static (string Username, string Password, string RegistryUri) GetAwsAccessKeyCredentials(IVariables variables, string accessKey, string secretKey)
+        public static (string Username, string Password, string RegistryUri) GetEcrAccessKeyCredentials(IVariables variables, string accessKey, string secretKey)
         {
-            var region = variables.Get("Region");
-            var regionEndpoint = RegionEndpoint.GetBySystemName(region);
+            var region = variables.Get(AuthenticationVariables.Aws.Region);
             var credentials = new BasicAWSCredentials(accessKey, secretKey);
-            var client = new AmazonECRClient(credentials, regionEndpoint);
             try
             {
-                var token = client.GetAuthorizationTokenAsync(new GetAuthorizationTokenRequest()).GetAwaiter().GetResult();
-                var authToken = token.AuthorizationData.FirstOrDefault();
-                if (authToken == null)
-                {
-                    throw new Exception("No AuthToken found");
-                }
-
+                var authToken = GetAuthorizationData(credentials, region);
                 var creds = DecodeCredentials(authToken);
                 return (creds.Username, creds.Password, authToken.ProxyEndpoint);
             }
@@ -85,6 +63,20 @@ namespace Calamari.CloudAccounts
             {
                 throw new AuthenticationException($"Unable to retrieve AWS Authorization token:\r\n\t{ex.Message}");
             }
+        }
+
+        static AuthorizationData GetAuthorizationData(AWSCredentials credentials, string region)
+        {
+            var regionEndpoint = RegionEndpoint.GetBySystemName(region);
+            var client = new AmazonECRClient(credentials, regionEndpoint);
+            var token = client.GetAuthorizationTokenAsync(new GetAuthorizationTokenRequest()).GetAwaiter().GetResult();
+            var authToken = token.AuthorizationData.FirstOrDefault();
+            if (authToken == null)
+            {
+                throw new Exception("No AuthToken found");
+            }
+            
+            return authToken;
         }
         
         static (string Username, string Password) DecodeCredentials(AuthorizationData authToken)

@@ -63,12 +63,12 @@ namespace Calamari.Integration.Packages.Download
                                                            int maxDownloadAttempts,
                                                            TimeSpan downloadAttemptBackoff)
         {
-            var usingOidc = !string.IsNullOrWhiteSpace(variables.Get("Jwt"));
-            if (variables.Get("FeedType") == FeedType.AwsElasticContainerRegistry.ToString())
+            var usingOidc = !string.IsNullOrWhiteSpace(variables.Get(AuthenticationVariables.Jwt));
+            if (variables.Get(AuthenticationVariables.FeedType) == FeedType.AwsElasticContainerRegistry.ToString())
             {
                 if (usingOidc || !string.IsNullOrWhiteSpace(username))
                 {
-                    var loginDetails = feedLoginDetailsProvider.GetFeedLoginDetails(variables, username, password);
+                    var loginDetails = feedLoginDetailsProvider.GetFeedLoginDetails(variables, username ?? string.Empty, password ?? string.Empty);
                     username = loginDetails.Username;
                     password = loginDetails.Password;
                     feedUri = new Uri(loginDetails.FeedUri);

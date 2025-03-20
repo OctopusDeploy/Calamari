@@ -44,13 +44,6 @@ namespace Calamari.Commands
 			ICommandLineRunner commandLineRunner,
             ILog log)
         {
-            var proc = Process.GetCurrentProcess();
-            Log.Info($"Waiting for debugger to attach... (PID: {proc.Id})");
-
-            while (!Debugger.IsAttached)
-            {
-                Thread.Sleep(1000);
-            }
             this.scriptEngine = scriptEngine;
             this.variables = variables;
             this.fileSystem = fileSystem;
@@ -92,7 +85,7 @@ namespace Calamari.Commands
             Options.Parse(commandLineArguments);
             
             // Add Feed Type so we can tell which auth to use when downloading
-            variables.Set("FeedType", feedType.ToString());
+            variables.Set(AuthenticationVariables.FeedType, feedType.ToString());
 
             try
             {
@@ -156,20 +149,11 @@ namespace Calamari.Commands
             out int parsedMaxDownloadAttempts,
             out TimeSpan parsedAttemptBackoff)
         {
-            var proc = Process.GetCurrentProcess();
-            Log.Info($"Waiting for debugger to attach... (PID: {proc.Id})");
-
-            while (!Debugger.IsAttached)
-            {
-                Thread.Sleep(1000);
-            }
-            
             Guard.NotNullOrWhiteSpace(packageId, "No package ID was specified. Please pass --packageId YourPackage");
             Guard.NotNullOrWhiteSpace(packageVersion, "No package version was specified. Please pass --packageVersion 1.0.0.0");
             Guard.NotNullOrWhiteSpace(feedId, "No feed ID was specified. Please pass --feedId feed-id");
             
             var usingOidc = !string.IsNullOrWhiteSpace(variables.Get("Jwt"));
-            // Add validation for roleArn and region?
             
             if (feedType != FeedType.S3 && feedType != FeedType.AwsElasticContainerRegistry && !usingOidc)
             {

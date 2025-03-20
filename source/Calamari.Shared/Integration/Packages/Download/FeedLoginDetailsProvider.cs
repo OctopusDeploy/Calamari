@@ -16,17 +16,17 @@ namespace Calamari.Integration.Packages.Download
     {
         public (string Username, string Password, string FeedUri) GetFeedLoginDetails(IVariables variables, string username, string password)
         {
-            var feedType = variables.Get("FeedType");
+            var feedType = variables.Get(AuthenticationVariables.FeedType);
 
             switch (feedType)
             {
                 case "AwsElasticContainerRegistry":
-                    var usingOidc = !string.IsNullOrWhiteSpace(variables.Get("Jwt"));
+                    var usingOidc = !string.IsNullOrWhiteSpace(variables.Get(AuthenticationVariables.Jwt));
                     if (usingOidc)
                     {
-                        return AwsAuthenticationProvider.GetAwsOidcCredentials(variables).GetAwaiter().GetResult();
+                        return AwsAuthenticationProvider.GetEcrOidcCredentials(variables).GetAwaiter().GetResult();
                     }
-                    return AwsAuthenticationProvider.GetAwsAccessKeyCredentials(variables, username, password);
+                    return AwsAuthenticationProvider.GetEcrAccessKeyCredentials(variables, username, password);
                 default:
                     throw new NotSupportedException($"Feed type '{feedType}' not supported by FeedLoginDetailsProvider.");
             }
