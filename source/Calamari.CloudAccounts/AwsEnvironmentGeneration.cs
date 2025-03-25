@@ -358,7 +358,7 @@ namespace Calamari.CloudAccounts
         {
             if ("True".Equals(assumeRole, StringComparison.OrdinalIgnoreCase))
             {
-                var client = new AmazonSecurityTokenServiceClient(AwsCredentials, AwsRegion);
+                var client = string.IsNullOrWhiteSpace(region) ? new AmazonSecurityTokenServiceClient(AwsCredentials) : new AmazonSecurityTokenServiceClient(AwsCredentials, AwsRegion);
                 var credentials = (await client.AssumeRoleAsync(GetAssumeRoleRequest())).Credentials;
 
                 EnvironmentVars["AWS_ACCESS_KEY_ID"] = credentials.AccessKeyId;
