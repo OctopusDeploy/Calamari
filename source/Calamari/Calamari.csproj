@@ -18,19 +18,15 @@
     <Product>Calamari</Product>
     <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
     <ApplicationManifest>Calamari.exe.manifest</ApplicationManifest>
-    <TargetFrameworks>net462;net6.0</TargetFrameworks>
+    <TargetFramework>net10.0</TargetFramework>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(TargetFramework)' == 'net462' ">
+  <PropertyGroup Condition=" '$(Configuration)' != 'Debug' ">
     <DefineConstants>$(DefineConstants);IIS_SUPPORT;</DefineConstants>
     <PlatformTarget>anycpu</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DefineConstants>$(DefineConstants);DEBUG</DefineConstants>
   </PropertyGroup>
-  <!--
-	The net462 build is the one that pulls in the AWS and Azure extensions. We treat
-	this build as the "Cloud" build.
-  -->
   <ItemGroup>
     <ProjectReference Include="..\Calamari.Aws\Calamari.Aws.csproj" />
     <ProjectReference Include="..\Calamari.Azure\Calamari.Azure.csproj" />
@@ -42,20 +38,20 @@
     </PackageReference>
     <ProjectReference Include="..\Calamari.Common\Calamari.Common.csproj" />
     <ProjectReference Include="..\Calamari.Shared\Calamari.Shared.csproj" />
-    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies.net462" Version="1.0.2">
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies.net462" Version="1.0.3">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.Web.Administration" Version="11.1.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="FSharp.Compiler.Tools" Version="4.0.0.1" />
-    <PackageReference Include="Octopus.Versioning" Version="5.1.876" />
-    <PackageReference Include="Octopus.TinyTypes" Version="2.2.1156" />
-    <PackageReference Include="Octopus.CoreUtilities" Version="2.1.449" />
+    <PackageReference Include="FSharp.Compiler.Tools" Version="10.2.3" />
+    <PackageReference Include="Octopus.Versioning" Version="5.1.879" />
+    <PackageReference Include="Octopus.TinyTypes" Version="3.0.1" />
+    <PackageReference Include="Octopus.CoreUtilities" Version="2.1.564" />
     <PackageReference Include="scriptcs" Version="0.17.1" />
-    <PackageReference Include="SharpCompress" Version="0.37.2" />
+    <PackageReference Include="SharpCompress" Version="0.39.0" />
     <PackageReference Include="YamlDotNet" Version="8.1.2" />
-    <PackageReference Include="System.ValueTuple" Version="4.5.0" />
+    <PackageReference Include="System.ValueTuple" Version="4.6.1" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFrameworkIdentifier)' == '.NETFramework' ">
     <Reference Include="System.ComponentModel.DataAnnotations" />
