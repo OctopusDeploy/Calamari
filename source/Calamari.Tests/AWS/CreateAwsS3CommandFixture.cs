@@ -12,6 +12,7 @@ using Amazon.S3.Model;
 using Calamari.Aws.Commands;
 using Calamari.Aws.Deployment;
 using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Testing;
@@ -67,14 +68,22 @@ namespace Calamari.Tests.AWS
         {
             await ExecuteAwsClient(async (s3Client, cfClient) =>
                                    {
-                                       var response = await s3Client.ListObjectsAsync(bucketName, cancellationToken);
-                                       foreach (var s3Object in response.S3Objects)
-                                           await s3Client.DeleteObjectAsync(bucketName, s3Object.Key, cancellationToken);
-                                       await cfClient.DeleteStackAsync(new DeleteStackRequest
-                                                                       {
-                                                                           StackName = stackName
-                                                                       },
-                                                                       cancellationToken);
+                                       try
+                                       {
+                                           var response = await s3Client.ListObjectsAsync(bucketName, cancellationToken);
+                                           foreach (var s3Object in response.S3Objects)
+                                               await s3Client.DeleteObjectAsync(bucketName, s3Object.Key, cancellationToken);
+                                           await cfClient.DeleteStackAsync(new DeleteStackRequest
+                                                                           {
+                                                                               StackName = stackName
+                                                                           },
+                                                                           cancellationToken);
+                                       }
+                                       catch (Exception ex)
+                                       {
+                                           // Validation tests do not create a bucket
+                                           Log.Error(ex.Message);
+                                       }
                                    });
         }
 
@@ -89,10 +98,7 @@ namespace Calamari.Tests.AWS
             variables.Set(AwsSpecialVariables.CloudFormation.Tags, JsonConvert.SerializeObject(tags));
 
             var command = new CreateAwsS3Command(new InMemoryLog(), variables);
-            Action act = () => command.Execute(new[]
-            {
-                "--bucket", bucketName
-            });
+            Action act = () => command.Execute(Array.Empty<string>());
 
             act.Should().Throw<CommandException>().WithMessage("*Each tag key must be unique.");
         }
@@ -101,18 +107,16 @@ namespace Calamari.Tests.AWS
         public async Task BucketShouldBeCreated()
         {
             // Arrange
+            variables.Set(AwsSpecialVariables.S3.BucketName, bucketName);
+            variables.Set(AwsSpecialVariables.CloudFormation.StackName, stackName);
+            variables.Set(AwsSpecialVariables.S3.ObjectWriterOwnership, "False");
             variables.Set(AwsSpecialVariables.CloudFormation.Tags, JsonConvert.SerializeObject(customTags));
 
             var log = new InMemoryLog();
             var command = new CreateAwsS3Command(log, variables);
 
             // Act
-            var result = command.Execute(new[]
-            {
-                "--bucketName", bucketName,
-                "--stackName", stackName,
-                "--objectWriterOwnership", "False"
-            });
+            var result = command.Execute(Array.Empty<string>());
 
             // Assert
             result.Should().Be(0);
@@ -124,23 +128,17 @@ namespace Calamari.Tests.AWS
         public async Task BucketWithSameIdentifiersShouldBeUpdated()
         {
             // Arrange
+            variables.Set(AwsSpecialVariables.S3.BucketName, bucketName);
+            variables.Set(AwsSpecialVariables.CloudFormation.StackName, stackName);
+            variables.Set(AwsSpecialVariables.S3.ObjectWriterOwnership, "False");
             variables.Set(AwsSpecialVariables.CloudFormation.Tags, JsonConvert.SerializeObject(customTags));
 
             var log = new InMemoryLog();
+            new CreateAwsS3Command(log, variables).Execute(Array.Empty<string>());
 
             // Act
-            new CreateAwsS3Command(log, variables).Execute(new[]
-            {
-                "--bucketName", bucketName,
-                "--stackName", stackName,
-                "--objectWriterOwnership", "False"
-            });
-            var result = new CreateAwsS3Command(log, variables).Execute(new[]
-            {
-                "--bucketName", bucketName,
-                "--stackName", stackName,
-                "--objectWriterOwnership", "True"
-            });
+            variables.Set(AwsSpecialVariables.S3.ObjectWriterOwnership, "True");
+            var result = new CreateAwsS3Command(log, variables).Execute(Array.Empty<string>());
 
             // Assert
             result.Should().Be(0);

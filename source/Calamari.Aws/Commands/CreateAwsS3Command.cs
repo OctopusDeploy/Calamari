@@ -11,6 +11,7 @@ using Calamari.Aws.Util;
 using Calamari.CloudAccounts;
 using Calamari.Commands.Support;
 using Calamari.Common.Commands;
+using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
@@ -26,47 +27,35 @@ namespace Calamari.Aws.Commands
     {
         readonly ILog log;
         readonly IVariables variables;
-        string bucketName;
-        string stackName;
-        bool publicAccess;
-        bool objectWriterOwnership;
 
         public CreateAwsS3Command(ILog log, IVariables variables)
         {
             this.log = log;
             this.variables = variables;
-            Options.Add("bucketName=", "The name of the bucket to create", v => bucketName = v);
-            Options.Add("stackName=", "The name of the CloudFormation stack.", v => stackName = v);
-            Options.Add("publicAccess=",
-                        "True if the bucket should allow public access, and False otherwise.",
-                        v => publicAccess = bool.TrueString.Equals(v, StringComparison.OrdinalIgnoreCase)); // False by default
-            Options.Add("objectWriterOwnership=",
-                        "True if the account creating the object should own it, and False if the bucket should own the object.",
-                        v => objectWriterOwnership = bool.TrueString.Equals(v, StringComparison.OrdinalIgnoreCase)); // False by default
         }
 
         public override int Execute(string[] commandLineArguments)
         {
-            Options.Parse(commandLineArguments);
+            var bucketName = variables.Get(AwsSpecialVariables.S3.BucketName);
+            var stackName = variables.Get(AwsSpecialVariables.CloudFormation.StackName);
+            var publicAccess = variables.GetFlag(AwsSpecialVariables.S3.PublicAccess);
+            var objectWriterOwnership = variables.GetFlag(AwsSpecialVariables.S3.ObjectWriterOwnership);
+            
+            Guard.NotNullOrWhiteSpace(bucketName, "Bucket name is required");
+            Guard.NotNullOrWhiteSpace(stackName, "Stack name is required");
 
             var tags = JsonConvert.DeserializeObject<List<KeyValuePair<string, string>>>(variables.Get(AwsSpecialVariables.CloudFormation.Tags) ?? "[]");
             ValidateTags(tags);
 
             var environment = AwsEnvironmentGeneration.Create(log, variables).GetAwaiter().GetResult();
 
-            IAmazonCloudFormation ClientFactory()
-            {
-                return ClientHelpers.CreateCloudFormationClient(environment);
-            }
+            IAmazonCloudFormation ClientFactory() => ClientHelpers.CreateCloudFormationClient(environment);
 
-            StackArn StackProvider(RunningDeployment _)
-            {
-                return new StackArn(stackName);
-            }
+            StackArn StackProvider(RunningDeployment _) => new StackArn(stackName);
 
             ICloudFormationRequestBuilder TemplateFactory()
             {
-                return new CloudFormationTemplate(GetTemplateBody,
+                return new CloudFormationTemplate(() => GetTemplateBody(bucketName, publicAccess, objectWriterOwnership),
                                                   new EmptyTemplateInputs<Parameter>(),
                                                   stackName,
                                                   new List<string>(),
@@ -115,7 +104,7 @@ namespace Calamari.Aws.Commands
                 throw new CommandException($"{errorLink} Each tag key must be unique.");
         }
 
-        string GetTemplateBody()
+        string GetTemplateBody(string bucketName, bool publicAccess, bool objectWriterOwnership)
         {
             var template = new
             {
