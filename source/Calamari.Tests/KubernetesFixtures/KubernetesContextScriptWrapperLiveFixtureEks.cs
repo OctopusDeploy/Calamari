@@ -79,17 +79,11 @@ namespace Calamari.Tests.KubernetesFixtures
         string awsVpcID;
         string awsSubnetID;
         string awsIamInstanceProfileName;
-        string region;
+        readonly string  region = "ap-southeast-1";
         string eksClusterArn;
         string eksIamRolArn;
 
         protected override string KubernetesCloudProvider => "EKS";
-
-        protected override async Task PreInitialise()
-        {
-            region = "ap-southeast-1";
-            await TestContext.Progress.WriteLineAsync($"Aws Region chosen: {region}");
-        }
 
         protected override async Task InstallOptionalTools(InstallTools tools)
         {

@@ -28,16 +28,12 @@ namespace Calamari.Tests.KubernetesFixtures
         string terraformWorkingFolder;
         
         protected abstract string KubernetesCloudProvider { get; }
-
-        protected virtual Task PreInitialise() { return Task.CompletedTask; }
         
         protected virtual Task InstallOptionalTools(InstallTools tools) { return Task.CompletedTask; }
 
         [OneTimeSetUp]
         public async Task SetupInfrastructure()
         {
-            await PreInitialise();
-            
             terraformWorkingFolder = InitialiseTerraformWorkingFolder($"terraform_working/{KubernetesCloudProvider}", 
                 $"KubernetesFixtures/Terraform/Clusters/{KubernetesCloudProvider}");
         
