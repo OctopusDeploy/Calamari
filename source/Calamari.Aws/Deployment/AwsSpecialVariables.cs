@@ -12,6 +12,9 @@
 
         public static class S3
         {
+            public const string BucketName = "Octopus.Action.Aws.S3.BucketName";
+            public const string ObjectWriterOwnership = "Octopus.Action.Aws.S3.ObjectWriterOwnership";
+            public const string PublicAccess = "Octopus.Action.Aws.S3.PublicAccess";
             public const string FileSelections = "Octopus.Action.Aws.S3.FileSelections";
             public const string PackageOptions = "Octopus.Action.Aws.S3.PackageOptions";
         }

@@ -369,10 +369,13 @@ namespace Calamari.CloudAccounts
 
         public AssumeRoleRequest GetAssumeRoleRequest()
         {
+            // RoleSessionName is required in .NET; if not provided, generate a random one like the JavaScript SDK.
+            var roleSessionName = String.IsNullOrEmpty(assumeRoleSession) ? $"aws-sdk-dotnet-{Guid.NewGuid()}" : assumeRoleSession;
+            
             var request = new AssumeRoleRequest
             {
                 RoleArn = assumeRoleArn,
-                RoleSessionName = assumeRoleSession,
+                RoleSessionName = roleSessionName,
                 ExternalId = string.IsNullOrWhiteSpace(assumeRoleExternalId) ? null : assumeRoleExternalId
             };
             if (int.TryParse(assumeRoleDurationSeconds, out var durationSeconds))
