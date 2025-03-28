@@ -7,6 +7,7 @@ def install_package_using_pip(package):
     exitcode = subprocess.call([sys.executable, "-m", "pip", "install", package, "--user"])
     if exitcode != 0:
         print("Unable to install package {} using pip.".format(package), file=sys.stderr)
+        print("Failed with: {}".format(sys.stderr), file=sys.stderr.buffer.readlines)
         print("If you do not have pip you can install {} using your favorite python package manager.".format(package), file=sys.stderr)
         exit(exitcode)
 
