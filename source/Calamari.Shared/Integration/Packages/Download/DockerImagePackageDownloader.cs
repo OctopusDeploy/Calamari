@@ -63,7 +63,6 @@ namespace Calamari.Integration.Packages.Download
                                                            int maxDownloadAttempts,
                                                            TimeSpan downloadAttemptBackoff)
         {
-            var usingOidc = !string.IsNullOrWhiteSpace(variables.Get(AuthenticationVariables.Jwt));
             if (variables.Get(AuthenticationVariables.FeedType) == FeedType.AwsElasticContainerRegistry.ToString())
             {
                 var loginDetails = ecrFeedLoginDetailsProvider.GetFeedLoginDetails(variables, username, password).GetAwaiter().GetResult();
