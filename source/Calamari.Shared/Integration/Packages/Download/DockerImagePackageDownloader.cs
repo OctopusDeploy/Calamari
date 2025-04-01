@@ -66,13 +66,10 @@ namespace Calamari.Integration.Packages.Download
             var usingOidc = !string.IsNullOrWhiteSpace(variables.Get(AuthenticationVariables.Jwt));
             if (variables.Get(AuthenticationVariables.FeedType) == FeedType.AwsElasticContainerRegistry.ToString())
             {
-                if (usingOidc || !string.IsNullOrWhiteSpace(username))
-                {
-                    var loginDetails = ecrFeedLoginDetailsProvider.GetFeedLoginDetails(variables, username ?? string.Empty, password ?? string.Empty).GetAwaiter().GetResult();
-                    username = loginDetails.Username;
-                    password = loginDetails.Password;
-                    feedUri = new Uri(loginDetails.FeedUri);
-                }
+                var loginDetails = ecrFeedLoginDetailsProvider.GetFeedLoginDetails(variables, username, password).GetAwaiter().GetResult();
+                username = loginDetails.Username;
+                password = loginDetails.Password;
+                feedUri = new Uri(loginDetails.FeedUri);
             }
             
             //Always try re-pull image, docker engine can take care of the rest

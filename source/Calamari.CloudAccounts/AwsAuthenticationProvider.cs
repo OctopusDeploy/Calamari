@@ -10,6 +10,7 @@ using Amazon.Runtime;
 using Amazon.SecurityToken;
 using Amazon.SecurityToken.Model;
 using Calamari.Common.Plumbing.Variables;
+using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.CloudAccounts
 {
@@ -36,8 +37,9 @@ namespace Calamari.CloudAccounts
                 var credentials = new SessionAWSCredentials(assumeRoleWithWebIdentityResponse.Credentials.AccessKeyId,
                                                             assumeRoleWithWebIdentityResponse.Credentials.SecretAccessKey,
                                                             assumeRoleWithWebIdentityResponse.Credentials.SessionToken);
-            
-                var authToken = await GetAuthorizationData(credentials, region);
+                var regionEndpoint = RegionEndpoint.GetBySystemName(region);
+                var ecrClient = new AmazonECRClient(credentials, regionEndpoint);
+                var authToken = await GetAuthorizationData(ecrClient);
                 var creds = DecodeCredentials(authToken);
                 return (creds.Username, creds.Password, authToken.ProxyEndpoint);
             }
@@ -52,10 +54,20 @@ namespace Calamari.CloudAccounts
         public static async Task<(string Username, string Password, string RegistryUri)> GetEcrAccessKeyCredentials(IVariables variables, string accessKey, string secretKey)
         {
             var region = variables.Get(AuthenticationVariables.Aws.Region);
-            var credentials = new BasicAWSCredentials(accessKey, secretKey);
+            var regionEndpoint = RegionEndpoint.GetBySystemName(region);
+            AmazonECRClient client;
+            if (accessKey.IsNullOrEmpty() || secretKey.IsNullOrEmpty())
+            {
+                client = new AmazonECRClient(regionEndpoint);
+            }
+            else
+            {
+                var credentials = new BasicAWSCredentials(accessKey, secretKey);
+                client = new AmazonECRClient(credentials, regionEndpoint);
+            }
             try
             {
-                var authToken = await GetAuthorizationData(credentials, region);
+                var authToken = await GetAuthorizationData(client);
                 var creds = DecodeCredentials(authToken);
                 return (creds.Username, creds.Password, authToken.ProxyEndpoint);
             }
@@ -65,10 +77,8 @@ namespace Calamari.CloudAccounts
             }
         }
 
-        static async Task<AuthorizationData> GetAuthorizationData(AWSCredentials credentials, string region)
+        static async Task<AuthorizationData> GetAuthorizationData(AmazonECRClient client)
         {
-            var regionEndpoint = RegionEndpoint.GetBySystemName(region);
-            var client = new AmazonECRClient(credentials, regionEndpoint);
             var token = await client.GetAuthorizationTokenAsync(new GetAuthorizationTokenRequest());
             var authToken = token.AuthorizationData.FirstOrDefault();
             if (authToken == null)
