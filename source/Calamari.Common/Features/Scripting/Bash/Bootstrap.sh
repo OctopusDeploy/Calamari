@@ -135,8 +135,16 @@ function new_octopusartifact
 
 	if [ -z "$ofn" ]
 	then
-	    ofn=`basename "$pth"`
+	    ofn=$(basename "$pth")
 	fi
+	
+	# Fully qualify the path (also check if realpath exists)
+	if [ -x "$(command -v realpath)" ];
+  then
+	    pth="$(realpath "$pth")" 
+  else 
+      pth="$(cd "$(dirname -- "$pth")" >/dev/null; pwd -P)/$(basename -- "$pth")"
+  fi	
 
 	echo "##octopus[stdout-verbose]"
 	echo "Artifact $ofn will be collected from $pth after this step completes"

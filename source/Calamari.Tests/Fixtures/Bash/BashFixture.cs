@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Calamari.Common.Plumbing;
 using Calamari.Deployment;
 using Calamari.Testing.Requirements;
 using Calamari.Tests.Helpers;
@@ -9,6 +10,8 @@ namespace Calamari.Tests.Fixtures.Bash
     [TestFixture]
     public class BashFixture : CalamariFixture
     {
+        static bool IsRunningOnUnixLikeEnvironment => CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac;
+
         [Test]
         [RequiresBashDotExeIfOnWindows]
         public void ShouldPrintEncodedVariable()
@@ -37,12 +40,17 @@ namespace Calamari.Tests.Fixtures.Bash
         [RequiresBashDotExeIfOnWindows]
         public void ShouldCreateArtifact()
         {
-            var (output, _) = RunScript("create-artifact.sh");
-
-            Assert.Multiple(() => {
-                output.AssertSuccess();
-                output.AssertOutput("##octopus[createArtifact path='Li9zdWJkaXIvYW5vdGhlcmRpci9teWZpbGU=' name='bXlmaWxl' length='MA==']");
-            });
+            
+            var artifactPath = IsRunningOnUnixLikeEnvironment ? @"\tmp\calamari\File.txt" : @"C:\Path\File.txt";
+            
+            var (output, _) = RunScript(
+                                        "create-artifact.sh",
+                                        new Dictionary<string, string> {{"BashFixture.ShouldCreateArtifact.Path", artifactPath}});
+            output.AssertSuccess();
+            var expectedArtifactServiceMessage = IsRunningOnUnixLikeEnvironment
+                ? "##octopus[createArtifact path='L3RtcC9jYWxhbWFyaS9GaWxlLnR4dA==' name='XHRtcFxjYWxhbWFyaVxGaWxlLnR4dA==' length='MA==']"
+                : "##octopus[createArtifact path='QzpcUGF0aFxGaWxlLnR4dA==' name='RmlsZS50eHQ=' length='MA==']";
+            output.AssertOutput(expectedArtifactServiceMessage);
         }
         
         [Test]
