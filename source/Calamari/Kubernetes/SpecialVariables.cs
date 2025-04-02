@@ -22,7 +22,7 @@ namespace Calamari.Kubernetes
         public const string CustomResourceYamlFileName = "Octopus.Action.KubernetesContainers.CustomResourceYamlFileName";
         public const string GroupedYamlDirectories = "Octopus.Action.KubernetesContainers.YamlDirectories";
         public const string KustomizeOverlayPath = "Octopus.Action.Kubernetes.Kustomize.OverlayPath";
-        
+
         public const string Timeout = "Octopus.Action.Kubernetes.DeploymentTimeout";
         public const string WaitForJobs = "Octopus.Action.Kubernetes.WaitForJobs";
         public const string PrintVerboseKubectlOutputOnError = "Octopus.Action.Kubernetes.PrintVerboseKubectlOutputOnError";
@@ -38,7 +38,7 @@ namespace Calamari.Kubernetes
 
         public const string ServerSideApplyEnabled = "Octopus.Action.Kubernetes.ServerSideApply.Enabled";
         public const string ServerSideApplyForceConflicts = "Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts";
-        
+
         public static class Helm
         {
             public const string ReleaseName = "Octopus.Action.Helm.ReleaseName";
@@ -55,6 +55,7 @@ namespace Calamari.Kubernetes
             public static class Packages
             {
                 public const string CustomHelmExePackageKey = "HelmExe";
+
                 public static string ValuesFilePath(string key)
                 {
                     return $"Octopus.Action.Package[{key}].ValuesFilePath";
@@ -89,7 +90,7 @@ namespace Calamari.Kubernetes
                     public const string CheckCount = "checkCount";
                 }
             }
-            
+
             public static class ManifestApplied
             {
                 public const string Name = "k8s-manifest-applied";
