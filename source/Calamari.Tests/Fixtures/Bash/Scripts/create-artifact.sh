@@ -1,7 +1,5 @@
 #!/bin/bash
 
-rm -fr ./subdir
-mkdir -p ./subdir/anotherdir
-touch ./subdir/anotherdir/myfile
+artifactPath=$(get_octopusvariable "BashFixture.ShouldCreateArtifact.Path")
 
-new_octopusartifact "./subdir/anotherdir/myfile"
+new_octopusartifact "$artifactPath"
