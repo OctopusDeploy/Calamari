@@ -19,6 +19,7 @@ namespace Calamari.Integration.Packages.Download
     public class S3PackageDownloader : IPackageDownloader
     {
         const string Extension = ".zip";
+        const string DefaultRegion = "us-east-1";
 
         // first item will be used as the default extension before checking for others
         static string[] knownFileExtensions =
@@ -135,7 +136,7 @@ namespace Calamari.Integration.Packages.Download
             throw new CommandException($"Failed to download package {packageId} {version}. Attempted {retry} times.");
         }
 
-        static AmazonS3Client GetS3Client(string? feedUsername, string? feedPassword, string endpoint = "us-west-1")
+        static AmazonS3Client GetS3Client(string? feedUsername, string? feedPassword, string endpoint = DefaultRegion)
         {
             var config = new AmazonS3Config
             {
@@ -171,7 +172,7 @@ namespace Calamari.Integration.Packages.Download
                 // If the bucket is in the us-east-1 region, then the region name is not included in the response.
                 if (string.IsNullOrEmpty(regionString))
                 {
-                    regionString = "us-east-1";
+                    regionString = DefaultRegion;
                 }
                 else if (regionString.Equals("EU", StringComparison.OrdinalIgnoreCase))
                 {
