@@ -514,7 +514,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 var installedToolInvocation = new CommandLineInvocation(executable, invocation.Arguments)
                 {
                     EnvironmentVars = invocation.EnvironmentVars,
-                    WorkingDirectory = invocation.WorkingDirectory,
+                    WorkingDirectory = invocation.GetWorkingDirectory(),
                     OutputAsVerbose = false,
                     OutputToLog = false,
                     AdditionalInvocationOutputSink = captureCommandOutput
