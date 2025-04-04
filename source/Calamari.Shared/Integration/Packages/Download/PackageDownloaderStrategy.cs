@@ -2,9 +2,11 @@
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Integration.Packages.Download.Oci;
 using Octopus.Versioning;
 
 namespace Calamari.Integration.Packages.Download
@@ -35,16 +37,17 @@ namespace Calamari.Integration.Packages.Download
             this.variables = variables;
         }
 
-        public PackagePhysicalFileMetadata DownloadPackage(string packageId,
-                                                           IVersion version,
-                                                           string feedId,
-                                                           Uri feedUri,
-                                                           FeedType feedType,
-                                                           string feedUsername,
-                                                           string feedPassword,
-                                                           bool forcePackageDownload,
-                                                           int maxDownloadAttempts,
-                                                           TimeSpan downloadAttemptBackoff)
+        public PackagePhysicalFileMetadata DownloadPackage(
+            string packageId,
+            IVersion version,
+            string feedId,
+            Uri feedUri,
+            FeedType feedType,
+            string feedUsername,
+            string feedPassword,
+            bool forcePackageDownload,
+            int maxDownloadAttempts,
+            TimeSpan downloadAttemptBackoff)
         {
             IPackageDownloader? downloader = null;
             switch (feedType)
@@ -62,13 +65,22 @@ namespace Calamari.Integration.Packages.Download
                     downloader = new HelmChartPackageDownloader(fileSystem, log);
                     break;
                 case FeedType.OciRegistry:
-                    downloader = new OciPackageDownloader(fileSystem, new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner), log);
+                    downloader = OciPackageDownloader();
+                    break;
+                case FeedType.AwsElasticContainerRegistry:
+                    if (OctopusFeatureToggles.UseOciRegistryPackageFeedsFeatureToggle.IsEnabled(variables))
+                    {
+                        downloader = new OciOrDockerImagePackageDownloader(OciPackageDownloader(), DockerImagePackageDownloader(), new OciRegistryClient(fileSystem, log), log);
+                    }
+                    else
+                    {
+                        downloader = DockerImagePackageDownloader();
+                    }
                     break;
                 case FeedType.Docker:
-                case FeedType.AwsElasticContainerRegistry:
                 case FeedType.AzureContainerRegistry:
                 case FeedType.GoogleContainerRegistry:
-                    downloader = new DockerImagePackageDownloader(engine, fileSystem, commandLineRunner, variables, log);
+                    downloader = DockerImagePackageDownloader();
                     break;
                 case FeedType.S3:
                     downloader = new S3PackageDownloader(log, fileSystem);
@@ -79,6 +91,7 @@ namespace Calamari.Integration.Packages.Download
                 default:
                     throw new NotImplementedException($"No Calamari downloader exists for feed type `{feedType}`.");
             }
+
             Log.Verbose($"Feed type provided `{feedType}` using {downloader.GetType().Name}");
 
             return downloader.DownloadPackage(
@@ -92,5 +105,11 @@ namespace Calamari.Integration.Packages.Download
                 maxDownloadAttempts,
                 downloadAttemptBackoff);
         }
+
+        OciPackageDownloader OciPackageDownloader()
+            => new OciPackageDownloader(fileSystem, new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner), new OciRegistryClient(fileSystem, log), log);
+
+        DockerImagePackageDownloader DockerImagePackageDownloader()
+            => new DockerImagePackageDownloader(engine, fileSystem, commandLineRunner, variables, log);
     }
 }
