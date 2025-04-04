@@ -15,6 +15,7 @@
         KubernetesLiveObjectStatusFeatureToggle,
         KubernetesAuthAwsCliWithExecFeatureToggle,
         ForceUtf8ZipFileDecodingFeatureToggle,
-        DisableFSharpScriptExecutionFeatureToggle
+        DisableFSharpScriptExecutionFeatureToggle,
+        BashParametersArrayFeatureToggle
     }
 }
