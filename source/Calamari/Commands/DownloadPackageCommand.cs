@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Globalization;
+using System.Threading;
 using Calamari.Commands.Support;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Packages;
@@ -81,6 +83,9 @@ namespace Calamari.Commands
         public override int Execute(string[] commandLineArguments)
         {
             Options.Parse(commandLineArguments);
+            
+            // Add Feed Type so we can tell which auth to use when downloading
+            variables.Set(AuthenticationVariables.FeedType, feedType.ToString());
 
             try
             {
@@ -147,7 +152,10 @@ namespace Calamari.Commands
             Guard.NotNullOrWhiteSpace(packageId, "No package ID was specified. Please pass --packageId YourPackage");
             Guard.NotNullOrWhiteSpace(packageVersion, "No package version was specified. Please pass --packageVersion 1.0.0.0");
             Guard.NotNullOrWhiteSpace(feedId, "No feed ID was specified. Please pass --feedId feed-id");
-            if (feedType != FeedType.S3)
+            
+            var usingOidc = !string.IsNullOrWhiteSpace(variables.Get("Jwt"));
+            
+            if (feedType != FeedType.S3 && feedType != FeedType.AwsElasticContainerRegistry && !usingOidc)
             {
                 Guard.NotNullOrWhiteSpace(feedUri, "No feed URI was specified. Please pass --feedUri https://url/to/nuget/feed");
             }
@@ -158,14 +166,14 @@ namespace Calamari.Commands
                 throw new CommandException($"Package version '{packageVersion}' specified is not a valid {versionFormat.ToString()} version string");
             }
 
-            if (feedType == FeedType.S3)
+            if (feedType == FeedType.S3 || feedType == FeedType.AwsElasticContainerRegistry || usingOidc)
             {
                 uri = null;
-            }
+            } 
             else if (!Uri.TryCreate(feedUri, UriKind.Absolute, out uri))
                 throw new CommandException($"URI specified '{feedUri}' is not a valid URI");
 
-            if (!String.IsNullOrWhiteSpace(feedUsername) && String.IsNullOrWhiteSpace(feedPassword))
+            if (!String.IsNullOrWhiteSpace(feedUsername) && String.IsNullOrWhiteSpace(feedPassword) && !usingOidc)
                 throw new CommandException("A username was specified but no password was provided. Please pass --feedPassword \"FeedPassword\"");
 
             if (!int.TryParse(maxDownloadAttempts, out parsedMaxDownloadAttempts))
