@@ -25,13 +25,13 @@ namespace Calamari.Common.Features.Processes.Semaphores
                                            .AddRetry(new RetryStrategyOptions()
                                            {
                                                ShouldHandle = new PredicateBuilder().Handle<Exception>(),
-                                               MaxRetryAttempts = 5, //means we'll wait for a max of around 250ms
+                                               MaxRetryAttempts = 20, //means we'll wait for a max of around 250ms
                                                BackoffType = DelayBackoffType.Linear,
                                                UseJitter = true,
                                                Delay = TimeSpan.FromMilliseconds(50),
                                                OnRetry = args =>
                                                          {
-                                                             log.Verbose($"Waiting {args.RetryDelay.TotalMilliseconds}ms before attempting to acquire the Semaphore again");
+                                                             log.Warn($"Waiting {args.RetryDelay.TotalMilliseconds}ms before attempting to acquire the Semaphore again");
                                                              return default;
                                                          }
                                            })
