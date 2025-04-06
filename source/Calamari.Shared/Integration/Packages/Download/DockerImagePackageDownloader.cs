@@ -27,6 +27,7 @@ namespace Calamari.Integration.Packages.Download
         readonly ICommandLineRunner commandLineRunner;
         readonly IVariables variables;
         readonly ILog log;
+        readonly IEcrFeedLoginDetailsProvider ecrFeedLoginDetailsProvider;
         const string DockerHubRegistry = "index.docker.io";
 
         // Ensures that any credential details are only available for the duration of the acquisition
@@ -41,13 +42,15 @@ namespace Calamari.Integration.Packages.Download
                                             ICalamariFileSystem fileSystem,
                                             ICommandLineRunner commandLineRunner,
                                             IVariables variables,
-                                            ILog log)
+                                            ILog log,
+                                            IEcrFeedLoginDetailsProvider ecrFeedLoginDetailsProvider)
         {
             this.scriptEngine = scriptEngine;
             this.fileSystem = fileSystem;
             this.commandLineRunner = commandLineRunner;
             this.variables = variables;
             this.log = log;
+            this.ecrFeedLoginDetailsProvider = ecrFeedLoginDetailsProvider;
         }
 
         public PackagePhysicalFileMetadata DownloadPackage(string packageId,
@@ -60,6 +63,14 @@ namespace Calamari.Integration.Packages.Download
                                                            int maxDownloadAttempts,
                                                            TimeSpan downloadAttemptBackoff)
         {
+            if (variables.Get(AuthenticationVariables.FeedType) == FeedType.AwsElasticContainerRegistry.ToString())
+            {
+                var loginDetails = ecrFeedLoginDetailsProvider.GetFeedLoginDetails(variables, username, password).GetAwaiter().GetResult();
+                username = loginDetails.Username;
+                password = loginDetails.Password;
+                feedUri = new Uri(loginDetails.FeedUri);
+            }
+            
             //Always try re-pull image, docker engine can take care of the rest
             var fullImageName = GetFullImageName(packageId, version, feedUri);
 
