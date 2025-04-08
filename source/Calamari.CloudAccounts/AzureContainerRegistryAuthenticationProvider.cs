@@ -12,13 +12,13 @@ namespace Calamari.CloudAccounts
 {
     public class AzureContainerRegistryAuthenticationProvider
     {
-        private readonly HttpClient _httpClient;
+        readonly HttpClient _httpClient;
         
         // Constants for ACR authentication
-        private const string AcrUsername = "00000000-0000-0000-0000-000000000000";
-        private const string AcrScope = "registry:catalog:* repository:*:pull repository:*:metadata_read";
-        private const string AzureDefaultScope = "https://management.azure.com/.default";
-
+        const string AcrUsername = "00000000-0000-0000-0000-000000000000";
+        const string AcrScope = "registry:catalog:* repository:*:pull repository:*:metadata_read";
+        const string AzureDefaultScope = "https://management.azure.com/.default";
+        const string ClientAssertionType = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer";
         public AzureContainerRegistryAuthenticationProvider()
         {
             _httpClient = new HttpClient(new HttpClientHandler {Proxy = NetWebRequest.DefaultWebProxy});
@@ -56,7 +56,7 @@ namespace Calamari.CloudAccounts
             {
                 new KeyValuePair<string, string>("client_id", clientId),
                 new KeyValuePair<string, string>("client_assertion", jwt),
-                new KeyValuePair<string, string>("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"),
+                new KeyValuePair<string, string>("client_assertion_type", ClientAssertionType),
                 new KeyValuePair<string, string>("grant_type", "client_credentials"),
                 new KeyValuePair<string, string>("scope", AzureDefaultScope)
             });
