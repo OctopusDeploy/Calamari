@@ -5,7 +5,7 @@ using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Integration.Packages.Download
 {
-    public interface IEcrFeedLoginDetailsProvider
+    public interface IFeedLoginDetailsProvider
     {
         Task<(string Username, string Password, string FeedUri)> GetFeedLoginDetails(
             IVariables variables,
@@ -13,7 +13,7 @@ namespace Calamari.Integration.Packages.Download
             string? password);
     }
 
-    public class EcrFeedLoginDetailsProvider : IEcrFeedLoginDetailsProvider
+    public class EcrFeedLoginDetailsProvider : IFeedLoginDetailsProvider
     {
         public async Task<(string Username, string Password, string FeedUri)> GetFeedLoginDetails(IVariables variables, string? username, string? password)
         {
@@ -25,4 +25,6 @@ namespace Calamari.Integration.Packages.Download
             return await AwsAuthenticationProvider.GetEcrAccessKeyCredentials(variables, username ?? string.Empty, password ?? string.Empty);
         }
     }
+    
+    
 }

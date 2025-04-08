@@ -17,7 +17,7 @@ namespace Calamari.CloudAccounts
     public static class AwsAuthenticationProvider
     {
         const string DefaultSessionName = "OctopusAwsAuthentication";
-           public static async Task<(string Username, string Password, string RegistryUri)> GetEcrOidcCredentials(IVariables variables)
+        public static async Task<(string Username, string Password, string RegistryUri)> GetEcrOidcCredentials(IVariables variables)
         {
             try
             {

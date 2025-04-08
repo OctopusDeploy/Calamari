@@ -11,5 +11,11 @@ namespace Calamari.Common.Plumbing.Variables
             public static readonly string Region = "Region";
             public static readonly string SessionDuration = "SessionDuration";
         }
+        
+        public static class Azure
+        {
+            public static readonly string TenantId = "TenantId";
+            public static readonly string ClientId = "ClientId";
+        }
     }
 }
