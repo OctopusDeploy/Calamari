@@ -44,7 +44,7 @@ namespace Calamari.Tests.AWS
             credentials.Should().NotBeNull();
             credentials.Username.Should().Be("AWS");
             credentials.Password.Should().NotBeEmpty();
-            credentials.RegistryUri.Should().Contain("amazonaws.com");
+            credentials.RegistryUri.Host.Should().Contain("amazonaws.com");
         }
 
         [Test]

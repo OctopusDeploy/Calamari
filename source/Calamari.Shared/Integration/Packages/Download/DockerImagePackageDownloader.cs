@@ -53,12 +53,12 @@ namespace Calamari.Integration.Packages.Download
             this.feedLoginDetailsProviderFactory = feedLoginDetailsProviderFactory;
         }
 
-        (string Username, string Password, string FeedUri) GetContainerRegistryLoginDetails(string feedTypeStr, string username, string password)
+        (string Username, string Password, Uri FeedUri) GetContainerRegistryLoginDetails(string feedTypeStr, string username, string password, Uri feedUri)
         {
             if (Enum.TryParse(feedTypeStr, out FeedType feedType))
             {
                 var feedLoginDetailsProvider = feedLoginDetailsProviderFactory.GetFeedLoginDetailsProvider(feedType);
-                return feedLoginDetailsProvider.GetFeedLoginDetails(variables, username, password).GetAwaiter().GetResult();
+                return feedLoginDetailsProvider.GetFeedLoginDetails(variables, username, password, feedUri).GetAwaiter().GetResult();
             }
             throw new ArgumentException($"Invalid feed type: {feedTypeStr}");
         }
@@ -77,10 +77,10 @@ namespace Calamari.Integration.Packages.Download
             if (feedType == FeedType.AwsElasticContainerRegistry.ToString()
                 || feedType == FeedType.AzureContainerRegistry.ToString())
             {
-                var loginDetails = GetContainerRegistryLoginDetails(feedType, username, password);
+                var loginDetails = GetContainerRegistryLoginDetails(feedType, username, password, feedUri);
                 username = loginDetails.Username;
                 password = loginDetails.Password;
-                feedUri = new Uri(loginDetails.FeedUri);
+                feedUri = loginDetails.FeedUri;
             }
             
             //Always try re-pull image, docker engine can take care of the rest

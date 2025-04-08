@@ -82,7 +82,6 @@ namespace Calamari.Commands
 
         public override int Execute(string[] commandLineArguments)
         {
-            Options.Parse(commandLineArguments);
             
             // Add Feed Type so we can tell which auth to use when downloading
             variables.Set(AuthenticationVariables.FeedType, feedType.ToString());
@@ -108,6 +107,7 @@ namespace Calamari.Commands
                     fileSystem,
                     commandLineRunner,
                     variables);
+                
                 var pkg = packageDownloaderStrategy.DownloadPackage(
                     packageId,
                     version,
@@ -154,8 +154,7 @@ namespace Calamari.Commands
             Guard.NotNullOrWhiteSpace(feedId, "No feed ID was specified. Please pass --feedId feed-id");
             
             var usingOidc = !string.IsNullOrWhiteSpace(variables.Get("Jwt"));
-            
-            if (feedType != FeedType.S3 && feedType != FeedType.AwsElasticContainerRegistry && !usingOidc)
+            if (feedType != FeedType.S3 && feedType != FeedType.AwsElasticContainerRegistry)
             {
                 Guard.NotNullOrWhiteSpace(feedUri, "No feed URI was specified. Please pass --feedUri https://url/to/nuget/feed");
             }
@@ -166,7 +165,7 @@ namespace Calamari.Commands
                 throw new CommandException($"Package version '{packageVersion}' specified is not a valid {versionFormat.ToString()} version string");
             }
 
-            if (feedType == FeedType.S3 || feedType == FeedType.AwsElasticContainerRegistry || usingOidc)
+            if (feedType == FeedType.S3 || feedType == FeedType.AwsElasticContainerRegistry)
             {
                 uri = null;
             } 

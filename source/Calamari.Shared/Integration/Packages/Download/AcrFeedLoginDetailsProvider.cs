@@ -8,12 +8,12 @@ namespace Calamari.Integration.Packages.Download
 {
     public class AcrFeedLoginDetailsProvider: IFeedLoginDetailsProvider
     {
-        public async Task<(string Username, string Password, string FeedUri)> GetFeedLoginDetails(IVariables variables, string? username, string? password)
+        public async Task<(string Username, string Password, Uri FeedUri)> GetFeedLoginDetails(IVariables variables, string? username, string? password, Uri feedUri)
         { 
             var arcAuth = new AzureContainerRegistryAuthenticationProvider();
             var usingOidc = !string.IsNullOrWhiteSpace(variables.Get(AuthenticationVariables.Jwt));
-            Log.Verbose(usingOidc ? "OIDC token detected - using token-based authentication flow" : $"Using username/password authentication flow. Username provided: {!string.IsNullOrEmpty(username)}");
-            return usingOidc ? (await arcAuth.GetAcrOidcCredentials(variables)) : ( await Task.FromResult(arcAuth.GetAcrUserNamePasswordCredentials(username, password, variables)));
+            Log.Verbose(usingOidc ? "Acr Feed - OIDC token detected - using token-based authentication flow" : $"Acr Feed - Using username/password authentication flow. Username provided: {!string.IsNullOrEmpty(username)}");
+            return usingOidc ? (await arcAuth.GetAcrOidcCredentials(variables, feedUri)) : ( await Task.FromResult(arcAuth.GetAcrUserNamePasswordCredentials(username, password, feedUri)));
         }
     }
 }

@@ -24,13 +24,12 @@ namespace Calamari.CloudAccounts
             _httpClient = new HttpClient(new HttpClientHandler {Proxy = NetWebRequest.DefaultWebProxy});
         }
 
-        public (string Username, string Password, string RegistryUri) GetAcrUserNamePasswordCredentials(string username, string password, IVariables variables)
+        public (string Username, string Password, Uri RegistryUri) GetAcrUserNamePasswordCredentials(string username, string password, Uri registryUri)
         {
-            var registryUri = variables.Get("feedUri");
             return (username, password, registryUri);
         }
         
-        public async Task<(string Username, string Password, string RegistryUri)> GetAcrOidcCredentials(IVariables variables)
+        public async Task<(string Username, string Password, Uri RegistryUri)> GetAcrOidcCredentials(IVariables variables, Uri registryUri)
         {
             try
             {
@@ -38,7 +37,6 @@ namespace Calamari.CloudAccounts
                 var jwt = variables.Get(AuthenticationVariables.Jwt);
                 var clientId = variables.Get(AuthenticationVariables.Azure.ClientId);
                 var tenantId = variables.Get(AuthenticationVariables.Azure.TenantId);
-                var registryUri = variables.Get("feedUri");
                 var aadToken = await ExchangeJwtForAccessTokenAsync(jwt, clientId, tenantId);
                 var refreshToken = await GetAcrRefreshTokenAsync(registryUri, aadToken, tenantId);
                 var accessToken = await GetAcrAccessTokenAsync(registryUri, refreshToken);
@@ -83,15 +81,15 @@ namespace Calamari.CloudAccounts
             }
         }
 
-        async Task<string> GetAcrRefreshTokenAsync(string registryUri, string aadToken, string tenantId)
+        async Task<string> GetAcrRefreshTokenAsync(Uri registryUri, string aadToken, string tenantId)
         {
-            var requestUri = $"{registryUri}/oauth2/exchange";
+            var requestUri = $"{registryUri.AbsoluteUri.TrimEnd('/')}/oauth2/exchange";
             using (var request = new HttpRequestMessage(HttpMethod.Post, requestUri))
             {
                 request.Content = new FormUrlEncodedContent(new Dictionary<string, string>
                 {
                     { "grant_type", "access_token" },
-                    { "service", new Uri(registryUri).Host },
+                    { "service", registryUri.Host },
                     { "access_token", aadToken },
                     { "tenant", tenantId }
                 });
@@ -125,15 +123,15 @@ namespace Calamari.CloudAccounts
             }
         }
 
-        async Task<string> GetAcrAccessTokenAsync(string registryUri, string refreshToken)
+        async Task<string> GetAcrAccessTokenAsync(Uri registryUri, string refreshToken)
         {
-            var requestUri = $"{registryUri}/oauth2/token";
+            var requestUri = $"{registryUri.AbsoluteUri.TrimEnd('/')}/oauth2/token";
             using (var request = new HttpRequestMessage(HttpMethod.Post, requestUri))
             {
                 request.Content = new FormUrlEncodedContent(new Dictionary<string, string>
                 {
                     { "grant_type", "refresh_token" },
-                    { "service", new Uri(registryUri).Host },
+                    { "service", registryUri.Host },
                     { "scope", AcrScope },
                     { "refresh_token", refreshToken }
                 });
