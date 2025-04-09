@@ -117,7 +117,7 @@
     <Copy SourceFiles="@(FSharpFiles)" DestinationFolder="$(PublishDir)/FSharp/" />
     <Copy SourceFiles="@(ScriptCSFiles)" DestinationFolder="$(PublishDir)/ScriptCS/" />
   </Target>
-  <Target Name="CopyDotnetScriptFilesAfterBuild" AfterTargets="Build">
+  <Target Name="CopyDotnetScriptFilesAfterBuild" AfterTargets="Build" Condition="'$(IsCrossTargetingBuild)' == 'false'">
     <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(OutDir)/" />
   </Target>
   <Target Name="CopyDotnetScriptFilesAfterPublish" AfterTargets="Publish">

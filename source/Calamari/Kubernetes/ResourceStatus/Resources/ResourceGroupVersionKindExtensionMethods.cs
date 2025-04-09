@@ -29,7 +29,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         {
             if (apiVersion.IsNullOrEmpty())
             {
-                return (null, null);
+                throw new InvalidOperationException($"Invalid API Version: '{apiVersion}'. Must conform to <group>/<version> naming convention.");
             }
             
             var apiVersionParts = apiVersion.Split('/');
@@ -40,7 +40,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
                 case 2:
                     return (apiVersionParts[0], apiVersionParts[1]);
                 default:
-                    return (null, null);
+                    throw new InvalidOperationException($"Invalid API Version: '{apiVersion}'. Must conform to <group>/<version> naming convention.");
             }
         } 
         

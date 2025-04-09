@@ -102,7 +102,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                                                 new ResourceIdentifier(SupportedResourceGroupVersionKinds.SecretV1, "feed-secret", "default"),
                                                 new ResourceIdentifier(SupportedResourceGroupVersionKinds.ConfigMapV1, "configmap", "default"),
                                                 new ResourceIdentifier(SupportedResourceGroupVersionKinds.ServiceV1, "service", "default"),
-                                                new ResourceIdentifier(new ResourceGroupVersionKind(null, null, "CustomResource"), "custom-resource", "default"));
+                                                new ResourceIdentifier(new ResourceGroupVersionKind("ourapi", "v1", "CustomResource"), "custom-resource", "default"));
         }
 
         [Test]

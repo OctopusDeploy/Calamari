@@ -1,3 +1,4 @@
+apiVersion: ourapi/v1
 kind: CustomResource
 metadata:
   name: custom-resource
