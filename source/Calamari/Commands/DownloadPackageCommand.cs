@@ -82,6 +82,7 @@ namespace Calamari.Commands
 
         public override int Execute(string[] commandLineArguments)
         {
+            Options.Parse(commandLineArguments);
             
             // Add Feed Type so we can tell which auth to use when downloading
             variables.Set(AuthenticationVariables.FeedType, feedType.ToString());
