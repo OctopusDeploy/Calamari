@@ -17,7 +17,7 @@ namespace Calamari.CloudAccounts
     public static class AwsAuthenticationProvider
     {
         const string DefaultSessionName = "OctopusAwsAuthentication";
-           public static async Task<(string Username, string Password, string RegistryUri)> GetEcrOidcCredentials(IVariables variables)
+        public static async Task<(string Username, string Password, Uri RegistryUri)> GetEcrOidcCredentials(IVariables variables)
         {
             try
             {
@@ -41,7 +41,7 @@ namespace Calamari.CloudAccounts
                 var ecrClient = new AmazonECRClient(credentials, regionEndpoint);
                 var authToken = await GetAuthorizationData(ecrClient);
                 var creds = DecodeCredentials(authToken);
-                return (creds.Username, creds.Password, authToken.ProxyEndpoint);
+                return (creds.Username, creds.Password, new Uri(authToken.ProxyEndpoint));
             }
             catch (Exception ex)
             {
@@ -51,7 +51,7 @@ namespace Calamari.CloudAccounts
             }
         }
         
-        public static async Task<(string Username, string Password, string RegistryUri)> GetEcrAccessKeyCredentials(IVariables variables, string accessKey, string secretKey)
+        public static async Task<(string Username, string Password, Uri RegistryUri)> GetEcrAccessKeyCredentials(IVariables variables, string accessKey, string secretKey)
         {
             var region = variables.Get(AuthenticationVariables.Aws.Region);
             var regionEndpoint = RegionEndpoint.GetBySystemName(region);
@@ -69,7 +69,7 @@ namespace Calamari.CloudAccounts
             {
                 var authToken = await GetAuthorizationData(client);
                 var creds = DecodeCredentials(authToken);
-                return (creds.Username, creds.Password, authToken.ProxyEndpoint);
+                return (creds.Username, creds.Password, new Uri(authToken.ProxyEndpoint));
             }
             catch (Exception ex)
             {
