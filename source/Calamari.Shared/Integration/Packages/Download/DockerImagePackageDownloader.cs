@@ -27,7 +27,7 @@ namespace Calamari.Integration.Packages.Download
         readonly ICommandLineRunner commandLineRunner;
         readonly IVariables variables;
         readonly ILog log;
-        readonly IEcrFeedLoginDetailsProvider ecrFeedLoginDetailsProvider;
+        readonly IFeedLoginDetailsProviderFactory feedLoginDetailsProviderFactory;
         const string DockerHubRegistry = "index.docker.io";
 
         // Ensures that any credential details are only available for the duration of the acquisition
@@ -43,16 +43,26 @@ namespace Calamari.Integration.Packages.Download
                                             ICommandLineRunner commandLineRunner,
                                             IVariables variables,
                                             ILog log,
-                                            IEcrFeedLoginDetailsProvider ecrFeedLoginDetailsProvider)
+                                            IFeedLoginDetailsProviderFactory feedLoginDetailsProviderFactory)
         {
             this.scriptEngine = scriptEngine;
             this.fileSystem = fileSystem;
             this.commandLineRunner = commandLineRunner;
             this.variables = variables;
             this.log = log;
-            this.ecrFeedLoginDetailsProvider = ecrFeedLoginDetailsProvider;
+            this.feedLoginDetailsProviderFactory = feedLoginDetailsProviderFactory;
         }
 
+        (string Username, string Password, Uri FeedUri) GetContainerRegistryLoginDetails(string feedTypeStr, string username, string password, Uri feedUri)
+        {
+            if (Enum.TryParse(feedTypeStr, out FeedType feedType))
+            {
+                var feedLoginDetailsProvider = feedLoginDetailsProviderFactory.GetFeedLoginDetailsProvider(feedType);
+                return feedLoginDetailsProvider.GetFeedLoginDetails(variables, username, password, feedUri).GetAwaiter().GetResult();
+            }
+            throw new ArgumentException($"Invalid feed type: {feedTypeStr}");
+        }
+        
         public PackagePhysicalFileMetadata DownloadPackage(string packageId,
                                                            IVersion version,
                                                            string feedId,
@@ -63,12 +73,14 @@ namespace Calamari.Integration.Packages.Download
                                                            int maxDownloadAttempts,
                                                            TimeSpan downloadAttemptBackoff)
         {
-            if (variables.Get(AuthenticationVariables.FeedType) == FeedType.AwsElasticContainerRegistry.ToString())
+            var feedType = variables.Get(AuthenticationVariables.FeedType);
+            if (feedType == FeedType.AwsElasticContainerRegistry.ToString()
+                || feedType == FeedType.AzureContainerRegistry.ToString())
             {
-                var loginDetails = ecrFeedLoginDetailsProvider.GetFeedLoginDetails(variables, username, password).GetAwaiter().GetResult();
+                var loginDetails = GetContainerRegistryLoginDetails(feedType, username, password, feedUri);
                 username = loginDetails.Username;
                 password = loginDetails.Password;
-                feedUri = new Uri(loginDetails.FeedUri);
+                feedUri = loginDetails.FeedUri;
             }
             
             //Always try re-pull image, docker engine can take care of the rest
