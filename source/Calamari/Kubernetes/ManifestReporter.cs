@@ -42,19 +42,18 @@ namespace Calamari.Kubernetes
             if (!FeatureToggle.KubernetesLiveObjectStatusFeatureToggle.IsEnabled(variables)
                 && !OctopusFeatureToggles.KubernetesObjectManifestInspectionFeatureToggle.IsEnabled(variables))
                 return;
-
-            using (var yamlFile = fileSystem.OpenFile(filePath, FileAccess.Read, FileShare.Read))
+            try
             {
-                try
+                using (var yamlFile = fileSystem.OpenFile(filePath, FileAccess.Read, FileShare.Read))
+                using (var reader = new StreamReader(yamlFile))
                 {
-                    var yamlStream = new YamlStream();
-                    yamlStream.Load(new StreamReader(yamlFile));
-                    ReportManifestStreamApplied(yamlStream);
+                    var manifest = reader.ReadToEnd();
+                    ReportManifestApplied(manifest);
                 }
-                catch (SemanticErrorException)
-                {
-                    log.Warn("Invalid YAML syntax found, resources will not be added to live object status");
-                }
+            }
+            catch (Exception ex)
+            {
+                LogException(ex);
             }
         }
 
@@ -70,10 +69,21 @@ namespace Calamari.Kubernetes
                 yamlStream.Load(new StringReader(yamlManifest));
                 ReportManifestStreamApplied(yamlStream);
             }
-            catch (SemanticErrorException)
+            catch (YamlException yamlEx)
             {
                 log.Warn("Invalid YAML syntax found, resources will not be added to live object status");
+                log.Verbose($"YAML syntax error: {yamlEx.Message}");
             }
+            catch (Exception ex)
+            {
+                LogException(ex);
+            }
+        }
+
+        void LogException(Exception e)
+        {
+            log.Warn("Failed to report manifest, resources will not be added to live object status");
+            log.Verbose($"Error: {e.Message}");
         }
 
         void ReportManifestStreamApplied(YamlStream yamlStream)

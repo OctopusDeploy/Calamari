@@ -31,6 +31,11 @@ namespace Calamari.Common.Plumbing.Variables
         {
             return variableName.StartsWith("Octopus.Script.Module[");
         }
+        
+        public static bool IsBuildInformationVariable(string variableName)
+        {
+            return variableName.StartsWith("Octopus.Deployment.PackageBuildInformation") || variableName.StartsWith("Octopus.Deployment.PackageBuildMetadata");
+        }
 
         public static bool IsExcludedFromLocalVariables(string name)
         {
