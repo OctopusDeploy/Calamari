@@ -12,8 +12,13 @@ namespace Calamari.Integration.Packages.Download
         { 
             var gcrAuth = new GoogleAuthenticationProvider();
             var usingOidc = !string.IsNullOrWhiteSpace(variables.Get(AuthenticationVariables.Jwt));
-            Log.Verbose(usingOidc ? "Gcr Feed - OIDC token detected - using token-based authentication flow." : "Gcr Feed - Using json key authentication flow.");
-            return usingOidc ? (await gcrAuth.GetGcrOidcCredentials(variables, feedUri)) : ( await Task.FromResult(gcrAuth.GetGcrUserNamePasswordCredentials(username, password, feedUri)));
+            if (usingOidc) {
+                Log.Verbose("Gcr Feed - OIDC token detected - using token-based authentication flow.");
+                return await gcrAuth.GetGcrOidcCredentials(variables, feedUri);
+            } 
+            
+            Log.Verbose("Gcr Feed - Using json key authentication flow.");
+            return await Task.FromResult(gcrAuth.GetGcrUserNamePasswordCredentials(username, password, feedUri));
         }
     }
 }
