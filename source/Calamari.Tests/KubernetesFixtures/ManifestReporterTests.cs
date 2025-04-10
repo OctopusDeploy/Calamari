@@ -87,6 +87,36 @@ quoted_float: ""5.75""
                 mr.ReportManifestFileApplied(filePath);
 
                 memoryLog.ServiceMessages.Should().BeEmpty();
+
+                memoryLog.MessagesWarnFormatted.Should().ContainSingle(x => x.Contains("Invalid YAML syntax found, resources will not be added to live object status"));
+            }
+        }
+
+        [TestCase(nameof(FeatureToggle.KubernetesLiveObjectStatusFeatureToggle))]
+        [TestCase(OctopusFeatureToggles.KnownSlugs.KubernetesObjectManifestInspection)]
+        public void GivenInvalidManifestAndVerboseVariableSet_ShouldLogErrorAndManifest(string enabledFeatureToggle)
+        {
+            var memoryLog = new InMemoryLog();
+            var variables = new CalamariVariables();
+            variables.Set(KnownVariables.EnabledFeatureToggles, enabledFeatureToggle);
+            variables.Set(SpecialVariables.PrintVerboseManifestOnParsingError, bool.TrueString);
+
+            var namespaceResolver = Substitute.For<IKubernetesManifestNamespaceResolver>();
+
+            var yaml = "text: \"Bar";
+            using (CreateFile(yaml, out var filePath))
+            {
+                var mr = new ManifestReporter(variables, CalamariPhysicalFileSystem.GetPhysicalFileSystem(), memoryLog, namespaceResolver);
+
+                mr.ReportManifestFileApplied(filePath);
+
+                memoryLog.ServiceMessages.Should().BeEmpty();
+
+                memoryLog.MessagesWarnFormatted.Should().ContainSingle(x => x.Contains("Invalid YAML syntax found, resources will not be added to live object status") && 
+                                                                            x.Contains("The error and manifest are verbose logged below"));
+
+                memoryLog.MessagesVerboseFormatted.Should().Contain(x => x.Contains("While scanning a quoted scalar"));
+                memoryLog.MessagesVerboseFormatted.Should().Contain(x => x.Contains(yaml));
             }
         }
 
@@ -116,7 +146,6 @@ quoted_float: ""5.75""
                 memoryLog.ServiceMessages.First().Properties.Should().Contain(new KeyValuePair<string, string>("ns", "my-cool-namespace"));
             }
         }
-
 
         [TestCase(nameof(FeatureToggle.KubernetesLiveObjectStatusFeatureToggle))]
         [TestCase(OctopusFeatureToggles.KnownSlugs.KubernetesObjectManifestInspection)]
