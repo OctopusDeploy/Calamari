@@ -18,6 +18,8 @@ namespace Calamari.Integration.Packages.Download
                     return new EcrFeedLoginDetailsProvider();
                 case FeedType.AzureContainerRegistry:
                     return new AcrFeedLoginDetailsProvider();
+                case FeedType.GoogleContainerRegistry:
+                    return new GcrFeedLoginDetailsProvider();
                 default:
                     throw new NotImplementedException($"No login provider implementation for feed type `{feedType}`.");
             }

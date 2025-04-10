@@ -75,7 +75,8 @@ namespace Calamari.Integration.Packages.Download
         {
             var feedType = variables.Get(AuthenticationVariables.FeedType);
             if (feedType == FeedType.AwsElasticContainerRegistry.ToString()
-                || feedType == FeedType.AzureContainerRegistry.ToString())
+                || feedType == FeedType.AzureContainerRegistry.ToString()
+                || feedType == FeedType.GoogleContainerRegistry.ToString())
             {
                 var loginDetails = GetContainerRegistryLoginDetails(feedType, username, password, feedUri);
                 username = loginDetails.Username;
