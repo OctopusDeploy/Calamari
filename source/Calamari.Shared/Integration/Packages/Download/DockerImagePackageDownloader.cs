@@ -29,6 +29,13 @@ namespace Calamari.Integration.Packages.Download
         readonly ILog log;
         readonly IFeedLoginDetailsProviderFactory feedLoginDetailsProviderFactory;
         const string DockerHubRegistry = "index.docker.io";
+        
+        static readonly HashSet<FeedType> SupportedLoginDetailsFeedTypes = new HashSet<FeedType>
+        {
+            FeedType.AwsElasticContainerRegistry,
+            FeedType.AzureContainerRegistry,
+            FeedType.GoogleContainerRegistry
+        };
 
         // Ensures that any credential details are only available for the duration of the acquisition
         readonly Dictionary<string, string> environmentVariables = new Dictionary<string, string>()
@@ -73,12 +80,11 @@ namespace Calamari.Integration.Packages.Download
                                                            int maxDownloadAttempts,
                                                            TimeSpan downloadAttemptBackoff)
         {
-            var feedType = variables.Get(AuthenticationVariables.FeedType);
-            if (feedType == FeedType.AwsElasticContainerRegistry.ToString()
-                || feedType == FeedType.AzureContainerRegistry.ToString()
-                || feedType == FeedType.GoogleContainerRegistry.ToString())
+            var contributedFeedType = variables.Get(AuthenticationVariables.FeedType);
+            if (Enum.TryParse(contributedFeedType, ignoreCase: true, out FeedType feedType) &&
+                SupportedLoginDetailsFeedTypes.Contains(feedType))
             {
-                var loginDetails = GetContainerRegistryLoginDetails(feedType, username, password, feedUri);
+                var loginDetails = GetContainerRegistryLoginDetails(contributedFeedType, username, password, feedUri);
                 username = loginDetails.Username;
                 password = loginDetails.Password;
                 feedUri = loginDetails.FeedUri;

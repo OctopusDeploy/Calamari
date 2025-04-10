@@ -8,7 +8,6 @@ using Calamari.Common.Plumbing.Variables;
 using Newtonsoft.Json;
 using NetWebRequest = System.Net.WebRequest;
 
-
 namespace Calamari.CloudAccounts
 {
     public class GoogleAuthenticationProvider
@@ -34,7 +33,10 @@ namespace Calamari.CloudAccounts
             {
                 Log.Verbose("Starting GCR OIDC credential retrieval process");
                 var jwt = variables.Get(AuthenticationVariables.Jwt);
-                var audience = variables.Get(AuthenticationVariables.Google.Audience)?.Replace("https:", "");
+                var rawAudience = variables.Get(AuthenticationVariables.Google.Audience);
+                var audience = Uri.TryCreate(rawAudience, UriKind.Absolute, out var uri)
+                    ? $"//{uri.Host}{uri.AbsolutePath}"
+                    : rawAudience;
                 var gcrToken = await ExchangeJwtForGcrToken(jwt, audience);
                 Log.Verbose($"Successfully retrieved credentials for {registryUri}");
                 return (OidcUsername, gcrToken, registryUri);
