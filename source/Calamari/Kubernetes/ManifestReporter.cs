@@ -51,10 +51,9 @@ namespace Calamari.Kubernetes
                     ReportManifestApplied(manifest);
                 }
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                log.Warn("Failed to report manifest, resources will not be added to live object status");
-                log.Verbose($"Error: {e.Message}");
+                LogException(ex);
             }
         }
 
@@ -70,11 +69,21 @@ namespace Calamari.Kubernetes
                 yamlStream.Load(new StringReader(yamlManifest));
                 ReportManifestStreamApplied(yamlStream);
             }
-            catch (YamlException e)
+            catch (YamlException yamlEx)
             {
                 log.Warn("Invalid YAML syntax found, resources will not be added to live object status");
-                log.Verbose($"YAML syntax error: {e.Message}");
+                log.Verbose($"YAML syntax error: {yamlEx.Message}");
             }
+            catch (Exception ex)
+            {
+                LogException(ex);
+            }
+        }
+
+        void LogException(Exception e)
+        {
+            log.Warn("Failed to report manifest, resources will not be added to live object status");
+            log.Verbose($"Error: {e.Message}");
         }
 
         void ReportManifestStreamApplied(YamlStream yamlStream)
