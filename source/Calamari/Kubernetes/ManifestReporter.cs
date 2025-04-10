@@ -9,7 +9,6 @@ using Calamari.Common.Plumbing.Variables;
 using YamlDotNet.Core;
 using YamlDotNet.RepresentationModel;
 using YamlDotNet.Serialization;
-using YamlDotNet.Serialization.NamingConventions;
 
 namespace Calamari.Kubernetes
 {
@@ -43,25 +42,26 @@ namespace Calamari.Kubernetes
                 && !OctopusFeatureToggles.KubernetesObjectManifestInspectionFeatureToggle.IsEnabled(variables))
                 return;
 
-            using (var yamlFile = fileSystem.OpenFile(filePath, FileAccess.Read, FileShare.Read))
+            try
             {
-                try
+                using (var yamlFile = fileSystem.OpenFile(filePath, FileAccess.Read, FileShare.Read))
+                using (var reader = new StreamReader(yamlFile))
                 {
-                    var yamlStream = new YamlStream();
-                    yamlStream.Load(new StreamReader(yamlFile));
-                    ReportManifestStreamApplied(yamlStream);
+                    //read the manifest
+                    var manifest = reader.ReadToEnd();
+                    ReportManifestApplied(manifest);
                 }
-                catch (SemanticErrorException)
-                {
-                    log.Warn("Invalid YAML syntax found, resources will not be added to live object status");
-                }
+            }
+            catch (Exception e)
+            {
+                log.Warn($"Failed to read yaml manifest at {filePath}, resources will not be added to live object status.");
+                log.Verbose($"Error: {e.Message}");
             }
         }
 
         public void ReportManifestApplied(string yamlManifest)
         {
-            if (!FeatureToggle.KubernetesLiveObjectStatusFeatureToggle.IsEnabled(variables)
-                && !OctopusFeatureToggles.KubernetesObjectManifestInspectionFeatureToggle.IsEnabled(variables))
+            if (!FeatureToggle.KubernetesLiveObjectStatusFeatureToggle.IsEnabled(variables) && !OctopusFeatureToggles.KubernetesObjectManifestInspectionFeatureToggle.IsEnabled(variables))
                 return;
 
             try
@@ -70,9 +70,9 @@ namespace Calamari.Kubernetes
                 yamlStream.Load(new StringReader(yamlManifest));
                 ReportManifestStreamApplied(yamlStream);
             }
-            catch (SemanticErrorException)
+            catch (YamlException e)
             {
-                log.Warn("Invalid YAML syntax found, resources will not be added to live object status");
+                LogYamlException(e, yamlManifest);
             }
         }
 
@@ -82,7 +82,7 @@ namespace Calamari.Kubernetes
             {
                 if (!(document.RootNode is YamlMappingNode rootNode))
                 {
-                    log.Warn("Could not parse manifest, resources will not be added to live object status");
+                    log.Warn("Could not parse manifest, resources will not be added to live object status.");
                     continue;
                 }
 
@@ -99,6 +99,23 @@ namespace Calamari.Kubernetes
                                                  });
 
                 log.WriteServiceMessage(message);
+            }
+        }
+
+        void LogYamlException(YamlException e, string manifest)
+        {
+            if (variables.GetFlag(SpecialVariables.PrintVerboseManifestOnParsingError))
+            {
+                log.Warn("Invalid YAML syntax found, resources will not be added to live object status. The error and manifest are verbose logged below.");
+                log.Verbose("---------------------------");
+                log.Verbose($"Error: {e.Message}");
+                log.Verbose("---------------------------");
+                log.Verbose(manifest);
+                log.Verbose("---------------------------");
+            }
+            else
+            {
+                log.Warn($"Invalid YAML syntax found, resources will not be added to live object status. To view the error and manifest, set Octopus Variable '{SpecialVariables.PrintVerboseManifestOnParsingError}' to 'true'");
             }
         }
 
