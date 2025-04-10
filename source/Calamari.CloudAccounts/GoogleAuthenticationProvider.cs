@@ -57,9 +57,8 @@ namespace Calamari.CloudAccounts
                 { "subject_token", jwt },
                 { "subject_token_type", "urn:ietf:params:oauth:token-type:jwt" }
             });
-    
-            var response = httpClient.PostAsync(StsEndpoint, requestContent, CancellationToken.None)
-                                     .GetAwaiter().GetResult();
+
+            var response = await httpClient.PostAsync(StsEndpoint, requestContent, CancellationToken.None);
             if (!response.IsSuccessStatusCode)
             {
                 var errorContent = await response.Content.ReadAsStringAsync();
