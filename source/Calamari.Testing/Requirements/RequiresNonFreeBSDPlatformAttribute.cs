@@ -8,7 +8,7 @@ namespace Calamari.Testing.Requirements
 {
     public class RequiresNonFreeBSDPlatformAttribute : NUnitAttribute, IApplyToTest
     {
-        readonly string reason;
+        readonly string? reason;
 
         public RequiresNonFreeBSDPlatformAttribute()
         {

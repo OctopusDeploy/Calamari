@@ -28,7 +28,7 @@ namespace Calamari.Common.Features.Processes
                 var exitCode = SilentProcessRunner.ExecuteCommand(
                     invocation.Executable,
                     invocation.Arguments,
-                    invocation.WorkingDirectory,
+                    invocation.GetWorkingDirectory(),
                     invocation.EnvironmentVars,
                     invocation.UserName,
                     invocation.Password,
@@ -39,7 +39,7 @@ namespace Calamari.Common.Features.Processes
                     invocation.ToString(),
                     exitCode.ExitCode,
                     exitCode.ErrorOutput,
-                    invocation.WorkingDirectory);
+                    invocation.GetWorkingDirectory());
             }
             catch (Exception ex)
             {
@@ -53,7 +53,7 @@ namespace Calamari.Common.Features.Processes
                     invocation.ToString(),
                     -1,
                     ex.ToString(),
-                    invocation.WorkingDirectory);
+                    invocation.GetWorkingDirectory());
             }
         }
 
