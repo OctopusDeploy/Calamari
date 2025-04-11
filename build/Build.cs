@@ -85,7 +85,7 @@ namespace Calamari.Build
         [Parameter]
         readonly string? TargetRuntime;
 
-        [GitVersion]
+        [GitVersion(UpdateBuildNumber = false)]
         readonly GitVersion? GitVersionInfo;
 
         static readonly List<string> CalamariProjectsToSkipConsolidation = new() { "Calamari.CloudAccounts", "Calamari.Common", "Calamari.ConsolidateCalamariPackages" };
@@ -574,15 +574,12 @@ namespace Calamari.Build
                      }
                  });
 
-        Target SetTeamCityVersion => d => d.Executes(() => TeamCity.Instance?.SetBuildNumber(NugetVersion.Value));
-
         Target BuildLocal => d =>
             d.DependsOn(PackCalamariConsolidatedNugetPackage)
              .DependsOn(UpdateCalamariVersionOnOctopusServer);
 
         Target BuildCi => d =>
-            d.DependsOn(SetTeamCityVersion)
-             .DependsOn(Pack)
+            d.DependsOn(Pack)
              .DependsOn(PackCalamariConsolidatedNugetPackage);
 
         public static int Main() => Execute<Build>(x => IsServerBuild ? x.BuildCi : x.BuildLocal);
