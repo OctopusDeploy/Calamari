@@ -35,7 +35,7 @@ namespace Calamari.Build
 
         [Parameter("Run packing step in parallel")] readonly bool PackInParallel;
 
-        [Parameter] readonly DotNetVerbosity BuildVerbosity = DotNetVerbosity.Minimal;
+        [Parameter] readonly DotNetVerbosity BuildVerbosity = DotNetVerbosity.minimal;
 
         [Parameter] readonly bool SignBinaries;
 
