@@ -1,0 +1,11 @@
+{
+  "storageAccountName": {
+    "value": "#{StorageAccountName}"
+  },
+  "location": {
+    "value": "#{Location}"
+  },
+  "sku": {
+    "value": "#{SKU}"
+  }
+}

@@ -330,7 +330,7 @@ namespace Calamari.Testing
             return result;
         }
         
-        Task<int> ExecuteWrapped(IReadOnlyCollection<string> paths, Func<Task<int>> func)
+        async Task<int> ExecuteWrapped(IReadOnlyCollection<string> paths, Func<Task<int>> func)
         {
             if (paths.Count > 0)
             {
@@ -339,7 +339,7 @@ namespace Calamari.Testing
                 {
                     Environment.SetEnvironmentVariable("PATH", $"{originalPath}{Path.PathSeparator}{string.Join(Path.PathSeparator.ToString(), paths)}", EnvironmentVariableTarget.Process);
 
-                    return func();
+                    return await func();
                 }
                 finally
                 {
@@ -347,7 +347,7 @@ namespace Calamari.Testing
                 }
             }
 
-            return func();
+            return await func();
         }
     }
 }

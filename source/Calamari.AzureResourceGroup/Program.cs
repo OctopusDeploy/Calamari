@@ -23,6 +23,7 @@ namespace Calamari.AzureResourceGroup
             builder.RegisterType<TemplateService>();
             builder.RegisterType<ResourceGroupTemplateNormalizer>().As<IResourceGroupTemplateNormalizer>();
             builder.RegisterType<TemplateResolver>().As<ITemplateResolver>().SingleInstance();
+            builder.RegisterType<AzureResourceGroupOperator>();
         }
 
         protected override IEnumerable<Assembly> GetProgramAssembliesToRegister()
