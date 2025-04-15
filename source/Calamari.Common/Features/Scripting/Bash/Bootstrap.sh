@@ -307,6 +307,72 @@ function decrypt_and_parse_variables {
     exec 3<&-
 }
 
+# -----------------------------------------------------------------------------
+# Functions to report Kubernetes Manifests via service message
+#	Accepts 2 arguments:
+#	  string: the namespace
+#	  string: the manifest
+# -----------------------------------------------------------------------------
+function report_kubernetes_manifest 
+{
+  MANIFEST="$1"
+  NAMESPACE="$2"
+  
+  
+  LINES=()
+
+	# Read lines from file into the array
+	while IFS= read -r LINE; do
+		LINES+=("$LINE")
+	done <<< "$MANIFEST"
+
+  MANIFESTS=()
+  
+  CURRENT=""
+	for LINE in "${LINES[@]}"; do
+		if [ "$LINE" = "---" ];
+		then
+			MANIFESTS+=("$CURRENT")
+			CURRENT=""
+		else
+			CURRENT="$CURRENT$LINE\n"	
+			echo "$CURRENT"		
+		fi
+    done
+	MANIFESTS+=("$CURRENT")
+
+	echo "${MANIFESTS[@]}"
+ 
+    for i in "${MANIFESTS[@]}"; do
+      if [ -z "$i" ]
+      then
+        continue 
+      fi      
+      
+      MESSAGE="##octopus[k8s-manifest-applied manifest='$(encode_servicemessagevalue "$i")'"
+      
+      if [ -n "$NAMESPACE" ]
+      then
+        MESSAGE="$MESSAGE ns='$(encode_servicemessagevalue "$NAMESPACE")'"
+      fi
+      
+      MESSAGE="$MESSAGE]"
+      
+      echo "$MESSAGE"
+      
+    done
+}
+
+function report_kubernetes_manifest_file 
+{
+  PATH="$1"
+  NAMESPACE="$2"
+  
+  MANIFEST=$(cat "$PATH")
+  
+  report_kubernetes_manifest "$MANIFEST" "$NAMESPACE"
+}
+
 bashParametersArrayFeatureToggle=#### BashParametersArrayFeatureToggle ####
 
 if [ "$bashParametersArrayFeatureToggle" = true ]; then
