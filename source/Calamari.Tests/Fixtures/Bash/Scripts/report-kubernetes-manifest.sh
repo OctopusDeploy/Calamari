@@ -1,3 +1,4 @@
+#!/bin/bash
 manifest="""
 \"apiVersion\": \"v1\"
 \"kind\": \"Namespace\"
