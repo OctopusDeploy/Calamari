@@ -329,7 +329,7 @@ function report_kubernetes_manifest
   
   CURRENT=""
 	for LINE in "${LINES[@]}"; do
-		if [ "$LINE" = "---" ]; then
+		if [ "$(echo "$LINE" | xargs)" = "---" ]; then
 			MANIFESTS+=("$CURRENT")
 			CURRENT=""
 		else
