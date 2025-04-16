@@ -358,15 +358,15 @@ function report_kubernetes_manifest
 
 function report_kubernetes_manifest_file 
 {
-  PATH="$1"
+  FULL_PATH="$1"
   NAMESPACE="$2"
   
-  if [ ! -f "$PATH" ]; then
-    write_verbose "No Kubernetes manifest file was found at '$PATH'."
+  if [ ! -f "$FULL_PATH" ]; then
+    write_verbose "No Kubernetes manifest file was found at '$FULL_PATH'."
     return
   fi
   
-  MANIFEST=$(cat "$PATH")
+  MANIFEST=$(cat "$FULL_PATH")
   
   report_kubernetes_manifest "$MANIFEST" "$NAMESPACE"
 }
