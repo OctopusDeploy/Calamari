@@ -172,6 +172,9 @@
     <None Update="KubernetesFixtures\Approved\KubernetesContextScriptWrapperFixture.ExecutionWithEKS_AwsCLIAuthenticator_WithExecFeatureToggleEnabled.approved.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="Fixtures\PowerShell\Scripts\ReportKubernetesManifestFile.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <None Remove="TestResults\**" />

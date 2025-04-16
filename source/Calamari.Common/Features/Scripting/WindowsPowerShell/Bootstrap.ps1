@@ -307,7 +307,7 @@ function Report-KubernetesManifestFile
         [string] $namespace
     )
 
-    if ((Test-Path $fullpath) -eq $false)
+    if ((Test-Path $path) -eq $false)
     {
         Write-Verbose "No Kubernetes manifest file was found at '$path'."
         return
