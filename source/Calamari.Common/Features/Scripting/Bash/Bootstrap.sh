@@ -316,8 +316,7 @@ function decrypt_and_parse_variables {
 function report_kubernetes_manifest 
 {
   MANIFEST="$1"
-  NAMESPACE="$2"
-  
+  NAMESPACE="$2"  
   
   LINES=()
 
@@ -330,43 +329,42 @@ function report_kubernetes_manifest
   
   CURRENT=""
 	for LINE in "${LINES[@]}"; do
-		if [ "$LINE" = "---" ];
-		then
+		if [ "$LINE" = "---" ]; then
 			MANIFESTS+=("$CURRENT")
 			CURRENT=""
 		else
 			CURRENT="$CURRENT$LINE\n"	
-			echo "$CURRENT"		
 		fi
-    done
+  done
+    
 	MANIFESTS+=("$CURRENT")
-
-	echo "${MANIFESTS[@]}"
- 
-    for i in "${MANIFESTS[@]}"; do
-      if [ -z "$i" ]
-      then
-        continue 
-      fi      
-      
-      MESSAGE="##octopus[k8s-manifest-applied manifest='$(encode_servicemessagevalue "$i")'"
-      
-      if [ -n "$NAMESPACE" ]
-      then
-        MESSAGE="$MESSAGE ns='$(encode_servicemessagevalue "$NAMESPACE")'"
-      fi
-      
-      MESSAGE="$MESSAGE]"
-      
-      echo "$MESSAGE"
-      
-    done
+	
+  for i in "${MANIFESTS[@]}"; do
+    if [ -z "$i" ]; then
+      continue 
+    fi      
+    
+    MESSAGE="##octopus[k8s-manifest-applied manifest='$(encode_servicemessagevalue "$i")'"
+    
+    if [ -n "$NAMESPACE" ]; then
+      MESSAGE="$MESSAGE ns='$(encode_servicemessagevalue "$NAMESPACE")'"
+    fi
+    
+    MESSAGE="$MESSAGE]"
+    
+    echo "$MESSAGE"      
+  done
 }
 
 function report_kubernetes_manifest_file 
 {
   PATH="$1"
   NAMESPACE="$2"
+  
+  if [ ! -f "$PATH" ]; then
+    write_verbose "No Kubernetes manifest file was found at '$PATH'."
+    return
+  fi
   
   MANIFEST=$(cat "$PATH")
   
