@@ -1,5 +1,5 @@
 ﻿param([string]$OctopusKey = "")
-{ { StartOfBootstrapScriptDebugLocation } }
+{{StartOfBootstrapScriptDebugLocation}}
 $ErrorActionPreference = 'Stop'
 $PSNativeCommandArgumentPassing = 'Legacy'
 
@@ -719,19 +719,19 @@ Log-VersionTable
 # -----------------------------------------------------------------
 # Variables
 # -----------------------------------------------------------------
-{ { BeforeVariablesDebugLocation } }
+{{ BeforeVariablesDebugLocation}}
 $MaximumVariableCount = 32768
 $OctopusParameters = Decrypt-Variables '{{VariablesIV}}' @'
 {{EncryptedVariablesString}}
 '@
 
-{ { LocalVariableDeclarations } }
+{{LocalVariableDeclarations}}
 
 # -----------------------------------------------------------------
 # Script Modules - after variables
 # -----------------------------------------------------------------
-{ { BeforeScriptModulesDebugLocation } }
-{ { ScriptModules } }
+{{BeforeScriptModulesDebugLocation}}
+{{ScriptModules}}
 
 # -----------------------------------------------------------------
 # Defaults
@@ -749,10 +749,10 @@ Import-CalamariModules
 # -----------------------------------------------------------------
 # Invoke target script
 # -----------------------------------------------------------------
-{ { BeforeLaunchingUserScriptDebugLocation } }
+{{BeforeLaunchingUserScriptDebugLocation}}
 try
 {
-    . '{{TargetScriptFile}}' { { ScriptParameters } }
+    . '{{TargetScriptFile}}' {{ScriptParameters}}
 }
 catch
 {
