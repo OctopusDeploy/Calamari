@@ -719,7 +719,7 @@ Log-VersionTable
 # -----------------------------------------------------------------
 # Variables
 # -----------------------------------------------------------------
-{{ BeforeVariablesDebugLocation}}
+{{BeforeVariablesDebugLocation}}
 $MaximumVariableCount = 32768
 $OctopusParameters = Decrypt-Variables '{{VariablesIV}}' @'
 {{EncryptedVariablesString}}
