@@ -175,6 +175,9 @@
     <None Update="Fixtures\PowerShell\Scripts\ReportKubernetesManifestFile.ps1">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="Fixtures\Bash\Scripts\report-kubernetes-manifest-file.sh">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <None Remove="TestResults\**" />
