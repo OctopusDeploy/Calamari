@@ -273,8 +273,8 @@ function Report-KubernetesManifest
         [string] $namespace
     )
 
-    # The manifest might be multiple documents, so we split on ---
-    $manifests = $manifest -split "---"
+    # The manifest might be multiple documents, so we split on --- (with the newline + any trailing spaces)
+    $manifests = $manifest -split "---\s*[\r|\n|\r\n]"
 
     for ($i = 0; $i -lt $manifests.Count; $i++) {
         $current = $manifests[$i]
@@ -313,7 +313,7 @@ function Report-KubernetesManifestFile
         return
     }
 
-    $manifest = Get-Content -Path $path
+    $manifest = Get-Content -Path $path -Raw
 
     Report-KubernetesManifest -manifest $manifest -namespace $namespace
 }
