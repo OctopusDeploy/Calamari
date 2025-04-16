@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Variables;
@@ -67,6 +68,69 @@ namespace Calamari.Tests.Fixtures.Bash
                                 output.AssertSuccess();
                                 output.AssertOutput("##octopus[progress percentage='NTA=' message='SGFsZiBXYXk=']");
                             });
+        }
+        
+        [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
+        [TestCase(null)]
+        [RequiresBashDotExeIfOnWindows]
+        public void ShouldReportKubernetesManifest(FeatureToggle? featureToggle)
+        {
+            var (output, _) = RunScript("report-kubernetes-manifest.sh", new Dictionary<string, string>().AddFeatureToggleToDictionary(new List<FeatureToggle?>{ featureToggle }));
+
+            Assert.Multiple(() =>
+                            {
+                                output.AssertSuccess();
+                                output.AssertOutput("##octopus[k8s-manifest-applied manifest='XG4iYXBpVmVyc2lvbiI6ICJ2MSJcbiJraW5kIjogIk5hbWVzcGFjZSJcbiJtZXRhZGF0YSI6XG4gICJuYW1lIjogImV4YW1wbGUiXG4ibGFiZWxzIjpcbiAgICAibmFtZSI6ICJleGFtcGxlIlxu']");
+                                output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiXG4ia2luZCI6ICJOYW1lc3BhY2UiXG4ibWV0YWRhdGEiOlxuICAibmFtZSI6ICJkaWZmcyJcbiJsYWJlbHMiOlxuICAgICJuYW1lIjogImRpZmZzIlxuXG4=']");
+                                output.AssertOutput("##octopus[k8s-manifest-applied manifest='XG4iYXBpVmVyc2lvbiI6ICJ2MSJcbiJraW5kIjogIk5hbWVzcGFjZSJcbiJtZXRhZGF0YSI6XG4gICJuYW1lIjogImV4YW1wbGUiXG4ibGFiZWxzIjpcbiAgICAibmFtZSI6ICJleGFtcGxlIlxu' ns='bXk=']");
+                                output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiXG4ia2luZCI6ICJOYW1lc3BhY2UiXG4ibWV0YWRhdGEiOlxuICAibmFtZSI6ICJkaWZmcyJcbiJsYWJlbHMiOlxuICAgICJuYW1lIjogImRpZmZzIlxuXG4=' ns='bXk=']");
+                            });
+        }
+        
+        [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
+        [TestCase(null)]
+        [RequiresBashDotExeIfOnWindows]
+        public void ShouldReportKubernetesManifestFile(FeatureToggle? featureToggle)
+        {
+            var tempPath = Path.GetTempPath();
+            const string manifest = @"""apiVersion"": ""v1""
+""kind"": ""Namespace""
+""metadata"":
+  ""name"": ""example""
+""labels"":
+    ""name"": ""example""
+---    
+""apiVersion"": ""v1""
+""kind"": ""Namespace""
+""metadata"":
+  ""name"": ""diffs""
+""labels"":
+    ""name"": ""diffs""";
+            
+            var filePath = Path.Combine(tempPath, "ShouldWriteServiceMessageForKubernetesManifestFile.manifest.yaml");
+            File.WriteAllText(filePath, manifest);
+
+            var additionalVariables = new Dictionary<string, string>().AddFeatureToggleToDictionary(new List<FeatureToggle?> { featureToggle });
+            additionalVariables.Add("ManifestFilePath", filePath);
+
+            try
+            {
+
+                var (output, _) = RunScript("report-kubernetes-manifest-file.sh", additionalVariables);
+
+                Assert.Multiple(() =>
+                                {
+                                    output.AssertSuccess();
+                                    output.AssertOutput("##octopus[k8s-manifest-applied manifest='XG4iYXBpVmVyc2lvbiI6ICJ2MSJcbiJraW5kIjogIk5hbWVzcGFjZSJcbiJtZXRhZGF0YSI6XG4gICJuYW1lIjogImV4YW1wbGUiXG4ibGFiZWxzIjpcbiAgICAibmFtZSI6ICJleGFtcGxlIlxu']");
+                                    output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiXG4ia2luZCI6ICJOYW1lc3BhY2UiXG4ibWV0YWRhdGEiOlxuICAibmFtZSI6ICJkaWZmcyJcbiJsYWJlbHMiOlxuICAgICJuYW1lIjogImRpZmZzIlxuXG4=']");
+                                    output.AssertOutput("##octopus[k8s-manifest-applied manifest='XG4iYXBpVmVyc2lvbiI6ICJ2MSJcbiJraW5kIjogIk5hbWVzcGFjZSJcbiJtZXRhZGF0YSI6XG4gICJuYW1lIjogImV4YW1wbGUiXG4ibGFiZWxzIjpcbiAgICAibmFtZSI6ICJleGFtcGxlIlxu' ns='bXk=']");
+                                    output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiXG4ia2luZCI6ICJOYW1lc3BhY2UiXG4ibWV0YWRhdGEiOlxuICAibmFtZSI6ICJkaWZmcyJcbiJsYWJlbHMiOlxuICAgICJuYW1lIjogImRpZmZzIlxuXG4=' ns='bXk=']");
+                                });
+            }
+            finally
+            {
+                File.Delete(filePath);
+            }
         }
 
         [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
