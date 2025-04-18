@@ -10,6 +10,7 @@ using Calamari.Aws.Integration.CloudFormation;
 using Calamari.Aws.Integration.CloudFormation.Templates;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Octopus.CoreUtilities.Extensions;
 
@@ -22,10 +23,11 @@ namespace Calamari.Aws.Deployment.Conventions
         readonly Func<ICloudFormationRequestBuilder> templateFactory;
 
         public CreateCloudFormationChangeSetConvention(Func<IAmazonCloudFormation> clientFactory,
-                                                       StackEventLogger logger,
+                                                       StackEventLogger stackEventLogger,
                                                        Func<RunningDeployment, StackArn> stackProvider,
-                                                       Func<ICloudFormationRequestBuilder> templateFactory
-        ) : base(logger)
+                                                       Func<ICloudFormationRequestBuilder> templateFactory,
+                                                       ILog log
+        ) : base(stackEventLogger, log)
         {
             Guard.NotNull(stackProvider, "Stack provider should not be null");
             Guard.NotNull(clientFactory, "Client factory should not be null");

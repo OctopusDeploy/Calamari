@@ -79,7 +79,7 @@ namespace Calamari.Integration.Packages.Download
                 default:
                     throw new NotImplementedException($"No Calamari downloader exists for feed type `{feedType}`.");
             }
-            Log.Verbose($"Feed type provided `{feedType}` using {downloader.GetType().Name}");
+            log.Verbose($"Feed type provided `{feedType}` using {downloader.GetType().Name}");
 
             return downloader.DownloadPackage(
                 packageId,

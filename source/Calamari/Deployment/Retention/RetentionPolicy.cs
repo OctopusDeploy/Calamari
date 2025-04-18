@@ -15,12 +15,14 @@ namespace Calamari.Deployment.Retention
         readonly ICalamariFileSystem fileSystem;
         readonly IDeploymentJournal deploymentJournal;
         readonly IClock clock;
+        readonly ILog log;
 
-        public RetentionPolicy(ICalamariFileSystem fileSystem, IDeploymentJournal deploymentJournal, IClock clock)
+        public RetentionPolicy(ICalamariFileSystem fileSystem, IDeploymentJournal deploymentJournal, IClock clock, ILog log)
         {
             this.fileSystem = fileSystem;
             this.deploymentJournal = deploymentJournal;
             this.clock = clock;
+            this.log = log;
         }
 
         public void ApplyRetentionPolicy(string retentionPolicySet, int? daysToKeep, int? successfulDeploymentsToKeep)
@@ -33,14 +35,14 @@ namespace Calamari.Deployment.Retention
 
             if (daysToKeep.HasValue && daysToKeep.Value > 0)
             {
-                Log.Info($"Keeping deployments from the last {daysToKeep} days");
+                log.Info($"Keeping deployments from the last {daysToKeep} days");
                 deploymentsToDelete = deploymentsToDelete
                     .Where(InstalledBeforePolicyDayCutoff(daysToKeep.Value, preservedEntries))
                     .ToList();
             }
             else if (successfulDeploymentsToKeep.HasValue && successfulDeploymentsToKeep.Value > 0)
             {
-                Log.Info($"Keeping this deployment and the previous {successfulDeploymentsToKeep} successful deployments");
+                log.Info($"Keeping this deployment and the previous {successfulDeploymentsToKeep} successful deployments");
                 // Keep the current deployment, plus specified deployment value
                 // Unsuccessful deployments are not included in the count of deployment to keep
 
@@ -52,13 +54,13 @@ namespace Calamari.Deployment.Retention
             }
             else
             {
-                Log.Info("Keeping all deployments");
+                log.Info("Keeping all deployments");
                 return;
             }
 
             if (!deploymentsToDelete.Any())
             {
-                Log.Info("Did not find any deployments to clean up");
+                log.Info("Did not find any deployments to clean up");
             }
 
             var entriesRemoved = RemoveDeployments(deploymentsToDelete, preservedEntries);
@@ -79,7 +81,7 @@ namespace Calamari.Deployment.Retention
                 }
                 catch (Exception ex)
                 {
-                    Log.VerboseFormat("Could not delete directory '{0}' because some files could not be deleted: {1}",
+                    log.VerboseFormat("Could not delete directory '{0}' because some files could not be deleted: {1}",
                                    deployment.ExtractedTo,
                                    ex.Message);
                 }
@@ -95,13 +97,13 @@ namespace Calamari.Deployment.Retention
                 || preservedEntries.Any(entry => deployment.ExtractedTo.Equals(entry.ExtractedTo, StringComparison.Ordinal)))
                 return;
 
-            Log.Info($"Removing directory '{deployment.ExtractedTo}'");
+            log.Info($"Removing directory '{deployment.ExtractedTo}'");
             fileSystem.PurgeDirectory(deployment.ExtractedTo, FailureOptions.IgnoreFailure);
 
             fileSystem.DeleteDirectory(deployment.ExtractedTo);
         }
 
-        static Func<JournalEntry, bool> SuccessfulCountGreaterThanPolicyCountOrDeployedUnsuccessfully(int successfulDeploymentsToKeep, List<JournalEntry> preservedEntries)
+        Func<JournalEntry, bool> SuccessfulCountGreaterThanPolicyCountOrDeployedUnsuccessfully(int successfulDeploymentsToKeep, List<JournalEntry> preservedEntries)
         {
             return journalEntry =>
             {
@@ -115,7 +117,7 @@ namespace Calamari.Deployment.Retention
                         .Concat(journalEntry.Packages.Select(p => p.DeployedFrom).Where(d => !string.IsNullOrEmpty(d)))
                         .ToList();
 
-                    Log.Verbose($"Keeping {FormatList(preservedDirectories)} as it is the {FormatWithThPostfix(preservedEntries.Count)}most recent successful release");
+                    log.Verbose($"Keeping {FormatList(preservedDirectories)} as it is the {FormatWithThPostfix(preservedEntries.Count)}most recent successful release");
 
                     return false;
                 }
@@ -141,7 +143,7 @@ namespace Calamari.Deployment.Retention
                     .Concat(journalEntry.Packages.Select(p => p.DeployedFrom).Where(p => !string.IsNullOrEmpty(p)))
                     .ToList();
 
-                Log.Verbose($"Keeping {FormatList(preservedDirectories)} as it was installed {installedAgo?.Days} days and {installedAgo?.Hours} hours ago");
+                log.Verbose($"Keeping {FormatList(preservedDirectories)} as it was installed {installedAgo?.Days} days and {installedAgo?.Hours} hours ago");
 
                 preservedEntries.Add(journalEntry);
                 return false;
@@ -189,7 +191,7 @@ namespace Calamari.Deployment.Retention
 
                 foreach (var file in toDelete)
                 {
-                    Log.Verbose($"Removing the failed to download file {file}");
+                    log.Verbose($"Removing the failed to download file {file}");
                     fileSystem.DeleteFile(file, FailureOptions.IgnoreFailure);
                 }
             }

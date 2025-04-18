@@ -2,6 +2,7 @@
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Variables;
 
@@ -9,11 +10,15 @@ namespace Calamari.AzureServiceFabric.Behaviours
 {
     class EnsureCertificateInstalledInStoreBehaviour : IDeployBehaviour
     {
+        readonly ILog log;
         readonly string certificateIdVariableName = SpecialVariables.Action.ServiceFabric.ClientCertVariable;
         readonly string storeLocationVariableName = SpecialVariables.Action.ServiceFabric.CertificateStoreLocation;
         readonly string storeNameVariableName = SpecialVariables.Action.ServiceFabric.CertificateStoreName;
 
-
+        public EnsureCertificateInstalledInStoreBehaviour(ILog log)
+        {
+            this.log = log;
+        }
         public bool IsEnabled(RunningDeployment context)
         {
             return true;
@@ -41,7 +46,7 @@ namespace Calamari.AzureServiceFabric.Behaviours
             if (!string.IsNullOrWhiteSpace(storeNameVariableName) && Enum.TryParse(variables.Get(storeNameVariableName, StoreName.My.ToString()), out StoreName storeNameOverride))
                 storeName = storeNameOverride;
 
-            CalamariCertificateStore.GetOrAdd(variables, certificateVariable, storeName, storeLocation);
+            new CalamariCertificateStore(log).GetOrAdd(variables, certificateVariable, storeName, storeLocation);
         }
     }
 }

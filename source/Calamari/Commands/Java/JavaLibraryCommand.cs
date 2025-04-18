@@ -46,7 +46,7 @@ namespace Calamari.Commands.Java
             {
                 new JavaStepConvention(actionType, new JavaRunner(commandLineRunner, variables)),
                 new FeatureRollbackConvention(DeploymentStages.DeployFailed, fileSystem, scriptEngine,
-                    commandLineRunner, embeddedResources)
+                    commandLineRunner, embeddedResources, log)
             };
 
             var deployment = new RunningDeployment(null, variables);
