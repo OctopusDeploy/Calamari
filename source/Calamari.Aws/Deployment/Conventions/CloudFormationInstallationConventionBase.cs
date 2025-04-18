@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Amazon.CloudFormation;
 using Amazon.CloudFormation.Model;
@@ -12,7 +10,6 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
-using Calamari.Integration.Processes;
 using Octopus.CoreUtilities;
 using Octopus.CoreUtilities.Extensions;
 
@@ -21,6 +18,7 @@ namespace Calamari.Aws.Deployment.Conventions
     public abstract class CloudFormationInstallationConventionBase: IInstallConvention
     {
         protected readonly StackEventLogger Logger;
+        const int DefaultPollTimeoutSeconds = 5;
 
         public CloudFormationInstallationConventionBase(StackEventLogger logger)
         {
@@ -29,6 +27,16 @@ namespace Calamari.Aws.Deployment.Conventions
 
         public abstract void Install(RunningDeployment deployment);
 
+        protected TimeSpan PollPeriod(RunningDeployment deployment)
+        {
+            var timeoutRaw = deployment.Variables.Get(SpecialVariables.Action.Aws.CloudFormationPollSeconds);
+            if (!int.TryParse(timeoutRaw, out var timeout))
+            {
+                timeout = DefaultPollTimeoutSeconds;
+            }
+            return TimeSpan.FromSeconds(timeout);
+        }
+        
         /// <summary>
         /// The AmazonServiceException can hold additional information that is useful to include in
         /// the log.
