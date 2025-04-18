@@ -12,15 +12,18 @@ namespace Calamari.Deployment.Features.Java.Actions
 {
     public class TomcatDeployCertificateAction : JavaAction
     {
-        public TomcatDeployCertificateAction(JavaRunner runner): base(runner)
+        readonly ILog log;
+
+        public TomcatDeployCertificateAction(JavaRunner runner, ILog log): base(runner)
         {
+            this.log = log;
         }
 
         public override void Execute(RunningDeployment deployment)
         {
             var variables = deployment.Variables;
             var tomcatVersion = GetTomcatVersion(variables);
-            Log.Info("Deploying certificate to Tomcat");
+            log.Info("Deploying certificate to Tomcat");
             runner.Run("com.octopus.calamari.tomcathttps.TomcatHttpsConfig", new Dictionary<string, string>()
             {
                 {"OctopusEnvironment_Java_Certificate_Variable", variables.Get(SpecialVariables.Action.Java.JavaKeystore.Variable)},                
@@ -62,10 +65,10 @@ namespace Calamari.Deployment.Features.Java.Actions
                 $"-cp \"{catalinaPath}\" org.apache.catalina.util.ServerInfo", ".", 
                 (stdOut) =>
                 {
-                    Log.Verbose(stdOut);
+                    log.Verbose(stdOut);
                     version.AppendLine(stdOut);
                 },
-                Console.Error.WriteLine);
+                log.Error);
 
             if (versionCheck.ExitCode != 0)
             {

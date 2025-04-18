@@ -101,15 +101,15 @@ namespace Calamari.Common.Features.Scripting
             switch (scriptSyntax)
             {
                 case ScriptSyntax.PowerShell:
-                    return new PowerShellScriptExecutor();
+                    return new PowerShellScriptExecutor(log);
                 case ScriptSyntax.CSharp:
-                    return runDotnetScript ? (IScriptExecutor) new DotnetScriptExecutor(commandLineRunner) : new ScriptCSScriptExecutor();
+                    return runDotnetScript ? (IScriptExecutor) new DotnetScriptExecutor(commandLineRunner, log) : new ScriptCSScriptExecutor(log);
                 case ScriptSyntax.Bash:
-                    return new BashScriptExecutor();
+                    return new BashScriptExecutor(log);
                 case ScriptSyntax.FSharp:
                     return new FSharpExecutor(log);
                 case ScriptSyntax.Python:
-                    return new PythonScriptExecutor();
+                    return new PythonScriptExecutor(log);
                 default:
                     throw new NotSupportedException($"{scriptSyntax} script are not supported for execution");
             }

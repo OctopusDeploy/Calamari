@@ -10,6 +10,7 @@ using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Tests.Fixtures.Util;
+using Calamari.Tests.Helpers;
 using Calamari.Util;
 using FluentAssertions;
 using Newtonsoft.Json;
@@ -66,7 +67,7 @@ namespace Calamari.Tests.Fixtures.Variables
         [Test]
         public void ShouldIncludeEncryptedSensitiveVariables()
         {
-            var result = new VariablesFactory(fileSystem).Create(options);
+            var result = new VariablesFactory(fileSystem, new SilentLog()).Create(options);
 
             Assert.AreEqual("firstSensitiveVariableValue", result.Get("firstSensitiveVariableName"));
             Assert.AreEqual("secondSensitiveVariableValue", result.Get("secondSensitiveVariableName"));
@@ -82,7 +83,7 @@ namespace Calamari.Tests.Fixtures.Variables
             File.WriteAllText(firstSensitiveVariablesFileName, JsonConvert.SerializeObject(sensitiveVariables));
             File.WriteAllText(secondSensitiveVariablesFileName, "{}");
 
-            var result = new VariablesFactory(fileSystem).Create(options);
+            var result = new VariablesFactory(fileSystem, new SilentLog()).Create(options);
 
             Assert.AreEqual("firstSensitiveVariableValue", result.Get("firstSensitiveVariableName"));
             Assert.AreEqual("firstInsensitiveVariableValue", result.Get("firstInsensitiveVariableName"));
@@ -94,7 +95,7 @@ namespace Calamari.Tests.Fixtures.Variables
         {
             options.InputVariables.SensitiveVariablesPassword = "FakePassword";
             CreateSensitiveVariableFile();
-            new VariablesFactory(fileSystem).Create(options);
+            new VariablesFactory(fileSystem, new SilentLog()).Create(options);
         }
 
         [Test]
@@ -103,7 +104,7 @@ namespace Calamari.Tests.Fixtures.Variables
         {
             options.InputVariables.SensitiveVariablesPassword = null;
             File.WriteAllText(firstSensitiveVariablesFileName, "I Am Not JSON");
-            new VariablesFactory(fileSystem).Create(options);
+            new VariablesFactory(fileSystem, new SilentLog()).Create(options);
         }
 
         void CreateInSensitiveVariableFile()
@@ -131,7 +132,7 @@ namespace Calamari.Tests.Fixtures.Variables
         [Test]
         public void ShouldCheckVariableIsSet()
         {
-            var variables = new VariablesFactory(fileSystem).Create(options);
+            var variables = new VariablesFactory(fileSystem, new SilentLog()).Create(options);
 
             Assert.That(variables.IsSet("thisIsBogus"), Is.False);
             Assert.That(variables.IsSet("firstSensitiveVariableName"), Is.True);
@@ -154,7 +155,7 @@ namespace Calamari.Tests.Fixtures.Variables
 
                     Environment.SetEnvironmentVariable(VariablesFactory.AdditionalVariablesPathVariable, varFile.FilePath);
 
-                    var variables = new VariablesFactory(CalamariPhysicalFileSystem.GetPhysicalFileSystem())
+                    var variables = new VariablesFactory(CalamariPhysicalFileSystem.GetPhysicalFileSystem(), new SilentLog())
                         .Create(new CommonOptions("test"));
 
                     variables.Get("new.key").Should().Be("new.value");
@@ -175,7 +176,7 @@ namespace Calamari.Tests.Fixtures.Variables
 
                 Environment.SetEnvironmentVariable(VariablesFactory.AdditionalVariablesPathVariable, filePath);
 
-                new VariablesFactory(CalamariPhysicalFileSystem.GetPhysicalFileSystem())
+                new VariablesFactory(CalamariPhysicalFileSystem.GetPhysicalFileSystem(), new SilentLog())
                     .Invoking(c => c.Create(new CommonOptions("test")))
                     .Should()
                     .Throw<CommandException>()

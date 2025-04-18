@@ -49,8 +49,8 @@ namespace Calamari.Aws.Commands
             var conventions = new List<IConvention>
             {
                 new LogAwsUserInfoConvention(environment),
-                new ExecuteCloudFormationChangeSetConvention(ClientFactory, stackEventLogger, StackProvider, ChangesetProvider, waitForComplete),
-                new CloudFormationOutputsAsVariablesConvention(ClientFactory, stackEventLogger, StackProvider)
+                new ExecuteCloudFormationChangeSetConvention(ClientFactory, stackEventLogger, StackProvider, ChangesetProvider, waitForComplete, log),
+                new CloudFormationOutputsAsVariablesConvention(ClientFactory, stackEventLogger, StackProvider, log)
             };
             
             var deployment = new RunningDeployment(packageFile, variables);

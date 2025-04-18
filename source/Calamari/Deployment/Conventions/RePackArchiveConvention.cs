@@ -29,14 +29,14 @@ namespace Calamari.Deployment.Conventions
         {
             if (deployment.Variables.GetFlag(SpecialVariables.Action.Java.JavaArchiveExtractionDisabled))
             {
-                Log.Verbose(
+                log.Verbose(
                     $"'{SpecialVariables.Action.Java.JavaArchiveExtractionDisabled}' is set. Skipping re-pack.");
                 return;
             }
 
             if (deployment.Variables.GetFlag(SpecialVariables.Action.Java.DeployExploded))
             {
-                Log.Verbose($"'{SpecialVariables.Action.Java.DeployExploded}' is set. Skipping re-pack.");
+                log.Verbose($"'{SpecialVariables.Action.Java.DeployExploded}' is set. Skipping re-pack.");
                 return;
             }
 
@@ -45,8 +45,8 @@ namespace Calamari.Deployment.Conventions
             var repackedArchiveDirectory = Path.GetDirectoryName(repackedArchivePath);
 
             deployment.Variables.Set(KnownVariables.OriginalPackageDirectoryPath, repackedArchiveDirectory);
-            Log.SetOutputVariable(PackageVariables.Output.InstallationDirectoryPath, repackedArchiveDirectory, deployment.Variables);
-            Log.SetOutputVariable(PackageVariables.Output.InstallationPackagePath, repackedArchivePath, deployment.Variables);
+            log.SetOutputVariable(PackageVariables.Output.InstallationDirectoryPath, repackedArchiveDirectory, deployment.Variables);
+            log.SetOutputVariable(PackageVariables.Output.InstallationPackagePath, repackedArchivePath, deployment.Variables);
         }
 
         protected string CreateArchive(RunningDeployment deployment)
@@ -61,7 +61,7 @@ namespace Calamari.Deployment.Conventions
 
             if (!string.IsNullOrWhiteSpace(customPackageFileName))
             {
-                Log.Verbose($"Using custom package file-name: '{customPackageFileName}'");
+                log.Verbose($"Using custom package file-name: '{customPackageFileName}'");
             }
 
             var targetFilePath = Path.Combine(applicationDirectory, customPackageFileName ?? Path.GetFileName(deployment.PackageFilePath));

@@ -25,10 +25,11 @@ namespace Calamari.Aws.Deployment.Conventions
 
         public ExecuteCloudFormationChangeSetConvention(
             Func<IAmazonCloudFormation> clientFactory,
-            StackEventLogger logger,
+            StackEventLogger stackEventLogger,
             Func<RunningDeployment, StackArn> stackProvider, 
             Func<RunningDeployment, ChangeSetArn> changeSetProvider,
-            bool waitForComplete): base(logger)
+            bool waitForComplete,
+            ILog log): base(stackEventLogger, log)
         {
             Guard.NotNull(stackProvider, "Stack provider must not be null");
             Guard.NotNull(changeSetProvider, "Change set provider must nobe null");

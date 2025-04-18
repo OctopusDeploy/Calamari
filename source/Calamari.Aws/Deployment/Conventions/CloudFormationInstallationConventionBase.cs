@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Amazon.CloudFormation;
 using Amazon.CloudFormation.Model;
@@ -10,9 +8,7 @@ using Calamari.Aws.Integration.CloudFormation;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
-using Calamari.Integration.Processes;
 using Octopus.CoreUtilities;
 using Octopus.CoreUtilities.Extensions;
 
@@ -20,11 +16,13 @@ namespace Calamari.Aws.Deployment.Conventions
 {
     public abstract class CloudFormationInstallationConventionBase: IInstallConvention
     {
-        protected readonly StackEventLogger Logger;
+        protected readonly StackEventLogger StackEventLogger;
+        protected readonly ILog log;
 
-        public CloudFormationInstallationConventionBase(StackEventLogger logger)
+        public CloudFormationInstallationConventionBase(StackEventLogger stackEventLogger, ILog log)
         {
-            Logger = logger;
+            StackEventLogger = stackEventLogger;
+            this.log = log;
         }
 
         public abstract void Install(RunningDeployment deployment);
@@ -75,7 +73,7 @@ namespace Calamari.Aws.Deployment.Conventions
         /// <returns>true if it was displayed, and false otherwise</returns>
         protected bool DisplayWarning(string errorCode, string message)
         {
-            return Logger.Warn(errorCode, message);
+            return StackEventLogger.Warn(errorCode, message);
         }
 
         /// <summary>
@@ -93,8 +91,8 @@ namespace Calamari.Aws.Deployment.Conventions
             {
                 try
                 {
-                    Logger.Log(@event);
-                    Logger.LogRollbackError(
+                    StackEventLogger.Log(@event);
+                    StackEventLogger.LogRollbackError(
                         @event,
                         x => WithAmazonServiceExceptionHandling(() => clientFactory.GetStackEvents(stack, (e) => x(e) && (filter == null || filter(e))).GetAwaiter().GetResult()),
                         expectSuccess,
@@ -102,15 +100,15 @@ namespace Calamari.Aws.Deployment.Conventions
                 }
                 catch (PermissionException exception)
                 {
-                    Log.Warn(exception.Message);
+                    log.Warn(exception.Message);
                 }
             };
         }
 
         protected void SetOutputVariable(IVariables variables, string name, string value)
         {
-            Log.SetOutputVariable($"AwsOutputs[{name}]", value ?? "", variables);
-            Log.Info($"Saving variable \"Octopus.Action[{variables["Octopus.Action.Name"]}].Output.AwsOutputs[{name}]\"");
+            log.SetOutputVariable($"AwsOutputs[{name}]", value ?? "", variables);
+            log.Info($"Saving variable \"Octopus.Action[{variables["Octopus.Action.Name"]}].Output.AwsOutputs[{name}]\"");
         }
 
         protected Task<Stack> QueryStackAsync(Func<IAmazonCloudFormation> clientFactory, StackArn stack)

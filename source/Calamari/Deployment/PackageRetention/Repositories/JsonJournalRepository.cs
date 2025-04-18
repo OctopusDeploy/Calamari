@@ -97,7 +97,7 @@ namespace Calamari.Deployment.PackageRetention.Repositories
             }
         }
 
-        static bool TryDeserializeJournal(string json, out PackageData result)
+        bool TryDeserializeJournal(string json, out PackageData result)
         {
             try
             {
@@ -106,7 +106,7 @@ namespace Calamari.Deployment.PackageRetention.Repositories
             }
             catch (Exception e)
             {
-                Log.Verbose($"Unable to deserialize entries in the package retention journal file. Error message: {e.ToString()}");
+                log.Verbose($"Unable to deserialize entries in the package retention journal file. Error message: {e.ToString()}");
                 result = new PackageData();
                 return false;
             }
