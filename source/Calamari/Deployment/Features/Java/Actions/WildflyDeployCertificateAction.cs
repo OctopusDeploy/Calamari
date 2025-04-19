@@ -6,14 +6,17 @@ namespace Calamari.Deployment.Features.Java.Actions
 {
     public class WildflyDeployCertificateAction: JavaAction
     {
-        public WildflyDeployCertificateAction(JavaRunner runner): base(runner)
+        readonly ILog log;
+
+        public WildflyDeployCertificateAction(JavaRunner runner, ILog log): base(runner)
         {
+            this.log = log;
         }
 
         public override void Execute(RunningDeployment deployment)
         {
             var variables = deployment.Variables;
-            Log.Info("Deploying certificate to WildFly");
+            log.Info("Deploying certificate to WildFly");
             
             var envVariables = new Dictionary<string, string>(){
                 {"OctopusEnvironment_Java_Certificate_Variable", variables.Get(SpecialVariables.Action.Java.JavaKeystore.Variable)},                

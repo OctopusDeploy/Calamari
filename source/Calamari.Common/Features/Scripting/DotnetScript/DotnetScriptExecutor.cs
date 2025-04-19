@@ -12,7 +12,7 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
     public class DotnetScriptExecutor : ScriptExecutor
     {
         readonly ICommandLineRunner commandLineRunner;
-        public DotnetScriptExecutor(ICommandLineRunner commandLineRunner)
+        public DotnetScriptExecutor(ICommandLineRunner commandLineRunner, ILog log): base(log)
         {
             this.commandLineRunner = commandLineRunner;
         }

@@ -48,12 +48,13 @@ namespace Calamari.Aws.Deployment.Conventions
         public DeployAwsCloudFormationConvention(
             Func<IAmazonCloudFormation> clientFactory,
             Func<ICloudFormationRequestBuilder> templateFactory,
-            StackEventLogger logger,
+            StackEventLogger stackEventLogger,
             Func<RunningDeployment, StackArn> stackProvider,
             Func<RunningDeployment, string> roleArnProvider,
             bool waitForComplete,
             string stackName,
-            AwsEnvironmentGeneration awsEnvironmentGeneration) : base(logger)
+            AwsEnvironmentGeneration awsEnvironmentGeneration,
+            ILog log) : base(stackEventLogger, log)
         {
             this.clientFactory = clientFactory;
             this.templateFactory = templateFactory;
@@ -112,8 +113,8 @@ namespace Calamari.Aws.Deployment.Conventions
             }
 
             // Take the stack ID returned by the create or update events, and save it as an output variable
-            Log.SetOutputVariable("AwsOutputs[StackId]", stackId ?? "", deployment.Variables);
-            Log.Info(
+            log.SetOutputVariable("AwsOutputs[StackId]", stackId ?? "", deployment.Variables);
+            log.Info(
                      $"Saving variable \"Octopus.Action[{deployment.Variables["Octopus.Action.Name"]}].Output.AwsOutputs[StackId]\"");
         }
 
@@ -150,7 +151,7 @@ namespace Calamari.Aws.Deployment.Conventions
             return WithAmazonServiceExceptionHandling(async () =>
                                                       {
                                                           var stackId = await clientFactory.CreateStackAsync(template.BuildCreateStackRequest());
-                                                          Log.Info($"Created stack {stackId} in region {awsEnvironmentGeneration.AwsRegion.SystemName}");
+                                                          log.Info($"Created stack {stackId} in region {awsEnvironmentGeneration.AwsRegion.SystemName}");
                                                           return stackId;
                                                       });
         }
@@ -163,7 +164,7 @@ namespace Calamari.Aws.Deployment.Conventions
             return WithAmazonServiceExceptionHandling(async () =>
                                                       {
                                                           await clientFactory.DeleteStackAsync(stack);
-                                                          Log.Info($"Deleted stack called {stackName} in region {awsEnvironmentGeneration.AwsRegion.SystemName}");
+                                                          log.Info($"Deleted stack called {stackName} in region {awsEnvironmentGeneration.AwsRegion.SystemName}");
                                                       });
         }
 
@@ -187,7 +188,7 @@ namespace Calamari.Aws.Deployment.Conventions
                 var result = await ClientHelpers.CreateCloudFormationClient(awsEnvironmentGeneration)
                                                 .UpdateStackAsync(template.BuildUpdateStackRequest());
 
-                Log.Info(
+                log.Info(
                          $"Updated stack with id {result.StackId} in region {awsEnvironmentGeneration.AwsRegion.SystemName}");
 
                 return result.StackId;
@@ -235,7 +236,7 @@ namespace Calamari.Aws.Deployment.Conventions
             // kind of error than the message. We are forced to match message strings.
             if (ex.Message.Contains("No updates are to be performed"))
             {
-                Log.Info("No updates are to be performed");
+                log.Info("No updates are to be performed");
                 return true;
             }
 

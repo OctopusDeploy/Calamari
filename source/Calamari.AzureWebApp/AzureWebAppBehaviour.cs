@@ -112,7 +112,7 @@ namespace Calamari.AzureWebApp
                     {
                         if (retry.ShouldLogWarning())
                         {
-                            Log.VerboseFormat("Retry #{0} on Azure deploy. Exception: {1}", retry.CurrentTry,
+                            log.VerboseFormat("Retry #{0} on Azure deploy. Exception: {1}", retry.CurrentTry,
                                 ex.Message);
                         }
 

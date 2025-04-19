@@ -26,11 +26,12 @@ namespace Calamari.Aws.Deployment.Conventions
 
         public DeleteCloudFormationStackConvention(
             AwsEnvironmentGeneration environment,
-            StackEventLogger logger,
+            StackEventLogger stackEventLogger,
             Func<IAmazonCloudFormation> clientFactory,
             Func<RunningDeployment, StackArn> stackProvider,
-            bool waitForComplete
-        ): base(logger)
+            bool waitForComplete,
+            ILog log
+        ): base(stackEventLogger, log)
         {
             Guard.NotNull(clientFactory, "Client must not be null");
             Guard.NotNull(stackProvider, "Stack provider must not be null");
@@ -59,11 +60,11 @@ namespace Calamari.Aws.Deployment.Conventions
             if (await clientFactory.StackExistsAsync(stack, StackStatus.Completed) != StackStatus.DoesNotExist)
             {
                 await DeleteCloudFormation(stack);
-                Log.Info($"Deleted stack called {stack.Value} in region {environment.AwsRegion.SystemName}");
+                log.Info($"Deleted stack called {stack.Value} in region {environment.AwsRegion.SystemName}");
             }
             else
             {
-                Log.Info($"No stack called {stack.Value} exists in region {environment.AwsRegion.SystemName}");
+                log.Info($"No stack called {stack.Value} exists in region {environment.AwsRegion.SystemName}");
                 return;
             }
 

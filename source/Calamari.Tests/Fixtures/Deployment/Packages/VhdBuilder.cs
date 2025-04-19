@@ -9,6 +9,7 @@ using Calamari.Common.Plumbing.Variables;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
+using NSubstitute;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.Deployment.Packages
@@ -38,7 +39,7 @@ namespace Calamari.Tests.Fixtures.Deployment.Packages
             using (var scriptFile = new TemporaryFile(Path.ChangeExtension(Path.GetTempFileName(), "ps1")))
             {
                 File.WriteAllText(scriptFile.FilePath, InitializeAndCopyFilesScript(vhdPath, packageDirectory, twoPartitions));
-                var result = ExecuteScript(new PowerShellScriptExecutor(), scriptFile.FilePath, new CalamariVariables());
+                var result = ExecuteScript(new PowerShellScriptExecutor(Substitute.For<ILog>()), scriptFile.FilePath, new CalamariVariables());
                 result.AssertSuccess();
             }
 

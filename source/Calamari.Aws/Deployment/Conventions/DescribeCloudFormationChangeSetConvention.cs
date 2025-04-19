@@ -7,6 +7,7 @@ using Calamari.Aws.Exceptions;
 using Calamari.Aws.Integration.CloudFormation;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
@@ -22,9 +23,10 @@ namespace Calamari.Aws.Deployment.Conventions
         private readonly Func<RunningDeployment, ChangeSetArn> changeSetProvider;
 
         public DescribeCloudFormationChangeSetConvention(Func<IAmazonCloudFormation> clientFactory,
-            StackEventLogger logger,
+            StackEventLogger stackEventLogger,
             Func<RunningDeployment, StackArn> stackProvider,
-            Func<RunningDeployment, ChangeSetArn> changeSetProvider) : base(logger)
+            Func<RunningDeployment, ChangeSetArn> changeSetProvider,
+            ILog log) : base(stackEventLogger, log)
         {
             this.clientFactory = clientFactory;
             this.stackProvider = stackProvider;

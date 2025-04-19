@@ -23,7 +23,8 @@ namespace Calamari.Aws.Deployment.Conventions
             Func<IAmazonCloudFormation> clientFactory,
             Func<RunningDeployment, StackArn> stackProvider,
             Func<List<StackResourceSummary>, List<KeyValuePair<string, string>>> customOutputPropertiesProvider,
-            StackEventLogger logger) : base(logger)
+            StackEventLogger stackEventLogger,
+            ILog log) : base(stackEventLogger, log)
         {
             this.clientFactory = clientFactory;
             this.stackProvider = stackProvider;

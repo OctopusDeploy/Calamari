@@ -3,7 +3,9 @@ using System.IO;
 using Calamari.Common.Features.Scripting.WindowsPowerShell;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Testing.Requirements;
+using NSubstitute;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.Integration.Scripting
@@ -18,7 +20,7 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
             using (var scriptFile = new TemporaryFile(Path.ChangeExtension(Path.GetTempFileName(), "ps1")))
             {
                 File.WriteAllText(scriptFile.FilePath, "Write-Host $mysecrect");
-                var result = ExecuteScript(new PowerShellScriptExecutor(), scriptFile.FilePath, GetVariables());
+                var result = ExecuteScript(new PowerShellScriptExecutor(Substitute.For<ILog>()), scriptFile.FilePath, GetVariables());
                 result.AssertOutput("KingKong");
             }
         }
@@ -38,7 +40,7 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
                 var calamariVariableDictionary = GetVariables();
                 calamariVariableDictionary.Set("Octopus.Action.PowerShell.PSDebug.Trace", variableValue);
 
-                var result = ExecuteScript(new PowerShellScriptExecutor(), scriptFile.FilePath,
+                var result = ExecuteScript(new PowerShellScriptExecutor(Substitute.For<ILog>()), scriptFile.FilePath,
                     calamariVariableDictionary);
 
                 result.AssertOutput("KingKong");
@@ -76,7 +78,7 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
                 var calamariVariableDictionary = GetVariables();
                 calamariVariableDictionary.Set("Octopus.Action.PowerShell.PSDebug.Trace", variableValue);
 
-                var result = ExecuteScript(new PowerShellScriptExecutor(), scriptFile.FilePath, calamariVariableDictionary);
+                var result = ExecuteScript(new PowerShellScriptExecutor(Substitute.For<ILog>()), scriptFile.FilePath, calamariVariableDictionary);
 
                 result.AssertOutput("KingKong");
                 result.AssertOutput("Octopus.Action.PowerShell.PSDebug.Trace is enabled, but PowerShell tracing is only supported with PowerShell versions 5 and above. This server is currently running PowerShell version 4.0.");
@@ -98,7 +100,7 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
                 if (!string.IsNullOrEmpty(variableValue))
                     calamariVariableDictionary.Set("Octopus.Action.PowerShell.PSDebug.Trace", variableValue);
 
-                var result = ExecuteScript(new PowerShellScriptExecutor(), scriptFile.FilePath,
+                var result = ExecuteScript(new PowerShellScriptExecutor(Substitute.For<ILog>()), scriptFile.FilePath,
                     calamariVariableDictionary);
 
                 result.AssertOutput("KingKong");
@@ -117,7 +119,7 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
                 var calamariVariableDictionary = GetVariables();
                 calamariVariableDictionary.Set("Octopus.Action.PowerShell.PSDebug.Strict", "true");
 
-                var result = ExecuteScript(new PowerShellScriptExecutor(), scriptFile.FilePath,
+                var result = ExecuteScript(new PowerShellScriptExecutor(Substitute.For<ILog>()), scriptFile.FilePath,
                     calamariVariableDictionary);
 
                 result.AssertErrorOutput(" cannot be retrieved because it has not been set.");
@@ -139,7 +141,7 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
                 if (!string.IsNullOrEmpty(variableValue))
                     calamariVariableDictionary.Set("Octopus.Action.PowerShell.PSDebug.Strict", variableValue);
 
-                var result = ExecuteScript(new PowerShellScriptExecutor(), scriptFile.FilePath,
+                var result = ExecuteScript(new PowerShellScriptExecutor(Substitute.For<ILog>()), scriptFile.FilePath,
                     calamariVariableDictionary);
 
                 result.AssertOutput("newVar = ''");
