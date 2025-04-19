@@ -1,20 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using Amazon.CloudFormation;
 using Amazon.CloudFormation.Model;
-using Amazon.Runtime;
-using Calamari.Aws.Exceptions;
 using Calamari.Aws.Integration.CloudFormation;
-using Calamari.Aws.Integration.CloudFormation.Templates;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Deployment;
-using Calamari.Deployment.Conventions;
-using Calamari.Integration.Processes;
 using Octopus.CoreUtilities;
 using Octopus.CoreUtilities.Extensions;
 
@@ -24,6 +17,7 @@ namespace Calamari.Aws.Deployment.Conventions
     {
         private readonly Func<IAmazonCloudFormation> clientFactory;
         private readonly Func<RunningDeployment, StackArn> stackProvider;
+        readonly int retryCount = 3;
 
         public CloudFormationOutputsAsVariablesConvention(
             Func<IAmazonCloudFormation> clientFactory,
@@ -42,7 +36,7 @@ namespace Calamari.Aws.Deployment.Conventions
             InstallAsync(deployment).GetAwaiter().GetResult();
         }
 
-        private Task InstallAsync(RunningDeployment deployment)
+        Task InstallAsync(RunningDeployment deployment)
         {
             Guard.NotNull(deployment, "Deployment must not be null");
             var stack = stackProvider(deployment);
@@ -53,11 +47,10 @@ namespace Calamari.Aws.Deployment.Conventions
                     WithAmazonServiceExceptionHandling(async () => (await QueryStackAsync(clientFactory, stack)).ToMaybe()),
                 deployment.Variables,
                 true,
-                CloudFormationDefaults.RetryCount,
-                CloudFormationDefaults.StatusWaitPeriod);
+                PollPeriod(deployment));
         }
 
-        public async Task<(IReadOnlyList<VariableOutput> result, bool success)> GetOutputVariables(
+        async Task<(IReadOnlyList<VariableOutput> result, bool success)> GetOutputVariables(
             Func<Task<Maybe<Stack>>> query)
         {
             Guard.NotNull(query, "Query for stack may not be null");
@@ -69,7 +62,7 @@ namespace Calamari.Aws.Deployment.Conventions
                 .Map(result => (result: result.SomeOr(new List<VariableOutput>()), success: true));
         }
 
-        public void PipeOutputs(IEnumerable<VariableOutput> outputs, IVariables variables, string name = "AwsOutputs")
+        void PipeOutputs(IEnumerable<VariableOutput> outputs, IVariables variables, string name = "AwsOutputs")
         {
             Guard.NotNull(variables, "Variables may not be null");
 
@@ -79,7 +72,7 @@ namespace Calamari.Aws.Deployment.Conventions
             }
         }
 
-        public async Task GetAndPipeOutputVariablesWithRetry(Func<Task<Maybe<Stack>>> query, IVariables variables, bool wait, int retryCount, TimeSpan waitPeriod)
+        async Task GetAndPipeOutputVariablesWithRetry(Func<Task<Maybe<Stack>>> query, IVariables variables, bool wait, TimeSpan pollPeriod)
         {
             for (var retry = 0; retry < retryCount; ++retry)
             {
@@ -91,7 +84,7 @@ namespace Calamari.Aws.Deployment.Conventions
                 }
 
                 // Wait for a bit for and try again
-                await Task.Delay(waitPeriod);
+                await Task.Delay(pollPeriod);
             }
         }
     }
