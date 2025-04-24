@@ -48,12 +48,15 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
         }
         
         [Test]
-        public void WhenWaitForJobsIsEnabled_ShouldHaveStatusOfFailedIfBackOffLimitHasBeenReached()
+        [TestCase(0,1)]
+        [TestCase(1,1)]
+        [TestCase(1,2)]
+        public void WhenWaitForJobsIsEnabled_ShouldHaveStatusOfFailedIfBackOffLimitHasBeenReached(int backoffLimit, int failures)
         {
             var jobResponse = new JobResponseBuilder()
-                .WithCompletions(3)
-                .WithBackoffLimit(4)
-                .WithFailed(4)
+                .WithCompletions(1)
+                .WithBackoffLimit(backoffLimit)
+                .WithFailed(failures)
                 .Build();
 
             var job = ResourceFactory.FromJson(jobResponse, new Options() { WaitForJobs = true });
