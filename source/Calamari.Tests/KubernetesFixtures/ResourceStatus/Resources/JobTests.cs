@@ -70,6 +70,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
             var jobResponse = new JobResponseBuilder()
                 .WithCompletions(3)
                 .WithSucceeded(3)
+                .WithBackoffLimit(3)
                 .WithFailed(1)
                 .Build();
 
@@ -84,6 +85,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
             var jobResponse = new JobResponseBuilder()
                 .WithCompletions(3)
                 .WithSucceeded(2)
+                .WithBackoffLimit(3)
                 .WithFailed(1)
                 .Build();
 
