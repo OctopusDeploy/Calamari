@@ -57,7 +57,7 @@ namespace Calamari.Aws.Deployment.Conventions
             try
             {
                 var changeset = await CreateChangeSet(await template.BuildChangesetRequest());
-                await WaitForChangesetCompletion(changeset);
+                await clientFactory.WaitForChangeSetCompletion(PollPeriod(deployment), changeset);
                 ApplyVariables(deployment.Variables)(changeset);
             }
             catch (AmazonServiceException exception)
@@ -65,11 +65,6 @@ namespace Calamari.Aws.Deployment.Conventions
                 LogAmazonServiceException(exception);
                 throw;
             }
-        }
-
-        private Task WaitForChangesetCompletion(RunningChangeSet result)
-        {
-            return clientFactory.WaitForChangeSetCompletion(CloudFormationDefaults.StatusWaitPeriod, result);
         }
 
         private Action<RunningChangeSet> ApplyVariables(IVariables variables)

@@ -70,22 +70,23 @@ namespace Calamari.Aws.Deployment.Conventions
                 return;
             }
 
-            await ExecuteChangeset(clientFactory, stack, changeSet);
+            var pollPeriod = PollPeriod(deployment);
+            await ExecuteChangeset(clientFactory, stack, changeSet, pollPeriod);
             
             if (waitForComplete)
             {
                 await WithAmazonServiceExceptionHandling(() =>
-                    clientFactory.WaitForStackToComplete(CloudFormationDefaults.StatusWaitPeriod, stack, LogAndThrowRollbacks(clientFactory, stack, filter: FilterStackEventsSince(deploymentStartTime)))
+                    clientFactory.WaitForStackToComplete(PollPeriod(deployment), stack, LogAndThrowRollbacks(clientFactory, stack, filter: FilterStackEventsSince(deploymentStartTime)))
                 );
             }
         }
 
-        private async Task<RunningChangeSet> ExecuteChangeset(Func<IAmazonCloudFormation> factory, StackArn stack,
-            ChangeSetArn changeSet)
+        async Task<RunningChangeSet> ExecuteChangeset(Func<IAmazonCloudFormation> factory, StackArn stack,
+            ChangeSetArn changeSet, TimeSpan pollPeriod)
         {
             try
             {
-                var changes = await factory.WaitForChangeSetCompletion(CloudFormationDefaults.StatusWaitPeriod,
+                var changes = await factory.WaitForChangeSetCompletion(pollPeriod,
                     new RunningChangeSet(stack, changeSet));
 
 

@@ -27,7 +27,15 @@ namespace Calamari.Integration.Packages.Download
         readonly ICommandLineRunner commandLineRunner;
         readonly IVariables variables;
         readonly ILog log;
+        readonly IFeedLoginDetailsProviderFactory feedLoginDetailsProviderFactory;
         const string DockerHubRegistry = "index.docker.io";
+        
+        static readonly HashSet<FeedType> SupportedLoginDetailsFeedTypes = new HashSet<FeedType>
+        {
+            FeedType.AwsElasticContainerRegistry,
+            FeedType.AzureContainerRegistry,
+            FeedType.GoogleContainerRegistry
+        };
 
         // Ensures that any credential details are only available for the duration of the acquisition
         readonly Dictionary<string, string> environmentVariables = new Dictionary<string, string>()
@@ -41,15 +49,27 @@ namespace Calamari.Integration.Packages.Download
                                             ICalamariFileSystem fileSystem,
                                             ICommandLineRunner commandLineRunner,
                                             IVariables variables,
-                                            ILog log)
+                                            ILog log,
+                                            IFeedLoginDetailsProviderFactory feedLoginDetailsProviderFactory)
         {
             this.scriptEngine = scriptEngine;
             this.fileSystem = fileSystem;
             this.commandLineRunner = commandLineRunner;
             this.variables = variables;
             this.log = log;
+            this.feedLoginDetailsProviderFactory = feedLoginDetailsProviderFactory;
         }
 
+        (string Username, string Password, Uri FeedUri) GetContainerRegistryLoginDetails(string feedTypeStr, string username, string password, Uri feedUri)
+        {
+            if (Enum.TryParse(feedTypeStr, out FeedType feedType))
+            {
+                var feedLoginDetailsProvider = feedLoginDetailsProviderFactory.GetFeedLoginDetailsProvider(feedType);
+                return feedLoginDetailsProvider.GetFeedLoginDetails(variables, username, password, feedUri).GetAwaiter().GetResult();
+            }
+            throw new ArgumentException($"Invalid feed type: {feedTypeStr}");
+        }
+        
         public PackagePhysicalFileMetadata DownloadPackage(string packageId,
                                                            IVersion version,
                                                            string feedId,
@@ -60,6 +80,16 @@ namespace Calamari.Integration.Packages.Download
                                                            int maxDownloadAttempts,
                                                            TimeSpan downloadAttemptBackoff)
         {
+            var contributedFeedType = variables.Get(AuthenticationVariables.FeedType);
+            if (Enum.TryParse(contributedFeedType, ignoreCase: true, out FeedType feedType) &&
+                SupportedLoginDetailsFeedTypes.Contains(feedType))
+            {
+                var loginDetails = GetContainerRegistryLoginDetails(contributedFeedType, username, password, feedUri);
+                username = loginDetails.Username;
+                password = loginDetails.Password;
+                feedUri = loginDetails.FeedUri;
+            }
+            
             //Always try re-pull image, docker engine can take care of the rest
             var fullImageName = GetFullImageName(packageId, version, feedUri);
 

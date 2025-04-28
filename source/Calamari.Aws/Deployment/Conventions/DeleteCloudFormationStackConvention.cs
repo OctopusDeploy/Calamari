@@ -1,19 +1,11 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Amazon.CloudFormation;
-using Amazon.CloudFormation.Model;
-using Amazon.Runtime;
-using Calamari.Aws.Exceptions;
-using Calamari.Aws.Integration;
 using Calamari.Aws.Integration.CloudFormation;
 using Calamari.CloudAccounts;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Logging;
-using Calamari.Deployment;
-using Calamari.Deployment.Conventions;
-using Octopus.CoreUtilities;
-using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Aws.Deployment.Conventions
 {
@@ -36,8 +28,7 @@ namespace Calamari.Aws.Deployment.Conventions
             Guard.NotNull(clientFactory, "Client must not be null");
             Guard.NotNull(stackProvider, "Stack provider must not be null");
             Guard.NotNull(environment, "Aws environment generation may not be null");
-            
-            
+
             this.clientFactory = clientFactory;
             this.stackProvider = stackProvider;
             this.waitForComplete = waitForComplete;
@@ -72,7 +63,7 @@ namespace Calamari.Aws.Deployment.Conventions
             {
                 await WithAmazonServiceExceptionHandling(async () =>
                 {
-                    await clientFactory.WaitForStackToComplete(CloudFormationDefaults.StatusWaitPeriod, stack,
+                    await clientFactory.WaitForStackToComplete(PollPeriod(deployment), stack,
                         LogAndThrowRollbacks(clientFactory, stack, true, false, FilterStackEventsSince(deploymentStartTime)));
                 });
             }

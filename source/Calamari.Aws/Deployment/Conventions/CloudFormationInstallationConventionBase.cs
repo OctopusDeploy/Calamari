@@ -16,8 +16,9 @@ namespace Calamari.Aws.Deployment.Conventions
 {
     public abstract class CloudFormationInstallationConventionBase: IInstallConvention
     {
-        protected readonly StackEventLogger StackEventLogger;
+        protected readonly StackEventLogger Logger;
         protected readonly ILog Log;
+        const int DefaultPollTimeoutSeconds = 5;
 
         public CloudFormationInstallationConventionBase(StackEventLogger stackEventLogger, ILog log)
         {
@@ -27,6 +28,16 @@ namespace Calamari.Aws.Deployment.Conventions
 
         public abstract void Install(RunningDeployment deployment);
 
+        protected TimeSpan PollPeriod(RunningDeployment deployment)
+        {
+            var timeoutRaw = deployment.Variables.Get(SpecialVariables.Action.Aws.CloudFormationPollSeconds);
+            if (!int.TryParse(timeoutRaw, out var timeout))
+            {
+                timeout = DefaultPollTimeoutSeconds;
+            }
+            return TimeSpan.FromSeconds(timeout);
+        }
+        
         /// <summary>
         /// The AmazonServiceException can hold additional information that is useful to include in
         /// the log.
