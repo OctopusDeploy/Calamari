@@ -8,6 +8,7 @@ using Calamari.Aws.Integration.CloudFormation;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Octopus.CoreUtilities;
 using Octopus.CoreUtilities.Extensions;
@@ -22,7 +23,7 @@ namespace Calamari.Aws.Deployment.Conventions
 
         public CloudFormationInstallationConventionBase(StackEventLogger stackEventLogger, ILog log)
         {
-            StackEventLogger = stackEventLogger;
+            Logger = stackEventLogger;
             Log = log;
         }
 
@@ -84,7 +85,7 @@ namespace Calamari.Aws.Deployment.Conventions
         /// <returns>true if it was displayed, and false otherwise</returns>
         protected bool DisplayWarning(string errorCode, string message)
         {
-            return StackEventLogger.Warn(errorCode, message);
+            return Logger.Warn(errorCode, message);
         }
 
         /// <summary>
@@ -102,12 +103,12 @@ namespace Calamari.Aws.Deployment.Conventions
             {
                 try
                 {
-                    StackEventLogger.Log(@event);
-                    StackEventLogger.LogRollbackError(
-                        @event,
-                        x => WithAmazonServiceExceptionHandling(() => clientFactory.GetStackEvents(stack, (e) => x(e) && (filter == null || filter(e))).GetAwaiter().GetResult()),
-                        expectSuccess,
-                        missingIsFailure);
+                    Logger.Log(@event);
+                    Logger.LogRollbackError(
+                                            @event,
+                                            x => WithAmazonServiceExceptionHandling(() => clientFactory.GetStackEvents(stack, (e) => x(e) && (filter == null || filter(e))).GetAwaiter().GetResult()),
+                                            expectSuccess,
+                                            missingIsFailure);
                 }
                 catch (PermissionException exception)
                 {
