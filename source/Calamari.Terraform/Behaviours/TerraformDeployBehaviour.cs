@@ -84,7 +84,7 @@ namespace Calamari.Terraform.Behaviours
             {
                 var serviceAccountEmails = variables.Get("Octopus.Action.GoogleCloud.ServiceAccountEmails") ?? string.Empty;
                 googleCloudEnvironmentVariables.Add("GOOGLE_IMPERSONATE_SERVICE_ACCOUNT", serviceAccountEmails);
-                Log.Verbose($"{serviceAccountEmails} has been set to GOOGLE_IMPERSONATE_SERVICE_ACCOUNT environment variable");
+                log.Verbose($"{serviceAccountEmails} has been set to GOOGLE_IMPERSONATE_SERVICE_ACCOUNT environment variable");
             }
 
             if (!useVmServiceAccount)
@@ -94,7 +94,7 @@ namespace Calamari.Terraform.Behaviours
                     var bytes = Convert.FromBase64String(keyFile);
                     var json = Encoding.UTF8.GetString(bytes);
                     googleCloudEnvironmentVariables.Add("GOOGLE_CLOUD_KEYFILE_JSON", json);
-                    Log.Verbose($"A JSON key has been set to GOOGLE_CLOUD_KEYFILE_JSON environment variable");
+                    log.Verbose($"A JSON key has been set to GOOGLE_CLOUD_KEYFILE_JSON environment variable");
                 }
                 else if (!string.IsNullOrWhiteSpace(jwtToken))
                 {
@@ -114,7 +114,7 @@ namespace Calamari.Terraform.Behaviours
 
                     var jsonAuthContent = File.ReadAllText(oauthFileConfiguration.JsonAuthFile.FilePath);
                     googleCloudEnvironmentVariables.Add("GOOGLE_CLOUD_KEYFILE_JSON", jsonAuthContent);
-                    Log.Verbose($"A JSON key has been set to GOOGLE_CLOUD_KEYFILE_JSON environment variable");
+                    log.Verbose($"A JSON key has been set to GOOGLE_CLOUD_KEYFILE_JSON environment variable");
                 }
             }
 
@@ -125,19 +125,19 @@ namespace Calamari.Terraform.Behaviours
             if (!string.IsNullOrEmpty(project))
             {
                 googleCloudEnvironmentVariables.Add("GOOGLE_PROJECT", project);
-                Log.Verbose($"{project} has been set to GOOGLE_PROJECT environment variable");
+                log.Verbose($"{project} has been set to GOOGLE_PROJECT environment variable");
             }
             
             if (!string.IsNullOrEmpty(region))
             {
                 googleCloudEnvironmentVariables.Add("GOOGLE_REGION", region);
-                Log.Verbose($"{region} has been set to GOOGLE_REGION environment variable");
+                log.Verbose($"{region} has been set to GOOGLE_REGION environment variable");
             }
             
             if (!string.IsNullOrEmpty(zone))
             {
                 googleCloudEnvironmentVariables.Add("GOOGLE_ZONE", zone);
-                Log.Verbose($"{zone} has been set to GOOGLE_ZONE environment variable");
+                log.Verbose($"{zone} has been set to GOOGLE_ZONE environment variable");
             }
             
             return googleCloudEnvironmentVariables;

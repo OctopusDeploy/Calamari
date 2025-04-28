@@ -213,9 +213,9 @@ namespace Calamari.Kubernetes.Integration
             switch (syntax)
             {
                 case ScriptSyntax.PowerShell:
-                    return new PowerShellScriptExecutor();
+                    return new PowerShellScriptExecutor(log);
                 case ScriptSyntax.Bash:
-                    return new BashScriptExecutor();
+                    return new BashScriptExecutor(log);
                 default:
                     throw new NotSupportedException($"{syntax} script is not supported for Helm upgrade execution");
             }

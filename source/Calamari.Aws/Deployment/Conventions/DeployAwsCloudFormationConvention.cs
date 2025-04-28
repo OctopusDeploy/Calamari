@@ -48,12 +48,13 @@ namespace Calamari.Aws.Deployment.Conventions
         public DeployAwsCloudFormationConvention(
             Func<IAmazonCloudFormation> clientFactory,
             Func<ICloudFormationRequestBuilder> templateFactory,
-            StackEventLogger logger,
+            StackEventLogger stackEventLogger,
             Func<RunningDeployment, StackArn> stackProvider,
             Func<RunningDeployment, string> roleArnProvider,
             bool waitForComplete,
             string stackName,
-            AwsEnvironmentGeneration awsEnvironmentGeneration) : base(logger)
+            AwsEnvironmentGeneration awsEnvironmentGeneration,
+            ILog log) : base(stackEventLogger, log)
         {
             this.clientFactory = clientFactory;
             this.templateFactory = templateFactory;

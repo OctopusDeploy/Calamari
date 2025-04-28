@@ -8,15 +8,20 @@ using Calamari.Common.Commands;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Common.Features.Scripting.WindowsPowerShell
 {
     public class PowerShellScriptExecutor : ScriptExecutor
     {
+        public PowerShellScriptExecutor(ILog log) : base(log)
+        {
+        }
+
         protected override IEnumerable<ScriptExecution> PrepareExecution(Script script,
-            IVariables variables,
-            Dictionary<string, string>? environmentVars = null)
+                                                                         IVariables variables,
+                                                                         Dictionary<string, string>? environmentVars = null)
         {
             var powerShellBootstrapper = GetPowerShellBootstrapper(variables);
 

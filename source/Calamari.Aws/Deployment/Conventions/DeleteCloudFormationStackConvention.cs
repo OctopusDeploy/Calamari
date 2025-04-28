@@ -18,11 +18,12 @@ namespace Calamari.Aws.Deployment.Conventions
 
         public DeleteCloudFormationStackConvention(
             AwsEnvironmentGeneration environment,
-            StackEventLogger logger,
+            StackEventLogger stackEventLogger,
             Func<IAmazonCloudFormation> clientFactory,
             Func<RunningDeployment, StackArn> stackProvider,
-            bool waitForComplete
-        ): base(logger)
+            bool waitForComplete,
+            ILog log
+        ): base(stackEventLogger, log)
         {
             Guard.NotNull(clientFactory, "Client must not be null");
             Guard.NotNull(stackProvider, "Stack provider must not be null");

@@ -7,6 +7,7 @@ using Amazon.CloudFormation.Model;
 using Calamari.Aws.Integration.CloudFormation;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Octopus.CoreUtilities;
 using Octopus.CoreUtilities.Extensions;
@@ -21,8 +22,8 @@ namespace Calamari.Aws.Deployment.Conventions
 
         public CloudFormationOutputsAsVariablesConvention(
             Func<IAmazonCloudFormation> clientFactory,
-            StackEventLogger logger,
-            Func<RunningDeployment, StackArn> stackProvider): base(logger)
+            StackEventLogger stackEventLogger,
+            Func<RunningDeployment, StackArn> stackProvider, ILog log): base(stackEventLogger, log)
         {
             Guard.NotNull(clientFactory, "Client factory must not be null");
             Guard.NotNull(stackProvider, "Stack provider must not be null");

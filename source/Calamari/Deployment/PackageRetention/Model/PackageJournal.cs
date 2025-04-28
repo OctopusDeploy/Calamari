@@ -90,7 +90,7 @@ namespace Calamari.Deployment.PackageRetention.Model
                         }
                         else
                         {
-                            Log.Verbose($"Removing package file '{package.Path}'");
+                            log.Verbose($"Removing package file '{package.Path}'");
                             fileSystem.DeleteFile(package.Path.Value, FailureOptions.IgnoreFailure);
                         }
 
@@ -101,7 +101,7 @@ namespace Calamari.Deployment.PackageRetention.Model
             }
             catch (Exception ex)
             {
-                Log.Info(ex.Message);
+                log.Info(ex.Message);
             }
         }
 

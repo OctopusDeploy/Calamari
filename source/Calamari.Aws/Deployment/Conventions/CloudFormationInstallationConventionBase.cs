@@ -18,11 +18,13 @@ namespace Calamari.Aws.Deployment.Conventions
     public abstract class CloudFormationInstallationConventionBase: IInstallConvention
     {
         protected readonly StackEventLogger Logger;
+        protected readonly ILog Log;
         const int DefaultPollTimeoutSeconds = 5;
 
-        public CloudFormationInstallationConventionBase(StackEventLogger logger)
+        public CloudFormationInstallationConventionBase(StackEventLogger stackEventLogger, ILog log)
         {
-            Logger = logger;
+            Logger = stackEventLogger;
+            Log = log;
         }
 
         public abstract void Install(RunningDeployment deployment);
@@ -103,10 +105,10 @@ namespace Calamari.Aws.Deployment.Conventions
                 {
                     Logger.Log(@event);
                     Logger.LogRollbackError(
-                        @event,
-                        x => WithAmazonServiceExceptionHandling(() => clientFactory.GetStackEvents(stack, (e) => x(e) && (filter == null || filter(e))).GetAwaiter().GetResult()),
-                        expectSuccess,
-                        missingIsFailure);
+                                            @event,
+                                            x => WithAmazonServiceExceptionHandling(() => clientFactory.GetStackEvents(stack, (e) => x(e) && (filter == null || filter(e))).GetAwaiter().GetResult()),
+                                            expectSuccess,
+                                            missingIsFailure);
                 }
                 catch (PermissionException exception)
                 {

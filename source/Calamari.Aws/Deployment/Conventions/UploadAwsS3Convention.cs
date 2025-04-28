@@ -110,7 +110,7 @@ namespace Calamari.Aws.Deployment.Conventions
 
             if (!md5HashSupported)
             {
-                Log.Info("MD5 hashes are not supported in executing environment. Files will always be uploaded.");
+                log.Info("MD5 hashes are not supported in executing environment. Files will always be uploaded.");
             }
 
             var options = optionsProvider.GetOptions(targetMode);
@@ -193,9 +193,9 @@ namespace Calamari.Aws.Deployment.Conventions
             throw new AmazonFileUploadException(message, exception);
         }
 
-        private static void WarnAndIgnoreException(Exception exception, string message)
+        void WarnAndIgnoreException(Exception exception, string message)
         {
-            Log.Warn(message);
+            log.Warn(message);
         }
 
         async Task<IEnumerable<S3UploadResult>> UploadAll(IEnumerable<S3TargetPropertiesBase> options, Func<AmazonS3Client> clientFactory, RunningDeployment deployment)
@@ -239,11 +239,11 @@ namespace Calamari.Aws.Deployment.Conventions
 
             if (!files.Any())
             {
-                Log.Info($"The glob pattern '{selection.Pattern}' didn't match any files. Nothing was uploaded to S3.");
+                log.Info($"The glob pattern '{selection.Pattern}' didn't match any files. Nothing was uploaded to S3.");
                 return results;
             }
 
-            Log.Info($"Glob pattern '{selection.Pattern}' matched {files.Count} files");
+            log.Info($"Glob pattern '{selection.Pattern}' matched {files.Count} files");
             var substitutionPatterns = SplitFilePatternString(selection.VariableSubstitutionPatterns);
 
             if(substitutionPatterns.Any())
@@ -440,9 +440,9 @@ namespace Calamari.Aws.Deployment.Conventions
         /// </summary>
         /// <param name="fileOrPackageDescription"></param>
         /// <param name="request"></param>
-        private static void LogPutObjectRequest(string fileOrPackageDescription, PutObjectRequest request)
+        void LogPutObjectRequest(string fileOrPackageDescription, PutObjectRequest request)
         {
-            Log.Info($"Attempting to upload {fileOrPackageDescription} to bucket {request.BucketName} with key {request.Key}.");
+            log.Info($"Attempting to upload {fileOrPackageDescription} to bucket {request.BucketName} with key {request.Key}.");
         }
 
         /// <summary>
@@ -458,7 +458,7 @@ namespace Calamari.Aws.Deployment.Conventions
             {
                 if (!await ShouldUpload(client, request))
                 {
-                    Log.Verbose(
+                    log.Verbose(
                         $"Object key {request.Key} exists for bucket {request.BucketName} with same content hash and metadata. Skipping upload.");
                     return new S3UploadResult(request, Maybe<PutObjectResponse>.None);
                 }
@@ -534,7 +534,7 @@ namespace Calamari.Aws.Deployment.Conventions
              .Map(stream => new StreamReader(stream).ReadToEnd())
              .Map(message => "An exception was thrown while contacting the AWS API.\n" + message)
              ?? "An exception was thrown while contacting the AWS API.")
-                .Tee(Log.Warn);
+                .Tee(log.Warn);
         }
     }
  }

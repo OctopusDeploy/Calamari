@@ -14,7 +14,7 @@ namespace Calamari.Common.Features.Scripting.FSharp
     {
         readonly ILog log;
         
-        public FSharpExecutor(ILog log)
+        public FSharpExecutor(ILog log) : base(log)
         {
             this.log = log;
         }
