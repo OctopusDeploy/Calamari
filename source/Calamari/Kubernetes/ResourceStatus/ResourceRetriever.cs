@@ -57,7 +57,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             foreach (var result in results.Where(r => r.IsSuccess))
             {
                 var resource = result.Value;
-                FetchChildrenAndUpdateResource(resource, kubectl, options);
+                resource.UpdateChildren(GetChildrenResources(resource, kubectl, options));
             }
 
             return results;
@@ -74,17 +74,17 @@ namespace Calamari.Kubernetes.ResourceStatus
             return !parseResult.IsSuccess ? ResourceRetrieverResult.Failure(parseResult.ErrorMessage) : ResourceRetrieverResult.Success(parseResult.Value);
         }
 
-        Resource FetchChildrenAndUpdateResource(Resource parentResource, IKubectl kubectl, Options options)
+        private IEnumerable<Resource> GetChildrenResources(Resource parentResource, IKubectl kubectl, Options options)
         {
             var childGvk = parentResource.ChildGroupVersionKind;
-            if (childGvk is null) return parentResource;
+            if (childGvk is null) return Enumerable.Empty<Resource>();
 
             var result = kubectlGet.AllResources(childGvk, parentResource.Namespace, kubectl);
             if (result.RawOutput.IsNullOrEmpty())
             {
                 // Child resources are ignored for determining deployment success.
                 log.Verbose($"Failed to get child resources for {parentResource.Name} in namespace {parentResource.Namespace}");
-                return parentResource;
+                return Enumerable.Empty<Resource>();
             }
             
             var parseResult = TryParse(ResourceFactory.FromListJson, result, options);
@@ -93,16 +93,16 @@ namespace Calamari.Kubernetes.ResourceStatus
                 // Child resources are ignored for determining deployment success.
                 log.Verbose($"Failed to parse child resources for {parentResource.Name} in namespace {parentResource.Namespace}");
                 log.Verbose(parseResult.ErrorMessage);
-                return parentResource;
+                return Enumerable.Empty<Resource>();
             };
             
             var resources = parseResult.Value;
-            var children = resources
-                           .Where(resource => resource.OwnerUids.Contains(parentResource.Uid))
-                           .Select(child =>FetchChildrenAndUpdateResource(child, kubectl, options))
-                           .ToList();
-            parentResource.UpdateChildren(children);
-            return parentResource;
+            return resources.Where(resource => resource.OwnerUids.Contains(parentResource.Uid))
+                            .Select(child =>
+                            {
+                                child.UpdateChildren(GetChildrenResources(child, kubectl, options));
+                                return child;
+                            }).ToList();
         }
         
         static ParseResult<T> TryParse<T>(Func<string, Options, T> function, KubectlGetResult getResult, Options options) where T : class
