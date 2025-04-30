@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Kubernetes.Integration;
 using Calamari.Kubernetes.ResourceStatus.Resources;
@@ -104,48 +105,44 @@ namespace Calamari.Kubernetes.ResourceStatus
             return parentResource;
         }
         
-        static Result<T> TryParse<T>(Func<string, Options, T> function, KubectlGetResult getResult, Options options) where T : class
+        static ParseResult<T> TryParse<T>(Func<string, Options, T> function, KubectlGetResult getResult, Options options) where T : class
         {
             try
             {
-                return Result<T>.Success(function(getResult.ResourceJson, options));
+                return ParseResult<T>.Success(function(getResult.ResourceJson, options));
             }
             catch (JsonException)
             {
-                return Result<T>.Failure(GetJsonStringError(getResult.ResourceJson, getResult, options));
+                return ParseResult<T>.Failure(GetJsonStringError(getResult.ResourceJson, getResult, options));
             }
         }
 
         static string GetJsonStringError(string jsonString, KubectlGetResult getResult, Options options)
         {
-            if (options.PrintVerboseKubectlOutputOnError)
-            {
-                var message = "";
-                message += "Failed to parse JSON:\n";
-                message += "---------------------------\n";
-                message += jsonString + "\n";
-                message += "---------------------------\n";
-                message += "Full command output:\n";
-                message += "---------------------------\n";
-                foreach (var msg in getResult.RawOutput)
-                {
-                    message += msg + "\n";
-                }
-                message += "---------------------------\n";
-                return message;
-            }
-            return $"Failed to parse JSON, to get Octopus to log out the JSON string retrieved from kubectl, set Octopus Variable '{SpecialVariables.PrintVerboseKubectlOutputOnError}' to 'true'";
+            if (!options.PrintVerboseKubectlOutputOnError)
+                return $"Failed to parse JSON, to get Octopus to log out the JSON string retrieved from kubectl, set Octopus Variable '{SpecialVariables.PrintVerboseKubectlOutputOnError}' to 'true'";
+            
+            var message = "";
+            message += "Failed to parse JSON:\n";
+            message += "---------------------------\n";
+            message += jsonString + "\n";
+            message += "---------------------------\n";
+            message += "Full command output:\n";
+            message += "---------------------------\n";
+            message += getResult.RawOutput.Join("\n") + "\n";
+            message += "---------------------------\n";
+            return message;
         }
         
-        class Result<T> where T : class 
+        class ParseResult<T> where T : class 
         {
-            Result (T value, string errorMessage)
+            ParseResult (T value, string errorMessage)
             {
                 Value = value;
                 ErrorMessage = errorMessage;
             }
-            public static Result<T> Success(T value) => new Result<T>(value, null);
-            public static Result<T> Failure(string errorMessage) => new Result<T>(null, errorMessage);
+            public static ParseResult<T> Success(T value) => new ParseResult<T>(value, null);
+            public static ParseResult<T> Failure(string errorMessage) => new ParseResult<T>(null, errorMessage);
         
             public T Value { get; }
             public bool IsSuccess => Value != null;
