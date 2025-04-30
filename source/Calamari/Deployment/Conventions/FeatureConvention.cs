@@ -17,8 +17,8 @@ namespace Calamari.Deployment.Conventions
 {
     public class FeatureConvention : FeatureConventionBase, IInstallConvention
     {
-        public FeatureConvention(string deploymentStage, IEnumerable<IFeature> featureClasses, ICalamariFileSystem fileSystem, IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner, ICalamariEmbeddedResources embeddedResources)
-            : base(deploymentStage, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources)
+        public FeatureConvention(string deploymentStage, IEnumerable<IFeature> featureClasses, ICalamariFileSystem fileSystem, IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner, ICalamariEmbeddedResources embeddedResources, ILog log)
+            : base(deploymentStage, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources, log)
         {
         }
 
@@ -30,7 +30,7 @@ namespace Calamari.Deployment.Conventions
 
     public class FeatureRollbackConvention : FeatureConventionBase, IRollbackConvention
     {
-        public FeatureRollbackConvention(string deploymentStage, ICalamariFileSystem fileSystem, IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner, ICalamariEmbeddedResources embeddedResources) : base(deploymentStage, null, fileSystem, scriptEngine, commandLineRunner, embeddedResources)
+        public FeatureRollbackConvention(string deploymentStage, ICalamariFileSystem fileSystem, IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner, ICalamariEmbeddedResources embeddedResources, ILog log) : base(deploymentStage, null, fileSystem, scriptEngine, commandLineRunner, embeddedResources, log)
         {
         }
 
@@ -50,6 +50,7 @@ namespace Calamari.Deployment.Conventions
         readonly string deploymentStage;
         readonly ICalamariFileSystem fileSystem;
         readonly ICalamariEmbeddedResources embeddedResources;
+        readonly ILog log;
         readonly IScriptEngine scriptEngine;
         readonly ICommandLineRunner commandLineRunner;
         const string scriptResourcePrefix = "Calamari.Scripts.";
@@ -57,11 +58,12 @@ namespace Calamari.Deployment.Conventions
         static readonly Assembly Assembly = typeof(FeatureConventionBase).Assembly;
 
         protected FeatureConventionBase(string deploymentStage, IEnumerable<IFeature> featureClasses, ICalamariFileSystem fileSystem,
-            IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner, ICalamariEmbeddedResources embeddedResources)
+            IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner, ICalamariEmbeddedResources embeddedResources, ILog log)
         {
             this.deploymentStage = deploymentStage;
             this.fileSystem = fileSystem;
             this.embeddedResources = embeddedResources;
+            this.log = log;
             this.scriptEngine = scriptEngine;
             this.commandLineRunner = commandLineRunner;
             this.featureClasses = featureClasses?.ToList();
@@ -94,7 +96,7 @@ namespace Calamari.Deployment.Conventions
             if (compiledFeature == null)
                 return;
 
-            Log.Verbose($"Executing feature-class '{compiledFeature.GetType()}'");
+            log.Verbose($"Executing feature-class '{compiledFeature.GetType()}'");
             compiledFeature.Execute(deployment);
         }
 
@@ -116,20 +118,20 @@ namespace Calamari.Deployment.Conventions
                 // way to override behaviour.
                 if (!fileSystem.FileExists(scriptFile))
                 {
-                    Log.VerboseFormat("Creating '{0}' from embedded resource", scriptFile);
+                    log.VerboseFormat("Creating '{0}' from embedded resource", scriptFile);
                     fileSystem.OverwriteFile(scriptFile, embeddedResources.GetEmbeddedResourceText(Assembly, scriptEmbeddedResource));
                 }
                 else
                 {
-                    Log.WarnFormat("Did not overwrite '{0}', it was already on disk", scriptFile);
+                    log.WarnFormat("Did not overwrite '{0}', it was already on disk", scriptFile);
                 }
 
                 // Execute the script
-                Log.VerboseFormat("Executing '{0}'", scriptFile);
+                log.VerboseFormat("Executing '{0}'", scriptFile);
                 var result = scriptEngine.Execute(new Script(scriptFile), deployment.Variables, commandLineRunner);
 
                 // And then delete it
-                Log.VerboseFormat("Deleting '{0}'", scriptFile);
+                log.VerboseFormat("Deleting '{0}'", scriptFile);
                 fileSystem.DeleteFile(scriptFile, FailureOptions.IgnoreFailure);
 
                 if (result.ExitCode != 0)

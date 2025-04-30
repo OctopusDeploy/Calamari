@@ -84,7 +84,7 @@ namespace Calamari.Aws.Integration.CloudFormation
         }
 
         public static async Task<DescribeChangeSetResponse> WaitForChangeSetCompletion(
-            this Func<IAmazonCloudFormation> clientFactory, TimeSpan waitPeriod, RunningChangeSet runningChangeSet)
+            this Func<IAmazonCloudFormation> clientFactory, TimeSpan pollPeriod, RunningChangeSet runningChangeSet)
         {
             var completion = new HashSet<ChangeSetStatus>
             {
@@ -100,7 +100,7 @@ namespace Calamari.Aws.Integration.CloudFormation
                     return result;
                 }
 
-                await Task.Delay(waitPeriod);
+                await Task.Delay(pollPeriod);
             }
         }
 
@@ -293,12 +293,12 @@ namespace Calamari.Aws.Integration.CloudFormation
         /// Wait for a given stack to complete by polling the stack events
         /// </summary>
         /// <param name="clientFactory">The client factory method to use</param>
-        /// <param name="waitPeriod">The period to wait between events</param>
+        /// <param name="pollPeriod">The period to wait between events</param>
         /// <param name="stack">The stack name or id to query</param>
         /// param name="action">Callback for each event while waiting
         /// <param name="filter">The predicate for filtering the stack events</param>
         public static async Task WaitForStackToComplete(this Func<IAmazonCloudFormation> clientFactory,
-            TimeSpan waitPeriod, StackArn stack, Action<Maybe<StackEvent>> action = null, Func<StackEvent, bool> filter = null)
+            TimeSpan pollPeriod, StackArn stack, Action<Maybe<StackEvent>> action = null, Func<StackEvent, bool> filter = null)
         {
             Guard.NotNull(stack, "Stack should not be null");
             Guard.NotNull(clientFactory, "Client factory should not be null");
@@ -311,7 +311,7 @@ namespace Calamari.Aws.Integration.CloudFormation
 
             do
             {
-                await Task.Delay(waitPeriod);
+                await Task.Delay(pollPeriod);
                 var @event = await clientFactory.GetLastStackEvent(stack, filter);
                 action?.Invoke(@event);
             } while (await clientFactory.StackExistsAsync(stack, StackStatus.Completed) == StackStatus.InProgress);

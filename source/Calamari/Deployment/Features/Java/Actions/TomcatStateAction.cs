@@ -6,15 +6,18 @@ namespace Calamari.Deployment.Features.Java.Actions
 {
     public class TomcatStateAction : JavaAction
     {
-        public TomcatStateAction(JavaRunner runner): base(runner)
+        readonly ILog log;
+
+        public TomcatStateAction(JavaRunner runner, ILog log): base(runner)
         {
+            this.log = log;
         }
 
 
         public override void Execute(RunningDeployment deployment)
         {
             var variables = deployment.Variables;
-            Log.Info("Updating Tomcat state");
+            log.Info("Updating Tomcat state");
             runner.Run("com.octopus.calamari.tomcat.TomcatState", new Dictionary<string, string>()
             {
                 {"OctopusEnvironment_Tomcat_Deploy_Name", variables.Get(SpecialVariables.Action.Java.Tomcat.DeployName)},

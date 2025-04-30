@@ -11,16 +11,23 @@ using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.AzureServiceFabric
 {
-    static class CalamariCertificateStore
+     class CalamariCertificateStore
     {
-        public static void EnsureCertificateIsInstalled(IVariables variables, string certificateVariable, string storeName, string storeLocation = "CurrentUser")
+        readonly ILog log;
+
+        public CalamariCertificateStore(ILog log)
+        {
+            this.log = log;
+        }
+
+        public void EnsureCertificateIsInstalled(IVariables variables, string certificateVariable, string storeName, string storeLocation = "CurrentUser")
         {
             var location = (StoreLocation) Enum.Parse(typeof(StoreLocation), storeLocation);
             var name = (StoreName) Enum.Parse(typeof(StoreName), storeName);
             GetOrAdd(variables, certificateVariable, name, location);
         }
 
-        public static void GetOrAdd(IVariables variables, string certificateVariable, StoreName storeName, StoreLocation storeLocation = StoreLocation.CurrentUser)
+        public void GetOrAdd(IVariables variables, string certificateVariable, StoreName storeName, StoreLocation storeLocation = StoreLocation.CurrentUser)
         {
             var pfxBytes = Convert.FromBase64String(variables.Get($"{certificateVariable}.{CertificateVariables.Properties.Pfx}"));
             var thumbprint = variables.Get($"{certificateVariable}.{CertificateVariables.Properties.Thumbprint}");
@@ -29,24 +36,24 @@ namespace Calamari.AzureServiceFabric
             GetOrAdd(thumbprint, pfxBytes, password, new X509Store(storeName, storeLocation));
         }
 
-        static void GetOrAdd(string thumbprint, byte[] bytes, string password, X509Store store)
+         void GetOrAdd(string thumbprint, byte[] bytes, string password, X509Store store)
         {
             store.Open(OpenFlags.ReadWrite);
 
             try
             {
-                Log.Verbose($"Loading certificate with thumbprint: {thumbprint}");
+                log.Verbose($"Loading certificate with thumbprint: {thumbprint}");
                 var certificateFromStore =
                     store.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, false)
                         .OfType<X509Certificate2>()
                         .FirstOrDefault(cert => CheckThatCertificateWasLoadedWithPrivateKeyAndGrantCurrentUserAccessIfRequired(cert, false));
                 if (certificateFromStore != null)
                 {
-                    Log.Verbose("Certificate was found in store");
+                    log.Verbose("Certificate was found in store");
                     return;
                 }
 
-                Log.Verbose("Loading certificate from disk");
+                log.Verbose("Loading certificate from disk");
                 var file = Path.Combine(Path.GetTempPath(), $"Octo-{Guid.NewGuid()}");
                 try
                 {
@@ -58,7 +65,7 @@ namespace Calamari.AzureServiceFabric
                         certificate = LoadCertificateWithPrivateKey(file, password);
                     }
 
-                    Log.Info("Adding certificate to store");
+                    log.Info("Adding certificate to store");
                     store.Add(certificate);
                 }
                 finally
@@ -82,7 +89,7 @@ namespace Calamari.AzureServiceFabric
                    ?? TryLoadCertificate(file, X509KeyStorageFlags.Exportable | X509KeyStorageFlags.PersistKeySet, false, password);
         }
 
-        static bool CheckThatCertificateWasLoadedWithPrivateKeyAndGrantCurrentUserAccessIfRequired(X509Certificate2 certificate, bool log = true)
+        bool CheckThatCertificateWasLoadedWithPrivateKeyAndGrantCurrentUserAccessIfRequired(X509Certificate2 certificate, bool shouldLog = true)
         {
             try
             {
@@ -120,9 +127,9 @@ namespace Calamari.AzureServiceFabric
 
                     var logMessage = message.ToString().Trim();
 
-                    if (log)
+                    if (shouldLog)
                     {
-                        Log.Info(logMessage);
+                        log.Info(logMessage);
                     }
 
                     return false;
@@ -132,7 +139,7 @@ namespace Calamari.AzureServiceFabric
             }
             catch (Exception ex)
             {
-                Log.Warn(ex.ToString());
+                log.Warn(ex.ToString());
                 return false;
             }
         }

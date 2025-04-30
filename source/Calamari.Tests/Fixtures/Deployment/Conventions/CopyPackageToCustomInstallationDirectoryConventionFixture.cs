@@ -2,10 +2,12 @@
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.Conventions;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Util;
+using Calamari.Tests.Helpers;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
@@ -139,7 +141,7 @@ namespace Calamari.Tests.Fixtures.Deployment.Conventions
 
         private CopyPackageToCustomInstallationDirectoryConvention CreateConvention()
         {
-           return new CopyPackageToCustomInstallationDirectoryConvention(fileSystem);
+           return new CopyPackageToCustomInstallationDirectoryConvention(fileSystem, new SilentLog());
         }
     }
 }

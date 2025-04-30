@@ -10,6 +10,7 @@ using Calamari.Aws.Integration.CloudFormation;
 using Calamari.Aws.Integration.CloudFormation.Templates;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Octopus.CoreUtilities.Extensions;
 
@@ -22,10 +23,11 @@ namespace Calamari.Aws.Deployment.Conventions
         readonly Func<ICloudFormationRequestBuilder> templateFactory;
 
         public CreateCloudFormationChangeSetConvention(Func<IAmazonCloudFormation> clientFactory,
-                                                       StackEventLogger logger,
+                                                       StackEventLogger stackEventLogger,
                                                        Func<RunningDeployment, StackArn> stackProvider,
-                                                       Func<ICloudFormationRequestBuilder> templateFactory
-        ) : base(logger)
+                                                       Func<ICloudFormationRequestBuilder> templateFactory,
+                                                       ILog log
+        ) : base(stackEventLogger, log)
         {
             Guard.NotNull(stackProvider, "Stack provider should not be null");
             Guard.NotNull(clientFactory, "Client factory should not be null");
@@ -55,7 +57,7 @@ namespace Calamari.Aws.Deployment.Conventions
             try
             {
                 var changeset = await CreateChangeSet(await template.BuildChangesetRequest());
-                await WaitForChangesetCompletion(changeset);
+                await clientFactory.WaitForChangeSetCompletion(PollPeriod(deployment), changeset);
                 ApplyVariables(deployment.Variables)(changeset);
             }
             catch (AmazonServiceException exception)
@@ -63,11 +65,6 @@ namespace Calamari.Aws.Deployment.Conventions
                 LogAmazonServiceException(exception);
                 throw;
             }
-        }
-
-        private Task WaitForChangesetCompletion(RunningChangeSet result)
-        {
-            return clientFactory.WaitForChangeSetCompletion(CloudFormationDefaults.StatusWaitPeriod, result);
         }
 
         private Action<RunningChangeSet> ApplyVariables(IVariables variables)

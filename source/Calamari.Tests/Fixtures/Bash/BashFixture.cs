@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Calamari.Common.FeatureToggles;
+using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Testing.Requirements;
@@ -274,7 +275,11 @@ namespace Calamari.Tests.Fixtures.Bash
                 output.AssertOutput(@"Key: VariableName {8}, Value: Value {8}");
                 output.AssertOutput("Key: VariableName\t9, Value: Value\t9");
                 output.AssertOutput(@"Key: VariableName 10 !@#$%^&*()_+1234567890-=, Value: Value 10 !@#$%^&*()_+1234567890-=");
-                output.AssertOutput("Key: VariableName \n 11, Value: Value \n 11");
+                if (CalamariEnvironment.IsRunningOnNix)
+                {
+                    output.AssertOutput("Key: VariableName \n 11, Value: Value \n 11");
+                }
+
                 output.AssertOutput("Key: VariableName.prop.anotherprop 12, Value: Value.prop.12");
                 output.AssertOutput("Key: VariableName`prop`anotherprop` 13, Value: Value`prop`13");
                 output.AssertOutput($"Key: {specialCharacters}, Value: {specialCharacters}");

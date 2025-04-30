@@ -21,15 +21,17 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
             Duration = $"{completionTime - startTime:c}";
 
             var backoffLimit = FieldOrDefault("$.spec.backoffLimit", 0);
-            var failed = FieldOrDefault("$.status.failed", 0);
+
+            // Using a default value of -1 rather than 0 as a job can be created with a backoffLimit of 0 and we don't want to immediately mark the job as failed
+            var failed = FieldOrDefault("$.status.failed", -1);
 
             if (!options.WaitForJobs)
             {
                 ResourceStatus = ResourceStatus.Successful;
                 return;
             }
-            
-            if (backoffLimit != 0 && failed == backoffLimit)
+
+            if (failed >= backoffLimit)
             {
                 ResourceStatus = ResourceStatus.Failed;
             } 

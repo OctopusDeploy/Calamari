@@ -5,10 +5,8 @@ using System.Xml.Linq;
 using Calamari.Common.Features.Deployment.Journal;
 using Calamari.Common.Features.Processes.Semaphores;
 using Calamari.Common.Plumbing.Commands;
-using Calamari.Common.Plumbing.Deployment.Journal;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Integration.FileSystem;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
@@ -41,9 +39,9 @@ namespace Calamari.Tests.Fixtures.Deployment
             Environment.SetEnvironmentVariable("TentacleJournal", Path.Combine(tentacleHiddenDirectory, "DeploymentJournal.xml" ));
             Environment.SetEnvironmentVariable("TentacleHome", tentacleHiddenDirectory);
 
-            variables = new VariablesFactory(fileSystem).Create(new CommonOptions("test"));
+            variables = new VariablesFactory(fileSystem, new SilentLog()).Create(new CommonOptions("test"));
 
-            deploymentJournal = new DeploymentJournal(fileSystem, new SystemSemaphoreManager(), variables);
+            deploymentJournal = new DeploymentJournal(fileSystem, new SystemSemaphoreManager(), variables, new SilentLog());
 
             packagesDirectory = Path.Combine(Path.GetTempPath(), "CalamariTestPackages");
             fileSystem.EnsureDirectoryExists(packagesDirectory);

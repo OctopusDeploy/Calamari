@@ -23,7 +23,8 @@ namespace Calamari.Aws.Deployment.Conventions
             Func<IAmazonCloudFormation> clientFactory,
             Func<RunningDeployment, StackArn> stackProvider,
             Func<List<StackResourceSummary>, List<KeyValuePair<string, string>>> customOutputPropertiesProvider,
-            StackEventLogger logger) : base(logger)
+            StackEventLogger stackEventLogger,
+            ILog log) : base(stackEventLogger, log)
         {
             this.clientFactory = clientFactory;
             this.stackProvider = stackProvider;
@@ -56,9 +57,9 @@ namespace Calamari.Aws.Deployment.Conventions
 
                 var outputs = BuildOutputVariables(stackResponse, resourceSummaries, variables);
 
-                Log.Verbose($"OUTPUTS: {JsonConvert.SerializeObject(outputs)}");
+                Common.Plumbing.Logging.Log.Verbose($"OUTPUTS: {JsonConvert.SerializeObject(outputs)}");
                 foreach (var output in outputs)
-                    Log.SetOutputVariable(output.Key, output.Value, variables);
+                    Common.Plumbing.Logging.Log.SetOutputVariable(output.Key, output.Value, variables);
             }
             catch (AmazonCloudFormationException ex) when (ex.ErrorCode == "AccessDenied")
             {

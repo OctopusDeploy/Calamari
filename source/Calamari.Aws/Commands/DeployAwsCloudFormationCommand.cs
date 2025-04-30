@@ -123,15 +123,21 @@ namespace Calamari.Aws.Commands
                                                     new CreateCloudFormationChangeSetConvention(ClientFactory,
                                                                                                 stackEventLogger,
                                                                                                 StackProvider,
-                                                                                                TemplateFactory),
-                                                    new DescribeCloudFormationChangeSetConvention(ClientFactory, stackEventLogger, StackProvider, ChangesetProvider),
+                                                                                                TemplateFactory,
+                                                                                                log),
+                                                    new DescribeCloudFormationChangeSetConvention(ClientFactory,
+                                                                                                  stackEventLogger,
+                                                                                                  StackProvider,
+                                                                                                  ChangesetProvider,
+                                                                                                  log),
                                                     new ExecuteCloudFormationChangeSetConvention(ClientFactory,
                                                                                                  stackEventLogger,
                                                                                                  StackProvider,
                                                                                                  ChangesetProvider,
-                                                                                                 waitForComplete)
+                                                                                                 waitForComplete,
+                                                                                                 log)
                                                         .When(ImmediateChangesetExecution),
-                                                    new CloudFormationOutputsAsVariablesConvention(ClientFactory, stackEventLogger, StackProvider)
+                                                    new CloudFormationOutputsAsVariablesConvention(ClientFactory, stackEventLogger, StackProvider, log)
                                                         .When(ImmediateChangesetExecution)
                                                    ).When(ChangesetsEnabled),
 
@@ -145,8 +151,9 @@ namespace Calamari.Aws.Commands
                                                                                           RoleArnProvider,
                                                                                           waitForComplete,
                                                                                           stackName,
-                                                                                          environment),
-                                                    new CloudFormationOutputsAsVariablesConvention(ClientFactory, stackEventLogger, StackProvider)
+                                                                                          environment,
+                                                                                          log),
+                                                    new CloudFormationOutputsAsVariablesConvention(ClientFactory, stackEventLogger, StackProvider, log)
                                                    )
                     .When(ChangesetsDisabled)
             };
