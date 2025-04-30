@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Amazon.CloudFormation;
 using Amazon.CloudFormation.Model;
@@ -12,7 +10,6 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
-using Calamari.Integration.Processes;
 using Octopus.CoreUtilities;
 using Octopus.CoreUtilities.Extensions;
 
@@ -21,14 +18,27 @@ namespace Calamari.Aws.Deployment.Conventions
     public abstract class CloudFormationInstallationConventionBase: IInstallConvention
     {
         protected readonly StackEventLogger Logger;
+        protected readonly ILog Log;
+        const int DefaultPollTimeoutSeconds = 5;
 
-        public CloudFormationInstallationConventionBase(StackEventLogger logger)
+        public CloudFormationInstallationConventionBase(StackEventLogger stackEventLogger, ILog log)
         {
-            Logger = logger;
+            Logger = stackEventLogger;
+            Log = log;
         }
 
         public abstract void Install(RunningDeployment deployment);
 
+        protected TimeSpan PollPeriod(RunningDeployment deployment)
+        {
+            var timeoutRaw = deployment.Variables.Get(SpecialVariables.Action.Aws.CloudFormationPollSeconds);
+            if (!int.TryParse(timeoutRaw, out var timeout))
+            {
+                timeout = DefaultPollTimeoutSeconds;
+            }
+            return TimeSpan.FromSeconds(timeout);
+        }
+        
         /// <summary>
         /// The AmazonServiceException can hold additional information that is useful to include in
         /// the log.
@@ -95,10 +105,10 @@ namespace Calamari.Aws.Deployment.Conventions
                 {
                     Logger.Log(@event);
                     Logger.LogRollbackError(
-                        @event,
-                        x => WithAmazonServiceExceptionHandling(() => clientFactory.GetStackEvents(stack, (e) => x(e) && (filter == null || filter(e))).GetAwaiter().GetResult()),
-                        expectSuccess,
-                        missingIsFailure);
+                                            @event,
+                                            x => WithAmazonServiceExceptionHandling(() => clientFactory.GetStackEvents(stack, (e) => x(e) && (filter == null || filter(e))).GetAwaiter().GetResult()),
+                                            expectSuccess,
+                                            missingIsFailure);
                 }
                 catch (PermissionException exception)
                 {

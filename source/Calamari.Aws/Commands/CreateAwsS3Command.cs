@@ -80,11 +80,12 @@ namespace Calamari.Aws.Commands
                                                       _ => null,
                                                       true,
                                                       stackName,
-                                                      environment),
+                                                      environment,
+                                                      log),
                 new DescribeAwsCloudFormationStackConvention(ClientFactory,
                                                              StackProvider,
                                                              ExtractBucketName,
-                                                             stackEventLogger)
+                                                             stackEventLogger, log)
             };
 
             var conventionRunner = new ConventionProcessor(new RunningDeployment(variables), conventions, log);

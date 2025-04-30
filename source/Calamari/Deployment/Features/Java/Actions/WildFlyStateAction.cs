@@ -6,14 +6,17 @@ namespace Calamari.Deployment.Features.Java.Actions
 {
     public class WildFlyStateAction : JavaAction
     {
-        public WildFlyStateAction(JavaRunner runner): base(runner)
+        readonly ILog log;
+
+        public WildFlyStateAction(JavaRunner runner, ILog log): base(runner)
         {
+            this.log = log;
         }
 
         public override void Execute(RunningDeployment deployment)
         {
             var variables = deployment.Variables;
-            Log.Info("Updating WildFly state");
+            log.Info("Updating WildFly state");
             runner.Run("com.octopus.calamari.wildfly.WildflyState", new Dictionary<string, string>()
             {
                 {"OctopusEnvironment_WildFly_Deploy_Name", variables.Get(SpecialVariables.Action.Java.WildFly.DeployName)},

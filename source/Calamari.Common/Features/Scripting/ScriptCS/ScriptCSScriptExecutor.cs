@@ -10,6 +10,10 @@ namespace Calamari.Common.Features.Scripting.ScriptCS
 {
     public class ScriptCSScriptExecutor : ScriptExecutor
     {
+        public ScriptCSScriptExecutor(ILog log) : base(log)
+        {
+        }
+
         protected override IEnumerable<ScriptExecution> PrepareExecution(Script script,
                                                                          IVariables variables,
                                                                          Dictionary<string, string>? environmentVars = null)
@@ -17,7 +21,7 @@ namespace Calamari.Common.Features.Scripting.ScriptCS
             var workingDirectory = Path.GetDirectoryName(script.File);
             var executable = ScriptCSBootstrapper.FindExecutable();
             var configurationFile = ScriptCSBootstrapper.PrepareConfigurationFile(workingDirectory, variables);
-            var (bootstrapFile, otherTemporaryFiles) = ScriptCSBootstrapper.PrepareBootstrapFile(script.File, configurationFile, workingDirectory, variables);
+            var (bootstrapFile, otherTemporaryFiles) = ScriptCSBootstrapper.PrepareBootstrapFile(script.File, configurationFile, workingDirectory, variables, log);
             var arguments = ScriptCSBootstrapper.FormatCommandArguments(bootstrapFile, script.Parameters);
 
             yield return new ScriptExecution(

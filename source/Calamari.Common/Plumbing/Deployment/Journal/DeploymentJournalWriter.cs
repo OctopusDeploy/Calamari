@@ -4,6 +4,7 @@ using Calamari.Common.Commands;
 using Calamari.Common.Features.Deployment.Journal;
 using Calamari.Common.Features.Processes.Semaphores;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Common.Plumbing.Deployment.Journal
@@ -11,10 +12,12 @@ namespace Calamari.Common.Plumbing.Deployment.Journal
     public class DeploymentJournalWriter : IDeploymentJournalWriter
     {
         readonly ICalamariFileSystem fileSystem;
+        readonly ILog log;
 
-        public DeploymentJournalWriter(ICalamariFileSystem fileSystem)
+        public DeploymentJournalWriter(ICalamariFileSystem fileSystem, ILog log)
         {
             this.fileSystem = fileSystem;
+            this.log = log;
         }
 
         /// <summary>
@@ -29,7 +32,7 @@ namespace Calamari.Common.Plumbing.Deployment.Journal
             if (deployment.SkipJournal)
                 return;
             var semaphore = new SystemSemaphoreManager();
-            var journal = new DeploymentJournal(fileSystem, semaphore, deployment.Variables);
+            var journal = new DeploymentJournal(fileSystem, semaphore, deployment.Variables, log);
 
             var hasPackages = !string.IsNullOrWhiteSpace(packageFile) || deployment.Variables.GetIndexes(PackageVariables.PackageCollection).Any();
 

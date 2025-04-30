@@ -17,11 +17,13 @@ namespace Calamari.Aws.Deployment.Conventions
     {
         private readonly AwsEnvironmentGeneration awsEnvironmentGeneration;
         private readonly Func<RunningDeployment, string> bucketFactory;
+        readonly ILog log;
 
-        public CreateS3BucketConvention(AwsEnvironmentGeneration awsEnvironmentGeneration, Func<RunningDeployment, string> bucketFactory)
+        public CreateS3BucketConvention(AwsEnvironmentGeneration awsEnvironmentGeneration, Func<RunningDeployment, string> bucketFactory, ILog log)
         {
             this.awsEnvironmentGeneration = awsEnvironmentGeneration;
             this.bucketFactory = bucketFactory;
+            this.log = log;
         }
 
         public void Install(RunningDeployment deployment)
@@ -47,7 +49,7 @@ namespace Calamari.Aws.Deployment.Conventions
             {
                 if (await Amazon.S3.Util.AmazonS3Util.DoesS3BucketExistV2Async(client, bucketName))
                 {
-                    Log.Verbose($"Bucket {bucketName} exists in region {awsEnvironmentGeneration.AwsRegion}. Skipping creation.");
+                    log.Verbose($"Bucket {bucketName} exists in region {awsEnvironmentGeneration.AwsRegion}. Skipping creation.");
                     return;
                 }
 
@@ -57,7 +59,7 @@ namespace Calamari.Aws.Deployment.Conventions
                     UseClientRegion = true
                 };
 
-                Log.Info($"Creating {bucketName}.");
+                log.Info($"Creating {bucketName}.");
                 await client.PutBucketAsync(request);
             }
         }

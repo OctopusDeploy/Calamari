@@ -55,7 +55,7 @@ namespace Calamari.Integration.Packages.Download
                 var downloaded = AttemptToGetPackageFromCache(packageId, version, cacheDirectory);
                 if (downloaded != null)
                 {
-                    Log.VerboseFormat("Package was found in cache. No need to download. Using file: '{0}'", downloaded.FullFilePath);
+                    log.VerboseFormat("Package was found in cache. No need to download. Using file: '{0}'", downloaded.FullFilePath);
                     return downloaded;
                 }
             }
@@ -71,7 +71,7 @@ namespace Calamari.Integration.Packages.Download
 
         PackagePhysicalFileMetadata? AttemptToGetPackageFromCache(string packageId, IVersion version, string cacheDirectory)
         {
-            Log.VerboseFormat("Checking package cache for package {0} v{1}", packageId, version.ToString());
+            log.VerboseFormat("Checking package cache for package {0} v{1}", packageId, version.ToString());
 
             var files = fileSystem.EnumerateFilesRecursively(cacheDirectory, PackageName.ToSearchPatterns(packageId, version));
 
@@ -100,8 +100,8 @@ namespace Calamari.Integration.Packages.Download
                                                            int maxDownloadAttempts,
                                                            TimeSpan downloadAttemptBackoff)
         {
-            Log.Info("Downloading package {0} v{1} from feed: '{2}'", packageId, version, feedUri);
-            Log.VerboseFormat("Downloaded package will be stored in: '{0}'", cacheDirectory);
+            log.Info($"Downloading package {packageId} v{version} from feed: '{feedUri}'");
+            log.Verbose($"Downloaded package will be stored in: '{cacheDirectory}'");
 
             var tempDirectory = fileSystem.CreateTemporaryDirectory();
             using (new TemporaryDirectory(tempDirectory))

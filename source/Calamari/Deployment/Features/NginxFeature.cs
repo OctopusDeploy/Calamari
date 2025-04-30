@@ -19,11 +19,13 @@ namespace Calamari.Deployment.Features
 
         readonly NginxServer nginxServer;
         readonly ICalamariFileSystem fileSystem;
+        readonly ILog log;
 
-        public NginxFeature(NginxServer nginxServer, ICalamariFileSystem fileSystem)
+        public NginxFeature(NginxServer nginxServer, ICalamariFileSystem fileSystem, ILog log)
         {
             this.nginxServer = nginxServer;
             this.fileSystem = fileSystem;
+            this.log = log;
         }
 
         public void Execute(RunningDeployment deployment)
@@ -58,11 +60,11 @@ namespace Calamari.Deployment.Features
                 .WithRootLocation(rootLocation)
                 .WithAdditionalLocations(additionalLocations);
 
-            Log.Verbose("Building nginx configuration");
+            log.Verbose("Building nginx configuration");
             var customNginxConfRoot = variables.Get(SpecialVariables.Action.Nginx.ConfigRoot);
             nginxServer.BuildConfiguration(customNginxConfRoot);
 
-            Log.Verbose("Saving nginx configuration");
+            log.Verbose("Saving nginx configuration");
             var tempDirectory = fileSystem.CreateTemporaryDirectory();
             variables.Set("OctopusNginxFeatureTempDirectory", tempDirectory);
             nginxServer.SaveConfiguration(tempDirectory);

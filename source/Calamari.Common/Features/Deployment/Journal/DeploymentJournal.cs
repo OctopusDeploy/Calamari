@@ -16,12 +16,14 @@ namespace Calamari.Common.Features.Deployment.Journal
         readonly ICalamariFileSystem fileSystem;
         readonly ISemaphoreFactory semaphore;
         readonly IVariables variables;
+        readonly ILog log;
 
-        public DeploymentJournal(ICalamariFileSystem fileSystem, ISemaphoreFactory semaphore, IVariables variables)
+        public DeploymentJournal(ICalamariFileSystem fileSystem, ISemaphoreFactory semaphore, IVariables variables, ILog log)
         {
             this.fileSystem = fileSystem;
             this.semaphore = semaphore;
             this.variables = variables;
+            this.log = log;
         }
 
         string? JournalPath => variables.Get(TentacleVariables.Agent.JournalPath);
@@ -31,7 +33,7 @@ namespace Calamari.Common.Features.Deployment.Journal
             using (semaphore.Acquire(SemaphoreName, "Another process is using the deployment journal"))
             {
                 var xElement = entry.ToXmlElement();
-                Log.VerboseFormat("Adding journal entry:\n{0}", xElement.ToString());
+                log.VerboseFormat("Adding journal entry:\n{0}", xElement.ToString());
                 Write(Read().Concat(new[] { xElement }));
             }
         }
