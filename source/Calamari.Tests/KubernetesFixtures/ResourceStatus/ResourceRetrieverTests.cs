@@ -2,10 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Amazon.IdentityManagement.Model;
+using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Kubernetes.Integration;
 using Calamari.Kubernetes.ResourceStatus;
 using Calamari.Kubernetes.ResourceStatus.Resources;
+using Calamari.Testing.Helpers;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NSubstitute;
@@ -214,38 +216,159 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                 }
             });
         }
+        
+        [Test]
+        public void HandlesInvalidJson()
+        {
+            var kubectlGet = new MockKubectlGet();
+            var resourceRetriever = new ResourceRetriever(kubectlGet, Substitute.For<ILog>());
+            
+            kubectlGet.SetResource("rs", "invalid json");
+            var results = resourceRetriever.GetAllOwnedResources(
+                new List<ResourceIdentifier>
+                {
+                    new ResourceIdentifier(SupportedResourceGroupVersionKinds.ReplicaSetV1, "rs", "octopus"),
+                },
+                null, new Options());
+
+            var result = results.Should().ContainSingle().Which;
+            result.IsSuccess.Should().BeFalse();
+            result.ErrorMessage.Should().Contain("Failed to parse JSON");
+        }
+        
+        [Test]
+        public void HandlesGetErrors()
+        {
+            var kubectlGet = new MockKubectlGet();
+            var resourceRetriever = new ResourceRetriever(kubectlGet, Substitute.For<ILog>());
+            
+            Message[] messages = { new Message(Level.Error, "Error getting resource") };
+            kubectlGet.SetResource("rs", messages);
+            var results = resourceRetriever.GetAllOwnedResources(
+                 new List<ResourceIdentifier>
+                 {
+                     new ResourceIdentifier(SupportedResourceGroupVersionKinds.ReplicaSetV1, "rs", "octopus"),
+                 },
+                 null, 
+                 new Options()
+                 {
+                     PrintVerboseKubectlOutputOnError = true
+                 });
+
+            var result = results.Should().ContainSingle().Which;
+            result.IsSuccess.Should().BeFalse();
+            result.ErrorMessage.Should().Contain("Error getting resource");
+        }
+        
+        
+        [Test]
+        public void HandlesEmptyResponse()
+        {
+            var kubectlGet = new MockKubectlGet();
+            var resourceRetriever = new ResourceRetriever(kubectlGet, Substitute.For<ILog>());
+            
+            kubectlGet.SetResource("rs", Array.Empty<Message>());
+            var results = resourceRetriever.GetAllOwnedResources(
+                 new List<ResourceIdentifier>
+                 {
+                     new ResourceIdentifier(SupportedResourceGroupVersionKinds.ReplicaSetV1, "rs", "octopus"),
+                 },
+                 null, new Options());
+
+            var result = results.Should().ContainSingle().Which;
+            result.IsSuccess.Should().BeFalse();
+            result.ErrorMessage.Should().Contain("Failed to get resource");
+        }
+        
+        [Test]
+        public void HandleChildFailure()
+        {
+            var replicaSetUid = Guid.NewGuid().ToString();
+
+            var replicaSet = new ResourceResponseBuilder().WithApiVersion("apps/v1")
+                .WithKind("ReplicaSet")
+                .WithName("rs")
+                .WithUid(replicaSetUid)
+                .Build();
+
+            var kubectlGet = new MockKubectlGet();
+            var log = new InMemoryLog();
+            var resourceRetriever = new ResourceRetriever(kubectlGet, log);
+            
+            kubectlGet.SetResource("rs", replicaSet);
+            Message[] messages = { new Message(Level.Error, "Error getting resource") };
+            kubectlGet.SetAllResources("Pod", messages);
+            
+            var results = resourceRetriever.GetAllOwnedResources(
+                 new List<ResourceIdentifier>
+                 {
+                     new ResourceIdentifier(SupportedResourceGroupVersionKinds.ReplicaSetV1, "rs", "octopus"),
+                 },
+                 null, 
+                 new Options()
+                 {
+                     PrintVerboseKubectlOutputOnError = true
+                 });
+
+
+            var result = results.Should().ContainSingle().Which;
+            result.IsSuccess.Should().BeTrue();
+            result.Value.Should().BeEquivalentTo(new
+                {
+                    GroupVersionKind = SupportedResourceGroupVersionKinds.ReplicaSetV1,
+                    Name = "rs",
+                    Children = Array.Empty<object>(),
+                }
+            );
+
+            log.MessagesVerboseFormatted
+               .Should()
+               .Contain(r => r.Contains("Error getting resource"));
+        }
     }
+    
 
     public class MockKubectlGet : IKubectlGet
     {
-        private readonly Dictionary<string, string> resourceEntries = new Dictionary<string, string>();
-        private readonly Dictionary<string, string> resourcesByKind = new Dictionary<string, string>();
+        private readonly Dictionary<string, Message[]> resourceEntries = new Dictionary<string, Message[]>();
+        private readonly Dictionary<string, Message[]> resourcesByKind = new Dictionary<string, Message[]>();
 
         public void SetResource(string name, string data)
         {
-            resourceEntries.Add(name, data);
+            Message[] messages = { new Message(Level.Info, data) };
+            resourceEntries.Add(name, messages);
+        }
+        public void SetResource(string name, Message[] messages)
+        {
+            resourceEntries.Add(name, messages);
         }
 
         public void SetAllResources(string kind, params string[] data)
         {
-            resourcesByKind.Add(kind, $"{{items: [{string.Join(",", data)}]}}");
+            Message[] messages = { new Message(Level.Info, $"{{items: [{string.Join(",", data)}]}}") };
+            resourcesByKind.Add(kind, messages);
+        }
+
+        public void SetAllResources(string kind, Message[] messages)
+        {
+            resourcesByKind.Add(kind, messages);
         }
 
 
         public KubectlGetResult Resource(IResourceIdentity resourceIdentity, IKubectl kubectl)
         {
-            return new KubectlGetResult(resourceEntries[resourceIdentity.Name], new List<string>
-            {
-                $"{Level.Info}: {resourceEntries[resourceIdentity.Name]}"
-            });
+            var resourceJson = resourceEntries[resourceIdentity.Name].Select(m => m.Text).Join(string.Empty);
+            var rawOutput = resourceEntries[resourceIdentity.Name].Select(m => $"{m.Level}: {m.Text}").ToList();
+            
+            return new KubectlGetResult(resourceJson, rawOutput);
         }
 
         public KubectlGetResult AllResources(ResourceGroupVersionKind groupVersionKind, string @namespace, IKubectl kubectl)
         {
-            return new KubectlGetResult(resourcesByKind[groupVersionKind.Kind], new List<string>
-            {
-                $"{Level.Info}: {resourcesByKind[groupVersionKind.Kind]}"
-            });
+            var resourceJson = resourcesByKind[groupVersionKind.Kind].Select(m => m.Text).Join(string.Empty);
+            var rawOutput = resourcesByKind[groupVersionKind.Kind].Select(m => $"{m.Level}: {m.Text}").ToList();
+            
+            return new KubectlGetResult(resourceJson, rawOutput);
         }
     }
 
