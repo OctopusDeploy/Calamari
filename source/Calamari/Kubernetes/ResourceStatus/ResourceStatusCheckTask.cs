@@ -46,7 +46,7 @@ namespace Calamari.Kubernetes.ResourceStatus
 
             var definedResources = resources.ToArray();
             var checkCount = 0;
-            var taskResult = await Task.Run(async () =>
+            return await Task.Run(async () =>
             {
                 timer.Start();
                 var result = new Result();
@@ -71,7 +71,7 @@ namespace Calamari.Kubernetes.ResourceStatus
                                           .ToList();
                     if (statusCheckFailures.Any())
                     {
-                        log.Verbose("Resource Status Check: Failed to retrieve 1 or more resources status.");
+                        log.Verbose("Resource Status Check: Failed to update status for one or more resources:");
                         statusCheckFailures.ForEach(log.Verbose);
                     }
                     var definedResourceStatuses = resourceStatusResults.Where(r => r.IsSuccess).Select(r => r.Value).ToArray();
@@ -88,8 +88,7 @@ namespace Calamari.Kubernetes.ResourceStatus
                         deploymentStatus,
                         definedResources,
                         definedResourceStatuses,
-                        resourceStatuses,
-                        statusCheckFailures.ToArray()
+                        resourceStatuses
                     );
 
                     //if we have been asked to stop, jump out after the last check
@@ -104,16 +103,6 @@ namespace Calamari.Kubernetes.ResourceStatus
 
                 return result;
             }, cancellationToken);
-            
-            if (taskResult.Warnings.Length <= 0)
-                return taskResult;
-            
-            log.Warn("Resource Status Check completed with issues:");
-            foreach (var warning in taskResult.Warnings)
-            {
-                log.Warn(warning);
-            }
-            return taskResult;
         }
 
         /// <summary>
@@ -165,8 +154,7 @@ namespace Calamari.Kubernetes.ResourceStatus
                     deploymentStatus,
                     Array.Empty<ResourceIdentifier>(),
                     Array.Empty<Resource>(),
-                    new Dictionary<string, Resource>(),
-                    Array.Empty<string>()
+                    new Dictionary<string, Resource>()
                     )
             {
             }
@@ -175,21 +163,18 @@ namespace Calamari.Kubernetes.ResourceStatus
                 DeploymentStatus deploymentStatus,
                 ResourceIdentifier[] definedResources,
                 Resource[] definedResourceStatuses,
-                Dictionary<string, Resource> resourceStatuses,
-                string[] warnings)
+                Dictionary<string, Resource> resourceStatuses)
             {
                 DefiniedResources = definedResources;
                 DefinedResourceStatuses = definedResourceStatuses;
                 ResourceStatuses = resourceStatuses;
                 DeploymentStatus = deploymentStatus;
-                Warnings = warnings;
             }
 
             public ResourceIdentifier[] DefiniedResources { get; }
             public Resource[] DefinedResourceStatuses { get; }
             public Dictionary<string, Resource> ResourceStatuses { get; }
             public DeploymentStatus DeploymentStatus { get; }
-            public string[] Warnings { get; }
         }
     }
 }
