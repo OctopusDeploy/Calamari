@@ -98,7 +98,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             
             var resources = parseResult.Value;
             var children = resources
-                           .Where(resource => resource.GroupVersionKind.Equals(childGvk))
+                           .Where(resource => resource.OwnerUids.Contains(parentResource.Uid))
                            .Select(child =>FetchChildrenAndUpdateResource(child, kubectl, options))
                            .ToList();
             parentResource.UpdateChildren(children);
