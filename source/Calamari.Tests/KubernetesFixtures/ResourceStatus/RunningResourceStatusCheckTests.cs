@@ -178,6 +178,61 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                 .Should().Be(RunningResourceStatusCheck.MessageInProgressAtTheEndOfTimeout);
         }
 
+        [Test]
+        public async Task ShouldReturnSuccessful_WhenStatusCheckFailsBeforeSucceeding()
+        {
+            var retriever = new TestRetriever();
+            var reporter = new TestReporter();
+            var kubectl = Substitute.For<IKubectl>();
+            var statusCheckTaskFactory = GetStatusCheckTaskFactory(retriever, reporter, kubectl, maxChecks: 5);
+            var log = new InMemoryLog();
+
+            retriever.SetResponses(
+                new List<ResourceRetrieverResult> { ResourceRetrieverResult.Failure("Test Failure Message") },
+                new List<ResourceRetrieverResult> { ResourceRetrieverResult.Success(new TestResource("Pod", Kubernetes.ResourceStatus.Resources.ResourceStatus.Successful)) }
+            );
+
+            var resourceStatusChecker = new RunningResourceStatusCheck(statusCheckTaskFactory, log, new TimeSpan(), new Options(), new[]
+            {
+                new ResourceIdentifier(SupportedResourceGroupVersionKinds.PodV1, "my-pod", "default")
+            });
+
+            var result = await resourceStatusChecker.WaitForCompletionOrTimeout(CancellationToken.None);
+
+            result.Should().BeTrue();
+            log.StandardError.Should().BeEmpty();
+            log.StandardOut.Should().Contain(RunningResourceStatusCheck.MessageDeploymentSucceeded);
+            log.MessagesVerboseFormatted.Should().Contain(l => l.Contains("Test Failure Message"));
+        }
+        
+        [Test]
+        public async Task ShouldReturnFailure_WhenStatusChecksAllFailsBeforeTimeout()
+        {
+            var retriever = new TestRetriever();
+            var reporter = new TestReporter();
+            var kubectl = Substitute.For<IKubectl>();
+            var statusCheckTaskFactory = GetStatusCheckTaskFactory(retriever, reporter, kubectl, maxChecks: 5);
+            var log = new InMemoryLog();
+
+            retriever.SetResponses(
+                new List<ResourceRetrieverResult> { ResourceRetrieverResult.Failure("Test Failure Message") },
+                new List<ResourceRetrieverResult> { ResourceRetrieverResult.Failure("Test Failure Message") }
+            );
+
+            var resourceStatusChecker = new RunningResourceStatusCheck(statusCheckTaskFactory, log, new TimeSpan(), new Options(), new[]
+            {
+                new ResourceIdentifier(SupportedResourceGroupVersionKinds.PodV1, "my-pod", "default")
+            });
+
+            var result = await resourceStatusChecker.WaitForCompletionOrTimeout(CancellationToken.None);
+
+            result.Should().BeFalse();
+            log.StandardError
+                .Should().ContainSingle().Which
+                .Should().Be(RunningResourceStatusCheck.MessageInProgressAtTheEndOfTimeout);
+            log.MessagesVerboseFormatted.Should().Contain(l => l.Contains("Test Failure Message"));
+        }
+
         private Func<ResourceStatusCheckTask> GetStatusCheckTaskFactory(IResourceRetriever retriever,
             IResourceUpdateReporter reporter, IKubectl kubectl, int maxChecks)
         {
@@ -201,6 +256,11 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         public void SetResponses(params List<Resource>[] responses)
         {
             this.responses.AddRange(responses.Select(r => r.Select(ResourceRetrieverResult.Success).ToList()));
+        }
+        
+        public  void SetResponses(params List<ResourceRetrieverResult>[] responses)
+        {
+            this.responses.AddRange(responses);
         }
     }
 
