@@ -56,15 +56,7 @@ namespace Calamari.Kubernetes.ResourceStatus
             foreach (var result in results.Where(r => r.IsSuccess))
             {
                 var resource = result.Value;
-                var childResult = GetChildrenResources(resource, kubectl, options);
-                if (!childResult.IsSuccess)
-                {
-                    // Child resources are ignored for determining deployment success.
-                    log.Verbose($"Failed to get child resources for {resource.Name} in namespace {resource.Namespace}");
-                    log.Verbose(childResult.ErrorMessage);
-                    continue;
-                }
-                resource.UpdateChildren(childResult.Value);
+                FetchChildrenAndUpdateResource(resource, kubectl, options);
             }
 
             return results;
@@ -81,34 +73,35 @@ namespace Calamari.Kubernetes.ResourceStatus
             return !parseResult.IsSuccess ? ResourceRetrieverResult.Failure(parseResult.ErrorMessage) : ResourceRetrieverResult.Success(parseResult.Value);
         }
 
-        Result<IEnumerable<Resource>> GetChildrenResources(Resource parentResource, IKubectl kubectl, Options options)
+        Resource FetchChildrenAndUpdateResource(Resource parentResource, IKubectl kubectl, Options options)
         {
             var childGvk = parentResource.ChildGroupVersionKind;
-            if (childGvk is null) return Result<IEnumerable<Resource>>.Success(Enumerable.Empty<Resource>());
+            if (childGvk is null) return parentResource;
 
             var result = kubectlGet.AllResources(childGvk, parentResource.Namespace, kubectl);
-            if (result.RawOutput.IsNullOrEmpty()) 
-                return Result<IEnumerable<Resource>>.Failure($"Failed to get child resources for {parentResource.Name} in namespace {parentResource.Namespace}");
+            if (result.RawOutput.IsNullOrEmpty())
+            {
+                // Child resources are ignored for determining deployment success.
+                log.Verbose($"Failed to get child resources for {parentResource.Name} in namespace {parentResource.Namespace}");
+                return parentResource;
+            }
             
             var parseResult = TryParse(ResourceFactory.FromListJson, result, options);
-            if (!parseResult.IsSuccess) return Result<IEnumerable<Resource>>.Failure(parseResult.ErrorMessage);
+            if (!parseResult.IsSuccess)
+            {
+                // Child resources are ignored for determining deployment success.
+                log.Verbose($"Failed to parse child resources for {parentResource.Name} in namespace {parentResource.Namespace}");
+                log.Verbose(parseResult.ErrorMessage);
+                return parentResource;
+            };
             
             var resources = parseResult.Value;
-            var children = resources.Where(resource => resource.GroupVersionKind.Equals(childGvk)).ToList();
-            foreach (var child in children)
-            {
-                var grandChildrenResult = GetChildrenResources(child, kubectl, options); 
-                if (!grandChildrenResult.IsSuccess)
-                {
-                    // Child resources are ignored for determining deployment success.
-                    log.Verbose($"Failed to get child resources for {child.Name} in namespace {child.Namespace}");
-                    log.Verbose(grandChildrenResult.ErrorMessage);                    
-                    continue;
-
-                }
-                child.UpdateChildren(grandChildrenResult.Value);
-            }
-            return Result<IEnumerable<Resource>>.Success(children);
+            var children = resources
+                           .Where(resource => resource.GroupVersionKind.Equals(childGvk))
+                           .Select(child =>FetchChildrenAndUpdateResource(child, kubectl, options))
+                           .ToList();
+            parentResource.UpdateChildren(children);
+            return parentResource;
         }
         
         static Result<T> TryParse<T>(Func<string, Options, T> function, KubectlGetResult getResult, Options options) where T : class
