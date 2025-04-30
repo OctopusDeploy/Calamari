@@ -46,7 +46,7 @@ namespace Calamari.Kubernetes.ResourceStatus
 
             var definedResources = resources.ToArray();
             var checkCount = 0;
-            return await Task.Run(async () =>
+            var taskResult = await Task.Run(async () =>
             {
                 timer.Start();
                 var result = new Result();
@@ -62,9 +62,19 @@ namespace Calamari.Kubernetes.ResourceStatus
                         return new Result(DeploymentStatus.Succeeded);
                     }
 
-                    var definedResourceStatuses = resourceRetriever
+                    var resourceStatusResults = resourceRetriever
                                                   .GetAllOwnedResources(definedResources, kubectl, options)
-                                                  .ToArray();
+                                                  .ToList();
+                    var statusCheckFailures = resourceStatusResults
+                                          .Where(r => !r.IsSuccess)
+                                          .Select(r => r.ErrorMessage)
+                                          .ToList();
+                    if (statusCheckFailures.Any())
+                    {
+                        log.Verbose("Resource Status Check: Failed to retrieve 1 or more resources status.");
+                        statusCheckFailures.ForEach(log.Verbose);
+                    }
+                    var definedResourceStatuses = resourceStatusResults.Where(r => r.IsSuccess).Select(r => r.Value).ToArray();
                     
                     var resourceStatuses = definedResourceStatuses
                                            .SelectMany(IterateResourceTree)
@@ -78,7 +88,9 @@ namespace Calamari.Kubernetes.ResourceStatus
                         deploymentStatus,
                         definedResources,
                         definedResourceStatuses,
-                        resourceStatuses);
+                        resourceStatuses,
+                        statusCheckFailures.ToArray()
+                    );
 
                     //if we have been asked to stop, jump out after the last check
                     if (stopAfterNextStatusCheck)
@@ -92,6 +104,16 @@ namespace Calamari.Kubernetes.ResourceStatus
 
                 return result;
             }, cancellationToken);
+            
+            if (taskResult.Warnings.Length <= 0)
+                return taskResult;
+            
+            log.Warn("Resource Status Check completed with issues:");
+            foreach (var warning in taskResult.Warnings)
+            {
+                log.Warn(warning);
+            }
+            return taskResult;
         }
 
         /// <summary>
@@ -141,9 +163,11 @@ namespace Calamari.Kubernetes.ResourceStatus
             public Result(DeploymentStatus deploymentStatus)
                 : this(
                     deploymentStatus,
-                    new ResourceIdentifier[0],
-                    new Resource[0],
-                    new Dictionary<string, Resource>())
+                    Array.Empty<ResourceIdentifier>(),
+                    Array.Empty<Resource>(),
+                    new Dictionary<string, Resource>(),
+                    Array.Empty<string>()
+                    )
             {
             }
 
@@ -151,18 +175,21 @@ namespace Calamari.Kubernetes.ResourceStatus
                 DeploymentStatus deploymentStatus,
                 ResourceIdentifier[] definedResources,
                 Resource[] definedResourceStatuses,
-                Dictionary<string, Resource> resourceStatuses)
+                Dictionary<string, Resource> resourceStatuses,
+                string[] warnings)
             {
                 DefiniedResources = definedResources;
                 DefinedResourceStatuses = definedResourceStatuses;
                 ResourceStatuses = resourceStatuses;
                 DeploymentStatus = deploymentStatus;
+                Warnings = warnings;
             }
 
             public ResourceIdentifier[] DefiniedResources { get; }
             public Resource[] DefinedResourceStatuses { get; }
             public Dictionary<string, Resource> ResourceStatuses { get; }
             public DeploymentStatus DeploymentStatus { get; }
+            public string[] Warnings { get; }
         }
     }
 }
