@@ -187,20 +187,20 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
 
     public class TestRetriever : IResourceRetriever
     {
-        private readonly List<List<Resource>> responses = new List<List<Resource>>();
+        private readonly List<List<ResourceRetrieverResult>> responses = new List<List<ResourceRetrieverResult>>();
         private int current;
 
-        public IEnumerable<Resource> GetAllOwnedResources(
+        public IEnumerable<ResourceRetrieverResult> GetAllOwnedResources(
             IEnumerable<ResourceIdentifier> resourceIdentifiers,
             IKubectl kubectl,
             Options options)
         {
-            return current >= responses.Count ? new List<Resource>() : responses[current++];
+            return current >= responses.Count ? new List<ResourceRetrieverResult>() : responses[current++];
         }
 
         public void SetResponses(params List<Resource>[] responses)
         {
-            this.responses.AddRange(responses);
+            this.responses.AddRange(responses.Select(r => r.Select(ResourceRetrieverResult.Success).ToList()));
         }
     }
 

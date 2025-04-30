@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Amazon.IdentityManagement.Model;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Kubernetes.Integration;
@@ -54,12 +55,13 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             kubectlGet.SetAllResources("Pod", pod1, pod2);
 
 
-            var got = resourceRetriever.GetAllOwnedResources(
+            var result = resourceRetriever.GetAllOwnedResources(
                 new List<ResourceIdentifier>
                 {
                     new ResourceIdentifier(SupportedResourceGroupVersionKinds.DeploymentV1, "nginx", "octopus")
                 },
                 null, new Options());
+            var got = result.Select(r => r.Value);
 
             got.Should().BeEquivalentTo(new object[]
             {
@@ -122,13 +124,14 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             kubectlGet.SetAllResources("ReplicaSet", replicaSet1, replicaSet2);
             kubectlGet.SetAllResources("Pod");
 
-            var got = resourceRetriever.GetAllOwnedResources(
+            var result = resourceRetriever.GetAllOwnedResources(
                 new List<ResourceIdentifier>
                 {
                     new ResourceIdentifier(SupportedResourceGroupVersionKinds.DeploymentV1, "deployment-1", "octopus"),
                     new ResourceIdentifier(SupportedResourceGroupVersionKinds.DeploymentV1, "deployment-2", "octopus")
                 },
                 null, new Options());
+            var got = result.Select(r => r.Value);
 
             got.Should().BeEquivalentTo(new object[]
             {
@@ -190,12 +193,13 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             kubectlGet.SetAllResources("Pod", childPod, irrelevantPod);
 
 
-            var got = resourceRetriever.GetAllOwnedResources(
+            var result = resourceRetriever.GetAllOwnedResources(
                 new List<ResourceIdentifier>
                 {
                     new ResourceIdentifier(SupportedResourceGroupVersionKinds.ReplicaSetV1, "rs", "octopus"),
                 },
                 null, new Options());
+            var got = result.Select(r => r.Value);
 
             got.Should().BeEquivalentTo(new object[]
             {
