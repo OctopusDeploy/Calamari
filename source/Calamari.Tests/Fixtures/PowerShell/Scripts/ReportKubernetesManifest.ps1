@@ -12,6 +12,8 @@ $manifest = @"
   "name": "diffs"
 "labels":
     "name": "diffs"
+---
+---
 "@
 
 Report-KubernetesManifest -manifest $manifest

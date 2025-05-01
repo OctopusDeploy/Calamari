@@ -81,10 +81,10 @@ namespace Calamari.Tests.Fixtures.Bash
             Assert.Multiple(() =>
                             {
                                 output.AssertSuccess();
-                                output.AssertOutput("##octopus[k8s-manifest-applied manifest='XG4iYXBpVmVyc2lvbiI6ICJ2MSJcbiJraW5kIjogIk5hbWVzcGFjZSJcbiJtZXRhZGF0YSI6XG4gICJuYW1lIjogImV4YW1wbGUiXG4ibGFiZWxzIjpcbiAgICAibmFtZSI6ICJleGFtcGxlIlxu']");
-                                output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiXG4ia2luZCI6ICJOYW1lc3BhY2UiXG4ibWV0YWRhdGEiOlxuICAibmFtZSI6ICJkaWZmcyJcbiJsYWJlbHMiOlxuICAgICJuYW1lIjogImRpZmZzIlxuXG4=']");
-                                output.AssertOutput("##octopus[k8s-manifest-applied manifest='XG4iYXBpVmVyc2lvbiI6ICJ2MSJcbiJraW5kIjogIk5hbWVzcGFjZSJcbiJtZXRhZGF0YSI6XG4gICJuYW1lIjogImV4YW1wbGUiXG4ibGFiZWxzIjpcbiAgICAibmFtZSI6ICJleGFtcGxlIlxu' ns='bXk=']");
-                                output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiXG4ia2luZCI6ICJOYW1lc3BhY2UiXG4ibWV0YWRhdGEiOlxuICAibmFtZSI6ICJkaWZmcyJcbiJsYWJlbHMiOlxuICAgICJuYW1lIjogImRpZmZzIlxuXG4=' ns='bXk=']");
+                                output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiXG4ia2luZCI6ICJOYW1lc3BhY2UiXG4ibWV0YWRhdGEiOlxuICAibmFtZSI6ICJleGFtcGxlIlxuImxhYmVscyI6XG4gICAgIm5hbWUiOiAiZXhhbXBsZSJcbg==']");
+                                output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiXG4ia2luZCI6ICJOYW1lc3BhY2UiXG4ibWV0YWRhdGEiOlxuICAibmFtZSI6ICJkaWZmcyJcbiJsYWJlbHMiOlxuICAgICJuYW1lIjogImRpZmZzIlxu']");
+                                output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiXG4ia2luZCI6ICJOYW1lc3BhY2UiXG4ibWV0YWRhdGEiOlxuICAibmFtZSI6ICJleGFtcGxlIlxuImxhYmVscyI6XG4gICAgIm5hbWUiOiAiZXhhbXBsZSJcbg==' ns='bXk=']");
+                                output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiXG4ia2luZCI6ICJOYW1lc3BhY2UiXG4ibWV0YWRhdGEiOlxuICAibmFtZSI6ICJkaWZmcyJcbiJsYWJlbHMiOlxuICAgICJuYW1lIjogImRpZmZzIlxu' ns='bXk=']");
                             });
         }
         

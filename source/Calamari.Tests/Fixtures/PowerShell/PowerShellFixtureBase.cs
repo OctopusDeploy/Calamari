@@ -262,9 +262,9 @@ namespace Calamari.Tests.Fixtures.PowerShell
             var (output, _) = RunPowerShellScript("ReportKubernetesManifest.ps1");
             output.AssertSuccess();
             output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiDQoia2luZCI6ICJOYW1lc3BhY2UiDQoibWV0YWRhdGEiOg0KICAibmFtZSI6ICJleGFtcGxlIg0KImxhYmVscyI6DQogICAgIm5hbWUiOiAiZXhhbXBsZSINCg==']");
-            output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiDQoia2luZCI6ICJOYW1lc3BhY2UiDQoibWV0YWRhdGEiOg0KICAibmFtZSI6ICJkaWZmcyINCiJsYWJlbHMiOg0KICAgICJuYW1lIjogImRpZmZzIg==']");
+            output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiDQoia2luZCI6ICJOYW1lc3BhY2UiDQoibWV0YWRhdGEiOg0KICAibmFtZSI6ICJkaWZmcyINCiJsYWJlbHMiOg0KICAgICJuYW1lIjogImRpZmZzIg0K']");
             output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiDQoia2luZCI6ICJOYW1lc3BhY2UiDQoibWV0YWRhdGEiOg0KICAibmFtZSI6ICJleGFtcGxlIg0KImxhYmVscyI6DQogICAgIm5hbWUiOiAiZXhhbXBsZSINCg==' ns='bXk=']");
-            output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiDQoia2luZCI6ICJOYW1lc3BhY2UiDQoibWV0YWRhdGEiOg0KICAibmFtZSI6ICJkaWZmcyINCiJsYWJlbHMiOg0KICAgICJuYW1lIjogImRpZmZzIg==' ns='bXk=']");
+            output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiDQoia2luZCI6ICJOYW1lc3BhY2UiDQoibWV0YWRhdGEiOg0KICAibmFtZSI6ICJkaWZmcyINCiJsYWJlbHMiOg0KICAgICJuYW1lIjogImRpZmZzIg0K' ns='bXk=']");
             AssertPowerShellEdition(output);
         }
         

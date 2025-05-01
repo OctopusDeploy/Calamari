@@ -274,7 +274,7 @@ function Report-KubernetesManifest
     )
 
     # The manifest might be multiple documents, so we split on --- (with the newline + any trailing spaces)
-    $manifests = $manifest -split "---\s*[\r|\n|\r\n]"
+    $manifests = $manifest -split "---\s*[\r|\n|\r\n]?"
 
     for ($i = 0; $i -lt $manifests.Count; $i++) {
         $current = $manifests[$i]

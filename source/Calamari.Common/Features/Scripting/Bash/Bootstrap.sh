@@ -339,12 +339,12 @@ function report_kubernetes_manifest
     
   MANIFESTS+=("$CURRENT")
   
-  for manifest in "${MANIFESTS[@]}"; do
-    if [ -z "$manifest" ]; then
+  for mf in "${MANIFESTS[@]}"; do
+    if [ -z "$mf" ]; then
       continue 
     fi      
     
-    MESSAGE="##octopus[k8s-manifest-applied manifest='$(encode_servicemessagevalue "$manifest")'"
+    MESSAGE="##octopus[k8s-manifest-applied manifest='$(encode_servicemessagevalue "$mf")'"
     
     if [ -n "$NAMESPACE" ]; then
       MESSAGE="$MESSAGE ns='$(encode_servicemessagevalue "$NAMESPACE")'"
