@@ -14,10 +14,12 @@ namespace Calamari.Deployment.Conventions
     public class CopyPackageToCustomInstallationDirectoryConvention : IInstallConvention
     {
         readonly ICalamariFileSystem fileSystem;
+        readonly ILog log;
 
-        public CopyPackageToCustomInstallationDirectoryConvention(ICalamariFileSystem fileSystem)
+        public CopyPackageToCustomInstallationDirectoryConvention(ICalamariFileSystem fileSystem, ILog log)
         {
             this.fileSystem = fileSystem;
+            this.log = log;
         }
 
         public void Install(RunningDeployment deployment)
@@ -29,8 +31,8 @@ namespace Calamari.Deployment.Conventions
 
             if (string.IsNullOrWhiteSpace(customInstallationDirectory))
             {
-                Log.Verbose("The package has been installed to: " + sourceDirectory);
-                Log.Verbose("If you would like the package to be installed to an alternative location, please use the 'Custom installation directory' feature");
+                log.Verbose("The package has been installed to: " + sourceDirectory);
+                log.Verbose("If you would like the package to be installed to an alternative location, please use the 'Custom installation directory' feature");
                 // If the variable was not set then we set it, as it makes it simpler for anything to depend on it from this point on
                 variables.Set(PackageVariables.CustomInstallationDirectory,
                     sourceDirectory);
@@ -38,7 +40,7 @@ namespace Calamari.Deployment.Conventions
                 return;
             }
 
-            Log.Verbose($"Installing package to custom directory {customInstallationDirectory}");
+            log.Verbose($"Installing package to custom directory {customInstallationDirectory}");
 
             if (!string.IsNullOrEmpty(errorString))
             {
@@ -64,27 +66,27 @@ namespace Calamari.Deployment.Conventions
                 if (variables.GetFlag(
                     PackageVariables.CustomInstallationDirectoryShouldBePurgedBeforeDeployment))
                 {
-                    Log.Info("Purging the directory '{0}'", customInstallationDirectory);
+                    log.Info($"Purging the directory '{customInstallationDirectory}'");
                     var purgeExlusions = variables.GetPaths(PackageVariables.CustomInstallationDirectoryPurgeExclusions).ToArray();
                     if (purgeExlusions.Any())
                     {
-                        Log.Info("Leaving files and directories that match any of: '{0}'", string.Join(", ", purgeExlusions));
+                        log.Info($"Leaving files and directories that match any of: '{string.Join(", ", purgeExlusions)}'");
                     }
 
                     fileSystem.PurgeDirectory(deployment.CustomDirectory, FailureOptions.ThrowOnFailure, purgeExlusions);
                 }
 
                 // Copy files from staging area to custom directory
-                Log.Info("Copying package contents to '{0}'", customInstallationDirectory);
+                log.Info($"Copying package contents to '{customInstallationDirectory}'");
                 int count = fileSystem.CopyDirectory(deployment.StagingDirectory, deployment.CustomDirectory);
-                Log.Info("Copied {0} files", count);
+                log.Info($"Copied {count} files");
 
                 // From this point on, the current directory will be the custom-directory
                 deployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.CustomDirectory;
 
-                Log.SetOutputVariable(PackageVariables.Output.InstallationDirectoryPath, deployment.CustomDirectory, variables);
-                Log.SetOutputVariable(PackageVariables.Output.DeprecatedInstallationDirectoryPath, deployment.CustomDirectory, variables);
-                Log.SetOutputVariable(PackageVariables.Output.CopiedFileCount, count.ToString(), variables);
+                log.SetOutputVariable(PackageVariables.Output.InstallationDirectoryPath, deployment.CustomDirectory, variables);
+                log.SetOutputVariable(PackageVariables.Output.DeprecatedInstallationDirectoryPath, deployment.CustomDirectory, variables);
+                log.SetOutputVariable(PackageVariables.Output.CopiedFileCount, count.ToString(), variables);
             }
             catch (UnauthorizedAccessException uae) when (uae.Message.StartsWith("Access to the path"))
             {

@@ -11,11 +11,13 @@ namespace Calamari.Deployment.Conventions
     {
         private readonly IScriptEngine scriptEngine;
         private readonly ICommandLineRunner commandLineRunner;
+        readonly ILog log;
 
-        public ExecuteScriptConvention(IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner)
+        public ExecuteScriptConvention(IScriptEngine scriptEngine, ICommandLineRunner commandLineRunner, ILog log)
         {
             this.scriptEngine = scriptEngine;
             this.commandLineRunner = commandLineRunner;
+            this.log = log;
         }
 
         public void Install(RunningDeployment deployment)
@@ -23,7 +25,7 @@ namespace Calamari.Deployment.Conventions
             var variables = deployment.Variables;
             var scriptFile = Path.Combine(deployment.CurrentDirectory, variables.Get(ScriptVariables.ScriptFileName));
             var scriptParameters = variables.Get(SpecialVariables.Action.Script.ScriptParameters);
-            Log.VerboseFormat("Executing '{0}'", scriptFile);
+            log.VerboseFormat("Executing '{0}'", scriptFile);
             var result = scriptEngine.Execute(new Script(scriptFile, scriptParameters), variables, commandLineRunner, deployment.EnvironmentVariables);
 
             var exitCode =
@@ -31,7 +33,7 @@ namespace Calamari.Deployment.Conventions
                     ? -1
                     : result.ExitCode;
 
-            Log.SetOutputVariable(SpecialVariables.Action.Script.ExitCode, exitCode.ToString(), variables);
+            log.SetOutputVariable(SpecialVariables.Action.Script.ExitCode, exitCode.ToString(), variables);
         }
     }
 }

@@ -63,7 +63,7 @@ namespace Calamari.AzureServiceFabric
                     var clientCertThumbprint = variables.Get(clientCertVariable + ".Thumbprint");
                     var commonName = variables.Get(clientCertVariable + ".SubjectCommonName");
 
-                    CalamariCertificateStore.EnsureCertificateIsInstalled(variables, clientCertVariable, certificateStoreName, certificateStoreLocation);
+                    new CalamariCertificateStore(log).EnsureCertificateIsInstalled(variables, clientCertVariable, certificateStoreName, certificateStoreLocation);
 
                     var xc = ServiceFabricHelper.GetX509Credentials(clientCertThumbprint, certificateStoreLocation, certificateStoreName, serverCertThumbprint, commonName);
                     try

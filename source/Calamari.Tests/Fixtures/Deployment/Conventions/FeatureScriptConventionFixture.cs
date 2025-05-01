@@ -8,8 +8,10 @@ using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.Conventions;
+using Calamari.Tests.Helpers;
 using NSubstitute;
 using NUnit.Framework;
 
@@ -134,7 +136,7 @@ namespace Calamari.Tests.Fixtures.Deployment.Conventions
 
         private FeatureConvention CreateConvention(string deployStage)
         {
-            return new FeatureConvention(deployStage, null, fileSystem, scriptEngine, commandLineRunner, embeddedResources);
+            return new FeatureConvention(deployStage, null, fileSystem, scriptEngine, commandLineRunner, embeddedResources, new SilentLog());
         }
     }
 }

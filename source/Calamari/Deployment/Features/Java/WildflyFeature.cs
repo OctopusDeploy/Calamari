@@ -9,10 +9,12 @@ namespace Calamari.Deployment.Features.Java
     public class WildflyFeature : IFeature
     {
         readonly JavaRunner javaRunner;
+        readonly ILog log;
 
-        public WildflyFeature(JavaRunner javaRunner)
+        public WildflyFeature(JavaRunner javaRunner, ILog log)
         {
             this.javaRunner = javaRunner;
+            this.log = log;
         }
 
         public string Name => SpecialVariables.Action.Java.WildFly.Feature;
@@ -30,7 +32,7 @@ namespace Calamari.Deployment.Features.Java
                 return;
 
             // Environment variables are used to pass parameters to the Java library
-            Log.Verbose("Invoking java to perform WildFly integration");
+            log.Verbose("Invoking java to perform WildFly integration");
             javaRunner.Run("com.octopus.calamari.wildfly.WildflyDeploy", new Dictionary<string, string>()
             {
                 {"OctopusEnvironment_Octopus_Tentacle_CurrentDeployment_PackageFilePath", deployment.Variables.Get(PackageVariables.Output.InstallationPackagePath, deployment.PackageFilePath)},

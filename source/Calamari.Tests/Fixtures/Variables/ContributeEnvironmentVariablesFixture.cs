@@ -51,7 +51,7 @@ namespace Calamari.Tests.Fixtures.Variables
 
         private IVariables AddEnvironmentVariables()
         {
-            var variables = new VariablesFactory(CalamariPhysicalFileSystem.GetPhysicalFileSystem()).Create(new CommonOptions("test"));
+            var variables = new VariablesFactory(CalamariPhysicalFileSystem.GetPhysicalFileSystem(), new SilentLog()).Create(new CommonOptions("test"));
 
             Assert.That(variables.GetNames().Count, Is.GreaterThan(3));
             Assert.That(variables.GetRaw(TentacleVariables.Agent.InstanceName), Is.EqualTo("#{env:TentacleInstanceName}"));

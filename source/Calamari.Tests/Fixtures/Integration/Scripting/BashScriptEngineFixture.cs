@@ -1,9 +1,11 @@
 using System.IO;
 using Calamari.Common.Features.Scripting.Bash;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Integration.FileSystem;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Helpers;
+using NSubstitute;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.Integration.Scripting
@@ -18,7 +20,7 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
             using (var scriptFile = new TemporaryFile(Path.ChangeExtension(Path.GetTempFileName(), "sh")))
             {
                 File.WriteAllText(scriptFile.FilePath, "#!/bin/bash\necho $(get_octopusvariable \"mysecrect\")");
-                var result = ExecuteScript(new BashScriptExecutor(), scriptFile.FilePath, GetVariables());
+                var result = ExecuteScript(new BashScriptExecutor(Substitute.For<ILog>()), scriptFile.FilePath, GetVariables());
                 result.AssertOutput("KingKong");
             }
         }
