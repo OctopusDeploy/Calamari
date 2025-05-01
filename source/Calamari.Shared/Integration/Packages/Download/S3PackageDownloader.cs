@@ -94,35 +94,41 @@ namespace Calamari.Integration.Packages.Download
 
                     log.Verbose($"Attempting download of package {packageId} version {version} from S3 bucket {bucketName} in region {region}. Attempt #{retry + 1}");
 
-                    using var s3Client = GetS3Client(feedUsername, feedPassword, region);
-                    string? foundFilePath = null;
-                    for (int i = 0; i < knownFileExtensions.Length && foundFilePath == null; i++)
+                    using (var s3Client = GetS3Client(feedUsername, feedPassword, region))
                     {
-                        var fileName = BuildFileName(prefix, version.ToString(), knownFileExtensions[i]);
-                        foundFilePath = FindSingleFileInTheBucket(s3Client, bucketName, fileName, CancellationToken.None)
-                                        .GetAwaiter()
-                                        .GetResult();
+                        string? foundFilePath = null;
+                        for (int i = 0; i < knownFileExtensions.Length && foundFilePath == null; i++)
+                        {
+                            var fileName = BuildFileName(prefix, version.ToString(), knownFileExtensions[i]);
+                            foundFilePath = FindSingleFileInTheBucket(s3Client, bucketName, fileName, CancellationToken.None)
+                                            .GetAwaiter()
+                                            .GetResult();
+                        }
+
+                        var fullFileName = !foundFilePath.IsNullOrEmpty() ? foundFilePath : throw new Exception($"Unable to download package {packageId} {version}: file not found");
+
+                        var knownExtension = knownFileExtensions.FirstOrDefault(extension => fullFileName!.EndsWith(extension))
+                                             ?? Path.GetExtension(fullFileName)
+                                             ?? Extension;
+
+                        // Now we know the extension check for the package in the local cache
+                        downloaded = GetFileFromCache(packageId,
+                                                      version,
+                                                      forcePackageDownload,
+                                                      cacheDirectory,
+                                                      new string[] { knownExtension });
+                        if (downloaded != null)
+                        {
+                            return downloaded;
+                        }
+
+                        var localDownloadName = Path.Combine(cacheDirectory, PackageName.ToCachedFileName(packageId, version, knownExtension));
+                        var response = s3Client.GetObjectAsync(bucketName, fullFileName).GetAwaiter().GetResult();
+                        response.WriteResponseStreamToFileAsync(localDownloadName, false, CancellationToken.None).GetAwaiter().GetResult();
+                        var packagePhysicalFileMetadata = PackagePhysicalFileMetadata.Build(localDownloadName);
+                        return packagePhysicalFileMetadata
+                               ?? throw new CommandException($"Unable to retrieve metadata for package {packageId}, version {version}");
                     }
-
-                    var fullFileName = !foundFilePath.IsNullOrEmpty() ? foundFilePath : throw new Exception($"Unable to download package {packageId} {version}: file not found");
-
-                    var knownExtension = knownFileExtensions.FirstOrDefault(extension => fullFileName!.EndsWith(extension))
-                                         ?? Path.GetExtension(fullFileName)
-                                         ?? Extension;
-
-                    // Now we know the extension check for the package in the local cache
-                    downloaded = GetFileFromCache(packageId, version, forcePackageDownload, cacheDirectory, new [] { knownExtension });
-                    if (downloaded != null)
-                    {
-                        return downloaded;
-                    }
-
-                    var localDownloadName = Path.Combine(cacheDirectory, PackageName.ToCachedFileName(packageId, version, knownExtension));
-                    var response = s3Client.GetObjectAsync(bucketName, fullFileName).GetAwaiter().GetResult();
-                    response.WriteResponseStreamToFileAsync(localDownloadName, false, CancellationToken.None).GetAwaiter().GetResult();
-                    var packagePhysicalFileMetadata = PackagePhysicalFileMetadata.Build(localDownloadName);
-                    return packagePhysicalFileMetadata
-                           ?? throw new CommandException($"Unable to retrieve metadata for package {packageId}, version {version}");
                 }
                 catch (Exception ex)
                 {
@@ -163,23 +169,25 @@ namespace Calamari.Integration.Packages.Download
             return downloaded;
         }
 
-        static string GetBucketsRegion(string? feedUsername, string? feedPassword, string bucketName)
+        string GetBucketsRegion(string? feedUsername, string? feedPassword, string bucketName)
         {
-            using var s3Client = GetS3Client(feedUsername, feedPassword);
-            var region = s3Client.GetBucketLocationAsync(bucketName, CancellationToken.None).GetAwaiter().GetResult();
-
-            string regionString = region.Location.Value;
-            // If the bucket is in the us-east-1 region, then the region name is not included in the response.
-            if (string.IsNullOrEmpty(regionString))
+            using (var s3Client = GetS3Client(feedUsername, feedPassword))
             {
-                regionString = DefaultRegion;
-            }
-            else if (regionString.Equals("EU", StringComparison.OrdinalIgnoreCase))
-            {
-                regionString = "eu-west-1";
-            }
+                var region = s3Client.GetBucketLocationAsync(bucketName, CancellationToken.None).GetAwaiter().GetResult();
 
-            return regionString;
+                string regionString = region.Location.Value;
+                // If the bucket is in the us-east-1 region, then the region name is not included in the response.
+                if (string.IsNullOrEmpty(regionString))
+                {
+                    regionString = DefaultRegion;
+                }
+                else if (regionString.Equals("EU", StringComparison.OrdinalIgnoreCase))
+                {
+                    regionString = "eu-west-1";
+                }
+
+                return regionString;
+            }
         }
 
         PackagePhysicalFileMetadata? SourceFromCache(string packageId, IVersion version, string cacheDirectory, string[] knownExtensions)
@@ -203,7 +211,7 @@ namespace Calamari.Integration.Packages.Download
             return null;
         }
 
-        static async Task<string?> FindSingleFileInTheBucket(AmazonS3Client client, string bucketName, string prefix, CancellationToken cancellationToken)
+        async Task<string?> FindSingleFileInTheBucket(AmazonS3Client client, string bucketName, string prefix, CancellationToken cancellationToken)
         {
             var request = new ListObjectsRequest
             {
