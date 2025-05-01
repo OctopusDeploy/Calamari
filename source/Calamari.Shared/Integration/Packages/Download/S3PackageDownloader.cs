@@ -107,16 +107,12 @@ namespace Calamari.Integration.Packages.Download
 
                         var fullFileName = !foundFilePath.IsNullOrEmpty() ? foundFilePath : throw new Exception($"Unable to download package {packageId} {version}: file not found");
 
-                        var knownExtension = knownFileExtensions.FirstOrDefault(extension => fullFileName!.EndsWith(extension))
+                        var knownExtension = knownFileExtensions.FirstOrDefault(extension => fullFileName.EndsWith(extension))
                                              ?? Path.GetExtension(fullFileName)
                                              ?? Extension;
 
                         // Now we know the extension check for the package in the local cache
-                        downloaded = GetFileFromCache(packageId,
-                                                      version,
-                                                      forcePackageDownload,
-                                                      cacheDirectory,
-                                                      new string[] { knownExtension });
+                        downloaded = GetFileFromCache(packageId, version, forcePackageDownload, cacheDirectory, new string[] { knownExtension });
                         if (downloaded != null)
                         {
                             return downloaded;
