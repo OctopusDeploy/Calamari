@@ -85,7 +85,7 @@ namespace Calamari.Integration.Packages.Download
                 return downloaded;
             }
 
-            var retry = 0;
+            int retry = 0;
             for (; retry < maxDownloadAttempts; ++retry)
             {
                 try
