@@ -57,9 +57,7 @@ namespace Calamari.AzureResourceGroup
 
         public async Task PollForCompletion(ArmOperation<ArmDeploymentResource> deploymentOperation, IVariables variables)
         {
-            var pollingTimeoutVariableValue = variables.Get(SpecialVariables.Action.Azure.ArmDeploymentTimeout, "30");
-            int.TryParse(pollingTimeoutVariableValue, out var pollingTimeoutValue);
-            var pollingTimeout = TimeSpan.FromMinutes(pollingTimeoutValue > 0 ? pollingTimeoutValue : 30);
+            var pollingTimeout = GetPollingTimeout(variables);
             var asyncResourceGroupPollingTimeoutPolicy = Policy.TimeoutAsync<ArmDeploymentResource>(pollingTimeout, TimeoutStrategy.Optimistic);
 
             log.Info("Polling for deployment completion...");
@@ -122,6 +120,16 @@ namespace Calamari.AzureResourceGroup
 
             foreach (var output in outputs)
                 log.SetOutputVariable($"AzureRmOutputs[{output.Key}]", output.Value["value"].ToString(), variables);
+        }
+        
+        static TimeSpan GetPollingTimeout(IVariables variables)
+        {
+            var pollingTimeoutVariableValue = variables.GetInt32(SpecialVariables.Action.Azure.ArmDeploymentTimeout);
+            if (pollingTimeoutVariableValue.HasValue && pollingTimeoutVariableValue.Value > 0)
+            {
+                return TimeSpan.FromMinutes(pollingTimeoutVariableValue.Value);
+            }
+            return TimeSpan.FromMinutes(30);
         }
     }
 }
