@@ -8,6 +8,7 @@ using Amazon.S3;
 using Amazon.S3.Model;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Integration.Packages.Download;
 using Calamari.Testing;
 using Calamari.Testing.Requirements;
@@ -72,7 +73,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         
         static S3PackageDownloader GetDownloader()
         {
-            return new S3PackageDownloader(ConsoleLog.Instance, CalamariPhysicalFileSystem.GetPhysicalFileSystem());
+            return new S3PackageDownloader(new CalamariVariables(), ConsoleLog.Instance, CalamariPhysicalFileSystem.GetPhysicalFileSystem());
         }
 
         [Test]

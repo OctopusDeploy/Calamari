@@ -71,7 +71,7 @@ namespace Calamari.Integration.Packages.Download
                     downloader = new DockerImagePackageDownloader(engine, fileSystem, commandLineRunner, variables, log, new FeedLoginDetailsProviderFactory());
                     break;
                 case FeedType.S3:
-                    downloader = new S3PackageDownloader(log, fileSystem);
+                    downloader = new S3PackageDownloader(variables, log, fileSystem);
                     break;
                 case FeedType.ArtifactoryGeneric:
                     downloader = new ArtifactoryPackageDownloader(log, fileSystem, variables);
