@@ -44,12 +44,18 @@ namespace Calamari.Common.Features.Packages.NuGet
             {
                 foreach (var entry in archive.Entries)
                 {
+                    if (entry == null) continue;
+                    
                     var unescapedKey = UnescapePath(entry.Key);
 
-                    if (IsExcludedPath(unescapedKey))
+                    if (unescapedKey == null || IsExcludedPath(unescapedKey))
                         continue;
 
-                    var targetDirectory = Path.Combine(directory, Path.GetDirectoryName(unescapedKey));
+                    var directoryName = Path.GetDirectoryName(unescapedKey);
+                    if (directoryName == null)
+                        continue;
+                    
+                    var targetDirectory = Path.Combine(directory, directoryName);
 
                     if (!Directory.Exists(targetDirectory))
                         Directory.CreateDirectory(targetDirectory);
@@ -86,7 +92,7 @@ namespace Calamari.Common.Features.Packages.NuGet
                 }
         }
 
-        static bool IsPackageFile(string packageFileName)
+        static bool IsPackageFile(string? packageFileName)
         {
             if (string.IsNullOrEmpty(packageFileName) || string.IsNullOrEmpty(Path.GetFileName(packageFileName)))
                 // This is to ignore archive entries that are not really files
