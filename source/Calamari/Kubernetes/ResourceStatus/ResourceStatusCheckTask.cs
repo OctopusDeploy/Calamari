@@ -62,9 +62,19 @@ namespace Calamari.Kubernetes.ResourceStatus
                         return new Result(DeploymentStatus.Succeeded);
                     }
 
-                    var definedResourceStatuses = resourceRetriever
+                    var resourceStatusResults = resourceRetriever
                                                   .GetAllOwnedResources(definedResources, kubectl, options)
-                                                  .ToArray();
+                                                  .ToList();
+                    var statusCheckFailures = resourceStatusResults
+                                          .Where(r => !r.IsSuccess)
+                                          .Select(r => r.ErrorMessage)
+                                          .ToList();
+                    if (statusCheckFailures.Any())
+                    {
+                        log.Verbose("Resource Status Check: Failed to update status for one or more resources:");
+                        statusCheckFailures.ForEach(log.Verbose);
+                    }
+                    var definedResourceStatuses = resourceStatusResults.Where(r => r.IsSuccess).Select(r => r.Value).ToArray();
                     
                     var resourceStatuses = definedResourceStatuses
                                            .SelectMany(IterateResourceTree)
@@ -78,7 +88,8 @@ namespace Calamari.Kubernetes.ResourceStatus
                         deploymentStatus,
                         definedResources,
                         definedResourceStatuses,
-                        resourceStatuses);
+                        resourceStatuses
+                    );
 
                     //if we have been asked to stop, jump out after the last check
                     if (stopAfterNextStatusCheck)
@@ -141,9 +152,10 @@ namespace Calamari.Kubernetes.ResourceStatus
             public Result(DeploymentStatus deploymentStatus)
                 : this(
                     deploymentStatus,
-                    new ResourceIdentifier[0],
-                    new Resource[0],
-                    new Dictionary<string, Resource>())
+                    Array.Empty<ResourceIdentifier>(),
+                    Array.Empty<Resource>(),
+                    new Dictionary<string, Resource>()
+                    )
             {
             }
 
