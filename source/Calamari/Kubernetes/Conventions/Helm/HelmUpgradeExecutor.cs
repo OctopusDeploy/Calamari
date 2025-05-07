@@ -36,7 +36,8 @@ namespace Calamari.Kubernetes.Conventions.Helm
 
         public void ExecuteHelmUpgrade(RunningDeployment deployment,
                                        string releaseName,
-                                       CancellationTokenSource cts)
+                                       CancellationTokenSource installCompletedCts,
+                                       CancellationTokenSource installErrorCts)
         {
             var packagePath = GetChartLocation(deployment);
 
@@ -44,28 +45,25 @@ namespace Calamari.Kubernetes.Conventions.Helm
 
             var result = helmCli.Upgrade(releaseName, packagePath, args);
 
-            try
+            if (result.ExitCode != 0)
             {
-                if (result.ExitCode != 0)
-                {
-                    throw new CommandException($"Helm Upgrade returned non-zero exit code: {result.ExitCode}. Deployment terminated.");
-                }
+                installErrorCts.Cancel();
+                throw new CommandException($"Helm Upgrade returned non-zero exit code: {result.ExitCode}. Deployment terminated.");
+            }
 
-                if (result.HasErrors && deployment.Variables.GetFlag(Deployment.SpecialVariables.Action.FailScriptOnErrorOutput))
-                {
-                    throw new CommandException("Helm Upgrade returned zero exit code but had error output. Deployment terminated.");
-                }
-            }
-            finally
+            if (result.HasErrors && deployment.Variables.GetFlag(Deployment.SpecialVariables.Action.FailScriptOnErrorOutput))
             {
-                cts.Cancel();
+                installErrorCts.Cancel();
+                throw new CommandException("Helm Upgrade returned zero exit code but had error output. Deployment terminated.");
             }
+
+            installCompletedCts.Cancel();
         }
 
         List<string> GetUpgradeCommandArgs(RunningDeployment deployment)
         {
             var args = new List<string>();
-            
+
             AssertHelmV3();
 
             SetResetValuesParameter(deployment, args);
@@ -315,7 +313,7 @@ namespace Calamari.Kubernetes.Conventions.Helm
 
             return files;
         }
-        
+
         void AssertHelmV3()
         {
             var (exitCode, infoOutput) = helmCli.GetExecutableVersion();
