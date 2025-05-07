@@ -131,7 +131,7 @@ namespace Calamari.Kubernetes.Conventions.Helm
                     }
                     catch (TaskCanceledException)
                     {
-                        //We don't care if this is delayed
+                        //We don't care if the delay was cancelled
                     }
                 }
             }
