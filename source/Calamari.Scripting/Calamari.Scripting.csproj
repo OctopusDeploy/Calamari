@@ -16,7 +16,6 @@
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="FSharp.Compiler.Tools" Version="4.0.0.1" />
     </ItemGroup>
 
     <!-- The following is to stop incorrect nullable reference type warnings for net462 build -->
@@ -28,15 +27,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Content Include="FSharp/*.*">
-            <LinkBase>FSharp</LinkBase>
-            <Pack>true</Pack>
-            <Visible>false</Visible>
-            <PackagePath>contentFiles/any/any/FSharp/</PackagePath>
-            <PackageCopyToOutput>true</PackageCopyToOutput>
-            <PackageFlatten>false</PackageFlatten>
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </Content>
         <Content Include="DotnetScript/*.*">
             <LinkBase>DotnetScript</LinkBase>
             <Pack>true</Pack>

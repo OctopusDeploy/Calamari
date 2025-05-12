@@ -1,1 +1,0 @@
-﻿printfn "Hello %s" "#{Name}"
