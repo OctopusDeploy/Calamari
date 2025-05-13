@@ -2,24 +2,23 @@ using System;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes;
-using Calamari.Kubernetes.ResourceStatus;
 using Calamari.Kubernetes.ResourceStatus.Resources;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.KubernetesFixtures.Builders;
+using Calamari.Tests.KubernetesFixtures.ResourceStatus;
 using FluentAssertions;
-using NSubstitute;
 using NUnit.Framework;
 
-namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
+namespace Calamari.Tests.KubernetesFixtures
 {
     [TestFixture]
-    public class KubernetesYamlTests
+    public class ManifestParserTests
     {
         readonly IKubernetesManifestNamespaceResolver namespaceResolver;
         readonly IVariables variables;
         readonly ILog log;
 
-        public KubernetesYamlTests()
+        public ManifestParserTests()
         {
             log = new InMemoryLog();
             namespaceResolver = new KubernetesManifestNamespaceResolver(new ApiResourcesScopeLookupBuilder()
@@ -33,7 +32,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         public void ShouldGenerateCorrectIdentifiers()
         {
             var input = TestFileLoader.Load("single-deployment.yaml");
-            var got = KubernetesYaml.GetDefinedResources(new[] { input }, namespaceResolver, variables, log);
+            var got = ManifestParser.GetResourcesFromManifest(input, namespaceResolver, variables, log);
             var expected = new[]
             {
                 new ResourceIdentifier(SupportedResourceGroupVersionKinds.DeploymentV1,
@@ -48,7 +47,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         public void ShouldOmitDefinitionIfTheMetadataSectionIsNotSet()
         {
             var input = TestFileLoader.Load("invalid.yaml");
-            var got = KubernetesYaml.GetDefinedResources(new[] { input }, namespaceResolver, variables, log);
+            var got = ManifestParser.GetResourcesFromManifest(input, namespaceResolver, variables, log);
             got.Should().BeEmpty();
         }
 
@@ -56,7 +55,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         public void ShouldHandleMultipleResourcesDefinedInTheSameFile()
         {
             var input = TestFileLoader.Load("multiple-resources.yaml");
-            var got = KubernetesYaml.GetDefinedResources(new[] { input }, namespaceResolver, variables, log);
+            var got = ManifestParser.GetResourcesFromManifest(input, namespaceResolver, variables, log);
             var expected = new[]
             {
                 new ResourceIdentifier(SupportedResourceGroupVersionKinds.DeploymentV1, "nginx", "default"),
@@ -73,7 +72,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             const string defaultNamespace = "DefaultNamespace";
             variables.Set(SpecialVariables.Namespace, defaultNamespace);
             var input = TestFileLoader.Load("no-namespace.yaml");
-            var got = KubernetesYaml.GetDefinedResources(new[] { input }, namespaceResolver, variables, log);
+            var got = ManifestParser.GetResourcesFromManifest(input, namespaceResolver, variables, log);
             var expected = new[]
             {
                 new ResourceIdentifier(SupportedResourceGroupVersionKinds.DeploymentV1,
@@ -84,24 +83,13 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
 
             got.Should().BeEquivalentTo(expected);
         }
-
+        
         [Test]
-        public void ShouldHandleMultipleYamlFiles()
+        public void ShouldHandleInvalidYamlSyntaxInManifest()
         {
-            var manifest = TestFileLoader.Load("single-deployment.yaml");
-            var multipleFileInput = new[] { manifest, manifest };
-            var got = KubernetesYaml.GetDefinedResources(multipleFileInput, namespaceResolver, variables, log);
-            var expected = new[]
-            {
-                new ResourceIdentifier(SupportedResourceGroupVersionKinds.DeploymentV1,
-                                       "nginx",
-                                       "test"),
-                new ResourceIdentifier(SupportedResourceGroupVersionKinds.DeploymentV1,
-                                       "nginx",
-                                       "test")
-            };
-
-            got.Should().BeEquivalentTo(expected);
+            var input = TestFileLoader.Load("invalid-syntax.yaml");
+            var got = ManifestParser.GetResourcesFromManifest(input, namespaceResolver, variables, log);
+            got.Should().BeEmpty();
         }
     }
 }
