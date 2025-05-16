@@ -13,7 +13,6 @@ namespace Calamari.Deployment.PackageRetention.Repositories
         IList<JournalEntry> GetAllJournalEntries();
         void AddJournalEntry(JournalEntry entry);
         void RemovePackageEntry(PackageIdentity packageIdentity);
-        void Load();
-        void Commit();
+
     }
 }

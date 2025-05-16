@@ -24,67 +24,18 @@ namespace Calamari.Deployment.PackageRetention.Repositories
             this.log = log;
         }
 
-        public override void Commit()
+
+
+ 
+
+
+        public class PackageData
         {
-            Save();
-        }
-
-        public override void Load()
-        {
-            if (File.Exists(journalPath))
-            {
-                var json = fileSystem.ReadFile(journalPath);
-
-                if (TryDeserializeJournal(json, out var journalContents))
-                {
-                    journalEntries = journalContents
-                                     ?.JournalEntries
-                                     ?.ToDictionary(entry => entry.Package, entry => entry)
-                                     ?? new Dictionary<PackageIdentity, JournalEntry>();
-                    Cache = journalContents?.Cache ?? new PackageCache(0);
-                }
-                else
-                {
-                    var journalFileName = Path.GetFileNameWithoutExtension(journalPath);
-                    var backupJournalFileName = $"{journalFileName}_{DateTimeOffset.UtcNow:yyyyMMddTHHmmss}.json"; // eg. PackageRetentionJournal_20210101T120000.json
-
-                    log.Warn($"The existing package retention journal file {journalPath} could not be read. The file will be renamed to {backupJournalFileName}. A new journal will be created.");
-
-                    // NET Framework 4.0 doesn't have File.Move(source, dest, overwrite) so we use Copy and Delete to replicate this
-                    File.Copy(journalPath, Path.Combine(Path.GetDirectoryName(journalPath), backupJournalFileName), true);
-                    File.Delete(journalPath);
-
-                    journalEntries = new Dictionary<PackageIdentity, JournalEntry>();
-                    Cache = new PackageCache(0);
-                }
-            }
-            else
-            {
-                journalEntries = new Dictionary<PackageIdentity, JournalEntry>();
-                Cache = new PackageCache(0);
-            }
-        }
-
-        void Save()
-        {
-            var onlyJournalEntries = journalEntries.Select(p => p.Value);
-            var json = JsonConvert.SerializeObject(new PackageData(onlyJournalEntries, Cache));
-
-            fileSystem.EnsureDirectoryExists(Path.GetDirectoryName(journalPath));
-            //save to temp file first
-            var tempFilePath = $"{journalPath}.temp.{Guid.NewGuid()}.json";
-
-            fileSystem.WriteAllText(tempFilePath, json, Encoding.UTF8);
-            fileSystem.OverwriteAndDelete(journalPath, tempFilePath);
-        }
-
-        class PackageData
-        {
-            public IEnumerable<JournalEntry> JournalEntries { get; }
+            public List<JournalEntry> JournalEntries { get; }
             public PackageCache Cache { get; }
 
             [JsonConstructor]
-            public PackageData(IEnumerable<JournalEntry> journalEntries, PackageCache cache)
+            public PackageData(List<JournalEntry> journalEntries, PackageCache cache)
             {
                 JournalEntries = journalEntries;
                 Cache = cache;
