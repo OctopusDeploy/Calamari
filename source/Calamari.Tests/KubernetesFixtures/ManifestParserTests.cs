@@ -85,7 +85,7 @@ namespace Calamari.Tests.KubernetesFixtures
         }
         
         [Test]
-        public void ShouldHandleInvalidYamlSyntaxInManifest()
+        public void ShouldHandleInvalidYamlSyntaxExceptionsFromManifest()
         {
             var input = TestFileLoader.Load("invalid-syntax.yaml");
             var got = ManifestParser.GetResourcesFromManifest(input, namespaceResolver, variables, log);
