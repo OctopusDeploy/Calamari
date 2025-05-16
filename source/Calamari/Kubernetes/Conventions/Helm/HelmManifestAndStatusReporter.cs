@@ -136,35 +136,7 @@ namespace Calamari.Kubernetes.Conventions.Helm
 
         async Task ParseManifestAndMonitorResourceStatuses(RunningDeployment deployment, string manifest, CancellationToken cancellationToken)
         {
-            var resources = new List<ResourceIdentifier>();
-            using (var reader = new StringReader(manifest))
-            {
-                var yamlStream = new YamlStream();
-                yamlStream.Load(reader);
-
-                foreach (var document in yamlStream.Documents)
-                {
-                    if (!(document.RootNode is YamlMappingNode rootNode))
-                    {
-                        if (document.RootNode.Tag != null)
-                        {
-                            log.Verbose("Could not parse manifest, resources will not be added to Kubernetes Object Status");
-                        }
-
-                        continue;
-                    }
-
-                    var gvk = rootNode.ToResourceGroupVersionKind();
-
-                    var metadataNode = rootNode.GetChildNode<YamlMappingNode>("metadata");
-                    var name = metadataNode.GetChildNode<YamlScalarNode>("name").Value;
-
-                    var @namespace = namespaceResolver.ResolveNamespace(rootNode, deployment.Variables);
-
-                    var resourceIdentifier = new ResourceIdentifier(gvk, name, @namespace);
-                    resources.Add(resourceIdentifier);
-                }
-            }
+            var resources = ManifestParser.GetResourcesFromManifest(manifest, namespaceResolver, deployment.Variables, log);
 
             //We are using helm as the deployment verification so an infinite timeout and wait for jobs makes sense
             var statusCheck = statusReporter.Start(0, false, resources);
