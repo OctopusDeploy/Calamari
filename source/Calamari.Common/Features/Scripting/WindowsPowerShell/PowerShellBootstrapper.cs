@@ -342,7 +342,7 @@ namespace Calamari.Common.Features.Scripting.WindowsPowerShell
                 if (ScriptVariables.GetLibraryScriptModuleLanguage(variables, variableName) == ScriptSyntax.PowerShell)
                 {
                     var libraryScriptModuleName = ScriptVariables.GetLibraryScriptModuleName(variableName);
-                    var name = "Library_" + ScriptVariables.FormatScriptName(libraryScriptModuleName) + "_" + DateTime.Now.Ticks;
+                    var name = "Library_" + ScriptVariables.FormatScriptNameForPhysicalFilesystem(libraryScriptModuleName) + "_" + DateTime.Now.Ticks;
                     var moduleFileName = $"{name}.psm1";
                     var moduleFilePath = Path.Combine(parentDirectory, moduleFileName);
                     Log.VerboseFormat("Writing script module '{0}' as PowerShell module {1}. This module will be automatically imported - functions will automatically be in scope.", libraryScriptModuleName, moduleFileName, name);

@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using Calamari.Common.Features.Scripts;
+using Calamari.Common.Plumbing.FileSystem;
 
 namespace Calamari.Common.Plumbing.Variables
 {
@@ -27,9 +28,10 @@ namespace Calamari.Common.Plumbing.Variables
             return variableName.Replace("Octopus.Script.Module[", "").TrimEnd(']');
         }
         
-        public static string FormatScriptName(string scriptName)
+        public static string FormatScriptNameForPhysicalFilesystem(string scriptName)
         {
-            return new string(scriptName.Where(c => char.IsLetterOrDigit(c) || c == '_').ToArray());
+            var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
+            return fileSystem.RemoveInvalidFileNameChars(scriptName); 
         }
 
         public static bool IsLibraryScriptModule(string variableName)
