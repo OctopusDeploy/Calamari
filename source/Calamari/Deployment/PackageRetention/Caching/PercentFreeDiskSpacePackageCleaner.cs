@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
@@ -14,6 +15,7 @@ namespace Calamari.Deployment.PackageRetention.Caching
     public class PercentFreeDiskSpacePackageCleaner : IRetentionAlgorithm
     {
         const string PackageRetentionPercentFreeDiskSpace = "OctopusPackageRetentionPercentFreeDiskSpace";
+        const string PackageRetentionQuantityToKeep = nameof(PackageRetentionQuantityToKeep);
         const int DefaultPercentFreeDiskSpace = 20;
         const int FreeSpacePercentBuffer = 30;
         readonly ISortJournalEntries sortJournalEntries;
@@ -31,6 +33,11 @@ namespace Calamari.Deployment.PackageRetention.Caching
         }
 
         public IEnumerable<PackageIdentity> GetPackagesToRemove(IEnumerable<JournalEntry> journalEntries)
+        {
+            return FeatureToggle.ConfigurablePackageCacheRetentionFeatureToggle.IsEnabled(variables) ? FindPackagesToRemoveV2(journalEntries) : FindPackagesToRemoveV1(journalEntries);
+        }
+
+        IEnumerable<PackageIdentity> FindPackagesToRemoveV1(IEnumerable<JournalEntry> journalEntries)
         {
             if (!fileSystem.GetDiskFreeSpace(packageUtils.RootDirectory, out var totalNumberOfFreeBytes) || !fileSystem.GetDiskTotalSpace(packageUtils.RootDirectory, out var totalNumberOfBytes))
             {
@@ -56,6 +63,22 @@ namespace Calamari.Deployment.PackageRetention.Caching
                                                        spaceFreed += entry.FileSizeBytes;
                                                        return moreToClean;
                                                    })
+                                        .Select(entry => entry.Package);
+        }
+
+        IEnumerable<PackageIdentity> FindPackagesToRemoveV2(IEnumerable<JournalEntry> journalEntries)
+        {
+            var journals = journalEntries.ToArray();
+            var quantityToKeep = variables.GetInt32(PackageRetentionQuantityToKeep);
+
+            if (quantityToKeep == null || journals.Length <= quantityToKeep)
+            {
+                return Array.Empty<PackageIdentity>();
+            }
+
+            var orderedJournalEntries = sortJournalEntries.Sort(journals).ToArray();
+
+            return orderedJournalEntries.Take((int)(orderedJournalEntries.Length - quantityToKeep))
                                         .Select(entry => entry.Package);
         }
     }

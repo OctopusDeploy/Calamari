@@ -1,14 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
-using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.PackageRetention.Caching;
 using Calamari.Deployment.PackageRetention.Model;
 using Calamari.Testing.Helpers;
 using FluentAssertions;
-using NSubstitute;
 using NUnit.Framework;
 using Octopus.Versioning.Semver;
 
@@ -28,13 +27,32 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         {
             Environment.SetEnvironmentVariable("TentacleHome", null);
         }
-        
+
+        [Test]
+        [TestCase(null, 0)]
+        [TestCase("0", 10)]
+        [TestCase("4", 6)]
+        [TestCase("100", 0)]
+        public void WhenQuantityToKeepIsConfigured(string quantityToKeep, int expectedQuantityToRemove)
+        {
+            var variables = new CalamariVariables();
+            variables.Add("PackageRetentionQuantityToKeep", quantityToKeep);
+            variables.Set(KnownVariables.EnabledFeatureToggles, nameof(FeatureToggle.ConfigurablePackageCacheRetentionFeatureToggle));
+            
+            var fileSystem = new FileSystemThatHasSpace(500, 5000);
+            var log = new InMemoryLog();
+            var subject = new PercentFreeDiskSpacePackageCleaner(fileSystem, new FirstInFirstOutJournalEntrySort(), variables, log);
+            var result = subject.GetPackagesToRemove(MakeSomeJournalEntries());
+            result.Count().Should().Be(expectedQuantityToRemove);
+        }
+
         [Test]
         public void WhenThereIsEnoughFreeSpace_NothingIsRemoved()
         {
+            var variables = new CalamariVariables();
             var fileSystem = new FileSystemThatHasSpace(1000, 1000);
             var log = new InMemoryLog();
-            var subject = new PercentFreeDiskSpacePackageCleaner(fileSystem, new FirstInFirstOutJournalEntrySort(), Substitute.For<IVariables>(), log);
+            var subject = new PercentFreeDiskSpacePackageCleaner(fileSystem, new FirstInFirstOutJournalEntrySort(), variables, log);
             var result = subject.GetPackagesToRemove(MakeSomeJournalEntries());
             result.Should().BeEmpty();
         }
@@ -42,9 +60,10 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         [Test]
         public void WhenFreeingUpAPackageWorthOfSpace_OnePackageIsMarkedForRemoval()
         {
+            var variables = new CalamariVariables();
             var fileSystem = new FileSystemThatHasSpace(500, 5000);
             var log = new InMemoryLog();
-            var subject = new PercentFreeDiskSpacePackageCleaner(fileSystem, new FirstInFirstOutJournalEntrySort(), Substitute.For<IVariables>(), log);
+            var subject = new PercentFreeDiskSpacePackageCleaner(fileSystem, new FirstInFirstOutJournalEntrySort(), variables, log);
             var result = subject.GetPackagesToRemove(MakeSomeJournalEntries());
             result.Count().Should().Be(1);
         }
@@ -52,9 +71,10 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         [Test]
         public void WhenFreeingUpTwoPackagesWorthOfSpace_TwoPackagesAreMarkedForRemoval()
         {
+            var variables = new CalamariVariables();
             var fileSystem = new FileSystemThatHasSpace(1000, 10000);
             var log = new InMemoryLog();
-            var subject = new PercentFreeDiskSpacePackageCleaner(fileSystem, new FirstInFirstOutJournalEntrySort(), Substitute.For<IVariables>(), log);
+            var subject = new PercentFreeDiskSpacePackageCleaner(fileSystem, new FirstInFirstOutJournalEntrySort(), variables, log);
             var result = subject.GetPackagesToRemove(MakeSomeJournalEntries());
             result.Count().Should().Be(2);
         }
