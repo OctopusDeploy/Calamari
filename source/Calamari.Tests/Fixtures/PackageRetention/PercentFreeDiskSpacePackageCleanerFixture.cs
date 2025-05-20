@@ -30,13 +30,13 @@ namespace Calamari.Tests.Fixtures.PackageRetention
 
         [Test]
         [TestCase(null, 0)]
-        [TestCase("0", 10)]
+        [TestCase("0", 0)]
         [TestCase("4", 6)]
         [TestCase("100", 0)]
         public void WhenQuantityToKeepIsConfigured(string quantityToKeep, int expectedQuantityToRemove)
         {
             var variables = new CalamariVariables();
-            variables.Add("PackageRetentionQuantityToKeep", quantityToKeep);
+            variables.Add("MachinePackageCacheRetentionQuantityToKeep", quantityToKeep);
             variables.Set(KnownVariables.EnabledFeatureToggles, nameof(FeatureToggle.ConfigurablePackageCacheRetentionFeatureToggle));
             
             var fileSystem = new FileSystemThatHasSpace(500, 5000);

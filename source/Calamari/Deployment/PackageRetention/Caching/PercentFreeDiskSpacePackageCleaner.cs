@@ -15,7 +15,7 @@ namespace Calamari.Deployment.PackageRetention.Caching
     public class PercentFreeDiskSpacePackageCleaner : IRetentionAlgorithm
     {
         const string PackageRetentionPercentFreeDiskSpace = "OctopusPackageRetentionPercentFreeDiskSpace";
-        const string PackageRetentionQuantityToKeep = nameof(PackageRetentionQuantityToKeep);
+        const string MachinePackageCacheRetentionQuantityToKeep = nameof(MachinePackageCacheRetentionQuantityToKeep);
         const int DefaultPercentFreeDiskSpace = 20;
         const int FreeSpacePercentBuffer = 30;
         readonly ISortJournalEntries sortJournalEntries;
@@ -69,9 +69,9 @@ namespace Calamari.Deployment.PackageRetention.Caching
         IEnumerable<PackageIdentity> FindPackagesToRemoveV2(IEnumerable<JournalEntry> journalEntries)
         {
             var journals = journalEntries.ToArray();
-            var quantityToKeep = variables.GetInt32(PackageRetentionQuantityToKeep);
+            var quantityToKeep = variables.GetInt32(MachinePackageCacheRetentionQuantityToKeep);
 
-            if (quantityToKeep == null || journals.Length <= quantityToKeep)
+            if (quantityToKeep == null || quantityToKeep == 0 || journals.Length <= quantityToKeep)
             {
                 return Array.Empty<PackageIdentity>();
             }
