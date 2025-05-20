@@ -17,5 +17,10 @@ namespace Calamari.Common.Plumbing.Variables
             public static readonly string TenantId = "TenantId";
             public static readonly string ClientId = "ClientId";
         }
+        
+        public static class Google
+        {
+            public static readonly string Audience = "Audience";
+        }
     }
 }

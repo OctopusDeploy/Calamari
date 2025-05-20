@@ -2,10 +2,12 @@
 using System.IO;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.Iis;
+using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
@@ -112,7 +114,7 @@ namespace Calamari.Tests.Fixtures.Deployment.Conventions
 
         private LegacyIisWebSiteConvention CreateConvention()
         {
-            return new LegacyIisWebSiteConvention(fileSystem, iis);
+            return new LegacyIisWebSiteConvention(fileSystem, iis, new SilentLog());
         }
     }
 }

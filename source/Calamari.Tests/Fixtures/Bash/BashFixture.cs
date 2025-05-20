@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using Calamari.Common.Features.Processes;
 using Calamari.Common.FeatureToggles;
+using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Testing.Requirements;
@@ -66,6 +69,88 @@ namespace Calamari.Tests.Fixtures.Bash
                                 output.AssertSuccess();
                                 output.AssertOutput("##octopus[progress percentage='NTA=' message='SGFsZiBXYXk=']");
                             });
+        }
+        
+        [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
+        [TestCase(null)]
+        [RequiresBashDotExeIfOnWindows]
+        public void ShouldReportKubernetesManifest(FeatureToggle? featureToggle)
+        {
+            var (output, _) = RunScript("report-kubernetes-manifest.sh", new Dictionary<string, string>().AddFeatureToggleToDictionary(new List<FeatureToggle?>{ featureToggle }));
+
+            Assert.Multiple(() =>
+                            {
+                                output.AssertSuccess();
+                                output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiXG4ia2luZCI6ICJOYW1lc3BhY2UiXG4ibWV0YWRhdGEiOlxuICAibmFtZSI6ICJleGFtcGxlIlxuImxhYmVscyI6XG4gICAgIm5hbWUiOiAiZXhhbXBsZSJcbg==']");
+                                output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiXG4ia2luZCI6ICJOYW1lc3BhY2UiXG4ibWV0YWRhdGEiOlxuICAibmFtZSI6ICJkaWZmcyJcbiJsYWJlbHMiOlxuICAgICJuYW1lIjogImRpZmZzIlxu']");
+                                output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiXG4ia2luZCI6ICJOYW1lc3BhY2UiXG4ibWV0YWRhdGEiOlxuICAibmFtZSI6ICJleGFtcGxlIlxuImxhYmVscyI6XG4gICAgIm5hbWUiOiAiZXhhbXBsZSJcbg==' ns='bXk=']");
+                                output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiXG4ia2luZCI6ICJOYW1lc3BhY2UiXG4ibWV0YWRhdGEiOlxuICAibmFtZSI6ICJkaWZmcyJcbiJsYWJlbHMiOlxuICAgICJuYW1lIjogImRpZmZzIlxu' ns='bXk=']");
+                            });
+        }
+        
+        [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
+        [TestCase(null)]
+        [RequiresBashDotExeIfOnWindows]
+        public void ShouldReportKubernetesManifestFile(FeatureToggle? featureToggle)
+        {
+            var tempPath = Path.GetTempPath();
+            var manifest = @"""apiVersion"": ""v1""
+""kind"": ""Namespace""
+""metadata"":
+  ""name"": ""example""
+""labels"":
+    ""name"": ""example""
+---    
+""apiVersion"": ""v1""
+""kind"": ""Namespace""
+""metadata"":
+  ""name"": ""diffs""
+""labels"":
+    ""name"": ""diffs""".ReplaceLineEndings("\n");
+            
+            var filePath = Path.Combine(tempPath, "ShouldWriteServiceMessageForKubernetesManifestFile.manifest.yaml");
+            File.WriteAllText(filePath, manifest);
+
+            //if we are running on windows, we must be running via bash.exe, so we need to translate this to a wsl path
+            var updatedFilePath = filePath;
+            if (CalamariEnvironment.IsRunningOnWindows)
+            {
+                var qualifiedPath = filePath.Replace(@"\",@"\\");
+
+                var path = string.Empty;
+                var result = SilentProcessRunner.ExecuteCommand("wsl", $"wslpath -a -u {qualifiedPath}", tempPath, output => path = output,
+                                                                _ => { });
+                
+                if (result.ExitCode != 0)
+                {
+                    Assert.Fail("Failed to convert windows path to WSL path");
+                    return;
+                }
+
+                updatedFilePath = path;
+            }
+
+            var additionalVariables = new Dictionary<string, string>().AddFeatureToggleToDictionary(new List<FeatureToggle?> { featureToggle });
+            additionalVariables.Add("ManifestFilePath", updatedFilePath);
+
+            try
+            {
+
+                var (output, _) = RunScript("report-kubernetes-manifest-file.sh", additionalVariables);
+
+                Assert.Multiple(() =>
+                                {
+                                    output.AssertSuccess();
+                                    output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiXG4ia2luZCI6ICJOYW1lc3BhY2UiXG4ibWV0YWRhdGEiOlxuICAibmFtZSI6ICJleGFtcGxlIlxuImxhYmVscyI6XG4gICAgIm5hbWUiOiAiZXhhbXBsZSJcbg==']");
+                                    output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiXG4ia2luZCI6ICJOYW1lc3BhY2UiXG4ibWV0YWRhdGEiOlxuICAibmFtZSI6ICJkaWZmcyJcbiJsYWJlbHMiOlxuICAgICJuYW1lIjogImRpZmZzIlxu']");
+                                    output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiXG4ia2luZCI6ICJOYW1lc3BhY2UiXG4ibWV0YWRhdGEiOlxuICAibmFtZSI6ICJleGFtcGxlIlxuImxhYmVscyI6XG4gICAgIm5hbWUiOiAiZXhhbXBsZSJcbg==' ns='bXk=']");
+                                    output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiXG4ia2luZCI6ICJOYW1lc3BhY2UiXG4ibWV0YWRhdGEiOlxuICAibmFtZSI6ICJkaWZmcyJcbiJsYWJlbHMiOlxuICAgICJuYW1lIjogImRpZmZzIlxu' ns='bXk=']");
+                                });
+            }
+            finally
+            {
+                File.Delete(filePath);
+            }
         }
 
         [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
@@ -274,7 +359,11 @@ namespace Calamari.Tests.Fixtures.Bash
                 output.AssertOutput(@"Key: VariableName {8}, Value: Value {8}");
                 output.AssertOutput("Key: VariableName\t9, Value: Value\t9");
                 output.AssertOutput(@"Key: VariableName 10 !@#$%^&*()_+1234567890-=, Value: Value 10 !@#$%^&*()_+1234567890-=");
-                output.AssertOutput("Key: VariableName \n 11, Value: Value \n 11");
+                if (CalamariEnvironment.IsRunningOnNix)
+                {
+                    output.AssertOutput("Key: VariableName \n 11, Value: Value \n 11");
+                }
+
                 output.AssertOutput("Key: VariableName.prop.anotherprop 12, Value: Value.prop.12");
                 output.AssertOutput("Key: VariableName`prop`anotherprop` 13, Value: Value`prop`13");
                 output.AssertOutput($"Key: {specialCharacters}, Value: {specialCharacters}");

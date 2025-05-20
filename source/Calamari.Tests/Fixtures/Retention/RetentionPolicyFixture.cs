@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Calamari.Common.Features.Deployment.Journal;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Deployment.Retention;
 using Calamari.Integration.Time;
 using NSubstitute;
@@ -45,7 +46,7 @@ namespace Calamari.Tests.Fixtures.Retention
             fileSystem = Substitute.For<ICalamariFileSystem>();
             deploymentJournal = Substitute.For<IDeploymentJournal>();
             clock = Substitute.For<IClock>();
-            retentionPolicy = new RetentionPolicy(fileSystem, deploymentJournal, clock);
+            retentionPolicy = new RetentionPolicy(fileSystem, deploymentJournal, clock, Substitute.For<ILog>());
 
             now = new DateTimeOffset(new DateTime(2015, 01, 15), new TimeSpan(0, 0, 0));
             clock.GetUtcTime().Returns(now);
