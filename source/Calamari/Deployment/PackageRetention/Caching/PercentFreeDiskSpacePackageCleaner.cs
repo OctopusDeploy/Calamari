@@ -71,14 +71,24 @@ namespace Calamari.Deployment.PackageRetention.Caching
             var journals = journalEntries.ToArray();
             var quantityToKeep = variables.GetInt32(MachinePackageCacheRetentionQuantityToKeep);
 
-            if (quantityToKeep == null || quantityToKeep == 0 || journals.Length <= quantityToKeep)
+            if (quantityToKeep == null || quantityToKeep == 0)
             {
+                log.Verbose("Maximum quantity to keep is not configured. No packages will be removed.");
+                return Array.Empty<PackageIdentity>();
+            }
+
+            if (journals.Length <= quantityToKeep)
+            {
+                log.Verbose("Cache size is less than the maximum quantity to keep. No packages will be removed.");
                 return Array.Empty<PackageIdentity>();
             }
 
             var orderedJournalEntries = sortJournalEntries.Sort(journals).ToArray();
+            var numberOfPackagesToRemove = (int)(orderedJournalEntries.Length - quantityToKeep);
+            
+            log.VerboseFormat("Cache size is greater than the maximum quantity to keep. {0} packages will be removed.", numberOfPackagesToRemove);
 
-            return orderedJournalEntries.Take((int)(orderedJournalEntries.Length - quantityToKeep))
+            return orderedJournalEntries.Take(numberOfPackagesToRemove)
                                         .Select(entry => entry.Package);
         }
     }
