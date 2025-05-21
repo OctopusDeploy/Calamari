@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.PackageRetention.Caching;
@@ -84,7 +83,8 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             for (var i = 0; i < 10; i++)
             {
                 var packageIdentity = new PackageIdentity(new PackageId("HelloWorld"), new SemanticVersion(1, 0, i), new PackagePath($"C:\\{i}.zip"));
-                yield return new JournalEntry(packageIdentity, 1000);
+                var packageUsages = new PackageUsages { new UsageDetails(new ServerTaskId($"Deployments-{i}"), new CacheAge(i), DateTime.Now.AddDays(i)) };
+                yield return new JournalEntry(packageIdentity, 1000, packageUsages: packageUsages);
             }
         }
     }

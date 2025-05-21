@@ -83,7 +83,7 @@ namespace Calamari.Deployment.PackageRetention.Caching
                 return Array.Empty<PackageIdentity>();
             }
 
-            var orderedJournalEntries = sortJournalEntries.Sort(journals).ToArray();
+            var orderedJournalEntries = JournalEntrySorter.LeastRecentlyUsed(journals).ToArray();
             var numberOfPackagesToRemove = (int)(orderedJournalEntries.Length - quantityToKeep);
             
             log.VerboseFormat("Cache size is greater than the maximum quantity to keep. {0} packages will be removed.", numberOfPackagesToRemove);
