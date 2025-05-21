@@ -11,13 +11,7 @@ namespace Calamari.Deployment.PackageRetention.Caching
         {
             var entries = journalEntries.Where(e => !e.HasLock()).ToList();
 
-            return entries.Select(je => new
-                          {
-                              journalEntry = je,
-                              LastUsed = je.GetUsageDetails().Max(u => u.DateTime)
-                          })
-                          .OrderBy(e => e.LastUsed)
-                          .Select(e => e.journalEntry);
+            return entries.OrderBy(je => je.GetUsageDetails().Max(u => u.DateTime));
         }
     }
 }
