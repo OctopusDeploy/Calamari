@@ -85,6 +85,14 @@ namespace Calamari.Tests.Fixtures.Python
         {
             var (output, _) = RunScript("updateprogress.py");
             output.AssertSuccess();
+            output.AssertOutput("##octopus[progress percentage='NTA=' message='']");
+        }
+
+        [Test, RequiresMinimumPython3Version(4)]
+        public void ShouldWriteUpdateProgressWithCustomMessage()
+        {
+            var (output, _) = RunScript("updateprogresswithmessage.py");
+            output.AssertSuccess();
             output.AssertOutput("##octopus[progress percentage='NTA=' message='SGFsZiBXYXk=']");
         }
 
