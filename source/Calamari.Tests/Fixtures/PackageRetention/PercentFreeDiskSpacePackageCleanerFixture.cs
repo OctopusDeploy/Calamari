@@ -37,7 +37,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         {
             var variables = new CalamariVariables();
             variables.Add("MachinePackageCacheRetentionQuantityToKeep", quantityToKeep);
-            variables.Set(KnownVariables.EnabledFeatureToggles, nameof(FeatureToggle.ConfigurablePackageCacheRetentionFeatureToggle));
+            variables.Set(KnownVariables.EnabledFeatureToggles, "configurable-package-cache-retention");
             
             var fileSystem = new FileSystemThatHasSpace(500, 5000);
             var log = new InMemoryLog();

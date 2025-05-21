@@ -16,7 +16,6 @@
         KubernetesAuthAwsCliWithExecFeatureToggle,
         ForceUtf8ZipFileDecodingFeatureToggle,
         DisableFSharpScriptExecutionFeatureToggle,
-        BashParametersArrayFeatureToggle,
-        ConfigurablePackageCacheRetentionFeatureToggle
+        BashParametersArrayFeatureToggle
     }
 }

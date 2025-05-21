@@ -34,7 +34,7 @@ namespace Calamari.Deployment.PackageRetention.Caching
 
         public IEnumerable<PackageIdentity> GetPackagesToRemove(IEnumerable<JournalEntry> journalEntries)
         {
-            return FeatureToggle.ConfigurablePackageCacheRetentionFeatureToggle.IsEnabled(variables) ? FindPackagesToRemoveV2(journalEntries) : FindPackagesToRemoveV1(journalEntries);
+            return OctopusFeatureToggles.ConfigurablePackageCacheRetentionFeatureToggle.IsEnabled(variables) ? FindPackagesToRemoveV2(journalEntries) : FindPackagesToRemoveV1(journalEntries);
         }
 
         IEnumerable<PackageIdentity> FindPackagesToRemoveV1(IEnumerable<JournalEntry> journalEntries)
