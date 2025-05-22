@@ -12,7 +12,7 @@ using Calamari.Integration.Packages.Download;
 
 namespace Calamari.Deployment.PackageRetention.Caching
 {
-    public class PercentFreeDiskSpacePackageCleaner : IRetentionAlgorithm
+    public class PackageCacheCleaner : IRetentionAlgorithm
     {
         const string PackageRetentionPercentFreeDiskSpace = "OctopusPackageRetentionPercentFreeDiskSpace";
         const string MachinePackageCacheRetentionQuantityToKeep = nameof(MachinePackageCacheRetentionQuantityToKeep);
@@ -24,7 +24,7 @@ namespace Calamari.Deployment.PackageRetention.Caching
         readonly ICalamariFileSystem fileSystem;
         readonly IPackageDownloaderUtils packageUtils = new PackageDownloaderUtils();
 
-        public PercentFreeDiskSpacePackageCleaner(ICalamariFileSystem fileSystem, ISortJournalEntries sortJournalEntries, IVariables variables, ILog log)
+        public PackageCacheCleaner(ICalamariFileSystem fileSystem, ISortJournalEntries sortJournalEntries, IVariables variables, ILog log)
         {
             this.fileSystem = fileSystem;
             this.sortJournalEntries = sortJournalEntries;
@@ -34,10 +34,10 @@ namespace Calamari.Deployment.PackageRetention.Caching
 
         public IEnumerable<PackageIdentity> GetPackagesToRemove(IEnumerable<JournalEntry> journalEntries)
         {
-            return OctopusFeatureToggles.ConfigurablePackageCacheRetentionFeatureToggle.IsEnabled(variables) ? FindPackagesToRemoveV2(journalEntries) : FindPackagesToRemoveV1(journalEntries);
+            return OctopusFeatureToggles.ConfigurablePackageCacheRetentionFeatureToggle.IsEnabled(variables) ? FindPackagesToRemoveByQuantityToKeep(journalEntries) : FindPackagesToRemoveByPercentFreeDiskSpace(journalEntries);
         }
 
-        IEnumerable<PackageIdentity> FindPackagesToRemoveV1(IEnumerable<JournalEntry> journalEntries)
+        IEnumerable<PackageIdentity> FindPackagesToRemoveByPercentFreeDiskSpace(IEnumerable<JournalEntry> journalEntries)
         {
             if (!fileSystem.GetDiskFreeSpace(packageUtils.RootDirectory, out var totalNumberOfFreeBytes) || !fileSystem.GetDiskTotalSpace(packageUtils.RootDirectory, out var totalNumberOfBytes))
             {
@@ -66,7 +66,7 @@ namespace Calamari.Deployment.PackageRetention.Caching
                                         .Select(entry => entry.Package);
         }
 
-        IEnumerable<PackageIdentity> FindPackagesToRemoveV2(IEnumerable<JournalEntry> journalEntries)
+        IEnumerable<PackageIdentity> FindPackagesToRemoveByQuantityToKeep(IEnumerable<JournalEntry> journalEntries)
         {
             var journals = journalEntries.ToArray();
             var quantityToKeep = variables.GetInt32(MachinePackageCacheRetentionQuantityToKeep);
