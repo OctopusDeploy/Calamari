@@ -9,13 +9,17 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.PackageRetention.Model;
 using Calamari.Integration.Packages.Download;
+using SharpCompress;
 
 namespace Calamari.Deployment.PackageRetention.Caching
 {
     public class PackageCacheCleaner : IRetentionAlgorithm
     {
         const string PackageRetentionPercentFreeDiskSpace = "OctopusPackageRetentionPercentFreeDiskSpace";
-        const string MachinePackageCacheRetentionQuantityToKeep = nameof(MachinePackageCacheRetentionQuantityToKeep);
+        const string MachinePackageCacheRetentionQuantityOfPackagesToKeep = nameof(MachinePackageCacheRetentionQuantityOfPackagesToKeep);
+        const string MachinePackageCacheRetentionQuantityOfVersionsToKeep = nameof(MachinePackageCacheRetentionQuantityOfVersionsToKeep);
+        const int DefaultQuantityOfPackagesToKeep = 0;
+        const int DefaultQuantityOfVersionsToKeep = 0;
         const int DefaultPercentFreeDiskSpace = 20;
         const int FreeSpacePercentBuffer = 30;
         readonly ISortJournalEntries sortJournalEntries;
@@ -69,27 +73,43 @@ namespace Calamari.Deployment.PackageRetention.Caching
         IEnumerable<PackageIdentity> FindPackagesToRemoveByQuantityToKeep(IEnumerable<JournalEntry> journalEntries)
         {
             var journals = journalEntries.ToArray();
-            var quantityToKeep = variables.GetInt32(MachinePackageCacheRetentionQuantityToKeep);
+            var quantityOfPackagesToKeep = variables.GetInt32(MachinePackageCacheRetentionQuantityOfPackagesToKeep) ?? DefaultQuantityOfPackagesToKeep;
+            var quantityOfVersionsToKeep = variables.GetInt32(MachinePackageCacheRetentionQuantityOfVersionsToKeep) ?? DefaultQuantityOfVersionsToKeep;
 
-            if (quantityToKeep == null || quantityToKeep == 0)
+            if (quantityOfPackagesToKeep == 0 && quantityOfVersionsToKeep == 0)
             {
                 log.Verbose("Maximum quantity to keep is not configured. No packages will be removed.");
                 return Array.Empty<PackageIdentity>();
             }
 
-            if (journals.Length <= quantityToKeep)
+            var orderedJournalEntries = JournalEntrySorter.LeastRecentlyUsedByVersion(journals).ToArray();
+            var numberOfPackagesToRemove = orderedJournalEntries.Length - quantityOfPackagesToKeep;
+            
+            var packagesToRemoveById = new List<PackageIdentity>();
+
+            if (numberOfPackagesToRemove > 0)
             {
-                log.Verbose("Cache size is less than the maximum quantity to keep. No packages will be removed.");
-                return Array.Empty<PackageIdentity>();
+                log.VerboseFormat("Cache size is greater than the maximum quantity to keep. {0} packages will be removed.", numberOfPackagesToRemove);
+                
+                packagesToRemoveById = orderedJournalEntries.Take(numberOfPackagesToRemove)
+                                                                .SelectMany(entry => entry.Value.Select(v => v.Package)).ToList();
+            }
+            
+            var packagesToKeepById = orderedJournalEntries.Skip(numberOfPackagesToRemove);
+            var packagesToRemoveByVersion = new List<PackageIdentity>();
+
+            packagesToKeepById.ForEach(kv =>
+                                       {
+                                           var numberOfVersionsToRemove = kv.Value.Count() - quantityOfVersionsToKeep;
+                                           packagesToRemoveByVersion.AddRange(JournalEntrySorter.LeastRecentlyUsed(kv.Value).Take(numberOfVersionsToRemove).Select(v => v.Package));
+                                       });
+
+            if (packagesToRemoveByVersion.Any())
+            {
+                log.VerboseFormat("Found cached packages with more versions than the maximum quantity to keep. {0} package versions will be removed.", packagesToRemoveByVersion.Count);
             }
 
-            var orderedJournalEntries = JournalEntrySorter.LeastRecentlyUsed(journals).ToArray();
-            var numberOfPackagesToRemove = (int)(orderedJournalEntries.Length - quantityToKeep);
-            
-            log.VerboseFormat("Cache size is greater than the maximum quantity to keep. {0} packages will be removed.", numberOfPackagesToRemove);
-
-            return orderedJournalEntries.Take(numberOfPackagesToRemove)
-                                        .Select(entry => entry.Package);
+            return packagesToRemoveById.Concat(packagesToRemoveByVersion);
         }
     }
 }
