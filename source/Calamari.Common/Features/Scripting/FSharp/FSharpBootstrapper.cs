@@ -73,7 +73,7 @@ namespace Calamari.Common.Features.Scripting.FSharp
                 if (ScriptVariables.GetLibraryScriptModuleLanguage(variables, variableName) == ScriptSyntax.FSharp)
                 {
                     var libraryScriptModuleName = ScriptVariables.GetLibraryScriptModuleName(variableName);
-                    var name = new string(libraryScriptModuleName.Where(char.IsLetterOrDigit).ToArray());
+                    var name = ScriptVariables.FormatScriptNameForPhysicalFilesystem(libraryScriptModuleName);
                     var moduleFileName = $"{name}.fsx";
                     var moduleFilePath = Path.Combine(workingDirectory, moduleFileName);
                     Log.VerboseFormat("Writing script module '{0}' as f# module {1}. Import this module via `#load \"{1}\"`.", libraryScriptModuleName, moduleFileName, name);

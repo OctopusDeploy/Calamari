@@ -9,7 +9,6 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.PackageRetention.Model;
 using Calamari.Integration.Packages.Download;
-using SharpCompress;
 
 namespace Calamari.Deployment.PackageRetention.Caching
 {
