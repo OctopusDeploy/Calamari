@@ -5,7 +5,6 @@ using System.IO.Compression;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Calamari.ConsolidateCalamariPackages;
 using NuGet.Packaging;
 using Nuke.Common;
 using Nuke.Common.CI.TeamCity;
@@ -143,9 +142,9 @@ namespace Calamari.Build
             d =>
                 d.Executes(() =>
                 {
-                    SourceDirectory.GlobDirectories("**/bin", "**/obj", "**/TestResults").ForEach(DeleteDirectory);
-                    EnsureCleanDirectory(ArtifactsDirectory);
-                    EnsureCleanDirectory(PublishDirectory);
+                    SourceDirectory.GlobDirectories("**/bin", "**/obj", "**/TestResults").ForEach(d => d.DeleteDirectory());
+                    ArtifactsDirectory.CreateOrCleanDirectory();
+                    PublishDirectory.CreateOrCleanDirectory();
                 });
 
         Target Restore =>
@@ -443,7 +442,7 @@ namespace Calamari.Build
                                                                           .EnableNoBuild()
                                                                           .EnableIncludeSource()
                                                                           .SetVersion(nugetVersion)
-                                                                          .SetNoRestore(true);
+                                                                          .EnableNoRestore();
 
                      var commonProjects = Directory.GetFiles(SourceDirectory, "*.Common.csproj",
                                                              new EnumerationOptions { RecurseSubdirectories = true });
@@ -753,8 +752,12 @@ namespace Calamari.Build
 
             return runtimes ?? Array.Empty<string>();
         }
-
-        //All libraries/flavours now support .NET Core
-        static List<string> GetCalamariFlavours() => CalamariPackages.Flavours;
+        
+        static List<string> GetCalamariFlavours()
+        {
+            return IsLocalBuild && !OperatingSystem.IsWindows()
+                ? MigratedCalamariFlavours.CrossPlatformFlavours
+                : MigratedCalamariFlavours.Flavours;
+        }
     }
 }
