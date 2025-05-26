@@ -122,7 +122,7 @@ namespace Calamari.Deployment.PackageRetention.Caching
 
             if (!packagesToRemove.Any())
             {
-                log.VerboseFormat("The number of cached packages is below the configured maximum. No packages will be removed.", packagesToRemoveByVersion.Count);
+                log.Verbose("The number of cached packages is below the configured maximum. No packages will be removed.");
             }
 
             return packagesToRemoveById.Union(packagesToRemoveByVersion);
