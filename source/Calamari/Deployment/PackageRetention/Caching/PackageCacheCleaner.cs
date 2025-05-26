@@ -90,33 +90,27 @@ namespace Calamari.Deployment.PackageRetention.Caching
                 return Array.Empty<PackageIdentity>();
             }
 
-            var orderedJournalEntries = JournalEntrySorter.LeastRecentlyUsedByVersion(journals).ToArray();
-            var numberOfPackagesToRemove = orderedJournalEntries.Length - quantityOfPackagesToKeep;
+            var orderedJournalEntries = JournalEntrySorter.MostRecentlyUsedByVersion(journals).ToArray();
             
             var packagesToRemoveById = new List<PackageIdentity>();
 
-            if (numberOfPackagesToRemove > 0)
+            // Package retention has currently only been implemented for number of items
+            if (packageUnit == MachinePackageCacheRetentionUnit.Items && quantityOfPackagesToKeep > 0 && quantityOfPackagesToKeep < orderedJournalEntries.Length)
             {
-                log.VerboseFormat("Cache size is greater than the maximum quantity to keep. {0} packages will be removed.", numberOfPackagesToRemove);
+                log.VerboseFormat("Cache size is greater than the maximum quantity to keep. {0} packages will be removed.", orderedJournalEntries.Length - quantityOfPackagesToKeep);
 
-                // Package retention has currently only been implemented for number of items
-                if (packageUnit == MachinePackageCacheRetentionUnit.Items)
-                {
-                    packagesToRemoveById = orderedJournalEntries.Take(numberOfPackagesToRemove)
-                                                                .SelectMany(entry => entry.Value.Select(v => v.Package)).ToList();
-                }
+                packagesToRemoveById = orderedJournalEntries.Skip(quantityOfPackagesToKeep)
+                                                            .SelectMany(entry => entry.Value.Select(v => v.Package)).ToList();
             }
             
-            var packagesToKeepById = orderedJournalEntries.Skip(numberOfPackagesToRemove);
             var packagesToRemoveByVersion = new List<PackageIdentity>();
 
             // Version retention has currently only been implemented for number of items
-            if (versionUnit == MachinePackageCacheRetentionUnit.Items)
+            if (versionUnit == MachinePackageCacheRetentionUnit.Items && quantityOfVersionsToKeep > 0)
             {
-                foreach (var packageToKeep in packagesToKeepById)
+                foreach (var packageToKeep in orderedJournalEntries)
                 {
-                    var numberOfVersionsToRemove = packageToKeep.Value.Count() - quantityOfVersionsToKeep;
-                    packagesToRemoveByVersion.AddRange(JournalEntrySorter.LeastRecentlyUsed(packageToKeep.Value).Take(numberOfVersionsToRemove).Select(v => v.Package));
+                    packagesToRemoveByVersion.AddRange(JournalEntrySorter.MostRecentlyUsed(packageToKeep.Value).Skip(quantityOfVersionsToKeep).Select(v => v.Package));
                 }
             }
             
@@ -125,7 +119,7 @@ namespace Calamari.Deployment.PackageRetention.Caching
                 log.VerboseFormat("Found cached packages with more versions than the maximum quantity to keep. {0} package versions will be removed.", packagesToRemoveByVersion.Count);
             }
 
-            return packagesToRemoveById.Concat(packagesToRemoveByVersion);
+            return packagesToRemoveById.Union(packagesToRemoveByVersion);
         }
     }
     
