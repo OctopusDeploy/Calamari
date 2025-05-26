@@ -4,10 +4,10 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace Calamari.Common.Plumbing.Extensions
+namespace Calamari.AzureWebApp.NetCoreShim
 {
     /// <summary>
-    /// This class is cloned into Calamari.AzureWebApp.NetCoreShim.AesEncryption.
+    /// This class is a clone of Calamari.Common.Plumbing.Extensions.AesEncryption.
     /// Ensure that any changes to the encryption algorithm are applied to both locations.
     /// </summary>
     public class AesEncryption
@@ -15,14 +15,14 @@ namespace Calamari.Common.Plumbing.Extensions
         //Key size used to encrypt variables for scripts (bash/powershell etc.)
         //The variables are decrypted in the respective bootstrapper scripts
         const int ScriptBootstrapKeySize = 256;
-        
+
         //Key size used to decrypt the variables file sent by Octopus Server
         const int ServerVariablesKeySize = 256;
-        
+
         //Key size used to encrypt variables for step packages (`step-bootstrapper` package referenced by Server)
         //The variables are decrypted in the step package bootstrapper
         const int StepPackageBootstrapKeySize = 256;
-        
+
         readonly int keySizeBits;
 
         const int BlockSizeBits = 128;
@@ -50,7 +50,7 @@ namespace Calamari.Common.Plumbing.Extensions
         {
             return new AesEncryption(password, ServerVariablesKeySize);
         }
-        
+
         AesEncryption(string password, int keySizeBits)
         {
             this.keySizeBits = keySizeBits;
@@ -108,7 +108,7 @@ namespace Calamari.Common.Plumbing.Extensions
             };
             if (iv != null)
                 provider.IV = iv;
-            
+
             return provider;
         }
 
@@ -117,19 +117,19 @@ namespace Calamari.Common.Plumbing.Extensions
             var ivLength = BlockSizeBits / 8;
             iv = new byte[ivLength];
             Buffer.BlockCopy(encrypted,
-                IvPrefix.Length,
-                iv,
-                0,
-                ivLength);
+                             IvPrefix.Length,
+                             iv,
+                             0,
+                             ivLength);
 
             var ivDataLength = IvPrefix.Length + ivLength;
             var aesDataLength = encrypted.Length - ivDataLength;
             var aesData = new byte[aesDataLength];
             Buffer.BlockCopy(encrypted,
-                ivDataLength,
-                aesData,
-                0,
-                aesDataLength);
+                             ivDataLength,
+                             aesData,
+                             0,
+                             aesDataLength);
             return aesData;
         }
 
@@ -143,9 +143,9 @@ namespace Calamari.Common.Plumbing.Extensions
         {
             const string chars = "abcdefghijklmnopqrstuvwxyz0123456789";
             return new string(
-                Enumerable.Repeat(chars, length)
-                    .Select(s => s[RandomGenerator.Next(s.Length)])
-                    .ToArray());
+                              Enumerable.Repeat(chars, length)
+                                        .Select(s => s[RandomGenerator.Next(s.Length)])
+                                        .ToArray());
         }
     }
 }
