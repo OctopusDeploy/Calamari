@@ -19,6 +19,8 @@ namespace Calamari.AzureWebApp.NetCoreShim.Retry
     /// throw;
     /// For a file system RetryTracker, use a small fixed interval and a limit of say 1 minute
     /// For a network RetryTracker, use an exponential retry up to, say, 30 seconds to prevent spamming host
+    /// <br/><br/>
+    /// This is copied from Calamari.Common.Retry as we don't want the Calamari.AzureWebApp.NetCoreShim to take a dependency on any other projects 
     /// </remarks>
     public class RetryTracker
     {
@@ -65,9 +67,7 @@ namespace Calamari.AzureWebApp.NetCoreShim.Retry
 
         public bool CanRetry()
         {
-            var noRetry = shortCircuit && CurrentTry > 0 ||
-                maxRetries.HasValue && CurrentTry > maxRetries.Value ||
-                timeLimit.HasValue && lastTry + retryInterval.GetInterval(CurrentTry) > timeLimit.Value;
+            var noRetry = shortCircuit && CurrentTry > 0 || maxRetries.HasValue && CurrentTry > maxRetries.Value || timeLimit.HasValue && lastTry + retryInterval.GetInterval(CurrentTry) > timeLimit.Value;
             return !noRetry;
         }
 

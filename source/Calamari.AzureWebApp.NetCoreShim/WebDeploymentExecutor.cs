@@ -24,6 +24,9 @@ namespace Calamari.AzureWebApp.NetCoreShim
             var retry = new RetryTracker(4,
                                          timeLimit: TimeSpan.MaxValue,
                                          retryInterval: RetryIntervalForAzureOperations);
+
+            var deploymentOptions = DeploymentOptions(options);
+            var deploymentSyncOptions = DeploymentSyncOptions(options);
             while (retry.Try())
             {
                 try
@@ -33,8 +36,8 @@ namespace Calamari.AzureWebApp.NetCoreShim
                                         .SyncTo(
                                                 "contentPath",
                                                 options.DestinationContentPath,
-                                                DeploymentOptions(options),
-                                                DeploymentSyncOptions(options)
+                                                deploymentOptions,
+                                                deploymentSyncOptions
                                                );
 
                     var resultJson = JsonConvert.SerializeObject(new
@@ -71,7 +74,7 @@ namespace Calamari.AzureWebApp.NetCoreShim
 
         DeploymentBaseOptions DeploymentOptions(Program.SyncOptions options)
         {
-            var encryption = new AesEncryption(options.EncryptionKey);
+            var encryption = AesEncryption.ForScripts(options.EncryptionKey);
             var decryptedUserName = encryption.Decrypt(Convert.FromBase64String(options.DestinationUserName));
             var decryptedPassword = encryption.Decrypt(Convert.FromBase64String(options.DestinationPassword));
 

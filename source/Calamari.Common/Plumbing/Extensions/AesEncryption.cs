@@ -6,6 +6,10 @@ using System.Text;
 
 namespace Calamari.Common.Plumbing.Extensions
 {
+    /// <summary>
+    /// This class is cloned into Calamari.AzureWebApp.NetCoreShim.AesEncryption.
+    /// Ensure that any changes to the encryption algorithm are applied to both locations.
+    /// </summary>
     public class AesEncryption
     {
         //Key size used to encrypt variables for scripts (bash/powershell etc.)

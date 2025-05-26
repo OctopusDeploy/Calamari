@@ -7,11 +7,26 @@ using System.Text;
 namespace Calamari.AzureWebApp.NetCoreShim
 {
     /// <summary>
-    /// This class is a clone of Calamari.AzureWebApp.NetCoreShim.AesEncryption.
+    /// This class is a clone of Calamari.Common.Plumbing.Extensions.AesEncryption.
     /// Ensure that any changes to the encryption algorithm are applied to both locations.
     /// </summary>
     public class AesEncryption
     {
+        //Key size used to encrypt variables for scripts (bash/powershell etc.)
+        //The variables are decrypted in the respective bootstrapper scripts
+        const int ScriptBootstrapKeySize = 256;
+
+        //Key size used to decrypt the variables file sent by Octopus Server
+        const int ServerVariablesKeySize = 256;
+
+        //Key size used to encrypt variables for step packages (`step-bootstrapper` package referenced by Server)
+        //The variables are decrypted in the step package bootstrapper
+        const int StepPackageBootstrapKeySize = 256;
+
+        readonly int keySizeBits;
+
+        const int BlockSizeBits = 128;
+
         const int PasswordSaltIterations = 1000;
         public const string SaltRaw = "Octopuss";
         static readonly byte[] PasswordPaddingSalt = Encoding.UTF8.GetBytes(SaltRaw);
@@ -19,11 +34,27 @@ namespace Calamari.AzureWebApp.NetCoreShim
 
         static readonly Random RandomGenerator = new Random();
 
-        readonly byte[] key;
+        public byte[] EncryptionKey { get; }
 
-        public AesEncryption(string password)
+        public static AesEncryption ForScripts(string password)
         {
-            key = GetEncryptionKey(password);
+            return new AesEncryption(password, ScriptBootstrapKeySize);
+        }
+
+        public static AesEncryption ForStepPackages(string password)
+        {
+            return new AesEncryption(password, StepPackageBootstrapKeySize);
+        }
+
+        public static AesEncryption ForServerVariables(string password)
+        {
+            return new AesEncryption(password, ServerVariablesKeySize);
+        }
+
+        AesEncryption(string password, int keySizeBits)
+        {
+            this.keySizeBits = keySizeBits;
+            EncryptionKey = GetEncryptionKey(password, this.keySizeBits);
         }
 
         public string Decrypt(byte[] encrypted)
@@ -71,18 +102,19 @@ namespace Calamari.AzureWebApp.NetCoreShim
             {
                 Mode = CipherMode.CBC,
                 Padding = PaddingMode.PKCS7,
-                KeySize = 128,
-                BlockSize = 128,
-                Key = key
+                KeySize = keySizeBits,
+                BlockSize = BlockSizeBits,
+                Key = EncryptionKey
             };
             if (iv != null)
                 provider.IV = iv;
+
             return provider;
         }
 
         public static byte[] ExtractIV(byte[] encrypted, out byte[] iv)
         {
-            var ivLength = 16;
+            var ivLength = BlockSizeBits / 8;
             iv = new byte[ivLength];
             Buffer.BlockCopy(encrypted,
                              IvPrefix.Length,
@@ -101,10 +133,10 @@ namespace Calamari.AzureWebApp.NetCoreShim
             return aesData;
         }
 
-        public static byte[] GetEncryptionKey(string encryptionPassword)
+        static byte[] GetEncryptionKey(string encryptionPassword, int keySizeBits)
         {
             var passwordGenerator = new Rfc2898DeriveBytes(encryptionPassword, PasswordPaddingSalt, PasswordSaltIterations);
-            return passwordGenerator.GetBytes(16);
+            return passwordGenerator.GetBytes(keySizeBits / 8);
         }
 
         public static string RandomString(int length)

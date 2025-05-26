@@ -8,6 +8,8 @@ namespace Calamari.AzureWebApp.NetCoreShim.Retry
     /// <remarks>
     /// e.g. For network operations, try again after 100ms, then double interval up to 5 seconds
     /// new LimitedExponentialRetryInterval(100, 5000, 2);
+    /// <br/><br/>
+    /// This is copied from Calamari.Common.Retry as we don't want the Calamari.AzureWebApp.NetCoreShim to take a dependency on any other projects 
     /// </remarks>
     public class LimitedExponentialRetryInterval : AzureWebApp.NetCoreShim.Retry.RetryInterval
     {
