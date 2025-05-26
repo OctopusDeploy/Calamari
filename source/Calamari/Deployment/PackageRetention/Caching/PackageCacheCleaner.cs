@@ -114,11 +114,11 @@ namespace Calamari.Deployment.PackageRetention.Caching
             // Version retention has currently only been implemented for number of items
             if (versionUnit == MachinePackageCacheRetentionUnit.Items)
             {
-                packagesToKeepById.ForEach(kv =>
-                                           {
-                                               var numberOfVersionsToRemove = kv.Value.Count() - quantityOfVersionsToKeep;
-                                               packagesToRemoveByVersion.AddRange(JournalEntrySorter.LeastRecentlyUsed(kv.Value).Take(numberOfVersionsToRemove).Select(v => v.Package));
-                                           });
+                foreach (var packageToKeep in packagesToKeepById)
+                {
+                    var numberOfVersionsToRemove = packageToKeep.Value.Count() - quantityOfVersionsToKeep;
+                    packagesToRemoveByVersion.AddRange(JournalEntrySorter.LeastRecentlyUsed(packageToKeep.Value).Take(numberOfVersionsToRemove).Select(v => v.Package));
+                }
             }
             
             if (packagesToRemoveByVersion.Any())
