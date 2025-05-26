@@ -84,10 +84,9 @@ namespace Calamari.Deployment.PackageRetention.Caching
             var packageUnit = packageUnitString != null ? (MachinePackageCacheRetentionUnit) Enum.Parse(typeof(MachinePackageCacheRetentionUnit), packageUnitString) : DefaultPackageUnit;
             var versionUnit = versionUnitString != null ? (MachinePackageCacheRetentionUnit) Enum.Parse(typeof(MachinePackageCacheRetentionUnit), versionUnitString) : DefaultVersionUnit;
 
-            if (quantityOfPackagesToKeep == 0 && quantityOfVersionsToKeep == 0)
+            if (quantityOfVersionsToKeep == 0)
             {
-                log.Verbose("Maximum quantity to keep is not configured. No packages will be removed.");
-                return Array.Empty<PackageIdentity>();
+                return FindPackagesToRemoveByPercentFreeDiskSpace(journals);
             }
 
             var orderedJournalEntries = JournalEntrySorter.MostRecentlyUsedByVersion(journals).ToArray();

@@ -57,10 +57,8 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         }
         
         [Test]
-        [TestCase(null, null)]
-        [TestCase("0", "0")]
         [TestCase("100", "100")]
-        public void WhenQuantityToKeepIsConfigured_KeepRequiredPackages(string quantityOfPackagesToKeep, string quantityOfVersionsToKeep)
+        public void WhenQuantityToKeepIsHigh_KeepAllPackages(string quantityOfPackagesToKeep, string quantityOfVersionsToKeep)
         {
             var variables = new CalamariVariables();
             variables.Add("MachinePackageCacheRetentionQuantityOfPackagesToKeep", quantityOfPackagesToKeep);
@@ -95,6 +93,37 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             var subject = new PackageCacheCleaner(fileSystem, new FirstInFirstOutJournalEntrySort(), variables, log);
             var result = subject.GetPackagesToRemove(Array.Empty<JournalEntry>());
             result.Should().BeEmpty();
+        }
+        
+        [Test]
+        [TestCase("0")]
+        [TestCase(null)]
+        public void WhenQuantityOfVersionsToKeepIsNotSet_FindPackagesToRemoveByPercentFreeDiskSpace(string quantityOfVersionsToKeep)
+        {
+            var variables = new CalamariVariables();
+            variables.Add("MachinePackageCacheRetentionQuantityOfPackagesToKeep", "10");
+            variables.Add("MachinePackageCacheRetentionQuantityOfVersionsToKeep", quantityOfVersionsToKeep);
+            variables.Set(KnownVariables.EnabledFeatureToggles, "configurable-package-cache-retention");
+
+            var fileSystem = new FileSystemThatHasSpace(500, 5000);
+            var log = new InMemoryLog();
+            var subject = new PackageCacheCleaner(fileSystem, new FirstInFirstOutJournalEntrySort(), variables, log);
+            var result = subject.GetPackagesToRemove(MakeSomeJournalEntries());
+            result.Count().Should().Be(1);
+        }
+        
+        [Test]
+        public void WhenConfigurablePackageCacheRetentionToggleIsDisabled_FindPackagesToRemoveByPercentFreeDiskSpace()
+        {
+            var variables = new CalamariVariables();
+            variables.Add("MachinePackageCacheRetentionQuantityOfPackagesToKeep", "100");
+            variables.Add("MachinePackageCacheRetentionQuantityOfVersionsToKeep", "100");
+
+            var fileSystem = new FileSystemThatHasSpace(500, 5000);
+            var log = new InMemoryLog();
+            var subject = new PackageCacheCleaner(fileSystem, new FirstInFirstOutJournalEntrySort(), variables, log);
+            var result = subject.GetPackagesToRemove(MakeSomeJournalEntries());
+            result.Count().Should().Be(1);
         }
 
         [Test]
