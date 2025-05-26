@@ -16,10 +16,14 @@ namespace Calamari.Common.Plumbing.Extensions
         {
             var serviceMessageParameters = new Dictionary<string, string>
             {
-                { ServiceMessageNames.CalamariDeploymentMetric.OperationIdAttribute, operationId },
                 { ServiceMessageNames.CalamariDeploymentMetric.MetricAttribute, metricName },
                 { ServiceMessageNames.CalamariDeploymentMetric.ValueAttribute, metricValue.ToString() },
             };
+            
+            if (operationId != null)
+            {
+                serviceMessageParameters.Add(ServiceMessageNames.CalamariDeploymentMetric.OperationIdAttribute, operationId);
+            }
 
             log.WriteServiceMessage(new ServiceMessage(ServiceMessageNames.CalamariDeploymentMetric.Name, serviceMessageParameters));
         }

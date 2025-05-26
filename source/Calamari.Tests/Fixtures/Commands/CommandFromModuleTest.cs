@@ -51,6 +51,7 @@ namespace Calamari.Tests.Fixtures.Commands
         [SetUp]
         public void SetUp()
         {
+            ExternalVariables.LogVariablesMissingEnvironmentVariableAttribute();
             ExternalVariables.LogMissingVariables();
         }
 
