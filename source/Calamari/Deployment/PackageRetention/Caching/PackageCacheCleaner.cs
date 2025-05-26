@@ -117,6 +117,13 @@ namespace Calamari.Deployment.PackageRetention.Caching
             {
                 log.VerboseFormat("Found cached packages with more versions than the maximum quantity to keep. {0} package versions will be removed.", packagesToRemoveByVersion.Count);
             }
+            
+            var packagesToRemove = packagesToRemoveById.Union(packagesToRemoveByVersion);
+
+            if (!packagesToRemove.Any())
+            {
+                log.VerboseFormat("The number of cached packages is below the configured maximum. No packages will be removed.", packagesToRemoveByVersion.Count);
+            }
 
             return packagesToRemoveById.Union(packagesToRemoveByVersion);
         }
