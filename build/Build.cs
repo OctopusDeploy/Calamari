@@ -833,11 +833,7 @@ namespace Calamari.Build
             return runtimes ?? Array.Empty<string>();
         }
 
-        static List<string> GetCalamariFlavours()
-        {
-            return IsLocalBuild && !OperatingSystem.IsWindows()
-                ? MigratedCalamariFlavours.CrossPlatformFlavours
-                : MigratedCalamariFlavours.Flavours;
-        }
+        //All libraries/flavours now support .NET Core
+        static List<string> GetCalamariFlavours() => CalamariPackages.Flavours;
     }
 }
