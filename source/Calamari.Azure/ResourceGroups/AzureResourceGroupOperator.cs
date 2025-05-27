@@ -14,7 +14,7 @@ using Newtonsoft.Json.Linq;
 using Polly;
 using Polly.Timeout;
 
-namespace Calamari.AzureResourceGroup
+namespace Calamari.Azure.ResourceGroups
 {
     class AzureResourceGroupOperator
     {
@@ -29,7 +29,7 @@ namespace Calamari.AzureResourceGroup
                                                                                 string deploymentName,
                                                                                 ArmDeploymentMode deploymentMode,
                                                                                 string template,
-                                                                                string? parameters)
+                                                                                string parameters)
         {
             log.Verbose($"Template:\n{template}\n");
             if (parameters != null)
@@ -108,7 +108,7 @@ namespace Calamari.AzureResourceGroup
             log.Info(sb.ToString());
         }
 
-        void CaptureOutputs(string? outputsJson, IVariables variables)
+        void CaptureOutputs(string outputsJson, IVariables variables)
         {
             if (string.IsNullOrWhiteSpace(outputsJson))
                 return;

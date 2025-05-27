@@ -29,7 +29,7 @@
     </ItemGroup>
   </Target>
   <ItemGroup>
-    <ProjectReference Include="..\Calamari.AzureResourceGroup\Calamari.AzureResourceGroup.csproj" />
+    <ProjectReference Include="..\Calamari.Azure\Calamari.Azure.csproj" />
     <ProjectReference Include="..\Calamari.Testing\Calamari.Testing.csproj" />
   </ItemGroup>
   <ItemGroup>

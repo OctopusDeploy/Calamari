@@ -2,7 +2,6 @@ using System;
 using System.Threading.Tasks;
 using Azure.ResourceManager.Resources;
 using Azure.ResourceManager.Resources.Models;
-using Calamari.Azure;
 using Calamari.CloudAccounts;
 using Calamari.Common.Commands;
 using Calamari.Common.FeatureToggles;
@@ -12,7 +11,7 @@ using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Variables;
 using Octopus.CoreUtilities.Extensions;
 
-namespace Calamari.AzureResourceGroup
+namespace Calamari.Azure.ResourceGroups
 {
     class DeployAzureResourceGroupBehaviour : IDeployBehaviour
     {

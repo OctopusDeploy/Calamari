@@ -1,4 +1,5 @@
-﻿using NUnit.Framework;
+﻿using Calamari.Azure.ResourceGroups;
+using NUnit.Framework;
 
 namespace Calamari.AzureResourceGroup.Tests
 {

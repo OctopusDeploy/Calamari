@@ -1,7 +1,8 @@
-﻿using Newtonsoft.Json;
+﻿using System;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace Calamari.AzureResourceGroup
+namespace Calamari.Azure.ResourceGroups
 {
     /// <summary>
     /// There are 2 ways the parameters can be passed to Calamari but the Resource Group Client supports only one format so we need to

@@ -1,4 +1,6 @@
-﻿namespace Calamari.AzureResourceGroup
+﻿using System;
+
+namespace Calamari.Azure.ResourceGroups
 {
     static class DefaultVariables
     {

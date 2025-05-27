@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Calamari.AzureResourceGroup
+namespace Calamari.Azure.ResourceGroups
 {
     interface IResourceGroupTemplateNormalizer
     {

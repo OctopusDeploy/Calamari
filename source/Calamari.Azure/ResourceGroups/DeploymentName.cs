@@ -2,11 +2,11 @@ using System;
 using System.Linq;
 using System.Text.RegularExpressions;
 
-namespace Calamari.AzureResourceGroup
+namespace Calamari.Azure.ResourceGroups
 {
     public static class DeploymentName
     {
-        public static string FromStepName(string? stepName)
+        public static string FromStepName(string stepName)
         {
             var deploymentName = stepName ?? string.Empty;
             deploymentName = deploymentName.ToLower();

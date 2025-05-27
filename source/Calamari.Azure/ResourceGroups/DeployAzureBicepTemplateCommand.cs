@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Pipeline;
 
-namespace Calamari.AzureResourceGroup
+namespace Calamari.Azure.ResourceGroups
 {
     [Command("deploy-azure-bicep-template", Description = "Deploy a Bicep template to Azure")]
     public class DeployAzureBicepTemplateCommand : PipelineCommand

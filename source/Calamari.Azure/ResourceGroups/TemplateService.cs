@@ -4,7 +4,7 @@ using Calamari.Common.Plumbing.Variables;
 using Calamari.Common.Util;
 using Octopus.CoreUtilities.Extensions;
 
-namespace Calamari.AzureResourceGroup
+namespace Calamari.Azure.ResourceGroups
 {
     class TemplateService
     {

@@ -4,7 +4,6 @@ using Azure;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Resources;
 using Azure.ResourceManager.Resources.Models;
-using Calamari.Azure;
 using Calamari.CloudAccounts;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Processes;
@@ -13,7 +12,7 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Variables;
 
-namespace Calamari.AzureResourceGroup
+namespace Calamari.Azure.ResourceGroups
 {
     class DeployBicepTemplateBehaviour : IDeployBehaviour
     {
@@ -79,7 +78,7 @@ namespace Calamari.AzureResourceGroup
             return armOperation.Value;
         }
 
-        (string template, string? parameters) GetArmTemplateAndParameters(RunningDeployment context)
+        (string template, string parameters) GetArmTemplateAndParameters(RunningDeployment context)
         {
             var bicepCli = new BicepCli(log, commandLineRunner, context.CurrentDirectory);
 

@@ -7,7 +7,7 @@ using Calamari.Common.Features.Scripting;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Logging;
 
-namespace Calamari.AzureResourceGroup
+namespace Calamari.Azure.ResourceGroups
 {
     public class BicepCli
     {
