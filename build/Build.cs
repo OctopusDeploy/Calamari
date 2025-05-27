@@ -214,7 +214,8 @@ namespace Calamari.Build
                  .Executes(async () =>
                            {
                                var flavours = GetCalamariFlavours();
-                               var migratedCalamariFlavoursTests = flavours.Select(f => $"{f}.Tests");
+                               var testFlavours = GetCalamariTestFlavours();
+                               var migratedCalamariFlavoursTests = testFlavours.Select(f => $"{f}.Tests");
                                var calamariFlavourProjects = Solution.Projects
                                                                      .Where(project => flavours.Contains(project.Name)
                                                                                        || migratedCalamariFlavoursTests.Contains(project.Name));
@@ -738,6 +739,13 @@ namespace Calamari.Build
             return IsLocalBuild && !OperatingSystem.IsWindows()
                 ? MigratedCalamariFlavours.CrossPlatformFlavours
                 : MigratedCalamariFlavours.Flavours;
+        }
+        
+        static List<string> GetCalamariTestFlavours()
+        {
+            return IsLocalBuild && !OperatingSystem.IsWindows()
+                ? MigratedCalamariFlavours.CrossPlatformTestFlavours
+                : MigratedCalamariFlavours.TestFlavours;
         }
     }
 }
