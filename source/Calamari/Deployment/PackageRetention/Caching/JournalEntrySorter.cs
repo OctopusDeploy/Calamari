@@ -18,11 +18,11 @@ namespace Calamari.Deployment.PackageRetention.Caching
         {
             var entries = journalEntries.Where(e => !e.HasLock()).ToList();
             
-            var sortedByVersion = entries
+            var packagesByMostRecentlyUsed = entries
                                   .GroupBy(je => je.Package.PackageId.ToString())
                                   .ToDictionary(k => k.Key, MostRecentlyUsed);
             
-            return sortedByVersion
+            return packagesByMostRecentlyUsed
                    .Where(kvp => kvp.Value != null && kvp.Value.Any())
                    .OrderByDescending(kvp => kvp.Value.First().GetUsageDetails().First().DateTime);
         }
