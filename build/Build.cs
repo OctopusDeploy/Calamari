@@ -274,7 +274,7 @@ namespace Calamari.Build
 
             var packagesToPublish = crossPlatformPackages.Concat(netFxPackages).ToArray();
 
-            foreach (var rid in GetRuntimeIdentifiers(Solution.GetProject(RootProjectName)!)!)
+            foreach (var rid in packagesToPublish.Select(p => p.Architecture).Distinct())
             {
                 DotNetRestore(s =>
                                   s.SetProjectFile(Solution)
@@ -282,17 +282,12 @@ namespace Calamari.Build
                                    .SetRuntime(rid));
             }
 
-            // var restoreTasks = packagesToPublish.Select(RestoreAsync);
-            // await Task.WhenAll(restoreTasks);
-            
-            // foreach (var package in packagesToPublish)
-            // {
-            //     await RestoreAsync(package);
-            // }
-
-            // Run all builds in parallel
-            var buildTasks = packagesToPublish.Select(BuildAsync);
-            await Task.WhenAll(buildTasks);
+            foreach (var package in packagesToPublish)
+            {
+                await BuildAsync(package);
+            }
+            // var buildTasks = packagesToPublish.Select(BuildAsync);
+            // await Task.WhenAll(buildTasks);
 
             // Run all publishes in parallel
             var outputPaths = new ConcurrentBag<AbsolutePath?>();
@@ -318,24 +313,6 @@ namespace Calamari.Build
 
             projects.ForEach(CompressCalamariProject);
             await Task.WhenAll(ProjectCompressionTasks);
-        }
-
-        async Task RestoreAsync(CalamariPackageMetadata calamariPackageMetadata)
-        {
-            if (!OperatingSystem.IsWindows() && !calamariPackageMetadata.IsCrossPlatform)
-            {
-                Log.Warning($"Not restoring {calamariPackageMetadata.Framework}: can only publish netfx on a Windows OS");
-                return;
-            }
-
-            Log.Information($"Restoring {calamariPackageMetadata.Project?.Name} for arch '{calamariPackageMetadata.Architecture}'");
-
-            var project = calamariPackageMetadata.Project;
-            await Task.Run(() =>
-                               DotNetRestore(s =>
-                                                 s.SetProjectFile(project)
-                                                  .SetProperty("DisableImplicitNuGetFallbackFolder", true)
-                                                  .SetRuntime(calamariPackageMetadata.Architecture)));
         }
 
         async Task BuildAsync(CalamariPackageMetadata calamariPackageMetadata)
