@@ -13,7 +13,7 @@ namespace Calamari.Deployment.PackageRetention.Model
     public class PackageJournal : IManagePackageCache
     {
         readonly IJournalRepository journalRepository;
-        readonly IEnumerable<IRetentionAlgorithm> retentionAlgorithms;
+        readonly IRetentionAlgorithm[] retentionAlgorithms;
         readonly ILog log;
         readonly ICalamariFileSystem fileSystem;
         readonly ISemaphoreFactory semaphoreFactory;
@@ -27,7 +27,7 @@ namespace Calamari.Deployment.PackageRetention.Model
             this.journalRepository = journalRepository;
             this.log = log;
             this.fileSystem = fileSystem;
-            this.retentionAlgorithms = retentionAlgorithms;
+            this.retentionAlgorithms = retentionAlgorithms.ToArray();
             this.semaphoreFactory = semaphoreFactory;
         }
 
