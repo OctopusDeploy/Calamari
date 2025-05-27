@@ -2,6 +2,9 @@
 using System;
 using Azure.Core;
 using Azure.ResourceManager.AppService;
+using Calamari.CloudAccounts;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Azure.AppServices
 {
@@ -70,6 +73,26 @@ namespace Calamari.Azure.AppServices
         /// <returns></returns>
         public ResourceIdentifier CreateWebSiteResourceIdentifier()
             => WebSiteResource.CreateResourceIdentifier(SubscriptionId, ResourceGroupName, Site);
+        
+        public static AzureTargetSite Create(IAzureAccount account, IVariables variables, ILog? log = null, bool allowEmptyResourceGroupName = false)
+        {
+            var resourceGroupName = variables.Get(AzureVariables.Action.Azure.ResourceGroupName);
+            if (!allowEmptyResourceGroupName && string.IsNullOrEmpty(resourceGroupName))
+                throw new Exception("resource group name must be specified");
+            log?.Verbose($"Using Azure Resource Group '{resourceGroupName}'.");
+
+            var webAppName = variables.Get(AzureVariables.Action.Azure.WebAppName);
+            if (string.IsNullOrEmpty(webAppName))
+                throw new Exception("Web App Name must be specified");
+            log?.Verbose($"Using App Service Name '{webAppName}'.");
+
+            var slotName = variables.Get(AzureVariables.Action.Azure.WebAppSlot);
+            log?.Verbose(string.IsNullOrEmpty(slotName)
+                             ? "No Deployment Slot specified"
+                             : $"Using Deployment Slot '{slotName}'");
+
+            return new AzureTargetSite(account.SubscriptionNumber, resourceGroupName, webAppName, slotName);
+        }
     }
 }
 #nullable restore
