@@ -59,7 +59,10 @@ namespace Calamari.Kubernetes.Conventions
 
             //This is used to cancel KOS when the helm upgrade has completed
             //It does not cancel the get manifest
-            var kosCts = new CancellationTokenSource();
+            var helmInstallCompletedCts = new CancellationTokenSource();
+            
+            //This is used to cancel the get manifest when the helm install fails (and we are still trying to retrieve the manifest)
+            var helmInstallErrorCts = new CancellationTokenSource();
 
             var helmUpgradeTask = Task.Run(() =>
                                            {
@@ -68,7 +71,7 @@ namespace Calamari.Kubernetes.Conventions
                                                                                       valueSourcesParser,
                                                                                       helmCli);
                                                
-                                               executor.ExecuteHelmUpgrade(deployment, releaseName, kosCts);
+                                               executor.ExecuteHelmUpgrade(deployment, releaseName, helmInstallCompletedCts, helmInstallErrorCts);
                                            });
 
             var manifestAndStatusCheckTask = Task.Run(async () =>
@@ -78,9 +81,10 @@ namespace Calamari.Kubernetes.Conventions
                                                           await runner.StartBackgroundMonitoringAndReporting(deployment,
                                                                                releaseName,
                                                                                newRevisionNumber,
-                                                                               kosCts.Token);
+                                                                               helmInstallCompletedCts.Token, 
+                                                                               helmInstallErrorCts.Token);
                                                       },
-                                                      kosCts.Token);
+                                                      helmInstallCompletedCts.Token);
 
             //we run both the helm upgrade and the manifest & status in parallel
             Task.WhenAll(helmUpgradeTask, manifestAndStatusCheckTask).GetAwaiter().GetResult();
