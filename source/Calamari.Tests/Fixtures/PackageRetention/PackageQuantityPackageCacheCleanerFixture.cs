@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.PackageRetention.Caching;
@@ -13,7 +12,7 @@ using Octopus.Versioning.Semver;
 namespace Calamari.Tests.Fixtures.PackageRetention
 {
     [TestFixture]
-    public class PackageCacheCleanerFixture
+    public class PackageQuantityPackageCacheCleanerFixture
     {
         [OneTimeSetUp]
         public void TestFixtureSetUp()
@@ -49,9 +48,8 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             var existingJournals = new[] { package1Version1, package1Version2, package1Version3, package2Version1, package3Version1, package3Version2, package4Version1 };
             var expectedResult = new List<PackageIdentity> { package3Version1.Package, package3Version2.Package, package2Version1.Package, package1Version3.Package };
             
-            var fileSystem = new FileSystemThatHasSpace(500, 5000);
             var log = new InMemoryLog();
-            var subject = new PackageCacheCleaner(fileSystem, new FirstInFirstOutJournalEntrySort(), variables, log);
+            var subject = new PackageQuantityPackageCacheCleaner(variables, log);
             var result = subject.GetPackagesToRemove(existingJournals);
             result.Should().BeEquivalentTo(expectedResult);
         }
@@ -73,24 +71,22 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             
             var existingJournals = new[] { package1Version1, package1Version2, package1Version3, package2Version1, package3Version1 };
 
-            var fileSystem = new FileSystemThatHasSpace(500, 5000);
             var log = new InMemoryLog();
-            var subject = new PackageCacheCleaner(fileSystem, new FirstInFirstOutJournalEntrySort(), variables, log);
+            var subject = new PackageQuantityPackageCacheCleaner(variables, log);
             var result = subject.GetPackagesToRemove(existingJournals);
             result.Should().BeEmpty();
         }
         
         [Test]
-        public void WhenQuantityToKeepIsConfigured_AndNoPackagesExist_RemoveNoPackages()
+        public void WhenQuantityToKeepIsConfigured_AndNoPackagesExist_ReturnNoPackages()
         {
             var variables = new CalamariVariables();
             variables.Add("MachinePackageCacheRetentionQuantityOfPackagesToKeep", "5");
             variables.Add("MachinePackageCacheRetentionQuantityOfVersionsToKeep", "5");
             variables.Set(KnownVariables.EnabledFeatureToggles, "configurable-package-cache-retention");
             
-            var fileSystem = new FileSystemThatHasSpace(500, 5000);
             var log = new InMemoryLog();
-            var subject = new PackageCacheCleaner(fileSystem, new FirstInFirstOutJournalEntrySort(), variables, log);
+            var subject = new PackageQuantityPackageCacheCleaner(variables, log);
             var result = subject.GetPackagesToRemove(Array.Empty<JournalEntry>());
             result.Should().BeEmpty();
         }
@@ -98,73 +94,42 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         [Test]
         [TestCase("0")]
         [TestCase(null)]
-        public void WhenQuantityOfVersionsToKeepIsNotSet_FindPackagesToRemoveByPercentFreeDiskSpace(string quantityOfVersionsToKeep)
+        public void WhenQuantityOfVersionsToKeepIsNotSet_ReturnNoPackages(string quantityOfVersionsToKeep)
         {
             var variables = new CalamariVariables();
             variables.Add("MachinePackageCacheRetentionQuantityOfPackagesToKeep", "10");
             variables.Add("MachinePackageCacheRetentionQuantityOfVersionsToKeep", quantityOfVersionsToKeep);
             variables.Set(KnownVariables.EnabledFeatureToggles, "configurable-package-cache-retention");
 
-            var fileSystem = new FileSystemThatHasSpace(500, 5000);
             var log = new InMemoryLog();
-            var subject = new PackageCacheCleaner(fileSystem, new FirstInFirstOutJournalEntrySort(), variables, log);
+            var subject = new PackageQuantityPackageCacheCleaner(variables, log);
             var result = subject.GetPackagesToRemove(MakeSomeJournalEntries());
-            result.Count().Should().Be(1);
+            result.Should().BeEmpty();
         }
         
         [Test]
-        public void WhenConfigurablePackageCacheRetentionToggleIsDisabled_FindPackagesToRemoveByPercentFreeDiskSpace()
+        public void WhenConfigurablePackageCacheRetentionToggleIsDisabled_ReturnNoPackages()
         {
             var variables = new CalamariVariables();
             variables.Add("MachinePackageCacheRetentionQuantityOfPackagesToKeep", "100");
             variables.Add("MachinePackageCacheRetentionQuantityOfVersionsToKeep", "100");
 
-            var fileSystem = new FileSystemThatHasSpace(500, 5000);
             var log = new InMemoryLog();
-            var subject = new PackageCacheCleaner(fileSystem, new FirstInFirstOutJournalEntrySort(), variables, log);
-            var result = subject.GetPackagesToRemove(MakeSomeJournalEntries());
-            result.Count().Should().Be(1);
-        }
-
-        [Test]
-        public void WhenThereIsEnoughFreeSpace_NothingIsRemoved()
-        {
-            var variables = new CalamariVariables();
-            var fileSystem = new FileSystemThatHasSpace(1000, 1000);
-            var log = new InMemoryLog();
-            var subject = new PackageCacheCleaner(fileSystem, new FirstInFirstOutJournalEntrySort(), variables, log);
+            var subject = new PackageQuantityPackageCacheCleaner(variables, log);
             var result = subject.GetPackagesToRemove(MakeSomeJournalEntries());
             result.Should().BeEmpty();
-        }
-
-        [Test]
-        public void WhenFreeingUpAPackageWorthOfSpace_OnePackageIsMarkedForRemoval()
-        {
-            var variables = new CalamariVariables();
-            var fileSystem = new FileSystemThatHasSpace(500, 5000);
-            var log = new InMemoryLog();
-            var subject = new PackageCacheCleaner(fileSystem, new FirstInFirstOutJournalEntrySort(), variables, log);
-            var result = subject.GetPackagesToRemove(MakeSomeJournalEntries());
-            result.Count().Should().Be(1);
-        }
-
-        [Test]
-        public void WhenFreeingUpTwoPackagesWorthOfSpace_TwoPackagesAreMarkedForRemoval()
-        {
-            var variables = new CalamariVariables();
-            var fileSystem = new FileSystemThatHasSpace(1000, 10000);
-            var log = new InMemoryLog();
-            var subject = new PackageCacheCleaner(fileSystem, new FirstInFirstOutJournalEntrySort(), variables, log);
-            var result = subject.GetPackagesToRemove(MakeSomeJournalEntries());
-            result.Count().Should().Be(2);
         }
 
         static IEnumerable<JournalEntry> MakeSomeJournalEntries()
         {
             for (var i = 0; i < 10; i++)
             {
-                var packageIdentity = new PackageIdentity(new PackageId("HelloWorld"), new SemanticVersion(1, 0, i), new PackagePath($"C:\\{i}.zip"));
-                var packageUsages = new PackageUsages { new UsageDetails(new ServerTaskId($"Deployments-{i}"), new CacheAge(i), DateTime.Now.AddDays(i)) };
+                var packageIdentity = new PackageIdentityBuilder()
+                                      .WithPackageId(new PackageId("HelloWorld"))
+                                      .WithVersion(new SemanticVersion(1, 0, i))
+                                      .WithPath(new PackagePath($"C:\\{i}.zip"))
+                                      .Build();
+                var packageUsages = new PackageUsages { new UsageDetailsBuilder().WithDeploymentTaskId(new ServerTaskId($"Deployments-{i}")).WithCacheAgeAtUsage(new CacheAge(i)).WithDateTime(DateTime.Now.AddDays(i)).Build() };
                 yield return new JournalEntry(packageIdentity, 1000, packageUsages: packageUsages);
             }
         }
