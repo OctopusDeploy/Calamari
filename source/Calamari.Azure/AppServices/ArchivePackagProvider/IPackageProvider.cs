@@ -1,7 +1,8 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Threading.Tasks;
 
-namespace Calamari.AzureAppService
+namespace Calamari.Azure.AppServices
 {
     public interface IPackageProvider
     {

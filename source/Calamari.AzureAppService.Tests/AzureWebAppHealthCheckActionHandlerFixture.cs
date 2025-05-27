@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 using Azure.ResourceManager.AppService;
 using Azure.ResourceManager.AppService.Models;
 using Azure.ResourceManager.Resources;
+using Calamari.Azure;
+using Calamari.Azure.AppServices;
 using Calamari.Common.Plumbing.Proxies;
 using Calamari.Testing;
 using FluentAssertions;

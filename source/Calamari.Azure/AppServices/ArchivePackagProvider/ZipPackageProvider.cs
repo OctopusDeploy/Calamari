@@ -1,10 +1,11 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Threading.Tasks;
 using SharpCompress.Archives;
 using SharpCompress.Archives.Zip;
 using SharpCompress.Common;
 
-namespace Calamari.AzureAppService
+namespace Calamari.Azure.AppServices
 {
     public class ZipPackageProvider : IPackageProvider
     {

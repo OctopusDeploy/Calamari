@@ -1,4 +1,4 @@
-using Calamari.AzureAppService.Azure;
+using Calamari.Azure.AppServices.Azure;
 using FluentAssertions;
 using NUnit.Framework;
 

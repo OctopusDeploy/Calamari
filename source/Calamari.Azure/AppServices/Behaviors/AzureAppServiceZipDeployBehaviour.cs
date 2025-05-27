@@ -13,9 +13,8 @@ using Azure;
 using Azure.ResourceManager;
 using Azure.ResourceManager.AppService;
 using Azure.ResourceManager.Resources;
-using Calamari.Azure;
-using Calamari.Azure.AppServices;
-using Calamari.AzureAppService.Azure;
+using Calamari.Azure.AppServices.Azure;
+using Calamari.AzureAppService;
 using Calamari.CloudAccounts;
 using Calamari.Common.Commands;
 using Calamari.Common.FeatureToggles;
@@ -27,9 +26,9 @@ using Calamari.Common.Plumbing.Variables;
 using Octopus.CoreUtilities.Extensions;
 using Polly;
 using Polly.Timeout;
-using AccountVariables = Calamari.AzureAppService.Azure.AccountVariables;
+using AccountVariables = Calamari.Azure.AppServices.Azure.AccountVariables;
 
-namespace Calamari.AzureAppService.Behaviors
+namespace Calamari.Azure.AppServices.Behaviors
 {
     internal class AzureAppServiceZipDeployBehaviour : IDeployBehaviour
     {

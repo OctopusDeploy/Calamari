@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
-namespace Calamari.AzureAppService.Azure
+namespace Calamari.Azure.AppServices.Azure
 {
     public class AzureResource
     {

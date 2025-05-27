@@ -1,4 +1,5 @@
-﻿using System;
+﻿#nullable enable
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -6,8 +7,7 @@ using System.Threading.Tasks;
 using Azure.ResourceManager;
 using Azure.ResourceManager.ResourceGraph;
 using Azure.ResourceManager.ResourceGraph.Models;
-using Calamari.Azure;
-using Calamari.AzureAppService.Azure;
+using Calamari.Azure.AppServices.Azure;
 using Calamari.CloudAccounts;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Discovery;
@@ -16,8 +16,7 @@ using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.ServiceMessages;
 using Newtonsoft.Json;
 
-#nullable enable
-namespace Calamari.AzureAppService.Behaviors
+namespace Calamari.Azure.AppServices.Behaviors
 {
     public class TargetDiscoveryBehaviour : IDeployBehaviour
     {

@@ -1,7 +1,7 @@
 ﻿
 using System;
 
-namespace Calamari.AzureAppService.Azure
+namespace Calamari.Azure.AppServices.Azure
 {
     static class DefaultVariables
     {

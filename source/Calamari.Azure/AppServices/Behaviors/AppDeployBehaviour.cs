@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Threading.Tasks;
-using Calamari.AzureAppService.Azure;
+using Calamari.Azure.AppServices.Azure;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 
-namespace Calamari.AzureAppService.Behaviors
+namespace Calamari.Azure.AppServices.Behaviors
 {
     public class AppDeployBehaviour : IDeployBehaviour
     {

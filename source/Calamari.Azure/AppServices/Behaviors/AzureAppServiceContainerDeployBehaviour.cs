@@ -2,17 +2,16 @@
 using System.Threading.Tasks;
 using Azure.ResourceManager;
 using Azure.ResourceManager.AppService;
-using Calamari.Azure;
-using Calamari.Azure.AppServices;
-using Calamari.AzureAppService.Azure;
+using Calamari.Azure.AppServices.Azure;
+using Calamari.AzureAppService;
 using Calamari.CloudAccounts;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 using Octopus.CoreUtilities.Extensions;
-using AccountVariables = Calamari.AzureAppService.Azure.AccountVariables;
+using AccountVariables = Calamari.Azure.AppServices.Azure.AccountVariables;
 
-namespace Calamari.AzureAppService.Behaviors
+namespace Calamari.Azure.AppServices.Behaviors
 {
     class AzureAppServiceContainerDeployBehaviour : IDeployBehaviour
     {

@@ -27,7 +27,6 @@ namespace Calamari.Azure
         public static readonly AzureKnownEnvironment Global = new AzureKnownEnvironment("AzureGlobalCloud");
         public static readonly AzureKnownEnvironment AzureChinaCloud = new AzureKnownEnvironment("AzureChinaCloud");
         public static readonly AzureKnownEnvironment AzureUSGovernment = new AzureKnownEnvironment("AzureUSGovernment");
-        public static readonly AzureKnownEnvironment AzureGermanCloud = new AzureKnownEnvironment("AzureGermanCloud");
 
         public AzureEnvironment AsAzureSDKEnvironment()
         {
@@ -51,7 +50,6 @@ namespace Calamari.Azure
         {
             "AzureGlobalCloud" => AzureAuthorityHosts.AzurePublicCloud,
             "AzureChinaCloud" => AzureAuthorityHosts.AzureChina,
-            "AzureGermanCloud" => AzureAuthorityHosts.AzureGermany,
             "AzureUSGovernment" => AzureAuthorityHosts.AzureGovernment,
             _ => throw new InvalidOperationException($"ARM Environment {name} is not a known Azure Environment name.")
         };

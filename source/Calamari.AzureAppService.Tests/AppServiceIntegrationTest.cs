@@ -13,15 +13,14 @@ using Azure.ResourceManager.AppService.Models;
 using Azure.ResourceManager.Resources;
 using Calamari.Azure;
 using Calamari.Azure.AppServices;
-using Calamari.AzureAppService.Azure;
-using Calamari.AzureAppService.Json;
+using Calamari.Azure.AppServices.Azure;
 using Calamari.CloudAccounts;
 using Calamari.Testing;
 using FluentAssertions;
 using Newtonsoft.Json;
 using NUnit.Framework;
 using Octostache;
-using AccountVariables = Calamari.AzureAppService.Azure.AccountVariables;
+using AccountVariables = Calamari.CloudAccounts.AccountVariables;
 
 namespace Calamari.AzureAppService.Tests
 {

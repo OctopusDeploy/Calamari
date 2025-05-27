@@ -1,5 +1,4 @@
 ﻿using Azure.ResourceManager.Resources;
-using Calamari.AzureAppService.Behaviors;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Discovery;
 using Calamari.Common.Plumbing.Variables;
@@ -13,6 +12,7 @@ using System.Threading.Tasks;
 using Azure;
 using Azure.ResourceManager.AppService;
 using Azure.ResourceManager.AppService.Models;
+using Calamari.Azure.AppServices.Behaviors;
 using Calamari.Common.Plumbing.Extensions;
 using Polly.Retry;
 

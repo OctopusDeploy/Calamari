@@ -1,9 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Newtonsoft.Json;
 
 /*
  * JSON format
@@ -16,7 +12,7 @@ using Newtonsoft.Json;
  *
  */
 
-namespace Calamari.AzureAppService.Json
+namespace Calamari.Azure.AppServices.Json
 {
     public class appSettingNamesRoot
     {

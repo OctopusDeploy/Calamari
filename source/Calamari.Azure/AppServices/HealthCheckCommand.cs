@@ -3,15 +3,14 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Azure.ResourceManager.AppService;
 using Azure.ResourceManager.Resources;
-using Calamari.Azure;
-using Calamari.AzureAppService.Azure;
+using Calamari.Azure.AppServices.Azure;
 using Calamari.CloudAccounts;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Pipeline;
 using Octopus.CoreUtilities.Extensions;
-using AccountVariables = Calamari.AzureAppService.Azure.AccountVariables;
+using AccountVariables = Calamari.Azure.AppServices.Azure.AccountVariables;
 
-namespace Calamari.AzureAppService
+namespace Calamari.Azure.AppServices
 {
     [Command("health-check", Description = "Run a health check on a DeploymentTargetType")]
     public class HealthCheckCommand : PipelineCommand

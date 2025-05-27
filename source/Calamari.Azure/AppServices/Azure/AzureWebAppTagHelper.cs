@@ -1,10 +1,10 @@
-﻿using System;
+﻿#nullable enable
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Calamari.Common.Features.Discovery;
 
-#nullable enable
-namespace Calamari.AzureAppService.Azure
+namespace Calamari.Azure.AppServices.Azure
 {
     static class AzureWebAppTagHelper
     {

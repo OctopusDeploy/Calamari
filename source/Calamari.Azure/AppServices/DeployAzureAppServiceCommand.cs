@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using Calamari.AzureAppService.Behaviors;
+using Calamari.Azure.AppServices.Behaviors;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Pipeline;
 
-namespace Calamari.AzureAppService
+namespace Calamari.Azure.AppServices
 {
     [Command("deploy-azure-app-service", Description = "Extracts and installs a deployment package to an Azure Web Application as a zip file")]
     public class DeployAzureAppServiceCommand : PipelineCommand
