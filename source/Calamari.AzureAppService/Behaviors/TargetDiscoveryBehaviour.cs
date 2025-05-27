@@ -76,7 +76,7 @@ namespace Calamari.AzureAppService.Behaviors
             });
             try
             {
-                var resources = await armClient.GetResourcesByType(WebAppType, WebAppSlotsType);
+                var resources = await armClient.GetResourcesByType( WebAppType, WebAppSlotsType);
                 var discoveredTargetCount = 0;
                 Log.Verbose($"Found {resources.Length} candidate web app resources.");
                 foreach (var resource in resources)
@@ -210,21 +210,35 @@ namespace Calamari.AzureAppService.Behaviors
                 "create-azurewebapptarget",
                 parameters.Where(p => p.Value != null).ToDictionary(p => p.Key, p => p.Value!));
         }
-
-        public static async Task<AzureResource[]> GetResourcesByType(this ArmClient armClient, params string[] types)
+        
+        public static async Task<AzureResource[]> GetResourcesByType(
+            this ArmClient armClient,
+            params string[] types)
         {
             var tenant = armClient.GetTenants().First();
-
-            var typesToRetrieveClause = string.Join(" or ", types.Select(t => $"type == '{t}'"));
             var typeCondition = types.Any()
-                ? $"| where { typesToRetrieveClause } |"
+                ? $"| where {string.Join(" or ", types.Select(t => $"type == '{t}'"))} |"
                 : string.Empty;
 
-            var query = new ResourceQueryContent(
-                $"Resources {typeCondition} project name, type, tags, resourceGroup");
+            var query = new ResourceQueryContent($"Resources {typeCondition} project name, type, tags, resourceGroup")
+            {
+                Options = new ResourceQueryRequestOptions { Top = 1000 }
+            };
 
-            var response = await tenant.GetResourcesAsync(query, CancellationToken.None);
-            return JsonConvert.DeserializeObject<AzureResource[]>(response.Value.Data.ToString())!;
+            var allResults = new List<AzureResource>();
+
+            while (true)
+            {
+                var page = (await tenant.GetResourcesAsync(query, CancellationToken.None)).Value;
+                var batch = JsonConvert.DeserializeObject<AzureResource[]>(page.Data.ToString())!;
+                allResults.AddRange(batch);
+
+                if (string.IsNullOrEmpty(page.SkipToken))
+                    break;
+
+                query.Options.SkipToken = page.SkipToken;
+            }
+            return allResults.ToArray();
         }
     }
 }
