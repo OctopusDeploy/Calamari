@@ -226,8 +226,11 @@ namespace Calamari.AzureAppService.Behaviors
             };
 
             var allResults = new List<AzureResource>();
-
-            while (true)
+            
+            // Assume user dont have more than 100,000 resources
+            const int maxAttempts = 100;
+            var attempt = 0;
+            while (attempt++ < maxAttempts)
             {
                 var page = (await tenant.GetResourcesAsync(query, CancellationToken.None)).Value;
                 var batch = JsonConvert.DeserializeObject<AzureResource[]>(page.Data.ToString())!;
