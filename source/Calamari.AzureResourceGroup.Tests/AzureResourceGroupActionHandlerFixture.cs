@@ -2,6 +2,8 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Calamari.Azure;
+using Calamari.Azure.ResourceGroups;
 using Calamari.Common.Features.Deployment;
 using Calamari.Common.Features.Scripts;
 using Calamari.Common.FeatureToggles;

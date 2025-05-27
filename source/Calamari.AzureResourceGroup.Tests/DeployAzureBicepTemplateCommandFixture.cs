@@ -6,6 +6,8 @@ using Azure;
 using Azure.Identity;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Resources;
+using Calamari.Azure;
+using Calamari.Azure.ResourceGroups;
 using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using Calamari.Testing.Tools;

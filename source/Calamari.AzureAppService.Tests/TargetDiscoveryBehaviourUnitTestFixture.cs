@@ -1,10 +1,10 @@
-﻿using Calamari.AzureAppService.Behaviors;
-using Calamari.Common.Commands;
+﻿using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Testing.Helpers;
 using FluentAssertions;
 using NUnit.Framework;
 using System.Threading.Tasks;
+using Calamari.Azure.AppServices.Behaviors;
 
 namespace Calamari.AzureAppService.Tests
 {
@@ -29,7 +29,7 @@ namespace Calamari.AzureAppService.Tests
         }
 
         [Test]
-        public async Task Exectute_LogsError_WhenContextIsInIncorrectFormat()
+        public async Task Execute_LogsError_WhenContextIsInIncorrectFormat()
         {
             // Arrange
             var variables = new CalamariVariables();
@@ -47,7 +47,7 @@ namespace Calamari.AzureAppService.Tests
         }
 
         [Test]
-        public async Task Exectute_LogsError_WhenContextIsInIncorrectFormat_AuthenticationMethod()
+        public async Task Execute_LogsError_WhenContextIsInIncorrectFormat_AuthenticationMethod()
         {
             // Arrange
             var variables = new CalamariVariables();

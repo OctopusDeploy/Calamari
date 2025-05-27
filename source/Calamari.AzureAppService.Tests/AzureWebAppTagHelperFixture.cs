@@ -3,7 +3,7 @@ using FluentAssertions;
 using FluentAssertions.Execution;
 using NUnit.Framework;
 using System.Collections.Generic;
-using Calamari.AzureAppService.Azure;
+using Calamari.Azure.AppServices.Azure;
 
 namespace Calamari.AzureAppService.Tests
 {
