@@ -12,47 +12,15 @@ namespace Calamari.Tests.Fixtures.Variables
     public class ScriptVariablesFixture
     {
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyWindows)]
-        public void FormatScriptNameForPhysicalFilesystem_ShouldRemoveSemiColon_OnWindows()
+        [TestCase("MyScriptModule", "MyScriptModule")]
+        [TestCase("My-Script-Module", "MyScriptModule")]
+        [TestCase("My Script Module", "MyScriptModule")]
+        [TestCase("My_Script_Module", "My_Script_Module")]
+        [TestCase("My-Script_ Module", "MyScript_Module")]
+        public void FormatScriptName_ShouldCorrectlyFormatFilenames(string input, string expected)
         {
-            var result = ScriptVariables.FormatScriptNameForPhysicalFilesystem("Script:Name");
-            result.Should().Be("ScriptName");
-        }
-
-        [Test]
-        [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
-        public void FormatScriptNameForPhysicalFilesystem_ShouldNotRemoveSemiColon_OnUnix()
-        {
-            var result = ScriptVariables.FormatScriptNameForPhysicalFilesystem("Script:Name");
-            result.Should().Be("Script:Name");
-        }
-        
-        [Test]
-        public void FormatScriptNameForPhysicalFilesystem_ShouldNotRemoveHyphens()
-        {
-            var result = ScriptVariables.FormatScriptNameForPhysicalFilesystem("Script-Name");
-            result.Should().Be("Script-Name");
-        }
-        
-        [Test]
-        public void FormatScriptNameForPhysicalFilesystem_ShouldNotRemoveUnderscores()
-        {
-            var result = ScriptVariables.FormatScriptNameForPhysicalFilesystem("Script_Name");
-            result.Should().Be("Script_Name");
-        }
-        
-        [Test]
-        public void FormatScriptNameForPhysicalFilesystem_ShouldRemoveSpaces()
-        {
-            var result = ScriptVariables.FormatScriptNameForPhysicalFilesystem("Script Name");
-            result.Should().Be("ScriptName");
-        }
-        
-        [Test]
-        public void FormatScriptNameForPhysicalFilesystem_ShouldHandleEmptyString()
-        {
-            var result = ScriptVariables.FormatScriptNameForPhysicalFilesystem("");
-            result.Should().Be("");
+            var result = ScriptVariables.FormatScriptName(input);
+            result.Should().Be(expected);
         }
     }
 }

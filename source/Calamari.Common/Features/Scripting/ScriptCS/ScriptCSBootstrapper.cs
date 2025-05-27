@@ -82,7 +82,7 @@ namespace Calamari.Common.Features.Scripting.ScriptCS
                 if (ScriptVariables.GetLibraryScriptModuleLanguage(variables, variableName) == ScriptSyntax.CSharp)
                 {
                     var libraryScriptModuleName = ScriptVariables.GetLibraryScriptModuleName(variableName);
-                    var name = ScriptVariables.FormatScriptNameForPhysicalFilesystem(libraryScriptModuleName); 
+                    var name = ScriptVariables.FormatScriptName(libraryScriptModuleName); 
                     var moduleFileName = $"{name}.csx";
                     var moduleFilePath = Path.Combine(workingDirectory, moduleFileName);
                     log.VerboseFormat("Writing script module '{0}' as c# module {1}. Import this module via `#load {1}`.", libraryScriptModuleName, moduleFileName, name);
