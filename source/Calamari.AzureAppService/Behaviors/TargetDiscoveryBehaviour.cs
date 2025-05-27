@@ -76,7 +76,7 @@ namespace Calamari.AzureAppService.Behaviors
             });
             try
             {
-                var resources = await armClient.GetResourcesByType( WebAppType, WebAppSlotsType);
+                var resources = await armClient.GetResourcesByType(WebAppType, WebAppSlotsType);
                 var discoveredTargetCount = 0;
                 Log.Verbose($"Found {resources.Length} candidate web app resources.");
                 foreach (var resource in resources)
