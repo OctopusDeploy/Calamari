@@ -744,7 +744,7 @@ namespace Calamari.Build
                                                   .SetRuntime(runtimeId)
                                                   .SetVersion(version)
                                                   .EnableNoRestore()
-                                                  .EnableNoRestore()
+                                                  .EnableNoBuild()
                                                   .EnableSelfContained()
                                                   ));
 
