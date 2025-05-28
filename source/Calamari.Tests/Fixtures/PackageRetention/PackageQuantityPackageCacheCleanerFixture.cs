@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.PackageRetention.Caching;
@@ -27,14 +28,15 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         }
 
         [Test]
-        public void WhenQuantityToKeepIsConfigured_RemoveExcessPackages()
+        public void WhenFindingPackagesToRemove_WithQuantityOfPackagesAndQuantityOfVersionsSet_ReturnExcessPackages()
         {
             var variables = new CalamariVariables
             {
                 { "MachinePackageCacheRetentionQuantityOfPackagesToKeep", "2" },
-                { "MachinePackageCacheRetentionQuantityOfVersionsToKeep", "2" }
+                { "MachinePackageCacheRetentionQuantityOfVersionsToKeep", "2" },
+                { "MachinePackageCacheRetentionStrategy", "Quantity" },
+                { KnownVariables.EnabledFeatureToggles, "configurable-package-cache-retention" }
             };
-            variables.Set(KnownVariables.EnabledFeatureToggles, "configurable-package-cache-retention");
         
             var package1Version1 = MakeAJournalEntry(2, DateTime.Now.AddMonths(-1), "Package1", 1);
             var package1Version2 = MakeAJournalEntry(2, DateTime.Now.AddMonths(-5), "Package1", 2);
@@ -57,14 +59,15 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         }
         
         [Test]
-        public void WhenQuantityToKeepIsConfigured_RemoveExcessPackageVersions()
+        public void WhenFindingPackagesToRemove__WithKeepAllPackagesAndQuantityOfVersionsSet__ReturnExcessPackageVersions()
         {
             var variables = new CalamariVariables
             {
-                { "MachinePackageCacheRetentionQuantityOfPackagesToKeep", "0" },
-                { "MachinePackageCacheRetentionQuantityOfVersionsToKeep", "2" }
+                { "MachinePackageCacheRetentionQuantityOfPackagesToKeep", "-1" },
+                { "MachinePackageCacheRetentionQuantityOfVersionsToKeep", "2" },
+                { "MachinePackageCacheRetentionStrategy", "Quantity" },
+                { KnownVariables.EnabledFeatureToggles, "configurable-package-cache-retention" }
             };
-            variables.Set(KnownVariables.EnabledFeatureToggles, "configurable-package-cache-retention");
         
             var package1Version1 = MakeAJournalEntry(2, DateTime.Now.AddMonths(-1), "Package1", 1);
             var package1Version2 = MakeAJournalEntry(2, DateTime.Now.AddMonths(-5), "Package1", 2);
@@ -88,14 +91,15 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         
         [Test]
         [TestCase("100", "100")]
-        public void WhenQuantityToKeepIsHigh_KeepAllPackages(string quantityOfPackagesToKeep, string quantityOfVersionsToKeep)
+        public void WhenFindingPackagesToRemove_WhenQuantityToKeepIsHigh_ReturnNoPackages(string quantityOfPackagesToKeep, string quantityOfVersionsToKeep)
         {
             var variables = new CalamariVariables
             {
                 { "MachinePackageCacheRetentionQuantityOfPackagesToKeep", quantityOfPackagesToKeep },
-                { "MachinePackageCacheRetentionQuantityOfVersionsToKeep", quantityOfVersionsToKeep }
+                { "MachinePackageCacheRetentionQuantityOfVersionsToKeep", quantityOfVersionsToKeep },
+                { "MachinePackageCacheRetentionStrategy", "Quantity" },
+                { KnownVariables.EnabledFeatureToggles, "configurable-package-cache-retention" }
             };
-            variables.Set(KnownVariables.EnabledFeatureToggles, "configurable-package-cache-retention");
         
             var package1Version1 = MakeAJournalEntry(3, DateTime.Now, "Package1", 1);
             var package1Version2 = MakeAJournalEntry(3, DateTime.Now, "Package1", 2);
@@ -112,14 +116,15 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         }
         
         [Test]
-        public void WhenQuantityToKeepIsConfigured_AndNoPackagesExist_ReturnNoPackages()
+        public void WhenFindingPackagesToRemove_AndNoPackagesExist_ReturnNoPackages()
         {
             var variables = new CalamariVariables
             {
                 { "MachinePackageCacheRetentionQuantityOfPackagesToKeep", "5" },
-                { "MachinePackageCacheRetentionQuantityOfVersionsToKeep", "5" }
+                { "MachinePackageCacheRetentionQuantityOfVersionsToKeep", "5" },
+                { "MachinePackageCacheRetentionStrategy", "Quantity" },
+                { KnownVariables.EnabledFeatureToggles, "configurable-package-cache-retention" }
             };
-            variables.Set(KnownVariables.EnabledFeatureToggles, "configurable-package-cache-retention");
             
             var log = new InMemoryLog();
             var subject = new PackageQuantityPackageCacheCleaner(variables, log);
@@ -128,17 +133,33 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         }
         
         [Test]
-        [TestCase("0")]
-        [TestCase(null)]
-        public void WhenQuantityOfVersionsToKeepIsNotSet_ReturnNoPackages(string quantityOfVersionsToKeep)
+        public void WhenFindingPackagesToRemove_WhenQuantityOfVersionsToKeepIsNotSet_KeepDefaultVersionCount()
         {
             var variables = new CalamariVariables
             {
                 { "MachinePackageCacheRetentionQuantityOfPackagesToKeep", "10" },
-                { "MachinePackageCacheRetentionQuantityOfVersionsToKeep", quantityOfVersionsToKeep }
+                { "MachinePackageCacheRetentionQuantityOfVersionsToKeep", null },
+                { "MachinePackageCacheRetentionStrategy", "Quantity" },
+                { KnownVariables.EnabledFeatureToggles, "configurable-package-cache-retention" }
             };
-            variables.Set(KnownVariables.EnabledFeatureToggles, "configurable-package-cache-retention");
         
+            var log = new InMemoryLog();
+            var subject = new PackageQuantityPackageCacheCleaner(variables, log);
+            var result = subject.GetPackagesToRemove(MakeSomeJournalEntries());
+            result.Count().Should().Be(5);
+        }
+        
+        [Test]
+        public void WhenMachinePackageCacheStrategyIsNotQuantity_ReturnNoPackages()
+        {
+            var variables = new CalamariVariables
+            {
+                { "MachinePackageCacheRetentionQuantityOfPackagesToKeep", "100" },
+                { "MachinePackageCacheRetentionQuantityOfVersionsToKeep", "100" },
+                { "MachinePackageCacheRetentionStrategy", "FreeSpace" },
+                { KnownVariables.EnabledFeatureToggles, "configurable-package-cache-retention" }
+            };
+            
             var log = new InMemoryLog();
             var subject = new PackageQuantityPackageCacheCleaner(variables, log);
             var result = subject.GetPackagesToRemove(MakeSomeJournalEntries());
@@ -151,7 +172,8 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             var variables = new CalamariVariables
             {
                 { "MachinePackageCacheRetentionQuantityOfPackagesToKeep", "100" },
-                { "MachinePackageCacheRetentionQuantityOfVersionsToKeep", "100" }
+                { "MachinePackageCacheRetentionQuantityOfVersionsToKeep", "100" },
+                { "MachinePackageCacheRetentionStrategy", "Quantity" }
             };
 
             var log = new InMemoryLog();

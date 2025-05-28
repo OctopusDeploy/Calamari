@@ -15,7 +15,8 @@ namespace Calamari.Deployment.PackageRetention.Caching
     public class PercentFreeDiskSpacePackageCacheCleaner : IRetentionAlgorithm
     {
         const string PackageRetentionPercentFreeDiskSpace = "OctopusPackageRetentionPercentFreeDiskSpace";
-        const string MachinePackageCacheRetentionQuantityOfVersionsToKeep = nameof(MachinePackageCacheRetentionQuantityOfVersionsToKeep);
+        const string PackageCacheRetentionStrategy = "MachinePackageCacheRetentionStrategy";
+        const MachinePackageCacheRetentionStrategy DefaultMachinePackageCacheRetentionStrategy = MachinePackageCacheRetentionStrategy.FreeSpace;
         const int DefaultPercentFreeDiskSpace = 20;
         const int FreeSpacePercentBuffer = 30;
         readonly ISortJournalEntries sortJournalEntries;
@@ -34,9 +35,10 @@ namespace Calamari.Deployment.PackageRetention.Caching
 
         public IEnumerable<PackageIdentity> GetPackagesToRemove(IEnumerable<JournalEntry> journalEntries)
         {
-            var quantityOfVersionsToKeep = variables.GetInt32(MachinePackageCacheRetentionQuantityOfVersionsToKeep) ?? 0;
+            var packageCacheRetentionStrategyString = variables.Get(PackageCacheRetentionStrategy);
+            var retentionStrategy = packageCacheRetentionStrategyString != null ? (MachinePackageCacheRetentionStrategy) Enum.Parse(typeof(MachinePackageCacheRetentionStrategy), packageCacheRetentionStrategyString) : DefaultMachinePackageCacheRetentionStrategy;
             
-            if (OctopusFeatureToggles.ConfigurablePackageCacheRetentionFeatureToggle.IsEnabled(variables) || quantityOfVersionsToKeep != 0)
+            if (OctopusFeatureToggles.ConfigurablePackageCacheRetentionFeatureToggle.IsEnabled(variables) && retentionStrategy == MachinePackageCacheRetentionStrategy.Quantity)
             {
                 return Array.Empty<PackageIdentity>();
             }

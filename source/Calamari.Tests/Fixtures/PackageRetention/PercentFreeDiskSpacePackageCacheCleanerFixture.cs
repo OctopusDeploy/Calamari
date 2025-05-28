@@ -32,8 +32,11 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         [TestCase(null)]
         public void WhenQuantityOfVersionsToKeepIsNotSet_FindPackagesToRemoveByPercentFreeDiskSpace(string quantityOfVersionsToKeep)
         {
-            var variables = new CalamariVariables();
-            variables.Add("MachinePackageCacheRetentionQuantityOfVersionsToKeep", quantityOfVersionsToKeep);
+            var variables = new CalamariVariables
+            {
+                { "MachinePackageCacheRetentionQuantityOfVersionsToKeep", quantityOfVersionsToKeep },
+                { "MachinePackageCacheRetentionStrategy", "FreeSpace" }
+            };
 
             var fileSystem = new FileSystemThatHasSpace(500, 5000);
             var log = new InMemoryLog();
@@ -43,10 +46,13 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         }
         
         [Test]
-        public void WhenQuantityOfVersionsToKeepIsSet_ReturnNoPackages()
+        public void WhenMachinePackageCacheStrategyIsNotFreeSpace_And_ConfigurableCacheRetentionIsEnabled_ReturnNoPackages()
         {
-            var variables = new CalamariVariables();
-            variables.Add("MachinePackageCacheRetentionQuantityOfVersionsToKeep", "5");
+            var variables = new CalamariVariables
+            {
+                { "MachinePackageCacheRetentionStrategy", "Quantity" },
+                { KnownVariables.EnabledFeatureToggles, "configurable-package-cache-retention" }
+            };
 
             var fileSystem = new FileSystemThatHasSpace(500, 5000);
             var log = new InMemoryLog();

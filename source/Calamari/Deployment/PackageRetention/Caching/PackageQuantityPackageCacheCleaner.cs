@@ -15,8 +15,10 @@ namespace Calamari.Deployment.PackageRetention.Caching
         const string MachinePackageCacheRetentionQuantityOfVersionsToKeep = nameof(MachinePackageCacheRetentionQuantityOfVersionsToKeep);
         const string PackageUnit = "MachinePackageCacheRetentionPackageUnit";
         const string VersionUnit = "MachinePackageCacheRetentionVersionUnit";
-        const int DefaultQuantityOfPackagesToKeep = 0;
-        const int DefaultQuantityOfVersionsToKeep = 0;
+        const string PackageCacheRetentionStrategy = "MachinePackageCacheRetentionStrategy";
+        const MachinePackageCacheRetentionStrategy DefaultMachinePackageCacheRetentionStrategy = MachinePackageCacheRetentionStrategy.FreeSpace;
+        const int DefaultQuantityOfPackagesToKeep = -1;
+        const int DefaultQuantityOfVersionsToKeep = 5;
         const MachinePackageCacheRetentionUnit DefaultPackageUnit = MachinePackageCacheRetentionUnit.Items;
         const MachinePackageCacheRetentionUnit DefaultVersionUnit = MachinePackageCacheRetentionUnit.Items;
         readonly IVariables variables;
@@ -30,15 +32,17 @@ namespace Calamari.Deployment.PackageRetention.Caching
 
         public IEnumerable<PackageIdentity> GetPackagesToRemove(IEnumerable<JournalEntry> journalEntries)
         {
-            var quantityOfVersionsToKeep = variables.GetInt32(MachinePackageCacheRetentionQuantityOfVersionsToKeep) ?? DefaultQuantityOfVersionsToKeep;
+            var packageCacheRetentionStrategyString = variables.Get(PackageCacheRetentionStrategy);
+            var retentionStrategy = packageCacheRetentionStrategyString != null ? (MachinePackageCacheRetentionStrategy) Enum.Parse(typeof(MachinePackageCacheRetentionStrategy), packageCacheRetentionStrategyString) : DefaultMachinePackageCacheRetentionStrategy;
             
-            if (!OctopusFeatureToggles.ConfigurablePackageCacheRetentionFeatureToggle.IsEnabled(variables) || quantityOfVersionsToKeep == 0)
+            if (!OctopusFeatureToggles.ConfigurablePackageCacheRetentionFeatureToggle.IsEnabled(variables) || retentionStrategy == MachinePackageCacheRetentionStrategy.FreeSpace)
             {
                 return Array.Empty<PackageIdentity>();
             }
             
             var journals = journalEntries.ToArray();
             var quantityOfPackagesToKeep = variables.GetInt32(MachinePackageCacheRetentionQuantityOfPackagesToKeep) ?? DefaultQuantityOfPackagesToKeep;
+            var quantityOfVersionsToKeep = variables.GetInt32(MachinePackageCacheRetentionQuantityOfVersionsToKeep) ?? DefaultQuantityOfVersionsToKeep;
             var packageUnitString = variables.Get(PackageUnit);
             var versionUnitString = variables.Get(VersionUnit);
             var packageUnit = packageUnitString != null ? (MachinePackageCacheRetentionUnit) Enum.Parse(typeof(MachinePackageCacheRetentionUnit), packageUnitString) : DefaultPackageUnit;
@@ -48,8 +52,12 @@ namespace Calamari.Deployment.PackageRetention.Caching
             
             var packagesToRemoveById = new List<PackageIdentity>();
 
+            if (quantityOfPackagesToKeep == -1)
+            {
+                log.Verbose("Machine cache retention quantity of packages to keep is Keep All. No packages will be removed.");
+            }
             // Package retention has currently only been implemented for number of items
-            if (packageUnit == MachinePackageCacheRetentionUnit.Items && quantityOfPackagesToKeep > 0 && quantityOfPackagesToKeep < orderedJournalEntriesByPackageId.Length)
+            else if (packageUnit == MachinePackageCacheRetentionUnit.Items && quantityOfPackagesToKeep >= 0 && quantityOfPackagesToKeep < orderedJournalEntriesByPackageId.Length)
             {
                 log.VerboseFormat("Cache size is greater than the maximum package quantity to keep {0}. {1} packages will be removed.", quantityOfPackagesToKeep, orderedJournalEntriesByPackageId.Length - quantityOfPackagesToKeep);
 
@@ -61,7 +69,7 @@ namespace Calamari.Deployment.PackageRetention.Caching
             var orderedJournalEntriesByVersion = JournalEntrySorter.MostRecentlyUsedByVersion(journals).ToArray();
 
             // Version retention has currently only been implemented for number of items
-            if (versionUnit == MachinePackageCacheRetentionUnit.Items && quantityOfVersionsToKeep > 0)
+            if (versionUnit == MachinePackageCacheRetentionUnit.Items)
             {
                 foreach (var packageWithVersions in orderedJournalEntriesByVersion)
                 {

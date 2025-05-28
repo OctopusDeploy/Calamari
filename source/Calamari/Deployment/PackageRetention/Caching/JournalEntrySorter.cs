@@ -41,7 +41,6 @@ namespace Calamari.Deployment.PackageRetention.Caching
                 // PackageIdentity represents package ID and version
                 var journalEntriesByMostRecentVersion = packageGroup.OrderByDescending(je => je.GetUsageDetails().Max(u => u.DateTime)).Select(je => je.Package).ToArray();
                 journalEntriesByPackageAndVersion.Add(packageGroup.Key, journalEntriesByMostRecentVersion);
-
             }
 
             return journalEntriesByPackageAndVersion;
