@@ -174,7 +174,7 @@ namespace Calamari.Build
             d =>
                 d.DependsOn(Compile)
                  .DependsOn(PublishAzureWebAppNetCoreShim)
-                 .Executes(() =>
+                 .Executes(async () =>
                            {
                                if (!OperatingSystem.IsWindows())
                                    Log.Warning("Building Calamari on a non-windows machine will result "
@@ -186,7 +186,7 @@ namespace Calamari.Build
                                                RootProjectName, $"{RootProjectName}.{FixedRuntimes.Cloud}");
 
                                var nugetVersion = NugetVersion.Value;
-                               var outputDirectory = DoPublish(RootProjectName,
+                               var outputDirectory = await DoPublish(RootProjectName,
                                                                OperatingSystem.IsWindows() ? Frameworks.Net462 : Frameworks.Net60,
                                                                nugetVersion);
                                if (OperatingSystem.IsWindows())
@@ -199,14 +199,16 @@ namespace Calamari.Build
                                                + "This is required for providing .Net Framework executables for legacy Target Operating Systems");
                                }
 
-                               DoPublish(RootProjectName,
+                               await DoPublish(RootProjectName,
                                          OperatingSystem.IsWindows() ? Frameworks.Net462 : Frameworks.Net60,
                                          nugetVersion,
                                          FixedRuntimes.Cloud);
 
                                // Create the self-contained Calamari packages for each runtime ID defined in Calamari.csproj
-                               foreach (var rid in GetRuntimeIdentifiers(Solution.GetProject(RootProjectName)!)!)
-                                   DoPublish(RootProjectName, Frameworks.Net60, nugetVersion, rid);
+                               var publishTasks = GetRuntimeIdentifiers(Solution.GetProject(RootProjectName)!)
+                                   .Select(rid => DoPublish(RootProjectName, Frameworks.Net60, nugetVersion, rid));
+
+                               await Task.WhenAll(publishTasks);
                            });
 
         Target PublishCalamariFlavourProjects =>
@@ -510,10 +512,10 @@ async Task<AbsolutePath?> PublishPackageAsync(CalamariPackageMetadata calamariPa
                                // Create a Zip for each runtime for testing
                                // ReSharper disable once LoopCanBeConvertedToQuery
                                foreach (var rid in GetRuntimeIdentifiers(Solution.GetProject("Calamari.Tests")!)!)
-                                   actions.Add(() =>
+                                   actions.Add(async () =>
                                                {
                                                    var publishedLocation =
-                                                       DoPublish("Calamari.Tests", Frameworks.Net60, nugetVersion, rid);
+                                                       DoPublish("Calamari.Tests", Frameworks.Net60, nugetVersion, rid).GetAwaiter().GetResult();
                                                    var zipName = $"Calamari.Tests.{rid}.{nugetVersion}.zip";
                                                    File.Copy(RootDirectory / "global.json", publishedLocation / "global.json");
                                                    CompressionTasks.Compress(publishedLocation, ArtifactsDirectory / zipName);
@@ -650,7 +652,7 @@ async Task<AbsolutePath?> PublishPackageAsync(CalamariPackageMetadata calamariPa
                 await Task.WhenAll(tasks);
         }
 
-        AbsolutePath DoPublish(string project, string framework, string version, string? runtimeId = null)
+        async Task<AbsolutePath> DoPublish(string project, string framework, string version, string? runtimeId = null)
         {
             var publishedTo = PublishDirectory / project / framework;
 
@@ -660,21 +662,27 @@ async Task<AbsolutePath?> PublishPackageAsync(CalamariPackageMetadata calamariPa
                 runtimeId = runtimeId != "portable" && runtimeId != "Cloud" ? runtimeId : null;
             }
 
-            DotNetPublish(s =>
-                              s.SetProject(Solution.GetProject(project))
-                               .SetConfiguration(Configuration)
-                               .SetOutput(publishedTo)
-                               .SetFramework(framework)
-                               .SetVersion(NugetVersion.Value)
-                               .SetVerbosity(BuildVerbosity)
-                               .SetRuntime(runtimeId)
-                               .SetVersion(version)
-                               .EnableSelfContained());
+            await Task.Run(() =>
+                               DotNetPublish(s =>
+                                                 s.SetProject(Solution.GetProject(project))
+                                                  .SetConfiguration(Configuration)
+                                                  .SetOutput(publishedTo)
+                                                  .SetFramework(framework)
+                                                  .SetVersion(NugetVersion.Value)
+                                                  .SetVerbosity(BuildVerbosity)
+                                                  .SetRuntime(runtimeId)
+                                                  .SetVersion(version)
+                                                  //.EnableSelfContained()
+                                                  )
+                               );
 
             if (WillSignBinaries)
-                Signing.SignAndTimestampBinaries(publishedTo, AzureKeyVaultUrl, AzureKeyVaultAppId,
-                                                 AzureKeyVaultAppSecret, AzureKeyVaultTenantId, AzureKeyVaultCertificateName,
-                                                 SigningCertificatePath, SigningCertificatePassword);
+            {
+                await Task.Run(() =>
+                                   Signing.SignAndTimestampBinaries(publishedTo, AzureKeyVaultUrl, AzureKeyVaultAppId,
+                                                                    AzureKeyVaultAppSecret, AzureKeyVaultTenantId, AzureKeyVaultCertificateName,
+                                                                    SigningCertificatePath, SigningCertificatePassword));
+            }
 
             return publishedTo;
         }
