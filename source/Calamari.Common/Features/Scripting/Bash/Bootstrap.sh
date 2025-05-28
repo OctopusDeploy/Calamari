@@ -270,8 +270,8 @@ function hex_to_bin_fd() {
     local fd="$2"
     
     # Process hex in reasonable chunks
-    for ((i=0; i<${#hex}; i+=40)); do
-        local chunk="${hex:$i:40}"
+    for ((i=0; i<${#hex}; i+=100)); do
+        local chunk="${hex:$i:100}"
         local cmd="printf '"
         
         for ((j=0; j<${#chunk}; j+=2)); do
@@ -395,10 +395,11 @@ bashParametersArrayFeatureToggle=#### BashParametersArrayFeatureToggle ####
 
 if [ "$bashParametersArrayFeatureToggle" = true ]; then
     if (( ${BASH_VERSINFO[0]:-0} > 4 || (${BASH_VERSINFO[0]:-0} == 4 && ${BASH_VERSINFO[1]:-0} > 2) )); then
-        if command -v xxd > /dev/null; then
+        if exec 3<> <(:); then
+            exec 3<&-
             decrypt_and_parse_variables "#### VARIABLESTRING.ENCRYPTED ####" "#### VARIABLESTRING.IV ####"
         else
-            echo "xxd is not installed, this is required to use octopus_parameters"
+            echo "Process substitution with exec is not supported. This is required to use octopus_parameters"
         fi
     else
         echo "Bash version 4.2 or later is required to use octopus_parameters"

@@ -408,8 +408,11 @@ namespace Calamari.Tests.Fixtures.Bash
         var (output, _) = RunScript("enumerate-variables.sh",
                                     variables.AddFeatureToggleToDictionary(new List<FeatureToggle?> { featureToggle }));
         sw.Stop();
-        sw.Elapsed.TotalMilliseconds.Should().BeLessThan(3000);
-        
+        // This depends on the running machine, locally ~1000ms, in CI sometimes this is ~2000ms. We're being very conservative
+        // but if there's a scenario where this test fails this should be increased. This test exists because there are 
+        // potential performance problems in encoding/decoding of variables in bash, this is a sanity check.
+        sw.Elapsed.TotalMilliseconds.Should().BeLessThan(4000);
+ 
         output.AssertSuccess();
         if (featureToggle == FeatureToggle.BashParametersArrayFeatureToggle)
         {
