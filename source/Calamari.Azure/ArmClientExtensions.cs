@@ -6,8 +6,7 @@ using Azure;
 using Azure.ResourceManager;
 using Azure.ResourceManager.AppService;
 using Azure.ResourceManager.AppService.Models;
-using Calamari.AzureAppService.Azure;
-using Calamari.AzureAppService.Json;
+using Calamari.Azure.AppServices;
 using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.AzureAppService
