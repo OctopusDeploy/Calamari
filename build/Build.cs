@@ -336,8 +336,8 @@ namespace Calamari.Build
                                                                                  return;
                                                                              }
 
-                                                                             var projectName = calamariPackageMetadata.Project?.Name ?? "UnknownProject";
-                                                                             var semaphore = semaphores.GetOrAdd(projectName, _ => new SemaphoreSlim(1, 1));
+                                                                             var architecture = calamariPackageMetadata.Architecture ?? "UnknownArchitecture";
+                                                                             var semaphore = semaphores.GetOrAdd(architecture, _ => new SemaphoreSlim(1, 1));
 
                                                                              await semaphore.WaitAsync();
                                                                              try
