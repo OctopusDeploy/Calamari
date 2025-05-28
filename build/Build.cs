@@ -213,7 +213,7 @@ namespace Calamari.Build
                                var publishTasks = GetRuntimeIdentifiers(Solution.GetProject(RootProjectName)!)
                                    .Select(async rid =>
                                            {
-                                               var semaphore = semaphores.GetOrAdd(RootProjectName, _ => new SemaphoreSlim(1, 1));
+                                               var semaphore = semaphores.GetOrAdd(RootProjectName, _ => new SemaphoreSlim(1, 4));
 
                                                await semaphore.WaitAsync();
                                                try
@@ -373,7 +373,6 @@ namespace Calamari.Build
                 d.DependsOn(BuildCalamariProjects)
                  .Executes(async () =>
                            {
-                               // Limit concurrency to 3 tasks
                                var semaphore = new SemaphoreSlim(4);
                                var outputPaths = new ConcurrentBag<AbsolutePath?>();
 
@@ -744,7 +743,7 @@ namespace Calamari.Build
                                                   .SetVerbosity(BuildVerbosity)
                                                   .SetRuntime(runtimeId)
                                                   .SetVersion(version)
-                                                  //.EnableSelfContained()
+                                                  .EnableSelfContained()
                                                   ));
 
             if (WillSignBinaries)
