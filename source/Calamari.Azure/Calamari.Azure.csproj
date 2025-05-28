@@ -27,6 +27,7 @@
         <PackageReference Include="Polly" Version="8.3.1"/>
         <PackageReference Include="SharpCompress" Version="0.37.2"/>
         <PackageReference Include="System.Linq.Async" Version="6.0.1"/>
+        <PackageReference Include="System.Net.Http" Version="4.3.4" />
         <PackageReference Include="System.Text.Json" Version="8.0.5"/>
     </ItemGroup>
     <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
@@ -37,7 +38,8 @@
         <PackageReference Include="System.Security.Principal.Windows" Version="4.7.0" />
     </ItemGroup>
 
-    <ItemGroup>
+    <!-- Service fabric can only be compiled on .NET Framework or .NET 6.0 & win-x64  -->
+    <ItemGroup Condition="('$(TargetFramework)' == 'net6.0' OR '$(TargetFramework)' == 'net462') AND '$(RuntimeIdentifier)' == 'win-x64'">
         <!-- IMPORTANT NOTE
         The version of this NuGet package is important. 
         As the SDK makes native COM calls to the Service Fabric Runtime, if there are any divergence between this package version
@@ -49,6 +51,11 @@
         -->
         <PackageReference Include="Microsoft.ServiceFabric" Version="10.1.2338"/>
     </ItemGroup>
+    <!-- Service fabric can only be compiled on .NET Framework or .NET 6.0 & win-x64, so we exclude the   -->
+    <ItemGroup Condition="'$(TargetFramework)' == 'net6.0' AND '$(RuntimeIdentifier)' != 'win-x64'">
+        <Compile Remove="ServiceFabric\**"/>
+    </ItemGroup>
+    
 
     <ItemGroup>
         <ProjectReference Include="..\Calamari.Scripting\Calamari.Scripting.csproj" />

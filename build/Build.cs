@@ -171,7 +171,7 @@ namespace Calamari.Build
 
         Target Publish =>
             d =>
-                d.DependsOn(Compile)
+                d.DependsOn(Restore)
                  .DependsOn(PublishAzureWebAppNetCoreShim)
                  .Executes(() =>
                            {
@@ -210,7 +210,7 @@ namespace Calamari.Build
 
         Target PublishCalamariFlavourProjects =>
             d =>
-                d.DependsOn(Compile)
+                d.DependsOn(Restore)
                  .Executes(async () =>
                            {
                                var flavours = GetCalamariFlavours();
@@ -351,7 +351,7 @@ namespace Calamari.Build
         }
 
         Target PublishAzureWebAppNetCoreShim =>
-            _ => _.DependsOn(Compile)
+            _ => _.DependsOn(Restore)
                   .Executes(() =>
                             {
                                 if (!OperatingSystem.IsWindows())
@@ -368,7 +368,6 @@ namespace Calamari.Build
                                                    .SetConfiguration(Configuration)
                                                    .SetProject(project.Path)
                                                    .SetFramework(Frameworks.Net462)
-                                                   .EnableNoBuild()
                                                    .SetOutput(outputPath));
 
                                 var archivePath = SourceDirectory / "Calamari.AzureWebApp" / "netcoreshim" / "netcoreshim.zip";
