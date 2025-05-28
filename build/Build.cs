@@ -213,7 +213,7 @@ namespace Calamari.Build
                                var publishTasks = GetRuntimeIdentifiers(Solution.GetProject(RootProjectName)!)
                                    .Select(async rid =>
                                            {
-                                               var semaphore = semaphores.GetOrAdd(RootProjectName, _ => new SemaphoreSlim(1, 4));
+                                               var semaphore = semaphores.GetOrAdd(RootProjectName, _ => new SemaphoreSlim(1, 5));
 
                                                await semaphore.WaitAsync();
                                                try
@@ -297,7 +297,7 @@ namespace Calamari.Build
                 d.DependsOn(GetCalamariFlavourProjectsToPublish)
                  .Executes(async () =>
                            {
-                               var semaphore = new SemaphoreSlim(2);
+                               var semaphore = new SemaphoreSlim(3);
 
                                var restoreTasks = PackagesToPublish
                                                   .Select(p => p.Architecture)
@@ -326,7 +326,7 @@ namespace Calamari.Build
         d.DependsOn(RestoreCalamariProjects)
          .Executes(async () =>
          {
-             var globalSemaphore = new SemaphoreSlim(4);
+             var globalSemaphore = new SemaphoreSlim(5);
              var semaphores = new ConcurrentDictionary<string, SemaphoreSlim>();
 
              var buildTasks = PackagesToPublish.Select(async calamariPackageMetadata =>
@@ -373,7 +373,7 @@ namespace Calamari.Build
                 d.DependsOn(BuildCalamariProjects)
                  .Executes(async () =>
                            {
-                               var semaphore = new SemaphoreSlim(4);
+                               var semaphore = new SemaphoreSlim(8);
                                var outputPaths = new ConcurrentBag<AbsolutePath?>();
 
                                var publishTasks = PackagesToPublish.Select(async package =>
