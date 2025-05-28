@@ -322,45 +322,51 @@ namespace Calamari.Build
                                await Task.WhenAll(restoreTasks);
                            });
         Target BuildCalamariProjects =>
-            d =>
-                d.DependsOn(RestoreCalamariProjects)
-                 .Executes(async () =>
-                           {
-                               var semaphores = new ConcurrentDictionary<string, SemaphoreSlim>();
+    d =>
+        d.DependsOn(RestoreCalamariProjects)
+         .Executes(async () =>
+         {
+             var globalSemaphore = new SemaphoreSlim(4);
+             var semaphores = new ConcurrentDictionary<string, SemaphoreSlim>();
 
-                               var buildTasks = PackagesToPublish.Select(async calamariPackageMetadata =>
-                                                                         {
-                                                                             if (!OperatingSystem.IsWindows() && !calamariPackageMetadata.IsCrossPlatform)
-                                                                             {
-                                                                                 Log.Warning($"Not Building {calamariPackageMetadata.Framework}: can only publish netfx on a Windows OS");
-                                                                                 return;
-                                                                             }
+             var buildTasks = PackagesToPublish.Select(async calamariPackageMetadata =>
+             {
+                 if (!OperatingSystem.IsWindows() && !calamariPackageMetadata.IsCrossPlatform)
+                 {
+                     Log.Warning($"Not Building {calamariPackageMetadata.Framework}: can only publish netfx on a Windows OS");
+                     return;
+                 }
 
-                                                                             var architecture = calamariPackageMetadata.Architecture ?? "UnknownArchitecture";
-                                                                             var semaphore = semaphores.GetOrAdd(architecture, _ => new SemaphoreSlim(1, 1));
+                 var projectName = calamariPackageMetadata.Project?.Name ?? "UnknownProject";
+                 var projectSemaphore = semaphores.GetOrAdd(projectName, _ => new SemaphoreSlim(1, 1));
+                 var architectureSemaphore = semaphores.GetOrAdd(calamariPackageMetadata.Architecture ?? "UnknownArchitecture", _ => new SemaphoreSlim(1, 1));
 
-                                                                             await semaphore.WaitAsync();
-                                                                             try
-                                                                             {
-                                                                                 Log.Information($"Building {calamariPackageMetadata.Project?.Name} for framework '{calamariPackageMetadata.Framework}' and arch '{calamariPackageMetadata.Architecture}'");
+                 await globalSemaphore.WaitAsync();
+                 await projectSemaphore.WaitAsync();
+                 await architectureSemaphore.WaitAsync();
+                 try
+                 {
+                     Log.Information($"Building {calamariPackageMetadata.Project?.Name} for framework '{calamariPackageMetadata.Framework}' and arch '{calamariPackageMetadata.Architecture}'");
 
-                                                                                 await Task.Run(() =>
-                                                                                                    DotNetBuild(s =>
-                                                                                                                    s.SetProjectFile(calamariPackageMetadata.Project)
-                                                                                                                     .SetConfiguration(Configuration)
-                                                                                                                     .SetFramework(calamariPackageMetadata.Framework)
-                                                                                                                     .EnableNoRestore()
-                                                                                                                     .SetRuntime(calamariPackageMetadata.Architecture)
-                                                                                                                     .EnableSelfContained()));
-                                                                             }
-                                                                             finally
-                                                                             {
-                                                                                 semaphore.Release();
-                                                                             }
-                                                                         });
+                     await Task.Run(() =>
+                         DotNetBuild(s =>
+                             s.SetProjectFile(calamariPackageMetadata.Project)
+                              .SetConfiguration(Configuration)
+                              .SetFramework(calamariPackageMetadata.Framework)
+                              .EnableNoRestore()
+                              .SetRuntime(calamariPackageMetadata.Architecture)
+                              .EnableSelfContained()));
+                 }
+                 finally
+                 {
+                     projectSemaphore.Release();
+                     architectureSemaphore.Release();
+                     globalSemaphore.Release();
+                 }
+             });
 
-                               await Task.WhenAll(buildTasks);
-                           });
+             await Task.WhenAll(buildTasks);
+         });
 
         Target PublishCalamariProjects =>
             d =>
