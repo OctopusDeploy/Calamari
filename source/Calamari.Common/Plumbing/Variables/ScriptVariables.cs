@@ -28,10 +28,9 @@ namespace Calamari.Common.Plumbing.Variables
             return variableName.Replace("Octopus.Script.Module[", "").TrimEnd(']');
         }
         
-        public static string FormatScriptNameForPhysicalFilesystem(string scriptName)
+        public static string FormatScriptName(string scriptName)
         {
-            var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
-            return fileSystem.RemoveInvalidFileNameChars(scriptName); 
+            return new string(scriptName.Where(x => char.IsLetterOrDigit(x) || x == '_').ToArray());
         }
 
         public static bool IsLibraryScriptModule(string variableName)
