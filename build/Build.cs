@@ -104,7 +104,7 @@ namespace Calamari.Build
         static AbsolutePath BuildDirectory => RootDirectory / "build";
         static AbsolutePath ArtifactsDirectory => RootDirectory / "artifacts";
         static AbsolutePath PublishDirectory => RootDirectory / "publish";
-        static AbsolutePath LocalPackagesDirectory => RootDirectory / "../LocalPackages";
+        static AbsolutePath LocalPackagesDirectory => RootDirectory / ".."/"LocalPackages";
         static AbsolutePath ConsolidateCalamariPackagesProject => SourceDirectory / "Calamari.ConsolidateCalamariPackages.Tests" / "Calamari.ConsolidateCalamariPackages.Tests.csproj";
         static AbsolutePath ConsolidatedPackageDirectory => ArtifactsDirectory / "consolidated";
         static AbsolutePath LegacyCalamariDirectory => PublishDirectory / "Calamari.Legacy";
@@ -725,8 +725,8 @@ namespace Calamari.Build
         void SetOctopusServerCalamariVersion(string projectFile)
         {
             var text = File.ReadAllText(projectFile);
-            text = Regex.Replace(text, @"<PackageReference Include=""Calamari.Consolidated"" Version=""([\S])+""",
-                                 $"<PackageReference Include=\"Calamari.Consolidated\" Version=\"{NugetVersion.Value}\"");
+            text = Regex.Replace(text, @"<BundledCalamariVersion>([\S])+</BundledCalamariVersion>",
+                                 $"<BundledCalamariVersion>{NugetVersion.Value}</BundledCalamariVersion>");
             File.WriteAllText(projectFile, text);
         }
 
