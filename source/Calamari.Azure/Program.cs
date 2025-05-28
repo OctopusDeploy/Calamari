@@ -3,7 +3,6 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Autofac;
 using Calamari.Azure.ResourceGroups;
-using Calamari.Azure.Scripts;
 using Calamari.Common;
 using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.Logging;
@@ -31,6 +30,10 @@ namespace Calamari.Azure
         
         protected override IEnumerable<Assembly> GetProgramAssembliesToRegister()
         {
+#if WIN_X64 || NETFRAMEWORK
+            yield return typeof(Calamari.Azure.ServiceFabric.Commands.DeployAzureServiceFabricAppCommand).Assembly;
+#endif
+            
             //Calamari.Scripting
             yield return typeof(RunScriptCommand).Assembly;
             //Calamari.Azure

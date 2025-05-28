@@ -19,6 +19,7 @@
     </ItemGroup>
     <ItemGroup>
       <ProjectReference Include="..\Calamari.Azure\Calamari.Azure.csproj" />
+        <ProjectReference Include="..\Calamari.Azure.ServiceFabric\Calamari.Azure.ServiceFabric.csproj" />
       <ProjectReference Include="..\Calamari.Testing\Calamari.Testing.csproj" />
     </ItemGroup>
     <ItemGroup>
