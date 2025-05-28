@@ -9,7 +9,7 @@ using System.Text;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 
-namespace Calamari.AzureServiceFabric
+namespace Calamari.Azure.ServiceFabric
 {
      class CalamariCertificateStore
     {
@@ -177,6 +177,9 @@ namespace Calamari.AzureServiceFabric
             }
         }
 
+        // This if define deals with the fact that this is only supported on Windows machines.
+        // We have code checks to make sure that this is command is only executed on Windows machines, so this pragma is a-ok.
+#if WIN_X64 || NETFRAMEWORK
         static void GrantCurrentUserAccessToPrivateKeyDirectory(string privateKeyPath)
         {
             var folderPath = Path.GetDirectoryName(privateKeyPath);
@@ -192,6 +195,12 @@ namespace Calamari.AzureServiceFabric
             security.AddAccessRule(new FileSystemAccessRule(current.User, FileSystemRights.FullControl, InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit, PropagationFlags.None, AccessControlType.Allow));
             directoryInfo.SetAccessControl(security);
         }
+#else
+        //empty method for compilation on platforms where this code won't even run
+        static void GrantCurrentUserAccessToPrivateKeyDirectory(string _)
+        {
+        }
+#endif
 
         #region Nested type: CryptUtils
 

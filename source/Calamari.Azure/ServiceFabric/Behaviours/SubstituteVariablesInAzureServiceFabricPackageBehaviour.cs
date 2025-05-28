@@ -5,7 +5,7 @@ using Calamari.Common.Features.Substitutions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Pipeline;
 
-namespace Calamari.AzureServiceFabric.Behaviours
+namespace Calamari.Azure.ServiceFabric.Behaviours
 {
     class SubstituteVariablesInAzureServiceFabricPackageBehaviour : IDeployBehaviour
     {

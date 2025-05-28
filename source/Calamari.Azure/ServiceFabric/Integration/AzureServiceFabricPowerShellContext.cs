@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Fabric;
-using System.Fabric.Security;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -13,9 +12,8 @@ using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
-using Microsoft.Identity.Client;
 
-namespace Calamari.AzureServiceFabric.Integration
+namespace Calamari.Azure.ServiceFabric.Integration
 {
     class AzureServiceFabricPowerShellContext : IScriptWrapper
     {

@@ -6,7 +6,7 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Variables;
 
-namespace Calamari.AzureServiceFabric.Behaviours
+namespace Calamari.Azure.ServiceFabric.Behaviours
 {
     class EnsureCertificateInstalledInStoreBehaviour : IDeployBehaviour
     {

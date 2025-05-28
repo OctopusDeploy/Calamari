@@ -11,7 +11,7 @@ using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Common.Util;
 
-namespace Calamari.AzureServiceFabric.Behaviours
+namespace Calamari.Azure.ServiceFabric.Behaviours
 {
     class DeployAzureServiceFabricAppBehaviour : IDeployBehaviour
     {

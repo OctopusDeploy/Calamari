@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Pipeline;
 
-namespace Calamari.AzureServiceFabric.Behaviours
+namespace Calamari.Azure.ServiceFabric.Behaviours
 {
     class CheckSdkInstalledBehaviour : IBeforePackageExtractionBehaviour
     {

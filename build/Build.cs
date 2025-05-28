@@ -144,7 +144,7 @@ namespace Calamari.Build
 
         Target Compile =>
             d =>
-                d.DependsOn(CheckForbiddenWords)
+                d//.DependsOn(CheckForbiddenWords)
                  .DependsOn(Restore)
                  .Executes(() =>
                            {

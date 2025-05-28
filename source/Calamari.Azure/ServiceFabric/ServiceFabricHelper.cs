@@ -2,7 +2,7 @@
 using System.Fabric;
 using System.Security.Cryptography.X509Certificates;
 
-namespace Calamari.AzureServiceFabric
+namespace Calamari.Azure.ServiceFabric
 {
     static class ServiceFabricHelper
     {

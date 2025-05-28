@@ -8,6 +8,7 @@ using Calamari.Common;
 using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Util;
+using Calamari.Scripting;
 
 namespace Calamari.Azure
 {
@@ -30,7 +31,11 @@ namespace Calamari.Azure
         
         protected override IEnumerable<Assembly> GetProgramAssembliesToRegister()
         {
+            //Calamari.Scripting
+            yield return typeof(RunScriptCommand).Assembly;
+            //Calamari.AzureScripting
             yield return typeof(AzureContextScriptWrapper).Assembly;
+            //Calamari.Azure
             yield return typeof(Program).Assembly;
         }
 

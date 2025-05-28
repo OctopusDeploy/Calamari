@@ -1,4 +1,6 @@
-﻿namespace Calamari.AzureServiceFabric
+﻿using System;
+
+namespace Calamari.Azure.ServiceFabric
 {
     enum AzureServiceFabricSecurityMode
     {

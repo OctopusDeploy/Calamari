@@ -1,14 +1,10 @@
-﻿using Calamari.Common.Plumbing.Extensions;
+﻿using System;
+using System.Fabric.Security;
+using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
 using Microsoft.Identity.Client;
-using System;
-using System.Collections.Generic;
-using System.Fabric.Security;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Calamari.AzureServiceFabric
+namespace Calamari.Azure.ServiceFabric
 {
     internal class AzureADUsernamePasswordTokenRetriever
     {

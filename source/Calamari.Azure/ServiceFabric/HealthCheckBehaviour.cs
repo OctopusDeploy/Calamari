@@ -1,16 +1,14 @@
 using System;
 using System.Fabric;
-using System.Fabric.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Calamari.Common.Commands;
-using Calamari.Common.Plumbing.Extensions;
+using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Variables;
-using Microsoft.Identity.Client;
 
-namespace Calamari.AzureServiceFabric
+namespace Calamari.Azure.ServiceFabric
 {
     class HealthCheckBehaviour: IDeployBehaviour
     {

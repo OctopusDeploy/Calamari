@@ -1,4 +1,5 @@
-using Calamari.AzureServiceFabric.Integration;
+using Calamari.Azure.ServiceFabric;
+using Calamari.Azure.ServiceFabric.Integration;
 using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;

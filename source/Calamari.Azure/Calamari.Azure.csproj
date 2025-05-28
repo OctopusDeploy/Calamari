@@ -9,13 +9,16 @@
         <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
         <LangVersion>8.0</LangVersion>
         <TargetFrameworks>net462;net6.0</TargetFrameworks>
+
+        <DefineConstants Condition="'$(RuntimeIdentifier)' == 'win-x64'">$(DefineConstants);WIN_X64</DefineConstants>
     </PropertyGroup>
+    
     <ItemGroup>
         <PackageReference Include="Azure.Identity" Version="1.13.1"/>
         <PackageReference Include="Azure.ResourceManager" Version="1.11.0"/>
         <PackageReference Include="Azure.ResourceManager.AppService" Version="1.0.2"/>
         <PackageReference Include="Azure.ResourceManager.ResourceGraph" Version="1.0.1"/>
-        <PackageReference Include="Azure.ResourceManager.Resources" Version="1.7.0" />
+        <PackageReference Include="Azure.ResourceManager.Resources" Version="1.7.0"/>
         <PackageReference Include="Microsoft.AspNetCore.WebUtilities" Version="2.2.0"/>
         <PackageReference Include="Microsoft.DotNet.Analyzers.Compatibility" Version="0.2.12-alpha">
             <PrivateAssets>all</PrivateAssets>
@@ -32,9 +35,29 @@
             <Version>6.0.0</Version>
         </PackageReference>
     </ItemGroup>
+
     <ItemGroup>
-        <ProjectReference Include="..\Calamari.AzureScripting\Calamari.AzureScripting.csproj" />
+        <!-- IMPORTANT NOTE
+        The version of this NuGet package is important. 
+        As the SDK makes native COM calls to the Service Fabric Runtime, if there are any divergence between this package version
+        and the versions of the installed Runtime & SDK, you may receive issues.
+        If this package version is updated, the TeamCity build steps will need updating to install the matching versions.
+        The download URL's for the runtime & SDK that match the current version here are:
+        Runtime: https://download.microsoft.com/download/b/8/a/b8a2fb98-0ec1-41e5-be98-9d8b5abf7856/MicrosoftServiceFabric.10.1.2338.9590.exe
+        SDK: https://download.microsoft.com/download/b/8/a/b8a2fb98-0ec1-41e5-be98-9d8b5abf7856/MicrosoftServiceFabricSDK.7.1.2338.msi
+        -->
+        <PackageReference Include="Microsoft.ServiceFabric" Version="10.1.2338"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Calamari.AzureScripting\Calamari.AzureScripting.csproj"/>
         <ProjectReference Include="..\Calamari.CloudAccounts\Calamari.CloudAccounts.csproj"/>
         <ProjectReference Include="..\Calamari.Common\Calamari.Common.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <EmbeddedResource Include="Scripts\*"/>
+        <EmbeddedResource Include="ServiceFabric\Scripts\AzureServiceFabricContext.ps1"/>
+        <EmbeddedResource Include="ServiceFabric\Scripts\DeployAzureServiceFabricApplication.ps1"/>
     </ItemGroup>
 </Project>

@@ -18,7 +18,7 @@
         <PackageReference Include="Shouldly" Version="3.0.2" />
     </ItemGroup>
     <ItemGroup>
-      <ProjectReference Include="..\Calamari.AzureServiceFabric\Calamari.AzureServiceFabric.csproj" />
+      <ProjectReference Include="..\Calamari.Azure\Calamari.Azure.csproj" />
       <ProjectReference Include="..\Calamari.Testing\Calamari.Testing.csproj" />
     </ItemGroup>
     <ItemGroup>
