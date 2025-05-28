@@ -743,6 +743,8 @@ namespace Calamari.Build
                                                   .SetVerbosity(BuildVerbosity)
                                                   .SetRuntime(runtimeId)
                                                   .SetVersion(version)
+                                                  .EnableNoRestore()
+                                                  .EnableNoRestore()
                                                   .EnableSelfContained()
                                                   ));
 
