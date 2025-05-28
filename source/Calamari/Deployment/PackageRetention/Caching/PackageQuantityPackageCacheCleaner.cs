@@ -51,7 +51,7 @@ namespace Calamari.Deployment.PackageRetention.Caching
             // Package retention has currently only been implemented for number of items
             if (packageUnit == MachinePackageCacheRetentionUnit.Items && quantityOfPackagesToKeep > 0 && quantityOfPackagesToKeep < orderedJournalEntriesByPackageId.Length)
             {
-                log.VerboseFormat("Cache size is greater than the maximum quantity to keep. {0} packages will be removed.", orderedJournalEntriesByPackageId.Length - quantityOfPackagesToKeep);
+                log.VerboseFormat("Cache size is greater than the maximum package quantity to keep {0}. {1} packages will be removed.", quantityOfPackagesToKeep, orderedJournalEntriesByPackageId.Length - quantityOfPackagesToKeep);
 
                 packagesToRemoveById = orderedJournalEntriesByPackageId.Skip(quantityOfPackagesToKeep)
                                                             .SelectMany(entry => entry.Value.Select(v => v.Package)).ToList();
@@ -71,14 +71,14 @@ namespace Calamari.Deployment.PackageRetention.Caching
             
             if (packagesToRemoveByVersion.Any())
             {
-                log.VerboseFormat("Found cached packages with more versions than the maximum quantity to keep. {0} package versions will be removed.", packagesToRemoveByVersion.Count);
+                log.VerboseFormat("Found cached packages with more versions than the maximum version quantity to keep {0}. {1} package versions will be removed.", quantityOfVersionsToKeep, packagesToRemoveByVersion.Count);
             }
             
             var packagesToRemove = packagesToRemoveById.Union(packagesToRemoveByVersion).ToArray();
 
             if (!packagesToRemove.Any())
             {
-                log.Verbose("The number of cached packages is below the configured maximum. No packages will be removed.");
+                log.VerboseFormat("The number of cached packages is below the configured maximum package quantity to keep {0} and version quantity to keep {1}. No packages will be removed.", quantityOfPackagesToKeep, quantityOfVersionsToKeep);
             }
 
             return packagesToRemove;
