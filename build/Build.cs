@@ -208,8 +208,23 @@ namespace Calamari.Build
                                                FixedRuntimes.Cloud);
 
                                // Create the self-contained Calamari packages for each runtime ID defined in Calamari.csproj
+                               var semaphores = new ConcurrentDictionary<string, SemaphoreSlim>();
+
                                var publishTasks = GetRuntimeIdentifiers(Solution.GetProject(RootProjectName)!)
-                                   .Select(rid => DoPublish(RootProjectName, Frameworks.Net60, nugetVersion, rid));
+                                   .Select(async rid =>
+                                           {
+                                               var semaphore = semaphores.GetOrAdd(RootProjectName, _ => new SemaphoreSlim(1, 1));
+
+                                               await semaphore.WaitAsync();
+                                               try
+                                               {
+                                                   await DoPublish(RootProjectName, Frameworks.Net60, nugetVersion, rid);
+                                               }
+                                               finally
+                                               {
+                                                   semaphore.Release();
+                                               }
+                                           });
 
                                await Task.WhenAll(publishTasks);
                            });
@@ -282,7 +297,7 @@ namespace Calamari.Build
                 d.DependsOn(GetCalamariFlavourProjectsToPublish)
                  .Executes(async () =>
                            {
-                               var semaphore = new SemaphoreSlim(2); // Limit to 2 concurrent tasks
+                               var semaphore = new SemaphoreSlim(2);
 
                                var restoreTasks = PackagesToPublish
                                                   .Select(p => p.Architecture)
@@ -306,16 +321,45 @@ namespace Calamari.Build
 
                                await Task.WhenAll(restoreTasks);
                            });
-
         Target BuildCalamariProjects =>
             d =>
                 d.DependsOn(RestoreCalamariProjects)
                  .Executes(async () =>
                            {
-                               foreach (var package in PackagesToPublish)
-                               {
-                                   await BuildAsync(package);
-                               }
+                               var semaphores = new ConcurrentDictionary<string, SemaphoreSlim>();
+
+                               var buildTasks = PackagesToPublish.Select(async calamariPackageMetadata =>
+                                                                         {
+                                                                             if (!OperatingSystem.IsWindows() && !calamariPackageMetadata.IsCrossPlatform)
+                                                                             {
+                                                                                 Log.Warning($"Not Building {calamariPackageMetadata.Framework}: can only publish netfx on a Windows OS");
+                                                                                 return;
+                                                                             }
+
+                                                                             var projectName = calamariPackageMetadata.Project?.Name ?? "UnknownProject";
+                                                                             var semaphore = semaphores.GetOrAdd(projectName, _ => new SemaphoreSlim(1, 1));
+
+                                                                             await semaphore.WaitAsync();
+                                                                             try
+                                                                             {
+                                                                                 Log.Information($"Building {calamariPackageMetadata.Project?.Name} for framework '{calamariPackageMetadata.Framework}' and arch '{calamariPackageMetadata.Architecture}'");
+
+                                                                                 await Task.Run(() =>
+                                                                                                    DotNetBuild(s =>
+                                                                                                                    s.SetProjectFile(calamariPackageMetadata.Project)
+                                                                                                                     .SetConfiguration(Configuration)
+                                                                                                                     .SetFramework(calamariPackageMetadata.Framework)
+                                                                                                                     .EnableNoRestore()
+                                                                                                                     .SetRuntime(calamariPackageMetadata.Architecture)
+                                                                                                                     .EnableSelfContained()));
+                                                                             }
+                                                                             finally
+                                                                             {
+                                                                                 semaphore.Release();
+                                                                             }
+                                                                         });
+
+                               await Task.WhenAll(buildTasks);
                            });
 
         Target PublishCalamariProjects =>
@@ -323,15 +367,24 @@ namespace Calamari.Build
                 d.DependsOn(BuildCalamariProjects)
                  .Executes(async () =>
                            {
-                               // Run all publishes in parallel
+                               // Limit concurrency to 3 tasks
+                               var semaphore = new SemaphoreSlim(4);
                                var outputPaths = new ConcurrentBag<AbsolutePath?>();
-                               var publishTasks = PackagesToPublish
-                                                  .AsParallel()
-                                                  .Select(async package =>
-                                                          {
-                                                              var outputPath = await PublishPackageAsync(package);
-                                                              outputPaths.Add(outputPath);
-                                                          });
+
+                               var publishTasks = PackagesToPublish.Select(async package =>
+                                                                           {
+                                                                               await semaphore.WaitAsync();
+                                                                               try
+                                                                               {
+                                                                                   var outputPath = await PublishPackageAsync(package);
+                                                                                   outputPaths.Add(outputPath);
+                                                                               }
+                                                                               finally
+                                                                               {
+                                                                                   semaphore.Release();
+                                                                               }
+                                                                           });
+
                                await Task.WhenAll(publishTasks);
 
                                // Sign and compress tasks
@@ -348,26 +401,6 @@ namespace Calamari.Build
                                CalamariProjects.ForEach(CompressCalamariProject);
                                await Task.WhenAll(ProjectCompressionTasks);
                            });
-
-        async Task BuildAsync(CalamariPackageMetadata calamariPackageMetadata)
-        {
-            if (!OperatingSystem.IsWindows() && !calamariPackageMetadata.IsCrossPlatform)
-            {
-                Log.Warning($"Not Building {calamariPackageMetadata.Framework}: can only publish netfx on a Windows OS");
-                return;
-            }
-
-            Log.Information($"Building {calamariPackageMetadata.Project?.Name} for framework '{calamariPackageMetadata.Framework}' and arch '{calamariPackageMetadata.Architecture}'");
-
-            await Task.Run(() =>
-                               DotNetBuild(s =>
-                                               s.SetProjectFile(calamariPackageMetadata.Project)
-                                                .SetConfiguration(Configuration)
-                                                .SetFramework(calamariPackageMetadata.Framework)
-                                                .EnableNoRestore()
-                                                .SetRuntime(calamariPackageMetadata.Architecture)
-                                                .EnableSelfContained()));
-        }
 
         async Task<AbsolutePath?> PublishPackageAsync(CalamariPackageMetadata calamariPackageMetadata)
         {
@@ -705,7 +738,8 @@ namespace Calamari.Build
                                                   .SetVerbosity(BuildVerbosity)
                                                   .SetRuntime(runtimeId)
                                                   .SetVersion(version)
-                                                  .EnableSelfContained()));
+                                                  //.EnableSelfContained()
+                                                  ));
 
             if (WillSignBinaries)
             {
