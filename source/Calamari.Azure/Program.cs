@@ -3,7 +3,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Autofac;
 using Calamari.Azure.ResourceGroups;
-using Calamari.AzureScripting;
+using Calamari.Azure.Scripts;
 using Calamari.Common;
 using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.Logging;
@@ -33,8 +33,6 @@ namespace Calamari.Azure
         {
             //Calamari.Scripting
             yield return typeof(RunScriptCommand).Assembly;
-            //Calamari.AzureScripting
-            yield return typeof(AzureContextScriptWrapper).Assembly;
             //Calamari.Azure
             yield return typeof(Program).Assembly;
         }

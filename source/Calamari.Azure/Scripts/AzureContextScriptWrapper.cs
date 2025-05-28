@@ -14,7 +14,7 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 
-namespace Calamari.AzureScripting
+namespace Calamari.Azure.Scripts
 {
     public class AzureContextScriptWrapper : IScriptWrapper
     {
@@ -40,12 +40,12 @@ namespace Calamari.AzureScripting
 
         public bool IsEnabled(ScriptSyntax syntax) => supportedScriptSyntax.Contains(syntax);
 
-        public IScriptWrapper? NextWrapper { get; set; }
+        public IScriptWrapper NextWrapper { get; set; }
 
         public CommandResult ExecuteScript(Script script,
                                            ScriptSyntax scriptSyntax,
                                            ICommandLineRunner commandLineRunner,
-                                           Dictionary<string, string>? environmentVars)
+                                           Dictionary<string, string> environmentVars)
         {
             var workingDirectory = Path.GetDirectoryName(script.File)!;
             variables.Set("OctopusAzureTargetScript", script.File);

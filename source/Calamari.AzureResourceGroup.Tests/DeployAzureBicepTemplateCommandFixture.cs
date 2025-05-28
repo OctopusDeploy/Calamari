@@ -111,7 +111,7 @@ namespace Calamari.AzureResourceGroup.Tests
         {
             context.WithTool(AzureCLI);
 
-            context.Variables.Add(AzureScripting.SpecialVariables.Account.AccountType, "AzureServicePrincipal");
+            context.Variables.Add(Azure.Scripts.SpecialVariables.Account.AccountType, "AzureServicePrincipal");
             context.Variables.Add(AzureAccountVariables.SubscriptionId, subscriptionId);
             context.Variables.Add(AzureAccountVariables.TenantId, tenantId);
             context.Variables.Add(AzureAccountVariables.ClientId, clientId);

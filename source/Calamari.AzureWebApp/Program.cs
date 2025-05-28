@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Threading.Tasks;
 using Autofac;
-using Calamari.AzureScripting;
+using Calamari.Azure.Scripts;
 using Calamari.AzureWebApp.Integration.Websites.Publishing;
 using Calamari.Common;
 using Calamari.Common.Plumbing.Commands;

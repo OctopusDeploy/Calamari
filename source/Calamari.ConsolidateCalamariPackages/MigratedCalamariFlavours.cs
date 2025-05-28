@@ -19,7 +19,6 @@ namespace Octopus.Calamari.ConsolidatedPackage
         {
             "Calamari.Azure",
             "Calamari.GoogleCloudScripting",
-            "Calamari.AzureScripting",
             "Calamari.Terraform"
         };
         

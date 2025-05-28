@@ -8,7 +8,7 @@ using System.Security.Principal;
 using System.Text;
 using Calamari.Common.Plumbing.Logging;
 
-namespace Calamari.AzureScripting
+namespace Calamari.Azure.Scripts
 {
     static class CalamariCertificateStore
     {
@@ -138,7 +138,7 @@ namespace Calamari.AzureScripting
             }
         }
 
-        static X509Certificate2? TryLoadCertificate(string file, X509KeyStorageFlags flags, bool requirePrivateKey)
+        static X509Certificate2 TryLoadCertificate(string file, X509KeyStorageFlags flags, bool requirePrivateKey)
         {
             try
             {
@@ -195,7 +195,7 @@ namespace Calamari.AzureScripting
                 var flag = false;
                 const uint dwFlags = 0u;
                 var num = 0;
-                string? text = null;
+                string text = null;
                 if (CryptAcquireCertificatePrivateKey(cert.Handle, dwFlags, IntPtr.Zero, ref zero, ref num, ref flag))
                 {
                     var intPtr = IntPtr.Zero;

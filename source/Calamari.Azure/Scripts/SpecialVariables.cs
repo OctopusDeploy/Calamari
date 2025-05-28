@@ -1,4 +1,6 @@
-﻿namespace Calamari.AzureScripting
+﻿using System;
+
+namespace Calamari.Azure.Scripts
 {
     public static class SpecialVariables
     {

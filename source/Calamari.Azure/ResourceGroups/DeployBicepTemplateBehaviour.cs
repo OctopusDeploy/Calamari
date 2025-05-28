@@ -36,7 +36,7 @@ namespace Calamari.Azure.ResourceGroups
 
         public async Task Execute(RunningDeployment context)
         {
-            var accountType = context.Variables.GetRequiredVariable(AzureScripting.SpecialVariables.Account.AccountType);
+            var accountType = context.Variables.GetRequiredVariable(Scripts.SpecialVariables.Account.AccountType);
             var account = accountType == AccountType.AzureOidc.ToString() ? (IAzureAccount)new AzureOidcAccount(context.Variables) : new AzureServicePrincipalAccount(context.Variables);
 
             var armClient = account.CreateArmClient();

@@ -8,6 +8,7 @@ using NUnit.Framework;
 using Calamari.Testing;
 using Calamari.Testing.Requirements;
 using Calamari.Testing.Tools;
+using SpecialVariables = Calamari.Azure.Scripts.SpecialVariables;
 
 namespace Calamari.AzureScripting.Tests
 {
