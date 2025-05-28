@@ -29,24 +29,56 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         [Test]
         public void WhenQuantityToKeepIsConfigured_RemoveExcessPackages()
         {
-            var variables = new CalamariVariables();
-            variables.Add("MachinePackageCacheRetentionQuantityOfPackagesToKeep", "2");
-            variables.Add("MachinePackageCacheRetentionQuantityOfVersionsToKeep", "2");
+            var variables = new CalamariVariables
+            {
+                { "MachinePackageCacheRetentionQuantityOfPackagesToKeep", "2" },
+                { "MachinePackageCacheRetentionQuantityOfVersionsToKeep", "2" }
+            };
             variables.Set(KnownVariables.EnabledFeatureToggles, "configurable-package-cache-retention");
         
             var package1Version1 = MakeAJournalEntry(2, DateTime.Now.AddMonths(-1), "Package1", 1);
-            var package1Version2 = MakeAJournalEntry(2, DateTime.Now.AddMonths(-2), "Package1", 2);
-            var package1Version3 = MakeAJournalEntry(2, DateTime.Now.AddMonths(-3), "Package1", 3);
+            var package1Version2 = MakeAJournalEntry(2, DateTime.Now.AddMonths(-5), "Package1", 2);
+            var package1Version3 = MakeAJournalEntry(2, DateTime.Now.AddMonths(-7), "Package1", 3);
             
             var package2Version1 = MakeAJournalEntry(1, DateTime.Now.AddMonths(-4), "Package2", 1);
             
-            var package3Version1 = MakeAJournalEntry(3, DateTime.Now.AddMonths(-5), "Package3", 1);
+            var package3Version1 = MakeAJournalEntry(3, DateTime.Now.AddMonths(-3), "Package3", 1);
             var package3Version2 = MakeAJournalEntry(3, DateTime.Now.AddMonths(-6), "Package3", 2);
             
             var package4Version1 = MakeAJournalEntry(4, DateTime.Now.AddDays(-1), "Package4", 1);
 
-            var existingJournals = new[] { package1Version1, package1Version2, package1Version3, package2Version1, package3Version1, package3Version2, package4Version1 };
+            var existingJournals = new[] { package4Version1 , package2Version1, package3Version2, package1Version3, package3Version1, package1Version2, package1Version1 };
             var expectedResult = new List<PackageIdentity> { package3Version1.Package, package3Version2.Package, package2Version1.Package, package1Version3.Package };
+            
+            var log = new InMemoryLog();
+            var subject = new PackageQuantityPackageCacheCleaner(variables, log);
+            var result = subject.GetPackagesToRemove(existingJournals);
+            result.Should().BeEquivalentTo(expectedResult);
+        }
+        
+        [Test]
+        public void WhenQuantityToKeepIsConfigured_RemoveExcessPackageVersions()
+        {
+            var variables = new CalamariVariables
+            {
+                { "MachinePackageCacheRetentionQuantityOfPackagesToKeep", "0" },
+                { "MachinePackageCacheRetentionQuantityOfVersionsToKeep", "2" }
+            };
+            variables.Set(KnownVariables.EnabledFeatureToggles, "configurable-package-cache-retention");
+        
+            var package1Version1 = MakeAJournalEntry(2, DateTime.Now.AddMonths(-1), "Package1", 1);
+            var package1Version2 = MakeAJournalEntry(2, DateTime.Now.AddMonths(-5), "Package1", 2);
+            var package1Version3 = MakeAJournalEntry(2, DateTime.Now.AddMonths(-7), "Package1", 3);
+            
+            var package2Version1 = MakeAJournalEntry(1, DateTime.Now.AddMonths(-4), "Package2", 1);
+            
+            var package3Version1 = MakeAJournalEntry(3, DateTime.Now.AddMonths(-3), "Package3", 1);
+            var package3Version2 = MakeAJournalEntry(3, DateTime.Now.AddMonths(-6), "Package3", 2);
+            
+            var package4Version1 = MakeAJournalEntry(4, DateTime.Now.AddDays(-1), "Package4", 1);
+
+            var existingJournals = new[] { package4Version1 , package2Version1, package3Version2, package1Version3, package3Version1, package1Version2, package1Version1 };
+            var expectedResult = new List<PackageIdentity> { package1Version3.Package };
             
             var log = new InMemoryLog();
             var subject = new PackageQuantityPackageCacheCleaner(variables, log);
@@ -58,9 +90,11 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         [TestCase("100", "100")]
         public void WhenQuantityToKeepIsHigh_KeepAllPackages(string quantityOfPackagesToKeep, string quantityOfVersionsToKeep)
         {
-            var variables = new CalamariVariables();
-            variables.Add("MachinePackageCacheRetentionQuantityOfPackagesToKeep", quantityOfPackagesToKeep);
-            variables.Add("MachinePackageCacheRetentionQuantityOfVersionsToKeep", quantityOfVersionsToKeep);
+            var variables = new CalamariVariables
+            {
+                { "MachinePackageCacheRetentionQuantityOfPackagesToKeep", quantityOfPackagesToKeep },
+                { "MachinePackageCacheRetentionQuantityOfVersionsToKeep", quantityOfVersionsToKeep }
+            };
             variables.Set(KnownVariables.EnabledFeatureToggles, "configurable-package-cache-retention");
         
             var package1Version1 = MakeAJournalEntry(3, DateTime.Now, "Package1", 1);
@@ -70,7 +104,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             var package3Version1 = MakeAJournalEntry(3, DateTime.Now, "Package3", 1);
             
             var existingJournals = new[] { package1Version1, package1Version2, package1Version3, package2Version1, package3Version1 };
-
+        
             var log = new InMemoryLog();
             var subject = new PackageQuantityPackageCacheCleaner(variables, log);
             var result = subject.GetPackagesToRemove(existingJournals);
@@ -80,9 +114,11 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         [Test]
         public void WhenQuantityToKeepIsConfigured_AndNoPackagesExist_ReturnNoPackages()
         {
-            var variables = new CalamariVariables();
-            variables.Add("MachinePackageCacheRetentionQuantityOfPackagesToKeep", "5");
-            variables.Add("MachinePackageCacheRetentionQuantityOfVersionsToKeep", "5");
+            var variables = new CalamariVariables
+            {
+                { "MachinePackageCacheRetentionQuantityOfPackagesToKeep", "5" },
+                { "MachinePackageCacheRetentionQuantityOfVersionsToKeep", "5" }
+            };
             variables.Set(KnownVariables.EnabledFeatureToggles, "configurable-package-cache-retention");
             
             var log = new InMemoryLog();
@@ -96,11 +132,13 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         [TestCase(null)]
         public void WhenQuantityOfVersionsToKeepIsNotSet_ReturnNoPackages(string quantityOfVersionsToKeep)
         {
-            var variables = new CalamariVariables();
-            variables.Add("MachinePackageCacheRetentionQuantityOfPackagesToKeep", "10");
-            variables.Add("MachinePackageCacheRetentionQuantityOfVersionsToKeep", quantityOfVersionsToKeep);
+            var variables = new CalamariVariables
+            {
+                { "MachinePackageCacheRetentionQuantityOfPackagesToKeep", "10" },
+                { "MachinePackageCacheRetentionQuantityOfVersionsToKeep", quantityOfVersionsToKeep }
+            };
             variables.Set(KnownVariables.EnabledFeatureToggles, "configurable-package-cache-retention");
-
+        
             var log = new InMemoryLog();
             var subject = new PackageQuantityPackageCacheCleaner(variables, log);
             var result = subject.GetPackagesToRemove(MakeSomeJournalEntries());
@@ -110,9 +148,11 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         [Test]
         public void WhenConfigurablePackageCacheRetentionToggleIsDisabled_ReturnNoPackages()
         {
-            var variables = new CalamariVariables();
-            variables.Add("MachinePackageCacheRetentionQuantityOfPackagesToKeep", "100");
-            variables.Add("MachinePackageCacheRetentionQuantityOfVersionsToKeep", "100");
+            var variables = new CalamariVariables
+            {
+                { "MachinePackageCacheRetentionQuantityOfPackagesToKeep", "100" },
+                { "MachinePackageCacheRetentionQuantityOfVersionsToKeep", "100" }
+            };
 
             var log = new InMemoryLog();
             var subject = new PackageQuantityPackageCacheCleaner(variables, log);
