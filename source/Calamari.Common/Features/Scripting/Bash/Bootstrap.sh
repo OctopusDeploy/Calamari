@@ -265,6 +265,24 @@ function log_environment_information
 
 log_environment_information
 
+function hex_to_bin_fd() {
+    local hex="$1"
+    local fd="$2"
+    
+    # Process hex in reasonable chunks
+    for ((i=0; i<${#hex}; i+=40)); do
+        local chunk="${hex:$i:40}"
+        local cmd="printf '"
+        
+        for ((j=0; j<${#chunk}; j+=2)); do
+            cmd+="\\x${chunk:$j:2}"
+        done
+        
+        cmd+="'"
+        eval "$cmd" >&$fd
+    done
+}
+
 function decrypt_and_parse_variables {
     local encrypted="$1"
     local iv="$2"
@@ -287,7 +305,9 @@ function decrypt_and_parse_variables {
     local concatenated_hex
     concatenated_hex=$(printf "%s" "${hex_parts[@]}")
 
-    exec 3< <(echo -n "$concatenated_hex" | xxd -r -p)
+    exec 3<> <(:)
+    hex_to_bin_fd "$concatenated_hex" 3
+    exec 3<&3
 
     local idx
     for idx in "${!key_byte_lengths[@]}"; do
