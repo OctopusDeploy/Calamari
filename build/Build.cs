@@ -739,10 +739,7 @@ namespace Calamari.Build
                                                   .SetVerbosity(BuildVerbosity)
                                                   .SetRuntime(runtimeId)
                                                   .SetVersion(version)
-                                                  .EnableNoRestore()
-                                                  .EnableNoBuild()
-                                                  .EnableSelfContained()
-                                                  ));
+                                                  .EnableSelfContained()));
 
             if (WillSignBinaries)
             {
