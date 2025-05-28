@@ -74,7 +74,6 @@ namespace Calamari.Build
 
         CalamariPackageMetadata[] PackagesToPublish = new CalamariPackageMetadata[0];
         List<Project> CalamariProjects = new();
-        List<Task> SignDirectoriesTasks = new();
         List<Task> ProjectCompressionTasks = new();
 
         public Build()
@@ -297,7 +296,7 @@ namespace Calamari.Build
                 d.DependsOn(GetCalamariFlavourProjectsToPublish)
                  .Executes(async () =>
                            {
-                               var semaphore = new SemaphoreSlim(3);
+                               var semaphore = new SemaphoreSlim(4);
 
                                var restoreTasks = PackagesToPublish
                                                   .Select(p => p.Architecture)
@@ -326,7 +325,7 @@ namespace Calamari.Build
         d.DependsOn(RestoreCalamariProjects)
          .Executes(async () =>
          {
-             var globalSemaphore = new SemaphoreSlim(5);
+             var globalSemaphore = new SemaphoreSlim(4);
              var semaphores = new ConcurrentDictionary<string, SemaphoreSlim>();
 
              var buildTasks = PackagesToPublish.Select(async calamariPackageMetadata =>
@@ -373,7 +372,7 @@ namespace Calamari.Build
                 d.DependsOn(BuildCalamariProjects)
                  .Executes(async () =>
                            {
-                               var semaphore = new SemaphoreSlim(8);
+                               var semaphore = new SemaphoreSlim(4);
                                var outputPaths = new ConcurrentBag<AbsolutePath?>();
 
                                var publishTasks = PackagesToPublish.Select(async package =>
@@ -399,10 +398,7 @@ namespace Calamari.Build
                                                .ToList();
 
                                await Task.WhenAll(signTasks);
-                               await Task.WhenAll(SignDirectoriesTasks);
-
                                StageLegacyCalamariAssemblies(PackagesToPublish);
-
                                CalamariProjects.ForEach(CompressCalamariProject);
                                await Task.WhenAll(ProjectCompressionTasks);
                            });
