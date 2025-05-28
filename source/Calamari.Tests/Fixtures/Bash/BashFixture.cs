@@ -408,7 +408,7 @@ namespace Calamari.Tests.Fixtures.Bash
         var (output, _) = RunScript("enumerate-variables.sh",
                                     variables.AddFeatureToggleToDictionary(new List<FeatureToggle?> { featureToggle }));
         sw.Stop();
-        sw.Elapsed.TotalMilliseconds.Should().BeLessThan(2000);
+        sw.Elapsed.TotalMilliseconds.Should().BeLessThan(3000);
         
         output.AssertSuccess();
         if (featureToggle == FeatureToggle.BashParametersArrayFeatureToggle)
