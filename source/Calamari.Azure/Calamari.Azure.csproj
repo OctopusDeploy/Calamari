@@ -9,8 +9,7 @@
         <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
         <LangVersion>8.0</LangVersion>
         <TargetFrameworks>net462;net6.0</TargetFrameworks>
-
-        <DefineConstants Condition="'$(RuntimeIdentifier)' == 'win-x64'">$(DefineConstants);WIN_X64</DefineConstants>
+        <DefineConstants Condition="'$(TargetFramework)' == 'net6.0' AND '$(RuntimeIdentifier)' == 'win-x64'">$(DefineConstants);WIN_X64</DefineConstants>
     </PropertyGroup>
     
     <ItemGroup>

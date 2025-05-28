@@ -177,9 +177,10 @@ namespace Calamari.Azure.ServiceFabric
             }
         }
 
-        // This if define deals with the fact that this is only supported on Windows machines.
-        // We have code checks to make sure that this is command is only executed on Windows machines, so this pragma is a-ok.
+        // This if define deals with the fact that this is only supported on Windows machines. We need the pragma disable to disable the warning as error
+        // We have code checks to make sure that this is command is only executed on Windows machines, so this if define + pragma is a-ok.
 #if WIN_X64 || NETFRAMEWORK
+#pragma warning disable CA1416
         static void GrantCurrentUserAccessToPrivateKeyDirectory(string privateKeyPath)
         {
             var folderPath = Path.GetDirectoryName(privateKeyPath);
@@ -195,6 +196,7 @@ namespace Calamari.Azure.ServiceFabric
             security.AddAccessRule(new FileSystemAccessRule(current.User, FileSystemRights.FullControl, InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit, PropagationFlags.None, AccessControlType.Allow));
             directoryInfo.SetAccessControl(security);
         }
+#pragma warning restore CA1416
 #else
         //empty method for compilation on platforms where this code won't even run
         static void GrantCurrentUserAccessToPrivateKeyDirectory(string _)
