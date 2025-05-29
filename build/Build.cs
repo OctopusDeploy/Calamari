@@ -294,31 +294,15 @@ namespace Calamari.Build
         Target RestoreCalamariProjects =>
             d =>
                 d.DependsOn(GetCalamariFlavourProjectsToPublish)
-                 .Executes(async () =>
+                 .Executes(() =>
                            {
-                               var semaphore = new SemaphoreSlim(4);
-
-                               var restoreTasks = PackagesToPublish
+                               PackagesToPublish
                                                   .Select(p => p.Architecture)
                                                   .Distinct()
-                                                  .Select(async rid =>
-                                                          {
-                                                              await semaphore.WaitAsync();
-                                                              try
-                                                              {
-                                                                  await Task.Run(() =>
-                                                                                     DotNetRestore(s =>
-                                                                                                       s.SetProjectFile(Solution)
-                                                                                                        .SetProperty("DisableImplicitNuGetFallbackFolder", true)
-                                                                                                        .SetRuntime(rid)));
-                                                              }
-                                                              finally
-                                                              {
-                                                                  semaphore.Release();
-                                                              }
-                                                          });
-
-                               await Task.WhenAll(restoreTasks);
+                                                  .ForEach(rid => DotNetRestore(s =>
+                                                                                    s.SetProjectFile(Solution)
+                                                                                     .SetProperty("DisableImplicitNuGetFallbackFolder", true)
+                                                                                     .SetRuntime(rid)));
                            });
         Target BuildCalamariProjects =>
     d =>
