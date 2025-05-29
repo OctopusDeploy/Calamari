@@ -35,7 +35,7 @@ namespace Calamari.Deployment.PackageRetention.Caching
             var packageCacheRetentionStrategyString = variables.Get(PackageCacheRetentionStrategy);
             var retentionStrategy = packageCacheRetentionStrategyString != null ? (MachinePackageCacheRetentionStrategy) Enum.Parse(typeof(MachinePackageCacheRetentionStrategy), packageCacheRetentionStrategyString) : DefaultMachinePackageCacheRetentionStrategy;
             
-            if (!OctopusFeatureToggles.ConfigurablePackageCacheRetentionFeatureToggle.IsEnabled(variables) || retentionStrategy == MachinePackageCacheRetentionStrategy.FreeSpace)
+            if (!OctopusFeatureToggles.ConfigurablePackageCacheRetentionFeatureToggle.IsEnabled(variables) || retentionStrategy != MachinePackageCacheRetentionStrategy.Quantities)
             {
                 return Array.Empty<PackageIdentity>();
             }
