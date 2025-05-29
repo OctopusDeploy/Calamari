@@ -563,7 +563,7 @@ namespace Calamari.Build
                                // Create a Zip for each runtime for testing
                                // ReSharper disable once LoopCanBeConvertedToQuery
                                foreach (var rid in GetRuntimeIdentifiers(Solution.GetProject("Calamari.Tests")!)!)
-                                   actions.Add(async () =>
+                                   actions.Add(() =>
                                                {
                                                    var publishedLocation =
                                                        DoPublish("Calamari.Tests", Frameworks.Net60, nugetVersion, rid).GetAwaiter().GetResult();
