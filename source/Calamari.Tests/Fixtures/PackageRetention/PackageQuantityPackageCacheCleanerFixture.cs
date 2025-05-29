@@ -156,7 +156,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             {
                 { "MachinePackageCacheRetentionQuantityOfPackagesToKeep", "100" },
                 { "MachinePackageCacheRetentionQuantityOfVersionsToKeep", "100" },
-                { "MachinePackageCacheRetentionStrategy", "FreeSpace" },
+                { "MachinePackageCacheRetentionStrategy", "Default" },
                 { KnownVariables.EnabledFeatureToggles, "configurable-package-cache-retention" }
             };
             

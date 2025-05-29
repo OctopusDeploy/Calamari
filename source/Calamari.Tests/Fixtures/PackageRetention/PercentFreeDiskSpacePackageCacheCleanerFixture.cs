@@ -35,7 +35,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             var variables = new CalamariVariables
             {
                 { "MachinePackageCacheRetentionQuantityOfVersionsToKeep", quantityOfVersionsToKeep },
-                { "MachinePackageCacheRetentionStrategy", "FreeSpace" }
+                { "MachinePackageCacheRetentionStrategy", "Default" }
             };
 
             var fileSystem = new FileSystemThatHasSpace(500, 5000);
