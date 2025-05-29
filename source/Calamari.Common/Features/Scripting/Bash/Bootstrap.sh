@@ -394,7 +394,7 @@ function report_kubernetes_manifest_file
 bashParametersArrayFeatureToggle=#### BashParametersArrayFeatureToggle ####
 
 if [ "$bashParametersArrayFeatureToggle" = true ]; then
-    if (( ${BASH_VERSINFO[0]:-0} > 4 || (${BASH_VERSINFO[0]:-0} == 4 && ${BASH_VERSINFO[1]:-0} > 2) )); then
+    if declare -gA test_array 2>/dev/null; then
         if exec 3<> <(:); then
             exec 3<&-
             decrypt_and_parse_variables "#### VARIABLESTRING.ENCRYPTED ####" "#### VARIABLESTRING.IV ####"
@@ -402,7 +402,7 @@ if [ "$bashParametersArrayFeatureToggle" = true ]; then
             echo "Process substitution with exec is not supported. This is required to use octopus_parameters"
         fi
     else
-        echo "Bash version 4.2 or later is required to use octopus_parameters"
+        echo "Associative arrays are not supported in this Bash version. This is required to use octopus_parameters"
     fi
 fi
 
