@@ -4,7 +4,7 @@ namespace Calamari.Deployment.PackageRetention.Caching
 {
     public enum MachinePackageCacheRetentionStrategy
     {
-        Default,
+        FreeSpace,
         Quantity
     }
 }

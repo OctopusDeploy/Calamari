@@ -16,7 +16,7 @@ namespace Calamari.Deployment.PackageRetention.Caching
         const string PackageUnit = "MachinePackageCacheRetentionPackageUnit";
         const string VersionUnit = "MachinePackageCacheRetentionVersionUnit";
         const string PackageCacheRetentionStrategy = "MachinePackageCacheRetentionStrategy";
-        const MachinePackageCacheRetentionStrategy DefaultMachinePackageCacheRetentionStrategy = MachinePackageCacheRetentionStrategy.Default;
+        const MachinePackageCacheRetentionStrategy DefaultMachinePackageCacheRetentionStrategy = MachinePackageCacheRetentionStrategy.FreeSpace;
         const int DefaultQuantityOfPackagesToKeep = -1;
         const int DefaultQuantityOfVersionsToKeep = 5;
         const MachinePackageCacheRetentionUnit DefaultPackageUnit = MachinePackageCacheRetentionUnit.Items;
@@ -35,7 +35,7 @@ namespace Calamari.Deployment.PackageRetention.Caching
             var packageCacheRetentionStrategyString = variables.Get(PackageCacheRetentionStrategy);
             var retentionStrategy = packageCacheRetentionStrategyString != null ? (MachinePackageCacheRetentionStrategy) Enum.Parse(typeof(MachinePackageCacheRetentionStrategy), packageCacheRetentionStrategyString) : DefaultMachinePackageCacheRetentionStrategy;
             
-            if (!OctopusFeatureToggles.ConfigurablePackageCacheRetentionFeatureToggle.IsEnabled(variables) || retentionStrategy == MachinePackageCacheRetentionStrategy.Default)
+            if (!OctopusFeatureToggles.ConfigurablePackageCacheRetentionFeatureToggle.IsEnabled(variables) || retentionStrategy == MachinePackageCacheRetentionStrategy.FreeSpace)
             {
                 return Array.Empty<PackageIdentity>();
             }
