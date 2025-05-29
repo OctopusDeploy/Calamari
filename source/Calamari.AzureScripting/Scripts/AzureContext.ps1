@@ -62,11 +62,11 @@ function Execute-WithRetry([ScriptBlock] $command) {
 }
 
 function Get-AzureRmModuleInstalled {
-    return $null -ne (Get-Command "Login-AzureRmAccount" -ErrorAction SilentlyContinue)
+    return $null -ne (Get-Module -ListAvailable -Name "AzureRM.Profile" -ErrorAction SilentlyContinue)
 }
 
 function Get-AzModuleInstalled {
-    return $null -ne (Get-Command "Connect-AzAccount" -ErrorAction SilentlyContinue)
+    return $null -ne (Get-Module -ListAvailable -Name "Az.Accounts" -ErrorAction SilentlyContinue)
 }
 
 function Get-RunningInPowershellCore {
