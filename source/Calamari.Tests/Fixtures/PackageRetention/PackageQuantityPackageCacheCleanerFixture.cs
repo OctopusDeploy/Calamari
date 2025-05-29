@@ -34,7 +34,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             {
                 { "MachinePackageCacheRetentionQuantityOfPackagesToKeep", "2" },
                 { "MachinePackageCacheRetentionQuantityOfVersionsToKeep", "2" },
-                { "MachinePackageCacheRetentionStrategy", "Quantity" },
+                { "MachinePackageCacheRetentionStrategy", "Quantities" },
                 { KnownVariables.EnabledFeatureToggles, "configurable-package-cache-retention" }
             };
         
@@ -65,7 +65,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             {
                 { "MachinePackageCacheRetentionQuantityOfPackagesToKeep", "-1" },
                 { "MachinePackageCacheRetentionQuantityOfVersionsToKeep", "2" },
-                { "MachinePackageCacheRetentionStrategy", "Quantity" },
+                { "MachinePackageCacheRetentionStrategy", "Quantities" },
                 { KnownVariables.EnabledFeatureToggles, "configurable-package-cache-retention" }
             };
         
@@ -97,7 +97,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             {
                 { "MachinePackageCacheRetentionQuantityOfPackagesToKeep", quantityOfPackagesToKeep },
                 { "MachinePackageCacheRetentionQuantityOfVersionsToKeep", quantityOfVersionsToKeep },
-                { "MachinePackageCacheRetentionStrategy", "Quantity" },
+                { "MachinePackageCacheRetentionStrategy", "Quantities" },
                 { KnownVariables.EnabledFeatureToggles, "configurable-package-cache-retention" }
             };
         
@@ -122,7 +122,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             {
                 { "MachinePackageCacheRetentionQuantityOfPackagesToKeep", "5" },
                 { "MachinePackageCacheRetentionQuantityOfVersionsToKeep", "5" },
-                { "MachinePackageCacheRetentionStrategy", "Quantity" },
+                { "MachinePackageCacheRetentionStrategy", "Quantities" },
                 { KnownVariables.EnabledFeatureToggles, "configurable-package-cache-retention" }
             };
             
@@ -139,7 +139,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             {
                 { "MachinePackageCacheRetentionQuantityOfPackagesToKeep", "10" },
                 { "MachinePackageCacheRetentionQuantityOfVersionsToKeep", null },
-                { "MachinePackageCacheRetentionStrategy", "Quantity" },
+                { "MachinePackageCacheRetentionStrategy", "Quantities" },
                 { KnownVariables.EnabledFeatureToggles, "configurable-package-cache-retention" }
             };
         
@@ -173,7 +173,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             {
                 { "MachinePackageCacheRetentionQuantityOfPackagesToKeep", "100" },
                 { "MachinePackageCacheRetentionQuantityOfVersionsToKeep", "100" },
-                { "MachinePackageCacheRetentionStrategy", "Quantity" }
+                { "MachinePackageCacheRetentionStrategy", "Quantities" }
             };
 
             var log = new InMemoryLog();

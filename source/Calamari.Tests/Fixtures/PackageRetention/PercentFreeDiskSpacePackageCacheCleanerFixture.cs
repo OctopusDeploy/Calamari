@@ -50,7 +50,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         {
             var variables = new CalamariVariables
             {
-                { "MachinePackageCacheRetentionStrategy", "Quantity" },
+                { "MachinePackageCacheRetentionStrategy", "Quantities" },
                 { KnownVariables.EnabledFeatureToggles, "configurable-package-cache-retention" }
             };
 
