@@ -265,6 +265,24 @@ function log_environment_information
 
 log_environment_information
 
+function hex_to_bin_fd() {
+    local hex="$1"
+    local fd="$2"
+    
+    # Process hex in reasonable chunks
+    for ((i=0; i<${#hex}; i+=100)); do
+        local chunk="${hex:$i:100}"
+        local cmd="printf '"
+        
+        for ((j=0; j<${#chunk}; j+=2)); do
+            cmd+="\\x${chunk:$j:2}"
+        done
+        
+        cmd+="'"
+        eval "$cmd" >&$fd
+    done
+}
+
 function decrypt_and_parse_variables {
     local encrypted="$1"
     local iv="$2"
@@ -287,7 +305,9 @@ function decrypt_and_parse_variables {
     local concatenated_hex
     concatenated_hex=$(printf "%s" "${hex_parts[@]}")
 
-    exec 3< <(echo -n "$concatenated_hex" | xxd -r -p)
+    exec 3<> <(:)
+    hex_to_bin_fd "$concatenated_hex" 3
+    exec 3<&3
 
     local idx
     for idx in "${!key_byte_lengths[@]}"; do
@@ -374,14 +394,15 @@ function report_kubernetes_manifest_file
 bashParametersArrayFeatureToggle=#### BashParametersArrayFeatureToggle ####
 
 if [ "$bashParametersArrayFeatureToggle" = true ]; then
-    if (( ${BASH_VERSINFO[0]:-0} > 4 || (${BASH_VERSINFO[0]:-0} == 4 && ${BASH_VERSINFO[1]:-0} > 2) )); then
-        if command -v xxd > /dev/null; then
+    if declare -gA test_array 2>/dev/null; then
+        if exec 3<> <(:); then
+            exec 3<&-
             decrypt_and_parse_variables "#### VARIABLESTRING.ENCRYPTED ####" "#### VARIABLESTRING.IV ####"
         else
-            echo "xxd is not installed, this is required to use octopus_parameters"
+            echo "Process substitution with exec is not supported. This is required to use octopus_parameters"
         fi
     else
-        echo "Bash version 4.2 or later is required to use octopus_parameters"
+        echo "Associative arrays are not supported in this Bash version. This is required to use octopus_parameters"
     fi
 fi
 
