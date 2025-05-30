@@ -312,7 +312,7 @@ namespace Calamari.Build
                 d.DependsOn(RestoreCalamariProjects)
                  .Executes(async () =>
                            {
-                               var globalSemaphore = new SemaphoreSlim(4);
+                               var globalSemaphore = new SemaphoreSlim(6);
                                var semaphores = new ConcurrentDictionary<string, SemaphoreSlim>();
 
                                var buildTasks = PackagesToPublish.Select(async calamariPackageMetadata =>
