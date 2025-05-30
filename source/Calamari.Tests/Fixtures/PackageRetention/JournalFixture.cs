@@ -9,7 +9,6 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.PackageRetention.Caching;
 using Calamari.Deployment.PackageRetention.Model;
-using Calamari.Deployment.PackageRetention.Repositories;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.PackageRetention.Repository;
 using FluentAssertions;
@@ -40,7 +39,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
                                                 journalRepository,
                                                 Substitute.For<ILog>(),
                                                 Substitute.For<ICalamariFileSystem>(),
-                                                Substitute.For<IRetentionAlgorithm>(),
+                                                Substitute.For<IEnumerable<IRetentionAlgorithm>>(),
                                                 Substitute.For<ISemaphoreFactory>()
                                                );
         }
@@ -169,7 +168,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             var thisJournal = new PackageJournal(thisRepository,
                                                  Substitute.For<ILog>(),
                                                  fileSystem,
-                                                 retentionAlgorithm,
+                                                 new []{ retentionAlgorithm },
                                                  Substitute.For<ISemaphoreFactory>());
 
             thisJournal.RegisterPackageUse(packageOne, new ServerTaskId("Deployment-1"), 1000);
@@ -200,7 +199,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             var thisJournal = new PackageJournal(thisRepository,
                                                  Substitute.For<ILog>(),
                                                  fileSystem,
-                                                 retentionAlgorithm,
+                                                 new []{ retentionAlgorithm },
                                                  Substitute.For<ISemaphoreFactory>());
 
             thisJournal.RegisterPackageUse(existingPackage, new ServerTaskId("Deployment-1"), 1 * 1024 * 1024); //Package is 1 MB
@@ -231,7 +230,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             var thisJournal = new PackageJournal(thisRepository,
                                                  Substitute.For<ILog>(),
                                                  fileSystem,
-                                                 retentionAlgorithm,
+                                                 new []{ retentionAlgorithm },
                                                  Substitute.For<ISemaphoreFactory>());
 
             thisJournal.RegisterPackageUse(existingPackage, new ServerTaskId("Deployment-1"), 1 * 1024 * 1024); //Package is 1 MB
@@ -265,7 +264,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             var testJournal = new PackageJournal(testJournalRepository,
                                                  Substitute.For<ILog>(),
                                                  Substitute.For<ICalamariFileSystem>(),
-                                                 Substitute.For<IRetentionAlgorithm>(),
+                                                 Substitute.For<IEnumerable<IRetentionAlgorithm>>(),
                                                  Substitute.For<ISemaphoreFactory>());
             testJournal.ExpireStaleLocks(TimeSpan.FromDays(14));
 
@@ -301,7 +300,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             var testJournal = new PackageJournal(testJournalRepository,
                                                  Substitute.For<ILog>(),
                                                  Substitute.For<ICalamariFileSystem>(),
-                                                 Substitute.For<IRetentionAlgorithm>(),
+                                                 Substitute.For<IEnumerable<IRetentionAlgorithm>>(),
                                                  Substitute.For<ISemaphoreFactory>());
             testJournal.ExpireStaleLocks(TimeSpan.FromDays(14));
 

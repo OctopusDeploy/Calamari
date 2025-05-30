@@ -92,8 +92,6 @@ namespace Calamari
 
             builder.RegisterInstance(new SystemSemaphoreManager()).As<ISemaphoreFactory>();
 
-            builder.RegisterModule<PackageRetentionModule>();
-
             TypeDescriptor.AddAttributes(typeof(ServerTaskId), new TypeConverterAttribute(typeof(TinyTypeTypeConverter<ServerTaskId>)));
 
             //Add decorator to commands with the RetentionLockingCommand attribute. Also need to include commands defined in external assemblies.

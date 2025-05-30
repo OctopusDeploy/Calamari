@@ -11,9 +11,11 @@ using Calamari.Integration.Packages.Download;
 
 namespace Calamari.Deployment.PackageRetention.Caching
 {
-    public class PercentFreeDiskSpacePackageCleaner : IRetentionAlgorithm
+    public class PercentFreeDiskSpacePackageCacheCleaner : IRetentionAlgorithm
     {
         const string PackageRetentionPercentFreeDiskSpace = "OctopusPackageRetentionPercentFreeDiskSpace";
+        const string PackageCacheRetentionStrategy = "MachinePackageCacheRetentionStrategy";
+        const MachinePackageCacheRetentionStrategy DefaultMachinePackageCacheRetentionStrategy = MachinePackageCacheRetentionStrategy.FreeSpace;
         const int DefaultPercentFreeDiskSpace = 20;
         const int FreeSpacePercentBuffer = 30;
         readonly ISortJournalEntries sortJournalEntries;
@@ -22,7 +24,7 @@ namespace Calamari.Deployment.PackageRetention.Caching
         readonly ICalamariFileSystem fileSystem;
         readonly IPackageDownloaderUtils packageUtils = new PackageDownloaderUtils();
 
-        public PercentFreeDiskSpacePackageCleaner(ICalamariFileSystem fileSystem, ISortJournalEntries sortJournalEntries, IVariables variables, ILog log)
+        public PercentFreeDiskSpacePackageCacheCleaner(ICalamariFileSystem fileSystem, ISortJournalEntries sortJournalEntries, IVariables variables, ILog log)
         {
             this.fileSystem = fileSystem;
             this.sortJournalEntries = sortJournalEntries;
@@ -32,10 +34,18 @@ namespace Calamari.Deployment.PackageRetention.Caching
 
         public IEnumerable<PackageIdentity> GetPackagesToRemove(IEnumerable<JournalEntry> journalEntries)
         {
+            var packageCacheRetentionStrategyString = variables.Get(PackageCacheRetentionStrategy);
+            var retentionStrategy = packageCacheRetentionStrategyString != null ? (MachinePackageCacheRetentionStrategy) Enum.Parse(typeof(MachinePackageCacheRetentionStrategy), packageCacheRetentionStrategyString) : DefaultMachinePackageCacheRetentionStrategy;
+            
+            if (retentionStrategy != MachinePackageCacheRetentionStrategy.FreeSpace)
+            {
+                return Array.Empty<PackageIdentity>();
+            }
+            
             if (!fileSystem.GetDiskFreeSpace(packageUtils.RootDirectory, out var totalNumberOfFreeBytes) || !fileSystem.GetDiskTotalSpace(packageUtils.RootDirectory, out var totalNumberOfBytes))
             {
                 log.Info("Unable to determine disk space. Skipping free space package retention.");
-                return new PackageIdentity[0];
+                return Array.Empty<PackageIdentity>();
             }
 
             var percentFreeDiskSpaceDesired = variables.GetInt32(PackageRetentionPercentFreeDiskSpace) ?? DefaultPercentFreeDiskSpace;
@@ -43,7 +53,7 @@ namespace Calamari.Deployment.PackageRetention.Caching
             if (totalNumberOfFreeBytes > desiredSpaceInBytes)
             {
                 log.VerboseFormat("Detected enough space for new packages. ({0}/{1})", totalNumberOfFreeBytes.ToFileSizeString(), totalNumberOfBytes.ToFileSizeString());
-                return new PackageIdentity[0];
+                return Array.Empty<PackageIdentity>();
             }
 
             var spaceToFree = (desiredSpaceInBytes - totalNumberOfFreeBytes) * (100 + FreeSpacePercentBuffer) / 100;
