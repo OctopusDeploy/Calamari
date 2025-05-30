@@ -46,12 +46,11 @@ namespace Calamari.Tests.Fixtures.PackageRetention
         }
         
         [Test]
-        public void WhenMachinePackageCacheStrategyIsNotFreeSpace_And_ConfigurableCacheRetentionIsEnabled_ReturnNoPackages()
+        public void WhenMachinePackageCacheStrategyIsNotFreeSpace_ReturnNoPackages()
         {
             var variables = new CalamariVariables
             {
                 { "MachinePackageCacheRetentionStrategy", "Quantities" },
-                { KnownVariables.EnabledFeatureToggles, "configurable-package-cache-retention" }
             };
 
             var fileSystem = new FileSystemThatHasSpace(500, 5000);
