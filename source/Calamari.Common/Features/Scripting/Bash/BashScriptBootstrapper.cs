@@ -168,7 +168,7 @@ namespace Calamari.Common.Features.Scripting.Bash
                 if (ScriptVariables.GetLibraryScriptModuleLanguage(variables, variableName) == ScriptSyntax.Bash)
                 {
                     var libraryScriptModuleName = ScriptVariables.GetLibraryScriptModuleName(variableName);
-                    var name = ScriptVariables.FormatScriptNameForPhysicalFilesystem(libraryScriptModuleName); 
+                    var name = ScriptVariables.FormatScriptName(libraryScriptModuleName); 
                     var moduleFileName = $"{name}.sh";
                     var moduleFilePath = Path.Combine(workingDirectory, moduleFileName);
                     Log.VerboseFormat("Writing script module '{0}' as bash script {1}. Import this via `source {1}`.", libraryScriptModuleName, moduleFileName, name);
