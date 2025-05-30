@@ -14,8 +14,8 @@ using Nuke.Common.IO;
 using Nuke.Common.ProjectModel;
 using Nuke.Common.Tooling;
 using Nuke.Common.Tools.DotNet;
-using Nuke.Common.Tools.GitVersion;
 using Nuke.Common.Tools.NuGet;
+using Nuke.Common.Tools.OctoVersion;
 using Nuke.Common.Utilities.Collections;
 using Octopus.Calamari.ConsolidatedPackage;
 using Serilog;
@@ -36,7 +36,7 @@ namespace Calamari.Build
 
         [Parameter("Run packing step in parallel")] readonly bool PackInParallel;
 
-        [Parameter] readonly DotNetVerbosity BuildVerbosity = DotNetVerbosity.Minimal;
+        [Parameter] readonly DotNetVerbosity BuildVerbosity = DotNetVerbosity.minimal;
 
         [Parameter] readonly bool SignBinaries;
 
@@ -68,7 +68,12 @@ namespace Calamari.Build
 
         [Parameter] readonly string? TargetRuntime;
 
-        [GitVersion] readonly GitVersion? GitVersionInfo;
+        const string CiBranchNameEnvVariable = "OCTOVERSION_CurrentBranch";
+        [Parameter($"The name of the current git branch. OctoVersion will use this to calculate the version number. This can be set via the environment variable {CiBranchNameEnvVariable}.", Name = CiBranchNameEnvVariable)]
+        string? BranchName { get; set; }
+
+        //this is instantiated in the constructor
+        public Lazy<OctoVersionInfo?> OctoVersionInfo;
 
         static readonly List<string> CalamariProjectsToSkipConsolidation = new() { "Calamari.CloudAccounts", "Calamari.Common", "Calamari.ConsolidateCalamariPackages" };
 
@@ -78,6 +83,18 @@ namespace Calamari.Build
 
         public Build()
         {
+            // Mimic the behaviour of this attribute, but lazily so we don't pay the OctoVersion cost when it isn't needed
+            OctoVersionInfo = new Lazy<OctoVersionInfo?>(() =>
+                                                        {
+                                                            var attribute = new OctoVersionAttribute { BranchMember = nameof(BranchName), Framework = "net8.0" };
+
+                                                            // the Attribute does all the work such as calling TeamCity.Instance?.SetBuildNumber for us
+                                                            var version = attribute.GetValue(null!, this);
+
+                                                            return version as OctoVersionInfo;
+                                                        }, LazyThreadSafetyMode.ExecutionAndPublication);
+            
+            
             NugetVersion = new Lazy<string>(GetNugetVersion);
 
             // This initialisation is required to ensure the build script can
@@ -89,7 +106,7 @@ namespace Calamari.Build
         static AbsolutePath BuildDirectory => RootDirectory / "build";
         static AbsolutePath ArtifactsDirectory => RootDirectory / "artifacts";
         static AbsolutePath PublishDirectory => RootDirectory / "publish";
-        static AbsolutePath LocalPackagesDirectory => RootDirectory / "../LocalPackages";
+        static AbsolutePath LocalPackagesDirectory => RootDirectory / ".."/"LocalPackages";
         static AbsolutePath ConsolidateCalamariPackagesProject => SourceDirectory / "Calamari.ConsolidateCalamariPackages.Tests" / "Calamari.ConsolidateCalamariPackages.Tests.csproj";
         static AbsolutePath ConsolidatedPackageDirectory => ArtifactsDirectory / "consolidated";
         static AbsolutePath LegacyCalamariDirectory => PublishDirectory / "Calamari.Legacy";
@@ -157,7 +174,7 @@ namespace Calamari.Build
                                                  .SetConfiguration(Configuration)
                                                  .EnableNoRestore()
                                                  .SetVersion(NugetVersion.Value)
-                                                 .SetInformationalVersion(GitVersionInfo?.InformationalVersion));
+                                                 .SetInformationalVersion(OctoVersionInfo.Value?.InformationalVersion));
                            });
 
         Target CalamariConsolidationTests =>
@@ -789,16 +806,16 @@ namespace Calamari.Build
         void SetOctopusServerCalamariVersion(string projectFile)
         {
             var text = File.ReadAllText(projectFile);
-            text = Regex.Replace(text, @"<PackageReference Include=""Calamari.Consolidated"" Version=""([\S])+""",
-                                 $"<PackageReference Include=\"Calamari.Consolidated\" Version=\"{NugetVersion.Value}\"");
+            text = Regex.Replace(text, @"<BundledCalamariVersion>([\S])+</BundledCalamariVersion>",
+                                 $"<BundledCalamariVersion>{NugetVersion.Value}</BundledCalamariVersion>");
             File.WriteAllText(projectFile, text);
         }
 
         string GetNugetVersion()
         {
             return AppendTimestamp
-                ? $"{GitVersionInfo?.NuGetVersion}-{DateTime.Now:yyyyMMddHHmmss}"
-                : GitVersionInfo?.NuGetVersion
+                ? $"{OctoVersionInfo.Value?.NuGetVersion}-{DateTime.Now:yyyyMMddHHmmss}"
+                : OctoVersionInfo.Value?.NuGetVersion
                   ?? throw new InvalidOperationException("Unable to retrieve valid Nuget Version");
         }
 
