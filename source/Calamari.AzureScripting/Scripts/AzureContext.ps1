@@ -62,11 +62,11 @@ function Execute-WithRetry([ScriptBlock] $command) {
 }
 
 function Get-AzureRmModuleInstalled {
-    return $null -ne (Get-Module -ListAvailable -Name "AzureRM.Profile" -ErrorAction SilentlyContinue)
+    return $null -ne (Get-Command "Login-AzureRmAccount" -Module 'AzureRM.Profile' -ErrorAction SilentlyContinue)
 }
 
 function Get-AzModuleInstalled {
-    return $null -ne (Get-Module -ListAvailable -Name "Az.Accounts" -ErrorAction SilentlyContinue)
+    return $null -ne (Get-Command "Connect-AzAccount" -Module 'Az.Accounts' -ErrorAction SilentlyContinue)
 }
 
 function Get-RunningInPowershellCore {
@@ -113,7 +113,7 @@ function Initialize-AzureRmContext {
 function Initialize-AzContext {
     $tempWarningPreference = $WarningPreference
     $WarningPreference = 'SilentlyContinue'
-    if (-Not(Get-Command "Disable-AzureRMContextAutosave" -errorAction SilentlyContinue))
+    if (-Not(Get-Command "Disable-AzureRMContextAutosave" -Module 'AzureRM.Profile' -errorAction SilentlyContinue))
     {
         $WarningPreference = $tempWarningPreference
         Write-Verbose "Enabling AzureRM aliasing"
