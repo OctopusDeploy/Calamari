@@ -122,7 +122,7 @@ namespace Calamari.Common.Features.Scripting.Python
                 if (ScriptVariables.GetLibraryScriptModuleLanguage(variables, variableName) == ScriptSyntax.Python)
                 {
                     var libraryScriptModuleName = ScriptVariables.GetLibraryScriptModuleName(variableName);
-                    var name = ScriptVariables.FormatScriptNameForPhysicalFilesystem(libraryScriptModuleName);
+                    var name = ScriptVariables.FormatScriptName(libraryScriptModuleName);
                     var moduleFileName = $"{name}.py";
                     Log.VerboseFormat("Writing script module '{0}' as python module {1}. Import this module via `import {2}`.", libraryScriptModuleName, moduleFileName, name);
                     var moduleFilePath = Path.Combine(workingDirectory, moduleFileName);
