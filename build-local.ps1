@@ -23,7 +23,24 @@ Write-Host "
 ##################################################################################################
 " -ForegroundColor Cyan
 
-./build.ps1 -BuildVerbosity Minimal -Verbosity Normal -PackInParallel -AppendTimestamp -SetOctopusServerVersion -TargetFramework "$Framework" -TargetRuntime "$Runtime"
+$branch = & git branch --show-current
+
+Write-Host "Branch: $branch"
+
+$now = Get-Date
+$year = $now.Year
+$numericVersion = "$year.99.0"
+
+$sanitizedBranch = $branch.Replace("/","-").Replace("_","-")
+
+Write-Host "Numeric version: $numericVersion"
+Write-Host "Sanitized branch: $sanitizedBranch"
+
+$env:OCTOVERSION_MajorMinorPatch= $numericVersion
+$env:OCTOVERSION_PreReleaseTagWithDash = "-$sanitizedBranch"
+$env:OCTOVERSION_FullSemVer = "$numericVersion-$sanitizedBranch"
+
+./build.ps1 -BuildVerbosity Minimal -Verbosity Normal -PackInParallel --Append-Timestamp -SetOctopusServerVersion -TargetFramework "$Framework" -TargetRuntime "$Runtime"
 
 Write-Host "
 ########################################################################################
