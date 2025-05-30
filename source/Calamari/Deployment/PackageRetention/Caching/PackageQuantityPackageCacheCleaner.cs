@@ -59,7 +59,8 @@ namespace Calamari.Deployment.PackageRetention.Caching
             // Package retention has currently only been implemented for number of items
             else if (packageUnit == MachinePackageCacheRetentionUnit.Items && quantityOfPackagesToKeep >= 0 && quantityOfPackagesToKeep < orderedJournalEntriesByPackageId.Length)
             {
-                log.VerboseFormat("Cache size is greater than the maximum package quantity to keep {0}. {1} packages will be removed.", quantityOfPackagesToKeep, orderedJournalEntriesByPackageId.Length - quantityOfPackagesToKeep);
+                var numberOfPackagesToRemove = orderedJournalEntriesByPackageId.Length - quantityOfPackagesToKeep;
+                log.VerboseFormat("Cache size is greater than the maximum package quantity to keep {0}. {1} package{2} will be removed.", quantityOfPackagesToKeep, numberOfPackagesToRemove, numberOfPackagesToRemove == 1 ? "" : "s");
 
                 packagesToRemoveById = orderedJournalEntriesByPackageId.Skip(quantityOfPackagesToKeep)
                                                             .SelectMany(entry => entry.Value.Select(v => v.Package)).ToList();
@@ -76,10 +77,12 @@ namespace Calamari.Deployment.PackageRetention.Caching
                     packagesToRemoveByVersion.AddRange(packageWithVersions.Value.Skip(quantityOfVersionsToKeep));
                 }
             }
+
+            var numberOfVersionsToRemove = packagesToRemoveByVersion.Except(packagesToRemoveById).Count();
             
-            if (packagesToRemoveByVersion.Any())
+            if (numberOfVersionsToRemove > 0)
             {
-                log.VerboseFormat("Found cached packages with more versions than the maximum version quantity to keep {0}. {1} package versions will be removed.", quantityOfVersionsToKeep, packagesToRemoveByVersion.Count);
+                log.VerboseFormat("Found cached packages with more versions than the maximum version quantity to keep {0}. {1} package version{2} will be removed.", quantityOfVersionsToKeep, numberOfVersionsToRemove, numberOfVersionsToRemove == 1 ? "" : "s");
             }
             
             var packagesToRemove = packagesToRemoveById.Union(packagesToRemoveByVersion).ToArray();
