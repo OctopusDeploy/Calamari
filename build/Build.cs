@@ -697,7 +697,7 @@ namespace Calamari.Build
                                .DependsOn(Pack)
                                .DependsOn(PackCalamariConsolidatedNugetPackage);
 
-        public static int Main() => Execute<Build>(x => true ? x.BuildCi : x.BuildLocal);
+        public static int Main() => Execute<Build>(x => IsServerBuild ? x.BuildCi : x.BuildLocal);
 
         async Task RunPackActions(List<Action> actions)
         {
@@ -724,7 +724,7 @@ namespace Calamari.Build
                                .SetVerbosity(BuildVerbosity)
                                .SetRuntime(runtimeId)
                                .SetVersion(version)
-                          //.EnableSelfContained()
+                               .EnableSelfContained()
                          );
 
             if (WillSignBinaries)
