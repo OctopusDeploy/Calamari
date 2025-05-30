@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
@@ -35,7 +34,7 @@ namespace Calamari.Deployment.PackageRetention.Caching
             var packageCacheRetentionStrategyString = variables.Get(PackageCacheRetentionStrategy);
             var retentionStrategy = packageCacheRetentionStrategyString != null ? (MachinePackageCacheRetentionStrategy) Enum.Parse(typeof(MachinePackageCacheRetentionStrategy), packageCacheRetentionStrategyString) : DefaultMachinePackageCacheRetentionStrategy;
             
-            if (!OctopusFeatureToggles.ConfigurablePackageCacheRetentionFeatureToggle.IsEnabled(variables) || retentionStrategy != MachinePackageCacheRetentionStrategy.Quantities)
+            if (retentionStrategy != MachinePackageCacheRetentionStrategy.Quantities)
             {
                 return Array.Empty<PackageIdentity>();
             }
