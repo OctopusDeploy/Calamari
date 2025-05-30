@@ -193,7 +193,7 @@ namespace Calamari.Build
             d =>
                 d.DependsOn(Compile)
                  .DependsOn(PublishAzureWebAppNetCoreShim)
-                 .Executes(() =>
+                 .Executes(async () =>
                            {
                                if (!OperatingSystem.IsWindows())
                                    Log.Warning("Building Calamari on a non-windows machine will result "
@@ -205,7 +205,7 @@ namespace Calamari.Build
                                                RootProjectName, $"{RootProjectName}.{FixedRuntimes.Cloud}");
 
                                var nugetVersion = NugetVersion.Value;
-                               var outputDirectory = DoPublish(RootProjectName,
+                               var outputDirectory = await DoPublish(RootProjectName,
                                                                OperatingSystem.IsWindows() ? Frameworks.Net462 : Frameworks.Net60,
                                                                nugetVersion);
                                if (OperatingSystem.IsWindows())
@@ -218,7 +218,7 @@ namespace Calamari.Build
                                                + "This is required for providing .Net Framework executables for legacy Target Operating Systems");
                                }
 
-                               DoPublish(RootProjectName,
+                               var publishCloudTask = DoPublish(RootProjectName,
                                          OperatingSystem.IsWindows() ? Frameworks.Net462 : Frameworks.Net60,
                                          nugetVersion,
                                          FixedRuntimes.Cloud);
@@ -226,8 +226,24 @@ namespace Calamari.Build
                                // Create the self-contained Calamari packages for each runtime ID defined in Calamari.csproj
                                var semaphores = new ConcurrentDictionary<string, SemaphoreSlim>();
 
-                               foreach (var rid in GetRuntimeIdentifiers(Solution.GetProject(RootProjectName)!)!)
-                                   DoPublish(RootProjectName, Frameworks.Net60, nugetVersion, rid);
+                               var publishTasks = GetRuntimeIdentifiers(Solution.GetProject(RootProjectName)!)
+                                   .Select(async rid =>
+                                           {
+                                               var semaphore = semaphores.GetOrAdd(RootProjectName, _ => new SemaphoreSlim(1, 5));
+
+                                               await semaphore.WaitAsync();
+                                               try
+                                               {
+                                                   await DoPublish(RootProjectName, Frameworks.Net60, nugetVersion, rid);
+                                               }
+                                               finally
+                                               {
+                                                   semaphore.Release();
+                                               }
+                                           });
+
+                               await publishCloudTask;
+                               await Task.WhenAll(publishTasks);
                            });
 
         Target GetCalamariFlavourProjectsToPublish =>
@@ -568,7 +584,7 @@ namespace Calamari.Build
                                foreach (var rid in GetRuntimeIdentifiers(Solution.GetProject("Calamari.Tests")!)!)
                                    actions.Add(() =>
                                                {
-                                                   var publishedLocation = DoPublish("Calamari.Tests", Frameworks.Net60, nugetVersion, rid);
+                                                   var publishedLocation = DoPublish("Calamari.Tests", Frameworks.Net60, nugetVersion, rid).GetAwaiter().GetResult();
                                                    var zipName = $"Calamari.Tests.{rid}.{nugetVersion}.zip";
                                                    File.Copy(RootDirectory / "global.json", publishedLocation / "global.json");
                                                    CompressionTasks.Compress(publishedLocation, ArtifactsDirectory / zipName);
@@ -705,7 +721,7 @@ namespace Calamari.Build
             await Task.WhenAll(tasks);
         }
 
-        AbsolutePath DoPublish(string project, string framework, string version, string? runtimeId = null)
+        async Task<AbsolutePath> DoPublish(string project, string framework, string version, string? runtimeId = null)
         {
             var publishedTo = PublishDirectory / project / framework;
 
@@ -715,7 +731,7 @@ namespace Calamari.Build
                 runtimeId = runtimeId != "portable" && runtimeId != "Cloud" ? runtimeId : null;
             }
 
-            DotNetPublish(s =>
+            await Task.Run(() => DotNetPublish(s =>
                               s.SetProject(Solution.GetProject(project))
                                .SetConfiguration(Configuration)
                                .SetOutput(publishedTo)
@@ -725,13 +741,15 @@ namespace Calamari.Build
                                .SetRuntime(runtimeId)
                                .SetVersion(version)
                                .EnableSelfContained()
+                               )
                          );
 
             if (WillSignBinaries)
             {
-                Signing.SignAndTimestampBinaries(publishedTo, AzureKeyVaultUrl, AzureKeyVaultAppId,
+                await Task.Run(() =>
+                    Signing.SignAndTimestampBinaries(publishedTo, AzureKeyVaultUrl, AzureKeyVaultAppId,
                                                  AzureKeyVaultAppSecret, AzureKeyVaultTenantId, AzureKeyVaultCertificateName,
-                                                 SigningCertificatePath, SigningCertificatePassword);
+                                                 SigningCertificatePath, SigningCertificatePassword));
             }
 
             return publishedTo;
