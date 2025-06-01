@@ -386,17 +386,14 @@ namespace Calamari.Tests.Fixtures.Bash
         [RequiresBashDotExeIfOnWindows]
         public void ShouldBeAbleToEnumerateLargeVariableSetsEfficiently(FeatureToggle? featureToggle)
         {
-            // Create a dictionary with 10,000 variables with diverse characters
             var variables = new Dictionary<string, string>();
-            var random = new Random(42); // Seed for reproducibility
+            var random = new Random(42);
 
-            // Generate 10,000 unique variables with diverse content
             for (int i = 0; i < 10000; i++)
             {
                 string key = $"Key{i}_{Guid.NewGuid().ToString("N")}";
                 string value = $"Value{i}_{Convert.ToBase64String(Guid.NewGuid().ToByteArray())}";
 
-                // Mix in some random Unicode characters
                 if (random.Next(5) == 0)
                 {
                     key += (char)random.Next(0x1F600, 0x1F64F); // Emoji range
@@ -407,7 +404,6 @@ namespace Calamari.Tests.Fixtures.Bash
             }
 
             var sw = Stopwatch.StartNew();
-            // Run the script with all these variables
             var (output, _) = RunScript("enumerate-variables.sh",
                                         variables.AddFeatureToggleToDictionary(new List<FeatureToggle?> { featureToggle }));
             sw.Stop();
@@ -426,12 +422,10 @@ namespace Calamari.Tests.Fixtures.Bash
                     return;
                 }
 
-                // Get all output lines that start with "Key: "
                 var outputLines = output.CapturedOutput.Infos
                                         .Where(line => line.StartsWith("Key: "))
                                         .ToList();
 
-                // Verify count matches
                 Assert.That(outputLines.Count,
                             Is.EqualTo(variables.Count),
                             "Not all variables were processed");
