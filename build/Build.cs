@@ -354,7 +354,7 @@ namespace Calamari.Build
                 d.DependsOn(BuildCalamariProjects)
                  .Executes(async () =>
                            {
-                               var semaphore = new SemaphoreSlim(3);
+                               var semaphore = new SemaphoreSlim(4);
                                var outputPaths = new ConcurrentBag<AbsolutePath?>();
 
                                var publishTasks = PackagesToPublish.Select(async package =>
