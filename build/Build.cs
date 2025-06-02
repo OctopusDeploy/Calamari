@@ -34,8 +34,6 @@ namespace Calamari.Build
 
         [Required] readonly Solution Solution = SolutionModelTasks.ParseSolution(SourceDirectory / "Calamari.sln");
 
-        [Parameter("Run packing step in parallel")] readonly bool PackInParallel;
-
         [Parameter] readonly DotNetVerbosity BuildVerbosity = DotNetVerbosity.minimal;
 
         [Parameter] readonly bool SignBinaries;
@@ -309,7 +307,7 @@ namespace Calamari.Build
                 d.DependsOn(RestoreCalamariProjects)
                  .Executes(async () =>
                            {
-                               var globalSemaphore = new SemaphoreSlim(4);
+                               var globalSemaphore = new SemaphoreSlim(3);
                                var semaphores = new ConcurrentDictionary<string, SemaphoreSlim>();
 
                                var buildTasks = PackagesToPublish.Select(async calamariPackageMetadata =>
@@ -356,7 +354,7 @@ namespace Calamari.Build
                 d.DependsOn(BuildCalamariProjects)
                  .Executes(async () =>
                            {
-                               var semaphore = new SemaphoreSlim(4);
+                               var semaphore = new SemaphoreSlim(3);
                                var outputPaths = new ConcurrentBag<AbsolutePath?>();
 
                                var publishTasks = PackagesToPublish.Select(async package =>
@@ -696,16 +694,8 @@ namespace Calamari.Build
 
         async Task RunPackActions(List<Action> actions)
         {
-            if (PackInParallel)
-            {
                 var tasks = actions.Select(Task.Run).ToList();
                 await Task.WhenAll(tasks);
-            }
-            else
-            {
-                foreach (var action in actions)
-                    action();
-            }
         }
 
         AbsolutePath DoPublish(string project, string framework, string version, string? runtimeId = null)
