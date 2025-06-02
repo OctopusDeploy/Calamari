@@ -586,7 +586,9 @@ namespace Calamari.Build
 
         Target Pack =>
             d =>
-                d.DependsOn(PackTests, PackBinaries, PackLegacyCalamari);
+                d.DependsOn(PackTests)
+                 .DependsOn(PackBinaries)
+                 .DependsOn(PackLegacyCalamari);
 
         Target CopyToLocalPackages =>
             d =>
