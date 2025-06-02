@@ -30,7 +30,9 @@ namespace Calamari.Kubernetes.ResourceStatus
         {
             //discover resources in the manifests
             var manifests = manifestRetriever.GetManifests(workingDirectory).ToList();
-            var definedResources = KubernetesYaml.GetDefinedResources(manifests, namespaceResolver, variables, log).ToList();
+            var definedResources = manifests
+                                   .SelectMany(m => Kubernetes.ManifestParser.GetResourcesFromManifest(m, namespaceResolver, variables, log))
+                                   .ToList();
 
             //look for the computed configmaps and secrets
             var defaultNamespace = namespaceResolver.GetImplicitNamespace(variables);

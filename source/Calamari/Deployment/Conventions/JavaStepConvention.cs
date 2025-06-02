@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Calamari.Commands.Support;
 using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Deployment.Features.Java;
 using Calamari.Deployment.Features.Java.Actions;
 
@@ -11,11 +12,13 @@ namespace Calamari.Deployment.Conventions
     {
         readonly string actionType;
         readonly JavaRunner javaRunner;
+        readonly ILog log;
 
-        public JavaStepConvention(string actionType, JavaRunner javaRunner)
+        public JavaStepConvention(string actionType, JavaRunner javaRunner, ILog log)
         {
             this.actionType = actionType;
             this.javaRunner = javaRunner;
+            this.log = log;
         }
 
         readonly Dictionary<string, Type> javaStepTypes = new Dictionary<string, Type>()
@@ -31,7 +34,7 @@ namespace Calamari.Deployment.Conventions
         {
             if (javaStepTypes.TryGetValue(actionType, out var stepType))
             {
-                var javaStep = (JavaAction)Activator.CreateInstance(stepType, new object[] {javaRunner});
+                var javaStep = (JavaAction)Activator.CreateInstance(stepType, new object[] {javaRunner, log});
                 javaStep.Execute(deployment);
             }
             else
