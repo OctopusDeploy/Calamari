@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using Calamari.Common.Features.Processes.Semaphores;
@@ -40,7 +41,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             var journal = new PackageJournal(journalRepo,
                                              Substitute.For<ILog>(),
                                              new TestCalamariPhysicalFileSystem(),
-                                             Substitute.For<IRetentionAlgorithm>(),
+                                             Substitute.For<IEnumerable<IRetentionAlgorithm>>(),
                                              new SystemSemaphoreManager());
             var serverTask = new ServerTaskId("ServerTasks-1");
             for (var i = 0; i < 50000; i++)
