@@ -129,14 +129,9 @@ function new_octopusartifact
       exit $?
   fi
 
-  pth=$1
-  ofn=$2
+  pth=$(cd "$(dirname "$1")"; pwd -P)/$(basename "$1")
+  ofn=${2:-$(basename "$pth")}
   len=$(wc -c < $1 )
-
-  if [ -z "$ofn" ]
-  then
-      ofn=`basename "$pth"`
-  fi
 
   echo "##octopus[stdout-verbose]"
   echo "Artifact $ofn will be collected from $pth after this step completes"
