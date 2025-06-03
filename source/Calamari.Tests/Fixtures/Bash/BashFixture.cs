@@ -50,10 +50,14 @@ namespace Calamari.Tests.Fixtures.Bash
         {
             var (output, _) = RunScript("create-artifact.sh", new Dictionary<string, string>().AddFeatureToggleToDictionary(new List<FeatureToggle?>{ featureToggle }));
 
+            var expectedArtifactServiceMessage = IsRunningOnUnixLikeEnvironment
+                ? "##octopus[createArtifact path='L29wdC9UZWFtQ2l0eS9CdWlsZEFnZW50L3dvcmsvNjI3Mjg2OTJjN2MzNTIwMC9CaW5hcmllcy9zdWJkaXIvYW5vdGhlcmRpci9teWZpbGU=' name='bXlmaWxl' length='MA==']"
+                : "##octopus[createArtifact path='L21udC9kL2J1aWxkQWdlbnQvd29ya0Rpci82MjcyODY5MmM3YzM1MjAwL0JpbmFyaWVzL3N1YmRpci9hbm90aGVyZGlyL215ZmlsZQ==' name='bXlmaWxl' length='MA==']\n";
+
             Assert.Multiple(() =>
                             {
                                 output.AssertSuccess();
-                                output.AssertOutput("##octopus[createArtifact path='L29wdC9UZWFtQ2l0eS9CdWlsZEFnZW50L3dvcmsvNjI3Mjg2OTJjN2MzNTIwMC9CaW5hcmllcy9zdWJkaXIvYW5vdGhlcmRpci9teWZpbGU=' name='bXlmaWxl' length='MA==']");
+                                output.AssertOutput(expectedArtifactServiceMessage);
                             });
         }
 

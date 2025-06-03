@@ -635,8 +635,6 @@ namespace Calamari.Tests.Fixtures.PowerShell
             AssertPowerShellEdition(output);
         }
 
-        static bool IsRunningOnUnixLikeEnvironment => CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac;
-
         protected CalamariResult InvokeCalamariForPowerShell(Action<CommandLine> buildCommand, CalamariVariables variables = null)
         {
             var variableDictionary = variables ?? new CalamariVariables();
