@@ -53,7 +53,7 @@ namespace Calamari.Tests.Fixtures.Bash
             Assert.Multiple(() =>
                             {
                                 output.AssertSuccess();
-                                output.AssertOutput("##octopus[createArtifact path='Li9zdWJkaXIvYW5vdGhlcmRpci9teWZpbGU=' name='bXlmaWxl' length='MA==']");
+                                output.AssertOutput("##octopus[createArtifact path='L29wdC9UZWFtQ2l0eS9CdWlsZEFnZW50L3dvcmsvNjI3Mjg2OTJjN2MzNTIwMC9CaW5hcmllcy9zdWJkaXIvYW5vdGhlcmRpci9teWZpbGU=' name='bXlmaWxl' length='MA==']");
                             });
         }
 
