@@ -320,7 +320,7 @@ namespace Calamari.Build
 
                                                                              var projectName = calamariPackageMetadata.Project?.Name ?? throw new Exception("Could not find project name");
                                                                              var projectSemaphore = semaphores.GetOrAdd(projectName, _ => new SemaphoreSlim(1, 1));
-                                                                             var architectureSemaphore = semaphores.GetOrAdd(calamariPackageMetadata.Architecture ?? throw new Exception("Unknown Architecture"), _ => new SemaphoreSlim(1, 1));
+                                                                             var architectureSemaphore = semaphores.GetOrAdd(calamariPackageMetadata.Architecture ?? throw new Exception($"Unknown Architecture {calamariPackageMetadata.Project?.Name}"), _ => new SemaphoreSlim(1, 1));
 
                                                                              await globalSemaphore.WaitAsync();
                                                                              await projectSemaphore.WaitAsync();
