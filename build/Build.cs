@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
@@ -32,8 +33,6 @@ namespace Calamari.Build
         [Parameter("Configuration to build - Default is 'Debug' (local) or 'Release' (server)")] readonly Configuration Configuration = IsLocalBuild ? Configuration.Debug : Configuration.Release;
 
         [Required] readonly Solution Solution = SolutionModelTasks.ParseSolution(SourceDirectory / "Calamari.sln");
-
-        [Parameter("Run packing step in parallel")] readonly bool PackInParallel;
 
         [Parameter] readonly DotNetVerbosity BuildVerbosity = DotNetVerbosity.minimal;
 
@@ -76,7 +75,8 @@ namespace Calamari.Build
 
         static readonly List<string> CalamariProjectsToSkipConsolidation = new() { "Calamari.CloudAccounts", "Calamari.Common", "Calamari.ConsolidateCalamariPackages" };
 
-        List<Task> SignDirectoriesTasks = new();
+        CalamariPackageMetadata[] PackagesToPublish = new CalamariPackageMetadata[0];
+        List<Project> CalamariProjects = new();
         List<Task> ProjectCompressionTasks = new();
 
         public Build()
@@ -221,15 +221,14 @@ namespace Calamari.Build
                                          nugetVersion,
                                          FixedRuntimes.Cloud);
 
-                               // Create the self-contained Calamari packages for each runtime ID defined in Calamari.csproj
                                foreach (var rid in GetRuntimeIdentifiers(Solution.GetProject(RootProjectName)!)!)
                                    DoPublish(RootProjectName, Frameworks.Net60, nugetVersion, rid);
                            });
 
-        Target PublishCalamariFlavourProjects =>
+        Target GetCalamariFlavourProjectsToPublish =>
             d =>
                 d.DependsOn(Compile)
-                 .Executes(async () =>
+                 .Executes(() =>
                            {
                                var flavours = GetCalamariFlavours();
                                var migratedCalamariFlavoursTests = flavours.Select(f => $"{f}.Tests");
@@ -246,90 +245,175 @@ namespace Calamari.Build
                                                       .Concat(calamariScriptingProjectAndTest)
                                                       .ToList();
 
-                               await PublishCalamariProjects(calamariProjects);
+                               CalamariProjects = calamariProjects;
+
+                               // All cross-platform Target Frameworks contain dots, all NetFx Target Frameworks don't
+                               // eg: net40, net452, net48 vs netcoreapp3.1, net5.0, net6.0
+                               bool IsCrossPlatform(string targetFramework) => targetFramework.Contains('.');
+
+                               var calamariPackages =
+                                   calamariProjects.SelectMany(project => project.GetTargetFrameworks()!, (p, f) => new
+                                                   {
+                                                       Project = p,
+                                                       Framework = f,
+                                                       CrossPlatform = IsCrossPlatform(f)
+                                                   })
+                                                   .ToList();
+
+                               // for NetFx target frameworks, we use "netfx" as the architecture, and ignore defined runtime identifiers
+                               var netFxPackages =
+                                   calamariPackages.Where(p => !p.CrossPlatform)
+                                                   .Select(packageToBuild => new CalamariPackageMetadata()
+                                                   {
+                                                       Project = packageToBuild.Project,
+                                                       Framework = packageToBuild.Framework,
+                                                       Architecture = null,
+                                                       IsCrossPlatform = packageToBuild.CrossPlatform
+                                                   });
+
+                               // for cross-platform frameworks, we combine each runtime identifier with each target framework
+                               var crossPlatformPackages =
+                                   calamariPackages.Where(p => p.CrossPlatform)
+                                                   .Where(p => string.IsNullOrWhiteSpace(TargetFramework) || p.Framework == TargetFramework)
+                                                   .SelectMany(packageToBuild => GetRuntimeIdentifiers(packageToBuild.Project) ?? Enumerable.Empty<string>(),
+                                                               (packageToBuild, runtimeIdentifier) => new CalamariPackageMetadata()
+                                                               {
+                                                                   Project = packageToBuild.Project,
+                                                                   Framework = packageToBuild.Framework,
+                                                                   Architecture = runtimeIdentifier,
+                                                                   IsCrossPlatform = packageToBuild.CrossPlatform
+                                                               })
+                                                   .Distinct(t => new { t.Project?.Name, t.Architecture, t.Framework });
+
+                               PackagesToPublish = crossPlatformPackages.Concat(netFxPackages).ToArray();
                            });
 
-        async Task PublishCalamariProjects(List<Project> projects)
-        {
-            // All cross-platform Target Frameworks contain dots, all NetFx Target Frameworks don't
-            // eg: net40, net452, net48 vs netcoreapp3.1, net5.0, net6.0
-            bool IsCrossPlatform(string targetFramework) => targetFramework.Contains('.');
+        Target RestoreCalamariProjects =>
+            d =>
+                d.DependsOn(GetCalamariFlavourProjectsToPublish)
+                 .Executes(() =>
+                           {
+                               PackagesToPublish
+                                   .Select(p => p.Architecture)
+                                   .Distinct()
+                                   .ForEach(rid => DotNetRestore(s =>
+                                                                     s.SetProjectFile(Solution)
+                                                                      .SetProperty("DisableImplicitNuGetFallbackFolder", true)
+                                                                      .SetRuntime(rid)));
+                           });
 
-            var calamariPackages =
-                projects.SelectMany(project => project.GetTargetFrameworks()!, (p, f) => new
-                        {
-                            Project = p,
-                            Framework = f,
-                            CrossPlatform = IsCrossPlatform(f)
-                        })
-                        .ToList();
+        Target BuildCalamariProjects =>
+            d =>
+                d.DependsOn(RestoreCalamariProjects)
+                 .Executes(async () =>
+                           {
+                               var globalSemaphore = new SemaphoreSlim(3);
+                               var semaphores = new ConcurrentDictionary<string, SemaphoreSlim>();
 
-            // for NetFx target frameworks, we use "netfx" as the architecture, and ignore defined runtime identifiers
-            var netFxPackages =
-                calamariPackages.Where(p => !p.CrossPlatform)
-                                .Select(packageToBuild => new CalamariPackageMetadata()
-                                {
-                                    Project = packageToBuild.Project,
-                                    Framework = packageToBuild.Framework,
-                                    Architecture = null,
-                                    IsCrossPlatform = packageToBuild.CrossPlatform
-                                });
+                               var buildTasks = PackagesToPublish.Select(async calamariPackageMetadata =>
+                                                                         {
+                                                                             if (!OperatingSystem.IsWindows() && !calamariPackageMetadata.IsCrossPlatform)
+                                                                             {
+                                                                                 Log.Warning($"Not Building {calamariPackageMetadata.Framework}: can only publish netfx on a Windows OS");
+                                                                                 return;
+                                                                             }
 
-            // for cross-platform frameworks, we combine each runtime identifier with each target framework
-            var crossPlatformPackages =
-                calamariPackages.Where(p => p.CrossPlatform)
-                                .Where(p => string.IsNullOrWhiteSpace(TargetFramework) || p.Framework == TargetFramework)
-                                .SelectMany(packageToBuild => GetRuntimeIdentifiers(packageToBuild.Project) ?? Enumerable.Empty<string>(),
-                                            (packageToBuild, runtimeIdentifier) => new CalamariPackageMetadata()
-                                            {
-                                                Project = packageToBuild.Project,
-                                                Framework = packageToBuild.Framework,
-                                                Architecture = runtimeIdentifier,
-                                                IsCrossPlatform = packageToBuild.CrossPlatform
-                                            })
-                                .Distinct(t => new { t.Project?.Name, t.Architecture, t.Framework });
+                                                                             var projectName = calamariPackageMetadata.Project?.Name ?? throw new Exception("Could not find project name");
+                                                                             var projectSemaphore = semaphores.GetOrAdd(projectName, _ => new SemaphoreSlim(1, 1));
 
-            var packagesToPublish = crossPlatformPackages.Concat(netFxPackages).ToArray();
+                                                                             // for NetFx target frameworks, we use "netfx" as the architecture, and ignore defined runtime identifiers, here we'll just block on all netfx
+                                                                             var architectureSemaphore = semaphores.GetOrAdd(calamariPackageMetadata.Architecture ?? "Unknown Architecture", _ => new SemaphoreSlim(1, 1));
 
-            packagesToPublish.ForEach(PublishPackage);
-            await Task.WhenAll(SignDirectoriesTasks);
+                                                                             await globalSemaphore.WaitAsync();
+                                                                             await projectSemaphore.WaitAsync();
+                                                                             await architectureSemaphore.WaitAsync();
+                                                                             try
+                                                                             {
+                                                                                 Log.Information($"Building {calamariPackageMetadata.Project?.Name} for framework '{calamariPackageMetadata.Framework}' and arch '{calamariPackageMetadata.Architecture}'");
 
-            StageLegacyCalamariAssemblies(packagesToPublish);
+                                                                                 await Task.Run(() =>
+                                                                                                    DotNetBuild(s =>
+                                                                                                                    s.SetProjectFile(calamariPackageMetadata.Project)
+                                                                                                                     .SetConfiguration(Configuration)
+                                                                                                                     .SetFramework(calamariPackageMetadata.Framework)
+                                                                                                                     .EnableNoRestore()
+                                                                                                                     .SetRuntime(calamariPackageMetadata.Architecture)
+                                                                                                                     .EnableSelfContained()));
+                                                                             }
+                                                                             finally
+                                                                             {
+                                                                                 projectSemaphore.Release();
+                                                                                 architectureSemaphore.Release();
+                                                                                 globalSemaphore.Release();
+                                                                             }
+                                                                         });
 
-            projects.ForEach(CompressCalamariProject);
-            await Task.WhenAll(ProjectCompressionTasks);
-        }
+                               await Task.WhenAll(buildTasks);
+                           });
 
-        void PublishPackage(CalamariPackageMetadata calamariPackageMetadata)
+        Target PublishCalamariProjects =>
+            d =>
+                d.DependsOn(BuildCalamariProjects)
+                 .Executes(async () =>
+                           {
+                               var semaphore = new SemaphoreSlim(4);
+                               var outputPaths = new ConcurrentBag<AbsolutePath?>();
+
+                               var publishTasks = PackagesToPublish.Select(async package =>
+                                                                           {
+                                                                               await semaphore.WaitAsync();
+                                                                               try
+                                                                               {
+                                                                                   var outputPath = await PublishPackageAsync(package);
+                                                                                   outputPaths.Add(outputPath);
+                                                                               }
+                                                                               finally
+                                                                               {
+                                                                                   semaphore.Release();
+                                                                               }
+                                                                           });
+
+                               await Task.WhenAll(publishTasks);
+
+                               // Sign and compress tasks
+                               var signTasks = outputPaths
+                                               .Where(output => output != null && !output.ToString().Contains("Tests"))
+                                               .Select(output => Task.Run(() => SignDirectory(output!)))
+                                               .ToList();
+
+                               await Task.WhenAll(signTasks);
+                               StageLegacyCalamariAssemblies(PackagesToPublish);
+                               CalamariProjects.ForEach(CompressCalamariProject);
+                               await Task.WhenAll(ProjectCompressionTasks);
+                           });
+
+        async Task<AbsolutePath?> PublishPackageAsync(CalamariPackageMetadata calamariPackageMetadata)
         {
             if (!OperatingSystem.IsWindows() && !calamariPackageMetadata.IsCrossPlatform)
             {
-                Log.Warning($"Not building {calamariPackageMetadata.Framework}: can only build netfx on a Windows OS");
-                return;
+                Log.Warning($"Not publishing {calamariPackageMetadata.Framework}: can only publish netfx on a Windows OS");
+                return null;
             }
 
-            Log.Information($"Building {calamariPackageMetadata.Project?.Name} for framework '{calamariPackageMetadata.Framework}' and arch '{calamariPackageMetadata.Architecture}'");
+            Log.Information($"Publishing {calamariPackageMetadata.Project?.Name} for framework '{calamariPackageMetadata.Framework}' and arch '{calamariPackageMetadata.Architecture}'");
 
             var project = calamariPackageMetadata.Project;
             var outputDirectory = PublishDirectory / project?.Name / (calamariPackageMetadata.IsCrossPlatform ? calamariPackageMetadata.Architecture : "netfx");
 
-            DotNetPublish(s =>
-                              s.SetConfiguration(Configuration)
-                               .SetProject(project)
-                               .SetFramework(calamariPackageMetadata.Framework)
-                               .SetRuntime(calamariPackageMetadata.Architecture)
-                               //explicitly mark all of these as self-contained (because they use a specific runtime)
-                               .EnableSelfContained()
-                               .SetOutput(outputDirectory)
-                         );
-
-            if (!project.Name.Contains("Tests"))
-            {
-                var signDirectoryTask = Task.Run(() => SignDirectory(outputDirectory));
-                SignDirectoriesTasks.Add(signDirectoryTask);
-            }
+            await Task.Run(() =>
+                               DotNetPublish(s =>
+                                                 s.SetConfiguration(Configuration)
+                                                  .SetProject(project)
+                                                  .SetFramework(calamariPackageMetadata.Framework)
+                                                  .SetRuntime(calamariPackageMetadata.Architecture)
+                                                  .EnableNoBuild()
+                                                  .EnableNoRestore()
+                                                  .EnableSelfContained()
+                                                  .SetOutput(outputDirectory)));
 
             File.Copy(RootDirectory / "global.json", outputDirectory / "global.json");
+
+            return outputDirectory;
         }
 
         static void StageLegacyCalamariAssemblies(CalamariPackageMetadata[] packagesToPublish)
@@ -397,7 +481,7 @@ namespace Calamari.Build
         Target PackLegacyCalamari =>
             d =>
                 d.DependsOn(Publish)
-                 .DependsOn(PublishCalamariFlavourProjects)
+                 .DependsOn(PublishCalamariProjects)
                  .Executes(() =>
                            {
                                if (!OperatingSystem.IsWindows())
@@ -412,7 +496,7 @@ namespace Calamari.Build
         Target PackBinaries =>
             d =>
                 d.DependsOn(Publish)
-                 .DependsOn(PublishCalamariFlavourProjects)
+                 .DependsOn(PublishCalamariProjects)
                  .Executes(async () =>
                            {
                                var nugetVersion = NugetVersion.Value;
@@ -464,7 +548,7 @@ namespace Calamari.Build
         Target PackTests =>
             d =>
                 d.DependsOn(Publish)
-                 .DependsOn(PublishCalamariFlavourProjects)
+                 .DependsOn(PublishCalamariProjects)
                  .Executes(async () =>
                            {
                                var nugetVersion = NugetVersion.Value;
@@ -481,8 +565,7 @@ namespace Calamari.Build
                                foreach (var rid in GetRuntimeIdentifiers(Solution.GetProject("Calamari.Tests")!)!)
                                    actions.Add(() =>
                                                {
-                                                   var publishedLocation =
-                                                       DoPublish("Calamari.Tests", Frameworks.Net60, nugetVersion, rid);
+                                                   var publishedLocation = DoPublish("Calamari.Tests", Frameworks.Net60, nugetVersion, rid);
                                                    var zipName = $"Calamari.Tests.{rid}.{nugetVersion}.zip";
                                                    File.Copy(RootDirectory / "global.json", publishedLocation / "global.json");
                                                    CompressionTasks.Compress(publishedLocation, ArtifactsDirectory / zipName);
@@ -615,16 +698,8 @@ namespace Calamari.Build
 
         async Task RunPackActions(List<Action> actions)
         {
-            if (PackInParallel)
-            {
                 var tasks = actions.Select(Task.Run).ToList();
                 await Task.WhenAll(tasks);
-            }
-            else
-            {
-                foreach (var action in actions)
-                    action();
-            }
         }
 
         AbsolutePath DoPublish(string project, string framework, string version, string? runtimeId = null)
@@ -646,12 +721,15 @@ namespace Calamari.Build
                                .SetVerbosity(BuildVerbosity)
                                .SetRuntime(runtimeId)
                                .SetVersion(version)
-                               .EnableSelfContained());
+                               .EnableSelfContained()
+                         );
 
             if (WillSignBinaries)
+            {
                 Signing.SignAndTimestampBinaries(publishedTo, AzureKeyVaultUrl, AzureKeyVaultAppId,
                                                  AzureKeyVaultAppSecret, AzureKeyVaultTenantId, AzureKeyVaultCertificateName,
                                                  SigningCertificatePath, SigningCertificatePassword);
+            }
 
             return publishedTo;
         }
