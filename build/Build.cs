@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
@@ -32,8 +33,6 @@ namespace Calamari.Build
         [Parameter("Configuration to build - Default is 'Debug' (local) or 'Release' (server)")] readonly Configuration Configuration = IsLocalBuild ? Configuration.Debug : Configuration.Release;
 
         [Required] readonly Solution Solution = SolutionModelTasks.ParseSolution(SourceDirectory / "Calamari.sln");
-
-        [Parameter("Run packing step in parallel")] readonly bool PackInParallel;
 
         [Parameter] readonly DotNetVerbosity BuildVerbosity = DotNetVerbosity.minimal;
 
@@ -290,8 +289,49 @@ namespace Calamari.Build
                                 .Distinct(t => new { t.Project?.Name, t.Architecture, t.Framework });
 
             var packagesToPublish = crossPlatformPackages.Concat(netFxPackages).ToArray();
+            
+            var globalSemaphore = new SemaphoreSlim(4);
+            var semaphores = new ConcurrentDictionary<string, SemaphoreSlim>();
+            var publishPackageTasks = new List<Task>();
 
-            packagesToPublish.ForEach(PublishPackage);
+            foreach (var package in packagesToPublish)
+            {
+                var projectName = package.Project?.Name ?? "UnknownProject";
+                var projectSemaphore = semaphores.GetOrAdd(projectName, _ => new SemaphoreSlim(1, 1));
+                var architectureSemaphore = semaphores.GetOrAdd(package.Architecture ?? "UnknownArchitecture", _ => new SemaphoreSlim(1, 1));
+
+                await globalSemaphore.WaitAsync();
+                await projectSemaphore.WaitAsync();
+                await architectureSemaphore.WaitAsync();
+
+                var publishPackageTask = Task.Run(async () =>
+                                    {
+                                        try
+                                        {
+                                            var outputDirectory = await PublishPackage(package);
+                                            if (outputDirectory != null)
+                                            {
+                                                File.Copy(RootDirectory / "global.json", outputDirectory / "global.json");
+                                            }
+                                            
+                                            if (package.Project != null && !package.Project.Name.Contains("Tests"))
+                                            {
+                                                var signDirectoryTask = Task.Run(() => SignDirectory(outputDirectory));
+                                                SignDirectoriesTasks.Add(signDirectoryTask);
+                                            }
+                                        }
+                                        finally
+                                        {
+                                            globalSemaphore.Release();
+                                            projectSemaphore.Release();
+                                            architectureSemaphore.Release();
+                                        }
+                                    });
+
+                publishPackageTasks.Add(publishPackageTask);
+            }
+
+            await Task.WhenAll(publishPackageTasks);
             await Task.WhenAll(SignDirectoriesTasks);
 
             StageLegacyCalamariAssemblies(packagesToPublish);
@@ -300,12 +340,12 @@ namespace Calamari.Build
             await Task.WhenAll(ProjectCompressionTasks);
         }
 
-        void PublishPackage(CalamariPackageMetadata calamariPackageMetadata)
+        async Task<AbsolutePath?> PublishPackage(CalamariPackageMetadata calamariPackageMetadata)
         {
             if (!OperatingSystem.IsWindows() && !calamariPackageMetadata.IsCrossPlatform)
             {
                 Log.Warning($"Not building {calamariPackageMetadata.Framework}: can only build netfx on a Windows OS");
-                return;
+                return null;
             }
 
             Log.Information($"Building {calamariPackageMetadata.Project?.Name} for framework '{calamariPackageMetadata.Framework}' and arch '{calamariPackageMetadata.Architecture}'");
@@ -313,7 +353,7 @@ namespace Calamari.Build
             var project = calamariPackageMetadata.Project;
             var outputDirectory = PublishDirectory / project?.Name / (calamariPackageMetadata.IsCrossPlatform ? calamariPackageMetadata.Architecture : "netfx");
 
-            DotNetPublish(s =>
+            await Task.Run(() => DotNetPublish(s =>
                               s.SetConfiguration(Configuration)
                                .SetProject(project)
                                .SetFramework(calamariPackageMetadata.Framework)
@@ -321,15 +361,9 @@ namespace Calamari.Build
                                //explicitly mark all of these as self-contained (because they use a specific runtime)
                                .EnableSelfContained()
                                .SetOutput(outputDirectory)
-                         );
+                         ));
 
-            if (!project.Name.Contains("Tests"))
-            {
-                var signDirectoryTask = Task.Run(() => SignDirectory(outputDirectory));
-                SignDirectoriesTasks.Add(signDirectoryTask);
-            }
-
-            File.Copy(RootDirectory / "global.json", outputDirectory / "global.json");
+            return outputDirectory;
         }
 
         static void StageLegacyCalamariAssemblies(CalamariPackageMetadata[] packagesToPublish)
@@ -615,16 +649,8 @@ namespace Calamari.Build
 
         async Task RunPackActions(List<Action> actions)
         {
-            if (PackInParallel)
-            {
                 var tasks = actions.Select(Task.Run).ToList();
                 await Task.WhenAll(tasks);
-            }
-            else
-            {
-                foreach (var action in actions)
-                    action();
-            }
         }
 
         AbsolutePath DoPublish(string project, string framework, string version, string? runtimeId = null)
