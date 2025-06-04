@@ -66,7 +66,7 @@ namespace Calamari.Testing.Helpers
                     var variableValue = message.GetValue(ServiceMessageNames.SetVariable.ValueAttribute);
 
                     if (!string.IsNullOrWhiteSpace(variableName))
-                        outputVariables.Set(variableName, variableValue);
+                        outputVariables.Set(variableName!, variableValue);
                     break;
                 case ServiceMessageNames.CalamariFoundPackage.Name:
                     CalamariFoundPackage = true;

@@ -19,7 +19,7 @@ namespace Calamari.Deployment.Conventions.DependencyVariables
             }
 
             public IEnumerable<string> GetIndexes() => variables.GetIndexes(PackageVariables.PackageCollection).WhereNotNullOrWhiteSpace();
-            public string OriginalPath(string referenceName) => variables.Get(PackageVariables.IndexedOriginalPath(referenceName));
+            public string? OriginalPath(string referenceName) => variables.Get(PackageVariables.IndexedOriginalPath(referenceName));
             public bool Extract(string referenceName) => variables.GetFlag(PackageVariables.IndexedExtract(referenceName));
 
             public IDependencyOutputVariables OutputVariables { get; } = new PackageDependencyOutputVariables();

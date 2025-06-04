@@ -48,15 +48,16 @@ namespace Calamari.Common.Features.Processes
         /// </summary>
         public ICommandInvocationOutputSink? AdditionalInvocationOutputSink { get; set; }
 
+        public string? WorkingDirectory
+        {
+            set => workingDirectory = value;
+        }
+
         /// <summary>
         /// The initial working-directory for the invocation.
         /// Defaults to Environment.CurrentDirectory
         /// </summary>
-        public string WorkingDirectory
-        {
-            get => workingDirectory ?? Environment.CurrentDirectory;
-            set => workingDirectory = value;
-        }
+        public string GetWorkingDirectory() => workingDirectory ?? Environment.CurrentDirectory; 
 
         public override string ToString()
         {

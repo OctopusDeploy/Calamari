@@ -10,6 +10,7 @@ namespace Calamari.Common.Features.Deployment.Journal
 {
     public class DeployedPackage
     {
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor - Handled by guard method.
         public DeployedPackage(string? packageId, string? packageVersion, string? deployedFrom)
         {
             Guard.NotNullOrWhiteSpace(packageId, "Deployed package must have an Id");
