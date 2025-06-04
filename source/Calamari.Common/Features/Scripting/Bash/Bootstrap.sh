@@ -129,14 +129,9 @@ function new_octopusartifact
       exit $?
   fi
 
-  pth=$1
-  ofn=$2
+  pth=$(cd "$(dirname "$1")"; pwd -P)/$(basename "$1") # fully qualify file path for relative file paths, this allows supporting passing in just a filename in the current working directory like we do in PowerShell
+  ofn=${2:-$(basename "$pth")} # derive file name from file path, this allows supporting scripts that use `set -o nounset` or `set -u` flags
   len=$(wc -c < $1 )
-
-  if [ -z "$ofn" ]
-  then
-      ofn=`basename "$pth"`
-  fi
 
   echo "##octopus[stdout-verbose]"
   echo "Artifact $ofn will be collected from $pth after this step completes"
