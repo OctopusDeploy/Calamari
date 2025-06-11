@@ -67,6 +67,7 @@ namespace Calamari.Build
         [Parameter] readonly string? TargetRuntime;
 
         const string CiBranchNameEnvVariable = "OCTOVERSION_CurrentBranch";
+
         [Parameter($"The name of the current git branch. OctoVersion will use this to calculate the version number. This can be set via the environment variable {CiBranchNameEnvVariable}.", Name = CiBranchNameEnvVariable)]
         string? BranchName { get; set; }
 
@@ -83,16 +84,15 @@ namespace Calamari.Build
         {
             // Mimic the behaviour of this attribute, but lazily so we don't pay the OctoVersion cost when it isn't needed
             OctoVersionInfo = new Lazy<OctoVersionInfo?>(() =>
-                                                        {
-                                                            var attribute = new OctoVersionAttribute { BranchMember = nameof(BranchName), Framework = "net8.0" };
+                                                         {
+                                                             var attribute = new OctoVersionAttribute { BranchMember = nameof(BranchName), Framework = "net8.0" };
 
-                                                            // the Attribute does all the work such as calling TeamCity.Instance?.SetBuildNumber for us
-                                                            var version = attribute.GetValue(null!, this);
+                                                             // the Attribute does all the work such as calling TeamCity.Instance?.SetBuildNumber for us
+                                                             var version = attribute.GetValue(null!, this);
 
-                                                            return version as OctoVersionInfo;
-                                                        }, LazyThreadSafetyMode.ExecutionAndPublication);
-            
-            
+                                                             return version as OctoVersionInfo;
+                                                         }, LazyThreadSafetyMode.ExecutionAndPublication);
+
             NugetVersion = new Lazy<string>(GetNugetVersion);
 
             // This initialisation is required to ensure the build script can
@@ -104,7 +104,7 @@ namespace Calamari.Build
         static AbsolutePath BuildDirectory => RootDirectory / "build";
         static AbsolutePath ArtifactsDirectory => RootDirectory / "artifacts";
         static AbsolutePath PublishDirectory => RootDirectory / "publish";
-        static AbsolutePath LocalPackagesDirectory => RootDirectory / ".."/"LocalPackages";
+        static AbsolutePath LocalPackagesDirectory => RootDirectory / ".." / "LocalPackages";
         static AbsolutePath ConsolidateCalamariPackagesProject => SourceDirectory / "Calamari.ConsolidateCalamariPackages.Tests" / "Calamari.ConsolidateCalamariPackages.Tests.csproj";
         static AbsolutePath ConsolidatedPackageDirectory => ArtifactsDirectory / "consolidated";
         static AbsolutePath LegacyCalamariDirectory => PublishDirectory / "Calamari.Legacy";
@@ -562,15 +562,19 @@ namespace Calamari.Build
 
                                // Create a Zip for each runtime for testing
                                // ReSharper disable once LoopCanBeConvertedToQuery
-                               foreach (var rid in GetRuntimeIdentifiers(Solution.GetProject("Calamari.Tests")!)!)
-                                   actions.Add(() =>
+                               actions.Add(() =>
+                                           {
+                                               //run each build in sequence as it's the same project and we get issues
+                                               foreach (var rid in GetRuntimeIdentifiers(Solution.GetProject("Calamari.Tests")!))
                                                {
                                                    var publishedLocation = DoPublish("Calamari.Tests", Frameworks.Net60, nugetVersion, rid);
                                                    var zipName = $"Calamari.Tests.{rid}.{nugetVersion}.zip";
                                                    File.Copy(RootDirectory / "global.json", publishedLocation / "global.json");
                                                    CompressionTasks.Compress(publishedLocation, ArtifactsDirectory / zipName);
-                                               });
+                                               }
+                                           });
 
+                               //I don't think this is _actually_ necessary to build...
                                actions.Add(() =>
                                            {
                                                var testingProjectPath = SourceDirectory / "Calamari.Testing" / "Calamari.Testing.csproj";
@@ -698,8 +702,8 @@ namespace Calamari.Build
 
         async Task RunPackActions(List<Action> actions)
         {
-                var tasks = actions.Select(Task.Run).ToList();
-                await Task.WhenAll(tasks);
+            var tasks = actions.Select(Task.Run).ToList();
+            await Task.WhenAll(tasks);
         }
 
         AbsolutePath DoPublish(string project, string framework, string version, string? runtimeId = null)
