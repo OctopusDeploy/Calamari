@@ -131,7 +131,7 @@ namespace Calamari.Kubernetes.Authentication
 
         static string GetEksClusterRegion(string clusterUrl)
         {
-            var match = Regex.Match(clusterUrl, @"^https:\/\/[^.]+\.([a-z0-9-]+)\.eks\.amazonaws\.com$");
+            var match = Regex.Match(clusterUrl, @"^https:\/\/[^.]+(?:\.[^.]+)?\.([a-z0-9-]+)\.eks\.amazonaws\.com$");
             return match.Success ? match.Groups[1].Value : null;
         }
 
