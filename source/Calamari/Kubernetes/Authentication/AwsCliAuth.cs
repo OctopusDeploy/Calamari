@@ -1,17 +1,14 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Text.RegularExpressions;
 using Calamari.CloudAccounts;
 using Calamari.Common.FeatureToggles;
-using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes.Integration;
-using Newtonsoft.Json.Linq;
 using Octopus.CoreUtilities;
 using Octopus.CoreUtilities.Extensions;
 using Octopus.Versioning.Semver;
-using InvalidOperationException = Amazon.CloudFormation.Model.InvalidOperationException;
 
 namespace Calamari.Kubernetes.Authentication
 {
@@ -132,7 +129,11 @@ namespace Calamari.Kubernetes.Authentication
             }
         }
 
-        static string GetEksClusterRegion(string clusterUrl) => clusterUrl.Replace(".eks.amazonaws.com", "").Split('.').Last();
+        static string GetEksClusterRegion(string clusterUrl)
+        {
+            var match = Regex.Match(clusterUrl, @"^https:\/\/[^.]+\.([a-z0-9-]+)\.eks\.amazonaws\.com$");
+            return match.Success ? match.Groups[1].Value : null;
+        }
 
         void SetKubeConfigAuthenticationToAwsCliUsingToken(string user, string clusterName, string region)
         {
