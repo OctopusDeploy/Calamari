@@ -81,6 +81,8 @@ namespace Calamari.Kubernetes.Authentication
                     }
 
                     log.Verbose("The EKS cluster Url specified should contain a valid aws region name");
+
+                    return false;
                 }
 
                 log.Verbose(
