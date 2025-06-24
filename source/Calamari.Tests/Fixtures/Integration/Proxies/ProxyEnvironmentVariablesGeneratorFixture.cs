@@ -57,7 +57,7 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
             ProxyRoutines.SetProxy(proxyUrl).Should().BeTrue();
             var result = RunWith(true, "", 80, "", "");
 
-            AssertUnauthenticatedSystemProxyUsed(result);
+            AssertUnauthenticatedProxyUsed(result);
         }
 
         [Test]
@@ -67,7 +67,7 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
             ProxyRoutines.SetProxy(proxyUrl).Should().BeTrue();
             var result = RunWith(true, "", 80, ProxyUserName, ProxyPassword);
 
-            AssertAuthenticatedSystemProxyUsed(result);
+            AssertAuthenticatedProxyUsed(result);
         }
 
         [Test]
@@ -91,6 +91,7 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
         }
 
         [Test]
+        [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
         public void Initialize_NoSystemProxy_NoProxy()
         {
             var result = RunWith(false, "", 80, "", "");
@@ -99,6 +100,7 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
         }
 
         [Test]
+        [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
         public void Initialize_NoSystemProxy_UseSystemProxy()
         {
             var result = RunWith(true, "", 80, "", "");
@@ -107,6 +109,7 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
         }
 
         [Test]
+        [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
         public void Initialize_NoSystemProxy_UseSystemProxyWithCredentials()
         {
             var result = RunWith(true, "", 80, ProxyUserName, ProxyPassword);
@@ -115,6 +118,7 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
         }
 
         [Test]
+        [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
         public void Initialize_NoSystemProxy_CustomProxy()
         {
             var result = RunWith(false, proxyHost, proxyPort, "", "");
@@ -123,6 +127,7 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
         }
 
         [Test]
+        [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
         public void Initialize_NoSystemProxy_CustomProxyWithCredentials()
         {
             var result = RunWith(false, proxyHost, proxyPort, ProxyUserName, ProxyPassword);
@@ -133,6 +138,7 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
         [TestCase("http_proxy")]
         [TestCase("https_proxy")]
         [TestCase("no_proxy")]
+        [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
         public void Initialize_OneLowerCaseEnvironmentVariableExists_UpperCaseVariantReturned(string existingVariableName)
         {
             var existingValue = "blahblahblah";
@@ -148,6 +154,7 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
         [TestCase("HTTP_PROXY")]
         [TestCase("HTTPS_PROXY")]
         [TestCase("NO_PROXY")]
+        [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
         public void Initialize_OneUpperCaseEnvironmentVariableExists_LowerCaseVariantReturned(string existingVariableName)
         {
             var existingValue = "blahblahblah";
@@ -228,24 +235,6 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
             var noProxy = result.Should().ContainSingle(kv => kv.Key == "NO_PROXY").Subject;
 
             noProxy.Value.Should().Be("*", "should bypass the proxy");
-        }
-        
-        void AssertUnauthenticatedSystemProxyUsed(IEnumerable<EnvironmentVariable> output)
-        {
-#if !NETCORE
-            AssertUnauthenticatedProxyUsed(output);
-#else
-            AssertNoProxyChanges(output);
-#endif
-        }
-        
-        void AssertAuthenticatedSystemProxyUsed(IEnumerable<EnvironmentVariable> output)
-        {
-#if !NETCORE
-            AssertAuthenticatedProxyUsed(output);
-#else
-            AssertNoProxyChanges(output);
-#endif
         }
     }
 }
