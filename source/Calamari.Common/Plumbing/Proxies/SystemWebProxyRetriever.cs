@@ -14,13 +14,13 @@ namespace Calamari.Common.Plumbing.Proxies
             {
                 var testUri = new Uri("http://test9c7b575efb72442c85f706ef1d64afa6.com");
 
-                //The result of this call to WebRequest.GetSystemProxy() is cached for the lifetime of the application.
-                //This means that even if the system proxy changes, the value returned is the same as the first execution.
-                //This is a problem in the tests as the tests fail due to this cached value.
-                //This has been resolved in https://github.com/OctopusDeploy/Calamari/pull/1504, but a change in .NET Core should stop caching this value
-                //See:
-                //- https://github.com/dotnet/runtime/issues/46910
-                //- https://github.com/dotnet/runtime/issues/95252
+                // The result of this call to WebRequest.GetSystemProxy() is cached for the lifetime of the application.
+                // This means that even if the system proxy changes, the value returned is the same as the first execution.
+                // This is a problem in the tests as the tests fail due to this cached value.
+                // This has been resolved in https://github.com/OctopusDeploy/Calamari/pull/1504, but a change in .NET Core should stop caching this value
+                // See:
+                // - https://github.com/dotnet/runtime/issues/46910
+                // - https://github.com/dotnet/runtime/issues/95252
                 var systemWebProxy = WebRequest.GetSystemWebProxy();
 
                 var proxyUri = systemWebProxy.GetProxy(testUri);

@@ -25,5 +25,10 @@ namespace Calamari.Testing.Helpers
         public const string PlatformAgnostic = "PlatformAgnostic";
 		
         public const string RunOnceOnWindowsAndLinux = "RunOnceOnWindowsAndLinux";
+
+        public static class Proxy
+        {
+            public const string ModifiesSystemProxy = "ModifiesSystemProxy";
+        }
     }
 }

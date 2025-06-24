@@ -42,6 +42,7 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
 
         [Test]
         [Category(TestCategory.CompatibleOS.OnlyWindows)]
+        [Category(TestCategory.Proxy.ModifiesSystemProxy)]
         public void Initialize_HasSystemProxy_NoProxy()
         {
             ProxyRoutines.SetProxy(proxyUrl).Should().BeTrue();
@@ -52,6 +53,7 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
 
         [Test]
         [Category(TestCategory.CompatibleOS.OnlyWindows)]
+        [Category(TestCategory.Proxy.ModifiesSystemProxy)]
         public void Initialize_HasSystemProxy_UseSystemProxy()
         {
             ProxyRoutines.SetProxy(proxyUrl).Should().BeTrue();
@@ -62,6 +64,7 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
 
         [Test]
         [Category(TestCategory.CompatibleOS.OnlyWindows)]
+        [Category(TestCategory.Proxy.ModifiesSystemProxy)]
         public void Initialize_HasSystemProxy_UseSystemProxyWithCredentials()
         {
             ProxyRoutines.SetProxy(proxyUrl).Should().BeTrue();
@@ -72,6 +75,7 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
 
         [Test]
         [Category(TestCategory.CompatibleOS.OnlyWindows)]
+        [Category(TestCategory.Proxy.ModifiesSystemProxy)]
         public void Initialize_HasSystemProxy_CustomProxy()
         {
             ProxyRoutines.SetProxy(BadproxyUrl).Should().BeTrue();
@@ -82,6 +86,7 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
 
         [Test]
         [Category(TestCategory.CompatibleOS.OnlyWindows)]
+        [Category(TestCategory.Proxy.ModifiesSystemProxy)]
         public void Initialize_HasSystemProxy_CustomProxyWithCredentials()
         {
             ProxyRoutines.SetProxy(BadproxyUrl).Should().BeTrue();
