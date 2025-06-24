@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using Calamari.Common.Plumbing.Logging;
 using Octopus.CoreUtilities;
 
 namespace Calamari.Common.Plumbing.Proxies
@@ -59,6 +60,7 @@ namespace Calamari.Common.Plumbing.Proxies
                     {
                         var proxyUri = proxy.GetProxy(TestUri);
 
+                        Log.Verbose($"Generating proxy environment variables for {proxyUri}");
                         return ProxyEnvironmentVariablesGenerator.GetProxyEnvironmentVariables(
                             proxyUri.Host,
                             proxyUri.Port,

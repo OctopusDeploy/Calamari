@@ -181,7 +181,7 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
             Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleProxyUsername, proxyUsername);
             Environment.SetEnvironmentVariable(EnvironmentVariables.TentacleProxyPassword, proxyPassword);
 
-            return ProxyEnvironmentVariablesGenerator.GenerateProxyEnvironmentVariables();
+            return ProxyEnvironmentVariablesGenerator.GenerateProxyEnvironmentVariables().ToArray();
         }
 
         void ResetProxyEnvironmentVariables()
