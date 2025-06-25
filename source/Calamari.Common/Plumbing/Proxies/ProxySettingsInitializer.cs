@@ -1,5 +1,4 @@
 using System;
-using Calamari.Common.Plumbing.Logging;
 
 namespace Calamari.Common.Plumbing.Proxies
 {
@@ -15,28 +14,21 @@ namespace Calamari.Common.Plumbing.Proxies
             var useCustomProxy = !string.IsNullOrWhiteSpace(proxyHost);
 
             if (useCustomProxy)
-            {
-                Log.Verbose("Using custom proxy settings");
                 return new UseCustomProxySettings(
-                                                  proxyHost,
-                                                  proxyPort,
-                                                  proxyUsername,
-                                                  proxyPassword
-                                                 );
-            }
+                    proxyHost,
+                    proxyPort,
+                    proxyUsername,
+                    proxyPassword
+                );
 
             if (!bool.TryParse(Environment.GetEnvironmentVariable(EnvironmentVariables.TentacleUseDefaultProxy), out var useDefaultProxy))
                 useDefaultProxy = true;
 
             if (useDefaultProxy)
-            {
-                Log.Verbose("Using system proxy settings");
                 return new UseSystemProxySettings(
-                                                  proxyUsername,
-                                                  proxyPassword);
-            }
+                    proxyUsername,
+                    proxyPassword);
 
-            Log.Verbose("Using bypass proxy settings");
             return new BypassProxySettings();
         }
     }
