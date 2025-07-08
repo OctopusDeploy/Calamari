@@ -175,25 +175,25 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
     class DeploymentResponseBuilder
     {
         const string Template = @"{{
-    ""apiVersion"": ""apps/v1"",
-    ""kind"": ""Deployment"",
-    ""metadata"": {{
-        ""name"": ""nginx"",
-        ""namespace"": ""default"",
-        ""uid"": ""01695a39-5865-4eea-b4bf-1a4783cbce62"",
-        ""generation"": {5}
-    }},
-    ""spec"": {{
-        ""replicas"": {0}
-    }},
-    ""status"": {{
-        ""replicas"": {1},
-        ""availableReplicas"": {2},
-        ""readyReplicas"": {3},
-        ""updatedReplicas"": {4},
-        ""observedGeneration"": {6}{7}
-    }}
-}}";
+            ""apiVersion"": ""apps/v1"",
+            ""kind"": ""Deployment"",
+            ""metadata"": {{
+                ""name"": ""nginx"",
+                ""namespace"": ""default"",
+                ""uid"": ""01695a39-5865-4eea-b4bf-1a4783cbce62"",
+                ""generation"": {5}
+            }},
+            ""spec"": {{
+                ""replicas"": {0}
+            }},
+            ""status"": {{
+                ""replicas"": {1},
+                ""availableReplicas"": {2},
+                ""readyReplicas"": {3},
+                ""updatedReplicas"": {4},
+                ""observedGeneration"": {6}{7}
+            }}
+        }}";
 
         int DesiredReplicas { get; set; }
         int TotalReplicas { get; set; }
