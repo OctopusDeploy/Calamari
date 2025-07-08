@@ -10,12 +10,10 @@
         ModernAzureSdkFeatureToggle,
         OidcAccountsFeatureToggle,
         AsynchronousAzureZipDeployFeatureToggle,
-        FSharpDeprecationFeatureToggle,
         AzureRMDeprecationFeatureToggle,
         KubernetesLiveObjectStatusFeatureToggle,
         KubernetesAuthAwsCliWithExecFeatureToggle,
         ForceUtf8ZipFileDecodingFeatureToggle,
-        DisableFSharpScriptExecutionFeatureToggle,
         BashParametersArrayFeatureToggle
     }
 }

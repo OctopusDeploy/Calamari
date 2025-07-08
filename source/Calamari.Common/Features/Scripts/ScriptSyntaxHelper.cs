@@ -11,7 +11,6 @@ namespace Calamari.Common.Features.Scripts
             ScriptSyntax.Bash,
             ScriptSyntax.Python,
             ScriptSyntax.CSharp,
-            ScriptSyntax.FSharp,
             ScriptSyntax.PowerShell
         };
 
@@ -20,7 +19,6 @@ namespace Calamari.Common.Features.Scripts
             ScriptSyntax.PowerShell,
             ScriptSyntax.Python,
             ScriptSyntax.CSharp,
-            ScriptSyntax.FSharp,
             ScriptSyntax.Bash
         };
 

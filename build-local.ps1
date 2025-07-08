@@ -40,7 +40,7 @@ $env:OCTOVERSION_MajorMinorPatch= $numericVersion
 $env:OCTOVERSION_PreReleaseTagWithDash = "-$sanitizedBranch"
 $env:OCTOVERSION_FullSemVer = "$numericVersion-$sanitizedBranch"
 
-./build.ps1 -BuildVerbosity Minimal -Verbosity Normal -PackInParallel --Append-Timestamp -SetOctopusServerVersion -TargetFramework "$Framework" -TargetRuntime "$Runtime"
+./build.ps1 -BuildVerbosity Minimal -Verbosity Normal --Append-Timestamp -SetOctopusServerVersion -TargetFramework "$Framework" -TargetRuntime "$Runtime"
 
 Write-Host "
 ########################################################################################

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Calamari.Common.Features.Processes.Semaphores;
 using Calamari.Common.Plumbing.Deployment.PackageRetention;
@@ -12,7 +13,7 @@ namespace Calamari.Deployment.PackageRetention.Model
     public class PackageJournal : IManagePackageCache
     {
         readonly IJournalRepository journalRepository;
-        readonly IRetentionAlgorithm retentionAlgorithm;
+        readonly IRetentionAlgorithm[] retentionAlgorithms;
         readonly ILog log;
         readonly ICalamariFileSystem fileSystem;
         readonly ISemaphoreFactory semaphoreFactory;
@@ -20,13 +21,13 @@ namespace Calamari.Deployment.PackageRetention.Model
         public PackageJournal(IJournalRepository journalRepository,
                               ILog log,
                               ICalamariFileSystem fileSystem,
-                              IRetentionAlgorithm retentionAlgorithm,
+                              IEnumerable<IRetentionAlgorithm> retentionAlgorithms,
                               ISemaphoreFactory semaphoreFactory)
         {
             this.journalRepository = journalRepository;
             this.log = log;
             this.fileSystem = fileSystem;
-            this.retentionAlgorithm = retentionAlgorithm;
+            this.retentionAlgorithms = retentionAlgorithms.ToArray();
             this.semaphoreFactory = semaphoreFactory;
         }
 
@@ -81,7 +82,7 @@ namespace Calamari.Deployment.PackageRetention.Model
                 using (AcquireSemaphore())
                 {
                     journalRepository.Load();
-                    var packagesToRemove = retentionAlgorithm.GetPackagesToRemove(journalRepository.GetAllJournalEntries());
+                    var packagesToRemove = retentionAlgorithms.SelectMany(algorithm => algorithm.GetPackagesToRemove(journalRepository.GetAllJournalEntries()));
                     foreach (var package in packagesToRemove)
                     {
                         if (string.IsNullOrWhiteSpace(package.Path.Value) || !fileSystem.FileExists(package.Path.Value))

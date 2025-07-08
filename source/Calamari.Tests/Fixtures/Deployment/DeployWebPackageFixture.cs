@@ -58,7 +58,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             result.AssertOutput("Extracting package to: " + Path.Combine(StagingDirectory, "Acme.Web", "1.0.0"));
 
-            result.AssertOutput("Extracted 11 files");
+            result.AssertOutput("Extracted 10 files");
             result.AssertOutput("Hello from Deploy.ps1");
         }
 
@@ -140,17 +140,15 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        [Category(TestCategory.ScriptingSupport.FSharp)]
         [Category(TestCategory.ScriptingSupport.DotnetScript)]
         public void ShouldInvokeDeployFailedOnError()
         {
             Variables.Set("ShouldFail", "yes");
             var result = DeployPackage();
-            if (ScriptingEnvironment.IsRunningOnMono())
+            if (CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac)
                 result.AssertOutput("I have failed! DeployFailed.sh");
             else
                 result.AssertOutput("I have failed! DeployFailed.ps1");
-            result.AssertNoOutput("I have failed! DeployFailed.fsx");
             result.AssertNoOutput("I have failed! DeployFailed.csx");
         }
 
@@ -160,7 +158,6 @@ namespace Calamari.Tests.Fixtures.Deployment
             var result = DeployPackage();
             result.AssertNoOutput("I have failed! DeployFailed.ps1");
             result.AssertNoOutput("I have failed! DeployFailed.sh");
-            result.AssertNoOutput("I have failed! DeployFailed.fsx");
             result.AssertNoOutput("I have failed! DeployFailed.csx");
         }
 
@@ -310,7 +307,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
                     result.AssertSuccess();
                     var extracted = result.GetOutputForLineContaining("Extracting package to: ");
-                    result.AssertOutput("Extracted 11 files");
+                    result.AssertOutput("Extracted 10 files");
 
                     lock (locker)
                     {
