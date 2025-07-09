@@ -32,6 +32,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
             var generation = FieldOrDefault("$.metadata.generation", 0);
             var observedGeneration = FieldOrDefault("$.status.observedGeneration", 0);
             
+            // Note that deployment status logic aligns with ArgoCD's gitops-engine, which is also used in the Kubernetes Monitor
             if (generation <= observedGeneration)
             {
                 var conditions = json.SelectToken("$.status.conditions") as JArray;
