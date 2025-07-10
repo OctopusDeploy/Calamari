@@ -55,8 +55,8 @@ namespace Calamari.AzureAppService.Tests
                 Environment.GetEnvironmentVariable(AccountVariables.ResourceManagementEndPoint) ?? DefaultVariables.ResourceManagementEndpoint;
             var activeDirectoryEndpointBaseUri =
                 Environment.GetEnvironmentVariable(AccountVariables.ActiveDirectoryEndPoint) ?? DefaultVariables.ActiveDirectoryEndpoint;
-
-            ResourceGroupName = $"{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid():N}";
+            
+            ResourceGroupName = $"Calamari-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid():N}";
 
             ClientId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId, cancellationToken);
             ClientSecret = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword, cancellationToken);
@@ -110,8 +110,8 @@ namespace Calamari.AzureAppService.Tests
         [OneTimeTearDown]
         public virtual async Task Cleanup()
         {
-            await ArmClient.GetResourceGroupResource(ResourceGroupResource.CreateResourceIdentifier(SubscriptionId, ResourceGroupName))
-                           .DeleteAsync(WaitUntil.Started);
+            var result = await ArmClient.GetResourceGroupResource(ResourceGroupResource.CreateResourceIdentifier(SubscriptionId, ResourceGroupName))
+                           .DeleteAsync(WaitUntil.Completed);
         }
 
         protected async Task AssertContent(string hostName, string actualText, string rootPath = null)
