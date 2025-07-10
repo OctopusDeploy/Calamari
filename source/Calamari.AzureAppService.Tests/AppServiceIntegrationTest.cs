@@ -56,7 +56,7 @@ namespace Calamari.AzureAppService.Tests
             var activeDirectoryEndpointBaseUri =
                 Environment.GetEnvironmentVariable(AccountVariables.ActiveDirectoryEndPoint) ?? DefaultVariables.ActiveDirectoryEndpoint;
             
-            ResourceGroupName = $"Calamari-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid():N}";
+            ResourceGroupName = $"calamari-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid():N}";
 
             ClientId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId, cancellationToken);
             ClientSecret = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword, cancellationToken);
