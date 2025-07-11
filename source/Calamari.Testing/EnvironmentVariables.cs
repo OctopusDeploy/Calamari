@@ -45,7 +45,7 @@ namespace Calamari.Testing
         [EnvironmentVariable("Artifactory_Admin_PAT", "op://Calamari Secrets for Tests/Artifactory Admin PAT/PAT")]
         ArtifactoryE2EPassword,
 
-        [EnvironmentVariable("DockerHub_TestReaderAccount_Password", "op://Calamari Secrets for Tests/DockerHub Test Reader Account/password")]
+        [EnvironmentVariable("DockerHub_TestReaderAccount_Password", "op://Calamari Secrets for Tests/TestCalamari/password")]
         DockerReaderPassword,
 
         [EnvironmentVariable("AWS_E2E_AccessKeyId", "op://Calamari Secrets for Tests/AWS E2E Test User Keys/AccessKeyId")]
