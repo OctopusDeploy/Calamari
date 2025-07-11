@@ -14,9 +14,17 @@ if [  ! -z $dockerUsername ]; then
     parsedVersion=(${dockerVersion//./ })
 
     if (( parsedVersion[0] > 17 || (parsedVersion[0] == 17 && parsedVersion[1] > 6) )); then
-        echo $dockerPassword | docker login --username $dockerUsername --password-stdin $feedUri 2>&1
+        if [ -z "$feedUri" ]; then
+            echo $dockerPassword | docker login --username $dockerUsername --password-stdin 2>&1
+        else
+            echo $dockerPassword | docker login --username $dockerUsername --password-stdin $feedUri 2>&1
+        fi
     else
-        docker login --username $dockerUsername --password $dockerPassword $feedUri 2>&1
+        if [ -z "$feedUri" ]; then
+            docker login --username $dockerUsername --password $dockerPassword 2>&1
+        else
+            docker login --username $dockerUsername --password $dockerPassword $feedUri 2>&1
+        fi
     fi
     rc=$?; if [[ $rc != 0 ]]; then
         echo "Login Failed" 
