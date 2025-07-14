@@ -69,8 +69,6 @@ namespace Calamari.Kubernetes.Conventions
 
             var customHelmExecutable = CustomHelmExecutableFullPath(deployment.Variables, deployment.CurrentDirectory);
 
-            AssertHelmV3(customHelmExecutable);
-
             var sb = new StringBuilder();
 
             SetExecutable(sb, syntax, customHelmExecutable);
