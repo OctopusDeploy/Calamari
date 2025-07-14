@@ -176,7 +176,7 @@ namespace Calamari.Tests.KubernetesFixtures
                                                          else if (CalamariEnvironment.IsRunningOnNix)
                                                          {
                                                              ExecuteCommandAndReturnResult("sudo",
-                                                                                           "apt-get install unzip",
+                                                                                           "apt-get install zip",
                                                                                            destinationDirectoryName);
 
                                                              ExecuteCommandAndReturnResult("unzip",
