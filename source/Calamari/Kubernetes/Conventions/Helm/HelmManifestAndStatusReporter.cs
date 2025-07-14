@@ -58,6 +58,12 @@ namespace Calamari.Kubernetes.Conventions.Helm
                                        return;
                                    }
 
+                                   if (DeploymentSupportsManifestReporting(deployment, out var reason))
+                                   {
+                                       log.Verbose(reason);
+                                       return;
+                                   }
+
                                    var manifest = await PollForManifest(deployment, releaseName, revisionNumber);
 
                                    //it's possible that we have no manifest as charts with just hooks don't produce a manifest
@@ -96,6 +102,19 @@ namespace Calamari.Kubernetes.Conventions.Helm
             return parsedExecutableVersion >= MinimumHelmVersion;
         }
 
+        static bool DeploymentSupportsManifestReporting(RunningDeployment deployment, out string reason)
+        {
+            var additionalArguments = deployment.Variables.Get(SpecialVariables.Helm.AdditionalArguments);
+            if (additionalArguments?.Contains("--dry-run") ?? false)
+            {
+                reason = "Helm --dry-run is enabled, no object statuses will be reported";
+                return false;
+            }
+
+            reason = "";
+            return true;
+        }
+
         async Task<string> PollForManifest(RunningDeployment deployment,
                                            string releaseName,
                                            int revisionNumber)
@@ -110,7 +129,7 @@ namespace Calamari.Kubernetes.Conventions.Helm
                 try
                 {
                     manifest = helmCli.GetManifest(releaseName, revisionNumber);
-                    
+
                     //flag if we successfully executed the get manifest call
                     //this is important because some helm charts just have hooks that don't have any manifests, so we receive null/empty string here
                     didSuccessfullyExecuteCliCall = true;
