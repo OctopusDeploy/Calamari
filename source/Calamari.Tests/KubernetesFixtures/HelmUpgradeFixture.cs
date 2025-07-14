@@ -8,6 +8,7 @@ using Calamari.Common.Features.Deployment;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripts;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.FileSystem;
@@ -21,7 +22,6 @@ using Calamari.Tests.Helpers;
 using Calamari.Util;
 using FluentAssertions;
 using NUnit.Framework;
-using Octopus.Versioning.Semver;
 
 namespace Calamari.Tests.KubernetesFixtures
 {
