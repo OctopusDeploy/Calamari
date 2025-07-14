@@ -58,7 +58,7 @@ namespace Calamari.Kubernetes.Conventions.Helm
                                        return;
                                    }
 
-                                   if (DeploymentSupportsManifestReporting(deployment, out var reason))
+                                   if (!DeploymentSupportsManifestReporting(deployment, out var reason))
                                    {
                                        log.Verbose(reason);
                                        return;
