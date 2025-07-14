@@ -74,6 +74,7 @@ namespace Calamari.Kubernetes.Conventions
             var sb = new StringBuilder();
 
             SetExecutable(sb, syntax, customHelmExecutable);
+            AssertHelmV3(customHelmExecutable);
             sb.Append($" upgrade --install");
             SetNamespaceParameter(deployment, sb);
             SetResetValuesParameter(deployment, sb);
