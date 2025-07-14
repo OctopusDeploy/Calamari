@@ -40,11 +40,23 @@ namespace Calamari.Tests.KubernetesFixtures
 
         protected const string Namespace = "calamari-testing";
 
-        static string HelmOsPlatform => CalamariEnvironment.IsRunningOnWindows
-            ? "windows-amd64"
-            : CalamariEnvironment.IsRunningOnNix
-                ? "linux-amd64"
-                : "darwin-arm64";
+        static string HelmOsPlatform
+        {
+            get
+            {
+                if (CalamariEnvironment.IsRunningOnWindows)
+                {
+                    return "windows-amd64";
+                }
+
+                if (CalamariEnvironment.IsRunningOnMac)
+                {
+                    return "darwin-arm64";
+                }
+
+                return "linux-amd64";
+            }
+        }
 
         TemporaryDirectory explicitVersionTempDirectory;
 
@@ -97,7 +109,7 @@ namespace Calamari.Tests.KubernetesFixtures
             FileSystem.PurgeDirectory(packageExtractionDirectory, FailureOptions.ThrowOnFailure);
 
             Environment.SetEnvironmentVariable("TentacleJournal",
-                                               Path.Combine(StagingDirectory, "DeploymentJournal.xml"));
+                Path.Combine(StagingDirectory, "DeploymentJournal.xml"));
 
             Variables = new VariablesFactory(FileSystem, new SilentLog()).Create(new CommonOptions("test"));
             Variables.Set(TentacleVariables.Agent.ApplicationDirectoryPath, StagingDirectory);
@@ -241,7 +253,7 @@ namespace Calamari.Tests.KubernetesFixtures
             Variables.Set(PackageVariables.IndexedPackageId("Pack-1"), "CustomValues");
             Variables.Set(PackageVariables.IndexedPackageVersion("Pack-1"), "2.0.0");
             Variables.Set(PackageVariables.IndexedOriginalPath("Pack-1"),
-                          GetFixtureResource("Charts", "CustomValues.2.0.0.zip"));
+                GetFixtureResource("Charts", "CustomValues.2.0.0.zip"));
             Variables.Set(Kubernetes.SpecialVariables.Helm.Packages.ValuesFilePath("Pack-1"), "values.yaml");
 
             //Variable that will replace packaged value in package
@@ -427,10 +439,10 @@ namespace Calamari.Tests.KubernetesFixtures
         {
             StringBuilder stdout = new StringBuilder();
             var result = SilentProcessRunner.ExecuteCommand("helm",
-                                                            "version --client --short",
-                                                            Environment.CurrentDirectory,
-                                                            output => stdout.AppendLine(output),
-                                                            error => { });
+                "version --client --short",
+                Environment.CurrentDirectory,
+                output => stdout.AppendLine(output),
+                error => { });
 
             result.ExitCode.Should().Be(0, $"Failed to retrieve version from Helm (Exit code {result.ExitCode}). Error output: \r\n{result.ErrorOutput}");
 
