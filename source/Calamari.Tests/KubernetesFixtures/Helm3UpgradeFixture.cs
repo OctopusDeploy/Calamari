@@ -16,7 +16,6 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
-        [RequiresNonMac]
         [Category(TestCategory.PlatformAgnostic)]
         public void Upgrade_Succeeds()
         {
@@ -34,7 +33,6 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
-        [RequiresNonMac]
         [Category(TestCategory.PlatformAgnostic)]
         public async Task CustomHelmExeInPackage_RelativePath()
         {
@@ -44,7 +42,6 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
-        [RequiresNonMac]
         [Category(TestCategory.PlatformAgnostic)]
         public void HelmVersionNewerThanMinimumVersion_ReportsObjectStatus()
         {
@@ -82,7 +79,6 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
-        [RequiresNonMac]
         [Category(TestCategory.PlatformAgnostic)]
         public async Task HelmVersionOlderThanMinimumVersion_DoesNotRunObjectStatus()
         {
@@ -114,7 +110,6 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
-        [RequiresNonMac]
         [Category(TestCategory.PlatformAgnostic)]
         public void HooksOnlyPackage_RetrievesEmptyManifestButDoesNotReportObjectStatus()
         {
@@ -144,7 +139,6 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
-        [RequiresNonMac]
         [Category(TestCategory.PlatformAgnostic)]
         public void EmptyChart_RetrievesEmptyManifestButDoesNotReportObjectStatus()
         {
