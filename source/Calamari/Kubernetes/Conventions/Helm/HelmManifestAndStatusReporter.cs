@@ -52,15 +52,15 @@ namespace Calamari.Kubernetes.Conventions.Helm
                                    || FeatureToggle.KubernetesLiveObjectStatusFeatureToggle.IsEnabled(deployment.Variables)
                                    || OctopusFeatureToggles.KubernetesObjectManifestInspectionFeatureToggle.IsEnabled(deployment.Variables))
                                {
-                                   if (!DoesHelmCliSupportManifestRetrieval(out var helmVersion))
-                                   {
-                                       log.Warn($"Octopus needs Helm v3.13 or later to display object status and manifests. Your current version is {helmVersion}. Please update your Helm executable or container to enable our new Kubernetes capabilities. Learn more in our {log.FormatShortLink("KOS", "documentation")}.");
-                                       return;
-                                   }
-
                                    if (!DeploymentSupportsManifestReporting(deployment, out var reason))
                                    {
                                        log.Verbose(reason);
+                                       return;
+                                   }
+
+                                   if (!DoesHelmCliSupportManifestRetrieval(out var helmVersion))
+                                   {
+                                       log.Warn($"Octopus needs Helm v3.13 or later to display object status and manifests. Your current version is {helmVersion}. Please update your Helm executable or container to enable our new Kubernetes capabilities. Learn more in our {log.FormatShortLink("KOS", "documentation")}.");
                                        return;
                                    }
 
