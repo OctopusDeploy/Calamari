@@ -100,5 +100,10 @@ namespace Calamari.Testing.Helpers
                     break;
             }
         }
+
+        public override string ToString()
+        {
+            return string.Join(Environment.NewLine, AllMessages);
+        }
     }
 }

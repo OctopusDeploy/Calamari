@@ -134,6 +134,7 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         [TestCase(true)]
         [TestCase(false)]
+        [Ignore("These tests will be transitioned to using a local Kind cluster, rather than a remote cluster")]
         public void DeployRawYaml_WithRawYamlDeploymentScriptOrCommand_OutputShouldIndicateSuccessfulDeployment(bool usePackage)
         {
             SetupAndRunKubernetesRawYamlDeployment(usePackage, SimpleDeploymentResource);
@@ -163,6 +164,7 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         [TestCase(true)]
         [TestCase(false)]
+        [Ignore("These tests will be transitioned to using a local Kind cluster, rather than a remote cluster")]
         public void DeployRawYaml_WithInvalidYaml_OutputShouldIndicateFailure(bool usePackage)
         {
             SetupAndRunKubernetesRawYamlDeployment(usePackage, InvalidDeploymentResource, shouldSucceed: false);
@@ -179,6 +181,7 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         [TestCase(true)]
         [TestCase(false)]
+        [Ignore("These tests will be transitioned to using a local Kind cluster, rather than a remote cluster")]
         public void DeployRawYaml_WithYamlThatWillNotSucceed_OutputShouldIndicateFailure(bool usePackage)
         {
             SetupAndRunKubernetesRawYamlDeployment(usePackage, FailToDeploymentResource, shouldSucceed: false);
@@ -193,6 +196,7 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
+        [Ignore("These tests will be transitioned to using a local Kind cluster, rather than a remote cluster")]
         public void DeployRawYaml_WithMultipleYamlFilesGlobPatterns_YamlFilesAppliedInCorrectBatches()
         {
             SetVariablesToAuthoriseWithAmazonAccount();
