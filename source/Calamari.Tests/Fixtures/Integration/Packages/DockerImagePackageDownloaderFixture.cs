@@ -68,8 +68,8 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         [RequiresDockerInstalled]
         public void DockerHubWithCredentials_Loads()
         {
-            const string privateImage = "octopusdeploy/octo-prerelease";
-            var version =  new SemanticVersion("7.3.7-alpine");
+            const string privateImage = "octopustestaccount/octopetshop-productservice";
+            var version =  new SemanticVersion("13.0");
 
             var downloader = GetDownloader();
             var pkg = downloader.DownloadPackage(privateImage,
@@ -130,7 +130,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
 
         [Test]
         [RequiresDockerInstalled]
-        [TestCase("octopusdeploy/octo-prerelease", "7.3.7-alpine")]
+        [TestCase("octopustestaccount/octopetshop-productservice", "13.0")]
         [TestCase("alpine", "3.6.5")]
         public void CachedDockerHubPackage_DoesNotGenerateImageNotCachedMessage(string image, string tag)
         {
@@ -177,7 +177,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         
         [Test]
         [RequiresDockerInstalled]
-        [TestCase("octopusdeploy/octo-prerelease", "7.3.7-alpine")]
+        [TestCase("octopustestaccount/octopetshop-productservice", "13.0")]
         [TestCase("alpine", "3.6.5")]
         public void NotCachedDockerHubPackage_GeneratesImageNotCachedMessage(string image, string tag)
         {
