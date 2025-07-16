@@ -471,7 +471,7 @@ namespace Calamari.Build
                                                    .SetFramework(Frameworks.Net462)
                                                    .EnableNoRestore()
                                                    .SetVersion(NugetVersion.Value)
-                                                   .SetInformationalVersion(GitVersionInfo?.InformationalVersion)
+                                                   .SetInformationalVersion(OctoVersionInfo.Value?.InformationalVersion)
                                                    .SetOutput(outputPath));
 
                                 var archivePath = SourceDirectory / "Calamari.AzureWebApp" / "netcoreshim" / "netcoreshim.zip";
