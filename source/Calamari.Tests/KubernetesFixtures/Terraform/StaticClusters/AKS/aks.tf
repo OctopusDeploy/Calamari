@@ -8,12 +8,13 @@ resource "azurerm_kubernetes_cluster" "default" {
   resource_group_name = azurerm_resource_group.default.name
   location            = "Australia East"
   dns_prefix          = "${var.static_resource_prefix}-k8s"
-  kubernetes_version  = "1.28"
+  kubernetes_version  = "1.32"
 
   tags = {
     octopus-environment = "Staging"
-    octopus-role        = "discovery-role"
-    source              = "calamari-e2e-tests"
+    octopus-role = "discovery-role"
+    octopus-tenantedDeploymentMode = "TenantedOrUntenanted"
+    source       = "calamari-e2e-tests"
   }
 
   default_node_pool {
@@ -36,12 +37,13 @@ resource "azurerm_kubernetes_cluster" "local_access_disabled" {
   resource_group_name = azurerm_resource_group.default.name
   location            = "Australia East"
   dns_prefix          = "${var.static_resource_prefix}-k8s-no-local"
-  kubernetes_version  = "1.28"
+  kubernetes_version  = "1.32"
 
-  tags = {
+    tags = {
     octopus-environment = "Staging"
-    octopus-role        = "discovery-role"
-    source              = "calamari-e2e-tests"
+    octopus-role = "discovery-role"
+    octopus-tenantedDeploymentMode = "TenantedOrUntenanted"
+    source       = "calamari-e2e-tests"
   }
 
   default_node_pool {
