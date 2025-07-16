@@ -134,7 +134,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
             var objectStatusUpdates = Log.Messages.GetServiceMessagesOfType("k8s-status");
 
-            objectStatusUpdates.Where(m => m.Properties["status"] == "Successful").Should().HaveCount(6);
+            objectStatusUpdates.Where(m => m.Properties["status"] == "Successful").Should().HaveCount(5);
 
             rawLogs.Should()
                    .ContainSingle(m =>
