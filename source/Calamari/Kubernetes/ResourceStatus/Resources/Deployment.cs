@@ -7,8 +7,8 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
 {
     public class Deployment : Resource
     {
-        public override string ChildKind => "ReplicaSet";
-        
+        public override ResourceGroupVersionKind ChildGroupVersionKind => SupportedResourceGroupVersionKinds.ReplicaSetV1;
+
         public int UpToDate { get; }
         public string Ready { get; }
         public int Available { get; }
@@ -29,12 +29,40 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
             Available = FieldOrDefault("$.status.availableReplicas", 0);
             UpToDate = FieldOrDefault("$.status.updatedReplicas", 0);
             
-            ResourceStatus = TotalReplicas == Desired
-                             && UpToDate == Desired
-                             && Available == Desired 
-                             && ReadyReplicas == Desired
-                ? ResourceStatus.Successful 
-                : ResourceStatus.InProgress;
+            var generation = FieldOrDefault("$.metadata.generation", 0);
+            var observedGeneration = FieldOrDefault("$.status.observedGeneration", 0);
+            
+            // Note that deployment status logic aligns with ArgoCD's gitops-engine, which is also used in the Kubernetes Monitor
+            if (generation <= observedGeneration)
+            {
+                var conditions = json.SelectToken("$.status.conditions") as JArray;
+                var progressingCondition = conditions?.FirstOrDefault(c => c["type"]?.ToString() == "Progressing");
+                
+                if (progressingCondition != null && progressingCondition["reason"]?.ToString() == "ProgressDeadlineExceeded")
+                {
+                    ResourceStatus = ResourceStatus.Failed;
+                }
+                else if (Desired > 0 && UpToDate < Desired)
+                {
+                    ResourceStatus = ResourceStatus.InProgress;
+                }
+                else if (TotalReplicas > UpToDate)
+                {
+                    ResourceStatus = ResourceStatus.InProgress;
+                }
+                else if (Available < UpToDate)
+                {
+                    ResourceStatus = ResourceStatus.InProgress;
+                }
+                else
+                {
+                    ResourceStatus = ResourceStatus.Successful;
+                }
+            }
+            else
+            {
+                ResourceStatus = ResourceStatus.InProgress;
+            }
         }
 
         public override void UpdateChildren(IEnumerable<Resource> children)

@@ -18,10 +18,11 @@ namespace Calamari.Common.Plumbing.Extensions
                     throw new CommandException($"The `{TentacleVariables.CurrentDeployment.PackageFilePath}` was not specified or blank. This is likely a bug in Octopus, please contact Octopus support.");
                 else
                     return null;
-
             path = CrossPlatform.ExpandPathEnvironmentVariables(path);
             if (!fileSystem.FileExists(path))
+            {
                 throw new CommandException("Could not find package file: " + path);
+            }
 
             return new PathToPackage(path);
         }

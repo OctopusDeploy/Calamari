@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Packages;
@@ -56,7 +57,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands
                 [SpecialVariables.WaitForJobs] = waitForJobs.ToString()
             };
             var runningCheck = Substitute.For<IRunningResourceStatusCheck>();
-            runningCheck.WaitForCompletionOrTimeout().Returns(true);
+            runningCheck.WaitForCompletionOrTimeout(CancellationToken.None).Returns(true);
             var resourceStatusCheck = Substitute.For<IResourceStatusReportExecutor>();
             resourceStatusCheck.Start(Arg.Any<int>(), Arg.Any<bool>()).Returns(runningCheck);
             var command = CreateCommand(variables, resourceStatusCheck);
@@ -67,7 +68,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands
             // Assert
             resourceStatusCheck.ReceivedCalls().Should().HaveCount(1);
             resourceStatusCheck.Received().Start(timeout, waitForJobs);
-            runningCheck.Received().WaitForCompletionOrTimeout();
+            runningCheck.Received().WaitForCompletionOrTimeout(CancellationToken.None);
             result.Should().Be(0);
         }
 

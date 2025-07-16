@@ -23,7 +23,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
             
             job.Should().BeEquivalentTo(new
             {
-                Kind = "Job",
+                GroupVersionKind = SupportedResourceGroupVersionKinds.JobV1,
                 Name = "my-job",
                 Namespace = "default",
                 Uid = "01695a39-5865-4eea-b4bf-1a4783cbce62",
@@ -48,12 +48,15 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
         }
         
         [Test]
-        public void WhenWaitForJobsIsEnabled_ShouldHaveStatusOfFailedIfBackOffLimitHasBeenReached()
+        [TestCase(0,1)]
+        [TestCase(1,1)]
+        [TestCase(1,2)]
+        public void WhenWaitForJobsIsEnabled_ShouldHaveStatusOfFailedIfBackOffLimitHasBeenReached(int backoffLimit, int failures)
         {
             var jobResponse = new JobResponseBuilder()
-                .WithCompletions(3)
-                .WithBackoffLimit(4)
-                .WithFailed(4)
+                .WithCompletions(1)
+                .WithBackoffLimit(backoffLimit)
+                .WithFailed(failures)
                 .Build();
 
             var job = ResourceFactory.FromJson(jobResponse, new Options() { WaitForJobs = true });
@@ -67,6 +70,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
             var jobResponse = new JobResponseBuilder()
                 .WithCompletions(3)
                 .WithSucceeded(3)
+                .WithBackoffLimit(3)
                 .WithFailed(1)
                 .Build();
 
@@ -81,6 +85,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
             var jobResponse = new JobResponseBuilder()
                 .WithCompletions(3)
                 .WithSucceeded(2)
+                .WithBackoffLimit(3)
                 .WithFailed(1)
                 .Build();
 
@@ -93,6 +98,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
     public class JobResponseBuilder
     {
         private const string Template = @"{{
+    ""apiVersion"": ""batch/v1"",
     ""kind"": ""Job"",
     ""metadata"": {{
         ""name"": ""my-job"",

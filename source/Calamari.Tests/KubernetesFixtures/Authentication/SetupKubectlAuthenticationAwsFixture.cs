@@ -1,11 +1,15 @@
 using System.Collections.Generic;
 using System.Linq;
 using Calamari.Aws.Deployment;
+using Calamari.Common.FeatureToggles;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes;
 using Calamari.Kubernetes.Authentication;
 using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
+using Octopus.CoreUtilities;
+using Octopus.Versioning.Semver;
 
 namespace Calamari.Tests.KubernetesFixtures.Authentication
 {
@@ -37,13 +41,13 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
 
         SetupKubectlAuthentication CreateSut() =>
             new SetupKubectlAuthentication(
-                variables,
-                log,
-                commandLineRunner,
-                kubectl,
-                fileSystem,
-                environmentVars,
-                workingDirectory);
+                                           variables,
+                                           log,
+                                           commandLineRunner,
+                                           kubectl,
+                                           fileSystem,
+                                           environmentVars,
+                                           workingDirectory);
 
         [Test]
         public void AuthenticatesWithAwsCli()
@@ -55,12 +59,43 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
             var expectedInvocations = SetupClusterContextInvocations(AwsClusterUrl);
             expectedInvocations.AddRange(AwsCliInvocations());
             expectedInvocations.AddRange(
-                new List<(string, string)>
-                {
-                    GetAwsTokenInvocation,
-                    SetKubectlTokenInvocation,
-                    GetNamespaceInvocation
-                });
+                                         new List<(string, string)>
+                                         {
+                                             GetAwsTokenInvocation,
+                                             SetKubectlTokenInvocation,
+                                             GetNamespaceInvocation
+                                         });
+
+            var result = CreateSut().Execute();
+
+            result.VerifySuccess();
+            AssertInvocations(expectedInvocations);
+        }
+
+        [Test]
+        public void AuthenticatesWithAwsCli_UsesKubectlExecWhenFeatureToggleEnabled()
+        {
+            AddLogForAwsEksGetToken();
+            AddLogForWhichAws();
+            AddLogForAwsVersion(CurrentAwsVersion);
+
+            kubectl.GetVersion().Returns(Maybe<SemanticVersion>.Some(new SemanticVersion(1, 29, 7)));
+
+            variables.SetStrings(KnownVariables.EnabledFeatureToggles,
+                                 new[]
+                                 {
+                                     FeatureToggle.KubernetesAuthAwsCliWithExecFeatureToggle.ToString()
+                                 },
+                                 ",");
+
+            var expectedInvocations = SetupClusterContextInvocations(AwsClusterUrl);
+            expectedInvocations.AddRange(AwsCliInvocations());
+            expectedInvocations.AddRange(
+                                         new List<(string, string)>
+                                         {
+                                             SetKubectlCredentialsViaExecInvocation,
+                                             GetNamespaceInvocation
+                                         });
 
             var result = CreateSut().Execute();
 
@@ -80,12 +115,12 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
             var expectedInvocations = SetupClusterContextInvocations(AwsClusterUrl);
             expectedInvocations.AddRange(AwsCliInvocations());
             expectedInvocations.AddRange(
-                new List<(string, string)>
-                {
-                    GetAwsTokenInvocation,
-                    SetKubectlTokenInvocation,
-                    GetNamespaceInvocation
-                });
+                                         new List<(string, string)>
+                                         {
+                                             GetAwsTokenInvocation,
+                                             SetKubectlTokenInvocation,
+                                             GetNamespaceInvocation
+                                         });
 
             var result = CreateSut().Execute();
 
@@ -101,11 +136,11 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
 
             var expectedInvocations = SetupClusterContextInvocations(AwsClusterUrl);
             expectedInvocations.AddRange(
-                new List<(string, string)>
-                {
-                    IamAuthenticatorInvocation,
-                    GetNamespaceInvocation
-                });
+                                         new List<(string, string)>
+                                         {
+                                             IamAuthenticatorInvocation,
+                                             GetNamespaceInvocation
+                                         });
 
             var result = CreateSut().Execute();
 
@@ -123,11 +158,11 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
 
             var expectedInvocations = SetupClusterContextInvocations(AwsClusterUrl);
             expectedInvocations.AddRange(
-                new List<(string, string)>
-                {
-                    IamAuthenticatorInvocation,
-                    GetNamespaceInvocation
-                });
+                                         new List<(string, string)>
+                                         {
+                                             IamAuthenticatorInvocation,
+                                             GetNamespaceInvocation
+                                         });
 
             var result = CreateSut().Execute();
 
@@ -146,19 +181,19 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
             var expectedInvocations = SetupClusterContextInvocations(AwsClusterUrl);
             expectedInvocations.AddRange(AwsCliInvocations());
             expectedInvocations.AddRange(
-                new List<(string, string)>
-                {
-                    IamAuthenticatorInvocation,
-                    GetNamespaceInvocation
-                });
+                                         new List<(string, string)>
+                                         {
+                                             IamAuthenticatorInvocation,
+                                             GetNamespaceInvocation
+                                         });
 
             var result = CreateSut().Execute();
 
             result.VerifySuccess();
             AssertInvocations(expectedInvocations);
             log.Received()
-                .Verbose(
-                    "aws cli version: 1.16.155 does not support the \"aws eks get-token\" command. Please update to a version later than 1.16.156");
+               .Verbose(
+                        "aws cli version: 1.16.155 does not support the \"aws eks get-token\" command. Please update to a version later than 1.16.156");
         }
 
         [Test]
@@ -171,20 +206,20 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
             var expectedInvocations = SetupClusterContextInvocations(AwsClusterUrl);
             expectedInvocations.AddRange(AwsCliInvocations());
             expectedInvocations.AddRange(
-                new List<(string, string)>
-                {
-                    IamAuthenticatorInvocation,
-                    GetNamespaceInvocation
-                });
+                                         new List<(string, string)>
+                                         {
+                                             IamAuthenticatorInvocation,
+                                             GetNamespaceInvocation
+                                         });
 
             CreateSut().Execute();
 
             AssertInvocations(expectedInvocations);
             log.Received()
-                .Verbose(
-                    Arg.Is<string>(
-                        s => s.StartsWith(
-                            $"Unable to authenticate to {AwsClusterUrl} using the aws cli. Failed with error message: 'not-a-version' is not a valid version string")));
+               .Verbose(
+                        Arg.Is<string>(
+                                       s => s.StartsWith(
+                                                         $"Unable to authenticate to {AwsClusterUrl} using the aws cli. Failed with error message: 'not-a-version' is not a valid version string")));
         }
 
         [Test]
@@ -198,11 +233,11 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
             var expectedInvocations = SetupClusterContextInvocations(InvalidAwsClusterUrl);
             expectedInvocations.AddRange(AwsCliInvocations());
             expectedInvocations.AddRange(
-                new List<(string, string)>
-                {
-                    IamAuthenticatorInvocation,
-                    GetNamespaceInvocation
-                });
+                                         new List<(string, string)>
+                                         {
+                                             IamAuthenticatorInvocation,
+                                             GetNamespaceInvocation
+                                         });
 
             var result = CreateSut().Execute();
 
@@ -220,9 +255,9 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
         void AddLogForAwsEksGetToken()
         {
             invocations.AddLogMessageFor(
-                "aws",
-                $"eks get-token --cluster-name={EksClusterName} --region={AwsRegion}",
-                $"{{\"status\": {{\"token\": \"k8s-aws-v1.token\"}}}}");
+                                         "aws",
+                                         $"eks get-token --cluster-name={EksClusterName} --region={AwsRegion}",
+                                         $"{{\"status\": {{\"token\": \"k8s-aws-v1.token\"}},\"apiVersion\":\"client.authentication.k8s.io/v1beta1\"}}");
         }
 
         void AddLogForAwsVersion(string version)
@@ -236,30 +271,33 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
             {
                 ("kubectl", $"config set-cluster octocluster --server={clusterUser}"),
                 ("kubectl",
-                    $"config set-context octocontext --user=octouser --cluster=octocluster --namespace={Namespace}"),
+                 $"config set-context octocontext --user=octouser --cluster=octocluster --namespace={Namespace}"),
                 ("kubectl", "config use-context octocontext"),
             };
         }
 
         List<(string, string)> AwsCliInvocations() => new List<(string, string)> { ("aws", "--version") };
 
-        (string, string) IamAuthenticatorInvocation =>
+        static (string, string) IamAuthenticatorInvocation =>
             ("kubectl",
-                $"config set-credentials octouser --exec-command=aws-iam-authenticator --exec-api-version=client.authentication.k8s.io/v1alpha1 --exec-arg=token --exec-arg=-i --exec-arg={EksClusterName}");
+             $"config set-credentials octouser --exec-command=aws-iam-authenticator --exec-api-version=client.authentication.k8s.io/v1alpha1 --exec-arg=token --exec-arg=-i --exec-arg={EksClusterName}");
 
-        (string, string ) GetAwsTokenInvocation
-            => ("aws", "eks get-token --cluster-name=my-cool-eks-cluster-name --region=southwest");
+        static (string, string ) GetAwsTokenInvocation
+            => ("aws", $"eks get-token --cluster-name={EksClusterName} --region={AwsRegion}");
 
-        (string, string) SetKubectlTokenInvocation
+        static (string, string) SetKubectlTokenInvocation
             => ("kubectl", "config set-credentials octouser --token=k8s-aws-v1.token");
 
-        (string, string) GetNamespaceInvocation => ("kubectl", $"get namespace {Namespace}");
+        static (string, string) SetKubectlCredentialsViaExecInvocation
+            => ("kubectl", $"config set-credentials octouser --exec-command=aws --exec-arg=eks --exec-arg=get-token --exec-arg=--cluster-name={EksClusterName} --exec-arg=--region={AwsRegion} --exec-api-version=client.authentication.k8s.io/v1beta1");
+
+        static (string, string) GetNamespaceInvocation => ("kubectl", $"get namespace {Namespace}");
 
         private void AssertInvocations(List<(string, string)> expectedInvocations)
         {
             invocations.Where(x => x.Executable != "which" && x.Executable != "where")
-                .Should()
-                .BeEquivalentTo(expectedInvocations, opts => opts.WithStrictOrdering());
+                       .Should()
+                       .BeEquivalentTo(expectedInvocations, opts => opts.WithStrictOrdering());
         }
     }
 }

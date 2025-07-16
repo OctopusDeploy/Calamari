@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Kubernetes.Integration;
 using Calamari.Kubernetes.ResourceStatus.Resources;
+using Newtonsoft.Json;
 using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Kubernetes.ResourceStatus
@@ -17,6 +19,7 @@ namespace Calamari.Kubernetes.ResourceStatus
         private readonly IResourceUpdateReporter reporter;
         private readonly IKubectl kubectl;
         private readonly Timer.Factory timerFactory;
+        bool stopAfterNextStatusCheck = false;
 
         public ResourceStatusCheckTask(
             IResourceRetriever resourceRetriever,
@@ -30,7 +33,11 @@ namespace Calamari.Kubernetes.ResourceStatus
             this.timerFactory = timerFactory;
         }
 
-        public async Task<Result> Run(IEnumerable<ResourceIdentifier> resources, Options options, TimeSpan timeout,
+        public async Task<Result> Run(
+            IEnumerable<ResourceIdentifier> resources, 
+            Options options,
+            TimeSpan timeout,
+            ILog log, 
             CancellationToken cancellationToken)
         {
             kubectl.SetKubectl();
@@ -55,9 +62,20 @@ namespace Calamari.Kubernetes.ResourceStatus
                         return new Result(DeploymentStatus.Succeeded);
                     }
 
-                    var definedResourceStatuses = resourceRetriever
+                    var resourceStatusResults = resourceRetriever
                                                   .GetAllOwnedResources(definedResources, kubectl, options)
-                                                  .ToArray();
+                                                  .ToList();
+                    var statusCheckFailures = resourceStatusResults
+                                          .Where(r => !r.IsSuccess)
+                                          .Select(r => r.ErrorMessage)
+                                          .ToList();
+                    if (statusCheckFailures.Any())
+                    {
+                        log.Verbose("Resource Status Check: Failed to update status for one or more resources:");
+                        statusCheckFailures.ForEach(log.Verbose);
+                    }
+                    var definedResourceStatuses = resourceStatusResults.Where(r => r.IsSuccess).Select(r => r.Value).ToArray();
+                    
                     var resourceStatuses = definedResourceStatuses
                                            .SelectMany(IterateResourceTree)
                                            .ToDictionary(resource => resource.Uid, resource => resource);
@@ -70,13 +88,29 @@ namespace Calamari.Kubernetes.ResourceStatus
                         deploymentStatus,
                         definedResources,
                         definedResourceStatuses,
-                        resourceStatuses);
+                        resourceStatuses
+                    );
+
+                    //if we have been asked to stop, jump out after the last check
+                    if (stopAfterNextStatusCheck)
+                    {
+                        return result;
+                    }
 
                     await timer.WaitForInterval();
+                    
                 } while (!timer.HasCompleted() && result.DeploymentStatus == DeploymentStatus.InProgress);
 
                 return result;
             }, cancellationToken);
+        }
+
+        /// <summary>
+        /// Stops the status check loop after the next resource status checks occur.
+        /// </summary> 
+        public void StopAfterNextResourceCheck()
+        {
+            stopAfterNextStatusCheck = true;    
         }
 
         private static DeploymentStatus GetDeploymentStatus(Resource[] resources, ResourceIdentifier[] definedResources)
@@ -118,9 +152,10 @@ namespace Calamari.Kubernetes.ResourceStatus
             public Result(DeploymentStatus deploymentStatus)
                 : this(
                     deploymentStatus,
-                    new ResourceIdentifier[0],
-                    new Resource[0],
-                    new Dictionary<string, Resource>())
+                    Array.Empty<ResourceIdentifier>(),
+                    Array.Empty<Resource>(),
+                    new Dictionary<string, Resource>()
+                    )
             {
             }
 

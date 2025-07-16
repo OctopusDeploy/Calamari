@@ -68,8 +68,8 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         [RequiresDockerInstalled]
         public void DockerHubWithCredentials_Loads()
         {
-            const string privateImage = "octopusdeploy/octo-prerelease";
-            var version =  new SemanticVersion("7.3.7-alpine");
+            const string privateImage = "octopustestaccount/octopetshop-productservice";
+            var version =  new SemanticVersion("13.0");
 
             var downloader = GetDownloader();
             var pkg = downloader.DownloadPackage(privateImage,
@@ -114,7 +114,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             var exception = Assert.Throws<CommandException>(() => downloader.DownloadPackage("octopus-echo",
                 new SemanticVersion("1.1"), "docker-feed",
                 new Uri(AuthFeedUri),
-                FeedUsername, "SuperDooper",
+                "Nonexistantuser", "SuperDooper",
                 true, 
                 //we don't want to perform too many of these otherwise jfrog / artifactory gets sad at us
                 2,
@@ -130,7 +130,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
 
         [Test]
         [RequiresDockerInstalled]
-        [TestCase("octopusdeploy/octo-prerelease", "7.3.7-alpine")]
+        [TestCase("octopustestaccount/octopetshop-productservice", "13.0")]
         [TestCase("alpine", "3.6.5")]
         public void CachedDockerHubPackage_DoesNotGenerateImageNotCachedMessage(string image, string tag)
         {
@@ -177,7 +177,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         
         [Test]
         [RequiresDockerInstalled]
-        [TestCase("octopusdeploy/octo-prerelease", "7.3.7-alpine")]
+        [TestCase("octopustestaccount/octopetshop-productservice", "13.0")]
         [TestCase("alpine", "3.6.5")]
         public void NotCachedDockerHubPackage_GeneratesImageNotCachedMessage(string image, string tag)
         {
@@ -256,7 +256,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         static DockerImagePackageDownloader GetDownloader(ILog log)
         {
             var runner = new CommandLineRunner(log, new CalamariVariables());
-            return new DockerImagePackageDownloader(new ScriptEngine(Enumerable.Empty<IScriptWrapper>(), log), CalamariPhysicalFileSystem.GetPhysicalFileSystem(), runner, new CalamariVariables(), log);
+            return new DockerImagePackageDownloader(new ScriptEngine(Enumerable.Empty<IScriptWrapper>(), log), CalamariPhysicalFileSystem.GetPhysicalFileSystem(), runner, new CalamariVariables(), log, new FeedLoginDetailsProviderFactory());
         }
     }
 }

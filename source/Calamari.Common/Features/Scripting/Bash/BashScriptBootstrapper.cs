@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripts;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
@@ -20,7 +21,7 @@ namespace Calamari.Common.Features.Scripting.Bash
 
         static readonly string BootstrapScriptTemplate;
         static readonly string SensitiveVariablePassword = AesEncryption.RandomString(16);
-        static readonly AesEncryption VariableEncryptor = new AesEncryption(SensitiveVariablePassword);
+        static readonly AesEncryption VariableEncryptor = AesEncryption.ForScripts(SensitiveVariablePassword);
         static readonly ICalamariFileSystem CalamariFileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
         static BashScriptBootstrapper()
@@ -30,7 +31,7 @@ namespace Calamari.Common.Features.Scripting.Bash
 
         public static string FormatCommandArguments(string bootstrapFile)
         {
-            var encryptionKey = ToHex(AesEncryption.GetEncryptionKey(SensitiveVariablePassword));
+            var encryptionKey = ToHex(VariableEncryptor.EncryptionKey);
             var commandArguments = new StringBuilder();
             commandArguments.AppendFormat("\"{0}\" \"{1}\"", bootstrapFile, encryptionKey);
             return commandArguments.ToString();
@@ -42,7 +43,17 @@ namespace Calamari.Common.Features.Scripting.Bash
 
             var builder = new StringBuilder(BootstrapScriptTemplate);
             var encryptedVariables = EncryptVariables(variables);
+
+            var variableString = GetEncryptedVariablesKvp(variables);
+
             builder.Replace("#### VariableDeclarations ####", string.Join(LinuxNewLine, GetVariableSwitchConditions(encryptedVariables)));
+
+            builder.Replace("#### BashParametersArrayFeatureToggle ####", FeatureToggle.BashParametersArrayFeatureToggle.IsEnabled(variables) ? "true" : "false");
+            if (FeatureToggle.BashParametersArrayFeatureToggle.IsEnabled(variables))
+            {
+                builder.Replace("#### VARIABLESTRING.IV ####", variableString.iv);
+                builder.Replace("#### VARIABLESTRING.ENCRYPTED ####", variableString.encrypted);
+            }
 
             using (var file = new FileStream(configurationFile, FileMode.CreateNew, FileAccess.Write))
             using (var writer = new StreamWriter(file, Encoding.ASCII))
@@ -53,6 +64,31 @@ namespace Calamari.Common.Features.Scripting.Bash
 
             File.SetAttributes(configurationFile, FileAttributes.Hidden);
             return configurationFile;
+        }
+        
+        static string EncodeAsHex(string value)
+        {
+            var bytes = Encoding.UTF8.GetBytes(value);
+            return BitConverter.ToString(bytes).Replace("-", "");
+        }
+        
+        static (string encrypted, string iv) GetEncryptedVariablesKvp(IVariables variables)
+        {
+            var sb = new StringBuilder();
+            foreach (var variable in variables
+                         .Where(v => !ScriptVariables.IsLibraryScriptModule(v.Key))
+                         .Where(v => !ScriptVariables.IsBuildInformationVariable(v.Key)))
+            {
+                var value = variable.Value ?? "nul";
+                sb.Append($"{EncodeAsHex(variable.Key)}").Append("$").AppendLine(EncodeAsHex(value));
+            }
+
+            var encrypted = VariableEncryptor.Encrypt(sb.ToString());
+            var rawEncrypted = AesEncryption.ExtractIV(encrypted, out var iv);
+            return (
+                Convert.ToBase64String(rawEncrypted),
+                ToHex(iv)
+            );
         }
 
         static IList<EncryptedVariable> EncryptVariables(IVariables variables)
@@ -132,7 +168,7 @@ namespace Calamari.Common.Features.Scripting.Bash
                 if (ScriptVariables.GetLibraryScriptModuleLanguage(variables, variableName) == ScriptSyntax.Bash)
                 {
                     var libraryScriptModuleName = ScriptVariables.GetLibraryScriptModuleName(variableName);
-                    var name = new string(libraryScriptModuleName.Where(char.IsLetterOrDigit).ToArray());
+                    var name = ScriptVariables.FormatScriptName(libraryScriptModuleName); 
                     var moduleFileName = $"{name}.sh";
                     var moduleFilePath = Path.Combine(workingDirectory, moduleFileName);
                     Log.VerboseFormat("Writing script module '{0}' as bash script {1}. Import this via `source {1}`.", libraryScriptModuleName, moduleFileName, name);

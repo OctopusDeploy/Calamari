@@ -76,10 +76,10 @@ namespace Calamari.Commands.Java
             if (!File.Exists(archiveFile))
                 throw new CommandException("Could not find archive file: " + archiveFile);
 
-            Log.Info("Deploying:    " + archiveFile);
+            log.Info("Deploying:    " + archiveFile);
 
             var semaphore = new SystemSemaphoreManager();
-            var journal = new DeploymentJournal(fileSystem, semaphore, variables);
+            var journal = new DeploymentJournal(fileSystem, semaphore, variables, log);
             var jarTools = new JarTool(commandLineRunner, log, fileSystem, variables);
             var packageExtractor = new JarPackageExtractor(jarTools).WithExtractionLimits(log, variables);
             var embeddedResources = new AssemblyEmbeddedResources();
@@ -88,8 +88,8 @@ namespace Calamari.Commands.Java
 
             var featureClasses = new List<IFeature>
             {
-                new TomcatFeature(javaRunner),
-                new WildflyFeature(javaRunner)
+                new TomcatFeature(javaRunner, log),
+                new WildflyFeature(javaRunner, log)
             };
 
             var deployExploded = variables.GetFlag(SpecialVariables.Action.Java.DeployExploded);
@@ -102,24 +102,24 @@ namespace Calamari.Commands.Java
                 deployExploded
                     ? (IInstallConvention)new DelegateInstallConvention(d => extractPackage.ExtractToApplicationDirectory(archiveFile, packageExtractor))
                     : new DelegateInstallConvention(d => extractPackage.ExtractToStagingDirectory(archiveFile, packageExtractor)),
-                new FeatureConvention(DeploymentStages.BeforePreDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
+                new FeatureConvention(DeploymentStages.BeforePreDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources, log),
                 new ConfiguredScriptConvention(new PreDeployConfiguredScriptBehaviour(log, fileSystem, scriptEngine, commandLineRunner)),
                 new PackagedScriptConvention(new PreDeployPackagedScriptBehaviour(log, fileSystem, scriptEngine, commandLineRunner)),
-                new FeatureConvention(DeploymentStages.AfterPreDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
+                new FeatureConvention(DeploymentStages.AfterPreDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources, log),
                 new SubstituteInFilesConvention(new SubstituteInFilesBehaviour(substituteInFiles)),
                 new StructuredConfigurationVariablesConvention(new StructuredConfigurationVariablesBehaviour(structuredConfigVariablesService)),
                 new RePackArchiveConvention(log, fileSystem, jarTools),
-                new CopyPackageToCustomInstallationDirectoryConvention(fileSystem),
-                new FeatureConvention(DeploymentStages.BeforeDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
+                new CopyPackageToCustomInstallationDirectoryConvention(fileSystem, log),
+                new FeatureConvention(DeploymentStages.BeforeDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources, log),
                 new PackagedScriptConvention(new DeployPackagedScriptBehaviour(log, fileSystem, scriptEngine, commandLineRunner)),
                 new ConfiguredScriptConvention(new DeployConfiguredScriptBehaviour(log, fileSystem, scriptEngine, commandLineRunner)),
-                new FeatureConvention(DeploymentStages.AfterDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
-                new FeatureConvention(DeploymentStages.BeforePostDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
+                new FeatureConvention(DeploymentStages.AfterDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources, log),
+                new FeatureConvention(DeploymentStages.BeforePostDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources, log),
                 new PackagedScriptConvention(new PostDeployPackagedScriptBehaviour(log, fileSystem, scriptEngine, commandLineRunner)),
                 new ConfiguredScriptConvention(new PostDeployConfiguredScriptBehaviour(log, fileSystem, scriptEngine, commandLineRunner)),
-                new FeatureConvention(DeploymentStages.AfterPostDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
+                new FeatureConvention(DeploymentStages.AfterPostDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources, log),
                 new RollbackScriptConvention(log, DeploymentStages.DeployFailed, fileSystem, scriptEngine, commandLineRunner),
-                new FeatureRollbackConvention(DeploymentStages.DeployFailed, fileSystem, scriptEngine, commandLineRunner, embeddedResources)
+                new FeatureRollbackConvention(DeploymentStages.DeployFailed, fileSystem, scriptEngine, commandLineRunner, embeddedResources, log)
             };
 
             var deployment = new RunningDeployment(archiveFile, variables);

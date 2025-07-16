@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using Calamari.Common.Plumbing.Extensions;
@@ -14,6 +15,7 @@ namespace Calamari.Integration.Packages.Download.Helm
     
      public class HelmEndpointProxy: IHelmEndpointProxy
     {
+        const string IndexFile = "index.yaml";
         static readonly string[] AcceptedContentType = {"application/x-yaml", "application/yaml"};
         static string httpAccept = string.Join( ", ", AcceptedContentType);
         
@@ -42,7 +44,7 @@ namespace Calamari.Integration.Packages.Download.Helm
         HttpResponseMessage GetIndexYaml(Uri chartRepositoryRootUrl, string username, string password, CancellationToken cancellationToken)
         {
             HttpResponseMessage response;
-            var endpoint = new Uri(chartRepositoryRootUrl, "index.yaml");
+            var endpoint = SanitiseUrl(chartRepositoryRootUrl);
 
             using (var msg = new HttpRequestMessage(HttpMethod.Get, endpoint))
             {
@@ -57,6 +59,21 @@ namespace Calamari.Integration.Packages.Download.Helm
             }
 
             return response;
+        }
+        
+        /// <summary>
+        /// The URL must not include the index.yaml path, but must include a trailing slash
+        /// </summary>
+        /// <param name="url">The URL to sanitise</param>
+        /// <returns>A sanitised URL allowing for subpaths in the helm repo</returns>
+        public static Uri SanitiseUrl(Uri url)
+        {
+            if (url.Segments.Last().EndsWith(IndexFile))
+            {
+                return url;
+            }
+
+            return new Uri($"{url.ToString().TrimEnd('/')}/{IndexFile}");
         }
         
         void ApplyAuthorization(string username, string password, HttpRequestMessage msg)

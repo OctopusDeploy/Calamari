@@ -60,6 +60,14 @@ namespace Calamari.Tests.KubernetesFixtures
                                                             var jObject = JObject.Parse(await json.Content.ReadAsStringAsync());
                                                             var downloadBaseUrl = jObject["current_download_url"].Value<string>();
                                                             var version = jObject["current_version"].Value<string>();
+
+                                                            //TODO(tmm): AzureRM_provider and/or Terraform were causing flakey tests - this pins the required version of terraform
+                                                            var pinnedVersion = "1.7.5";
+                                                            downloadBaseUrl = downloadBaseUrl.Replace(version, pinnedVersion);
+                                                            version = pinnedVersion;
+
+                                                            log($"Found Terraform version {version} @ {downloadBaseUrl}");
+                                                            
                                                             return (version, downloadBaseUrl);
                                                         },
                                                         async (destinationDirectoryName, tuple) =>
@@ -160,6 +168,7 @@ namespace Calamari.Tests.KubernetesFixtures
                                                              {
                                                                  return GetAwsCliExecutablePath(destinationDirectoryName);
                                                              }
+
                                                              ExecuteCommandAndReturnResult("msiexec",
                                                                                            $"/a {awsInstaller} /qn TARGETDIR={destinationDirectoryName}\\extract",
                                                                                            destinationDirectoryName);
@@ -167,7 +176,7 @@ namespace Calamari.Tests.KubernetesFixtures
                                                          else if (CalamariEnvironment.IsRunningOnNix)
                                                          {
                                                              ExecuteCommandAndReturnResult("sudo",
-                                                                                           "apt-get install unzip",
+                                                                                           "apt-get install zip",
                                                                                            destinationDirectoryName);
 
                                                              ExecuteCommandAndReturnResult("unzip",
@@ -552,11 +561,16 @@ namespace Calamari.Tests.KubernetesFixtures
 
         HttpClient CreateHttpClient()
         {
+            //we are _totally_ Chrome :joy:
+            const string userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36";
 #if NETCORE
-            return httpClientFactory.CreateClient();
+            var httpClient = httpClientFactory.CreateClient();
+            httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(userAgent);
 #else
-            return new HttpClient();
+            var httpClient = new HttpClient();
+            httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(userAgent);
 #endif
+            return httpClient;
         }
     }
 }

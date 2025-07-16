@@ -18,7 +18,7 @@ namespace Calamari.Common.Features.Scripting.ScriptCS
     {
         static readonly string BootstrapScriptTemplate;
         static readonly string SensitiveVariablePassword = AesEncryption.RandomString(16);
-        static readonly AesEncryption VariableEncryptor = new AesEncryption(SensitiveVariablePassword);
+        static readonly AesEncryption VariableEncryptor = AesEncryption.ForScripts(SensitiveVariablePassword);
         static readonly ICalamariFileSystem CalamariFileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
         static ScriptCSBootstrapper()
@@ -44,7 +44,7 @@ namespace Calamari.Common.Features.Scripting.ScriptCS
         public static string FormatCommandArguments(string bootstrapFile, string? scriptParameters)
         {
             scriptParameters = RetrieveParameterValues(scriptParameters);
-            var encryptionKey = Convert.ToBase64String(AesEncryption.GetEncryptionKey(SensitiveVariablePassword));
+            var encryptionKey = Convert.ToBase64String(VariableEncryptor.EncryptionKey);
             var commandArguments = new StringBuilder();
             commandArguments.AppendFormat("-script \"{0}\" -- {1} \"{2}\"", bootstrapFile, scriptParameters, encryptionKey);
             return commandArguments.ToString();
@@ -58,10 +58,10 @@ namespace Calamari.Common.Features.Scripting.ScriptCS
                 .Trim();
         }
 
-        public static (string bootstrapFile, string[] temporaryFiles) PrepareBootstrapFile(string scriptFilePath, string configurationFile, string workingDirectory, IVariables variables)
+        public static (string bootstrapFile, string[] temporaryFiles) PrepareBootstrapFile(string scriptFilePath, string configurationFile, string workingDirectory, IVariables variables, ILog log)
         {
             var bootstrapFile = Path.Combine(workingDirectory, "Bootstrap." + Guid.NewGuid().ToString().Substring(10) + "." + Path.GetFileName(scriptFilePath));
-            var scriptModulePaths = PrepareScriptModules(variables, workingDirectory).ToArray();
+            var scriptModulePaths = PrepareScriptModules(variables, workingDirectory, log).ToArray();
 
             using (var file = new FileStream(bootstrapFile, FileMode.CreateNew, FileAccess.Write))
             using (var writer = new StreamWriter(file, Encoding.UTF8))
@@ -76,16 +76,16 @@ namespace Calamari.Common.Features.Scripting.ScriptCS
             return (bootstrapFile, scriptModulePaths);
         }
 
-        static IEnumerable<string> PrepareScriptModules(IVariables variables, string workingDirectory)
+        static IEnumerable<string> PrepareScriptModules(IVariables variables, string workingDirectory, ILog log)
         {
             foreach (var variableName in variables.GetNames().Where(ScriptVariables.IsLibraryScriptModule))
                 if (ScriptVariables.GetLibraryScriptModuleLanguage(variables, variableName) == ScriptSyntax.CSharp)
                 {
                     var libraryScriptModuleName = ScriptVariables.GetLibraryScriptModuleName(variableName);
-                    var name = new string(libraryScriptModuleName.Where(char.IsLetterOrDigit).ToArray());
+                    var name = ScriptVariables.FormatScriptName(libraryScriptModuleName); 
                     var moduleFileName = $"{name}.csx";
                     var moduleFilePath = Path.Combine(workingDirectory, moduleFileName);
-                    Log.VerboseFormat("Writing script module '{0}' as c# module {1}. Import this module via `#load {1}`.", libraryScriptModuleName, moduleFileName, name);
+                    log.VerboseFormat("Writing script module '{0}' as c# module {1}. Import this module via `#load {1}`.", libraryScriptModuleName, moduleFileName, name);
                     var contents = variables.Get(variableName);
                     if (contents == null)
                         throw new InvalidOperationException($"Value for variable {variableName} could not be found.");

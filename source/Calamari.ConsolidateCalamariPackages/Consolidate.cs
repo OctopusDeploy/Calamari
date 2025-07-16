@@ -6,7 +6,7 @@ using System.Linq;
 using System.Reflection;
 using Serilog;
 
-namespace Calamari.ConsolidateCalamariPackages
+namespace Octopus.Calamari.ConsolidatedPackage
 {
     public class Consolidate
     {

@@ -13,8 +13,10 @@ using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Kubernetes.Commands;
+using Calamari.Kubernetes.ResourceStatus.Resources;
 using Calamari.Testing;
 using Calamari.Testing.Helpers;
+using Calamari.Testing.Requirements;
 using Calamari.Tests.AWS;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
@@ -39,7 +41,7 @@ namespace Calamari.Tests.KubernetesFixtures
         private const string ConfigMapFileName = "myapp-configmap1.yml";
         private const string ConfigMapFileName2 = "myapp-configmap2.yml";
 
-        private const string SimpleDeploymentResourceType = "Deployment";
+        private readonly ResourceGroupVersionKind simpleDeploymentResourceGvk = new ResourceGroupVersionKind("apps", "v1", "Deployment");
         private const string SimpleDeploymentResourceName = "nginx-deployment";
         private const string SimpleDeploymentResource =
             "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: nginx-deployment\nspec:\n  selector:\n    matchLabels:\n      app: nginx\n  replicas: 3\n  template:\n    metadata:\n      labels:\n        app: nginx\n    spec:\n      containers:\n      - name: nginx\n        image: nginx:1.14.2\n        ports:\n        - containerPort: 80";
@@ -132,13 +134,14 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         [TestCase(true)]
         [TestCase(false)]
+        [Ignore("These tests will be transitioned to using a local Kind cluster, rather than a remote cluster")]
         public void DeployRawYaml_WithRawYamlDeploymentScriptOrCommand_OutputShouldIndicateSuccessfulDeployment(bool usePackage)
         {
             SetupAndRunKubernetesRawYamlDeployment(usePackage, SimpleDeploymentResource);
 
             var rawLogs = Log.Messages.Select(m => m.FormattedMessage).ToArray();
 
-            AssertObjectStatusMonitoringStarted(rawLogs, (SimpleDeploymentResourceType, SimpleDeploymentResourceName));
+            AssertObjectStatusMonitoringStarted(rawLogs, (simpleDeploymentResourceGvk, SimpleDeploymentResourceName));
 
             var objectStatusUpdates = Log.Messages.GetServiceMessagesOfType("k8s-status");
 
@@ -148,19 +151,20 @@ namespace Calamari.Tests.KubernetesFixtures
                 m.Contains("Resource status check completed successfully because all resources are deployed successfully"));
         }
 
-        private static void AssertObjectStatusMonitoringStarted(string[] rawLogs, params (string Type, string Name)[] resources)
+        private static void AssertObjectStatusMonitoringStarted(string[] rawLogs, params (ResourceGroupVersionKind Gvk, string Name)[] resources)
         {
             var resourceStatusCheckLog = "Resource Status Check: 1 new resources have been added:";
             var idx = Array.IndexOf(rawLogs, resourceStatusCheckLog);
-            foreach (var (i, type, name) in resources.Select((t, i) => (i, t.Type, t.Name)))
+            foreach (var (i, gvk, name) in resources.Select((t, i) => (i, t.Gvk, t.Name)))
             {
-                rawLogs[idx + i + 1].Should().Be($" - {type}/{name} in namespace calamari-testing");
+                rawLogs[idx + i + 1].Should().Be($" - {gvk}/{name} in namespace calamari-testing");
             }
         }
 
         [Test]
         [TestCase(true)]
         [TestCase(false)]
+        [Ignore("These tests will be transitioned to using a local Kind cluster, rather than a remote cluster")]
         public void DeployRawYaml_WithInvalidYaml_OutputShouldIndicateFailure(bool usePackage)
         {
             SetupAndRunKubernetesRawYamlDeployment(usePackage, InvalidDeploymentResource, shouldSucceed: false);
@@ -177,13 +181,14 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         [TestCase(true)]
         [TestCase(false)]
+        [Ignore("These tests will be transitioned to using a local Kind cluster, rather than a remote cluster")]
         public void DeployRawYaml_WithYamlThatWillNotSucceed_OutputShouldIndicateFailure(bool usePackage)
         {
             SetupAndRunKubernetesRawYamlDeployment(usePackage, FailToDeploymentResource, shouldSucceed: false);
 
             var rawLogs = Log.Messages.Select(m => m.FormattedMessage).ToArray();
 
-            AssertObjectStatusMonitoringStarted(rawLogs, (SimpleDeploymentResourceType, SimpleDeploymentResourceName));
+            AssertObjectStatusMonitoringStarted(rawLogs, (simpleDeploymentResourceGvk, SimpleDeploymentResourceName));
 
             rawLogs.Should().ContainSingle(l =>
                 l ==
@@ -191,6 +196,7 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
+        [Ignore("These tests will be transitioned to using a local Kind cluster, rather than a remote cluster")]
         public void DeployRawYaml_WithMultipleYamlFilesGlobPatterns_YamlFilesAppliedInCorrectBatches()
         {
             SetVariablesToAuthoriseWithAmazonAccount();
@@ -272,6 +278,32 @@ namespace Calamari.Tests.KubernetesFixtures
         public void AuthorisingWithAmazonAccount(bool runAsScript)
         {
             SetVariablesToAuthoriseWithAmazonAccount();
+
+            if (runAsScript)
+            {
+                DeployWithKubectlTestScriptAndVerifyResult();
+            }
+            else
+            {
+                ExecuteCommandAndVerifyResult(TestableKubernetesDeploymentCommand.Name);
+            }
+        }
+        
+        [Test]
+        [TestCase(true)]
+        [TestCase(false)]
+        [WindowsTest] // We are having an issue with this test running on Linux. The test successfully executes on Windows.
+        public void AuthorisingWithAmazonAccount_WithExecFeatureToggleEnabled(bool runAsScript)
+        {
+            SetVariablesToAuthoriseWithAmazonAccount();
+            
+            //set the feature toggle
+            variables.SetStrings(KnownVariables.EnabledFeatureToggles,
+                                 new[]
+                                 {
+                                     FeatureToggle.KubernetesAuthAwsCliWithExecFeatureToggle.ToString()
+                                 },
+                                 ",");
 
             if (runAsScript)
             {
@@ -368,7 +400,7 @@ namespace Calamari.Tests.KubernetesFixtures
                         { "isDynamic", bool.TrueString },
                         { "awsUseWorkerCredentials", bool.TrueString },
                         { "awsAssumeRole", bool.TrueString },
-                        { "awsAssumeRoleArn", eksIamRolArn },
+                        { "awsAssumeRoleArn", eksIamRolArn }
                     };
 
                 DoDiscoveryAndAssertReceivedServiceMessageWithMatchingProperties(authenticationDetails,
@@ -458,7 +490,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 { "updateIfExisting", bool.TrueString },
                 { "isDynamic", bool.TrueString },
                 { "awsUseWorkerCredentials", bool.FalseString },
-                { "awsAssumeRole", bool.FalseString }
+                { "awsAssumeRole", bool.FalseString },
             };
 
             DoDiscoveryAndAssertReceivedServiceMessageWithMatchingProperties(authenticationDetails, serviceMessageProperties);
@@ -506,7 +538,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 { "awsAssumeRole", bool.TrueString },
                 { "awsAssumeRoleArn", eksIamRolArn },
                 { "awsAssumeRoleSession", "ThisIsASessionName" },
-                { "awsAssumeRoleSessionDurationSeconds", sessionDuration.ToString() }
+                { "awsAssumeRoleSessionDurationSeconds", sessionDuration.ToString() },
             };
 
             DoDiscoveryAndAssertReceivedServiceMessageWithMatchingProperties(authenticationDetails, serviceMessageProperties);

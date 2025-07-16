@@ -11,6 +11,14 @@ namespace Calamari.Deployment.Features
 {
     public class IisWebSiteBeforeDeployFeature : IisWebSiteFeature
     {
+        readonly IWindowsX509CertificateStore windowsX509CertificateStore;
+        readonly ILog log;
+
+        public IisWebSiteBeforeDeployFeature(IWindowsX509CertificateStore windowsX509CertificateStore, ILog log)
+        {
+            this.windowsX509CertificateStore = windowsX509CertificateStore;
+            this.log = log;
+        }
         public override string DeploymentStage => DeploymentStages.BeforeDeploy;
 
         public override void Execute(RunningDeployment deployment)
@@ -19,19 +27,13 @@ namespace Calamari.Deployment.Features
 
             if (variables.GetFlag(SpecialVariables.Action.IisWebSite.DeployAsWebSite, false))
             {
-
-#if WINDOWS_CERTIFICATE_STORE_SUPPORT
                 // Any certificate-variables used by IIS bindings must be placed in the
                 // LocalMachine certificate store
                 EnsureCertificatesUsedInBindingsAreInStore(variables);
-#endif
-
             }
         }
 
-
-#if WINDOWS_CERTIFICATE_STORE_SUPPORT
-        static void EnsureCertificatesUsedInBindingsAreInStore(IVariables variables)
+        void EnsureCertificatesUsedInBindingsAreInStore(IVariables variables)
         {
             foreach (var binding in GetEnabledBindings(variables))
             {
@@ -44,14 +46,14 @@ namespace Calamari.Deployment.Features
             }
         }
 
-        static void EnsureCertificateInStore(IVariables variables, string certificateVariable)
+        void EnsureCertificateInStore(IVariables variables, string certificateVariable)
         {
             var thumbprint = variables.Get($"{certificateVariable}.{CertificateVariables.Properties.Thumbprint}");
 
-            var storeName = WindowsX509CertificateStore.FindCertificateStore(thumbprint, StoreLocation.LocalMachine);
+            var storeName = windowsX509CertificateStore.FindCertificateStore(thumbprint, StoreLocation.LocalMachine);
             if (storeName != null)
             {
-                Log.Verbose($"Found existing certificate with thumbprint '{thumbprint}' in Cert:\\LocalMachine\\{storeName}");
+                log.Verbose($"Found existing certificate with thumbprint '{thumbprint}' in Cert:\\LocalMachine\\{storeName}");
             }
             else
             {
@@ -63,31 +65,27 @@ namespace Calamari.Deployment.Features
                 return;
 
             storeNamesVariable = string.Join(",", storeNamesVariable, storeName);
-            Log.SetOutputVariable(SpecialVariables.Action.IisWebSite.Output.CertificateStoreName, storeNamesVariable, variables);
+            log.SetOutputVariable(SpecialVariables.Action.IisWebSite.Output.CertificateStoreName, storeNamesVariable, variables);
         }
 
-       
-
-        static string AddCertificateToLocalMachineStore(IVariables variables, string certificateVariable)
+        string AddCertificateToLocalMachineStore(IVariables variables, string certificateVariable)
         {
             var pfxBytes = Convert.FromBase64String(variables.Get($"{certificateVariable}.{CertificateVariables.Properties.Pfx}"));
             var password = variables.Get($"{certificateVariable}.{CertificateVariables.Properties.Password}");
             var subject = variables.Get($"{certificateVariable}.{CertificateVariables.Properties.Subject}");
 
-            Log.Info($"Adding certificate '{subject}' into Cert:\\LocalMachine\\My");
+            log.Info($"Adding certificate '{subject}' into Cert:\\LocalMachine\\My");
 
             try
             {
-                WindowsX509CertificateStore.ImportCertificateToStore(pfxBytes, password, StoreLocation.LocalMachine, "My", true);
+                windowsX509CertificateStore.ImportCertificateToStore(pfxBytes, password, StoreLocation.LocalMachine, "My", true);
                 return "My";
             }
             catch (Exception)
             {
-                Log.Error("Exception while attempting to add certificate to store");
+                log.Error("Exception while attempting to add certificate to store");
                 throw;
             }
         }
-#endif
-
     }
 }

@@ -2,10 +2,13 @@
 using System.IO;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.Iis;
+using Calamari.Tests.Helpers;
+using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
 
@@ -61,7 +64,23 @@ namespace Calamari.Tests.Fixtures.Deployment.Conventions
         }
 
         [Test]
-        public void ShouldForceIis6CompatibilityIfFlagSet()
+        public void ShouldForceIis6CompatibilityIfSuperForceFlagSet()
+        {
+            const string websiteName = "AcmeOnline";
+            variables.Set(SpecialVariables.Package.UpdateIisWebsite, true.ToString());
+            variables.Set(SpecialVariables.Package.UpdateIisWebsiteName, websiteName);
+            variables.Set(SpecialVariables.UseLegacyIisSupport, true.ToString());
+            variables.Set(SpecialVariables.UseLegacyIisSupportForce, true.ToString());
+            fileSystem.FileExists(Path.Combine(stagingDirectory, "Web.config")).Returns(true);
+            iis.OverwriteHomeDirectory(websiteName, stagingDirectory, true).Returns(true);
+
+            CreateConvention().Install(deployment);
+
+            iis.Received().OverwriteHomeDirectory(websiteName, stagingDirectory, true);
+        }
+        
+        [Test]
+        public void ShouldFailIis6CompatibilityIfFlagSet()
         {
             const string websiteName = "AcmeOnline";
             variables.Set(SpecialVariables.Package.UpdateIisWebsite, true.ToString());
@@ -70,9 +89,12 @@ namespace Calamari.Tests.Fixtures.Deployment.Conventions
             fileSystem.FileExists(Path.Combine(stagingDirectory, "Web.config")).Returns(true);
             iis.OverwriteHomeDirectory(websiteName, stagingDirectory, true).Returns(true);
 
-            CreateConvention().Install(deployment);
+            var exception = Assert.Throws<CommandException>(() =>
+                                                                CreateConvention().Install(deployment)
+                                                           );
+            exception.Message.Should().Contain("Support for IIS6 is no longer supported.");
 
-            iis.Received().OverwriteHomeDirectory(websiteName, stagingDirectory, true);
+            iis.DidNotReceive().OverwriteHomeDirectory(websiteName, stagingDirectory, true);
         }
 
         [Test]
@@ -92,7 +114,7 @@ namespace Calamari.Tests.Fixtures.Deployment.Conventions
 
         private LegacyIisWebSiteConvention CreateConvention()
         {
-            return new LegacyIisWebSiteConvention(fileSystem, iis);
+            return new LegacyIisWebSiteConvention(fileSystem, iis, new SilentLog());
         }
     }
 }

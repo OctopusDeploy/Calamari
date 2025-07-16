@@ -25,6 +25,7 @@ using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Deployment.Features;
 using Calamari.Deployment.PackageRetention;
+using Calamari.Integration.Certificates;
 using Calamari.Integration.Iis;
 using Calamari.Integration.Nginx;
 
@@ -42,6 +43,7 @@ namespace Calamari.Commands
         readonly IExtractPackage extractPackage;
         readonly IStructuredConfigVariablesService structuredConfigVariablesService;
         readonly IDeploymentJournalWriter deploymentJournalWriter;
+        readonly IWindowsX509CertificateStore windowsX509CertificateStore;
         PathToPackage pathToPackage;
 
         public DeployPackageCommand(
@@ -53,7 +55,8 @@ namespace Calamari.Commands
             ISubstituteInFiles substituteInFiles,
             IExtractPackage extractPackage,
             IStructuredConfigVariablesService structuredConfigVariablesService,
-            IDeploymentJournalWriter deploymentJournalWriter)
+            IDeploymentJournalWriter deploymentJournalWriter,
+            IWindowsX509CertificateStore windowsX509CertificateStore)
         {
             Options.Add("package=", "Path to the deployment package to install.", v => pathToPackage = new PathToPackage(Path.GetFullPath(v)));
 
@@ -66,6 +69,7 @@ namespace Calamari.Commands
             this.extractPackage = extractPackage;
             this.structuredConfigVariablesService = structuredConfigVariablesService;
             this.deploymentJournalWriter = deploymentJournalWriter;
+            this.windowsX509CertificateStore = windowsX509CertificateStore;
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -77,7 +81,7 @@ namespace Calamari.Commands
             if (!File.Exists(pathToPackage))
                 throw new CommandException("Could not find package file: " + pathToPackage);
 
-            Log.Info("Deploying package:    " + pathToPackage);
+            log.Info("Deploying package:    " + pathToPackage);
 
             var featureClasses = new List<IFeature>();
 
@@ -85,44 +89,42 @@ namespace Calamari.Commands
             var configurationTransformer = ConfigurationTransformer.FromVariables(variables, log);
             var transformFileLocator = new TransformFileLocator(fileSystem, log);
             var embeddedResources = new AssemblyEmbeddedResources();
-#if IIS_SUPPORT
+
             var iis = new InternetInformationServer();
-            featureClasses.AddRange(new IFeature[] { new IisWebSiteBeforeDeployFeature(), new IisWebSiteAfterPostDeployFeature() });
-#endif
+            featureClasses.AddRange(new IFeature[] { new IisWebSiteBeforeDeployFeature(windowsX509CertificateStore, log), new IisWebSiteAfterPostDeployFeature(windowsX509CertificateStore) });
+
             if (!CalamariEnvironment.IsRunningOnWindows)
             {
-                featureClasses.Add(new NginxFeature(NginxServer.AutoDetect(), fileSystem));
+                featureClasses.Add(new NginxFeature(NginxServer.AutoDetect(), fileSystem, log));
             }
 
             var semaphore = new SystemSemaphoreManager();
-            var journal = new DeploymentJournal(fileSystem, semaphore, variables);
+            var journal = new DeploymentJournal(fileSystem, semaphore, variables, log);
 
             var conventions = new List<IConvention>
             {
                 new AlreadyInstalledConvention(log, journal),
                 new DelegateInstallConvention(d => extractPackage.ExtractToApplicationDirectory(pathToPackage)),
-                new FeatureConvention(DeploymentStages.BeforePreDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
+                new FeatureConvention(DeploymentStages.BeforePreDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources, log),
                 new ConfiguredScriptConvention(new PreDeployConfiguredScriptBehaviour(log, fileSystem, scriptEngine, commandLineRunner)),
                 new PackagedScriptConvention(new PreDeployPackagedScriptBehaviour(log, fileSystem, scriptEngine, commandLineRunner)),
-                new FeatureConvention(DeploymentStages.AfterPreDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
+                new FeatureConvention(DeploymentStages.AfterPreDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources, log),
                 new SubstituteInFilesConvention(new SubstituteInFilesBehaviour(substituteInFiles)),
                 new ConfigurationTransformsConvention(new ConfigurationTransformsBehaviour(fileSystem, variables, configurationTransformer, transformFileLocator, log)),
                 new ConfigurationVariablesConvention(new ConfigurationVariablesBehaviour(fileSystem, variables, replacer, log)),
                 new StructuredConfigurationVariablesConvention(new StructuredConfigurationVariablesBehaviour(structuredConfigVariablesService)),
-                new CopyPackageToCustomInstallationDirectoryConvention(fileSystem),
-                new FeatureConvention(DeploymentStages.BeforeDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
+                new CopyPackageToCustomInstallationDirectoryConvention(fileSystem, log),
+                new FeatureConvention(DeploymentStages.BeforeDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources, log),
                 new PackagedScriptConvention(new DeployPackagedScriptBehaviour(log, fileSystem, scriptEngine, commandLineRunner)),
                 new ConfiguredScriptConvention(new DeployConfiguredScriptBehaviour(log, fileSystem, scriptEngine, commandLineRunner)),
-                new FeatureConvention(DeploymentStages.AfterDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
-#if IIS_SUPPORT
-                new LegacyIisWebSiteConvention(fileSystem, iis),
-#endif
-                new FeatureConvention(DeploymentStages.BeforePostDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
+                new FeatureConvention(DeploymentStages.AfterDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources, log),
+                new LegacyIisWebSiteConvention(fileSystem, iis, log),
+                new FeatureConvention(DeploymentStages.BeforePostDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources, log),
                 new PackagedScriptConvention(new PostDeployPackagedScriptBehaviour(log, fileSystem, scriptEngine, commandLineRunner)),
                 new ConfiguredScriptConvention(new PostDeployConfiguredScriptBehaviour( log, fileSystem, scriptEngine, commandLineRunner)),
-                new FeatureConvention(DeploymentStages.AfterPostDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources),
+                new FeatureConvention(DeploymentStages.AfterPostDeploy, featureClasses, fileSystem, scriptEngine, commandLineRunner, embeddedResources, log),
                 new RollbackScriptConvention(log, DeploymentStages.DeployFailed, fileSystem, scriptEngine, commandLineRunner),
-                new FeatureRollbackConvention(DeploymentStages.DeployFailed, fileSystem, scriptEngine, commandLineRunner, embeddedResources)
+                new FeatureRollbackConvention(DeploymentStages.DeployFailed, fileSystem, scriptEngine, commandLineRunner, embeddedResources, log)
             };
 
             var deployment = new RunningDeployment(pathToPackage, variables);

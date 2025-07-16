@@ -13,13 +13,15 @@
     <TargetFrameworks>net462;net6.0</TargetFrameworks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net6.0' ">
-    <DefineConstants>$(DefineConstants);NETCORE;AWS;AZURE_CORE;JAVA_SUPPORT</DefineConstants>
+    <DefineConstants>$(DefineConstants);NETCORE;AZURE_CORE;JAVA_SUPPORT</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net462' ">
-    <DefineConstants>$(DefineConstants);NETFX;AWS;IIS_SUPPORT;USE_NUGET_V2_LIBS;USE_OCTODIFF_EXE;WINDOWS_CERTIFICATE_STORE_SUPPORT;WINDOWS_USER_ACCOUNT_SUPPORT;WINDOWS_REGISTRY_SUPPORT</DefineConstants>
+    <DefineConstants>$(DefineConstants);NETFX;IIS_SUPPORT;USE_NUGET_V2_LIBS;USE_OCTODIFF_EXE;</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="XPath2" Version="1.0.12" />
+    <PackageReference Include="System.DirectoryServices.AccountManagement" Version="4.7.0" />
+    <PackageReference Include="WireMock.Net" Version="1.6.9" />
+    <PackageReference Include="XPath2" Version="1.1.5" />
     <ProjectReference Include="..\Calamari.Testing\Calamari.Testing.csproj" />
     <ProjectReference Include="..\Calamari\Calamari.csproj" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.3.0" />
@@ -58,9 +60,6 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Fixtures\PowerShell\Scripts\HelloWithVariable.ps1" />
-    <EmbeddedResource Include="Fixtures\FSharp\Scripts\HelloDefaultValue.fsx" />
-    <EmbeddedResource Include="Fixtures\FSharp\Scripts\HelloDirectValue.fsx" />
-    <EmbeddedResource Include="Fixtures\FSharp\Scripts\HelloVariableSubstitution.fsx" />
     <None Include="Fixtures\ConfigurationVariables\Samples\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
@@ -107,9 +106,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Fixtures\Deployment\Packages\Octopus.Sample.AzureCloudService\**">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="Fixtures\FSharp\Scripts\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Fixtures\Integration\Packages\Samples\**">
@@ -167,6 +163,18 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <Compile Remove="Fixtures\StructuredVariables\CalamariFlavourProgramReplacerSelectionFixture.cs" />
+    <None Update="KubernetesFixtures\Approved\KubernetesContextScriptWrapperFixture.ExecutionWithEKS_AwsCLIAuthenticator_WithExecFeatureToggleEnabled.approved.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Fixtures\PowerShell\Scripts\ReportKubernetesManifestFile.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Fixtures\Bash\Scripts\report-kubernetes-manifest-file.sh">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="KubernetesFixtures\ResourceStatus\assets\invalid-syntax.yaml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <None Remove="TestResults\**" />
@@ -256,9 +264,6 @@
   -->
   <Target Name="RunResolvePackageDependencies" Condition="'$(RunResolvePackageDependencies)' != ''" />
   <Target Name="CopyTools" AfterTargets="Build" DependsOnTargets="RunResolvePackageDependencies">
-    <CreateItem Include="@(PackageDefinitions)" Condition="'%(Name)' == 'FSharp.Compiler.Tools'">
-      <Output TaskParameter="Include" ItemName="FSharpCompilerToolsRef" />
-    </CreateItem>
     <CreateItem Include="@(PackageDefinitions)" Condition="'%(Name)' == 'ScriptCS'">
       <Output TaskParameter="Include" ItemName="ScriptCSRef" />
     </CreateItem>
@@ -266,29 +271,22 @@
       <Output TaskParameter="Include" ItemName="NuGetCommandLineRef" />
     </CreateItem>
     <PropertyGroup>
-      <FSharpCompilerTools>@(FSharpCompilerToolsRef->'%(ResolvedPath)')/tools/*.*</FSharpCompilerTools>
-      <FSharpCompilerToolsExe Condition="'$(TargetFramework)' == 'net6.0'">@(FSharpCompilerToolsRef->'%(ResolvedPath)')/tools/*.exe</FSharpCompilerToolsExe>
       <ScriptCS>@(ScriptCSRef->'%(ResolvedPath)')/tools/*.*</ScriptCS>
       <ScriptCSExe Condition="'$(TargetFramework)' == 'net6.0'">@(ScriptCSRef->'%(ResolvedPath)')/tools/*.exe</ScriptCSExe>
       <NuGetCommandLine>@(NuGetCommandLineRef->'%(ResolvedPath)')/tools/*.*</NuGetCommandLine>
     </PropertyGroup>
     <ItemGroup>
-      <FSharpFiles Include="$(FSharpCompilerTools)" />
-      <FSharpFilesExe Condition="'$(TargetFramework)' == 'net6.0'" Include="$(FSharpCompilerToolsExe)" />
       <ScriptCSFiles Include="$(ScriptCS)" />
       <ScriptCSFilesExe Condition="'$(TargetFramework)' == 'net6.0'" Include="$(ScriptCSExe)" />
       <DotnetScriptFiles Condition="'$(TargetFramework)' == 'net6.0'" Include="$(MSBuildProjectDirectory)/../Calamari.Scripting/DotnetScript/dotnet-script.*.zip" />
       <DotnetScriptFilesExe Condition="'$(TargetFramework)' == 'net6.0'" Include="$(OutDir)/dotnet-script/*.sh;$(OutDir)/dotnet-script/*.exe" />
       <NuGetFiles Include="$(NuGetCommandLine)" Condition=" '$(TargetFramework)' == 'net462'" />
     </ItemGroup>
-    <Copy SourceFiles="@(FSharpFiles)" DestinationFolder="$(OutDir)/FSharp/" SkipUnchangedFiles="true" />
     <Exec Command="chmod +x %(ScriptCSFilesExe.Identity)" IgnoreExitCode="true" Condition="'$(TargetFramework)' == 'net6.0'" />
     <Copy SourceFiles="@(ScriptCSFiles)" DestinationFolder="$(OutDir)/ScriptCS/" SkipUnchangedFiles="true" />
     <Copy SourceFiles="@(NuGetFiles)" DestinationFolder="$(OutDir)/NuGet/" SkipUnchangedFiles="true" Condition="'$(TargetFramework)' == 'net462'" />
     <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(OutDir)/" SkipUnchangedFiles="true" />
-    <Exec Command="chmod +x %(FSharpFilesExe.Identity)" IgnoreExitCode="true" Condition="'$(TargetFramework)' == 'net6.0'" />
     <Exec Command="chmod +x %(DotnetScriptFilesExe.Identity)" IgnoreExitCode="true" Condition="'$(TargetFramework)' == 'net6.0'" />
-    <Copy SourceFiles="@(FSharpFiles)" DestinationFolder="$(PublishDir)/FSharp/" Condition="'$(PublishDir)' != ''" />
     <Copy SourceFiles="@(ScriptCSFiles)" DestinationFolder="$(PublishDir)/ScriptCS/" Condition="'$(PublishDir)' != ''" />
     <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(PublishDir)/" Condition="'$(PublishDir)' != '' And '$(TargetFramework)' == 'net6.0'" />
   </Target>

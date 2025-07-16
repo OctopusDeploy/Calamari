@@ -49,10 +49,6 @@ namespace Calamari.Tests.Fixtures.Deployment
         [Test]
         public void ShouldDeployAndInstallWithCustomUserName()
         {
-            if (!CalamariEnvironment.IsRunningOnWindows)
-                Assert.Inconclusive("Services are only supported on windows");
-
-#if WINDOWS_USER_ACCOUNT_SUPPORT
             TestUserPrincipal userPrincipal = null;
             try
             {
@@ -68,9 +64,6 @@ namespace Calamari.Tests.Fixtures.Deployment
             {
                 userPrincipal?.Delete();
             }
-#else
-            Assert.Inconclusive("Not yet able to configure user accounts under netcore to test service accounts");
-#endif
 
         }
     }

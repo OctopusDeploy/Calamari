@@ -10,15 +10,19 @@ using FluentAssertions;
 using NSubstitute;
 using NuGet.Packaging;
 using NUnit.Framework;
+using Octopus.Calamari.ConsolidatedPackage;
 using Serilog;
+using SharpCompress.Writers;
+using SharpCompress.Writers.Zip;
 using TestStack.BDDfy;
+using CompressionLevel = SharpCompress.Compressors.Deflate.CompressionLevel;
 
 namespace Calamari.ConsolidateCalamariPackages.Tests
 {
     [TestFixture]
     public class IntegrationTests
     {
-        readonly Assent.Configuration assentConfiguration = new Assent.Configuration().UsingSanitiser(s => Sanitise4PartVersions(SanitiseHashes(s)));
+        readonly Assent.Configuration assentConfiguration = new Assent.Configuration().UsingSanitiser(s => Sanitise4PartVersions(SanitiseHash(s)));
         static readonly string TestPackagesDirectory = "../../../testPackages";
 
         private string temp;
@@ -85,7 +89,7 @@ namespace Calamari.ConsolidateCalamariPackages.Tests
         public void AndThenThePackageContentsShouldBe()
         {
             using (var zip = ZipFile.Open(expectedZip, ZipArchiveMode.Read))
-                this.Assent(string.Join("\r\n", zip.Entries.Select(e => SanitiseHashes(e.FullName)).OrderBy(k => k)), assentConfiguration);
+                this.Assent(string.Join("\r\n", zip.Entries.Select(e => SanitiseHash(e.FullName)).OrderBy(k => k)), assentConfiguration);
         }
 
         public void AndThenTheIndexShouldBe()
@@ -96,8 +100,74 @@ namespace Calamari.ConsolidateCalamariPackages.Tests
                 this.Assent(sr.ReadToEnd(), assentConfiguration);
         }
 
-        private static string SanitiseHashes(string s)
-            => Regex.Replace(s, "[a-z0-9]{32}", "<hash>");
+        public void AndTheRegeneratedPackageShouldBeIdenticalToInputs()
+        {
+            var streamProvider = new FileBasedStreamProvider(expectedZip);
+            var factory = new ConsolidatedPackageFactory();
+            var consolidatedPackage = factory.LoadFrom(streamProvider);
+
+            // Sashimi is a multi-arch package - atm this test can't unpack it cleanly enough.
+            foreach (var reference in packageReferences.Where(pr => !pr.Name.Contains("Sashimi")))
+            {
+                var (flavour, platform) = ExtractFlavourAndPlatform(reference);
+                var outputFilename = Path.Combine(temp, $"{flavour}_{platform}_output.zip");
+                using (var outputStream = File.OpenWrite(outputFilename))
+                {
+                    using (var dest = new ZipWriter(outputStream, new ZipWriterOptions(SharpCompress.Common.CompressionType.Deflate) { DeflateCompressionLevel = CompressionLevel.BestSpeed, LeaveStreamOpen = false }))
+                    {
+                        foreach (var entry in consolidatedPackage.ExtractCalamariPackage(flavour, platform))
+                        {
+                            dest.Write(entry.entryName, entry.sourceStream);
+                        }
+                    }
+                }
+
+                ZipFilesShouldBeIdentical(reference.PackagePath, outputFilename);
+            }
+        }
+
+        void ZipFilesShouldBeIdentical(string inputFilename, string regeneratedZipFilename)
+        {
+            using (var inputZip = ZipFile.OpenRead(inputFilename))
+            {
+                var sourceEntries = inputZip.Entries.Where(e =>
+                                                               !e.FullName.StartsWith("_rels") && !e.FullName.StartsWith("package") && !e.FullName.Equals("[Content_Types].xml")
+                                                          )
+                                            .ToList();
+                using (var regenZip = ZipFile.OpenRead(regeneratedZipFilename))
+                {
+                    //NOTE: some files appear multiple times in the regenerated zip file
+                    var regenNames = regenZip.Entries.Select(e => e.FullName).Distinct().ToList();
+                    var sourceNames = sourceEntries.Select(e => e.FullName).ToList();
+                    var missingNames = sourceNames.Where(s => !regenNames.Contains(s)).ToList();
+                    var addedNames = regenNames.Where(s => !sourceNames.Contains(s)).ToList();
+                    sourceNames.Should().BeEquivalentTo(regenNames);
+                }
+            }
+        }
+
+        static (string flavour, string platform) ExtractFlavourAndPlatform(BuildPackageReference packReference)
+        {
+            if (IsNetfx(packReference.Name))
+            {
+                return (packReference.Name, "netfx");
+            }
+
+            var packageName = packReference.Name;
+            var flavour = packageName.Split(".")[0];
+            var platform = packageName.Substring(flavour.Length).Trim('.');
+
+            return (flavour, platform);
+        }
+
+        static bool IsNetfx(string packageId)
+        {
+            return packageId.Equals("Calamari") || packageId.Equals("Calamari.Cloud");
+        }
+        
+        private static string SanitiseHash(string s) 
+        => Regex.Replace(s, "[a-z0-9]{32}", "<hash>");
+        
 
         private static string Sanitise4PartVersions(string s)
             => Regex.Replace(s, @"[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+", "<version>");

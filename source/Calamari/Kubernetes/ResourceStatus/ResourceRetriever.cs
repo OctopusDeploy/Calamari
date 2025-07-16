@@ -18,7 +18,22 @@ namespace Calamari.Kubernetes.ResourceStatus
         /// <summary>
         /// Gets the resources identified by the resourceIdentifiers and all their owned resources
         /// </summary>
-        IEnumerable<Resource> GetAllOwnedResources(IEnumerable<ResourceIdentifier> resourceIdentifiers, IKubectl kubectl, Options options);
+        IEnumerable<ResourceRetrieverResult> GetAllOwnedResources(IEnumerable<ResourceIdentifier> resourceIdentifiers, IKubectl kubectl, Options options);
+    }
+
+    public class ResourceRetrieverResult
+    {
+        ResourceRetrieverResult(Resource value, string errorMessage)
+        {
+            Value = value;
+            ErrorMessage = errorMessage;
+        }
+        public static ResourceRetrieverResult Success(Resource value) => new ResourceRetrieverResult(value, null);
+        public static ResourceRetrieverResult Failure(string errorMessage) => new ResourceRetrieverResult(null, errorMessage);
+
+        public Resource Value { get; }
+        public bool IsSuccess => Value != null;
+        public string ErrorMessage { get; }
     }
 
     public class ResourceRetriever : IResourceRetriever
@@ -33,39 +48,55 @@ namespace Calamari.Kubernetes.ResourceStatus
         }
 
         /// <inheritdoc />
-        public IEnumerable<Resource> GetAllOwnedResources(IEnumerable<ResourceIdentifier> resourceIdentifiers, IKubectl kubectl, Options options)
+        public IEnumerable<ResourceRetrieverResult> GetAllOwnedResources(IEnumerable<ResourceIdentifier> resourceIdentifiers, IKubectl kubectl, Options options)
         {
-            var resources = resourceIdentifiers
+            var results = resourceIdentifiers
                 .Select(identifier => GetResource(identifier, kubectl, options))
-                .Where(resource => resource != null)
                 .ToList();
 
-            foreach (var resource in resources)
+            foreach (var result in results.Where(r => r.IsSuccess))
             {
+                var resource = result.Value;
                 resource.UpdateChildren(GetChildrenResources(resource, kubectl, options));
             }
 
-            return resources;
+            return results;
         }
 
-        private Resource GetResource(ResourceIdentifier resourceIdentifier, IKubectl kubectl, Options options)
+        private ResourceRetrieverResult GetResource(ResourceIdentifier resourceIdentifier, IKubectl kubectl, Options options)
         {
-            var result = kubectlGet.Resource(resourceIdentifier.Kind, resourceIdentifier.Name, resourceIdentifier.Namespace, kubectl);
+            var result = kubectlGet.Resource(resourceIdentifier, kubectl);
             
-            return result.RawOutput.IsNullOrEmpty() ? null : TryParse(ResourceFactory.FromJson, result, options);
+            if (result.RawOutput.IsNullOrEmpty()) 
+                return ResourceRetrieverResult.Failure($"Failed to get resource {resourceIdentifier.Name} in namespace {resourceIdentifier.Namespace}");
+
+            var parseResult = TryParse(ResourceFactory.FromJson, result, options);
+            return !parseResult.IsSuccess ? ResourceRetrieverResult.Failure(parseResult.ErrorMessage) : ResourceRetrieverResult.Success(parseResult.Value);
         }
 
         private IEnumerable<Resource> GetChildrenResources(Resource parentResource, IKubectl kubectl, Options options)
         {
-            var childKind = parentResource.ChildKind;
-            if (string.IsNullOrEmpty(childKind))
+            var childGvk = parentResource.ChildGroupVersionKind;
+            if (childGvk is null) return Enumerable.Empty<Resource>();
+
+            var result = kubectlGet.AllResources(childGvk, parentResource.Namespace, kubectl);
+            if (result.RawOutput.IsNullOrEmpty())
             {
+                // Child resources are ignored for determining deployment success.
+                log.Verbose($"Failed to get child resources for {parentResource.Name} in namespace {parentResource.Namespace}");
                 return Enumerable.Empty<Resource>();
             }
-
-            var result = kubectlGet.AllResources(childKind, parentResource.Namespace, kubectl);
-
-            var resources = TryParse(ResourceFactory.FromListJson, result, options);
+            
+            var parseResult = TryParse(ResourceFactory.FromListJson, result, options);
+            if (!parseResult.IsSuccess)
+            {
+                // Child resources are ignored for determining deployment success.
+                log.Verbose($"Failed to parse child resources for {parentResource.Name} in namespace {parentResource.Namespace}");
+                log.Verbose(parseResult.ErrorMessage);
+                return Enumerable.Empty<Resource>();
+            };
+            
+            var resources = parseResult.Value;
             return resources.Where(resource => resource.OwnerUids.Contains(parentResource.Uid))
                             .Select(child =>
                             {
@@ -73,41 +104,49 @@ namespace Calamari.Kubernetes.ResourceStatus
                                 return child;
                             }).ToList();
         }
-
-        T TryParse<T>(Func<string, Options, T> function, KubectlGetResult getResult, Options options)
+        
+        static ParseResult<T> TryParse<T>(Func<string, Options, T> function, KubectlGetResult getResult, Options options) where T : class
         {
             try
             {
-                
-                return function(getResult.ResourceJson, options);
+                return ParseResult<T>.Success(function(getResult.ResourceJson, options));
             }
             catch (JsonException)
             {
-                LogJsonStringError(getResult.ResourceJson, getResult, options);
-                throw;
+                return ParseResult<T>.Failure(GetJsonStringError(getResult.ResourceJson, getResult, options));
             }
         }
 
-        void LogJsonStringError(string jsonString, KubectlGetResult getResult, Options options)
+        static string GetJsonStringError(string jsonString, KubectlGetResult getResult, Options options)
         {
-            if (options.PrintVerboseKubectlOutputOnError)
+            if (!options.PrintVerboseKubectlOutputOnError)
+                return $"Failed to parse JSON, to get Octopus to log out the JSON string retrieved from kubectl, set Octopus Variable '{SpecialVariables.PrintVerboseKubectlOutputOnError}' to 'true'";
+            
+            var message = "";
+            message += "Failed to parse JSON:\n";
+            message += "---------------------------\n";
+            message += jsonString + "\n";
+            message += "---------------------------\n";
+            message += "Full command output:\n";
+            message += "---------------------------\n";
+            message += getResult.RawOutput.Join("\n") + "\n";
+            message += "---------------------------\n";
+            return message;
+        }
+        
+        class ParseResult<T> where T : class 
+        {
+            ParseResult (T value, string errorMessage)
             {
-                log.Error("Failed to parse JSON:");
-                log.Error("---------------------------");
-                log.Error(jsonString);
-                log.Error("---------------------------");
-                log.Error("Full command output:");
-                log.Error("---------------------------");
-                foreach (var msg in getResult.RawOutput)
-                {
-                    log.Error(msg);
-                }
-                log.Error("---------------------------");
+                Value = value;
+                ErrorMessage = errorMessage;
             }
-            else
-            {
-                log.Error($"Failed to parse JSON, to get Octopus to log out the JSON string retrieved from kubectl, set Octopus Variable '{SpecialVariables.PrintVerboseKubectlOutputOnError}' to 'true'");
-            }
+            public static ParseResult<T> Success(T value) => new ParseResult<T>(value, null);
+            public static ParseResult<T> Failure(string errorMessage) => new ParseResult<T>(null, errorMessage);
+        
+            public T Value { get; }
+            public bool IsSuccess => Value != null;
+            public string ErrorMessage { get; }
         }
     }
 }

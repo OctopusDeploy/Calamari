@@ -12,6 +12,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
         public void ShouldCollectCorrectProperties()
         {
             const string input = @"{
+    ""apiVersion"": ""discovery.k8s.io/v1"",
     ""kind"": ""EndpointSlice"",
     ""metadata"": {
         ""name"": ""my-svc-abcde"",
@@ -49,7 +50,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
             
             service.Should().BeEquivalentTo(new
             {
-                Kind = "EndpointSlice",
+                GroupVersionKind = SupportedResourceGroupVersionKinds.EndpointSliceV1,
                 Name = "my-svc-abcde",
                 Namespace = "default",
                 Uid = "01695a39-5865-4eea-b4bf-1a4783cbce62",

@@ -29,7 +29,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             reporter.ReportUpdatedResources(originalStatuses, newStatuses, 1);
 
             var serviceMessages = log.ServiceMessages
-                .Where(message => message.Name == SpecialVariables.ServiceMessageNames.ResourceStatus.Name)
+                .Where(message => message.Name == SpecialVariables.ServiceMessages.ResourceStatus.Name)
                 .ToList();
 
             serviceMessages.Select(message => message.Properties["name"])
@@ -72,7 +72,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             reporter.ReportUpdatedResources(originalStatuses, newStatuses, 1);
             
             var serviceMessages = log.ServiceMessages
-                .Where(message => message.Name == SpecialVariables.ServiceMessageNames.ResourceStatus.Name)
+                .Where(message => message.Name == SpecialVariables.ServiceMessages.ResourceStatus.Name)
                 .ToList();
 
             serviceMessages.Should().ContainSingle().Which.Properties
@@ -102,7 +102,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             reporter.ReportUpdatedResources(originalStatuses, newStatuses, 1);
             
             var serviceMessages = log.ServiceMessages
-                .Where(message => message.Name == SpecialVariables.ServiceMessageNames.ResourceStatus.Name)
+                .Where(message => message.Name == SpecialVariables.ServiceMessages.ResourceStatus.Name)
                 .ToList();
 
             serviceMessages.Should().ContainSingle().Which.Properties
@@ -111,11 +111,14 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                     new KeyValuePair<string, string>("name", "redis"),
                     new KeyValuePair<string, string>("removed", bool.TrueString),
                     new KeyValuePair<string, string>("checkCount", "1"),
+                    new KeyValuePair<string, string>("group", "apps"),
+                    new KeyValuePair<string, string>("version", "v1"),
+                    new KeyValuePair<string, string>("kind", "Deployment"),
                 });
         }
         
         [Test]
-        public void ClusterScopedResourcesAreIgnored()
+        public void ClusterScopedResourcesAreIncluded()
         {
             var variables = new CalamariVariables();
             var log = new InMemoryLog();
@@ -129,15 +132,28 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             reporter.ReportUpdatedResources(new Dictionary<string, Resource>(), newStatuses, 1);
             
             var serviceMessages = log.ServiceMessages
-                .Where(message => message.Name == SpecialVariables.ServiceMessageNames.ResourceStatus.Name)
+                .Where(message => message.Name == SpecialVariables.ServiceMessages.ResourceStatus.Name)
                 .ToList();
-
-            serviceMessages.Should().ContainSingle().Which.Properties
-                .Should().Contain(new KeyValuePair<string, string>[]
-                {
-                    new KeyValuePair<string, string>("name", "app"),
-                    new KeyValuePair<string, string>("checkCount", "1"),
-                });
+            
+            serviceMessages.Should().Contain(sm => sm.Properties.Intersect(new[]
+            {
+                new KeyValuePair<string, string>("name", "app"),
+                new KeyValuePair<string, string>("checkCount", "1"),
+                new KeyValuePair<string, string>("group", "apps"),
+                new KeyValuePair<string, string>("version", "v1"),
+                new KeyValuePair<string, string>("kind", "Deployment"),
+                new KeyValuePair<string, string>("namespace", "default"),
+            }).Count() == 6);
+            
+            serviceMessages.Should().Contain(sm => sm.Properties.Intersect(new[]
+            {
+                new KeyValuePair<string, string>("name", "my-namespace"),
+                new KeyValuePair<string, string>("checkCount", "1"),
+                new KeyValuePair<string, string>("group", string.Empty),
+                new KeyValuePair<string, string>("version", "v1"),
+                new KeyValuePair<string, string>("kind", "Namespace"),
+                new KeyValuePair<string, string>("namespace", null),
+            }).Count() == 6);
         }
     }
 }

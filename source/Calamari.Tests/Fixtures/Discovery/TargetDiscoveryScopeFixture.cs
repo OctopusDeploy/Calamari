@@ -14,6 +14,7 @@ namespace Calamari.Tests.Fixtures.Discovery
         private const string scopeEnvironment = "scope-environment";
         private const string scopeRole1 = "scope-role-1";
         private const string scopeRole2 = "scope-role-2";
+        const string tenantedDeploymentMode = "Tenanted";
         private static readonly string[] scopeRoles = new string[] { scopeRole1, scopeRole2 };
         private TargetDiscoveryScope sut = new TargetDiscoveryScope(
             scopeSpace, scopeEnvironment, scopeProject, scopeTenant, scopeRoles, "WorkerPool-1", null);
@@ -27,7 +28,8 @@ namespace Calamari.Tests.Fixtures.Discovery
                 role: scopeRole1,
                 project: null,
                 space: null,
-                tenant: null);
+                tenant: null,
+                tenantedDeploymentMode: null);
 
             // Act
             var result = sut.Match(foundTags);
@@ -50,7 +52,8 @@ namespace Calamari.Tests.Fixtures.Discovery
                 role: scopeRole1,
                 project: null,
                 space: null,
-                tenant: null);
+                tenant: null,
+                tenantedDeploymentMode: null);
 
             // Act
             var result = sut.Match(foundTags);
@@ -73,7 +76,8 @@ namespace Calamari.Tests.Fixtures.Discovery
                 role: null,
                 project: null,
                 space: null,
-                tenant: null);
+                tenant: null,
+                tenantedDeploymentMode: null);
 
             // Act
             var result = sut.Match(foundTags);
@@ -96,7 +100,8 @@ namespace Calamari.Tests.Fixtures.Discovery
                 role: "wrong-role",
                 project: null,
                 space: null,
-                tenant: null);
+                tenant: null,
+                tenantedDeploymentMode: null);
 
             // Act
             var result = sut.Match(foundTags);
@@ -119,7 +124,8 @@ namespace Calamari.Tests.Fixtures.Discovery
                 role: scopeRole1,
                 project: null,
                 space: null,
-                tenant: null);
+                tenant: null,
+                tenantedDeploymentMode: null);
 
             // Act
             var result = sut.Match(foundTags);
@@ -137,7 +143,8 @@ namespace Calamari.Tests.Fixtures.Discovery
                 role: scopeRole2,
                 project: null,
                 space: null,
-                tenant: null);
+                tenant: null,
+                tenantedDeploymentMode: null);
 
             // Act
             var result = sut.Match(foundTags);
@@ -155,7 +162,8 @@ namespace Calamari.Tests.Fixtures.Discovery
                 role: scopeRole1,
                 project: "wrong-project",
                 space: null,
-                tenant: null);
+                tenant: null,
+                tenantedDeploymentMode: null);
 
             // Act
             var result = sut.Match(foundTags);
@@ -178,7 +186,8 @@ namespace Calamari.Tests.Fixtures.Discovery
                 role: scopeRole1,
                 project: null,
                 space: "wrong-space",
-                tenant: null);
+                tenant: null,
+                tenantedDeploymentMode: null);
 
             // Act
             var result = sut.Match(foundTags);
@@ -201,7 +210,8 @@ namespace Calamari.Tests.Fixtures.Discovery
                 role: scopeRole1,
                 project: null,
                 space: null,
-                tenant: "wrong-tenant");
+                tenant: "wrong-tenant",
+                tenantedDeploymentMode: null);
 
             // Act
             var result = sut.Match(foundTags);
@@ -224,10 +234,12 @@ namespace Calamari.Tests.Fixtures.Discovery
                 role: scopeRole1,
                 project: scopeProject,
                 space: scopeSpace,
-                tenant: scopeTenant);
+                tenant: scopeTenant,
+                tenantedDeploymentMode: tenantedDeploymentMode);
 
             // Act
             var result = sut.Match(foundTags);
+            result.TenantedDeploymentMode.Should().BeEquivalentTo(tenantedDeploymentMode);
 
             // Assert
             result.IsSuccess.Should().BeTrue();
@@ -236,16 +248,19 @@ namespace Calamari.Tests.Fixtures.Discovery
         [Test]
         public void Match_ShouldMakeOrdinalCaseInsenitiveComparisons()
         {
+            var tenantedDeploymentModeTag = "TaG-tenAntedDeploymentMode";
             // Arrange
             var foundTags = new TargetTags(
                 environment: "sCoPe-eNvIrOnMeNt",
                 role: "sCoPe-rOlE-1",
                 project: "sCoPe-pRoJeCt",
                 space: "sCoPe-sPaCe",
-                tenant: "sCoPe-tEnAnT");
+                tenant: "sCoPe-tEnAnT",
+                tenantedDeploymentMode: tenantedDeploymentModeTag);
 
             // Act
             var result = sut.Match(foundTags);
+            result.TenantedDeploymentMode.Should().BeEquivalentTo(tenantedDeploymentModeTag);
 
             // Assert
             result.IsSuccess.Should().BeTrue();
@@ -260,7 +275,8 @@ namespace Calamari.Tests.Fixtures.Discovery
                 role: "sCoPe-rOlE-1",
                 project: null,
                 space: null,
-                tenant: null);
+                tenant: null,
+                tenantedDeploymentMode: null);
 
             // Act
             var result = sut.Match(foundTags);
@@ -278,7 +294,8 @@ namespace Calamari.Tests.Fixtures.Discovery
                 role: "wrong-role",
                 project: "wrong-project",
                 space: "wrong-space",
-                tenant: "wrong-tenant");
+                tenant: "wrong-tenant",
+                tenantedDeploymentMode: null);
 
             // Act
             var result = sut.Match(foundTags);

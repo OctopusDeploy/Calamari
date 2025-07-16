@@ -103,7 +103,7 @@ public class OctopusParametersDictionary : System.Collections.Generic.Dictionary
         {
             algorithm.Mode = CipherMode.CBC;
             algorithm.Padding = PaddingMode.PKCS7;
-            algorithm.KeySize = 128;
+            algorithm.KeySize = 256;
             algorithm.BlockSize = 128;
             algorithm.Key = Key;
             algorithm.IV = Convert.FromBase64String(iv);

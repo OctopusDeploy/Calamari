@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Calamari.ConsolidateCalamariPackages
+namespace Octopus.Calamari.ConsolidatedPackage
 {
     public class MigratedCalamariFlavours
     {
@@ -11,12 +11,12 @@ namespace Calamari.ConsolidateCalamariPackages
         public static List<string> FullFrameworkOnlyFlavours = new()
         {
             "Calamari.AzureWebApp",
-            "Calamari.AzureServiceFabric",
-            "Calamari.AzureCloudService",
+            "Calamari.",
         };
 
         public static List<string> CrossPlatformFlavours = new()
         {
+            "Calamari.AzureServiceFabric",
             "Calamari.AzureAppService",
             "Calamari.AzureResourceGroup",
             "Calamari.GoogleCloudScripting",

@@ -12,7 +12,7 @@ sensitiveVariableKey=$1
 # -----------------------------------------------------------------------------
 function encode_servicemessagevalue
 {
-	echo -n "$1" | openssl enc -base64 -A
+  echo -n "$1" | openssl enc -base64 -A
 }
 
 # -----------------------------------------------------------------------------
@@ -22,7 +22,7 @@ function encode_servicemessagevalue
 # -----------------------------------------------------------------------------
 function decode_servicemessagevalue
 {
-	echo -n "$1" | openssl enc -base64 -A -d
+  echo -n "$1" | openssl enc -base64 -A -d
 }
 
 # -----------------------------------------------------------------------------
@@ -46,7 +46,7 @@ __mask_sensitive_value $sensitiveVariableKey
 # -----------------------------------------------------------------------------
 function decrypt_variable
 {
-	echo $1 | openssl enc -a -A -d -aes-128-cbc -nosalt -K $sensitiveVariableKey -iv $2
+  echo $1 | openssl enc -a -A -d -aes-256-cbc -nosalt -K $sensitiveVariableKey -iv $2
 }
 
 #	---------------------------------------------------------------------------
@@ -74,12 +74,12 @@ function get_octopusvariable
 function fail_step
 {
 
-	if [ ! -z "${1:-}" ]
-	then
-		echo "##octopus[resultMessage message='$(encode_servicemessagevalue "$1")']"
-	fi
+  if [ ! -z "${1:-}" ]
+  then
+    echo "##octopus[resultMessage message='$(encode_servicemessagevalue "$1")']"
+  fi
 
-	exit 1;
+  exit 1;
 }
 
 #	---------------------------------------------------------------------------
@@ -91,26 +91,26 @@ function fail_step
 #	---------------------------------------------------------------------------
 function set_octopusvariable
 {
-	MESSAGE="##octopus[setVariable"
+  MESSAGE="##octopus[setVariable"
 
-	if [ -n "$1" ]
-	then
-		MESSAGE="$MESSAGE name='$(encode_servicemessagevalue "$1")'"
-	fi
+  if [ -n "$1" ]
+  then
+    MESSAGE="$MESSAGE name='$(encode_servicemessagevalue "$1")'"
+  fi
 
-	if [ -n "$2" ]
-	then
-		MESSAGE="$MESSAGE value='$(encode_servicemessagevalue "$2")'"
-	fi
+  if [ -n "$2" ]
+  then
+    MESSAGE="$MESSAGE value='$(encode_servicemessagevalue "$2")'"
+  fi
 
-	if [ ! -z "${3:-}" ] && [ "$3" = "-sensitive" ]
-	then
-		MESSAGE="$MESSAGE sensitive='$(encode_servicemessagevalue "True")'"
-	fi
+  if [ ! -z "${3:-}" ] && [ "$3" = "-sensitive" ]
+  then
+    MESSAGE="$MESSAGE sensitive='$(encode_servicemessagevalue "True")'"
+  fi
 
-	MESSAGE="$MESSAGE]"
+  MESSAGE="$MESSAGE]"
 
-	echo $MESSAGE
+  echo $MESSAGE
 }
 
 # -----------------------------------------------------------------------------
@@ -121,31 +121,26 @@ function set_octopusvariable
 # -----------------------------------------------------------------------------
 function new_octopusartifact
 {
-	echo "Collecting $1 as an artifact..."
+  echo "Collecting $1 as an artifact..."
 
-	if [ ! -e "$1" ]
-	then
-		error_exit $PROGNAME $LINENO "\"$(1)\" does not exist." $E_FILE_NOT_FOUND
-	    exit $?
-	fi
+  if [ ! -e "$1" ]
+  then
+    error_exit $PROGNAME $LINENO "\"$(1)\" does not exist." $E_FILE_NOT_FOUND
+      exit $?
+  fi
 
-	pth=$1
-	ofn=$2
-	len=$(wc -c < $1 )
+  pth=$(cd "$(dirname "$1")"; pwd -P)/$(basename "$1") # fully qualify file path for relative file paths, this allows supporting passing in just a filename in the current working directory like we do in PowerShell
+  ofn=${2:-$(basename "$pth")} # derive file name from file path, this allows supporting scripts that use `set -o nounset` or `set -u` flags
+  len=$(wc -c < $1 )
 
-	if [ -z "$ofn" ]
-	then
-	    ofn=`basename "$pth"`
-	fi
-
-	echo "##octopus[stdout-verbose]"
-	echo "Artifact $ofn will be collected from $pth after this step completes"
-	echo "##octopus[stdout-default]"
-	echo "##octopus[createArtifact path='$(encode_servicemessagevalue "$pth")' name='$(encode_servicemessagevalue "$ofn")' length='$(encode_servicemessagevalue $len)']"
+  echo "##octopus[stdout-verbose]"
+  echo "Artifact $ofn will be collected from $pth after this step completes"
+  echo "##octopus[stdout-default]"
+  echo "##octopus[createArtifact path='$(encode_servicemessagevalue "$pth")' name='$(encode_servicemessagevalue "$ofn")' length='$(encode_servicemessagevalue $len)']"
 }
 
 function remove-octopustarget {
-	echo "##octopus[delete-target machine='$(encode_servicemessagevalue "$1")']"
+  echo "##octopus[delete-target machine='$(encode_servicemessagevalue "$1")']"
 }
 
 function new_octopustarget() (
@@ -203,7 +198,7 @@ function new_octopustarget() (
 # -----------------------------------------------------------------------------
 function update_progress
 {
-	echo "##octopus[progress percentage='$(encode_servicemessagevalue "$1")' message='$(encode_servicemessagevalue "$2")']"
+  echo "##octopus[progress percentage='$(encode_servicemessagevalue "$1")' message='$(encode_servicemessagevalue "$2")']"
 }
 
 # -----------------------------------------------------------------------------
@@ -211,30 +206,30 @@ function update_progress
 # -----------------------------------------------------------------------------
 function write_verbose
 {
-	echo "##octopus[stdout-verbose]"
-	echo $1
-	echo "##octopus[stdout-default]"
+  echo "##octopus[stdout-verbose]"
+  echo $1
+  echo "##octopus[stdout-default]"
 }
 
 function write_highlight
 {
-	echo "##octopus[stdout-highlight]"
-	echo $1
-	echo "##octopus[stdout-default]"
+  echo "##octopus[stdout-highlight]"
+  echo $1
+  echo "##octopus[stdout-default]"
 }
 
 function write_wait
 {
-	echo "##octopus[stdout-wait]"
-	echo $1
-	echo "##octopus[stdout-default]"
+  echo "##octopus[stdout-wait]"
+  echo $1
+  echo "##octopus[stdout-default]"
 }
 
 function write_warning
 {
-	echo "##octopus[stdout-warning]"
-	echo $1
-	echo "##octopus[stdout-default]"
+  echo "##octopus[stdout-warning]"
+  echo $1
+  echo "##octopus[stdout-default]"
 }
 
 
@@ -243,24 +238,147 @@ function write_warning
 # -----------------------------------------------------------------------------
 function log_environment_information
 {
-	suppressEnvironmentLogging=$(get_octopusvariable "Octopus.Action.Script.SuppressEnvironmentLogging")
-	if [ "$suppressEnvironmentLogging" == "True" ]
-	then
-		return 0
-	fi
+  suppressEnvironmentLogging=$(get_octopusvariable "Octopus.Action.Script.SuppressEnvironmentLogging")
+  if [ "$suppressEnvironmentLogging" == "True" ]
+  then
+    return 0
+  fi
 
-	echo "##octopus[stdout-verbose]"
-	echo "Bash Environment Information:"
-	echo "  OperatingSystem: $(uname -a)"
-	echo "  CurrentUser: $(whoami)"
-	echo "  HostName: $(hostname)"
-	echo "  ProcessorCount: $(getconf _NPROCESSORS_ONLN)"
-	currentDirectory="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-	echo "  CurrentDirectory: $currentDirectory"
-	tempDirectory=$(dirname $(mktemp -u))
-	echo "  TempDirectory: $tempDirectory"
-	echo "  HostProcessID: $$"
-	echo "##octopus[stdout-default]"
+  echo "##octopus[stdout-verbose]"
+  echo "Bash Environment Information:"
+  echo "  OperatingSystem: $(uname -a)"
+  echo "  CurrentUser: $(whoami)"
+  echo "  HostName: $(hostname)"
+  echo "  ProcessorCount: $(getconf _NPROCESSORS_ONLN)"
+  currentDirectory="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+  echo "  CurrentDirectory: $currentDirectory"
+  tempDirectory=$(dirname $(mktemp -u))
+  echo "  TempDirectory: $tempDirectory"
+  echo "  HostProcessID: $$"
+  echo "##octopus[stdout-default]"
 }
 
 log_environment_information
+
+function decrypt_and_parse_variables {
+    local encrypted="$1"
+    local iv="$2"
+
+    local decrypted
+    decrypted=$(decrypt_variable "$encrypted" "$iv")
+    declare -gA octopus_parameters=()
+
+    local -a key_byte_lengths=()
+    local -a value_byte_lengths=()
+    local -a hex_parts=()
+
+    while IFS='$' read -r hex_key hex_value; do
+        hex_value="${hex_value//$'\n'/}"
+        key_byte_lengths+=( $(( ${#hex_key} / 2 )) )
+        value_byte_lengths+=( $(( ${#hex_value} / 2 )) )
+        hex_parts+=( "${hex_key}${hex_value}" )
+    done <<< "$decrypted"
+
+    local concatenated_hex
+    concatenated_hex=$(printf "%s" "${hex_parts[@]}")
+
+    exec 3< <(echo -n "$concatenated_hex" | xxd -r -p)
+
+    local idx
+    for idx in "${!key_byte_lengths[@]}"; do
+        local key_byte_len="${key_byte_lengths[idx]}"
+        local value_byte_len="${value_byte_lengths[idx]}"
+        local decoded_key decoded_value
+
+        LC_ALL=C read -r -N "$key_byte_len" decoded_key <&3
+        LC_ALL=C read -r -N "$value_byte_len" decoded_value <&3
+
+        [[ "$decoded_value" == "nul" ]] && decoded_value=""
+        if [[ -n "$decoded_key" ]]; then
+            octopus_parameters["$decoded_key"]="$decoded_value"
+        fi
+    done
+
+    exec 3<&-
+}
+
+# -----------------------------------------------------------------------------
+# Functions to report Kubernetes Manifests via service message
+#	Accepts 2 arguments:
+#	  string: the namespace
+#	  string: the manifest
+# -----------------------------------------------------------------------------
+function report_kubernetes_manifest 
+{
+  MANIFEST="$1"
+  NAMESPACE="$2"  
+  
+  LINES=()
+
+  # Read lines from file into the array
+  while IFS= read -r LINE; do
+    LINES+=("$LINE")
+  done <<< "$MANIFEST"
+
+  MANIFESTS=()
+  
+  CURRENT=""
+  for LINE in "${LINES[@]}"; do
+    if [ "$(echo "$LINE" | xargs)" = "---" ]; then
+      MANIFESTS+=("$CURRENT")
+      CURRENT=""
+    else
+      CURRENT="$CURRENT$LINE\n"	
+    fi
+  done
+    
+  MANIFESTS+=("$CURRENT")
+  
+  for mf in "${MANIFESTS[@]}"; do
+    if [ -z "$mf" ]; then
+      continue 
+    fi      
+    
+    MESSAGE="##octopus[k8s-manifest-applied manifest='$(encode_servicemessagevalue "$mf")'"
+    
+    if [ -n "$NAMESPACE" ]; then
+      MESSAGE="$MESSAGE ns='$(encode_servicemessagevalue "$NAMESPACE")'"
+    fi
+    
+    MESSAGE="$MESSAGE]"
+    
+    echo "$MESSAGE"      
+  done
+}
+
+function report_kubernetes_manifest_file 
+{
+  FULL_PATH="$1"
+  NAMESPACE="$2"
+  
+  if [ ! -f "$FULL_PATH" ]; then
+    write_verbose "No Kubernetes manifest file was found at '$FULL_PATH'."
+    return
+  fi
+  
+  MANIFEST=$(cat "$FULL_PATH")
+  
+  report_kubernetes_manifest "$MANIFEST" "$NAMESPACE"
+}
+
+bashParametersArrayFeatureToggle=#### BashParametersArrayFeatureToggle ####
+
+if [ "$bashParametersArrayFeatureToggle" = true ]; then
+    if (( ${BASH_VERSINFO[0]:-0} > 4 || (${BASH_VERSINFO[0]:-0} == 4 && ${BASH_VERSINFO[1]:-0} > 2) )); then
+        if command -v xxd > /dev/null; then
+            decrypt_and_parse_variables "#### VARIABLESTRING.ENCRYPTED ####" "#### VARIABLESTRING.IV ####"
+        else
+            echo "xxd is not installed, this is required to use octopus_parameters"
+        fi
+    else
+        echo "Bash version 4.2 or later is required to use octopus_parameters"
+    fi
+fi
+
+
+

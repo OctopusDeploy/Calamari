@@ -1,9 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using Amazon.IdentityManagement.Model;
+using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Kubernetes.Integration;
 using Calamari.Kubernetes.ResourceStatus;
 using Calamari.Kubernetes.ResourceStatus.Resources;
+using Calamari.Testing.Helpers;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NSubstitute;
@@ -20,26 +24,26 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             var deploymentUid = Guid.NewGuid().ToString();
             var replicaSetUid = Guid.NewGuid().ToString();
 
-            var nginxDeployment = new ResourceResponseBuilder()
+            var nginxDeployment = new ResourceResponseBuilder().WithApiVersion("apps/v1")
                 .WithKind("Deployment")
                 .WithName("nginx")
                 .WithUid(deploymentUid)
                 .Build();
 
-            var nginxReplicaSet = new ResourceResponseBuilder()
+            var nginxReplicaSet = new ResourceResponseBuilder().WithApiVersion("apps/v1")
                 .WithKind("ReplicaSet")
                 .WithName("nginx-replicaset")
                 .WithUid(replicaSetUid)
                 .WithOwnerUid(deploymentUid)
                 .Build();
 
-            var pod1 = new ResourceResponseBuilder()
+            var pod1 = new ResourceResponseBuilder().WithApiVersion("v1")
                 .WithKind("Pod")
                 .WithName("nginx-pod-1")
                 .WithOwnerUid(replicaSetUid)
                 .Build();
 
-            var pod2 = new ResourceResponseBuilder()
+            var pod2 = new ResourceResponseBuilder().WithApiVersion("v1")
                 .WithKind("Pod")
                 .WithName("nginx-pod-2")
                 .WithOwnerUid(replicaSetUid)
@@ -53,29 +57,30 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             kubectlGet.SetAllResources("Pod", pod1, pod2);
 
 
-            var got = resourceRetriever.GetAllOwnedResources(
+            var result = resourceRetriever.GetAllOwnedResources(
                 new List<ResourceIdentifier>
                 {
-                    new ResourceIdentifier("Deployment", "nginx", "octopus")
+                    new ResourceIdentifier(SupportedResourceGroupVersionKinds.DeploymentV1, "nginx", "octopus")
                 },
                 null, new Options());
+            var got = result.Select(r => r.Value);
 
             got.Should().BeEquivalentTo(new object[]
             {
                 new
                 {
-                    Kind = "Deployment",
+                    GroupVersionKind = SupportedResourceGroupVersionKinds.DeploymentV1,
                     Name = "nginx",
                     Children = new object[]
                     {
                         new
                         {
-                            Kind = "ReplicaSet",
+                            GroupVersionKind = SupportedResourceGroupVersionKinds.ReplicaSetV1,
                             Name = "nginx-replicaset",
                             Children = new object[]
                             {
-                                new { Kind = "Pod", Name = "nginx-pod-1"},
-                                new { Kind = "Pod", Name = "nginx-pod-2"},
+                                new { GroupVersionKind = SupportedResourceGroupVersionKinds.PodV1, Name = "nginx-pod-1"},
+                                new { GroupVersionKind = SupportedResourceGroupVersionKinds.PodV1, Name = "nginx-pod-2"},
                             }
                         }
                     }
@@ -89,25 +94,25 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             var deployment1Uid = Guid.NewGuid().ToString();
             var deployment2Uid = Guid.NewGuid().ToString();
 
-            var deployment1 = new ResourceResponseBuilder()
+            var deployment1 = new ResourceResponseBuilder().WithApiVersion("apps/v1")
                 .WithKind("Deployment")
                 .WithName("deployment-1")
                 .WithUid(deployment1Uid)
                 .Build();
 
-            var replicaSet1 = new ResourceResponseBuilder()
+            var replicaSet1 = new ResourceResponseBuilder().WithApiVersion("apps/v1")
                 .WithKind("ReplicaSet")
                 .WithName("replicaset-1")
                 .WithOwnerUid(deployment1Uid)
                 .Build();
 
-            var deployment2 = new ResourceResponseBuilder()
+            var deployment2 = new ResourceResponseBuilder().WithApiVersion("apps/v1")
                 .WithKind("Deployment")
                 .WithName("deployment-2")
                 .WithUid(deployment2Uid)
                 .Build();
 
-            var replicaSet2 = new ResourceResponseBuilder()
+            var replicaSet2 = new ResourceResponseBuilder().WithApiVersion("apps/v1")
                 .WithKind("ReplicaSet")
                 .WithName("replicaset-2")
                 .WithOwnerUid(deployment2Uid)
@@ -121,38 +126,39 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             kubectlGet.SetAllResources("ReplicaSet", replicaSet1, replicaSet2);
             kubectlGet.SetAllResources("Pod");
 
-            var got = resourceRetriever.GetAllOwnedResources(
+            var result = resourceRetriever.GetAllOwnedResources(
                 new List<ResourceIdentifier>
                 {
-                    new ResourceIdentifier("Deployment", "deployment-1", "octopus"),
-                    new ResourceIdentifier("Deployment", "deployment-2", "octopus")
+                    new ResourceIdentifier(SupportedResourceGroupVersionKinds.DeploymentV1, "deployment-1", "octopus"),
+                    new ResourceIdentifier(SupportedResourceGroupVersionKinds.DeploymentV1, "deployment-2", "octopus")
                 },
                 null, new Options());
+            var got = result.Select(r => r.Value);
 
             got.Should().BeEquivalentTo(new object[]
             {
                 new
                 {
-                    Kind = "Deployment",
+                    GroupVersionKind = SupportedResourceGroupVersionKinds.DeploymentV1,
                     Name = "deployment-1",
                     Children = new object[]
                     {
                         new
                         {
-                            Kind = "ReplicaSet",
+                            GroupVersionKind = SupportedResourceGroupVersionKinds.ReplicaSetV1,
                             Name = "replicaset-1",
                         }
                     }
                 },
                 new
                 {
-                    Kind = "Deployment",
+                    GroupVersionKind = SupportedResourceGroupVersionKinds.DeploymentV1,
                     Name = "deployment-2",
                     Children = new object[]
                     {
                         new
                         {
-                            Kind = "ReplicaSet",
+                            GroupVersionKind = SupportedResourceGroupVersionKinds.ReplicaSetV1,
                             Name = "replicaset-2",
                         }
                     }
@@ -165,19 +171,19 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         {
             var replicaSetUid = Guid.NewGuid().ToString();
 
-            var replicaSet = new ResourceResponseBuilder()
+            var replicaSet = new ResourceResponseBuilder().WithApiVersion("apps/v1")
                 .WithKind("ReplicaSet")
                 .WithName("rs")
                 .WithUid(replicaSetUid)
                 .Build();
 
-            var childPod = new ResourceResponseBuilder()
+            var childPod = new ResourceResponseBuilder().WithApiVersion("v1")
                 .WithKind("Pod")
                 .WithName("pod-1")
                 .WithOwnerUid(replicaSetUid)
                 .Build();
 
-            var irrelevantPod = new ResourceResponseBuilder()
+            var irrelevantPod = new ResourceResponseBuilder().WithApiVersion("v1")
                 .WithKind("Pod")
                 .WithName("pod-x")
                 .Build();
@@ -189,82 +195,212 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             kubectlGet.SetAllResources("Pod", childPod, irrelevantPod);
 
 
-            var got = resourceRetriever.GetAllOwnedResources(
+            var result = resourceRetriever.GetAllOwnedResources(
                 new List<ResourceIdentifier>
                 {
-                    new ResourceIdentifier("ReplicaSet", "rs", "octopus"),
+                    new ResourceIdentifier(SupportedResourceGroupVersionKinds.ReplicaSetV1, "rs", "octopus"),
                 },
                 null, new Options());
+            var got = result.Select(r => r.Value);
 
             got.Should().BeEquivalentTo(new object[]
             {
                 new
                 {
-                    Kind = "ReplicaSet",
+                    GroupVersionKind = SupportedResourceGroupVersionKinds.ReplicaSetV1,
                     Name = "rs",
                     Children = new object[]
                     {
-                        new { Kind = "Pod", Name = "pod-1" }
+                        new { GroupVersionKind = SupportedResourceGroupVersionKinds.PodV1, Name = "pod-1" }
                     }
                 }
             });
         }
+        
+        [Test]
+        public void HandlesInvalidJson()
+        {
+            var kubectlGet = new MockKubectlGet();
+            var resourceRetriever = new ResourceRetriever(kubectlGet, Substitute.For<ILog>());
+            
+            kubectlGet.SetResource("rs", "invalid json");
+            var results = resourceRetriever.GetAllOwnedResources(
+                new List<ResourceIdentifier>
+                {
+                    new ResourceIdentifier(SupportedResourceGroupVersionKinds.ReplicaSetV1, "rs", "octopus"),
+                },
+                null, new Options());
+
+            var result = results.Should().ContainSingle().Which;
+            result.IsSuccess.Should().BeFalse();
+            result.ErrorMessage.Should().Contain("Failed to parse JSON");
+        }
+        
+        [Test]
+        public void HandlesGetErrors()
+        {
+            var kubectlGet = new MockKubectlGet();
+            var resourceRetriever = new ResourceRetriever(kubectlGet, Substitute.For<ILog>());
+            
+            Message[] messages = { new Message(Level.Error, "Error getting resource") };
+            kubectlGet.SetResource("rs", messages);
+            var results = resourceRetriever.GetAllOwnedResources(
+                 new List<ResourceIdentifier>
+                 {
+                     new ResourceIdentifier(SupportedResourceGroupVersionKinds.ReplicaSetV1, "rs", "octopus"),
+                 },
+                 null, 
+                 new Options()
+                 {
+                     PrintVerboseKubectlOutputOnError = true
+                 });
+
+            var result = results.Should().ContainSingle().Which;
+            result.IsSuccess.Should().BeFalse();
+            result.ErrorMessage.Should().Contain("Error getting resource");
+        }
+        
+        
+        [Test]
+        public void HandlesEmptyResponse()
+        {
+            var kubectlGet = new MockKubectlGet();
+            var resourceRetriever = new ResourceRetriever(kubectlGet, Substitute.For<ILog>());
+            
+            kubectlGet.SetResource("rs", Array.Empty<Message>());
+            var results = resourceRetriever.GetAllOwnedResources(
+                 new List<ResourceIdentifier>
+                 {
+                     new ResourceIdentifier(SupportedResourceGroupVersionKinds.ReplicaSetV1, "rs", "octopus"),
+                 },
+                 null, new Options());
+
+            var result = results.Should().ContainSingle().Which;
+            result.IsSuccess.Should().BeFalse();
+            result.ErrorMessage.Should().Contain("Failed to get resource");
+        }
+        
+        [Test]
+        public void HandleChildFailure()
+        {
+            var replicaSetUid = Guid.NewGuid().ToString();
+
+            var replicaSet = new ResourceResponseBuilder().WithApiVersion("apps/v1")
+                .WithKind("ReplicaSet")
+                .WithName("rs")
+                .WithUid(replicaSetUid)
+                .Build();
+
+            var kubectlGet = new MockKubectlGet();
+            var log = new InMemoryLog();
+            var resourceRetriever = new ResourceRetriever(kubectlGet, log);
+            
+            kubectlGet.SetResource("rs", replicaSet);
+            Message[] messages = { new Message(Level.Error, "Error getting resource") };
+            kubectlGet.SetAllResources("Pod", messages);
+            
+            var results = resourceRetriever.GetAllOwnedResources(
+                 new List<ResourceIdentifier>
+                 {
+                     new ResourceIdentifier(SupportedResourceGroupVersionKinds.ReplicaSetV1, "rs", "octopus"),
+                 },
+                 null, 
+                 new Options()
+                 {
+                     PrintVerboseKubectlOutputOnError = true
+                 });
+
+
+            var result = results.Should().ContainSingle().Which;
+            result.IsSuccess.Should().BeTrue();
+            result.Value.Should().BeEquivalentTo(new
+                {
+                    GroupVersionKind = SupportedResourceGroupVersionKinds.ReplicaSetV1,
+                    Name = "rs",
+                    Children = Array.Empty<object>(),
+                }
+            );
+
+            log.MessagesVerboseFormatted
+               .Should()
+               .Contain(r => r.Contains("Error getting resource"));
+        }
     }
+    
 
     public class MockKubectlGet : IKubectlGet
     {
-        private readonly Dictionary<string, string> resourceEntries = new Dictionary<string, string>();
-        private readonly Dictionary<string, string> resourcesByKind = new Dictionary<string, string>();
+        private readonly Dictionary<string, Message[]> resourceEntries = new Dictionary<string, Message[]>();
+        private readonly Dictionary<string, Message[]> resourcesByKind = new Dictionary<string, Message[]>();
 
         public void SetResource(string name, string data)
         {
-            resourceEntries.Add(name, data);
+            Message[] messages = { new Message(Level.Info, data) };
+            resourceEntries.Add(name, messages);
+        }
+        public void SetResource(string name, Message[] messages)
+        {
+            resourceEntries.Add(name, messages);
         }
 
         public void SetAllResources(string kind, params string[] data)
         {
-            resourcesByKind.Add(kind, $"{{items: [{string.Join(",", data)}]}}");
+            Message[] messages = { new Message(Level.Info, $"{{items: [{string.Join(",", data)}]}}") };
+            resourcesByKind.Add(kind, messages);
+        }
+
+        public void SetAllResources(string kind, Message[] messages)
+        {
+            resourcesByKind.Add(kind, messages);
         }
 
 
-        public KubectlGetResult Resource(string kind, string name, string @namespace, IKubectl kubectl)
+        public KubectlGetResult Resource(IResourceIdentity resourceIdentity, IKubectl kubectl)
         {
-            return new KubectlGetResult(resourceEntries[name], new List<string>
-            {
-                $"{Level.Info}: {resourceEntries[name]}"
-            });
+            var resourceJson = resourceEntries[resourceIdentity.Name].Select(m => m.Text).Join(string.Empty);
+            var rawOutput = resourceEntries[resourceIdentity.Name].Select(m => $"{m.Level}: {m.Text}").ToList();
+            
+            return new KubectlGetResult(resourceJson, rawOutput);
         }
 
-        public KubectlGetResult AllResources(string kind, string @namespace, IKubectl kubectl)
+        public KubectlGetResult AllResources(ResourceGroupVersionKind groupVersionKind, string @namespace, IKubectl kubectl)
         {
-            return new KubectlGetResult(resourcesByKind[kind], new List<string>
-            {
-                $"{Level.Info}: {resourcesByKind[kind]}"
-            });
+            var resourceJson = resourcesByKind[groupVersionKind.Kind].Select(m => m.Text).Join(string.Empty);
+            var rawOutput = resourcesByKind[groupVersionKind.Kind].Select(m => $"{m.Level}: {m.Text}").ToList();
+            
+            return new KubectlGetResult(resourceJson, rawOutput);
         }
     }
 
     public class ResourceResponseBuilder
     {
-        private static string template = @"
+        static string template = @"
 {{
-    ""kind"": ""{0}"",
+    ""apiVersion"": ""{0}"",
+    ""kind"": ""{1}"",
     ""metadata"": {{
-        ""name"": ""{1}"",
-        ""uid"": ""{2}"",
+        ""name"": ""{2}"",
+        ""uid"": ""{3}"",
         ""ownerReferences"": [
             {{
-                ""uid"": ""{3}""
+                ""uid"": ""{4}""
             }}
         ]
     }}
 }}";
 
-        private string kind = "";
-        private string name = "";
-        private string uid = Guid.NewGuid().ToString();
-        private string ownerUid = Guid.NewGuid().ToString();
-
+        string apiVersion = "";
+        string kind = "";
+        string name = "";
+        string uid = Guid.NewGuid().ToString();
+        string ownerUid = Guid.NewGuid().ToString();
+        
+        public ResourceResponseBuilder WithApiVersion(string apiVersion)
+        {
+            this.apiVersion = apiVersion;
+            return this;
+        }
+        
         public ResourceResponseBuilder WithKind(string kind)
         {
             this.kind = kind;
@@ -289,6 +425,14 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             return this;
         }
 
-        public string Build() => string.Format(template, kind, name, uid, ownerUid).ReplaceLineEndings().Replace(Environment.NewLine, string.Empty);
+        public string Build() =>
+            string.Format(template,
+                          apiVersion,
+                          kind,
+                          name,
+                          uid,
+                          ownerUid)
+                  .ReplaceLineEndings()
+                  .Replace(Environment.NewLine, string.Empty);
     }
 }

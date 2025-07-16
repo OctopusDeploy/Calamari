@@ -30,7 +30,7 @@ namespace Calamari.AzureServiceFabric
 
         public async Task Execute(RunningDeployment context)
         {
-            if (!ServiceFabricHelper.IsServiceFabricSdkKeyInRegistry())
+            if (!ServiceFabricHelper.IsServiceFabricSdkInstalled())
             {
                 throw new Exception("Could not find the Azure Service Fabric SDK on this server. This SDK is required before running health checks on Service Fabric targets.");
             }
@@ -63,9 +63,9 @@ namespace Calamari.AzureServiceFabric
                     var clientCertThumbprint = variables.Get(clientCertVariable + ".Thumbprint");
                     var commonName = variables.Get(clientCertVariable + ".SubjectCommonName");
 
-                    CalamariCertificateStore.EnsureCertificateIsInstalled(variables, clientCertVariable, certificateStoreName, certificateStoreLocation);
+                    new CalamariCertificateStore(log).EnsureCertificateIsInstalled(variables, clientCertVariable, certificateStoreName, certificateStoreLocation);
 
-                    var xc = GetCredentials(clientCertThumbprint, certificateStoreLocation, certificateStoreName, serverCertThumbprint, commonName);
+                    var xc = ServiceFabricHelper.GetX509Credentials(clientCertThumbprint, certificateStoreLocation, certificateStoreName, serverCertThumbprint, commonName);
                     try
                     {
                         fabricClient = new FabricClient(xc, connectionEndpoint);
@@ -86,18 +86,7 @@ namespace Calamari.AzureServiceFabric
                     var claimsCredentials = new ClaimsCredentials();
                     claimsCredentials.ServerThumbprints.Add(serverCertThumbprint);
                     fabricClient = new FabricClient(claimsCredentials, connectionEndpoint);
-                    fabricClient.ClaimsRetrieval += (o, e) =>
-                                                    {
-                                                        try
-                                                        {
-                                                            return GetAccessToken(e.AzureActiveDirectoryMetadata, aadUserCredentialUsername, aadUserCredentialPassword);
-                                                        }
-                                                        catch (Exception ex)
-                                                        {
-                                                            log.Error($"Connect failed: {ex.PrettyPrint()}");
-                                                            return "BAD_TOKEN"; //TODO: mark.siedle - You cannot return null or an empty value here or the Azure lib spazzes out trying to call a lib that doesn't exist "System.Fabric.AzureActiveDirectory.Client"  :(
-                                                        }
-                                                    };
+                    fabricClient.ClaimsRetrieval += (o, e) => AzureADUsernamePasswordTokenRetriever.GetAccessToken(e.AzureActiveDirectoryMetadata, aadUserCredentialUsername, aadUserCredentialPassword, log);
                     break;
                 }
 
@@ -133,38 +122,5 @@ namespace Calamari.AzureServiceFabric
                 fabricClient.Dispose();
             }
         }
-
-        #region Auth helpers
-        static string GetAccessToken(AzureActiveDirectoryMetadata aad, string aadUsername, string aadPassword)
-        {
-            var app = PublicClientApplicationBuilder
-                      .Create(aad.ClientApplication)
-                      .WithAuthority(aad.Authority)
-                      .Build();
-
-            var authResult = app.AcquireTokenByUsernamePassword(new[] { $"{aad.ClusterApplication}/.default" }, aadUsername, aadPassword)
-                                .ExecuteAsync()
-                                .GetAwaiter()
-                                .GetResult();
-
-            return authResult.AccessToken;
-        }
-
-        static X509Credentials GetCredentials(string clientCertThumbprint, string clientCertStoreLocation, string clientCertStoreName, string serverCertThumb, string commonName)
-        {
-            var xc = new X509Credentials
-            {
-                StoreLocation = (StoreLocation)Enum.Parse(typeof(StoreLocation), clientCertStoreLocation),
-                StoreName = clientCertStoreName,
-                FindType = X509FindType.FindByThumbprint,
-                FindValue = clientCertThumbprint
-            };
-            xc.RemoteCommonNames.Add(commonName);
-            xc.RemoteCertThumbprints.Add(serverCertThumb);
-            xc.ProtectionLevel = ProtectionLevel.EncryptAndSign;
-            return xc;
-        }
-
-        #endregion
     }
 }

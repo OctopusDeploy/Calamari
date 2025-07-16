@@ -1,5 +1,4 @@
-﻿#if AWS
-using System;
+﻿using System;
 using System.Threading.Tasks;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Testing.Helpers;
@@ -45,4 +44,3 @@ namespace Calamari.Tests.AWS.CloudFormation
         }
     }
 }
-#endif

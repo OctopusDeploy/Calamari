@@ -256,6 +256,55 @@ namespace Calamari.Tests.Fixtures.PowerShell
             }
         }
 
+        [Test]
+        public void ShouldWriteServiceMessageForKubernetesManifest()
+        {
+            var (output, _) = RunPowerShellScript("ReportKubernetesManifest.ps1");
+            output.AssertSuccess();
+            output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiDQoia2luZCI6ICJOYW1lc3BhY2UiDQoibWV0YWRhdGEiOg0KICAibmFtZSI6ICJleGFtcGxlIg0KImxhYmVscyI6DQogICAgIm5hbWUiOiAiZXhhbXBsZSINCg==']");
+            output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiDQoia2luZCI6ICJOYW1lc3BhY2UiDQoibWV0YWRhdGEiOg0KICAibmFtZSI6ICJkaWZmcyINCiJsYWJlbHMiOg0KICAgICJuYW1lIjogImRpZmZzIg0K']");
+            output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiDQoia2luZCI6ICJOYW1lc3BhY2UiDQoibWV0YWRhdGEiOg0KICAibmFtZSI6ICJleGFtcGxlIg0KImxhYmVscyI6DQogICAgIm5hbWUiOiAiZXhhbXBsZSINCg==' ns='bXk=']");
+            output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiDQoia2luZCI6ICJOYW1lc3BhY2UiDQoibWV0YWRhdGEiOg0KICAibmFtZSI6ICJkaWZmcyINCiJsYWJlbHMiOg0KICAgICJuYW1lIjogImRpZmZzIg0K' ns='bXk=']");
+            AssertPowerShellEdition(output);
+        }
+        
+        [Test]
+        public void ShouldWriteServiceMessageForKubernetesManifestFile()
+        {
+            var tempPath = Path.GetTempPath();
+            const string manifest = @"""apiVersion"": ""v1""
+""kind"": ""Namespace""
+""metadata"":
+  ""name"": ""example""
+""labels"":
+    ""name"": ""example""
+---    
+""apiVersion"": ""v1""
+""kind"": ""Namespace""
+""metadata"":
+  ""name"": ""diffs""
+""labels"":
+    ""name"": ""diffs""";
+
+            var filePath = Path.Combine(tempPath, "ShouldWriteServiceMessageForKubernetesManifestFile.manifest.yaml");
+            File.WriteAllText(filePath, manifest);
+
+            try
+            {
+                var (output, _) = RunPowerShellScript("ReportKubernetesManifestFile.ps1", new Dictionary<string, string> {{"ManifestFilePath", filePath}});
+                output.AssertSuccess();
+                output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiDQoia2luZCI6ICJOYW1lc3BhY2UiDQoibWV0YWRhdGEiOg0KICAibmFtZSI6ICJleGFtcGxlIg0KImxhYmVscyI6DQogICAgIm5hbWUiOiAiZXhhbXBsZSINCg==']");
+                output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiDQoia2luZCI6ICJOYW1lc3BhY2UiDQoibWV0YWRhdGEiOg0KICAibmFtZSI6ICJkaWZmcyINCiJsYWJlbHMiOg0KICAgICJuYW1lIjogImRpZmZzIg==']");
+                output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiDQoia2luZCI6ICJOYW1lc3BhY2UiDQoibWV0YWRhdGEiOg0KICAibmFtZSI6ICJleGFtcGxlIg0KImxhYmVscyI6DQogICAgIm5hbWUiOiAiZXhhbXBsZSINCg==' ns='bXk=']");
+                output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiDQoia2luZCI6ICJOYW1lc3BhY2UiDQoibWV0YWRhdGEiOg0KICAibmFtZSI6ICJkaWZmcyINCiJsYWJlbHMiOg0KICAgICJuYW1lIjogImRpZmZzIg==' ns='bXk=']");
+                AssertPowerShellEdition(output);
+            }
+            finally
+            {
+                File.Delete(filePath);
+            }
+        }
+
         class Artifact
         {
             public string Name => System.IO.Path.GetFileName(Path);
@@ -585,8 +634,6 @@ namespace Calamari.Tests.Fixtures.PowerShell
             output.AssertOutput(string.Join(Environment.NewLine, "45", "226", "128", "147"));
             AssertPowerShellEdition(output);
         }
-
-        static bool IsRunningOnUnixLikeEnvironment => CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac;
 
         protected CalamariResult InvokeCalamariForPowerShell(Action<CommandLine> buildCommand, CalamariVariables variables = null)
         {

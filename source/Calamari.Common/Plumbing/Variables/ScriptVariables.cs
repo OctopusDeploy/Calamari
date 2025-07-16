@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using Calamari.Common.Features.Scripts;
+using Calamari.Common.Plumbing.FileSystem;
 
 namespace Calamari.Common.Plumbing.Variables
 {
@@ -26,10 +27,20 @@ namespace Calamari.Common.Plumbing.Variables
         {
             return variableName.Replace("Octopus.Script.Module[", "").TrimEnd(']');
         }
+        
+        public static string FormatScriptName(string scriptName)
+        {
+            return new string(scriptName.Where(x => char.IsLetterOrDigit(x) || x == '_').ToArray());
+        }
 
         public static bool IsLibraryScriptModule(string variableName)
         {
             return variableName.StartsWith("Octopus.Script.Module[");
+        }
+        
+        public static bool IsBuildInformationVariable(string variableName)
+        {
+            return variableName.StartsWith("Octopus.Deployment.PackageBuildInformation") || variableName.StartsWith("Octopus.Deployment.PackageBuildMetadata");
         }
 
         public static bool IsExcludedFromLocalVariables(string name)

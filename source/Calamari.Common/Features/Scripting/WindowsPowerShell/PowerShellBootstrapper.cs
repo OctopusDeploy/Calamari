@@ -162,7 +162,7 @@ namespace Calamari.Common.Features.Scripting.WindowsPowerShell
         static readonly string BootstrapScriptTemplate;
         static readonly string DebugBootstrapScriptTemplate;
         static readonly string SensitiveVariablePassword = AesEncryption.RandomString(16);
-        static readonly AesEncryption VariableEncryptor = new AesEncryption(SensitiveVariablePassword);
+        static readonly AesEncryption VariableEncryptor = AesEncryption.ForScripts(SensitiveVariablePassword);
         static readonly ICalamariFileSystem CalamariFileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
         static PowerShellBootstrapper()
@@ -177,7 +177,7 @@ namespace Calamari.Common.Features.Scripting.WindowsPowerShell
 
         public string FormatCommandArguments(string bootstrapFile, string debuggingBootstrapFile, IVariables variables)
         {
-            var encryptionKey = Convert.ToBase64String(AesEncryption.GetEncryptionKey(SensitiveVariablePassword));
+            var encryptionKey = Convert.ToBase64String(VariableEncryptor.EncryptionKey);
             var commandArguments = new StringBuilder();
             var executeWithoutProfile = variables[PowerShellVariables.ExecuteWithoutProfile];
             var traceCommand = GetPsDebugCommand(variables);
@@ -342,7 +342,7 @@ namespace Calamari.Common.Features.Scripting.WindowsPowerShell
                 if (ScriptVariables.GetLibraryScriptModuleLanguage(variables, variableName) == ScriptSyntax.PowerShell)
                 {
                     var libraryScriptModuleName = ScriptVariables.GetLibraryScriptModuleName(variableName);
-                    var name = "Library_" + new string(libraryScriptModuleName.Where(char.IsLetterOrDigit).ToArray()) + "_" + DateTime.Now.Ticks;
+                    var name = "Library_" + ScriptVariables.FormatScriptName(libraryScriptModuleName) + "_" + DateTime.Now.Ticks;
                     var moduleFileName = $"{name}.psm1";
                     var moduleFilePath = Path.Combine(parentDirectory, moduleFileName);
                     Log.VerboseFormat("Writing script module '{0}' as PowerShell module {1}. This module will be automatically imported - functions will automatically be in scope.", libraryScriptModuleName, moduleFileName, name);

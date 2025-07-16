@@ -7,6 +7,7 @@ using Assent;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Features;
@@ -238,7 +239,8 @@ namespace Calamari.Tests.Fixtures.Nginx
 
             new NginxFeature(
                 nginxServer,
-                CalamariPhysicalFileSystem.GetPhysicalFileSystem()
+                CalamariPhysicalFileSystem.GetPhysicalFileSystem(),
+                Substitute.For<ILog>()
             ).Execute(deployment);
 
             var nginxTempDirectory = deployment.Variables.Get("OctopusNginxFeatureTempDirectory");

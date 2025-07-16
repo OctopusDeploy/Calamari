@@ -62,11 +62,11 @@ function Execute-WithRetry([ScriptBlock] $command) {
 }
 
 function Get-AzureRmModuleInstalled {
-    return $null -ne (Get-Command "Login-AzureRmAccount" -ErrorAction SilentlyContinue)
+    return $null -ne (Get-Command "Login-AzureRmAccount" -Module 'AzureRM.Profile' -ErrorAction SilentlyContinue)
 }
 
 function Get-AzModuleInstalled {
-    return $null -ne (Get-Command "Connect-AzAccount" -ErrorAction SilentlyContinue)
+    return $null -ne (Get-Command "Connect-AzAccount" -Module 'Az.Accounts' -ErrorAction SilentlyContinue)
 }
 
 function Get-RunningInPowershellCore {
@@ -113,7 +113,7 @@ function Initialize-AzureRmContext {
 function Initialize-AzContext {
     $tempWarningPreference = $WarningPreference
     $WarningPreference = 'SilentlyContinue'
-    if (-Not(Get-Command "Disable-AzureRMContextAutosave" -errorAction SilentlyContinue))
+    if (-Not(Get-Command "Disable-AzureRMContextAutosave" -Module 'AzureRM.Profile' -errorAction SilentlyContinue))
     {
         $WarningPreference = $tempWarningPreference
         Write-Verbose "Enabling AzureRM aliasing"
@@ -280,7 +280,11 @@ Execute-WithRetry{
     }
 }
 
-Write-Verbose "Invoking target script $OctopusAzureTargetScript with $OctopusAzureTargetScriptParameters parameters"
+if ([string]::IsNullOrEmpty($OctopusAzureTargetScriptParameters)) {
+    Write-Verbose "Invoking target script '$OctopusAzureTargetScript'."
+} else {
+    Write-Verbose "Invoking target script '$OctopusAzureTargetScript' with parameters '$OctopusAzureTargetScriptParameters'."
+}
 
 try {
     Invoke-Expression ". `"$OctopusAzureTargetScript`" $OctopusAzureTargetScriptParameters"

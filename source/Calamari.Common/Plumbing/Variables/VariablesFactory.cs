@@ -7,6 +7,7 @@ using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
 using Newtonsoft.Json;
 using Octostache;
 
@@ -16,10 +17,12 @@ namespace Calamari.Common.Plumbing.Variables
     {
         public static readonly string AdditionalVariablesPathVariable = "AdditionalVariablesPath";
         readonly ICalamariFileSystem fileSystem;
+        readonly ILog log;
 
-        public VariablesFactory(ICalamariFileSystem fileSystem)
+        public VariablesFactory(ICalamariFileSystem fileSystem, ILog log)
         {
             this.fileSystem = fileSystem;
+            this.log = log;
         }
 
         public IVariables Create(CommonOptions options)
@@ -33,7 +36,7 @@ namespace Calamari.Common.Plumbing.Variables
             AddEnvironmentVariables(variables);
             variables.Set(TentacleVariables.Agent.InstanceName, "#{env:TentacleInstanceName}");
             ReadAdditionalVariablesFromFile(variables);
-            DeploymentJournalVariableContributor.Contribute(fileSystem, variables);
+            DeploymentJournalVariableContributor.Contribute(fileSystem, variables, log);
 
             return variables;
         }
@@ -132,7 +135,7 @@ namespace Calamari.Common.Plumbing.Variables
         {
             try
             {
-                return new AesEncryption(encryptionPassword).Decrypt(encryptedVariables);
+                return AesEncryption.ForServerVariables(encryptionPassword).Decrypt(encryptedVariables);
             }
             catch (CryptographicException)
             {

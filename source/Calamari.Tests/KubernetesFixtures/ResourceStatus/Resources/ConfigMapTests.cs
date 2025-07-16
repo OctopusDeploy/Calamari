@@ -12,6 +12,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
         public void ShouldCollectCorrectProperties()
         {
             const string input = @"{
+    ""apiVersion"": ""v1"",
     ""kind"": ""ConfigMap"",
     ""metadata"": {
         ""name"": ""my-cm"",
@@ -27,7 +28,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
             
             configMap.Should().BeEquivalentTo(new
             {
-                Kind = "ConfigMap",
+                GroupVersionKind = SupportedResourceGroupVersionKinds.ConfigMapV1,
                 Name = "my-cm",
                 Namespace = "default",
                 Uid = "01695a39-5865-4eea-b4bf-1a4783cbce62",

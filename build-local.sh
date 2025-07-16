@@ -79,6 +79,19 @@ if [ -z "$auto_accept" ]; then
   fi
 fi
 
-./build.sh -BuildVerbosity Minimal -Verbosity Minimal -PackInParallel -AppendTimestamp -SetOctopusServerVersion -TargetFramework "$target_framework" -TargetRuntime "$target_runtime"
+branch=$(git branch --show-current)
+
+echo "Branch: $branch"
+
+year=$(date '+%Y')
+numericVersion="$year.99.0"
+
+sanitizedBranch=$(echo "$branch" | sed 's|^refs/heads/||; s|[/_]|-|g' | sed 's|\+.*$||g')
+
+export OCTOVERSION_MajorMinorPatch="$numericVersion"
+export OCTOVERSION_PreReleaseTagWithDash="-$sanitizedBranch"
+export OCTOVERSION_FullSemVer="$numericVersion-$sanitizedBranch"
+
+./build.sh -BuildVerbosity Minimal -Verbosity Minimal -AppendTimestamp -SetOctopusServerVersion -TargetFramework "$target_framework" -TargetRuntime "$target_runtime"
 
 echo -e "$FinishMessage"

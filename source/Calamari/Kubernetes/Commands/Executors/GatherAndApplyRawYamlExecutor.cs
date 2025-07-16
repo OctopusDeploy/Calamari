@@ -90,7 +90,7 @@ namespace Calamari.Kubernetes.Commands.Executors
             {
                 var fullFilePath = fileSystem.GetRelativePath(directoryWithTrailingSlash, file);
                 log.Verbose($"Matched file: {fullFilePath}");
-                manifestReporter.ReportManifestApplied(file);
+                manifestReporter.ReportManifestFileApplied(file);
             }
         }
     }

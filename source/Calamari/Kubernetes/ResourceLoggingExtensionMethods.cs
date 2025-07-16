@@ -11,7 +11,7 @@ namespace Calamari.Kubernetes
             foreach (var resourceIdentifier in resourceToLog)
             {
                 var hasNamespace = !string.IsNullOrEmpty(resourceIdentifier.Namespace);
-                log.Verbose($" - {resourceIdentifier.Kind}/{resourceIdentifier.Name} {(hasNamespace ? $"in namespace {resourceIdentifier.Namespace}" : "")}");
+                log.Verbose($" - {resourceIdentifier.GroupVersionKind}/{resourceIdentifier.Name} {(hasNamespace ? $"in namespace {resourceIdentifier.Namespace}" : "")}");
             }
         }
     }

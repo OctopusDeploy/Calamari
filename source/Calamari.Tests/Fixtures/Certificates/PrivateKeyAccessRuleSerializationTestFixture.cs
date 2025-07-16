@@ -1,11 +1,9 @@
-﻿#if WINDOWS_CERTIFICATE_STORE_SUPPORT 
-using System.Linq;
+﻿using System.Linq;
 using Calamari.Commands;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Integration.Certificates;
 using NUnit.Framework;
-using Octostache;
 
 namespace Calamari.Tests.Fixtures.Certificates
 {
@@ -22,9 +20,9 @@ namespace Calamari.Tests.Fixtures.Certificates
             var result = PrivateKeyAccessRule.FromJson(json).ToList();
 
             Assert.AreEqual(2, result.Count);
-            Assert.AreEqual("BUILTIN\\Administrators", result[0].Identity.ToString());
+            Assert.AreEqual("BUILTIN\\Administrators", result[0].Identity);
             Assert.AreEqual(PrivateKeyAccess.FullControl, result[0].Access);
-            Assert.AreEqual("BUILTIN\\Users", result[1].Identity.ToString());
+            Assert.AreEqual("BUILTIN\\Users", result[1].Identity);
             Assert.AreEqual(PrivateKeyAccess.ReadOnly, result[1].Access);
         }
 
@@ -41,9 +39,8 @@ namespace Calamari.Tests.Fixtures.Certificates
             var result = ImportCertificateCommand.GetPrivateKeyAccessRules(variables).ToList();
 
             Assert.AreEqual(1, result.Count);
-            Assert.AreEqual("AmericanEagles\\RogerRamjet", result[0].Identity.ToString());
+            Assert.AreEqual("AmericanEagles\\RogerRamjet", result[0].Identity);
             Assert.AreEqual(PrivateKeyAccess.FullControl, result[0].Access);
         }
     }
 }
-#endif

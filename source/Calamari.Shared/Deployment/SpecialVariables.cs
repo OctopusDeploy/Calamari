@@ -34,6 +34,7 @@ namespace Calamari.Deployment
         }
 
         public const string UseLegacyIisSupport = "OctopusUseLegacyIisSupport";
+        public const string UseLegacyIisSupportForce = "OctopusForceUseLegacyIisSupport";
 
         public static readonly string RetentionPolicyItemsToKeep = "OctopusRetentionPolicyItemsToKeep";
         public static readonly string RetentionPolicyDaysToKeep = "OctopusRetentionPolicyDaysToKeep";
@@ -167,6 +168,7 @@ namespace Calamari.Deployment
                 public static readonly string CloudFormationStackName = "Octopus.Action.Aws.CloudFormationStackName";
                 public static readonly string CloudFormationTemplate = "Octopus.Action.Aws.CloudFormationTemplate";
                 public static readonly string CloudFormationProperties = "Octopus.Action.Aws.CloudFormationProperties";
+                public static readonly string CloudFormationPollSeconds = "Octopus.Action.Aws.CloudFormationPollSeconds";
                 public static readonly string AssumeRoleARN = "Octopus.Action.Aws.AssumedRoleArn";
                 public static readonly string AssumeRoleExternalId = "Octopus.Action.Aws.AssumeRoleExternalId";
                 public static readonly string AccountId = "Octopus.Action.AwsAccount.Variable";

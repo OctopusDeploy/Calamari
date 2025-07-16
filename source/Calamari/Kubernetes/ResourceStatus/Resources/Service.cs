@@ -6,7 +6,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
 {
     public class Service : Resource
     {
-        public override string ChildKind => "EndpointSlice";
+        public override ResourceGroupVersionKind ChildGroupVersionKind => SupportedResourceGroupVersionKinds.EndpointSliceV1;
 
         public string Type { get; }
         public string ClusterIp { get; }

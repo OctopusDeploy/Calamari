@@ -3,18 +3,19 @@ using System.Linq;
 using Calamari.Common.Features.Deployment.Journal;
 using Calamari.Common.Features.Processes.Semaphores;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
 
 namespace Calamari.Common.Plumbing.Variables
 {
     public static class DeploymentJournalVariableContributor
     {
-        public static void Contribute(ICalamariFileSystem fileSystem, IVariables variables)
+        public static void Contribute(ICalamariFileSystem fileSystem, IVariables variables, ILog log)
         {
             var policySet = variables.Get(KnownVariables.RetentionPolicySet);
             if (string.IsNullOrWhiteSpace(policySet))
                 return;
 
-            var journal = new DeploymentJournal(fileSystem, new SystemSemaphoreManager(), variables);
+            var journal = new DeploymentJournal(fileSystem, new SystemSemaphoreManager(), variables, log);
             Previous(variables, journal, policySet);
             PreviousSuccessful(variables, journal, policySet);
         }

@@ -1,5 +1,4 @@
-﻿#if WINDOWS_CERTIFICATE_STORE_SUPPORT 
-using System;
+﻿using System;
 using Microsoft.Win32.SafeHandles;
 
 namespace Calamari.Integration.Certificates.WindowsNative
@@ -29,4 +28,3 @@ namespace Calamari.Integration.Certificates.WindowsNative
         public static SafeCertStoreHandle InvalidHandle => new SafeCertStoreHandle(IntPtr.Zero);
     }
 }
-#endif

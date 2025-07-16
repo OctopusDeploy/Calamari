@@ -12,5 +12,7 @@ namespace Calamari.Kubernetes.ResourceStatus
         public bool WaitForJobs { get; set; }
 
         public bool PrintVerboseKubectlOutputOnError { get; set; }
+        
+        public bool PrintVerboseOutput { get; set; }
     }
 }

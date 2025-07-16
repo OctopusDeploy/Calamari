@@ -12,7 +12,13 @@ namespace Calamari.Common.Features.Scripting
 {
     public abstract class ScriptExecutor : IScriptExecutor
     {
+        protected readonly ILog log;
         static readonly string CopyWorkingDirectoryVariable = "Octopus.Calamari.CopyWorkingDirectoryIncludingKeyTo";
+
+        public ScriptExecutor(ILog log)
+        {
+            this.log = log;
+        }
 
         public CommandResult Execute(Script script,
             IVariables variables,
@@ -65,7 +71,7 @@ namespace Calamari.Common.Features.Scripting
             IVariables variables,
             Dictionary<string, string>? environmentVars = null);
 
-        static void CopyWorkingDirectory(IVariables variables, string workingDirectory, string arguments)
+        void CopyWorkingDirectory(IVariables variables, string workingDirectory, string arguments)
         {
             var fs = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
@@ -83,7 +89,7 @@ namespace Calamari.Common.Features.Scripting
                 copyTo = Path.Combine(copyToParent, $"{n++}");
             } while (Directory.Exists(copyTo));
 
-            Log.Verbose($"Copying working directory '{workingDirectory}' to '{copyTo}'");
+            log.Verbose($"Copying working directory '{workingDirectory}' to '{copyTo}'");
             fs.CopyDirectory(workingDirectory, copyTo);
             File.WriteAllText(Path.Combine(copyTo, "Arguments.txt"), arguments);
             File.WriteAllText(Path.Combine(copyTo, "CopiedFromDirectory.txt"), workingDirectory);

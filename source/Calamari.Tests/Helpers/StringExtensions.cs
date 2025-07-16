@@ -9,6 +9,7 @@ namespace Calamari.Tests.Helpers
         static readonly Regex Regex = new Regex("\r\n|\n\r|\n|\r", RegexOptions.Compiled);
         
         public static string ReplaceLineEndings(this string value) => Regex.Replace(value, Environment.NewLine);
+        public static string ReplaceLineEndings(this string value, string replacement) => Regex.Replace(value, replacement);
     }
 }
 //#endif

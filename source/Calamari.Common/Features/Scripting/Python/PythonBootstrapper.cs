@@ -20,7 +20,7 @@ namespace Calamari.Common.Features.Scripting.Python
         static readonly string ConfigurationScriptTemplate;
         static readonly string InstallDependenciesScriptTemplate;
         static readonly string SensitiveVariablePassword = AesEncryption.RandomString(16);
-        static readonly AesEncryption VariableEncryptor = new AesEncryption(SensitiveVariablePassword);
+        static readonly AesEncryption VariableEncryptor = AesEncryption.ForScripts(SensitiveVariablePassword);
         static readonly ICalamariFileSystem CalamariFileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
 
         static PythonBootstrapper()
@@ -31,7 +31,7 @@ namespace Calamari.Common.Features.Scripting.Python
 
         public static string FormatCommandArguments(string bootstrapFile, string? scriptParameters)
         {
-            var encryptionKey = ToHex(AesEncryption.GetEncryptionKey(SensitiveVariablePassword));
+            var encryptionKey = ToHex(VariableEncryptor.EncryptionKey);
             var commandArguments = new StringBuilder();
             commandArguments.Append($"\"-u\" \"{bootstrapFile}\" {scriptParameters} \"{encryptionKey}\"");
             return commandArguments.ToString();
@@ -122,7 +122,7 @@ namespace Calamari.Common.Features.Scripting.Python
                 if (ScriptVariables.GetLibraryScriptModuleLanguage(variables, variableName) == ScriptSyntax.Python)
                 {
                     var libraryScriptModuleName = ScriptVariables.GetLibraryScriptModuleName(variableName);
-                    var name = new string(libraryScriptModuleName.Where(x => char.IsLetterOrDigit(x) || x == '_').ToArray());
+                    var name = ScriptVariables.FormatScriptName(libraryScriptModuleName);
                     var moduleFileName = $"{name}.py";
                     Log.VerboseFormat("Writing script module '{0}' as python module {1}. Import this module via `import {2}`.", libraryScriptModuleName, moduleFileName, name);
                     var moduleFilePath = Path.Combine(workingDirectory, moduleFileName);

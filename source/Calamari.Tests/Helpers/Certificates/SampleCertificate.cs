@@ -1,4 +1,4 @@
-﻿#if WINDOWS_CERTIFICATE_STORE_SUPPORT 
+﻿
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -10,6 +10,11 @@ using Calamari.Integration.Certificates;
 using NUnit.Framework;
 using System.Linq;
 using Calamari.Testing.Helpers;
+#if  NETFX
+using CryptoKeyAccessRule = System.Security.AccessControl.CryptoKeyAccessRule;
+#else
+using CryptoKeyAccessRule = Calamari.Integration.Certificates.CryptoKeyAccessRule;
+#endif
 
 namespace Calamari.Tests.Helpers.Certificates
 {
@@ -102,7 +107,7 @@ namespace Calamari.Tests.Helpers.Certificates
             if (certificates.Count == 0)
                 return;
 
-            WindowsX509CertificateStore.RemoveCertificateFromStore(Thumbprint, store.Location, store.Name);
+            new WindowsX509CertificateStore().RemoveCertificateFromStore(Thumbprint, store.Location, store.Name);
         }
 
         public void AssertCertificateIsInStore(string storeName, StoreLocation storeLocation)
@@ -122,27 +127,18 @@ namespace Calamari.Tests.Helpers.Certificates
                 ? foundCertificates[0]
                 : null;
         }
-
-        public static void AssertIdentityHasPrivateKeyAccess(X509Certificate2 certificate, IdentityReference identity, CryptoKeyRights rights)
+#pragma warning disable CA1416
+        public static void AssertHasPrivateKeyRights(CryptoKeySecurity privateKeySecurity, NTAccount identifier, CryptoKeyRights right)
         {
-            if (!certificate.HasPrivateKey)
-                throw new Exception("Certificate does not have private key");
+            var accessRules = privateKeySecurity.GetAccessRules(true, false, typeof(NTAccount));
 
-            var cspAlgorithm = certificate.PrivateKey as ICspAsymmetricAlgorithm;
+            var found = accessRules.Cast<CryptoKeyAccessRule>()
+                                   .Any(x => x.IdentityReference.Value == identifier.Value && x.CryptoKeyRights.HasFlag(right));
 
-            if (cspAlgorithm == null)
-                throw new Exception("Private key is not a CSP key");
-
-            var keySecurity = cspAlgorithm.CspKeyContainerInfo.CryptoKeySecurity;
-
-            foreach(var accessRule in keySecurity.GetAccessRules(true, false, identity.GetType()).Cast<CryptoKeyAccessRule>())
-            {
-                if (accessRule.IdentityReference.Equals(identity) && accessRule.CryptoKeyRights.HasFlag(rights))
-                    return;
-            }
-
-            throw new Exception($"Identity '{identity.ToString()}' does not have access right '{rights}' to private-key");
+            Assert.True(found, $"Identity '{identifier}' does not have access right '{right}' to private-key");
         }
+        
+#pragma warning restore CA1416
 
         X509Certificate2 LoadAsX509Certificate2()
         {
@@ -154,4 +150,3 @@ namespace Calamari.Tests.Helpers.Certificates
 
     }
 }
-#endif

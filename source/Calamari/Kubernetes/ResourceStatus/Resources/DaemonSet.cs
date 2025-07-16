@@ -6,7 +6,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
 {
     public class DaemonSet: Resource
     {
-        public override string ChildKind => "Pod";
+        public override ResourceGroupVersionKind ChildGroupVersionKind => SupportedResourceGroupVersionKinds.PodV1;
 
         public int Desired { get; }
         public int Current { get; }

@@ -9,7 +9,7 @@ namespace Calamari.Tests
     {
         public static void SaveEncrypted(this VariableDictionary variables, string key, string file)
         {
-            var encryptedContent = new AesEncryption(key).Encrypt(variables.SaveAsString());
+            var encryptedContent = AesEncryption.ForServerVariables(key).Encrypt(variables.SaveAsString());
             File.WriteAllBytes(file, encryptedContent);
         }
     }

@@ -136,6 +136,7 @@ namespace Calamari.Tests.AWS.CloudFormation
         public async Task DeployTemplate(string resourceName, string templateFilePath, IVariables variables)
         {
             var variablesFile = Path.GetTempFileName();
+            variables.Set("Octopus.Account.AccountType", "AmazonWebServicesAccount");
             variables.Set("Octopus.Action.AwsAccount.Variable", "AWSAccount");
             variables.Set("AWSAccount.AccessKey", await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3AccessKey, CancellationToken.None));
             variables.Set("AWSAccount.SecretKey", await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3SecretKey, CancellationToken.None));
@@ -175,6 +176,7 @@ namespace Calamari.Tests.AWS.CloudFormation
         public async Task DeployTemplateS3(string resourceName, IVariables variables)
         {
             var variablesFile = Path.GetTempFileName();
+            variables.Set("Octopus.Account.AccountType", "AmazonWebServicesAccount");
             variables.Set("Octopus.Action.AwsAccount.Variable", "AWSAccount");
             variables.Set("AWSAccount.AccessKey", await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3AccessKey, CancellationToken.None));
             variables.Set("AWSAccount.SecretKey", await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3SecretKey, CancellationToken.None));
@@ -226,6 +228,7 @@ namespace Calamari.Tests.AWS.CloudFormation
         {
             var variablesFile = Path.GetTempFileName();
             var variables = new CalamariVariables();
+            variables.Set("Octopus.Account.AccountType", "AmazonWebServicesAccount");
             variables.Set("Octopus.Action.AwsAccount.Variable", "AWSAccount");
             variables.Set("AWSAccount.AccessKey", await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3AccessKey, CancellationToken.None));
             variables.Set("AWSAccount.SecretKey", await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3SecretKey, CancellationToken.None));

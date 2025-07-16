@@ -12,11 +12,13 @@ namespace Calamari.Deployment.Conventions
     {
         readonly ICalamariFileSystem fileSystem;
         readonly IInternetInformationServer iis;
+        readonly ILog log;
 
-        public LegacyIisWebSiteConvention(ICalamariFileSystem fileSystem, IInternetInformationServer iis)
+        public LegacyIisWebSiteConvention(ICalamariFileSystem fileSystem, IInternetInformationServer iis, ILog log)
         {
             this.fileSystem = fileSystem;
             this.iis = iis;
+            this.log = log;
         }
 
         public void Install(RunningDeployment deployment)
@@ -36,17 +38,39 @@ namespace Calamari.Deployment.Conventions
 
             // In situations where the IIS version cannot be correctly determined automatically,
             // this variable can be set to force IIS6 compatibility.
-            var legacySupport = deployment.Variables.GetFlag(SpecialVariables.UseLegacyIisSupport);
+            var legacySupport = LegacySupport(deployment);
 
             var updated = iis.OverwriteHomeDirectory(iisSiteName, webRoot, legacySupport);
 
             if (!updated)
                 throw new CommandException(
-                    string.Format(
-                        "Could not find an IIS website or virtual directory named '{0}' on the local machine. You need to create the site and/or virtual directory manually. To turn off this feature, use the 'Configure features' link in the deployment step configuration to disable IIS updates.", 
-                        iisSiteName));
+                                           $"Could not find an IIS website or virtual directory named '{iisSiteName}' on the local machine. You need to create the site and/or virtual directory manually. To turn off this feature, use the 'Configure features' link in the deployment step configuration to disable IIS updates.");
 
-            Log.Info("The IIS website named '{0}' has had its path updated to: '{1}'", iisSiteName, webRoot);
+            log.Info($"The IIS website named '{iisSiteName}' has had its path updated to: '{webRoot}'");
+        }
+
+        bool LegacySupport(RunningDeployment deployment)
+        {
+            var legacySupport = deployment.Variables.GetFlag(SpecialVariables.UseLegacyIisSupport);
+
+            // IIS7 was shipped in Windows Server 2008 and so this should not be getting hit by ANY customers (i.e. 2003 is deprecated)
+            if (!legacySupport)
+                return false;
+
+            // We were previously never warning of its imminent removal so
+            // provide a final legacy support capability with another big warning
+            // This will provide us some cover for later removal.
+            var forceLegacySupport = deployment.Variables.GetFlag(SpecialVariables.UseLegacyIisSupportForce);
+            if (!forceLegacySupport)
+                throw new CommandException($"Support for IIS6 is no longer supported.\r\n"
+                                           + $"Remove the {SpecialVariables.UseLegacyIisSupportForce} variable and ensure you are targeting IIS7+.");
+
+            log.Warn($"LegacyIIS support confirmed.\r\n"
+                     + $"Support for IIS6 is no longer supported.\r\n"
+                     + $"Remove the `{SpecialVariables.UseLegacyIisSupport}` and `{SpecialVariables.UseLegacyIisSupportForce}` variables and ensure you are targeting IIS7+.\r\n"
+                     + $"This capability will be very shortly removed without further warning.");
+            return true;
+
         }
 
         string GetRootMostDirectoryContainingWebConfig(RunningDeployment deployment)

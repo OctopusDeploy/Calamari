@@ -4,7 +4,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
 {
     public class StatefulSet: Resource
     {
-        public override string ChildKind => "Pod";
+        public override ResourceGroupVersionKind ChildGroupVersionKind => SupportedResourceGroupVersionKinds.PodV1;
 
         public string Ready { get; }
 

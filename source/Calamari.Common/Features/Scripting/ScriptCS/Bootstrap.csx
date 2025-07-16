@@ -106,7 +106,7 @@ public static class Octopus
             {
                 Mode = CipherMode.CBC,
                 Padding = PaddingMode.PKCS7,
-                KeySize = 128,
+                KeySize = 256,
                 BlockSize = 128
             })
             {

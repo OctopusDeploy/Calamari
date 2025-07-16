@@ -22,6 +22,7 @@ namespace Calamari.Common.Plumbing.Logging
         void DeltaVerification(string remotePath, string hash, long size);
         void DeltaVerificationError(string error);
         string FormatLink(string uri, string? description = null);
+        string FormatShortLink(string link, string? description = null);
         void WriteServiceMessage(ServiceMessage serviceMessage);
     }
 }

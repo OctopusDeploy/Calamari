@@ -40,14 +40,14 @@ namespace Calamari.Deployment
                     if (installException is CommandException || installException is RecursiveDefinitionException)
                         log.Verbose(installException.ToString());
                     else
-                        Console.Error.WriteLine(installException);
+                        log.Error(installException.ToString());
                 }
 
                 deployment.Error(installException);
 
                 if (rollbackConventions.Any())
                 {
-                    Console.Error.WriteLine("Running rollback conventions...");
+                    log.Error("Running rollback conventions...");
 
                     try
                     {
@@ -65,7 +65,7 @@ namespace Calamari.Deployment
                             if (rollbackException is CommandException || rollbackException is RecursiveDefinitionException)
                                 log.Verbose(installException.ToString());
                             else
-                                Console.Error.WriteLine(rollbackException);
+                                log.Error(rollbackException.ToString());
                         }
                     }
                 }

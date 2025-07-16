@@ -12,6 +12,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
         public void ShouldCollectCorrectProperties()
         {
             const string input = @"{
+    ""apiVersion"": ""v1"",
     ""kind"": ""Secret"",
     ""metadata"": {
         ""name"": ""my-secret"",
@@ -28,7 +29,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus.Resources
             
             secret.Should().BeEquivalentTo(new
             {
-                Kind = "Secret",
+                GroupVersionKind = SupportedResourceGroupVersionKinds.SecretV1,
                 Name = "my-secret",
                 Namespace = "default",
                 Uid = "01695a39-5865-4eea-b4bf-1a4783cbce62",

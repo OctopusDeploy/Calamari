@@ -1,10 +1,8 @@
-﻿#if WINDOWS_CERTIFICATE_STORE_SUPPORT
-#nullable disable
+﻿#nullable disable
 using System;
 using System.Runtime.InteropServices;
 using System.Text;
 using Microsoft.Win32.SafeHandles;
-
 namespace Calamari.Integration.Certificates.WindowsNative
 {
     internal static class WindowsX509Native
@@ -69,14 +67,7 @@ namespace Calamari.Integration.Certificates.WindowsNative
                                                                       [Out] out int dwKeySpec,
                                                                       [Out, MarshalAs(UnmanagedType.Bool)] out bool pfCallerFreeProvOrNCryptKey);
 
-        [DllImport("Crypt32.dll", SetLastError = true)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        internal static extern bool CryptAcquireCertificatePrivateKey(SafeCertContextHandle pCert,
-                                                                      AcquireCertificateKeyOptions dwFlags,
-            IntPtr pvReserved, // void *
-                                                                      [Out] out SafeNCryptKeyHandle phCryptProvOrNCryptKey,
-                                                                      [Out] out int dwKeySpec,
-                                                                      [Out, MarshalAs(UnmanagedType.Bool)] out bool pfCallerFreeProvOrNCryptKey);
+
 
         [DllImport("Crypt32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
         internal static extern
@@ -100,6 +91,15 @@ namespace Calamari.Integration.Certificates.WindowsNative
         [DllImport("Ncrypt.dll")]
         internal static extern int NCryptDeleteKey(SafeNCryptKeyHandle hKey, int flags);
 
+        [DllImport("Crypt32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool CryptAcquireCertificatePrivateKey(SafeCertContextHandle pCert,
+                                                                      AcquireCertificateKeyOptions dwFlags,
+            IntPtr pvReserved, // void *
+                                                                      [Out] out SafeNCryptKeyHandle phCryptProvOrNCryptKey,
+                                                                      [Out] out int dwKeySpec,
+                                                                      [Out, MarshalAs(UnmanagedType.Bool)] out bool pfCallerFreeProvOrNCryptKey);
+        
         [Flags]
         internal enum CertStoreProviders
         {
@@ -334,4 +334,3 @@ namespace Calamari.Integration.Certificates.WindowsNative
         }
     }
 }
-#endif

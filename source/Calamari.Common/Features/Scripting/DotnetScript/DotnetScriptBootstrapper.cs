@@ -22,7 +22,7 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
         static readonly string BootstrapScriptTemplate;
         static readonly string ClassBasedBootstrapScriptTemplate;
         static readonly string SensitiveVariablePassword = AesEncryption.RandomString(16);
-        static readonly AesEncryption VariableEncryptor = new AesEncryption(SensitiveVariablePassword);
+        static readonly AesEncryption VariableEncryptor = AesEncryption.ForScripts(SensitiveVariablePassword);
         static readonly ICalamariFileSystem CalamariFileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
         static readonly Regex ScriptParameterArgumentsRegex = new Regex(@"^(?<scriptCommandArgs>.*)\s*--\s(?<scriptArgs>.*)$", RegexOptions.Compiled);
         static DotnetScriptBootstrapper()
@@ -84,9 +84,6 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
 
         public static string FindBundledExecutable()
         {
-            if (ScriptingEnvironment.IsNetFramework())
-                throw new CommandException("dotnet-script requires .NET Core 6 or later");
-
             var exeName = $"dotnet-script.{(CalamariEnvironment.IsRunningOnWindows ? "cmd" : "dll")}";
             var myPath = typeof(DotnetScriptExecutor).Assembly.Location;
             var parent = Path.GetDirectoryName(myPath);
@@ -101,7 +98,7 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
         public static string FormatCommandArguments(string bootstrapFile, string? scriptParameters)
         {
             var (scriptCommandArguments, scriptArguments) = RetrieveParameterValues(scriptParameters);
-            var encryptionKey = Convert.ToBase64String(AesEncryption.GetEncryptionKey(SensitiveVariablePassword));
+            var encryptionKey = Convert.ToBase64String(VariableEncryptor.EncryptionKey);
             var commandArguments = new StringBuilder();
             commandArguments.Append("-s https://api.nuget.org/v3/index.json ");
             if (!string.IsNullOrWhiteSpace(scriptCommandArguments)) commandArguments.Append($"{scriptCommandArguments} ");
@@ -150,7 +147,7 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
                 if (ScriptVariables.GetLibraryScriptModuleLanguage(variables, variableName) == ScriptSyntax.CSharp)
                 {
                     var libraryScriptModuleName = ScriptVariables.GetLibraryScriptModuleName(variableName);
-                    var name = new string(libraryScriptModuleName.Where(char.IsLetterOrDigit).ToArray());
+                    var name = ScriptVariables.FormatScriptName(libraryScriptModuleName); 
                     var moduleFileName = $"{name}.csx";
                     var moduleFilePath = Path.Combine(workingDirectory, moduleFileName);
                     Log.VerboseFormat("Writing script module '{0}' as c# module {1}. Import this module via `#load \"{1}\"`.", libraryScriptModuleName, moduleFileName, name);

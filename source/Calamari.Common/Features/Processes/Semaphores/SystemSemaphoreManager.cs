@@ -5,6 +5,8 @@ using System.Threading;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
+using Polly;
+using Polly.Retry;
 
 namespace Calamari.Common.Features.Processes.Semaphores
 {
@@ -12,17 +14,28 @@ namespace Calamari.Common.Features.Processes.Semaphores
     {
         readonly ILog log;
         readonly int initialWaitBeforeShowingLogMessage;
+        readonly ResiliencePipeline semaphoreAcquisitionPipeline;
 
         public SystemSemaphoreManager()
         {
             log = ConsoleLog.Instance;
             initialWaitBeforeShowingLogMessage = (int)TimeSpan.FromSeconds(3).TotalMilliseconds;
-        }
 
-        public SystemSemaphoreManager(ILog log, TimeSpan initialWaitBeforeShowingLogMessage)
-        {
-            this.log = log;
-            this.initialWaitBeforeShowingLogMessage = (int)initialWaitBeforeShowingLogMessage.TotalMilliseconds;
+            semaphoreAcquisitionPipeline = new ResiliencePipelineBuilder()
+                                           .AddRetry(new RetryStrategyOptions()
+                                           {
+                                               ShouldHandle = new PredicateBuilder().Handle<Exception>(),
+                                               MaxRetryAttempts = 5, //means we'll wait for a max of around 250ms
+                                               BackoffType = DelayBackoffType.Linear,
+                                               UseJitter = true,
+                                               Delay = TimeSpan.FromMilliseconds(50),
+                                               OnRetry = args =>
+                                                         {
+                                                             log.Verbose($"Waiting {args.RetryDelay.TotalMilliseconds}ms before attempting to acquire the Semaphore again");
+                                                             return default;
+                                                         }
+                                           })
+                                           .Build();
         }
 
         public IDisposable Acquire(string name, string waitMessage)
@@ -34,19 +47,16 @@ namespace Calamari.Common.Features.Processes.Semaphores
 
         IDisposable AcquireSemaphore(string name, string waitMessage)
         {
-            Semaphore semaphore;
             var globalName = $"Global\\{name}";
-            try
-            {
-                semaphore = CreateGlobalSemaphoreAccessibleToEveryone(globalName);
-            }
-            catch (Exception ex)
-            {
-                log.Verbose($"Acquiring semaphore failed: {ex.PrettyPrint()}");
-                log.Verbose("Retrying without setting access controls...");
-                semaphore = new Semaphore(1, 1, globalName);
-            }
 
+            //we try and create/acquire a global semaphore with some retry
+            //this is done to (hopefully) avoid situations where two instances of Calamari are trying to acquire the same semaphore
+            //this could happen in the case of parallel steps being executed on the same machine
+            var semaphore = semaphoreAcquisitionPipeline.Execute(() => new Semaphore(1,1, name));
+            
+            //assign full control for all use
+            SetFullAccessControlForAllUsers(semaphore, globalName);
+            
             try
             {
                 if (!semaphore.WaitOne(initialWaitBeforeShowingLogMessage))
@@ -63,10 +73,10 @@ namespace Calamari.Common.Features.Processes.Semaphores
             }
 
             return new Releaser(() =>
-            {
-                semaphore.Release();
-                semaphore.Dispose();
-            });
+                                {
+                                    semaphore.Release();
+                                    semaphore.Dispose();
+                                });
         }
 
         IDisposable AcquireMutex(string name, string waitMessage)
@@ -90,13 +100,14 @@ namespace Calamari.Common.Features.Processes.Semaphores
             }
 
             return new Releaser(() =>
-            {
-                mutex.ReleaseMutex();
-                mutex.Dispose();
-            });
+                                {
+                                    mutex.ReleaseMutex();
+                                    mutex.Dispose();
+                                });
         }
 
-        static Semaphore CreateGlobalSemaphoreAccessibleToEveryone(string name)
+
+        void SetFullAccessControlForAllUsers(Semaphore semaphore, string name)
         {
             var semaphoreSecurity = new SemaphoreSecurity();
             var everyone = new SecurityIdentifier(WellKnownSidType.WorldSid, null);
@@ -104,11 +115,14 @@ namespace Calamari.Common.Features.Processes.Semaphores
 
             semaphoreSecurity.AddAccessRule(rule);
 
-            bool createdNew;
-
-            var semaphore = new Semaphore(1, 1, name, out createdNew);
-            semaphore.SetAccessControl(semaphoreSecurity);
-            return semaphore;
+            try
+            {
+                semaphore.SetAccessControl(semaphoreSecurity);
+            }
+            catch (Exception e)
+            {
+                log.Verbose($"Failed to set access controls on semaphore '{name}': {e.PrettyPrint()}");
+            }
         }
 
         class Releaser : IDisposable
