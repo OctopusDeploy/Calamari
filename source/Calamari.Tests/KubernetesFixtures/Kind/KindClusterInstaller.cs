@@ -1,15 +1,16 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
-using Serilog;
+using Calamari.Testing.Extensions;
+using YamlDotNet.RepresentationModel;
 
 namespace Calamari.Tests.KubernetesFixtures.Kind
 {
@@ -31,44 +32,37 @@ namespace Calamari.Tests.KubernetesFixtures.Kind
             this.temporaryDirectory = temporaryDirectory;
             this.logger = logger;
 
-            clusterName = $"tentacleint-{DateTime.Now:yyyyMMddhhmmss}";
+            clusterName = $"calamariint-{DateTime.Now:yyyyMMddhhmmss}";
             kubeConfigName = $"{clusterName}.config";
         }
 
         public async Task InstallCluster()
         {
+            var configFilePath = await WriteFileToTemporaryDirectory("kind-config.yaml");
+            
             var sw = new Stopwatch();
             sw.Restart();
-            
-            
-            
-            
-            var result = SilentProcessRunner.ExecuteCommand(
-                                                              installTools.KindExecutable,
-                                                              //we give the cluster a unique name
-                                                              $"create cluster --name={clusterName} --kubeconfig=\"{kubeConfigName}\"",
-                                                              temporaryDirectory.DirectoryPath,
-                                                              logger.Debug,
-                                                              logger.Information,
-                                                              logger.Error,
-                                                              CancellationToken.None);
+
+            var result = SilentProcessRunner.ExecuteCommand(installTools.KindExecutable,
+                                                            //we give the cluster a unique name
+                                                            $"create cluster --name={clusterName} --kubeconfig=\"{kubeConfigName}\" --config=\"{configFilePath}\"",
+                                                            temporaryDirectory.DirectoryPath,
+                                                            logger.Info,
+                                                            logger.Error);
 
             sw.Stop();
-            
 
             if (result.ExitCode != 0)
             {
-                logger.Error("Failed to create Kind Kubernetes cluster {ClusterName}", clusterName);
+                logger.ErrorFormat("Failed to create Kind Kubernetes cluster {0}", clusterName);
                 throw new InvalidOperationException($"Failed to create Kind Kubernetes cluster {clusterName}");
             }
 
-            logger.Information("Test cluster kubeconfig path: {Path:l}", KubeConfigPath);
+            logger.InfoFormat("Test cluster kubeconfig path: {0}", KubeConfigPath);
 
-            logger.Information("Created Kind Kubernetes cluster {ClusterName} in {ElapsedTime}", clusterName, sw.Elapsed);
+            logger.InfoFormat("Created Kind Kubernetes cluster {0} in {1}", clusterName, sw.Elapsed);
 
             await SetLocalhostRouting();
-
-            await InstallNfsCsiDriver();
         }
 
         async Task SetLocalhostRouting()
@@ -78,106 +72,100 @@ namespace Calamari.Tests.KubernetesFixtures.Kind
             var manifestFilePath = await WriteFileToTemporaryDirectory(filename, "manifest.yaml");
 
             var sb = new StringBuilder();
-            var sprLogger = new LoggerConfiguration()
-                            .WriteTo.Logger(logger)
-                            .WriteTo.StringBuilder(sb)
-                            .CreateLogger();
 
-            var exitCode = SilentProcessRunner.ExecuteCommand(
-                                                              kubeCtlPath,
-                                                              //we give the cluster a unique name
-                                                              $"apply -n default -f \"{manifestFilePath}\" --kubeconfig=\"{KubeConfigPath}\"",
-                                                              tempDir.DirectoryPath,
-                                                              sprLogger.Debug,
-                                                              sprLogger.Information,
-                                                              sprLogger.Error,
-                                                              CancellationToken.None);
+            var result = SilentProcessRunner.ExecuteCommand(installTools.KubectlExecutable,
+                                                            //we give the cluster a unique name
+                                                            $"apply -n default -f \"{manifestFilePath}\" --kubeconfig=\"{KubeConfigPath}\"",
+                                                            temporaryDirectory.DirectoryPath,
+                                                            s =>
+                                                            {
+                                                                sb.AppendLine(s);
+                                                                logger.Info(s);
+                                                            },
+                                                            s =>
+                                                            {
+                                                                sb.AppendLine(s);
+                                                                logger.Error(s);
+                                                            });
 
-            if (exitCode != 0)
+            if (result.ExitCode != 0)
             {
-                logger.Error("Failed to apply localhost routing to cluster {ClusterName}", clusterName);
+                logger.ErrorFormat("Failed to apply localhost routing to cluster {0}", clusterName);
                 throw new InvalidOperationException($"Failed to apply localhost routing to cluster {clusterName}. Logs: {sb}");
             }
         }
 
-        async Task<string> WriteFileToTemporaryDirectory(string resourceFileName, string? outputFilename = null)
+        async Task<string> WriteFileToTemporaryDirectory(string resourceFileName, string outputFilename = null)
         {
-            await using var resourceStream = Assembly.GetExecutingAssembly().GetManifestResourceStreamFromPartialName(resourceFileName);
-
-            var filePath = Path.Combine(tempDir.DirectoryPath, outputFilename ?? resourceFileName);
-            await using var file = File.Create(filePath);
-
-            resourceStream.Seek(0, SeekOrigin.Begin);
-            await resourceStream.CopyToAsync(file);
-
-            return filePath;
-        }
-
-        async Task InstallNfsCsiDriver()
-        {
-            await Task.CompletedTask;
-            //we need to perform a repo update in helm first
-            // var exitCode = SilentProcessRunner.ExecuteCommand(
-            //     helmPath,
-            //     "repo update",
-            //     tempDir.DirectoryPath,
-            //     logger.Debug,
-            //     logger.Information,
-            //     logger.Error,
-            //     CancellationToken.None);
-
-            var installArgs = BuildNfsCsiDriverInstallArguments();
-        
-            var sb = new StringBuilder();
-            var sprLogger = new LoggerConfiguration()
-                            .WriteTo.Logger(logger)
-                            .WriteTo.StringBuilder(sb)
-                            .CreateLogger();
-        
-            var exitCode = SilentProcessRunner.ExecuteCommand(
-                                                              helmExePath,
-                                                              installArgs,
-                                                              tempDir.DirectoryPath,
-                                                              sprLogger.Debug,
-                                                              sprLogger.Information,
-                                                              sprLogger.Error,
-                                                              CancellationToken.None);
-
-            if (exitCode != 0)
+            using (var resourceStream = Assembly.GetExecutingAssembly().GetManifestResourceStreamFromPartialName(resourceFileName))
             {
-                throw new InvalidOperationException($"Failed to install NFS CSI driver into cluster {clusterName}. Logs: {sb}");
-            }
-        }
+                var filePath = Path.Combine(temporaryDirectory.DirectoryPath, outputFilename ?? resourceFileName);
 
-        string BuildNfsCsiDriverInstallArguments()
-        {
-            return string.Join(" ",
-                               "install",
-                               "--atomic",
-                               "--repo https://raw.githubusercontent.com/kubernetes-csi/csi-driver-nfs/master/charts",
-                               "--namespace kube-system",
-                               "--version \"v4.*.*\"",
-                               $"--kubeconfig \"{KubeConfigPath}\"",
-                               "csi-driver-nfs",
-                               "csi-driver-nfs"
-                              );
+                using (var file = File.Create(filePath))
+                {
+                    resourceStream.Seek(0, SeekOrigin.Begin);
+                    await resourceStream.CopyToAsync(file);
+
+                    return filePath;
+                }
+            }
         }
 
         public void Dispose()
         {
-            var exitCode = SilentProcessRunner.ExecuteCommand(
-                                                              kindExePath,
+            var result = SilentProcessRunner.ExecuteCommand(
+                                                              installTools.KindExecutable,
                                                               //delete the cluster for this test run
                                                               $"delete cluster --name={clusterName}",
-                                                              tempDir.DirectoryPath,
-                                                              logger.Debug,
-                                                              logger.Information,
-                                                              logger.Error,
-                                                              CancellationToken.None);
+                                                              temporaryDirectory.DirectoryPath,
+                                                              logger.Info,
+                                                              logger.Error);
 
-            if (exitCode != 0)
+            if (result.ExitCode != 0)
             {
-                logger.Error("Failed to delete Kind kubernetes cluster {ClusterName}", clusterName);
+                logger.ErrorFormat("Failed to delete Kind kubernetes cluster {0}", clusterName);
+            }
+        }
+
+        public (string clusterUrl, string certificateAuthorityData,  string clientCertificateData, string clientKeyData) GetClusterAuthInfo()
+        {
+            using (var fileStream = File.OpenRead(KubeConfigPath))
+            using (var textReader = new StreamReader(fileStream))
+            {
+                var yamlStream = new YamlStream();
+                yamlStream.Load(textReader);
+
+                var doc = yamlStream.Documents.First();
+                var rootNode = (YamlMappingNode)doc.RootNode;
+
+                //Get the cluster url from the cluster node
+                var clustersNode = (YamlSequenceNode)rootNode["clusters"];
+
+                //we only have one named cluster node
+                var namedClusterNode = (YamlMappingNode)clustersNode.First();
+
+                //get its cluster field
+                var clusterNode = (YamlMappingNode)namedClusterNode["cluster"];
+
+                //get the server url
+                var serverUrl = ((YamlScalarNode)clusterNode["server"]).Value;
+                var certificateAuthorityData = ((YamlScalarNode)clusterNode["certificate-authority-data"]).Value;
+                
+                
+                //Now get the client key data
+                var usersNode = (YamlSequenceNode)rootNode["users"];
+                
+                //we only have one named user
+                var namedUserNode = (YamlMappingNode)usersNode.First();
+                
+                //get its cluster field
+                var userNode = (YamlMappingNode)namedUserNode["user"];
+
+                //get the client key data
+                var clientCertificateData = ((YamlScalarNode)userNode["client-certificate-data"]).Value;
+                var clientKeyData = ((YamlScalarNode)userNode["client-key-data"]).Value;
+
+                return (serverUrl,certificateAuthorityData, clientCertificateData, clientKeyData);
             }
         }
     }

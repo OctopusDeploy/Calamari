@@ -10,6 +10,7 @@ using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes.Commands;
 using Calamari.Kubernetes.ResourceStatus.Resources;
 using Calamari.Testing.Helpers;
+using Calamari.Testing.Requirements;
 using Calamari.Tests.Helpers;
 using Calamari.Tests.KubernetesFixtures.Kind;
 using FluentAssertions;
@@ -21,6 +22,7 @@ using KubernetesSpecialVariables = Calamari.Kubernetes.SpecialVariables;
 namespace Calamari.Tests.KubernetesFixtures
 {
     [TestFixture]
+    [RequiresDotNetCore]
     public class DeployRawYamlTests : CalamariFixture
     {
         const string ResourcePackageFileName = "package.1.0.0.zip";
@@ -66,7 +68,7 @@ namespace Calamari.Tests.KubernetesFixtures
         TemporaryDirectory tempDir;
         KindClusterInstaller kindClusterInstaller;
         IVariables variables;
-        
+
         string testNamespace;
 
         [OneTimeSetUp]
@@ -79,13 +81,16 @@ namespace Calamari.Tests.KubernetesFixtures
 
             tempDir = TemporaryDirectory.Create();
 
-            kindClusterInstaller = new KindClusterInstaller(installTools,Log);
+            kindClusterInstaller = new KindClusterInstaller(installTools, tempDir, new InMemoryLog());
+
+            await kindClusterInstaller.InstallCluster();
         }
-        
+
         [OneTimeTearDown]
         public void TearDownInfrastructure()
         {
             kindClusterInstaller.Dispose();
+
             tempDir.Dispose();
         }
 
@@ -94,11 +99,26 @@ namespace Calamari.Tests.KubernetesFixtures
             base.SetUpCalamariFixture();
 
             variables = new CalamariVariables();
-            
-            testNamespace = $"calamari-testing-${Guid.NewGuid():N}";
-            
+
+            testNamespace = $"calamari-testing-{Guid.NewGuid():N}";
+
             //set the namespace for this test
             variables.Set(KubernetesSpecialVariables.Namespace, testNamespace);
+            variables.Set(KubernetesSpecialVariables.CustomKubectlExecutable, installTools.KubectlExecutable);
+
+            //Set up the auth information using the same client certificate auth as kind
+            var (clusterUrl, certificateAuthorityData, clientCertificateData, clientKeyData) = kindClusterInstaller.GetClusterAuthInfo();
+
+            variables.Set(KubernetesSpecialVariables.ClusterUrl, clusterUrl);
+
+            const string certificateAuthority = "myauthority";
+            variables.Set(KubernetesSpecialVariables.CertificateAuthority, certificateAuthority);
+            variables.Set(KubernetesSpecialVariables.CertificatePem(certificateAuthority), Encoding.ASCII.GetString(Convert.FromBase64String(certificateAuthorityData)));
+
+            const string clientCert = "myClientCert";
+            variables.Set(KubernetesSpecialVariables.ClientCertificate, clientCert);
+            variables.Set(KubernetesSpecialVariables.CertificatePem(clientCert), Encoding.ASCII.GetString(Convert.FromBase64String(clientCertificateData)));
+            variables.Set(KubernetesSpecialVariables.PrivateKeyPem(clientCert), Encoding.ASCII.GetString(Convert.FromBase64String(clientKeyData)));
         }
 
         [Test]
@@ -121,13 +141,13 @@ namespace Calamari.Tests.KubernetesFixtures
                                       m.Contains("Resource status check completed successfully because all resources are deployed successfully"));
         }
 
-        static void AssertObjectStatusMonitoringStarted(string[] rawLogs, params (ResourceGroupVersionKind Gvk, string Name)[] resources)
+        void AssertObjectStatusMonitoringStarted(string[] rawLogs, params (ResourceGroupVersionKind Gvk, string Name)[] resources)
         {
             var resourceStatusCheckLog = "Resource Status Check: 1 new resources have been added:";
             var idx = Array.IndexOf(rawLogs, resourceStatusCheckLog);
             foreach (var (i, gvk, name) in resources.Select((t, i) => (i, t.Gvk, t.Name)))
             {
-                rawLogs[idx + i + 1].Should().Be($" - {gvk}/{name} in namespace calamari-testing");
+                rawLogs[idx + i + 1].Should().Be($" - {gvk}/{name} in namespace {testNamespace}");
             }
         }
 
@@ -215,7 +235,10 @@ namespace Calamari.Tests.KubernetesFixtures
 
             // We need to replace the backslash with forward slash because
             // the slash comes out differently on windows machines.
-            var assentString = string.Join('\n', assentLogs).Replace("\\", "/");
+            var assentString = string.Join("\n", assentLogs).Replace("\\", "/");
+
+            assentString = assentString.Replace(testNamespace, "TEST_NAMESPACE");
+
             this.Assent(assentString, configuration: AssentConfiguration.DefaultWithPostfix("ApplyingBatches"));
 
             var resources = new[]
@@ -251,6 +274,62 @@ namespace Calamari.Tests.KubernetesFixtures
                                               ? CreateAddPackageFunc(resource)
                                               : CreateAddCustomResourceFileFunc(resource),
                                           shouldSucceed);
+        }
+
+        void ExecuteCommandAndVerifyResult(string commandName, Func<string, string> addFilesOrPackageFunc = null, bool shouldSucceed = true)
+        {
+            using (var dir = TemporaryDirectory.Create())
+            {
+                var directoryPath = dir.DirectoryPath;
+                // Note: the "Test Folder" has a space in it to test that working directories
+                // with spaces are handled correctly by Kubernetes Steps.
+                var folderPath = Path.Combine(directoryPath, "Test Folder");
+                Directory.CreateDirectory(folderPath);
+
+                var packagePath = addFilesOrPackageFunc?.Invoke(folderPath);
+
+                var output = ExecuteCommand(commandName, folderPath, packagePath);
+
+                WriteLogMessagesToTestOutput();
+
+                if (shouldSucceed)
+                {
+                    output.AssertSuccess();
+                }
+                else
+                {
+                    output.AssertFailure();
+                }
+            }
+        }
+
+        CalamariResult ExecuteCommand(string command, string workingDirectory, string packagePath)
+        {
+            using (var variablesFile = new TemporaryFile(Path.GetTempFileName()))
+            {
+                variables.Save(variablesFile.FilePath);
+
+                var calamariCommand = Calamari()
+                                      .Action(command)
+                                      .Argument("variables", variablesFile.FilePath)
+                                      .WithWorkingDirectory(workingDirectory)
+                                      .OutputToLog(true);
+
+                if (packagePath != null)
+                {
+                    calamariCommand.Argument("package", packagePath);
+                }
+
+                return Invoke(calamariCommand, variables, Log);
+            }
+        }
+
+        void WriteLogMessagesToTestOutput()
+        {
+            foreach (var message in Log.Messages)
+            {
+                Console.WriteLine($"[{message.Level}] {message.FormattedMessage}");
+            }
         }
 
         void SetVariablesForRawYamlCommand(string globPaths)
