@@ -41,6 +41,7 @@ namespace Calamari.Tests.KubernetesFixtures
         public string AwsCliExecutable { get; private set; }
         public string KubeloginExecutable { get; private set; }
         public string GcloudExecutable { get; private set; }
+        public string KindExecutable { get; private set; }
 
         public async Task Install()
         {
@@ -259,6 +260,26 @@ namespace Calamari.Tests.KubernetesFixtures
             }
         }
 
+        public async Task InstallKind()
+        {
+            using (var client = CreateHttpClient())
+            {
+                KindExecutable = await DownloadCli("kind",
+                                             () => Task.FromResult(("v0.29.0", (string)null)),
+                                             async (destinationDirectoryName, tuple) =>
+                                             {
+                                                 var downloadUrl = GetKindDownloadUrl(tuple.version);
+
+                                                 await Download(Path.Combine(destinationDirectoryName, GetKindFileName()),
+                                                                client,
+                                                                downloadUrl);
+                                                 
+                                                 var kindExecutable = Directory.EnumerateFiles(destinationDirectoryName).FirstOrDefault();
+                                                 return kindExecutable;
+                                             });
+            }
+        }
+
         static string ExecuteCommandAndReturnResult(string executable, string arguments, string workingDirectory, Dictionary<string, string> environmentVariables = null)
         {
             var stdOut = new StringBuilder();
@@ -390,6 +411,20 @@ namespace Calamari.Tests.KubernetesFixtures
 
             return $"https://github.com/Azure/kubelogin/releases/download/{currentVersion}/kubelogin-win-amd64.zip";
         }
+
+        static string GetKindDownloadUrl(string version)
+        {
+            var osName = "windows";
+
+            if (CalamariEnvironment.IsRunningOnNix)
+                osName = "linux";
+            if (CalamariEnvironment.IsRunningOnMac)
+                osName = "darwin";
+
+            return $"https://github.com/kubernetes-sigs/kind/releases/download/{version}/kind-{osName}-amd64";
+        }
+
+        static string GetKindFileName() => CalamariEnvironment.IsRunningOnWindows ? "kind.exe" : "kind";
 
         public string GetKubeloginZipFileName()
         {
