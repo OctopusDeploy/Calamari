@@ -8,6 +8,7 @@ using Calamari.Common.Features.Deployment;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripts;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.FileSystem;
@@ -21,7 +22,6 @@ using Calamari.Tests.Helpers;
 using Calamari.Util;
 using FluentAssertions;
 using NUnit.Framework;
-using Octopus.Versioning.Semver;
 
 namespace Calamari.Tests.KubernetesFixtures
 {
@@ -111,6 +111,9 @@ namespace Calamari.Tests.KubernetesFixtures
             Variables.Set(Kubernetes.SpecialVariables.Namespace, Namespace);
             Variables.Set(SpecialVariables.Account.AccountType, "Token");
             Variables.Set(SpecialVariables.Account.Token, ClusterToken);
+
+            // KOSForHelm is on by default
+            Variables.Set(KnownVariables.EnabledFeatureToggles, Variables.Get(KnownVariables.EnabledFeatureToggles) + "," + OctopusFeatureToggles.KnownSlugs.KOSForHelm);
 
             if (ExplicitExeVersion != null)
                 Variables.Set(Kubernetes.SpecialVariables.Helm.CustomHelmExecutable, HelmExePath);
@@ -331,6 +334,23 @@ namespace Calamari.Tests.KubernetesFixtures
             var result = DeployPackage();
             result.AssertSuccess();
             result.AssertOutputMatches("[helm|\\\\helm\"] upgrade (.*) --dry-run");
+        }
+
+        [Test]
+        [RequiresNonFreeBSDPlatform]
+        [RequiresNon32BitWindows]
+        [RequiresNonMac]
+        [Category(TestCategory.PlatformAgnostic)]
+        public void DoesNotReportManifestsWhenDryRunIsSet()
+        {
+            Variables.Set(Kubernetes.SpecialVariables.Helm.AdditionalArguments, "--dry-run");
+            Variables.Set(Kubernetes.SpecialVariables.ResourceStatusCheck, "true");
+            AddPostDeployMessageCheckAndCleanup(explicitNamespace: null, dryRun: true);
+
+            var result = DeployPackage();
+            result.AssertSuccess();
+            result.AssertOutputMatches("[helm|\\\\helm\"] upgrade (.*) --dry-run");
+            result.AssertOutputContains("Helm --dry-run is enabled, no object statuses will be reported");
         }
 
         [Test]
