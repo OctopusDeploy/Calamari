@@ -12,21 +12,34 @@ namespace Calamari.Testing
     public enum ExternalVariable
     {
         
-        [EnvironmentVariable("AzureOld_OctopusAPITester_SubscriptionId", "op://Calamari Secrets for Tests/Azure - OctopusApiTester/subscription id")]
+        [EnvironmentVariable("Azure_OctopusAPITester_SubscriptionId", "op://Calamari Secrets for Tests/Azure - OctopusApiTester/subscription id")]
         AzureSubscriptionId,
 
-        [EnvironmentVariable("AzureOld_OctopusAPITester_TenantId", "op://Calamari Secrets for Tests/Azure - OctopusApiTester/tenant id")]
+        [EnvironmentVariable("Azure_OctopusAPITester_TenantId", "op://Calamari Secrets for Tests/Azure - OctopusApiTester/tenant id")]
         AzureSubscriptionTenantId,
 
-        [EnvironmentVariable("AzureOld_OctopusAPITester_Password", "op://Calamari Secrets for Tests/Azure - OctopusApiTester/password")]
+        [EnvironmentVariable("Azure_OctopusAPITester_Password", "op://Calamari Secrets for Tests/Azure - OctopusApiTester/password")]
         AzureSubscriptionPassword,
 
-        [EnvironmentVariable("AzureOld_OctopusAPITester_ClientId", "op://Calamari Secrets for Tests/Azure - OctopusApiTester/client application id")]
+        [EnvironmentVariable("Azure_OctopusAPITester_ClientId", "op://Calamari Secrets for Tests/Azure - OctopusApiTester/client application id")]
         AzureSubscriptionClientId,
 
-        [EnvironmentVariable("AzureOld_OctopusAPITester_Certificate", "op://Calamari Secrets for Tests/Azure - OctopusApiTester/thumbprint")]
+        [EnvironmentVariable("Azure_OctopusAPITester_Certificate", "op://Calamari Secrets for Tests/Azure - OctopusApiTester/thumbprint")]
         AzureSubscriptionCertificate,
 
+        //These are specifically for the AKS tests against the static Instances
+        [EnvironmentVariable("AzureAks_OctopusAPITester_SubscriptionId", "op://Calamari Secrets for Tests/Azure - OctopusApiTester/subscription id")]
+        AzureAksSubscriptionId,
+
+        [EnvironmentVariable("AzureAks_OctopusAPITester_TenantId", "op://Calamari Secrets for Tests/Azure - OctopusApiTester/tenant id")]
+        AzureAksSubscriptionTenantId,
+
+        [EnvironmentVariable("AzureAks_OctopusAPITester_Password", "op://Calamari Secrets for Tests/Azure - OctopusApiTester/password")]
+        AzureAksSubscriptionPassword,
+
+        [EnvironmentVariable("AzureAks_OctopusAPITester_ClientId", "op://Calamari Secrets for Tests/Azure - OctopusApiTester/client application id")]
+        AzureAksSubscriptionClientId,
+        
         [EnvironmentVariable("GitHub_OctopusAPITester_Username", "op://Calamari Secrets for Tests/GitHub Test Account/username")]
         GitHubUsername,
 
