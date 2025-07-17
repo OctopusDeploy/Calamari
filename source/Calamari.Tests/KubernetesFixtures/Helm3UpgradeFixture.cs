@@ -158,6 +158,34 @@ namespace Calamari.Tests.KubernetesFixtures
                   .Should()
                   .BeEmpty();
         }
+        
+        [Test]
+        [RequiresNonFreeBSDPlatform]
+        [RequiresNon32BitWindows]
+        [RequiresNonMac]
+        [Category(TestCategory.PlatformAgnostic)]
+        public void TargetingANamespaceThatDoesNotExistAbortsTheManifestSearchingLoop()
+        {
+            Variables.AddFlag(SpecialVariables.ResourceStatusCheck, true);
+            Variables.Set(KnownVariables.EnabledFeatureToggles, OctopusFeatureToggles.KnownSlugs.KOSForHelm);
+            Variables.Set(SpecialVariables.Helm.Timeout, "2m30s");
+            Variables.Set(SpecialVariables.Helm.Namespace, "this-namespace-does-not-exist");
+
+            var result = DeployPackage();
+
+            result.AssertFailure();
+            result.AssertOutputMatches($"Retrieving manifest for {ReleaseName}");
+            result.AssertNoOutputMatches($"Retrieved manifest for {ReleaseName}");
+            
+            result.AssertOutputMatches("Helm Upgrade returned non-zero exit code: 1. Deployment terminated.");
+            result.AssertOutputMatches("Canceling manifest retrieval as Helm installation failed");
+
+            //we should not have received any KOS service messages
+            result.CapturedOutput.ServiceMessages
+                  .Where(sm => sm.Name == SpecialVariables.ServiceMessages.ResourceStatus.Name)
+                  .Should()
+                  .BeEmpty();
+        }
 
         protected override string ExplicitExeVersion => "3.16.2";
     }
