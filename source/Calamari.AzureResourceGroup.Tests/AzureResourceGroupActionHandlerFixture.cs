@@ -176,12 +176,6 @@ az group list";
             context.Variables.Add("WebSite", SdkContext.RandomResourceName(string.Empty, 12));
             context.Variables.Add("Location", resourceGroup.RegionName);
             context.Variables.Add("AccountPrefix", SdkContext.RandomResourceName(string.Empty, 6));
-            var existingFeatureToggles = context.Variables.GetStrings(KnownVariables.EnabledFeatureToggles);
-            context.Variables.SetStrings(KnownVariables.EnabledFeatureToggles,
-                                         existingFeatureToggles.Concat(new[]
-                                         {
-                                             FeatureToggle.ModernAzureSdkFeatureToggle.ToString()
-                                         }));
         }
 
         private static void AddTemplateFiles(CommandTestBuilderContext context, string template, string parameters)

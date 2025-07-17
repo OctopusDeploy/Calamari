@@ -7,7 +7,6 @@
     /// </summary>
     public enum FeatureToggle {
         SkunkworksFeatureToggle,
-        ModernAzureSdkFeatureToggle,
         OidcAccountsFeatureToggle,
         AsynchronousAzureZipDeployFeatureToggle,
         AzureRMDeprecationFeatureToggle,
