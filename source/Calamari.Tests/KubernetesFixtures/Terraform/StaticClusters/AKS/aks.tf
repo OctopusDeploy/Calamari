@@ -61,6 +61,7 @@ resource "azurerm_kubernetes_cluster" "local_access_disabled" {
   local_account_disabled            = true
 
   azure_active_directory_role_based_access_control {
+    tenant_id          = var.tenant_id
     azure_rbac_enabled = true
   }
 }
