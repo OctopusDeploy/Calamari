@@ -11,10 +11,11 @@ resource "azurerm_kubernetes_cluster" "default" {
   kubernetes_version  = "1.32"
 
   tags = {
-    octopus-environment = "Staging"
-    octopus-role = "discovery-role"
+    octopus-project                = "aks-static"
+    octopus-environment            = "Staging"
+    octopus-role                   = "discovery-role"
     octopus-tenantedDeploymentMode = "TenantedOrUntenanted"
-    source       = "calamari-e2e-tests"
+    source                         = "calamari-e2e-tests"
   }
 
   default_node_pool {
@@ -39,11 +40,12 @@ resource "azurerm_kubernetes_cluster" "local_access_disabled" {
   dns_prefix          = "${var.static_resource_prefix}-k8s-no-local"
   kubernetes_version  = "1.32"
 
-    tags = {
-    octopus-environment = "Staging"
-    octopus-role = "discovery-role"
+  tags = {
+    octopus-project                = "aks-static-no-local"
+    octopus-environment            = "Staging"
+    octopus-role                   = "discovery-role"
     octopus-tenantedDeploymentMode = "TenantedOrUntenanted"
-    source       = "calamari-e2e-tests"
+    source                         = "calamari-e2e-tests"
   }
 
   default_node_pool {

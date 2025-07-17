@@ -179,7 +179,7 @@ namespace Calamari.Tests.KubernetesFixtures
         {
             var scope = new TargetDiscoveryScope("TestSpace",
                 "Staging",
-                "testProject",
+                "aks-static",
                 null,
                 new[] { "discovery-role" },
                 "WorkerPool-1",
