@@ -541,7 +541,7 @@ namespace Calamari.AzureAppService.Tests
                                                                                $"{ResourceGroupName}-java",
                                                                                new WebSiteData(ResourceGroupResource.Data.Location)
                                                                                {
-                                                                                   AppServicePlanId = WebSiteResource.Data.Id,
+                                                                                   AppServicePlanId = LinuxAppServicePlanResource.Id,
                                                                                    SiteConfig = new SiteConfigProperties
                                                                                    {
                                                                                        IsAlwaysOn = true,

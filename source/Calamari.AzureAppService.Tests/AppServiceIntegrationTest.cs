@@ -83,7 +83,6 @@ namespace Calamari.AzureAppService.Tests
             ResourceGroupResource staticResourceGroupResource = await subscriptionResource.GetResourceGroupAsync("calamari-testing-static-rg", CancellationToken);
             
             WindowsAppServicePlanResource = await staticResourceGroupResource.GetAppServicePlanAsync("calamari-testing-static-win-plan", CancellationToken);
-            LinuxAppServicePlanResource = await staticResourceGroupResource.GetAppServicePlanAsync("calamari-testing-static-linux-plan", CancellationToken);
             WindowsContainerAppServicePlanResource = await staticResourceGroupResource.GetAppServicePlanAsync("calamari-testing-static-container-win-plan", CancellationToken);
             LinuxAppServicePlanResource = await staticResourceGroupResource.GetAppServicePlanAsync("calamari-testing-static-linux-plan", CancellationToken);
         }
