@@ -52,6 +52,12 @@ namespace Calamari.Kubernetes.Conventions.Helm
                                    || FeatureToggle.KubernetesLiveObjectStatusFeatureToggle.IsEnabled(deployment.Variables)
                                    || OctopusFeatureToggles.KubernetesObjectManifestInspectionFeatureToggle.IsEnabled(deployment.Variables))
                                {
+                                   if (!DeploymentSupportsManifestReporting(deployment, out var reason))
+                                   {
+                                       log.Verbose(reason);
+                                       return;
+                                   }
+
                                    if (!DoesHelmCliSupportManifestRetrieval(out var helmVersion))
                                    {
                                        log.Warn($"Octopus needs Helm v3.13 or later to display object status and manifests. Your current version is {helmVersion}. Please update your Helm executable or container to enable our new Kubernetes capabilities. Learn more in our {log.FormatShortLink("KOS", "documentation")}.");
@@ -96,6 +102,19 @@ namespace Calamari.Kubernetes.Conventions.Helm
             return parsedExecutableVersion >= MinimumHelmVersion;
         }
 
+        static bool DeploymentSupportsManifestReporting(RunningDeployment deployment, out string reason)
+        {
+            var additionalArguments = deployment.Variables.Get(SpecialVariables.Helm.AdditionalArguments);
+            if (additionalArguments?.Contains("--dry-run") ?? false)
+            {
+                reason = "Helm --dry-run is enabled, no object statuses will be reported";
+                return false;
+            }
+
+            reason = "";
+            return true;
+        }
+
         async Task<string> PollForManifest(RunningDeployment deployment,
                                            string releaseName,
                                            int revisionNumber)
@@ -110,7 +129,7 @@ namespace Calamari.Kubernetes.Conventions.Helm
                 try
                 {
                     manifest = helmCli.GetManifest(releaseName, revisionNumber);
-                    
+
                     //flag if we successfully executed the get manifest call
                     //this is important because some helm charts just have hooks that don't have any manifests, so we receive null/empty string here
                     didSuccessfullyExecuteCliCall = true;

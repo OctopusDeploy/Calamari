@@ -1,7 +1,5 @@
 ﻿using System.Linq;
 using System.Threading.Tasks;
-using Calamari.Common.FeatureToggles;
-using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes;
 using Calamari.Testing.Helpers;
 using Calamari.Testing.Requirements;
@@ -46,7 +44,6 @@ namespace Calamari.Tests.KubernetesFixtures
         public void HelmVersionNewerThanMinimumVersion_ReportsObjectStatus()
         {
             Variables.AddFlag(SpecialVariables.ResourceStatusCheck, true);
-            Variables.Set(KnownVariables.EnabledFeatureToggles, OctopusFeatureToggles.KnownSlugs.KOSForHelm);
             Variables.Set(SpecialVariables.Helm.Timeout, "2m30s");
 
             var result = DeployPackage();
@@ -86,7 +83,6 @@ namespace Calamari.Tests.KubernetesFixtures
             using (await UseCustomHelmExeInPackage("3.12.0"))
             {
                 Variables.AddFlag(SpecialVariables.ResourceStatusCheck, true);
-                Variables.Set(KnownVariables.EnabledFeatureToggles, OctopusFeatureToggles.KnownSlugs.KOSForHelm);
                 Variables.Set(SpecialVariables.Helm.Timeout, "2m30s");
 
                 var result = DeployPackage();
@@ -114,7 +110,6 @@ namespace Calamari.Tests.KubernetesFixtures
         public void HooksOnlyPackage_RetrievesEmptyManifestButDoesNotReportObjectStatus()
         {
             Variables.AddFlag(SpecialVariables.ResourceStatusCheck, true);
-            Variables.Set(KnownVariables.EnabledFeatureToggles, OctopusFeatureToggles.KnownSlugs.KOSForHelm);
             Variables.Set(SpecialVariables.Helm.Timeout, "2m30s");
 
             var result = DeployPackage("hooks-only-1.0.0.tgz");
@@ -143,7 +138,6 @@ namespace Calamari.Tests.KubernetesFixtures
         public void EmptyChart_RetrievesEmptyManifestButDoesNotReportObjectStatus()
         {
             Variables.AddFlag(SpecialVariables.ResourceStatusCheck, true);
-            Variables.Set(KnownVariables.EnabledFeatureToggles, OctopusFeatureToggles.KnownSlugs.KOSForHelm);
             Variables.Set(SpecialVariables.Helm.Timeout, "2m30s");
 
             var result = DeployPackage("empty-chart-1.0.0.tgz");
