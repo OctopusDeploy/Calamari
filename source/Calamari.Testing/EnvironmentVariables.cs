@@ -27,6 +27,19 @@ namespace Calamari.Testing
         [EnvironmentVariable("Azure_OctopusAPITester_Certificate", "op://Calamari Secrets for Tests/Azure - OctopusApiTester/thumbprint")]
         AzureSubscriptionCertificate,
 
+        //These are specifically for the AKS tests against the static Instances
+        [EnvironmentVariable("AzureAks_OctopusAPITester_SubscriptionId", "op://Calamari Secrets for Tests/Azure - OctopusApiTester/subscription id")]
+        AzureAksSubscriptionId,
+
+        [EnvironmentVariable("AzureAks_OctopusAPITester_TenantId", "op://Calamari Secrets for Tests/Azure - OctopusApiTester/tenant id")]
+        AzureAksSubscriptionTenantId,
+
+        [EnvironmentVariable("AzureAks_OctopusAPITester_Password", "op://Calamari Secrets for Tests/Azure - OctopusApiTester/password")]
+        AzureAksSubscriptionPassword,
+
+        [EnvironmentVariable("AzureAks_OctopusAPITester_ClientId", "op://Calamari Secrets for Tests/Azure - OctopusApiTester/client application id")]
+        AzureAksSubscriptionClientId,
+        
         [EnvironmentVariable("GitHub_OctopusAPITester_Username", "op://Calamari Secrets for Tests/GitHub Test Account/username")]
         GitHubUsername,
 
