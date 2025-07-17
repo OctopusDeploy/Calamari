@@ -128,6 +128,9 @@ namespace Calamari.Tests.KubernetesFixtures
             Variables.Set(SpecialVariables.Account.AccountType, "Token");
             Variables.Set(SpecialVariables.Account.Token, ClusterToken);
 
+            // KOSForHelm is on by default
+            Variables.Set(KnownVariables.EnabledFeatureToggles, Variables.Get(KnownVariables.EnabledFeatureToggles) + "," + OctopusFeatureToggles.KnownSlugs.KOSForHelm);
+
             if (ExplicitExeVersion != null)
                 Variables.Set(Kubernetes.SpecialVariables.Helm.CustomHelmExecutable, HelmExePath);
 
@@ -341,6 +344,23 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
+        [Category(TestCategory.PlatformAgnostic)]
+        public void DoesNotReportManifestsWhenDryRunIsSet()
+        {
+            Variables.Set(Kubernetes.SpecialVariables.Helm.AdditionalArguments, "--dry-run");
+            Variables.Set(Kubernetes.SpecialVariables.ResourceStatusCheck, "true");
+            AddPostDeployMessageCheckAndCleanup(explicitNamespace: null, dryRun: true);
+
+            var result = DeployPackage();
+            result.AssertSuccess();
+            result.AssertOutputMatches("[helm|\\\\helm\"] upgrade (.*) --dry-run");
+            result.AssertOutputContains("Helm --dry-run is enabled, no object statuses will be reported");
+        }
+
+        [Test]
+        [RequiresNonFreeBSDPlatform]
+        [RequiresNon32BitWindows]
+        [RequiresNonMac]
         [Category(TestCategory.PlatformAgnostic)]
         public void WhenTheChartDirectoryVariableIsSet_TheChartAtThatLocationIsUsed()
         {

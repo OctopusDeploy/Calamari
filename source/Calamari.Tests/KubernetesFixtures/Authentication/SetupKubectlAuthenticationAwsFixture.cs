@@ -19,10 +19,13 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
         private const string OlderAwsVersion = "aws-cli/1.16.155";
         private const string InvalidAwsVersion = "aws-cli/not-a-version";
 
-        private const string EksClusterName = "my-cool-eks-cluster-name";
+        private const string EksClusterName = "my-cool_eks-cluster-name";
         private const string AwsRegion = "southwest";
-        private const string AwsClusterUrl = "http://www." + AwsRegion + ".eks.amazonaws.com";
-        private const string InvalidAwsClusterUrl = "http://www." + AwsRegion + "..eks.amazonaws.com";
+        private const string AwsClusterUrl = "https://" + EksClusterName + "." + AwsRegion + ".eks.amazonaws.com";
+        private const string ExtendedAwsClusterUrl = "https://" + EksClusterName + ".gr7." + AwsRegion + ".eks.amazonaws.com";
+        private const string InvalidAwsClusterUrl = "https://www." + AwsRegion + "..eks.amazonaws.com";
+        private const string HttpAwsClusterUrl = "http://" + EksClusterName + "." + AwsRegion + ".eks.amazonaws.com";
+        private const string ClusterCname = "cluster.cname";
 
         [SetUp]
         public void Setup()
@@ -49,14 +52,18 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
                                            environmentVars,
                                            workingDirectory);
 
+        [TestCase(AwsClusterUrl)]
+        [TestCase(ExtendedAwsClusterUrl)]
         [Test]
-        public void AuthenticatesWithAwsCli()
+        public void AuthenticatesWithAwsCli(string clusterUrl)
         {
+            variables.Set(SpecialVariables.ClusterUrl, clusterUrl);
+
             AddLogForAwsEksGetToken();
             AddLogForWhichAws();
             AddLogForAwsVersion(CurrentAwsVersion);
 
-            var expectedInvocations = SetupClusterContextInvocations(AwsClusterUrl);
+            var expectedInvocations = SetupClusterContextInvocations(clusterUrl);
             expectedInvocations.AddRange(AwsCliInvocations());
             expectedInvocations.AddRange(
                                          new List<(string, string)>
@@ -223,14 +230,17 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
         }
 
         [Test]
-        public void FallsBackToIamAuthenticatorWithoutRegion()
+        [TestCase(InvalidAwsClusterUrl)]
+        [TestCase(HttpAwsClusterUrl)]
+        [TestCase(ClusterCname)]
+        public void FallsBackToIamAuthenticatorWithoutRegion(string clusterUrl)
         {
-            variables.Set(SpecialVariables.ClusterUrl, InvalidAwsClusterUrl);
+            variables.Set(SpecialVariables.ClusterUrl, clusterUrl);
 
             AddLogForAwsEksGetToken();
             AddLogForWhichAws();
 
-            var expectedInvocations = SetupClusterContextInvocations(InvalidAwsClusterUrl);
+            var expectedInvocations = SetupClusterContextInvocations(clusterUrl);
             expectedInvocations.AddRange(AwsCliInvocations());
             expectedInvocations.AddRange(
                                          new List<(string, string)>
@@ -244,6 +254,7 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
             result.VerifySuccess();
             AssertInvocations(expectedInvocations);
             log.Received().Verbose("The EKS cluster Url specified should contain a valid aws region name");
+            log.Received().Verbose("Attempting to authenticate with aws-iam-authenticator");
         }
 
         void AddLogForWhichAws()

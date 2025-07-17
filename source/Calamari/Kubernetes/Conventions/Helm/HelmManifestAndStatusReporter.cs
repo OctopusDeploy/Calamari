@@ -37,11 +37,11 @@ namespace Calamari.Kubernetes.Conventions.Helm
             this.helmCli = helmCli;
         }
 
-        public async Task StartBackgroundMonitoringAndReporting(
-            RunningDeployment deployment,
-            string releaseName,
-            int revisionNumber,
-            CancellationToken cancellationToken)
+        public async Task StartBackgroundMonitoringAndReporting(RunningDeployment deployment,
+                                                                string releaseName,
+                                                                int revisionNumber,
+                                                                CancellationToken helmInstallCompletedCancellationToken,
+                                                                CancellationToken helmInstallErrorCancellationToken)
         {
             await Task.Run(async () =>
                            {
@@ -52,13 +52,19 @@ namespace Calamari.Kubernetes.Conventions.Helm
                                    || FeatureToggle.KubernetesLiveObjectStatusFeatureToggle.IsEnabled(deployment.Variables)
                                    || OctopusFeatureToggles.KubernetesObjectManifestInspectionFeatureToggle.IsEnabled(deployment.Variables))
                                {
+                                   if (!DeploymentSupportsManifestReporting(deployment, out var reason))
+                                   {
+                                       log.Verbose(reason);
+                                       return;
+                                   }
+
                                    if (!DoesHelmCliSupportManifestRetrieval(out var helmVersion))
                                    {
                                        log.Warn($"Octopus needs Helm v3.13 or later to display object status and manifests. Your current version is {helmVersion}. Please update your Helm executable or container to enable our new Kubernetes capabilities. Learn more in our {log.FormatShortLink("KOS", "documentation")}.");
                                        return;
                                    }
 
-                                   var manifest = await PollForManifest(deployment, releaseName, revisionNumber);
+                                   var manifest = await PollForManifest(deployment, releaseName, revisionNumber, helmInstallErrorCancellationToken);
 
                                    //it's possible that we have no manifest as charts with just hooks don't produce a manifest
                                    //in this case, there is nothing to do, so we are done :)
@@ -70,14 +76,17 @@ namespace Calamari.Kubernetes.Conventions.Helm
                                    //report the manifest has been applied
                                    manifestReporter.ReportManifestApplied(manifest);
 
+                                   //we want to cancel KOS if either token is cancelled
+                                   var kosKts = CancellationTokenSource.CreateLinkedTokenSource(helmInstallCompletedCancellationToken, helmInstallErrorCancellationToken);
+
                                    //if resource status (KOS) is enabled, parse the manifest and start monitoring the resources
                                    if (resourceStatusCheckIsEnabled)
                                    {
-                                       await ParseManifestAndMonitorResourceStatuses(deployment, manifest, cancellationToken);
+                                       await ParseManifestAndMonitorResourceStatuses(deployment, manifest, kosKts.Token);
                                    }
                                }
                            },
-                           cancellationToken);
+                           helmInstallCompletedCancellationToken);
         }
 
         static readonly SemanticVersion MinimumHelmVersion = new SemanticVersion(3, 13, 0);
@@ -96,21 +105,37 @@ namespace Calamari.Kubernetes.Conventions.Helm
             return parsedExecutableVersion >= MinimumHelmVersion;
         }
 
+        static bool DeploymentSupportsManifestReporting(RunningDeployment deployment, out string reason)
+        {
+            var additionalArguments = deployment.Variables.Get(SpecialVariables.Helm.AdditionalArguments);
+            if (additionalArguments?.Contains("--dry-run") ?? false)
+            {
+                reason = "Helm --dry-run is enabled, no object statuses will be reported";
+                return false;
+            }
+
+            reason = "";
+            return true;
+        }
+
         async Task<string> PollForManifest(RunningDeployment deployment,
                                            string releaseName,
-                                           int revisionNumber)
+                                           int revisionNumber,
+                                           CancellationToken helmInstallErrorCancellationToken)
         {
-            var ct = new CancellationTokenSource();
+            var cts = CancellationTokenSource.CreateLinkedTokenSource(helmInstallErrorCancellationToken);
             var timeout = GoDurationParser.TryParseDuration(deployment.Variables.Get(SpecialVariables.Helm.Timeout), out var timespan) ? timespan : TimeSpan.FromMinutes(5);
-            ct.CancelAfter(timeout);
+            cts.CancelAfter(timeout);
             string manifest = null;
             log.Verbose($"Retrieving manifest for {releaseName}, revision {revisionNumber}.");
             var didSuccessfullyExecuteCliCall = false;
-            while (!ct.IsCancellationRequested)
+
+            while (!cts.IsCancellationRequested)
+            {
                 try
                 {
                     manifest = helmCli.GetManifest(releaseName, revisionNumber);
-                    
+
                     //flag if we successfully executed the get manifest call
                     //this is important because some helm charts just have hooks that don't have any manifests, so we receive null/empty string here
                     didSuccessfullyExecuteCliCall = true;
@@ -119,12 +144,29 @@ namespace Calamari.Kubernetes.Conventions.Helm
                 catch (CommandLineException)
                 {
                     log.Verbose($"Manifest could not be retrieved for {releaseName}, revision {revisionNumber}. Retrying in 1s.");
-                    await Task.Delay(TimeSpan.FromSeconds(1), ct.Token);
+                    try
+                    {
+                        await Task.Delay(TimeSpan.FromSeconds(1), cts.Token);
+                    }
+                    catch (TaskCanceledException)
+                    {
+                        //We don't care if the delay was cancelled
+                    }
                 }
+            }
 
-            //it's possible that some manifests doesn't
+            //if the helm install failed
+            if (helmInstallErrorCancellationToken.IsCancellationRequested)
+            {
+                log.Verbose("Canceling manifest retrieval as Helm installation failed");
+                return null;
+            }
+
+            //If we can't retrieve the manifest
             if (!didSuccessfullyExecuteCliCall)
-                throw new CommandException("Failed to retrieve helm manifest in a timely manner");
+            {
+                throw new CommandException("Failed to retrieve Helm manifest in a timely manner");
+            }
 
             //Log if we found a manifest, or not
             log.Verbose(string.IsNullOrWhiteSpace(manifest)
