@@ -156,7 +156,8 @@ namespace Calamari.AzureResourceGroup.Tests
 
             context.Variables.Add("SKU", "Standard_LRS");
             context.Variables.Add("Location", resourceGroupLocation);
-            context.Variables.Add("StorageAccountName", "calamari" + Guid.NewGuid().ToString("N").Substring(0, 7));
+            //storage accounts can be 24 chars long
+            context.Variables.Add("StorageAccountName", AzureTestResourceHelpers.RandomName(length: 24));
         }
 
         static void AddTemplateFiles(CommandTestBuilderContext context, string template, string parameters)
