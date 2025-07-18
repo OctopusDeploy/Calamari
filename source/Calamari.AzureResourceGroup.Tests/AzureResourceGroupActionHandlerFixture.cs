@@ -203,7 +203,7 @@ az group list";
             context.Variables.Add("ResourceGroup", resourceGroupName);
             context.Variables.Add("SKU", "Shared");
             //as we have a single resource group, we need to have unique web app name per test
-            context.Variables.Add("WebSite", $"Calamari-${Guid.NewGuid():N}");
+            context.Variables.Add("WebSite", $"Calamari-{Guid.NewGuid():N}");
             context.Variables.Add("Location", resourceGroupResource.Data.Location);
             //this is a storage account prefix, so just make it as random as possible. The first character must be a letter, so just set to c (for calamari).
             context.Variables.Add("AccountPrefix", AzureTestResourceHelpers.RandomName("c", 5));

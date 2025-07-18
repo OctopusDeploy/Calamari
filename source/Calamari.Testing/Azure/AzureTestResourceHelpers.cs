@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Calamari.Testing;
+namespace Calamari.Testing.Azure;
 
 public static class AzureTestResourceHelpers
 {
@@ -16,13 +16,13 @@ public static class AzureTestResourceHelpers
 
     public static string RandomName(string? prefix = null, int length = 32)
     {
-        var result = new char[32];
-        for (var i = 0; i < 2; i++)
+        var result = new char[length];
+        for (var i = 0; i < length; i++)
         {
             result[i] = ValidNameChars[Random.Next(ValidNameChars.Length)];
         }
 
-        return new string(result);
+        return $"{prefix}{new string(result)}";
     }
 
     public static class ResourceGroupTags
