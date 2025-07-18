@@ -7,11 +7,12 @@ public static class AzureTestResourceHelpers
 {
     const string ValidNameChars = "abcdefghijklmnopqrstuvwxyz0123456789";
 
-    static readonly Random Random = new Random();
+    static readonly Random Random = new();
 
     public static string GetResourceGroupName()
     {
-        return $"calamari-e2e-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid():N}";
+        //surely the changes of hitting 8 random chars on the same day at the same time are unique
+        return RandomName($"calamari-e2e-{DateTime.UtcNow:yyyyMMdd}-", 8);
     }
 
     public static string RandomName(string? prefix = null, int length = 32)
