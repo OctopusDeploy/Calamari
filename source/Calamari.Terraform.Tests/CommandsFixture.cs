@@ -18,6 +18,7 @@ using Calamari.Common.Plumbing.Variables;
 using Calamari.Terraform.Commands;
 using Calamari.Terraform.Tests.CommonTemplates;
 using Calamari.Testing;
+using Calamari.Testing.Azure;
 using Calamari.Testing.Helpers;
 using FluentAssertions;
 using Newtonsoft.Json;
@@ -206,7 +207,7 @@ namespace Calamari.Terraform.Tests
                                       _ =>
                                       {
                                           _.Variables.Add(ScriptVariables.ScriptSource,
-                                              ScriptVariables.ScriptSourceOptions.Package);
+                                                          ScriptVariables.ScriptSourceOptions.Package);
                                           _.Variables.Add(TerraformSpecialVariables.Action.Terraform.EnvironmentVariables, null);
                                       },
                                       "Simple")
@@ -225,7 +226,7 @@ namespace Calamari.Terraform.Tests
                                           _.Variables.Add(TerraformSpecialVariables.Action.Terraform.Template, template);
                                           _.Variables.Add(TerraformSpecialVariables.Action.Terraform.TemplateParameters, "{}");
                                           _.Variables.Add(ScriptVariables.ScriptSource,
-                                              ScriptVariables.ScriptSourceOptions.Inline);
+                                                          ScriptVariables.ScriptSourceOptions.Inline);
                                           _.Variables.Add(TerraformSpecialVariables.Action.Terraform.EnvironmentVariables,
                                                           JsonConvert.SerializeObject(new Dictionary<string, string> { { "TF_VAR_ami", "new ami value" } }));
                                       },
@@ -470,7 +471,7 @@ namespace Calamari.Terraform.Tests
             output.OutputVariables.ContainsKey("TerraformValueOutputs[url]").Should().BeTrue();
             var requestUri = output.OutputVariables["TerraformValueOutputs[url]"].Value;
 
-            string fileData;            
+            string fileData;
             // This intermittently throws a 401, requiring authorization. These buckets are public by default and the client has no authorization so this looks to be a race condition in the bucket configuration.    
             var strategy = TestingRetryPolicies.CreateGoogleCloudHttpRetryPipeline();
             using (var client = new HttpClient())
@@ -494,6 +495,9 @@ namespace Calamari.Terraform.Tests
         [Test]
         public async Task AzureIntegration()
         {
+            var resourceGroupName = AzureTestResourceHelpers.GetResourceGroupName();
+            var resourceGroupLocation = RandomAzureRegion.GetRandomRegionWithExclusions();
+
             var random = Guid.NewGuid().ToString("N").Substring(0, 6);
             var appName = $"cfe2e-{random}";
             var expectedHostName = $"{appName}.azurewebsites.net";
@@ -503,11 +507,13 @@ namespace Calamari.Terraform.Tests
 
             async Task PopulateVariables(CommandTestBuilderContext _)
             {
-                _.Variables.Add(AzureAccountVariables.SubscriptionId, await ExternalVariables.Get(ExternalVariable.AzureSubscriptionId, CancellationToken.None));
-                _.Variables.Add(AzureAccountVariables.TenantId, await ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId, CancellationToken.None));
-                _.Variables.Add(AzureAccountVariables.ClientId, await ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId, CancellationToken.None));
-                _.Variables.Add(AzureAccountVariables.Password, await ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword, CancellationToken.None));
+                _.Variables.Add(AzureAccountVariables.SubscriptionId, await ExternalVariables.Get(ExternalVariable.AzureAksSubscriptionId, CancellationToken.None));
+                _.Variables.Add(AzureAccountVariables.TenantId, await ExternalVariables.Get(ExternalVariable.AzureAksSubscriptionTenantId, CancellationToken.None));
+                _.Variables.Add(AzureAccountVariables.ClientId, await ExternalVariables.Get(ExternalVariable.AzureAksSubscriptionClientId, CancellationToken.None));
+                _.Variables.Add(AzureAccountVariables.Password, await ExternalVariables.Get(ExternalVariable.AzureAksSubscriptionPassword, CancellationToken.None));
                 _.Variables.Add("app_name", appName);
+                _.Variables.Add("resource_group_name", resourceGroupName);
+                _.Variables.Add("resource_group_location", resourceGroupLocation);
                 _.Variables.Add(TerraformSpecialVariables.Action.Terraform.VarFiles, "example.tfvars");
                 _.Variables.Add(TerraformSpecialVariables.Action.Terraform.AzureManagedAccount, Boolean.TrueString);
                 _.Variables.Add(KnownVariables.OriginalPackageDirectoryPath, temporaryFolder.DirectoryPath);
@@ -644,7 +650,7 @@ namespace Calamari.Terraform.Tests
                                           _.Variables.Add(TerraformSpecialVariables.Action.Terraform.Template, template);
                                           _.Variables.Add(TerraformSpecialVariables.Action.Terraform.TemplateParameters, variables);
                                           _.Variables.Add(ScriptVariables.ScriptSource,
-                                              ScriptVariables.ScriptSourceOptions.Inline);
+                                                          ScriptVariables.ScriptSourceOptions.Inline);
                                       },
                                       String.Empty,
                                       _ =>
@@ -685,7 +691,7 @@ output ""config-map-aws-auth"" {{
                                           _.Variables.Add(TerraformSpecialVariables.Action.Terraform.Template, template);
                                           _.Variables.Add(TerraformSpecialVariables.Action.Terraform.TemplateParameters, "");
                                           _.Variables.Add(ScriptVariables.ScriptSource,
-                                              ScriptVariables.ScriptSourceOptions.Inline);
+                                                          ScriptVariables.ScriptSourceOptions.Inline);
                                       },
                                       String.Empty,
                                       _ =>
@@ -706,7 +712,7 @@ output ""config-map-aws-auth"" {{
                 .Should()
                 .NotContain("Could not parse Terraform CLI version");
         }
-        
+
         [Test]
         public void InlineJsonTemplateAndVariables()
         {
@@ -723,7 +729,7 @@ output ""config-map-aws-auth"" {{
                                           _.Variables.Add(TerraformSpecialVariables.Action.Terraform.Template, template);
                                           _.Variables.Add(TerraformSpecialVariables.Action.Terraform.TemplateParameters, variables);
                                           _.Variables.Add(ScriptVariables.ScriptSource,
-                                              ScriptVariables.ScriptSourceOptions.Inline);
+                                                          ScriptVariables.ScriptSourceOptions.Inline);
                                       },
                                       String.Empty,
                                       _ =>
@@ -744,8 +750,7 @@ output ""config-map-aws-auth"" {{
                 {
                     sourceFolderPath = Path.Combine(sourceFolderPath, terraformVersion);
                 }
-                
-                
+
                 var filePaths = Directory.GetFiles(sourceFolderPath);
 
                 // Copy the files and overwrite destination files if they already exist.
@@ -772,10 +777,10 @@ output ""config-map-aws-auth"" {{
                                                                       populateVariables(context);
                                                                       return Task.CompletedTask;
                                                                   };
-            
+
             return ExecuteAndReturnLogOutput(command, wrappedAction, folderName, assert);
         }
-        
+
         string ExecuteAndReturnLogOutput(string command,
                                          Func<CommandTestBuilderContext, Task> populateVariables,
                                          string folderName,
@@ -783,18 +788,17 @@ output ""config-map-aws-auth"" {{
         {
             return ExecuteAndReturnResult(command, populateVariables, folderName, assert).Result.FullLog;
         }
-        
 
         async Task<TestCalamariCommandResult> ExecuteAndReturnResult(string command, Action<CommandTestBuilderContext> populateVariables, string folderName, Action<TestCalamariCommandResult>? assert = null)
         {
             Func<CommandTestBuilderContext, Task> wrappedAction = context =>
-                                                         {
-                                                             populateVariables(context);
-                                                             return Task.CompletedTask;
-                                                         };
+                                                                  {
+                                                                      populateVariables(context);
+                                                                      return Task.CompletedTask;
+                                                                  };
             return await ExecuteAndReturnResult(command, wrappedAction, folderName, assert);
         }
-        
+
         async Task<TestCalamariCommandResult> ExecuteAndReturnResult(string command, Func<CommandTestBuilderContext, Task> populateVariables, string folderName, Action<TestCalamariCommandResult>? assert = null)
         {
             var assertResult = assert ?? (_ => { });
@@ -805,7 +809,7 @@ output ""config-map-aws-auth"" {{
                                                  .WithArrange(context =>
                                                               {
                                                                   context.Variables.Add(ScriptVariables.ScriptSource,
-                                                                      ScriptVariables.ScriptSourceOptions.Package);
+                                                                                        ScriptVariables.ScriptSourceOptions.Package);
                                                                   context.Variables.Add(TerraformSpecialVariables.Packages.PackageId, terraformFiles);
                                                                   context.Variables.Add(TerraformSpecialVariables.Calamari.TerraformCliPath,
                                                                                         Path.GetDirectoryName(customTerraformExecutable));
@@ -870,7 +874,7 @@ output ""config-map-aws-auth"" {{
             if (TerraformCliVersionAsObject.CompareTo(minimumVersion) < 0
                 || TerraformCliVersionAsObject.CompareTo(maximumVersion) >= 0)
             {
-                var becauseText = because is not null ? $" because {because}" : null; 
+                var becauseText = because is not null ? $" because {because}" : null;
                 Assert.Ignore($"Test ignored as terraform version is not between {minimumVersion} and {maximumVersion}{becauseText}");
             }
         }

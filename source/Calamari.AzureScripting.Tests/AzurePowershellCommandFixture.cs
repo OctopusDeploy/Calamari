@@ -33,10 +33,10 @@ namespace Calamari.AzureScripting.Tests
         [OneTimeSetUp]
         public async Task Setup()
         {
-            clientId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId, cancellationToken);
-            clientSecret = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword, cancellationToken);
-            tenantId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId, cancellationToken);
-            subscriptionId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionId, cancellationToken);
+            clientId = await ExternalVariables.Get(ExternalVariable.AzureAksSubscriptionClientId, cancellationToken);
+            clientSecret = await ExternalVariables.Get(ExternalVariable.AzureAksSubscriptionPassword, cancellationToken);
+            tenantId = await ExternalVariables.Get(ExternalVariable.AzureAksSubscriptionTenantId, cancellationToken);
+            subscriptionId = await ExternalVariables.Get(ExternalVariable.AzureAksSubscriptionId, cancellationToken);
         }
 
         [Test]

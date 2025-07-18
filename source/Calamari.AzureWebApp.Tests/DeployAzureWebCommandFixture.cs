@@ -8,6 +8,7 @@ using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Testing;
+using Calamari.Testing.Azure;
 using Calamari.Testing.Helpers;
 using FluentAssertions;
 using Microsoft.Azure.Management.AppService.Fluent;
@@ -45,11 +46,12 @@ namespace Calamari.AzureWebApp.Tests
             azureConfigPath = TemporaryDirectory.Create();
             Environment.SetEnvironmentVariable("AZURE_CONFIG_DIR", azureConfigPath.DirectoryPath);
             
-            clientId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId, cancellationToken);
-            clientSecret = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword, cancellationToken);
-            tenantId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId, cancellationToken);
-            subscriptionId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionId, cancellationToken);
-            var resourceGroupName = SdkContext.RandomResourceName(nameof(DeployAzureWebCommandFixture), 60);
+            clientId = await ExternalVariables.Get(ExternalVariable.AzureAksSubscriptionClientId, cancellationToken);
+            clientSecret = await ExternalVariables.Get(ExternalVariable.AzureAksSubscriptionPassword, cancellationToken);
+            tenantId = await ExternalVariables.Get(ExternalVariable.AzureAksSubscriptionTenantId, cancellationToken);
+            subscriptionId = await ExternalVariables.Get(ExternalVariable.AzureAksSubscriptionId, cancellationToken);
+
+            var resourceGroupName = AzureTestResourceHelpers.GetResourceGroupName();
 
             var credentials = SdkContext.AzureCredentialsFactory.FromServicePrincipal(clientId, clientSecret, tenantId,
                 AzureEnvironment.AzureGlobalCloud);
@@ -63,6 +65,7 @@ namespace Calamari.AzureWebApp.Tests
             resourceGroup = await azure.ResourceGroups
                 .Define(resourceGroupName)
                 .WithRegion(Region.USWest)
+                .WithTags(AzureTestResourceHelpers.ResourceGroupTags.ToDictionary())
                 .CreateAsync();
 
             appServicePlan = await azure.AppServices.AppServicePlans

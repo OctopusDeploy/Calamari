@@ -20,6 +20,7 @@ using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Testing;
+using Calamari.Testing.Azure;
 using Calamari.Testing.LogParser;
 using FluentAssertions;
 using NUnit.Framework;
