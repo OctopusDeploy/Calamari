@@ -44,10 +44,9 @@ Function New-AzureConnection {
     Connect-AzAccount -ServicePrincipal -Credential $ApplicationCredential -TenantId $TenantId -Subscription $SubscriptionId | Out-Null
     Set-AzContext -Subscription $SubscriptionId -TenantId $TenantId | Out-Null
 
-    # Something would be seriously wrong if we ran this tool in a non-sandbox subscription for some reason
     $actualSubscriptionContext = Get-AzContext
-    if (-not($($actualSubscriptionContext.Subscription.Name) -like "*Sandbox")) {
-        Write-Error "The Subscription Name of '$($actualSubscriptionContext.Subscription.Name)' does not contain the word 'Sandbox'. This tool is only meant for Sandbox Subscriptions "
+    if (-not($($actualSubscriptionContext.Subscription.Name) -like "Automated Integration Test Subscription")) {
+        Write-Error "The Subscription Name of '$($actualSubscriptionContext.Subscription.Name)' does not contain the word 'Automated Integration Test Subscription'. This tool is only meant for deleting Calamari resources in the 'Automated Integration Test Subscription' only"
         break;
     }
 
@@ -75,6 +74,7 @@ Function Get-SandboxResourceGroups {
     @{ expression = { Get-StandardizeDateFormat $_.createdTime }; label = 'CreatedTime' }, `
     @{ expression = { $_.id }; label = 'ResourceId' }, `
     @{ expression = { $_.tags.LifetimeInDays }; label = 'LifetimeInDays' }, `
+    @{ expression = { $_.tags.source }; label = 'Source' }, `
     @{ expression = { if ($_.tags.CleanupNotificationSent -eq "True") { $true } else { $false } }; label = 'CleanupNotificationIsSent' }
 
     return $sandboxResourceGroups
@@ -95,8 +95,6 @@ Function Add-CleanupProperties {
         $CleanupProperties
     )
 
-
-
     # Don't delete a resource group if it was only created within the last '$NoDeletetoleranceInHours' hours before this script runs.
     # This prevents resource groups that were only just created minutes/hours before the tool runs from being deleted.
     # this also prevents surprises where we've sent an alert on Thursday for x resource groups to be deleted, but were created after the initial notification period.
@@ -114,21 +112,25 @@ Function Add-CleanupProperties {
     $ResourceGroups | Add-Member NoteProperty CleanupActionReason $null
     
     $ResourceGroups | ForEach-Object {
+        $Source = $_.Source
         $LifetimeInDays = $_.LifetimeInDays
         $CreatedTime = [DateTime]::ParseExact($_.CreatedTime, $cleanupProperties["DesiredDateFormat"], $null)
         $Expired = $false
 
-        if ($null -ne $LifetimeInDays) {
-            $ExpirationDate = $CreatedTime.AddDays($LifetimeInDays).ToString($cleanupProperties["DesiredDateFormat"])
-            $Expired = $date -ge $ExpirationDate
+        # Only process calamari resource groups
+        if ($Source -eq "calamari-e2e-tests") {
+            if ($null -ne $LifetimeInDays) {
+                $ExpirationDate = $CreatedTime.AddDays($LifetimeInDays).ToString($cleanupProperties["DesiredDateFormat"])
+                $Expired = $date -ge $ExpirationDate
+            }
+            else {
+                $ExpirationDate = $CreatedTime.AddHours($NoDeletetoleranceInHours).ToString($cleanupProperties["DesiredDateFormat"])
+                $Expired = $date -gt $ExpirationDate
+            }
+            
+            $_.ExpirationDate = $ExpirationDate
+            $_.Expired = $Expired
         }
-        else {
-            $ExpirationDate = $CreatedTime.AddHours($NoDeletetoleranceInHours).ToString($cleanupProperties["DesiredDateFormat"])
-            $Expired = $date -gt $ExpirationDate
-        }
-
-        $_.ExpirationDate = $ExpirationDate
-        $_.Expired = $Expired
     }
 
     $ResourceGroups | ForEach-Object {
@@ -232,7 +234,7 @@ Function Get-SandboxResourceForSubscription {
 
     $connectedSubscriptionName = New-AzureConnection -ApplicationId $AzureProperties["ApplicationId"] `
         -ApplicationSecret (ConvertTo-SecureString $AzureProperties["ClientSecret"] -AsPlainText -Force) `
-        -TenantId "removed" `
+        -TenantId $AzureProperties["TenantId"] `
         -SubscriptionId $AzureProperties["SubscriptionId"]
 
     $groups = Get-SandboxResourceGroups -SubscriptionId $AzureProperties["SubscriptionId"]

@@ -86,7 +86,7 @@ Function Initialize-SlackNotification {
         author_name = ""
         author_link = ""
         title       = "Azure Sandbox Cleanup"
-        title_link  = "removed"
+        title_link  = ""
 
         fields      = @()
     }

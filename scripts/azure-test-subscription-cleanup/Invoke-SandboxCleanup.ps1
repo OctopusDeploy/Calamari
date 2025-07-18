@@ -7,9 +7,10 @@ Function Invoke-SandboxCleanup {
     $isCleanup = $false
 
     $azureProperties = @{
-        ApplicationId = $OctopusParameters["AzureAccount.Client"]
+        ApplicationId  = $OctopusParameters["AzureAccount.Client"]
         SubscriptionId = $OctopusParameters["AzureSubscriptionID"]
-        ClientSecret = $OctopusParameters["AzureAccount.Password"]
+        ClientSecret   = $OctopusParameters["AzureAccount.Password"]
+        TenantId       = $OctopusParameters["AzureAccount.TenantId"]
     }
     
     $octopusProperties = @{
@@ -17,16 +18,16 @@ Function Invoke-SandboxCleanup {
     }
 
     $slackProperties = @{
-        SendSlackNotification = ($OctopusParameters["SendSlackNotification"] -eq "True")
+        SendSlackNotification       = ($OctopusParameters["SendSlackNotification"] -eq "True")
         WriteCleanupNotificationTag = ($OctopusParameters["WriteCleanupNotificationTag"] -eq "True")
-        SlackBearerToken = $OctopusParameters["SlackBearerToken"]
-        TeamSlackChannel = $OctopusParameters["TeamSlackChannel"]
+        SlackBearerToken            = $OctopusParameters["SlackBearerToken"]
+        TeamSlackChannel            = $OctopusParameters["TeamSlackChannel"]
     }
 
     $cleanupProperties = @{
         NoDeleteToleranceInHours = $OctopusParameters["NoDeleteToleranceInHours"]
-        DeleteCadenceString = $OctopusParameters["DeleteCadenceString"]
-        DesiredDateFormat = "yyyy-MM-dd HH:mm"
+        DeleteCadenceString      = $OctopusParameters["DeleteCadenceString"]
+        DesiredDateFormat        = "yyyy-MM-dd HH:mm"
     }
 
     $allResourceGroups = Get-SandboxResourceForSubscription -AzureProperties $azureProperties -CleanupProperties $cleanupProperties -OctopusProperties $octopusProperties
@@ -39,16 +40,16 @@ Function Invoke-SandboxCleanup {
     Show-OctopusArtifactDocument -ResourceGroups $allResourceGroups -Azureproperties $azureProperties
 
     $resourceGroupsToDelete = @($allResourceGroups | Where-Object {
-        $_.CleanupAction.Equals("Delete");
-    })
+            $_.CleanupAction.Equals("Delete");
+        })
 
     $notifiedResourceGroupsToDelete = @($resourceGroupsToDelete | Where-Object {
-        $_.CleanupNotificationIsSent -eq "True"
-    })
+            $_.CleanupNotificationIsSent -eq "True"
+        })
     
     $resourceGroupsSurvivedChoppingBlock = @($allResourceGroups | Where-Object {
-        $_.CleanupAction.Equals("Ignore") -and $_.CleanupNotificationIsSent -eq "True" 
-    })
+            $_.CleanupAction.Equals("Ignore") -and $_.CleanupNotificationIsSent -eq "True" 
+        })
 
     if ($($octopusProperties["EnvironmentName"]).Contains("Cleanup")) {
         $isCleanup = $true
@@ -64,7 +65,8 @@ Function Invoke-SandboxCleanup {
                 -CleanupProperties $cleanupProperties `
                 -AzureProperties $azureProperties
 
-        } else {
+        }
+        else {
             Log -IncludeTimestamp $true -Message "The slack notification has been suppressed because the octopus variable 'SendSlackNotification' evaluates to false."
         }    
     }
@@ -79,7 +81,8 @@ Function Invoke-SandboxCleanup {
                     -OctopusProperties $octopusProperties `
                     -CleanupProperties $cleanupProperties `
                     -AzureProperties $azureProperties
-            } else {
+            }
+            else {
                 Log -IncludeTimestamp $true -Message "The slack notification has been suppressed because the octopus variable 'SendSlackNotification' evaluates to false."
             }    
 
@@ -88,7 +91,8 @@ Function Invoke-SandboxCleanup {
                 -ConnectedSubscriptionName $OctopusParameters["AzureAccount.SubscriptionNumber"] `
                 -SlackProperties $slackProperties
 
-        } else {
+        }
+        else {
             Log -IncludeTimestamp $true -Message "The slack notification has been suppressed because there are no resource groups to delete."
         }
 
