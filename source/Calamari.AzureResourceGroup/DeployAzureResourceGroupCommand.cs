@@ -10,10 +10,6 @@ namespace Calamari.AzureResourceGroup
     {
         protected override IEnumerable<IDeployBehaviour> Deploy(DeployResolver resolver)
         {
-            // Legacy Azure SDK behaviour
-            yield return resolver.Create<LegacyDeployAzureResourceGroupBehaviour>();
-            
-            // Modern Azure SDK behaviour
             yield return resolver.Create<DeployAzureResourceGroupBehaviour>();
         }
     }

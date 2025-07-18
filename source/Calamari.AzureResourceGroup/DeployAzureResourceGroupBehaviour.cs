@@ -32,10 +32,7 @@ namespace Calamari.AzureResourceGroup
             this.azureResourceGroupOperator = azureResourceGroupOperator;
         }
 
-        public bool IsEnabled(RunningDeployment context)
-        {
-            return FeatureToggle.ModernAzureSdkFeatureToggle.IsEnabled(context.Variables);
-        }
+        public bool IsEnabled(RunningDeployment context) => true;
 
         public async Task Execute(RunningDeployment context)
         {
