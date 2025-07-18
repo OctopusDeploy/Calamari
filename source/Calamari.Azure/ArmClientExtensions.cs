@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -9,7 +10,7 @@ using Azure.ResourceManager.AppService.Models;
 using Calamari.Azure.AppServices;
 using Octopus.CoreUtilities.Extensions;
 
-namespace Calamari.AzureAppService
+namespace Calamari.Azure
 {
     ///<summary>
     /// Provides a set of static methods for interacting with an <see cref="ArmClient"/> using an <see cref="AzureTargetSite"/>.
@@ -20,6 +21,17 @@ namespace Calamari.AzureAppService
     /// </remarks>
     public static class ArmClientExtensions
     {
+        public static async Task<WebSiteData> GetWebSiteDataAsync(this ArmClient armClient, AzureTargetSite targetSite)
+        {
+            return targetSite.HasSlot  switch
+                   {
+                       true => (await armClient.GetWebSiteSlotResource( targetSite.CreateResourceIdentifier())
+                                               .GetAsync()).Value.Data,
+                       false => (await armClient.GetWebSiteResource(targetSite.CreateResourceIdentifier())
+                                                .GetAsync()).Value.Data
+                   };
+        }
+        
         public static async Task<SiteConfigData> GetSiteConfigDataAsync(this ArmClient armClient, AzureTargetSite targetSite)
         {
             return targetSite.HasSlot switch
