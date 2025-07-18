@@ -11,7 +11,7 @@ public static class AzureTestResourceHelpers
 
     public static string GetResourceGroupName()
     {
-        return $"Calamari-E2E-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid():N}";
+        return $"calamari-e2e-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid():N}";
     }
 
     public static string RandomName(string? prefix = null, int length = 32)
