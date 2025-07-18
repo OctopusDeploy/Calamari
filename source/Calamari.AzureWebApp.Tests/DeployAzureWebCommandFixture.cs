@@ -8,6 +8,7 @@ using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Testing;
+using Calamari.Testing.Azure;
 using Calamari.Testing.Helpers;
 using FluentAssertions;
 using Microsoft.Azure.Management.AppService.Fluent;
