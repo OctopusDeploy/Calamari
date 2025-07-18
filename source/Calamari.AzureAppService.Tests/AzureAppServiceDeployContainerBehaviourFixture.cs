@@ -12,6 +12,7 @@ using Calamari.AzureAppService.Azure;
 using Calamari.AzureAppService.Behaviors;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Testing.Azure;
 using Calamari.Testing.Helpers;
 using FluentAssertions;
 using NUnit.Framework;
