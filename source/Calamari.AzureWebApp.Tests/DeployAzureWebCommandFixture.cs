@@ -17,6 +17,7 @@ using Calamari.Common.Features.Deployment;
 using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Testing;
+using Calamari.Testing.Azure;
 using Calamari.Testing.Helpers;
 using Calamari.Testing.Requirements;
 using FluentAssertions;
@@ -90,10 +91,8 @@ namespace Calamari.AzureWebApp.Tests
                                                       {
                                                           Tags =
                                                           {
-                                                              // give them an expiry of 14 days so if the tests fail to clean them up
-                                                              // they will be automatically cleaned up by the Sandbox cleanup process
-                                                              // We keep them for 14 days just in case we need to do debugging/investigation
-                                                              ["LifetimeInDays"] = "14"
+                                                              [AzureTestResourceHelpers.ResourceGroupTags.LifetimeInDaysKey] = AzureTestResourceHelpers.ResourceGroupTags.LifetimeInDaysValue,
+                                                              [AzureTestResourceHelpers.ResourceGroupTags.SourceKey] = AzureTestResourceHelpers.ResourceGroupTags.SourceValue
                                                           }
                                                       },
                                                       cancellationToken);

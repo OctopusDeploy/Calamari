@@ -1,11 +1,7 @@
 ﻿using System;
 using System.Linq;
 
-<<<<<<<< HEAD:source/Calamari.Testing/RandomAzureRegion.cs
-namespace Calamari.Testing
-========
 namespace Calamari.Testing.Azure
->>>>>>>> main:source/Calamari.Testing/Azure/RandomAzureRegion.cs
 {
     public static class RandomAzureRegion
     {
