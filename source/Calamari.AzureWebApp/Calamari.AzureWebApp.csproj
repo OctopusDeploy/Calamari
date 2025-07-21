@@ -38,13 +38,12 @@
       <PackageFlatten>false</PackageFlatten>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Remove="netcoreshim\**" />
   </ItemGroup>
-
+  
   <ItemGroup>
     <Compile Remove="netcoreshim\**" />
   </ItemGroup>
-
+  
   <ItemGroup>
     <EmbeddedResource Remove="netcoreshim\**" />
   </ItemGroup>
