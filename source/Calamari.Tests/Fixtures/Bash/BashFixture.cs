@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
+using System.Text.RegularExpressions;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing;
@@ -8,6 +10,7 @@ using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Testing.Requirements;
 using Calamari.Tests.Helpers;
+using FluentAssertions;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.Bash
@@ -50,10 +53,25 @@ namespace Calamari.Tests.Fixtures.Bash
         {
             var (output, _) = RunScript("create-artifact.sh", new Dictionary<string, string>().AddFeatureToggleToDictionary(new List<FeatureToggle?>{ featureToggle }));
 
+            const string regexPattern = @"##octopus\[createArtifact path='([\S]+)' name='bXlmaWxl' length='MA==']";
+    
             Assert.Multiple(() =>
                             {
                                 output.AssertSuccess();
-                                output.AssertOutput("##octopus[createArtifact path='Li9zdWJkaXIvYW5vdGhlcmRpci9teWZpbGU=' name='bXlmaWxl' length='MA==']");
+                                output.AssertOutputMatches(regexPattern);
+
+                                
+                                var match = Regex.Match(output.CapturedOutput.ToString(), regexPattern);
+                                match.Success.Should().BeTrue();
+                                
+                                //the second match is the first match group
+                                var matchedPath = match.Groups[1];
+                                
+                                //decoded path
+                                var decodedPath = Encoding.UTF8.GetString(Convert.FromBase64String(matchedPath.Value));
+
+                                //even on windows, this runs in linux (WSL), so the path will always be this direction
+                                decodedPath.Should().EndWith($"/subdir/anotherdir/myfile");
                             });
         }
 

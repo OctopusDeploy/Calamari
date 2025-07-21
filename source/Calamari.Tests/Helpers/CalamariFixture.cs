@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using Calamari.Commands; //Required when NETFX is defined
 using Calamari.Common.Features.Processes;
+using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
@@ -24,7 +25,9 @@ namespace Calamari.Tests.Helpers
         {
             Log = new InMemoryLog();
         }
-
+        
+        protected static bool IsRunningOnUnixLikeEnvironment => CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac;
+        
         protected CommandLine Calamari()
         {
 #if NETFX
