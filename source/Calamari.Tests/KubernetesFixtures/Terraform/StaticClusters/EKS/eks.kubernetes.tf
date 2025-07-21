@@ -1,9 +1,9 @@
 data "aws_eks_cluster" "default" {
-  name = aws_eks_cluster.default.name
+  name = "${var.static_resource_prefix}-eks"
 }
 
 data "aws_eks_cluster_auth" "default" {
-  name = aws_eks_cluster.default.name
+  name = "${var.static_resource_prefix}-eks"
 }
 
 provider "kubernetes" {
