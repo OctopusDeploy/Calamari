@@ -74,7 +74,7 @@ resource "aws_eks_node_group" "default" {
 resource "aws_eks_cluster" "default" {
   name     = "${var.static_resource_prefix}-eks"
   role_arn = aws_iam_role.cluster.arn
-  version  = "1.28"
+  version  = "1.32"
 
   tags = {
     octopus-environment = "Staging"
