@@ -1,17 +1,20 @@
+using System;
 using System.IO;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Azure;
+using Azure.Core;
+using Azure.ResourceManager;
+using Azure.ResourceManager.Resources;
+using Calamari.Azure;
+using Calamari.CloudAccounts;
 using Calamari.Common.Features.Deployment;
 using Calamari.Common.Features.Scripts;
-using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Testing;
+using Calamari.Testing.Azure;
 using Calamari.Testing.Helpers;
 using Calamari.Testing.Requirements;
-using Microsoft.Azure.Management.Fluent;
-using Microsoft.Azure.Management.ResourceManager.Fluent;
-using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 
@@ -26,45 +29,71 @@ namespace Calamari.AzureResourceGroup.Tests
         string clientSecret;
         string tenantId;
         string subscriptionId;
-        IResourceGroup resourceGroup;
-        IAzure azure;
         static readonly CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
         readonly CancellationToken cancellationToken = CancellationTokenSource.Token;
+
+        ArmClient armClient;
+        SubscriptionResource subscriptionResource;
+        ResourceGroupResource resourceGroupResource;
+        string resourceGroupName;
 
         [OneTimeSetUp]
         public async Task Setup()
         {
-            clientId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId, cancellationToken);
-            clientSecret = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword, cancellationToken);
-            tenantId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId, cancellationToken);
-            subscriptionId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionId, cancellationToken);
+            var resourceManagementEndpointBaseUri =
+                Environment.GetEnvironmentVariable(AccountVariables.ResourceManagementEndPoint) ?? DefaultVariables.ResourceManagementEndpoint;
+            var activeDirectoryEndpointBaseUri =
+                Environment.GetEnvironmentVariable(AccountVariables.ActiveDirectoryEndPoint) ?? DefaultVariables.ActiveDirectoryEndpoint;
 
-            var resourceGroupName = SdkContext.RandomResourceName(nameof(AzureResourceGroupActionHandlerFixture), 60);
+            clientId = await ExternalVariables.Get(ExternalVariable.AzureAksSubscriptionClientId, cancellationToken);
+            clientSecret = await ExternalVariables.Get(ExternalVariable.AzureAksSubscriptionPassword, cancellationToken);
+            tenantId = await ExternalVariables.Get(ExternalVariable.AzureAksSubscriptionTenantId, cancellationToken);
+            subscriptionId = await ExternalVariables.Get(ExternalVariable.AzureAksSubscriptionId, cancellationToken);
 
-            var credentials = SdkContext.AzureCredentialsFactory.FromServicePrincipal(clientId,
-                                                                                      clientSecret,
-                                                                                      tenantId,
-                                                                                      AzureEnvironment.AzureGlobalCloud);
+            var resourceGroupLocation = Environment.GetEnvironmentVariable("AZURE_NEW_RESOURCE_REGION") ?? RandomAzureRegion.GetRandomRegionWithExclusions();
 
-            azure = Microsoft.Azure.Management.Fluent.Azure
-                             .Configure()
-                             .WithLogLevel(HttpLoggingDelegatingHandler.Level.Basic)
-                             .Authenticate(credentials)
-                             .WithSubscription(subscriptionId);
+            resourceGroupName = AzureTestResourceHelpers.GetResourceGroupName();
 
-            resourceGroup = await azure.ResourceGroups
-                                       .Define(resourceGroupName)
-                                       .WithRegion(Region.USWest)
-                                       .CreateAsync();
+            var servicePrincipalAccount = new AzureServicePrincipalAccount(subscriptionId,
+                                                                           clientId,
+                                                                           tenantId,
+                                                                           clientSecret,
+                                                                           "AzureGlobalCloud",
+                                                                           resourceManagementEndpointBaseUri,
+                                                                           activeDirectoryEndpointBaseUri);
+
+            armClient = servicePrincipalAccount.CreateArmClient(retryOptions =>
+                                                                {
+                                                                    retryOptions.MaxRetries = 5;
+                                                                    retryOptions.Mode = RetryMode.Exponential;
+                                                                    retryOptions.Delay = TimeSpan.FromSeconds(2);
+                                                                    retryOptions.NetworkTimeout = TimeSpan.FromSeconds(200);
+                                                                });
+
+            //create the resource group
+            subscriptionResource = armClient.GetSubscriptionResource(SubscriptionResource.CreateResourceIdentifier(subscriptionId));
+
+            var response = await subscriptionResource
+                                 .GetResourceGroups()
+                                 .CreateOrUpdateAsync(WaitUntil.Completed,
+                                                      resourceGroupName,
+                                                      new ResourceGroupData(new AzureLocation(resourceGroupLocation))
+                                                      {
+                                                          Tags =
+                                                          {
+                                                              [AzureTestResourceHelpers.ResourceGroupTags.LifetimeInDaysKey] = AzureTestResourceHelpers.ResourceGroupTags.LifetimeInDaysValue,
+                                                              [AzureTestResourceHelpers.ResourceGroupTags.SourceKey] = AzureTestResourceHelpers.ResourceGroupTags.SourceValue
+                                                          }
+                                                      });
+
+            resourceGroupResource = response.Value;
         }
 
         [OneTimeTearDown]
         public async Task Cleanup()
         {
-            if (resourceGroup != null)
-            {
-                await azure.ResourceGroups.DeleteByNameAsync(resourceGroup.Name);
-            }
+            await armClient.GetResourceGroupResource(ResourceGroupResource.CreateResourceIdentifier(subscriptionId, resourceGroupName))
+                           .DeleteAsync(WaitUntil.Started);
         }
 
         [Test]
@@ -170,18 +199,15 @@ az group list";
             context.Variables.Add(AzureAccountVariables.TenantId, tenantId);
             context.Variables.Add(AzureAccountVariables.ClientId, clientId);
             context.Variables.Add(AzureAccountVariables.Password, clientSecret);
-            context.Variables.Add(SpecialVariables.Action.Azure.ResourceGroupName, resourceGroup.Name);
-            context.Variables.Add("ResourceGroup", resourceGroup.Name);
+            context.Variables.Add(SpecialVariables.Action.Azure.ResourceGroupName, resourceGroupName);
+            context.Variables.Add("ResourceGroup", resourceGroupName);
             context.Variables.Add("SKU", "Shared");
-            context.Variables.Add("WebSite", SdkContext.RandomResourceName(string.Empty, 12));
-            context.Variables.Add("Location", resourceGroup.RegionName);
-            context.Variables.Add("AccountPrefix", SdkContext.RandomResourceName(string.Empty, 6));
-            var existingFeatureToggles = context.Variables.GetStrings(KnownVariables.EnabledFeatureToggles);
-            context.Variables.SetStrings(KnownVariables.EnabledFeatureToggles,
-                                         existingFeatureToggles.Concat(new[]
-                                         {
-                                             FeatureToggle.ModernAzureSdkFeatureToggle.ToString()
-                                         }));
+            //as we have a single resource group, we need to have unique web app name per test
+            context.Variables.Add("WebSite", $"Calamari-{Guid.NewGuid():N}");
+            context.Variables.Add("Location", resourceGroupResource.Data.Location);
+            //this is a storage account prefix, so just make it as random as possible
+            //The names of the storage accounts are a max of 7 chars, so we generate a prefix of 17 chars (storage accounts have a max of 24)
+            context.Variables.Add("AccountPrefix", AzureTestResourceHelpers.RandomName(length: 17));
         }
 
         private static void AddTemplateFiles(CommandTestBuilderContext context, string template, string parameters)
