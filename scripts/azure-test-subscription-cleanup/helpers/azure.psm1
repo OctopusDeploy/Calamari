@@ -254,8 +254,7 @@ Function Start-ResourceGroupDeletion {
     param (
         [array]$ResourceGroupsToDelete,
         [string]$OctopusEnvironment,
-        [string]$ConnectedSubscriptionName,
-        $SlackProperties
+        [string]$ConnectedSubscriptionName
     )
 
     if ($OctopusEnvironment.Contains("Cleanup")) {
@@ -264,49 +263,16 @@ Function Start-ResourceGroupDeletion {
             Write-Host "Deleting Resource Group '$($_.ResourceGroupName)' in subscription '$ConnectedSubscriptionName'"
             
             try {
-                $cleanupNotificationIsSent = Confirm-CleanupNotificationIsSentTag -ResourceGroup $_
-
-                if ($cleanupNotificationIsSent) {
-                    Remove-AzResourceGroup -Name $($_.ResourceGroupName) -Force -ErrorAction Stop  
-                }
+                # TODO: Replace real cleanup command
+                Write-Host "DEBUG: Deleting Resource Group '$($_.ResourceGroupName)' in subscription '$ConnectedSubscriptionName'"
+                # Remove-AzResourceGroup -Name $($_.ResourceGroupName) -Force -ErrorAction Stop  
             }
             catch {
-                $slackAttachmentTemplate = New-Object PSObject
-                Add-Member -InputObject $slackAttachmentTemplate -MemberType NoteProperty -Name pretext -Value ""
-                Add-Member -InputObject $slackAttachmentTemplate -MemberType NoteProperty -Name fallback -Value ""
-                Add-Member -InputObject $slackAttachmentTemplate -MemberType NoteProperty -Name color -Value ""
-                Add-Member -InputObject $slackAttachmentTemplate -MemberType NoteProperty -Name fields -Value @()
-
-                $slackAttachment = $slackAttachmentTemplate
-                $slackAttachment.pretext = ":Exclamation: Failed to delete $($_.ResourceGroupName) Azure Sandbox Resource groups in '$ConnectedSubscriptionName'"
-                $slackAttachment.fallback = "Azure Sandbox Cleanup failed to delete resource group '$($_.ResourceGroupName)'"
-                $slackAttachment.color = "#C21807"
-                $slackAttachment.fields = @(
-                    @{
-                        value = "`````` `n $($_.Exception.Message) `n ``````"
-                    }
-                );               
-                Invoke-NewSlackNotificationRequest -Attachments $slackAttachment -SlackProperties $slackProperties
+                Write-Warning "Failed to delete $($_.ResourceGroupName) Azure Sandbox Resource groups in '$ConnectedSubscriptionName'"
             }
         }
     } 
     else {
         Write-Host "This script is running in an '$OctopusEnvironment' environment so cleanup is not going to occur. Cleanup Can only run when the Environment name is 'Azure Cleanup'"
-    }
-}
-
-Function Invoke-CleanupSurvivingResourceGroups {
-    param (
-        [array]$ResourceGroupsSurvivedChoppingBlock,
-        [string]$OctopusEnvironment,
-        [string]$ConnectedSubscriptionName
-    )
-
-    if ($OctopusEnvironment.Contains("Cleanup")) {
-        Write-host "Cleaing the NotificationIsSentTag on resource groups that are no longer expired"
-        $ResourceGroupsSurvivedChoppingBlock | ForEach-Object {
-            Write-Host "Resource group with the name '$($_.ResourceGroupName)' in subscription '$ConnectedSubscriptionName' survived the chopping block"
-            Clear-CleanupNotificationIsSentTag -ResourceGroup $_
-        }
     }
 }

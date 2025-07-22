@@ -108,13 +108,13 @@ Describe "Invoke-SandboxCleanup Tests" {
             "Octopus.Environment.Name"        = "Azure Notify"
             "NoDeleteToleranceInHours"        = 1
             "DeleteCadenceString"             = "Friday at 9:00 AM Brisbane Time"
-            "AzureAccount.Client"             = $Env:AZURE_CLIENT_ID
-            "AzureAccount.Password"           = $Env:AZURE_SERVICE_PRINCIPAL_SECRET
-            "AzureAccount.TenantId"           = $Env:AZURE_TENANT_ID
-            "AzureAccount.SubscriptionNumber" = $Env:AZURE_SUBSCRIPTION_ID
-            "AzureSubscriptionID"             = $Env:AZURE_SUBSCRIPTION_ID
-            "SlackBearerToken"                = $Env:SLACK_BEARER_TOKEN
-            "TeamSlackChannel"                = ""
+
+            # These are required to be present but not valid as the test mocks Azure
+            "AzureAccount.Client"             = '$Env:AZURE_CLIENT_ID'
+            "AzureAccount.Password"           = '$Env:AZURE_SERVICE_PRINCIPAL_SECRET'
+            "AzureAccount.TenantId"           = '$Env:AZURE_TENANT_ID'
+            "AzureAccount.SubscriptionNumber" = '$Env:AZURE_SUBSCRIPTION_ID'
+            "AzureSubscriptionID"             = '$Env:AZURE_SUBSCRIPTION_ID'
         }
         
         # Import the script containing the Invoke-SandboxCleanup function
