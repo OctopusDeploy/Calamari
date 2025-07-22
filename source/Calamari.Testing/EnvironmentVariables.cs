@@ -27,7 +27,7 @@ namespace Calamari.Testing
         [EnvironmentVariable("Azure_OctopusAPITester_Certificate", "op://Calamari Secrets for Tests/Azure - OctopusApiTester/thumbprint")]
         AzureSubscriptionCertificate,
 
-        //These are specifically for the AKS tests against the static Instances
+        //This is correctly configured in TeamCity. ALl azure tests _should_ use these secrets going forward.
         [EnvironmentVariable("AzureAks_OctopusAPITester_SubscriptionId", "op://Calamari Secrets for Tests/Azure - OctopusApiTester/subscription id")]
         AzureAksSubscriptionId,
 

@@ -452,7 +452,7 @@ namespace Calamari.Build
         }
 
         Target PublishAzureWebAppNetCoreShim =>
-            _ => _.DependsOn(Compile)
+            _ => _.DependsOn(Restore)
                   .Executes(() =>
                             {
                                 if (!OperatingSystem.IsWindows())
@@ -469,7 +469,9 @@ namespace Calamari.Build
                                                    .SetConfiguration(Configuration)
                                                    .SetProject(project.Path)
                                                    .SetFramework(Frameworks.Net462)
-                                                   .EnableNoBuild()
+                                                   .EnableNoRestore()
+                                                   .SetVersion(NugetVersion.Value)
+                                                   .SetInformationalVersion(OctoVersionInfo.Value?.InformationalVersion)
                                                    .SetOutput(outputPath));
 
                                 var archivePath = SourceDirectory / "Calamari.AzureWebApp" / "netcoreshim" / "netcoreshim.zip";
@@ -833,11 +835,7 @@ namespace Calamari.Build
             return runtimes ?? Array.Empty<string>();
         }
 
-        static List<string> GetCalamariFlavours()
-        {
-            return IsLocalBuild && !OperatingSystem.IsWindows()
-                ? MigratedCalamariFlavours.CrossPlatformFlavours
-                : MigratedCalamariFlavours.Flavours;
-        }
+        //All libraries/flavours now support .NET Core
+        static List<string> GetCalamariFlavours() => CalamariPackages.Flavours;
     }
 }
