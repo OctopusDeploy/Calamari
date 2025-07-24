@@ -41,8 +41,8 @@ namespace Calamari.Tests.Fixtures.Commands
             variables.Set("Octopus.Action.Aws.AssumedRoleSession", "");
             variables.Set("Octopus.Account.AccountType", "AzureServicePrincipal");
             variables.Set("Octopus.Action.Azure.TenantId", "2a881dca-3230-4e01-abcb-a1fd235c0981");
-            variables.Set("Octopus.Action.Azure.ClientId", await ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId, cancellationToken));
-            variables.Set("Octopus.Action.Azure.Password", await ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword, cancellationToken));
+            variables.Set("Octopus.Action.Azure.ClientId", await ExternalVariables.Get(ExternalVariable.AzureAksSubscriptionClientId, cancellationToken));
+            variables.Set("Octopus.Action.Azure.Password", await ExternalVariables.Get(ExternalVariable.AzureAksSubscriptionPassword, cancellationToken));
             variables.Set("Octopus.Action.Azure.SubscriptionId", "cf21dc34-73dc-4d7d-bd86-041884e0bc75");
 
             return variables;
