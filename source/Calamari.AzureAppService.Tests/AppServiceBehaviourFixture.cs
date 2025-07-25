@@ -416,7 +416,8 @@ namespace Calamari.AzureAppService.Tests
 
             protected override async Task ConfigureTestResources(ResourceGroupResource resourceGroup)
             {
-                var storageAccountName = ResourceGroupName.Replace("-", "").Substring(0, 20);
+                //just generate a completely unique name
+                var storageAccountName = AzureTestResourceHelpers.RandomName(length: 24);
 
                 var storageAccountResponse = await ResourceGroupResource
                                                    .GetStorageAccounts()
