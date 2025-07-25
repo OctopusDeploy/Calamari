@@ -498,10 +498,10 @@ namespace Calamari.Terraform.Tests
             var resourceGroupName = AzureTestResourceHelpers.GetResourceGroupName();
             var resourceGroupLocation = RandomAzureRegion.GetRandomRegionWithExclusions();
 
-            var subscriptionId = await ExternalVariables.Get(ExternalVariable.AzureAksSubscriptionId, CancellationToken.None);
-            var tenantId = await ExternalVariables.Get(ExternalVariable.AzureAksSubscriptionTenantId, CancellationToken.None);
-            var clientId = await ExternalVariables.Get(ExternalVariable.AzureAksSubscriptionClientId, CancellationToken.None);
-            var clientPassword = await ExternalVariables.Get(ExternalVariable.AzureAksSubscriptionPassword, CancellationToken.None);
+            var subscriptionId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionId, CancellationToken.None);
+            var tenantId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId, CancellationToken.None);
+            var clientId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId, CancellationToken.None);
+            var clientPassword = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword, CancellationToken.None);
 
             var random = Guid.NewGuid().ToString("N").Substring(0, 6);
             var appName = $"cfe2e-{random}";
