@@ -125,5 +125,14 @@ namespace Calamari.Tests.Fixtures.Python
             output.AssertFailure();
             output.AssertOutput("##octopus[resultMessage message='Q3VzdG9tIGZhaWx1cmUgbWVzc2FnZQ==']");
         }
+
+        [Test, RequiresMinimumPython3Version(4)]
+        public void ShouldRunWithNameAsMain()
+        {
+            var (output, _) = RunScript("checkname.py");
+
+            output.AssertSuccess();
+            output.AssertOutput("__name__ is __main__");
+        }
     }
 }
