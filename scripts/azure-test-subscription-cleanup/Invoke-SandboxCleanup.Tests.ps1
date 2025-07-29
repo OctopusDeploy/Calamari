@@ -11,9 +11,6 @@ BeforeAll {
     Remove-Module "octopus" -Force -ErrorAction SilentlyContinue
     Import-Module (Join-Path $PSScriptRoot "helpers/octopus.psm1")
 
-    Remove-Module "slack" -Force -ErrorAction SilentlyContinue
-    Import-Module (Join-Path $PSScriptRoot "helpers/slack.psm1")
-}
 
 Describe "Invoke-SandboxCleanup Tests" {
     It "Should make the correct cleanup decision" {

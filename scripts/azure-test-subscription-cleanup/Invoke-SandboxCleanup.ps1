@@ -1,7 +1,6 @@
 Import-Module "${PSScriptRoot}\helpers\azure.psm1"
 Import-Module "${PSScriptRoot}\helpers\logging.psm1"
 Import-Module "${PSScriptRoot}\helpers\octopus.psm1"
-Import-Module "${PSScriptRoot}\helpers\slack.psm1"
 
 Function Invoke-SandboxCleanup {
     $isCleanup = $false
