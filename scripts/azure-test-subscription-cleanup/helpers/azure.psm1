@@ -263,9 +263,7 @@ Function Start-ResourceGroupDeletion {
             Write-Host "Deleting Resource Group '$($_.ResourceGroupName)' in subscription '$ConnectedSubscriptionName'"
             
             try {
-                # TODO: Replace real cleanup command
-                Write-Host "DEBUG: Deleting Resource Group '$($_.ResourceGroupName)' in subscription '$ConnectedSubscriptionName'"
-                # Remove-AzResourceGroup -Name $($_.ResourceGroupName) -Force -ErrorAction Stop  
+                Remove-AzResourceGroup -Name $($_.ResourceGroupName) -Force -ErrorAction Stop
             }
             catch {
                 Write-Warning "Failed to delete $($_.ResourceGroupName) Azure Sandbox Resource groups in '$ConnectedSubscriptionName'"

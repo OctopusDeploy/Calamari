@@ -49,9 +49,7 @@ Function Invoke-SandboxCleanup {
         if ($resourceGroupsToDelete.Count -gt 0) { 
             Start-ResourceGroupDeletion -ResourceGroupsToDelete $resourceGroupsToDelete `
                 -OctopusEnvironment $OctopusParameters["Octopus.Environment.Name"] `
-                -ConnectedSubscriptionName $OctopusParameters["AzureAccount.SubscriptionNumber"] `
-                -SlackProperties $
-
+                -ConnectedSubscriptionName $OctopusParameters["AzureAccount.SubscriptionNumber"]
         }
     }
 
