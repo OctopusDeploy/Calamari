@@ -11,34 +11,17 @@ namespace Calamari.Testing
 {
     public enum ExternalVariable
     {
-        
         [EnvironmentVariable("Azure_OctopusAPITester_SubscriptionId", "op://Calamari Secrets for Tests/Azure - OctopusApiTester/subscription id")]
         AzureSubscriptionId,
-
+        
         [EnvironmentVariable("Azure_OctopusAPITester_TenantId", "op://Calamari Secrets for Tests/Azure - OctopusApiTester/tenant id")]
         AzureSubscriptionTenantId,
-
+        
         [EnvironmentVariable("Azure_OctopusAPITester_Password", "op://Calamari Secrets for Tests/Azure - OctopusApiTester/password")]
         AzureSubscriptionPassword,
-
+        
         [EnvironmentVariable("Azure_OctopusAPITester_ClientId", "op://Calamari Secrets for Tests/Azure - OctopusApiTester/client application id")]
         AzureSubscriptionClientId,
-
-        [EnvironmentVariable("Azure_OctopusAPITester_Certificate", "op://Calamari Secrets for Tests/Azure - OctopusApiTester/thumbprint")]
-        AzureSubscriptionCertificate,
-
-        //This is correctly configured in TeamCity. ALl azure tests _should_ use these secrets going forward.
-        [EnvironmentVariable("AzureAks_OctopusAPITester_SubscriptionId", "op://Calamari Secrets for Tests/Azure - OctopusApiTester/subscription id")]
-        AzureAksSubscriptionId,
-
-        [EnvironmentVariable("AzureAks_OctopusAPITester_TenantId", "op://Calamari Secrets for Tests/Azure - OctopusApiTester/tenant id")]
-        AzureAksSubscriptionTenantId,
-
-        [EnvironmentVariable("AzureAks_OctopusAPITester_Password", "op://Calamari Secrets for Tests/Azure - OctopusApiTester/password")]
-        AzureAksSubscriptionPassword,
-
-        [EnvironmentVariable("AzureAks_OctopusAPITester_ClientId", "op://Calamari Secrets for Tests/Azure - OctopusApiTester/client application id")]
-        AzureAksSubscriptionClientId,
         
         [EnvironmentVariable("GitHub_OctopusAPITester_Username", "op://Calamari Secrets for Tests/GitHub Test Account/username")]
         GitHubUsername,

@@ -107,7 +107,7 @@ namespace Calamari.Common.Features.Scripting.Python
             {
                 writer.WriteLine("from runpy import run_path");
                 writer.WriteLine("configuration = run_path(\"" + configurationFile.Replace("\\", "\\\\") + "\")");
-                writer.WriteLine("run_path(\"" + script.File.Replace("\\", "\\\\") + "\", configuration)");
+                writer.WriteLine("run_path(\"" + script.File.Replace("\\", "\\\\") + "\", configuration, '__main__')");
                 writer.Flush();
             }
 

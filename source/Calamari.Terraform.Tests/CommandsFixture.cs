@@ -498,26 +498,17 @@ namespace Calamari.Terraform.Tests
             var resourceGroupName = AzureTestResourceHelpers.GetResourceGroupName();
             var resourceGroupLocation = RandomAzureRegion.GetRandomRegionWithExclusions();
 
+            var subscriptionId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionId, CancellationToken.None);
+            var tenantId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId, CancellationToken.None);
+            var clientId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId, CancellationToken.None);
+            var clientPassword = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword, CancellationToken.None);
+
             var random = Guid.NewGuid().ToString("N").Substring(0, 6);
             var appName = $"cfe2e-{random}";
             var expectedHostName = $"{appName}.azurewebsites.net";
 
             using var temporaryFolder = TemporaryDirectory.Create();
             CopyAllFiles(TestEnvironment.GetTestPath("Azure"), temporaryFolder.DirectoryPath, terraformCliVersion);
-
-            async Task PopulateVariables(CommandTestBuilderContext _)
-            {
-                _.Variables.Add(AzureAccountVariables.SubscriptionId, await ExternalVariables.Get(ExternalVariable.AzureAksSubscriptionId, CancellationToken.None));
-                _.Variables.Add(AzureAccountVariables.TenantId, await ExternalVariables.Get(ExternalVariable.AzureAksSubscriptionTenantId, CancellationToken.None));
-                _.Variables.Add(AzureAccountVariables.ClientId, await ExternalVariables.Get(ExternalVariable.AzureAksSubscriptionClientId, CancellationToken.None));
-                _.Variables.Add(AzureAccountVariables.Password, await ExternalVariables.Get(ExternalVariable.AzureAksSubscriptionPassword, CancellationToken.None));
-                _.Variables.Add("app_name", appName);
-                _.Variables.Add("resource_group_name", resourceGroupName);
-                _.Variables.Add("resource_group_location", resourceGroupLocation);
-                _.Variables.Add(TerraformSpecialVariables.Action.Terraform.VarFiles, "example.tfvars");
-                _.Variables.Add(TerraformSpecialVariables.Action.Terraform.AzureManagedAccount, Boolean.TrueString);
-                _.Variables.Add(KnownVariables.OriginalPackageDirectoryPath, temporaryFolder.DirectoryPath);
-            }
 
             var output = await ExecuteAndReturnResult(planCommand, PopulateVariables, temporaryFolder.DirectoryPath);
             output.OutputVariables.ContainsKey("TerraformPlanOutput").Should().BeTrue();
@@ -530,6 +521,21 @@ namespace Calamari.Terraform.Tests
             await ExecuteAndReturnResult(destroyCommand, PopulateVariables, temporaryFolder.DirectoryPath);
 
             await AssertResponseIsNotReachable();
+            return;
+
+            void PopulateVariables(CommandTestBuilderContext _)
+            {
+                _.Variables.Add(AzureAccountVariables.SubscriptionId,subscriptionId );
+                _.Variables.Add(AzureAccountVariables.TenantId,tenantId);
+                _.Variables.Add(AzureAccountVariables.ClientId,clientId);
+                _.Variables.Add(AzureAccountVariables.Password, clientPassword);
+                _.Variables.Add("app_name", appName);
+                _.Variables.Add("resource_group_name", resourceGroupName);
+                _.Variables.Add("resource_group_location", resourceGroupLocation);
+                _.Variables.Add(TerraformSpecialVariables.Action.Terraform.VarFiles, "example.tfvars");
+                _.Variables.Add(TerraformSpecialVariables.Action.Terraform.AzureManagedAccount, Boolean.TrueString);
+                _.Variables.Add(KnownVariables.OriginalPackageDirectoryPath, temporaryFolder.DirectoryPath);
+            }
 
             async Task AssertResponseIsNotReachable()
             {
@@ -579,18 +585,8 @@ namespace Calamari.Terraform.Tests
             using var temporaryFolder = TemporaryDirectory.Create();
             CopyAllFiles(TestEnvironment.GetTestPath("AWS"), temporaryFolder.DirectoryPath);
 
-            async Task PopulateVariables(CommandTestBuilderContext _)
-            {
-                _.Variables.Add(TerraformSpecialVariables.Action.Terraform.FileSubstitution, "test.txt");
-                _.Variables.Add("Octopus.Action.Amazon.AccessKey", await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3AccessKey, CancellationToken.None));
-                _.Variables.Add("Octopus.Action.Amazon.SecretKey", await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3SecretKey, CancellationToken.None));
-                _.Variables.Add("Octopus.Action.Aws.Region", "ap-southeast-1");
-                _.Variables.Add("Hello", "Hello World from AWS");
-                _.Variables.Add("bucket_name", bucketName);
-                _.Variables.Add(TerraformSpecialVariables.Action.Terraform.VarFiles, "example.tfvars");
-                _.Variables.Add(TerraformSpecialVariables.Action.Terraform.AWSManagedAccount, "AWS");
-                _.Variables.Add(KnownVariables.OriginalPackageDirectoryPath, temporaryFolder.DirectoryPath);
-            }
+            var accessKey = await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3AccessKey, CancellationToken.None);
+            var secretKey = await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3SecretKey, CancellationToken.None);
 
             var output = await ExecuteAndReturnResult(planCommand, PopulateVariables, temporaryFolder.DirectoryPath);
             output.OutputVariables.ContainsKey("TerraformPlanOutput").Should().BeTrue();
@@ -611,18 +607,27 @@ namespace Calamari.Terraform.Tests
                 var response = await client.GetAsync(expectedUrl).ConfigureAwait(false);
                 response.StatusCode.Should().Be(HttpStatusCode.NotFound);
             }
+
+            return;
+
+            void PopulateVariables(CommandTestBuilderContext _)
+            {
+                _.Variables.Add(TerraformSpecialVariables.Action.Terraform.FileSubstitution, "test.txt");
+                _.Variables.Add("Octopus.Action.Amazon.AccessKey", accessKey);
+                _.Variables.Add("Octopus.Action.Amazon.SecretKey",secretKey);
+                _.Variables.Add("Octopus.Action.Aws.Region", "ap-southeast-1");
+                _.Variables.Add("Hello", "Hello World from AWS");
+                _.Variables.Add("bucket_name", bucketName);
+                _.Variables.Add(TerraformSpecialVariables.Action.Terraform.VarFiles, "example.tfvars");
+                _.Variables.Add(TerraformSpecialVariables.Action.Terraform.AWSManagedAccount, "AWS");
+                _.Variables.Add(KnownVariables.OriginalPackageDirectoryPath, temporaryFolder.DirectoryPath);
+            }
         }
 
         [Test]
         public async Task PlanDetailedExitCode()
         {
             using var stateFileFolder = TemporaryDirectory.Create();
-
-            void PopulateVariables(CommandTestBuilderContext _)
-            {
-                _.Variables.Add(TerraformSpecialVariables.Action.Terraform.AdditionalActionParams,
-                                $"-state=\"{Path.Combine(stateFileFolder.DirectoryPath, "terraform.tfstate")}\" -refresh=false");
-            }
 
             var output = await ExecuteAndReturnResult(planCommand, PopulateVariables, "PlanDetailedExitCode");
             output.OutputVariables.ContainsKey("TerraformPlanDetailedExitCode").Should().BeTrue();
@@ -635,6 +640,13 @@ namespace Calamari.Terraform.Tests
             output = await ExecuteAndReturnResult(planCommand, PopulateVariables, "PlanDetailedExitCode");
             output.OutputVariables.ContainsKey("TerraformPlanDetailedExitCode").Should().BeTrue();
             output.OutputVariables["TerraformPlanDetailedExitCode"].Value.Should().Be("0");
+            return;
+
+            void PopulateVariables(CommandTestBuilderContext _)
+            {
+                _.Variables.Add(TerraformSpecialVariables.Action.Terraform.AdditionalActionParams,
+                                $"-state=\"{Path.Combine(stateFileFolder.DirectoryPath, "terraform.tfstate")}\" -refresh=false");
+            }
         }
 
         [Test]
@@ -772,34 +784,10 @@ output ""config-map-aws-auth"" {{
                                          string folderName,
                                          Action<TestCalamariCommandResult>? assert = null)
         {
-            Func<CommandTestBuilderContext, Task> wrappedAction = context =>
-                                                                  {
-                                                                      populateVariables(context);
-                                                                      return Task.CompletedTask;
-                                                                  };
-
-            return ExecuteAndReturnLogOutput(command, wrappedAction, folderName, assert);
-        }
-
-        string ExecuteAndReturnLogOutput(string command,
-                                         Func<CommandTestBuilderContext, Task> populateVariables,
-                                         string folderName,
-                                         Action<TestCalamariCommandResult>? assert = null)
-        {
             return ExecuteAndReturnResult(command, populateVariables, folderName, assert).Result.FullLog;
         }
 
         async Task<TestCalamariCommandResult> ExecuteAndReturnResult(string command, Action<CommandTestBuilderContext> populateVariables, string folderName, Action<TestCalamariCommandResult>? assert = null)
-        {
-            Func<CommandTestBuilderContext, Task> wrappedAction = context =>
-                                                                  {
-                                                                      populateVariables(context);
-                                                                      return Task.CompletedTask;
-                                                                  };
-            return await ExecuteAndReturnResult(command, wrappedAction, folderName, assert);
-        }
-
-        async Task<TestCalamariCommandResult> ExecuteAndReturnResult(string command, Func<CommandTestBuilderContext, Task> populateVariables, string folderName, Action<TestCalamariCommandResult>? assert = null)
         {
             var assertResult = assert ?? (_ => { });
 
@@ -816,11 +804,7 @@ output ""config-map-aws-auth"" {{
                                                                   context.Variables.Add(TerraformSpecialVariables.Action.Terraform.CustomTerraformExecutable,
                                                                                         customTerraformExecutable);
 
-                                                                  var task = populateVariables(context);
-                                                                  if (!task.IsCompleted)
-                                                                  {
-                                                                      task.RunSynchronously();
-                                                                  }
+                                                                  populateVariables(context);
 
                                                                   var isInline = context.Variables.Get(ScriptVariables.ScriptSource)!
                                                                                         .Equals(ScriptVariables.ScriptSourceOptions.Inline, StringComparison.InvariantCultureIgnoreCase);
