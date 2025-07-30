@@ -51,10 +51,10 @@ namespace Calamari.Tests.KubernetesFixtures
 
         protected override async Task<Dictionary<string, string>> GetEnvironmentVars(CancellationToken cancellationToken)
         {
-            azureSubscriptionId = await ExternalVariables.Get(ExternalVariable.AzureAksSubscriptionId, cancellationToken);
-            azureSubscriptionClientId = await ExternalVariables.Get(ExternalVariable.AzureAksSubscriptionClientId, cancellationToken);
-            azureSubscriptionPassword = await ExternalVariables.Get(ExternalVariable.AzureAksSubscriptionPassword, cancellationToken);
-            azureSubscriptionTenantId = await ExternalVariables.Get(ExternalVariable.AzureAksSubscriptionTenantId, cancellationToken);
+            azureSubscriptionId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionId, cancellationToken);
+            azureSubscriptionClientId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId, cancellationToken);
+            azureSubscriptionPassword = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword, cancellationToken);
+            azureSubscriptionTenantId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId, cancellationToken);
 
             return new Dictionary<string, string>()
             {
