@@ -131,12 +131,6 @@ namespace Calamari.Kubernetes.Integration
             buildArgs.Add($"\"{releaseName}\"");
             buildArgs.Add($"\"{packagePath}\"");
 
-            if (OctopusFeatureToggles.ExecuteHelmUpgradeCommandViaShellScriptFeatureToggle.IsEnabled(variables))
-            {
-                log.Warn("The current workaround for backwards compatibility with Helm command execution via shell scripts is temporary and will be removed in Octopus version 2025.3. To ensure continued compatibility, please update your step to provide arguments directly compatible with Helm, avoiding shell-specific formatting");
-                return ExecuteCommandViaScript(buildArgs);
-            }
-
             var result = ExecuteCommandAndLogOutput(buildArgs);
             return result;
         }
@@ -163,61 +157,6 @@ namespace Calamari.Kubernetes.Integration
                 ExecuteCommandAndLogOutput(new CommandLineInvocation("chmod",
                                                                      "+x",
                                                                      ExecutableLocation));
-            }
-        }
-
-        CommandResult ExecuteCommandViaScript(IEnumerable<string> arguments)
-        {
-            var syntax = ScriptSyntaxHelper.GetPreferredScriptSyntaxForEnvironment();
-            var command = BuildHelmScriptCommand(arguments, syntax);
-            var fileName = SyntaxSpecificFileName(syntax);
-            var scriptExecutor = GetScriptExecutor(syntax);
-            
-            using (new TemporaryFile(fileName))
-            {
-                fileSystem.OverwriteFile(fileName, command);
-                
-                return scriptExecutor.Execute(new Script(fileName), variables, commandLineRunner, environmentVars);
-            }
-        }
-
-        string BuildHelmScriptCommand(IEnumerable<string> arguments, ScriptSyntax syntax)
-        {
-            var cmd = new List<string>();
-            
-            SetExecutable(cmd, syntax);
-            cmd.AddRange(arguments.Where(s => !string.IsNullOrWhiteSpace(s)));
-
-            var command = string.Join(" ", cmd);
-            log.Verbose(command);
-            return command;
-        }
-        
-        void SetExecutable(List<string> commandBuilder, ScriptSyntax syntax)
-        {
-            if (isCustomExecutable)
-            {
-                commandBuilder.Add(syntax == ScriptSyntax.PowerShell ? ". " : $"chmod +x \"{ExecutableLocation}\";");
-            }
-            
-            commandBuilder.Add(ExecutableLocation);
-        }
-        
-        string SyntaxSpecificFileName(ScriptSyntax syntax)
-        {
-            return Path.Combine(workingDirectory, syntax == ScriptSyntax.PowerShell ? "Calamari.HelmUpgrade.ps1" : "Calamari.HelmUpgrade.sh");
-        }
-        
-        IScriptExecutor GetScriptExecutor(ScriptSyntax syntax)
-        {
-            switch (syntax)
-            {
-                case ScriptSyntax.PowerShell:
-                    return new PowerShellScriptExecutor(log);
-                case ScriptSyntax.Bash:
-                    return new BashScriptExecutor(log);
-                default:
-                    throw new NotSupportedException($"{syntax} script is not supported for Helm upgrade execution");
             }
         }
     }
