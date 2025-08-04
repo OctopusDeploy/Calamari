@@ -7,13 +7,13 @@ using Amazon.ECR.Model;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
-using Calamari.Kubernetes.Commands.Executors;
 using Calamari.Kubernetes.ResourceStatus.Resources;
 using Calamari.Util;
 using LibGit2Sharp;
 using Repository = LibGit2Sharp.Repository;
 
-namespace Calamari.ArgoCD.Commands.Executors;
+namespace Calamari.ArgoCD.Commands.Executors
+{
 
 public class ArgoCDTemplateExecutor
 {
@@ -52,10 +52,12 @@ public class ArgoCDTemplateExecutor
 
         foreach (var file in files)
         {
-            File.Copy(file.FilePath, Path(repoPath, file.FilePath), true);
+            File.Copy(file.MappedRelativePath, Path(repoPath, file.FilePath), true);
         }
         
         
     }
+    
+}
     
 }
