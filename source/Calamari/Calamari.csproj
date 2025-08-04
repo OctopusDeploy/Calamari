@@ -55,7 +55,7 @@
     <PackageReference Include="SharpCompress" Version="0.37.2" />
     <PackageReference Include="YamlDotNet" Version="8.1.2" />
     <PackageReference Include="System.ValueTuple" Version="4.5.0" />
-    <PackageREference Include="libGit2Sharp" Version="0.30.0" />
+    <PackageReference Include="LibGit2Sharp" Version="0.26.2" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFrameworkIdentifier)' == '.NETFramework' ">
     <Reference Include="System.ComponentModel.DataAnnotations" />

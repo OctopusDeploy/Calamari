@@ -1,6 +1,6 @@
+using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Calamari.ArgoCD.Commands;
 using Calamari.ArgoCD.Commands.Executors;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Packages;
@@ -10,11 +10,10 @@ using Calamari.Common.Plumbing.Deployment.Journal;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Kubernetes.Commands.Executors;
-using Calamari.Kubernetes.Integration;
+using Calamari.Kubernetes;
 using Calamari.Kubernetes.ResourceStatus;
 
-namespace Calamari.Kubernetes.Commands
+namespace Calamari.ArgoCD.Commands
 {
     [Command(Name, Description = "Apply Raw Yaml to Kubernetes Cluster")]
     public class ArgoCDUpdateAppFromTemplates : ArgoCDDeploymentBaseCommand
@@ -33,7 +32,8 @@ namespace Calamari.Kubernetes.Commands
             IExtractPackage extractPackage,
             ISubstituteInFiles substituteInFiles,
             IStructuredConfigVariablesService structuredConfigVariablesService,
-            IResourceStatusReportExecutor statusReporter)
+            IResourceStatusReportExecutor statusReporter,
+            ArgoCDTemplateExecutor argoCdTemplateExecutor)
             : base(log,
                    deploymentJournalWriter,
                    variables,
@@ -44,6 +44,7 @@ namespace Calamari.Kubernetes.Commands
         {
             this.variables = variables;
             this.statusReporter = statusReporter;
+            this.argoCdTemplateExecutor = argoCdTemplateExecutor;
         }
 
         protected override async Task<bool> ExecuteCommand(RunningDeployment runningDeployment)
