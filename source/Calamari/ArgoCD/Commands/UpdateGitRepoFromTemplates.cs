@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Calamari.ArgoCD.Commands.Executors;
@@ -16,15 +17,15 @@ using Calamari.Kubernetes.ResourceStatus;
 namespace Calamari.ArgoCD.Commands
 {
     [Command(Name, Description = "Apply Raw Yaml to Kubernetes Cluster")]
-    public class ArgoCDUpdateAppFromTemplates : ArgoCDDeploymentBaseCommand
+    public class UpdateGitRepoFromTemplates : GitDeploymentBaseCommand
     {
-        public const string Name = "kubernetes-apply-raw-yaml";
+        public const string Name = "update-git-repo-from-templates";
 
         readonly IVariables variables;
         readonly IResourceStatusReportExecutor statusReporter;
-        readonly ArgoCDTemplateExecutor argoCdTemplateExecutor;
+        readonly GitTemplateExecutor gitTemplateExecutor;
 
-        public ArgoCDUpdateAppFromTemplates(
+        public UpdateGitRepoFromTemplates(
             ILog log,
             IDeploymentJournalWriter deploymentJournalWriter,
             IVariables variables,
@@ -33,7 +34,7 @@ namespace Calamari.ArgoCD.Commands
             ISubstituteInFiles substituteInFiles,
             IStructuredConfigVariablesService structuredConfigVariablesService,
             IResourceStatusReportExecutor statusReporter,
-            ArgoCDTemplateExecutor argoCdTemplateExecutor)
+            GitTemplateExecutor gitTemplateExecutor)
             : base(log,
                    deploymentJournalWriter,
                    variables,
@@ -44,7 +45,7 @@ namespace Calamari.ArgoCD.Commands
         {
             this.variables = variables;
             this.statusReporter = statusReporter;
-            this.argoCdTemplateExecutor = argoCdTemplateExecutor;
+            this.gitTemplateExecutor = gitTemplateExecutor;
         }
 
         protected override async Task<bool> ExecuteCommand(RunningDeployment runningDeployment)
@@ -53,8 +54,10 @@ namespace Calamari.ArgoCD.Commands
             var waitForJobs = variables.GetFlag(SpecialVariables.WaitForJobs);
 
             var statusCheck = statusReporter.Start(timeoutSeconds, waitForJobs);
+
+            var pathToTemplates = Path.Combine(runningDeployment.StagingDirectory, PackageDirectoryName);
             
-            return await argoCdTemplateExecutor.Execute(runningDeployment, (newResources) => statusCheck.AddResources(newResources)) &&
+            return await gitTemplateExecutor.Execute(runningDeployment, pathToTemplates) &&
                    await statusCheck.WaitForCompletionOrTimeout(CancellationToken.None);
         }
     }
