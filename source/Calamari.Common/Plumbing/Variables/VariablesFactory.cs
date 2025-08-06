@@ -15,7 +15,8 @@ namespace Calamari.Common.Plumbing.Variables
 {
     public class VariablesFactory
     {
-        public static readonly string AdditionalVariablesPathVariable = "AdditionalVariablesPath";
+        public const string AdditionalVariablesPathVariable = "AdditionalVariablesPath";
+        
         readonly ICalamariFileSystem fileSystem;
         readonly ILog log;
 
@@ -29,8 +30,10 @@ namespace Calamari.Common.Plumbing.Variables
         {
             var variables = new CalamariVariables();
 
-            ReadUnencryptedVariablesFromFile(options, variables);
-            ReadEncryptedVariablesFromFile(options, variables);
+            ReadEncryptedVariablesFromFile(new[] { options.InputVariables.VariablesFile }, options, variables);
+            ReadEncryptedVariablesFromFile(options.InputVariables.SensitiveVariablesFiles, options, variables);
+            ReadEncryptedVariablesFromFile(new[] { options.InputVariables.PlatformVariablesFiles }, options, variables);
+
             ReadOutputVariablesFromOfflineDropPreviousSteps(options, variables);
 
             AddEnvironmentVariables(variables);
@@ -41,24 +44,11 @@ namespace Calamari.Common.Plumbing.Variables
             return variables;
         }
 
-        void ReadUnencryptedVariablesFromFile(CommonOptions options, CalamariVariables variables)
+        void ReadEncryptedVariablesFromFile(IEnumerable<string?> filenames, CommonOptions options, CalamariVariables variables)
         {
-            var variablesFile = options.InputVariables.VariablesFile;
-            if (string.IsNullOrEmpty(variablesFile))
-                return;
-
-            if (!fileSystem.FileExists(variablesFile))
-                throw new CommandException("Could not find variables file: " + variablesFile);
-
-            var readVars = new VariableDictionary(variablesFile);
-            variables.Merge(readVars);
-        }
-
-        void ReadEncryptedVariablesFromFile(CommonOptions options, CalamariVariables variables)
-        {
-            foreach (var sensitiveFilePath in options.InputVariables.SensitiveVariablesFiles.Where(f => !string.IsNullOrEmpty(f)))
+            foreach (var sensitiveFilePath in filenames.Where(f => !string.IsNullOrEmpty(f)))
             {
-                var sensitiveFilePassword = options.InputVariables.SensitiveVariablesPassword;
+                var sensitiveFilePassword = options.InputVariables.VariableEncryptionPassword;
                 var rawVariables = string.IsNullOrWhiteSpace(sensitiveFilePassword)
                     ? fileSystem.ReadFile(sensitiveFilePath)
                     : Decrypt(fileSystem.ReadAllBytes(sensitiveFilePath), sensitiveFilePassword);
@@ -108,10 +98,7 @@ namespace Calamari.Common.Plumbing.Variables
 
             string BuildExceptionMessage(string reason)
             {
-                return $"Could not read additional variables from JSON file at '{path}'. " +
-                    $"{reason} Make sure the file can be read or remove the " +
-                    $"'{AdditionalVariablesPathVariable}' environment variable. " +
-                    "See inner exception for details.";
+                return $"Could not read additional variables from JSON file at '{path}'. " + $"{reason} Make sure the file can be read or remove the " + $"'{AdditionalVariablesPathVariable}' environment variable. " + "See inner exception for details.";
             }
 
             if (string.IsNullOrEmpty(path))

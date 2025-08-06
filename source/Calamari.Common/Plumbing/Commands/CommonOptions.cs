@@ -29,11 +29,13 @@ namespace Calamari.Common.Plumbing.Commands
             var options = new CommonOptions(command);
 
             var set = new OptionSet()
-                .Add("variables=", "Path to a JSON file containing variables.", v => options.InputVariables.VariablesFile = v)
-                .Add("outputVariables=", "Base64 encoded encrypted JSON file containing output variables.", v => options.InputVariables.OutputVariablesFile = v)
-                .Add("outputVariablesPassword=", "Password used to decrypt output-variables", v => options.InputVariables.OutputVariablesPassword = v)
-                .Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.", v => options.InputVariables.SensitiveVariablesFiles.Add(v))
-                .Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables.", v => options.InputVariables.SensitiveVariablesPassword = v);
+                      .Add("variables=", "Path to a password protected  JSON file containing variables.", v => options.InputVariables.VariablesFile = v)
+                      .Add("sensitiveVariables=", "Path to a Password protected JSON file containing sensitive variables.", v => options.InputVariables.SensitiveVariablesFiles.Add(v))
+                      .Add("platformVariables=", "Path to a Password protected JSON file containing platform-specific variables.", v => options.InputVariables.PlatformVariablesFiles = v)
+                      .Add("variableEncryptionPassword=", "Password used to decrypt encrypted variables.", v => options.InputVariables.VariableEncryptionPassword = v)
+                      .Add("outputVariables=", "Base64 encoded encrypted JSON file containing output variables.", v => options.InputVariables.OutputVariablesFile = v)
+                      .Add("outputVariablesPassword=", "Password used to decrypt output-variables", v => options.InputVariables.OutputVariablesPassword = v);
+            
             options.RemainingArguments = set.Parse(args.Skip(1));
 
             return options;
@@ -43,7 +45,8 @@ namespace Calamari.Common.Plumbing.Commands
         {
             public string? VariablesFile { get; internal set; }
             public List<string> SensitiveVariablesFiles { get; } = new List<string>();
-            public string? SensitiveVariablesPassword { get; internal set; }
+            public string? PlatformVariablesFiles { get;internal set; }
+            public string? VariableEncryptionPassword { get; internal set; }
             public string? OutputVariablesFile { get; internal set; }
             public string? OutputVariablesPassword { get; internal set; }
         }

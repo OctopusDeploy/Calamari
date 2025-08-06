@@ -77,6 +77,9 @@ namespace Calamari.Common
                 }
 #endif
 
+                var tmp = container.Resolve<VariablesFactory>().Create(options);
+                tmp.ToString();
+                
                 return ResolveAndExecuteCommand(container, options);
             }
             catch (Exception ex)
