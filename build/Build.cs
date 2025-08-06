@@ -248,7 +248,7 @@ namespace Calamari.Build
                                CalamariProjects = calamariProjects;
 
                                // All cross-platform Target Frameworks contain dots, all NetFx Target Frameworks don't
-                               // eg: net40, net452, net48 vs netcoreapp3.1, net5.0, net6.0
+                               // eg: net40, net452, net48 vs netcoreapp3.1, net5.0, net8.0
                                bool IsCrossPlatform(string targetFramework) => targetFramework.Contains('.');
 
                                var calamariPackages =
