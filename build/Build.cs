@@ -209,16 +209,16 @@ partial class Build : NukeBuild
                                            + "deployment steps in Octopus Server",
                                            RootProjectName, $"{RootProjectName}.{FixedRuntimes.Cloud}");
 
-                               DoPublish(RootProjectName, Frameworks.Net60, nugetVersion);
+                               DoPublish(RootProjectName, Frameworks.Net80, nugetVersion);
 
                                Log.Warning($"Skipping the bundling of {RootProjectName} into the Calamari.Legacy bundle. "
                                            + "This is required for providing .Net Framework executables for legacy Target Operating Systems");
                                
-                               DoPublish(RootProjectName, Frameworks.Net60, nugetVersion, FixedRuntimes.Cloud);
+                               DoPublish(RootProjectName, Frameworks.Net80, nugetVersion, FixedRuntimes.Cloud);
                            }
 
                            foreach (var rid in GetRuntimeIdentifiers(Solution.GetProject(RootProjectName)!))
-                               DoPublish(RootProjectName, Frameworks.Net60, nugetVersion, rid);
+                               DoPublish(RootProjectName, Frameworks.Net80, nugetVersion, rid);
                        });
 
     Target GetCalamariFlavourProjectsToPublish =>
@@ -500,10 +500,10 @@ partial class Build : NukeBuild
                            var packageActions = new List<Action>
                            {
                                () => DoPackage(RootProjectName,
-                                               OperatingSystem.IsWindows() ? Frameworks.Net462 : Frameworks.Net60,
+                                               OperatingSystem.IsWindows() ? Frameworks.Net462 : Frameworks.Net80,
                                                nugetVersion),
                                () => DoPackage(RootProjectName,
-                                               OperatingSystem.IsWindows() ? Frameworks.Net462 : Frameworks.Net60,
+                                               OperatingSystem.IsWindows() ? Frameworks.Net462 : Frameworks.Net80,
                                                nugetVersion,
                                                FixedRuntimes.Cloud),
                            };
@@ -512,7 +512,7 @@ partial class Build : NukeBuild
                            // ReSharper disable once LoopCanBeConvertedToQuery
                            foreach (var rid in GetRuntimeIdentifiers(Solution.GetProject(RootProjectName)!))
                                packageActions.Add(() => DoPackage(RootProjectName,
-                                                                  Frameworks.Net60,
+                                                                  Frameworks.Net80,
                                                                   nugetVersion,
                                                                   rid));
 
@@ -549,7 +549,7 @@ partial class Build : NukeBuild
              .Executes(async () =>
                        {
                            var nugetVersion = NugetVersion.Value;
-                           var defaultTarget = OperatingSystem.IsWindows() ? Frameworks.Net462 : Frameworks.Net60;
+                           var defaultTarget = OperatingSystem.IsWindows() ? Frameworks.Net462 : Frameworks.Net80;
                            AbsolutePath binFolder = SourceDirectory / "Calamari.Tests" / "bin" / Configuration / defaultTarget;
                            Directory.Exists(binFolder);
                            var actions = new List<Action>
@@ -564,7 +564,7 @@ partial class Build : NukeBuild
                                            //run each build in sequence as it's the same project and we get issues
                                            foreach (var rid in GetRuntimeIdentifiers(Solution.GetProject("Calamari.Tests")!))
                                            {
-                                               var publishedLocation = DoPublish("Calamari.Tests", Frameworks.Net60, nugetVersion, rid);
+                                               var publishedLocation = DoPublish("Calamari.Tests", Frameworks.Net80, nugetVersion, rid);
                                                var zipName = $"Calamari.Tests.{rid}.{nugetVersion}.zip";
                                                File.Copy(RootDirectory / "global.json", publishedLocation / "global.json");
                                                publishedLocation.CompressTo(ArtifactsDirectory / zipName);
