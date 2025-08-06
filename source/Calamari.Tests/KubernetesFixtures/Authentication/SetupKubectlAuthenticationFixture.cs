@@ -483,7 +483,7 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
         }
     }
 
-    // This extension method only exists in .net6.0
+    // This extension method only exists in .net8.0
     #if NETFX
     public static class MiscExtensions
     {

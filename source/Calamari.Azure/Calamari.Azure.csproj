@@ -9,6 +9,7 @@
         <LangVersion>8.0</LangVersion>
         <TargetFrameworks>net462;net6.0</TargetFrameworks>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <TargetFrameworks>net462;net8.0</TargetFrameworks>
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="Azure.Identity" Version="1.13.1" />

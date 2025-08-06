@@ -11,6 +11,7 @@
         <!-- CS8632: The annotation for nullable reference types should only be used in code within a '#nullable' annotations context. -->
         <NoWarn>CS8632</NoWarn>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <TargetFrameworks>net462;net8.0</TargetFrameworks>
     </PropertyGroup>
 
     <ItemGroup>

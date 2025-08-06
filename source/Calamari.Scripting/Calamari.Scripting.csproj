@@ -10,6 +10,7 @@
         <LangVersion>9</LangVersion>
         <TargetFrameworks>net462;net6.0</TargetFrameworks>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <TargetFrameworks>net462;net8.0</TargetFrameworks>
     </PropertyGroup>
 
     <ItemGroup>
@@ -23,7 +24,7 @@
     <PropertyGroup Condition="'$(TargetFramework)' == 'net462' ">
         <NoWarn>CS8600;CS8601;CS8602;CS8603;CS8604</NoWarn>
     </PropertyGroup>
-    <PropertyGroup Condition=" '$(TargetFramework)' == 'net6.0' ">
+    <PropertyGroup Condition=" '$(TargetFramework)' == 'net8.0' ">
         <DefineConstants>$(DefineConstants);HAS_NULLABLE_REF_TYPES</DefineConstants>
     </PropertyGroup>
 
