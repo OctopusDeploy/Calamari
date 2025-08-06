@@ -20,6 +20,7 @@
     <ApplicationManifest>Calamari.exe.manifest</ApplicationManifest>
     <TargetFrameworks>net462;net6.0</TargetFrameworks>
     <LangVersion>8</LangVersion>
+    <TargetFrameworks>net462;net8.0</TargetFrameworks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net462' ">
     <DefineConstants>$(DefineConstants);IIS_SUPPORT;</DefineConstants>
