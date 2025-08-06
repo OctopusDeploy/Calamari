@@ -86,7 +86,7 @@ namespace Calamari
             builder.RegisterType<WindowsX509CertificateStore>().As<IWindowsX509CertificateStore>().SingleInstance();
             builder.RegisterType<ApiResourceScopeLookup>().As<IApiResourceScopeLookup>().SingleInstance();
             builder.RegisterType<KubernetesManifestNamespaceResolver>().As<IKubernetesManifestNamespaceResolver>().InstancePerLifetimeScope();
-            builder.RegisterType<GitTemplateExecutor>().As<GitTemplateExecutor>().InstancePerLifetimeScope();
+            builder.RegisterType<UpdateGitFromTemplatesExecutor>().As<UpdateGitFromTemplatesExecutor>().InstancePerLifetimeScope();
             
             builder.RegisterType<KubernetesDiscovererFactory>()
                    .As<IKubernetesDiscovererFactory>()

@@ -62,6 +62,15 @@ namespace Calamari.Kubernetes
             }
         }
 
+        public static class Git
+        {
+            public const string Url = "Octopus.Action.Git.Url";
+            public const string BranchName = "Octopus.Action.Git.BranchName";
+            public const string Folder = "Octopus.Action.Git.Folder";
+            public const string Username = "Octopus.Action.Git.Username";
+            public const string Password = "Octopus.Action.Helm.Password";
+        }
+
         public class ServiceMessages
         {
             public static class ResourceStatus

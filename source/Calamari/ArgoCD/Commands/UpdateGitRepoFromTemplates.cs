@@ -23,7 +23,7 @@ namespace Calamari.ArgoCD.Commands
 
         readonly IVariables variables;
         readonly IResourceStatusReportExecutor statusReporter;
-        readonly GitTemplateExecutor gitTemplateExecutor;
+        readonly UpdateGitFromTemplatesExecutor updateGitFromTemplatesExecutor;
 
         public UpdateGitRepoFromTemplates(
             ILog log,
@@ -34,7 +34,7 @@ namespace Calamari.ArgoCD.Commands
             ISubstituteInFiles substituteInFiles,
             IStructuredConfigVariablesService structuredConfigVariablesService,
             IResourceStatusReportExecutor statusReporter,
-            GitTemplateExecutor gitTemplateExecutor)
+            UpdateGitFromTemplatesExecutor updateGitFromTemplatesExecutor)
             : base(log,
                    deploymentJournalWriter,
                    variables,
@@ -45,7 +45,7 @@ namespace Calamari.ArgoCD.Commands
         {
             this.variables = variables;
             this.statusReporter = statusReporter;
-            this.gitTemplateExecutor = gitTemplateExecutor;
+            this.updateGitFromTemplatesExecutor = updateGitFromTemplatesExecutor;
         }
 
         protected override async Task<bool> ExecuteCommand(RunningDeployment runningDeployment)
@@ -57,7 +57,7 @@ namespace Calamari.ArgoCD.Commands
 
             var pathToTemplates = Path.Combine(runningDeployment.StagingDirectory, PackageDirectoryName);
             
-            return await gitTemplateExecutor.Execute(runningDeployment, pathToTemplates) &&
+            return await updateGitFromTemplatesExecutor.Execute(runningDeployment, pathToTemplates) &&
                    await statusCheck.WaitForCompletionOrTimeout(CancellationToken.None);
         }
     }

@@ -16,18 +16,20 @@ namespace Calamari.ArgoCD.Commands.Executors
 {
     class GitConnection
     {
-        public GitConnection(string url, string branchName, string username, string password)
+        public GitConnection(string url, string branchName, string username, string password, string folder)
         {
             Url = url;
             BranchName = branchName;
             Username = username;
             Password = password;
+            Folder = folder;
         }
 
         public string Url { get; }
         public string BranchName { get; }
         public string Username { get; }
         public string Password { get; }
+        public string Folder { get; }
     }
 
     class StepFields
@@ -42,13 +44,13 @@ namespace Calamari.ArgoCD.Commands.Executors
         public List<string> FileGlobs { get; }
     }
 
-    public class GitTemplateExecutor
+    public class UpdateGitFromTemplatesExecutor
     {
-        readonly string gitRepoPath = "git";
+        readonly string repoPath = "git";
         readonly ICalamariFileSystem fileSystem;
         readonly ILog log;
 
-        public GitTemplateExecutor(ICalamariFileSystem fileSystem, ILog log)
+        public UpdateGitFromTemplatesExecutor(ICalamariFileSystem fileSystem, ILog log)
         {
             this.fileSystem = fileSystem;
             this.log = log;
@@ -57,14 +59,14 @@ namespace Calamari.ArgoCD.Commands.Executors
         public async Task<bool> Execute(RunningDeployment deployment, string inputDirectory)
         {
             await Task.CompletedTask;
-            var gitURL = deployment.Variables.Get("Octopus.Action.ArgoCD.Git.URL");
-            var branchName = deployment.Variables.Get("Octopus.Action.ArgoCD.Git.BranchName");
-            var username = deployment.Variables.Get("Octopus.Action.ArgoCD.Git.Username");
-            var password = deployment.Variables.Get("Octopus.Action.ArgoCD.Git.Password");
+            var url = deployment.Variables.Get(SpecialVariables.Git.Url);
+            var branchName = deployment.Variables.Get(SpecialVariables.Git.BranchName);
+            var username = deployment.Variables.Get(SpecialVariables.Git.Username);
+            var password = deployment.Variables.Get(SpecialVariables.Git.Password);
+            var folder = deployment.Variables.Get(SpecialVariables.Git.Folder);
 
             var stepFields = new StepFields(
-                new GitConnection(gitURL, branchName, username, password),
-                //TODO(tmm): Does frontend separate based on \n, or \r\n?
+                new GitConnection(url, branchName, username, password, folder),
                 deployment.Variables.GetPaths(SpecialVariables.CustomResourceYamlFileName)
             );
             
@@ -76,19 +78,37 @@ namespace Calamari.ArgoCD.Commands.Executors
         void DoWork(StepFields stepFields, RunningDeployment deployment, string inputDirectory)
         {
             //Does a deployment get its own directory every time? If so - this will work for now, if not, this is kinda messy
-            log.Info($"Executing ArgoCD {gitRepoPath}");
+            log.Info($"Executing ArgoCD");
             
             var filesToApply = SelectFiles(inputDirectory, stepFields.FileGlobs);
-            
-            var repositoryPath = Path.Combine(deployment.CurrentDirectory, gitRepoPath);
-            var repo = CheckoutGitRepository(stepFields.GitConnection, repositoryPath);
+            UpdateRepository(filesToApply, deployment.CurrentDirectory, stepFields);
+        }
+
+        void UpdateRepository(IEnumerable<RelativeGlobMatch> filesToApply, string rootDir, StepFields stepFields)
+        {
+            var repository = Path.Combine(rootDir, repoPath);
+            var repo = CheckoutGitRepository(stepFields.GitConnection, repository);
             
             foreach (var file in filesToApply)
             {
                 //The file destination will be the same path wrt package
-                File.Copy(file.FilePath, Path.Combine(repositoryPath, file.MappedRelativePath), true);
+                File.Copy(file.FilePath, Path.Combine(repository, stepFields.GitConnection.Folder, file.MappedRelativePath), true);
                 repo.Index.Add(file.MappedRelativePath);
             }
+
+            Branch localBranch = repo.Branches[stepFields.GitConnection.BranchName];
+            
+            repo.Commit("Updated the git repo",
+                        new Signature("Octopus", "octopus@octopus.com", DateTimeOffset.Now),
+                        new Signature("Octopus", "octopus@octopus.com", DateTimeOffset.Now));
+            
+            Remote remote = repo.Network.Remotes["origin"];
+            repo.Branches.Update(localBranch, 
+                                 branch => branch.Remote = remote.Name,
+                                 branch => branch.UpstreamBranch = localBranch.CanonicalName);
+            
+            repo.Network.Push(localBranch);
+            
         }
 
         IEnumerable<RelativeGlobMatch> SelectFiles(string pathToExtractedPackage, List<string> fileGlobs)
@@ -114,7 +134,5 @@ namespace Calamari.ArgoCD.Commands.Executors
             Repository.Clone(gitConnection.Url, checkoutPath, options);
             return new Repository(checkoutPath);
         }
-
-
     }
 }
