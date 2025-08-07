@@ -16,7 +16,7 @@ namespace Calamari.Common.Plumbing.Variables
     public class VariablesFactory
     {
         public const string AdditionalVariablesPathVariable = "AdditionalVariablesPath";
-        
+
         readonly ICalamariFileSystem fileSystem;
         readonly ILog log;
 
@@ -28,11 +28,30 @@ namespace Calamari.Common.Plumbing.Variables
 
         public IVariables Create(CommonOptions options)
         {
-            var variables = new CalamariVariables();
+            var encryptedVariableFileNames = new List<string>
+            {
+                options.InputVariables.VariablesFile,
+                options.InputVariables.PlatformVariablesFiles,
+            };
+            encryptedVariableFileNames.AddRange(options.InputVariables.SensitiveVariablesFiles);
 
-            ReadEncryptedVariablesFromFile(new[] { options.InputVariables.VariablesFile }, options, variables);
-            ReadEncryptedVariablesFromFile(options.InputVariables.SensitiveVariablesFiles, options, variables);
-            ReadEncryptedVariablesFromFile(new[] { options.InputVariables.PlatformVariablesFiles }, options, variables);
+            return Create(new CalamariVariables(), options, encryptedVariableFileNames);
+        }
+
+        public INonSensitiveOnlyVariables CreateNonSensitiveOnlyVariables(CommonOptions options)
+        {
+            var encryptedVariableFileNames = new List<string>
+            {
+                options.InputVariables.VariablesFile,
+                options.InputVariables.PlatformVariablesFiles,
+            };
+
+            return Create(new NonSensitiveOnlyCalamariVariables(), options, encryptedVariableFileNames);
+        }
+
+        T Create<T>(T variables, CommonOptions options, IEnumerable<string> encryptedVariableFileNames) where T : CalamariVariables
+        {
+            ReadEncryptedVariablesFromFiles(encryptedVariableFileNames, options, variables);
 
             ReadOutputVariablesFromOfflineDropPreviousSteps(options, variables);
 
@@ -44,7 +63,7 @@ namespace Calamari.Common.Plumbing.Variables
             return variables;
         }
 
-        void ReadEncryptedVariablesFromFile(IEnumerable<string?> filenames, CommonOptions options, CalamariVariables variables)
+        void ReadEncryptedVariablesFromFiles(IEnumerable<string?> filenames, CommonOptions options, IVariables variables)
         {
             foreach (var sensitiveFilePath in filenames.Where(f => !string.IsNullOrEmpty(f)))
             {
@@ -66,7 +85,7 @@ namespace Calamari.Common.Plumbing.Variables
             }
         }
 
-        void ReadOutputVariablesFromOfflineDropPreviousSteps(CommonOptions options, CalamariVariables variables)
+        void ReadOutputVariablesFromOfflineDropPreviousSteps(CommonOptions options, IVariables variables)
         {
             var outputVariablesFilePath = options.InputVariables.OutputVariablesFile;
             if (string.IsNullOrEmpty(outputVariablesFilePath))

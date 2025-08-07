@@ -1,0 +1,18 @@
+﻿using Autofac;
+
+namespace Calamari.Common.Features.Substitutions
+{
+    public class SubstitutionsModule : Module
+    {
+        protected override void Load(ContainerBuilder builder)
+        {
+            //all variables
+            builder.RegisterType<SubstituteInFiles>().As<ISubstituteInFiles>().InstancePerLifetimeScope();
+            builder.RegisterType<FileSubstituter>().As<IFileSubstituter>().InstancePerLifetimeScope();
+            
+            //non-sensitive variables
+            builder.RegisterType<NonSensitiveSubstituteInFiles>().As<ISubstituteInFiles>().InstancePerLifetimeScope();
+            builder.RegisterType<NonSensitiveFileSubstituter>().As<INonSensitiveFileSubstituter>().InstancePerLifetimeScope();
+        }
+    }
+}
