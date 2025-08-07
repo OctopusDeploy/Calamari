@@ -20,38 +20,24 @@ namespace Calamari.Common.Plumbing.Variables
         readonly ICalamariFileSystem fileSystem;
         readonly ILog log;
 
+        static readonly object LoaderLock = new object();
+        TargetVariableCollection? targetVariableCollection;
+
         public VariablesFactory(ICalamariFileSystem fileSystem, ILog log)
         {
             this.fileSystem = fileSystem;
             this.log = log;
         }
 
-        public IVariables Create(CommonOptions options)
+        public IVariables Create(CommonOptions options) => Create(new CalamariVariables(), options, _ => true);
+
+        public INonSensitiveOnlyVariables CreateNonSensitiveOnlyVariables(CommonOptions options) => Create(new NonSensitiveOnlyCalamariVariables(), options, tv => !tv.IsSensitive);
+
+        T Create<T>(T variables, CommonOptions options, Func<TargetVariable, bool> targetVariablePredicate) where T : CalamariVariables
         {
-            var encryptedVariableFileNames = new List<string>
-            {
-                options.InputVariables.VariablesFile,
-                options.InputVariables.PlatformVariablesFiles,
-            };
-            encryptedVariableFileNames.AddRange(options.InputVariables.SensitiveVariablesFiles);
+            LoadTargetVariablesFromFiles(options);
 
-            return Create(new CalamariVariables(), options, encryptedVariableFileNames);
-        }
-
-        public INonSensitiveOnlyVariables CreateNonSensitiveOnlyVariables(CommonOptions options)
-        {
-            var encryptedVariableFileNames = new List<string>
-            {
-                options.InputVariables.VariablesFile,
-                options.InputVariables.PlatformVariablesFiles,
-            };
-
-            return Create(new NonSensitiveOnlyCalamariVariables(), options, encryptedVariableFileNames);
-        }
-
-        T Create<T>(T variables, CommonOptions options, IEnumerable<string> encryptedVariableFileNames) where T : CalamariVariables
-        {
-            ReadEncryptedVariablesFromFiles(encryptedVariableFileNames, options, variables);
+            ImportTargetVariablesIntoVariableCollection(variables, targetVariablePredicate);
 
             ReadOutputVariablesFromOfflineDropPreviousSteps(options, variables);
 
@@ -63,25 +49,52 @@ namespace Calamari.Common.Plumbing.Variables
             return variables;
         }
 
-        void ReadEncryptedVariablesFromFiles(IEnumerable<string?> filenames, CommonOptions options, IVariables variables)
+        void LoadTargetVariablesFromFiles(CommonOptions options)
         {
-            foreach (var sensitiveFilePath in filenames.Where(f => !string.IsNullOrEmpty(f)))
+            lock (LoaderLock)
             {
-                var sensitiveFilePassword = options.InputVariables.VariableEncryptionPassword;
-                var rawVariables = string.IsNullOrWhiteSpace(sensitiveFilePassword)
-                    ? fileSystem.ReadFile(sensitiveFilePath)
-                    : Decrypt(fileSystem.ReadAllBytes(sensitiveFilePath), sensitiveFilePassword);
+                //if this is not null, we must have already loaded it
+                if (targetVariableCollection != null)
+                {
+                    return;
+                }
 
-                try
+                targetVariableCollection = new TargetVariableCollection();
+                foreach (var variablesFilePath in options.InputVariables.VariablesFiles.Where(f => !string.IsNullOrEmpty(f)))
                 {
-                    var sensitiveVariables = JsonConvert.DeserializeObject<Dictionary<string, string>>(rawVariables);
-                    foreach (var variable in sensitiveVariables)
-                        variables.Set(variable.Key, variable.Value);
+                    var sensitiveFilePassword = options.InputVariables.VariableEncryptionPassword;
+                    var json = string.IsNullOrWhiteSpace(sensitiveFilePassword)
+                        ? fileSystem.ReadFile(variablesFilePath)
+                        : Decrypt(fileSystem.ReadAllBytes(variablesFilePath), sensitiveFilePassword);
+
+                    try
+                    {
+                        //deserialize the target variables from the json
+                        var targetVariables = TargetVariableCollection.FromJson(json);
+                        
+                        //append to the main collection
+                        //This may have duplicates, but that isn't a concern as they will be de-duped later in the process
+                        targetVariableCollection.AddRange(targetVariables);
+                    }
+                    catch (JsonReaderException)
+                    {
+                        throw new CommandException("Unable to parse variables as valid JSON.");
+                    }
                 }
-                catch (JsonReaderException)
-                {
-                    throw new CommandException("Unable to parse sensitive-variables as valid JSON.");
-                }
+            }
+        }
+
+        void ImportTargetVariablesIntoVariableCollection<T>(T variables, Func<TargetVariable,bool> targetVariablePredicate) where T : CalamariVariables
+        {
+            if(targetVariableCollection == null)
+            {
+                throw new InvalidOperationException("The target variable collection is null, meaning it has not been loaded yet.");
+            }
+            
+            //for each variable, load it into the variable collection
+            foreach (var tv in targetVariableCollection.Where(targetVariablePredicate))
+            {
+                variables.Set(tv.Key, tv.Value);
             }
         }
 
