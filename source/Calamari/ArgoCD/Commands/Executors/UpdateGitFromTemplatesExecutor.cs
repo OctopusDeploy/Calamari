@@ -1,3 +1,4 @@
+#nullable enable
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -16,7 +17,7 @@ namespace Calamari.ArgoCD.Commands.Executors
 {
     class GitConnection
     {
-        public GitConnection(string url, string branchName, string username, string password, string folder)
+        public GitConnection(string url, string branchName, string? username, string? password, string folder)
         {
             Url = url;
             BranchName = branchName;
@@ -27,9 +28,10 @@ namespace Calamari.ArgoCD.Commands.Executors
 
         public string Url { get; }
         public string BranchName { get; }
-        public string Username { get; }
-        public string Password { get; }
+        public string? Username { get; }
+        public string? Password { get; }
         public string Folder { get; }
+        public string RemoteBranchName => $"origin/{BranchName}";
     }
 
     class StepFields
@@ -66,7 +68,7 @@ namespace Calamari.ArgoCD.Commands.Executors
             var folder = deployment.Variables.Get(SpecialVariables.Git.Folder);
 
             var stepFields = new StepFields(
-                new GitConnection(url, branchName, username, password, folder),
+                new GitConnection(url!, branchName!, username, password, folder!),
                 deployment.Variables.GetPaths(SpecialVariables.CustomResourceYamlFileName)
             );
             
@@ -87,12 +89,16 @@ namespace Calamari.ArgoCD.Commands.Executors
         void UpdateRepository(IEnumerable<RelativeGlobMatch> filesToApply, string rootDir, StepFields stepFields)
         {
             var repository = Path.Combine(rootDir, repoPath);
+            Directory.CreateDirectory(repository);
             var repo = CheckoutGitRepository(stepFields.GitConnection, repository);
             
             foreach (var file in filesToApply)
             {
+                //TODO(tmm): AHHHHHH - the MappedRelativePath does not work. how I thought!
+                // second.yaml gets dumped into the root (not under nested!).
                 //The file destination will be the same path wrt package
                 File.Copy(file.FilePath, Path.Combine(repository, stepFields.GitConnection.Folder, file.MappedRelativePath), true);
+                //the add must be the relative path
                 repo.Index.Add(file.MappedRelativePath);
             }
 
@@ -121,18 +127,26 @@ namespace Calamari.ArgoCD.Commands.Executors
         {
             var options = new CloneOptions
             {
-                BranchName = gitConnection.BranchName,
-                FetchOptions = new FetchOptions
+            };
+
+            if (gitConnection.Username != null && gitConnection.Password != null)
+            {
+                options.FetchOptions = new FetchOptions
                 {
                     CredentialsProvider = (url, usernameFromUrl, types) => new UsernamePasswordCredentials
                     {
-                        Username = gitConnection.Username,
-                        Password = gitConnection.Password
+                        Username = gitConnection.Username!,
+                        Password = gitConnection.Password!
                     }
-                }
-            };
+                };
+            }
+
             Repository.Clone(gitConnection.Url, checkoutPath, options);
-            return new Repository(checkoutPath);
+            var repo = new Repository(checkoutPath);
+            Branch remoteBranch = repo.Branches[gitConnection.RemoteBranchName];
+            var branch = repo.CreateBranch(gitConnection.BranchName, remoteBranch.Tip);
+            LibGit2Sharp.Commands.Checkout(repo, gitConnection.BranchName);
+            return repo;
         }
     }
 }
