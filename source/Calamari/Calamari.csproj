@@ -18,7 +18,7 @@
     <Product>Calamari</Product>
     <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
     <ApplicationManifest>Calamari.exe.manifest</ApplicationManifest>
-    <TargetFrameworks>net462;net6.0</TargetFrameworks>
+    <TargetFrameworks>net462;net8.0</TargetFrameworks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net462' ">
     <DefineConstants>$(DefineConstants);IIS_SUPPORT;</DefineConstants>
@@ -42,7 +42,7 @@
     </PackageReference>
     <ProjectReference Include="..\Calamari.Common\Calamari.Common.csproj" />
     <ProjectReference Include="..\Calamari.Shared\Calamari.Shared.csproj" />
-    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies.net462" Version="1.0.2">
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies.net462" Version="1.0.3">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
