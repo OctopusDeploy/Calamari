@@ -100,8 +100,8 @@ namespace Calamari.Tests.ArgoCD.Commands.Executors
                 [KnownVariables.OriginalPackageDirectoryPath] = StagingDirectory,
                 [SpecialVariables.CustomResourceYamlFileName] = "./*\nnested/*",
                 [SpecialVariables.Git.Folder] = "",
-                //[SpecialVariables.Git.Password] = "password",
-                //[SpecialVariables.Git.Username] = "username",
+                [SpecialVariables.Git.Password] = "password",
+                [SpecialVariables.Git.Username] = "username",
                 [SpecialVariables.Git.Url] = OriginPath,
                 [SpecialVariables.Git.BranchName] = branchName,
             };
@@ -113,12 +113,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Executors
             
             await executor.Execute(runningDeployment, PackageDirectory);
             
-            //
             var resultPath = Path.Combine(tempDirectory, "result");
-            var options = new CloneOptions()
-            {
-                BranchName = branchName,
-            };
             Repository.Clone(OriginPath, resultPath);
             var resultRepo = new Repository(resultPath);
             LibGit2Sharp.Commands.Checkout(resultRepo, $"origin/{branchName}");
