@@ -13,6 +13,8 @@ using Repository = LibGit2Sharp.Repository;
 
 namespace Calamari.ArgoCD.Commands.Executors
 {
+#if NET6_0
+
     class GitConnection
     {
         public GitConnection(string url, string branchName, string? username, string? password, string folder)
@@ -103,6 +105,12 @@ namespace Calamari.ArgoCD.Commands.Executors
             {
                 //The file destination will be the same path wrt package
                 var repositoryRelativePath = Path.Combine(stepFields.GitConnection.Folder, file.RelativePath);
+                var destinationPath = Path.Combine(repository, repositoryRelativePath);
+                var destinationDirectory = Path.GetDirectoryName(destinationPath);
+                if (destinationDirectory != null)
+                {
+                    Directory.CreateDirectory(destinationDirectory);
+                }
                 File.Copy(file.AbsolutePath, Path.Combine(repository, repositoryRelativePath), true);
                 repo.Index.Add(repositoryRelativePath);
             }
@@ -146,12 +154,13 @@ namespace Calamari.ArgoCD.Commands.Executors
                 };
             }
 
-            Repository.Clone(gitConnection.Url, checkoutPath, options);
-            var repo = new Repository(checkoutPath);
+            var repoPath = Repository.Clone(gitConnection.Url, checkoutPath, options);
+            var repo = new Repository(repoPath);
             Branch remoteBranch = repo.Branches[gitConnection.RemoteBranchName];
             var branch = repo.CreateBranch(gitConnection.BranchName, remoteBranch.Tip);
             LibGit2Sharp.Commands.Checkout(repo, gitConnection.BranchName);
             return repo;
         }
     }
+#endif
 }

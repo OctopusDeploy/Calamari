@@ -1,3 +1,4 @@
+#if NETCORE
 using System;
 using System.IO;
 using System.Net;
@@ -11,6 +12,7 @@ using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
+using FluentAssertions;
 using LibGit2Sharp;
 using NUnit.Framework;
 
@@ -36,42 +38,48 @@ namespace Calamari.Tests.ArgoCD.Commands.Executors
             log = new InMemoryLog();
             tempDirectory = fileSystem.CreateTemporaryDirectory();
             Directory.CreateDirectory(PackageDirectory);
+            
             Directory.CreateDirectory(OriginPath);
             Repository.Init(OriginPath, isBare: true);
+            
             BareOrigin = new Repository(OriginPath);
             CreateDevBranchIn(OriginPath);
         }
 
         void CreateDevBranchIn(string originPath)
         {
-            //to create a commit in a bare repo you have to push it into the repo - go figure.
-            var tmpClone = Path.Combine(tempDirectory, "clone");
-            Repository.Clone(originPath, tmpClone);
-            var repo = new Repository(tmpClone); 
+            var signature = new Signature("Your Name", "your.email@example.com", DateTimeOffset.Now);
             
-            var author = new Signature("Your Name", "your.email@example.com", DateTimeOffset.Now);
-            var committer = author; // Often the same for simple commits
-
-            // Create CommitOptions and set AllowEmptyCommit to true
-            var commitOptions = new CommitOptions
-            {
-                AllowEmptyCommit = true
-            };
-
-            var readmeFilename = "readme.txt";
-            var readmeFile = Path.Combine(tmpClone, readmeFilename);
-            File.WriteAllText(readmeFile,"readme");
-            repo.Index.Add(readmeFilename);
-
-            // Commit the empty changes
-            repo.Commit("Your empty commit message", author, committer, commitOptions);
-            var localBranch = repo.CreateBranch(branchName);
-            Remote remote = repo.Network.Remotes["origin"];
-            repo.Branches.Update(localBranch, 
-                                 branch => branch.Remote = remote.Name,
-                                 branch => branch.UpstreamBranch = localBranch.CanonicalName);
-            
-            repo.Network.Push(localBranch);
+            var repository = new Repository(OriginPath);
+            repository.Refs.UpdateTarget("HEAD", "refs/heads/master");
+            var tree = repository.ObjectDatabase.CreateTree(new TreeDefinition());
+            var commit = repository.ObjectDatabase.CreateCommit(
+                                                   signature,
+                                                   signature,
+                                                   "InitializeRepo",
+                                                   tree,
+                                                   Array.Empty<Commit>(),
+                                                   false);
+            repository.CreateBranch(branchName, commit);
+            //
+            //
+            // var author = new Signature("Your Name", "your.email@example.com", DateTimeOffset.Now);
+            // var committer = author; // Often the same for simple commits
+            //
+            // // Create CommitOptions and set AllowEmptyCommit to true
+            // var commitOptions = new CommitOptions
+            // {
+            //     AllowEmptyCommit = true
+            // };
+            //
+            // var readmeFilename = "readme.txt";
+            // var readmeFile = Path.Combine(originPath, readmeFilename);
+            // File.WriteAllText(readmeFile,"readme");
+            // repository.Index.Add(readmeFilename);
+            //
+            // // Commit the empty changes
+            // var commit = repository.Commit("Your empty commit message", author, committer, commitOptions);
+            // repository.CreateBranch(branchName, commit);
         }
         
         [TearDown]
@@ -83,9 +91,9 @@ namespace Calamari.Tests.ArgoCD.Commands.Executors
         [Test]
         public async Task ExecuteCopiesFilesFromPackageIntoRepo()
         {
-            File.WriteAllText(Path.Combine(PackageDirectory,"first.yaml"), "firstContent");
             var nestedDirectory = Path.Combine(PackageDirectory, "nested");
             Directory.CreateDirectory(nestedDirectory);
+            File.WriteAllText(Path.Combine(PackageDirectory,"first.yaml"), "firstContent");
             File.WriteAllText(Path.Combine(nestedDirectory, "second.yaml"), "secondContent");
             
             var variables = new CalamariVariables
@@ -105,6 +113,23 @@ namespace Calamari.Tests.ArgoCD.Commands.Executors
             var executor = new UpdateGitFromTemplatesExecutor(fileSystem, log);
             
             await executor.Execute(runningDeployment, PackageDirectory);
+            
+            //
+            var resultPath = Path.Combine(tempDirectory, "result");
+            var options = new CloneOptions()
+            {
+                BranchName = branchName,
+            };
+            Repository.Clone(OriginPath, resultPath);
+            var resultRepo = new Repository(resultPath);
+            LibGit2Sharp.Commands.Checkout(resultRepo, $"origin/{branchName}");
+            var resultFirstContent = File.ReadAllText(Path.Combine(resultPath, "first.yaml"));
+            var resultNestedContent = File.ReadAllText(Path.Combine(resultPath, "nested", "second.yaml"));
+            
+            resultFirstContent.Should().Be("firstContent");
+            resultNestedContent.Should().Be("secondContent");
         }
     }
 }
+
+#endif
