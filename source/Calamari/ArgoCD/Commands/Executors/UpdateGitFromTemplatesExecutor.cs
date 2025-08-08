@@ -8,8 +8,6 @@ using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Kubernetes;
-using Calamari.Kubernetes.ResourceStatus.Resources;
-using Calamari.Util;
 using LibGit2Sharp;
 using Repository = LibGit2Sharp.Repository;
 
@@ -34,6 +32,20 @@ namespace Calamari.ArgoCD.Commands.Executors
         public string RemoteBranchName => $"origin/{BranchName}";
     }
 
+
+    class FileToCopy
+    {
+        public FileToCopy(string packageBasePath, string absolutePath)
+        {
+            this.packageBasePath = packageBasePath;
+            this.AbsolutePath = absolutePath;
+        }
+
+        readonly string packageBasePath;
+        public string AbsolutePath { get; }
+        public string RelativePath => Path.GetRelativePath(packageBasePath, AbsolutePath);
+    }
+    
     class StepFields
     {
         public StepFields(GitConnection gitConnection, List<string> fileGlobs)
@@ -58,7 +70,7 @@ namespace Calamari.ArgoCD.Commands.Executors
             this.log = log;
         }
         
-        public async Task<bool> Execute(RunningDeployment deployment, string inputDirectory)
+        public async Task<bool> Execute(RunningDeployment deployment, string extractedPackageDirectory)
         {
             await Task.CompletedTask;
             var url = deployment.Variables.Get(SpecialVariables.Git.Url);
@@ -72,34 +84,27 @@ namespace Calamari.ArgoCD.Commands.Executors
                 deployment.Variables.GetPaths(SpecialVariables.CustomResourceYamlFileName)
             );
             
-            DoWork(stepFields, deployment, inputDirectory);
+            //Does a deployment get its own directory every time? If so - this will work for now, if not, this is kinda messy
+            log.Info($"Executing ArgoCD");
+            var filesToApply = SelectFiles(extractedPackageDirectory, stepFields.FileGlobs);
+            UpdateRepository(filesToApply, deployment.CurrentDirectory, stepFields);
              
             return true;
         }
-        
-        void DoWork(StepFields stepFields, RunningDeployment deployment, string inputDirectory)
-        {
-            //Does a deployment get its own directory every time? If so - this will work for now, if not, this is kinda messy
-            log.Info($"Executing ArgoCD");
-            
-            var filesToApply = SelectFiles(inputDirectory, stepFields.FileGlobs);
-            UpdateRepository(filesToApply, deployment.CurrentDirectory, stepFields);
-        }
 
-        void UpdateRepository(IEnumerable<RelativeGlobMatch> filesToApply, string rootDir, StepFields stepFields)
+
+        void UpdateRepository(IEnumerable<FileToCopy> filesToCopy, string rootDir, StepFields stepFields)
         {
             var repository = Path.Combine(rootDir, repoPath);
             Directory.CreateDirectory(repository);
             var repo = CheckoutGitRepository(stepFields.GitConnection, repository);
             
-            foreach (var file in filesToApply)
+            foreach (var file in filesToCopy)
             {
-                //TODO(tmm): AHHHHHH - the MappedRelativePath does not work. how I thought!
-                // second.yaml gets dumped into the root (not under nested!).
                 //The file destination will be the same path wrt package
-                File.Copy(file.FilePath, Path.Combine(repository, stepFields.GitConnection.Folder, file.MappedRelativePath), true);
-                //the add must be the relative path
-                repo.Index.Add(file.MappedRelativePath);
+                var repositoryRelativePath = Path.Combine(stepFields.GitConnection.Folder, file.RelativePath);
+                File.Copy(file.AbsolutePath, Path.Combine(repository, repositoryRelativePath), true);
+                repo.Index.Add(repositoryRelativePath);
             }
 
             Branch localBranch = repo.Branches[stepFields.GitConnection.BranchName];
@@ -117,10 +122,10 @@ namespace Calamari.ArgoCD.Commands.Executors
             
         }
 
-        IEnumerable<RelativeGlobMatch> SelectFiles(string pathToExtractedPackage, List<string> fileGlobs)
+        IEnumerable<FileToCopy> SelectFiles(string pathToExtractedPackage, List<string> fileGlobs)
         {
-            var relativeGlobber = new RelativeGlobber((@base, pattern) => fileSystem.EnumerateFilesWithGlob(@base, pattern), pathToExtractedPackage);
-            return fileGlobs.SelectMany(glob => relativeGlobber.EnumerateFilesWithGlob(glob)).ToList();
+            return fileGlobs.SelectMany(glob => fileSystem.EnumerateFilesWithGlob(pathToExtractedPackage, glob))
+                            .Select(file => new FileToCopy(pathToExtractedPackage, file));
         }
 
         Repository CheckoutGitRepository(GitConnection gitConnection, string checkoutPath)
