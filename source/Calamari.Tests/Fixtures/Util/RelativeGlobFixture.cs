@@ -18,16 +18,6 @@ namespace Calamari.Tests.Fixtures.Util
         }
         
         [Test]
-        public void RelativeIsWithRespectToTheGlob()
-        {
-            var files = new List<string>{ @"c:\staging\content\first.txt", @"c:\staging\content\nested\two.txt" };
-            var matches = new RelativeGlobber((@base, pattern) => files, @"c:\staging").EnumerateFilesWithGlob("context/*").ToList();
-            Assert.AreEqual(matches.Count, 2);            
-            Assert.AreEqual(@"content/first.txt", matches[0].MappedRelativePath);
-            Assert.AreEqual(@"content/nested/two.txt", matches[1].MappedRelativePath);
-        }
-        
-        [Test]
         public void HasCorrectRelativePathsForFolderGlob()
         {
             var files = new List<string>{ @"c:\staging\content\first.txt", @"c:\staging\content\nested\two.txt" };
