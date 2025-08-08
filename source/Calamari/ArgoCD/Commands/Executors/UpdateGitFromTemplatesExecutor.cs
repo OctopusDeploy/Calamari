@@ -89,7 +89,6 @@ namespace Calamari.ArgoCD.Commands.Executors
             return true;
         }
 
-
         void UpdateRepository(IEnumerable<FileToCopy> filesToCopy, string rootDir, StepFields stepFields)
         {
             var repository = Path.Combine(rootDir, repoPath);
@@ -104,21 +103,28 @@ namespace Calamari.ArgoCD.Commands.Executors
             PushChanges(stepFields.GitConnection.BranchName, repo);
         }
 
-        static void CopyFileIntoRepository(string gitSubFolder, FileToCopy file, string repositoryPath, Repository repo)
+        void CopyFileIntoRepository(string gitSubFolder, FileToCopy file, string repositoryPath, Repository repo)
         {
             //The file destination will be the same path wrt package
             var repositoryRelativePath = Path.Combine(gitSubFolder, file.RelativePath);
-            var destinationPath = Path.Combine(repositoryPath, repositoryRelativePath);
-            var destinationDirectory = Path.GetDirectoryName(destinationPath);
-            if (destinationDirectory != null)
-            {
-                Directory.CreateDirectory(destinationDirectory);
-            }
+            
+            EnsureDirectoryExists(repositoryPath, repositoryRelativePath);
+
             File.Copy(file.AbsolutePath, Path.Combine(repositoryPath, repositoryRelativePath), true);
             repo.Index.Add(repositoryRelativePath);
         }
 
-        static void PushChanges(string branchName, Repository repo)
+        void EnsureDirectoryExists(string repositoryPath, string repositoryRelativeFilePath)
+        {
+            var absoluteDestinationPath = Path.Combine(repositoryPath, repositoryRelativeFilePath);
+            var destinationDirectory = Path.GetDirectoryName(absoluteDestinationPath);
+            if (destinationDirectory != null)
+            {
+                Directory.CreateDirectory(destinationDirectory);
+            }
+        }
+
+        void PushChanges(string branchName, Repository repo)
         {
             Branch localBranch = repo.Branches[branchName];
             repo.Commit("Updated the git repo",
@@ -136,14 +142,14 @@ namespace Calamari.ArgoCD.Commands.Executors
         IEnumerable<FileToCopy> SelectFiles(string pathToExtractedPackage, List<string> fileGlobs)
         {
             return fileGlobs.SelectMany(glob => fileSystem.EnumerateFilesWithGlob(pathToExtractedPackage, glob))
-                            .Select(file =>
+                            .Select(absoluteFilepath =>
                                     {
                                         #if NETCORE
                                         var relativePath = Path.GetRelativePath(pathToExtractedPackage, file);
                                         #else           
-                                        var relativePath = file.Substring(pathToExtractedPackage.Length + 1);
+                                        var relativePath = absoluteFilepath.Substring(pathToExtractedPackage.Length + 1);
                                         #endif
-                                        return new FileToCopy(file, relativePath);
+                                        return new FileToCopy(absoluteFilepath, relativePath);
                                     });
         }
 
