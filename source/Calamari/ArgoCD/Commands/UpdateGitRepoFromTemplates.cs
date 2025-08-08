@@ -14,7 +14,6 @@ using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes;
 using Calamari.Kubernetes.ResourceStatus;
 
-#if NET6_0
 namespace Calamari.ArgoCD.Commands
 {
     
@@ -64,4 +63,3 @@ namespace Calamari.ArgoCD.Commands
         }
     }
 }
-#endif

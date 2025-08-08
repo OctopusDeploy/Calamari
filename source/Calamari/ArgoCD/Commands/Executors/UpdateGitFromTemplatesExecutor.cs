@@ -13,8 +13,6 @@ using Repository = LibGit2Sharp.Repository;
 
 namespace Calamari.ArgoCD.Commands.Executors
 {
-#if NET6_0
-
     class GitConnection
     {
         public GitConnection(string url, string branchName, string? username, string? password, string folder)
@@ -37,15 +35,13 @@ namespace Calamari.ArgoCD.Commands.Executors
 
     class FileToCopy
     {
-        public FileToCopy(string packageBasePath, string absolutePath)
+        public FileToCopy(string absolutePath, string relativePath)
         {
-            this.packageBasePath = packageBasePath;
-            this.AbsolutePath = absolutePath;
+            RelativePath = relativePath;
+            AbsolutePath = absolutePath;
         }
-
-        readonly string packageBasePath;
         public string AbsolutePath { get; }
-        public string RelativePath => Path.GetRelativePath(packageBasePath, AbsolutePath);
+        public string RelativePath { get;  }
     }
     
     class StepFields
@@ -86,7 +82,6 @@ namespace Calamari.ArgoCD.Commands.Executors
                 deployment.Variables.GetPaths(SpecialVariables.CustomResourceYamlFileName)
             );
             
-            //Does a deployment get its own directory every time? If so - this will work for now, if not, this is kinda messy
             log.Info($"Executing ArgoCD");
             var filesToApply = SelectFiles(extractedPackageDirectory, stepFields.FileGlobs);
             UpdateRepository(filesToApply, deployment.CurrentDirectory, stepFields);
@@ -103,20 +98,29 @@ namespace Calamari.ArgoCD.Commands.Executors
             
             foreach (var file in filesToCopy)
             {
-                //The file destination will be the same path wrt package
-                var repositoryRelativePath = Path.Combine(stepFields.GitConnection.Folder, file.RelativePath);
-                var destinationPath = Path.Combine(repository, repositoryRelativePath);
-                var destinationDirectory = Path.GetDirectoryName(destinationPath);
-                if (destinationDirectory != null)
-                {
-                    Directory.CreateDirectory(destinationDirectory);
-                }
-                File.Copy(file.AbsolutePath, Path.Combine(repository, repositoryRelativePath), true);
-                repo.Index.Add(repositoryRelativePath);
+                CopyFileIntoRepository(stepFields.GitConnection.Folder, file, repository, repo);
             }
 
-            Branch localBranch = repo.Branches[stepFields.GitConnection.BranchName];
-            
+            PushChanges(stepFields.GitConnection.BranchName, repo);
+        }
+
+        static void CopyFileIntoRepository(string gitSubFolder, FileToCopy file, string repositoryPath, Repository repo)
+        {
+            //The file destination will be the same path wrt package
+            var repositoryRelativePath = Path.Combine(gitSubFolder, file.RelativePath);
+            var destinationPath = Path.Combine(repositoryPath, repositoryRelativePath);
+            var destinationDirectory = Path.GetDirectoryName(destinationPath);
+            if (destinationDirectory != null)
+            {
+                Directory.CreateDirectory(destinationDirectory);
+            }
+            File.Copy(file.AbsolutePath, Path.Combine(repositoryPath, repositoryRelativePath), true);
+            repo.Index.Add(repositoryRelativePath);
+        }
+
+        static void PushChanges(string branchName, Repository repo)
+        {
+            Branch localBranch = repo.Branches[branchName];
             repo.Commit("Updated the git repo",
                         new Signature("Octopus", "octopus@octopus.com", DateTimeOffset.Now),
                         new Signature("Octopus", "octopus@octopus.com", DateTimeOffset.Now));
@@ -127,21 +131,31 @@ namespace Calamari.ArgoCD.Commands.Executors
                                  branch => branch.UpstreamBranch = localBranch.CanonicalName);
             
             repo.Network.Push(localBranch);
-            
         }
 
         IEnumerable<FileToCopy> SelectFiles(string pathToExtractedPackage, List<string> fileGlobs)
         {
             return fileGlobs.SelectMany(glob => fileSystem.EnumerateFilesWithGlob(pathToExtractedPackage, glob))
-                            .Select(file => new FileToCopy(pathToExtractedPackage, file));
+                            .Select(file =>
+                                    {
+                                        #if NETCORE
+                                        var relativePath = Path.GetRelativePath(pathToExtractedPackage, file);
+                                        #else           
+                                        var relativePath = file.Substring(pathToExtractedPackage.Length + 1);
+                                        #endif
+                                        return new FileToCopy(file, relativePath);
+                                    });
         }
 
         Repository CheckoutGitRepository(GitConnection gitConnection, string checkoutPath)
         {
-            var options = new CloneOptions
-            {
-            };
+            //Todo - cannot make this work
+            // var options = new CloneOptions
+            // {
+            //     BranchName = gitConnection.BranchName
+            // };
 
+            var options = new CloneOptions();
             if (gitConnection.Username != null && gitConnection.Password != null)
             {
                 options.FetchOptions = new FetchOptions
@@ -162,5 +176,4 @@ namespace Calamari.ArgoCD.Commands.Executors
             return repo;
         }
     }
-#endif
 }

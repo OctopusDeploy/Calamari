@@ -1,4 +1,3 @@
-#if NETCORE
 using System;
 using System.IO;
 using System.Net;
@@ -131,5 +130,3 @@ namespace Calamari.Tests.ArgoCD.Commands.Executors
         }
     }
 }
-
-#endif
