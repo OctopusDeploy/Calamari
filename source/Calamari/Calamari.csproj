@@ -19,6 +19,7 @@
     <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
     <ApplicationManifest>Calamari.exe.manifest</ApplicationManifest>
     <TargetFrameworks>net462;net6.0</TargetFrameworks>
+    <LangVersion>8</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net462' ">
     <DefineConstants>$(DefineConstants);IIS_SUPPORT;</DefineConstants>
@@ -55,6 +56,7 @@
     <PackageReference Include="SharpCompress" Version="0.37.2" />
     <PackageReference Include="YamlDotNet" Version="8.1.2" />
     <PackageReference Include="System.ValueTuple" Version="4.5.0" />
+    <PackageReference Include="Octopus.LibGit2Sharp" Version="0.26.353-octopus-master" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFrameworkIdentifier)' == '.NETFramework' ">
     <Reference Include="System.ComponentModel.DataAnnotations" />
