@@ -11,6 +11,7 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Integration.Processes;
+using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using NUnit.Framework;
 
@@ -104,7 +105,7 @@ namespace Calamari.Tests.Helpers
                                                                           IEnumerable<string> extensions = null)
         {
             var variablesFile = Path.GetTempFileName();
-            var variables = new CalamariVariables();
+            IVariables variables = new CalamariVariables();
             variables.Set(ScriptVariables.ScriptFileName, scriptName);
             variables.Set(ScriptVariables.ScriptBody, File.ReadAllText(GetFixtureResource("Scripts", scriptName)));
             variables.Set(ScriptVariables.Syntax, scriptName.ToScriptType().ToString());
@@ -122,10 +123,8 @@ namespace Calamari.Tests.Helpers
                     sensitiveVariablesPassword = AesEncryption.RandomString(10);
                 }
 
-                variables.SaveAsEncryptedExecutionVariables(sensitiveVariablesPassword, variablesFile);
-                cmdBase = cmdBase
-                          .Argument("variables", variablesFile)
-                          .Argument("variablesPassword", sensitiveVariablesPassword);
+                variables.SaveAsEncryptedExecutionVariables(variablesFile, sensitiveVariablesPassword);
+                cmdBase = cmdBase.VariablesFileArguments(variablesFile, sensitiveVariablesPassword);
 
                 if (extensions != null)
                 {

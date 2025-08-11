@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Integration.FileSystem;
+using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Deployment.Packages;
 using Calamari.Tests.Helpers;
@@ -102,11 +103,11 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             using (var variablesFile = new TemporaryFile(Path.GetTempFileName()))
             {
-                variables.Save(variablesFile.FilePath);
+                var encryptionKey = variables.SaveAsEncryptedExecutionVariables(variablesFile.FilePath);
 
                 return Invoke(Calamari()
                     .Action("transfer-package")
-                    .Argument("variables", variablesFile.FilePath));
+                    .VariablesFileArguments(variablesFile.FilePath, encryptionKey));
             }
         }
     }
