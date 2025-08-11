@@ -31,8 +31,7 @@ namespace Calamari.ArgoCD.Commands.Executors
         public string Folder { get; }
         public string RemoteBranchName => $"origin/{BranchName}";
     }
-
-
+    
     class FileToCopy
     {
         public FileToCopy(string absolutePath, string relativePath)
@@ -84,59 +83,57 @@ namespace Calamari.ArgoCD.Commands.Executors
             
             log.Info($"Executing ArgoCD");
             var filesToApply = SelectFiles(extractedPackageDirectory, stepFields.FileGlobs);
-            UpdateRepository(filesToApply, deployment.CurrentDirectory, stepFields);
+            
+            var localRepository = CloneRepository(stepFields.GitConnection, deployment.CurrentDirectory);
+            
+            ApplyChangesToLocalRepository(filesToApply, localRepository, folder!);
              
+            PushChanges(stepFields.GitConnection.BranchName, localRepository);
             return true;
         }
 
-        void UpdateRepository(IEnumerable<FileToCopy> filesToCopy, string rootDir, StepFields stepFields)
+        Repository CloneRepository(GitConnection gitConnection, string rootDir)
         {
-            var repository = Path.Combine(rootDir, repoPath);
-            Directory.CreateDirectory(repository);
-            var repo = CheckoutGitRepository(stepFields.GitConnection, repository);
-            
+            var repositoryPath = Path.Combine(rootDir, repoPath);
+            Directory.CreateDirectory(repositoryPath);
+            return CheckoutGitRepository(gitConnection, repositoryPath);            
+        }
+
+        void ApplyChangesToLocalRepository(IEnumerable<FileToCopy> filesToCopy, Repository repository, string repoSubFolder)
+        {
             foreach (var file in filesToCopy)
             {
-                CopyFileIntoRepository(stepFields.GitConnection.Folder, file, repository, repo);
+                var repoRelativeFilePath = Path.Combine(repoSubFolder, file.RelativePath);
+                var absRepoFilePath = Path.Combine(repository.Info.WorkingDirectory, repoRelativeFilePath);
+                EnsureParentDirectoryExists(absRepoFilePath);
+                File.Copy(file.AbsolutePath, absRepoFilePath, true);
+                
+                //This MUST take a path relative to the repository root.
+                repository.Index.Add(repoRelativeFilePath);
             }
-
-            PushChanges(stepFields.GitConnection.BranchName, repo);
         }
 
-        void CopyFileIntoRepository(string gitSubFolder, FileToCopy file, string repositoryPath, Repository repo)
+        void EnsureParentDirectoryExists(string filePath)
         {
-            //The file destination will be the same path wrt package
-            var repositoryRelativePath = Path.Combine(gitSubFolder, file.RelativePath);
-            
-            EnsureDirectoryExists(repositoryPath, repositoryRelativePath);
-
-            File.Copy(file.AbsolutePath, Path.Combine(repositoryPath, repositoryRelativePath), true);
-            repo.Index.Add(repositoryRelativePath);
-        }
-
-        void EnsureDirectoryExists(string repositoryPath, string repositoryRelativeFilePath)
-        {
-            var absoluteDestinationPath = Path.Combine(repositoryPath, repositoryRelativeFilePath);
-            var destinationDirectory = Path.GetDirectoryName(absoluteDestinationPath);
+            var destinationDirectory = Path.GetDirectoryName(filePath);
             if (destinationDirectory != null)
             {
                 Directory.CreateDirectory(destinationDirectory);
             }
         }
-
+        
         void PushChanges(string branchName, Repository repo)
         {
-            Branch localBranch = repo.Branches[branchName];
             repo.Commit("Updated the git repo",
                         new Signature("Octopus", "octopus@octopus.com", DateTimeOffset.Now),
                         new Signature("Octopus", "octopus@octopus.com", DateTimeOffset.Now));
             
             Remote remote = repo.Network.Remotes["origin"];
-            repo.Branches.Update(localBranch, 
+            repo.Branches.Update(repo.Head, 
                                  branch => branch.Remote = remote.Name,
-                                 branch => branch.UpstreamBranch = localBranch.CanonicalName);
+                                 branch => branch.UpstreamBranch = $"refs/heads/{branchName}");
             
-            repo.Network.Push(localBranch);
+            repo.Network.Push(repo.Head);
         }
 
         IEnumerable<FileToCopy> SelectFiles(string pathToExtractedPackage, List<string> fileGlobs)
@@ -177,7 +174,7 @@ namespace Calamari.ArgoCD.Commands.Executors
             var repoPath = Repository.Clone(gitConnection.Url, checkoutPath, options);
             var repo = new Repository(repoPath);
             Branch remoteBranch = repo.Branches[gitConnection.RemoteBranchName];
-            var branch = repo.CreateBranch(gitConnection.BranchName, remoteBranch.Tip);
+            repo.CreateBranch(gitConnection.BranchName, remoteBranch.Tip);
             LibGit2Sharp.Commands.Checkout(repo, gitConnection.BranchName);
             return repo;
         }

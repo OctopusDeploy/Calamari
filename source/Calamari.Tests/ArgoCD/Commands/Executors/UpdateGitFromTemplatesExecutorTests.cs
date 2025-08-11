@@ -60,25 +60,6 @@ namespace Calamari.Tests.ArgoCD.Commands.Executors
                                                    Array.Empty<Commit>(),
                                                    false);
             repository.CreateBranch(branchName, commit);
-            //
-            //
-            // var author = new Signature("Your Name", "your.email@example.com", DateTimeOffset.Now);
-            // var committer = author; // Often the same for simple commits
-            //
-            // // Create CommitOptions and set AllowEmptyCommit to true
-            // var commitOptions = new CommitOptions
-            // {
-            //     AllowEmptyCommit = true
-            // };
-            //
-            // var readmeFilename = "readme.txt";
-            // var readmeFile = Path.Combine(originPath, readmeFilename);
-            // File.WriteAllText(readmeFile,"readme");
-            // repository.Index.Add(readmeFilename);
-            //
-            // // Commit the empty changes
-            // var commit = repository.Commit("Your empty commit message", author, committer, commitOptions);
-            // repository.CreateBranch(branchName, commit);
         }
         
         [TearDown]
