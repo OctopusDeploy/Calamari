@@ -10,17 +10,17 @@ namespace Calamari.ArgoCD.Conventions
 {
     public class GitCloneConvention : IInstallConvention
     {
-        string repositorySubPath = "repo";
-        public List<Repository> Repositories { get; private set; }
+        readonly GitInstallationContext gitInstallContext;
+        const string GitRepositoryDirectoryName = "git";
 
-        public GitCloneConvention(string repositorySubPath)
+        public GitCloneConvention(GitInstallationContext gitInstallContext)
         {
-            this.repositorySubPath = repositorySubPath;
-            Repositories = new List<Repository>();
+            this.gitInstallContext = gitInstallContext;
         }
 
         public void Install(RunningDeployment deployment)
         {
+            // NOTE: This could be MULTIPLE REPOSITORIES
             var url = deployment.Variables.Get(SpecialVariables.Git.Url);
             var branchName = deployment.Variables.Get(SpecialVariables.Git.BranchName);
             var username = deployment.Variables.Get(SpecialVariables.Git.Username);
@@ -33,12 +33,13 @@ namespace Calamari.ArgoCD.Conventions
                                                   password,
                                                   folder!);
 
-            Repositories.Add(CloneRepository(gitConnection, Path.Combine(deployment.CurrentDirectory, repositorySubPath)));
+            var repo = CloneRepository(gitConnection, deployment.CurrentDirectory);
+            gitInstallContext.AddRepository(repo);
         }
 
         Repository CloneRepository(GitConnection gitConnection, string rootDir)
         {
-            var repositoryPath = Path.Combine(rootDir, repositorySubPath);
+            var repositoryPath = Path.Combine(rootDir, GitRepositoryDirectoryName);
             Directory.CreateDirectory(repositoryPath);
             return CheckoutGitRepository(gitConnection, repositoryPath);
         }

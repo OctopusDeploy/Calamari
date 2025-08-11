@@ -1,12 +1,10 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Calamari.ArgoCD.Commands.Executors;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Deployment.Conventions;
 using Calamari.Kubernetes;
-using LibGit2Sharp;
 
 namespace Calamari.ArgoCD.Conventions
 {
@@ -24,12 +22,12 @@ namespace Calamari.ArgoCD.Conventions
 
     public class UpdateRepositoryConvention : IInstallConvention
     {
-        readonly List<Repository> repositories;
+        readonly GitInstallationContext context;
         readonly ICalamariFileSystem fileSystem;
 
-        public UpdateRepositoryConvention(List<Repository> repositories, ICalamariFileSystem fileSystem)
+        public UpdateRepositoryConvention(GitInstallationContext context, ICalamariFileSystem fileSystem)
         {
-            this.repositories = repositories;
+            this.context = context;
             this.fileSystem = fileSystem;
         }
 
@@ -64,7 +62,7 @@ namespace Calamari.ArgoCD.Conventions
             foreach (var file in filesToCopy)
             {
                 var repoRelativeFilePath = Path.Combine(repoSubFolder, file.RelativePath);
-                foreach(var repo in repositories)
+                foreach(var repo in context.Repositories)
                 {
                     var absRepoFilePath = Path.Combine(repo.Info.WorkingDirectory, repoRelativeFilePath);
                     EnsureParentDirectoryExists(absRepoFilePath);

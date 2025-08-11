@@ -23,10 +23,9 @@ using LibGit2Sharp;
 namespace Calamari.ArgoCD.Commands
 {
     [Command(Name, Description = "Write populated templates to git repository")]
-    public class UpdateGitRepoFromTemplates : Command
+    public partial class UpdateGitRepoFromTemplates : Command
     {
         public const string PackageDirectoryName = "package";
-        public const string GitRepositoryDirectoryName = "git";
 
         public const string Name = "update-git-repo-from-templates";
 
@@ -62,18 +61,11 @@ namespace Calamari.ArgoCD.Commands
         public override int Execute(string[] commandLineArguments)
         {
             Options.Parse(commandLineArguments);
-            var repositories = new List<Repository>();
+            var context = new GitInstallationContext();
 
             var conventions = new List<IConvention>()
             {
-                new DelegateInstallConvention(d =>
-                                              {
-                                                  var workingDirectory = d.CurrentDirectory;
-                                                  var gitRepositoryRoot = Path.Combine(workingDirectory, GitRepositoryDirectoryName);
-                                                  var convention = new GitCloneConvention(gitRepositoryRoot);
-                                                  convention.Install(d);
-                                                  repositories.AddRange(convention.Repositories); //this needs to make multiple repos
-                                              }),
+                new GitCloneConvention(context),
                 new DelegateInstallConvention(d =>
                                               {
                                                   var workingDirectory = d.CurrentDirectory;
@@ -86,22 +78,19 @@ namespace Calamari.ArgoCD.Commands
                                                   d.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
                                               }),
                 new SubstituteInFilesConvention(new SubstituteInFilesBehaviour(substituteInFiles, PackageDirectoryName)),
-                new ConfigurationTransformsConvention(new ConfigurationTransformsBehaviour(fileSystem,
-                                                                                           variables,
-                                                                                           ConfigurationTransformer.FromVariables(variables, log),
-                                                                                           new TransformFileLocator(fileSystem, log),
-                                                                                           log,
-                                                                                           PackageDirectoryName)),
-                new ConfigurationVariablesConvention(new ConfigurationVariablesBehaviour(fileSystem,
-                                                                                         variables,
-                                                                                         new ConfigurationVariablesReplacer(variables, log),
-                                                                                         log,
-                                                                                         PackageDirectoryName)),
-                new StructuredConfigurationVariablesConvention(
-                                                               new StructuredConfigurationVariablesBehaviour(structuredConfigVariablesService, PackageDirectoryName)),
-                new UpdateRepositoryConvention(repositories, fileSystem),
-                new GitPushConvention(repositories),
+                new UpdateRepositoryConvention(context, fileSystem),
+                new GitPushConvention(context),
             };
+            //
+            // for (int i = 0; i < conventions.Count; i++)
+            // {
+            //     conventions.Add(
+            //                     new AggregateInstallationConvention(
+            //                                                         new CloneRepo(),
+            //                                                         new UpdateRepositoryConvention(,
+            //                                                                                        new GitPush)));
+            // }
+            //               )
 
             var runningDeployment = new RunningDeployment(pathToPackage, variables);
 

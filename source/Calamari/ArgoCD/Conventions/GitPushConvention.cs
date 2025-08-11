@@ -1,6 +1,4 @@
-using System.Collections.Generic;
-using System.IO;
-using Calamari.ArgoCD.Commands.Executors;
+using System;
 using Calamari.Common.Commands;
 using Calamari.Deployment.Conventions;
 using LibGit2Sharp;
@@ -9,39 +7,33 @@ namespace Calamari.ArgoCD.Conventions
 {
     public class GitPushConvention : IInstallConvention
     {
-        readonly List<Repository> repositories;
+        readonly GitInstallationContext context;
 
-        public GitPushConvention(List<Repository> repositories)
+        public GitPushConvention(GitInstallationContext context)
         {
-            this.repositories = repositories;
+            this.context = context;
         }
 
         public void Install(RunningDeployment deployment)
         {
-            
-        }
-        
-        void ApplyChangesToLocalRepository(IEnumerable<FileToCopy> filesToCopy, Repository repository, string repoSubFolder)
-        {
-            foreach (var file in filesToCopy)
+            foreach (var repository in context.Repositories)
             {
-                var repoRelativeFilePath = Path.Combine(repoSubFolder, file.RelativePath);
-                var absRepoFilePath = Path.Combine(repository.Info.WorkingDirectory, repoRelativeFilePath);
-                EnsureParentDirectoryExists(absRepoFilePath);
-                File.Copy(file.AbsolutePath, absRepoFilePath, true);
-                
-                //This MUST take a path relative to the repository root.
-                repository.Index.Add(repoRelativeFilePath);
+                PushChanges("blah", repository);
             }
         }
 
-        void EnsureParentDirectoryExists(string filePath)
+        void PushChanges(string branchName, Repository repo)
         {
-            var destinationDirectory = Path.GetDirectoryName(filePath);
-            if (destinationDirectory != null)
-            {
-                Directory.CreateDirectory(destinationDirectory);
-            }
+            repo.Commit("Updated the git repo",
+                        new Signature("Octopus", "octopus@octopus.com", DateTimeOffset.Now),
+                        new Signature("Octopus", "octopus@octopus.com", DateTimeOffset.Now));
+            
+            Remote remote = repo.Network.Remotes["origin"];
+            repo.Branches.Update(repo.Head, 
+                                 branch => branch.Remote = remote.Name,
+                                 branch => branch.UpstreamBranch = $"refs/heads/{branchName}");
+            
+            repo.Network.Push(repo.Head);
         }
     }
 }
