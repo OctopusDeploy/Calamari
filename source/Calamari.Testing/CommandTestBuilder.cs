@@ -152,8 +152,9 @@ namespace Calamari.Testing
 
                 var varPath = Path.Combine(workingPath, "variables.json");
 
-                context.Variables.Save(varPath);
+                var encryptionKey = context.Variables.SaveAsEncryptedExecutionVariables(varPath);
                 args.Add($"--variables={varPath}");
+                args.Add($"--variablesPassword={encryptionKey}");
 
                 return args;
             }
