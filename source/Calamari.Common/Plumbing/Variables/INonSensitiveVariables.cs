@@ -4,7 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Calamari.Common.Plumbing.Variables
 {
-    public interface INonSensitiveOnlyVariables : IVariables
+    public interface INonSensitiveVariables : IVariables
     {
     }
 }

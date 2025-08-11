@@ -10,7 +10,7 @@ namespace Calamari.Common.Features.Substitutions
 {
     public class NonSensitiveSubstituteInFiles : SubstituteInFiles, INonSensitiveSubstituteInFiles
     {
-        public NonSensitiveSubstituteInFiles(ILog log, ICalamariFileSystem fileSystem, INonSensitiveFileSubstituter fileSubstituter, INonSensitiveOnlyVariables variables)
+        public NonSensitiveSubstituteInFiles(ILog log, ICalamariFileSystem fileSystem, INonSensitiveFileSubstituter fileSubstituter, INonSensitiveVariables variables)
             : base(log, fileSystem, fileSubstituter, variables)
         {
         }

@@ -8,8 +8,8 @@ namespace Calamari.Common.Features.Substitutions
 {
     public class NonSensitiveFileSubstituter : FileSubstituter, INonSensitiveFileSubstituter
     {
-        public NonSensitiveFileSubstituter(ILog log, ICalamariFileSystem fileSystem, INonSensitiveOnlyVariables nonSensitiveOnlyVariables)
-            : base(log, fileSystem, nonSensitiveOnlyVariables)
+        public NonSensitiveFileSubstituter(ILog log, ICalamariFileSystem fileSystem, INonSensitiveVariables nonSensitiveVariables)
+            : base(log, fileSystem, nonSensitiveVariables)
         {
         }
 

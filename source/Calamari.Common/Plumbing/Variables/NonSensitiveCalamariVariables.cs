@@ -4,6 +4,6 @@ using Octostache;
 
 namespace Calamari.Common.Plumbing.Variables
 {
-    public class NonSensitiveOnlyCalamariVariables : CalamariVariables, INonSensitiveOnlyVariables
+    public class NonSensitiveCalamariVariables : CalamariVariables, INonSensitiveVariables
     { }
 }

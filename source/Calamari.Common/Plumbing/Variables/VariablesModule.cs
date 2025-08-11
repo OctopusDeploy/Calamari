@@ -5,19 +5,12 @@ namespace Calamari.Common.Plumbing.Variables
 {
     public class VariablesModule : Module
     {
-        readonly CommonOptions options;
-
-        public VariablesModule(CommonOptions options)
-        {
-            this.options = options;
-        }
-        
         protected override void Load(ContainerBuilder builder)
         {
             builder.RegisterType<VariablesFactory>().AsSelf().SingleInstance();
             
-            builder.Register(c => c.Resolve<VariablesFactory>().Create(options)).As<IVariables>().SingleInstance();
-            builder.Register(c => c.Resolve<VariablesFactory>().CreateNonSensitiveOnlyVariables(options)).As<INonSensitiveOnlyVariables>().SingleInstance();
+            builder.Register(c => c.Resolve<VariablesFactory>().Create(c.Resolve<CommonOptions>())).As<IVariables>().SingleInstance();
+            builder.Register(c => c.Resolve<VariablesFactory>().CreateNonSensitiveVariables(c.Resolve<CommonOptions>())).As<INonSensitiveVariables>().SingleInstance();
         }
     }
 }

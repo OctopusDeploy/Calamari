@@ -60,7 +60,6 @@ namespace Calamari.Common
                 ConfigureContainer(builder, options);
 
                 using var container = builder.Build();
-                container.Resolve<VariableLogger>().LogVariables();
 
 #if DEBUG
                 var waitForDebugger = container.Resolve<IVariables>().Get(KnownVariables.Calamari.WaitForDebugger);
@@ -101,6 +100,9 @@ namespace Calamari.Common
 
         protected virtual void ConfigureContainer(ContainerBuilder builder, CommonOptions options)
         {
+            //register the option into the DI
+            builder.RegisterInstance(options).AsSelf();
+            
             var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
             builder.RegisterInstance(fileSystem).As<ICalamariFileSystem>();
             builder.RegisterType<ScriptEngine>().As<IScriptEngine>();
@@ -113,7 +115,7 @@ namespace Calamari.Common
             builder.RegisterType<CodeGenFunctionsRegistry>().SingleInstance();
             builder.RegisterType<AssemblyEmbeddedResources>().As<ICalamariEmbeddedResources>();
 
-            builder.RegisterModule(new VariablesModule(options));
+            builder.RegisterModule<VariablesModule>();
             builder.RegisterModule<SubstitutionsModule>();
 
             var assemblies = GetAllAssembliesToRegister().ToArray();

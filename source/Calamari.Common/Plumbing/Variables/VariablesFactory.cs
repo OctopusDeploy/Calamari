@@ -21,7 +21,7 @@ namespace Calamari.Common.Plumbing.Variables
         readonly ILog log;
 
         static readonly object LoaderLock = new object();
-        TargetVariableCollection? targetVariableCollection;
+        CalamariExecutionVariableCollection? variableCollection;
 
         public VariablesFactory(ICalamariFileSystem fileSystem, ILog log)
         {
@@ -31,9 +31,9 @@ namespace Calamari.Common.Plumbing.Variables
 
         public IVariables Create(CommonOptions options) => Create(new CalamariVariables(), options, _ => true);
 
-        public INonSensitiveOnlyVariables CreateNonSensitiveOnlyVariables(CommonOptions options) => Create(new NonSensitiveOnlyCalamariVariables(), options, tv => !tv.IsSensitive);
+        public INonSensitiveVariables CreateNonSensitiveVariables(CommonOptions options) => Create(new NonSensitiveCalamariVariables(), options, tv => !tv.IsSensitive);
 
-        T Create<T>(T variables, CommonOptions options, Func<TargetVariable, bool> targetVariablePredicate) where T : CalamariVariables
+        T Create<T>(T variables, CommonOptions options, Func<CalamariExecutionVariable, bool> targetVariablePredicate) where T : CalamariVariables
         {
             LoadTargetVariablesFromFiles(options);
 
@@ -54,12 +54,12 @@ namespace Calamari.Common.Plumbing.Variables
             lock (LoaderLock)
             {
                 //if this is not null, we must have already loaded it
-                if (targetVariableCollection != null)
+                if (variableCollection != null)
                 {
                     return;
                 }
 
-                targetVariableCollection = new TargetVariableCollection();
+                variableCollection = new CalamariExecutionVariableCollection();
                 foreach (var variablesFilePath in options.InputVariables.VariablesFiles.Where(f => !string.IsNullOrEmpty(f)))
                 {
                     var sensitiveFilePassword = options.InputVariables.VariableEncryptionPassword;
@@ -70,11 +70,11 @@ namespace Calamari.Common.Plumbing.Variables
                     try
                     {
                         //deserialize the target variables from the json
-                        var targetVariables = TargetVariableCollection.FromJson(json);
+                        var targetVariables = CalamariExecutionVariableCollection.FromJson(json);
                         
                         //append to the main collection
                         //This may have duplicates, but that isn't a concern as they will be de-duped later in the process
-                        targetVariableCollection.AddRange(targetVariables);
+                        variableCollection.AddRange(targetVariables);
                     }
                     catch (JsonReaderException)
                     {
@@ -84,15 +84,15 @@ namespace Calamari.Common.Plumbing.Variables
             }
         }
 
-        void ImportTargetVariablesIntoVariableCollection<T>(T variables, Func<TargetVariable,bool> targetVariablePredicate) where T : CalamariVariables
+        void ImportTargetVariablesIntoVariableCollection<T>(T variables, Func<CalamariExecutionVariable, bool> targetVariablePredicate) where T : CalamariVariables
         {
-            if(targetVariableCollection == null)
+            if(variableCollection == null)
             {
                 throw new InvalidOperationException("The target variable collection is null, meaning it has not been loaded yet.");
             }
             
             //for each variable, load it into the variable collection
-            foreach (var tv in targetVariableCollection.Where(targetVariablePredicate))
+            foreach (var tv in variableCollection.Where(targetVariablePredicate))
             {
                 variables.Set(tv.Key, tv.Value);
             }

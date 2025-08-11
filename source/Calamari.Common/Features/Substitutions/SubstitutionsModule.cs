@@ -11,7 +11,7 @@ namespace Calamari.Common.Features.Substitutions
             builder.RegisterType<FileSubstituter>().As<IFileSubstituter>().InstancePerLifetimeScope();
             
             //non-sensitive variables
-            builder.RegisterType<NonSensitiveSubstituteInFiles>().As<ISubstituteInFiles>().InstancePerLifetimeScope();
+            builder.RegisterType<NonSensitiveSubstituteInFiles>().As<INonSensitiveSubstituteInFiles>().InstancePerLifetimeScope();
             builder.RegisterType<NonSensitiveFileSubstituter>().As<INonSensitiveFileSubstituter>().InstancePerLifetimeScope();
         }
     }
