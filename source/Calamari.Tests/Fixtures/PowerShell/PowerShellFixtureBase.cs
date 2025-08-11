@@ -6,6 +6,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing;
+using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
@@ -640,11 +641,13 @@ namespace Calamari.Tests.Fixtures.PowerShell
             var variableDictionary = variables ?? new CalamariVariables();
             variableDictionary.Add(PowerShellVariables.Edition, GetPowerShellEditionVariable());
 
-            using (var variablesFile = CreateVariablesFile(variableDictionary))
+            using (var variablesFile = CreateVariablesFile(variableDictionary ))
             {
                 var calamariCommand = Calamari();
                 buildCommand(calamariCommand);
-                calamariCommand.Argument("variables", variablesFile.FilePath);
+                calamariCommand.Argument("variables", variablesFile.FilePath)
+                               .Argument("variablesPassword", variablesFile.EncryptionKey);
+                
                 return Invoke(calamariCommand);
             }
         }
@@ -658,12 +661,15 @@ namespace Calamari.Tests.Fixtures.PowerShell
         {
             readonly TemporaryFile tempFile;
             public string FilePath { get; }
+            public string EncryptionKey { get; }
 
             public VariableFile(CalamariVariables variables)
             {
                 FilePath = Path.GetTempFileName();
+                EncryptionKey =  AesEncryption.RandomString(10);
+                
+                variables.SaveAsEncryptedExecutionVariables(EncryptionKey, FilePath);
                 tempFile = new TemporaryFile(FilePath);
-                variables.Save(FilePath);
             }
 
             public void Dispose()
