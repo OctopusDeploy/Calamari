@@ -40,10 +40,11 @@ namespace Calamari.Common
 
         protected virtual void ConfigureContainer(ContainerBuilder builder, CommonOptions options)
         {
+            //register the options into the DI
+            builder.RegisterInstance(options).AsSelf();
+            
             var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
             builder.RegisterInstance(fileSystem).As<ICalamariFileSystem>();
-            builder.RegisterType<VariablesFactory>().AsSelf();
-            builder.Register(c => c.Resolve<VariablesFactory>().Create(options)).As<IVariables>().SingleInstance();
             builder.RegisterType<ScriptEngine>().As<IScriptEngine>();
             builder.RegisterType<VariableLogger>().AsSelf();
             builder.RegisterInstance(log).As<ILog>().SingleInstance();
@@ -59,6 +60,8 @@ namespace Calamari.Common
             builder.Register(context => ConfigurationTransformer.FromVariables(context.Resolve<IVariables>(), context.Resolve<ILog>())).As<IConfigurationTransformer>();
             builder.RegisterType<DeploymentJournalWriter>().As<IDeploymentJournalWriter>().SingleInstance();
             builder.RegisterType<CodeGenFunctionsRegistry>().SingleInstance();
+            
+            builder.RegisterModule<VariablesModule>();
 
             var assemblies = GetAllAssembliesToRegister().ToArray();
 
