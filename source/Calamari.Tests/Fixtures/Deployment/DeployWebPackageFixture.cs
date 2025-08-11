@@ -13,6 +13,7 @@ using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.Iis;
+using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using Calamari.Testing.Requirements;
 using Calamari.Tests.Fixtures.Deployment.Packages;
@@ -294,15 +295,16 @@ namespace Calamari.Tests.Fixtures.Deployment
                     CalamariResult result;
                     using (var variablesFile = new TemporaryFile(Path.GetTempFileName()))
                     {
+                        string encryptionKey;
                         lock (locker) // this save method isn't thread safe
                         {
-                            Variables.Save(variablesFile.FilePath);
+                            encryptionKey =Variables.SaveAsEncryptedExecutionVariables(variablesFile.FilePath);
                         }
 
                         result = Invoke(Calamari()
                             .Action("deploy-package")
                             .Argument("package", nupkgFile.FilePath)
-                            .Argument("variables", variablesFile.FilePath));
+                            .VariablesFileArguments(variablesFile.FilePath, encryptionKey));
                     }
 
                     result.AssertSuccess();

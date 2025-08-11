@@ -1,11 +1,13 @@
 using System;
 using System.IO;
 using Calamari.Common.Plumbing.Commands;
+using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Integration.FileSystem;
 using Calamari.Integration.Processes;
+using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Helpers;
 using Octostache;
@@ -46,12 +48,12 @@ namespace Calamari.Tests.Fixtures.Deployment
         {
             using (var variablesFile = new TemporaryFile(Path.GetTempFileName()))
             {
-                Variables.Save(variablesFile.FilePath);
+                var encryptionKey = Variables.SaveAsEncryptedExecutionVariables(variablesFile.FilePath);
 
                 return Invoke(Calamari()
                     .Action("deploy-package")
                     .Argument("package", packageName)
-                    .Argument("variables", variablesFile.FilePath));
+                    .VariablesFileArguments(variablesFile.FilePath, encryptionKey));
             }
         }
     }

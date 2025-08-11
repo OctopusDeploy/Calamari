@@ -12,6 +12,7 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes.Commands;
+using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
@@ -162,10 +163,10 @@ namespace Calamari.Tests.KubernetesFixtures
         {
             using (var variablesFile = new TemporaryFile(Path.GetTempFileName()))
             {
-                variables.Save(variablesFile.FilePath);
+                var encryptionKey = variables.SaveAsEncryptedExecutionVariables(variablesFile.FilePath);
 
                 var calamariCommand = Calamari().Action(command)
-                                                .Argument("variables", variablesFile.FilePath)
+                                                .VariablesFileArguments(variablesFile.FilePath, encryptionKey)
                                                 .WithEnvironmentVariables(GetEnvironments())
                                                 .WithWorkingDirectory(workingDirectory)
                                                 .OutputToLog(true);
