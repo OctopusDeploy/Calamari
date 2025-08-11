@@ -1,5 +1,7 @@
 ﻿using System.IO;
+using System.Linq;
 using Calamari.Common.Plumbing.Extensions;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Util;
 using Octostache;
 
@@ -7,10 +9,13 @@ namespace Calamari.Tests
 {
     public static class VariableDictionaryExtensions
     {
-        public static void SaveEncrypted(this VariableDictionary variables, string key, string file)
+        public static void SaveAsEncryptedExecutionVariables(this VariableDictionary variable, string encryptionKey, string filePath)
         {
-            var encryptedContent = AesEncryption.ForServerVariables(key).Encrypt(variables.SaveAsString());
-            File.WriteAllBytes(file, encryptedContent);
+            var collection = new CalamariExecutionVariableCollection();
+            collection.AddRange(variable.Select(kvp => new CalamariExecutionVariable(kvp.Key, kvp.Value, false /* Assume all are non-sensitive */)));
+            
+            var encryptedContent = AesEncryption.ForServerVariables(encryptionKey).Encrypt(collection.ToJsonString());
+            File.WriteAllBytes(filePath, encryptedContent);
         }
     }
 }
