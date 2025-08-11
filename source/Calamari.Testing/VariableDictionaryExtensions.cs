@@ -28,7 +28,7 @@ namespace Calamari.Testing
         public static string SaveAsEncryptedExecutionVariables(this IVariables variable, string filePath)
         {
             var encryptionKey = AesEncryption.RandomString(10);
-            SaveAsEncryptedExecutionVariables(variable, filePath, null);
+            SaveAsEncryptedExecutionVariables(variable, filePath, encryptionKey);
             return encryptionKey;
         }
 
