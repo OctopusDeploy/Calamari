@@ -88,6 +88,7 @@ numericVersion="$year.99.0"
 
 sanitizedBranch=$(echo "$branch" | sed 's|^refs/heads/||; s|[/_]|-|g' | sed 's|\+.*$||g')
 
+export OCTOVERSION_CurrentBranch="$sanitizedBranch"
 export OCTOVERSION_MajorMinorPatch="$numericVersion"
 export OCTOVERSION_PreReleaseTagWithDash="-$sanitizedBranch"
 export OCTOVERSION_FullSemVer="$numericVersion-$sanitizedBranch"

@@ -36,6 +36,7 @@ $sanitizedBranch = $branch.Replace("/","-").Replace("_","-")
 Write-Host "Numeric version: $numericVersion"
 Write-Host "Sanitized branch: $sanitizedBranch"
 
+$env:OCTOVERSION_CurrentBranch = $sanitizedBranch
 $env:OCTOVERSION_MajorMinorPatch= $numericVersion
 $env:OCTOVERSION_PreReleaseTagWithDash = "-$sanitizedBranch"
 $env:OCTOVERSION_FullSemVer = "$numericVersion-$sanitizedBranch"
