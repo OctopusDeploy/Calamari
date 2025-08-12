@@ -43,6 +43,7 @@ namespace Calamari.ArgoCD.Conventions
             var fileGlob = deployment.Variables.GetPaths(SpecialVariables.CustomResourceYamlFileName);
             var filesToApply = SelectFiles(deployment.CurrentDirectory, fileGlob).ToList();
             
+            log.Info($"Found {filesToApply.Count} files to apply");
             foreach (var repositoryIndex in repositoryIndexes)
             {
                 Log.Info("Writing files to repository for index {RepoIndex}", repositoryIndex);
@@ -53,11 +54,13 @@ namespace Calamari.ArgoCD.Conventions
 
         void UpdateRepository(string index, IGitConnection gitConnection, List<FileToCopy> filesToApply)
         {
-            Log.VerboseFormat("Cloning repository from {RepositoryURL}", gitConnection.Url);
+            Log.Info("Cloning repository {RepositoryURL}, checking out branch '{branch}'", gitConnection.Url, gitConnection.BranchName);
             var localRepository = RepositoryHelpers.CloneRepository(Path.Combine(repositoryParentDirectory, index), gitConnection);
-            Log.Verbose("Copying files into repository");
+            Log.Info("Copying files into repository");
             var filesAdded = CopyFilesIntoPlace(filesToApply, localRepository.Info.WorkingDirectory, gitConnection.SubFolder);
             RepositoryHelpers.StageFiles(filesAdded, localRepository);
+            
+            Log.Info("Pushing changes to branch '{branch}'", gitConnection.BranchName);
             RepositoryHelpers.PushChanges(gitConnection.BranchName, localRepository);
         }
 
