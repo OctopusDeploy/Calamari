@@ -78,11 +78,11 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             {
                 [KnownVariables.OriginalPackageDirectoryPath] = StagingDirectory,
                 [SpecialVariables.CustomResourceYamlFileName] = "./*\nnested/*",
-                [SpecialVariables.Git.Folder] = "",
-                [SpecialVariables.Git.Password] = "password",
-                [SpecialVariables.Git.Username] = "username",
-                [SpecialVariables.Git.Url] = OriginPath,
-                [SpecialVariables.Git.BranchName] = branchName,
+                [SpecialVariables.Git.SubFolder("repo_name")] = "",
+                [SpecialVariables.Git.Password("repo_name")] = "password",
+                [SpecialVariables.Git.Username("repo_name")] = "username",
+                [SpecialVariables.Git.Url("repo_name")] = OriginPath,
+                [SpecialVariables.Git.BranchName("repo_name")] = branchName,
             };
             var runningDeployment = new RunningDeployment("./arbitraryFile.txt", variables);
             runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;

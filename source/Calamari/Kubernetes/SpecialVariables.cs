@@ -64,11 +64,15 @@ namespace Calamari.Kubernetes
 
         public static class Git
         {
-            public const string Url = "Octopus.Action.Git.Url";
-            public const string BranchName = "Octopus.Action.Git.BranchName";
-            public const string Folder = "Octopus.Action.Git.Folder";
-            public const string Username = "Octopus.Action.Git.Username";
-            public const string Password = "Octopus.Action.Helm.Password";
+            public static string Index => $"Octopus.Action.Argo.Repositories";
+
+            static string Prefix(string name) => $"{Index}[{name}]"; 
+        
+            public static string BranchName(string name) => $"{Prefix(name)}.Branch";
+            public static string Url(string name)  => $"{Prefix(name)}.Url";
+            public static string Username(string name) => $"{Prefix(name)}.Username";
+            public static string Password(string name) => $"{Prefix(name)}.Password";
+            public static string SubFolder(string name) => $"{Prefix(name)}.SubFolder";
         }
 
         public class ServiceMessages

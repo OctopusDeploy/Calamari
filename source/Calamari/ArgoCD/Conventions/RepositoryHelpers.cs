@@ -7,7 +7,7 @@ namespace Calamari.ArgoCD.Conventions
 {
     public static class RepositoryHelpers
     {
-        public static Repository CloneRepository(string rootDir, RepositoryBranchFolder repositoryBranchFolder)
+        public static Repository CloneRepository(string rootDir, IGitConnection repositoryBranchFolder)
         {
             // we're going to need ANOTHER layer of abstraction in case there's multiple repos
             var repositoryPath = Path.Combine(rootDir, "repo");
@@ -15,7 +15,7 @@ namespace Calamari.ArgoCD.Conventions
             return CheckoutGitRepository(repositoryBranchFolder, repositoryPath);            
         }
         
-        static Repository CheckoutGitRepository(RepositoryBranchFolder gitConnection, string checkoutPath)
+        static Repository CheckoutGitRepository(IGitConnection gitConnection, string checkoutPath)
         {
             //Todo - cannot make this work
             // var options = new CloneOptions
@@ -24,19 +24,19 @@ namespace Calamari.ArgoCD.Conventions
             // };
 
             var options = new CloneOptions();
-            if (gitConnection.Repository.Username != null && gitConnection.Repository.Password != null)
+            if (gitConnection.Username != null && gitConnection.Password != null)
             {
                 options.FetchOptions = new FetchOptions
                 {
                     CredentialsProvider = (url, usernameFromUrl, types) => new UsernamePasswordCredentials
                     {
-                        Username = gitConnection.Repository.Username!,
-                        Password = gitConnection.Repository.Password!
+                        Username = gitConnection.Username!,
+                        Password = gitConnection.Password!
                     }
                 };
             }
 
-            var repoPath = Repository.Clone(gitConnection.Repository.Url, checkoutPath, options);
+            var repoPath = Repository.Clone(gitConnection.Url, checkoutPath, options);
             var repo = new Repository(repoPath);
             Branch remoteBranch = repo.Branches[gitConnection.RemoteBranchName];
             

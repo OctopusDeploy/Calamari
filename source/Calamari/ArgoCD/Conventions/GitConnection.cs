@@ -3,7 +3,6 @@ using System;
 
 namespace Calamari.ArgoCD.Conventions
 {
-
     public class GitRepository
     {
         public GitRepository(string url, string? username, string? password)

@@ -12,7 +12,7 @@ using Repository = LibGit2Sharp.Repository;
 
 namespace Calamari.ArgoCD.Conventions
 {
-    class FileToCopy
+    public class FileToCopy
     {
         public FileToCopy(string absolutePath, string relativePath)
         {
@@ -50,27 +50,25 @@ namespace Calamari.ArgoCD.Conventions
         
         public void Install(RunningDeployment deployment)
         {
-            var url = deployment.Variables.Get(SpecialVariables.Git.Url)!;
-            var branchName = deployment.Variables.Get(SpecialVariables.Git.BranchName)!;
-            var username = deployment.Variables.Get(SpecialVariables.Git.Username);
-            var password = deployment.Variables.Get(SpecialVariables.Git.Password);
-            var folder = deployment.Variables.Get(SpecialVariables.Git.Folder) ?? string.Empty;
+            var repositoryIndexes = deployment.Variables.GetIndexes(SpecialVariables.Git.Index);
 
-            var stepFields = new StepFields(
-                                            new RepositoryBranchFolder(new GitRepository(url, username, password), branchName, folder),
-                                            deployment.Variables.GetPaths(SpecialVariables.CustomResourceYamlFileName)
-                                           );
-            
             log.Info($"Executing ArgoCD");
-            var filesToApply = SelectFiles(deployment.CurrentDirectory, stepFields.FileGlobs);
+            var fileGlob = deployment.Variables.GetPaths(SpecialVariables.CustomResourceYamlFileName);
+            var filesToApply = SelectFiles(deployment.CurrentDirectory, fileGlob).ToList();
             
-            var localRepository = RepositoryHelpers.CloneRepository(repositoryParentDirectory, stepFields.GitConnection);
-            
-            var filesAdded = CopyFilesIntoPlace(filesToApply, localRepository.Info.WorkingDirectory, folder);
-            
+            foreach (var repositoryName in repositoryIndexes)
+            {
+                IGitConnection gitConnection = new VariableBackedGitConnection(deployment.Variables, repositoryName);
+                UpdateRepository(gitConnection, filesToApply);
+            }
+        }
+
+        void UpdateRepository(IGitConnection gitConnection, List<FileToCopy> filesToApply)
+        {
+            var localRepository = RepositoryHelpers.CloneRepository(repositoryParentDirectory, gitConnection);
+            var filesAdded = CopyFilesIntoPlace(filesToApply, localRepository.Info.WorkingDirectory, gitConnection.SubFolder);
             RepositoryHelpers.StageFiles(filesAdded, localRepository);
-             
-            RepositoryHelpers.PushChanges(stepFields.GitConnection.BranchName, localRepository);
+            RepositoryHelpers.PushChanges(gitConnection.BranchName, localRepository);
         }
 
         List<string> CopyFilesIntoPlace(IEnumerable<FileToCopy> filesToCopy, string destinationRootDir, string repoSubFolder)
@@ -95,7 +93,7 @@ namespace Calamari.ArgoCD.Conventions
             var destinationDirectory = Path.GetDirectoryName(filePath);
             if (destinationDirectory != null)
             {
-                Directory.CreateDirectory(destinationDirectory);
+                Directory.CreateDirectory(destinationDirectory);    
             }
         }
 
