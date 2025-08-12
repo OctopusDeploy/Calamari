@@ -6,7 +6,7 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Deployment.Conventions;
 using Calamari.Kubernetes;
 
-namespace Calamari.ArgoCD.Conventions
+namespace Calamari.ArgoCD.Conventions.old
 {
     class FileToCopy
     {
@@ -20,12 +20,12 @@ namespace Calamari.ArgoCD.Conventions
         public string RelativePath { get; }
     }
 
-    public class UpdateRepositoryConvention : IInstallConvention
+    public class AddFilesToRepositoryConvention : IInstallConvention
     {
         readonly GitInstallationContext context;
         readonly ICalamariFileSystem fileSystem;
 
-        public UpdateRepositoryConvention(GitInstallationContext context, ICalamariFileSystem fileSystem)
+        public AddFilesToRepositoryConvention(GitInstallationContext context, ICalamariFileSystem fileSystem)
         {
             this.context = context;
             this.fileSystem = fileSystem;

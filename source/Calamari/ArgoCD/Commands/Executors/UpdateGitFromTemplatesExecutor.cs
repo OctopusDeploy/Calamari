@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Calamari.ArgoCD.Conventions;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
@@ -26,13 +27,13 @@ namespace Calamari.ArgoCD.Commands.Executors
     
     class StepFields
     {
-        public StepFields(GitConnection gitConnection, List<string> fileGlobs)
+        public StepFields(RepositoryBranchFolder repositoryBranchFolder, List<string> fileGlobs)
         {
-            GitConnection = gitConnection;
+            RepositoryBranchFolder = repositoryBranchFolder;
             FileGlobs = fileGlobs;
         }
 
-        public GitConnection GitConnection { get; }
+        public RepositoryBranchFolder RepositoryBranchFolder { get; }
         public List<string> FileGlobs { get; }
     }
 
@@ -51,29 +52,29 @@ namespace Calamari.ArgoCD.Commands.Executors
         public async Task<bool> Execute(RunningDeployment deployment, string extractedPackageDirectory)
         {
             await Task.CompletedTask;
-            var url = deployment.Variables.Get(SpecialVariables.Git.Url);
-            var branchName = deployment.Variables.Get(SpecialVariables.Git.BranchName);
+            var url = deployment.Variables.Get(SpecialVariables.Git.Url)!;
+            var branchName = deployment.Variables.Get(SpecialVariables.Git.BranchName)!;
             var username = deployment.Variables.Get(SpecialVariables.Git.Username);
             var password = deployment.Variables.Get(SpecialVariables.Git.Password);
-            var folder = deployment.Variables.Get(SpecialVariables.Git.Folder);
+            var folder = deployment.Variables.Get(SpecialVariables.Git.Folder) ?? "";
 
             var stepFields = new StepFields(
-                new GitConnection(url!, branchName!, username, password, folder!),
-                deployment.Variables.GetPaths(SpecialVariables.CustomResourceYamlFileName)
-            );
+                                            new RepositoryBranchFolder(new GitRepository(url, username, password), branchName, folder),
+                                            deployment.Variables.GetPaths(SpecialVariables.CustomResourceYamlFileName)
+                                           );
             
             log.Info($"Executing ArgoCD");
             var filesToApply = SelectFiles(extractedPackageDirectory, stepFields.FileGlobs);
             
-            var localRepository = CloneRepository(stepFields.GitConnection, deployment.CurrentDirectory);
+            var localRepository = CloneRepository(stepFields.RepositoryBranchFolder, deployment.CurrentDirectory);
             
             ApplyChangesToLocalRepository(filesToApply, localRepository, folder!);
              
-            PushChanges(stepFields.GitConnection.BranchName, localRepository);
+            PushChanges(stepFields.RepositoryBranchFolder.BranchName, localRepository);
             return true;
         }
 
-        Repository CloneRepository(GitConnection gitConnection, string rootDir)
+        Repository CloneRepository(RepositoryBranchFolder gitConnection, string rootDir)
         {
             var repositoryPath = Path.Combine(rootDir, repoPath);
             Directory.CreateDirectory(repositoryPath);
@@ -131,7 +132,7 @@ namespace Calamari.ArgoCD.Commands.Executors
                                     });
         }
 
-        Repository CheckoutGitRepository(GitConnection gitConnection, string checkoutPath)
+        public static Repository CheckoutGitRepository(RepositoryBranchFolder gitConnection, string checkoutPath)
         {
             //Todo - cannot make this work
             // var options = new CloneOptions
@@ -140,19 +141,19 @@ namespace Calamari.ArgoCD.Commands.Executors
             // };
 
             var options = new CloneOptions();
-            if (gitConnection.Username != null && gitConnection.Password != null)
+            if (gitConnection.Repository.Username != null && gitConnection.Repository.Password != null)
             {
                 options.FetchOptions = new FetchOptions
                 {
                     CredentialsProvider = (url, usernameFromUrl, types) => new UsernamePasswordCredentials
                     {
-                        Username = gitConnection.Username!,
-                        Password = gitConnection.Password!
+                        Username = gitConnection.Repository.Username!,
+                        Password = gitConnection.Repository.Password!
                     }
                 };
             }
 
-            var repoPath = Repository.Clone(gitConnection.Url, checkoutPath, options);
+            var repoPath = Repository.Clone(gitConnection.Repository.Url, checkoutPath, options);
             var repo = new Repository(repoPath);
             Branch remoteBranch = repo.Branches[gitConnection.RemoteBranchName];
             

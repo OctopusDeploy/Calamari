@@ -5,11 +5,11 @@ using LibGit2Sharp;
 
 namespace Calamari.ArgoCD.Conventions
 {
-    public class GitPushConvention : IInstallConvention
+    public class GitCommitAndPushConvention : IInstallConvention
     {
         readonly GitInstallationContext context;
 
-        public GitPushConvention(GitInstallationContext context)
+        public GitCommitAndPushConvention(GitInstallationContext context)
         {
             this.context = context;
         }

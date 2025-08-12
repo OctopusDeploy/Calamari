@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Calamari.ArgoCD.Conventions;
+using Calamari.Aws.Deployment.Conventions;
 using Calamari.Commands;
 using Calamari.Commands.Support;
 using Calamari.Common.Commands;
@@ -23,35 +24,31 @@ using LibGit2Sharp;
 namespace Calamari.ArgoCD.Commands
 {
     [Command(Name, Description = "Write populated templates to git repository")]
-    public partial class UpdateGitRepoFromTemplates : Command
+    public class CommitToGitRepositoryCommand : Command
     {
         public const string PackageDirectoryName = "package";
 
-        public const string Name = "update-git-repo-from-templates";
+        public const string Name = "commit-to-git";
 
         readonly ILog log;
         readonly IVariables variables;
         readonly ICalamariFileSystem fileSystem;
         readonly IExtractPackage extractPackage;
         readonly ISubstituteInFiles substituteInFiles;
-        readonly IStructuredConfigVariablesService structuredConfigVariablesService;
         PathToPackage pathToPackage;
 
-        public UpdateGitRepoFromTemplates(
+        public CommitToGitRepositoryCommand(
             ILog log,
-            IDeploymentJournalWriter deploymentJournalWriter,
             IVariables variables,
             ICalamariFileSystem fileSystem,
             IExtractPackage extractPackage,
-            ISubstituteInFiles substituteInFiles,
-            IStructuredConfigVariablesService structuredConfigVariablesService)
+            ISubstituteInFiles substituteInFiles)
         {
             this.log = log;
             this.variables = variables;
             this.fileSystem = fileSystem;
             this.extractPackage = extractPackage;
             this.substituteInFiles = substituteInFiles;
-            this.structuredConfigVariablesService = structuredConfigVariablesService;
 
             Options.Add("package=",
                         "Path to the NuGet package to install.",
@@ -61,36 +58,29 @@ namespace Calamari.ArgoCD.Commands
         public override int Execute(string[] commandLineArguments)
         {
             Options.Parse(commandLineArguments);
-            var context = new GitInstallationContext();
+            var workingDirectory = Directory.GetCurrentDirectory();
 
-            var conventions = new List<IConvention>()
+            var conventions = new List<IConvention>
             {
-                new GitCloneConvention(context),
                 new DelegateInstallConvention(d =>
                                               {
-                                                  var workingDirectory = d.CurrentDirectory;
+                                                  workingDirectory = d.CurrentDirectory;
                                                   var stagingDirectory = Path.Combine(workingDirectory, ExtractPackage.StagingDirectoryName);
                                                   var packageDirectory = Path.Combine(stagingDirectory, PackageDirectoryName);
                                                   fileSystem.EnsureDirectoryExists(packageDirectory);
                                                   extractPackage.ExtractToCustomDirectory(pathToPackage, packageDirectory);
 
-                                                  d.StagingDirectory = stagingDirectory;
+                                                  d.StagingDirectory = packageDirectory;
                                                   d.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
                                               }),
                 new SubstituteInFilesConvention(new SubstituteInFilesBehaviour(substituteInFiles, PackageDirectoryName)),
-                new UpdateRepositoryConvention(context, fileSystem),
-                new GitPushConvention(context),
+                new DelegateInstallConvention(d =>
+                                              {
+                                                  var convention = new UpdateGitRepositoryInstallConvention(fileSystem, workingDirectory, log);
+                                                  convention.Install(d);
+                                              })
+                
             };
-            //
-            // for (int i = 0; i < conventions.Count; i++)
-            // {
-            //     conventions.Add(
-            //                     new AggregateInstallationConvention(
-            //                                                         new CloneRepo(),
-            //                                                         new UpdateRepositoryConvention(,
-            //                                                                                        new GitPush)));
-            // }
-            //               )
 
             var runningDeployment = new RunningDeployment(pathToPackage, variables);
 

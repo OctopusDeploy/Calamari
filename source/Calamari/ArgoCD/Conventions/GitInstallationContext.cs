@@ -6,11 +6,13 @@ namespace Calamari.ArgoCD.Conventions
 {
     public class GitInstallationContext
     {
-        public void AddRepository(Repository respotiry)
+        public void AddRepository(Repository repository)
         {
-            Repositories.Add(respotiry);
+            Repositories.Add(repository);
         }
 
         public List<Repository> Repositories { get; } = new List<Repository>();
+        
+        public string WorkingDirectory { get; set; }
     }
 }

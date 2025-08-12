@@ -1,9 +1,9 @@
 using System;
 using System.IO;
-using System.Net;
 using System.Threading.Tasks;
 using Calamari.ArgoCD.Commands;
 using Calamari.ArgoCD.Commands.Executors;
+using Calamari.ArgoCD.Conventions;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Deployment;
 using Calamari.Common.Plumbing.FileSystem;
@@ -15,10 +15,10 @@ using FluentAssertions;
 using LibGit2Sharp;
 using NUnit.Framework;
 
-namespace Calamari.Tests.ArgoCD.Commands.Executors
+namespace Calamari.Tests.ArgoCD.Commands.Conventions
 {
     [TestFixture]
-    public class UpdateGitFromTemplatesExecutorTests
+    public class UpdateGitRepositoryInstallConventionTests
     {
         readonly ICalamariFileSystem fileSystem = TestCalamariPhysicalFileSystem.GetPhysicalFileSystem();
         InMemoryLog log;
@@ -69,7 +69,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Executors
         }
 
         [Test]
-        public async Task ExecuteCopiesFilesFromPackageIntoRepo()
+        public void ExecuteCopiesFilesFromPackageIntoRepo()
         {
             var nestedDirectory = Path.Combine(PackageDirectory, "nested");
             Directory.CreateDirectory(nestedDirectory);
@@ -90,9 +90,9 @@ namespace Calamari.Tests.ArgoCD.Commands.Executors
             runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
             runningDeployment.StagingDirectory = StagingDirectory;
             
-            var executor = new UpdateGitFromTemplatesExecutor(fileSystem, log);
+            var convention = new UpdateGitRepositoryInstallConvention(fileSystem, tempDirectory, log);
             
-            await executor.Execute(runningDeployment, PackageDirectory);
+            convention.Install(runningDeployment);
             
             var resultPath = Path.Combine(tempDirectory, "result");
             Repository.Clone(OriginPath, resultPath);

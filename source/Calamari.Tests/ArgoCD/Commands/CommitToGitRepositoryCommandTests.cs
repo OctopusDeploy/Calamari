@@ -1,10 +1,12 @@
 using System;
 using System.IO;
-using System.Net;
 using System.Threading.Tasks;
 using Calamari.ArgoCD.Commands;
 using Calamari.ArgoCD.Commands.Executors;
 using Calamari.Common.Commands;
+using Calamari.Common.Features.Packages;
+using Calamari.Common.Features.Processes;
+using Calamari.Common.Features.Substitutions;
 using Calamari.Common.Plumbing.Deployment;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
@@ -15,10 +17,9 @@ using FluentAssertions;
 using LibGit2Sharp;
 using NUnit.Framework;
 
-namespace Calamari.Tests.ArgoCD.Commands.Executors
+namespace Calamari.Tests.ArgoCD.Commands
 {
-    [TestFixture]
-    public class UpdateGitFromTemplatesExecutorTests
+    public class CommitToGitRepositoryCommandTests
     {
         readonly ICalamariFileSystem fileSystem = TestCalamariPhysicalFileSystem.GetPhysicalFileSystem();
         InMemoryLog log;
@@ -28,9 +29,8 @@ namespace Calamari.Tests.ArgoCD.Commands.Executors
         string OriginPath => Path.Combine(tempDirectory, "origin");
 
         string branchName = "devBranch";
-
         Repository BareOrigin;
-
+        
         [SetUp]
         public void Init()
         {
@@ -53,24 +53,26 @@ namespace Calamari.Tests.ArgoCD.Commands.Executors
             repository.Refs.UpdateTarget("HEAD", "refs/heads/master");
             var tree = repository.ObjectDatabase.CreateTree(new TreeDefinition());
             var commit = repository.ObjectDatabase.CreateCommit(
-                                                   signature,
-                                                   signature,
-                                                   "InitializeRepo",
-                                                   tree,
-                                                   Array.Empty<Commit>(),
-                                                   false);
+                                                                signature,
+                                                                signature,
+                                                                "InitializeRepo",
+                                                                tree,
+                                                                Array.Empty<Commit>(),
+                                                                false);
             repository.CreateBranch(branchName, commit);
         }
-        
+                
         [TearDown]
         public void Cleanup()
         {
             fileSystem.DeleteDirectory(tempDirectory, FailureOptions.IgnoreFailure);
         }
-
+        
+        
         [Test]
-        public async Task ExecuteCopiesFilesFromPackageIntoRepo()
+        public void ExecuteCopiesFilesFromPackageIntoRepo()
         {
+            //this all needs to go into a zip file somehow
             var nestedDirectory = Path.Combine(PackageDirectory, "nested");
             Directory.CreateDirectory(nestedDirectory);
             File.WriteAllText(Path.Combine(PackageDirectory,"first.yaml"), "firstContent");
@@ -86,13 +88,11 @@ namespace Calamari.Tests.ArgoCD.Commands.Executors
                 [SpecialVariables.Git.Url] = OriginPath,
                 [SpecialVariables.Git.BranchName] = branchName,
             };
-            var runningDeployment = new RunningDeployment(PackageDirectory, variables);
-            runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
-            runningDeployment.StagingDirectory = StagingDirectory;
             
-            var executor = new UpdateGitFromTemplatesExecutor(fileSystem, log);
-            
-            await executor.Execute(runningDeployment, PackageDirectory);
+            var extractPackage = new ExtractPackage(new CombinedPackageExtractor(log, fileSystem, variables, new CommandLineRunner(log, variables)), fileSystem, variables, log);
+            var fileSubstituter = new SubstituteInFiles(log, fileSystem, new FileSubstituter(log, fileSystem), variables);
+            var command = new CommitToGitRepositoryCommand(log, variables, fileSystem,extractPackage, fileSubstituter);
+            command.Execute(new string[] { "package=blah.zip" });
             
             var resultPath = Path.Combine(tempDirectory, "result");
             Repository.Clone(OriginPath, resultPath);
@@ -104,5 +104,8 @@ namespace Calamari.Tests.ArgoCD.Commands.Executors
             resultFirstContent.Should().Be("firstContent");
             resultNestedContent.Should().Be("secondContent");
         }
+        
+        
+        
     }
 }
