@@ -46,7 +46,7 @@ namespace Calamari.ArgoCD.Conventions
             log.Info($"Found {filesToApply.Count} files to apply");
             foreach (var repositoryIndex in repositoryIndexes)
             {
-                Log.Info("Writing files to repository for index {RepoIndex}", repositoryIndex);
+                Log.Info($"Writing files to repository for index {repositoryIndex}");
                 IGitConnection gitConnection = new VariableBackedGitConnection(deployment.Variables, repositoryIndex);
                 UpdateRepository(repositoryIndex, gitConnection, filesToApply);
             }
@@ -54,13 +54,13 @@ namespace Calamari.ArgoCD.Conventions
 
         void UpdateRepository(string index, IGitConnection gitConnection, List<FileToCopy> filesToApply)
         {
-            Log.Info("Cloning repository {RepositoryURL}, checking out branch '{branch}'", gitConnection.Url, gitConnection.BranchName);
+            Log.Info($"Cloning repository {gitConnection.Url}, checking out branch '{gitConnection.BranchName}'");
             var localRepository = RepositoryHelpers.CloneRepository(Path.Combine(repositoryParentDirectory, index), gitConnection);
             Log.Info("Copying files into repository");
             var filesAdded = CopyFilesIntoPlace(filesToApply, localRepository.Info.WorkingDirectory, gitConnection.SubFolder);
             RepositoryHelpers.StageFiles(filesAdded, localRepository);
             
-            Log.Info("Pushing changes to branch '{branch}'", gitConnection.BranchName);
+            Log.Info($"Pushing changes to branch '{gitConnection.BranchName}'");
             RepositoryHelpers.PushChanges(gitConnection.BranchName, localRepository);
         }
 
@@ -71,7 +71,7 @@ namespace Calamari.ArgoCD.Conventions
             {
                 var repoRelativeFilePath = Path.Combine(repoSubFolder, file.RelativePath);
                 var absRepoFilePath = Path.Combine(destinationRootDir, repoRelativeFilePath);
-                Log.VerboseFormat("Copying '{inputFile}' to '{outputPath}'", file.AbsolutePath, absRepoFilePath);
+                Log.VerboseFormat($"Copying '{file.AbsolutePath}' to '{absRepoFilePath}'");
                 EnsureParentDirectoryExists(absRepoFilePath);
                 File.Copy(file.AbsolutePath, absRepoFilePath, true);
                 
