@@ -2,29 +2,23 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Calamari.ArgoCD.Conventions;
-using Calamari.Aws.Deployment.Conventions;
 using Calamari.Commands;
 using Calamari.Commands.Support;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Behaviours;
-using Calamari.Common.Features.ConfigurationTransforms;
-using Calamari.Common.Features.ConfigurationVariables;
 using Calamari.Common.Features.Packages;
-using Calamari.Common.Features.StructuredVariables;
 using Calamari.Common.Features.Substitutions;
 using Calamari.Common.Plumbing.Deployment;
-using Calamari.Common.Plumbing.Deployment.Journal;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
-using LibGit2Sharp;
 
 namespace Calamari.ArgoCD.Commands
 {
-    [Command(Name, Description = "Write populated templates to git repository")]
-    public class CommitToGitRepositoryCommand : Command
+    [Command(Name, Description = "Write populated template from a package into git repositories")]
+    public class CommitToGitCommand : Command
     {
         public const string PackageDirectoryName = "package";
 
@@ -37,7 +31,7 @@ namespace Calamari.ArgoCD.Commands
         readonly ISubstituteInFiles substituteInFiles;
         PathToPackage pathToPackage;
 
-        public CommitToGitRepositoryCommand(
+        public CommitToGitCommand(
             ILog log,
             IVariables variables,
             ICalamariFileSystem fileSystem,

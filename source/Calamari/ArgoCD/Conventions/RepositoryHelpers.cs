@@ -7,10 +7,8 @@ namespace Calamari.ArgoCD.Conventions
 {
     public static class RepositoryHelpers
     {
-        public static Repository CloneRepository(string rootDir, IGitConnection repositoryBranchFolder)
+        public static Repository CloneRepository(string repositoryPath, IGitConnection repositoryBranchFolder)
         {
-            // we're going to need ANOTHER layer of abstraction in case there's multiple repos
-            var repositoryPath = Path.Combine(rootDir, "repo");
             Directory.CreateDirectory(repositoryPath);
             return CheckoutGitRepository(repositoryBranchFolder, repositoryPath);            
         }
@@ -61,9 +59,9 @@ namespace Calamari.ArgoCD.Conventions
             repo.Network.Push(repo.Head);
         }
 
-        public static void StageFiles(List<string> filesAdded, Repository repo)
+        public static void StageFiles(List<string> filesToStage, Repository repo)
         {
-            foreach (var file in filesAdded)
+            foreach (var file in filesToStage)
             {
                 repo.Index.Add(file);
             }

@@ -64,7 +64,7 @@ namespace Calamari.Kubernetes
 
         public static class Git
         {
-            public static string Index => $"Octopus.Action.Argo.Repositories";
+            public static string Index => "Octopus.Action.Git.Repository";
 
             static string Prefix(string name) => $"{Index}[{name}]"; 
         

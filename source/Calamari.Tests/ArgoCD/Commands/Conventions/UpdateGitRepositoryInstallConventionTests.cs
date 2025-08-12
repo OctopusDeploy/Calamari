@@ -22,7 +22,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
         InMemoryLog log;
         string tempDirectory;
         string StagingDirectory => Path.Combine(tempDirectory, "staging");
-        string PackageDirectory => Path.Combine(StagingDirectory, CommitToGitRepositoryCommand.PackageDirectoryName);
+        string PackageDirectory => Path.Combine(StagingDirectory, CommitToGitCommand.PackageDirectoryName);
         string OriginPath => Path.Combine(tempDirectory, "origin");
 
         string branchName = "devBranch";
