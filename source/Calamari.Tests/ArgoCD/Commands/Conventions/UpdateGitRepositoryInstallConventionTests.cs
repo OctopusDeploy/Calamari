@@ -1,8 +1,6 @@
 using System;
 using System.IO;
-using System.Threading.Tasks;
 using Calamari.ArgoCD.Commands;
-using Calamari.ArgoCD.Commands.Executors;
 using Calamari.ArgoCD.Conventions;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Deployment;
@@ -86,9 +84,9 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                 [SpecialVariables.Git.Url] = OriginPath,
                 [SpecialVariables.Git.BranchName] = branchName,
             };
-            var runningDeployment = new RunningDeployment(PackageDirectory, variables);
+            var runningDeployment = new RunningDeployment("./arbitraryFile.txt", variables);
             runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
-            runningDeployment.StagingDirectory = StagingDirectory;
+            runningDeployment.StagingDirectory = PackageDirectory;
             
             var convention = new UpdateGitRepositoryInstallConvention(fileSystem, tempDirectory, log);
             
