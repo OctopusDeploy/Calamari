@@ -48,17 +48,21 @@ namespace Calamari.ArgoCD.Conventions
             {
                 Log.Info($"Writing files to repository for index {repositoryIndex}");
                 IGitConnection gitConnection = new VariableBackedGitConnection(deployment.Variables, repositoryIndex);
-                UpdateRepository(repositoryIndex, gitConnection, filesToApply);
+                UpdateRepository(repositoryIndex, gitConnection, filesToApply, deployment.Variables.GetMandatoryVariable(SpecialVariables.Git.CommitMessage));
+                if(deployment.Variables.GetFlag())
             }
         }
 
-        void UpdateRepository(string index, IGitConnection gitConnection, List<FileToCopy> filesToApply)
+        void UpdateRepository(string respositoryIndexName, IGitConnection gitConnection, List<FileToCopy> filesToApply, string commitMessage)
         {
             Log.Info($"Cloning repository {gitConnection.Url}, checking out branch '{gitConnection.BranchName}'");
-            var localRepository = RepositoryHelpers.CloneRepository(Path.Combine(repositoryParentDirectory, index), gitConnection);
+            var localRepository = RepositoryHelpers.CloneRepository(Path.Combine(repositoryParentDirectory, respositoryIndexName), gitConnection);
             Log.Info("Copying files into repository");
             var filesAdded = CopyFilesIntoPlace(filesToApply, localRepository.Info.WorkingDirectory, gitConnection.SubFolder);
+            Log.Info("Staging files in repository");
             RepositoryHelpers.StageFiles(filesAdded, localRepository);
+            Log.Info("Commiting changes");
+            RepositoryHelpers.CommitChanges(commitMessage, localRepository);
             
             Log.Info($"Pushing changes to branch '{gitConnection.BranchName}'");
             RepositoryHelpers.PushChanges(gitConnection.BranchName, localRepository);

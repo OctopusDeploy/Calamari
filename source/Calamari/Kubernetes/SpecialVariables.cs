@@ -73,6 +73,10 @@ namespace Calamari.Kubernetes
             public static string Username(string name) => $"{Prefix(name)}.Username";
             public static string Password(string name) => $"{Prefix(name)}.Password";
             public static string SubFolder(string name) => $"{Prefix(name)}.SubFolder";
+            
+            public static string CommitMessage = $"{Index}.CommitMessage";
+
+            public static string CommitMethod = "Octopus.Action.ArgoCD.CommitMethod"; ///yeah, its got Argo in its name :/
         }
 
         public class ServiceMessages

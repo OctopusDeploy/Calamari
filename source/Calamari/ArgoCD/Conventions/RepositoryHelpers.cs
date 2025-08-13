@@ -44,13 +44,16 @@ namespace Calamari.ArgoCD.Conventions
             LibGit2Sharp.Commands.Checkout(repo, gitConnection.BranchName);
             return repo;
         }
+
+        public static void CommitChanges(string commitMessage, Repository repo)
+        {
+            repo.Commit(commitMessage,
+                        new Signature("Octopus", "octopus@octopus.com", DateTimeOffset.Now),
+                        new Signature("Octopus", "octopus@octopus.com", DateTimeOffset.Now));            
+        }
         
         public static void PushChanges(string branchName, Repository repo)
         {
-            repo.Commit("Updated the git repo",
-                        new Signature("Octopus", "octopus@octopus.com", DateTimeOffset.Now),
-                        new Signature("Octopus", "octopus@octopus.com", DateTimeOffset.Now));
-            
             Remote remote = repo.Network.Remotes["origin"];
             repo.Branches.Update(repo.Head, 
                                  branch => branch.Remote = remote.Name,
