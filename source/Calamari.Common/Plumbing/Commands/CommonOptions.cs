@@ -35,16 +35,8 @@ namespace Calamari.Common.Plumbing.Commands
                       .Add("outputVariablesPassword=", "Password used to decrypt output variables", v => options.InputVariables.OutputVariablesPassword = v);
 
             //these are legacy options to support the V2 pipeline
-            set.Add("sensitiveVariables=", "(DEPRECATED) Path to a encrypted JSON file containing sensitive variables.", v => options.InputVariables.VariableFiles.Add(v))
-               .Add("sensitiveVariablesPassword=",
-                    "(DEPRECATED) Password used to decrypt sensitive variables. Will only be used if variablesPassword is not set.",
-                    v =>
-                    {
-                        if (string.IsNullOrEmpty(options.InputVariables.VariablesPassword))
-                        {
-                            options.InputVariables.VariablesPassword = v;
-                        }
-                    });
+            set.Add("sensitiveVariables=", "(DEPRECATED) Path to a encrypted JSON file containing sensitive variables. This file format is deprecated.", v => options.InputVariables.DeprecatedFormatVariableFiles.Add(v))
+               .Add("sensitiveVariablesPassword=", "(DEPRECATED) Password used to decrypt sensitive variables.", v => options.InputVariables.DeprecatedVariablesPassword = v);
 
             options.RemainingArguments = set.Parse(args.Skip(1));
 
@@ -57,6 +49,10 @@ namespace Calamari.Common.Plumbing.Commands
             public string? VariablesPassword { get; internal set; }
             public string? OutputVariablesFile { get; internal set; }
             public string? OutputVariablesPassword { get; internal set; }
+
+            //These are to support the V2 pipeline
+            public List<string> DeprecatedFormatVariableFiles { get; internal set; } = new List<string>();
+            public string? DeprecatedVariablesPassword { get; internal set; }
         }
     }
 }

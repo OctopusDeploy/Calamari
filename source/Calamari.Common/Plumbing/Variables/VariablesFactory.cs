@@ -33,6 +33,10 @@ namespace Calamari.Common.Plumbing.Variables
             LoadExecutionVariablesFromFile(options);
             ReadOutputVariablesFromOfflineDropPreviousSteps(options);
 
+            //This exists as the V2 pipeline stores both the parameters and the contents of the variables files for resiliency
+            // This should be removed once the first version this is deployed to has rolled out to most cloud customers
+            ReadDeprecatedVariablesFormatFromFiles(options);
+
             var variables = new CalamariVariables();
             //we load _all_ variables from the execution variables into the CalamariVariables dictionary
             ImportTargetVariablesIntoVariableCollection(variables, _ => true);
@@ -80,12 +84,35 @@ namespace Calamari.Common.Plumbing.Variables
             {
                 var outputVariables = JsonConvert.DeserializeObject<Dictionary<string, string>>(rawVariables);
 
-                //append to the main collection
-                executionVariables.AddRange(outputVariables.Select(ov => new CalamariExecutionVariable(ov.Key, ov.Value, false /* All output variables are currently non-sensitive */)));
+                // All output variables are currently non-sensitive
+                executionVariables.AddRange(outputVariables.Select(ov => new CalamariExecutionVariable(ov.Key, ov.Value, false )));
             }
             catch (JsonReaderException)
             {
                 throw new CommandException("Unable to parse output variables as valid JSON.");
+            }
+        }
+
+        void ReadDeprecatedVariablesFormatFromFiles(CommonOptions options)
+        {
+            foreach (var variableFilePath in options.InputVariables.DeprecatedFormatVariableFiles.Where(f => !string.IsNullOrEmpty(f)))
+            {
+                var sensitiveFilePassword = options.InputVariables.DeprecatedVariablesPassword;
+                var json = string.IsNullOrWhiteSpace(sensitiveFilePassword)
+                    ? fileSystem.ReadFile(variableFilePath)
+                    : Decrypt(fileSystem.ReadAllBytes(variableFilePath), sensitiveFilePassword);
+
+                try
+                {
+                    var outputVariables = JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
+
+                    // We don't know if the previous variables were sensitive or not, so treat them as non-sensitive */
+                    executionVariables.AddRange(outputVariables.Select(ov => new CalamariExecutionVariable(ov.Key, ov.Value, false)));
+                }
+                catch (JsonReaderException)
+                {
+                    throw new CommandException("Unable to parse variables as valid JSON.");
+                }
             }
         }
 
