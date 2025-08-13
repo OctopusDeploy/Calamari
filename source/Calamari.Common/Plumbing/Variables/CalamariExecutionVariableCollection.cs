@@ -33,13 +33,13 @@ namespace Calamari.Common.Plumbing.Variables
             IsSensitive = isSensitive;
         }
 
-        [JsonProperty("key")]
+        [JsonProperty("k")]
         public string Key { get; private set; }
 
-        [JsonProperty("value", DefaultValueHandling = DefaultValueHandling.Include)]
+        [JsonProperty("v", DefaultValueHandling = DefaultValueHandling.Include)]
         public string? Value { get; set; }
 
-        [JsonProperty("isSensitive")]
+        [JsonProperty("s")]
         public bool IsSensitive { get; set; }
 
         string DebuggerDisplay => $"{Key}={(IsSensitive ? "********" : Value)} {(IsSensitive ? "(Sensitive)" : null)}";
