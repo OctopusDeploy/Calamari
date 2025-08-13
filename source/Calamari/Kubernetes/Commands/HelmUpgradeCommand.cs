@@ -82,26 +82,18 @@ namespace Calamari.Kubernetes.Commands
 
             var conventions = new List<IConvention>
             {
-                new DelegateInstallConvention(d => extractPackage.ExtractToStagingDirectory(pathToPackage))
+                new DelegateInstallConvention(d => extractPackage.ExtractToStagingDirectory(pathToPackage)),
+                new StageDependenciesConvention(null,
+                                                fileSystem,
+                                                new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner),
+                                                new PackageVariablesFactory(),
+                                                true),
+                new StageDependenciesConvention(null,
+                                                fileSystem,
+                                                new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner),
+                                                new GitDependencyVariablesFactory(),
+                                                true)
             };
-
-            if (OctopusFeatureToggles.NonPrimaryGitDependencySupportFeatureToggle.IsEnabled(variables))
-            {
-                conventions.Add(new StageDependenciesConvention(null,
-                                                                fileSystem,
-                                                                new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner),
-                                                                new PackageVariablesFactory(),
-                                                                true));
-                conventions.Add(new StageDependenciesConvention(null,
-                                                                fileSystem,
-                                                                new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner),
-                                                                new GitDependencyVariablesFactory(),
-                                                                true));
-            }
-            else
-            {
-                conventions.Add(new StageScriptPackagesConvention(null, fileSystem, new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner), true));
-            }
 
             conventions.AddRange(new IInstallConvention[]
             {
@@ -113,9 +105,9 @@ namespace Calamari.Kubernetes.Commands
                 new DelegateInstallConvention(d => substituteInFiles.Substitute(d.CurrentDirectory, TemplateValuesFiles(d), true)),
                 new ConfiguredScriptConvention(new DeployConfiguredScriptBehaviour(log, fileSystem, scriptEngine, commandLineRunner)),
             });
-            
+
             conventions.AddRange(AddHelmUpgradeConventions());
-            
+
             conventions.Add(new ConfiguredScriptConvention(new PostDeployConfiguredScriptBehaviour(log, fileSystem, scriptEngine, commandLineRunner)));
 
             var deployment = new RunningDeployment(pathToPackage, variables);
