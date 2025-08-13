@@ -19,13 +19,12 @@ namespace Calamari.Common.Plumbing.Variables
 
         public static CalamariExecutionVariableCollection FromJson(string json)
         {
-            return JsonConvert.DeserializeObject<CalamariExecutionVariableCollection>(json, SerializerSettings)
-                   ?? throw new InvalidOperationException("Failed to deserialize target variables from json.");
+            return JsonConvert.DeserializeObject<CalamariExecutionVariableCollection>(json, SerializerSettings) ?? throw new InvalidOperationException("Failed to deserialize target variables from json.");
         }
     }
 
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
-    public class CalamariExecutionVariable
+    public class CalamariExecutionVariable : IEquatable<CalamariExecutionVariable>
     {
         public CalamariExecutionVariable(string key, string? value, bool isSensitive)
         {
@@ -43,6 +42,43 @@ namespace Calamari.Common.Plumbing.Variables
         [JsonProperty("isSensitive")]
         public bool IsSensitive { get; set; }
 
-        string DebuggerDisplay => $"{Key}={Value} {(IsSensitive ? "(Sensitive)" : null)}";
+        string DebuggerDisplay => $"{Key}={(IsSensitive ? "********" : Value)} {(IsSensitive ? "(Sensitive)" : null)}";
+
+        public bool Equals(CalamariExecutionVariable? other)
+        {
+            if (other is null)
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other))
+            {
+                return true;
+            }
+
+            return Key == other.Key && Value == other.Value && IsSensitive == other.IsSensitive;
+        }
+
+        public override bool Equals(object? obj)
+        {
+            if (obj is null)
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, obj))
+            {
+                return true;
+            }
+
+            if (obj.GetType() != GetType())
+            {
+                return false;
+            }
+
+            return Equals((CalamariExecutionVariable)obj);
+        }
+
+        public override int GetHashCode() => HashCode.Combine(Key, Value, IsSensitive);
     }
 }
