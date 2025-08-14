@@ -31,11 +31,12 @@ namespace Calamari.Common.Plumbing.Variables
         public IVariables Create(CommonOptions options)
         {
             LoadExecutionVariablesFromFile(options);
-            ReadOutputVariablesFromOfflineDropPreviousSteps(options);
 
             //This exists as the V2 pipeline stores both the parameters and the contents of the variables files for resiliency
             // This should be removed once the first version this is deployed to has rolled out to most cloud customers
             ReadDeprecatedVariablesFormatFromFiles(options);
+            
+            ReadOutputVariablesFromOfflineDropPreviousSteps(options);
 
             var variables = new CalamariVariables();
             //we load _all_ variables from the execution variables into the CalamariVariables dictionary
