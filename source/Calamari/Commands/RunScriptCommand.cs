@@ -77,17 +77,11 @@ namespace Calamari.Commands
             var deployment = new RunningDeployment(packageFile, variables);
             WriteVariableScriptToFile(deployment);
 
-            var conventions = new List<IConvention>();
+            var conventions = new List<IConvention>
+            {
+                new StageDependenciesConvention(packageFile, fileSystem, new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner), new PackageVariablesFactory())
+            };
 
-            if (OctopusFeatureToggles.NonPrimaryGitDependencySupportFeatureToggle.IsEnabled(variables))
-            {
-                conventions.Add(new StageDependenciesConvention(packageFile, fileSystem, new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner), new PackageVariablesFactory()));
-            }
-            else
-            {
-                conventions.Add(new StageScriptPackagesConvention(packageFile, fileSystem, new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner)));
-            }
-            
             conventions.AddRange(new IConvention[] {
                 // Substitute the script source file
                 new DelegateInstallConvention(d => substituteInFiles.Substitute(d.CurrentDirectory, ScriptFileTargetFactory(d).ToList())),
