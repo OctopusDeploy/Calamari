@@ -605,7 +605,10 @@ namespace Calamari.Build
                  .Executes(() =>
                            {
                                Directory.CreateDirectory(LocalPackagesDirectory);
-                               foreach (var file in Directory.GetFiles(ArtifactsDirectory, "Calamari.*.nupkg"))
+                               var calamariNupkgs = Directory.GetFiles(ArtifactsDirectory, "Calamari.*.nupkg");
+                               var octopusCalamariNpkgs = Directory.GetFiles(ArtifactsDirectory, "Octopus.Calamari.*.nupkg");
+                               
+                               foreach (var file in calamariNupkgs.Concat(octopusCalamariNpkgs))
                                    CopyFile(file, LocalPackagesDirectory / Path.GetFileName(file), FileExistsPolicy.Overwrite);
                            });
 

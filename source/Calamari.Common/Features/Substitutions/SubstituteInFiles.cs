@@ -1,24 +1,25 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Calamari.Common.Features.Substitutions;
+using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 
-namespace Calamari.Common.Plumbing.FileSystem
+namespace Calamari.Common.Features.Substitutions
 {
     public class SubstituteInFiles : ISubstituteInFiles
     {
         readonly ILog log;
         readonly ICalamariFileSystem fileSystem;
-        readonly IFileSubstituter substituter;
+        readonly IFileSubstituter fileSubstituter;
         readonly IVariables variables;
 
-        public SubstituteInFiles(ILog log, ICalamariFileSystem fileSystem, IFileSubstituter substituter, IVariables variables)
+        public SubstituteInFiles(ILog log, ICalamariFileSystem fileSystem, IFileSubstituter fileSubstituter, IVariables variables)
         {
             this.log = log;
             this.fileSystem = fileSystem;
-            this.substituter = substituter;
+            this.fileSubstituter = fileSubstituter;
             this.variables = variables;
         }
 
@@ -43,7 +44,7 @@ namespace Calamari.Common.Plumbing.FileSystem
                 }
 
                 foreach (var file in matchingFiles)
-                    substituter.PerformSubstitution(file, variables);
+                    fileSubstituter.PerformSubstitution(file);
             }
         }
 

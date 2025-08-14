@@ -15,9 +15,13 @@ namespace Calamari.Common.Plumbing.Variables
 {
     public class VariablesFactory
     {
-        public static readonly string AdditionalVariablesPathVariable = "AdditionalVariablesPath";
+        public const string AdditionalVariablesPathVariable = "AdditionalVariablesPath";
+
         readonly ICalamariFileSystem fileSystem;
         readonly ILog log;
+
+        static readonly object LoaderLock = new object();
+        CalamariExecutionVariableCollection? variableCollection;
 
         public VariablesFactory(ICalamariFileSystem fileSystem, ILog log)
         {
@@ -25,12 +29,16 @@ namespace Calamari.Common.Plumbing.Variables
             this.log = log;
         }
 
-        public IVariables Create(CommonOptions options)
-        {
-            var variables = new CalamariVariables();
+        public IVariables Create(CommonOptions options) => Create(new CalamariVariables(), options, _ => true);
 
-            ReadUnencryptedVariablesFromFile(options, variables);
-            ReadEncryptedVariablesFromFile(options, variables);
+        public INonSensitiveVariables CreateNonSensitiveVariables(CommonOptions options) => Create(new NonSensitiveCalamariVariables(), options, tv => !tv.IsSensitive);
+
+        T Create<T>(T variables, CommonOptions options, Func<CalamariExecutionVariable, bool> targetVariablePredicate) where T : CalamariVariables
+        {
+            LoadTargetVariablesFromFiles(options);
+
+            ImportTargetVariablesIntoVariableCollection(variables, targetVariablePredicate);
+
             ReadOutputVariablesFromOfflineDropPreviousSteps(options, variables);
 
             AddEnvironmentVariables(variables);
@@ -41,42 +49,56 @@ namespace Calamari.Common.Plumbing.Variables
             return variables;
         }
 
-        void ReadUnencryptedVariablesFromFile(CommonOptions options, CalamariVariables variables)
+        void LoadTargetVariablesFromFiles(CommonOptions options)
         {
-            var variablesFile = options.InputVariables.VariablesFile;
-            if (string.IsNullOrEmpty(variablesFile))
-                return;
-
-            if (!fileSystem.FileExists(variablesFile))
-                throw new CommandException("Could not find variables file: " + variablesFile);
-
-            var readVars = new VariableDictionary(variablesFile);
-            variables.Merge(readVars);
-        }
-
-        void ReadEncryptedVariablesFromFile(CommonOptions options, CalamariVariables variables)
-        {
-            foreach (var sensitiveFilePath in options.InputVariables.SensitiveVariablesFiles.Where(f => !string.IsNullOrEmpty(f)))
+            lock (LoaderLock)
             {
-                var sensitiveFilePassword = options.InputVariables.SensitiveVariablesPassword;
-                var rawVariables = string.IsNullOrWhiteSpace(sensitiveFilePassword)
-                    ? fileSystem.ReadFile(sensitiveFilePath)
-                    : Decrypt(fileSystem.ReadAllBytes(sensitiveFilePath), sensitiveFilePassword);
-
-                try
+                //if this is not null, we must have already loaded it
+                if (variableCollection != null)
                 {
-                    var sensitiveVariables = JsonConvert.DeserializeObject<Dictionary<string, string>>(rawVariables);
-                    foreach (var variable in sensitiveVariables)
-                        variables.Set(variable.Key, variable.Value);
+                    return;
                 }
-                catch (JsonReaderException)
+
+                variableCollection = new CalamariExecutionVariableCollection();
+                foreach (var variablesFilePath in options.InputVariables.VariablesFiles.Where(f => !string.IsNullOrEmpty(f)))
                 {
-                    throw new CommandException("Unable to parse sensitive-variables as valid JSON.");
+                    var sensitiveFilePassword = options.InputVariables.VariableEncryptionPassword;
+                    var json = string.IsNullOrWhiteSpace(sensitiveFilePassword)
+                        ? fileSystem.ReadFile(variablesFilePath)
+                        : Decrypt(fileSystem.ReadAllBytes(variablesFilePath), sensitiveFilePassword);
+
+                    try
+                    {
+                        //deserialize the target variables from the json
+                        var targetVariables = CalamariExecutionVariableCollection.FromJson(json);
+                        
+                        //append to the main collection
+                        //This may have duplicates, but that isn't a concern as they will be de-duped later in the process
+                        variableCollection.AddRange(targetVariables);
+                    }
+                    catch (JsonReaderException)
+                    {
+                        throw new CommandException("Unable to parse variables as valid JSON.");
+                    }
                 }
             }
         }
 
-        void ReadOutputVariablesFromOfflineDropPreviousSteps(CommonOptions options, CalamariVariables variables)
+        void ImportTargetVariablesIntoVariableCollection<T>(T variables, Func<CalamariExecutionVariable, bool> targetVariablePredicate) where T : CalamariVariables
+        {
+            if(variableCollection == null)
+            {
+                throw new InvalidOperationException("The target variable collection is null, meaning it has not been loaded yet.");
+            }
+            
+            //for each variable, load it into the variable collection
+            foreach (var tv in variableCollection.Where(targetVariablePredicate))
+            {
+                variables.Set(tv.Key, tv.Value);
+            }
+        }
+
+        void ReadOutputVariablesFromOfflineDropPreviousSteps(CommonOptions options, IVariables variables)
         {
             var outputVariablesFilePath = options.InputVariables.OutputVariablesFile;
             if (string.IsNullOrEmpty(outputVariablesFilePath))
@@ -108,10 +130,7 @@ namespace Calamari.Common.Plumbing.Variables
 
             string BuildExceptionMessage(string reason)
             {
-                return $"Could not read additional variables from JSON file at '{path}'. " +
-                    $"{reason} Make sure the file can be read or remove the " +
-                    $"'{AdditionalVariablesPathVariable}' environment variable. " +
-                    "See inner exception for details.";
+                return $"Could not read additional variables from JSON file at '{path}'. " + $"{reason} Make sure the file can be read or remove the " + $"'{AdditionalVariablesPathVariable}' environment variable. " + "See inner exception for details.";
             }
 
             if (string.IsNullOrEmpty(path))

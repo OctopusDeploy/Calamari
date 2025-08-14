@@ -333,10 +333,10 @@ namespace Calamari.Tests.AWS
             var packageFilePath = TestEnvironment.GetTestPath("AWS", "S3", "CompressedPackages", fileName);
 
             var prefix = await UploadEntireCompressedPackage(packageFilePath,
-                                                       packageId,
-                                                       packageVersion,
-                                                       packageOptions,
-                                                       variables);
+                                                             packageId,
+                                                             packageVersion,
+                                                             packageOptions,
+                                                             variables);
 
             await Validate(async client =>
                            {
@@ -374,10 +374,10 @@ namespace Calamari.Tests.AWS
             var packageFilePath = TestEnvironment.GetTestPath("AWS", "S3", "CompressedPackages", fileName);
 
             var prefix = await UploadEntireCompressedPackage(packageFilePath,
-                                                       packageId,
-                                                       packageVersion,
-                                                       packageOptions,
-                                                       variables);
+                                                             packageId,
+                                                             packageVersion,
+                                                             packageOptions,
+                                                             variables);
 
             await Validate(async client =>
                            {
@@ -430,10 +430,10 @@ namespace Calamari.Tests.AWS
             var packageFilePath = TestEnvironment.GetTestPath("AWS", "S3", "CompressedPackages", fileName);
 
             var prefix = await UploadEntireCompressedPackage(packageFilePath,
-                                                       packageId,
-                                                       packageVersion,
-                                                       packageOptions,
-                                                       variables);
+                                                             packageId,
+                                                             packageVersion,
+                                                             packageOptions,
+                                                             variables);
 
             await Validate(async client =>
                            {
@@ -486,10 +486,10 @@ namespace Calamari.Tests.AWS
             var packageFilePath = TestEnvironment.GetTestPath("AWS", "S3", "CompressedPackages", fileName);
 
             var prefix = await UploadEntireCompressedPackage(packageFilePath,
-                                                       packageId,
-                                                       packageVersion,
-                                                       packageOptions,
-                                                       variables);
+                                                             packageId,
+                                                             packageVersion,
+                                                             packageOptions,
+                                                             variables);
 
             await Validate(async client =>
                            {
@@ -682,7 +682,7 @@ namespace Calamari.Tests.AWS
                                                      log,
                                                      variables,
                                                      fileSystem,
-                                                     new SubstituteInFiles(log, fileSystem, new FileSubstituter(log, fileSystem), variables),
+                                                     new SubstituteInFiles(log, fileSystem, new FileSubstituter(log, fileSystem, variables), variables),
                                                      new ExtractPackage(new CombinedPackageExtractor(log, fileSystem, variables, new CommandLineRunner(log, variables)), fileSystem, variables, log),
                                                      new StructuredConfigVariablesService(new PrioritisedList<IFileFormatVariableReplacer>
                                                                                           {
@@ -711,10 +711,10 @@ namespace Calamari.Tests.AWS
         }
 
         protected async Task<string> UploadEntireCompressedPackage(string packageFilePath,
-                                                       string packageId,
-                                                       string packageVersion,
-                                                       List<S3PackageOptions> propertiesList,
-                                                       VariableDictionary customVariables = null)
+                                                                   string packageId,
+                                                                   string packageVersion,
+                                                                   List<S3PackageOptions> propertiesList,
+                                                                   VariableDictionary customVariables = null)
         {
             var bucketKeyPrefix = $"calamaritest/{Guid.NewGuid():N}/";
             var variables = new CalamariVariables();
@@ -747,7 +747,7 @@ namespace Calamari.Tests.AWS
                                                      log,
                                                      variables,
                                                      fileSystem,
-                                                     new SubstituteInFiles(log, fileSystem, new FileSubstituter(log, fileSystem), variables),
+                                                     new SubstituteInFiles(log, fileSystem, new FileSubstituter(log, fileSystem, variables), variables),
                                                      new ExtractPackage(new CombinedPackageExtractor(log, fileSystem, variables, new CommandLineRunner(log, variables)), fileSystem, variables, log),
                                                      new StructuredConfigVariablesService(new PrioritisedList<IFileFormatVariableReplacer>
                                                                                           {

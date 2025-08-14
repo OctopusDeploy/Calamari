@@ -77,7 +77,7 @@ namespace Calamari.Tests.Fixtures.Variables
         [Test]
         public void ShouldIncludeCleartextSensitiveVariables()
         {
-            options.InputVariables.SensitiveVariablesPassword = null;
+            options.InputVariables.VariableEncryptionPassword = null;
 
             var sensitiveVariables = new Dictionary<string, string> { { "firstSensitiveVariableName", "firstSensitiveVariableValue"} };
             File.WriteAllText(firstSensitiveVariablesFileName, JsonConvert.SerializeObject(sensitiveVariables));
@@ -93,7 +93,7 @@ namespace Calamari.Tests.Fixtures.Variables
         [ExpectedException(typeof(CommandException), ExpectedMessage = "Cannot decrypt sensitive-variables. Check your password is correct.")]
         public void ThrowsCommandExceptionIfUnableToDecrypt()
         {
-            options.InputVariables.SensitiveVariablesPassword = "FakePassword";
+            options.InputVariables.VariableEncryptionPassword = "FakePassword";
             CreateSensitiveVariableFile();
             new VariablesFactory(fileSystem, new SilentLog()).Create(options);
         }
@@ -102,7 +102,7 @@ namespace Calamari.Tests.Fixtures.Variables
         [ExpectedException(typeof(CommandException), ExpectedMessage = "Unable to parse sensitive-variables as valid JSON.")]
         public void ThrowsCommandExceptionIfUnableToParseAsJson()
         {
-            options.InputVariables.SensitiveVariablesPassword = null;
+            options.InputVariables.VariableEncryptionPassword = null;
             File.WriteAllText(firstSensitiveVariablesFileName, "I Am Not JSON");
             new VariablesFactory(fileSystem, new SilentLog()).Create(options);
         }

@@ -38,7 +38,7 @@ namespace Calamari.Commands
         readonly IScriptEngine scriptEngine;
         readonly ICalamariFileSystem fileSystem;
         readonly ICommandLineRunner commandLineRunner;
-        readonly ISubstituteInFiles substituteInFiles;
+        readonly INonSensitiveSubstituteInFiles substituteInFiles;
         readonly IStructuredConfigVariablesService structuredConfigVariablesService;
 
         public RunScriptCommand(
@@ -48,7 +48,7 @@ namespace Calamari.Commands
             IScriptEngine scriptEngine,
             ICalamariFileSystem fileSystem,
             ICommandLineRunner commandLineRunner,
-            ISubstituteInFiles substituteInFiles,
+            INonSensitiveSubstituteInFiles substituteInFiles,
             IStructuredConfigVariablesService structuredConfigVariablesService
         )
         {

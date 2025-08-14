@@ -28,7 +28,7 @@ namespace Calamari.AzureServiceFabric.Behaviours
             var configurationFiles = fileSystem.EnumerateFilesRecursively(context.CurrentDirectory, "*.config", "*.xml");
             foreach (var configurationFile in configurationFiles)
             {
-                substituter.PerformSubstitution(configurationFile, context.Variables);
+                substituter.PerformSubstitution(configurationFile);
             }
 
             return Task.CompletedTask;

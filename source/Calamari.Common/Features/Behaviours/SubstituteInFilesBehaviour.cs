@@ -6,7 +6,6 @@ using Calamari.Common.Features.Substitutions;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Variables;
-using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Common.Features.Behaviours
 {
