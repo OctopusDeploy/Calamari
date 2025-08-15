@@ -4,10 +4,12 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Calamari.Common.Commands;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Deployment.Conventions;
 using Calamari.Kubernetes;
+using LibGit2Sharp;
 
 namespace Calamari.ArgoCD.Conventions
 {
@@ -43,30 +45,38 @@ namespace Calamari.ArgoCD.Conventions
             var fileGlob = deployment.Variables.GetPaths(SpecialVariables.CustomResourceYamlFileName);
             var filesToApply = SelectFiles(deployment.CurrentDirectory, fileGlob).ToList();
             
+            var commitMessage = GenerateCommitMessage(deployment);
+            var requiresPullRequest = FeatureToggle.ArgocdCreatePullRequestFeatureToggle.IsEnabled(deployment.Variables) && deployment.Variables.Get(SpecialVariables.Git.CommitMethod) == "PullRequest";
+            
             log.Info($"Found {filesToApply.Count} files to apply");
+            
+            var repositoryFactory = new RepositoryFactory(log, repositoryParentDirectory);
             foreach (var repositoryIndex in repositoryIndexes)
             {
                 Log.Info($"Writing files to repository for index {repositoryIndex}");
                 IGitConnection gitConnection = new VariableBackedGitConnection(deployment.Variables, repositoryIndex);
-                UpdateRepository(repositoryIndex, gitConnection, filesToApply, deployment.Variables.GetMandatoryVariable(SpecialVariables.Git.CommitMessage));
-                if(deployment.Variables.GetFlag())
+
+                var repository = repositoryFactory.CloneRepository(repositoryIndex, gitConnection);
+                Log.Info("Copying files into repository");
+                var filesAdded = CopyFilesIntoPlace(filesToApply, repository.WorkingDirectory, gitConnection.SubFolder);
+                Log.Info("Staging files in repository");
+                repository.StageFiles(filesAdded);
+                Log.Info("Commiting changes");
+                repository.CommitChanges(commitMessage);
+                
+                repository.PushChanges(requiresPullRequest, gitConnection.BranchName);
             }
         }
 
-        void UpdateRepository(string respositoryIndexName, IGitConnection gitConnection, List<FileToCopy> filesToApply, string commitMessage)
+        string GenerateCommitMessage(RunningDeployment deployment)
         {
-            Log.Info($"Cloning repository {gitConnection.Url}, checking out branch '{gitConnection.BranchName}'");
-            var localRepository = RepositoryHelpers.CloneRepository(Path.Combine(repositoryParentDirectory, respositoryIndexName), gitConnection);
-            Log.Info("Copying files into repository");
-            var filesAdded = CopyFilesIntoPlace(filesToApply, localRepository.Info.WorkingDirectory, gitConnection.SubFolder);
-            Log.Info("Staging files in repository");
-            RepositoryHelpers.StageFiles(filesAdded, localRepository);
-            Log.Info("Commiting changes");
-            RepositoryHelpers.CommitChanges(commitMessage, localRepository);
-            
-            Log.Info($"Pushing changes to branch '{gitConnection.BranchName}'");
-            RepositoryHelpers.PushChanges(gitConnection.BranchName, localRepository);
+            var summary = deployment.Variables.GetMandatoryVariable(SpecialVariables.Git.CommitMessageSummary);
+            var description = deployment.Variables.Get(SpecialVariables.Git.CommitMessageDescription) ?? string.Empty;
+            return description.Equals(string.Empty)
+                ? summary
+                : $"{summary}\n\n{description}";
         }
+
 
         List<string> CopyFilesIntoPlace(IEnumerable<FileToCopy> filesToCopy, string destinationRootDir, string repoSubFolder)
         {
