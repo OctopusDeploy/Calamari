@@ -29,7 +29,7 @@ namespace Calamari.Tests.Fixtures.Commands
             return Path.Combine(TestEnvironment.CurrentWorkingDirectory, path, Path.Combine(paths));
         }
 
-        private async Task<CalamariVariables> BuildVariables(CancellationToken cancellationToken)
+        private async Task<IVariables> BuildVariables(CancellationToken cancellationToken)
         {
             var variables = new CalamariVariables();
             variables.Set("Octopus.Action.AwsAccount.Variable", "AwsAccount");
@@ -62,13 +62,16 @@ namespace Calamari.Tests.Fixtures.Commands
 
             using (var temp = new TemporaryFile(Path.GetTempFileName()))
             {
-                (await BuildVariables(CancellationToken.None)).Save(temp.FilePath);
+                var variables = await BuildVariables(CancellationToken.None);
 
+                var encryptionKey = variables.SaveAsEncryptedExecutionVariables(temp.FilePath);
+                
                 var args = new[]
                 {
                     "run-test-script",
-                    "--script=" + Script,
-                    "--variables=" + temp.FilePath
+                    $"--script={Script}",
+                    $"--variables={temp.FilePath}",
+                    $"--variablesPassword={encryptionKey}"
                 };
 
                 ScriptHookMock.WasCalled = false;

@@ -141,11 +141,12 @@ namespace Calamari.Tests.AWS.CloudFormation
             variables.Set("AWSAccount.AccessKey", await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3AccessKey, CancellationToken.None));
             variables.Set("AWSAccount.SecretKey", await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3SecretKey, CancellationToken.None));
             variables.Set("Octopus.Action.Aws.Region", region);
-            variables.Save(variablesFile);
 
             using (var templateFile = new TemporaryFile(templateFilePath))
             using (new TemporaryFile(variablesFile))
             {
+                var encryptionKey = variables.SaveAsEncryptedExecutionVariables(variablesFile);
+                
                 var log = new InMemoryLog();
                 var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
                 var command = new DeployCloudFormationCommand(
@@ -163,8 +164,9 @@ namespace Calamari.Tests.AWS.CloudFormation
                     );
                 var result = command.Execute(new[]
                 {
-                    "--template", $"{templateFile.FilePath}",
-                    "--variables", $"{variablesFile}",
+                    "--template", templateFile.FilePath,
+                    "--variables", variablesFile,
+                    "--variablesPassword", encryptionKey,
                     "--stackName", resourceName,
                     "--waitForCompletion", "true"
                 });
@@ -181,10 +183,10 @@ namespace Calamari.Tests.AWS.CloudFormation
             variables.Set("AWSAccount.AccessKey", await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3AccessKey, CancellationToken.None));
             variables.Set("AWSAccount.SecretKey", await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3SecretKey, CancellationToken.None));
             variables.Set("Octopus.Action.Aws.Region", "us-east-1");
-            variables.Save(variablesFile);
 
             using (new TemporaryFile(variablesFile))
             {
+                var encryptionKey = variables.SaveAsEncryptedExecutionVariables(variablesFile);
                 var log = new InMemoryLog();
                 var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
                 var command = new DeployCloudFormationCommand(log,
@@ -202,7 +204,8 @@ namespace Calamari.Tests.AWS.CloudFormation
                 {
                     "--templateS3", "https://calamari-cloudformation-tests.s3.amazonaws.com/s3/empty.yaml",
                     "--templateS3Parameters", "https://calamari-cloudformation-tests.s3.amazonaws.com/s3/properties.json",
-                    "--variables", $"{variablesFile}",
+                    "--variables", variablesFile,
+                    "--variablesPassword", encryptionKey,
                     "--stackName", resourceName,
                     "--waitForCompletion", "true"
                 });
@@ -227,17 +230,17 @@ namespace Calamari.Tests.AWS.CloudFormation
         public async Task DeleteStack(string stackName)
         {
             var variablesFile = Path.GetTempFileName();
-            var variables = new CalamariVariables();
+            IVariables variables = new CalamariVariables();
             variables.Set("Octopus.Account.AccountType", "AmazonWebServicesAccount");
             variables.Set("Octopus.Action.AwsAccount.Variable", "AWSAccount");
             variables.Set("AWSAccount.AccessKey", await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3AccessKey, CancellationToken.None));
             variables.Set("AWSAccount.SecretKey", await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3SecretKey, CancellationToken.None));
             variables.Set("Octopus.Action.Aws.Region", region);
             variables.Set(AwsSpecialVariables.CloudFormation.StackName, stackName);
-            variables.Save(variablesFile);
 
             using (new TemporaryFile(variablesFile))
             {
+                var encryptionKey = variables.SaveAsEncryptedExecutionVariables(variablesFile);
                 var log = new InMemoryLog();
                 var command = new DeleteCloudFormationCommand(
                                                               log,
@@ -245,7 +248,8 @@ namespace Calamari.Tests.AWS.CloudFormation
                                                              );
                 var result = command.Execute(new[]
                 {
-                    "--variables", $"{variablesFile}",
+                    "--variables", variablesFile,
+                    "--variablesPassword", encryptionKey,
                     "--waitForCompletion", "true"
                 });
 

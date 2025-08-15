@@ -11,6 +11,7 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Integration.Processes;
+using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using NUnit.Framework;
 
@@ -25,9 +26,9 @@ namespace Calamari.Tests.Helpers
         {
             Log = new InMemoryLog();
         }
-        
+
         protected static bool IsRunningOnUnixLikeEnvironment => CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac;
-        
+
         protected CommandLine Calamari()
         {
 #if NETFX
@@ -68,10 +69,10 @@ namespace Calamari.Tests.Helpers
             var capture = new CaptureCommandInvocationOutputSink();
             var sco = new SplitCommandInvocationOutputSink(new ServiceMessageCommandInvocationOutputSink(variables), capture);
 
-            foreach(var line in Log.StandardOut)
+            foreach (var line in Log.StandardOut)
                 sco.WriteInfo(line);
 
-            foreach(var line in Log.StandardError)
+            foreach (var line in Log.StandardError)
                 sco.WriteError(line);
 
             return new CalamariResult(exitCode, capture);
@@ -83,7 +84,6 @@ namespace Calamari.Tests.Helpers
             var result = runner.Execute(command.Build());
             return new CalamariResult(result.ExitCode, runner.Output);
         }
-
 
         protected string GetFixtureResource(params string[] paths)
         {
@@ -99,13 +99,13 @@ namespace Calamari.Tests.Helpers
         }
 
         protected (CalamariResult result, IVariables variables) RunScript(string scriptName,
-            Dictionary<string, string> additionalVariables = null,
-            Dictionary<string, string> additionalParameters = null,
-            string sensitiveVariablesPassword = null,
-            IEnumerable<string> extensions = null)
+                                                                          Dictionary<string, string> additionalVariables = null,
+                                                                          Dictionary<string, string> additionalParameters = null,
+                                                                          string sensitiveVariablesPassword = null,
+                                                                          IEnumerable<string> extensions = null)
         {
             var variablesFile = Path.GetTempFileName();
-            var variables = new CalamariVariables();
+            IVariables variables = new CalamariVariables();
             variables.Set(ScriptVariables.ScriptFileName, scriptName);
             variables.Set(ScriptVariables.ScriptBody, File.ReadAllText(GetFixtureResource("Scripts", scriptName)));
             variables.Set(ScriptVariables.Syntax, scriptName.ToScriptType().ToString());
@@ -117,17 +117,14 @@ namespace Calamari.Tests.Helpers
                 var cmdBase = Calamari()
                     .Action("run-script");
 
-                if (sensitiveVariablesPassword == null)
+                //all variables _must_ be encrypted now
+                if (string.IsNullOrEmpty(sensitiveVariablesPassword))
                 {
-                    variables.Save(variablesFile);
-                    cmdBase = cmdBase.Argument("variables", variablesFile);
+                    sensitiveVariablesPassword = AesEncryption.RandomString(10);
                 }
-                else
-                {
-                    variables.SaveEncrypted(sensitiveVariablesPassword, variablesFile);
-                    cmdBase = cmdBase.Argument("sensitiveVariables", variablesFile)
-                        .Argument("sensitiveVariablesPassword", sensitiveVariablesPassword);
-                }
+
+                variables.SaveAsEncryptedExecutionVariables(variablesFile, sensitiveVariablesPassword);
+                cmdBase = cmdBase.VariablesFileArguments(variablesFile, sensitiveVariablesPassword);
 
                 if (extensions != null)
                 {
@@ -139,7 +136,6 @@ namespace Calamari.Tests.Helpers
                 var output = Invoke(cmdBase, variables);
 
                 return (output, variables);
-
             }
         }
     }

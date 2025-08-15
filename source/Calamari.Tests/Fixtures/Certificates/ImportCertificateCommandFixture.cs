@@ -1,9 +1,11 @@
 ﻿using System;
 using System.IO;
 using System.Security.Cryptography.X509Certificates;
+using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
+using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using Calamari.Testing.Requirements;
 using Calamari.Tests.Helpers;
@@ -82,10 +84,11 @@ namespace Calamari.Tests.Fixtures.Certificates
         {
             using (var variablesFile = new TemporaryFile(Path.GetTempFileName()))
             {
-                variables.Save(variablesFile.FilePath);
+                var encryptionKey = variables.SaveAsEncryptedExecutionVariables(variablesFile.FilePath);
+                
                 return InvokeInProcess(Calamari()
                               .Action("import-certificate")
-                              .Argument("variables", variablesFile.FilePath));
+                              .VariablesFileArguments(variablesFile.FilePath, encryptionKey));
             }
         }
         

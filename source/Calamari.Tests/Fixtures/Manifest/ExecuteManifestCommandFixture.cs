@@ -6,6 +6,7 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Deployment;
 using Calamari.LaunchTools;
+using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using Calamari.Testing.Requirements;
 using Calamari.Tests.Helpers;
@@ -87,12 +88,11 @@ namespace Calamari.Tests.Fixtures.Manifest
         {
             using (var variablesFile = new TemporaryFile(Path.GetTempFileName()))
             {
-                variables.Save(variablesFile.FilePath);
+                var encryptionKey = variables.SaveAsEncryptedExecutionVariables(variablesFile.FilePath);
 
                 return Invoke(Calamari()
                               .Action("execute-manifest")
-                              .Argument("variables", variablesFile.FilePath)
-                              .Argument("sensitiveVariablesPassword", "GB8KdBqYRlgAON9ISUPdnQ=="));
+                              .VariablesFileArguments(variablesFile.FilePath, encryptionKey));
             }
         }
     }
