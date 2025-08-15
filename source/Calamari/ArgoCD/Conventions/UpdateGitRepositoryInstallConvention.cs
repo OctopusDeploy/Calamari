@@ -72,7 +72,7 @@ namespace Calamari.ArgoCD.Conventions
                 }
                 else
                 {
-                    Log.Info("No changes were commited, s");
+                    Log.Info("No changes were commited.");
                 }
             }
         }
