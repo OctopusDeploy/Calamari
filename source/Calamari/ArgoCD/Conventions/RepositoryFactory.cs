@@ -56,6 +56,7 @@ namespace Calamari.ArgoCD.Conventions
             var repoPath = Repository.Clone(gitConnection.Url, checkoutPath, options);
             var repo = new Repository(repoPath);
             Branch remoteBranch = repo.Branches[gitConnection.RemoteBranchName];
+            log.Verbose($"Checking out {remoteBranch.Tip.Sha}");
             
             //A local branch is required such that libgit2sharp can create "tracking" data
             // libgit2sharp does not support pushing from a detached head

@@ -27,9 +27,10 @@ namespace Calamari.ArgoCD.Conventions
             try
             {
                 var commitTime = DateTimeOffset.Now;
-                repository.Commit(commitMessage,
+                var commit = repository.Commit(commitMessage,
                                   new Signature("Octopus", "octopus@octopus.com", commitTime),
                                   new Signature("Octopus", "octopus@octopus.com", commitTime));
+                log.Verbose($"Committed changes to {commit.Sha}");
                 return true;
             }
             catch (EmptyCommitException)
