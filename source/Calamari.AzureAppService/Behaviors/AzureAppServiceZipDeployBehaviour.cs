@@ -158,7 +158,7 @@ namespace Calamari.AzureAppService.Behaviors
                 //Need to check if site turn off 
                 var scmPublishEnabled = await armClient.IsScmPublishEnabled(targetSite);
                 
-                if (packageProvider.SupportsAsynchronousDeployment && FeatureToggle.AsynchronousAzureZipDeployFeatureToggle.IsEnabled(context.Variables))
+                if (packageProvider.SupportsAsynchronousDeployment)
                 {
                     await UploadZipAndPollAsync(account, publishingProfile, scmPublishEnabled, uploadPath, targetSite.ScmSiteAndSlot, packageProvider, pollingTimeout, asyncZipDeployTimeoutPolicy);
                 }
