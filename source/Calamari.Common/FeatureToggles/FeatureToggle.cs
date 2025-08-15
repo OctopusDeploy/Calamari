@@ -8,7 +8,6 @@
     public enum FeatureToggle {
         SkunkworksFeatureToggle,
         OidcAccountsFeatureToggle,
-        AzureRMDeprecationFeatureToggle,
         KubernetesLiveObjectStatusFeatureToggle,
         KubernetesAuthAwsCliWithExecFeatureToggle,
         ForceUtf8ZipFileDecodingFeatureToggle,
