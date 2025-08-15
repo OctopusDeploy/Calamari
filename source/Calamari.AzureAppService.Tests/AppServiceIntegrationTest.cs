@@ -14,7 +14,6 @@ using Azure.ResourceManager.Resources;
 using Calamari.Azure;
 using Calamari.Azure.AppServices;
 using Calamari.AzureAppService.Azure;
-using Calamari.AzureAppService.Json;
 using Calamari.CloudAccounts;
 using Calamari.Testing;
 using Calamari.Testing.Azure;
