@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Sockets;
 using Calamari.Common.Plumbing.Logging;
 using LibGit2Sharp;
 
@@ -64,7 +65,7 @@ namespace Calamari.ArgoCD.Conventions
             }
             LibGit2Sharp.Commands.Checkout(repo, gitConnection.BranchName);
 
-            return new RepositoryWrapper(repo, log);
+            return new RepositoryWrapper(repo, log, gitConnection);
         }
     }
 }

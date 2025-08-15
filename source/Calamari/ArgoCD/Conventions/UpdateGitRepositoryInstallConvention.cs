@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using Calamari.Common.Commands;
 using Calamari.Common.FeatureToggles;
+using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Deployment.Conventions;
@@ -42,7 +43,7 @@ namespace Calamari.ArgoCD.Conventions
             var repositoryIndexes = deployment.Variables.GetIndexes(SpecialVariables.Git.Index);
 
             Log.Info("Executing Commit To Git operation");
-            var fileGlob = deployment.Variables.GetPaths(SpecialVariables.CustomResourceYamlFileName);
+            var fileGlob = deployment.Variables.GetPaths(SpecialVariables.Git.TemplateGlobs);
             var filesToApply = SelectFiles(deployment.CurrentDirectory, fileGlob).ToList();
             
             var commitMessage = GenerateCommitMessage(deployment);
@@ -51,6 +52,8 @@ namespace Calamari.ArgoCD.Conventions
             log.Info($"Found {filesToApply.Count} files to apply");
             
             var repositoryFactory = new RepositoryFactory(log, repositoryParentDirectory);
+            var repositoryIndexNames = repositoryIndexes.Join(",");
+            log.Info($"Found the following repository indicies '{repositoryIndexNames}'");
             foreach (var repositoryIndex in repositoryIndexes)
             {
                 Log.Info($"Writing files to repository for index {repositoryIndex}");
@@ -62,9 +65,15 @@ namespace Calamari.ArgoCD.Conventions
                 Log.Info("Staging files in repository");
                 repository.StageFiles(filesAdded);
                 Log.Info("Commiting changes");
-                repository.CommitChanges(commitMessage);
-                
-                repository.PushChanges(requiresPullRequest, gitConnection.BranchName);
+                if (repository.CommitChanges(commitMessage))
+                {
+                    Log.Info("Changes were commited, pushing to remote");
+                    repository.PushChanges(requiresPullRequest, gitConnection.BranchName);    
+                }
+                else
+                {
+                    Log.Info("No changes were commited, s");
+                }
             }
         }
 

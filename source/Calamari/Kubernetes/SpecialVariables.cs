@@ -79,6 +79,8 @@ namespace Calamari.Kubernetes
             public static readonly string CommitMessageDescription = "Octopus.Action.ArgoCD.CommitMessageDescription";
 
             public static readonly string CommitMethod = "Octopus.Action.ArgoCD.CommitMethod";
+
+            public static readonly string TemplateGlobs = "Octopus.Action.ArgoCD.TemplateGlobs";
         }
 
         public class ServiceMessages

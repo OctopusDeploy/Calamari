@@ -82,7 +82,7 @@ namespace Calamari.ArgoCD.Commands
             conventionRunner.RunConventions(logExceptions: false);
 
             //need to work out if the conventions somehow fails
-            return 1;
+            return 0;
         }
     }
 }

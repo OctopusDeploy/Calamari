@@ -9,13 +9,15 @@ namespace Calamari.ArgoCD.Conventions
     {
         readonly IRepository repository;
         readonly ILog log;
-        
+        readonly IGitConnection connection;
+
         public string WorkingDirectory => repository.Info.WorkingDirectory;
 
-        public RepositoryWrapper(IRepository repository, ILog log)
+        public RepositoryWrapper(IRepository repository, ILog log, IGitConnection connection)
         {
             this.repository = repository;
             this.log = log;
+            this.connection = connection;
         }
         
 
@@ -40,7 +42,9 @@ namespace Calamari.ArgoCD.Conventions
         {
             foreach (var file in filesToStage)
             {
-                repository.Index.Add(file);
+                //WHAT THE HELL?! libGit2Sharp doesn't like the "./" at the start of the relative path
+                //which comes from the ARGOCD-SUBFOLDER
+                repository.Index.Add(file.Substring(2));
             }
         }
         
@@ -64,9 +68,16 @@ namespace Calamari.ArgoCD.Conventions
             Remote remote = repository.Network.Remotes["origin"];
             repository.Branches.Update(repository.Head, 
                                        branch => branch.Remote = remote.Name,
-                                       branch => branch.UpstreamBranch = $"refs/heads/{branchName}");
+                                       branch => branch.UpstreamBranch = $"refs/heads/main"); //TODO(tmm): HACK THIS BACK TO branchName
             
-            repository.Network.Push(repository.Head);
+            log.Info($"Pushing changes to branch '{branchName}' with original credentials");
+            var pushOptions = new PushOptions
+            {
+                CredentialsProvider = (url, usernameFromUrl, types) =>
+                                          new UsernamePasswordCredentials { Username = connection.Username, Password = connection.Password }
+            };
+            
+            repository.Network.Push(repository.Head, pushOptions);
         }
     }
 }
