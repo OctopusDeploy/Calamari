@@ -43,9 +43,7 @@ namespace Calamari.ArgoCD.Conventions
         {
             foreach (var file in filesToStage)
             {
-                //WHAT THE HELL?! libGit2Sharp doesn't like the "./" at the start of the relative path
-                //which comes from the ARGOCD-SUBFOLDER
-                repository.Index.Add(file.Substring(2));
+                repository.Index.Add(file);
             }
         }
         
