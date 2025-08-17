@@ -25,9 +25,11 @@ namespace Calamari.Tests.Fixtures.Variables
         string tempDirectory;
         string firstVariableFileName;
         string secondVariableFileName;
+        string legacyVariableFileName;
         ICalamariFileSystem fileSystem;
         CommonOptions options;
         const string encryptionPassword = "HumptyDumpty!";
+        const string legacyEncryptionPassword = "SatOnTheWall!";
 
         [SetUp]
         public void SetUp()
@@ -35,6 +37,7 @@ namespace Calamari.Tests.Fixtures.Variables
             tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
             firstVariableFileName = Path.Combine(tempDirectory, "firstVariableSet.secret");
             secondVariableFileName = Path.Combine(tempDirectory, "secondVariableSet.secret");
+            legacyVariableFileName = Path.Combine(tempDirectory, "legacyVariableSet.secret");
             fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
             fileSystem.EnsureDirectoryExists(tempDirectory);
 
@@ -48,7 +51,11 @@ namespace Calamari.Tests.Fixtures.Variables
                 "--variables",
                 secondVariableFileName,
                 "--variablesPassword",
-                encryptionPassword
+                encryptionPassword,
+                "--sensitiveVariables",
+                legacyVariableFileName,
+                "--sensitiveVariablesPassword",
+                legacyEncryptionPassword
             });
         }
 
@@ -66,6 +73,7 @@ namespace Calamari.Tests.Fixtures.Variables
 
             Assert.AreEqual("firstVariableValue", result.Get("firstVariableName"));
             Assert.AreEqual("secondVariableValue", result.Get("secondVariableName"));
+            Assert.AreEqual("thirdVariableValue", result.Get("thirdVariableName"));
         }
 
         [Test]
@@ -99,6 +107,12 @@ namespace Calamari.Tests.Fixtures.Variables
                 new CalamariExecutionVariable("secondVariableName", "secondVariableValue", true)
             };
             File.WriteAllBytes(secondVariableFileName, AesEncryption.ForServerVariables(encryptionPassword).Encrypt(secondVariableCollection.ToJsonString()));
+
+            var legacyVariables = new VariableDictionary
+            {
+                {"thirdVariableName", "thirdVariableValue"}
+            };
+            File.WriteAllBytes(legacyVariableFileName, AesEncryption.ForServerVariables(legacyEncryptionPassword).Encrypt(legacyVariables.SaveAsString()));
         }
 
         [Test]
