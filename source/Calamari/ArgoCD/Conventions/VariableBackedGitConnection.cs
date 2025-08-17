@@ -25,7 +25,7 @@ namespace Calamari.ArgoCD.Conventions
         {
             get
             {
-                var raw = variables.Get(SpecialVariables.Git.SubFolder(index), String.Empty);
+                var raw = variables.Get(SpecialVariables.Git.SubFolder(index), String.Empty) ?? String.Empty;
                 if (raw.StartsWith("./"))
                 {
                     return raw.Substring(2);

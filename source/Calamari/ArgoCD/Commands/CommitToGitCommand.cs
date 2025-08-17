@@ -15,6 +15,8 @@ using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 
+using SpecialVariables = Calamari.Kubernetes.SpecialVariables;
+
 namespace Calamari.ArgoCD.Commands
 {
     [Command(Name, Description = "Write populated template from a package into git repositories")]
@@ -67,7 +69,7 @@ namespace Calamari.ArgoCD.Commands
                                                   d.StagingDirectory = packageDirectory;
                                                   d.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
                                               }),
-                new SubstituteInFilesConvention(new SubstituteInFilesBehaviour(substituteInFiles, PackageDirectoryName)),
+                new GlobbedSubtituteInFilesConvention(SpecialVariables.Git.TemplateGlobs, substituteInFiles, fileSystem, log),
                 new DelegateInstallConvention(d =>
                                               {
                                                   var convention = new UpdateGitRepositoryInstallConvention(fileSystem, workingDirectory, log);
