@@ -7,9 +7,10 @@ namespace Calamari.Common.Plumbing.Variables
 {
     public class CalamariExecutionVariableCollection : List<CalamariExecutionVariable>
     {
-        static readonly JsonSerializerSettings SerializerSettings = new JsonSerializerSettings()
+        static readonly JsonSerializerSettings SerializerSettings = new JsonSerializerSettings
         {
-            TypeNameHandling = TypeNameHandling.None
+            TypeNameHandling = TypeNameHandling.None,
+            DateParseHandling = DateParseHandling.None
         };
 
         public string ToJsonString()
