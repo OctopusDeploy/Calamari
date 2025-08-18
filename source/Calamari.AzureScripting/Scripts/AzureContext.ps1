@@ -190,7 +190,6 @@ Execute-WithRetry{
                         $loginArgs += @("--federated-token=$(ConvertTo-QuotedString($OctopusOpenIdJwt))");
 
                         Write-Host "az login --service-principal $loginArgs"
-                        az login --service-principal $loginArgs
                     }
                     else {
                         # Use the full argument because of https://github.com/Azure/azure-cli/issues/12105
