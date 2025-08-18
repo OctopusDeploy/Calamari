@@ -50,7 +50,6 @@ namespace Calamari.AzureScripting
             var workingDirectory = Path.GetDirectoryName(script.File)!;
             variables.Set("OctopusAzureTargetScript", script.File);
             variables.Set("OctopusAzureTargetScriptParameters", script.Parameters);
-            variables.Set("OctopusAzureRmIsDeprecated", FeatureToggle.AzureRMDeprecationFeatureToggle.IsEnabled(variables).ToString());
 
             SetOutputVariable("OctopusAzureSubscriptionId", variables.Get(SpecialVariables.Action.Azure.SubscriptionId)!);
             SetOutputVariable("OctopusAzureStorageAccountName", variables.Get(SpecialVariables.Action.Azure.StorageAccountName)!);

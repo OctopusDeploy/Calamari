@@ -535,7 +535,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
                 .Argument("package", GetFixtureResource("Packages", "PackagedScript.1.0.0.zip")), variables);
 
             output.AssertSuccess();
-            output.AssertOutput("Extracting package");
+            output.AssertOutput("Extracting dependency");
             output.AssertOutput("Performing variable substitution");
             output.AssertOutput("OctopusParameter: Production");
             output.AssertOutput("InlineVariable: Production");
