@@ -15,8 +15,6 @@ using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 
-using SpecialVariables = Calamari.Kubernetes.SpecialVariables;
-
 namespace Calamari.ArgoCD.Commands
 {
     [Command(Name, Description = "Write populated template from a package into git repositories")]
@@ -82,8 +80,7 @@ namespace Calamari.ArgoCD.Commands
 
             var conventionRunner = new ConventionProcessor(runningDeployment, conventions, log);
             conventionRunner.RunConventions(logExceptions: false);
-
-            //need to work out if the conventions somehow fails
+            
             return 0;
         }
     }
