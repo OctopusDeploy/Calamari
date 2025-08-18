@@ -69,7 +69,7 @@ namespace Calamari.ArgoCD.Commands
                                                   d.StagingDirectory = packageDirectory;
                                                   d.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
                                               }),
-                new GlobbedSubtituteInFilesConvention(SpecialVariables.Git.TemplateGlobs, substituteInFiles, fileSystem, log),
+                new SubstituteInFilesConvention(new SubstituteInFilesBehaviour(substituteInFiles)),
                 new DelegateInstallConvention(d =>
                                               {
                                                   var convention = new UpdateGitRepositoryInstallConvention(fileSystem, workingDirectory, log);
