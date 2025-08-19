@@ -108,12 +108,10 @@ namespace Calamari.Tests.LaunchTools
             {
                 "Test",
                 "--variables",
-                "firstInsensitiveVariablesFileName",
-                "--sensitiveVariables",
-                "firstSensitiveVariablesFileName",
-                "--sensitiveVariables",
-                "secondSensitiveVariablesFileName",
-                "--sensitiveVariablesPassword",
+                "firstVariablesFileName",
+                "--variables",
+                "secondVariablesFileName",
+                "--variablesPassword",
                 "encryptionPassword"
             });
 

@@ -11,6 +11,7 @@ using Calamari.Common.Features.Scripts;
 using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Commands;
+using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
@@ -434,12 +435,13 @@ namespace Calamari.Tests.KubernetesFixtures
 
                 Log.VerboseFormat("Deploying test chart from package: {0}", packageName);
                 var pkg = GetFixtureResource("Charts", packageName);
-                Variables.Save(variablesFile.FilePath);
+
+               var encryptionKey = Variables.SaveAsEncryptedExecutionVariables(variablesFile.FilePath);
 
                 return InvokeInProcess(Calamari()
                                        .Action("helm-upgrade")
                                        .Argument("package", pkg)
-                                       .Argument("variables", variablesFile.FilePath));
+                                       .VariablesFileArguments(variablesFile.FilePath, encryptionKey));
             }
         }
 

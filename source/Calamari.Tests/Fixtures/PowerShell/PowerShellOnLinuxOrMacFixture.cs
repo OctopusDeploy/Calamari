@@ -5,6 +5,7 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
+using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
@@ -29,17 +30,18 @@ namespace Calamari.Tests.Fixtures.PowerShell
         {
             var variablesFile = Path.GetTempFileName();
 
-            var variables = new CalamariVariables();
+            IVariables variables = new CalamariVariables();
             variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.PowerShell), "Write-Host Hello PowerShell");
             variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.CSharp), "Write-Host Hello CSharp");
             variables.Set(SpecialVariables.Action.Script.ScriptBodyBySyntax(ScriptSyntax.Bash), "echo Hello Bash");
-            variables.Save(variablesFile);
 
             using (new TemporaryFile(variablesFile))
             {
+                var encryptionKey = variables.SaveAsEncryptedExecutionVariables(variablesFile);
+                
                 var output = Invoke(Calamari()
                     .Action("run-script")
-                    .Argument("variables", variablesFile));
+                    .VariablesFileArguments(variablesFile, encryptionKey));
 
                 output.AssertSuccess();
                 output.AssertOutput("Hello Bash");
