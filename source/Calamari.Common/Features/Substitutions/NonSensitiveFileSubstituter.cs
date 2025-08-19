@@ -13,16 +13,16 @@ namespace Calamari.Common.Features.Substitutions
         {
         }
 
-        protected override void PerformSubstitutionAndUpdateFile(string sourceFile, string targetFile, bool throwOnError)
+        protected override void PerformSubstitutionAndUpdateFile(string sourceFile, string targetFile, bool throwOnError, bool throwPlainOctostacheError = false )
         {
             try
             {
                 //We always want to throw when substitution fails
-                base.PerformSubstitutionAndUpdateFile(sourceFile, targetFile, true);
+                base.PerformSubstitutionAndUpdateFile(sourceFile, targetFile, true, true);
             }
-            catch (Exception e)
+            catch (InvalidOperationException e)
             {
-                throw new CommandException($"{e.Message}{Environment.NewLine}This may be due to sensitive variables in use");
+                throw new CommandException($"{e.Message}. This may be due to invalid Octostache syntax or sensitive variables.");
             }
         }
     }

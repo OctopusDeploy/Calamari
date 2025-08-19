@@ -25,7 +25,7 @@ namespace Calamari.Common.Features.Substitutions
         public void PerformSubstitution(string sourceFile, string targetFile) 
             => PerformSubstitutionAndUpdateFile(sourceFile, targetFile, variables.GetFlag(KnownVariables.ShouldFailDeploymentOnSubstitutionFails));
 
-        protected virtual void PerformSubstitutionAndUpdateFile(string sourceFile, string targetFile, bool throwOnError)
+        protected virtual void PerformSubstitutionAndUpdateFile(string sourceFile, string targetFile, bool throwOnError, bool throwPlainOctostacheError = false)
         {
             log.Verbose($"Performing variable substitution on '{sourceFile}'");
 
@@ -38,7 +38,10 @@ namespace Calamari.Common.Features.Substitutions
             {
                 if (throwOnError)
                 {
-                    throw new Exception($"Parsing file '{sourceFile}' with Octostache returned the following error: `{error}`");
+                    var message = !throwPlainOctostacheError
+                        ? $"Parsing file '{sourceFile}' with Octostache returned the following error: `{error}`"
+                        : error;
+                    throw new InvalidOperationException(message);
                 }
 
                 log.VerboseFormat("Parsing file '{0}' with Octostache returned the following error: `{1}`", sourceFile, error);
