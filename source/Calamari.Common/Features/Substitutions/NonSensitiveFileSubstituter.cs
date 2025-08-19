@@ -22,7 +22,7 @@ namespace Calamari.Common.Features.Substitutions
             }
             catch (InvalidOperationException e)
             {
-                throw new CommandException($"{e.Message}. This may be due to invalid Octostache syntax or sensitive variables.");
+                throw new CommandException($"{e.Message}. This may be due to missing or sensitive variables.");
             }
         }
     }

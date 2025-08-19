@@ -39,7 +39,7 @@ namespace Calamari.Tests.Fixtures.Substitutions
             // Assert
             action.Should()
                   .Throw<CommandException>()
-                  .WithMessage("*");
+                  .WithMessage("*#{server.Port}*This may be due to missing or sensitive variables.");
         }
 
         static (string text, Encoding encoding) PerformTest(string sampleFile, INonSensitiveVariables variables, Encoding expectedResultEncoding = null)
