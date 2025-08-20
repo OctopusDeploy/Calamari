@@ -36,9 +36,9 @@ namespace Calamari.ArgoCD.Conventions
 
             Log.Info("Executing Commit To Git operation");
             var fileGlobs = deployment.Variables.GetPaths(SpecialVariables.Git.TemplateGlobs);
-            var filesToApply = SelectFiles(deployment.CurrentDirectory, fileGlobs).ToArray();
+            var filesToApply = SelectFiles(deployment.CurrentDirectory, fileGlobs);
             
-            var helper = new FileWriter(fileSystem, filesToApply);
+            var fileWriter = new FileWriter(fileSystem, filesToApply);
             
             var commitMessage = GenerateCommitMessage(deployment);
             var requiresPullRequest = FeatureToggle.ArgocdCreatePullRequestFeatureToggle.IsEnabled(deployment.Variables) && deployment.Variables.Get(SpecialVariables.Git.CommitMethod) == "PullRequest";
@@ -56,7 +56,7 @@ namespace Calamari.ArgoCD.Conventions
                 var repository = repositoryFactory.CloneRepository(repositoryIndex, gitConnection);
                 
                 Log.Info("Copying files into repository");
-                var filesAdded = helper.ApplyFilesTo(repository.WorkingDirectory, subFolder);
+                var filesAdded = fileWriter.ApplyFilesTo(repository.WorkingDirectory, subFolder);
                 
                 Log.Info("Staging files in repository");
                 repository.StageFiles(filesAdded.ToArray());
@@ -95,18 +95,19 @@ namespace Calamari.ArgoCD.Conventions
                 : $"{summary}\n\n{description}";
         }
         
-        IEnumerable<PackageRelativeFile> SelectFiles(string pathToExtractedPackage, List<string> fileGlobs)
+        PackageRelativeFile[] SelectFiles(string pathToExtractedPackage, List<string> fileGlobs)
         {
             return fileGlobs.SelectMany(glob => fileSystem.EnumerateFilesWithGlob(pathToExtractedPackage, glob))
                             .Select(absoluteFilepath =>
                                     {
 #if NETCORE
                                         var relativePath = Path.GetRelativePath(pathToExtractedPackage, file);
-#else           
+#else
                                         var relativePath = absoluteFilepath.Substring(pathToExtractedPackage.Length + 1);
 #endif
                                         return new PackageRelativeFile(absoluteFilepath, relativePath);
-                                    });
+                                    })
+                            .ToArray();
         }
     }
 }
