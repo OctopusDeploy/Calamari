@@ -15,17 +15,6 @@ using SharpCompress;
 
 namespace Calamari.ArgoCD.Conventions
 {
-    public class FileToCopy
-    {
-        public FileToCopy(string absolutePath, string relativePath)
-        {
-            RelativePath = relativePath;
-            AbsolutePath = absolutePath;
-        }
-        public string AbsolutePath { get; }
-        public string RelativePath { get;  }
-    }
-
     public class UpdateGitRepositoryInstallConvention : IInstallConvention
     {
         readonly ICalamariFileSystem fileSystem;
@@ -90,7 +79,7 @@ namespace Calamari.ArgoCD.Conventions
                 : $"{summary}\n\n{description}";
         }
         
-        IEnumerable<FileToCopy> SelectFiles(string pathToExtractedPackage, List<string> fileGlobs)
+        IEnumerable<PackageRelativeFile> SelectFiles(string pathToExtractedPackage, List<string> fileGlobs)
         {
             return fileGlobs.SelectMany(glob => fileSystem.EnumerateFilesWithGlob(pathToExtractedPackage, glob))
                             .Select(absoluteFilepath =>
@@ -100,7 +89,7 @@ namespace Calamari.ArgoCD.Conventions
 #else           
                                         var relativePath = absoluteFilepath.Substring(pathToExtractedPackage.Length + 1);
 #endif
-                                        return new FileToCopy(absoluteFilepath, relativePath);
+                                        return new PackageRelativeFile(absoluteFilepath, relativePath);
                                     });
         }
     }

@@ -37,9 +37,9 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
         [Test]
         public void WhenApplyFilesToASubDirectory_FilenamesReturnedAreRelativeToRoot()
         {
-            FileToCopy[] filesToCopy = {
-                new FileToCopy(Path.Combine(packageDirectory, "firstFile.txt"), "firstFile.text"),
-                new FileToCopy(Path.Combine(packageDirectory, "nested", "firstFile.txt"), "secondFile.text"),
+            PackageRelativeFile[] filesToCopy = {
+                new PackageRelativeFile(Path.Combine(packageDirectory, "firstFile.txt"), "firstFile.text"),
+                new PackageRelativeFile(Path.Combine(packageDirectory, "nested", "firstFile.txt"), "secondFile.text"),
 
             };
             
@@ -54,11 +54,11 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             var subFolder = "";
             var result = fileWriter.ApplyFilesTo(destinationDirectory, subFolder);
             result.Should().HaveCount(2);
-            result.Should().BeEquivalentTo(Path.Combine(subFolder, filesToCopy[0].RelativePath),
-                                           Path.Combine(subFolder, filesToCopy[1].RelativePath));
+            result.Should().BeEquivalentTo(Path.Combine(subFolder, filesToCopy[0].PackageRelativePath),
+                                           Path.Combine(subFolder, filesToCopy[1].PackageRelativePath));
             
-            File.Exists(Path.Combine(destinationDirectory, subFolder, filesToCopy[0].RelativePath));
-            File.Exists(Path.Combine(destinationDirectory, subFolder, filesToCopy[1].RelativePath));
+            File.Exists(Path.Combine(destinationDirectory, subFolder, filesToCopy[0].PackageRelativePath));
+            File.Exists(Path.Combine(destinationDirectory, subFolder, filesToCopy[1].PackageRelativePath));
         }
     }
 }

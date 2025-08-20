@@ -8,20 +8,20 @@ namespace Calamari.ArgoCD.Conventions
     public class FileWriter
     {
         readonly ICalamariFileSystem fileSystem;
-        readonly FileToCopy[] sourceFiles;
+        readonly PackageRelativeFile[] packageFiles;
 
-        public FileWriter(ICalamariFileSystem fileSystem, FileToCopy[] sourceFiles)
+        public FileWriter(ICalamariFileSystem fileSystem, PackageRelativeFile[] packageFiles)
         {
             this.fileSystem = fileSystem;
-            this.sourceFiles = sourceFiles;
+            this.packageFiles = packageFiles;
         }
 
         public IReadOnlyList<string> ApplyFilesTo(string destinationRootDir, string subFolder)
         {
             var rootDirRelativeFiles = new List<string>();
-            foreach (var file in sourceFiles)
+            foreach (var file in packageFiles)
             {
-                var rootDirRelativeFilePath = Path.Combine(subFolder, file.RelativePath);
+                var rootDirRelativeFilePath = Path.Combine(subFolder, file.PackageRelativePath);
                 var absDestinationPath = Path.Combine(destinationRootDir, rootDirRelativeFilePath);
                 Log.VerboseFormat($"Copying '{file.AbsolutePath}' to '{absDestinationPath}'");
                 EnsureParentDirectoryExists(absDestinationPath);
