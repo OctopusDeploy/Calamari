@@ -39,10 +39,11 @@ namespace Calamari.ArgoCD.Conventions
             }
         }
         
-        public void StageFiles(List<string> filesToStage)
+        public void StageFiles(string[] filesToStage)
         {
             foreach (var file in filesToStage)
             {
+                // if a file does not exist - what should we do? throw and continue? or just throw?
                 repository.Index.Add(file);
             }
         }

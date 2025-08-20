@@ -59,14 +59,13 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
         }
 
         [Test]
-        public void CanCloneAnExistingRepository()
+        public void CanCloneAnExistingRepositoryAndAssociatedFiles()
         {
             var filename = "firstFile.txt";
             var originalContent = "This is the file content";
             CreateCommitOnOrigin(filename, originalContent);
             
             var connection = new GitConnection(null, null, OriginPath, branchName, "yeahNasty");
-
             var clonedRepository = repositoryFactory.CloneRepository("CanCloneAnExistingRepository", connection);
             
             clonedRepository.Should().NotBeNull();
@@ -75,8 +74,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             var fileContent = File.ReadAllText(Path.Combine(clonedRepository.WorkingDirectory, filename));
             fileContent.Should().Be(originalContent);
         }
-
-
+        
         void CreateCommitOnOrigin(string filename, string content)
         {
             var message = $"Commit: Message";

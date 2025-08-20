@@ -11,6 +11,7 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Deployment.Conventions;
 using Calamari.Kubernetes;
 using LibGit2Sharp;
+using SharpCompress;
 
 namespace Calamari.ArgoCD.Conventions
 {
@@ -63,7 +64,7 @@ namespace Calamari.ArgoCD.Conventions
                 Log.Info("Copying files into repository");
                 var filesAdded = CopyFilesIntoPlace(filesToApply, repository.WorkingDirectory, gitConnection.SubFolder);
                 Log.Info("Staging files in repository");
-                repository.StageFiles(filesAdded);
+                repository.StageFiles(filesAdded.ToArray());
                 Log.Info("Commiting changes");
                 if (repository.CommitChanges(commitMessage))
                 {
@@ -87,7 +88,7 @@ namespace Calamari.ArgoCD.Conventions
         }
 
 
-        List<string> CopyFilesIntoPlace(IEnumerable<FileToCopy> filesToCopy, string destinationRootDir, string repoSubFolder)
+        IReadOnlyList<string> CopyFilesIntoPlace(IEnumerable<FileToCopy> filesToCopy, string destinationRootDir, string repoSubFolder)
         {
             var repoRelativeFiles = new List<string>();
             foreach (var file in filesToCopy)
@@ -101,7 +102,7 @@ namespace Calamari.ArgoCD.Conventions
                 repoRelativeFiles.Add(repoRelativeFilePath); //This MUST take a path relative to the repository root.
             }
 
-            return repoRelativeFiles;
+            return repoRelativeFiles.AsReadOnly();
         }
 
         void EnsureParentDirectoryExists(string filePath)
