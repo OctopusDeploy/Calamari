@@ -27,8 +27,6 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
 
         string argoCdBranchName = "devBranch";
 
-        Repository BareOrigin;
-
         [SetUp]
         public void Init()
         {
@@ -36,7 +34,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             tempDirectory = fileSystem.CreateTemporaryDirectory();
             Directory.CreateDirectory(PackageDirectory);
 
-            BareOrigin = RepositoryHelpers.CreateBareRepository(OriginPath);
+            Repository BareOrigin = RepositoryHelpers.CreateBareRepository(OriginPath);
             RepositoryHelpers.CreateBranchIn(argoCdBranchName, OriginPath);
         }
         
