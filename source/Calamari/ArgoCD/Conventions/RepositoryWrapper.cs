@@ -45,6 +45,7 @@ namespace Calamari.ArgoCD.Conventions
             {
                 repository.Index.Add(file);
             }
+            repository.Index.Write();
         }
         
         public void PushChanges(bool requiresPullRequest, string branchName)
@@ -67,7 +68,7 @@ namespace Calamari.ArgoCD.Conventions
             Remote remote = repository.Network.Remotes["origin"];
             repository.Branches.Update(repository.Head, 
                                        branch => branch.Remote = remote.Name,
-                                       branch => branch.UpstreamBranch = $"refs/heads/main"); //TODO(tmm): HACK THIS BACK TO branchName
+                                       branch => branch.UpstreamBranch = $"refs/heads/{branchName}");
             
             log.Info($"Pushing changes to branch '{branchName}' with original credentials");
             var pushOptions = new PushOptions
