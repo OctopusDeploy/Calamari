@@ -111,14 +111,13 @@ namespace Calamari.Common
             builder.RegisterInstance(log).As<ILog>().SingleInstance();
             builder.RegisterType<FreeSpaceChecker>().As<IFreeSpaceChecker>().SingleInstance();
             builder.RegisterType<CommandLineRunner>().As<ICommandLineRunner>().SingleInstance();
-            builder.RegisterType<FileSubstituter>().As<IFileSubstituter>();
-            builder.RegisterType<SubstituteInFiles>().As<ISubstituteInFiles>();
             builder.RegisterType<CombinedPackageExtractor>().As<ICombinedPackageExtractor>();
             builder.RegisterType<ExtractPackage>().As<IExtractPackage>();
             builder.RegisterType<CodeGenFunctionsRegistry>().SingleInstance();
             builder.RegisterType<AssemblyEmbeddedResources>().As<ICalamariEmbeddedResources>();
             
             builder.RegisterModule<VariablesModule>();
+            builder.RegisterModule<SubstitutionsModule>();
 
             var assemblies = GetAllAssembliesToRegister().ToArray();
 

@@ -265,8 +265,8 @@ namespace Calamari.Tests.Fixtures.Substitutions
             var temp = Path.GetTempFileName();
             using (new TemporaryFile(temp))
             {
-                var substituter = new FileSubstituter(new InMemoryLog(), FileSystem);
-                substituter.PerformSubstitution(sampleFile, variables, temp);
+                var substituter = new FileSubstituter(new InMemoryLog(), FileSystem, variables);
+                substituter.PerformSubstitution(sampleFile, temp);
                 using (var reader = new StreamReader(temp, expectedResultEncoding ?? new UTF8Encoding(false, true), expectedResultEncoding == null))
                 {
                     return (reader.ReadToEnd(), reader.CurrentEncoding);

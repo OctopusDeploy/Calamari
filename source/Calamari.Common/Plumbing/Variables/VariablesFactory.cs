@@ -16,31 +16,28 @@ namespace Calamari.Common.Plumbing.Variables
     public class VariablesFactory
     {
         public const string AdditionalVariablesPathVariable = "AdditionalVariablesPath";
+        
         readonly ICalamariFileSystem fileSystem;
         readonly ILog log;
 
-        readonly CalamariExecutionVariableCollection executionVariables;
+        static readonly object LoaderLock = new object();
+        CalamariExecutionVariableCollection? executionVariables;
 
         public VariablesFactory(ICalamariFileSystem fileSystem, ILog log)
         {
             this.fileSystem = fileSystem;
             this.log = log;
-            executionVariables = new CalamariExecutionVariableCollection();
         }
 
-        public IVariables Create(CommonOptions options)
+        public IVariables Create(CommonOptions options) => Create(new CalamariVariables(), options, _ => true);
+        public INonSensitiveVariables CreateNonSensitiveVariables(CommonOptions options) => Create(new NonSensitiveCalamariVariables(), options, cev => !cev.IsSensitive);
+
+        T Create<T>(T variables, CommonOptions options, Func<CalamariExecutionVariable, bool> predicate) where T : CalamariVariables
         {
-            LoadExecutionVariablesFromFile(options);
+            LoadExecutionVariablesFromFiles(options);
 
-            //This exists as the V2 pipeline stores both the parameters and the contents of the variables files for resiliency
-            // This should be removed once the first version this is deployed to has rolled out to most cloud customers
-            ReadDeprecatedVariablesFormatFromFiles(options);
-            
-            ReadOutputVariablesFromOfflineDropPreviousSteps(options);
-
-            var variables = new CalamariVariables();
             //we load _all_ variables from the execution variables into the CalamariVariables dictionary
-            ImportTargetVariablesIntoVariableCollection(variables, _ => true);
+            ImportExecutionVariablesIntoVariableCollection(variables, predicate);
 
             AddEnvironmentVariables(variables);
             variables.Set(TentacleVariables.Agent.InstanceName, "#{env:TentacleInstanceName}");
@@ -48,6 +45,26 @@ namespace Calamari.Common.Plumbing.Variables
             DeploymentJournalVariableContributor.Contribute(fileSystem, variables, log);
 
             return variables;
+        }
+
+        void LoadExecutionVariablesFromFiles(CommonOptions options)
+        {
+            lock (LoaderLock)
+            {
+                //if the execution variables have already been loaded, we don't need to load them again
+                if (executionVariables is { })
+                    return;
+                
+                executionVariables = new CalamariExecutionVariableCollection();
+
+                LoadExecutionVariablesFromFile(options);
+
+                // This exists as the V2 pipeline stores both the parameters and the contents of the variables files for resiliency
+                // This should be removed once the first version this is deployed to has rolled out to most cloud customers
+                ReadDeprecatedVariablesFormatFromFiles(options);
+
+                ReadOutputVariablesFromOfflineDropPreviousSteps(options);
+            }
         }
 
         void LoadExecutionVariablesFromFile(CommonOptions options)
@@ -86,7 +103,7 @@ namespace Calamari.Common.Plumbing.Variables
                 var outputVariables = JsonConvert.DeserializeObject<Dictionary<string, string>>(rawVariables);
 
                 // All output variables are currently non-sensitive
-                executionVariables.AddRange(outputVariables.Select(ov => new CalamariExecutionVariable(ov.Key, ov.Value, false )));
+                executionVariables.AddRange(outputVariables.Select(ov => new CalamariExecutionVariable(ov.Key, ov.Value, false)));
             }
             catch (JsonReaderException)
             {
@@ -117,8 +134,13 @@ namespace Calamari.Common.Plumbing.Variables
             }
         }
 
-        void ImportTargetVariablesIntoVariableCollection(IVariables variables, Func<CalamariExecutionVariable, bool> targetVariablePredicate)
+        void ImportExecutionVariablesIntoVariableCollection(IVariables variables, Func<CalamariExecutionVariable, bool> targetVariablePredicate)
         {
+            if(executionVariables == null)
+            {
+                throw new InvalidOperationException("The execution variable collection is null, meaning it has not been loaded yet.");
+            }
+            
             //for each variable, load it into the variable collection
             foreach (var tv in executionVariables.Where(targetVariablePredicate))
             {
