@@ -20,46 +20,40 @@ namespace Calamari.ArgoCD.Conventions
     public class UpdateGitRepositoryInstallConvention : IInstallConvention
     {
         readonly ICalamariFileSystem fileSystem;
-        readonly string repositoryParentDirectory;
+        readonly RepositoryFactory repositoryFactory;
         readonly ILog log;
 
         public UpdateGitRepositoryInstallConvention(ICalamariFileSystem fileSystem, string repositoryParentDirectory, ILog log)
         {
             this.fileSystem = fileSystem;
-            this.repositoryParentDirectory = repositoryParentDirectory;
             this.log = log;
+            repositoryFactory = new RepositoryFactory(log, repositoryParentDirectory);
         }
         
         public void Install(RunningDeployment deployment)
         {
-            var repositoryIndexes = deployment.Variables.GetIndexes(SpecialVariables.Git.Index);
-
             Log.Info("Executing Commit To Git operation");
-            var fileGlobs = deployment.Variables.GetPaths(SpecialVariables.Git.TemplateGlobs);
-            var filesToApply = SelectFiles(deployment.CurrentDirectory, fileGlobs);
-            
-            var fileWriter = new FileWriter(fileSystem, filesToApply);
-            
+            var fileWriter = GetReferencedPackageFiles(deployment);
+
             var commitMessage = GenerateCommitMessage(deployment);
             var requiresPullRequest = FeatureToggle.ArgocdCreatePullRequestFeatureToggle.IsEnabled(deployment.Variables) && deployment.Variables.Get(SpecialVariables.Git.CommitMethod) == "PullRequest";
             
-            log.Info($"Found {filesToApply.Length} files to apply");
-            
-            var repositoryFactory = new RepositoryFactory(log, repositoryParentDirectory);
-            var repositoryIndexNames = repositoryIndexes.Join(",");
-            log.Info($"Found the following repository indicies '{repositoryIndexNames}'");
+            var repositoryIndexes = deployment.Variables.GetIndexes(SpecialVariables.Git.Index);
+            log.Info($"Found the following repository indicies '{repositoryIndexes.Join(",")}'");
             foreach (var repositoryIndex in repositoryIndexes)
             {
-                Log.Info($"Writing files to repository for index {repositoryIndex}");
+                Log.Info($"Writing files to repository for '{repositoryIndex}'");
                 IGitConnection gitConnection = new VariableBackedGitConnection(deployment.Variables, repositoryIndex);
-                var subFolder = GetSubFolderFor(repositoryIndex, deployment.Variables);
                 var repository = repositoryFactory.CloneRepository(repositoryIndex, gitConnection);
                 
-                Log.Info("Copying files into repository");
+                Log.Info($"Copying files into repository {gitConnection.Url}");
+                var subFolder = GetSubFolderFor(repositoryIndex, deployment.Variables);
+                Log.VerboseFormat("Copying files into subfolder '{subfolder}'", subFolder);
                 var filesAdded = fileWriter.ApplyFilesTo(repository.WorkingDirectory, subFolder);
                 
                 Log.Info("Staging files in repository");
                 repository.StageFiles(filesAdded.ToArray());
+                
                 Log.Info("Commiting changes");
                 if (repository.CommitChanges(commitMessage))
                 {
@@ -71,6 +65,19 @@ namespace Calamari.ArgoCD.Conventions
                     Log.Info("No changes were commited.");
                 }
             }
+        }
+
+        FileWriter GetReferencedPackageFiles(RunningDeployment deployment)
+        {
+            
+            var fileGlobs = deployment.Variables.GetPaths(SpecialVariables.Git.TemplateGlobs);
+            log.Info($"Selecting files from package using '{string.Join(" ", fileGlobs)}'");
+            var filesToApply = SelectFiles(deployment.CurrentDirectory, fileGlobs);
+            
+            log.Info($"Found {filesToApply.Length} files to apply");
+            var fileWriter = new FileWriter(fileSystem, filesToApply);
+            
+            return fileWriter;
         }
 
         string GetSubFolderFor(string repositoryIndex, IVariables variables)

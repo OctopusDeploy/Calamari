@@ -33,6 +33,8 @@ namespace Calamari.ArgoCD.Conventions
             return rootDirRelativeFiles.AsReadOnly();
         }
 
+        
+        
         static void EnsureParentDirectoryExists(string filePath)
         {
             var destinationDirectory = Path.GetDirectoryName(filePath);
