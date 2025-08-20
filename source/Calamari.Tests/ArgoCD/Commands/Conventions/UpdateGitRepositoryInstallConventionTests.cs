@@ -25,7 +25,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
         string PackageDirectory => Path.Combine(StagingDirectory, CommitToGitCommand.PackageDirectoryName);
         string OriginPath => Path.Combine(tempDirectory, "origin");
 
-        string branchName = "devBranch";
+        string argoCdBranchName = "devBranch";
 
         Repository BareOrigin;
 
@@ -35,30 +35,11 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             log = new InMemoryLog();
             tempDirectory = fileSystem.CreateTemporaryDirectory();
             Directory.CreateDirectory(PackageDirectory);
-            
-            Directory.CreateDirectory(OriginPath);
-            Repository.Init(OriginPath, isBare: true);
-            
-            BareOrigin = new Repository(OriginPath);
-            CreateDevBranchIn(OriginPath);
-        }
 
-        void CreateDevBranchIn(string originPath)
-        {
-            var signature = new Signature("Your Name", "your.email@example.com", DateTimeOffset.Now);
-            
-            var repository = new Repository(OriginPath);
-            repository.Refs.UpdateTarget("HEAD", "refs/heads/master");
-            var tree = repository.ObjectDatabase.CreateTree(new TreeDefinition());
-            var commit = repository.ObjectDatabase.CreateCommit(
-                                                   signature,
-                                                   signature,
-                                                   "InitializeRepo",
-                                                   tree,
-                                                   Array.Empty<Commit>(),
-                                                   false);
-            repository.CreateBranch(branchName, commit);
+            BareOrigin = RepositoryHelpers.CreateBareRepository(OriginPath);
+            RepositoryHelpers.CreateBranchIn(argoCdBranchName, OriginPath);
         }
+        
         
         [TearDown]
         public void Cleanup()
@@ -77,12 +58,12 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             var variables = new CalamariVariables
             {
                 [KnownVariables.OriginalPackageDirectoryPath] = StagingDirectory,
-                [SpecialVariables.Git.TemplateGlobs] = "nested/*",
+                [SpecialVariables.Git.TemplateGlobs] = "./*\nnested/*",
                 [SpecialVariables.Git.SubFolder("repo_name")] = "",
                 [SpecialVariables.Git.Password("repo_name")] = "password",
                 [SpecialVariables.Git.Username("repo_name")] = "username",
                 [SpecialVariables.Git.Url("repo_name")] = OriginPath,
-                [SpecialVariables.Git.BranchName("repo_name")] = branchName,
+                [SpecialVariables.Git.BranchName("repo_name")] = argoCdBranchName,
                 [SpecialVariables.Git.CommitMethod] = "DirectCommit",
                 [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this"
             };
@@ -97,11 +78,11 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             var resultPath = Path.Combine(tempDirectory, "result");
             Repository.Clone(OriginPath, resultPath);
             var resultRepo = new Repository(resultPath);
-            LibGit2Sharp.Commands.Checkout(resultRepo, $"origin/{branchName}");
-            //var resultFirstContent = File.ReadAllText(Path.Combine(resultPath, "first.yaml"));
+            LibGit2Sharp.Commands.Checkout(resultRepo, $"origin/{argoCdBranchName}");
+            var resultFirstContent = File.ReadAllText(Path.Combine(resultPath, "first.yaml"));
             var resultNestedContent = File.ReadAllText(Path.Combine(resultPath, "nested", "second.yaml"));
             
-            //resultFirstContent.Should().Be("firstContent");
+            resultFirstContent.Should().Be("firstContent");
             resultNestedContent.Should().Be("secondContent");
             Console.WriteLine(log.ToString());
         }
