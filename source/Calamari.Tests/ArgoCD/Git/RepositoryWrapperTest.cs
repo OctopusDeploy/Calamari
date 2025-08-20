@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Git;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Testing.Helpers;
@@ -82,7 +81,7 @@ namespace Calamari.Tests.ArgoCD.Git
             repository.PushChanges(false, branchName);
             
             //ensure the remote contains the file
-            var originFileContent = ReadOriginFile(filename);
+            var originFileContent = RepositoryHelpers.ReadFileFromBranch(bareOrigin, branchName, filename);
             originFileContent.Should().Be(fileContents);
         }
         
@@ -95,15 +94,6 @@ namespace Calamari.Tests.ArgoCD.Git
             repository.CommitChanges("There is no data to comm it").Should().BeTrue();
             repository.PushChanges(false, "arbitraryBranch1");
             repository.PushChanges(false, "arbitraryBranch2");
-        }
-
-        string ReadOriginFile(string filename)
-        {
-            var fileTreeEntry = bareOrigin.Branches[branchName].Tip[filename];
-            
-            var fileBlob = (Blob)fileTreeEntry.Target;
-            return fileBlob.GetContentText();
-            
         }
     }
 }

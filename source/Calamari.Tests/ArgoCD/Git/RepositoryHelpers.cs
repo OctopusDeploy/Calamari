@@ -28,5 +28,13 @@ namespace Calamari.Tests.ArgoCD.Git
                                                                 false);
             repository.CreateBranch(branchName, commit);
         }
+        
+        public static string ReadFileFromBranch(Repository repo, string branchName, string filename)
+        {
+            var fileTreeEntry = repo.Branches[branchName].Tip[filename];
+            
+            var fileBlob = (Blob)fileTreeEntry.Target;
+            return fileBlob.GetContentText();
+        }
     }
 }
