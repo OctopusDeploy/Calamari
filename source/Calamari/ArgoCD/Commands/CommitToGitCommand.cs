@@ -28,7 +28,7 @@ namespace Calamari.ArgoCD.Commands
         readonly IVariables variables;
         readonly ICalamariFileSystem fileSystem;
         readonly IExtractPackage extractPackage;
-        readonly ISubstituteInFiles substituteInFiles;
+        readonly INonSensitiveSubstituteInFiles substituteInFiles;
         PathToPackage pathToPackage;
 
         public CommitToGitCommand(
@@ -36,7 +36,7 @@ namespace Calamari.ArgoCD.Commands
             IVariables variables,
             ICalamariFileSystem fileSystem,
             IExtractPackage extractPackage,
-            ISubstituteInFiles substituteInFiles)
+            INonSensitiveSubstituteInFiles substituteInFiles)
         {
             this.log = log;
             this.variables = variables;
@@ -67,7 +67,7 @@ namespace Calamari.ArgoCD.Commands
                                                   d.StagingDirectory = packageDirectory;
                                                   d.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
                                               }),
-                new SubstituteInFilesConvention(new SubstituteInFilesBehaviour(substituteInFiles)),
+                new SubstituteInFilesConvention(new NonSensitiveSubstituteInFilesBehaviour(substituteInFiles)),
                 new DelegateInstallConvention(d =>
                                               {
                                                   var convention = new UpdateGitRepositoryInstallConvention(fileSystem, workingDirectory, log);

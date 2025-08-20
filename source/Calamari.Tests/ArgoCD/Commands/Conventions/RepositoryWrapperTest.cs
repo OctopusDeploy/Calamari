@@ -36,7 +36,6 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             var repositoryFactory = new RepositoryFactory(log, tempDirectory);
             var connection = new GitConnection(null, null, OriginPath, branchName, "yeahNasty");
             repository = repositoryFactory.CloneRepository(repositoryPath, connection);
-
         }
         
         [TearDown]
