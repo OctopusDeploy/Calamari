@@ -48,7 +48,7 @@ namespace Calamari.ArgoCD.Conventions
                 
                 Log.Info($"Copying files into repository {gitConnection.Url}");
                 var subFolder = GetSubFolderFor(repositoryIndex, deployment.Variables);
-                Log.VerboseFormat("Copying files into subfolder '{subfolder}'", subFolder);
+                Log.VerboseFormat("Copying files into subfolder '{0}'", subFolder);
                 var filesAdded = fileWriter.ApplyFilesTo(repository.WorkingDirectory, subFolder);
                 
                 Log.Info("Staging files in repository");
