@@ -35,7 +35,7 @@ namespace Calamari.Tests.ArgoCD.Git
             RepositoryHelpers.CreateBranchIn(branchName, OriginPath);
 
             var repositoryFactory = new RepositoryFactory(log, tempDirectory);
-            var connection = new GitConnection(null, null, OriginPath, branchName, "yeahNasty");
+            var connection = new GitConnection(null, null, OriginPath, branchName);
             repository = repositoryFactory.CloneRepository(repositoryPath, connection);
         }
         

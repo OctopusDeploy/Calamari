@@ -9,6 +9,7 @@ using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.Conventions;
 using Calamari.Kubernetes;
 using LibGit2Sharp;
@@ -51,10 +52,11 @@ namespace Calamari.ArgoCD.Conventions
             {
                 Log.Info($"Writing files to repository for index {repositoryIndex}");
                 IGitConnection gitConnection = new VariableBackedGitConnection(deployment.Variables, repositoryIndex);
+                var subFolder = GetSubFolderFor(repositoryIndex, deployment.Variables);
                 var repository = repositoryFactory.CloneRepository(repositoryIndex, gitConnection);
                 
                 Log.Info("Copying files into repository");
-                var filesAdded = helper.ApplyFilesTo(repository.WorkingDirectory, gitConnection.SubFolder);
+                var filesAdded = helper.ApplyFilesTo(repository.WorkingDirectory, subFolder);
                 
                 Log.Info("Staging files in repository");
                 repository.StageFiles(filesAdded.ToArray());
@@ -68,6 +70,19 @@ namespace Calamari.ArgoCD.Conventions
                 {
                     Log.Info("No changes were commited.");
                 }
+            }
+        }
+
+        string GetSubFolderFor(string repositoryIndex, IVariables variables)
+        {
+            {
+                var raw = variables.Get(SpecialVariables.Git.SubFolder(repositoryIndex), String.Empty) ?? String.Empty;
+                if (raw.StartsWith("./"))
+                {
+                    return raw.Substring(2);
+                }
+
+                return raw;
             }
         }
 

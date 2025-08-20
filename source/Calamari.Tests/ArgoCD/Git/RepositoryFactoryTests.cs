@@ -1,11 +1,9 @@
 using System;
 using System.IO;
 using System.Text;
-using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Git;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Testing.Helpers;
-using Calamari.Tests.ArgoCD.Commands.Conventions;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
 using FluentAssertions;
 using LibGit2Sharp;
@@ -51,8 +49,7 @@ namespace Calamari.Tests.ArgoCD.Git
             var connection = new GitConnection("username",
                                                "password",
                                                "file://doesNotExist",
-                                               branchName,
-                                               "./");
+                                               branchName);
             
             Action action = () => repositoryFactory.CloneRepository("name", connection);
             
@@ -67,7 +64,7 @@ namespace Calamari.Tests.ArgoCD.Git
             var originalContent = "This is the file content";
             CreateCommitOnOrigin(filename, originalContent);
             
-            var connection = new GitConnection(null, null, OriginPath, branchName, "yeahNasty");
+            var connection = new GitConnection(null, null, OriginPath, branchName);
             var clonedRepository = repositoryFactory.CloneRepository("CanCloneAnExistingRepository", connection);
             
             clonedRepository.Should().NotBeNull();

@@ -20,20 +20,6 @@ namespace Calamari.ArgoCD.Git
         public string? Password => variables.Get(SpecialVariables.Git.Password(index));
         public string Url => variables.GetMandatoryVariable(SpecialVariables.Git.Url(index));
         public string BranchName => variables.GetMandatoryVariable(SpecialVariables.Git.BranchName(index));
-
-        public string SubFolder
-        {
-            get
-            {
-                var raw = variables.Get(SpecialVariables.Git.SubFolder(index), String.Empty) ?? String.Empty;
-                if (raw.StartsWith("./"))
-                {
-                    return raw.Substring(2);
-                }
-
-                return raw;
-            }
-        }
         public string RemoteBranchName => $"origin/{BranchName}";
     }
 
@@ -43,8 +29,6 @@ namespace Calamari.ArgoCD.Git
         public string? Password { get;  }
         public string Url { get;  }
         public string BranchName { get;  }
-        
-        public string SubFolder { get; }
         public string RemoteBranchName { get;  }
     }
 }
