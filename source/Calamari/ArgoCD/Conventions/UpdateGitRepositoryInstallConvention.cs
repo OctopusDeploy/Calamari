@@ -44,13 +44,15 @@ namespace Calamari.ArgoCD.Conventions
             var repositoryIndexes = deployment.Variables.GetIndexes(SpecialVariables.Git.Index);
 
             Log.Info("Executing Commit To Git operation");
-            var fileGlob = deployment.Variables.GetPaths(SpecialVariables.Git.TemplateGlobs);
-            var filesToApply = SelectFiles(deployment.CurrentDirectory, fileGlob).ToList();
+            var fileGlobs = deployment.Variables.GetPaths(SpecialVariables.Git.TemplateGlobs);
+            var filesToApply = SelectFiles(deployment.CurrentDirectory, fileGlobs).ToArray();
+            
+            var helper = new FileWriter(fileSystem, filesToApply);
             
             var commitMessage = GenerateCommitMessage(deployment);
             var requiresPullRequest = FeatureToggle.ArgocdCreatePullRequestFeatureToggle.IsEnabled(deployment.Variables) && deployment.Variables.Get(SpecialVariables.Git.CommitMethod) == "PullRequest";
             
-            log.Info($"Found {filesToApply.Count} files to apply");
+            log.Info($"Found {filesToApply.Length} files to apply");
             
             var repositoryFactory = new RepositoryFactory(log, repositoryParentDirectory);
             var repositoryIndexNames = repositoryIndexes.Join(",");
@@ -59,10 +61,11 @@ namespace Calamari.ArgoCD.Conventions
             {
                 Log.Info($"Writing files to repository for index {repositoryIndex}");
                 IGitConnection gitConnection = new VariableBackedGitConnection(deployment.Variables, repositoryIndex);
-
                 var repository = repositoryFactory.CloneRepository(repositoryIndex, gitConnection);
+                
                 Log.Info("Copying files into repository");
-                var filesAdded = CopyFilesIntoPlace(filesToApply, repository.WorkingDirectory, gitConnection.SubFolder);
+                var filesAdded = helper.ApplyFilesTo(repository.WorkingDirectory, gitConnection.SubFolder);
+                
                 Log.Info("Staging files in repository");
                 repository.StageFiles(filesAdded.ToArray());
                 Log.Info("Commiting changes");
@@ -86,44 +89,17 @@ namespace Calamari.ArgoCD.Conventions
                 ? summary
                 : $"{summary}\n\n{description}";
         }
-
-
-        IReadOnlyList<string> CopyFilesIntoPlace(IEnumerable<FileToCopy> filesToCopy, string destinationRootDir, string repoSubFolder)
-        {
-            var repoRelativeFiles = new List<string>();
-            foreach (var file in filesToCopy)
-            {
-                var repoRelativeFilePath = Path.Combine(repoSubFolder, file.RelativePath);
-                var absRepoFilePath = Path.Combine(destinationRootDir, repoRelativeFilePath);
-                Log.VerboseFormat($"Copying '{file.AbsolutePath}' to '{absRepoFilePath}'");
-                EnsureParentDirectoryExists(absRepoFilePath);
-                File.Copy(file.AbsolutePath, absRepoFilePath, true);
-                
-                repoRelativeFiles.Add(repoRelativeFilePath); //This MUST take a path relative to the repository root.
-            }
-
-            return repoRelativeFiles.AsReadOnly();
-        }
-
-        void EnsureParentDirectoryExists(string filePath)
-        {
-            var destinationDirectory = Path.GetDirectoryName(filePath);
-            if (destinationDirectory != null)
-            {
-                Directory.CreateDirectory(destinationDirectory);    
-            }
-        }
-
+        
         IEnumerable<FileToCopy> SelectFiles(string pathToExtractedPackage, List<string> fileGlobs)
         {
             return fileGlobs.SelectMany(glob => fileSystem.EnumerateFilesWithGlob(pathToExtractedPackage, glob))
                             .Select(absoluteFilepath =>
                                     {
-                                        #if NETCORE
+#if NETCORE
                                         var relativePath = Path.GetRelativePath(pathToExtractedPackage, file);
-                                        #else           
+#else           
                                         var relativePath = absoluteFilepath.Substring(pathToExtractedPackage.Length + 1);
-                                        #endif
+#endif
                                         return new FileToCopy(absoluteFilepath, relativePath);
                                     });
         }
