@@ -45,7 +45,6 @@ namespace Calamari.ArgoCD.Conventions
             {
                 repository.Index.Add(file);
             }
-            repository.Index.Write();
         }
         
         public void PushChanges(bool requiresPullRequest, string branchName)
