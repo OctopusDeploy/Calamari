@@ -1,6 +1,8 @@
+using System;
 using Calamari.ArgoCD.Conventions;
+using Calamari.ArgoCD.Git;
 
-namespace Calamari.Tests.ArgoCD.Commands.Conventions
+namespace Calamari.Tests.ArgoCD.Git
 {
     public class GitConnection : IGitConnection
     {

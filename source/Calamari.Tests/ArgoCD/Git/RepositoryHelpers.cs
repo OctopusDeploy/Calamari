@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using LibGit2Sharp;
 
-namespace Calamari.Tests.ArgoCD.Commands.Conventions
+namespace Calamari.Tests.ArgoCD.Git
 {
     public static class RepositoryHelpers
     {

@@ -1,12 +1,10 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Net.Sockets;
+using Calamari.ArgoCD.Conventions;
 using Calamari.Common.Plumbing.Logging;
 using LibGit2Sharp;
 
-namespace Calamari.ArgoCD.Conventions
+namespace Calamari.ArgoCD.Git
 {
     public interface IRepositoryFactory
     {

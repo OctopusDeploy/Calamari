@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using Calamari.ArgoCD.Conventions;
+using Calamari.ArgoCD.Git;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
@@ -8,7 +9,7 @@ using FluentAssertions;
 using LibGit2Sharp;
 using NUnit.Framework;
 
-namespace Calamari.Tests.ArgoCD.Commands.Conventions
+namespace Calamari.Tests.ArgoCD.Git
 {
     [TestFixture]
     public class RepositoryWrapperTest

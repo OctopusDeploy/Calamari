@@ -3,7 +3,7 @@ using System;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes;
 
-namespace Calamari.ArgoCD.Conventions
+namespace Calamari.ArgoCD.Git
 {
     public class VariableBackedGitConnection : IGitConnection
     {
