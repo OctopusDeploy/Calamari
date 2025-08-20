@@ -139,8 +139,13 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
             var outputVariablesFile = Path.GetTempFileName();
 
-            var variables = new Dictionary<string, string>() { ["Octopus.Action[PreviousStep].Output.FirstName"] = "Steve" };
-            var serialized = JsonConvert.SerializeObject(variables);
+            var variables = new CalamariExecutionVariableCollection
+            {
+                new CalamariExecutionVariable("Octopus.Action[PreviousStep].Output.FirstName", "Steve", false),
+                new CalamariExecutionVariable("Octopus.Action[PreviousStep].Output.LastName", "Not Jobs", true)
+            };
+            
+            var serialized = variables.ToJsonString();
             var bytes = ProtectedData.Protect(Encoding.UTF8.GetBytes(serialized), Convert.FromBase64String("5XETGOgqYR2bRhlfhDruEg=="), DataProtectionScope.CurrentUser);
             var encoded = Convert.ToBase64String(bytes);
             File.WriteAllText(outputVariablesFile, encoded);
@@ -151,7 +156,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
                     new Dictionary<string, string>() { ["outputVariables"] = outputVariablesFile, ["outputVariablesPassword"] = "5XETGOgqYR2bRhlfhDruEg==" });
 
                 output.AssertSuccess();
-                output.AssertOutput("Hello Steve");
+                output.AssertOutput("Hello Steve Not Jobs");
                 AssertPowerShellEdition(output);
             }
         }
