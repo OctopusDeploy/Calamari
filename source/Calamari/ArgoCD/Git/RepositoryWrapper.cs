@@ -52,7 +52,7 @@ namespace Calamari.ArgoCD.Git
         
         public void PushChanges(bool requiresPullRequest, string branchName)
         {
-            var pushToBranchName = branchName;
+            var pushToBranchName = repository.GetBranchName(branchName);;
             if (requiresPullRequest)
             {
                 pushToBranchName += "-pullrequest";
@@ -67,6 +67,7 @@ namespace Calamari.ArgoCD.Git
         
         public void PushChanges(string branchName)
         {
+            Log.Info($"Literally pushing to {branchName}");
             Remote remote = repository.Network.Remotes["origin"];
             repository.Branches.Update(repository.Head, 
                                        branch => branch.Remote = remote.Name,

@@ -53,16 +53,19 @@ namespace Calamari.ArgoCD.Git
 
             var repoPath = Repository.Clone(gitConnection.Url, checkoutPath, options);
             var repo = new Repository(repoPath);
-            Branch remoteBranch = repo.Branches[gitConnection.RemoteBranchName];
+            
+            //this is required to handle the issue around "HEAD"
+            var branchToCheckout = repo.GetBranchName(gitConnection.BranchName);
+            Branch remoteBranch = repo.Branches[branchToCheckout];
             log.Verbose($"Checking out {remoteBranch.Tip.Sha}");
             
             //A local branch is required such that libgit2sharp can create "tracking" data
             // libgit2sharp does not support pushing from a detached head
-            if (repo.Branches[gitConnection.BranchName] == null)
+            if (repo.Branches[branchToCheckout] == null)
             {
-                repo.CreateBranch(gitConnection.BranchName, remoteBranch.Tip);    
+                repo.CreateBranch(branchToCheckout, remoteBranch.Tip);    
             }
-            LibGit2Sharp.Commands.Checkout(repo, gitConnection.BranchName);
+            LibGit2Sharp.Commands.Checkout(repo, branchToCheckout);
 
             return new RepositoryWrapper(repo, log, gitConnection);
         }

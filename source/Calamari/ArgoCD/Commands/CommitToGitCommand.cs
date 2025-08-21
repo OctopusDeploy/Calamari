@@ -61,6 +61,9 @@ namespace Calamari.ArgoCD.Commands
                                                   var packageDirectory = Path.Combine(workingDirectory, PackageDirectoryName);
                                                   fileSystem.EnsureDirectoryExists(packageDirectory);
                                                   extractPackage.ExtractToCustomDirectory(pathToPackage, packageDirectory);
+                                                  
+                                                  d.StagingDirectory = workingDirectory;
+                                                  d.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
                                               }),
                 new SubstituteInFilesConvention(new NonSensitiveSubstituteInFilesBehaviour(substituteInFiles, PackageDirectoryName)),
                 new UpdateGitRepositoryInstallConvention(fileSystem, PackageDirectoryName, log),
