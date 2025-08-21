@@ -1,0 +1,130 @@
+#nullable enable
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using Calamari.ArgoCD.Git;
+using Calamari.Common.Commands;
+using Calamari.Common.FeatureToggles;
+using Calamari.Common.Plumbing.Extensions;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
+using Calamari.Deployment.Conventions;
+using Calamari.Kubernetes;
+
+namespace Calamari.ArgoCD.Conventions
+{
+    public class UpdateGitRepositoryInstallConvention : IInstallConvention
+    {
+        readonly ICalamariFileSystem fileSystem;
+        readonly ILog log;
+        readonly string packageSubfolder;
+
+        public UpdateGitRepositoryInstallConvention(ICalamariFileSystem fileSystem, string packageSubfolder, ILog log)
+        {
+            this.fileSystem = fileSystem;
+            this.log = log;
+            this.packageSubfolder = packageSubfolder;
+        }
+        
+        public void Install(RunningDeployment deployment)
+        {
+            Log.Info("Executing Commit To Git operation");
+            var packageFiles = GetReferencedPackageFiles(deployment);
+
+            var requiresPullRequest = RequiresPullRequest(deployment);
+            var commitMessage = GenerateCommitMessage(deployment);
+            
+            var repositoryFactory = new RepositoryFactory(log, deployment.CurrentDirectory);
+            var repositoryIndexes = deployment.Variables.GetIndexes(SpecialVariables.Git.Index);
+            log.Info($"Found the following repository indicies '{repositoryIndexes.Join(",")}'");
+            foreach (var repositoryIndex in repositoryIndexes)
+            {
+                Log.Info($"Writing files to repository for '{repositoryIndex}'");
+                IGitConnection gitConnection = new VariableBackedGitConnection(deployment.Variables, repositoryIndex);
+                var repository = repositoryFactory.CloneRepository(repositoryIndex, gitConnection);
+                
+                Log.Info($"Copying files into repository {gitConnection.Url}");
+                var subFolder = deployment.Variables.Get(SpecialVariables.Git.SubFolder(repositoryIndex), String.Empty) ?? String.Empty;
+                Log.VerboseFormat("Copying files into subfolder '{0}'", subFolder);
+
+                var repositoryFiles = packageFiles.Select(f => new FileCopySpecification(f, repository.WorkingDirectory, subFolder)).ToList();
+                
+                CopyFiles(repositoryFiles);
+                
+                Log.Info("Staging files in repository");
+                repository.StageFiles(repositoryFiles.Select(fcs => fcs.DestinationRelativePath).ToArray());
+                
+                Log.Info("Commiting changes");
+                if (repository.CommitChanges(commitMessage))
+                {
+                    Log.Info("Changes were commited, pushing to remote");
+                    repository.PushChanges(requiresPullRequest, gitConnection.BranchName);    
+                }
+                else
+                {
+                    Log.Info("No changes were commited.");
+                }
+            }
+        }
+
+        bool RequiresPullRequest(RunningDeployment deployment)
+        {
+            return FeatureToggle.ArgocdCreatePullRequestFeatureToggle.IsEnabled(deployment.Variables) && deployment.Variables.Get(SpecialVariables.Git.CommitMethod) == SpecialVariables.Git.GitCommitMethods.PullRequest;
+
+        }
+
+        void CopyFiles(IEnumerable<IFileCopySpecification> repositoryFiles)
+        {
+            foreach (var file in repositoryFiles)
+            {
+                Log.VerboseFormat($"Copying '{file.SourceAbsolutePath}' to '{file.DestinationAbsolutePath}'");
+                EnsureParentDirectoryExists(file.DestinationAbsolutePath);
+                fileSystem.CopyFile(file.SourceAbsolutePath, file.DestinationAbsolutePath);
+            }
+        }
+        
+        static void EnsureParentDirectoryExists(string filePath)
+        {
+            var destinationDirectory = Path.GetDirectoryName(filePath);
+            if (destinationDirectory != null)
+            {
+                Directory.CreateDirectory(destinationDirectory);    
+            }
+        }
+
+        IPackageRelativeFile[] GetReferencedPackageFiles(RunningDeployment deployment)
+        {
+            var fileGlobs = deployment.Variables.GetPaths(SpecialVariables.Git.TemplateGlobs);
+            log.Info($"Selecting files from package using '{string.Join(" ", fileGlobs)}'");
+            var filesToApply = SelectFiles(Path.Combine(deployment.CurrentDirectory, packageSubfolder), fileGlobs);
+            log.Info($"Found {filesToApply.Length} files to apply");
+            return filesToApply;
+        }
+
+        string GenerateCommitMessage(RunningDeployment deployment)
+        {
+            var summary = deployment.Variables.GetMandatoryVariable(SpecialVariables.Git.CommitMessageSummary);
+            var description = deployment.Variables.Get(SpecialVariables.Git.CommitMessageDescription) ?? string.Empty;
+            return description.Equals(string.Empty)
+                ? summary
+                : $"{summary}\n\n{description}";
+        }
+        
+        IPackageRelativeFile[] SelectFiles(string pathToExtractedPackage, List<string> fileGlobs)
+        {
+            return fileGlobs.SelectMany(glob => fileSystem.EnumerateFilesWithGlob(pathToExtractedPackage, glob))
+                            .Select(absoluteFilepath =>
+                                    {
+#if NETCORE
+                                        var relativePath = Path.GetRelativePath(pathToExtractedPackage, file);
+#else
+                                        var relativePath = absoluteFilepath.Substring(pathToExtractedPackage.Length + 1);
+#endif
+                                        return new PackageRelativeFile(absoluteFilepath, relativePath);
+                                    })
+                            .ToArray<IPackageRelativeFile>();
+        }
+    }
+}
