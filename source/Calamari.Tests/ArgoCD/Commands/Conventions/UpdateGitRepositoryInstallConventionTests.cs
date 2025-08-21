@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using Calamari.ArgoCD.Commands;
 using Calamari.ArgoCD.Conventions;
+using Calamari.ArgoCD.Git;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Deployment;
 using Calamari.Common.Plumbing.FileSystem;
@@ -27,7 +28,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
         
         string OriginPath => Path.Combine(tempDirectory, "origin");
 
-        string argoCdBranchName = "devBranch";
+        GitBranchName argoCdBranchName = new GitBranchName("devBranch");
 
         [SetUp]
         public void Init()
@@ -70,7 +71,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                 [SpecialVariables.Git.Password("repo_name")] = "password",
                 [SpecialVariables.Git.Username("repo_name")] = "username",
                 [SpecialVariables.Git.Url("repo_name")] = OriginPath,
-                [SpecialVariables.Git.BranchName("repo_name")] = argoCdBranchName,
+                [SpecialVariables.Git.BranchName("repo_name")] = argoCdBranchName.Value,
                 [SpecialVariables.Git.CommitMethod] = "DirectCommit",
                 [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this"
             };

@@ -9,7 +9,7 @@ namespace Calamari.Tests.ArgoCD.Git
         public GitConnection(string username,
                              string password,
                              string url,
-                             string branchName)
+                             GitBranchName branchName)
         {
             Username = username;
             Password = password;
@@ -20,7 +20,6 @@ namespace Calamari.Tests.ArgoCD.Git
         public string Username { get; }
         public string Password { get; }
         public string Url { get; }
-        public string BranchName { get; }
-        public string RemoteBranchName => $"origin/{BranchName}";
+        public GitBranchName BranchName { get; }
     }
 }

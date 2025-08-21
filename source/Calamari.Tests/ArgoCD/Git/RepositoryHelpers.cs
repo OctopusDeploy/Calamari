@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using Calamari.ArgoCD.Git;
 using LibGit2Sharp;
 
 namespace Calamari.Tests.ArgoCD.Git
@@ -12,7 +13,7 @@ namespace Calamari.Tests.ArgoCD.Git
             Repository.Init(repositoryPath, isBare: true);
             return new Repository(repositoryPath);
         }
-        public static void CreateBranchIn(string branchName, string originPath)
+        public static void CreateBranchIn(GitBranchName branchName, string originPath)
         {
             var signature = new Signature("Your Name", "your.email@example.com", DateTimeOffset.Now);
             
@@ -26,12 +27,12 @@ namespace Calamari.Tests.ArgoCD.Git
                                                                 tree,
                                                                 Array.Empty<Commit>(),
                                                                 false);
-            repository.CreateBranch(branchName, commit);
+            repository.CreateBranch(branchName.Value, commit);
         }
         
-        public static string ReadFileFromBranch(Repository repo, string branchName, string filename)
+        public static string ReadFileFromBranch(Repository repo, GitBranchName branchName, string filename)
         {
-            var fileTreeEntry = repo.Branches[branchName].Tip[filename];
+            var fileTreeEntry = repo.Branches[branchName.Value].Tip[filename];
             
             var fileBlob = (Blob)fileTreeEntry.Target;
             return fileBlob.GetContentText();

@@ -21,7 +21,7 @@ namespace Calamari.Tests.ArgoCD.Git
         string tempDirectory;
         string OriginPath => Path.Combine(tempDirectory, "origin");
         Repository bareOrigin;
-        string branchName = "devBranch";
+        GitBranchName branchName = new GitBranchName("devBranch");
         
         RepositoryFactory repositoryFactory;
         
@@ -79,7 +79,7 @@ namespace Calamari.Tests.ArgoCD.Git
             var message = $"Commit: Message";
             var signature = new Signature("Author", "author@place.com", DateTimeOffset.Now);
 
-            var branch = bareOrigin.Branches[branchName];
+            var branch = bareOrigin.Branches[branchName.Value];
             var treeDefinition = TreeDefinition.From(branch.Tip.Tree);
             var blobID = bareOrigin.ObjectDatabase.Write<Blob>(Encoding.UTF8.GetBytes((content)));
             treeDefinition.Add(filename, blobID, Mode.NonExecutableFile);

@@ -56,7 +56,7 @@ namespace Calamari.ArgoCD.Git
             
             //this is required to handle the issue around "HEAD"
             var branchToCheckout = repo.GetBranchName(gitConnection.BranchName);
-            Branch remoteBranch = repo.Branches[branchToCheckout];
+            Branch remoteBranch = repo.Branches[$"origin/{branchToCheckout}"];
             log.Verbose($"Checking out {remoteBranch.Tip.Sha}");
             
             //A local branch is required such that libgit2sharp can create "tracking" data

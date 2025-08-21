@@ -6,14 +6,14 @@ namespace Calamari.ArgoCD.Git
     {
         const string HeadAsTarget = "HEAD";
         
-        public static string GetBranchName(this IRepository repository, string branchName)
+        public static string GetBranchName(this IRepository repository, GitBranchName branchName)
         {
-            if (branchName == HeadAsTarget)
+            if (branchName.Value == HeadAsTarget)
             {
                 return repository.Head.FriendlyName;
             }
 
-            return branchName;
+            return branchName.Value;
         }
     }
 }
