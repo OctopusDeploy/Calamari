@@ -61,13 +61,12 @@ namespace Calamari.Tests.ArgoCD.Git
         }
 
         [Test]
-        public void AttemptingToAddAFileWithDotSlashAtStartFails()
+        public void AttemptingToAddFilestartingWithDotSlashSucceeds()
         {
             //This is to highlight a behaviour of libGit2Sharp which we may run into
             string filename = "newFile.txt";
             File.WriteAllText(Path.Combine(RepositoryRootPath, filename), "");
-            Action act = () => repository.StageFiles(new[] { $"./{filename}" });
-            act.Should().Throw<LibGit2SharpException>().And.Message.Should().Contain("invalid path");
+            repository.StageFiles(new[] { $"./{filename}" });
         }
         
         [Test]

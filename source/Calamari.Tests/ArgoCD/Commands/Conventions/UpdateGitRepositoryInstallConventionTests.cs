@@ -22,8 +22,9 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
         readonly ICalamariFileSystem fileSystem = TestCalamariPhysicalFileSystem.GetPhysicalFileSystem();
         InMemoryLog log;
         string tempDirectory;
-        string StagingDirectory => Path.Combine(tempDirectory, "staging");
-        string PackageDirectory => Path.Combine(StagingDirectory, CommitToGitCommand.PackageDirectoryName);
+        string WorkingDirectory => Path.Combine(tempDirectory, "working");
+        string PackageDirectory => Path.Combine(WorkingDirectory, CommitToGitCommand.PackageDirectoryName);
+        
         string OriginPath => Path.Combine(tempDirectory, "origin");
 
         string argoCdBranchName = "devBranch";
@@ -56,7 +57,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             
             var variables = new CalamariVariables
             {
-                [KnownVariables.OriginalPackageDirectoryPath] = StagingDirectory,
+                [KnownVariables.OriginalPackageDirectoryPath] = WorkingDirectory,
                 [SpecialVariables.Git.TemplateGlobs] = "./*\nnested/*",
                 [SpecialVariables.Git.SubFolder("repo_name")] = "",
                 [SpecialVariables.Git.Password("repo_name")] = "password",
@@ -68,9 +69,9 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             };
             var runningDeployment = new RunningDeployment("./arbitraryFile.txt", variables);
             runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
-            runningDeployment.StagingDirectory = PackageDirectory;
+            runningDeployment.StagingDirectory = WorkingDirectory;
             
-            var convention = new UpdateGitRepositoryInstallConvention(fileSystem, tempDirectory, log);
+            var convention = new UpdateGitRepositoryInstallConvention(fileSystem, CommitToGitCommand.PackageDirectoryName, log);
             
             convention.Install(runningDeployment);
             

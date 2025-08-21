@@ -41,10 +41,12 @@ namespace Calamari.ArgoCD.Git
         
         public void StageFiles(string[] filesToStage)
         {
+            //find files which have changed in fs??? <---   
             foreach (var file in filesToStage)
             {
+                var fileToAdd = file.StartsWith("./") ? file.Substring(2) : file;
                 // if a file does not exist - what should we do? throw and continue? or just throw?
-                repository.Index.Add(file);
+                repository.Index.Add(fileToAdd);
             }
         }
         

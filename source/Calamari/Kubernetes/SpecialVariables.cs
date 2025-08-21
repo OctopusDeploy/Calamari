@@ -81,6 +81,12 @@ namespace Calamari.Kubernetes
             public static readonly string CommitMethod = "Octopus.Action.ArgoCD.CommitMethod";
 
             public static readonly string TemplateGlobs = "Octopus.Action.ArgoCD.TemplateGlobs";
+            
+            public static class GitCommitMethods
+            {
+                public const string DirectCommit = "DirectCommit";
+                public const string PullRequest = "PullRequest";
+            }
         }
 
         public class ServiceMessages

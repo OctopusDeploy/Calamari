@@ -17,7 +17,7 @@ using Calamari.Deployment.Conventions;
 
 namespace Calamari.ArgoCD.Commands
 {
-    [Command(Name, Description = "Write populated template from a package into git repositories")]
+    [Command(Name, Description = "Write populated templates from a package into one or more git repositories")]
     public class CommitToGitCommand : Command
     {
         public const string PackageDirectoryName = "package";
@@ -52,28 +52,18 @@ namespace Calamari.ArgoCD.Commands
         public override int Execute(string[] commandLineArguments)
         {
             Options.Parse(commandLineArguments);
-            var workingDirectory = Directory.GetCurrentDirectory();
 
             var conventions = new List<IConvention>
             {
                 new DelegateInstallConvention(d =>
                                               {
-                                                  workingDirectory = d.CurrentDirectory;
-                                                  var stagingDirectory = Path.Combine(workingDirectory, ExtractPackage.StagingDirectoryName);
-                                                  var packageDirectory = Path.Combine(stagingDirectory, PackageDirectoryName);
+                                                  var workingDirectory = d.CurrentDirectory;
+                                                  var packageDirectory = Path.Combine(workingDirectory, PackageDirectoryName);
                                                   fileSystem.EnsureDirectoryExists(packageDirectory);
                                                   extractPackage.ExtractToCustomDirectory(pathToPackage, packageDirectory);
-
-                                                  d.StagingDirectory = packageDirectory;
-                                                  d.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
                                               }),
-                new SubstituteInFilesConvention(new NonSensitiveSubstituteInFilesBehaviour(substituteInFiles)),
-                new DelegateInstallConvention(d =>
-                                              {
-                                                  var convention = new UpdateGitRepositoryInstallConvention(fileSystem, workingDirectory, log);
-                                                  convention.Install(d);
-                                              })
-                
+                new SubstituteInFilesConvention(new NonSensitiveSubstituteInFilesBehaviour(substituteInFiles, PackageDirectoryName)),
+                new UpdateGitRepositoryInstallConvention(fileSystem, PackageDirectoryName, log),
             };
 
             var runningDeployment = new RunningDeployment(pathToPackage, variables);

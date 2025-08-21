@@ -3,7 +3,13 @@ using System;
 
 namespace Calamari.ArgoCD.Conventions
 {
-    public class PackageRelativeFile
+    public interface IPackageRelativeFile
+    {
+        string AbsolutePath { get; }
+        string PackageRelativePath { get; }
+    }
+
+    public class PackageRelativeFile : IPackageRelativeFile
     {
         public PackageRelativeFile(string absolutePath, string packageRelativePath)
         {

@@ -12,32 +12,31 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.Conventions;
 using Calamari.Kubernetes;
-using LibGit2Sharp;
-using SharpCompress;
 
 namespace Calamari.ArgoCD.Conventions
 {
     public class UpdateGitRepositoryInstallConvention : IInstallConvention
     {
         readonly ICalamariFileSystem fileSystem;
-        readonly RepositoryFactory repositoryFactory;
         readonly ILog log;
+        readonly string packageSubfolder;
 
-        public UpdateGitRepositoryInstallConvention(ICalamariFileSystem fileSystem, string repositoryParentDirectory, ILog log)
+        public UpdateGitRepositoryInstallConvention(ICalamariFileSystem fileSystem, string packageSubfolder, ILog log)
         {
             this.fileSystem = fileSystem;
             this.log = log;
-            repositoryFactory = new RepositoryFactory(log, repositoryParentDirectory);
+            this.packageSubfolder = packageSubfolder;
         }
         
         public void Install(RunningDeployment deployment)
         {
             Log.Info("Executing Commit To Git operation");
-            var fileWriter = GetReferencedPackageFiles(deployment);
+            var packageFiles = GetReferencedPackageFiles(deployment);
 
+            var requiresPullRequest = RequiresPullRequest(deployment);
             var commitMessage = GenerateCommitMessage(deployment);
-            var requiresPullRequest = FeatureToggle.ArgocdCreatePullRequestFeatureToggle.IsEnabled(deployment.Variables) && deployment.Variables.Get(SpecialVariables.Git.CommitMethod) == "PullRequest";
             
+            var repositoryFactory = new RepositoryFactory(log, deployment.CurrentDirectory);
             var repositoryIndexes = deployment.Variables.GetIndexes(SpecialVariables.Git.Index);
             log.Info($"Found the following repository indicies '{repositoryIndexes.Join(",")}'");
             foreach (var repositoryIndex in repositoryIndexes)
@@ -47,12 +46,15 @@ namespace Calamari.ArgoCD.Conventions
                 var repository = repositoryFactory.CloneRepository(repositoryIndex, gitConnection);
                 
                 Log.Info($"Copying files into repository {gitConnection.Url}");
-                var subFolder = GetSubFolderFor(repositoryIndex, deployment.Variables);
+                var subFolder = deployment.Variables.Get(SpecialVariables.Git.SubFolder(repositoryIndex), String.Empty) ?? String.Empty;
                 Log.VerboseFormat("Copying files into subfolder '{0}'", subFolder);
-                var filesAdded = fileWriter.ApplyFilesTo(repository.WorkingDirectory, subFolder);
+
+                var repositoryFiles = packageFiles.Select(f => new FileCopySpecification(f, repository.WorkingDirectory, subFolder)).ToList();
+                
+                CopyFiles(repositoryFiles);
                 
                 Log.Info("Staging files in repository");
-                repository.StageFiles(filesAdded.ToArray());
+                repository.StageFiles(repositoryFiles.Select(fcs => fcs.DestinationRelativePath).ToArray());
                 
                 Log.Info("Commiting changes");
                 if (repository.CommitChanges(commitMessage))
@@ -67,30 +69,38 @@ namespace Calamari.ArgoCD.Conventions
             }
         }
 
-        FileWriter GetReferencedPackageFiles(RunningDeployment deployment)
+        bool RequiresPullRequest(RunningDeployment deployment)
         {
-            
-            var fileGlobs = deployment.Variables.GetPaths(SpecialVariables.Git.TemplateGlobs);
-            log.Info($"Selecting files from package using '{string.Join(" ", fileGlobs)}'");
-            var filesToApply = SelectFiles(deployment.CurrentDirectory, fileGlobs);
-            
-            log.Info($"Found {filesToApply.Length} files to apply");
-            var fileWriter = new FileWriter(fileSystem, filesToApply);
-            
-            return fileWriter;
+            return FeatureToggle.ArgocdCreatePullRequestFeatureToggle.IsEnabled(deployment.Variables) && deployment.Variables.Get(SpecialVariables.Git.CommitMethod) == SpecialVariables.Git.GitCommitMethods.PullRequest;
+
         }
 
-        string GetSubFolderFor(string repositoryIndex, IVariables variables)
+        void CopyFiles(IEnumerable<IFileCopySpecification> repositoryFiles)
         {
+            foreach (var file in repositoryFiles)
             {
-                var raw = variables.Get(SpecialVariables.Git.SubFolder(repositoryIndex), String.Empty) ?? String.Empty;
-                if (raw.StartsWith("./"))
-                {
-                    return raw.Substring(2);
-                }
-
-                return raw;
+                Log.VerboseFormat($"Copying '{file.SourceAbsolutePath}' to '{file.DestinationAbsolutePath}'");
+                EnsureParentDirectoryExists(file.DestinationAbsolutePath);
+                fileSystem.CopyFile(file.SourceAbsolutePath, file.DestinationAbsolutePath);
             }
+        }
+        
+        static void EnsureParentDirectoryExists(string filePath)
+        {
+            var destinationDirectory = Path.GetDirectoryName(filePath);
+            if (destinationDirectory != null)
+            {
+                Directory.CreateDirectory(destinationDirectory);    
+            }
+        }
+
+        IPackageRelativeFile[] GetReferencedPackageFiles(RunningDeployment deployment)
+        {
+            var fileGlobs = deployment.Variables.GetPaths(SpecialVariables.Git.TemplateGlobs);
+            log.Info($"Selecting files from package using '{string.Join(" ", fileGlobs)}'");
+            var filesToApply = SelectFiles(Path.Combine(deployment.CurrentDirectory, packageSubfolder), fileGlobs);
+            log.Info($"Found {filesToApply.Length} files to apply");
+            return filesToApply;
         }
 
         string GenerateCommitMessage(RunningDeployment deployment)
@@ -102,7 +112,7 @@ namespace Calamari.ArgoCD.Conventions
                 : $"{summary}\n\n{description}";
         }
         
-        PackageRelativeFile[] SelectFiles(string pathToExtractedPackage, List<string> fileGlobs)
+        IPackageRelativeFile[] SelectFiles(string pathToExtractedPackage, List<string> fileGlobs)
         {
             return fileGlobs.SelectMany(glob => fileSystem.EnumerateFilesWithGlob(pathToExtractedPackage, glob))
                             .Select(absoluteFilepath =>
@@ -114,7 +124,7 @@ namespace Calamari.ArgoCD.Conventions
 #endif
                                         return new PackageRelativeFile(absoluteFilepath, relativePath);
                                     })
-                            .ToArray();
+                            .ToArray<IPackageRelativeFile>();
         }
     }
 }
