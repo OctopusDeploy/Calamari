@@ -1,3 +1,5 @@
+using System;
+using System.IO;
 using Calamari.ArgoCD.Conventions;
 using FluentAssertions;
 using NUnit.Framework;
@@ -12,9 +14,9 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
         {
             var originalPackage = new PackageRelativeFile("/tmp/unzippedPackage/file", "file");
             var copyInto = new FileCopySpecification(originalPackage, "/MyNewRootArea/", "subFolder");
-            
-            copyInto.DestinationAbsolutePath.Should().Be("/MyNewRootArea/subFolder/file");
-            copyInto.DestinationRelativePath.Should().Be("subFolder/file");
+
+            copyInto.DestinationAbsolutePath.Should().Be($"/MyNewRootArea{Path.DirectorySeparatorChar}subFolder{Path.DirectorySeparatorChar}file");
+            copyInto.DestinationRelativePath.Should().Be($"subFolder{Path.DirectorySeparatorChar}file");
         }
         
         [Test]
@@ -23,17 +25,17 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             var originalPackage = new PackageRelativeFile("/tmp/unzippedPackage/file", "file");
             var copyInto = new FileCopySpecification(originalPackage, "/MyNewRootArea/", "subFolder/AndThenMore");
             
-            copyInto.DestinationAbsolutePath.Should().Be("/MyNewRootArea/subFolder/AndThenMore/file");
-            copyInto.DestinationRelativePath.Should().Be("subFolder/AndThenMore/file");
+            copyInto.DestinationAbsolutePath.Should().Be($"/MyNewRootArea{Path.DirectorySeparatorChar}subFolder/AndThenMore{Path.DirectorySeparatorChar}file");
+            copyInto.DestinationRelativePath.Should().Be($"subFolder/AndThenMore{Path.DirectorySeparatorChar}file");
         }
 
         [Test]
-        public void DotSlashSubFolderIsPropogatedToDestinationPath()
+        public void DotSlashSubFolderIsPropagatedToDestinationPath()
         {
             var originalPackage = new PackageRelativeFile("/tmp/unzippedPackage/file", "file");
-            var copyInto = new FileCopySpecification(originalPackage, "/MyNewRootArea/", "./");
+            var copyInto = new FileCopySpecification(originalPackage, "/MyNewRootArea", "./");
             
-            copyInto.DestinationAbsolutePath.Should().Be("/MyNewRootArea/./file");
+            copyInto.DestinationAbsolutePath.Should().Be($"/MyNewRootArea{Path.DirectorySeparatorChar}./file");
             copyInto.DestinationRelativePath.Should().Be("./file");
         }
     }

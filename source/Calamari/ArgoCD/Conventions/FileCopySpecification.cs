@@ -19,7 +19,7 @@ namespace Calamari.ArgoCD.Conventions
 
         public string SourceAbsolutePath => packageSource.AbsolutePath;
         public string DestinationRelativePath => Path.Combine(repositorySubPath, packageSource.PackageRelativePath);
-        public string DestinationAbsolutePath => Path.Combine(rootPath, repositorySubPath, packageSource.PackageRelativePath);
+        public string DestinationAbsolutePath => Path.Combine(rootPath, DestinationRelativePath);
 
         public FileCopySpecification(IPackageRelativeFile packageSource, string rootPath, string repositorySubPath)
         {
