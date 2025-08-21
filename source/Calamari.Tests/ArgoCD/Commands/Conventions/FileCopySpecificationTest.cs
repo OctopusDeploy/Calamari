@@ -13,7 +13,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
         public void DestinationPathsAreCorrectlyDetermined()
         {
             var originalPackage = new PackageRelativeFile("/tmp/unzippedPackage/file", "file");
-            var copyInto = new FileCopySpecification(originalPackage, "/MyNewRootArea/", "subFolder");
+            var copyInto = new FileCopySpecification(originalPackage, "/MyNewRootArea", "subFolder");
 
             copyInto.DestinationAbsolutePath.Should().Be($"/MyNewRootArea{Path.DirectorySeparatorChar}subFolder{Path.DirectorySeparatorChar}file");
             copyInto.DestinationRelativePath.Should().Be($"subFolder{Path.DirectorySeparatorChar}file");
@@ -23,7 +23,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
         public void MultiLayerSubFolderAreCorrectlyDetermined()
         {
             var originalPackage = new PackageRelativeFile("/tmp/unzippedPackage/file", "file");
-            var copyInto = new FileCopySpecification(originalPackage, "/MyNewRootArea/", "subFolder/AndThenMore");
+            var copyInto = new FileCopySpecification(originalPackage, "/MyNewRootArea", "subFolder/AndThenMore");
             
             copyInto.DestinationAbsolutePath.Should().Be($"/MyNewRootArea{Path.DirectorySeparatorChar}subFolder/AndThenMore{Path.DirectorySeparatorChar}file");
             copyInto.DestinationRelativePath.Should().Be($"subFolder/AndThenMore{Path.DirectorySeparatorChar}file");
