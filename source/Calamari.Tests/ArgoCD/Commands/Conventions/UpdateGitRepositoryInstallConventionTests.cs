@@ -50,10 +50,17 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
         [Test]
         public void ExecuteCopiesFilesFromPackageIntoRepo()
         {
+            const string firstFilename = "first.yaml";
+            const string nestedFilename = "nested/second.yaml";
+            const string firstFileContent = "firstContent";
+            const string secondFileContent = "secondContent";
+            
             var nestedDirectory = Path.Combine(PackageDirectory, "nested");
             Directory.CreateDirectory(nestedDirectory);
-            File.WriteAllText(Path.Combine(PackageDirectory,"first.yaml"), "firstContent");
-            File.WriteAllText(Path.Combine(nestedDirectory, "second.yaml"), "secondContent");
+
+            
+            File.WriteAllText(Path.Combine(PackageDirectory, firstFilename), firstFileContent);
+            File.WriteAllText(Path.Combine(PackageDirectory, nestedFilename), secondFileContent);
             
             var variables = new CalamariVariables
             {
@@ -79,11 +86,11 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             Repository.Clone(OriginPath, resultPath);
             var resultRepo = new Repository(resultPath);
             LibGit2Sharp.Commands.Checkout(resultRepo, $"origin/{argoCdBranchName}");
-            var resultFirstContent = File.ReadAllText(Path.Combine(resultPath, "first.yaml"));
-            var resultNestedContent = File.ReadAllText(Path.Combine(resultPath, "nested", "second.yaml"));
             
-            resultFirstContent.Should().Be("firstContent");
-            resultNestedContent.Should().Be("secondContent");
+            var resultFirstContent = File.ReadAllText(Path.Combine(resultPath, firstFilename));
+            var resultNestedContent = File.ReadAllText(Path.Combine(resultPath, nestedFilename));
+            resultFirstContent.Should().Be(firstFileContent);
+            resultNestedContent.Should().Be(secondFileContent);
             Console.WriteLine(log.ToString());
         }
     }
