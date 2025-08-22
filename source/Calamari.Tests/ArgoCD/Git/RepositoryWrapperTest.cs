@@ -20,7 +20,7 @@ namespace Calamari.Tests.ArgoCD.Git
         string OriginPath => Path.Combine(tempDirectory, "origin");
         string repositoryPath = "repository";
         Repository bareOrigin;
-        string branchName = "devBranch";
+        GitBranchName branchName = new GitBranchName("devBranch");
 
         RepositoryWrapper repository;
         
@@ -91,8 +91,8 @@ namespace Calamari.Tests.ArgoCD.Git
             File.WriteAllText(Path.Combine(RepositoryRootPath, filename), "");
             repository.StageFiles(new[] { filename });
             repository.CommitChanges("There is no data to comm it").Should().BeTrue();
-            repository.PushChanges(false, "arbitraryBranch1");
-            repository.PushChanges(false, "arbitraryBranch2");
+            repository.PushChanges(false, new GitBranchName("arbitraryBranch1"));
+            repository.PushChanges(false, new GitBranchName("arbitraryBranch2"));
         }
     }
 }

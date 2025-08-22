@@ -50,9 +50,9 @@ namespace Calamari.ArgoCD.Git
             }
         }
         
-        public void PushChanges(bool requiresPullRequest, string branchName)
+        public void PushChanges(bool requiresPullRequest, GitBranchName branchName)
         {
-            var pushToBranchName = branchName;
+            var pushToBranchName = repository.GetBranchName(branchName);;
             if (requiresPullRequest)
             {
                 pushToBranchName += "-pullrequest";
