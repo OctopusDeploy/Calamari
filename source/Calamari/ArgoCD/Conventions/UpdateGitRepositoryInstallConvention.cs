@@ -75,7 +75,6 @@ namespace Calamari.ArgoCD.Conventions
         bool RequiresPullRequest(RunningDeployment deployment)
         {
             return OctopusFeatureToggles.ArgoCDCreatePullRequestFeatureToggle.IsEnabled(deployment.Variables) && deployment.Variables.Get(SpecialVariables.Git.CommitMethod) == SpecialVariables.Git.GitCommitMethods.PullRequest;
-
         }
 
         void CopyFiles(IEnumerable<IFileCopySpecification> repositoryFiles)
@@ -120,8 +119,8 @@ namespace Calamari.ArgoCD.Conventions
             return fileGlobs.SelectMany(glob => fileSystem.EnumerateFilesWithGlob(pathToExtractedPackage, glob))
                             .Select(absoluteFilepath =>
                                     {
-#if NETCORE
-                                        var relativePath = Path.GetRelativePath(pathToExtractedPackage, file);
+#if NET
+                                        var relativePath = Path.GetRelativePath(pathToExtractedPackage, absoluteFilepath);
 #else
                                         var relativePath = absoluteFilepath.Substring(pathToExtractedPackage.Length + 1);
 #endif
