@@ -56,19 +56,23 @@ namespace Calamari.ArgoCD.Git
         
         public async Task PushChanges(bool requiresPullRequest, GitBranchName branchName, CancellationToken cancellationToken)
         {
-            log.Verbose($"A PR should be created for {branchName} = {requiresPullRequest}");
-            var currentBranchName = repository.GetBranchName(branchName); 
+            var currentBranchName = repository.GetBranchName(branchName);
             var pushToBranchName = currentBranchName;
             if (requiresPullRequest)
             {
-                pushToBranchName += "-pullrequest";
+                pushToBranchName = CalculateBranchName();
             }
             Log.Info($"Pushing changes to branch '{pushToBranchName}'");
             PushChanges(pushToBranchName);
             if (requiresPullRequest)
             {
                 await pullRequestCreator.CreatePullRequest(log, connection, "PR Title", "Pr Body", new GitBranchName(pushToBranchName),  new GitBranchName(currentBranchName), cancellationToken);
-            }   
+            }
+        }
+
+        string CalculateBranchName()
+        {
+            return $"octopus-argo-cd-{Guid.NewGuid().ToString("N").Substring(0, 10)}";
         }
         
         public void PushChanges(string branchName)
@@ -82,8 +86,7 @@ namespace Calamari.ArgoCD.Git
             var pushOptions = new PushOptions
             {
                 CredentialsProvider = (url, usernameFromUrl, types) =>
-                                          new UsernamePasswordCredentials { Username = connection.Username, Password = connection.Password },
-                
+                                          new UsernamePasswordCredentials { Username = connection.Username, Password = connection.Password }
             };
             
             repository.Network.Push(repository.Head, pushOptions);
