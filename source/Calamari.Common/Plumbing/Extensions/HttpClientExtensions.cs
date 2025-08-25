@@ -6,7 +6,7 @@ namespace Calamari.Common.Plumbing.Extensions
 {
     public static class HttpClientExtensions
     {
-        public static void AddAuthenticationHeader(this HttpRequestHeaders headers, string userName, string password)
+        public static void AddAuthenticationHeader(this HttpRequestHeaders headers, string userName, string? password)
         {
             if (!string.IsNullOrWhiteSpace(userName))
             {
