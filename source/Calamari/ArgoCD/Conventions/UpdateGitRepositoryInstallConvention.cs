@@ -75,7 +75,7 @@ namespace Calamari.ArgoCD.Conventions
 
         bool RequiresPullRequest(RunningDeployment deployment)
         {
-            return deployment.Variables.Get(SpecialVariables.Git.CommitMethod) == SpecialVariables.Git.GitCommitMethods.PullRequest;
+            return OctopusFeatureToggles.ArgoCDCreatePullRequestFeatureToggle.IsEnabled(deployment.Variables) && deployment.Variables.Get(SpecialVariables.Git.CommitMethod) == SpecialVariables.Git.GitCommitMethods.PullRequest;
 
         }
 
