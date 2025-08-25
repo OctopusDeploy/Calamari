@@ -1,5 +1,7 @@
 using System;
-using Calamari.ArgoCD.Conventions;
+using System.Threading;
+using System.Threading.Tasks;
+using Calamari.ArgoCD.GitHub;
 using Calamari.Common.Plumbing.Logging;
 using LibGit2Sharp;
 
@@ -10,14 +12,16 @@ namespace Calamari.ArgoCD.Git
         readonly IRepository repository;
         readonly ILog log;
         readonly IGitConnection connection;
+        readonly IGitHubPullRequestCreator pullRequestCreator;
 
         public string WorkingDirectory => repository.Info.WorkingDirectory;
 
-        public RepositoryWrapper(IRepository repository, ILog log, IGitConnection connection)
+        public RepositoryWrapper(IRepository repository, ILog log, IGitConnection connection, IGitHubPullRequestCreator pullRequestCreator)
         {
             this.repository = repository;
             this.log = log;
             this.connection = connection;
+            this.pullRequestCreator = pullRequestCreator;
         }
         
 
@@ -50,19 +54,25 @@ namespace Calamari.ArgoCD.Git
             }
         }
         
-        public void PushChanges(bool requiresPullRequest, GitBranchName branchName)
+        public async Task PushChanges(bool requiresPullRequest, GitBranchName branchName, CancellationToken cancellationToken)
         {
-            var pushToBranchName = repository.GetBranchName(branchName);;
+            var currentBranchName = repository.GetBranchName(branchName);
+            var pushToBranchName = currentBranchName;
             if (requiresPullRequest)
             {
-                pushToBranchName += "-pullrequest";
+                pushToBranchName = CalculateBranchName();
             }
             Log.Info($"Pushing changes to branch '{pushToBranchName}'");
             PushChanges(pushToBranchName);
             if (requiresPullRequest)
             {
-                //perform the pull request creation work.
+                await pullRequestCreator.CreatePullRequest(log, connection, "PR Title", "Pr Body", new GitBranchName(pushToBranchName),  new GitBranchName(currentBranchName), cancellationToken);
             }
+        }
+
+        string CalculateBranchName()
+        {
+            return $"octopus-argo-cd-{Guid.NewGuid().ToString("N").Substring(0, 10)}";
         }
         
         public void PushChanges(string branchName)

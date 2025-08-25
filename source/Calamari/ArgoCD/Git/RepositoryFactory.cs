@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using Calamari.ArgoCD.Conventions;
+using Calamari.ArgoCD.GitHub;
 using Calamari.Common.Plumbing.Logging;
 using LibGit2Sharp;
 
@@ -15,11 +16,13 @@ namespace Calamari.ArgoCD.Git
     {
         readonly ILog log;
         readonly string repositoryParentDirectory;
+        readonly IGitHubPullRequestCreator pullRequestCreator;
 
-        public RepositoryFactory(ILog log, string repositoryParentDirectory)
+        public RepositoryFactory(ILog log, string repositoryParentDirectory, IGitHubPullRequestCreator gitHubPullRequestCreator)
         {
             this.log = log;
             this.repositoryParentDirectory = repositoryParentDirectory;
+            this.pullRequestCreator = gitHubPullRequestCreator;
         }
 
         public RepositoryWrapper CloneRepository(string repositoryName, IGitConnection gitConnection)
@@ -67,7 +70,7 @@ namespace Calamari.ArgoCD.Git
             }
             LibGit2Sharp.Commands.Checkout(repo, branchToCheckout);
 
-            return new RepositoryWrapper(repo, log, gitConnection);
+            return new RepositoryWrapper(repo, log, gitConnection, pullRequestCreator);
         }
     }
 }

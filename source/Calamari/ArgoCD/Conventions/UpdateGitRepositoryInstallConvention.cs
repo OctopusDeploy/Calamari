@@ -3,13 +3,14 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using Calamari.ArgoCD.Git;
+using Calamari.ArgoCD.GitHub;
 using Calamari.Common.Commands;
 using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
-using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.Conventions;
 using Calamari.Kubernetes;
 
@@ -20,11 +21,13 @@ namespace Calamari.ArgoCD.Conventions
         readonly ICalamariFileSystem fileSystem;
         readonly ILog log;
         readonly string packageSubfolder;
+        readonly IGitHubPullRequestCreator pullRequestCreator;
 
-        public UpdateGitRepositoryInstallConvention(ICalamariFileSystem fileSystem, string packageSubfolder, ILog log)
+        public UpdateGitRepositoryInstallConvention(ICalamariFileSystem fileSystem, string packageSubfolder, ILog log, IGitHubPullRequestCreator pullRequestCreator)
         {
             this.fileSystem = fileSystem;
             this.log = log;
+            this.pullRequestCreator = pullRequestCreator;
             this.packageSubfolder = packageSubfolder;
         }
         
@@ -36,7 +39,7 @@ namespace Calamari.ArgoCD.Conventions
             var requiresPullRequest = RequiresPullRequest(deployment);
             var commitMessage = GenerateCommitMessage(deployment);
             
-            var repositoryFactory = new RepositoryFactory(log, deployment.CurrentDirectory);
+            var repositoryFactory = new RepositoryFactory(log, deployment.CurrentDirectory, pullRequestCreator);
             var repositoryIndexes = deployment.Variables.GetIndexes(SpecialVariables.Git.Index);
             log.Info($"Found the following repository indicies '{repositoryIndexes.Join(",")}'");
             foreach (var repositoryIndex in repositoryIndexes)
@@ -60,7 +63,7 @@ namespace Calamari.ArgoCD.Conventions
                 if (repository.CommitChanges(commitMessage))
                 {
                     Log.Info("Changes were commited, pushing to remote");
-                    repository.PushChanges(requiresPullRequest, gitConnection.BranchName);    
+                    repository.PushChanges(requiresPullRequest, gitConnection.BranchName, CancellationToken.None).GetAwaiter().GetResult();    
                 }
                 else
                 {
@@ -71,7 +74,7 @@ namespace Calamari.ArgoCD.Conventions
 
         bool RequiresPullRequest(RunningDeployment deployment)
         {
-            return FeatureToggle.ArgocdCreatePullRequestFeatureToggle.IsEnabled(deployment.Variables) && deployment.Variables.Get(SpecialVariables.Git.CommitMethod) == SpecialVariables.Git.GitCommitMethods.PullRequest;
+            return OctopusFeatureToggles.ArgoCDCreatePullRequestFeatureToggle.IsEnabled(deployment.Variables) && deployment.Variables.Get(SpecialVariables.Git.CommitMethod) == SpecialVariables.Git.GitCommitMethods.PullRequest;
 
         }
 

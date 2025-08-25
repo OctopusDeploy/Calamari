@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Calamari.ArgoCD.Conventions;
+using Calamari.ArgoCD.GitHub;
 using Calamari.Commands;
 using Calamari.Commands.Support;
 using Calamari.Common.Commands;
@@ -29,6 +30,7 @@ namespace Calamari.ArgoCD.Commands
         readonly ICalamariFileSystem fileSystem;
         readonly IExtractPackage extractPackage;
         readonly INonSensitiveSubstituteInFiles substituteInFiles;
+        readonly IGitHubPullRequestCreator pullRequestCreator;
         PathToPackage pathToPackage;
 
         public CommitToGitCommand(
@@ -36,13 +38,15 @@ namespace Calamari.ArgoCD.Commands
             IVariables variables,
             ICalamariFileSystem fileSystem,
             IExtractPackage extractPackage,
-            INonSensitiveSubstituteInFiles substituteInFiles)
+            INonSensitiveSubstituteInFiles substituteInFiles,
+            IGitHubPullRequestCreator pullRequestCreator)
         {
             this.log = log;
             this.variables = variables;
             this.fileSystem = fileSystem;
             this.extractPackage = extractPackage;
             this.substituteInFiles = substituteInFiles;
+            this.pullRequestCreator = pullRequestCreator;
 
             Options.Add("package=",
                         "Path to the NuGet package to install.",
@@ -66,7 +70,7 @@ namespace Calamari.ArgoCD.Commands
                                                   d.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
                                               }),
                 new SubstituteInFilesConvention(new NonSensitiveSubstituteInFilesBehaviour(substituteInFiles, PackageDirectoryName)),
-                new UpdateGitRepositoryInstallConvention(fileSystem, PackageDirectoryName, log),
+                new UpdateGitRepositoryInstallConvention(fileSystem, PackageDirectoryName, log, pullRequestCreator),
             };
 
             var runningDeployment = new RunningDeployment(pathToPackage, variables);

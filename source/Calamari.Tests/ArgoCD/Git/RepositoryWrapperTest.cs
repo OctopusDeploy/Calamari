@@ -1,11 +1,15 @@
 using System;
 using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 using Calamari.ArgoCD.Git;
+using Calamari.ArgoCD.GitHub;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
 using FluentAssertions;
 using LibGit2Sharp;
+using NSubstitute;
 using NUnit.Framework;
 
 namespace Calamari.Tests.ArgoCD.Git
@@ -33,7 +37,7 @@ namespace Calamari.Tests.ArgoCD.Git
             bareOrigin = RepositoryHelpers.CreateBareRepository(OriginPath);
             RepositoryHelpers.CreateBranchIn(branchName, OriginPath);
 
-            var repositoryFactory = new RepositoryFactory(log, tempDirectory);
+            var repositoryFactory = new RepositoryFactory(log, tempDirectory, Substitute.For<IGitHubPullRequestCreator>());
             var connection = new GitConnection(null, null, OriginPath, branchName);
             repository = repositoryFactory.CloneRepository(repositoryPath, connection);
         }
@@ -70,14 +74,14 @@ namespace Calamari.Tests.ArgoCD.Git
         }
         
         [Test]
-        public void StagingARealFileSucceedsAndCanBeCommittedAndPushed()
+        public async Task StagingARealFileSucceedsAndCanBeCommittedAndPushed()
         {
             string filename = "newFile.txt";
             string fileContents = "Lorem ipsum dolor sit amet";
             File.WriteAllText(Path.Combine(RepositoryRootPath, filename), fileContents);
             repository.StageFiles(new[] { filename });
             repository.CommitChanges("There is no data to comm it").Should().BeTrue();
-            repository.PushChanges(false, branchName);
+            await repository.PushChanges(false, branchName, CancellationToken.None);
             
             //ensure the remote contains the file
             var originFileContent = RepositoryHelpers.ReadFileFromBranch(bareOrigin, branchName, filename);
@@ -85,14 +89,14 @@ namespace Calamari.Tests.ArgoCD.Git
         }
         
         [Test]
-        public void CanPushTheHeadToAnyBranchNameOnRemote()
+        public async Task CanPushTheHeadToAnyBranchNameOnRemote()
         {
             string filename = "newFile.txt";
             File.WriteAllText(Path.Combine(RepositoryRootPath, filename), "");
             repository.StageFiles(new[] { filename });
             repository.CommitChanges("There is no data to comm it").Should().BeTrue();
-            repository.PushChanges(false, new GitBranchName("arbitraryBranch1"));
-            repository.PushChanges(false, new GitBranchName("arbitraryBranch2"));
+            await repository.PushChanges(false, new GitBranchName("arbitraryBranch1"), CancellationToken.None);
+            await repository.PushChanges(false, new GitBranchName("arbitraryBranch2"), CancellationToken.None);
         }
     }
 }
