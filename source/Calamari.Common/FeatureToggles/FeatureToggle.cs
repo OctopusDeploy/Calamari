@@ -11,7 +11,6 @@
         KubernetesLiveObjectStatusFeatureToggle,
         KubernetesAuthAwsCliWithExecFeatureToggle,
         ForceUtf8ZipFileDecodingFeatureToggle,
-        BashParametersArrayFeatureToggle,
-        ArgocdCreatePullRequestFeatureToggle,
+        BashParametersArrayFeatureToggle
     }
 }

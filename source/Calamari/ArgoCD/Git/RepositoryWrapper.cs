@@ -1,5 +1,7 @@
 using System;
-using Calamari.ArgoCD.Conventions;
+using System.Threading;
+using System.Threading.Tasks;
+using Calamari.ArgoCD.GitHub;
 using Calamari.Common.Plumbing.Logging;
 using LibGit2Sharp;
 
@@ -10,14 +12,16 @@ namespace Calamari.ArgoCD.Git
         readonly IRepository repository;
         readonly ILog log;
         readonly IGitConnection connection;
+        readonly IGitHubPullRequestCreator pullRequestCreator;
 
         public string WorkingDirectory => repository.Info.WorkingDirectory;
 
-        public RepositoryWrapper(IRepository repository, ILog log, IGitConnection connection)
+        public RepositoryWrapper(IRepository repository, ILog log, IGitConnection connection, IGitHubPullRequestCreator pullRequestCreator)
         {
             this.repository = repository;
             this.log = log;
             this.connection = connection;
+            this.pullRequestCreator = pullRequestCreator;
         }
         
 
@@ -50,9 +54,11 @@ namespace Calamari.ArgoCD.Git
             }
         }
         
-        public void PushChanges(bool requiresPullRequest, GitBranchName branchName)
+        public async Task PushChanges(bool requiresPullRequest, GitBranchName branchName, CancellationToken cancellationToken)
         {
-            var pushToBranchName = repository.GetBranchName(branchName);;
+            log.Verbose($"A PR should be created for {branchName} = {requiresPullRequest}");
+            var currentBranchName = repository.GetBranchName(branchName); 
+            var pushToBranchName = currentBranchName;
             if (requiresPullRequest)
             {
                 pushToBranchName += "-pullrequest";
@@ -61,8 +67,8 @@ namespace Calamari.ArgoCD.Git
             PushChanges(pushToBranchName);
             if (requiresPullRequest)
             {
-                //perform the pull request creation work.
-            }
+                await pullRequestCreator.CreatePullRequest(log, connection, "PR Title", "Pr Body", new GitBranchName(pushToBranchName),  new GitBranchName(currentBranchName), cancellationToken);
+            }   
         }
         
         public void PushChanges(string branchName)
@@ -76,7 +82,8 @@ namespace Calamari.ArgoCD.Git
             var pushOptions = new PushOptions
             {
                 CredentialsProvider = (url, usernameFromUrl, types) =>
-                                          new UsernamePasswordCredentials { Username = connection.Username, Password = connection.Password }
+                                          new UsernamePasswordCredentials { Username = connection.Username, Password = connection.Password },
+                
             };
             
             repository.Network.Push(repository.Head, pushOptions);

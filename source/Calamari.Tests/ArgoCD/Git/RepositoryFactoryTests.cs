@@ -2,11 +2,13 @@ using System;
 using System.IO;
 using System.Text;
 using Calamari.ArgoCD.Git;
+using Calamari.ArgoCD.GitHub;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
 using FluentAssertions;
 using LibGit2Sharp;
+using NSubstitute;
 using NUnit.Framework;
 
 namespace Calamari.Tests.ArgoCD.Git
@@ -34,7 +36,7 @@ namespace Calamari.Tests.ArgoCD.Git
             bareOrigin = RepositoryHelpers.CreateBareRepository(OriginPath);
             RepositoryHelpers.CreateBranchIn(branchName, OriginPath);
 
-            repositoryFactory = new RepositoryFactory(log, tempDirectory);
+            repositoryFactory = new RepositoryFactory(log, tempDirectory, Substitute.For<IGitHubPullRequestCreator>());
         }
         
         [TearDown]
