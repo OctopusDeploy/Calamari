@@ -1,4 +1,7 @@
+#if NET
 using System.Collections.Generic;
+using Calamari.ArgoCD.Conventions;
+using Calamari.ArgoCD.GitHub;
 using Calamari.Commands.Support;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
@@ -17,12 +20,14 @@ namespace Calamari.ArgoCD.Commands
         readonly ILog log;
         readonly IVariables variables;
         readonly ICalamariFileSystem fileSystem;
+        readonly IGitHubPullRequestCreator pullRequestCreator;
 
-        public UpdateArgoCDAppImagesCommand(ILog log, IVariables variables, ICalamariFileSystem fileSystem)
+        public UpdateArgoCDAppImagesCommand(ILog log, IVariables variables, ICalamariFileSystem fileSystem, IGitHubPullRequestCreator pullRequestCreator)
         {
             this.log = log;
             this.variables = variables;
             this.fileSystem = fileSystem;
+            this.pullRequestCreator = pullRequestCreator;
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -32,7 +37,7 @@ namespace Calamari.ArgoCD.Commands
 
             var conventions = new List<IConvention>
             {
-                
+                new UpdateArgoCDAppImagesInstallConvention(log, pullRequestCreator, fileSystem),
             };
                 
             var conventionRunner = new ConventionProcessor(runningDeployment, conventions, log);
@@ -42,3 +47,5 @@ namespace Calamari.ArgoCD.Commands
         }
     }
 }
+
+#endif

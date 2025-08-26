@@ -1,11 +1,9 @@
+#if NET
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages;
 using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Models;
 using Calamari.ArgoCD.Git;
@@ -37,8 +35,6 @@ namespace Calamari.ArgoCD.Conventions
         {
             var repositoryFactory = new RepositoryFactory(log, deployment.CurrentDirectory, pullRequestCreator);
             var requiresPullRequest = RequiresPullRequest(deployment);
-
-            var stepVariableFactory = new ArgoCDActionVariablesFactory();
 
             var commitMessageSummary = deployment.Variables.Get(SpecialVariables.Git.CommitMessageSummary) ?? throw new CommandException("Git commit summary is not set.");
             var commitMessageDescription = deployment.Variables.Get(SpecialVariables.Git.CommitMessageDescription);
@@ -167,3 +163,5 @@ namespace Calamari.ArgoCD.Conventions
         }
     }
 }
+
+#endif
