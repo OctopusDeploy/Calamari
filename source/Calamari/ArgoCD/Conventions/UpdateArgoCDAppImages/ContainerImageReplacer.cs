@@ -5,6 +5,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using k8s;
+using k8s.Models;
 using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Models;
 using Octopus.Core.Features.Kubernetes.ArgoCD;
 using YamlDotNet.RepresentationModel;
