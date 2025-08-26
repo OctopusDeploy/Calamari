@@ -89,6 +89,15 @@ namespace Calamari.Kubernetes
                 public const string DirectCommit = "DirectCommit";
                 public const string PullRequest = "PullRequest";
             }
+            
+            public static class Output
+            {
+                public static readonly string GatewayIds = "ArgoCD.GatewayIds";
+                public static readonly string GitUris = "ArgoCD.GitUris";
+                public static readonly string MatchingApplications = "ArgoCD.TotalMatchingApplications";
+                public static readonly string UpdatedApplications = "ArgoCD.UpdatedApplications";
+                public static readonly string UpdatedImages = "ArgoCD.UpdatedImages";
+            }
         }
 
         public class ServiceMessages
