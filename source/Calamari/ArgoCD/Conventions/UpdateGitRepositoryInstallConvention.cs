@@ -46,8 +46,8 @@ namespace Calamari.ArgoCD.Conventions
             {
                 Log.Info($"Writing files to repository for '{repositoryIndex}'");
                 IGitConnection gitConnection = new VariableBackedGitConnection(deployment.Variables, repositoryIndex);
-                var subFolder = deployment.Variables.Get(SpecialVariables.Git.SubFolder(repositoryIndex), String.Empty);
-                var purgeOutput = deployment.Variables.Get(SpecialVariables.Git.PurgeOutput, "False");
+                var subFolder = deployment.Variables.Get(SpecialVariables.Git.SubFolder(repositoryIndex), String.Empty) ?? String.Empty;
+                var purgeOutput = deployment.Variables.Get(SpecialVariables.Git.PurgeOutput, "False") ?? "False";
                 
                 Log.Info($"Copying files into repository {gitConnection.Url}");
                 var repository = repositoryFactory.CloneRepository(repositoryIndex, gitConnection);
