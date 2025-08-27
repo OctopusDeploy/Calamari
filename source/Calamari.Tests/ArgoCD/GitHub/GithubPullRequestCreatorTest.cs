@@ -8,19 +8,20 @@ using NUnit.Framework;
 
 namespace Calamari.Tests.ArgoCD.GitHub
 {
-    [TestFixture]
+    //Reintroduce this if you want to test the actual GH PR creation
+    //[TestFixture]
     public class GithubPullRequestCreatorTest
     {
         InMemoryLog log = new InMemoryLog();
         
-        [Test]
+        //[Test]
         public async Task CreatePrInRepo()
         {
             GitHubClientFactory gitHubClientFactory = new GitHubClientFactory();
             GitHubPullRequestCreator prCreator = new GitHubPullRequestCreator(gitHubClientFactory);
 
             var connection = new GitConnection(
-                                              "trent@gcentral.com.au",
+                                              "yourGithubUsername",
                                               "ADD_PAT_HERE",
                                               "https://github.com/rain-on/PopulatedArgoCd.git",
                                               new GitBranchName("NOT_USED_IN_THIS_TEST"));
