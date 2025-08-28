@@ -1,25 +1,20 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Reflection;
 using Calamari.Common.Commands;
-using Calamari.Common.Features.EmbeddedResources;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
-using Calamari.Common.Features.Scripts;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Deployment;
 using Newtonsoft.Json.Linq;
 using Octopus.Versioning;
 
 namespace Calamari.Integration.Packages.Download
 {
-    // Note about moving this class: GetScript method uses the namespace of this class as part of the
-    // get Embedded Resource to find the DockerLogin and DockerPull scripts. If you move this file, be sure look at that method
-    // and make sure it can still find the scripts
     public class DockerImagePackageDownloader : IPackageDownloader
     {
         readonly IScriptEngine scriptEngine;
@@ -92,11 +87,23 @@ namespace Calamari.Integration.Packages.Download
             
             //Always try re-pull image, docker engine can take care of the rest
             var fullImageName = GetFullImageName(packageId, version, feedUri);
+            var dockerCredentialHelper = new DockerCredentialHelper(fileSystem, log);
 
             var feedHost = GetFeedHost(feedUri);
 
             var strategy = PackageDownloaderRetryUtils.CreateRetryStrategy<CommandException>(maxDownloadAttempts, downloadAttemptBackoff, log);
-            strategy.Execute(() => PerformLogin(username, password, feedHost));
+
+            var useCredentialHelper = OctopusFeatureToggles.UseDockerCredentialHelperFeatureToggle.IsEnabled(variables);
+            var helperSetupSuccessfully = false;
+            if (useCredentialHelper && !string.IsNullOrEmpty(username) && !string.IsNullOrEmpty(password))
+            {
+                helperSetupSuccessfully = strategy.Execute(() 
+                  => dockerCredentialHelper.SetupCredentialHelper(environmentVariables, variables, feedUri, username, password, DockerHubRegistry));
+            } 
+            if (!helperSetupSuccessfully)
+            {
+                strategy.Execute(() => PerformLogin(username, password, feedHost));
+            }
 
             const string cachedWorkerToolsShortLink = "https://g.octopushq.com/CachedWorkerToolsImages";
             var imageNotCachedMessage =
@@ -110,6 +117,13 @@ namespace Calamari.Integration.Packages.Download
             strategy.Execute(() => PerformPull(fullImageName));
 
             var (hash, size) = GetImageDetails(fullImageName);
+            
+            // Cleanup credential helper files if used
+            if (useCredentialHelper)
+            {
+                dockerCredentialHelper.CleanupCredentialHelper(environmentVariables);
+            }
+            
             return new PackagePhysicalFileMetadata(new PackageFileNameMetadata(packageId, version, version, ""), string.Empty, hash, size);
         }
 
@@ -149,7 +163,7 @@ namespace Calamari.Integration.Packages.Download
             if (result.ExitCode != 0)
                 throw new CommandException("Unable to log in Docker registry");
         }
-
+        
         bool IsImageCached(string fullImageName)
         {
             var cachedDigests = GetCachedImageDigests();
@@ -179,7 +193,7 @@ namespace Calamari.Integration.Packages.Download
 
         CommandResult ExecuteScript(string scriptName, Dictionary<string, string?> envVars)
         {
-            var file = GetScript(scriptName);
+            var file = ScriptExtractor.GetScript(fileSystem, scriptName);
             using (new TemporaryFile(file))
             {
                 var clone = variables.Clone();
@@ -264,29 +278,6 @@ namespace Calamari.Integration.Packages.Download
             {
                 return null;
             }
-        }
-
-        string GetScript(string scriptName)
-        {
-            var syntax = ScriptSyntaxHelper.GetPreferredScriptSyntaxForEnvironment();
-
-            string contextFile;
-            switch (syntax)
-            {
-                case ScriptSyntax.Bash:
-                    contextFile = $"{scriptName}.sh";
-                    break;
-                case ScriptSyntax.PowerShell:
-                    contextFile = $"{scriptName}.ps1";
-                    break;
-                default:
-                    throw new InvalidOperationException("No kubernetes context wrapper exists for " + syntax);
-            }
-
-            var scriptFile = Path.Combine(".", $"Octopus.{contextFile}");
-            var contextScript = new AssemblyEmbeddedResources().GetEmbeddedResourceText(Assembly.GetExecutingAssembly(), $"{typeof(DockerImagePackageDownloader).Namespace}.Scripts.{contextFile}");
-            fileSystem.OverwriteFile(scriptFile, contextScript);
-            return scriptFile;
         }
     }
 }

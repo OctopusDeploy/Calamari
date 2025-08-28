@@ -9,11 +9,13 @@ namespace Calamari.Common.FeatureToggles
             public const string KubernetesObjectManifestInspection = "kubernetes-object-manifest-inspection";
             public const string KOSForHelm = "kos-for-helm";
             public const string ArgoCDCreatePullRequestFeatureToggle = "argocd-create-pull-request";
+            public const string UseDockerCredentialHelper = "calamari-use-docker-credential-helper";
         };
 
         public static readonly OctopusFeatureToggle KubernetesObjectManifestInspectionFeatureToggle = new OctopusFeatureToggle(KnownSlugs.KubernetesObjectManifestInspection);
         public static readonly OctopusFeatureToggle KOSForHelmFeatureToggle = new OctopusFeatureToggle(KnownSlugs.KOSForHelm);
         public static readonly OctopusFeatureToggle ArgoCDCreatePullRequestFeatureToggle = new OctopusFeatureToggle(KnownSlugs.ArgoCDCreatePullRequestFeatureToggle);
+        public static readonly OctopusFeatureToggle UseDockerCredentialHelperFeatureToggle = new OctopusFeatureToggle(KnownSlugs.UseDockerCredentialHelper);
 
         public class OctopusFeatureToggle
         {
