@@ -5,9 +5,11 @@ using System.IO;
 using System.Linq;
 using Calamari.Common.Features.EmbeddedResources;
 using Calamari.Common.Features.Processes;
+using Calamari.Common.Plumbing;
 using Calamari.Integration.Packages.Download;
 using Calamari.Testing.Requirements;
 using FluentAssertions;
+using FluentAssertions.Execution;
 using Newtonsoft.Json;
 using NUnit.Framework;
 
@@ -31,6 +33,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         public void Setup()
         {
             tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+            Directory.CreateDirectory(tempDirectory);
             dockerConfigPath = Path.Combine(tempDirectory, "docker-config");
             Directory.CreateDirectory(dockerConfigPath);
 
@@ -68,7 +71,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             File.WriteAllText(bashScript, bashContent);
             
             // Make bash script executable on Unix systems
-            if (Environment.OSVersion.Platform == PlatformID.Unix || Environment.OSVersion.Platform == PlatformID.MacOSX)
+            if (CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac)
             {
                 SilentProcessRunner.ExecuteCommand("chmod", $"+x {bashScript}", ".", new Dictionary<string, string>(), _ => { }, _ => { });
             }
@@ -80,22 +83,39 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             var testAssemblyLocation = System.Reflection.Assembly.GetExecutingAssembly().Location;
             var testBinDirectory = Path.GetDirectoryName(testAssemblyLocation);
             
-            // Try to find Calamari executable in the same directory as the test assembly
+            // Look for Calamari executable in multiple potential locations
+            var searchDirectories = new[]
+            {
+                testBinDirectory, // Same directory as test assembly
+                Path.Combine(testBinDirectory, "..", "..", "..", "..", "bin", "Debug", "net462"), // Relative path to main bin
+                Path.Combine(testBinDirectory, "..", "..", "..", "..", "..", "bin", "Debug", "net462") // Another potential path
+            };
+            
             // On Unix systems it's "Calamari", on Windows it's "Calamari.exe"
-            var executableNames = Environment.OSVersion.Platform == PlatformID.Win32NT 
+            var executableNames = CalamariEnvironment.IsRunningOnWindows 
                 ? new[] { "Calamari.exe", "Calamari" }
                 : new[] { "Calamari", "Calamari.exe" };
             
-            foreach (var executableName in executableNames)
+            foreach (var searchDirectory in searchDirectories)
             {
-                calamariExecutable = Path.Combine(testBinDirectory, executableName);
-                if (File.Exists(calamariExecutable))
+                foreach (var executableName in executableNames)
                 {
-                    return;
+                    var candidatePath = Path.Combine(searchDirectory, executableName);
+                    if (File.Exists(candidatePath))
+                    {
+                        calamariExecutable = Path.GetFullPath(candidatePath);
+                        
+                        // Make sure the executable has execute permissions on Unix systems
+                        if (CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac)
+                        {
+                            SilentProcessRunner.ExecuteCommand("chmod", $"+x \"{calamariExecutable}\"", ".", new Dictionary<string, string>(), _ => { }, _ => { });
+                        }
+                        return;
+                    }
                 }
             }
             
-            throw new InvalidOperationException($"Could not find Calamari executable in {testBinDirectory}. Tried: {string.Join(", ", executableNames)}. Make sure the project is built.");
+            throw new InvalidOperationException($"Could not find Calamari executable. Searched in: {string.Join(", ", searchDirectories)}. Tried names: {string.Join(", ", executableNames)}. Make sure the project is built.");
         }
 
 
@@ -115,12 +135,13 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             var result = ExecutePowerShellScript("store", credentialJson);
 
             // Assert
-            result.ExitCode.Should().Be(0);
+            result.ExitCode.Should().Be(0, $"Script execution failed. Output: {result.Output}, Error: {result.Error}");
             
             // Verify credentials were actually stored by the real command
             var credentialsDir = Path.Combine(dockerConfigPath, "credentials");
-            Directory.Exists(credentialsDir).Should().BeTrue();
-            Directory.GetFiles(credentialsDir, "*.cred").Should().HaveCount(1);
+            Directory.Exists(credentialsDir).Should().BeTrue($"Expected credentials directory '{credentialsDir}' to exist");
+            var credFiles = Directory.Exists(credentialsDir) ? Directory.GetFiles(credentialsDir, "*.cred") : new string[0];
+            credFiles.Should().HaveCount(1, $"Expected exactly 1 credential file in '{credentialsDir}', but found: {string.Join(", ", credFiles)}");
         }
 
         [Test]
@@ -140,17 +161,26 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             var result = ExecutePowerShellScript("get", TestServerUrl);
 
             // Assert
-            result.ExitCode.Should().Be(0);
+            result.ExitCode.Should().Be(0, $"Script execution failed. Output: {result.Output}, Error: {result.Error}");
             
             // Parse and verify the returned JSON credentials
             // Extract the JSON line from Calamari output (skip verbose logging)
             var outputLines = result.Output.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
             var jsonLine = outputLines.FirstOrDefault(line => line.Trim().StartsWith("{"));
-            jsonLine.Should().NotBeNull("Expected JSON response from credential get operation");
+            jsonLine.Should().NotBeNull($"Expected JSON response from credential get operation. Full output: {result.Output}, Error: {result.Error}");
             
-            var responseJson = JsonConvert.DeserializeObject<dynamic>(jsonLine.Trim());
-            ((string)responseJson.Username).Should().Be(TestUsername);
-            ((string)responseJson.Secret).Should().Be(TestPassword);
+            dynamic responseJson;
+            try 
+            {
+                responseJson = JsonConvert.DeserializeObject<dynamic>(jsonLine.Trim());
+            }
+            catch (Exception ex)
+            {
+                throw new AssertionFailedException($"Failed to parse JSON response '{jsonLine}'. Error: {ex.Message}. Full output: {result.Output}");
+            }
+            
+            ((string)responseJson.Username).Should().Be(TestUsername, $"Username mismatch in response: {jsonLine}");
+            ((string)responseJson.Secret).Should().Be(TestPassword, $"Password mismatch in response: {jsonLine}");
         }
 
         [Test]
@@ -166,18 +196,20 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             });
             ExecutePowerShellScript("store", credentialJson);
             
-            // Verify credential exists
+            // Verify credential exists before erase
             var credentialsDir = Path.Combine(dockerConfigPath, "credentials");
-            Directory.GetFiles(credentialsDir, "*.cred").Should().HaveCount(1);
+            var existingFiles = Directory.Exists(credentialsDir) ? Directory.GetFiles(credentialsDir, "*.cred") : new string[0];
+            existingFiles.Should().HaveCount(1, $"Expected exactly 1 credential file before erase in '{credentialsDir}', but found: {string.Join(", ", existingFiles)}");
 
             // Act
             var result = ExecutePowerShellScript("erase", TestServerUrl);
 
             // Assert
-            result.ExitCode.Should().Be(0);
+            result.ExitCode.Should().Be(0, $"Script execution failed. Output: {result.Output}, Error: {result.Error}");
             
             // Verify credential was actually erased
-            Directory.GetFiles(credentialsDir, "*.cred").Should().BeEmpty();
+            var remainingFiles = Directory.Exists(credentialsDir) ? Directory.GetFiles(credentialsDir, "*.cred") : new string[0];
+            remainingFiles.Should().BeEmpty($"Expected no credential files after erase, but found: {string.Join(", ", remainingFiles)}");
         }
 
         [Test]
@@ -196,12 +228,13 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             var result = ExecuteBashScript("store", credentialJson);
 
             // Assert
-            result.ExitCode.Should().Be(0);
+            result.ExitCode.Should().Be(0, $"Script execution failed. Output: {result.Output}, Error: {result.Error}");
             
             // Verify credentials were actually stored by the real command
             var credentialsDir = Path.Combine(dockerConfigPath, "credentials");
-            Directory.Exists(credentialsDir).Should().BeTrue();
-            Directory.GetFiles(credentialsDir, "*.cred").Should().HaveCount(1);
+            Directory.Exists(credentialsDir).Should().BeTrue($"Expected credentials directory '{credentialsDir}' to exist");
+            var credFiles = Directory.Exists(credentialsDir) ? Directory.GetFiles(credentialsDir, "*.cred") : new string[0];
+            credFiles.Should().HaveCount(1, $"Expected exactly 1 credential file in '{credentialsDir}', but found: {string.Join(", ", credFiles)}");
         }
 
         [Test]
@@ -221,17 +254,26 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             var result = ExecuteBashScript("get", TestServerUrl);
 
             // Assert
-            result.ExitCode.Should().Be(0);
+            result.ExitCode.Should().Be(0, $"Script execution failed. Output: {result.Output}, Error: {result.Error}");
             
             // Parse and verify the returned JSON credentials
             // Extract the JSON line from Calamari output (skip verbose logging)
             var outputLines = result.Output.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
             var jsonLine = outputLines.FirstOrDefault(line => line.Trim().StartsWith("{"));
-            jsonLine.Should().NotBeNull("Expected JSON response from credential get operation");
+            jsonLine.Should().NotBeNull($"Expected JSON response from credential get operation. Full output: {result.Output}, Error: {result.Error}");
             
-            var responseJson = JsonConvert.DeserializeObject<dynamic>(jsonLine.Trim());
-            ((string)responseJson.Username).Should().Be(TestUsername);
-            ((string)responseJson.Secret).Should().Be(TestPassword);
+            dynamic responseJson;
+            try 
+            {
+                responseJson = JsonConvert.DeserializeObject<dynamic>(jsonLine.Trim());
+            }
+            catch (Exception ex)
+            {
+                throw new AssertionFailedException($"Failed to parse JSON response '{jsonLine}'. Error: {ex.Message}. Full output: {result.Output}");
+            }
+            
+            ((string)responseJson.Username).Should().Be(TestUsername, $"Username mismatch in response: {jsonLine}");
+            ((string)responseJson.Secret).Should().Be(TestPassword, $"Password mismatch in response: {jsonLine}");
         }
 
         [Test]
@@ -247,18 +289,20 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             });
             ExecuteBashScript("store", credentialJson);
             
-            // Verify credential exists
+            // Verify credential exists before erase
             var credentialsDir = Path.Combine(dockerConfigPath, "credentials");
-            Directory.GetFiles(credentialsDir, "*.cred").Should().HaveCount(1);
+            var existingFiles = Directory.Exists(credentialsDir) ? Directory.GetFiles(credentialsDir, "*.cred") : new string[0];
+            existingFiles.Should().HaveCount(1, $"Expected exactly 1 credential file before erase in '{credentialsDir}', but found: {string.Join(", ", existingFiles)}");
 
             // Act
             var result = ExecuteBashScript("erase", TestServerUrl);
 
             // Assert
-            result.ExitCode.Should().Be(0);
+            result.ExitCode.Should().Be(0, $"Script execution failed. Output: {result.Output}, Error: {result.Error}");
             
             // Verify credential was actually erased
-            Directory.GetFiles(credentialsDir, "*.cred").Should().BeEmpty();
+            var remainingFiles = Directory.Exists(credentialsDir) ? Directory.GetFiles(credentialsDir, "*.cred") : new string[0];
+            remainingFiles.Should().BeEmpty($"Expected no credential files after erase, but found: {string.Join(", ", remainingFiles)}");
         }
 
         [Test]
@@ -291,6 +335,10 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
 
         ScriptExecutionResult ExecutePowerShellScript(string operation, string input = null)
         {
+            Console.WriteLine($"[TEST DEBUG] Executing PowerShell script: {powershellScript} with operation: {operation}");
+            Console.WriteLine($"[TEST DEBUG] Calamari executable: {calamariExecutable}");
+            Console.WriteLine($"[TEST DEBUG] Docker config path: {dockerConfigPath}");
+            
             var psi = new ProcessStartInfo
             {
                 FileName = "powershell.exe",
@@ -334,6 +382,10 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
 
         ScriptExecutionResult ExecuteBashScript(string operation, string input = null)
         {
+            Console.WriteLine($"[TEST DEBUG] Executing Bash script: {bashScript} with operation: {operation}");
+            Console.WriteLine($"[TEST DEBUG] Calamari executable: {calamariExecutable}");
+            Console.WriteLine($"[TEST DEBUG] Docker config path: {dockerConfigPath}");
+            
             var psi = new ProcessStartInfo
             {
                 FileName = "/bin/bash",
