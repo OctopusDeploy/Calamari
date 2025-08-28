@@ -1,0 +1,101 @@
+using System;
+using System.IO;
+using System.Text;
+using Calamari.ArgoCD.Git;
+using Calamari.ArgoCD.GitHub;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Testing.Helpers;
+using Calamari.Tests.Fixtures.Integration.FileSystem;
+using FluentAssertions;
+using LibGit2Sharp;
+using NSubstitute;
+using NUnit.Framework;
+
+namespace Calamari.Tests.ArgoCD.Git
+{
+    
+    [TestFixture]
+    public class RepositoryFactoryTests
+    {
+        readonly ICalamariFileSystem fileSystem = TestCalamariPhysicalFileSystem.GetPhysicalFileSystem();
+        
+        InMemoryLog log;
+        string tempDirectory;
+        string OriginPath => Path.Combine(tempDirectory, "origin");
+        Repository bareOrigin;
+        GitBranchName branchName = new GitBranchName("devBranch");
+        
+        RepositoryFactory repositoryFactory;
+        
+        [SetUp]
+        public void Init()
+        {
+            log = new InMemoryLog();
+            tempDirectory = fileSystem.CreateTemporaryDirectory();
+
+            bareOrigin = RepositoryHelpers.CreateBareRepository(OriginPath);
+            RepositoryHelpers.CreateBranchIn(branchName, OriginPath);
+
+            repositoryFactory = new RepositoryFactory(log, tempDirectory, Substitute.For<IGitHubPullRequestCreator>());
+        }
+        
+        [TearDown]
+        public void Cleanup()
+        {
+            fileSystem.DeleteDirectory(tempDirectory, FailureOptions.IgnoreFailure);
+        }
+
+        [Test]
+        public void ThrowsExceptionIfUrlDoesNotExist()
+        {
+            var connection = new GitConnection("username",
+                                               "password",
+                                               "file://doesNotExist",
+                                               branchName);
+            
+            Action action = () => repositoryFactory.CloneRepository("name", connection);
+            
+            action.Should().Throw<LibGit2SharpException>().And.Message.Should().Contain("failed to resolve path");
+            
+        }
+
+        [Test]
+        public void CanCloneAnExistingRepositoryAndAssociatedFiles()
+        {
+            var filename = "firstFile.txt";
+            var originalContent = "This is the file content";
+            CreateCommitOnOrigin(filename, originalContent);
+            
+            var connection = new GitConnection(null, null, OriginPath, branchName);
+            var clonedRepository = repositoryFactory.CloneRepository("CanCloneAnExistingRepository", connection);
+            
+            clonedRepository.Should().NotBeNull();
+            
+            File.Exists(Path.Combine(clonedRepository.WorkingDirectory, filename)).Should().BeTrue();
+            var fileContent = File.ReadAllText(Path.Combine(clonedRepository.WorkingDirectory, filename));
+            fileContent.Should().Be(originalContent);
+        }
+        
+        void CreateCommitOnOrigin(string filename, string content)
+        {
+            var message = $"Commit: Message";
+            var signature = new Signature("Author", "author@place.com", DateTimeOffset.Now);
+
+            var branch = bareOrigin.Branches[branchName.Value];
+            var treeDefinition = TreeDefinition.From(branch.Tip.Tree);
+            var blobID = bareOrigin.ObjectDatabase.Write<Blob>(Encoding.UTF8.GetBytes((content)));
+            treeDefinition.Add(filename, blobID, Mode.NonExecutableFile);
+            
+            var tree = bareOrigin.ObjectDatabase.CreateTree(treeDefinition);
+            var commit = bareOrigin.ObjectDatabase.CreateCommit(
+                                                                signature,
+                                                                signature,
+                                                                message,
+                                                                tree,
+                                                                new[] {branch.Tip},
+                                                                false);
+            bareOrigin.Refs.UpdateTarget(branch.Reference, commit.Id);
+            
+        }
+    }
+}

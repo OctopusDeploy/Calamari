@@ -10,6 +10,7 @@ namespace Calamari.Common.Plumbing.Variables
             builder.RegisterType<VariablesFactory>().AsSelf().SingleInstance();
 
             builder.Register(c => c.Resolve<VariablesFactory>().Create(c.Resolve<CommonOptions>())).As<IVariables>().SingleInstance();
+            builder.Register(c => c.Resolve<VariablesFactory>().CreateNonSensitiveVariables(c.Resolve<CommonOptions>())).As<INonSensitiveVariables>().SingleInstance();
         }
     }
 }
