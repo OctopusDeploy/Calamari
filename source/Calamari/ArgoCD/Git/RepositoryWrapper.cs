@@ -24,16 +24,6 @@ namespace Calamari.ArgoCD.Git
             this.pullRequestCreator = pullRequestCreator;
         }
         
-        public void StageFiles(string[] filesToStage)
-        {
-            //find files which have changed in fs??? <---   
-            foreach (var file in filesToStage)
-            {
-                var fileToAdd = file.StartsWith("./") ? file.Substring(2) : file;
-                // if a file does not exist - what should we do? throw and continue? or just throw?
-                repository.Index.Add(fileToAdd);
-            }
-        }
         
         // returns true if changes were made to the repository
         public bool CommitChanges(string summary, string description)
@@ -54,6 +44,17 @@ namespace Calamari.ArgoCD.Git
             }
         }
         
+        public void StageFiles(string[] filesToStage)
+        {
+            //find files which have changed in fs??? <---   
+            foreach (var file in filesToStage)
+            {
+                var fileToAdd = file.StartsWith("./") ? file.Substring(2) : file;
+                // if a file does not exist - what should we do? throw and continue? or just throw?
+                repository.Index.Add(fileToAdd);
+            }
+        }
+        
         public async Task PushChanges(bool requiresPullRequest, GitBranchName branchName, CancellationToken cancellationToken)
         {
             var currentBranchName = repository.GetBranchName(branchName);
@@ -63,7 +64,7 @@ namespace Calamari.ArgoCD.Git
                 pushToBranchName = CalculateBranchName();
             }
             Log.Info($"Pushing changes to branch '{pushToBranchName}'");
-            var pushedBranchName = PushChanges(pushToBranchName);
+            PushChanges(pushToBranchName);
             if (requiresPullRequest)
             {
                 var commit = repository.Head.Tip; //this is a BIT dodgy - as it assumes we're pushing head.
@@ -78,13 +79,12 @@ namespace Calamari.ArgoCD.Git
             return $"octopus-argo-cd-{Guid.NewGuid().ToString("N").Substring(0, 10)}";
         }
         
-        public GitBranchName PushChanges(string branchName)
+        public void PushChanges(string branchName)
         {
             Remote remote = repository.Network.Remotes["origin"];
-            var upstreamBranchName = $"refs/heads/{branchName}";
             repository.Branches.Update(repository.Head, 
                                        branch => branch.Remote = remote.Name,
-                                       branch => branch.UpstreamBranch = upstreamBranchName);
+                                       branch => branch.UpstreamBranch = $"refs/heads/{branchName}");
             
             log.Info($"Pushing changes to branch '{branchName}' with original credentials");
             var pushOptions = new PushOptions
@@ -94,8 +94,6 @@ namespace Calamari.ArgoCD.Git
             };
             
             repository.Network.Push(repository.Head, pushOptions);
-            
-            return new GitBranchName(upstreamBranchName);
         }
         
         string GenerateCommitMessage(string summary, string description)

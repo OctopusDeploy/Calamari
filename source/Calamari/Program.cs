@@ -85,9 +85,6 @@ namespace Calamari
             builder.RegisterType<WindowsX509CertificateStore>().As<IWindowsX509CertificateStore>().SingleInstance();
             builder.RegisterType<ApiResourceScopeLookup>().As<IApiResourceScopeLookup>().SingleInstance();
             builder.RegisterType<KubernetesManifestNamespaceResolver>().As<IKubernetesManifestNamespaceResolver>().InstancePerLifetimeScope();
-            
-            
-            //Types for the github interactions
             builder.RegisterType<GitHubClientFactory>().As<IGitHubClientFactory>().InstancePerLifetimeScope();
             builder.RegisterType<GitHubPullRequestCreator>().As<IGitHubPullRequestCreator>().InstancePerLifetimeScope();
             
