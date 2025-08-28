@@ -10,7 +10,7 @@ namespace Calamari.ArgoCD.GitHub
     public interface IGitHubPullRequestCreator
     {
         Task<(int PullRequestNumber, string PullRequestUrl)> CreatePullRequest(ILog log,
-                                                                               IGitConnection gitConnection,
+                                                                               IRepositoryConnection gitConnection,
                                                                                string prTitle, string body,
                                                                                GitBranchName sourceBranch,
                                                                                GitBranchName destinationBranch,
@@ -26,7 +26,7 @@ namespace Calamari.ArgoCD.GitHub
         }
 
        public async Task<(int PullRequestNumber, string PullRequestUrl)> CreatePullRequest(ILog log,
-                                                                                           IGitConnection gitConnection,
+                                                                                           IRepositoryConnection gitConnection,
                                                                                            string prTitle,
                                                                                            string body,
                                                                                            GitBranchName sourceBranch,
