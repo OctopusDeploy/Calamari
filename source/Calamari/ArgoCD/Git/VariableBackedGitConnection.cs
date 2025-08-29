@@ -22,11 +22,15 @@ namespace Calamari.ArgoCD.Git
         public GitBranchName BranchName => new GitBranchName(variables.GetMandatoryVariable(SpecialVariables.Git.BranchName(index)));
     }
 
-    public interface IGitConnection
+    public interface IRepositoryConnection
     {
         public string? Username { get;  }
         public string? Password { get;  }
         public string Url { get;  }
+    }
+    
+    public interface IGitConnection : IRepositoryConnection
+    {
         public GitBranchName BranchName { get;  }
     }
 }
