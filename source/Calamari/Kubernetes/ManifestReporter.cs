@@ -39,9 +39,6 @@ namespace Calamari.Kubernetes
 
         public void ReportManifestFileApplied(string filePath)
         {
-            if (!FeatureToggle.KubernetesLiveObjectStatusFeatureToggle.IsEnabled(variables))
-                return;
-            
             try
             {
                 using (var yamlFile = fileSystem.OpenFile(filePath, FileAccess.Read, FileShare.Read))
@@ -59,9 +56,6 @@ namespace Calamari.Kubernetes
 
         public void ReportManifestApplied(string yamlManifest)
         {
-            if (!FeatureToggle.KubernetesLiveObjectStatusFeatureToggle.IsEnabled(variables))
-                return;
-
             try
             {
                 var yamlStream = new YamlStream();
