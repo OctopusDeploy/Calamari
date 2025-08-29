@@ -11,8 +11,10 @@ using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.Conventions;
 using Calamari.Kubernetes;
+using Microsoft.Azure.Management.Compute.Fluent.Models;
 
 namespace Calamari.ArgoCD.Conventions
 {
@@ -22,12 +24,14 @@ namespace Calamari.ArgoCD.Conventions
         readonly ILog log;
         readonly string packageSubfolder;
         readonly IGitHubPullRequestCreator pullRequestCreator;
+        readonly ICustomPropertiesFactory customPropertiesFactory;
 
-        public UpdateGitRepositoryInstallConvention(ICalamariFileSystem fileSystem, string packageSubfolder, ILog log, IGitHubPullRequestCreator pullRequestCreator)
+        public UpdateGitRepositoryInstallConvention(ICalamariFileSystem fileSystem, string packageSubfolder, ILog log, IGitHubPullRequestCreator pullRequestCreator, ICustomPropertiesFactory customPropertiesFactory)
         {
             this.fileSystem = fileSystem;
             this.log = log;
             this.pullRequestCreator = pullRequestCreator;
+            this.customPropertiesFactory = customPropertiesFactory;
             this.packageSubfolder = packageSubfolder;
         }
         
@@ -40,16 +44,20 @@ namespace Calamari.ArgoCD.Conventions
             var commitMessage = GenerateCommitMessage(deployment);
             
             var repositoryFactory = new RepositoryFactory(log, deployment.CurrentDirectory, pullRequestCreator);
-            var repositoryIndexes = deployment.Variables.GetIndexes(SpecialVariables.Git.Index);
-            log.Info($"Found the following repository indicies '{repositoryIndexes.Join(",")}'");
-            foreach (var repositoryIndex in repositoryIndexes)
+            
+            var argoProperties = customPropertiesFactory.Create<ArgoCDActionCustomProperties>();
+            
+            log.Info($"Found the following repository indicies '{argoProperties.Applications.Select(a => a.Name).Join(",")}'");
+            foreach (var argoApplication in argoProperties.Applications)
             {
-                Log.Info($"Writing files to repository for '{repositoryIndex}'");
-                IGitConnection gitConnection = new VariableBackedGitConnection(deployment.Variables, repositoryIndex);
-                var repository = repositoryFactory.CloneRepository(repositoryIndex, gitConnection);
-                
-                Log.Info($"Copying files into repository {gitConnection.Url}");
-                var subFolder = deployment.Variables.Get(SpecialVariables.Git.SubFolder(repositoryIndex), String.Empty) ?? String.Empty;
+                var applicationSource = argoApplication.Sources.First();
+
+                Log.Info($"Writing files to repository for '{argoApplication.Name}'");
+                IGitConnection gitConnection = new GitConnection(applicationSource.Credentials!.Username, applicationSource.Credentials!.Password, applicationSource.RepoUrl.AbsoluteUri, new GitBranchName(applicationSource.TargetRevision));
+                var repository = repositoryFactory.CloneRepository(argoApplication.Name, gitConnection);
+
+                Log.Info($"Copying files into repository {applicationSource.RepoUrl}");
+                var subFolder = deployment.Variables.Get(applicationSource.Path, String.Empty) ?? String.Empty;
                 Log.VerboseFormat("Copying files into subfolder '{0}'", subFolder);
 
                 var repositoryFiles = packageFiles.Select(f => new FileCopySpecification(f, repository.WorkingDirectory, subFolder)).ToList();
