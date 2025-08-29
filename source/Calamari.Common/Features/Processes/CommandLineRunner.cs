@@ -21,7 +21,10 @@ namespace Calamari.Common.Features.Processes
 
         public CommandResult Execute(CommandLineInvocation invocation)
         {
-            var commandOutput = new SplitCommandInvocationOutputSink(GetCommandOutputs(invocation));
+            var outputSinks = GetCommandOutputs(invocation);
+            var inMemoryOutputLog = new InMemoryCommandOutputSink();
+            outputSinks.Add(inMemoryOutputLog);
+            var commandOutput = new SplitCommandInvocationOutputSink(outputSinks);
 
             try
             {
@@ -38,6 +41,7 @@ namespace Calamari.Common.Features.Processes
                 return new CommandResult(
                     invocation.ToString(),
                     exitCode.ExitCode,
+                    inMemoryOutputLog.StdOut,
                     exitCode.ErrorOutput,
                     invocation.WorkingDirectory);
             }
