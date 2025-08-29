@@ -9,16 +9,23 @@ namespace Calamari.Common.Features.Processes
         readonly string? workingDirectory;
 
         public CommandResult(string command, int exitCode, string? additionalErrors = null, string? workingDirectory = null)
+            : this(command, exitCode, null, additionalErrors, workingDirectory)
+        {
+        }
+
+        public CommandResult(string command, int exitCode, string? output, string? additionalErrors = null, string? workingDirectory = null)
         {
             this.command = command;
             ExitCode = exitCode;
             Errors = additionalErrors;
             this.workingDirectory = workingDirectory;
+            this.Output = output;
         }
 
         public int ExitCode { get; }
 
         public string? Errors { get; }
+        public string? Output { get; }
 
         public bool HasErrors => !string.IsNullOrWhiteSpace(Errors) && ErrorsExcludeServiceMessages(Errors);
 

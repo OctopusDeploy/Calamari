@@ -33,7 +33,7 @@ namespace Calamari
 {
     public class Program : CalamariFlavourProgram
     {
-        protected Program(ILog log) : base(log)
+        protected Program(ILog log) : base(new DeferredLogger(log))
         {
         }
 
@@ -54,11 +54,39 @@ namespace Calamari
             var commandCandidates = commands.Where(x => x.Metadata.Name.Equals(options.Command, StringComparison.OrdinalIgnoreCase)).ToArray();
 
             if (commandCandidates.Length == 0)
+            {
+                FlushDeferredLogsIfApplicable();
                 throw new CommandException($"Could not find the command {options.Command}");
-            if (commandCandidates.Length > 1)
-                throw new CommandException($"Multiple commands found with the name {options.Command}");
+            }
 
-            return commandCandidates[0].Value.Value.Execute(options.RemainingArguments.ToArray());
+            if (commandCandidates.Length > 1)
+            {
+                FlushDeferredLogsIfApplicable();
+                throw new CommandException($"Multiple commands found with the name {options.Command}");
+            }
+
+            var command = commandCandidates[0].Value.Value;
+            
+            FlushDeferredLogsIfApplicable(command);
+
+            return command.Execute(options.RemainingArguments.ToArray());
+        }
+
+        void FlushDeferredLogsIfApplicable()
+        {
+            if (log is DeferredLogger deferredLogger)
+            {
+                deferredLogger.FlushDeferredLogs();
+            }
+        }
+        
+        void FlushDeferredLogsIfApplicable(ICommandWithArgs command)
+        {
+            if (log is DeferredLogger deferredLogger && !(command is IWantCustomHandlingOfDeferredLogs))
+            {
+                // Release any deferred logs given that the command being executed does not handle deferred logs itself.
+                deferredLogger.FlushDeferredLogs();
+            }
         }
 
         protected override void ConfigureContainer(ContainerBuilder builder, CommonOptions options)

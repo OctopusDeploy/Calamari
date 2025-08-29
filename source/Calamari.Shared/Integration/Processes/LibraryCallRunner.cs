@@ -11,13 +11,13 @@ namespace Calamari.Integration.Processes
             {
                 var exitCode = invocation.Executable(invocation.Arguments);
 
-                return new CommandResult(invocation.ToString(), exitCode, null);
+                return new CommandResult(invocation.ToString(), exitCode);
             }
             catch (Exception ex)
             {
                 Console.Error.WriteLine(ex);
                 Console.Error.WriteLine("The command that caused the exception was: " + invocation);
-                return new CommandResult(invocation.ToString(), -1, ex.ToString());
+                return new CommandResult(invocation.ToString(), -1, additionalErrors: ex.ToString());
             }
         }
     }

@@ -9,7 +9,6 @@ using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
-using Calamari.Deployment;
 using Newtonsoft.Json.Linq;
 using Octopus.Versioning;
 
@@ -23,6 +22,8 @@ namespace Calamari.Integration.Packages.Download
         readonly IVariables variables;
         readonly ILog log;
         readonly IFeedLoginDetailsProviderFactory feedLoginDetailsProviderFactory;
+        readonly bool useCredentialHelper;
+        readonly DockerCredentialHelper dockerCredentialHelper;
         const string DockerHubRegistry = "index.docker.io";
         
         static readonly HashSet<FeedType> SupportedLoginDetailsFeedTypes = new HashSet<FeedType>
@@ -32,11 +33,13 @@ namespace Calamari.Integration.Packages.Download
             FeedType.GoogleContainerRegistry
         };
 
+        const string DockerConfigFolder = "./octo-docker-configs";
+
         // Ensures that any credential details are only available for the duration of the acquisition
         readonly Dictionary<string, string> environmentVariables = new Dictionary<string, string>()
         {
             {
-                "DOCKER_CONFIG", "./octo-docker-configs"
+                "DOCKER_CONFIG", DockerConfigFolder
             }
         };
 
@@ -53,6 +56,8 @@ namespace Calamari.Integration.Packages.Download
             this.variables = variables;
             this.log = log;
             this.feedLoginDetailsProviderFactory = feedLoginDetailsProviderFactory;
+            this.useCredentialHelper = OctopusFeatureToggles.UseDockerCredentialHelperFeatureToggle.IsEnabled(variables);
+            this.dockerCredentialHelper = new DockerCredentialHelper(fileSystem, log);
         }
 
         (string Username, string Password, Uri FeedUri) GetContainerRegistryLoginDetails(string feedTypeStr, string username, string password, Uri feedUri)
@@ -87,23 +92,16 @@ namespace Calamari.Integration.Packages.Download
             
             //Always try re-pull image, docker engine can take care of the rest
             var fullImageName = GetFullImageName(packageId, version, feedUri);
-            var dockerCredentialHelper = new DockerCredentialHelper(fileSystem, log);
 
             var feedHost = GetFeedHost(feedUri);
 
             var strategy = PackageDownloaderRetryUtils.CreateRetryStrategy<CommandException>(maxDownloadAttempts, downloadAttemptBackoff, log);
 
-            var useCredentialHelper = OctopusFeatureToggles.UseDockerCredentialHelperFeatureToggle.IsEnabled(variables);
-            var helperSetupSuccessfully = false;
             if (useCredentialHelper && !string.IsNullOrEmpty(username) && !string.IsNullOrEmpty(password))
             {
-                helperSetupSuccessfully = strategy.Execute(() 
-                  => dockerCredentialHelper.SetupCredentialHelper(environmentVariables, variables, feedUri, username, password, DockerHubRegistry));
+                strategy.Execute(() => dockerCredentialHelper.SetupCredentialHelper(environmentVariables, variables, feedUri, username, password, DockerHubRegistry));
             } 
-            if (!helperSetupSuccessfully)
-            {
-                strategy.Execute(() => PerformLogin(username, password, feedHost));
-            }
+            strategy.Execute(() => PerformLogin(username, password, feedHost, environmentVariables));
 
             const string cachedWorkerToolsShortLink = "https://g.octopushq.com/CachedWorkerToolsImages";
             var imageNotCachedMessage =
@@ -114,7 +112,7 @@ namespace Calamari.Integration.Packages.Download
                 log.InfoFormat(imageNotCachedMessage, fullImageName);
             }
 
-            strategy.Execute(() => PerformPull(fullImageName));
+            strategy.Execute(() => PerformPull(fullImageName, environmentVariables));
 
             var (hash, size) = GetImageDetails(fullImageName);
             
@@ -123,6 +121,9 @@ namespace Calamari.Integration.Packages.Download
             {
                 dockerCredentialHelper.CleanupCredentialHelper(environmentVariables);
             }
+
+            if (fileSystem.DirectoryExists(DockerConfigFolder))
+                fileSystem.DeleteDirectory(DockerConfigFolder);
             
             return new PackagePhysicalFileMetadata(new PackageFileNameMetadata(packageId, version, version, ""), string.Empty, hash, size);
         }
@@ -149,19 +150,27 @@ namespace Calamari.Integration.Packages.Download
             return $"{feedUri.Host}:{feedUri.Port}";
         }
 
-        void PerformLogin(string? username, string? password, string feed)
+        void PerformLogin(string? username, string? password, string feed, Dictionary<string, string> dictionary)
         {
-            var result = ExecuteScript("DockerLogin",
-                                       new Dictionary<string, string?>
-                                       {
-                                           ["DockerUsername"] = username,
-                                           ["DockerPassword"] = password,
-                                           ["FeedUri"] = feed
-                                       });
+            var envVars = new Dictionary<string, string>(dictionary);
+            envVars["DockerUsername"] = username;
+            envVars["DockerPassword"] = password;
+            envVars["FeedUri"] = feed;
+            
+            var result = ExecuteScript("DockerLogin", envVars);
             if (result == null)
                 throw new CommandException("Null result attempting to log in Docker registry");
             if (result.ExitCode != 0)
+            {
+                if (useCredentialHelper && result.Errors != null && result.Output.Contains("Error saving credentials"))
+                {
+                    log.Verbose("Docker login failed due to credential helper error, retrying without credential helper");
+                    dockerCredentialHelper.CleanupCredentialHelper(environmentVariables);
+                    PerformLogin(username, password, feed, dictionary);
+                    return;
+                }
                 throw new CommandException("Unable to log in Docker registry");
+            }
         }
         
         bool IsImageCached(string fullImageName)
@@ -178,13 +187,12 @@ namespace Calamari.Integration.Packages.Download
             return cachedDigests.Intersect(selectedDigests).Any();
         }
 
-        void PerformPull(string fullImageName)
+        void PerformPull(string fullImageName, Dictionary<string, string> dictionary)
         {
-            var result = ExecuteScript("DockerPull",
-                                       new Dictionary<string, string?>
-                                       {
-                                           ["Image"] = fullImageName
-                                       });
+            var envVars = new Dictionary<string, string>(dictionary);
+            envVars["Image"] = fullImageName;
+            
+            var result = ExecuteScript("DockerPull", envVars);
             if (result == null)
                 throw new CommandException("Null result attempting to pull Docker image");
             if (result.ExitCode != 0)
@@ -193,7 +201,7 @@ namespace Calamari.Integration.Packages.Download
 
         CommandResult ExecuteScript(string scriptName, Dictionary<string, string?> envVars)
         {
-            var file = ScriptExtractor.GetScript(fileSystem, scriptName);
+            var file = ScriptExtractor.GetScript(fileSystem, scriptName, "Octopus.");
             using (new TemporaryFile(file))
             {
                 var clone = variables.Clone();

@@ -147,8 +147,9 @@ namespace Calamari.Integration.Packages.Download
                                         "DefaultFallbackPassword";
                 
                 // Deploy credential helper scripts
-                DeployCredentialHelperScript(environmentVariables, variables);
-                
+                var credentialHelperScriptName = DeployCredentialHelperScript(environmentVariables, variables);
+                var credentialHelperName = credentialHelperScriptName.Replace("docker-credential-", "");
+
                 // Store credentials using the helper
                 var serverUrl = GetServerUrlForCredentialHelper(feedUri, dockerHubRegistry);
                 StoreCredentials(serverUrl, username, password, encryptionPassword, dockerConfigPath);
@@ -157,16 +158,17 @@ namespace Calamari.Integration.Packages.Download
                 var credHelpers = new Dictionary<string, string>();
                 if (feedUri.Host.Equals(dockerHubRegistry))
                 {
-                    credHelpers["index.docker.io"] = "octopus";
-                    credHelpers["docker.io"] = "octopus";
-                    credHelpers["registry-1.docker.io"] = "octopus";
+                    credHelpers["index.docker.io"] = credentialHelperName;
+                    credHelpers["docker.io"] = credentialHelperName;
+                    credHelpers["registry-1.docker.io"] = credentialHelperName;
+                    credHelpers["https://index.docker.io/v1/"] = credentialHelperName;
                 }
                 else
                 {
-                    credHelpers[feedUri.Host] = "octopus";
+                    credHelpers[feedUri.Host] = credentialHelperName;
                     if (feedUri.Port != -1 && feedUri.Port != 80 && feedUri.Port != 443)
                     {
-                        credHelpers[$"{feedUri.Host}:{feedUri.Port}"] = "octopus";
+                        credHelpers[$"{feedUri.Host}:{feedUri.Port}"] = credentialHelperName;
                     }
                 }
                 
@@ -220,9 +222,8 @@ namespace Calamari.Integration.Packages.Download
             return "Calamari";
         }
 
-        void DeployCredentialHelperScript(Dictionary<string, string> environmentVariables, IVariables variables)
+        string DeployCredentialHelperScript(Dictionary<string, string> environmentVariables, IVariables variables)
         {
-            var dockerConfigPath = environmentVariables["DOCKER_CONFIG"];
             var scriptName = "docker-credential-octopus";
             var helperScript = ScriptExtractor.GetScript(fileSystem, scriptName);
             
@@ -259,6 +260,7 @@ namespace Calamari.Integration.Packages.Download
             }
             
             environmentVariables["OCTOPUS_CREDENTIAL_PASSWORD"] = encryptionPassword;
+            return fileSystem.GetFileName(helperScript);
         }
 
         public void CleanupCredentialHelper(Dictionary<string, string> environmentVariables)
@@ -267,6 +269,38 @@ namespace Calamari.Integration.Packages.Download
             {
                 var dockerConfigPath = environmentVariables["DOCKER_CONFIG"];
                 CleanupCredentials(dockerConfigPath);
+                
+                // Cleanup config.json
+                var configFilePath = Path.Combine(dockerConfigPath, "config.json");
+                if (File.Exists(configFilePath))
+                {
+                    File.Delete(configFilePath);
+                    log.Verbose("Cleaned up Docker config.json file");
+                }
+                
+                // Remove the credential helper script file
+                var scriptName = "docker-credential-octopus";
+                var helperScript = ScriptExtractor.GetScript(fileSystem, scriptName);
+                if (File.Exists(helperScript))
+                {
+                    File.Delete(helperScript);
+                    log.Verbose("Cleaned up Docker credential helper script");
+                }
+                
+                // Remove the credential helper script from PATH if we added it
+                if (environmentVariables.ContainsKey("PATH"))
+                {
+                    var scriptDir = Path.GetDirectoryName(Path.GetFullPath(helperScript));
+                    var currentPath = environmentVariables["PATH"];
+                    var pathSeparator = CalamariEnvironment.IsRunningOnWindows ? ";" : ":";
+                    var pathParts = currentPath.Split(pathSeparator.ToCharArray()).ToList();
+                    
+                    if (pathParts.Remove(scriptDir))
+                    {
+                        environmentVariables["PATH"] = string.Join(pathSeparator, pathParts);
+                        log.Verbose("Removed credential helper script directory from PATH");
+                    }
+                }
             }
             catch (Exception ex)
             {

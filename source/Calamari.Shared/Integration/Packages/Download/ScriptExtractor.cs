@@ -9,7 +9,7 @@ namespace Calamari.Integration.Packages.Download
 {
     public static class ScriptExtractor
     {
-        internal static string GetScript(ICalamariFileSystem fileSystem, string scriptName)
+        internal static string GetScript(ICalamariFileSystem fileSystem, string scriptName, string? outputFileNamePrefix = null)
         {
             var syntax = ScriptSyntaxHelper.GetPreferredScriptSyntaxForEnvironment();
 
@@ -26,7 +26,7 @@ namespace Calamari.Integration.Packages.Download
                     throw new InvalidOperationException("No script wrapper exists for " + syntax);
             }
 
-            var scriptFile = Path.Combine(".", $"Octopus.{contextFile}");
+            var scriptFile = Path.Combine(".", $"{outputFileNamePrefix}{contextFile}");
             var contextScript = new AssemblyEmbeddedResources().GetEmbeddedResourceText(Assembly.GetExecutingAssembly(), $"{typeof(DockerImagePackageDownloader).Namespace}.Scripts.{contextFile}");
             fileSystem.OverwriteFile(scriptFile, contextScript);
             return scriptFile;

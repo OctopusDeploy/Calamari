@@ -33,7 +33,7 @@ namespace Calamari.Tests.Fixtures.Deployment.Conventions
             fileSystem = Substitute.For<ICalamariFileSystem>();
             fileSystem.EnumerateFiles(Arg.Any<string>(), Arg.Any<string[]>()).Returns(new[] {TestEnvironment.ConstructRootedPath("App", "MyApp", "Hello.ps1"), TestEnvironment.ConstructRootedPath("App", "MyApp", "Deploy.ps1"), TestEnvironment.ConstructRootedPath("App", "MyApp", "Deploy.csx"), TestEnvironment.ConstructRootedPath("App", "MyApp", "PreDeploy.ps1"), TestEnvironment.ConstructRootedPath("App", "MyApp", "PreDeploy.sh"), TestEnvironment.ConstructRootedPath("App", "MyApp", "PostDeploy.ps1"), TestEnvironment.ConstructRootedPath("App", "MyApp", "PostDeploy.sh"), TestEnvironment.ConstructRootedPath("App", "MyApp", "DeployFailed.ps1"), TestEnvironment.ConstructRootedPath("App", "MyApp", "DeployFailed.sh")});
 
-            commandResult = new CommandResult("PowerShell.exe foo bar", 0, null);
+            commandResult = new CommandResult("PowerShell.exe foo bar", 0);
             scriptEngine = Substitute.For<IScriptEngine>();
             scriptEngine.Execute(Arg.Any<Script>(), Arg.Any<IVariables>(), Arg.Any<ICommandLineRunner>()).Returns(c => commandResult);
             scriptEngine.GetSupportedTypes().Returns(new[] {ScriptSyntax.CSharp, ScriptSyntax.PowerShell, ScriptSyntax.Bash});

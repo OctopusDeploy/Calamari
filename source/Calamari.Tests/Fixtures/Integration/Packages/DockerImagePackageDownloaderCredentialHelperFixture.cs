@@ -24,7 +24,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
     public class DockerImagePackageDownloaderCredentialHelperFixture
     {
         static readonly string DockerHubFeedUri = "https://index.docker.io";
-        static readonly string DockerTestUsername = "octopustestaccount";
+        static string dockerTestUsername;
         static string dockerTestPassword;
         static readonly CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
         readonly CancellationToken cancellationToken = CancellationTokenSource.Token;
@@ -33,7 +33,8 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         [OneTimeSetUp]
         public async Task TestFixtureSetUp()
         {
-            dockerTestPassword = await ExternalVariables.Get(ExternalVariable.DockerReaderPassword, cancellationToken);
+            dockerTestUsername = await ExternalVariables.Get(ExternalVariable.DockerHubOrgAccessUsername, cancellationToken);
+            dockerTestPassword = await ExternalVariables.Get(ExternalVariable.DockerHubOrgAccessToken, cancellationToken);
             Environment.SetEnvironmentVariable("TentacleHome", Home);
         }
 
@@ -56,7 +57,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             // Act
             var pkg = downloader.DownloadPackage("octopusdeploy/octo-prerelease",
                 new SemanticVersion("7.3.7-alpine"), "docker-feed",
-                new Uri(DockerHubFeedUri), DockerTestUsername, dockerTestPassword, true, 1,
+                new Uri(DockerHubFeedUri), dockerTestUsername, dockerTestPassword, true, 1,
                 TimeSpan.FromSeconds(10));
 
             // Assert
@@ -68,7 +69,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             log.Messages.Should().Contain(m => m.FormattedMessage.Contains("Cleaned up Docker credential files"));
             
             // Verify no unencrypted credential warnings in the log
-            log.Messages.Should().NotContain(m => m.FormattedMessage.Contains("credentials are stored unencrypted"));
+            log.Messages.Should().NotContain(m => m.FormattedMessage.Contains("Your password will be stored unencrypted in octo-docker-configs/config.json"));
         }
 
         [Test]
@@ -84,7 +85,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             // Act
             var pkg = downloader.DownloadPackage("octopusdeploy/octo-prerelease",
                 new SemanticVersion("7.3.7-alpine"), "docker-feed",
-                new Uri(DockerHubFeedUri), DockerTestUsername, dockerTestPassword, true, 1,
+                new Uri(DockerHubFeedUri), dockerTestUsername, dockerTestPassword, true, 1,
                 TimeSpan.FromSeconds(10));
 
             // Assert
@@ -133,12 +134,11 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             // Act
             var pkg = downloader.DownloadPackage("octopusdeploy/octo-prerelease",
                 new SemanticVersion("7.3.7-alpine"), "docker-feed",
-                new Uri(DockerHubFeedUri), DockerTestUsername, dockerTestPassword, true, 1,
+                new Uri(DockerHubFeedUri), dockerTestUsername, dockerTestPassword, true, 1,
                 TimeSpan.FromSeconds(10));
 
-            // Assert - Extract docker config path from logs for verification
-            var dockerConfigLogMessage = log.Messages.FirstOrDefault(m => m.FormattedMessage.Contains("DOCKER_CONFIG"));
-            dockerConfigLogMessage.Should().NotBeNull();
+            // Verify no unencrypted credential warnings in the log
+            log.Messages.Should().NotContain(m => m.FormattedMessage.Contains("Your password will be stored unencrypted in octo-docker-configs/config.json"));
             
             // The Docker config should have been created and then cleaned up
             log.Messages.Should().Contain(m => m.FormattedMessage.Contains("Configured Docker credential helper"));
@@ -154,7 +154,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         {
             // Arrange - Using a public registry that doesn't require auth for this test
             var log = new InMemoryLog();
-                        var variables = new CalamariVariables();
+            var variables = new CalamariVariables();
             variables.Set(KnownVariables.EnabledFeatureToggles, OctopusFeatureToggles.KnownSlugs.UseDockerCredentialHelper);
             var downloader = GetDownloader(log, variables);
 
@@ -186,6 +186,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             // Arrange
             var log = new InMemoryLog();
             var variables = new CalamariVariables();
+            variables.Set(KnownVariables.EnabledFeatureToggles, OctopusFeatureToggles.KnownSlugs.UseDockerCredentialHelper);
             
             // Simulate a scenario where credential helper setup might fail
             // by using an invalid encryption password format
@@ -195,7 +196,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             // Act
             var pkg = downloader.DownloadPackage("octopusdeploy/octo-prerelease",
                 new SemanticVersion("7.3.7-alpine"), "docker-feed",
-                new Uri(DockerHubFeedUri), DockerTestUsername, dockerTestPassword, true, 1,
+                new Uri(DockerHubFeedUri), dockerTestUsername, dockerTestPassword, true, 1,
                 TimeSpan.FromSeconds(10));
 
             // Assert
@@ -204,7 +205,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             
             // Should either succeed with credential helper or fall back gracefully
             var hasCredentialHelperMessage = log.Messages.Any(m => m.FormattedMessage.Contains("Configured Docker credential helper"));
-            var hasFallbackMessage = log.Messages.Any(m => m.FormattedMessage.Contains("Failed to setup credential helper, falling back"));
+            var hasFallbackMessage = log.Messages.Any(m => m.FormattedMessage.Contains("Docker login failed due to credential helper error, retrying without credential helper"));
             
             (hasCredentialHelperMessage || hasFallbackMessage).Should().BeTrue("Either credential helper should work or fallback should occur");
         }
@@ -223,7 +224,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             // Act - Download from Docker Hub first
             var pkg1 = downloader.DownloadPackage("octopusdeploy/octo-prerelease",
                 new SemanticVersion("7.3.7-alpine"), "docker-feed",
-                new Uri(DockerHubFeedUri), DockerTestUsername, dockerTestPassword, true, 1,
+                new Uri(DockerHubFeedUri), dockerTestUsername, dockerTestPassword, true, 1,
                 TimeSpan.FromSeconds(10));
             
             // Then download from the same registry again (should reuse or recreate config)
