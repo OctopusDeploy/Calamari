@@ -37,8 +37,6 @@ namespace Calamari.Tests.KubernetesFixtures
             }
         }
 
-        [TestCase(nameof(FeatureToggle.KubernetesLiveObjectStatusFeatureToggle))]
-        [TestCase(OctopusFeatureToggles.KnownSlugs.KubernetesObjectManifestInspection)]
         public void GivenValidYaml_ShouldPostSingleServiceMessage(string enabledFeatureToggle)
         {
             var memoryLog = new InMemoryLog();
@@ -69,8 +67,6 @@ quoted_float: ""5.75""
             }
         }
 
-        [TestCase(nameof(FeatureToggle.KubernetesLiveObjectStatusFeatureToggle))]
-        [TestCase(OctopusFeatureToggles.KnownSlugs.KubernetesObjectManifestInspection)]
         public void GivenInvalidManifest_ShouldNotPostServiceMessage(string enabledFeatureToggle)
         {
             var memoryLog = new InMemoryLog();
@@ -90,8 +86,6 @@ quoted_float: ""5.75""
             }
         }
 
-        [TestCase(nameof(FeatureToggle.KubernetesLiveObjectStatusFeatureToggle))]
-        [TestCase(OctopusFeatureToggles.KnownSlugs.KubernetesObjectManifestInspection)]
         public void NamespacedResolved_ShouldReportResolvedNamespace(string enabledFeatureToggle)
         {
             var memoryLog = new InMemoryLog();
@@ -116,10 +110,7 @@ quoted_float: ""5.75""
                 memoryLog.ServiceMessages.First().Properties.Should().Contain(new KeyValuePair<string, string>("ns", "my-cool-namespace"));
             }
         }
-
-
-        [TestCase(nameof(FeatureToggle.KubernetesLiveObjectStatusFeatureToggle))]
-        [TestCase(OctopusFeatureToggles.KnownSlugs.KubernetesObjectManifestInspection)]
+        
         public void GivenValidYamlString_ShouldPostSingleServiceMessage(string enabledFeatureToggle)
         {
             var memoryLog = new InMemoryLog();
