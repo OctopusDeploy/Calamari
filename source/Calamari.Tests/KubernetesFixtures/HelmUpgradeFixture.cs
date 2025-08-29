@@ -129,9 +129,6 @@ namespace Calamari.Tests.KubernetesFixtures
             Variables.Set(SpecialVariables.Account.AccountType, "Token");
             Variables.Set(SpecialVariables.Account.Token, ClusterToken);
 
-            // KOSForHelm is on by default
-            Variables.Set(KnownVariables.EnabledFeatureToggles, Variables.Get(KnownVariables.EnabledFeatureToggles) + "," + OctopusFeatureToggles.KnownSlugs.KOSForHelm);
-
             if (ExplicitExeVersion != null)
                 Variables.Set(Kubernetes.SpecialVariables.Helm.CustomHelmExecutable, HelmExePath);
 
