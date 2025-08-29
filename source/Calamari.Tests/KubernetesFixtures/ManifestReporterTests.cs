@@ -20,23 +20,6 @@ namespace Calamari.Tests.KubernetesFixtures
     public class ManifestReporterTests
     {
         [Test]
-        public void GivenDisabledFeatureToggle_ShouldNotPostServiceMessage()
-        {
-            var memoryLog = new InMemoryLog();
-            var variables = new CalamariVariables();
-            var namespaceResolver = Substitute.For<IKubernetesManifestNamespaceResolver>();
-
-            var yaml = @"foo: bar";
-            using (CreateFile(yaml, out var filePath))
-            {
-                var mr = new ManifestReporter(variables, CalamariPhysicalFileSystem.GetPhysicalFileSystem(), memoryLog, namespaceResolver);
-
-                mr.ReportManifestFileApplied(filePath);
-
-                memoryLog.ServiceMessages.Should().BeEmpty();
-            }
-        }
-
         public void GivenValidYaml_ShouldPostSingleServiceMessage(string enabledFeatureToggle)
         {
             var memoryLog = new InMemoryLog();
@@ -67,6 +50,7 @@ quoted_float: ""5.75""
             }
         }
 
+        [Test]
         public void GivenInvalidManifest_ShouldNotPostServiceMessage(string enabledFeatureToggle)
         {
             var memoryLog = new InMemoryLog();
@@ -86,6 +70,7 @@ quoted_float: ""5.75""
             }
         }
 
+        [Test]
         public void NamespacedResolved_ShouldReportResolvedNamespace(string enabledFeatureToggle)
         {
             var memoryLog = new InMemoryLog();
@@ -111,6 +96,7 @@ quoted_float: ""5.75""
             }
         }
         
+        [Test]
         public void GivenValidYamlString_ShouldPostSingleServiceMessage(string enabledFeatureToggle)
         {
             var memoryLog = new InMemoryLog();

@@ -45,8 +45,6 @@ namespace Calamari.Kubernetes.Conventions.Helm
         {
             await Task.Run(async () =>
                            {
-                               var resourceStatusCheckIsEnabled = deployment.Variables.GetFlag(SpecialVariables.ResourceStatusCheck);
-
                                if (!DeploymentSupportsManifestReporting(deployment, out var reason))
                                {
                                    log.Verbose(reason);
@@ -75,6 +73,7 @@ namespace Calamari.Kubernetes.Conventions.Helm
                                var kosKts = CancellationTokenSource.CreateLinkedTokenSource(helmInstallCompletedCancellationToken, helmInstallErrorCancellationToken);
 
                                //if resource status (KOS) is enabled, parse the manifest and start monitoring the resources
+                               var resourceStatusCheckIsEnabled = deployment.Variables.GetFlag(SpecialVariables.ResourceStatusCheck);
                                if (resourceStatusCheckIsEnabled)
                                {
                                    await ParseManifestAndMonitorResourceStatuses(deployment, manifest, kosKts.Token);
