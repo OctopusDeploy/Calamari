@@ -37,7 +37,8 @@ namespace Calamari.ArgoCD.Conventions
             var packageFiles = GetReferencedPackageFiles(deployment);
 
             var requiresPullRequest = RequiresPullRequest(deployment);
-            var commitMessage = GenerateCommitMessage(deployment);
+            var summary = deployment.Variables.GetMandatoryVariable(SpecialVariables.Git.CommitMessageSummary);
+            var description = deployment.Variables.Get(SpecialVariables.Git.CommitMessageDescription) ?? string.Empty;
             
             var repositoryFactory = new RepositoryFactory(log, deployment.CurrentDirectory, pullRequestCreator);
             var repositoryIndexes = deployment.Variables.GetIndexes(SpecialVariables.Git.Index);
@@ -69,7 +70,7 @@ namespace Calamari.ArgoCD.Conventions
                 repository.StageFiles(repositoryFiles.Select(fcs => fcs.DestinationRelativePath).ToArray());
                 
                 Log.Info("Commiting changes");
-                if (repository.CommitChanges(commitMessage))
+                if (repository.CommitChanges(summary, description))
                 {
                     Log.Info("Changes were commited, pushing to remote");
                     repository.PushChanges(requiresPullRequest, gitConnection.BranchName, CancellationToken.None).GetAwaiter().GetResult();    
@@ -113,15 +114,6 @@ namespace Calamari.ArgoCD.Conventions
             var filesToApply = SelectFiles(Path.Combine(deployment.CurrentDirectory, packageSubfolder), fileGlobs);
             log.Info($"Found {filesToApply.Length} files to apply");
             return filesToApply;
-        }
-
-        string GenerateCommitMessage(RunningDeployment deployment)
-        {
-            var summary = deployment.Variables.GetMandatoryVariable(SpecialVariables.Git.CommitMessageSummary);
-            var description = deployment.Variables.Get(SpecialVariables.Git.CommitMessageDescription) ?? string.Empty;
-            return description.Equals(string.Empty)
-                ? summary
-                : $"{summary}\n\n{description}";
         }
         
         IPackageRelativeFile[] SelectFiles(string pathToExtractedPackage, List<string> fileGlobs)
