@@ -48,18 +48,19 @@ namespace Calamari.ArgoCD.Conventions
                 Log.Info($"Writing files to repository for '{repositoryIndex}'");
                 IGitConnection gitConnection = new VariableBackedGitConnection(deployment.Variables, repositoryIndex);
                 var subFolder = deployment.Variables.Get(SpecialVariables.Git.SubFolder(repositoryIndex), String.Empty) ?? String.Empty;
-                var purgeOutput = deployment.Variables.Get(SpecialVariables.Git.PurgeOutput, "False") ?? "False";
-                
-                Log.Info($"Copying files into repository {gitConnection.Url}");
+                var purgeOutput = deployment.Variables.GetFlag(SpecialVariables.Git.PurgeOutput);
+
                 var repository = repositoryFactory.CloneRepository(repositoryIndex, gitConnection);
                 
                 Log.Info($"Copying files into repository {gitConnection.Url}");
-                if (purgeOutput.Equals("True", StringComparison.OrdinalIgnoreCase))
+                if (purgeOutput)
                 {
-                    var targetDirectory = Path.Combine(repository.WorkingDirectory, subFolder);
-                    fileSystem.PurgeDirectory(targetDirectory, 
-                                              exclude: fsInfo => fsInfo.Name.StartsWith(".git", StringComparison.OrdinalIgnoreCase), 
-                                              FailureOptions.IgnoreFailure);
+                    repository.StageFilesForRemoval(subFolder);
+                    // var targetDirectory = Path.Combine(repository.WorkingDirectory, subFolder);
+                    // Log.Info($"Removing existing content from {targetDirectory}");
+                    // fileSystem.PurgeDirectory(targetDirectory, 
+                    //                           exclude: fsInfo => fsInfo.Name.StartsWith(".git", StringComparison.OrdinalIgnoreCase), 
+                    //                           FailureOptions.IgnoreFailure);
                 }
 
                 var repositoryFiles = packageFiles.Select(f => new FileCopySpecification(f, repository.WorkingDirectory, subFolder)).ToList();

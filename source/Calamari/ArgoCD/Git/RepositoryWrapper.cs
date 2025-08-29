@@ -1,9 +1,11 @@
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Calamari.ArgoCD.GitHub;
 using Calamari.Common.Plumbing.Logging;
 using LibGit2Sharp;
+using SharpCompress;
 
 namespace Calamari.ArgoCD.Git
 {
@@ -43,14 +45,18 @@ namespace Calamari.ArgoCD.Git
                 return false;
             }
         }
+
+        public void StageFilesForRemoval(string subPath)
+        {
+            repository.Index.Where(i => i.Path.StartsWith(subPath) && i.Mode != Mode.Directory).ForEach(i => repository.Index.Remove(i.Path));
+        }
         
-        public void StageFiles(string[] filesToStage)
+        public void StageFiles(string[] filesAdded)
         {
             //find files which have changed in fs??? <---   
-            foreach (var file in filesToStage)
+            foreach (var file in filesAdded)
             {
                 var fileToAdd = file.StartsWith("./") ? file.Substring(2) : file;
-                // if a file does not exist - what should we do? throw and continue? or just throw?
                 repository.Index.Add(fileToAdd);
             }
         }
