@@ -14,10 +14,24 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.Conventions;
 using Calamari.Kubernetes;
-using Microsoft.Azure.Management.Compute.Fluent.Models;
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
 
 namespace Calamari.ArgoCD.Conventions
 {
+    public class ArgoCustomPropertiesDto
+    {
+        public GitRepoDetailsDto[] GitRepoDetailsDtos { get; set; }
+    }
+
+    public class GitRepoDetailsDto
+    {
+        public string Url { get; set; }
+        public string Username { get; set; }
+        public string Password { get; set; }
+        public string TargetRevision { get; set; }
+        public string Path { get; set; }
+    }
+    
     public class UpdateGitRepositoryInstallConvention : IInstallConvention
     {
         readonly ICalamariFileSystem fileSystem;
@@ -46,18 +60,18 @@ namespace Calamari.ArgoCD.Conventions
             
             var repositoryFactory = new RepositoryFactory(log, deployment.CurrentDirectory, pullRequestCreator);
             
-            var argoProperties = customPropertiesFactory.Create<ArgoCDActionCustomProperties>();
+            var argoProperties = customPropertiesFactory.Create<ArgoCustomPropertiesDto>();
             
-            log.Info($"Found the following repository indicies '{argoProperties.Applications.Select(a => a.Name).Join(",")}'");
-            foreach (var argoApplication in argoProperties.Applications)
+            log.Info($"Found the following repository indicies '{argoProperties.GitRepoDetailsDtos.Select(a => a.Url).Join(",")}'");
+            foreach (var applicationSource in argoProperties.GitRepoDetailsDtos)
             {
-                var applicationSource = argoApplication.Sources.First();
+                //var applicationSource = argoApplication.Sources.First();
 
-                Log.Info($"Writing files to repository for '{argoApplication.Name}'");
-                IGitConnection gitConnection = new GitConnection(applicationSource.Credentials!.Username, applicationSource.Credentials!.Password, applicationSource.RepoUrl.AbsoluteUri, new GitBranchName(applicationSource.TargetRevision));
-                var repository = repositoryFactory.CloneRepository(argoApplication.Name, gitConnection);
+                Log.Info($"Writing files to repository for '{applicationSource.Url}'");
+                IGitConnection gitConnection = new GitConnection(applicationSource.Username, applicationSource.Password, applicationSource.Url, new GitBranchName(applicationSource.TargetRevision));
+                var repository = repositoryFactory.CloneRepository("Foobar", gitConnection);
 
-                Log.Info($"Copying files into repository {applicationSource.RepoUrl}");
+                Log.Info($"Copying files into repository {applicationSource.Url}");
                 var subFolder = deployment.Variables.Get(applicationSource.Path, String.Empty) ?? String.Empty;
                 Log.VerboseFormat("Copying files into subfolder '{0}'", subFolder);
 

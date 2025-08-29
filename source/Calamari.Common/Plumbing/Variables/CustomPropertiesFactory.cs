@@ -44,8 +44,7 @@ namespace Calamari.Common.Plumbing.Variables
 
     public interface ICustomPropertiesFactory
     {
-        T Create<T>() 
-            where T : IActionCustomProperties;
+        T Create<T>();
     }
 
     public class CustomPropertiesFactory : ICustomPropertiesFactory
@@ -63,8 +62,7 @@ namespace Calamari.Common.Plumbing.Variables
             this.options = options;
         }
 
-        public T Create<T>() 
-            where T : IActionCustomProperties
+        public T Create<T>()
         {
             lock (LoaderLock)
             {
