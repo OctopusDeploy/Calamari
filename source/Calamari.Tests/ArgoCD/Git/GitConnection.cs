@@ -4,9 +4,9 @@ using Calamari.ArgoCD.Git;
 
 namespace Calamari.Tests.ArgoCD.Git
 {
-    public class GitConnection : IGitConnection
+    public class TestGitConnection : IGitConnection
     {
-        public GitConnection(string username,
+        public TestGitConnection(string username,
                              string password,
                              string url,
                              GitBranchName branchName)

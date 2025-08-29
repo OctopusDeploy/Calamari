@@ -80,8 +80,34 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             var runningDeployment = new RunningDeployment("./arbitraryFile.txt", variables);
             runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
             runningDeployment.StagingDirectory = WorkingDirectory;
-            
-            var convention = new UpdateGitRepositoryInstallConvention(fileSystem, CommitToGitCommand.PackageDirectoryName, log, Substitute.For<IGitHubPullRequestCreator>());
+
+            var customPropertiesFactory = Substitute.For<ICustomPropertiesFactory>();
+            var argoCdActionCustomProperties = new ArgoCDActionCustomProperties()
+            {
+                Applications = new ArgoApplication[]
+                {
+                    new ArgoApplication()
+                    {
+                        Name = "App1",
+                        Sources = new ArgoApplicationSource[]
+                        {
+                            new ArgoApplicationSource()
+                            {
+                                RepoUrl = new Uri(OriginPath),
+                                Path = "",
+                                TargetRevision = argoCdBranchName.Value,
+                                Credentials = new GitCredentials()
+                                {
+                                    Username = "username",
+                                    Password = "password"
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+            customPropertiesFactory.Create<ArgoCDActionCustomProperties>().Returns(argoCdActionCustomProperties);
+            var convention = new UpdateGitRepositoryInstallConvention(fileSystem, CommitToGitCommand.PackageDirectoryName, log, Substitute.For<IGitHubPullRequestCreator>(), customPropertiesFactory);
             
             convention.Install(runningDeployment);
             

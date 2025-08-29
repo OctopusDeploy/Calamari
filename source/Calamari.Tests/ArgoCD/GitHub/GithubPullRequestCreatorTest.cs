@@ -20,7 +20,7 @@ namespace Calamari.Tests.ArgoCD.GitHub
             GitHubClientFactory gitHubClientFactory = new GitHubClientFactory();
             GitHubPullRequestCreator prCreator = new GitHubPullRequestCreator(gitHubClientFactory);
 
-            var connection = new GitConnection(
+            var connection = new TestGitConnection(
                                               "yourGithubUsername",
                                               "ADD_PAT_HERE",
                                               "https://github.com/rain-on/PopulatedArgoCd.git",

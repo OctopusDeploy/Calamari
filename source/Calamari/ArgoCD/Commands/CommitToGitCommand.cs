@@ -32,6 +32,7 @@ namespace Calamari.ArgoCD.Commands
         readonly INonSensitiveSubstituteInFiles substituteInFiles;
         readonly IGitHubPullRequestCreator pullRequestCreator;
         PathToPackage pathToPackage;
+        ICustomPropertiesFactory customPropertiesFactory;
 
         public CommitToGitCommand(
             ILog log,
@@ -39,7 +40,8 @@ namespace Calamari.ArgoCD.Commands
             ICalamariFileSystem fileSystem,
             IExtractPackage extractPackage,
             INonSensitiveSubstituteInFiles substituteInFiles,
-            IGitHubPullRequestCreator pullRequestCreator)
+            IGitHubPullRequestCreator pullRequestCreator,
+            ICustomPropertiesFactory customPropertiesFactory)
         {
             this.log = log;
             this.variables = variables;
@@ -47,6 +49,7 @@ namespace Calamari.ArgoCD.Commands
             this.extractPackage = extractPackage;
             this.substituteInFiles = substituteInFiles;
             this.pullRequestCreator = pullRequestCreator;
+            this.customPropertiesFactory = customPropertiesFactory;
 
             Options.Add("package=",
                         "Path to the NuGet package to install.",
@@ -70,7 +73,7 @@ namespace Calamari.ArgoCD.Commands
                                                   d.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
                                               }),
                 new SubstituteInFilesConvention(new NonSensitiveSubstituteInFilesBehaviour(substituteInFiles, PackageDirectoryName)),
-                new UpdateGitRepositoryInstallConvention(fileSystem, PackageDirectoryName, log, pullRequestCreator),
+                new UpdateGitRepositoryInstallConvention(fileSystem, PackageDirectoryName, log, pullRequestCreator, customPropertiesFactory),
             };
 
             var runningDeployment = new RunningDeployment(pathToPackage, variables);
