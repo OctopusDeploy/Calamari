@@ -20,11 +20,10 @@ namespace Calamari.Tests.KubernetesFixtures
     public class ManifestReporterTests
     {
         [Test]
-        public void GivenValidYaml_ShouldPostSingleServiceMessage(string enabledFeatureToggle)
+        public void GivenValidYaml_ShouldPostSingleServiceMessage()
         {
             var memoryLog = new InMemoryLog();
             var variables = new CalamariVariables();
-            variables.Set(KnownVariables.EnabledFeatureToggles, enabledFeatureToggle);
 
             var namespaceResolver = Substitute.For<IKubernetesManifestNamespaceResolver>();
             namespaceResolver.ResolveNamespace(Arg.Any<YamlMappingNode>(), Arg.Any<IVariables>())
@@ -51,11 +50,10 @@ quoted_float: ""5.75""
         }
 
         [Test]
-        public void GivenInvalidManifest_ShouldNotPostServiceMessage(string enabledFeatureToggle)
+        public void GivenInvalidManifest_ShouldNotPostServiceMessage()
         {
             var memoryLog = new InMemoryLog();
             var variables = new CalamariVariables();
-            variables.Set(KnownVariables.EnabledFeatureToggles, enabledFeatureToggle);
 
             var namespaceResolver = Substitute.For<IKubernetesManifestNamespaceResolver>();
 
@@ -71,11 +69,10 @@ quoted_float: ""5.75""
         }
 
         [Test]
-        public void NamespacedResolved_ShouldReportResolvedNamespace(string enabledFeatureToggle)
+        public void NamespacedResolved_ShouldReportResolvedNamespace()
         {
             var memoryLog = new InMemoryLog();
             var variables = new CalamariVariables();
-            variables.Set(KnownVariables.EnabledFeatureToggles, enabledFeatureToggle);
 
             var namespaceResolver = Substitute.For<IKubernetesManifestNamespaceResolver>();
             namespaceResolver.ResolveNamespace(Arg.Any<YamlMappingNode>(), Arg.Any<IVariables>())
@@ -95,13 +92,12 @@ quoted_float: ""5.75""
                 memoryLog.ServiceMessages.First().Properties.Should().Contain(new KeyValuePair<string, string>("ns", "my-cool-namespace"));
             }
         }
-        
+
         [Test]
-        public void GivenValidYamlString_ShouldPostSingleServiceMessage(string enabledFeatureToggle)
+        public void GivenValidYamlString_ShouldPostSingleServiceMessage()
         {
             var memoryLog = new InMemoryLog();
             var variables = new CalamariVariables();
-            variables.Set(KnownVariables.EnabledFeatureToggles, enabledFeatureToggle);
 
             var namespaceResolver = Substitute.For<IKubernetesManifestNamespaceResolver>();
             namespaceResolver.ResolveNamespace(Arg.Any<YamlMappingNode>(), Arg.Any<IVariables>())
