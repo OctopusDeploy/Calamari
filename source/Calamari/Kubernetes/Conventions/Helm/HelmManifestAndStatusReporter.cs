@@ -45,45 +45,38 @@ namespace Calamari.Kubernetes.Conventions.Helm
         {
             await Task.Run(async () =>
                            {
-                               var resourceStatusCheckIsEnabled = deployment.Variables.GetFlag(SpecialVariables.ResourceStatusCheck);
-
-                               if (
-                                   resourceStatusCheckIsEnabled
-                                   || FeatureToggle.KubernetesLiveObjectStatusFeatureToggle.IsEnabled(deployment.Variables)
-                                   || OctopusFeatureToggles.KubernetesObjectManifestInspectionFeatureToggle.IsEnabled(deployment.Variables))
+                               if (!DeploymentSupportsManifestReporting(deployment, out var reason))
                                {
-                                   if (!DeploymentSupportsManifestReporting(deployment, out var reason))
-                                   {
-                                       log.Verbose(reason);
-                                       return;
-                                   }
+                                   log.Verbose(reason);
+                                   return;
+                               }
 
-                                   if (!DoesHelmCliSupportManifestRetrieval(out var helmVersion))
-                                   {
-                                       log.Warn($"Octopus needs Helm v3.13 or later to display object status and manifests. Your current version is {helmVersion}. Please update your Helm executable or container to enable our new Kubernetes capabilities. Learn more in our {log.FormatShortLink("KOS", "documentation")}.");
-                                       return;
-                                   }
+                               if (!DoesHelmCliSupportManifestRetrieval(out var helmVersion))
+                               {
+                                   log.Warn($"Octopus needs Helm v3.13 or later to display object status and manifests. Your current version is {helmVersion}. Please update your Helm executable or container to enable our new Kubernetes capabilities. Learn more in our {log.FormatShortLink("KOS", "documentation")}.");
+                                   return;
+                               }
 
-                                   var manifest = await PollForManifest(deployment, releaseName, revisionNumber, helmInstallErrorCancellationToken);
+                               var manifest = await PollForManifest(deployment, releaseName, revisionNumber, helmInstallErrorCancellationToken);
 
-                                   //it's possible that we have no manifest as charts with just hooks don't produce a manifest
-                                   //in this case, there is nothing to do, so we are done :)
-                                   if (string.IsNullOrWhiteSpace(manifest))
-                                   {
-                                       return;
-                                   }
+                               //it's possible that we have no manifest as charts with just hooks don't produce a manifest
+                               //in this case, there is nothing to do, so we are done :)
+                               if (string.IsNullOrWhiteSpace(manifest))
+                               {
+                                   return;
+                               }
 
-                                   //report the manifest has been applied
-                                   manifestReporter.ReportManifestApplied(manifest);
+                               //report the manifest has been applied
+                               manifestReporter.ReportManifestApplied(manifest);
 
-                                   //we want to cancel KOS if either token is cancelled
-                                   var kosKts = CancellationTokenSource.CreateLinkedTokenSource(helmInstallCompletedCancellationToken, helmInstallErrorCancellationToken);
+                               //we want to cancel KOS if either token is cancelled
+                               var kosKts = CancellationTokenSource.CreateLinkedTokenSource(helmInstallCompletedCancellationToken, helmInstallErrorCancellationToken);
 
-                                   //if resource status (KOS) is enabled, parse the manifest and start monitoring the resources
-                                   if (resourceStatusCheckIsEnabled)
-                                   {
-                                       await ParseManifestAndMonitorResourceStatuses(deployment, manifest, kosKts.Token);
-                                   }
+                               //if resource status (KOS) is enabled, parse the manifest and start monitoring the resources
+                               var resourceStatusCheckIsEnabled = deployment.Variables.GetFlag(SpecialVariables.ResourceStatusCheck);
+                               if (resourceStatusCheckIsEnabled)
+                               {
+                                   await ParseManifestAndMonitorResourceStatuses(deployment, manifest, kosKts.Token);
                                }
                            },
                            helmInstallCompletedCancellationToken);
