@@ -68,7 +68,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             var variables = new CalamariVariables
             {
                 [KnownVariables.OriginalPackageDirectoryPath] = WorkingDirectory,
-                [SpecialVariables.Git.TemplateGlobs] = "./*\nnested/*",
+                [SpecialVariables.Git.InputPath] = "./*\nnested/*",
                 [SpecialVariables.Git.SubFolder("repo_name")] = "",
                 [SpecialVariables.Git.Password("repo_name")] = "password",
                 [SpecialVariables.Git.Username("repo_name")] = "username",

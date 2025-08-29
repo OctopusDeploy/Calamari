@@ -110,26 +110,38 @@ namespace Calamari.ArgoCD.Conventions
 
         IPackageRelativeFile[] GetReferencedPackageFiles(RunningDeployment deployment)
         {
-            var fileGlobs = deployment.Variables.GetPaths(SpecialVariables.Git.TemplateGlobs);
-            log.Info($"Selecting files from package using '{string.Join(" ", fileGlobs)}'");
-            var filesToApply = SelectFiles(Path.Combine(deployment.CurrentDirectory, packageSubfolder), fileGlobs);
+            var inputPath = deployment.Variables.GetMandatoryVariable(SpecialVariables.Git.InputPath);
+            log.Info($"Selecting files from package using '{inputPath}'");
+            var filesToApply = SelectFiles(Path.Combine(deployment.CurrentDirectory, packageSubfolder), inputPath);
             log.Info($"Found {filesToApply.Length} files to apply");
             return filesToApply;
         }
         
-        IPackageRelativeFile[] SelectFiles(string pathToExtractedPackage, List<string> fileGlobs)
+        IPackageRelativeFile[] SelectFiles(string pathToExtractedPackageFiles, string inputPath)
         {
-            return fileGlobs.SelectMany(glob => fileSystem.EnumerateFilesWithGlob(pathToExtractedPackage, glob))
-                            .Select(absoluteFilepath =>
-                                    {
-#if NETCORE
-                                        var relativePath = Path.GetRelativePath(pathToExtractedPackage, file);
+            var absInputPath = Path.Combine(pathToExtractedPackageFiles, inputPath);
+            Log.Info($"trying to get things outta {absInputPath}");
+            if (File.Exists(absInputPath))
+            {
+                //No, this is probably wrong - it _probably_ needs to go into the absolute _basePath_
+                return new[] { new PackageRelativeFile(absInputPath, Path.GetFileName(absInputPath)) };
+            }
+            
+            if (Directory.Exists(absInputPath))
+            {
+                return fileSystem.EnumerateFiles(absInputPath, "*")
+                                      .Select(absoluteFilepath =>
+                                              {
+#if NET
+                                        var relativePath = Path.GetRelativePath(absInputPath, absoluteFilepath);
 #else
-                                        var relativePath = absoluteFilepath.Substring(pathToExtractedPackage.Length + 1);
+                                                  var relativePath = absoluteFilepath.Substring(absInputPath.Length + 1);
 #endif
-                                        return new PackageRelativeFile(absoluteFilepath, relativePath);
-                                    })
-                            .ToArray<IPackageRelativeFile>();
+                                                  return new PackageRelativeFile(absoluteFilepath, relativePath);
+                                              })
+                                      .ToArray<IPackageRelativeFile>();
+            }
+            throw new InvalidOperationException($"Supplied input path '{inputPath}' does not exist within the supplied package");
         }
     }
 }
