@@ -111,13 +111,14 @@ namespace Calamari.ArgoCD.Conventions
         IPackageRelativeFile[] GetReferencedPackageFiles(RunningDeployment deployment)
         {
             var inputPath = deployment.Variables.GetMandatoryVariable(SpecialVariables.Git.InputPath);
-            log.Info($"Selecting files from package using '{inputPath}'");
-            var filesToApply = SelectFiles(Path.Combine(deployment.CurrentDirectory, packageSubfolder), inputPath);
+            var recursive = deployment.Variables.GetFlag(SpecialVariables.Git.Recursive, false);
+            log.Info($"Selecting files from package using '{inputPath}' (recursive: {recursive})");
+            var filesToApply = SelectFiles(Path.Combine(deployment.CurrentDirectory, packageSubfolder), inputPath, recursive);
             log.Info($"Found {filesToApply.Length} files to apply");
             return filesToApply;
         }
         
-        IPackageRelativeFile[] SelectFiles(string pathToExtractedPackageFiles, string inputPath)
+        IPackageRelativeFile[] SelectFiles(string pathToExtractedPackageFiles, string inputPath, bool recursive)
         {
             var absInputPath = Path.Combine(pathToExtractedPackageFiles, inputPath);
             Log.Info($"trying to get things outta {absInputPath}");
@@ -129,17 +130,28 @@ namespace Calamari.ArgoCD.Conventions
             
             if (Directory.Exists(absInputPath))
             {
-                return fileSystem.EnumerateFiles(absInputPath, "*")
-                                      .Select(absoluteFilepath =>
-                                              {
+                //we really only do yaml files.
+                var yamlFileSearchPattern = new[] {"*.yaml", "*.yml"};
+                IEnumerable<string> fileList;
+                if (recursive)
+                {
+                    fileList = fileSystem.EnumerateFilesRecursively(absInputPath, yamlFileSearchPattern);
+                }
+                else
+                {
+                    fileList = fileSystem.EnumerateFiles(absInputPath, yamlFileSearchPattern);
+                }
+                
+                return fileList.Select(absoluteFilepath =>
+                                       {
 #if NET
-                                        var relativePath = Path.GetRelativePath(absInputPath, absoluteFilepath);
+                                           var relativePath = Path.GetRelativePath(absInputPath, absoluteFilepath);
 #else
                                                   var relativePath = absoluteFilepath.Substring(absInputPath.Length + 1);
 #endif
-                                                  return new PackageRelativeFile(absoluteFilepath, relativePath);
-                                              })
-                                      .ToArray<IPackageRelativeFile>();
+                                           return new PackageRelativeFile(absoluteFilepath, relativePath);
+                                       })
+                               .ToArray<IPackageRelativeFile>();
             }
             throw new InvalidOperationException($"Supplied input path '{inputPath}' does not exist within the supplied package");
         }
