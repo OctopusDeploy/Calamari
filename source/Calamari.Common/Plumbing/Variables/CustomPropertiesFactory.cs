@@ -72,10 +72,12 @@ namespace Calamari.Common.Plumbing.Variables
 
         T LoadExecutionVariablesFromFile<T>()
         {
-            var sensitiveFilePassword = options.InputVariables.VariablesPassword;
-            var json = string.IsNullOrWhiteSpace(sensitiveFilePassword)
-                ? fileSystem.ReadFile(options.CustomPropertiesFile)
-                : Decrypt(fileSystem.ReadAllBytes(options.CustomPropertiesFile), sensitiveFilePassword);
+            //var sensitiveFilePassword = options.InputVariables.VariablesPassword;
+            // var json = string.IsNullOrWhiteSpace(sensitiveFilePassword)
+            //     ? fileSystem.ReadFile(options.CustomPropertiesFile)
+            //     : Decrypt(fileSystem.ReadAllBytes(options.CustomPropertiesFile), sensitiveFilePassword);
+
+            var json = fileSystem.ReadFile(options.CustomPropertiesFile);
 
             try
             {

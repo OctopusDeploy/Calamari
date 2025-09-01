@@ -72,7 +72,7 @@ namespace Calamari.ArgoCD.Conventions
                 var repository = repositoryFactory.CloneRepository("Foobar", gitConnection);
 
                 Log.Info($"Copying files into repository {applicationSource.Url}");
-                var subFolder = deployment.Variables.Get(applicationSource.Path, String.Empty) ?? String.Empty;
+                var subFolder = applicationSource.Path ?? String.Empty;
                 Log.VerboseFormat("Copying files into subfolder '{0}'", subFolder);
 
                 var repositoryFiles = packageFiles.Select(f => new FileCopySpecification(f, repository.WorkingDirectory, subFolder)).ToList();
