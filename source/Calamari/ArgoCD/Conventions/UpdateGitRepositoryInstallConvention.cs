@@ -55,12 +55,8 @@ namespace Calamari.ArgoCD.Conventions
                 Log.Info($"Copying files into repository {gitConnection.Url}");
                 if (purgeOutput)
                 {
-                    repository.StageFilesForRemoval(subFolder);
-                    // var targetDirectory = Path.Combine(repository.WorkingDirectory, subFolder);
-                    // Log.Info($"Removing existing content from {targetDirectory}");
-                    // fileSystem.PurgeDirectory(targetDirectory, 
-                    //                           exclude: fsInfo => fsInfo.Name.StartsWith(".git", StringComparison.OrdinalIgnoreCase), 
-                    //                           FailureOptions.IgnoreFailure);
+                    var recursive = deployment.Variables.GetFlag(SpecialVariables.Git.Recursive, false);
+                    repository.StageFilesForRemoval(subFolder, recursive);
                 }
 
                 var repositoryFiles = packageFiles.Select(f => new FileCopySpecification(f, repository.WorkingDirectory, subFolder)).ToList();
@@ -121,7 +117,6 @@ namespace Calamari.ArgoCD.Conventions
         IPackageRelativeFile[] SelectFiles(string pathToExtractedPackageFiles, string inputPath, bool recursive)
         {
             var absInputPath = Path.Combine(pathToExtractedPackageFiles, inputPath);
-            Log.Info($"trying to get things outta {absInputPath}");
             if (File.Exists(absInputPath))
             {
                 //No, this is probably wrong - it _probably_ needs to go into the absolute _basePath_
