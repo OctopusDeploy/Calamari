@@ -31,14 +31,14 @@ namespace Calamari.ArgoCD.Conventions
         public void Install(RunningDeployment deployment)
         {
             Log.Info("Executing Commit To Git operation");
-            var specFactory = new ArgoCommitToGitSpecFactory(log);
+            var specFactory = new ArgoCommitToGitConfigFactory(log);
             var spec = specFactory.Create(deployment);
             var packageFiles = GetReferencedPackageFiles(spec);
             
             var repositoryFactory = new RepositoryFactory(log, spec.WorkingDirectory, pullRequestCreator);
 
             var repositoryIndex = 0;
-            foreach (var argoSource in spec.ArgoSourceToUpdate)
+            foreach (var argoSource in spec.ArgoSourcesToUpdate)
             {
                 var repoName = repositoryIndex.ToString();
                 Log.Info($"Writing files to git repository for '{argoSource.Url}'");
@@ -90,17 +90,17 @@ namespace Calamari.ArgoCD.Conventions
             }
         }
         
-         IPackageRelativeFile[] GetReferencedPackageFiles(ArgoCommitToGitSpec spec)
+         IPackageRelativeFile[] GetReferencedPackageFiles(ArgoCommitToGitConfig config)
         {
-            log.Info($"Selecting files from package using '{spec.InputSubPath}' (recursive: {spec.RecurseInputPath})");
-            var filesToApply = SelectFiles(Path.Combine(spec.WorkingDirectory, packageSubfolder), spec);
+            log.Info($"Selecting files from package using '{config.InputSubPath}' (recursive: {config.RecurseInputPath})");
+            var filesToApply = SelectFiles(Path.Combine(config.WorkingDirectory, packageSubfolder), config);
             log.Info($"Found {filesToApply.Length} files to apply");
             return filesToApply;
         }
         
-        IPackageRelativeFile[] SelectFiles(string pathToExtractedPackageFiles, ArgoCommitToGitSpec spec)
+        IPackageRelativeFile[] SelectFiles(string pathToExtractedPackageFiles, ArgoCommitToGitConfig config)
         {
-            var absInputPath = Path.Combine(pathToExtractedPackageFiles, spec.InputSubPath);
+            var absInputPath = Path.Combine(pathToExtractedPackageFiles, config.InputSubPath);
             if (File.Exists(absInputPath))
             {
                 //No, this is probably wrong - it _probably_ needs to go into the absolute _basePath_
@@ -110,13 +110,13 @@ namespace Calamari.ArgoCD.Conventions
             if (Directory.Exists(absInputPath))
             {
                 IEnumerable<string> fileList;
-                if (spec.RecurseInputPath)
+                if (config.RecurseInputPath)
                 {
-                    fileList = fileSystem.EnumerateFilesRecursively(absInputPath, spec.FileGlobs);
+                    fileList = fileSystem.EnumerateFilesRecursively(absInputPath, config.FileGlobs);
                 }
                 else
                 {
-                    fileList = fileSystem.EnumerateFiles(absInputPath, spec.FileGlobs);
+                    fileList = fileSystem.EnumerateFiles(absInputPath, config.FileGlobs);
                 }
                 
                 return fileList.Select(absoluteFilepath =>
@@ -130,7 +130,7 @@ namespace Calamari.ArgoCD.Conventions
                                        })
                                .ToArray<IPackageRelativeFile>();
             }
-            throw new InvalidOperationException($"Supplied input path '{spec.InputSubPath}' does not exist within the supplied package");
+            throw new InvalidOperationException($"Supplied input path '{config.InputSubPath}' does not exist within the supplied package");
         }
     }
 }

@@ -8,16 +8,16 @@ using Calamari.Kubernetes;
 
 namespace Calamari.ArgoCD.Conventions
 {
-    public class ArgoCommitToGitSpecFactory
+    public class ArgoCommitToGitConfigFactory
     {
         readonly ILog log;
 
-        public ArgoCommitToGitSpecFactory(ILog log)
+        public ArgoCommitToGitConfigFactory(ILog log)
         {
             this.log = log;
         }
 
-        public ArgoCommitToGitSpec Create(RunningDeployment deployment)
+        public ArgoCommitToGitConfig Create(RunningDeployment deployment)
         {
             var inputPath = deployment.Variables.GetMandatoryVariable(SpecialVariables.Git.InputPath);
             var recursive = deployment.Variables.GetFlag(SpecialVariables.Git.Recursive, false);
@@ -35,7 +35,7 @@ namespace Calamari.ArgoCD.Conventions
                 gitConnections.Add(new VariableBackedArgoSource(deployment.Variables, repositoryIndex));
             }
 
-            return new ArgoCommitToGitSpec(
+            return new ArgoCommitToGitConfig(
                                            deployment.CurrentDirectory,
                                            inputPath,
                                            recursive,

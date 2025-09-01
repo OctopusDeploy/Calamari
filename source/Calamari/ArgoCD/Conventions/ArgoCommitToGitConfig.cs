@@ -4,12 +4,12 @@ using Calamari.ArgoCD.Git;
 
 namespace Calamari.ArgoCD.Conventions
 {
-    public class ArgoCommitToGitSpec
+    public class ArgoCommitToGitConfig
     {
-        public ArgoCommitToGitSpec(string workingDirectory, string inputSubPath, bool recurseInputPath, string commitSummary, string commitDescription,
+        public ArgoCommitToGitConfig(string workingDirectory, string inputSubPath, bool recurseInputPath, string commitSummary, string commitDescription,
                                    bool requiresPr,
                                    bool purgeOutputDirectory,
-                                   List<IArgoApplicationSource> argoSourcesToUpdate)
+                                   List<IArgoApplicationSource> argoSourcesesToUpdate)
         {
             WorkingDirectory = workingDirectory;
             InputSubPath = inputSubPath;
@@ -18,7 +18,7 @@ namespace Calamari.ArgoCD.Conventions
             CommitDescription = commitDescription;
             RequiresPr = requiresPr;
             PurgeOutputDirectory = purgeOutputDirectory;
-            ArgoSourceToUpdate = argoSourcesToUpdate;
+            ArgoSourcesToUpdate = argoSourcesesToUpdate;
         }
         
         public string WorkingDirectory { get; set; }
@@ -33,6 +33,6 @@ namespace Calamari.ArgoCD.Conventions
         public bool RequiresPr { get; }
         public bool PurgeOutputDirectory { get; }
 
-        public List<IArgoApplicationSource> ArgoSourceToUpdate { get;  }
+        public List<IArgoApplicationSource> ArgoSourcesToUpdate { get;  }
     }
 }
