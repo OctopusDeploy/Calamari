@@ -8,7 +8,7 @@ namespace Calamari.Build;
 partial class Build
 {
     [PublicAPI]
-    Target NetCoreTesting =>
+    static Target NetCoreTesting =>
         target => target
             .Executes(() =>
             {

@@ -19,7 +19,6 @@ using Nuke.Common.Tools.OctoVersion;
 using Nuke.Common.Utilities.Collections;
 using Octopus.Calamari.ConsolidatedPackage;
 using Serilog;
-using static Nuke.Common.IO.FileSystemTasks;
 using static Nuke.Common.Tools.DotNet.DotNetTasks;
 using static Nuke.Common.Tools.Git.GitTasks;
 using static Nuke.Common.Tools.NuGet.NuGetTasks;
@@ -72,13 +71,13 @@ namespace Calamari.Build
         string? BranchName { get; set; }
 
         //this is instantiated in the constructor
-        public Lazy<OctoVersionInfo?> OctoVersionInfo;
+        readonly Lazy<OctoVersionInfo?> OctoVersionInfo;
 
         static readonly List<string> CalamariProjectsToSkipConsolidation = new() { "Calamari.CloudAccounts", "Calamari.Common", "Calamari.ConsolidateCalamariPackages" };
 
-        CalamariPackageMetadata[] PackagesToPublish = new CalamariPackageMetadata[0];
+        CalamariPackageMetadata[] PackagesToPublish = Array.Empty<CalamariPackageMetadata>();
         List<Project> CalamariProjects = new();
-        List<Task> ProjectCompressionTasks = new();
+        readonly List<Task> ProjectCompressionTasks = new();
 
         public Build()
         {
@@ -111,7 +110,7 @@ namespace Calamari.Build
 
         Lazy<string> NugetVersion { get; }
 
-        Target CheckForbiddenWords =>
+        static Target CheckForbiddenWords =>
             d =>
                 d.Executes(() =>
                            {
@@ -136,7 +135,7 @@ namespace Calamari.Build
                                                        + string.Join("\r\n", filesContainingForbiddenWords));
                            });
 
-        Target Clean =>
+        static Target Clean =>
             d =>
                 d.Executes(() =>
                            {
@@ -208,7 +207,7 @@ namespace Calamari.Build
                                                                nugetVersion);
                                if (OperatingSystem.IsWindows())
                                {
-                                   CopyDirectoryRecursively(outputDirectory, (LegacyCalamariDirectory / RootProjectName), DirectoryExistsPolicy.Merge);
+                                   outputDirectory.Copy(LegacyCalamariDirectory / RootProjectName, ExistsPolicy.DirectoryMerge | ExistsPolicy.FileFail);
                                }
                                else
                                {
@@ -432,8 +431,11 @@ namespace Calamari.Build
                          {
                              Log.Information($"Copying {calamariPackageMetadata.Project?.Name} for legacy Calamari '{calamariPackageMetadata.Framework}' and arch '{calamariPackageMetadata.Architecture}'");
                              var project = calamariPackageMetadata.Project;
-                             var publishedPath = PublishDirectory / project.Name / "netfx";
-                             CopyDirectoryRecursively(publishedPath, (LegacyCalamariDirectory / project.Name), DirectoryExistsPolicy.Merge);
+                             if (project is not null)
+                             {
+                                 var publishedPath = PublishDirectory / project.Name / "netfx";
+                                 publishedPath.Copy(LegacyCalamariDirectory / project.Name, ExistsPolicy.DirectoryMerge | ExistsPolicy.FileFail);
+                             }
                          });
         }
 
@@ -447,7 +449,7 @@ namespace Calamari.Build
                 return;
             }
 
-            var compressionTask = Task.Run(() => CompressionTasks.CompressZip(compressionSource, $"{ArtifactsDirectory / project.Name}.zip"));
+            var compressionTask = Task.Run(() => compressionSource.CompressTo($"{ArtifactsDirectory / project.Name}.zip"));
             ProjectCompressionTasks.Add(compressionTask);
         }
 
@@ -559,7 +561,7 @@ namespace Calamari.Build
                                Directory.Exists(binFolder);
                                var actions = new List<Action>
                                {
-                                   () => CompressionTasks.Compress(binFolder, ArtifactsDirectory / "Binaries.zip")
+                                   () => binFolder.CompressTo( ArtifactsDirectory / "Binaries.zip")
                                };
 
                                // Create a Zip for each runtime for testing
@@ -572,7 +574,7 @@ namespace Calamari.Build
                                                    var publishedLocation = DoPublish("Calamari.Tests", Frameworks.Net60, nugetVersion, rid);
                                                    var zipName = $"Calamari.Tests.{rid}.{nugetVersion}.zip";
                                                    File.Copy(RootDirectory / "global.json", publishedLocation / "global.json");
-                                                   CompressionTasks.Compress(publishedLocation, ArtifactsDirectory / zipName);
+                                                   publishedLocation.CompressTo(ArtifactsDirectory / zipName);
                                                }
                                            });
 
@@ -608,8 +610,11 @@ namespace Calamari.Build
                                var calamariNupkgs = Directory.GetFiles(ArtifactsDirectory, "Calamari.*.nupkg");
                                var octopusCalamariNpkgs = Directory.GetFiles(ArtifactsDirectory, "Octopus.Calamari.*.nupkg");
 
-                               foreach (var file in calamariNupkgs.Concat(octopusCalamariNpkgs))
-                                   CopyFile(file, LocalPackagesDirectory / Path.GetFileName(file), FileExistsPolicy.Overwrite);
+                               foreach (AbsolutePath file in calamariNupkgs.Concat(octopusCalamariNpkgs).Where(f => f != null))
+                               {
+                                   file.Copy(LocalPackagesDirectory / Path.GetFileName(file), ExistsPolicy.FileOverwrite);
+                               }
+                                   
                            });
 
         Target PackageConsolidatedCalamariZip =>
@@ -792,17 +797,18 @@ namespace Calamari.Build
                                                  AzureKeyVaultAppSecret, AzureKeyVaultTenantId, AzureKeyVaultCertificateName,
                                                  SigningCertificatePath, SigningCertificatePassword);
 
-            var nuspec = $"{publishedTo}/{packageId}.nuspec";
-            CopyFile($"{projectDir}/{project}.nuspec", nuspec, FileExistsPolicy.Overwrite);
-            var text = File.ReadAllText(nuspec);
+            AbsolutePath nuspecSrc = $"{projectDir}/{project}.nuspec";
+            AbsolutePath nuspecDest = $"{publishedTo}/{packageId}.nuspec";
+            nuspecSrc.Copy(nuspecDest, ExistsPolicy.FileOverwrite);
+            var text = File.ReadAllText(nuspecDest);
             text = text.Replace("$id$", packageId)
                        .Replace("$version$", version);
-            File.WriteAllText(nuspec, text);
+            File.WriteAllText(nuspecDest, text);
 
             NuGetPack(s =>
                           s.SetBasePath(publishedTo)
                            .SetOutputDirectory(ArtifactsDirectory)
-                           .SetTargetPath(nuspec)
+                           .SetTargetPath(nuspecDest)
                            .SetVersion(NugetVersion.Value)
                            .SetVerbosity(NuGetVerbosity.Normal)
                            .SetProperties(nugetPackProperties));
