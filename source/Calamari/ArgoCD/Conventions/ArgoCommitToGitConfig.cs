@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 using Calamari.ArgoCD.Git;
 
 namespace Calamari.ArgoCD.Conventions
@@ -8,7 +7,7 @@ namespace Calamari.ArgoCD.Conventions
     {
         public ArgoCommitToGitConfig(string workingDirectory, string inputSubPath, bool recurseInputPath, string commitSummary, string commitDescription,
                                    bool requiresPr,
-                                   List<IArgoApplicationSource> argoSourcesesToUpdate)
+                                   List<IArgoApplicationSource> argoSourcesToUpdate)
         {
             WorkingDirectory = workingDirectory;
             InputSubPath = inputSubPath;
@@ -16,7 +15,7 @@ namespace Calamari.ArgoCD.Conventions
             CommitSummary = commitSummary;
             CommitDescription = commitDescription;
             RequiresPr = requiresPr;
-            ArgoSourcesToUpdate = argoSourcesesToUpdate;
+            ArgoSourcesToUpdate = argoSourcesToUpdate;
         }
         
         public string WorkingDirectory { get; set; }
