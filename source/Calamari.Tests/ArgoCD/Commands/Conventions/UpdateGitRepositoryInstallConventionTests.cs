@@ -82,7 +82,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
             runningDeployment.StagingDirectory = WorkingDirectory;
             
-            var convention = new UpdateGitRepositoryInstallConvention(fileSystem, CommitToGitCommand.PackageDirectoryName, log, Substitute.For<IGitHubPullRequestCreator>());
+            var convention = new UpdateGitRepositoryInstallConvention(fileSystem, CommitToGitCommand.PackageDirectoryName, log, Substitute.For<IGitHubPullRequestCreator>(), new ArgoCommitToGitConfigFactory(log));
             
             convention.Install(runningDeployment);
             

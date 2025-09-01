@@ -6,6 +6,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using Autofac.Features.Metadata;
+using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.GitHub;
 using Calamari.Commands;
 using Calamari.Common;
@@ -87,6 +88,7 @@ namespace Calamari
             builder.RegisterType<KubernetesManifestNamespaceResolver>().As<IKubernetesManifestNamespaceResolver>().InstancePerLifetimeScope();
             builder.RegisterType<GitHubClientFactory>().As<IGitHubClientFactory>().InstancePerLifetimeScope();
             builder.RegisterType<GitHubPullRequestCreator>().As<IGitHubPullRequestCreator>().InstancePerLifetimeScope();
+            builder.RegisterType<ArgoCommitToGitConfigFactory>().AsSelf().InstancePerLifetimeScope();
             
             builder.RegisterType<KubernetesDiscovererFactory>()
                    .As<IKubernetesDiscovererFactory>()

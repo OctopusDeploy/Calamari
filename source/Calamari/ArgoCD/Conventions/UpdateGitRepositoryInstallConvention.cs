@@ -19,20 +19,22 @@ namespace Calamari.ArgoCD.Conventions
         readonly ILog log;
         readonly string packageSubfolder;
         readonly IGitHubPullRequestCreator pullRequestCreator;
+        readonly ArgoCommitToGitConfigFactory argoCommitToGitConfigFactory;
 
-        public UpdateGitRepositoryInstallConvention(ICalamariFileSystem fileSystem, string packageSubfolder, ILog log, IGitHubPullRequestCreator pullRequestCreator)
+        public UpdateGitRepositoryInstallConvention(ICalamariFileSystem fileSystem, string packageSubfolder, ILog log, IGitHubPullRequestCreator pullRequestCreator,
+                                                    ArgoCommitToGitConfigFactory argoCommitToGitConfigFactory)
         {
             this.fileSystem = fileSystem;
             this.log = log;
             this.pullRequestCreator = pullRequestCreator;
+            this.argoCommitToGitConfigFactory = argoCommitToGitConfigFactory;
             this.packageSubfolder = packageSubfolder;
         }
         
         public void Install(RunningDeployment deployment)
         {
             Log.Info("Executing Commit To Git operation");
-            var configFactory = new ArgoCommitToGitConfigFactory(log);
-            var actionConfig = configFactory.Create(deployment);
+            var actionConfig = argoCommitToGitConfigFactory.Create(deployment);
             var packageFiles = GetReferencedPackageFiles(actionConfig);
             
             var repositoryFactory = new RepositoryFactory(log, actionConfig.WorkingDirectory, pullRequestCreator);
@@ -98,8 +100,7 @@ namespace Calamari.ArgoCD.Conventions
             var absInputPath = Path.Combine(pathToExtractedPackageFiles, config.InputSubPath);
             if (File.Exists(absInputPath))
             {
-                //No, this is probably wrong - it _probably_ needs to go into the absolute _basePath_
-                return new[] { new PackageRelativeFile(absInputPath, Path.GetFileName(absInputPath)) };
+                return new[] { new PackageRelativeFile(absolutePath: absInputPath, packageRelativePath: Path.GetFileName(absInputPath)) };
             }
             
             if (Directory.Exists(absInputPath))
