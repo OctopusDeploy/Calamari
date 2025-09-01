@@ -88,8 +88,10 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             {
                 testBinDirectory, // Same directory as test assembly
                 Path.Combine(testBinDirectory, "..", "..", "..", "..", "bin", "Debug", "net462"), // Relative path to main bin
-                Path.Combine(testBinDirectory, "..", "..", "..", "..", "..", "bin", "Debug", "net462") // Another potential path
-            };
+                Path.Combine(testBinDirectory, "..", "..", "..", "..", "..", "bin", "Debug", "net462"), // Another potential path
+                Path.Combine(testBinDirectory, "..", "Binaries"), // CI build path
+                Environment.GetEnvironmentVariable("CALAMARI_EXECUTABLE_PATH") // Allow override via env var
+            }.Where(dir => !string.IsNullOrEmpty(dir));
             
             // On Unix systems it's "Calamari", on Windows it's "Calamari.exe"
             var executableNames = CalamariEnvironment.IsRunningOnWindows 
@@ -342,7 +344,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             var psi = new ProcessStartInfo
             {
                 FileName = "powershell.exe",
-                Arguments = $"-ExecutionPolicy Bypass -File \"{powershellScript}\" {operation}",
+                Arguments = $"-ExecutionPolicy Bypass -File \"{powershellScript}\" -Operation {operation}",
                 UseShellExecute = false,
                 RedirectStandardInput = true,
                 RedirectStandardOutput = true,
