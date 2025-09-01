@@ -29,7 +29,6 @@ namespace Calamari.ArgoCD.Git
             this.pullRequestCreator = pullRequestCreator;
         }
         
-        
         // returns true if changes were made to the repository
         public bool CommitChanges(string summary, string description)
         {
