@@ -8,7 +8,6 @@ namespace Calamari.ArgoCD.Conventions
     {
         public ArgoCommitToGitConfig(string workingDirectory, string inputSubPath, bool recurseInputPath, string commitSummary, string commitDescription,
                                    bool requiresPr,
-                                   bool purgeOutputDirectory,
                                    List<IArgoApplicationSource> argoSourcesesToUpdate)
         {
             WorkingDirectory = workingDirectory;
@@ -17,7 +16,6 @@ namespace Calamari.ArgoCD.Conventions
             CommitSummary = commitSummary;
             CommitDescription = commitDescription;
             RequiresPr = requiresPr;
-            PurgeOutputDirectory = purgeOutputDirectory;
             ArgoSourcesToUpdate = argoSourcesesToUpdate;
         }
         
@@ -31,8 +29,6 @@ namespace Calamari.ArgoCD.Conventions
         public string CommitSummary { get; }
         public string CommitDescription { get; }
         public bool RequiresPr { get; }
-        public bool PurgeOutputDirectory { get; }
-
         public List<IArgoApplicationSource> ArgoSourcesToUpdate { get;  }
     }
 }

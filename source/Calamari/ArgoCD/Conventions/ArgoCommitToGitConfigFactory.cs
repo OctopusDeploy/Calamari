@@ -25,7 +25,6 @@ namespace Calamari.ArgoCD.Conventions
             var requiresPullRequest = RequiresPullRequest(deployment);
             var summary = deployment.Variables.GetMandatoryVariable(SpecialVariables.Git.CommitMessageSummary);
             var description = deployment.Variables.Get(SpecialVariables.Git.CommitMessageDescription) ?? string.Empty;
-            var purgeOutput = deployment.Variables.GetFlag(SpecialVariables.Git.PurgeOutput);
             
             var repositoryIndexes = deployment.Variables.GetIndexes(SpecialVariables.Git.Index);
             log.Info($"Found the following repository indicies '{repositoryIndexes.Join(",")}'");
@@ -42,7 +41,6 @@ namespace Calamari.ArgoCD.Conventions
                                            summary,
                                            description,
                                            requiresPullRequest,
-                                           purgeOutput,
                                            gitConnections);
         }
         

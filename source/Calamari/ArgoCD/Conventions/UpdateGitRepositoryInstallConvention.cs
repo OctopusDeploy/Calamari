@@ -43,11 +43,6 @@ namespace Calamari.ArgoCD.Conventions
                 var repoName = repositoryIndex.ToString();
                 Log.Info($"Writing files to git repository for '{argoSource.Url}'");
                 var repository = repositoryFactory.CloneRepository(repoName, argoSource);
-                
-                if (spec.PurgeOutputDirectory)
-                {
-                    repository.StageFilesForRemoval(argoSource.SubFolder, spec.RecurseInputPath);
-                }
 
                 var repositoryFiles = packageFiles.Select(f => new FileCopySpecification(f, repository.WorkingDirectory, argoSource.SubFolder)).ToList();
                 Log.VerboseFormat("Copying files into subfolder '{0}'", argoSource.SubFolder);
