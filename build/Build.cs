@@ -110,7 +110,7 @@ namespace Calamari.Build
 
         Lazy<string> NugetVersion { get; }
 
-        static Target CheckForbiddenWords =>
+        Target CheckForbiddenWords =>
             d =>
                 d.Executes(() =>
                            {
@@ -135,7 +135,7 @@ namespace Calamari.Build
                                                        + string.Join("\r\n", filesContainingForbiddenWords));
                            });
 
-        static Target Clean =>
+        Target Clean =>
             d =>
                 d.Executes(() =>
                            {
