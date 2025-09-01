@@ -70,6 +70,7 @@ namespace Calamari.ArgoCD.Git
                 Log.Info($"Removing files which match {cleansedSubPath}");
                 // not sure how to handle platform-specific paths.
                 filesToRemove.AddRange(repository.Index.Where(i => i.Path.StartsWith(cleansedSubPath)
+                                                                   && (i.Path.EndsWith("yaml") || i.Path.EndsWith("yml"))
                                                                    && !i.Path.Substring(cleansedSubPath.Length).Contains("/")
                                                                    && i.Mode != Mode.Directory)
                                                  .ToArray());
