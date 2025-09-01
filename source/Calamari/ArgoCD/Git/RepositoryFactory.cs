@@ -52,10 +52,10 @@ namespace Calamari.ArgoCD.Git
                     Password = gitConnection.Password!
                 };
                 options.CredentialsProvider = credentialsProvider;
-                options.FetchOptions = new FetchOptions
-                {
-                    CredentialsProvider = credentialsProvider
-                };
+                // options.FetchOptions = new FetchOptions
+                // {
+                //     CredentialsProvider = credentialsProvider
+                // };
             }
 
             var repoPath = Repository.Clone(gitConnection.Url, checkoutPath, options);
