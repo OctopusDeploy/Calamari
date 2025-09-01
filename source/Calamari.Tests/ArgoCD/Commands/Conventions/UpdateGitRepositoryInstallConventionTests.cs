@@ -74,6 +74,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                 [SpecialVariables.Git.Username("repo_name")] = "username",
                 [SpecialVariables.Git.Url("repo_name")] = OriginPath,
                 [SpecialVariables.Git.BranchName("repo_name")] = argoCdBranchName.Value,
+                [SpecialVariables.Git.Recursive] = "True",
                 [SpecialVariables.Git.CommitMethod] = "DirectCommit",
                 [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this"
             };
