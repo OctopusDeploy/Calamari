@@ -7,14 +7,9 @@
     /// </summary>
     public enum FeatureToggle {
         SkunkworksFeatureToggle,
-        ModernAzureSdkFeatureToggle,
         OidcAccountsFeatureToggle,
-        AsynchronousAzureZipDeployFeatureToggle,
-        FSharpDeprecationFeatureToggle,
-        AzureRMDeprecationFeatureToggle,
-        KubernetesLiveObjectStatusFeatureToggle,
         KubernetesAuthAwsCliWithExecFeatureToggle,
         ForceUtf8ZipFileDecodingFeatureToggle,
-        DisableFSharpScriptExecutionFeatureToggle
+        BashParametersArrayFeatureToggle
     }
 }

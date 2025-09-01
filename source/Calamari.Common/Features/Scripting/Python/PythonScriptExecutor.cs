@@ -3,15 +3,20 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Calamari.Common.Features.Processes;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Common.Features.Scripting.Python
 {
     public class PythonScriptExecutor : ScriptExecutor
     {
+        public PythonScriptExecutor(ILog log) : base(log)
+        {
+        }
+
         protected override IEnumerable<ScriptExecution> PrepareExecution(Script script,
-            IVariables variables,
-            Dictionary<string, string>? environmentVars = null)
+                                                                         IVariables variables,
+                                                                         Dictionary<string, string>? environmentVars = null)
         {
             var executable = PythonBootstrapper.FindPythonExecutable();
             var workingDirectory = Path.GetDirectoryName(script.File);

@@ -16,12 +16,15 @@ namespace Calamari.AzureAppService.Azure
             caseInsensitiveTagDictionary.TryGetValue(TargetTags.ProjectTagName, out string? project);
             caseInsensitiveTagDictionary.TryGetValue(TargetTags.SpaceTagName, out string? space);
             caseInsensitiveTagDictionary.TryGetValue(TargetTags.TenantTagName, out string? tenant);
+            caseInsensitiveTagDictionary.TryGetValue(TargetTags.TenantedDeploymentModeTagName, out string? tenantedDeploymentMode);
+
             return new TargetTags(
                 environment: environment,
                 role: role,
                 project: project,
                 space: space,
-                tenant: tenant);
+                tenant: tenant,
+                tenantedDeploymentMode: tenantedDeploymentMode);
         }
     }
 }

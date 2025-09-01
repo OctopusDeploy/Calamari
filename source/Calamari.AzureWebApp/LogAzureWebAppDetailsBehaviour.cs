@@ -1,11 +1,14 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
+using Azure.ResourceManager.AppService;
+using Azure.ResourceManager.Resources;
+using Calamari.Azure;
+using Calamari.Azure.AppServices;
 using Calamari.CloudAccounts;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
-using Microsoft.Azure.Management.WebSites;
-using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.AzureWebApp
 {
@@ -13,7 +16,7 @@ namespace Calamari.AzureWebApp
     {
         readonly ILog log;
 
-        Dictionary<string, string> portalLinks = new Dictionary<string, string>
+        readonly Dictionary<string, string> portalLinks = new Dictionary<string, string>
         {
             { "AzureGlobalCloud", "portal.azure.com" },
             { "AzureChinaCloud", "portal.azure.cn" },
@@ -37,41 +40,39 @@ namespace Calamari.AzureWebApp
             {
                 var variables = deployment.Variables;
                 var resourceGroupName = variables.Get(SpecialVariables.Action.Azure.ResourceGroupName, string.Empty);
+
                 var siteAndSlotName = variables.Get(SpecialVariables.Action.Azure.WebAppName);
                 var azureEnvironment = variables.Get(SpecialVariables.Action.Azure.Environment);
 
-                WebSiteManagementClient client;
-                var hasJwt = !variables.Get(AzureAccountVariables.Jwt).IsNullOrEmpty();
-                if (hasJwt)
+                var account = AzureAccountFactory.Create(variables);
+                var armClient = account.CreateArmClient();
+
+                var targetSite = AzureTargetSite.Create(account, variables, log);
+
+                var resourceGroupResource = armClient.GetResourceGroupResource(ResourceGroupResource.CreateResourceIdentifier(targetSite.SubscriptionId, targetSite.ResourceGroupName));
+                if (!await resourceGroupResource.GetWebSites().ExistsAsync(targetSite.Site))
                 {
-                    var account = new AzureOidcAccount(variables);
-                    client = await account.CreateWebSiteManagementClient();
+                    Log.Error($"Azure Web App '{targetSite.Site}' could not be found in resource group '{resourceGroupName}'. Either it does not exist, or the Azure Account in use may not have permissions to access it.");
+                    throw new Exception("Web App not found");
                 }
-                else
+
+                var webSiteData = await armClient.GetWebSiteDataAsync(targetSite);
+
+                var portalUrl = GetAzurePortalUrl(azureEnvironment);
+
+                log.Info($"Default Host Name: {webSiteData.DefaultHostName}");
+                log.Info($"Application state: {webSiteData.State}");
+                log.Info("Links:");
+                log.Info(log.FormatLink($"https://{webSiteData.DefaultHostName}"));
+
+                if (!webSiteData.IsHttpsOnly.GetValueOrDefault())
                 {
-                    var account = new AzureServicePrincipalAccount(variables);
-                    client = await account.CreateWebSiteManagementClient();
+                    log.Info(log.FormatLink($"http://{webSiteData.DefaultHostName}"));
                 }
 
-                var site = await client.WebApps.GetAsync(resourceGroupName, siteAndSlotName);
-                if (site != null)
-                {
-                    var portalUrl = GetAzurePortalUrl(azureEnvironment);
+                var portalUri = $"https://{portalUrl}/#@/resource{webSiteData.Id}";
 
-                    log.Info($"Default Host Name: {site.DefaultHostName}");
-                    log.Info($"Application state: {site.State}");
-                    log.Info("Links:");
-                    log.Info(log.FormatLink($"https://{site.DefaultHostName}"));
-
-                    if (!site.HttpsOnly.HasValue || site.HttpsOnly == false)
-                    {
-                        log.Info(log.FormatLink($"http://{site.DefaultHostName}"));
-                    }
-
-                    var portalUri = $"https://{portalUrl}/#@/resource{site.Id}";
-
-                    log.Info(log.FormatLink(portalUri, "View in Azure Portal"));
-                }
+                log.Info(log.FormatLink(portalUri, "View in Azure Portal"));
             }
             catch
             {
@@ -81,9 +82,9 @@ namespace Calamari.AzureWebApp
 
         string GetAzurePortalUrl(string environment)
         {
-            if (!string.IsNullOrEmpty(environment) && portalLinks.ContainsKey(environment))
+            if (!string.IsNullOrEmpty(environment) && portalLinks.TryGetValue(environment, out var url))
             {
-                return portalLinks[environment];
+                return url;
             }
 
             return portalLinks["AzureGlobalCloud"];

@@ -44,7 +44,7 @@ namespace Calamari.Kubernetes
             }
             catch
             {
-                log.Warn("Unable to retrieve resource scoping using kubectl api-resources. Using default resource scopes.");
+                log.Verbose("Unable to retrieve resource scoping using kubectl api-resources. Using default resource scopes.");
                 return DefaultResourceScopeLookup;
             }
         }

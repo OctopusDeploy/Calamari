@@ -159,7 +159,8 @@ namespace Calamari.AzureAppService.Behaviors
                     context.Authentication!.AccountId,
                     matchResult.Role,
                     context.Scope!.WorkerPoolId,
-                    slotName));
+                    slotName,
+                    matchResult.TenantedDeploymentMode));
         }
 
         private TargetDiscoveryContext<AccountAuthenticationDetails<IAzureAccount>>? GetTargetDiscoveryContext<T>(
@@ -190,7 +191,7 @@ namespace Calamari.AzureAppService.Behaviors
 
     public static class TargetDiscoveryHelpers
     {
-        public static ServiceMessage CreateWebAppTargetCreationServiceMessage(string? resourceGroupName, string webAppName, string accountId, string role, string? workerPoolId, string? slotName)
+        public static ServiceMessage CreateWebAppTargetCreationServiceMessage(string? resourceGroupName, string webAppName, string accountId, string role, string? workerPoolId, string? slotName, string? tenantedMode)
         {
             var parameters = new Dictionary<string, string?> {
                     { "azureWebApp", webAppName },
@@ -201,28 +202,46 @@ namespace Calamari.AzureAppService.Behaviors
                     { "octopusRoles", role },
                     { "updateIfExisting", "True" },
                     { "octopusDefaultWorkerPoolIdOrName", workerPoolId },
-                    { "isDynamic", "True" }
+                    { "isDynamic", "True" },
+                    { "tenantedDeploymentParticipation", tenantedMode },
                 };
 
             return new ServiceMessage(
                 "create-azurewebapptarget",
                 parameters.Where(p => p.Value != null).ToDictionary(p => p.Key, p => p.Value!));
         }
-
-        public static async Task<AzureResource[]> GetResourcesByType(this ArmClient armClient, params string[] types)
+        
+        public static async Task<AzureResource[]> GetResourcesByType(
+            this ArmClient armClient,
+            params string[] types)
         {
             var tenant = armClient.GetTenants().First();
-
-            var typesToRetrieveClause = string.Join(" or ", types.Select(t => $"type == '{t}'"));
             var typeCondition = types.Any()
-                ? $"| where { typesToRetrieveClause } |"
+                ? $"| where {string.Join(" or ", types.Select(t => $"type == '{t}'"))} |"
                 : string.Empty;
 
-            var query = new ResourceQueryContent(
-                $"Resources {typeCondition} project name, type, tags, resourceGroup");
+            var query = new ResourceQueryContent($"Resources {typeCondition} project name, type, tags, resourceGroup")
+            {
+                Options = new ResourceQueryRequestOptions { Top = 1000 }
+            };
 
-            var response = await tenant.GetResourcesAsync(query, CancellationToken.None);
-            return JsonConvert.DeserializeObject<AzureResource[]>(response.Value.Data.ToString())!;
+            var allResults = new List<AzureResource>();
+            
+            // Assume user dont have more than 100,000 resources
+            const int maxAttempts = 100;
+            var attempt = 0;
+            while (attempt++ < maxAttempts)
+            {
+                var page = (await tenant.GetResourcesAsync(query, CancellationToken.None)).Value;
+                var batch = JsonConvert.DeserializeObject<AzureResource[]>(page.Data.ToString())!;
+                allResults.AddRange(batch);
+
+                if (string.IsNullOrEmpty(page.SkipToken))
+                    break;
+
+                query.Options.SkipToken = page.SkipToken;
+            }
+            return allResults.ToArray();
         }
     }
 }

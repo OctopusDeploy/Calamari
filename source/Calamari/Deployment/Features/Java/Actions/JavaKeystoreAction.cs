@@ -7,13 +7,16 @@ namespace Calamari.Deployment.Features.Java.Actions
 {
     public class JavaKeystoreAction: JavaAction
     {
-        public JavaKeystoreAction(JavaRunner runner): base(runner)
+        readonly ILog log;
+
+        public JavaKeystoreAction(JavaRunner runner, ILog log): base(runner)
         {
+            this.log = log;
         }
         public override void Execute(RunningDeployment deployment)
         {
             var variables = deployment.Variables;
-            Log.Info("Adding certificate to Java Keystore");
+            log.Info("Adding certificate to Java Keystore");
             
             var certificateId = variables.Get(SpecialVariables.Action.Java.JavaKeystore.Variable);
             var envVariables = new Dictionary<string, string>(){

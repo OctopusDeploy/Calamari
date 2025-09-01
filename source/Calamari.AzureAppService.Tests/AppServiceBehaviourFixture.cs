@@ -20,6 +20,7 @@ using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Testing;
+using Calamari.Testing.Azure;
 using Calamari.Testing.LogParser;
 using FluentAssertions;
 using NUnit.Framework;
@@ -87,11 +88,7 @@ namespace Calamari.AzureAppService.Tests
                                                          AddVariables(context);
 
                                                          var existingFeatureToggles = context.Variables.GetStrings(KnownVariables.EnabledFeatureToggles);
-                                                         context.Variables.SetStrings(KnownVariables.EnabledFeatureToggles,
-                                                                                      existingFeatureToggles.Concat(new[]
-                                                                                      {
-                                                                                          FeatureToggle.AsynchronousAzureZipDeployFeatureToggle.ToString()
-                                                                                      }));
+                                                         context.Variables.SetStrings(KnownVariables.EnabledFeatureToggles, existingFeatureToggles);
                                                      })
                                         .Execute();
 
@@ -162,11 +159,7 @@ namespace Calamari.AzureAppService.Tests
                                                          AddVariables(context);
 
                                                          var existingFeatureToggles = context.Variables.GetStrings(KnownVariables.EnabledFeatureToggles);
-                                                         context.Variables.SetStrings(KnownVariables.EnabledFeatureToggles,
-                                                                                      existingFeatureToggles.Concat(new[]
-                                                                                      {
-                                                                                          FeatureToggle.AsynchronousAzureZipDeployFeatureToggle.ToString()
-                                                                                      }));
+                                                         context.Variables.SetStrings(KnownVariables.EnabledFeatureToggles, existingFeatureToggles);
                                                      })
                                         .Execute();
 
@@ -214,7 +207,7 @@ namespace Calamari.AzureAppService.Tests
                                                          context.Variables[PackageVariables.SubstituteInFilesTargets] = "test.jsp";
                                                      })
                                         .Execute();
-                
+
                 await DoWithRetries(3,
                                     async () =>
                                     {
@@ -222,7 +215,7 @@ namespace Calamari.AzureAppService.Tests
                                     },
                                     secondsBetweenRetries: 10);
             }
-            
+
             [Test]
             public async Task CanDeployJarPackage()
             {
@@ -252,16 +245,16 @@ namespace Calamari.AzureAppService.Tests
                 packageinfo.packageVersion = "1.0.0";
                 packageinfo.packageName = "sample4";
                 greeting = "java";
-                
+
                 var commandResult = await CommandTestBuilder.CreateAsync<DeployAzureAppServiceCommand, Program>()
-                                        .WithArrange(context =>
-                                                     {
-                                                         context.WithPackage(packageinfo.packagePath, packageinfo.packageName, packageinfo.packageVersion);
-                                                         AddVariables(context);
-                                                         context.Variables[SpecialVariables.Action.Azure.WebAppName] = javaSite.Value.Data.Name;
-                                                     })
-                                        .Execute();
-                
+                                                            .WithArrange(context =>
+                                                                         {
+                                                                             context.WithPackage(packageinfo.packagePath, packageinfo.packageName, packageinfo.packageVersion);
+                                                                             AddVariables(context);
+                                                                             context.Variables[SpecialVariables.Action.Azure.WebAppName] = javaSite.Value.Data.Name;
+                                                                         })
+                                                            .Execute();
+
                 commandResult.Outcome.Should().Be(TestExecutionOutcome.Successful);
             }
 
@@ -331,7 +324,6 @@ namespace Calamari.AzureAppService.Tests
                 return packageinfo;
             }
 
-
             async Task<(string packagePath, string packageName, string packageVersion)> PrepareNugetPackage()
             {
                 (string packagePath, string packageName, string packageVersion) packageinfo;
@@ -369,7 +361,6 @@ namespace Calamari.AzureAppService.Tests
                 return packageinfo;
             }
 
-
             private static (string packagePath, string packageName, string packageVersion) PrepareFunctionAppZipPackage()
             {
                 (string packagePath, string packageName, string packageVersion) packageInfo;
@@ -391,15 +382,15 @@ namespace Calamari.AzureAppService.Tests
                 context.Variables.Add(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.SubstituteInFiles);
                 context.Variables.Add(PackageVariables.SubstituteInFilesTargets, "index.html");
                 context.Variables.Add(SpecialVariables.Action.Azure.DeploymentType, "ZipDeploy");
-                
+
                 var settings = BuildAppSettingsJson(new[]
                 {
                     ("WEBSITES_CONTAINER_START_TIME_LIMIT", "460", false),
                     ("WEBSITE_SCM_ALWAYS_ON_ENABLED", "true", false)
                 });
-                
-                context.Variables[SpecialVariables.Action.Azure.AppSettings] =  settings.json;
-                context.Variables[SpecialVariables.Action.Azure.AsyncZipDeploymentTimeout] =  "3";
+
+                context.Variables[SpecialVariables.Action.Azure.AppSettings] = settings.json;
+                context.Variables[SpecialVariables.Action.Azure.AsyncZipDeploymentTimeout] = "3";
             }
         }
 
@@ -408,14 +399,15 @@ namespace Calamari.AzureAppService.Tests
         {
             // For some reason we are having issues creating these linux resources on Standard in EastUS
             protected override string DefaultResourceGroupLocation => RandomAzureRegion.GetRandomRegionWithExclusions("eastus");
-            
+
             static readonly CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
             readonly CancellationToken cancellationToken = CancellationTokenSource.Token;
             AppServicePlanResource appServicePlanResource;
 
             protected override async Task ConfigureTestResources(ResourceGroupResource resourceGroup)
             {
-                var storageAccountName = ResourceGroupName.Replace("-", "").Substring(0, 20);
+                //just generate a completely unique name
+                var storageAccountName = AzureTestResourceHelpers.RandomName(length: 24);
 
                 var storageAccountResponse = await ResourceGroupResource
                                                    .GetStorageAccounts()
@@ -469,13 +461,13 @@ namespace Calamari.AzureAppService.Tests
                                                                                                new AppServiceNameValuePair { Name = "FUNCTIONS_EXTENSION_VERSION", Value = "~4" },
                                                                                                new AppServiceNameValuePair { Name = "AzureWebJobsStorage", Value = $"DefaultEndpointsProtocol=https;AccountName={storageAccountName};AccountKey={keys.First().Value};EndpointSuffix=core.windows.net" },
                                                                                                new AppServiceNameValuePair { Name = "WEBSITES_CONTAINER_START_TIME_LIMIT", Value = "460" },
-                                                                                               new AppServiceNameValuePair { Name = "WEBSITE_SCM_ALWAYS_ON_ENABLED", Value = "true"}
+                                                                                               new AppServiceNameValuePair { Name = "WEBSITE_SCM_ALWAYS_ON_ENABLED", Value = "true" }
                                                                                            }
                                                                                        }
                                                                                    });
 
                 await linuxWebSiteResponse.WaitForCompletionAsync(cancellationToken);
-                
+
                 WebSiteResource = linuxWebSiteResponse.Value;
             }
 
@@ -535,7 +527,6 @@ namespace Calamari.AzureAppService.Tests
                                     secondsBetweenRetries: 10);
             }
 
-
             [Test]
             public async Task CanDeployZip_ToLinuxFunctionApp_WithAsyncDeploymentAndPolling()
             {
@@ -550,11 +541,7 @@ namespace Calamari.AzureAppService.Tests
                                                          AddVariables(context);
 
                                                          var existingFeatureToggles = context.Variables.GetStrings(KnownVariables.EnabledFeatureToggles);
-                                                         context.Variables.SetStrings(KnownVariables.EnabledFeatureToggles,
-                                                                                      existingFeatureToggles.Concat(new[]
-                                                                                      {
-                                                                                          FeatureToggle.AsynchronousAzureZipDeployFeatureToggle.ToString()
-                                                                                      }));
+                                                         context.Variables.SetStrings(KnownVariables.EnabledFeatureToggles, existingFeatureToggles);
                                                      })
                                         .Execute();
 
@@ -568,7 +555,7 @@ namespace Calamari.AzureAppService.Tests
                                     },
                                     secondsBetweenRetries: 10);
             }
-            
+
             [Test]
             public async Task CanDeployJarPackage()
             {
@@ -587,7 +574,7 @@ namespace Calamari.AzureAppService.Tests
                                                                                        AppSettings = new List<AppServiceNameValuePair>
                                                                                        {
                                                                                            new AppServiceNameValuePair { Name = "WEBSITES_CONTAINER_START_TIME_LIMIT", Value = "460" },
-                                                                                           new AppServiceNameValuePair { Name = "WEBSITE_SCM_ALWAYS_ON_ENABLED", Value = "true"}
+                                                                                           new AppServiceNameValuePair { Name = "WEBSITE_SCM_ALWAYS_ON_ENABLED", Value = "true" }
                                                                                        }
                                                                                    }
                                                                                });
@@ -598,16 +585,16 @@ namespace Calamari.AzureAppService.Tests
                 packageinfo.packageVersion = "1.0.0";
                 packageinfo.packageName = "sample4";
                 greeting = "java";
-                
+
                 var commandResult = await CommandTestBuilder.CreateAsync<DeployAzureAppServiceCommand, Program>()
-                                        .WithArrange(context =>
-                                                     {
-                                                         context.WithPackage(packageinfo.packagePath, packageinfo.packageName, packageinfo.packageVersion);
-                                                         AddVariables(context);
-                                                         context.Variables[SpecialVariables.Action.Azure.WebAppName] = javaSite.Value.Data.Name;
-                                                     })
-                                        .Execute();
-                
+                                                            .WithArrange(context =>
+                                                                         {
+                                                                             context.WithPackage(packageinfo.packagePath, packageinfo.packageName, packageinfo.packageVersion);
+                                                                             AddVariables(context);
+                                                                             context.Variables[SpecialVariables.Action.Azure.WebAppName] = javaSite.Value.Data.Name;
+                                                                         })
+                                                            .Execute();
+
                 commandResult.Outcome.Should().Be(TestExecutionOutcome.Successful);
             }
 
@@ -636,14 +623,14 @@ namespace Calamari.AzureAppService.Tests
             {
                 AddAzureVariables(context);
                 context.Variables.Add(SpecialVariables.Action.Azure.DeploymentType, "ZipDeploy");
-                
+
                 var settings = BuildAppSettingsJson(new[]
                 {
                     ("WEBSITES_CONTAINER_START_TIME_LIMIT", "460", false),
                     ("WEBSITE_SCM_ALWAYS_ON_ENABLED", "true", false)
                 });
-                
-                context.Variables[SpecialVariables.Action.Azure.AppSettings] =  settings.json;
+
+                context.Variables[SpecialVariables.Action.Azure.AppSettings] = settings.json;
             }
         }
     }

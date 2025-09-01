@@ -13,6 +13,7 @@ using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.Iis;
+using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using Calamari.Testing.Requirements;
 using Calamari.Tests.Fixtures.Deployment.Packages;
@@ -58,7 +59,7 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             result.AssertOutput("Extracting package to: " + Path.Combine(StagingDirectory, "Acme.Web", "1.0.0"));
 
-            result.AssertOutput("Extracted 11 files");
+            result.AssertOutput("Extracted 10 files");
             result.AssertOutput("Hello from Deploy.ps1");
         }
 
@@ -140,17 +141,15 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        [Category(TestCategory.ScriptingSupport.FSharp)]
         [Category(TestCategory.ScriptingSupport.DotnetScript)]
         public void ShouldInvokeDeployFailedOnError()
         {
             Variables.Set("ShouldFail", "yes");
             var result = DeployPackage();
-            if (ScriptingEnvironment.IsRunningOnMono())
+            if (CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac)
                 result.AssertOutput("I have failed! DeployFailed.sh");
             else
                 result.AssertOutput("I have failed! DeployFailed.ps1");
-            result.AssertNoOutput("I have failed! DeployFailed.fsx");
             result.AssertNoOutput("I have failed! DeployFailed.csx");
         }
 
@@ -160,7 +159,6 @@ namespace Calamari.Tests.Fixtures.Deployment
             var result = DeployPackage();
             result.AssertNoOutput("I have failed! DeployFailed.ps1");
             result.AssertNoOutput("I have failed! DeployFailed.sh");
-            result.AssertNoOutput("I have failed! DeployFailed.fsx");
             result.AssertNoOutput("I have failed! DeployFailed.csx");
         }
 
@@ -297,20 +295,21 @@ namespace Calamari.Tests.Fixtures.Deployment
                     CalamariResult result;
                     using (var variablesFile = new TemporaryFile(Path.GetTempFileName()))
                     {
+                        string encryptionKey;
                         lock (locker) // this save method isn't thread safe
                         {
-                            Variables.Save(variablesFile.FilePath);
+                            encryptionKey =Variables.SaveAsEncryptedExecutionVariables(variablesFile.FilePath);
                         }
 
                         result = Invoke(Calamari()
                             .Action("deploy-package")
                             .Argument("package", nupkgFile.FilePath)
-                            .Argument("variables", variablesFile.FilePath));
+                            .VariablesFileArguments(variablesFile.FilePath, encryptionKey));
                     }
 
                     result.AssertSuccess();
                     var extracted = result.GetOutputForLineContaining("Extracting package to: ");
-                    result.AssertOutput("Extracted 11 files");
+                    result.AssertOutput("Extracted 10 files");
 
                     lock (locker)
                     {

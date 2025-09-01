@@ -14,8 +14,11 @@ using Calamari.Kubernetes.ResourceStatus.Resources;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
 using Calamari.Tests.Helpers;
+using Calamari.Tests.KubernetesFixtures.Builders;
 using FluentAssertions;
+using NSubstitute;
 using NUnit.Framework;
+using YamlDotNet.RepresentationModel;
 
 namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
 {
@@ -99,7 +102,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                                                 new ResourceIdentifier(SupportedResourceGroupVersionKinds.SecretV1, "feed-secret", "default"),
                                                 new ResourceIdentifier(SupportedResourceGroupVersionKinds.ConfigMapV1, "configmap", "default"),
                                                 new ResourceIdentifier(SupportedResourceGroupVersionKinds.ServiceV1, "service", "default"),
-                                                new ResourceIdentifier(new ResourceGroupVersionKind(null, null, "CustomResource"), "custom-resource", "default"));
+                                                new ResourceIdentifier(new ResourceGroupVersionKind("ourapi", "v1", "CustomResource"), "custom-resource", "default"));
         }
 
         [Test]
@@ -271,6 +274,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             fileSystem = fileSystem ?? new TestCalamariPhysicalFileSystem();
             var kubectl = new Kubectl(variables, log, new CommandLineRunner(log, variables));
             var statusCheckerContainer = new RunningStatusCheckContainer();
+            var namespaceResolver = new KubernetesManifestNamespaceResolver(new ApiResourcesScopeLookupBuilder().Build(), log);
             var reportExecutor =
                 new ResourceStatusReportExecutor(variables,
                                                  (_, __, rs) =>
@@ -278,7 +282,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                                                      statusCheckerContainer.StatusCheck = new MockRunningResourceStatusCheck(rs);
                                                      return statusCheckerContainer.StatusCheck;
                                                  });
-            var resourceFinder = new ResourceFinder(variables, new ManifestRetriever(variables, fileSystem));
+            var resourceFinder = new ResourceFinder(variables, new ManifestRetriever(variables, fileSystem), namespaceResolver, log);
 
             var wrapper = new ResourceStatusReportScriptWrapper(kubectl, variables, resourceFinder, reportExecutor)
             {

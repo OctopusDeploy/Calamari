@@ -25,10 +25,11 @@ namespace Calamari.Aws.Deployment.Conventions
 
         public ExecuteCloudFormationChangeSetConvention(
             Func<IAmazonCloudFormation> clientFactory,
-            StackEventLogger logger,
+            StackEventLogger stackEventLogger,
             Func<RunningDeployment, StackArn> stackProvider, 
             Func<RunningDeployment, ChangeSetArn> changeSetProvider,
-            bool waitForComplete): base(logger)
+            bool waitForComplete,
+            ILog log): base(stackEventLogger, log)
         {
             Guard.NotNull(stackProvider, "Stack provider must not be null");
             Guard.NotNull(changeSetProvider, "Change set provider must nobe null");
@@ -69,22 +70,23 @@ namespace Calamari.Aws.Deployment.Conventions
                 return;
             }
 
-            await ExecuteChangeset(clientFactory, stack, changeSet);
+            var pollPeriod = PollPeriod(deployment);
+            await ExecuteChangeset(clientFactory, stack, changeSet, pollPeriod);
             
             if (waitForComplete)
             {
                 await WithAmazonServiceExceptionHandling(() =>
-                    clientFactory.WaitForStackToComplete(CloudFormationDefaults.StatusWaitPeriod, stack, LogAndThrowRollbacks(clientFactory, stack, filter: FilterStackEventsSince(deploymentStartTime)))
+                    clientFactory.WaitForStackToComplete(PollPeriod(deployment), stack, LogAndThrowRollbacks(clientFactory, stack, filter: FilterStackEventsSince(deploymentStartTime)))
                 );
             }
         }
 
-        private async Task<RunningChangeSet> ExecuteChangeset(Func<IAmazonCloudFormation> factory, StackArn stack,
-            ChangeSetArn changeSet)
+        async Task<RunningChangeSet> ExecuteChangeset(Func<IAmazonCloudFormation> factory, StackArn stack,
+            ChangeSetArn changeSet, TimeSpan pollPeriod)
         {
             try
             {
-                var changes = await factory.WaitForChangeSetCompletion(CloudFormationDefaults.StatusWaitPeriod,
+                var changes = await factory.WaitForChangeSetCompletion(pollPeriod,
                     new RunningChangeSet(stack, changeSet));
 
 

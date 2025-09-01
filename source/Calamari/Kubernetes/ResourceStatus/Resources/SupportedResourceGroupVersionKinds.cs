@@ -9,6 +9,7 @@ namespace Calamari.Kubernetes.ResourceStatus.Resources
         public static ResourceGroupVersionKind SecretV1 => new ResourceGroupVersionKind("", "v1", "Secret");
         public static ResourceGroupVersionKind ConfigMapV1 => new ResourceGroupVersionKind("", "v1", "ConfigMap");
         public static ResourceGroupVersionKind PersistentVolumeClaimV1 => new ResourceGroupVersionKind("", "v1", "PersistentVolumeClaim");
+        public static ResourceGroupVersionKind PersistentVolumeV1 => new ResourceGroupVersionKind("", "v1", "PersistentVolume");
         
         public static ResourceGroupVersionKind ReplicaSetV1 => new ResourceGroupVersionKind("apps", "v1", "ReplicaSet");
         public static ResourceGroupVersionKind DeploymentV1 => new ResourceGroupVersionKind("apps", "v1", "Deployment");

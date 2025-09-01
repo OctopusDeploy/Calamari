@@ -134,6 +134,7 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         [TestCase(true)]
         [TestCase(false)]
+        [Ignore("These tests will be transitioned to using a local Kind cluster, rather than a remote cluster")]
         public void DeployRawYaml_WithRawYamlDeploymentScriptOrCommand_OutputShouldIndicateSuccessfulDeployment(bool usePackage)
         {
             SetupAndRunKubernetesRawYamlDeployment(usePackage, SimpleDeploymentResource);
@@ -163,6 +164,7 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         [TestCase(true)]
         [TestCase(false)]
+        [Ignore("These tests will be transitioned to using a local Kind cluster, rather than a remote cluster")]
         public void DeployRawYaml_WithInvalidYaml_OutputShouldIndicateFailure(bool usePackage)
         {
             SetupAndRunKubernetesRawYamlDeployment(usePackage, InvalidDeploymentResource, shouldSucceed: false);
@@ -179,6 +181,7 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         [TestCase(true)]
         [TestCase(false)]
+        [Ignore("These tests will be transitioned to using a local Kind cluster, rather than a remote cluster")]
         public void DeployRawYaml_WithYamlThatWillNotSucceed_OutputShouldIndicateFailure(bool usePackage)
         {
             SetupAndRunKubernetesRawYamlDeployment(usePackage, FailToDeploymentResource, shouldSucceed: false);
@@ -193,6 +196,7 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
+        [Ignore("These tests will be transitioned to using a local Kind cluster, rather than a remote cluster")]
         public void DeployRawYaml_WithMultipleYamlFilesGlobPatterns_YamlFilesAppliedInCorrectBatches()
         {
             SetVariablesToAuthoriseWithAmazonAccount();
@@ -396,7 +400,7 @@ namespace Calamari.Tests.KubernetesFixtures
                         { "isDynamic", bool.TrueString },
                         { "awsUseWorkerCredentials", bool.TrueString },
                         { "awsAssumeRole", bool.TrueString },
-                        { "awsAssumeRoleArn", eksIamRolArn },
+                        { "awsAssumeRoleArn", eksIamRolArn }
                     };
 
                 DoDiscoveryAndAssertReceivedServiceMessageWithMatchingProperties(authenticationDetails,
@@ -486,7 +490,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 { "updateIfExisting", bool.TrueString },
                 { "isDynamic", bool.TrueString },
                 { "awsUseWorkerCredentials", bool.FalseString },
-                { "awsAssumeRole", bool.FalseString }
+                { "awsAssumeRole", bool.FalseString },
             };
 
             DoDiscoveryAndAssertReceivedServiceMessageWithMatchingProperties(authenticationDetails, serviceMessageProperties);
@@ -534,7 +538,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 { "awsAssumeRole", bool.TrueString },
                 { "awsAssumeRoleArn", eksIamRolArn },
                 { "awsAssumeRoleSession", "ThisIsASessionName" },
-                { "awsAssumeRoleSessionDurationSeconds", sessionDuration.ToString() }
+                { "awsAssumeRoleSessionDurationSeconds", sessionDuration.ToString() },
             };
 
             DoDiscoveryAndAssertReceivedServiceMessageWithMatchingProperties(authenticationDetails, serviceMessageProperties);

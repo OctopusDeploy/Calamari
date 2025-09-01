@@ -44,9 +44,9 @@ namespace Calamari.Commands.Java
 
             var conventions = new List<IConvention>
             {
-                new JavaStepConvention(actionType, new JavaRunner(commandLineRunner, variables)),
+                new JavaStepConvention(actionType, new JavaRunner(commandLineRunner, variables), log),
                 new FeatureRollbackConvention(DeploymentStages.DeployFailed, fileSystem, scriptEngine,
-                    commandLineRunner, embeddedResources)
+                    commandLineRunner, embeddedResources, log)
             };
 
             var deployment = new RunningDeployment(null, variables);

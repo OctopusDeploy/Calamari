@@ -10,34 +10,47 @@ namespace Calamari.Common.Features.Substitutions
     {
         readonly ILog log;
         readonly ICalamariFileSystem fileSystem;
+        readonly IVariables variables;
 
-        public FileSubstituter(ILog log, ICalamariFileSystem fileSystem)
+        public FileSubstituter(ILog log, ICalamariFileSystem fileSystem, IVariables variables)
         {
             this.log = log;
             this.fileSystem = fileSystem;
+            this.variables = variables;
         }
 
-        public void PerformSubstitution(string sourceFile, IVariables variables)
-        {
-            PerformSubstitution(sourceFile, variables, sourceFile);
-        }
+        public void PerformSubstitution(string sourceFile)
+            => PerformSubstitution(sourceFile, sourceFile);
 
-        public void PerformSubstitution(string sourceFile, IVariables variables, string targetFile)
+        public void PerformSubstitution(string sourceFile, string targetFile) 
+            => PerformSubstitutionAndUpdateFile(sourceFile, targetFile, variables.GetFlag(KnownVariables.ShouldFailDeploymentOnSubstitutionFails));
+
+        protected virtual void PerformSubstitutionAndUpdateFile(string sourceFile, string targetFile, bool throwOnError, bool throwPlainOctostacheError = false)
         {
             log.Verbose($"Performing variable substitution on '{sourceFile}'");
 
             var source = fileSystem.ReadFile(sourceFile, out var sourceFileEncoding);
-            var encoding = GetEncoding(variables, sourceFileEncoding);
+            var encoding = GetEncoding(sourceFileEncoding);
 
             var result = variables.Evaluate(source, out var error, false);
 
             if (!string.IsNullOrEmpty(error))
+            {
+                if (throwOnError)
+                {
+                    var message = !throwPlainOctostacheError
+                        ? $"Parsing file '{sourceFile}' with Octostache returned the following error: `{error}`"
+                        : error;
+                    throw new InvalidOperationException(message);
+                }
+
                 log.VerboseFormat("Parsing file '{0}' with Octostache returned the following error: `{1}`", sourceFile, error);
+            }
 
             fileSystem.OverwriteFile(targetFile, result, encoding);
         }
 
-        Encoding GetEncoding(IVariables variables, Encoding fileEncoding)
+        Encoding GetEncoding(Encoding fileEncoding)
         {
             var requestedEncoding = variables.Get(PackageVariables.SubstituteInFilesOutputEncoding);
             if (requestedEncoding == null)

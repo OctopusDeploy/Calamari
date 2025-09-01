@@ -4,7 +4,6 @@ using System.Linq;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting.Bash;
 using Calamari.Common.Features.Scripting.DotnetScript;
-using Calamari.Common.Features.Scripting.FSharp;
 using Calamari.Common.Features.Scripting.Python;
 using Calamari.Common.Features.Scripting.ScriptCS;
 using Calamari.Common.Features.Scripting.WindowsPowerShell;
@@ -101,15 +100,13 @@ namespace Calamari.Common.Features.Scripting
             switch (scriptSyntax)
             {
                 case ScriptSyntax.PowerShell:
-                    return new PowerShellScriptExecutor();
+                    return new PowerShellScriptExecutor(log);
                 case ScriptSyntax.CSharp:
-                    return runDotnetScript ? (IScriptExecutor) new DotnetScriptExecutor(commandLineRunner) : new ScriptCSScriptExecutor();
+                    return runDotnetScript ? (IScriptExecutor) new DotnetScriptExecutor(commandLineRunner, log) : new ScriptCSScriptExecutor(log);
                 case ScriptSyntax.Bash:
-                    return new BashScriptExecutor();
-                case ScriptSyntax.FSharp:
-                    return new FSharpExecutor(log);
+                    return new BashScriptExecutor(log);
                 case ScriptSyntax.Python:
-                    return new PythonScriptExecutor();
+                    return new PythonScriptExecutor(log);
                 default:
                     throw new NotSupportedException($"{scriptSyntax} script are not supported for execution");
             }

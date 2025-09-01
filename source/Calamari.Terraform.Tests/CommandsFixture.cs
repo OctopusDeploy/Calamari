@@ -18,6 +18,7 @@ using Calamari.Common.Plumbing.Variables;
 using Calamari.Terraform.Commands;
 using Calamari.Terraform.Tests.CommonTemplates;
 using Calamari.Testing;
+using Calamari.Testing.Azure;
 using Calamari.Testing.Helpers;
 using FluentAssertions;
 using Newtonsoft.Json;
@@ -206,7 +207,7 @@ namespace Calamari.Terraform.Tests
                                       _ =>
                                       {
                                           _.Variables.Add(ScriptVariables.ScriptSource,
-                                              ScriptVariables.ScriptSourceOptions.Package);
+                                                          ScriptVariables.ScriptSourceOptions.Package);
                                           _.Variables.Add(TerraformSpecialVariables.Action.Terraform.EnvironmentVariables, null);
                                       },
                                       "Simple")
@@ -225,7 +226,7 @@ namespace Calamari.Terraform.Tests
                                           _.Variables.Add(TerraformSpecialVariables.Action.Terraform.Template, template);
                                           _.Variables.Add(TerraformSpecialVariables.Action.Terraform.TemplateParameters, "{}");
                                           _.Variables.Add(ScriptVariables.ScriptSource,
-                                              ScriptVariables.ScriptSourceOptions.Inline);
+                                                          ScriptVariables.ScriptSourceOptions.Inline);
                                           _.Variables.Add(TerraformSpecialVariables.Action.Terraform.EnvironmentVariables,
                                                           JsonConvert.SerializeObject(new Dictionary<string, string> { { "TF_VAR_ami", "new ami value" } }));
                                       },
@@ -470,7 +471,7 @@ namespace Calamari.Terraform.Tests
             output.OutputVariables.ContainsKey("TerraformValueOutputs[url]").Should().BeTrue();
             var requestUri = output.OutputVariables["TerraformValueOutputs[url]"].Value;
 
-            string fileData;            
+            string fileData;
             // This intermittently throws a 401, requiring authorization. These buckets are public by default and the client has no authorization so this looks to be a race condition in the bucket configuration.    
             var strategy = TestingRetryPolicies.CreateGoogleCloudHttpRetryPipeline();
             using (var client = new HttpClient())
@@ -494,24 +495,20 @@ namespace Calamari.Terraform.Tests
         [Test]
         public async Task AzureIntegration()
         {
+            var resourceGroupName = AzureTestResourceHelpers.GetResourceGroupName();
+            var resourceGroupLocation = RandomAzureRegion.GetRandomRegionWithExclusions();
+
+            var subscriptionId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionId, CancellationToken.None);
+            var tenantId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId, CancellationToken.None);
+            var clientId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId, CancellationToken.None);
+            var clientPassword = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword, CancellationToken.None);
+
             var random = Guid.NewGuid().ToString("N").Substring(0, 6);
             var appName = $"cfe2e-{random}";
             var expectedHostName = $"{appName}.azurewebsites.net";
 
             using var temporaryFolder = TemporaryDirectory.Create();
             CopyAllFiles(TestEnvironment.GetTestPath("Azure"), temporaryFolder.DirectoryPath, terraformCliVersion);
-
-            async Task PopulateVariables(CommandTestBuilderContext _)
-            {
-                _.Variables.Add(AzureAccountVariables.SubscriptionId, await ExternalVariables.Get(ExternalVariable.AzureSubscriptionId, CancellationToken.None));
-                _.Variables.Add(AzureAccountVariables.TenantId, await ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId, CancellationToken.None));
-                _.Variables.Add(AzureAccountVariables.ClientId, await ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId, CancellationToken.None));
-                _.Variables.Add(AzureAccountVariables.Password, await ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword, CancellationToken.None));
-                _.Variables.Add("app_name", appName);
-                _.Variables.Add(TerraformSpecialVariables.Action.Terraform.VarFiles, "example.tfvars");
-                _.Variables.Add(TerraformSpecialVariables.Action.Terraform.AzureManagedAccount, Boolean.TrueString);
-                _.Variables.Add(KnownVariables.OriginalPackageDirectoryPath, temporaryFolder.DirectoryPath);
-            }
 
             var output = await ExecuteAndReturnResult(planCommand, PopulateVariables, temporaryFolder.DirectoryPath);
             output.OutputVariables.ContainsKey("TerraformPlanOutput").Should().BeTrue();
@@ -524,6 +521,21 @@ namespace Calamari.Terraform.Tests
             await ExecuteAndReturnResult(destroyCommand, PopulateVariables, temporaryFolder.DirectoryPath);
 
             await AssertResponseIsNotReachable();
+            return;
+
+            void PopulateVariables(CommandTestBuilderContext _)
+            {
+                _.Variables.Add(AzureAccountVariables.SubscriptionId,subscriptionId );
+                _.Variables.Add(AzureAccountVariables.TenantId,tenantId);
+                _.Variables.Add(AzureAccountVariables.ClientId,clientId);
+                _.Variables.Add(AzureAccountVariables.Password, clientPassword);
+                _.Variables.Add("app_name", appName);
+                _.Variables.Add("resource_group_name", resourceGroupName);
+                _.Variables.Add("resource_group_location", resourceGroupLocation);
+                _.Variables.Add(TerraformSpecialVariables.Action.Terraform.VarFiles, "example.tfvars");
+                _.Variables.Add(TerraformSpecialVariables.Action.Terraform.AzureManagedAccount, Boolean.TrueString);
+                _.Variables.Add(KnownVariables.OriginalPackageDirectoryPath, temporaryFolder.DirectoryPath);
+            }
 
             async Task AssertResponseIsNotReachable()
             {
@@ -573,18 +585,8 @@ namespace Calamari.Terraform.Tests
             using var temporaryFolder = TemporaryDirectory.Create();
             CopyAllFiles(TestEnvironment.GetTestPath("AWS"), temporaryFolder.DirectoryPath);
 
-            async Task PopulateVariables(CommandTestBuilderContext _)
-            {
-                _.Variables.Add(TerraformSpecialVariables.Action.Terraform.FileSubstitution, "test.txt");
-                _.Variables.Add("Octopus.Action.Amazon.AccessKey", await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3AccessKey, CancellationToken.None));
-                _.Variables.Add("Octopus.Action.Amazon.SecretKey", await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3SecretKey, CancellationToken.None));
-                _.Variables.Add("Octopus.Action.Aws.Region", "ap-southeast-1");
-                _.Variables.Add("Hello", "Hello World from AWS");
-                _.Variables.Add("bucket_name", bucketName);
-                _.Variables.Add(TerraformSpecialVariables.Action.Terraform.VarFiles, "example.tfvars");
-                _.Variables.Add(TerraformSpecialVariables.Action.Terraform.AWSManagedAccount, "AWS");
-                _.Variables.Add(KnownVariables.OriginalPackageDirectoryPath, temporaryFolder.DirectoryPath);
-            }
+            var accessKey = await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3AccessKey, CancellationToken.None);
+            var secretKey = await ExternalVariables.Get(ExternalVariable.AwsCloudFormationAndS3SecretKey, CancellationToken.None);
 
             var output = await ExecuteAndReturnResult(planCommand, PopulateVariables, temporaryFolder.DirectoryPath);
             output.OutputVariables.ContainsKey("TerraformPlanOutput").Should().BeTrue();
@@ -605,18 +607,27 @@ namespace Calamari.Terraform.Tests
                 var response = await client.GetAsync(expectedUrl).ConfigureAwait(false);
                 response.StatusCode.Should().Be(HttpStatusCode.NotFound);
             }
+
+            return;
+
+            void PopulateVariables(CommandTestBuilderContext _)
+            {
+                _.Variables.Add(TerraformSpecialVariables.Action.Terraform.FileSubstitution, "test.txt");
+                _.Variables.Add("Octopus.Action.Amazon.AccessKey", accessKey);
+                _.Variables.Add("Octopus.Action.Amazon.SecretKey",secretKey);
+                _.Variables.Add("Octopus.Action.Aws.Region", "ap-southeast-1");
+                _.Variables.Add("Hello", "Hello World from AWS");
+                _.Variables.Add("bucket_name", bucketName);
+                _.Variables.Add(TerraformSpecialVariables.Action.Terraform.VarFiles, "example.tfvars");
+                _.Variables.Add(TerraformSpecialVariables.Action.Terraform.AWSManagedAccount, "AWS");
+                _.Variables.Add(KnownVariables.OriginalPackageDirectoryPath, temporaryFolder.DirectoryPath);
+            }
         }
 
         [Test]
         public async Task PlanDetailedExitCode()
         {
             using var stateFileFolder = TemporaryDirectory.Create();
-
-            void PopulateVariables(CommandTestBuilderContext _)
-            {
-                _.Variables.Add(TerraformSpecialVariables.Action.Terraform.AdditionalActionParams,
-                                $"-state=\"{Path.Combine(stateFileFolder.DirectoryPath, "terraform.tfstate")}\" -refresh=false");
-            }
 
             var output = await ExecuteAndReturnResult(planCommand, PopulateVariables, "PlanDetailedExitCode");
             output.OutputVariables.ContainsKey("TerraformPlanDetailedExitCode").Should().BeTrue();
@@ -629,6 +640,13 @@ namespace Calamari.Terraform.Tests
             output = await ExecuteAndReturnResult(planCommand, PopulateVariables, "PlanDetailedExitCode");
             output.OutputVariables.ContainsKey("TerraformPlanDetailedExitCode").Should().BeTrue();
             output.OutputVariables["TerraformPlanDetailedExitCode"].Value.Should().Be("0");
+            return;
+
+            void PopulateVariables(CommandTestBuilderContext _)
+            {
+                _.Variables.Add(TerraformSpecialVariables.Action.Terraform.AdditionalActionParams,
+                                $"-state=\"{Path.Combine(stateFileFolder.DirectoryPath, "terraform.tfstate")}\" -refresh=false");
+            }
         }
 
         [Test]
@@ -644,7 +662,7 @@ namespace Calamari.Terraform.Tests
                                           _.Variables.Add(TerraformSpecialVariables.Action.Terraform.Template, template);
                                           _.Variables.Add(TerraformSpecialVariables.Action.Terraform.TemplateParameters, variables);
                                           _.Variables.Add(ScriptVariables.ScriptSource,
-                                              ScriptVariables.ScriptSourceOptions.Inline);
+                                                          ScriptVariables.ScriptSourceOptions.Inline);
                                       },
                                       String.Empty,
                                       _ =>
@@ -685,7 +703,7 @@ output ""config-map-aws-auth"" {{
                                           _.Variables.Add(TerraformSpecialVariables.Action.Terraform.Template, template);
                                           _.Variables.Add(TerraformSpecialVariables.Action.Terraform.TemplateParameters, "");
                                           _.Variables.Add(ScriptVariables.ScriptSource,
-                                              ScriptVariables.ScriptSourceOptions.Inline);
+                                                          ScriptVariables.ScriptSourceOptions.Inline);
                                       },
                                       String.Empty,
                                       _ =>
@@ -706,7 +724,7 @@ output ""config-map-aws-auth"" {{
                 .Should()
                 .NotContain("Could not parse Terraform CLI version");
         }
-        
+
         [Test]
         public void InlineJsonTemplateAndVariables()
         {
@@ -723,7 +741,7 @@ output ""config-map-aws-auth"" {{
                                           _.Variables.Add(TerraformSpecialVariables.Action.Terraform.Template, template);
                                           _.Variables.Add(TerraformSpecialVariables.Action.Terraform.TemplateParameters, variables);
                                           _.Variables.Add(ScriptVariables.ScriptSource,
-                                              ScriptVariables.ScriptSourceOptions.Inline);
+                                                          ScriptVariables.ScriptSourceOptions.Inline);
                                       },
                                       String.Empty,
                                       _ =>
@@ -744,8 +762,7 @@ output ""config-map-aws-auth"" {{
                 {
                     sourceFolderPath = Path.Combine(sourceFolderPath, terraformVersion);
                 }
-                
-                
+
                 var filePaths = Directory.GetFiles(sourceFolderPath);
 
                 // Copy the files and overwrite destination files if they already exist.
@@ -767,35 +784,10 @@ output ""config-map-aws-auth"" {{
                                          string folderName,
                                          Action<TestCalamariCommandResult>? assert = null)
         {
-            Func<CommandTestBuilderContext, Task> wrappedAction = context =>
-                                                                  {
-                                                                      populateVariables(context);
-                                                                      return Task.CompletedTask;
-                                                                  };
-            
-            return ExecuteAndReturnLogOutput(command, wrappedAction, folderName, assert);
-        }
-        
-        string ExecuteAndReturnLogOutput(string command,
-                                         Func<CommandTestBuilderContext, Task> populateVariables,
-                                         string folderName,
-                                         Action<TestCalamariCommandResult>? assert = null)
-        {
             return ExecuteAndReturnResult(command, populateVariables, folderName, assert).Result.FullLog;
         }
-        
 
         async Task<TestCalamariCommandResult> ExecuteAndReturnResult(string command, Action<CommandTestBuilderContext> populateVariables, string folderName, Action<TestCalamariCommandResult>? assert = null)
-        {
-            Func<CommandTestBuilderContext, Task> wrappedAction = context =>
-                                                         {
-                                                             populateVariables(context);
-                                                             return Task.CompletedTask;
-                                                         };
-            return await ExecuteAndReturnResult(command, wrappedAction, folderName, assert);
-        }
-        
-        async Task<TestCalamariCommandResult> ExecuteAndReturnResult(string command, Func<CommandTestBuilderContext, Task> populateVariables, string folderName, Action<TestCalamariCommandResult>? assert = null)
         {
             var assertResult = assert ?? (_ => { });
 
@@ -805,18 +797,14 @@ output ""config-map-aws-auth"" {{
                                                  .WithArrange(context =>
                                                               {
                                                                   context.Variables.Add(ScriptVariables.ScriptSource,
-                                                                      ScriptVariables.ScriptSourceOptions.Package);
+                                                                                        ScriptVariables.ScriptSourceOptions.Package);
                                                                   context.Variables.Add(TerraformSpecialVariables.Packages.PackageId, terraformFiles);
                                                                   context.Variables.Add(TerraformSpecialVariables.Calamari.TerraformCliPath,
                                                                                         Path.GetDirectoryName(customTerraformExecutable));
                                                                   context.Variables.Add(TerraformSpecialVariables.Action.Terraform.CustomTerraformExecutable,
                                                                                         customTerraformExecutable);
 
-                                                                  var task = populateVariables(context);
-                                                                  if (!task.IsCompleted)
-                                                                  {
-                                                                      task.RunSynchronously();
-                                                                  }
+                                                                  populateVariables(context);
 
                                                                   var isInline = context.Variables.Get(ScriptVariables.ScriptSource)!
                                                                                         .Equals(ScriptVariables.ScriptSourceOptions.Inline, StringComparison.InvariantCultureIgnoreCase);
@@ -870,7 +858,7 @@ output ""config-map-aws-auth"" {{
             if (TerraformCliVersionAsObject.CompareTo(minimumVersion) < 0
                 || TerraformCliVersionAsObject.CompareTo(maximumVersion) >= 0)
             {
-                var becauseText = because is not null ? $" because {because}" : null; 
+                var becauseText = because is not null ? $" because {because}" : null;
                 Assert.Ignore($"Test ignored as terraform version is not between {minimumVersion} and {maximumVersion}{becauseText}");
             }
         }

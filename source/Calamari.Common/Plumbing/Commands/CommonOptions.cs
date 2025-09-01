@@ -29,11 +29,15 @@ namespace Calamari.Common.Plumbing.Commands
             var options = new CommonOptions(command);
 
             var set = new OptionSet()
-                .Add("variables=", "Path to a JSON file containing variables.", v => options.InputVariables.VariablesFile = v)
-                .Add("outputVariables=", "Base64 encoded encrypted JSON file containing output variables.", v => options.InputVariables.OutputVariablesFile = v)
-                .Add("outputVariablesPassword=", "Password used to decrypt output-variables", v => options.InputVariables.OutputVariablesPassword = v)
-                .Add("sensitiveVariables=", "Password protected JSON file containing sensitive-variables.", v => options.InputVariables.SensitiveVariablesFiles.Add(v))
-                .Add("sensitiveVariablesPassword=", "Password used to decrypt sensitive-variables.", v => options.InputVariables.SensitiveVariablesPassword = v);
+                      .Add("variables=", "Path to a encrypted JSON file containing variables.", v => options.InputVariables.VariableFiles.Add(v))
+                      .Add("variablesPassword=", "Password used to decrypt variables.", v => options.InputVariables.VariablesPassword = v)
+                      .Add("outputVariables=", "Path to a encrypted JSON file containing output variables from previous executions.", v => options.InputVariables.OutputVariablesFile = v)
+                      .Add("outputVariablesPassword=", "Password used to decrypt output variables", v => options.InputVariables.OutputVariablesPassword = v);
+
+            //these are legacy options to support the V2 pipeline
+            set.Add("sensitiveVariables=", "(DEPRECATED) Path to a encrypted JSON file containing sensitive variables. This file format is deprecated.", v => options.InputVariables.DeprecatedFormatVariableFiles.Add(v))
+               .Add("sensitiveVariablesPassword=", "(DEPRECATED) Password used to decrypt sensitive variables.", v => options.InputVariables.DeprecatedVariablesPassword = v);
+
             options.RemainingArguments = set.Parse(args.Skip(1));
 
             return options;
@@ -41,11 +45,14 @@ namespace Calamari.Common.Plumbing.Commands
 
         public class Variables
         {
-            public string? VariablesFile { get; internal set; }
-            public List<string> SensitiveVariablesFiles { get; } = new List<string>();
-            public string? SensitiveVariablesPassword { get; internal set; }
+            public List<string> VariableFiles { get; internal set; } = new List<string>();
+            public string? VariablesPassword { get; internal set; }
             public string? OutputVariablesFile { get; internal set; }
             public string? OutputVariablesPassword { get; internal set; }
+
+            //These are to support the V2 pipeline
+            public List<string> DeprecatedFormatVariableFiles { get; internal set; } = new List<string>();
+            public string? DeprecatedVariablesPassword { get; internal set; }
         }
     }
 }

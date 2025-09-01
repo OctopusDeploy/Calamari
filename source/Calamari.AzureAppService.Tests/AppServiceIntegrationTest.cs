@@ -12,10 +12,12 @@ using Azure.ResourceManager.AppService;
 using Azure.ResourceManager.AppService.Models;
 using Azure.ResourceManager.Resources;
 using Calamari.Azure;
+using Calamari.Azure.AppServices;
 using Calamari.AzureAppService.Azure;
 using Calamari.AzureAppService.Json;
 using Calamari.CloudAccounts;
 using Calamari.Testing;
+using Calamari.Testing.Azure;
 using FluentAssertions;
 using Newtonsoft.Json;
 using NUnit.Framework;
@@ -55,7 +57,7 @@ namespace Calamari.AzureAppService.Tests
             var activeDirectoryEndpointBaseUri =
                 Environment.GetEnvironmentVariable(AccountVariables.ActiveDirectoryEndPoint) ?? DefaultVariables.ActiveDirectoryEndpoint;
 
-            ResourceGroupName = $"{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid():N}";
+            ResourceGroupName = AzureTestResourceHelpers.GetResourceGroupName();
 
             ClientId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId, cancellationToken);
             ClientSecret = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword, cancellationToken);
@@ -84,6 +86,7 @@ namespace Calamari.AzureAppService.Tests
 
             //create the resource group
             SubscriptionResource = ArmClient.GetSubscriptionResource(SubscriptionResource.CreateResourceIdentifier(SubscriptionId));
+
             var response = await SubscriptionResource
                                  .GetResourceGroups()
                                  .CreateOrUpdateAsync(WaitUntil.Completed,
@@ -92,10 +95,8 @@ namespace Calamari.AzureAppService.Tests
                                                       {
                                                           Tags =
                                                           {
-                                                              // give them an expiry of 14 days so if the tests fail to clean them up
-                                                              // they will be automatically cleaned up by the Sandbox cleanup process
-                                                              // We keep them for 14 days just in case we need to do debugging/investigation
-                                                              ["LifetimeInDays"] = "14"
+                                                              [AzureTestResourceHelpers.ResourceGroupTags.LifetimeInDaysKey] = AzureTestResourceHelpers.ResourceGroupTags.LifetimeInDaysValue,
+                                                              [AzureTestResourceHelpers.ResourceGroupTags.SourceKey] = AzureTestResourceHelpers.ResourceGroupTags.SourceValue
                                                           }
                                                       });
 

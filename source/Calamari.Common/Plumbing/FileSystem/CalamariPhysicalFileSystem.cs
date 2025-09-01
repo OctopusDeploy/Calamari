@@ -602,7 +602,7 @@ namespace Calamari.Common.Plumbing.FileSystem
                 count += CopyDirectory(childSourceDirectory, childTargetDirectory, cancel);
             }
 
-            return count;
+            return count;   
         }
 
         public void CopyFile(string sourceFile, string targetFile)

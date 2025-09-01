@@ -6,15 +6,10 @@ namespace Calamari.Common.FeatureToggles
     {
         public static class KnownSlugs
         {
-            public const string KubernetesObjectManifestInspection = "kubernetes-object-manifest-inspection";
-            public const string KOSForHelm = "kos-for-helm";
-            public const string ExecuteHelmUpgradeCommandViaShellScript = "execute-helm-upgrade-command-via-shell-script";
+            public const string ArgoCDCreatePullRequestFeatureToggle = "argocd-create-pull-request";
         };
 
-        public static readonly OctopusFeatureToggle NonPrimaryGitDependencySupportFeatureToggle = new OctopusFeatureToggle("non-primary-git-dependency-support");
-        public static readonly OctopusFeatureToggle KubernetesObjectManifestInspectionFeatureToggle = new OctopusFeatureToggle(KnownSlugs.KubernetesObjectManifestInspection);
-        public static readonly OctopusFeatureToggle KOSForHelmFeatureToggle = new OctopusFeatureToggle(KnownSlugs.KOSForHelm);
-        public static readonly OctopusFeatureToggle ExecuteHelmUpgradeCommandViaShellScriptFeatureToggle = new OctopusFeatureToggle(KnownSlugs.ExecuteHelmUpgradeCommandViaShellScript);
+        public static readonly OctopusFeatureToggle ArgoCDCreatePullRequestFeatureToggle = new OctopusFeatureToggle(KnownSlugs.ArgoCDCreatePullRequestFeatureToggle);
 
         public class OctopusFeatureToggle
         {

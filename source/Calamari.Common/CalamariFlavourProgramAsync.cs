@@ -40,17 +40,16 @@ namespace Calamari.Common
 
         protected virtual void ConfigureContainer(ContainerBuilder builder, CommonOptions options)
         {
+            //register the options into the DI
+            builder.RegisterInstance(options).AsSelf();
+            
             var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
             builder.RegisterInstance(fileSystem).As<ICalamariFileSystem>();
-            builder.RegisterType<VariablesFactory>().AsSelf();
-            builder.Register(c => c.Resolve<VariablesFactory>().Create(options)).As<IVariables>().SingleInstance();
             builder.RegisterType<ScriptEngine>().As<IScriptEngine>();
             builder.RegisterType<VariableLogger>().AsSelf();
             builder.RegisterInstance(log).As<ILog>().SingleInstance();
             builder.RegisterType<FreeSpaceChecker>().As<IFreeSpaceChecker>().SingleInstance();
             builder.RegisterType<CommandLineRunner>().As<ICommandLineRunner>().SingleInstance();
-            builder.RegisterType<FileSubstituter>().As<IFileSubstituter>();
-            builder.RegisterType<SubstituteInFiles>().As<ISubstituteInFiles>();
             builder.RegisterType<CombinedPackageExtractor>().As<ICombinedPackageExtractor>();
             builder.RegisterType<ExtractPackage>().As<IExtractPackage>();
             builder.RegisterType<AssemblyEmbeddedResources>().As<ICalamariEmbeddedResources>();
@@ -59,6 +58,9 @@ namespace Calamari.Common
             builder.Register(context => ConfigurationTransformer.FromVariables(context.Resolve<IVariables>(), context.Resolve<ILog>())).As<IConfigurationTransformer>();
             builder.RegisterType<DeploymentJournalWriter>().As<IDeploymentJournalWriter>().SingleInstance();
             builder.RegisterType<CodeGenFunctionsRegistry>().SingleInstance();
+            
+            builder.RegisterModule<VariablesModule>();
+            builder.RegisterModule<SubstitutionsModule>();
 
             var assemblies = GetAllAssembliesToRegister().ToArray();
 

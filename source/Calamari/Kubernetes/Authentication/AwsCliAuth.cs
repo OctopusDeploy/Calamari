@@ -1,17 +1,14 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Text.RegularExpressions;
 using Calamari.CloudAccounts;
 using Calamari.Common.FeatureToggles;
-using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes.Integration;
-using Newtonsoft.Json.Linq;
 using Octopus.CoreUtilities;
 using Octopus.CoreUtilities.Extensions;
 using Octopus.Versioning.Semver;
-using InvalidOperationException = Amazon.CloudFormation.Model.InvalidOperationException;
 
 namespace Calamari.Kubernetes.Authentication
 {
@@ -84,6 +81,8 @@ namespace Calamari.Kubernetes.Authentication
                     }
 
                     log.Verbose("The EKS cluster Url specified should contain a valid aws region name");
+
+                    return false;
                 }
 
                 log.Verbose(
@@ -132,16 +131,15 @@ namespace Calamari.Kubernetes.Authentication
             }
         }
 
-        static string GetEksClusterRegion(string clusterUrl) => clusterUrl.Replace(".eks.amazonaws.com", "").Split('.').Last();
+        static string GetEksClusterRegion(string clusterUrl)
+        {
+            var match = Regex.Match(clusterUrl, @"^https:\/\/[^.]+(?:\.[^.]+)?\.([a-z0-9-]+)\.eks\.amazonaws\.com$");
+            return match.Success ? match.Groups[1].Value : null;
+        }
 
         void SetKubeConfigAuthenticationToAwsCliUsingToken(string user, string clusterName, string region)
         {
-            var token = deploymentVariables.Get(AccountVariables.Jwt);
-
-            if (string.IsNullOrEmpty(token))
-            {
-                token = awsCli.GetEksClusterToken(clusterName, region);
-            }
+            var token = awsCli.GetEksClusterToken(clusterName, region);
 
             var arguments = new List<string> { "config", "set-credentials", user, $"--token={token}" };
 
@@ -151,8 +149,6 @@ namespace Calamari.Kubernetes.Authentication
         
         void SetKubeConfigAuthenticationToAwsCliUsingExec(string user, string clusterName, string region)
         {
-            var oidcJwt = deploymentVariables.Get(AccountVariables.Jwt);
-            
             var apiVersion = GetKubeCtlAuthApiVersion();
             
             var arguments = new List<string>
@@ -167,12 +163,6 @@ namespace Calamari.Kubernetes.Authentication
                 $"--exec-arg=--region={region}",
                 $"--exec-api-version={apiVersion}"
             };
-
-            if (!oidcJwt.IsNullOrEmpty())
-            {
-                arguments.Add($"--token={oidcJwt}");
-                log.AddValueToRedact(oidcJwt, "<token>");
-            }
 
             kubectl.ExecuteCommandAndAssertSuccess(arguments.ToArray());
         }

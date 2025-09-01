@@ -47,7 +47,7 @@ namespace Calamari.AzureScripting.Tests
             var psScript = @"
 $ErrorActionPreference = 'Continue'
 az --version
-Get-AzureEnvironment
+Get-AzEnvironment
 az group list";
 
             await CommandTestBuilder.CreateAsync<RunScriptCommand, Program>()
@@ -68,7 +68,7 @@ az group list";
             var psScript = @"
 $ErrorActionPreference = 'Continue'
 az --version
-Get-AzureEnvironment
+Get-AzEnvironment
 az group list";
 
             await CommandTestBuilder.CreateAsync<RunScriptCommand, Program>()
@@ -90,7 +90,7 @@ az group list";
             var psScript = @"
 $ErrorActionPreference = 'Continue'
 az --version
-Get-AzureEnvironment
+Get-AzEnvironment
 az group list";
 
             await CommandTestBuilder.CreateAsync<RunScriptCommand, Program>()

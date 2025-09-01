@@ -27,11 +27,11 @@ namespace Calamari.Common
 {
     public abstract class CalamariFlavourProgram
     {
-        protected readonly ILog Log;
+        readonly ILog log;
 
         protected CalamariFlavourProgram(ILog log)
         {
-            Log = log;
+            this.log = log;
         }
 
         protected virtual int Run(string[] args)
@@ -43,14 +43,14 @@ namespace Calamari.Common
                 SecurityProtocols.EnableAllSecurityProtocols();
                 var options = CommonOptions.Parse(args);
 
-                Log.Verbose($"Calamari Version: {GetType().Assembly.GetInformationalVersion()}");
+                log.Verbose($"Calamari Version: {GetType().Assembly.GetInformationalVersion()}");
 
                 if (options.Command.Equals("version", StringComparison.OrdinalIgnoreCase))
                     return 0;
 
                 var envInfo = string.Join($"{Environment.NewLine}  ",
                     EnvironmentHelper.SafelyGetEnvironmentInformation());
-                Log.Verbose($"Environment Information: {Environment.NewLine}  {envInfo}");
+                log.Verbose($"Environment Information: {Environment.NewLine}  {envInfo}");
 
                 EnvironmentHelper.SetEnvironmentVariable("OctopusCalamariWorkingDirectory",
                     Environment.CurrentDirectory);
@@ -68,7 +68,7 @@ namespace Calamari.Common
                 if (string.Equals(waitForDebugger, "true", StringComparison.OrdinalIgnoreCase))
                 {
                     using var proc = Process.GetCurrentProcess();
-                    Log.Info($"Waiting for debugger to attach... (PID: {proc.Id})");
+                    log.Info($"Waiting for debugger to attach... (PID: {proc.Id})");
 
                     while (!Debugger.IsAttached)
                     {
@@ -81,7 +81,7 @@ namespace Calamari.Common
             }
             catch (Exception ex)
             {
-                return ConsoleFormatter.PrintError(Log, ex);
+                return ConsoleFormatter.PrintError(log, ex);
             }
         }
 
@@ -100,22 +100,24 @@ namespace Calamari.Common
         }
 
         protected virtual void ConfigureContainer(ContainerBuilder builder, CommonOptions options)
-        {
+        {            
+            //register the options into the DI
+            builder.RegisterInstance(options).AsSelf();
+            
             var fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
             builder.RegisterInstance(fileSystem).As<ICalamariFileSystem>();
-            builder.RegisterType<VariablesFactory>().AsSelf();
-            builder.Register(c => c.Resolve<VariablesFactory>().Create(options)).As<IVariables>().SingleInstance();
             builder.RegisterType<ScriptEngine>().As<IScriptEngine>();
             builder.RegisterType<VariableLogger>().AsSelf();
-            builder.RegisterInstance(Log).As<ILog>().SingleInstance();
+            builder.RegisterInstance(log).As<ILog>().SingleInstance();
             builder.RegisterType<FreeSpaceChecker>().As<IFreeSpaceChecker>().SingleInstance();
             builder.RegisterType<CommandLineRunner>().As<ICommandLineRunner>().SingleInstance();
-            builder.RegisterType<FileSubstituter>().As<IFileSubstituter>();
-            builder.RegisterType<SubstituteInFiles>().As<ISubstituteInFiles>();
             builder.RegisterType<CombinedPackageExtractor>().As<ICombinedPackageExtractor>();
             builder.RegisterType<ExtractPackage>().As<IExtractPackage>();
             builder.RegisterType<CodeGenFunctionsRegistry>().SingleInstance();
             builder.RegisterType<AssemblyEmbeddedResources>().As<ICalamariEmbeddedResources>();
+            
+            builder.RegisterModule<VariablesModule>();
+            builder.RegisterModule<SubstitutionsModule>();
 
             var assemblies = GetAllAssembliesToRegister().ToArray();
 

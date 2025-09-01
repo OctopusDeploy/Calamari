@@ -19,6 +19,7 @@
     <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
     <ApplicationManifest>Calamari.exe.manifest</ApplicationManifest>
     <TargetFrameworks>net462;net6.0</TargetFrameworks>
+    <LangVersion>8</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net462' ">
     <DefineConstants>$(DefineConstants);IIS_SUPPORT;</DefineConstants>
@@ -48,7 +49,7 @@
     </PackageReference>
     <PackageReference Include="Microsoft.Web.Administration" Version="11.1.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="FSharp.Compiler.Tools" Version="4.0.0.1" />
+    <PackageReference Include="Octokit" Version="14.0.0" />
     <PackageReference Include="Octopus.Versioning" Version="5.1.876" />
     <PackageReference Include="Octopus.TinyTypes" Version="2.2.1156" />
     <PackageReference Include="Octopus.CoreUtilities" Version="2.1.449" />
@@ -56,6 +57,7 @@
     <PackageReference Include="SharpCompress" Version="0.37.2" />
     <PackageReference Include="YamlDotNet" Version="8.1.2" />
     <PackageReference Include="System.ValueTuple" Version="4.5.0" />
+    <PackageReference Include="Octopus.LibGit2Sharp" Version="0.26.353-octopus-master" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFrameworkIdentifier)' == '.NETFramework' ">
     <Reference Include="System.ComponentModel.DataAnnotations" />
@@ -84,6 +86,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="ArgoCD\Http\" />
+  </ItemGroup>
   <!--
     In netcore 2.1.3, the framework stopped calculating package definitions automatically "for perf"
     (see https://github.com/dotnet/sdk/issues/2342)
@@ -93,31 +98,24 @@
   -->
   <Target Name="RunResolvePackageDependencies" Condition="'$(RunResolvePackageDependencies)' != ''" />
   <Target Name="GetToolFiles" DependsOnTargets="RunResolvePackageDependencies">
-    <CreateItem Include="@(PackageDefinitions)" Condition="'%(Name)' == 'FSharp.Compiler.Tools'">
-      <Output TaskParameter="Include" ItemName="FSharpCompilerToolsRef" />
-    </CreateItem>
     <CreateItem Include="@(PackageDefinitions)" Condition="'%(Name)' == 'ScriptCS'">
       <Output TaskParameter="Include" ItemName="ScriptCSRef" />
     </CreateItem>
     <PropertyGroup>
-      <FSharpCompilerTools>@(FSharpCompilerToolsRef->'%(ResolvedPath)')/tools/*.*</FSharpCompilerTools>
       <ScriptCS>@(ScriptCSRef->'%(ResolvedPath)')/tools/*.*</ScriptCS>
     </PropertyGroup>
     <ItemGroup>
-      <FSharpFiles Include="$(FSharpCompilerTools)" />
       <ScriptCSFiles Include="$(ScriptCS)" />
-      <DotnetScriptFiles Include="$(MSBuildProjectDirectory)/../Calamari.Scripting/DotnetScript/dotnet-script.*.zip" Condition="'$(TargetFramework)' == 'net6.0'" />
+      <DotnetScriptFiles Include="$(MSBuildProjectDirectory)/../Calamari.Scripting/DotnetScript/dotnet-script.*.zip"/>
     </ItemGroup>
   </Target>
   <Target Name="CopyToolsAfterBuild" AfterTargets="Build" DependsOnTargets="GetToolFiles">
-    <Copy SourceFiles="@(FSharpFiles)" DestinationFolder="$(OutDir)/FSharp/" />
     <Copy SourceFiles="@(ScriptCSFiles)" DestinationFolder="$(OutDir)/ScriptCS/" />
   </Target>
   <Target Name="CopyToolsAfterPublish" AfterTargets="Publish" DependsOnTargets="GetToolFiles">
-    <Copy SourceFiles="@(FSharpFiles)" DestinationFolder="$(PublishDir)/FSharp/" />
     <Copy SourceFiles="@(ScriptCSFiles)" DestinationFolder="$(PublishDir)/ScriptCS/" />
   </Target>
-  <Target Name="CopyDotnetScriptFilesAfterBuild" AfterTargets="Build">
+  <Target Name="CopyDotnetScriptFilesAfterBuild" AfterTargets="Build" Condition="'$(IsCrossTargetingBuild)' == 'false'">
     <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(OutDir)/" />
   </Target>
   <Target Name="CopyDotnetScriptFilesAfterPublish" AfterTargets="Publish">

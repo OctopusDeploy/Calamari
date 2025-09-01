@@ -6,6 +6,10 @@ using System.Text;
 
 namespace Calamari.Common.Plumbing.Extensions
 {
+    /// <summary>
+    /// This class is cloned into Calamari.AzureWebApp.NetCoreShim.AesEncryption.
+    /// Ensure that any changes to the encryption algorithm are applied to both locations.
+    /// </summary>
     public class AesEncryption
     {
         //Key size used to encrypt variables for scripts (bash/powershell etc.)
@@ -13,7 +17,7 @@ namespace Calamari.Common.Plumbing.Extensions
         const int ScriptBootstrapKeySize = 256;
         
         //Key size used to decrypt the variables file sent by Octopus Server
-        const int ServerVariablesKeySize = 128;
+        const int ServerVariablesKeySize = 256;
         
         //Key size used to encrypt variables for step packages (`step-bootstrapper` package referenced by Server)
         //The variables are decrypted in the step package bootstrapper

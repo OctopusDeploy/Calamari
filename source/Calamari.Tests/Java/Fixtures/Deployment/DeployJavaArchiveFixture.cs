@@ -135,7 +135,7 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
                 variables,
                 fileSystem,
                 commandLineRunner,
-                new SubstituteInFiles(log, fileSystem, new FileSubstituter(log, fileSystem), variables),
+                new SubstituteInFiles(log, fileSystem, new FileSubstituter(log, fileSystem, variables), variables),
                 new ExtractPackage(new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner), fileSystem, variables, log),
                 new StructuredConfigVariablesService(new PrioritisedList<IFileFormatVariableReplacer>
                 {
@@ -144,14 +144,14 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
                     new YamlFormatVariableReplacer(fileSystem, log),
                     new PropertiesFormatVariableReplacer(fileSystem, log),
                 }, variables, fileSystem, log),
-                new DeploymentJournalWriter(fileSystem)
+                new DeploymentJournalWriter(fileSystem, new SilentLog())
             );
             returnCode = command.Execute(new[] { "--archive", $"{packageName}" });
         }
 
         protected IVariables GenerateVariables()
         {
-            var variables = new VariablesFactory(fileSystem).Create(new CommonOptions("test"));
+            var variables = new VariablesFactory(fileSystem, new SilentLog()).Create(new CommonOptions("test"));
             variables.Set(TentacleVariables.Agent.ApplicationDirectoryPath, applicationDirectory);
             return variables;
         }

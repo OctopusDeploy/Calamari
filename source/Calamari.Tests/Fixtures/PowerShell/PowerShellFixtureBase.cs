@@ -6,9 +6,11 @@ using System.Security.Cryptography;
 using System.Text;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing;
+using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
+using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
@@ -137,8 +139,13 @@ namespace Calamari.Tests.Fixtures.PowerShell
 
             var outputVariablesFile = Path.GetTempFileName();
 
-            var variables = new Dictionary<string, string>() { ["Octopus.Action[PreviousStep].Output.FirstName"] = "Steve" };
-            var serialized = JsonConvert.SerializeObject(variables);
+            var variables = new CalamariExecutionVariableCollection
+            {
+                new CalamariExecutionVariable("Octopus.Action[PreviousStep].Output.FirstName", "Steve", false),
+                new CalamariExecutionVariable("Octopus.Action[PreviousStep].Output.LastName", "Not Jobs", true)
+            };
+            
+            var serialized = variables.ToJsonString();
             var bytes = ProtectedData.Protect(Encoding.UTF8.GetBytes(serialized), Convert.FromBase64String("5XETGOgqYR2bRhlfhDruEg=="), DataProtectionScope.CurrentUser);
             var encoded = Convert.ToBase64String(bytes);
             File.WriteAllText(outputVariablesFile, encoded);
@@ -149,7 +156,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
                     new Dictionary<string, string>() { ["outputVariables"] = outputVariablesFile, ["outputVariablesPassword"] = "5XETGOgqYR2bRhlfhDruEg==" });
 
                 output.AssertSuccess();
-                output.AssertOutput("Hello Steve");
+                output.AssertOutput("Hello Steve Not Jobs");
                 AssertPowerShellEdition(output);
             }
         }
@@ -253,6 +260,55 @@ namespace Calamari.Tests.Fixtures.PowerShell
                 {
                     artifact.Delete();
                 }
+            }
+        }
+
+        [Test]
+        public void ShouldWriteServiceMessageForKubernetesManifest()
+        {
+            var (output, _) = RunPowerShellScript("ReportKubernetesManifest.ps1");
+            output.AssertSuccess();
+            output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiDQoia2luZCI6ICJOYW1lc3BhY2UiDQoibWV0YWRhdGEiOg0KICAibmFtZSI6ICJleGFtcGxlIg0KImxhYmVscyI6DQogICAgIm5hbWUiOiAiZXhhbXBsZSINCg==']");
+            output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiDQoia2luZCI6ICJOYW1lc3BhY2UiDQoibWV0YWRhdGEiOg0KICAibmFtZSI6ICJkaWZmcyINCiJsYWJlbHMiOg0KICAgICJuYW1lIjogImRpZmZzIg0K']");
+            output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiDQoia2luZCI6ICJOYW1lc3BhY2UiDQoibWV0YWRhdGEiOg0KICAibmFtZSI6ICJleGFtcGxlIg0KImxhYmVscyI6DQogICAgIm5hbWUiOiAiZXhhbXBsZSINCg==' ns='bXk=']");
+            output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiDQoia2luZCI6ICJOYW1lc3BhY2UiDQoibWV0YWRhdGEiOg0KICAibmFtZSI6ICJkaWZmcyINCiJsYWJlbHMiOg0KICAgICJuYW1lIjogImRpZmZzIg0K' ns='bXk=']");
+            AssertPowerShellEdition(output);
+        }
+        
+        [Test]
+        public void ShouldWriteServiceMessageForKubernetesManifestFile()
+        {
+            var tempPath = Path.GetTempPath();
+            const string manifest = @"""apiVersion"": ""v1""
+""kind"": ""Namespace""
+""metadata"":
+  ""name"": ""example""
+""labels"":
+    ""name"": ""example""
+---    
+""apiVersion"": ""v1""
+""kind"": ""Namespace""
+""metadata"":
+  ""name"": ""diffs""
+""labels"":
+    ""name"": ""diffs""";
+
+            var filePath = Path.Combine(tempPath, "ShouldWriteServiceMessageForKubernetesManifestFile.manifest.yaml");
+            File.WriteAllText(filePath, manifest);
+
+            try
+            {
+                var (output, _) = RunPowerShellScript("ReportKubernetesManifestFile.ps1", new Dictionary<string, string> {{"ManifestFilePath", filePath}});
+                output.AssertSuccess();
+                output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiDQoia2luZCI6ICJOYW1lc3BhY2UiDQoibWV0YWRhdGEiOg0KICAibmFtZSI6ICJleGFtcGxlIg0KImxhYmVscyI6DQogICAgIm5hbWUiOiAiZXhhbXBsZSINCg==']");
+                output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiDQoia2luZCI6ICJOYW1lc3BhY2UiDQoibWV0YWRhdGEiOg0KICAibmFtZSI6ICJkaWZmcyINCiJsYWJlbHMiOg0KICAgICJuYW1lIjogImRpZmZzIg==']");
+                output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiDQoia2luZCI6ICJOYW1lc3BhY2UiDQoibWV0YWRhdGEiOg0KICAibmFtZSI6ICJleGFtcGxlIg0KImxhYmVscyI6DQogICAgIm5hbWUiOiAiZXhhbXBsZSINCg==' ns='bXk=']");
+                output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiDQoia2luZCI6ICJOYW1lc3BhY2UiDQoibWV0YWRhdGEiOg0KICAibmFtZSI6ICJkaWZmcyINCiJsYWJlbHMiOg0KICAgICJuYW1lIjogImRpZmZzIg==' ns='bXk=']");
+                AssertPowerShellEdition(output);
+            }
+            finally
+            {
+                File.Delete(filePath);
             }
         }
 
@@ -486,7 +542,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
                 .Argument("package", GetFixtureResource("Packages", "PackagedScript.1.0.0.zip")), variables);
 
             output.AssertSuccess();
-            output.AssertOutput("Extracting package");
+            output.AssertOutput("Extracting dependency");
             output.AssertOutput("Performing variable substitution");
             output.AssertOutput("OctopusParameter: Production");
             output.AssertOutput("InlineVariable: Production");
@@ -586,18 +642,17 @@ namespace Calamari.Tests.Fixtures.PowerShell
             AssertPowerShellEdition(output);
         }
 
-        static bool IsRunningOnUnixLikeEnvironment => CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac;
-
         protected CalamariResult InvokeCalamariForPowerShell(Action<CommandLine> buildCommand, CalamariVariables variables = null)
         {
             var variableDictionary = variables ?? new CalamariVariables();
             variableDictionary.Add(PowerShellVariables.Edition, GetPowerShellEditionVariable());
 
-            using (var variablesFile = CreateVariablesFile(variableDictionary))
+            using (var variablesFile = CreateVariablesFile(variableDictionary ))
             {
                 var calamariCommand = Calamari();
                 buildCommand(calamariCommand);
-                calamariCommand.Argument("variables", variablesFile.FilePath);
+                calamariCommand.VariablesFileArguments(variablesFile.FilePath, variablesFile.EncryptionKey);
+                
                 return Invoke(calamariCommand);
             }
         }
@@ -611,12 +666,15 @@ namespace Calamari.Tests.Fixtures.PowerShell
         {
             readonly TemporaryFile tempFile;
             public string FilePath { get; }
+            public string EncryptionKey { get; }
 
-            public VariableFile(CalamariVariables variables)
+            public VariableFile(IVariables variables)
             {
                 FilePath = Path.GetTempFileName();
+                EncryptionKey =  AesEncryption.RandomString(10);
+                
+                variables.SaveAsEncryptedExecutionVariables(FilePath, EncryptionKey);
                 tempFile = new TemporaryFile(FilePath);
-                variables.Save(FilePath);
             }
 
             public void Dispose()

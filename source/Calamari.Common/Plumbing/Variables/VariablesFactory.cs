@@ -7,6 +7,7 @@ using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
 using Newtonsoft.Json;
 using Octostache;
 
@@ -14,66 +15,83 @@ namespace Calamari.Common.Plumbing.Variables
 {
     public class VariablesFactory
     {
-        public static readonly string AdditionalVariablesPathVariable = "AdditionalVariablesPath";
+        public const string AdditionalVariablesPathVariable = "AdditionalVariablesPath";
+        
         readonly ICalamariFileSystem fileSystem;
+        readonly ILog log;
 
-        public VariablesFactory(ICalamariFileSystem fileSystem)
+        static readonly object LoaderLock = new object();
+        CalamariExecutionVariableCollection? executionVariables;
+
+        public VariablesFactory(ICalamariFileSystem fileSystem, ILog log)
         {
             this.fileSystem = fileSystem;
+            this.log = log;
         }
 
-        public IVariables Create(CommonOptions options)
-        {
-            var variables = new CalamariVariables();
+        public IVariables Create(CommonOptions options) => Create(new CalamariVariables(), options, _ => true);
+        public INonSensitiveVariables CreateNonSensitiveVariables(CommonOptions options) => Create(new NonSensitiveCalamariVariables(), options, cev => !cev.IsSensitive);
 
-            ReadUnencryptedVariablesFromFile(options, variables);
-            ReadEncryptedVariablesFromFile(options, variables);
-            ReadOutputVariablesFromOfflineDropPreviousSteps(options, variables);
+        T Create<T>(T variables, CommonOptions options, Func<CalamariExecutionVariable, bool> predicate) where T : CalamariVariables
+        {
+            LoadExecutionVariablesFromFiles(options);
+
+            //we load _all_ variables from the execution variables into the CalamariVariables dictionary
+            ImportExecutionVariablesIntoVariableCollection(variables, predicate);
 
             AddEnvironmentVariables(variables);
             variables.Set(TentacleVariables.Agent.InstanceName, "#{env:TentacleInstanceName}");
             ReadAdditionalVariablesFromFile(variables);
-            DeploymentJournalVariableContributor.Contribute(fileSystem, variables);
+            DeploymentJournalVariableContributor.Contribute(fileSystem, variables, log);
 
             return variables;
         }
 
-        void ReadUnencryptedVariablesFromFile(CommonOptions options, CalamariVariables variables)
+        void LoadExecutionVariablesFromFiles(CommonOptions options)
         {
-            var variablesFile = options.InputVariables.VariablesFile;
-            if (string.IsNullOrEmpty(variablesFile))
-                return;
+            lock (LoaderLock)
+            {
+                //if the execution variables have already been loaded, we don't need to load them again
+                if (executionVariables is { })
+                    return;
+                
+                executionVariables = new CalamariExecutionVariableCollection();
 
-            if (!fileSystem.FileExists(variablesFile))
-                throw new CommandException("Could not find variables file: " + variablesFile);
+                LoadExecutionVariablesFromFile(options);
 
-            var readVars = new VariableDictionary(variablesFile);
-            variables.Merge(readVars);
+                // This exists as the V2 pipeline stores both the parameters and the contents of the variables files for resiliency
+                // This should be removed once the first version this is deployed to has rolled out to most cloud customers
+                ReadDeprecatedVariablesFormatFromFiles(options);
+
+                ReadOutputVariablesFromOfflineDropPreviousSteps(options);
+            }
         }
 
-        void ReadEncryptedVariablesFromFile(CommonOptions options, CalamariVariables variables)
+        void LoadExecutionVariablesFromFile(CommonOptions options)
         {
-            foreach (var sensitiveFilePath in options.InputVariables.SensitiveVariablesFiles.Where(f => !string.IsNullOrEmpty(f)))
+            foreach (var variableFilePath in options.InputVariables.VariableFiles.Where(f => !string.IsNullOrEmpty(f)))
             {
-                var sensitiveFilePassword = options.InputVariables.SensitiveVariablesPassword;
-                var rawVariables = string.IsNullOrWhiteSpace(sensitiveFilePassword)
-                    ? fileSystem.ReadFile(sensitiveFilePath)
-                    : Decrypt(fileSystem.ReadAllBytes(sensitiveFilePath), sensitiveFilePassword);
+                var sensitiveFilePassword = options.InputVariables.VariablesPassword;
+                var json = string.IsNullOrWhiteSpace(sensitiveFilePassword)
+                    ? fileSystem.ReadFile(variableFilePath)
+                    : Decrypt(fileSystem.ReadAllBytes(variableFilePath), sensitiveFilePassword);
 
                 try
                 {
-                    var sensitiveVariables = JsonConvert.DeserializeObject<Dictionary<string, string>>(rawVariables);
-                    foreach (var variable in sensitiveVariables)
-                        variables.Set(variable.Key, variable.Value);
+                    //deserialize the target variables from the json
+                    var targetVariables = CalamariExecutionVariableCollection.FromJson(json);
+
+                    //append to the main collection
+                    executionVariables.AddRange(targetVariables);
                 }
                 catch (JsonReaderException)
                 {
-                    throw new CommandException("Unable to parse sensitive-variables as valid JSON.");
+                    throw new CommandException("Unable to parse variables as valid JSON.");
                 }
             }
         }
 
-        void ReadOutputVariablesFromOfflineDropPreviousSteps(CommonOptions options, CalamariVariables variables)
+        void ReadOutputVariablesFromOfflineDropPreviousSteps(CommonOptions options)
         {
             var outputVariablesFilePath = options.InputVariables.OutputVariablesFile;
             if (string.IsNullOrEmpty(outputVariablesFilePath))
@@ -82,13 +100,49 @@ namespace Calamari.Common.Plumbing.Variables
             var rawVariables = DecryptWithMachineKey(fileSystem.ReadFile(outputVariablesFilePath), options.InputVariables.OutputVariablesPassword);
             try
             {
-                var outputVariables = JsonConvert.DeserializeObject<Dictionary<string, string>>(rawVariables);
-                foreach (var variable in outputVariables)
-                    variables.Set(variable.Key, variable.Value);
+                var variables = CalamariExecutionVariableCollection.FromJson(rawVariables);
+                executionVariables.AddRange(variables);
             }
             catch (JsonReaderException)
             {
                 throw new CommandException("Unable to parse output variables as valid JSON.");
+            }
+        }
+
+        void ReadDeprecatedVariablesFormatFromFiles(CommonOptions options)
+        {
+            foreach (var variableFilePath in options.InputVariables.DeprecatedFormatVariableFiles.Where(f => !string.IsNullOrEmpty(f)))
+            {
+                var sensitiveFilePassword = options.InputVariables.DeprecatedVariablesPassword;
+                var json = string.IsNullOrWhiteSpace(sensitiveFilePassword)
+                    ? fileSystem.ReadFile(variableFilePath)
+                    : Decrypt(fileSystem.ReadAllBytes(variableFilePath), sensitiveFilePassword);
+
+                try
+                {
+                    var outputVariables = JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
+
+                    // We don't know if the previous variables were sensitive or not, so treat them as non-sensitive */
+                    executionVariables.AddRange(outputVariables.Select(ov => new CalamariExecutionVariable(ov.Key, ov.Value, false)));
+                }
+                catch (JsonReaderException)
+                {
+                    throw new CommandException("Unable to parse variables as valid JSON.");
+                }
+            }
+        }
+
+        void ImportExecutionVariablesIntoVariableCollection(IVariables variables, Func<CalamariExecutionVariable, bool> targetVariablePredicate)
+        {
+            if(executionVariables == null)
+            {
+                throw new InvalidOperationException("The execution variable collection is null, meaning it has not been loaded yet.");
+            }
+            
+            //for each variable, load it into the variable collection
+            foreach (var tv in executionVariables.Where(targetVariablePredicate))
+            {
+                variables.Set(tv.Key, tv.Value);
             }
         }
 
@@ -105,10 +159,7 @@ namespace Calamari.Common.Plumbing.Variables
 
             string BuildExceptionMessage(string reason)
             {
-                return $"Could not read additional variables from JSON file at '{path}'. " +
-                    $"{reason} Make sure the file can be read or remove the " +
-                    $"'{AdditionalVariablesPathVariable}' environment variable. " +
-                    "See inner exception for details.";
+                return $"Could not read additional variables from JSON file at '{path}'. " + $"{reason} Make sure the file can be read or remove the " + $"'{AdditionalVariablesPathVariable}' environment variable. " + "See inner exception for details.";
             }
 
             if (string.IsNullOrEmpty(path))
@@ -136,7 +187,7 @@ namespace Calamari.Common.Plumbing.Variables
             }
             catch (CryptographicException)
             {
-                throw new CommandException("Cannot decrypt sensitive-variables. Check your password is correct.");
+                throw new CommandException("Cannot decrypt variables. Check your password is correct.");
             }
         }
 

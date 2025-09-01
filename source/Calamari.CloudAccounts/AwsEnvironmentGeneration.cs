@@ -358,7 +358,7 @@ namespace Calamari.CloudAccounts
         {
             if ("True".Equals(assumeRole, StringComparison.OrdinalIgnoreCase))
             {
-                var client = new AmazonSecurityTokenServiceClient(AwsCredentials);
+                var client = string.IsNullOrWhiteSpace(region) ? new AmazonSecurityTokenServiceClient(AwsCredentials) : new AmazonSecurityTokenServiceClient(AwsCredentials, AwsRegion);
                 var credentials = (await client.AssumeRoleAsync(GetAssumeRoleRequest())).Credentials;
 
                 EnvironmentVars["AWS_ACCESS_KEY_ID"] = credentials.AccessKeyId;
@@ -369,10 +369,13 @@ namespace Calamari.CloudAccounts
 
         public AssumeRoleRequest GetAssumeRoleRequest()
         {
+            // RoleSessionName is required in .NET; if not provided, generate a random one like the JavaScript SDK.
+            var roleSessionName = String.IsNullOrEmpty(assumeRoleSession) ? $"aws-sdk-dotnet-{Guid.NewGuid()}" : assumeRoleSession;
+            
             var request = new AssumeRoleRequest
             {
                 RoleArn = assumeRoleArn,
-                RoleSessionName = assumeRoleSession,
+                RoleSessionName = roleSessionName,
                 ExternalId = string.IsNullOrWhiteSpace(assumeRoleExternalId) ? null : assumeRoleExternalId
             };
             if (int.TryParse(assumeRoleDurationSeconds, out var durationSeconds))

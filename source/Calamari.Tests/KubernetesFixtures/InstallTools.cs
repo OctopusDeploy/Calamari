@@ -176,7 +176,7 @@ namespace Calamari.Tests.KubernetesFixtures
                                                          else if (CalamariEnvironment.IsRunningOnNix)
                                                          {
                                                              ExecuteCommandAndReturnResult("sudo",
-                                                                                           "apt-get install unzip",
+                                                                                           "apt-get install zip",
                                                                                            destinationDirectoryName);
 
                                                              ExecuteCommandAndReturnResult("unzip",
@@ -561,11 +561,16 @@ namespace Calamari.Tests.KubernetesFixtures
 
         HttpClient CreateHttpClient()
         {
+            //we are _totally_ Chrome :joy:
+            const string userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36";
 #if NETCORE
-            return httpClientFactory.CreateClient();
+            var httpClient = httpClientFactory.CreateClient();
+            httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(userAgent);
 #else
-            return new HttpClient();
+            var httpClient = new HttpClient();
+            httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(userAgent);
 #endif
+            return httpClient;
         }
     }
 }

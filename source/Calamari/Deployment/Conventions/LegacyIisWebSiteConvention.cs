@@ -12,11 +12,13 @@ namespace Calamari.Deployment.Conventions
     {
         readonly ICalamariFileSystem fileSystem;
         readonly IInternetInformationServer iis;
+        readonly ILog log;
 
-        public LegacyIisWebSiteConvention(ICalamariFileSystem fileSystem, IInternetInformationServer iis)
+        public LegacyIisWebSiteConvention(ICalamariFileSystem fileSystem, IInternetInformationServer iis, ILog log)
         {
             this.fileSystem = fileSystem;
             this.iis = iis;
+            this.log = log;
         }
 
         public void Install(RunningDeployment deployment)
@@ -42,14 +44,12 @@ namespace Calamari.Deployment.Conventions
 
             if (!updated)
                 throw new CommandException(
-                    string.Format(
-                        "Could not find an IIS website or virtual directory named '{0}' on the local machine. You need to create the site and/or virtual directory manually. To turn off this feature, use the 'Configure features' link in the deployment step configuration to disable IIS updates.", 
-                        iisSiteName));
+                                           $"Could not find an IIS website or virtual directory named '{iisSiteName}' on the local machine. You need to create the site and/or virtual directory manually. To turn off this feature, use the 'Configure features' link in the deployment step configuration to disable IIS updates.");
 
-            Log.Info("The IIS website named '{0}' has had its path updated to: '{1}'", iisSiteName, webRoot);
+            log.Info($"The IIS website named '{iisSiteName}' has had its path updated to: '{webRoot}'");
         }
 
-        static bool LegacySupport(RunningDeployment deployment)
+        bool LegacySupport(RunningDeployment deployment)
         {
             var legacySupport = deployment.Variables.GetFlag(SpecialVariables.UseLegacyIisSupport);
 
@@ -65,7 +65,7 @@ namespace Calamari.Deployment.Conventions
                 throw new CommandException($"Support for IIS6 is no longer supported.\r\n"
                                            + $"Remove the {SpecialVariables.UseLegacyIisSupportForce} variable and ensure you are targeting IIS7+.");
 
-            Log.Warn($"LegacyIIS support confirmed.\r\n"
+            log.Warn($"LegacyIIS support confirmed.\r\n"
                      + $"Support for IIS6 is no longer supported.\r\n"
                      + $"Remove the `{SpecialVariables.UseLegacyIisSupport}` and `{SpecialVariables.UseLegacyIisSupportForce}` variables and ensure you are targeting IIS7+.\r\n"
                      + $"This capability will be very shortly removed without further warning.");

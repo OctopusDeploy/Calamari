@@ -74,10 +74,10 @@ namespace Calamari.Common.Features.Discovery
                 failureReasons.Add(
                     $"Mismatched tenant tag. Optional '{TargetTags.TenantTagName}' tag must match '{TenantName}' if present, but is '{tags.Tenant}'.");
             }
-
+            
             return failureReasons.Any()
                 ? TargetMatchResult.Failure(failureReasons)
-                : TargetMatchResult.Success(this.Roles.First(r => r.Equals(tags.Role, StringComparison.OrdinalIgnoreCase)));
+                : TargetMatchResult.Success(this.Roles.First(r => r.Equals(tags.Role, StringComparison.OrdinalIgnoreCase)), tags.TenantedDeploymentMode);
         }
     }
 

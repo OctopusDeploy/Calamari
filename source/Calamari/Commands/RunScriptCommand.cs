@@ -77,17 +77,11 @@ namespace Calamari.Commands
             var deployment = new RunningDeployment(packageFile, variables);
             WriteVariableScriptToFile(deployment);
 
-            var conventions = new List<IConvention>();
+            var conventions = new List<IConvention>
+            {
+                new StageDependenciesConvention(packageFile, fileSystem, new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner), new PackageVariablesFactory())
+            };
 
-            if (OctopusFeatureToggles.NonPrimaryGitDependencySupportFeatureToggle.IsEnabled(variables))
-            {
-                conventions.Add(new StageDependenciesConvention(packageFile, fileSystem, new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner), new PackageVariablesFactory()));
-            }
-            else
-            {
-                conventions.Add(new StageScriptPackagesConvention(packageFile, fileSystem, new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner)));
-            }
-            
             conventions.AddRange(new IConvention[] {
                 // Substitute the script source file
                 new DelegateInstallConvention(d => substituteInFiles.Substitute(d.CurrentDirectory, ScriptFileTargetFactory(d).ToList())),
@@ -96,7 +90,7 @@ namespace Calamari.Commands
                 new ConfigurationTransformsConvention(new ConfigurationTransformsBehaviour(fileSystem, variables, configurationTransformer, transformFileLocator, log)),
                 new ConfigurationVariablesConvention(new ConfigurationVariablesBehaviour(fileSystem, variables, replacer, log)),
                 new StructuredConfigurationVariablesConvention(new StructuredConfigurationVariablesBehaviour(structuredConfigVariablesService)),
-                new ExecuteScriptConvention(scriptEngine, commandLineRunner)
+                new ExecuteScriptConvention(scriptEngine, commandLineRunner, log)
                 });
 
             var conventionRunner = new ConventionProcessor(deployment, conventions, log);
@@ -143,7 +137,7 @@ namespace Calamari.Commands
                 if (scriptSyntax == null)
                 {
                     syntax = scriptEngine.GetSupportedTypes().FirstOrDefault();
-                    Log.Warn($"No script syntax provided. Defaulting to first known supported type {syntax}");
+                    log.Warn($"No script syntax provided. Defaulting to first known supported type {syntax}");
                 }
                 else if (!Enum.TryParse(scriptSyntax, out syntax))
                 {
@@ -180,14 +174,14 @@ namespace Calamari.Commands
             {
                 if (WasProvided(variables.Get(ScriptVariables.ScriptBody)))
                 {
-                    Log.Warn(
+                    log.Warn(
                         $"The `--script` parameter and `{ScriptVariables.ScriptBody}` variable are both set." +
                         $"\r\nThe variable value takes precedence to allow for variable replacement of the script file.");
                 }
 
                 if (WasProvided(variables.Get(ScriptVariables.ScriptFileName)))
                 {
-                    Log.Warn(
+                    log.Warn(
                         $"The `--script` parameter and `{ScriptVariables.ScriptFileName}` variable are both set." +
                         $"\r\nThe variable value takes precedence to allow for variable replacement of the script file.");
                 }
@@ -196,7 +190,7 @@ namespace Calamari.Commands
                     variables.Set(ScriptVariables.ScriptFileName, scriptFileArg);
                 }
 
-                Log.Warn($"The `--script` parameter is deprecated.\r\n" +
+                log.Warn($"The `--script` parameter is deprecated.\r\n" +
                          $"Please set the `{ScriptVariables.ScriptBody}` and `{ScriptVariables.ScriptFileName}` variable to allow for variable replacement of the script file.");
             }
 
@@ -204,7 +198,7 @@ namespace Calamari.Commands
             {
                 if (WasProvided(variables.Get(SpecialVariables.Action.Script.ScriptParameters)))
                 {
-                    Log.Warn($"The `--scriptParameters` parameter and `{SpecialVariables.Action.Script.ScriptParameters}` variable are both set.\r\n" +
+                    log.Warn($"The `--scriptParameters` parameter and `{SpecialVariables.Action.Script.ScriptParameters}` variable are both set.\r\n" +
                              $"Please provide just the `{SpecialVariables.Action.Script.ScriptParameters}` variable instead.");
                 }
                 else

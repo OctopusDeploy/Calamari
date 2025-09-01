@@ -14,12 +14,14 @@ namespace Calamari.Common.Features.Discovery
             caseInsensitiveTagDictionary.TryGetValue(TargetTags.ProjectTagName, out var project);
             caseInsensitiveTagDictionary.TryGetValue(TargetTags.SpaceTagName, out var space);
             caseInsensitiveTagDictionary.TryGetValue(TargetTags.TenantTagName, out var tenant);
+            caseInsensitiveTagDictionary.TryGetValue(TargetTags.TenantedDeploymentModeTagName, out var tenantedDeploymentMode);
             return new TargetTags(
                 environment: environment,
                 role: role,
                 project: project,
                 space: space,
-                tenant: tenant);
+                tenant: tenant,
+                tenantedDeploymentMode: tenantedDeploymentMode);
         }
     }
 }

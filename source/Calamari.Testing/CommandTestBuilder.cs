@@ -152,8 +152,9 @@ namespace Calamari.Testing
 
                 var varPath = Path.Combine(workingPath, "variables.json");
 
-                context.Variables.Save(varPath);
+                var encryptionKey = context.Variables.SaveAsEncryptedExecutionVariables(varPath);
                 args.Add($"--variables={varPath}");
+                args.Add($"--variablesPassword={encryptionKey}");
 
                 return args;
             }
@@ -330,7 +331,7 @@ namespace Calamari.Testing
             return result;
         }
         
-        Task<int> ExecuteWrapped(IReadOnlyCollection<string> paths, Func<Task<int>> func)
+        async Task<int> ExecuteWrapped(IReadOnlyCollection<string> paths, Func<Task<int>> func)
         {
             if (paths.Count > 0)
             {
@@ -339,7 +340,7 @@ namespace Calamari.Testing
                 {
                     Environment.SetEnvironmentVariable("PATH", $"{originalPath}{Path.PathSeparator}{string.Join(Path.PathSeparator.ToString(), paths)}", EnvironmentVariableTarget.Process);
 
-                    return func();
+                    return await func();
                 }
                 finally
                 {
@@ -347,7 +348,7 @@ namespace Calamari.Testing
                 }
             }
 
-            return func();
+            return await func();
         }
     }
 }
