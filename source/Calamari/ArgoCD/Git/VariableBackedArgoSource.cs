@@ -20,7 +20,7 @@ namespace Calamari.ArgoCD.Git
         public string? Password => variables.Get(SpecialVariables.Git.Password(index));
         public string Url => variables.GetMandatoryVariable(SpecialVariables.Git.Url(index));
         public GitBranchName BranchName => new GitBranchName(variables.GetMandatoryVariable(SpecialVariables.Git.BranchName(index)));
-        public string SubFolder => variables.GetMandatoryVariable(SpecialVariables.Git.SubFolder(index));
+        public string SubFolder => variables.Get(SpecialVariables.Git.SubFolder(index), string.Empty) ?? string.Empty;
     }
 
     public interface IRepositoryConnection
