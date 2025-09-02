@@ -54,16 +54,9 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
         public void ExecuteCopiesFilesFromPackageIntoRepo()
         {
             const string firstFilename = "first.yaml";
+            CreateFileUnderPackageDirectory(firstFilename);
             const string nestedFilename = "nested/second.yaml";
-            const string firstFileContent = "firstContent";
-            const string secondFileContent = "secondContent";
-            
-            var nestedDirectory = Path.Combine(PackageDirectory, "nested");
-            Directory.CreateDirectory(nestedDirectory);
-
-            
-            File.WriteAllText(Path.Combine(PackageDirectory, firstFilename), firstFileContent);
-            File.WriteAllText(Path.Combine(PackageDirectory, nestedFilename), secondFileContent);
+            CreateFileUnderPackageDirectory(nestedFilename);
             
             var variables = new CalamariVariables
             {
@@ -83,19 +76,71 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             runningDeployment.StagingDirectory = WorkingDirectory;
             
             var convention = new UpdateGitRepositoryInstallConvention(fileSystem, CommitToGitCommand.PackageDirectoryName, log, Substitute.For<IGitHubPullRequestCreator>(), new ArgoCommitToGitConfigFactory(log));
+            convention.Install(runningDeployment);
+
+            var resultPath = CloneOrigin();
+            var resultFirstContent = File.ReadAllText(Path.Combine(resultPath, firstFilename));
+            var resultNestedContent = File.ReadAllText(Path.Combine(resultPath, nestedFilename));
+            resultFirstContent.Should().Be(firstFilename);
+            resultNestedContent.Should().Be(nestedFilename);
+        }
+
+        [Test]
+        public void DoesNotCopyFilesRecursivelyIfNotSet()
+        {
+            const string firstFilename = "first.yaml";
+            CreateFileUnderPackageDirectory(firstFilename);
+            const string nestedFilename = "nested/second.yaml";
+            CreateFileUnderPackageDirectory(nestedFilename);
             
+            var variables = new CalamariVariables
+            {
+                [KnownVariables.OriginalPackageDirectoryPath] = WorkingDirectory,
+                [SpecialVariables.Git.InputPath] = "",
+                [SpecialVariables.Git.SubFolder("repo_name")] = "",
+                [SpecialVariables.Git.Password("repo_name")] = "password",
+                [SpecialVariables.Git.Username("repo_name")] = "username",
+                [SpecialVariables.Git.Url("repo_name")] = OriginPath,
+                [SpecialVariables.Git.BranchName("repo_name")] = argoCdBranchName.Value,
+                [SpecialVariables.Git.Recursive] = "False",
+                [SpecialVariables.Git.CommitMethod] = "DirectCommit",
+                [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this"
+            };
+            var runningDeployment = new RunningDeployment("./arbitraryFile.txt", variables);
+            runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
+            runningDeployment.StagingDirectory = WorkingDirectory;    
+            
+            var convention = new UpdateGitRepositoryInstallConvention(fileSystem, CommitToGitCommand.PackageDirectoryName, log, Substitute.For<IGitHubPullRequestCreator>(), new ArgoCommitToGitConfigFactory(log));
             convention.Install(runningDeployment);
             
-            var resultPath = Path.Combine(tempDirectory, "result");
+            var resultPath = CloneOrigin();
+            File.Exists(Path.Combine(resultPath, firstFilename)).Should().BeTrue();
+            File.Exists(Path.Combine(resultPath, nestedFilename)).Should().BeFalse();
+        }
+
+        //Accepts a relative path and creates a file under the package directory, which
+        //contains the relative filename as its contents.
+        void CreateFileUnderPackageDirectory(string filename)
+        {
+            var packageFile = Path.Combine(PackageDirectory, filename);
+            var directory = Path.GetDirectoryName(packageFile);
+            if (directory != null)
+            {
+                Directory.CreateDirectory(directory);        
+            }
+
+            File.WriteAllText(packageFile, filename);
+        }
+
+        string CloneOrigin()
+        {
+            var subPath = Guid.NewGuid().ToString();
+            var resultPath = Path.Combine(tempDirectory, subPath);
             Repository.Clone(OriginPath, resultPath);
             var resultRepo = new Repository(resultPath);
             LibGit2Sharp.Commands.Checkout(resultRepo, $"origin/{argoCdBranchName}");
-            
-            var resultFirstContent = File.ReadAllText(Path.Combine(resultPath, firstFilename));
-            var resultNestedContent = File.ReadAllText(Path.Combine(resultPath, nestedFilename));
-            resultFirstContent.Should().Be(firstFileContent);
-            resultNestedContent.Should().Be(secondFileContent);
-            Console.WriteLine(log.ToString());
+
+            return resultPath;
         }
     }
 }
