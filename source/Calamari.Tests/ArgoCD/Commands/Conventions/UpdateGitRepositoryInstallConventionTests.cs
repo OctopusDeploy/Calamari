@@ -60,7 +60,6 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             
             var nestedDirectory = Path.Combine(PackageDirectory, "nested");
             Directory.CreateDirectory(nestedDirectory);
-
             
             File.WriteAllText(Path.Combine(PackageDirectory, firstFilename), firstFileContent);
             File.WriteAllText(Path.Combine(PackageDirectory, nestedFilename), secondFileContent);
@@ -97,5 +96,22 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             resultNestedContent.Should().Be(secondFileContent);
             Console.WriteLine(log.ToString());
         }
+
+        [Test]
+        public void InstallConventionPurgesFiles()
+        {
+            const string firstFilename = "first.yaml";
+            const string nestedFilename = "nested/second.yaml";
+            const string firstFileContent = "firstContent";
+            const string secondFileContent = "secondContent";
+            
+            var nestedDirectory = Path.Combine(PackageDirectory, "nested");
+            Directory.CreateDirectory(nestedDirectory);
+            
+            File.WriteAllText(Path.Combine(PackageDirectory, firstFilename), firstFileContent);
+            File.WriteAllText(Path.Combine(PackageDirectory, nestedFilename), secondFileContent);
+        }
+        
+        private Create
     }
 }
