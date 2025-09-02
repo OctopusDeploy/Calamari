@@ -54,9 +54,9 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
         public void ExecuteCopiesFilesFromPackageIntoRepo()
         {
             const string firstFilename = "first.yaml";
-            CreateFileWithFixedContent(firstFilename);
+            CreateFileUnderPackageDirectory(firstFilename);
             const string nestedFilename = "nested/second.yaml";
-            CreateFileWithFixedContent(nestedFilename);
+            CreateFileUnderPackageDirectory(nestedFilename);
             
             var variables = new CalamariVariables
             {
@@ -89,9 +89,9 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
         public void DoesNotCopyFilesRecursivelyIfNotSet()
         {
             const string firstFilename = "first.yaml";
-            CreateFileWithFixedContent(firstFilename);
+            CreateFileUnderPackageDirectory(firstFilename);
             const string nestedFilename = "nested/second.yaml";
-            CreateFileWithFixedContent(nestedFilename);
+            CreateFileUnderPackageDirectory(nestedFilename);
             
             var variables = new CalamariVariables
             {
@@ -118,8 +118,9 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             File.Exists(Path.Combine(resultPath, nestedFilename)).Should().BeFalse();
         }
 
-        //accepts a relative path and creates a file under the tmp directory used for the test
-        void CreateFileWithFixedContent(string filename)
+        //Accepts a relative path and creates a file under the package directory, which
+        //contains the relative filename as its contents.
+        void CreateFileUnderPackageDirectory(string filename)
         {
             var packageFile = Path.Combine(PackageDirectory, filename);
             var directory = Path.GetDirectoryName(packageFile);
