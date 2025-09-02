@@ -16,7 +16,6 @@ namespace Calamari.Common.Plumbing.Commands
         public string Command { get; }
         public List<string> RemainingArguments { get; private set; } = new List<string>();
         public Variables InputVariables { get; } = new Variables();
-        public string CustomPropertiesFile { get; set; }
 
         public static CommonOptions Parse(string[] args)
         {
@@ -33,8 +32,7 @@ namespace Calamari.Common.Plumbing.Commands
                       .Add("variables=", "Path to a encrypted JSON file containing variables.", v => options.InputVariables.VariableFiles.Add(v))
                       .Add("variablesPassword=", "Password used to decrypt variables.", v => options.InputVariables.VariablesPassword = v)
                       .Add("outputVariables=", "Path to a encrypted JSON file containing output variables from previous executions.", v => options.InputVariables.OutputVariablesFile = v)
-                      .Add("outputVariablesPassword=", "Password used to decrypt output variables", v => options.InputVariables.OutputVariablesPassword = v)
-                      .Add("customProperties=", "Path to a encrypted JSON file containing custom properties.", v => options.CustomPropertiesFile = v);
+                      .Add("outputVariablesPassword=", "Password used to decrypt output variables", v => options.InputVariables.OutputVariablesPassword = v);
 
             //these are legacy options to support the V2 pipeline
             set.Add("sensitiveVariables=", "(DEPRECATED) Path to a encrypted JSON file containing sensitive variables. This file format is deprecated.", v => options.InputVariables.DeprecatedFormatVariableFiles.Add(v))

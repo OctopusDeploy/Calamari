@@ -1,11 +1,9 @@
 using System;
-using System.Diagnostics;
 using System.IO;
 using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.GitHub;
 using Calamari.Common.Plumbing.Logging;
 using LibGit2Sharp;
-using LibGit2Sharp.Handlers;
 
 namespace Calamari.ArgoCD.Git
 {
@@ -46,16 +44,14 @@ namespace Calamari.ArgoCD.Git
             var options = new CloneOptions();
             if (gitConnection.Username != null && gitConnection.Password != null)
             {
-                CredentialsHandler credentialsProvider = (url, usernameFromUrl, types) => new UsernamePasswordCredentials
+                options.FetchOptions = new FetchOptions
                 {
-                    Username = gitConnection.Username!,
-                    Password = gitConnection.Password!
+                    CredentialsProvider = (url, usernameFromUrl, types) => new UsernamePasswordCredentials
+                    {
+                        Username = gitConnection.Username!,
+                        Password = gitConnection.Password!
+                    }
                 };
-                options.CredentialsProvider = credentialsProvider;
-                // options.FetchOptions = new FetchOptions
-                // {
-                //     CredentialsProvider = credentialsProvider
-                // };
             }
 
             var repoPath = Repository.Clone(gitConnection.Url, checkoutPath, options);

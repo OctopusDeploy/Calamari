@@ -5,23 +5,6 @@ using Calamari.Kubernetes;
 
 namespace Calamari.ArgoCD.Git
 {
-    public class VariableBackedGitConnection : IGitConnection
-    {
-        IVariables variables;
-        string index;
-
-        public VariableBackedGitConnection(IVariables variables, string index)
-        {
-            this.variables = variables;
-            this.index = index;
-        }
-
-        public string? Username => variables.Get(SpecialVariables.Git.Username(index));
-        public string? Password => variables.Get(SpecialVariables.Git.Password(index));
-        public string Url => variables.GetMandatoryVariable(SpecialVariables.Git.Url(index));
-        public GitBranchName BranchName => new GitBranchName(variables.GetMandatoryVariable(SpecialVariables.Git.BranchName(index)));
-    }
-
     public interface IRepositoryConnection
     {
         public string? Username { get;  }
