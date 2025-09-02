@@ -10,74 +10,33 @@ using Newtonsoft.Json;
 
 namespace Calamari.Common.Plumbing.Variables
 {
-    public interface IActionCustomProperties 
-    {
-    }
-    
-    public class ArgoCDActionCustomProperties : IActionCustomProperties
-    {
-        public ArgoApplication[] Applications { get; set; } = Array.Empty<ArgoApplication>();
-    }
-
-    
-    public class ArgoApplication 
-    {
-        public string Name { get; set; }
-        public ArgoApplicationSource[] Sources { get; set; }
-    }
-
-    
-    public class ArgoApplicationSource
-    {
-        public Uri RepoUrl { get; set; }
-        public string TargetRevision { get; set; }
-        public string Path { get; set; }
-        
-        public GitCredentials? Credentials { get; set; }
-    }
-
-    public class GitCredentials
-    {
-        public string Username { get; set; }
-        public string Password { get; set; }
-    }
-
     public interface ICustomPropertiesFactory
     {
-        T Create<T>();
+        T Create<T>(string customPropertiesFile, string password);
     }
 
     public class CustomPropertiesFactory : ICustomPropertiesFactory
     {
         readonly ICalamariFileSystem fileSystem;
-        readonly ILog log;
-        readonly CommonOptions options;
 
         static readonly object LoaderLock = new object();
 
-        public CustomPropertiesFactory(ICalamariFileSystem fileSystem, ILog log, CommonOptions options)
+        public CustomPropertiesFactory(ICalamariFileSystem fileSystem)
         {
             this.fileSystem = fileSystem;
-            this.log = log;
-            this.options = options;
         }
 
-        public T Create<T>()
+        public T Create<T>(string customPropertiesFile, string password)
         {
             lock (LoaderLock)
             {
-                return LoadExecutionVariablesFromFile<T>();
+                return LoadExecutionVariablesFromFile<T>(customPropertiesFile, password);
             }
         }
 
-        T LoadExecutionVariablesFromFile<T>()
+        T LoadExecutionVariablesFromFile<T>(string customPropertiesFile, string password)
         {
-            //var sensitiveFilePassword = options.InputVariables.VariablesPassword;
-            // var json = string.IsNullOrWhiteSpace(sensitiveFilePassword)
-            //     ? fileSystem.ReadFile(options.CustomPropertiesFile)
-            //     : Decrypt(fileSystem.ReadAllBytes(options.CustomPropertiesFile), sensitiveFilePassword);
-
-            var json = fileSystem.ReadFile(options.CustomPropertiesFile);
+            var json = Decrypt(fileSystem.ReadAllBytes(customPropertiesFile), password);
 
             try
             {
@@ -95,15 +54,15 @@ namespace Calamari.Common.Plumbing.Variables
             DateParseHandling = DateParseHandling.None
         };
 
-        static string Decrypt(byte[] encryptedVariables, string encryptionPassword)
+        static string Decrypt(byte[] encryptedJson, string encryptionPassword)
         {
             try
             {
-                return AesEncryption.ForServerVariables(encryptionPassword).Decrypt(encryptedVariables);
+                return AesEncryption.ForServerVariables(encryptionPassword).Decrypt(encryptedJson);
             }
             catch (CryptographicException)
             {
-                throw new CommandException("Cannot decrypt variables. Check your password is correct.");
+                throw new CommandException("Cannot decrypt custom properties. Check your password is correct.");
             }
         }
     }

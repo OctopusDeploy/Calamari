@@ -18,20 +18,8 @@ using Calamari.Kubernetes;
 
 namespace Calamari.ArgoCD.Conventions
 {
-    public class ArgoCustomPropertiesDto
-    {
-        public GitRepoDetailsDto[] GitRepoDetailsDtos { get; set; }
-    }
 
-    public class GitRepoDetailsDto
-    {
-        public string Url { get; set; }
-        public string Username { get; set; }
-        public string Password { get; set; }
-        public string TargetRevision { get; set; }
-        public string Path { get; set; }
-    }
-    
+
     public class UpdateGitRepositoryInstallConvention : IInstallConvention
     {
         readonly ICalamariFileSystem fileSystem;
@@ -39,16 +27,26 @@ namespace Calamari.ArgoCD.Conventions
         readonly string packageSubfolder;
         readonly IGitHubPullRequestCreator pullRequestCreator;
         readonly ICustomPropertiesFactory customPropertiesFactory;
+        readonly string customPropertiesFile;
+        readonly string customPropertiesPassword;
 
-        public UpdateGitRepositoryInstallConvention(ICalamariFileSystem fileSystem, string packageSubfolder, ILog log, IGitHubPullRequestCreator pullRequestCreator, ICustomPropertiesFactory customPropertiesFactory)
+        public UpdateGitRepositoryInstallConvention(ICalamariFileSystem fileSystem,
+                                                    string packageSubfolder,
+                                                    ILog log,
+                                                    IGitHubPullRequestCreator pullRequestCreator,
+                                                    ICustomPropertiesFactory customPropertiesFactory,
+                                                    string customPropertiesFile,
+                                                    string customPropertiesPassword)
         {
             this.fileSystem = fileSystem;
             this.log = log;
             this.pullRequestCreator = pullRequestCreator;
             this.customPropertiesFactory = customPropertiesFactory;
+            this.customPropertiesFile = customPropertiesFile;
+            this.customPropertiesPassword = customPropertiesPassword;
             this.packageSubfolder = packageSubfolder;
         }
-        
+
         public void Install(RunningDeployment deployment)
         {
             Log.Info("Executing Commit To Git operation");
@@ -57,41 +55,43 @@ namespace Calamari.ArgoCD.Conventions
             var requiresPullRequest = RequiresPullRequest(deployment);
             var summary = deployment.Variables.GetMandatoryVariable(SpecialVariables.Git.CommitMessageSummary);
             var description = deployment.Variables.Get(SpecialVariables.Git.CommitMessageDescription) ?? string.Empty;
-            
+
             var repositoryFactory = new RepositoryFactory(log, deployment.CurrentDirectory, pullRequestCreator);
-            
-            var argoProperties = customPropertiesFactory.Create<ArgoCustomPropertiesDto>();
-            
-            log.Info($"Found the following repository indicies '{argoProperties.GitRepoDetailsDtos.Select(a => a.Url).Join(",")}'");
-            foreach (var applicationSource in argoProperties.GitRepoDetailsDtos)
+
+            var argoProperties = customPropertiesFactory.Create<ArgoCustomPropertiesDto>(customPropertiesFile, customPropertiesPassword);
+
+            log.Info($"Found the following applications: '{argoProperties.Applications.Select(a => a.Name).Join(",")}'");
+
+            foreach (var application in argoProperties.Applications)
             {
-                //var applicationSource = argoApplication.Sources.First();
-
-                Log.Info($"Writing files to repository for '{applicationSource.Url}'");
-                IGitConnection gitConnection = new GitConnection(applicationSource.Username, applicationSource.Password, applicationSource.Url, new GitBranchName(applicationSource.TargetRevision));
-                var repository = repositoryFactory.CloneRepository("Foobar", gitConnection);
-
-                Log.Info($"Copying files into repository {applicationSource.Url}");
-                var subFolder = applicationSource.Path ?? String.Empty;
-                Log.VerboseFormat("Copying files into subfolder '{0}'", subFolder);
-
-                var repositoryFiles = packageFiles.Select(f => new FileCopySpecification(f, repository.WorkingDirectory, subFolder)).ToList();
-                
-                CopyFiles(repositoryFiles);
-                
-                Log.Info("Staging files in repository");
-                repository.StageFiles(repositoryFiles.Select(fcs => fcs.DestinationRelativePath).ToArray());
-                
-                Log.Info("Commiting changes");
-                if (repository.CommitChanges(summary, description))
+                foreach (var applicationSource in application.Sources)
                 {
-                    Log.Info("Changes were commited, pushing to remote");
-                    repository.PushChanges(requiresPullRequest, gitConnection.BranchName, CancellationToken.None).GetAwaiter().GetResult();    
-                }
-                else
-                {
-                    Log.Info("No changes were commited.");
-                }
+                    Log.Info($"Writing files to repository for '{applicationSource.Url}'");
+                    IGitConnection gitConnection = new GitConnection(applicationSource.Username, applicationSource.Password, applicationSource.Url, new GitBranchName(applicationSource.TargetRevision));
+                    var repository = repositoryFactory.CloneRepository("Foobar", gitConnection);
+
+                    Log.Info($"Copying files into repository {applicationSource.Url}");
+                    var subFolder = applicationSource.Path ?? String.Empty;
+                    Log.VerboseFormat("Copying files into subfolder '{0}'", subFolder);
+
+                    var repositoryFiles = packageFiles.Select(f => new FileCopySpecification(f, repository.WorkingDirectory, subFolder)).ToList();
+
+                    CopyFiles(repositoryFiles);
+
+                    Log.Info("Staging files in repository");
+                    repository.StageFiles(repositoryFiles.Select(fcs => fcs.DestinationRelativePath).ToArray());
+
+                    Log.Info("Commiting changes");
+                    if (repository.CommitChanges(summary, description))
+                    {
+                        Log.Info("Changes were commited, pushing to remote");
+                        repository.PushChanges(requiresPullRequest, gitConnection.BranchName, CancellationToken.None).GetAwaiter().GetResult();
+                    }
+                    else
+                    {
+                        Log.Info("No changes were commited.");
+                    }
+                }     
             }
         }
 
@@ -110,13 +110,13 @@ namespace Calamari.ArgoCD.Conventions
                 fileSystem.CopyFile(file.SourceAbsolutePath, file.DestinationAbsolutePath);
             }
         }
-        
+
         static void EnsureParentDirectoryExists(string filePath)
         {
             var destinationDirectory = Path.GetDirectoryName(filePath);
             if (destinationDirectory != null)
             {
-                Directory.CreateDirectory(destinationDirectory);    
+                Directory.CreateDirectory(destinationDirectory);
             }
         }
 
@@ -128,7 +128,7 @@ namespace Calamari.ArgoCD.Conventions
             log.Info($"Found {filesToApply.Length} files to apply");
             return filesToApply;
         }
-        
+
         IPackageRelativeFile[] SelectFiles(string pathToExtractedPackage, List<string> fileGlobs)
         {
             return fileGlobs.SelectMany(glob => fileSystem.EnumerateFilesWithGlob(pathToExtractedPackage, glob))
@@ -143,5 +143,32 @@ namespace Calamari.ArgoCD.Conventions
                                     })
                             .ToArray<IPackageRelativeFile>();
         }
+    }
+
+
+    public class ArgoCustomPropertiesDto
+    {
+        public ArgoApplicationDto[] Applications { get; set; }
+    }
+
+    public class ArgoApplicationDto
+    {
+        public ArgoApplicationDto(string name, ArgoApplicationSourceDto[] sources)
+        {
+            Name = name;
+            Sources = sources;
+        }
+
+        public string Name { get; set; }
+        public ArgoApplicationSourceDto[] Sources { get; set; }
+    }
+
+    public class ArgoApplicationSourceDto
+    {
+        public string Url { get; set; }
+        public string Username { get; set; }
+        public string Password { get; set; }
+        public string TargetRevision { get; set; }
+        public string Path { get; set; }
     }
 }

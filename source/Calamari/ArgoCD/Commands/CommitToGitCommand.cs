@@ -33,6 +33,8 @@ namespace Calamari.ArgoCD.Commands
         readonly IGitHubPullRequestCreator pullRequestCreator;
         PathToPackage pathToPackage;
         ICustomPropertiesFactory customPropertiesFactory;
+        string customPropertiesFile;
+        string customPropertiesPassword;
 
         public CommitToGitCommand(
             ILog log,
@@ -54,6 +56,12 @@ namespace Calamari.ArgoCD.Commands
             Options.Add("package=",
                         "Path to the NuGet package to install.",
                         v => pathToPackage = new PathToPackage(Path.GetFullPath(v)));
+            Options.Add("customPropertiesFile=",
+                        "Name of the custom properties file",
+                        v => customPropertiesFile = Path.GetFullPath(v));
+            Options.Add("customPropertiesPassword=",
+                        "Password to decrypt the custom properties file",
+                        v => customPropertiesPassword = v);
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -73,7 +81,7 @@ namespace Calamari.ArgoCD.Commands
                                                   d.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
                                               }),
                 new SubstituteInFilesConvention(new NonSensitiveSubstituteInFilesBehaviour(substituteInFiles, PackageDirectoryName)),
-                new UpdateGitRepositoryInstallConvention(fileSystem, PackageDirectoryName, log, pullRequestCreator, customPropertiesFactory),
+                new UpdateGitRepositoryInstallConvention(fileSystem, PackageDirectoryName, log, pullRequestCreator, customPropertiesFactory, customPropertiesFile, customPropertiesPassword),
             };
 
             var runningDeployment = new RunningDeployment(pathToPackage, variables);
