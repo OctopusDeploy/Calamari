@@ -8,6 +8,7 @@ using Calamari.ArgoCD.Dtos;
 using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.GitHub;
 using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
@@ -21,6 +22,7 @@ namespace Calamari.ArgoCD.Conventions
         readonly ILog log;
         readonly string packageSubfolder;
         readonly IGitHubPullRequestCreator pullRequestCreator;
+        readonly ArgoCommitToGitConfigFactory argoCommitToGitConfigFactory;
         readonly ICustomPropertiesFactory customPropertiesFactory;
         readonly string customPropertiesFile;
         readonly string customPropertiesPassword;
@@ -29,6 +31,7 @@ namespace Calamari.ArgoCD.Conventions
                                                     string packageSubfolder,
                                                     ILog log,
                                                     IGitHubPullRequestCreator pullRequestCreator,
+                                                    ArgoCommitToGitConfigFactory argoCommitToGitConfigFactory,
                                                     ICustomPropertiesFactory customPropertiesFactory,
                                                     string customPropertiesFile,
                                                     string customPropertiesPassword)
@@ -36,6 +39,7 @@ namespace Calamari.ArgoCD.Conventions
             this.fileSystem = fileSystem;
             this.log = log;
             this.pullRequestCreator = pullRequestCreator;
+            this.argoCommitToGitConfigFactory = argoCommitToGitConfigFactory;
             this.customPropertiesFactory = customPropertiesFactory;
             this.customPropertiesFile = customPropertiesFile;
             this.customPropertiesPassword = customPropertiesPassword;
@@ -45,11 +49,8 @@ namespace Calamari.ArgoCD.Conventions
         public void Install(RunningDeployment deployment)
         {
             Log.Info("Executing Commit To Git operation");
-            var packageFiles = GetReferencedPackageFiles(deployment);
-
-            var requiresPullRequest = RequiresPullRequest(deployment);
-            var summary = deployment.Variables.GetMandatoryVariable(SpecialVariables.Git.CommitMessageSummary);
-            var description = deployment.Variables.Get(SpecialVariables.Git.CommitMessageDescription) ?? string.Empty;
+            var actionConfig = argoCommitToGitConfigFactory.Create(deployment);
+            var packageFiles = GetReferencedPackageFiles(actionConfig);
 
             var repositoryFactory = new RepositoryFactory(log, deployment.CurrentDirectory, pullRequestCreator);
 
@@ -62,7 +63,7 @@ namespace Calamari.ArgoCD.Conventions
                 foreach (var applicationSource in application.Sources)
                 {
                     Log.Info($"Writing files to repository for '{applicationSource.Url}'");
-                    IGitConnection gitConnection = new GitConnection(applicationSource.Username, applicationSource.Password, applicationSource.Url, new GitBranchName(applicationSource.TargetRevision));
+                    var gitConnection = new GitConnection(applicationSource.Username, applicationSource.Password, applicationSource.Url, applicationSource.TargetRevision);
                     var repository = repositoryFactory.CloneRepository("Foobar", gitConnection);
 
                     Log.Info($"Copying files into repository {applicationSource.Url}");
@@ -70,17 +71,17 @@ namespace Calamari.ArgoCD.Conventions
                     Log.VerboseFormat("Copying files into subfolder '{0}'", subFolder);
 
                     var repositoryFiles = packageFiles.Select(f => new FileCopySpecification(f, repository.WorkingDirectory, subFolder)).ToList();
-
+                    Log.VerboseFormat("Copying files into subfolder '{0}'", applicationSource.Path!);
                     CopyFiles(repositoryFiles);
 
                     Log.Info("Staging files in repository");
                     repository.StageFiles(repositoryFiles.Select(fcs => fcs.DestinationRelativePath).ToArray());
 
                     Log.Info("Commiting changes");
-                    if (repository.CommitChanges(summary, description))
+                    if (repository.CommitChanges(actionConfig.CommitSummary, actionConfig.CommitDescription))
                     {
                         Log.Info("Changes were commited, pushing to remote");
-                        repository.PushChanges(requiresPullRequest, gitConnection.BranchName, CancellationToken.None).GetAwaiter().GetResult();
+                        repository.PushChanges(actionConfig.RequiresPr, applicationSource.TargetRevision, CancellationToken.None).GetAwaiter().GetResult();    
                     }
                     else
                     {
@@ -117,8 +118,6 @@ namespace Calamari.ArgoCD.Conventions
             return filesToApply;
         }
 
-        IPackageRelativeFile[] SelectFiles(string pathToExtractedPackage, List<string> fileGlobs)
-        
         IPackageRelativeFile[] SelectFiles(string pathToExtractedPackageFiles, ArgoCommitToGitConfig config)
         {
             var absInputPath = Path.Combine(pathToExtractedPackageFiles, config.InputSubPath);

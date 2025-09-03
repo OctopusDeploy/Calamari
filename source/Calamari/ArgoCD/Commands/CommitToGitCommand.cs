@@ -32,8 +32,8 @@ namespace Calamari.ArgoCD.Commands
         readonly INonSensitiveSubstituteInFiles substituteInFiles;
         readonly IGitHubPullRequestCreator pullRequestCreator;
         readonly ArgoCommitToGitConfigFactory configFactory;
+        readonly ICustomPropertiesFactory customPropertiesFactory;
         PathToPackage pathToPackage;
-        ICustomPropertiesFactory customPropertiesFactory;
         string customPropertiesFile;
         string customPropertiesPassword;
 
@@ -44,6 +44,7 @@ namespace Calamari.ArgoCD.Commands
             IExtractPackage extractPackage,
             INonSensitiveSubstituteInFiles substituteInFiles,
             IGitHubPullRequestCreator pullRequestCreator,
+            ArgoCommitToGitConfigFactory configFactory,
             ICustomPropertiesFactory customPropertiesFactory)
         {
             this.log = log;
@@ -52,6 +53,7 @@ namespace Calamari.ArgoCD.Commands
             this.extractPackage = extractPackage;
             this.substituteInFiles = substituteInFiles;
             this.pullRequestCreator = pullRequestCreator;
+            this.configFactory = configFactory;
             this.customPropertiesFactory = customPropertiesFactory;
 
             Options.Add("package=",
@@ -82,7 +84,7 @@ namespace Calamari.ArgoCD.Commands
                                                   d.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
                                               }),
                 new SubstituteInFilesConvention(new NonSensitiveSubstituteInFilesBehaviour(substituteInFiles, PackageDirectoryName)),
-                new UpdateGitRepositoryInstallConvention(fileSystem, PackageDirectoryName, log, pullRequestCreator, customPropertiesFactory, customPropertiesFile, customPropertiesPassword),
+                new UpdateGitRepositoryInstallConvention(fileSystem, PackageDirectoryName, log, pullRequestCreator, configFactory, customPropertiesFactory, customPropertiesFile, customPropertiesPassword),
             };
 
             var runningDeployment = new RunningDeployment(pathToPackage, variables);

@@ -89,6 +89,7 @@ namespace Calamari
             builder.RegisterType<KubernetesManifestNamespaceResolver>().As<IKubernetesManifestNamespaceResolver>().InstancePerLifetimeScope();
             builder.RegisterType<GitHubClientFactory>().As<IGitHubClientFactory>().InstancePerLifetimeScope();
             builder.RegisterType<GitHubPullRequestCreator>().As<IGitHubPullRequestCreator>().InstancePerLifetimeScope();
+            builder.RegisterType<ArgoCommitToGitConfigFactory>().AsSelf().InstancePerLifetimeScope();
             builder.RegisterType<CustomPropertiesFactory>().As<ICustomPropertiesFactory>().SingleInstance();
 
             builder.RegisterType<KubernetesDiscovererFactory>()
