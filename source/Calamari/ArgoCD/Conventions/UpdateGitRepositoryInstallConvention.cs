@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using Calamari.ArgoCD.Dtos;
 using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.GitHub;
 using Calamari.Common.Commands;
@@ -18,8 +19,6 @@ using Calamari.Kubernetes;
 
 namespace Calamari.ArgoCD.Conventions
 {
-
-
     public class UpdateGitRepositoryInstallConvention : IInstallConvention
     {
         readonly ICalamariFileSystem fileSystem;
@@ -143,32 +142,5 @@ namespace Calamari.ArgoCD.Conventions
                                     })
                             .ToArray<IPackageRelativeFile>();
         }
-    }
-
-
-    public class ArgoCustomPropertiesDto
-    {
-        public ArgoApplicationDto[] Applications { get; set; }
-    }
-
-    public class ArgoApplicationDto
-    {
-        public ArgoApplicationDto(string name, ArgoApplicationSourceDto[] sources)
-        {
-            Name = name;
-            Sources = sources;
-        }
-
-        public string Name { get; set; }
-        public ArgoApplicationSourceDto[] Sources { get; set; }
-    }
-
-    public class ArgoApplicationSourceDto
-    {
-        public string Url { get; set; }
-        public string Username { get; set; }
-        public string Password { get; set; }
-        public string TargetRevision { get; set; }
-        public string Path { get; set; }
     }
 }
