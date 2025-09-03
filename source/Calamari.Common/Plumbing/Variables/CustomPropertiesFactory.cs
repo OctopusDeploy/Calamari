@@ -32,11 +32,11 @@ namespace Calamari.Common.Plumbing.Variables
         {
             lock (LoaderLock)
             {
-                return LoadExecutionVariablesFromFile<T>(customPropertiesFile, password);
+                return LoadFromFile<T>(customPropertiesFile, password);
             }
         }
 
-        T LoadExecutionVariablesFromFile<T>(string customPropertiesFile, string password)
+        T LoadFromFile<T>(string customPropertiesFile, string password)
         {
             var json = Decrypt(fileSystem.ReadAllBytes(customPropertiesFile), password);
 
@@ -46,7 +46,7 @@ namespace Calamari.Common.Plumbing.Variables
             }
             catch (JsonReaderException)
             {
-                throw new CommandException("Unable to parse variables as valid JSON.");
+                throw new CommandException("Unable to parse custom properties as valid JSON.");
             }
         }
 
