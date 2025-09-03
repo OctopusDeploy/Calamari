@@ -8,14 +8,10 @@ using Calamari.ArgoCD.Dtos;
 using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.GitHub;
 using Calamari.Common.Commands;
-using Calamari.Common.FeatureToggles;
-using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.Conventions;
-using Calamari.Kubernetes;
-#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
 
 namespace Calamari.ArgoCD.Conventions
 {
@@ -94,12 +90,6 @@ namespace Calamari.ArgoCD.Conventions
             }
         }
 
-        bool RequiresPullRequest(RunningDeployment deployment)
-        {
-            return OctopusFeatureToggles.ArgoCDCreatePullRequestFeatureToggle.IsEnabled(deployment.Variables) && deployment.Variables.Get(SpecialVariables.Git.CommitMethod) == SpecialVariables.Git.GitCommitMethods.PullRequest;
-
-        }
-
         void CopyFiles(IEnumerable<IFileCopySpecification> repositoryFiles)
         {
             foreach (var file in repositoryFiles)
@@ -118,29 +108,49 @@ namespace Calamari.ArgoCD.Conventions
                 Directory.CreateDirectory(destinationDirectory);
             }
         }
-
-        IPackageRelativeFile[] GetReferencedPackageFiles(RunningDeployment deployment)
+        
+         IPackageRelativeFile[] GetReferencedPackageFiles(ArgoCommitToGitConfig config)
         {
-            var fileGlobs = deployment.Variables.GetPaths(SpecialVariables.Git.TemplateGlobs);
-            log.Info($"Selecting files from package using '{string.Join(" ", fileGlobs)}'");
-            var filesToApply = SelectFiles(Path.Combine(deployment.CurrentDirectory, packageSubfolder), fileGlobs);
+            log.Info($"Selecting files from package using '{config.InputSubPath}' (recursive: {config.RecurseInputPath})");
+            var filesToApply = SelectFiles(Path.Combine(config.WorkingDirectory, packageSubfolder), config);
             log.Info($"Found {filesToApply.Length} files to apply");
             return filesToApply;
         }
 
         IPackageRelativeFile[] SelectFiles(string pathToExtractedPackage, List<string> fileGlobs)
+        
+        IPackageRelativeFile[] SelectFiles(string pathToExtractedPackageFiles, ArgoCommitToGitConfig config)
         {
-            return fileGlobs.SelectMany(glob => fileSystem.EnumerateFilesWithGlob(pathToExtractedPackage, glob))
-                            .Select(absoluteFilepath =>
-                                    {
-#if NETCORE
-                                        var relativePath = Path.GetRelativePath(pathToExtractedPackage, file);
+            var absInputPath = Path.Combine(pathToExtractedPackageFiles, config.InputSubPath);
+            if (File.Exists(absInputPath))
+            {
+                return new[] { new PackageRelativeFile(absolutePath: absInputPath, packageRelativePath: Path.GetFileName(absInputPath)) };
+            }
+            
+            if (Directory.Exists(absInputPath))
+            {
+                IEnumerable<string> fileList;
+                if (config.RecurseInputPath)
+                {
+                    fileList = fileSystem.EnumerateFilesRecursively(absInputPath, config.FileGlobs);
+                }
+                else
+                {
+                    fileList = fileSystem.EnumerateFiles(absInputPath, config.FileGlobs);
+                }
+                
+                return fileList.Select(absoluteFilepath =>
+                                       {
+#if NET
+                                           var relativePath = Path.GetRelativePath(absInputPath, absoluteFilepath);
 #else
-                                        var relativePath = absoluteFilepath.Substring(pathToExtractedPackage.Length + 1);
+                                                  var relativePath = absoluteFilepath.Substring(absInputPath.Length + 1);
 #endif
-                                        return new PackageRelativeFile(absoluteFilepath, relativePath);
-                                    })
-                            .ToArray<IPackageRelativeFile>();
+                                           return new PackageRelativeFile(absoluteFilepath, relativePath);
+                                       })
+                               .ToArray<IPackageRelativeFile>();
+            }
+            throw new InvalidOperationException($"Supplied input path '{config.InputSubPath}' does not exist within the supplied package");
         }
     }
 }

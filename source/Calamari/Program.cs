@@ -6,6 +6,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using Autofac.Features.Metadata;
+using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.GitHub;
 using Calamari.Commands;
 using Calamari.Common;

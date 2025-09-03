@@ -31,6 +31,7 @@ namespace Calamari.ArgoCD.Commands
         readonly IExtractPackage extractPackage;
         readonly INonSensitiveSubstituteInFiles substituteInFiles;
         readonly IGitHubPullRequestCreator pullRequestCreator;
+        readonly ArgoCommitToGitConfigFactory configFactory;
         PathToPackage pathToPackage;
         ICustomPropertiesFactory customPropertiesFactory;
         string customPropertiesFile;

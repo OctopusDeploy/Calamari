@@ -8,7 +8,6 @@
     public enum FeatureToggle {
         SkunkworksFeatureToggle,
         OidcAccountsFeatureToggle,
-        KubernetesLiveObjectStatusFeatureToggle,
         KubernetesAuthAwsCliWithExecFeatureToggle,
         ForceUtf8ZipFileDecodingFeatureToggle,
         BashParametersArrayFeatureToggle
