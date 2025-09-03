@@ -29,7 +29,7 @@ namespace Calamari.ArgoCD.Dtos
         public ArgoApplicationSourceDto(string url, 
                                         string username, 
                                         string password, 
-                                        GitBranchName targetRevision,
+                                        string targetRevision,
                                         string path)
         {
             Url = url;
@@ -42,7 +42,7 @@ namespace Calamari.ArgoCD.Dtos
         public string Url { get; set; }
         public string Username { get; set; }
         public string Password { get; set; }
-        public GitBranchName TargetRevision { get; set; }
+        public string TargetRevision { get; set; }
         public string Path { get; set; }
     }
 }

@@ -93,7 +93,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             {
                 new ArgoApplicationDto("App1", new[]
                 {
-                    new ArgoApplicationSourceDto(OriginPath, "username", "password", argoCdBranchName, "")
+                    new ArgoApplicationSourceDto(OriginPath, "username", "password", argoCdBranchName.Value, "")
                 })
             }));
             return customPropertiesFactory;

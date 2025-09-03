@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Commands;
+using Calamari.Common.Plumbing.Deployment.PackageRetention;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
@@ -51,7 +53,7 @@ namespace Calamari.Common.Plumbing.Variables
         static readonly JsonSerializerSettings SerializerSettings = new JsonSerializerSettings
         {
             TypeNameHandling = TypeNameHandling.None,
-            DateParseHandling = DateParseHandling.None
+            DateParseHandling = DateParseHandling.None,
         };
 
         static string Decrypt(byte[] encryptedJson, string encryptionPassword)

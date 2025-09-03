@@ -63,7 +63,7 @@ namespace Calamari.ArgoCD.Conventions
                 foreach (var applicationSource in application.Sources)
                 {
                     Log.Info($"Writing files to repository for '{applicationSource.Url}'");
-                    var gitConnection = new GitConnection(applicationSource.Username, applicationSource.Password, applicationSource.Url, applicationSource.TargetRevision);
+                    var gitConnection = new GitConnection(applicationSource.Username, applicationSource.Password, applicationSource.Url, new GitBranchName(applicationSource.TargetRevision));
                     var repository = repositoryFactory.CloneRepository("Foobar", gitConnection);
 
                     Log.Info($"Copying files into repository {applicationSource.Url}");
@@ -81,7 +81,7 @@ namespace Calamari.ArgoCD.Conventions
                     if (repository.CommitChanges(actionConfig.CommitSummary, actionConfig.CommitDescription))
                     {
                         Log.Info("Changes were commited, pushing to remote");
-                        repository.PushChanges(actionConfig.RequiresPr, applicationSource.TargetRevision, CancellationToken.None).GetAwaiter().GetResult();    
+                        repository.PushChanges(actionConfig.RequiresPr, new GitBranchName(applicationSource.TargetRevision), CancellationToken.None).GetAwaiter().GetResult();    
                     }
                     else
                     {
