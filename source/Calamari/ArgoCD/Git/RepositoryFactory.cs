@@ -1,3 +1,4 @@
+#if NET
 using System;
 using System.IO;
 using Calamari.ArgoCD.Conventions;
@@ -71,3 +72,4 @@ namespace Calamari.ArgoCD.Git
         }
     }
 }
+#endif
