@@ -44,7 +44,7 @@ namespace Calamari.ArgoCD.Git
             var options = new CloneOptions();
             if (gitConnection.Username != null && gitConnection.Password != null)
             {
-                options.CredentialsProvider = (url, usernameFromUrl, types) => new UsernamePasswordCredentials
+                options.FetchOptions.CredentialsProvider = (url, usernameFromUrl, types) => new UsernamePasswordCredentials
                     {
                         Username = gitConnection.Username!,
                         Password = gitConnection.Password!
