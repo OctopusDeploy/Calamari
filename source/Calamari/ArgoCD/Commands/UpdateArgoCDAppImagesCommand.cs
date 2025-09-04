@@ -1,6 +1,7 @@
 #if NET
 using System.Collections.Generic;
 using Calamari.ArgoCD.Conventions;
+using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages;
 using Calamari.ArgoCD.GitHub;
 using Calamari.Commands.Support;
 using Calamari.Common.Commands;
@@ -21,23 +22,28 @@ namespace Calamari.ArgoCD.Commands
         readonly IVariables variables;
         readonly ICalamariFileSystem fileSystem;
         readonly IGitHubPullRequestCreator pullRequestCreator;
+        readonly ArgoCommitToGitConfigFactory configFactory;
+        readonly CommitMessageGenerator commitMessageGenerator;
 
-        public UpdateArgoCDAppImagesCommand(ILog log, IVariables variables, ICalamariFileSystem fileSystem, IGitHubPullRequestCreator pullRequestCreator)
+        public UpdateArgoCDAppImagesCommand(ILog log, IVariables variables, ICalamariFileSystem fileSystem, IGitHubPullRequestCreator pullRequestCreator,
+                                            CommitMessageGenerator commitMessageGenerator,
+                                            ArgoCommitToGitConfigFactory configFactory)
         {
             this.log = log;
             this.variables = variables;
             this.fileSystem = fileSystem;
             this.pullRequestCreator = pullRequestCreator;
+            this.commitMessageGenerator = commitMessageGenerator;
+            this.configFactory = configFactory;
         }
 
         public override int Execute(string[] commandLineArguments)
         {
             var runningDeployment = new RunningDeployment(null, variables);
 
-
             var conventions = new List<IConvention>
             {
-                new UpdateArgoCDAppImagesInstallConvention(log, pullRequestCreator, fileSystem),
+                new UpdateArgoCDAppImagesInstallConvention(log, pullRequestCreator, fileSystem, configFactory, commitMessageGenerator),
             };
                 
             var conventionRunner = new ConventionProcessor(runningDeployment, conventions, log);

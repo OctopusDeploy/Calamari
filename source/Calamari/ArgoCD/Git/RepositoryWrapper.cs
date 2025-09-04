@@ -28,11 +28,17 @@ namespace Calamari.ArgoCD.Git
         // returns true if changes were made to the repository
         public bool CommitChanges(string summary, string description)
         {
+            var fullMessage = GenerateCommitMessage(summary, description);
+            return CommitChanges(fullMessage);
+        }
+
+        public bool CommitChanges(string fullMessage)
+        {
             try
             {
                 var commitTime = DateTimeOffset.Now;
-                var commitMessage = GenerateCommitMessage(summary, description);
-                var commit = repository.Commit(commitMessage,
+                
+                var commit = repository.Commit(fullMessage,
                                                new Signature("Octopus", "octopus@octopus.com", commitTime),
                                                new Signature("Octopus", "octopus@octopus.com", commitTime));
                 log.Verbose($"Committed changes to {commit.Sha}");
@@ -41,7 +47,7 @@ namespace Calamari.ArgoCD.Git
             catch (EmptyCommitException)
             {
                 return false;
-            }
+            } 
         }
         
         public void StageFiles(string[] filesToStage)

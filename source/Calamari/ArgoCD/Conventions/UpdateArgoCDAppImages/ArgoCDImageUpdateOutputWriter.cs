@@ -4,24 +4,38 @@ using System.Linq;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Kubernetes;
 
-namespace Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages;
-
-public class ArgoCDImageUpdateOutputWriter(ILog log)
+namespace Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages
 {
-    readonly ILog log = log;
-
-    public void WriteImageUpdateOutput(IEnumerable<ArgoCDGatewayId> gateways, IEnumerable<Uri> gitRepos,
-        IEnumerable<string> totalApplications, IEnumerable<string> updatedApplications, int imagesUpdatedCount)
+    public class ArgoCDImageUpdateOutputWriter
     {
-        var gatewayIds = ToCommaSeparatedString(gateways.Select(g => g.Value));
-        var gitUris = ToCommaSeparatedString(gitRepos.Select(u => u.ToString()));
-        var totalApps = ToCommaSeparatedString(totalApplications);
-        var updatedApps = ToCommaSeparatedString(updatedApplications);
-        IV
-    }
+        readonly ILog log;
 
-    static string ToCommaSeparatedString(IEnumerable<string> items)
-    {
-        return string.Join(", ", items);
+        public ArgoCDImageUpdateOutputWriter(ILog log)
+        {
+            this.log = log;
+        }
+
+        public void WriteImageUpdateOutput(IEnumerable<string> gateways,
+                                           IEnumerable<Uri> gitRepos,
+                                           IEnumerable<string> totalApplications,
+                                           IEnumerable<string> updatedApplications,
+                                           int imagesUpdatedCount)
+        {
+            var gatewayIds = ToCommaSeparatedString(gateways);
+            var gitUris = ToCommaSeparatedString(gitRepos.Select(u => u.ToString()));
+            var totalApps = ToCommaSeparatedString(totalApplications);
+            var updatedApps = ToCommaSeparatedString(updatedApplications);
+
+            log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.GitUris, gitUris);
+            log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.MatchingApplications, totalApps);
+            log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.UpdatedApplications, updatedApps);
+            log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.UpdatedImages, imagesUpdatedCount.ToString());
+
+        }
+
+        static string ToCommaSeparatedString(IEnumerable<string> items)
+        {
+            return string.Join(", ", items);
+        }
     }
 }
