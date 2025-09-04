@@ -90,7 +90,7 @@ namespace Calamari
             builder.RegisterType<GitHubClientFactory>().As<IGitHubClientFactory>().InstancePerLifetimeScope();
             builder.RegisterType<GitHubPullRequestCreator>().As<IGitHubPullRequestCreator>().InstancePerLifetimeScope();
             builder.RegisterType<ArgoCommitToGitConfigFactory>().AsSelf().InstancePerLifetimeScope();
-            builder.RegisterType<CustomPropertiesFactory>().As<ICustomPropertiesFactory>().SingleInstance();
+            builder.RegisterType<CustomPropertiesLoader>().As<ICustomPropertiesLoader>().SingleInstance();
 
             builder.RegisterType<KubernetesDiscovererFactory>()
                    .As<IKubernetesDiscovererFactory>()

@@ -24,26 +24,20 @@ namespace Calamari.ArgoCD.Conventions
         readonly string packageSubfolder;
         readonly IGitHubPullRequestCreator pullRequestCreator;
         readonly ArgoCommitToGitConfigFactory argoCommitToGitConfigFactory;
-        readonly ICustomPropertiesFactory customPropertiesFactory;
-        readonly string customPropertiesFile;
-        readonly string customPropertiesPassword;
+        readonly ICustomPropertiesLoader customPropertiesLoader;
 
         public UpdateGitRepositoryInstallConvention(ICalamariFileSystem fileSystem,
                                                     string packageSubfolder,
                                                     ILog log,
                                                     IGitHubPullRequestCreator pullRequestCreator,
                                                     ArgoCommitToGitConfigFactory argoCommitToGitConfigFactory,
-                                                    ICustomPropertiesFactory customPropertiesFactory,
-                                                    string customPropertiesFile,
-                                                    string customPropertiesPassword)
+                                                    ICustomPropertiesLoader customPropertiesLoader)
         {
             this.fileSystem = fileSystem;
             this.log = log;
             this.pullRequestCreator = pullRequestCreator;
             this.argoCommitToGitConfigFactory = argoCommitToGitConfigFactory;
-            this.customPropertiesFactory = customPropertiesFactory;
-            this.customPropertiesFile = customPropertiesFile;
-            this.customPropertiesPassword = customPropertiesPassword;
+            this.customPropertiesLoader = customPropertiesLoader;
             this.packageSubfolder = packageSubfolder;
         }
 
@@ -55,7 +49,7 @@ namespace Calamari.ArgoCD.Conventions
 
             var repositoryFactory = new RepositoryFactory(log, deployment.CurrentDirectory, pullRequestCreator);
 
-            var argoProperties = customPropertiesFactory.Create<ArgoCDCustomPropertiesDto>(customPropertiesFile, customPropertiesPassword);
+            var argoProperties = customPropertiesLoader.Load<ArgoCDCustomPropertiesDto>();
 
             log.Info($"Found the following applications: '{argoProperties.Applications.Select(a => a.Name).Join(",")}'");
 

@@ -71,12 +71,9 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
             runningDeployment.StagingDirectory = WorkingDirectory;
 
-            var customPropertiesFile = "customfile";
-            var customPropertiesPassword = "pass";
-            var customPropertiesFactory = SetupCustomPropertiesFactory(customPropertiesFile, customPropertiesPassword);
+            var customPropertiesLoader = SetupCustomPropertiesLoader();
 
-            var convention = new UpdateGitRepositoryInstallConvention(fileSystem, CommitToGitCommand.PackageDirectoryName, log, Substitute.For<IGitHubPullRequestCreator>(), new ArgoCommitToGitConfigFactory(log),
-                                                                      customPropertiesFactory,customPropertiesFile, customPropertiesPassword);
+            var convention = new UpdateGitRepositoryInstallConvention(fileSystem, CommitToGitCommand.PackageDirectoryName, log, Substitute.For<IGitHubPullRequestCreator>(), new ArgoCommitToGitConfigFactory(log), customPropertiesLoader);
             convention.Install(runningDeployment);
 
             var resultPath = CloneOrigin();
@@ -86,10 +83,10 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             resultNestedContent.Should().Be(nestedFilename);
         }
 
-        ICustomPropertiesFactory SetupCustomPropertiesFactory(string customPropertiesFile, string customPropertiesPassword)
+        ICustomPropertiesLoader SetupCustomPropertiesLoader()
         {
-            var customPropertiesFactory = Substitute.For<ICustomPropertiesFactory>();
-            customPropertiesFactory.Create<ArgoCDCustomPropertiesDto>(customPropertiesFile, customPropertiesPassword).Returns(new ArgoCDCustomPropertiesDto(new[]
+            var customPropertiesFactory = Substitute.For<ICustomPropertiesLoader>();
+            customPropertiesFactory.Load<ArgoCDCustomPropertiesDto>().Returns(new ArgoCDCustomPropertiesDto(new[]
             {
                 new ArgoCDApplicationDto("App1", new[]
                 {
@@ -119,12 +116,9 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
             runningDeployment.StagingDirectory = WorkingDirectory;    
             
-            var customPropertiesFile = "customfile";
-            var customPropertiesPassword = "pass";
-            var customPropertiesFactory = SetupCustomPropertiesFactory(customPropertiesFile, customPropertiesPassword);
+            var customPropertiesLoader = SetupCustomPropertiesLoader();
 
-            var convention = new UpdateGitRepositoryInstallConvention(fileSystem, CommitToGitCommand.PackageDirectoryName, log, Substitute.For<IGitHubPullRequestCreator>(), new ArgoCommitToGitConfigFactory(log),
-                                                                      customPropertiesFactory,"customfile", "pass");
+            var convention = new UpdateGitRepositoryInstallConvention(fileSystem, CommitToGitCommand.PackageDirectoryName, log, Substitute.For<IGitHubPullRequestCreator>(), new ArgoCommitToGitConfigFactory(log), customPropertiesLoader);
             convention.Install(runningDeployment);
             
             var resultPath = CloneOrigin();

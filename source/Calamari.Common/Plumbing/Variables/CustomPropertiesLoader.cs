@@ -12,31 +12,35 @@ using Newtonsoft.Json;
 
 namespace Calamari.Common.Plumbing.Variables
 {
-    public interface ICustomPropertiesFactory
+    public interface ICustomPropertiesLoader
     {
-        T Create<T>(string customPropertiesFile, string password);
+        T Load<T>();
     }
 
-    public class CustomPropertiesFactory : ICustomPropertiesFactory
+    public class CustomPropertiesLoader : ICustomPropertiesLoader
     {
         readonly ICalamariFileSystem fileSystem;
+        readonly string customPropertiesFile;
+        readonly string password;
 
         static readonly object LoaderLock = new object();
 
-        public CustomPropertiesFactory(ICalamariFileSystem fileSystem)
+        public CustomPropertiesLoader(ICalamariFileSystem fileSystem, string customPropertiesFile, string password)
         {
             this.fileSystem = fileSystem;
+            this.customPropertiesFile = customPropertiesFile;
+            this.password = password;
         }
 
-        public T Create<T>(string customPropertiesFile, string password)
+        public T Load<T>()
         {
             lock (LoaderLock)
             {
-                return LoadFromFile<T>(customPropertiesFile, password);
+                return LoadFromFile<T>();
             }
         }
 
-        T LoadFromFile<T>(string customPropertiesFile, string password)
+        T LoadFromFile<T>()
         {
             var json = Decrypt(fileSystem.ReadAllBytes(customPropertiesFile), password);
 
