@@ -88,7 +88,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             var customPropertiesFactory = Substitute.For<ICustomPropertiesLoader>();
             customPropertiesFactory.Load<ArgoCDCustomPropertiesDto>().Returns(new ArgoCDCustomPropertiesDto(new[]
             {
-                new ArgoCDApplicationDto("App1", new[]
+                new ArgoCDApplicationDto("Gateway1", "App1", new[]
                 {
                     new ArgoCDApplicationSourceDto(OriginPath, "username", "password", argoCdBranchName.Value, "")
                 })
