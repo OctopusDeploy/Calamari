@@ -54,7 +54,7 @@ namespace Calamari.ArgoCD.Conventions
 
             var repositoryFactory = new RepositoryFactory(log, deployment.CurrentDirectory, pullRequestCreator);
 
-            var argoProperties = customPropertiesFactory.Create<ArgoCustomPropertiesDto>(customPropertiesFile, customPropertiesPassword);
+            var argoProperties = customPropertiesFactory.Create<ArgoCDCustomPropertiesDto>(customPropertiesFile, customPropertiesPassword);
 
             log.Info($"Found the following applications: '{argoProperties.Applications.Select(a => a.Name).Join(",")}'");
 

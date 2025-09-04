@@ -89,11 +89,11 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
         ICustomPropertiesFactory SetupCustomPropertiesFactory(string customPropertiesFile, string customPropertiesPassword)
         {
             var customPropertiesFactory = Substitute.For<ICustomPropertiesFactory>();
-            customPropertiesFactory.Create<ArgoCustomPropertiesDto>(customPropertiesFile, customPropertiesPassword).Returns(new ArgoCustomPropertiesDto(new[]
+            customPropertiesFactory.Create<ArgoCDCustomPropertiesDto>(customPropertiesFile, customPropertiesPassword).Returns(new ArgoCDCustomPropertiesDto(new[]
             {
-                new ArgoApplicationDto("App1", new[]
+                new ArgoCDApplicationDto("App1", new[]
                 {
-                    new ArgoApplicationSourceDto(OriginPath, "username", "password", argoCdBranchName.Value, "")
+                    new ArgoCDApplicationSourceDto(OriginPath, "username", "password", argoCdBranchName.Value, "")
                 })
             }));
             return customPropertiesFactory;

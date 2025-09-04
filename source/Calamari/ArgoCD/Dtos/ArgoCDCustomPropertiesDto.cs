@@ -2,31 +2,31 @@ using Calamari.ArgoCD.Git;
 
 namespace Calamari.ArgoCD.Dtos
 {
-    public class ArgoCustomPropertiesDto
+    public class ArgoCDCustomPropertiesDto
     {
-        public ArgoCustomPropertiesDto(ArgoApplicationDto[] applications)
+        public ArgoCDCustomPropertiesDto(ArgoCDApplicationDto[] applications)
         {
             Applications = applications;
         }
 
-        public ArgoApplicationDto[] Applications { get; set; }
+        public ArgoCDApplicationDto[] Applications { get; set; }
     }
     
-    public class ArgoApplicationDto
+    public class ArgoCDApplicationDto
     {
-        public ArgoApplicationDto(string name, ArgoApplicationSourceDto[] sources)
+        public ArgoCDApplicationDto(string name, ArgoCDApplicationSourceDto[] sources)
         {
             Name = name;
             Sources = sources;
         }
 
         public string Name { get; set; }
-        public ArgoApplicationSourceDto[] Sources { get; set; }
+        public ArgoCDApplicationSourceDto[] Sources { get; set; }
     }
 
-    public class ArgoApplicationSourceDto
+    public class ArgoCDApplicationSourceDto
     {
-        public ArgoApplicationSourceDto(string url, 
+        public ArgoCDApplicationSourceDto(string url, 
                                         string username, 
                                         string password, 
                                         string targetRevision,
