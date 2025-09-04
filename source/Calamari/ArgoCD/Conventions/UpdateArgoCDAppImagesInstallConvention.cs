@@ -23,34 +23,33 @@ namespace Calamari.ArgoCD.Conventions
         readonly ICalamariFileSystem fileSystem;
         readonly ILog log;
         readonly IGitHubPullRequestCreator pullRequestCreator;
+        readonly ArgoCommitToGitConfigFactory argoCommitToGitConfigFactory;
 
-        public UpdateArgoCDAppImagesInstallConvention(ILog log, IGitHubPullRequestCreator pullRequestCreator, ICalamariFileSystem fileSystem)
+        public UpdateArgoCDAppImagesInstallConvention(ILog log, IGitHubPullRequestCreator pullRequestCreator, ICalamariFileSystem fileSystem, ArgoCommitToGitConfigFactory argoCommitToGitConfigFactory)
         {
             this.log = log;
             this.pullRequestCreator = pullRequestCreator;
             this.fileSystem = fileSystem;
+            this.argoCommitToGitConfigFactory = argoCommitToGitConfigFactory;
         }
 
         public void Install(RunningDeployment deployment)
         {
+            var actionConfig = argoCommitToGitConfigFactory.Create(deployment);
             var repositoryFactory = new RepositoryFactory(log, deployment.CurrentDirectory, pullRequestCreator);
-            var requiresPullRequest = RequiresPullRequest(deployment);
-
-            var commitMessageSummary = deployment.Variables.Get(SpecialVariables.Git.CommitMessageSummary) ?? throw new CommandException("Git commit summary is not set.");
-            var commitMessageDescription = deployment.Variables.Get(SpecialVariables.Git.CommitMessageDescription);
             var packageReferences = deployment.Variables.GetContainerPackageNames().Select(p => ContainerImageReference.FromReferenceString(p)).ToList();
 
             var repositoryIndexes = deployment.Variables.GetIndexes(SpecialVariables.Git.Index);
-            log.Info($"Found the following repository indicies '{repositoryIndexes.Join(",")}'");
-            foreach (var repositoryIndex in repositoryIndexes)
+            var repositoryIndex = 0;
+            foreach (var argoSource in actionConfig.ArgoSourcesToUpdate)
             {
-                Log.Info($"Writing files to repository for '{repositoryIndex}'");
-                IGitConnection gitConnection = new VariableBackedGitConnection(deployment.Variables, repositoryIndex);
+                var repoName = repositoryIndex.ToString();
+                Log.Info($"Writing files to git repository for '{argoSource.Url}'");
+                var repository = repositoryFactory.CloneRepository(repoName, argoSource);
+                
                 var defaultRegistry = deployment.Variables.Get(SpecialVariables.Git.DefaultRegistry(repositoryIndex));
-                var subFolder = deployment.Variables.Get(SpecialVariables.Git.SubFolder(repositoryIndex), String.Empty);
-                var repository = repositoryFactory.CloneRepository(repositoryIndex, gitConnection);
 
-                var pathToUpdate = Path.Combine(repository.WorkingDirectory, subFolder);
+                var pathToUpdate = Path.Combine(repository.WorkingDirectory, argoSource.SubFolder);
                 var updatedFiles = UpdateFiles(gitConnection, pathToUpdate, defaultRegistry, packageReferences);
 
                 if (updatedFiles.Count > 0)
@@ -97,7 +96,7 @@ namespace Calamari.ArgoCD.Conventions
             var updatedImages = new HashSet<string>();
             foreach (var file in yamlFiles)
             {
-                log.Verbose($"Processing file {file} in Repository {toUpdate.Url}.");
+                log.Verbose($"Processing file {file}.");
                 var fileContent = fileSystem.ReadFile(file);
 
                 var imageReplacer = new ContainerImageReplacer(fileContent, defaultRegistry);
@@ -119,38 +118,38 @@ namespace Calamari.ArgoCD.Conventions
                     log.Verbose($"No changes made to file {file} as no image references were updated.");
                 }
             }
-            //
-            // if (updatedFiles.Count > 0)
-            // {
-            //     try
-            //     {
-            //         var imageUpdateChanges = new ImageUpdateChanges(updatedFiles, updatedImages);
-            //
-            //         var changesApplied = await repository.TryCommitChanges(imageUpdateChanges,
-            //                                                                commitSummary,
-            //                                                                userCommitDescription,
-            //                                                                log,
-            //                                                                cancellationToken);
-            //         if (changesApplied)
-            //         {
-            //             imagesReplaced.UnionWith(updatedImages);
-            //         }
-            //         else
-            //         {
-            //             // NOTE: We need to look at how we can provide better information to the user as to WHY the commit was not made.
-            //             // This could be because:
-            //             // - Changes were redundant (unlikely)
-            //             // - The parent commit was superseded by another commit,
-            //             // - Failure for some other reason
-            //             log.Warn($"Changes were not committed to {toUpdate.Url}.");
-            //         }
-            //     }
-            //     catch (Exception e)
-            //     {
-            //         log.Error($"Failed to commit changes to the Git Repository: {e.Message}");
-            //         throw;
-            //     }
-            // }
+            
+            if (updatedFiles.Count > 0)
+            {
+                try
+                {
+                    var imageUpdateChanges = new ImageUpdateChanges(updatedFiles, updatedImages);
+            
+                    var changesApplied = await repository.TryCommitChanges(imageUpdateChanges,
+                                                                           commitSummary,
+                                                                           userCommitDescription,
+                                                                           log,
+                                                                           cancellationToken);
+                    if (changesApplied)
+                    {
+                        imagesReplaced.UnionWith(updatedImages);
+                    }
+                    else
+                    {
+                        // NOTE: We need to look at how we can provide better information to the user as to WHY the commit was not made.
+                        // This could be because:
+                        // - Changes were redundant (unlikely)
+                        // - The parent commit was superseded by another commit,
+                        // - Failure for some other reason
+                        log.Warn($"Changes were not committed to {toUpdate.Url}.");
+                    }
+                }
+                catch (Exception e)
+                {
+                    log.Error($"Failed to commit changes to the Git Repository: {e.Message}");
+                    throw;
+                }
+            }
 
             return imagesReplaced;
         }

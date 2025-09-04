@@ -89,8 +89,10 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net6.0' ">
+    <Package Include="KubernetesClient" Version="15.0.1" />
     <PackageReference Include="KubernetesClient" Version="15.0.1" />
+  </ItemGroup>
   <ItemGroup>
     <Folder Include="ArgoCD\Http\" />
   </ItemGroup>
