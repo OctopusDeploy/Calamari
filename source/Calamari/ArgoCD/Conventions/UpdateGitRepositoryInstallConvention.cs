@@ -1,6 +1,7 @@
 #nullable enable
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -58,13 +59,14 @@ namespace Calamari.ArgoCD.Conventions
 
             log.Info($"Found the following applications: '{argoProperties.Applications.Select(a => a.Name).Join(",")}'");
 
+            int repositoryNumber = 1;
             foreach (var application in argoProperties.Applications)
             {
                 foreach (var applicationSource in application.Sources)
                 {
-                    Log.Info($"Writing files to repository for '{applicationSource.Url}'");
+                    Log.Info($"Writing files to repository '{applicationSource.Url}' for '{application.Name}'");
                     var gitConnection = new GitConnection(applicationSource.Username, applicationSource.Password, applicationSource.Url, new GitBranchName(applicationSource.TargetRevision));
-                    var repository = repositoryFactory.CloneRepository("Foobar", gitConnection);
+                    var repository = repositoryFactory.CloneRepository(repositoryNumber.ToString(CultureInfo.InvariantCulture), gitConnection);
 
                     Log.Info($"Copying files into repository {applicationSource.Url}");
                     var subFolder = applicationSource.Path ?? String.Empty;
@@ -87,6 +89,8 @@ namespace Calamari.ArgoCD.Conventions
                     {
                         Log.Info("No changes were commited.");
                     }
+
+                    repositoryNumber++;
                 }     
             }
         }
