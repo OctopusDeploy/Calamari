@@ -26,14 +26,14 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
         [Test]
         public void UpdateImages_WithNoNewImages_ReturnsSameYaml()
         {
-            const string inputYaml = """
+            const string inputYaml = @"
                                      kind: Deployment
                                      spec:
                                        template:
                                          spec:
                                            containers:
                                              - image: nginx:1.19
-                                     """;
+                                     ";
 
             var imageReplacer = new ContainerImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry);
 
@@ -48,7 +48,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
         {
             var imageReplacer = new ContainerImageReplacer(string.Empty, ArgoCDConstants.DefaultContainerRegistry);
 
-            var result = imageReplacer.UpdateImages([]);
+            var result = imageReplacer.UpdateImages(new List<ContainerImageReference>());
 
             result.UpdatedContents.Should().BeEmpty();
             result.UpdatedImageReferences.Should().BeEmpty();
@@ -57,11 +57,11 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
         [Test]
         public void UpdateImages_WithInvalidDocuments_IgnoresDocuments()
         {
-            const string invalidYaml = """
+            const string invalidYaml = @"
                                        this: is: not: valid: yaml
                                        - just:
                                          - random: stuff
-                                       """;
+                                       ";
             var imageReplacer = new ContainerImageReplacer(invalidYaml, ArgoCDConstants.DefaultContainerRegistry);
             var result = imageReplacer.UpdateImages(new List<ContainerImageReference>());
 
@@ -73,14 +73,14 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
         [Test]
         public void UpdateImages_WithResourcesWithoutImages_LeavesYamlUnchanged()
         {
-            const string yamlWithoutImages = """
+            const string yamlWithoutImages = @"
                                              kind: Service
                                              metadata:
                                                name: my-service
                                              spec:
                                                ports:
                                                  - port: 80
-                                             """;
+                                             ";
 
             var imageReplacer = new ContainerImageReplacer(yamlWithoutImages, ArgoCDConstants.DefaultContainerRegistry);
 
@@ -93,15 +93,15 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
         [Test]
         public void UpdateImages_WithArgoAppManifest_LeavesYamlUnchanged()
         {
-            const string argoApp = """
+            const string argoApp = @"
                                    apiVersion: argoproj.io/v1alpha1
                                    kind: Application
                                    metadata:
                                      name: demo-containers-app
                                      namespace: argocd
                                      annotations:
-                                       octopus.com/project: "container-replacement-demo"
-                                       octopus.com/environment: "demo"
+                                       octopus.com/project: ""container-replacement-demo""
+                                       octopus.com/environment: ""demo""
                                    spec:
                                      project: default
                                      source:
@@ -117,7 +117,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
                                          selfHeal: true
                                        syncOptions:
                                          - CreateNamespace=true
-                                   """;
+                                   ";
 
             var imageReplacer = new ContainerImageReplacer(argoApp, ArgoCDConstants.DefaultContainerRegistry);
 
@@ -130,15 +130,15 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
         [Test]
         public void UpdateImages_WithYamlComments_PreservesComments()
         {
-            const string yamlWithComments = """
-                                            # This is a comment
+            const string yamlWithComments = @"
+                                            \# This is a comment
                                             kind: Deployment
                                             spec:
                                               template:
                                                 spec:
                                                   containers:
                                                     - image: nginx:1.19 # Another comment
-                                            """;
+                                            ";
             var imageReplacer = new ContainerImageReplacer(yamlWithComments, ArgoCDConstants.DefaultContainerRegistry);
 
             var result = imageReplacer.UpdateImages(new List<ContainerImageReference> { ContainerImageReference.FromReferenceString("nginx:1.25") });
@@ -149,22 +149,22 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
         [Test]
         public void UpdateImages_WithQuotedReference_PreservesQuotes()
         {
-            const string inputYaml = """
+            const string inputYaml = @"
                                      apiVersion: v1
                                      kind: Pod
                                      spec:
                                        containers:
                                          - name: my-container
-                                           image: "nginx:1.19"
-                                     """;
-            const string expectedYaml = """
+                                           image: ""nginx:1.19""
+                                     ";
+            const string expectedYaml = @"
                                         apiVersion: v1
                                         kind: Pod
                                         spec:
                                           containers:
                                             - name: my-container
-                                              image: "nginx:1.25"
-                                        """;
+                                              image: ""nginx:1.25""
+                                        ";
             var imageReplacer = new ContainerImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry);
 
             var updatedImage = new List<ContainerImageReference>
@@ -183,24 +183,22 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
         [Test]
         public void DoesNotUpdateComments()
         {
-            const string inputYaml = """
-                                     apiVersion: v1
-                                     kind: Pod
-                                     spec:
-                                       containers:
-                                         - name: my-container
-                                           #image: nginx:1.19 being used here
-                                           image: nginx:1.19
-                                     """;
-            const string expectedYaml = """
-                                        apiVersion: v1
-                                        kind: Pod
-                                        spec:
-                                          containers:
-                                            - name: my-container
-                                              #image: nginx:1.19 being used here
-                                              image: nginx:1.25
-                                        """;
+          var commentLine = "#image: nginx:1.19 being used here";
+          string inputYaml = @"apiVersion: v1
+kind: Pod
+spec:
+  containers:
+    - name: my-container
+      " + commentLine + @"
+      image: nginx:1.19";
+          
+            string expectedYaml = @"apiVersion: v1
+kind: Pod
+spec:
+  containers:
+    - name: my-container
+      " + commentLine + @"
+      image: nginx:1.25";
             var imageReplacer = new ContainerImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry);
 
             var updatedImage = new List<ContainerImageReference>
@@ -217,7 +215,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
         [Test]
         public void UpdateImages_WithPodWithUpdates_ReturnsUpdatedYaml()
         {
-            const string inputYaml = $"""
+            const string inputYaml = @"
                                       apiVersion: v1
                                       kind: Pod
                                       metadata:
@@ -231,9 +229,9 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
                                         initContainers:
                                           - name: init-busybox
                                             image: busybox:unstable #Update Init
-                                            command: ["echo", "Init container added"]
-                                      """;
-            const string expectedYaml = $"""
+                                            command: [""echo"", ""Init container added""]
+                                      ";
+            const string expectedYaml = @"
                                          apiVersion: v1
                                          kind: Pod
                                          metadata:
@@ -247,8 +245,8 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
                                            initContainers:
                                              - name: init-busybox
                                                image: busybox:stable #Update Init
-                                               command: ["echo", "Init container added"]
-                                         """;
+                                               command: [""echo"", ""Init container added""]
+                                         ";
             var imageReplacer = new ContainerImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry);
 
             var result = imageReplacer.UpdateImages(imagesToUpdate);
@@ -263,7 +261,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
         [Test]
         public void UpdateImages_WithPodWithUpdatesForMultipleContainers_ReturnsUpdatedYaml()
         {
-            const string inputYaml = """
+            const string inputYaml = @"
                                      apiVersion: v1
                                      kind: Pod
                                      metadata:
@@ -274,9 +272,9 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
                                            image: nginx:1.19
                                          - name: init-busybox
                                            image: busybox:unstable
-                                           command: ["echo", "Init container added"]
-                                     """;
-            const string expectedYaml = """
+                                           command: [""echo"", ""Init container added""]
+                                     ";
+            const string expectedYaml = @"
                                         apiVersion: v1
                                         kind: Pod
                                         metadata:
@@ -287,8 +285,8 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
                                               image: nginx:1.25
                                             - name: init-busybox
                                               image: busybox:stable
-                                              command: ["echo", "Init container added"]
-                                        """;
+                                              command: [""echo"", ""Init container added""]
+                                        ";
             var imageReplacer = new ContainerImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry);
 
             var result = imageReplacer.UpdateImages(imagesToUpdate);
@@ -303,7 +301,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
         [Test]
         public void UpdateImages_WithPodWithUpdatesToMultipleInstancesOfSameImage_ReturnsUpdatedYaml()
         {
-            const string inputYaml = """
+            const string inputYaml = @"
                                      apiVersion: v1
                                      kind: Pod
                                      metadata:
@@ -316,8 +314,8 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
                                            image: nginx:1.19
                                          - name: older-nginx
                                            image: nginx:1.12
-                                     """;
-            const string expectedYaml = """
+                                     ";
+            const string expectedYaml = @"
                                         apiVersion: v1
                                         kind: Pod
                                         metadata:
@@ -330,7 +328,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
                                               image: nginx:1.25
                                             - name: older-nginx
                                               image: nginx:1.25
-                                        """;
+                                        ";
             var imageReplacer = new ContainerImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry);
 
             var updatedImage = new List<ContainerImageReference>
@@ -355,7 +353,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
         [TestCase("Job", "batch/v1")]
         public void UpdateImages_SpecTemplateSpecPath_ReturnsUpdatedYaml(string kind, string api = "apps/v1")
         {
-            var inputYaml = $"""
+            var inputYaml = @"
                              apiVersion: {api}
                              kind: {kind}
                              metadata:
@@ -378,9 +376,9 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
                                    initContainers:
                                      - name: init-busybox
                                        image: busybox:unstable #Update Init
-                                       command: ["echo", "Init container added"]
-                             """;
-            var expectedYaml = $"""
+                                       command: [""echo"", ""Init container added""]
+                             ";
+            var expectedYaml = @"
                                 apiVersion: {api}
                                 kind: {kind}
                                 metadata:
@@ -403,8 +401,8 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
                                       initContainers:
                                         - name: init-busybox
                                           image: busybox:stable #Update Init
-                                          command: ["echo", "Init container added"]
-                                """;
+                                          command: [""echo"", ""Init container added""]
+                                ";
             var imageReplacer = new ContainerImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry);
 
             var result = imageReplacer.UpdateImages(imagesToUpdate);
@@ -419,7 +417,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
         [Test]
         public void UpdateImages_ForReplicationController_ReturnsUpdatedYaml()
         {
-            const string inputYaml = """
+            const string inputYaml = @"
                                      apiVersion: v1
                                      kind: ReplicationController
                                      metadata:
@@ -441,10 +439,10 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
                                            initContainers:
                                              - name: init-busybox
                                                image: busybox:unstable #Update Init
-                                               command: ["echo", "Init container added"]
+                                               command: [""echo"", ""Init container added""]
 
-                                     """;
-            const string expectedYaml = """
+                                     ";
+            const string expectedYaml = @"
                                         apiVersion: v1
                                         kind: ReplicationController
                                         metadata:
@@ -466,9 +464,9 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
                                               initContainers:
                                                 - name: init-busybox
                                                   image: busybox:stable #Update Init
-                                                  command: ["echo", "Init container added"]
+                                                  command: [""echo"", ""Init container added""]
 
-                                        """;
+                                        ";
             var imageReplacer = new ContainerImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry);
 
             var result = imageReplacer.UpdateImages(imagesToUpdate);
@@ -483,7 +481,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
         [Test]
         public void UpdateImages_TemplateSpecPath_ReturnsUpdatedYaml()
         {
-            const string inputYaml = $"""
+            const string inputYaml = @"
                                       apiVersion: v1
                                       kind: PodTemplate
                                       metadata:
@@ -501,10 +499,10 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
                                           initContainers:
                                             - name: init-busybox
                                               image: busybox:unstable #Update Init
-                                              command: ["echo", "Init container added"]
-                                      """;
+                                              command: [""echo"", ""Init container added""]
+                                      ";
 
-            const string expectedYaml = $"""
+            const string expectedYaml = @"
                                          apiVersion: v1
                                          kind: PodTemplate
                                          metadata:
@@ -522,8 +520,8 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
                                              initContainers:
                                                - name: init-busybox
                                                  image: busybox:stable #Update Init
-                                                 command: ["echo", "Init container added"]
-                                         """;
+                                                 command: [""echo"", ""Init container added""]
+                                         ";
             var imageReplacer = new ContainerImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry);
 
             var result = imageReplacer.UpdateImages(imagesToUpdate);
@@ -538,13 +536,13 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
         [Test]
         public void UpdateImages_WithCronJobResource_ReturnsUpdatedYaml()
         {
-            const string inputYaml = """
+            const string inputYaml = @"
                                      apiVersion: batch/v1
                                      kind: CronJob
                                      metadata:
                                        name: sample-cronjob
                                      spec:
-                                       schedule: "*/5 * * * *"
+                                       schedule: ""*/5 * * * *""
                                        jobTemplate:
                                          spec:
                                            template:
@@ -560,16 +558,16 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
                                                initContainers:
                                                  - name: init-busybox
                                                    image: busybox:unstable #Update Init
-                                                   command: ["echo", "Init container added"]
+                                                   command: [""echo"", ""Init container added""]
                                                restartPolicy: OnFailure
-                                     """;
-            const string expectedYaml = """
+                                     ";
+            const string expectedYaml = @"
                                         apiVersion: batch/v1
                                         kind: CronJob
                                         metadata:
                                           name: sample-cronjob
                                         spec:
-                                          schedule: "*/5 * * * *"
+                                          schedule: ""*/5 * * * *""
                                           jobTemplate:
                                             spec:
                                               template:
@@ -585,9 +583,9 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
                                                   initContainers:
                                                     - name: init-busybox
                                                       image: busybox:stable #Update Init
-                                                      command: ["echo", "Init container added"]
+                                                      command: [""echo"", ""Init container added""]
                                                   restartPolicy: OnFailure
-                                        """;
+                                        ";
             var imageReplacer = new ContainerImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry);
 
             var result = imageReplacer.UpdateImages(imagesToUpdate);
@@ -602,7 +600,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
         [Test]
         public void UpdateImages_WithMultipleDocuments_CompletesSuccessfully()
         {
-            const string inputYaml = """
+            const string inputYaml = @"
                                      apiVersion: v1
                                      kind: Pod
                                      metadata:
@@ -620,8 +618,8 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
                                      spec:
                                        ports:
                                          - port: 80
-                                     """;
-            const string expectedYaml = """
+                                     ";
+            const string expectedYaml = @"
                                         apiVersion: v1
                                         kind: Pod
                                         metadata:
@@ -639,7 +637,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
                                         spec:
                                           ports:
                                             - port: 80
-                                        """;
+                                        ";
             var imageReplacer = new ContainerImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry);
 
             var result = imageReplacer.UpdateImages(imagesToUpdate);
@@ -653,7 +651,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
         [Test]
         public void UpdateImages_WithNoChangeToTag_ReturnsNoChanges()
         {
-            const string inputYaml = $"""
+            const string inputYaml = @"
                                       apiVersion: v1
                                       kind: Pod
                                       metadata:
@@ -662,7 +660,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
                                         containers:
                                           - name: nginx
                                             image: nginx:1.19
-                                      """;
+                                      ";
             var imageReplacer = new ContainerImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry);
 
             var result = imageReplacer.UpdateImages(new List<ContainerImageReference> { ContainerImageReference.FromReferenceString("nginx:1.19") });
@@ -676,7 +674,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
         [Test]
         public void UpdateImages_WithPodUpdatesUsingCustomRegistry_ReturnsUpdatedYaml()
         {
-            const string inputYaml = $"""
+            const string inputYaml = @"
                                       apiVersion: v1
                                       kind: Pod
                                       metadata:
@@ -690,9 +688,9 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
                                         initContainers:
                                           - name: init-busybox
                                             image: busybox:unstable #Update Init
-                                            command: ["echo", "Init container added"]
-                                      """;
-            const string expectedYaml = $"""
+                                            command: [""echo"", ""Init container added""]
+                                      ";
+            const string expectedYaml = @"
                                          apiVersion: v1
                                          kind: Pod
                                          metadata:
@@ -706,8 +704,8 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
                                            initContainers:
                                              - name: init-busybox
                                                image: busybox:stable #Update Init
-                                               command: ["echo", "Init container added"]
-                                         """;
+                                               command: [""echo"", ""Init container added""]
+                                         ";
 
             List<ContainerImageReference> customRegistryImagesToUpdate = new List<ContainerImageReference>
             {
@@ -730,7 +728,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
         [Test]
         public void UpdateImages_WithPodUpdatesUsingCustomRegistry_OnlyUpdatesCustomMatches()
         {
-            const string inputYaml = $"""
+            const string inputYaml = @"
                                       apiVersion: v1
                                       kind: Pod
                                       metadata:
@@ -744,9 +742,9 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
                                         initContainers:
                                           - name: init-busybox
                                             image: busybox:unstable #Update Init
-                                            command: ["echo", "Init container added"]
-                                      """;
-            const string expectedYaml = $"""
+                                            command: [""echo"", ""Init container added""]
+                                      ";
+            const string expectedYaml = @"
                                          apiVersion: v1
                                          kind: Pod
                                          metadata:
@@ -760,8 +758,8 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
                                            initContainers:
                                              - name: init-busybox
                                                image: busybox:stable #Update Init
-                                               command: ["echo", "Init container added"]
-                                         """;
+                                               command: [""echo"", ""Init container added""]
+                                         ";
 
             List<ContainerImageReference> customRegistryImagesToUpdate = new List<ContainerImageReference>
               {
