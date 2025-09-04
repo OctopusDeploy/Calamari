@@ -169,7 +169,6 @@ namespace Calamari.Tests.KubernetesFixtures
         public void TargetingANamespaceThatDoesNotExistAbortsTheManifestSearchingLoop()
         {
             Variables.AddFlag(SpecialVariables.ResourceStatusCheck, true);
-            Variables.Set(KnownVariables.EnabledFeatureToggles, OctopusFeatureToggles.KnownSlugs.KOSForHelm);
             Variables.Set(SpecialVariables.Helm.Timeout, "2m30s");
             Variables.Set(SpecialVariables.Helm.Namespace, "this-namespace-does-not-exist");
 

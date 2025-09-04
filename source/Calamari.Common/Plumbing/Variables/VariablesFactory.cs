@@ -100,10 +100,8 @@ namespace Calamari.Common.Plumbing.Variables
             var rawVariables = DecryptWithMachineKey(fileSystem.ReadFile(outputVariablesFilePath), options.InputVariables.OutputVariablesPassword);
             try
             {
-                var outputVariables = JsonConvert.DeserializeObject<Dictionary<string, string>>(rawVariables);
-
-                // All output variables are currently non-sensitive
-                executionVariables.AddRange(outputVariables.Select(ov => new CalamariExecutionVariable(ov.Key, ov.Value, false)));
+                var variables = CalamariExecutionVariableCollection.FromJson(rawVariables);
+                executionVariables.AddRange(variables);
             }
             catch (JsonReaderException)
             {

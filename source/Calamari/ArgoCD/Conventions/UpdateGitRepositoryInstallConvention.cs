@@ -7,12 +7,9 @@ using System.Threading;
 using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.GitHub;
 using Calamari.Common.Commands;
-using Calamari.Common.FeatureToggles;
-using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Deployment.Conventions;
-using Calamari.Kubernetes;
 
 namespace Calamari.ArgoCD.Conventions
 {
@@ -22,59 +19,53 @@ namespace Calamari.ArgoCD.Conventions
         readonly ILog log;
         readonly string packageSubfolder;
         readonly IGitHubPullRequestCreator pullRequestCreator;
+        readonly ArgoCommitToGitConfigFactory argoCommitToGitConfigFactory;
 
-        public UpdateGitRepositoryInstallConvention(ICalamariFileSystem fileSystem, string packageSubfolder, ILog log, IGitHubPullRequestCreator pullRequestCreator)
+        public UpdateGitRepositoryInstallConvention(ICalamariFileSystem fileSystem, string packageSubfolder, ILog log, IGitHubPullRequestCreator pullRequestCreator,
+                                                    ArgoCommitToGitConfigFactory argoCommitToGitConfigFactory)
         {
             this.fileSystem = fileSystem;
             this.log = log;
             this.pullRequestCreator = pullRequestCreator;
+            this.argoCommitToGitConfigFactory = argoCommitToGitConfigFactory;
             this.packageSubfolder = packageSubfolder;
         }
         
         public void Install(RunningDeployment deployment)
         {
             Log.Info("Executing Commit To Git operation");
-            var packageFiles = GetReferencedPackageFiles(deployment);
-
-            var requiresPullRequest = RequiresPullRequest(deployment);
-            var commitMessage = GenerateCommitMessage(deployment);
+            var actionConfig = argoCommitToGitConfigFactory.Create(deployment);
+            var packageFiles = GetReferencedPackageFiles(actionConfig);
             
-            var repositoryFactory = new RepositoryFactory(log, deployment.CurrentDirectory, pullRequestCreator);
-            var repositoryIndexes = deployment.Variables.GetIndexes(SpecialVariables.Git.Index);
-            log.Info($"Found the following repository indicies '{repositoryIndexes.Join(",")}'");
-            foreach (var repositoryIndex in repositoryIndexes)
-            {
-                Log.Info($"Writing files to repository for '{repositoryIndex}'");
-                IGitConnection gitConnection = new VariableBackedGitConnection(deployment.Variables, repositoryIndex);
-                var repository = repositoryFactory.CloneRepository(repositoryIndex, gitConnection);
-                
-                Log.Info($"Copying files into repository {gitConnection.Url}");
-                var subFolder = deployment.Variables.Get(SpecialVariables.Git.SubFolder(repositoryIndex), String.Empty) ?? String.Empty;
-                Log.VerboseFormat("Copying files into subfolder '{0}'", subFolder);
+            var repositoryFactory = new RepositoryFactory(log, actionConfig.WorkingDirectory, pullRequestCreator);
 
-                var repositoryFiles = packageFiles.Select(f => new FileCopySpecification(f, repository.WorkingDirectory, subFolder)).ToList();
-                
+            var repositoryIndex = 0;
+            foreach (var argoSource in actionConfig.ArgoSourcesToUpdate)
+            {
+                var repoName = repositoryIndex.ToString();
+                Log.Info($"Writing files to git repository for '{argoSource.Url}'");
+                var repository = repositoryFactory.CloneRepository(repoName, argoSource);
+
+                var repositoryFiles = packageFiles.Select(f => new FileCopySpecification(f, repository.WorkingDirectory, argoSource.SubFolder)).ToList();
+                Log.VerboseFormat("Copying files into subfolder '{0}'", argoSource.SubFolder);
                 CopyFiles(repositoryFiles);
                 
                 Log.Info("Staging files in repository");
                 repository.StageFiles(repositoryFiles.Select(fcs => fcs.DestinationRelativePath).ToArray());
                 
                 Log.Info("Commiting changes");
-                if (repository.CommitChanges(commitMessage))
+                if (repository.CommitChanges(actionConfig.CommitSummary, actionConfig.CommitDescription))
                 {
                     Log.Info("Changes were commited, pushing to remote");
-                    repository.PushChanges(requiresPullRequest, gitConnection.BranchName, CancellationToken.None).GetAwaiter().GetResult();    
+                    repository.PushChanges(actionConfig.RequiresPr, argoSource.BranchName, CancellationToken.None).GetAwaiter().GetResult();    
                 }
                 else
                 {
                     Log.Info("No changes were commited.");
                 }
-            }
-        }
 
-        bool RequiresPullRequest(RunningDeployment deployment)
-        {
-            return OctopusFeatureToggles.ArgoCDCreatePullRequestFeatureToggle.IsEnabled(deployment.Variables) && deployment.Variables.Get(SpecialVariables.Git.CommitMethod) == SpecialVariables.Git.GitCommitMethods.PullRequest;
+                repositoryIndex++;
+            }
         }
 
         void CopyFiles(IEnumerable<IFileCopySpecification> repositoryFiles)
@@ -92,41 +83,50 @@ namespace Calamari.ArgoCD.Conventions
             var destinationDirectory = Path.GetDirectoryName(filePath);
             if (destinationDirectory != null)
             {
-                Directory.CreateDirectory(destinationDirectory);    
+                Directory.CreateDirectory(destinationDirectory);        
             }
         }
-
-        IPackageRelativeFile[] GetReferencedPackageFiles(RunningDeployment deployment)
+        
+         IPackageRelativeFile[] GetReferencedPackageFiles(ArgoCommitToGitConfig config)
         {
-            var fileGlobs = deployment.Variables.GetPaths(SpecialVariables.Git.TemplateGlobs);
-            log.Info($"Selecting files from package using '{string.Join(" ", fileGlobs)}'");
-            var filesToApply = SelectFiles(Path.Combine(deployment.CurrentDirectory, packageSubfolder), fileGlobs);
+            log.Info($"Selecting files from package using '{config.InputSubPath}' (recursive: {config.RecurseInputPath})");
+            var filesToApply = SelectFiles(Path.Combine(config.WorkingDirectory, packageSubfolder), config);
             log.Info($"Found {filesToApply.Length} files to apply");
             return filesToApply;
         }
-
-        string GenerateCommitMessage(RunningDeployment deployment)
-        {
-            var summary = deployment.Variables.GetMandatoryVariable(SpecialVariables.Git.CommitMessageSummary);
-            var description = deployment.Variables.Get(SpecialVariables.Git.CommitMessageDescription) ?? string.Empty;
-            return description.Equals(string.Empty)
-                ? summary
-                : $"{summary}\n\n{description}";
-        }
         
-        IPackageRelativeFile[] SelectFiles(string pathToExtractedPackage, List<string> fileGlobs)
+        IPackageRelativeFile[] SelectFiles(string pathToExtractedPackageFiles, ArgoCommitToGitConfig config)
         {
-            return fileGlobs.SelectMany(glob => fileSystem.EnumerateFilesWithGlob(pathToExtractedPackage, glob))
-                            .Select(absoluteFilepath =>
-                                    {
+            var absInputPath = Path.Combine(pathToExtractedPackageFiles, config.InputSubPath);
+            if (File.Exists(absInputPath))
+            {
+                return new[] { new PackageRelativeFile(absolutePath: absInputPath, packageRelativePath: Path.GetFileName(absInputPath)) };
+            }
+            
+            if (Directory.Exists(absInputPath))
+            {
+                IEnumerable<string> fileList;
+                if (config.RecurseInputPath)
+                {
+                    fileList = fileSystem.EnumerateFilesRecursively(absInputPath, config.FileGlobs);
+                }
+                else
+                {
+                    fileList = fileSystem.EnumerateFiles(absInputPath, config.FileGlobs);
+                }
+                
+                return fileList.Select(absoluteFilepath =>
+                                       {
 #if NET
-                                        var relativePath = Path.GetRelativePath(pathToExtractedPackage, absoluteFilepath);
+                                           var relativePath = Path.GetRelativePath(absInputPath, absoluteFilepath);
 #else
-                                        var relativePath = absoluteFilepath.Substring(pathToExtractedPackage.Length + 1);
+                                                  var relativePath = absoluteFilepath.Substring(absInputPath.Length + 1);
 #endif
-                                        return new PackageRelativeFile(absoluteFilepath, relativePath);
-                                    })
-                            .ToArray<IPackageRelativeFile>();
+                                           return new PackageRelativeFile(absoluteFilepath, relativePath);
+                                       })
+                               .ToArray<IPackageRelativeFile>();
+            }
+            throw new InvalidOperationException($"Supplied input path '{config.InputSubPath}' does not exist within the supplied package");
         }
     }
 }

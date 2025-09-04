@@ -44,13 +44,10 @@ namespace Calamari.ArgoCD.Git
             var options = new CloneOptions();
             if (gitConnection.Username != null && gitConnection.Password != null)
             {
-                options.FetchOptions = new FetchOptions
-                {
-                    CredentialsProvider = (url, usernameFromUrl, types) => new UsernamePasswordCredentials
+                options.CredentialsProvider = (url, usernameFromUrl, types) => new UsernamePasswordCredentials
                     {
                         Username = gitConnection.Username!,
                         Password = gitConnection.Password!
-                    }
                 };
             }
 
