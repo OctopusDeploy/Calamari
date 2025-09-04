@@ -23,7 +23,6 @@ namespace Calamari.Common.Plumbing.Variables
         readonly string customPropertiesFile;
         readonly string password;
 
-        static readonly object LoaderLock = new object();
 
         public CustomPropertiesLoader(ICalamariFileSystem fileSystem, string customPropertiesFile, string password)
         {
@@ -33,14 +32,6 @@ namespace Calamari.Common.Plumbing.Variables
         }
 
         public T Load<T>()
-        {
-            lock (LoaderLock)
-            {
-                return LoadFromFile<T>();
-            }
-        }
-
-        T LoadFromFile<T>()
         {
             var json = Decrypt(fileSystem.ReadAllBytes(customPropertiesFile), password);
 
