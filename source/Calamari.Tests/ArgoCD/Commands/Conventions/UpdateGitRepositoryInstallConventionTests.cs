@@ -1,3 +1,4 @@
+#if NET
 using System;
 using System.IO;
 using Calamari.ArgoCD.Commands;
@@ -144,3 +145,4 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
         }
     }
 }
+#endif 
