@@ -26,22 +26,13 @@ namespace Calamari.ArgoCD.Conventions
             var summary = deployment.Variables.GetMandatoryVariable(SpecialVariables.Git.CommitMessageSummary);
             var description = deployment.Variables.Get(SpecialVariables.Git.CommitMessageDescription) ?? string.Empty;
             
-            var repositoryIndexes = deployment.Variables.GetIndexes(SpecialVariables.Git.Index);
-            log.Info($"Found the following repository indicies '{repositoryIndexes.Join(",")}'");
-            List<IArgoApplicationSource> gitConnections = new List<IArgoApplicationSource>();
-            foreach (var repositoryIndex in repositoryIndexes)
-            {
-                gitConnections.Add(new VariableBackedArgoSource(deployment.Variables, repositoryIndex));
-            }
-
             return new ArgoCommitToGitConfig(
                                            deployment.CurrentDirectory,
                                            inputPath,
                                            recursive,
                                            summary,
                                            description,
-                                           requiresPullRequest,
-                                           gitConnections);
+                                           requiresPullRequest);
         }
         
         bool RequiresPullRequest(RunningDeployment deployment)

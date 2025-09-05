@@ -27,6 +27,7 @@ using Calamari.LaunchTools;
 using IContainer = Autofac.IContainer;
 using Calamari.Aws.Deployment;
 using Calamari.Azure.Kubernetes.Discovery;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes;
 using Calamari.Kubernetes.Commands.Executors;
 
@@ -89,7 +90,8 @@ namespace Calamari
             builder.RegisterType<GitHubClientFactory>().As<IGitHubClientFactory>().InstancePerLifetimeScope();
             builder.RegisterType<GitHubPullRequestCreator>().As<IGitHubPullRequestCreator>().InstancePerLifetimeScope();
             builder.RegisterType<ArgoCommitToGitConfigFactory>().AsSelf().InstancePerLifetimeScope();
-            
+            builder.RegisterType<CustomPropertiesLoader>().As<ICustomPropertiesLoader>().SingleInstance();
+
             builder.RegisterType<KubernetesDiscovererFactory>()
                    .As<IKubernetesDiscovererFactory>()
                    .SingleInstance();

@@ -3,10 +3,12 @@ using System;
 using System.IO;
 using Calamari.ArgoCD.Commands;
 using Calamari.ArgoCD.Conventions;
+using Calamari.ArgoCD.Dtos;
 using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.GitHub;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Deployment;
+using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes;
@@ -40,10 +42,9 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             tempDirectory = fileSystem.CreateTemporaryDirectory();
             Directory.CreateDirectory(PackageDirectory);
 
-            Repository BareOrigin = RepositoryHelpers.CreateBareRepository(OriginPath);
+            RepositoryHelpers.CreateBareRepository(OriginPath);
             RepositoryHelpers.CreateBranchIn(argoCdBranchName, OriginPath);
         }
-        
         
         [TearDown]
         public void Cleanup()
@@ -63,11 +64,6 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             {
                 [KnownVariables.OriginalPackageDirectoryPath] = WorkingDirectory,
                 [SpecialVariables.Git.InputPath] = "",
-                [SpecialVariables.Git.SubFolder("repo_name")] = "",
-                [SpecialVariables.Git.Password("repo_name")] = "password",
-                [SpecialVariables.Git.Username("repo_name")] = "username",
-                [SpecialVariables.Git.Url("repo_name")] = OriginPath,
-                [SpecialVariables.Git.BranchName("repo_name")] = argoCdBranchName.Value,
                 [SpecialVariables.Git.Recursive] = "True",
                 [SpecialVariables.Git.CommitMethod] = "DirectCommit",
                 [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this"
@@ -75,8 +71,10 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             var runningDeployment = new RunningDeployment("./arbitraryFile.txt", variables);
             runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
             runningDeployment.StagingDirectory = WorkingDirectory;
-            
-            var convention = new UpdateGitRepositoryInstallConvention(fileSystem, CommitToGitCommand.PackageDirectoryName, log, Substitute.For<IGitHubPullRequestCreator>(), new ArgoCommitToGitConfigFactory(log));
+
+            var customPropertiesLoader = SetupCustomPropertiesLoader();
+
+            var convention = new UpdateGitRepositoryInstallConvention(fileSystem, CommitToGitCommand.PackageDirectoryName, log, Substitute.For<IGitHubPullRequestCreator>(), new ArgoCommitToGitConfigFactory(log), customPropertiesLoader);
             convention.Install(runningDeployment);
 
             var resultPath = CloneOrigin();
@@ -84,6 +82,19 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             var resultNestedContent = File.ReadAllText(Path.Combine(resultPath, nestedFilename));
             resultFirstContent.Should().Be(firstFilename);
             resultNestedContent.Should().Be(nestedFilename);
+        }
+
+        ICustomPropertiesLoader SetupCustomPropertiesLoader()
+        {
+            var customPropertiesFactory = Substitute.For<ICustomPropertiesLoader>();
+            customPropertiesFactory.Load<ArgoCDCustomPropertiesDto>().Returns(new ArgoCDCustomPropertiesDto(new[]
+            {
+                new ArgoCDApplicationDto("Gateway1", "App1", new[]
+                {
+                    new ArgoCDApplicationSourceDto(OriginPath, "username", "password", argoCdBranchName.Value, "")
+                })
+            }));
+            return customPropertiesFactory;
         }
 
         [Test]
@@ -98,11 +109,6 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             {
                 [KnownVariables.OriginalPackageDirectoryPath] = WorkingDirectory,
                 [SpecialVariables.Git.InputPath] = "",
-                [SpecialVariables.Git.SubFolder("repo_name")] = "",
-                [SpecialVariables.Git.Password("repo_name")] = "password",
-                [SpecialVariables.Git.Username("repo_name")] = "username",
-                [SpecialVariables.Git.Url("repo_name")] = OriginPath,
-                [SpecialVariables.Git.BranchName("repo_name")] = argoCdBranchName.Value,
                 [SpecialVariables.Git.Recursive] = "False",
                 [SpecialVariables.Git.CommitMethod] = "DirectCommit",
                 [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this"
@@ -111,7 +117,9 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
             runningDeployment.StagingDirectory = WorkingDirectory;    
             
-            var convention = new UpdateGitRepositoryInstallConvention(fileSystem, CommitToGitCommand.PackageDirectoryName, log, Substitute.For<IGitHubPullRequestCreator>(), new ArgoCommitToGitConfigFactory(log));
+            var customPropertiesLoader = SetupCustomPropertiesLoader();
+
+            var convention = new UpdateGitRepositoryInstallConvention(fileSystem, CommitToGitCommand.PackageDirectoryName, log, Substitute.For<IGitHubPullRequestCreator>(), new ArgoCommitToGitConfigFactory(log), customPropertiesLoader);
             convention.Install(runningDeployment);
             
             var resultPath = CloneOrigin();
