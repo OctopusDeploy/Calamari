@@ -149,22 +149,18 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
         [Test]
         public void UpdateImages_WithQuotedReference_PreservesQuotes()
         {
-            const string inputYaml = @"
-                                     apiVersion: v1
-                                     kind: Pod
-                                     spec:
-                                       containers:
-                                         - name: my-container
-                                           image: ""nginx:1.19""
-                                     ";
-            const string expectedYaml = @"
-                                        apiVersion: v1
-                                        kind: Pod
-                                        spec:
-                                          containers:
-                                            - name: my-container
-                                              image: ""nginx:1.25""
-                                        ";
+            const string inputYaml = @"apiVersion: v1
+kind: Pod
+spec:
+  containers:
+    - name: my-container
+      image: ""nginx:1.19""";
+            const string expectedYaml = @"apiVersion: v1
+kind: Pod
+spec:
+  containers:
+    - name: my-container
+      image: ""nginx:1.25""";
             var imageReplacer = new ContainerImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry);
 
             var updatedImage = new List<ContainerImageReference>
@@ -216,37 +212,37 @@ spec:
         public void UpdateImages_WithPodWithUpdates_ReturnsUpdatedYaml()
         {
             const string inputYaml = @"
-                                      apiVersion: v1
-                                      kind: Pod
-                                      metadata:
-                                        name: sample-pod
-                                      spec:
-                                        containers:
-                                          - name: nginx
-                                            image: nginx:1.19 #Update
-                                          - name: apline
-                                            image: alpine:3.21 #Ignore
-                                        initContainers:
-                                          - name: init-busybox
-                                            image: busybox:unstable #Update Init
-                                            command: [""echo"", ""Init container added""]
-                                      ";
+apiVersion: v1
+kind: Pod
+metadata:
+  name: sample-pod
+spec:
+  containers:
+    - name: nginx
+      image: nginx:1.19 #Update
+    - name: apline
+      image: alpine:3.21 #Ignore
+  initContainers:
+    - name: init-busybox
+      image: busybox:unstable #Update Init
+      command: [""echo"", ""Init container added""]
+";
             const string expectedYaml = @"
-                                         apiVersion: v1
-                                         kind: Pod
-                                         metadata:
-                                           name: sample-pod
-                                         spec:
-                                           containers:
-                                             - name: nginx
-                                               image: nginx:1.25 #Update
-                                             - name: apline
-                                               image: alpine:3.21 #Ignore
-                                           initContainers:
-                                             - name: init-busybox
-                                               image: busybox:stable #Update Init
-                                               command: [""echo"", ""Init container added""]
-                                         ";
+apiVersion: v1
+kind: Pod
+metadata:
+  name: sample-pod
+spec:
+  containers:
+    - name: nginx
+      image: nginx:1.25 #Update
+    - name: apline
+      image: alpine:3.21 #Ignore
+  initContainers:
+    - name: init-busybox
+      image: busybox:stable #Update Init
+      command: [""echo"", ""Init container added""]
+";
             var imageReplacer = new ContainerImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry);
 
             var result = imageReplacer.UpdateImages(imagesToUpdate);
@@ -262,31 +258,31 @@ spec:
         public void UpdateImages_WithPodWithUpdatesForMultipleContainers_ReturnsUpdatedYaml()
         {
             const string inputYaml = @"
-                                     apiVersion: v1
-                                     kind: Pod
-                                     metadata:
-                                       name: sample-pod
-                                     spec:
-                                       containers:
-                                         - name: nginx
-                                           image: nginx:1.19
-                                         - name: init-busybox
-                                           image: busybox:unstable
-                                           command: [""echo"", ""Init container added""]
-                                     ";
+apiVersion: v1
+kind: Pod
+metadata:
+  name: sample-pod
+spec:
+  containers:
+    - name: nginx
+      image: nginx:1.19
+    - name: init-busybox
+      image: busybox:unstable
+      command: [""echo"", ""Init container added""]
+";
             const string expectedYaml = @"
-                                        apiVersion: v1
-                                        kind: Pod
-                                        metadata:
-                                          name: sample-pod
-                                        spec:
-                                          containers:
-                                            - name: nginx
-                                              image: nginx:1.25
-                                            - name: init-busybox
-                                              image: busybox:stable
-                                              command: [""echo"", ""Init container added""]
-                                        ";
+apiVersion: v1
+kind: Pod
+metadata:
+  name: sample-pod
+spec:
+  containers:
+    - name: nginx
+      image: nginx:1.25
+    - name: init-busybox
+      image: busybox:stable
+      command: [""echo"", ""Init container added""]
+";
             var imageReplacer = new ContainerImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry);
 
             var result = imageReplacer.UpdateImages(imagesToUpdate);
@@ -302,33 +298,33 @@ spec:
         public void UpdateImages_WithPodWithUpdatesToMultipleInstancesOfSameImage_ReturnsUpdatedYaml()
         {
             const string inputYaml = @"
-                                     apiVersion: v1
-                                     kind: Pod
-                                     metadata:
-                                       name: sample-pod
-                                     spec:
-                                       containers:
-                                         - name: nginx
-                                           image: nginx:1.19
-                                         - name: more-nginx
-                                           image: nginx:1.19
-                                         - name: older-nginx
-                                           image: nginx:1.12
-                                     ";
+apiVersion: v1
+kind: Pod
+metadata:
+  name: sample-pod
+spec:
+  containers:
+    - name: nginx
+      image: nginx:1.19
+    - name: more-nginx
+      image: nginx:1.19
+    - name: older-nginx
+      image: nginx:1.12
+";
             const string expectedYaml = @"
-                                        apiVersion: v1
-                                        kind: Pod
-                                        metadata:
-                                          name: sample-pod
-                                        spec:
-                                          containers:
-                                            - name: nginx
-                                              image: nginx:1.25
-                                            - name: more-nginx
-                                              image: nginx:1.25
-                                            - name: older-nginx
-                                              image: nginx:1.25
-                                        ";
+apiVersion: v1
+kind: Pod
+metadata:
+  name: sample-pod
+spec:
+  containers:
+    - name: nginx
+      image: nginx:1.25
+    - name: more-nginx
+      image: nginx:1.25
+    - name: older-nginx
+      image: nginx:1.25
+";
             var imageReplacer = new ContainerImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry);
 
             var updatedImage = new List<ContainerImageReference>
@@ -353,56 +349,56 @@ spec:
         [TestCase("Job", "batch/v1")]
         public void UpdateImages_SpecTemplateSpecPath_ReturnsUpdatedYaml(string kind, string api = "apps/v1")
         {
-            var inputYaml = @"
-                             apiVersion: {api}
-                             kind: {kind}
-                             metadata:
-                               name: sample-{kind.ToLower()}
-                             spec:
-                               replicas: 1
-                               selector:
-                                 matchLabels:
-                                   app: sample-{kind.ToLower()}
-                               template:
-                                 metadata:
-                                   labels:
-                                     app: sample-{kind.ToLower()}
-                                 spec:
-                                   containers:
-                                     - name: nginx
-                                       image: nginx:1.19 #Update
-                                     - name: apline
-                                       image: alpine:3.21 #Ignore
-                                   initContainers:
-                                     - name: init-busybox
-                                       image: busybox:unstable #Update Init
-                                       command: [""echo"", ""Init container added""]
-                             ";
-            var expectedYaml = @"
-                                apiVersion: {api}
-                                kind: {kind}
-                                metadata:
-                                  name: sample-{kind.ToLower()}
-                                spec:
-                                  replicas: 1
-                                  selector:
-                                    matchLabels:
-                                      app: sample-{kind.ToLower()}
-                                  template:
-                                    metadata:
-                                      labels:
-                                        app: sample-{kind.ToLower()}
-                                    spec:
-                                      containers:
-                                        - name: nginx
-                                          image: nginx:1.25 #Update
-                                        - name: apline
-                                          image: alpine:3.21 #Ignore
-                                      initContainers:
-                                        - name: init-busybox
-                                          image: busybox:stable #Update Init
-                                          command: [""echo"", ""Init container added""]
-                                ";
+            var inputYaml = @$"
+apiVersion: {api}
+kind: {kind}
+metadata:
+  name: sample-{kind.ToLower()}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sample-{kind.ToLower()}
+  template:
+    metadata:
+      labels:
+        app: sample-{kind.ToLower()}
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.19 #Update
+        - name: apline
+          image: alpine:3.21 #Ignore
+      initContainers:
+        - name: init-busybox
+          image: busybox:unstable #Update Init
+          command: [""echo"", ""Init container added""]
+";
+            var expectedYaml = @$"
+apiVersion: {api}
+kind: {kind}
+metadata:
+  name: sample-{kind.ToLower()}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sample-{kind.ToLower()}
+  template:
+    metadata:
+      labels:
+        app: sample-{kind.ToLower()}
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.25 #Update
+        - name: apline
+          image: alpine:3.21 #Ignore
+      initContainers:
+        - name: init-busybox
+          image: busybox:stable #Update Init
+          command: [""echo"", ""Init container added""]
+";
             var imageReplacer = new ContainerImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry);
 
             var result = imageReplacer.UpdateImages(imagesToUpdate);
@@ -418,55 +414,55 @@ spec:
         public void UpdateImages_ForReplicationController_ReturnsUpdatedYaml()
         {
             const string inputYaml = @"
-                                     apiVersion: v1
-                                     kind: ReplicationController
-                                     metadata:
-                                       name: sample-replictioncontroller
-                                     spec:
-                                       replicas: 1
-                                       selector:
-                                         app: sample-replictioncontroller
-                                       template:
-                                         metadata:
-                                           labels:
-                                             app: sample-replictioncontroller
-                                         spec:
-                                           containers:
-                                             - name: nginx
-                                               image: nginx:1.19 #Update
-                                             - name: alpine
-                                               image: alpine:3.21 #Ignore
-                                           initContainers:
-                                             - name: init-busybox
-                                               image: busybox:unstable #Update Init
-                                               command: [""echo"", ""Init container added""]
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: sample-replictioncontroller
+spec:
+  replicas: 1
+  selector:
+    app: sample-replictioncontroller
+  template:
+    metadata:
+      labels:
+        app: sample-replictioncontroller
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.19 #Update
+        - name: alpine
+          image: alpine:3.21 #Ignore
+      initContainers:
+        - name: init-busybox
+          image: busybox:unstable #Update Init
+          command: [""echo"", ""Init container added""]
 
-                                     ";
+";
             const string expectedYaml = @"
-                                        apiVersion: v1
-                                        kind: ReplicationController
-                                        metadata:
-                                          name: sample-replictioncontroller
-                                        spec:
-                                          replicas: 1
-                                          selector:
-                                            app: sample-replictioncontroller
-                                          template:
-                                            metadata:
-                                              labels:
-                                                app: sample-replictioncontroller
-                                            spec:
-                                              containers:
-                                                - name: nginx
-                                                  image: nginx:1.25 #Update
-                                                - name: alpine
-                                                  image: alpine:3.21 #Ignore
-                                              initContainers:
-                                                - name: init-busybox
-                                                  image: busybox:stable #Update Init
-                                                  command: [""echo"", ""Init container added""]
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: sample-replictioncontroller
+spec:
+  replicas: 1
+  selector:
+    app: sample-replictioncontroller
+  template:
+    metadata:
+      labels:
+        app: sample-replictioncontroller
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.25 #Update
+        - name: alpine
+          image: alpine:3.21 #Ignore
+      initContainers:
+        - name: init-busybox
+          image: busybox:stable #Update Init
+          command: [""echo"", ""Init container added""]
 
-                                        ";
+";
             var imageReplacer = new ContainerImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry);
 
             var result = imageReplacer.UpdateImages(imagesToUpdate);
@@ -482,46 +478,46 @@ spec:
         public void UpdateImages_TemplateSpecPath_ReturnsUpdatedYaml()
         {
             const string inputYaml = @"
-                                      apiVersion: v1
-                                      kind: PodTemplate
-                                      metadata:
-                                        name: sample-podtemplate
-                                      template:
-                                        metadata:
-                                          labels:
-                                            app: sample-podtemplate
-                                        spec:
-                                          containers:
-                                            - name: nginx
-                                              image: nginx:1.19 #Update
-                                            - name: apline
-                                              image: alpine:3.21 #Ignore
-                                          initContainers:
-                                            - name: init-busybox
-                                              image: busybox:unstable #Update Init
-                                              command: [""echo"", ""Init container added""]
-                                      ";
+apiVersion: v1
+kind: PodTemplate
+metadata:
+  name: sample-podtemplate
+template:
+  metadata:
+    labels:
+      app: sample-podtemplate
+  spec:
+    containers:
+      - name: nginx
+        image: nginx:1.19 #Update
+      - name: apline
+        image: alpine:3.21 #Ignore
+    initContainers:
+      - name: init-busybox
+        image: busybox:unstable #Update Init
+        command: [""echo"", ""Init container added""]
+";
 
             const string expectedYaml = @"
-                                         apiVersion: v1
-                                         kind: PodTemplate
-                                         metadata:
-                                           name: sample-podtemplate
-                                         template:
-                                           metadata:
-                                             labels:
-                                               app: sample-podtemplate
-                                           spec:
-                                             containers:
-                                               - name: nginx
-                                                 image: nginx:1.25 #Update
-                                               - name: apline
-                                                 image: alpine:3.21 #Ignore
-                                             initContainers:
-                                               - name: init-busybox
-                                                 image: busybox:stable #Update Init
-                                                 command: [""echo"", ""Init container added""]
-                                         ";
+apiVersion: v1
+kind: PodTemplate
+metadata:
+  name: sample-podtemplate
+template:
+  metadata:
+    labels:
+      app: sample-podtemplate
+  spec:
+    containers:
+      - name: nginx
+        image: nginx:1.25 #Update
+      - name: apline
+        image: alpine:3.21 #Ignore
+    initContainers:
+      - name: init-busybox
+        image: busybox:stable #Update Init
+        command: [""echo"", ""Init container added""]
+";
             var imageReplacer = new ContainerImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry);
 
             var result = imageReplacer.UpdateImages(imagesToUpdate);
@@ -537,55 +533,55 @@ spec:
         public void UpdateImages_WithCronJobResource_ReturnsUpdatedYaml()
         {
             const string inputYaml = @"
-                                     apiVersion: batch/v1
-                                     kind: CronJob
-                                     metadata:
-                                       name: sample-cronjob
-                                     spec:
-                                       schedule: ""*/5 * * * *""
-                                       jobTemplate:
-                                         spec:
-                                           template:
-                                             metadata:
-                                               labels:
-                                                 app: sample-cronjob
-                                             spec:
-                                               containers:
-                                                 - name: nginx
-                                                   image: nginx:1.19 #Update
-                                                 - name: alpine
-                                                   image: alpine:3.21 #Ignore
-                                               initContainers:
-                                                 - name: init-busybox
-                                                   image: busybox:unstable #Update Init
-                                                   command: [""echo"", ""Init container added""]
-                                               restartPolicy: OnFailure
-                                     ";
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: sample-cronjob
+spec:
+  schedule: ""*/5 * * * *""
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: sample-cronjob
+        spec:
+          containers:
+            - name: nginx
+              image: nginx:1.19 #Update
+            - name: alpine
+              image: alpine:3.21 #Ignore
+          initContainers:
+            - name: init-busybox
+              image: busybox:unstable #Update Init
+              command: [""echo"", ""Init container added""]
+          restartPolicy: OnFailure
+";
             const string expectedYaml = @"
-                                        apiVersion: batch/v1
-                                        kind: CronJob
-                                        metadata:
-                                          name: sample-cronjob
-                                        spec:
-                                          schedule: ""*/5 * * * *""
-                                          jobTemplate:
-                                            spec:
-                                              template:
-                                                metadata:
-                                                  labels:
-                                                    app: sample-cronjob
-                                                spec:
-                                                  containers:
-                                                    - name: nginx
-                                                      image: nginx:1.25 #Update
-                                                    - name: alpine
-                                                      image: alpine:3.21 #Ignore
-                                                  initContainers:
-                                                    - name: init-busybox
-                                                      image: busybox:stable #Update Init
-                                                      command: [""echo"", ""Init container added""]
-                                                  restartPolicy: OnFailure
-                                        ";
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: sample-cronjob
+spec:
+  schedule: ""*/5 * * * *""
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: sample-cronjob
+        spec:
+          containers:
+            - name: nginx
+              image: nginx:1.25 #Update
+            - name: alpine
+              image: alpine:3.21 #Ignore
+          initContainers:
+            - name: init-busybox
+              image: busybox:stable #Update Init
+              command: [""echo"", ""Init container added""]
+          restartPolicy: OnFailure
+";
             var imageReplacer = new ContainerImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry);
 
             var result = imageReplacer.UpdateImages(imagesToUpdate);
@@ -601,43 +597,43 @@ spec:
         public void UpdateImages_WithMultipleDocuments_CompletesSuccessfully()
         {
             const string inputYaml = @"
-                                     apiVersion: v1
-                                     kind: Pod
-                                     metadata:
-                                       name: sample-pod
-                                     spec:
-                                       containers:
-                                         - name: nginx
-                                           image: nginx:1.19 #Update
-                                     ---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: sample-pod
+spec:
+  containers:
+    - name: nginx
+      image: nginx:1.19 #Update
+---
 
-                                     apiVersion: v1
-                                     kind: Service
-                                     metadata:
-                                       name: sample-service
-                                     spec:
-                                       ports:
-                                         - port: 80
-                                     ";
+apiVersion: v1
+kind: Service
+metadata:
+  name: sample-service
+spec:
+  ports:
+    - port: 80
+";
             const string expectedYaml = @"
-                                        apiVersion: v1
-                                        kind: Pod
-                                        metadata:
-                                          name: sample-pod
-                                        spec:
-                                          containers:
-                                            - name: nginx
-                                              image: nginx:1.25 #Update
-                                        ---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: sample-pod
+spec:
+  containers:
+    - name: nginx
+      image: nginx:1.25 #Update
+---
 
-                                        apiVersion: v1
-                                        kind: Service
-                                        metadata:
-                                          name: sample-service
-                                        spec:
-                                          ports:
-                                            - port: 80
-                                        ";
+apiVersion: v1
+kind: Service
+metadata:
+  name: sample-service
+spec:
+  ports:
+    - port: 80
+";
             var imageReplacer = new ContainerImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry);
 
             var result = imageReplacer.UpdateImages(imagesToUpdate);
@@ -675,37 +671,37 @@ spec:
         public void UpdateImages_WithPodUpdatesUsingCustomRegistry_ReturnsUpdatedYaml()
         {
             const string inputYaml = @"
-                                      apiVersion: v1
-                                      kind: Pod
-                                      metadata:
-                                        name: sample-pod
-                                      spec:
-                                        containers:
-                                          - name: nginx
-                                            image: nginx:1.19 #Update
-                                          - name: alpine
-                                            image: alpine:3.21 #Ignore
-                                        initContainers:
-                                          - name: init-busybox
-                                            image: busybox:unstable #Update Init
-                                            command: [""echo"", ""Init container added""]
-                                      ";
+apiVersion: v1
+kind: Pod
+metadata:
+  name: sample-pod
+spec:
+  containers:
+    - name: nginx
+      image: nginx:1.19 #Update
+    - name: alpine
+      image: alpine:3.21 #Ignore
+  initContainers:
+    - name: init-busybox
+      image: busybox:unstable #Update Init
+      command: [""echo"", ""Init container added""]
+";
             const string expectedYaml = @"
-                                         apiVersion: v1
-                                         kind: Pod
-                                         metadata:
-                                           name: sample-pod
-                                         spec:
-                                           containers:
-                                             - name: nginx
-                                               image: nginx:1.25 #Update
-                                             - name: alpine
-                                               image: alpine:3.21 #Ignore
-                                           initContainers:
-                                             - name: init-busybox
-                                               image: busybox:stable #Update Init
-                                               command: [""echo"", ""Init container added""]
-                                         ";
+apiVersion: v1
+kind: Pod
+metadata:
+  name: sample-pod
+spec:
+  containers:
+    - name: nginx
+      image: nginx:1.25 #Update
+    - name: alpine
+      image: alpine:3.21 #Ignore
+  initContainers:
+    - name: init-busybox
+      image: busybox:stable #Update Init
+      command: [""echo"", ""Init container added""]
+";
 
             List<ContainerImageReference> customRegistryImagesToUpdate = new List<ContainerImageReference>
             {
@@ -729,37 +725,37 @@ spec:
         public void UpdateImages_WithPodUpdatesUsingCustomRegistry_OnlyUpdatesCustomMatches()
         {
             const string inputYaml = @"
-                                      apiVersion: v1
-                                      kind: Pod
-                                      metadata:
-                                        name: sample-pod
-                                      spec:
-                                        containers:
-                                          - name: nginx
-                                            image: nginx:1.19 #Ignore
-                                          - name: alpine
-                                            image: alpine:3.21 #Ignore
-                                        initContainers:
-                                          - name: init-busybox
-                                            image: busybox:unstable #Update Init
-                                            command: [""echo"", ""Init container added""]
-                                      ";
+apiVersion: v1
+kind: Pod
+metadata:
+  name: sample-pod
+spec:
+  containers:
+    - name: nginx
+      image: nginx:1.19 #Ignore
+    - name: alpine
+      image: alpine:3.21 #Ignore
+  initContainers:
+    - name: init-busybox
+      image: busybox:unstable #Update Init
+      command: [""echo"", ""Init container added""]
+";
             const string expectedYaml = @"
-                                         apiVersion: v1
-                                         kind: Pod
-                                         metadata:
-                                           name: sample-pod
-                                         spec:
-                                           containers:
-                                             - name: nginx
-                                               image: nginx:1.19 #Ignore
-                                             - name: alpine
-                                               image: alpine:3.21 #Ignore
-                                           initContainers:
-                                             - name: init-busybox
-                                               image: busybox:stable #Update Init
-                                               command: [""echo"", ""Init container added""]
-                                         ";
+apiVersion: v1
+kind: Pod
+metadata:
+  name: sample-pod
+spec:
+  containers:
+    - name: nginx
+      image: nginx:1.19 #Ignore
+    - name: alpine
+      image: alpine:3.21 #Ignore
+  initContainers:
+    - name: init-busybox
+      image: busybox:stable #Update Init
+      command: [""echo"", ""Init container added""]
+";
 
             List<ContainerImageReference> customRegistryImagesToUpdate = new List<ContainerImageReference>
               {
