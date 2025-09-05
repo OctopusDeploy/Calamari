@@ -1,3 +1,4 @@
+#if NET
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -110,3 +111,4 @@ namespace Calamari.ArgoCD.Git
         }
     }
 }
+#endif
