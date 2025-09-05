@@ -19,7 +19,7 @@
     <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
     <ApplicationManifest>Calamari.exe.manifest</ApplicationManifest>
     <TargetFrameworks>net462;net6.0</TargetFrameworks>
-    <LangVersion>8</LangVersion>
+    <LangVersion>latest</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net462' ">
     <DefineConstants>$(DefineConstants);IIS_SUPPORT;</DefineConstants>
@@ -58,9 +58,6 @@
     <PackageReference Include="YamlDotNet" Version="16.0.0" />
     <PackageReference Include="System.ValueTuple" Version="4.5.0" />
   </ItemGroup>
-  <ItemGroup Condition=" '${TargetFrameworkIdentifier)' == '.NetCore' ">
-    <PackageReference Include="YamlDotNet" Version="16.0.0" />
-  </ItemGroup>
   <ItemGroup Condition=" '$(TargetFrameworkIdentifier)' == '.NETFramework' ">
     <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Configuration.Install" />
@@ -89,7 +86,6 @@
     </None>
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' == 'net6.0' ">
-    <Package Include="KubernetesClient" Version="15.0.1" />
     <PackageReference Include="KubernetesClient" Version="15.0.1" />
   </ItemGroup>
   <ItemGroup>
