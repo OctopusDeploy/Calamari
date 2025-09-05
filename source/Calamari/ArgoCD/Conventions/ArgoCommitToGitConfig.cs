@@ -1,4 +1,3 @@
-#nullable enable
 using System.Collections.Generic;
 using Calamari.ArgoCD.Git;
 
@@ -27,7 +26,7 @@ namespace Calamari.ArgoCD.Conventions
         public bool RecurseInputPath { get; }
         
         public string CommitSummary { get; }
-        public string? CommitDescription { get; }
+        public string CommitDescription { get; }
         public bool RequiresPr { get; }
         public List<IArgoApplicationSource> ArgoSourcesToUpdate { get;  }
     }
