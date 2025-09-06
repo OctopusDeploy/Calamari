@@ -29,7 +29,7 @@ namespace Calamari.Tests.Fixtures.Deployment.Conventions
             variables = new CalamariVariables();
             fileSystem = Substitute.For<ICalamariFileSystem>();
             iis = Substitute.For<IInternetInformationServer>();
-            deployment = new RunningDeployment("C:\\packages", variables)
+            deployment = new RunningDeployment("C:\\packages", variables, new NonSensitiveCalamariVariables())
             {
                 StagingDirectory = stagingDirectory
             };

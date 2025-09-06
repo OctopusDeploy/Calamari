@@ -38,7 +38,7 @@ namespace Calamari.Commands
         {
             log.Info("Setting up KubeConfig authentication.");
             var environmentVars = new Dictionary<string, string>();
-            var runningDeployment = new RunningDeployment(variables);
+            var runningDeployment = new RunningDeployment(variables, new NonSensitiveCalamariVariables());
             
             kubectl.SetEnvironmentVariables(environmentVars);
             kubectl.SetWorkingDirectory(runningDeployment.CurrentDirectory);

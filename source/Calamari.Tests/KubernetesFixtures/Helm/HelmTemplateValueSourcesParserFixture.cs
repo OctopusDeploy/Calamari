@@ -52,7 +52,7 @@ namespace Calamari.Tests.KubernetesFixtures.Helm
                 [PackageVariables.IndexedPackageVersion(string.Empty)] = "0.3.8"
             };
 
-            var deployment = new RunningDeployment(variables)
+            var deployment = new RunningDeployment(variables, new NonSensitiveCalamariVariables())
             {
                 CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory
             };
@@ -86,7 +86,7 @@ namespace Calamari.Tests.KubernetesFixtures.Helm
                 [PackageVariables.IndexedPackageVersion(string.Empty)] = "0.3.8"
             };
 
-            var deployment = new RunningDeployment(variables)
+            var deployment = new RunningDeployment(variables, new NonSensitiveCalamariVariables())
             {
                 CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory
             };
@@ -146,7 +146,7 @@ secondary.Development.yaml"
                 [PackageVariables.IndexedPackageVersion(string.Empty)] = "0.3.8"
             };
 
-            var deployment = new RunningDeployment(variables)
+            var deployment = new RunningDeployment(variables, new NonSensitiveCalamariVariables())
             {
                 CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory
             };
@@ -226,7 +226,7 @@ secondary.Development.yaml"
                 [PackageVariables.IndexedPackageId("helm-package")] = "5ec01a18"
             };
 
-            var deployment = new RunningDeployment(variables)
+            var deployment = new RunningDeployment(variables, new NonSensitiveCalamariVariables())
             {
                 CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory
             };
@@ -308,7 +308,7 @@ secondary.Development.yaml"
                 [Deployment.SpecialVariables.GitResources.CommitHash(string.Empty)] = "abc123"
             };
 
-            var deployment = new RunningDeployment(variables)
+            var deployment = new RunningDeployment(variables, new NonSensitiveCalamariVariables())
             {
                 CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory
             };
@@ -392,7 +392,7 @@ secondary.Development.yaml"
                 [Deployment.SpecialVariables.GitResources.CommitHash(string.Empty)] = "abc123"
             };
 
-            var deployment = new RunningDeployment(variables)
+            var deployment = new RunningDeployment(variables, new NonSensitiveCalamariVariables())
             {
                 CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory
             };
@@ -471,7 +471,7 @@ secondary.Development.yaml"
                 [Deployment.SpecialVariables.GitResources.CommitHash(string.Empty)] = "abc123"
             };
 
-            var deployment = new RunningDeployment(variables)
+            var deployment = new RunningDeployment(variables, new NonSensitiveCalamariVariables())
             {
                 CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory
             };

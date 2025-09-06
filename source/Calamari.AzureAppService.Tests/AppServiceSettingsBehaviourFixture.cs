@@ -65,7 +65,7 @@ namespace Calamari.AzureAppService.Tests
 
             var iVars = new CalamariVariables();
             AddAzureVariables(iVars);
-            var runningContext = new RunningDeployment("", iVars);
+            var runningContext = new RunningDeployment("", iVars, new NonSensitiveCalamariVariables());
             iVars.Add("Greeting", "Calamari");
 
             var appSettings = BuildAppSettingsJson(new[]
@@ -90,7 +90,7 @@ namespace Calamari.AzureAppService.Tests
 
             var iVars = new CalamariVariables();
             AddAzureVariables(iVars);
-            var runningContext = new RunningDeployment("", iVars);
+            var runningContext = new RunningDeployment("", iVars, new NonSensitiveCalamariVariables());
             iVars.Add("Greeting", "Calamari");
 
             var connectionStrings = BuildConnectionStringJson(new[]
@@ -123,7 +123,7 @@ namespace Calamari.AzureAppService.Tests
 
             var iVars = new CalamariVariables();
             AddAzureVariables(iVars);
-            var runningContext = new RunningDeployment("", iVars);
+            var runningContext = new RunningDeployment("", iVars, new NonSensitiveCalamariVariables());
             iVars.Add("Greeting", slotName);
             iVars.Add("Octopus.Action.Azure.DeploymentSlot", slotName);
 

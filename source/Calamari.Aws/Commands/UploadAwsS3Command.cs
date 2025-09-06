@@ -86,7 +86,7 @@ namespace Calamari.Aws.Commands
                 )
             };
 
-            var deployment = new RunningDeployment(pathToPackage, variables);
+            var deployment = new RunningDeployment(pathToPackage, variables, new NonSensitiveCalamariVariables());
             var conventionRunner = new ConventionProcessor(deployment, conventions, log);
 
             conventionRunner.RunConventions();

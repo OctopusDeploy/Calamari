@@ -7,7 +7,7 @@ namespace Calamari.Common.Commands
 {
     public class RunningDeployment
     {
-        public RunningDeployment(IVariables variables, INonSensitiveVariables? nonSensitiveVariables = null, Dictionary<string, string>? environmentVariables = null)
+        public RunningDeployment(IVariables variables, INonSensitiveVariables nonSensitiveVariables, Dictionary<string, string>? environmentVariables = null)
             : this(
                    null,
                    variables,
@@ -18,7 +18,7 @@ namespace Calamari.Common.Commands
 
         public RunningDeployment(string? packageFilePath,
                                  IVariables variables,
-                                 INonSensitiveVariables? nonSensitiveVariables = null,
+                                 INonSensitiveVariables nonSensitiveVariables,
                                  Dictionary<string, string>? environmentVariables = null)
         {
             if (!string.IsNullOrEmpty(packageFilePath))

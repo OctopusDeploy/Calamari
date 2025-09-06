@@ -17,7 +17,7 @@ namespace Calamari.Tests.KubernetesFixtures.Helm
         [SetUp]
         public void SetUp()
         {
-            deployment = new RunningDeployment(new CalamariVariables());
+            deployment = new RunningDeployment(new CalamariVariables(), new NonSensitiveCalamariVariables());
             fileSystem = Substitute.For<ICalamariFileSystem>();
         }
 

@@ -30,7 +30,7 @@ namespace Calamari.Tests.Fixtures.Deployment.Conventions
             variables = new CalamariVariables();
             variables.Set(KnownVariables.OriginalPackageDirectoryPath, stagingDirectory);
             fileSystem = Substitute.For<ICalamariFileSystem>();
-            deployment = new RunningDeployment(packageFilePath, variables);
+            deployment = new RunningDeployment(packageFilePath, variables, new NonSensitiveCalamariVariables());
         }
 
         [Test]

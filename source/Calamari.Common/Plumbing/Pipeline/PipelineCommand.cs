@@ -51,7 +51,7 @@ namespace Calamari.Common.Plumbing.Pipeline
         public async Task Execute(ILifetimeScope lifetimeScope, IVariables variables)
         {
             var pathToPrimaryPackage = variables.GetPathToPrimaryPackage(lifetimeScope.Resolve<ICalamariFileSystem>(), false);
-            var deployment = new RunningDeployment(pathToPrimaryPackage, variables);
+            var deployment = new RunningDeployment(pathToPrimaryPackage, variables, new NonSensitiveCalamariVariables());
 
             try
             {

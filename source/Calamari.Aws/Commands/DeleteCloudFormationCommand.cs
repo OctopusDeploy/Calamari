@@ -53,7 +53,7 @@ namespace Calamari.Aws.Commands
                 new DeleteCloudFormationStackConvention(environment, stackEventLogger, ClientFactory, StackProvider, waitForComplete, log)
             };
             
-            var deployment = new RunningDeployment(packageFile, variables);
+            var deployment = new RunningDeployment(packageFile, variables, new NonSensitiveCalamariVariables());
             
             var conventionRunner = new ConventionProcessor(deployment, conventions, log);
             conventionRunner.RunConventions();

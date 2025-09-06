@@ -25,7 +25,7 @@ namespace Calamari.Tests.Fixtures.Deployment.Conventions
             variables.Set(PackageVariables.SubstituteInFilesTargets, glob);
             variables.Set(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.SubstituteInFiles);
 
-            var deployment = new RunningDeployment(TestEnvironment.ConstructRootedPath("packages"), variables)
+            var deployment = new RunningDeployment(TestEnvironment.ConstructRootedPath("packages"), variables, new NonSensitiveCalamariVariables())
             {
                 StagingDirectory = StagingDirectory
             };

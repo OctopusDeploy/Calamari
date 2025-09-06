@@ -38,7 +38,7 @@ namespace Calamari.Tests.Fixtures.Deployment.Conventions
             scriptEngine.Execute(Arg.Any<Script>(), Arg.Any<IVariables>(), Arg.Any<ICommandLineRunner>()).Returns(c => commandResult);
             scriptEngine.GetSupportedTypes().Returns(new[] {ScriptSyntax.CSharp, ScriptSyntax.PowerShell, ScriptSyntax.Bash});
             runner = Substitute.For<ICommandLineRunner>();
-            deployment = new RunningDeployment(TestEnvironment.ConstructRootedPath("Packages"), new CalamariVariables());
+            deployment = new RunningDeployment(TestEnvironment.ConstructRootedPath("Packages"), new CalamariVariables(), new NonSensitiveCalamariVariables());
             log = new InMemoryLog();
         }
 

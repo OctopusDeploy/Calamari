@@ -52,7 +52,7 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
                 replacer
             }, variables, fileSystem, log);
 
-            var deployment = new RunningDeployment(CurrentPath, variables)
+            var deployment = new RunningDeployment(CurrentPath, variables, new NonSensitiveCalamariVariables())
             {
                 CurrentDirectoryProvider = DeploymentWorkingDirectory.CustomDirectory
             };

@@ -49,7 +49,7 @@ namespace Calamari.Commands.Java
                     commandLineRunner, embeddedResources, log)
             };
 
-            var deployment = new RunningDeployment(null, variables);
+            var deployment = new RunningDeployment(null, variables, new NonSensitiveCalamariVariables());
             var conventionRunner = new ConventionProcessor(deployment, conventions, log);
             conventionRunner.RunConventions();
 

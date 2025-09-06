@@ -67,7 +67,7 @@ namespace Calamari.Terraform.Tests
 
         public class MockableRunningDeployment : RunningDeployment
         {
-            public MockableRunningDeployment(IVariables variables) : base(variables)
+            public MockableRunningDeployment(IVariables variables) : base(variables, new NonSensitiveCalamariVariables())
             {
             }
         }
