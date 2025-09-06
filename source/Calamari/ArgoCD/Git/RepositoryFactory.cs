@@ -1,3 +1,4 @@
+#if NET
 using System;
 using System.IO;
 using Calamari.ArgoCD.Conventions;
@@ -44,7 +45,7 @@ namespace Calamari.ArgoCD.Git
             var options = new CloneOptions();
             if (gitConnection.Username != null && gitConnection.Password != null)
             {
-                options.CredentialsProvider = (url, usernameFromUrl, types) => new UsernamePasswordCredentials
+                options.FetchOptions.CredentialsProvider = (url, usernameFromUrl, types) => new UsernamePasswordCredentials
                     {
                         Username = gitConnection.Username!,
                         Password = gitConnection.Password!
@@ -71,3 +72,4 @@ namespace Calamari.ArgoCD.Git
         }
     }
 }
+#endif
