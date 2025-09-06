@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using Amazon.CloudFormation.Model;
 using Calamari.ArgoCD.Git;
 using Calamari.Common.Commands;
 using Calamari.Common.FeatureToggles;
