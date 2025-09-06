@@ -68,7 +68,7 @@ namespace Calamari.AzureAppService.Tests
         {
             // Arrange
             var variables = new CalamariVariables();
-            var context = new RunningDeployment(variables);
+            var context = new RunningDeployment(variables, new NonSensitiveCalamariVariables());
             this.CreateVariables(context);
             var log = new InMemoryLog();
             var sut = new TargetDiscoveryBehaviour(log);
@@ -108,7 +108,7 @@ namespace Calamari.AzureAppService.Tests
         {
             // Arrange
             var variables = new CalamariVariables();
-            var context = new RunningDeployment(variables);
+            var context = new RunningDeployment(variables, new NonSensitiveCalamariVariables());
             this.CreateVariables(context);
             var log = new InMemoryLog();
             var sut = new TargetDiscoveryBehaviour(log);
@@ -141,7 +141,7 @@ namespace Calamari.AzureAppService.Tests
         {
             // Arrange
             var variables = new CalamariVariables();
-            var context = new RunningDeployment(variables);
+            var context = new RunningDeployment(variables, new NonSensitiveCalamariVariables());
             CreateVariables(context);
             var log = new InMemoryLog();
             var sut = new TargetDiscoveryBehaviour(log);
@@ -191,7 +191,7 @@ namespace Calamari.AzureAppService.Tests
         {
             // Arrange
             var variables = new CalamariVariables();
-            var context = new RunningDeployment(variables);
+            var context = new RunningDeployment(variables, new NonSensitiveCalamariVariables());
             CreateVariables(context);
             var log = new InMemoryLog();
             var sut = new TargetDiscoveryBehaviour(log);
@@ -242,7 +242,7 @@ namespace Calamari.AzureAppService.Tests
         {
             // Arrange
             var variables = new CalamariVariables();
-            var context = new RunningDeployment(variables);
+            var context = new RunningDeployment(variables, new NonSensitiveCalamariVariables());
             CreateVariables(context);
             var log = new InMemoryLog();
             var sut = new TargetDiscoveryBehaviour(log);

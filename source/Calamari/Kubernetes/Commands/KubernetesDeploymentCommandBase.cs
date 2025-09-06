@@ -124,7 +124,7 @@ namespace Calamari.Kubernetes.Commands
 
             conventions.AddRange(CommandSpecificInstallConventions());
 
-            var runningDeployment = new RunningDeployment(pathToPackage, variables);
+            var runningDeployment = new RunningDeployment(pathToPackage, variables, new NonSensitiveCalamariVariables());
 
             var conventionRunner = new ConventionProcessor(runningDeployment, conventions, log);
             conventionRunner.RunConventions(logExceptions: false);

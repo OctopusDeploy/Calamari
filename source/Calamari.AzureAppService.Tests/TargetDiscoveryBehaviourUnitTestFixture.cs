@@ -16,7 +16,7 @@ namespace Calamari.AzureAppService.Tests
         {
             // Arrange
             var variables = new CalamariVariables();
-            var context = new RunningDeployment(variables);
+            var context = new RunningDeployment(variables, new NonSensitiveCalamariVariables());
             var log = new InMemoryLog();
             var sut = new TargetDiscoveryBehaviour(log);
 
@@ -33,7 +33,7 @@ namespace Calamari.AzureAppService.Tests
         {
             // Arrange
             var variables = new CalamariVariables();
-            var context = new RunningDeployment(variables);
+            var context = new RunningDeployment(variables, new NonSensitiveCalamariVariables());
             context.Variables.Add("Octopus.TargetDiscovery.Context", @"{ authentication: { authenticationMethod: ""ServicePrincipal""}}");
             var log = new InMemoryLog();
             var sut = new TargetDiscoveryBehaviour(log);
@@ -51,7 +51,7 @@ namespace Calamari.AzureAppService.Tests
         {
             // Arrange
             var variables = new CalamariVariables();
-            var context = new RunningDeployment(variables);
+            var context = new RunningDeployment(variables, new NonSensitiveCalamariVariables());
             context.Variables.Add("Octopus.TargetDiscovery.Context", "bogus json");
             var log = new InMemoryLog();
             var sut = new TargetDiscoveryBehaviour(log);

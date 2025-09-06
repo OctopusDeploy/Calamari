@@ -42,7 +42,7 @@ namespace Calamari.Tests.Fixtures.Deployment.Conventions
             variables.Set(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.ConfigurationTransforms);
             variables.Set(KnownVariables.OriginalPackageDirectoryPath, deployDirectory);
 
-            deployment = new RunningDeployment(deployDirectory, variables);
+            deployment = new RunningDeployment(deployDirectory, variables, new NonSensitiveCalamariVariables());
         }
 
         void AddConfigurationVariablesFlag()
@@ -242,7 +242,7 @@ namespace Calamari.Tests.Fixtures.Deployment.Conventions
             deploymentVariables.Set(DeploymentEnvironment.Name, "my-test-env");
             deploymentVariables.Set(SpecialVariables.Package.EnableDiagnosticsConfigTransformationLogging, "True");
             deploymentVariables.Set(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.ConfigurationTransforms);
-            var runningDeployment = new RunningDeployment(@"c:\temp\MyPackage.1.0.0.nupkg", deploymentVariables);
+            var runningDeployment = new RunningDeployment(@"c:\temp\MyPackage.1.0.0.nupkg", deploymentVariables, new NonSensitiveCalamariVariables());
 
             //mock the world
             calamariFileSystem.DirectoryExists(@"c:\temp").Returns(true);

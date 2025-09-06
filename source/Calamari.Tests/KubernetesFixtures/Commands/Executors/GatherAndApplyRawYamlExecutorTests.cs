@@ -60,7 +60,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
             {
                 [KnownVariables.OriginalPackageDirectoryPath] = StagingDirectory
             };
-            var runningDeployment = new RunningDeployment(variables);
+            var runningDeployment = new RunningDeployment(variables, new NonSensitiveCalamariVariables());
             var fileSystem = new TestCalamariPhysicalFileSystem();
             var executor = CreateExecutor(variables, fileSystem);
 
@@ -85,7 +85,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
                 [KnownVariables.OriginalPackageDirectoryPath] = StagingDirectory,
                 [SpecialVariables.CustomResourceYamlFileName] = "dirA/*\ndirB/*"
             };
-            var runningDeployment = new RunningDeployment(variables);
+            var runningDeployment = new RunningDeployment(variables, new NonSensitiveCalamariVariables());
             var executor = CreateExecutor(variables, fileSystem);
             var expectedYamlGrouping = $"{Path.Combine(StagingDirectory, "grouped", "1")};{Path.Combine(StagingDirectory, "grouped", "2")}";
 
@@ -122,7 +122,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
                 [SpecialVariables.CustomResourceYamlFileName] = "dirA/*\ndirB/*",
                 [SpecialVariables.ServerSideApplyEnabled] = "true"
             };
-            var runningDeployment = new RunningDeployment(variables);
+            var runningDeployment = new RunningDeployment(variables, new NonSensitiveCalamariVariables());
             var executor = CreateExecutor(variables, fileSystem);
             var expectedYamlGrouping = $"{Path.Combine(StagingDirectory, "grouped", "1")};{Path.Combine(StagingDirectory, "grouped", "2")}";
 
@@ -168,7 +168,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
                 [SpecialVariables.ServerSideApplyEnabled] = "true",
                 [SpecialVariables.ServerSideApplyForceConflicts] = "true"
             };
-            var runningDeployment = new RunningDeployment(variables);
+            var runningDeployment = new RunningDeployment(variables, new NonSensitiveCalamariVariables());
             var executor = CreateExecutor(variables, fileSystem);
             var expectedYamlGrouping = $"{Path.Combine(StagingDirectory, "grouped", "1")};{Path.Combine(StagingDirectory, "grouped", "2")}";
 
@@ -214,7 +214,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
                 [SpecialVariables.ServerSideApplyEnabled] = "false",
                 [SpecialVariables.ServerSideApplyForceConflicts] = "true"
             };
-            var runningDeployment = new RunningDeployment(variables);
+            var runningDeployment = new RunningDeployment(variables, new NonSensitiveCalamariVariables());
             var executor = CreateExecutor(variables, fileSystem);
             var expectedYamlGrouping = $"{Path.Combine(StagingDirectory, "grouped", "1")};{Path.Combine(StagingDirectory, "grouped", "2")}";
 
@@ -259,7 +259,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
                 [KnownVariables.OriginalPackageDirectoryPath] = StagingDirectory,
                 [SpecialVariables.CustomResourceYamlFileName] = "dirA/*\ndirB/*"
             };
-            var runningDeployment = new RunningDeployment(variables);
+            var runningDeployment = new RunningDeployment(variables, new NonSensitiveCalamariVariables());
             var executor = CreateExecutor(variables, fileSystem);
 
             // Act

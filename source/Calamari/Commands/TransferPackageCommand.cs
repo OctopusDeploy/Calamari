@@ -45,7 +45,7 @@ namespace Calamari.Commands
                 new TransferPackageConvention(log, fileSystem),
             };
 
-            var deployment = new RunningDeployment(packageFile, variables);
+            var deployment = new RunningDeployment(packageFile, variables, new NonSensitiveCalamariVariables());
             var conventionRunner = new ConventionProcessor(deployment, conventions, log);
 
             try

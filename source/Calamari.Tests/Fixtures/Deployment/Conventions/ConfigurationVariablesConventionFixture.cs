@@ -30,7 +30,7 @@ namespace Calamari.Tests.Fixtures.Deployment.Conventions
                 "C:\\App\\MyApp\\Views\\Web.config"
             });
 
-            deployment = new RunningDeployment("C:\\Packages", new CalamariVariables());
+            deployment = new RunningDeployment("C:\\Packages", new CalamariVariables(), new NonSensitiveCalamariVariables());
             replacer = Substitute.For<IConfigurationVariablesReplacer>();
         }
 

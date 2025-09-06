@@ -23,8 +23,9 @@ namespace Calamari.ArgoCD.Conventions
             var recursive = deployment.Variables.GetFlag(SpecialVariables.Git.Recursive, false);
             
             var requiresPullRequest = RequiresPullRequest(deployment);
-            var summary = deployment.Variables.GetMandatoryVariable(SpecialVariables.Git.CommitMessageSummary);
-            var description = deployment.Variables.Get(SpecialVariables.Git.CommitMessageDescription) ?? string.Empty;
+
+            var summary = deployment.GetMandatoryNonSensitiveVariable(SpecialVariables.Git.CommitMessageSummary);
+            var description = deployment.GetNonSensitiveVariable(SpecialVariables.Git.CommitMessageDescription) ?? string.Empty;
             
             var repositoryIndexes = deployment.Variables.GetIndexes(SpecialVariables.Git.Index);
             log.Info($"Found the following repository indicies '{repositoryIndexes.Join(",")}'");

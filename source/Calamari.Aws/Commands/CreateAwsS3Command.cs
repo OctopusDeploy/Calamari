@@ -88,7 +88,7 @@ namespace Calamari.Aws.Commands
                                                              stackEventLogger, log)
             };
 
-            var conventionRunner = new ConventionProcessor(new RunningDeployment(variables), conventions, log);
+            var conventionRunner = new ConventionProcessor(new RunningDeployment(variables, new NonSensitiveCalamariVariables()), conventions, log);
             conventionRunner.RunConventions();
 
             return 0;

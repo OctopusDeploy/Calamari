@@ -28,6 +28,7 @@ namespace Calamari.ArgoCD.Commands
 
         readonly ILog log;
         readonly IVariables variables;
+        readonly INonSensitiveVariables nonSensitiveVariables;
         readonly ICalamariFileSystem fileSystem;
         readonly IExtractPackage extractPackage;
         readonly INonSensitiveSubstituteInFiles substituteInFiles;
@@ -38,6 +39,7 @@ namespace Calamari.ArgoCD.Commands
         public CommitToGitCommand(
             ILog log,
             IVariables variables,
+            INonSensitiveVariables nonSensitiveVariables,
             ICalamariFileSystem fileSystem,
             IExtractPackage extractPackage,
             INonSensitiveSubstituteInFiles substituteInFiles,
@@ -51,6 +53,7 @@ namespace Calamari.ArgoCD.Commands
             this.substituteInFiles = substituteInFiles;
             this.pullRequestCreator = pullRequestCreator;
             this.configFactory = configFactory;
+            this.nonSensitiveVariables = nonSensitiveVariables;
 
             Options.Add("package=",
                         "Path to the NuGet package to install.",
@@ -77,7 +80,7 @@ namespace Calamari.ArgoCD.Commands
                 new UpdateGitRepositoryInstallConvention(fileSystem, PackageDirectoryName, log, pullRequestCreator, configFactory),
             };
 
-            var runningDeployment = new RunningDeployment(pathToPackage, variables);
+            var runningDeployment = new RunningDeployment(pathToPackage, variables, nonSensitiveVariables);
 
             var conventionRunner = new ConventionProcessor(runningDeployment, conventions, log);
             conventionRunner.RunConventions(logExceptions: false);

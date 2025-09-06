@@ -40,7 +40,7 @@ namespace Calamari.Tests.Fixtures.Deployment.Conventions
             variables = new CalamariVariables();
             variables.Set(KnownVariables.Package.EnabledFeatures, KnownVariables.Features.CustomScripts);
 
-            deployment = new RunningDeployment("C:\\packages", variables) { StagingDirectory = stagingDirectory };
+            deployment = new RunningDeployment("C:\\packages", variables, new NonSensitiveCalamariVariables()) { StagingDirectory = stagingDirectory };
         }
 
         [Test]

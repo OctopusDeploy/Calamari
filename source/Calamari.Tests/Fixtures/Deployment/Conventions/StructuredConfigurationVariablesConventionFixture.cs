@@ -22,7 +22,7 @@ namespace Calamari.Tests.Fixtures.Deployment.Conventions
         {
             var variables = new CalamariVariables();
             service = Substitute.For<IStructuredConfigVariablesService>();
-            deployment = new RunningDeployment(TestEnvironment.ConstructRootedPath("Packages"), variables);
+            deployment = new RunningDeployment(TestEnvironment.ConstructRootedPath("Packages"), variables, new NonSensitiveCalamariVariables());
         }
 
         [Test]
