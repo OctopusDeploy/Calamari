@@ -1,6 +1,8 @@
 #if NET
+#nullable enable
 using System;
 using System.IO;
+using System.Text;
 using Calamari.ArgoCD.Git;
 using LibGit2Sharp;
 
@@ -35,7 +37,7 @@ namespace Calamari.Tests.ArgoCD.Git
         {
             var fileTreeEntry = repo.Branches[branchName.Value].Tip[filename];
             
-            var fileBlob = (Blob)fileTreeEntry.Target;
+            var fileBlob = (Blob)fileTreeEntry.Target;  
             return fileBlob.GetContentText();
         }
     }

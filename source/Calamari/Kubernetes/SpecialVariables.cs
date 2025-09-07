@@ -61,7 +61,7 @@ namespace Calamari.Kubernetes
                 }
             }
         }
-        
+
         public static class Git
         {
             public static string Index => "Octopus.Action.Git.Repository";

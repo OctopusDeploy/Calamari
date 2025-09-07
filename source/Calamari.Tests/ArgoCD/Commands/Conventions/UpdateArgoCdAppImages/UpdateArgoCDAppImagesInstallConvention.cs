@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages;
+using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Models;
 using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.GitHub;
 using Calamari.Common.Commands;
@@ -17,6 +18,7 @@ using Calamari.Testing.Helpers;
 using Calamari.Tests.ArgoCD.Git;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
 using FluentAssertions;
+using LibGit2Sharp;
 using NSubstitute;
 using NUnit.Framework;
 
@@ -30,18 +32,18 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
         // readonly IGitOpsRepositoryFactory gitOpsRepositoryFactory = Substitute.For<IGitOpsRepositoryFactory>();
         
         readonly ICalamariFileSystem fileSystem = TestCalamariPhysicalFileSystem.GetPhysicalFileSystem();
-        ILog log;
+        InMemoryLog log = new InMemoryLog();
         string tempDirectory;
         string OriginPath => Path.Combine(tempDirectory, "origin");
+        Repository OriginRepo;
         GitBranchName argoCdBranchName = new GitBranchName("devBranch");
 
         [SetUp]
         public void Init()
         {
-            log = new InMemoryLog();
             tempDirectory = fileSystem.CreateTemporaryDirectory();
 
-            Repository BareOrigin = RepositoryHelpers.CreateBareRepository(OriginPath);
+            OriginRepo = RepositoryHelpers.CreateBareRepository(OriginPath);
             RepositoryHelpers.CreateBranchIn(argoCdBranchName, OriginPath);
         }
         
@@ -79,45 +81,44 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
             var filesInRepo = fileSystem.EnumerateFilesRecursively(resultRepo, "*");
             filesInRepo.Should().BeEmpty();
         }
-        //
-        // [Test]
-        // public async Task UpdateImages_WithNoImageMatches_ReturnsEmptySetAndCommitsNoChanges()
-        // {
-        //     // Arrange
-        //     var updater = new ArgoCDAppImageUpdater(gitOpsRepositoryFactory);
-        //
-        //     var returnedFiles = new Dictionary<string, string>()
-        //     {
-        //         { "include/file1.yaml", "No yaml here" }
-        //     };
-        //     fakeArgoCDGitOpsRepository.ReadYamlFiles(Arg.Any<ITaskLog>(), Arg.Any<CancellationToken>()).Returns(returnedFiles);
-        //
-        //     var updateTarget = new ArgoCDImageUpdateTarget("App Name",
-        //                                                    "docker.io",
-        //                                                    "include",
-        //                                                    new Uri("http://localhost/fake-repo.git"),
-        //                                                    "branch");
-        //
-        //     var imagesToUpdate = new List<ContainerImageReference>
-        //     {
-        //         ContainerImageReference.FromReferenceString("nginx:1.27.1", "docker.io")
-        //     };
-        //
-        //     // Act
-        //     var result = await updater.UpdateImages(updateTarget,
-        //                                             imagesToUpdate,
-        //                                             new GitCommitSummary("Nothing"),
-        //                                             string.Empty,
-        //                                             false,
-        //                                             log,
-        //                                             CancellationToken);
-        //
-        //     // Assert
-        //     result.ImagesUpdated.Should().BeEmpty();
-        //     log.Received().Verbose("Processing file include/file1.yaml in Repository http://localhost/fake-repo.git.");
-        //     log.Received().Verbose("No changes made to file include/file1.yaml as no image references were updated.");
-        //
-        // }
+        
+        [Test]
+        public void UpdateImages_WithNoImageMatches_ReturnsEmptySetAndCommitsNoChanges()
+        {
+            // Arrange
+            var updater = new Calamari.ArgoCD.Conventions.UpdateArgoCDAppImagesInstallConvention(log,
+                                                                                                 Substitute.For<IGitHubPullRequestCreator>(),
+                                                                                                 fileSystem,
+                                                                                                 new ArgoCommitToGitConfigFactory(log),
+                                                                                                 new CommitMessageGenerator());
+            var variables = new CalamariVariables
+            {
+                [SpecialVariables.Git.SubFolder("repo_name")] = "",
+                [SpecialVariables.Git.Password("repo_name")] = "password",
+                [SpecialVariables.Git.Username("repo_name")] = "username",
+                [SpecialVariables.Git.Url("repo_name")] = OriginPath,
+                [SpecialVariables.Git.BranchName("repo_name")] = argoCdBranchName.Value,
+                [SpecialVariables.Git.DefaultRegistry("repo_name")] = "docker.io",
+                [SpecialVariables.Git.CommitMethod] = "DirectCommit",
+                [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this",
+                [Deployment.SpecialVariables.Packages.Image("nginx")] = "nginx:1.27.1",
+                [Deployment.SpecialVariables.Packages.Purpose("nginx")] = "DockerImageReference",
+            };
+            var runningDeployment = new RunningDeployment(null, variables);
+            runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
+            runningDeployment.StagingDirectory = tempDirectory;
+            
+            OriginRepo.AddFilesToBranch(argoCdBranchName, ("include/file1.yaml", "No Yamnl here"));
+        
+            
+            // Act
+            updater.Install(runningDeployment);
+            
+        
+            // Assert
+            log.StandardOut.Should().Contain("Processing file include/file1.yaml in Repository http://localhost/fake-repo.git.");
+            log.StandardOut.Should().Contain("No changes made to file include/file1.yaml as no image references were updated.");
+        }
         //
         // [Test]
         // public async Task UpdateImages_WithImageMatches_CommitsChangesToGitAndReturnsUpdatedImages()
@@ -227,6 +228,11 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
             LibGit2Sharp.Commands.Checkout(resultRepo, $"origin/{argoCdBranchName}");
 
             return resultPath;
+        }
+
+        void AddFileToOrigin(string filename, string contents)
+        {
+            
         }
     }
 }
