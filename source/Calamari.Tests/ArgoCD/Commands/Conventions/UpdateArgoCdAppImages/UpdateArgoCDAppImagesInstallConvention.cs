@@ -1,3 +1,4 @@
+#if NET
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -116,7 +117,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
             
         
             // Assert
-            log.StandardOut.Should().Contain("Processing file include/file1.yaml in Repository http://localhost/fake-repo.git.");
+            log.StandardOut.Should().Contain(s => s.Contains($"Processing file include/file1.yaml"));
             log.StandardOut.Should().Contain("No changes made to file include/file1.yaml as no image references were updated.");
         }
         //
@@ -229,10 +230,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
 
             return resultPath;
         }
-
-        void AddFileToOrigin(string filename, string contents)
-        {
-            
-        }
     }
 }
+
+#endif

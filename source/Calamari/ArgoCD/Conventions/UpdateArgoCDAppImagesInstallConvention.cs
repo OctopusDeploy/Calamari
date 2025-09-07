@@ -87,7 +87,8 @@ namespace Calamari.ArgoCD.Conventions
             var updatedImages = new HashSet<string>();
             foreach (var file in yamlFiles)
             {
-                log.Verbose($"Processing file {file}.");
+                var relativePath = Path.GetRelativePath(rootPath, file);
+                log.Verbose($"Processing file {relativePath}.");    
                 var fileContent = fileSystem.ReadFile(file);
 
                 var imageReplacer = new ContainerImageReplacer(fileContent, defaultRegistry);
@@ -106,7 +107,7 @@ namespace Calamari.ArgoCD.Conventions
                 }
                 else
                 {
-                    log.Verbose($"No changes made to file {file} as no image references were updated.");
+                    log.Verbose($"No changes made to file {relativePath} as no image references were updated.");
                 }
             }
 
