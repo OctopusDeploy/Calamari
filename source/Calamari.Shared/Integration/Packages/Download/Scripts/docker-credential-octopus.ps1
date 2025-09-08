@@ -5,6 +5,9 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+# Enable PowerShell debug tracing for troubleshooting
+Set-PSDebug -Trace 2
+
 # Get the Calamari executable path from environment variable
 $calamariExe = $env:OCTOPUS_CALAMARI_EXECUTABLE
 if (-not $calamariExe) {
