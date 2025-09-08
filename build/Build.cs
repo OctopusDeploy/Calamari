@@ -572,6 +572,10 @@ namespace Calamari.Build
                                                    var publishedLocation = DoPublish("Calamari.Tests", Frameworks.Net60, nugetVersion, rid);
                                                    var zipName = $"Calamari.Tests.{rid}.{nugetVersion}.zip";
                                                    File.Copy(RootDirectory / "global.json", publishedLocation / "global.json");
+                                                   
+                                                   // copy the calamari.deps.json to the test folder so that tests can find calamari when running
+                                                   // by default, it only gets Calamari.Tests.deps.json
+                                                   File.Copy(PublishDirectory / "Calamari" / Frameworks.Net60 / "Calamari.deps.json", publishedLocation / "Calamari.deps.json");
                                                    CompressionTasks.Compress(publishedLocation, ArtifactsDirectory / zipName);
                                                }
                                            });
