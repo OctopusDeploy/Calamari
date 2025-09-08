@@ -134,7 +134,7 @@ namespace Calamari.Tests.KubernetesFixtures.Integration
                 variables.Merge(additionalVariables);
             }
 
-            var runningDeployment = new RunningDeployment(variables, null, new Dictionary<string, string>())
+            var runningDeployment = new RunningDeployment(variables, new NonSensitiveCalamariVariables(), new Dictionary<string, string>())
             {
                 StagingDirectory = workingDirectory.DirectoryPath
             };
