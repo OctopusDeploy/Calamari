@@ -282,6 +282,8 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         [NonWindowsTest]
         public void BashScript_WithEraseOperation_CallsCalamariCorrectly()
         {
+            Console.WriteLine($"[TEST DEBUG] Starting BashScript_WithEraseOperation_CallsCalamariCorrectly");
+            
             // Arrange - First store credentials
             var credentialJson = JsonConvert.SerializeObject(new
             {
@@ -420,6 +422,10 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
                 var error = process.StandardError.ReadToEnd();
                 process.WaitForExit();
 
+                Console.WriteLine($"[TEST DEBUG] Exit code was {process.ExitCode}");
+                Console.WriteLine($"[TEST DEBUG] Output was {output}");
+                Console.WriteLine($"[TEST DEBUG] Error was {error}");
+                
                 return new ScriptExecutionResult
                 {
                     ExitCode = process.ExitCode,
