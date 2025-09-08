@@ -575,7 +575,7 @@ namespace Calamari.Build
                                                    
                                                    // copy the calamari.deps.json to the test folder so that tests can find calamari when running
                                                    // by default, it only gets Calamari.Tests.deps.json
-                                                   File.Copy(PublishDirectory / "Calamari" / Frameworks.Net60 / "Calamari.deps.json", publishedLocation / "Calamari.deps.json");
+                                                   File.Copy(PublishDirectory / "Calamari" / Frameworks.Net60 / rid / "Calamari.deps.json", publishedLocation / "Calamari.deps.json");
                                                    CompressionTasks.Compress(publishedLocation, ArtifactsDirectory / zipName);
                                                }
                                            });
