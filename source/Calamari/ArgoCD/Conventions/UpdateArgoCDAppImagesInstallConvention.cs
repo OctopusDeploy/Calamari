@@ -50,7 +50,7 @@ namespace Calamari.ArgoCD.Conventions
                 Log.Info($"Writing files to git repository for '{argoSource.Url}'");
                 var repository = repositoryFactory.CloneRepository(repoName, argoSource);
 
-                string defaultRegistry = ""; // deployment.Variables.Get(SpecialVariables.Git.DefaultRegistry(repositoryIndex));
+                string defaultRegistry = deployment.Variables.Get(SpecialVariables.Git.DefaultRegistry(repoName)) ?? "docker.io";
 
                 var pathToUpdate = Path.Combine(repository.WorkingDirectory, argoSource.SubFolder);
 

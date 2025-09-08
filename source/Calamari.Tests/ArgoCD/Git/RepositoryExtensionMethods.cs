@@ -13,6 +13,14 @@ namespace Calamari.Tests.ArgoCD.Git
 {
     public static class RepositoryExtensionMethods
     {
+        public static string ReadFileFromBranch(this Repository repo, GitBranchName branchName, string filename)
+        {
+            var fileTreeEntry = repo.Branches[branchName.Value].Tip[filename];
+            
+            var fileBlob = (Blob)fileTreeEntry.Target;  
+            return fileBlob.GetContentText();
+        }
+        
         public static void AddFilesToBranch(this Repository repo, GitBranchName branchName, params (string Name, string? Content)[] files)
         {
             var signature = new Signature("Arbitrary Coder", "arbitrary@octopus.com", DateTimeOffset.Now);
