@@ -1,3 +1,4 @@
+#if NET
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -31,6 +32,7 @@ namespace Calamari.ArgoCD.Commands
         readonly IExtractPackage extractPackage;
         readonly INonSensitiveSubstituteInFiles substituteInFiles;
         readonly IGitHubPullRequestCreator pullRequestCreator;
+        readonly ArgoCommitToGitConfigFactory configFactory;
         PathToPackage pathToPackage;
 
         public CommitToGitCommand(
@@ -39,7 +41,8 @@ namespace Calamari.ArgoCD.Commands
             ICalamariFileSystem fileSystem,
             IExtractPackage extractPackage,
             INonSensitiveSubstituteInFiles substituteInFiles,
-            IGitHubPullRequestCreator pullRequestCreator)
+            IGitHubPullRequestCreator pullRequestCreator,
+            ArgoCommitToGitConfigFactory configFactory)
         {
             this.log = log;
             this.variables = variables;
@@ -47,6 +50,7 @@ namespace Calamari.ArgoCD.Commands
             this.extractPackage = extractPackage;
             this.substituteInFiles = substituteInFiles;
             this.pullRequestCreator = pullRequestCreator;
+            this.configFactory = configFactory;
 
             Options.Add("package=",
                         "Path to the NuGet package to install.",
@@ -70,7 +74,7 @@ namespace Calamari.ArgoCD.Commands
                                                   d.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
                                               }),
                 new SubstituteInFilesConvention(new NonSensitiveSubstituteInFilesBehaviour(substituteInFiles, PackageDirectoryName)),
-                new UpdateGitRepositoryInstallConvention(fileSystem, PackageDirectoryName, log, pullRequestCreator),
+                new UpdateGitRepositoryInstallConvention(fileSystem, PackageDirectoryName, log, pullRequestCreator, configFactory),
             };
 
             var runningDeployment = new RunningDeployment(pathToPackage, variables);
@@ -82,3 +86,4 @@ namespace Calamari.ArgoCD.Commands
         }
     }
 }
+#endif

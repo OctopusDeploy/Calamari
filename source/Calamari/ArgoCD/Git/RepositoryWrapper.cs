@@ -1,3 +1,4 @@
+#if NET
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -24,16 +25,17 @@ namespace Calamari.ArgoCD.Git
             this.pullRequestCreator = pullRequestCreator;
         }
         
-
+        
         // returns true if changes were made to the repository
-        public bool CommitChanges(string commitMessage)
+        public bool CommitChanges(string summary, string description)
         {
             try
             {
                 var commitTime = DateTimeOffset.Now;
+                var commitMessage = GenerateCommitMessage(summary, description);
                 var commit = repository.Commit(commitMessage,
-                                  new Signature("Octopus", "octopus@octopus.com", commitTime),
-                                  new Signature("Octopus", "octopus@octopus.com", commitTime));
+                                               new Signature("Octopus", "octopus@octopus.com", commitTime),
+                                               new Signature("Octopus", "octopus@octopus.com", commitTime));
                 log.Verbose($"Committed changes to {commit.Sha}");
                 return true;
             }
@@ -66,7 +68,10 @@ namespace Calamari.ArgoCD.Git
             PushChanges(pushToBranchName);
             if (requiresPullRequest)
             {
-                await pullRequestCreator.CreatePullRequest(log, connection, "PR Title", "Pr Body", new GitBranchName(pushToBranchName),  new GitBranchName(currentBranchName), cancellationToken);
+                var commit = repository.Head.Tip; //this is a BIT dodgy - as it assumes we're pushing head.
+                var commitSummary = commit.MessageShort;
+                var commitDescription = commit.Message.Substring(commitSummary.Length).Trim('\n');
+                await pullRequestCreator.CreatePullRequest(log, connection, commitSummary, commitDescription, new GitBranchName(pushToBranchName),  new GitBranchName(currentBranchName), cancellationToken);
             }
         }
 
@@ -91,5 +96,13 @@ namespace Calamari.ArgoCD.Git
             
             repository.Network.Push(repository.Head, pushOptions);
         }
+        
+        string GenerateCommitMessage(string summary, string description)
+        {
+            return description.Equals(string.Empty)
+                ? summary
+                : $"{summary}\n\n{description}";
+        }
     }
 }
+#endif

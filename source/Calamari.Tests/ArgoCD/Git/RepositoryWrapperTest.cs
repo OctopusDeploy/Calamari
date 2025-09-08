@@ -1,3 +1,4 @@
+#if NET
 using System;
 using System.IO;
 using System.Threading;
@@ -5,6 +6,7 @@ using System.Threading.Tasks;
 using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.GitHub;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
 using FluentAssertions;
@@ -26,6 +28,8 @@ namespace Calamari.Tests.ArgoCD.Git
         Repository bareOrigin;
         GitBranchName branchName = new GitBranchName("devBranch");
 
+        IGitHubPullRequestCreator gitHubPullRequestCreator = Substitute.For<IGitHubPullRequestCreator>();
+        IGitConnection gitConnection;
         RepositoryWrapper repository;
         
         [SetUp]
@@ -37,9 +41,9 @@ namespace Calamari.Tests.ArgoCD.Git
             bareOrigin = RepositoryHelpers.CreateBareRepository(OriginPath);
             RepositoryHelpers.CreateBranchIn(branchName, OriginPath);
 
-            var repositoryFactory = new RepositoryFactory(log, tempDirectory, Substitute.For<IGitHubPullRequestCreator>());
-            var connection = new GitConnection(null, null, OriginPath, branchName);
-            repository = repositoryFactory.CloneRepository(repositoryPath, connection);
+            var repositoryFactory = new RepositoryFactory(log, tempDirectory, gitHubPullRequestCreator);
+            gitConnection = new GitConnection(null, null, OriginPath, branchName);
+            repository = repositoryFactory.CloneRepository(repositoryPath, gitConnection);
         }
         
         [TearDown]
@@ -60,7 +64,7 @@ namespace Calamari.Tests.ArgoCD.Git
         [Test]
         public void EmptyCommitReturnsFalse()
         {
-            var result = repository.CommitChanges("There is no data to comm it");
+            var result = repository.CommitChanges("Summary Message","There is no data to commit");
             result.Should().BeFalse();
         }
 
@@ -80,7 +84,7 @@ namespace Calamari.Tests.ArgoCD.Git
             string fileContents = "Lorem ipsum dolor sit amet";
             File.WriteAllText(Path.Combine(RepositoryRootPath, filename), fileContents);
             repository.StageFiles(new[] { filename });
-            repository.CommitChanges("There is no data to comm it").Should().BeTrue();
+            repository.CommitChanges("Summary Message", "A file has changed").Should().BeTrue();
             await repository.PushChanges(false, branchName, CancellationToken.None);
             
             //ensure the remote contains the file
@@ -94,9 +98,31 @@ namespace Calamari.Tests.ArgoCD.Git
             string filename = "newFile.txt";
             File.WriteAllText(Path.Combine(RepositoryRootPath, filename), "");
             repository.StageFiles(new[] { filename });
-            repository.CommitChanges("There is no data to comm it").Should().BeTrue();
+            repository.CommitChanges("Summary Message", "There is no data to comm it").Should().BeTrue();
             await repository.PushChanges(false, new GitBranchName("arbitraryBranch1"), CancellationToken.None);
             await repository.PushChanges(false, new GitBranchName("arbitraryBranch2"), CancellationToken.None);
         }
+
+        [Test]
+        public async Task WhenCreatingAPrThePrTitleAndBodyMatchTheCommitMessageFields()
+        {
+            string filename = "newFile.txt";
+            File.WriteAllText(Path.Combine(RepositoryRootPath, filename), "");
+            repository.StageFiles(new[] { filename });
+            var commitSummary = "Summary Message";
+            var commitDescription = "A commit description";
+            repository.CommitChanges(commitSummary, commitDescription).Should().BeTrue();
+            var prBranch = new GitBranchName("arbitraryBranch");
+            await repository.PushChanges(true, prBranch, CancellationToken.None);
+            await gitHubPullRequestCreator.Received(1)
+                                    .CreatePullRequest(log,
+                                                       gitConnection,
+                                                       commitSummary,
+                                                       commitDescription,
+                                                       Arg.Any<GitBranchName>(),
+                                                       prBranch,
+                                                       Arg.Any<CancellationToken>());
+        }
     }
 }
+#endif
