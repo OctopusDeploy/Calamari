@@ -68,7 +68,9 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             // Create Bash script from embedded resource
             bashScript = Path.Combine(tempDirectory, "docker-credential-octopus.sh");
             var bashContent = embeddedResources.GetEmbeddedResourceText(dockerImagePackageDownloaderAssembly, $"{scriptsNamespace}.docker-credential-octopus.sh");
-            File.WriteAllText(bashScript, bashContent);
+            // Ensure Unix line endings for bash script to avoid issues on CI/Unix systems
+            var normalizedBashContent = bashContent.Replace("\r\n", "\n").Replace("\r", "\n");
+            File.WriteAllText(bashScript, normalizedBashContent);
             
             // Make bash script executable on Unix systems
             if (CalamariEnvironment.IsRunningOnNix || CalamariEnvironment.IsRunningOnMac)
