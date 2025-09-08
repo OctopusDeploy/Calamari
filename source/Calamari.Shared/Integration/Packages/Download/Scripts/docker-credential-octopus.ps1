@@ -28,9 +28,9 @@ $process.StartInfo = $psi
 $process.Start()
 
 # Forward stdin to process
-$input = [Console]::In.ReadToEnd()
-if ($input) {
-    $process.StandardInput.Write($input)
+$stdinContent = [Console]::In.ReadToEnd()
+if ($stdinContent) {
+    $process.StandardInput.Write($stdinContent)
 }
 $process.StandardInput.Close()
 
