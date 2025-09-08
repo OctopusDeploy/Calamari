@@ -64,6 +64,16 @@ namespace Calamari.Kubernetes
 
         public static class Git
         {
+            public static string Index => "Octopus.Action.Git.Repository";
+
+            static string Prefix(string name) => $"{Index}[{name}]"; 
+        
+            public static string BranchName(string name) => $"{Prefix(name)}.Branch";
+            public static string Url(string name)  => $"{Prefix(name)}.Url";
+            public static string Username(string name) => $"{Prefix(name)}.Username";
+            public static string Password(string name) => $"{Prefix(name)}.Password";
+            public static string SubFolder(string name) => $"{Prefix(name)}.SubFolder";
+            
             public static readonly string CommitMessageSummary = "Octopus.Action.ArgoCD.CommitMessageSummary";
             
             public static readonly string CommitMessageDescription = "Octopus.Action.ArgoCD.CommitMessageDescription";
