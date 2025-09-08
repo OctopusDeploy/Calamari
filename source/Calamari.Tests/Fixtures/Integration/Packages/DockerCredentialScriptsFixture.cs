@@ -364,7 +364,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             Console.WriteLine($"[TEST DEBUG] Output was {result.Output}");
             Console.WriteLine($"[TEST DEBUG] Error was {result.Error}");
             
-            result.ExitCode.Should().Be(0, "Bash script execution failed. Output: {result.Output}, Error: {result.Error}");
+            result.ExitCode.Should().Be(0, $"Bash script execution failed. Output: {result.Output}, Error: {result.Error}");
             return result;
         }
 
@@ -390,7 +390,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             Console.WriteLine($"[TEST DEBUG] Output was {result.Output}");
             Console.WriteLine($"[TEST DEBUG] Error was {result.Error}");
 
-            result.ExitCode.Should().Be(0, "Bash script execution failed. Output: {result.Output}, Error: {result.Error}");
+            result.ExitCode.Should().Be(0, $"Bash script execution failed. Output: {result.Output}, Error: {result.Error}");
             
             return result;
         }
