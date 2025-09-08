@@ -7,19 +7,13 @@ namespace Calamari.Common.Commands
 {
     public class RunningDeployment
     {
-        public RunningDeployment(IVariables variables, INonSensitiveVariables? nonSensitiveVariables = null, Dictionary<string, string>? environmentVariables = null)
-            : this(
-                   null,
-                   variables,
-                   nonSensitiveVariables,
-                   environmentVariables)
+        public RunningDeployment(IVariables variables, Dictionary<string, string>? environmentVariables = null) : this(
+            null, variables, environmentVariables)
         {
         }
 
-        public RunningDeployment(string? packageFilePath,
-                                 IVariables variables,
-                                 INonSensitiveVariables? nonSensitiveVariables = null,
-                                 Dictionary<string, string>? environmentVariables = null)
+        public RunningDeployment(string? packageFilePath, IVariables variables,
+            Dictionary<string, string>? environmentVariables = null)
         {
             if (!string.IsNullOrEmpty(packageFilePath))
             {
@@ -27,7 +21,6 @@ namespace Calamari.Common.Commands
             }
 
             Variables = variables;
-            NonsensitiveVariables = nonSensitiveVariables ?? new NonSensitiveCalamariVariables();
             EnvironmentVariables = environmentVariables ?? new Dictionary<string, string>();
         }
 
@@ -65,8 +58,6 @@ namespace Calamari.Common.Commands
                 : CustomDirectory ?? throw new InvalidOperationException("Current directory is not set for the deployment");
 
         public IVariables Variables { get; }
-
-        public INonSensitiveVariables NonsensitiveVariables { get; }
 
         public Dictionary<string, string> EnvironmentVariables { get; }
 
