@@ -44,7 +44,7 @@ namespace Calamari.LaunchTools
                 var pathToNode = variables.Get(instructions.NodePathVariable);
                 var nodeExecutablePath = BuildNodePath(pathToNode);
                 var parameters = BuildParams(instructions, variableFile.FilePath);
-                var runningDeployment = new RunningDeployment(variables,new NonSensitiveCalamariVariables());
+                var runningDeployment = new RunningDeployment(variables);
                 var commandLineInvocation = new CommandLineInvocation(nodeExecutablePath, parameters)
                 {
                     WorkingDirectory = runningDeployment.CurrentDirectory,

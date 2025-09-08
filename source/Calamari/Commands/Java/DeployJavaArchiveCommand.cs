@@ -122,7 +122,7 @@ namespace Calamari.Commands.Java
                 new FeatureRollbackConvention(DeploymentStages.DeployFailed, fileSystem, scriptEngine, commandLineRunner, embeddedResources, log)
             };
 
-            var deployment = new RunningDeployment(archiveFile, variables, new NonSensitiveCalamariVariables());
+            var deployment = new RunningDeployment(archiveFile, variables);
             var conventionRunner = new ConventionProcessor(deployment, conventions, log);
 
             try

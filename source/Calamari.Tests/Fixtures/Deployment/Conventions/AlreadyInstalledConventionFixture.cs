@@ -64,7 +64,7 @@ namespace Calamari.Tests.Fixtures.Deployment.Conventions
         void RunConvention()
         {
             var convention = new AlreadyInstalledConvention(new InMemoryLog(), journal);
-            convention.Install(new RunningDeployment("C:\\Package.nupkg", variables, new NonSensitiveCalamariVariables()));
+            convention.Install(new RunningDeployment("C:\\Package.nupkg", variables));
         }
     }
 }

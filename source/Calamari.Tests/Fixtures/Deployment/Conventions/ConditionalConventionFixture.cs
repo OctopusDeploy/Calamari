@@ -31,7 +31,7 @@ namespace Calamari.Tests.Fixtures.Deployment.Conventions
         [SetUp]
         public void SetUp()
         {
-            deployment = new RunningDeployment("c:\\packages", new CalamariVariables(), new NonSensitiveCalamariVariables());
+            deployment = new RunningDeployment("c:\\packages", new CalamariVariables());
         }
 
         [Test]

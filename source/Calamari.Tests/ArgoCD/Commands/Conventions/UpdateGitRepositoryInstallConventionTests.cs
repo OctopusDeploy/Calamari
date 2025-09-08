@@ -72,7 +72,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                 [SpecialVariables.Git.CommitMethod] = "DirectCommit",
                 [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this"
             };
-            var runningDeployment = new RunningDeployment("./arbitraryFile.txt", variables, new NonSensitiveCalamariVariables());
+            var runningDeployment = new RunningDeployment("./arbitraryFile.txt", variables);
             runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
             runningDeployment.StagingDirectory = WorkingDirectory;
             
@@ -107,7 +107,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                 [SpecialVariables.Git.CommitMethod] = "DirectCommit",
                 [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this"
             };
-            var runningDeployment = new RunningDeployment("./arbitraryFile.txt", variables, new NonSensitiveCalamariVariables());
+            var runningDeployment = new RunningDeployment("./arbitraryFile.txt", variables);
             runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
             runningDeployment.StagingDirectory = WorkingDirectory;    
             

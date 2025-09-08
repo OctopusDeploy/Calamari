@@ -123,7 +123,7 @@ namespace Calamari.Tests.Fixtures.ConfigurationTransforms
 
             var deploymentVariables = new CalamariVariables();
             deploymentVariables[KnownVariables.OriginalPackageDirectoryPath] = extractionDirectory;
-            var deployment = new RunningDeployment(null, deploymentVariables, new NonSensitiveCalamariVariables());
+            var deployment = new RunningDeployment(null, deploymentVariables);
 
             const bool diagnosticLoggingEnabled = false;
             var result = transformFileLocator.DetermineTransformFileNames(sourceFile, transform, diagnosticLoggingEnabled, deployment.CurrentDirectory).ToArray();

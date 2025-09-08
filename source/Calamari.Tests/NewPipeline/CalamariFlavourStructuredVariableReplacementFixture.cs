@@ -158,7 +158,7 @@ namespace Calamari.Tests.NewPipeline
 
             public int Execute()
             {
-                var deployment = new RunningDeployment(variables, new NonSensitiveCalamariVariables());
+                var deployment = new RunningDeployment(variables);
                 
                 var conventions = new List<IConvention>
                 {

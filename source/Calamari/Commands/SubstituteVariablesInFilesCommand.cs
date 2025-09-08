@@ -19,7 +19,7 @@ namespace Calamari.Commands
 
         protected override void Execute(SubstituteVariablesInFilesCommandInputs inputs)
         {
-            var runningDeployment = new RunningDeployment(variables, new NonSensitiveCalamariVariables());
+            var runningDeployment = new RunningDeployment(variables);
             var targetPath = runningDeployment.CurrentDirectory;
             
             substituteInFiles.Substitute(targetPath, inputs.FilesToTarget.Split(new []{'\n', '\r', ';'}, StringSplitOptions.RemoveEmptyEntries));

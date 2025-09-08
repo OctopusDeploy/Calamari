@@ -80,7 +80,7 @@ namespace Calamari.Aws.Commands
             string RoleArnProvider(RunningDeployment x) => x.Variables[AwsSpecialVariables.CloudFormation.RoleArn];
             var iamCapabilities = JsonConvert.DeserializeObject<List<string>>(variables.Get(AwsSpecialVariables.IamCapabilities, "[]"));
             var tags = JsonConvert.DeserializeObject<List<KeyValuePair<string, string>>>(variables.Get(AwsSpecialVariables.CloudFormation.Tags, "[]"));
-            var deployment = new RunningDeployment(pathToPackage, variables, new NonSensitiveCalamariVariables());
+            var deployment = new RunningDeployment(pathToPackage, variables);
 
             ICloudFormationRequestBuilder TemplateFactory() => string.IsNullOrWhiteSpace(templateS3Url)
                 ? CloudFormationTemplate.Create(templateResolver,

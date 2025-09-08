@@ -12,7 +12,7 @@ namespace Calamari.Tests.Fixtures.Deployment.Conventions
         [Test]
         public void ShouldReturnCorrectDirectories()
         {
-            var deployment = new RunningDeployment("C:\\Package.nupkg", new CalamariVariables(), new NonSensitiveCalamariVariables());
+            var deployment = new RunningDeployment("C:\\Package.nupkg", new CalamariVariables());
 
             // When no custom installation directory is chosen, custom points to staging
             deployment.Variables.Set(KnownVariables.OriginalPackageDirectoryPath, "C:\\Apps\\MyPackage\\1.0.0_1");

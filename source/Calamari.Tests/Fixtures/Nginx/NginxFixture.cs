@@ -230,7 +230,7 @@ namespace Calamari.Tests.Fixtures.Nginx
             var packageId = "NginxSampleWebApp";
             var confDirectory = "conf";
             
-            var deployment = new RunningDeployment($"C:\\{packageId}.zip", new CalamariVariables(), new NonSensitiveCalamariVariables());
+            var deployment = new RunningDeployment($"C:\\{packageId}.zip", new CalamariVariables());
             deployment.Variables.Set(PackageVariables.PackageId, packageId);
             deployment.Variables.Set(PackageVariables.Output.InstallationDirectoryPath, $"/var/www/{packageId}");
             deployment.Variables.Set(SpecialVariables.Action.Nginx.Server.Bindings, httpOnlyBinding);

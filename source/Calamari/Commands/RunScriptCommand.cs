@@ -74,7 +74,7 @@ namespace Calamari.Commands
             var replacer = new ConfigurationVariablesReplacer(variables, log);
 
             ValidateArguments();
-            var deployment = new RunningDeployment(packageFile, variables, new NonSensitiveCalamariVariables());
+            var deployment = new RunningDeployment(packageFile, variables);
             WriteVariableScriptToFile(deployment);
 
             var conventions = new List<IConvention>

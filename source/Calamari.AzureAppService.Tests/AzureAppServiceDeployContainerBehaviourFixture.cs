@@ -79,7 +79,7 @@ namespace Calamari.AzureAppService.Tests
                 newVariables = new CalamariVariables();
                 AddVariables(newVariables);
 
-                var runningContext = new RunningDeployment("", newVariables, new NonSensitiveCalamariVariables());
+                var runningContext = new RunningDeployment("", newVariables);
 
                 await new AzureAppServiceContainerDeployBehaviour(new InMemoryLog()).Execute(runningContext);
 
@@ -103,7 +103,7 @@ namespace Calamari.AzureAppService.Tests
                                                           slotName,
                                                           WebSiteResource.Data);
 
-                var runningContext = new RunningDeployment("", newVariables, new NonSensitiveCalamariVariables());
+                var runningContext = new RunningDeployment("", newVariables);
 
                 await new AzureAppServiceContainerDeployBehaviour(new InMemoryLog()).Execute(runningContext);
 
@@ -223,7 +223,7 @@ namespace Calamari.AzureAppService.Tests
                 newVariables = new CalamariVariables();
                 AddVariables(newVariables);
 
-                var runningContext = new RunningDeployment("", newVariables, new NonSensitiveCalamariVariables());
+                var runningContext = new RunningDeployment("", newVariables);
 
                 await new AzureAppServiceContainerDeployBehaviour(new InMemoryLog()).Execute(runningContext);
 
@@ -247,7 +247,7 @@ namespace Calamari.AzureAppService.Tests
                                                           slotName,
                                                           WebSiteResource.Data);
 
-                var runningContext = new RunningDeployment("", newVariables, new NonSensitiveCalamariVariables());
+                var runningContext = new RunningDeployment("", newVariables);
 
                 await new AzureAppServiceContainerDeployBehaviour(new InMemoryLog()).Execute(runningContext);
 

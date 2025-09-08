@@ -53,7 +53,7 @@ namespace Calamari.Aws.Commands
                 new CloudFormationOutputsAsVariablesConvention(ClientFactory, stackEventLogger, StackProvider, log)
             };
             
-            var deployment = new RunningDeployment(packageFile, variables, new NonSensitiveCalamariVariables());
+            var deployment = new RunningDeployment(packageFile, variables);
             
             var conventionRunner = new ConventionProcessor(deployment, conventions, log);
             conventionRunner.RunConventions();

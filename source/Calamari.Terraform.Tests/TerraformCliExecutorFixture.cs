@@ -26,7 +26,7 @@ namespace Calamari.Terraform.Tests
             cliExecutor = new TerraformCliExecutor(Substitute.For<ILog>(),
                                                    Substitute.For<ICalamariFileSystem>(),
                                                    commandLineRunner,
-                                                   new RunningDeployment("blah", variables, new NonSensitiveCalamariVariables()),
+                                                   new RunningDeployment("blah", variables),
                                                    new Dictionary<string, string>());
         }
 

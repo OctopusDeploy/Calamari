@@ -59,7 +59,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
             {
                 [KnownVariables.OriginalPackageDirectoryPath] = StagingDirectory
             };
-            var runningDeployment = new RunningDeployment(variables, new NonSensitiveCalamariVariables());
+            var runningDeployment = new RunningDeployment(variables);
             var executor = CreateExecutor(variables);
 
             // Act
@@ -90,7 +90,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
                 [KnownVariables.OriginalPackageDirectoryPath] = StagingDirectory,
                 [SpecialVariables.KustomizeOverlayPath] = OverlayPath
             };
-            var runningDeployment = new RunningDeployment(variables, new NonSensitiveCalamariVariables());
+            var runningDeployment = new RunningDeployment(variables);
             var executor = CreateExecutor(variables);
 
             // Act
@@ -124,7 +124,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
                 [KnownVariables.OriginalPackageDirectoryPath] = StagingDirectory,
                 [SpecialVariables.KustomizeOverlayPath] = OverlayPath
             };
-            var runningDeployment = new RunningDeployment(variables, new NonSensitiveCalamariVariables());
+            var runningDeployment = new RunningDeployment(variables);
             var executor = CreateExecutor(variables);
 
             // Act
@@ -149,7 +149,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
                 [KnownVariables.OriginalPackageDirectoryPath] = StagingDirectory,
                 [SpecialVariables.KustomizeOverlayPath] = OverlayPath
             };
-            var runningDeployment = new RunningDeployment(variables, new NonSensitiveCalamariVariables());
+            var runningDeployment = new RunningDeployment(variables);
             var executor = CreateExecutor(variables);
 
             // Act
@@ -182,7 +182,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
                 [SpecialVariables.KustomizeOverlayPath] = OverlayPath,
                 [SpecialVariables.ServerSideApplyEnabled] = "true"
             };
-            var runningDeployment = new RunningDeployment(variables, new NonSensitiveCalamariVariables());
+            var runningDeployment = new RunningDeployment(variables);
             var executor = CreateExecutor(variables);
 
             // Act
@@ -216,7 +216,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
                 [SpecialVariables.ServerSideApplyEnabled] = "true",
                 [SpecialVariables.ServerSideApplyForceConflicts] = "true"
             };
-            var runningDeployment = new RunningDeployment(variables, new NonSensitiveCalamariVariables());
+            var runningDeployment = new RunningDeployment(variables);
             var executor = CreateExecutor(variables);
 
             // Act
@@ -253,7 +253,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
                 [SpecialVariables.ServerSideApplyEnabled] = "false",
                 [SpecialVariables.ServerSideApplyForceConflicts] = "true"
             };
-            var runningDeployment = new RunningDeployment(variables, new NonSensitiveCalamariVariables());
+            var runningDeployment = new RunningDeployment(variables);
             var executor = CreateExecutor(variables);
 
             // Act
@@ -285,7 +285,7 @@ namespace Calamari.Tests.KubernetesFixtures.Commands.Executors
                 [KnownVariables.OriginalPackageDirectoryPath] = StagingDirectory,
                 [SpecialVariables.KustomizeOverlayPath] = OverlayPath
             };
-            var runningDeployment = new RunningDeployment(variables, new NonSensitiveCalamariVariables());
+            var runningDeployment = new RunningDeployment(variables);
             var executor = CreateExecutor(variables);
 
             // Act

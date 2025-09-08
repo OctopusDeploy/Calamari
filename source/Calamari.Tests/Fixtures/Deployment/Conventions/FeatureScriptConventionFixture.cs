@@ -42,7 +42,7 @@ namespace Calamari.Tests.Fixtures.Deployment.Conventions
             variables = new CalamariVariables();
             variables.Set(KnownVariables.Package.EnabledFeatures, "Octopus.Features.blah");
 
-            deployment = new RunningDeployment("C:\\packages", variables, new NonSensitiveCalamariVariables()) { StagingDirectory = stagingDirectory };
+            deployment = new RunningDeployment("C:\\packages", variables) { StagingDirectory = stagingDirectory };
         }
 
         [Test]
