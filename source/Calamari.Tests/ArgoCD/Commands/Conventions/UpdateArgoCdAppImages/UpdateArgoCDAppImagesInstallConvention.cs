@@ -20,6 +20,7 @@ using Calamari.Tests.ArgoCD.Git;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
 using FluentAssertions;
 using LibGit2Sharp;
+using Microsoft.Azure.Management.Network.Fluent.Models;
 using NSubstitute;
 using NUnit.Framework;
 
@@ -110,116 +111,105 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
             runningDeployment.StagingDirectory = tempDirectory;
             
             OriginRepo.AddFilesToBranch(argoCdBranchName, ("include/file1.yaml", "No Yamnl here"));
-        
-            
+
             // Act
             updater.Install(runningDeployment);
             
-        
             // Assert
             log.StandardOut.Should().Contain(s => s.Contains($"Processing file include/file1.yaml"));
             log.StandardOut.Should().Contain("No changes made to file include/file1.yaml as no image references were updated.");
         }
-        //
-        // [Test]
-        // public async Task UpdateImages_WithImageMatches_CommitsChangesToGitAndReturnsUpdatedImages()
-        // {
-        //     // Arrange
-        //     var updater = new ArgoCDAppImageUpdater(gitOpsRepositoryFactory);
-        //
-        //     var returnedFiles = new Dictionary<string, string>()
-        //     {
-        //         {
-        //             "include/file1.yaml",
-        //             """
-        //             apiVersion: apps/v1
-        //             kind: Deployment
-        //             metadata:
-        //               name: sample-deployment
-        //             spec:
-        //               replicas: 1
-        //               selector:
-        //                 matchLabels:
-        //                   app: sample-deployment
-        //               template:
-        //                 metadata:
-        //                   labels:
-        //                     app: sample-deployment
-        //                 spec:
-        //                   containers:
-        //                     - name: nginx
-        //                       image: nginx:1.19 
-        //                     - name: alpine
-        //                       image: alpine:3.21 
-        //             """
-        //         }
-        //     };
-        //     var commitSummary = new GitCommitSummary("Commit Summary Here");
-        //     const string userCommitDescription = "User provided commit description";
-        //     const string updatedYamlContent =
-        //         """
-        //         apiVersion: apps/v1
-        //         kind: Deployment
-        //         metadata:
-        //           name: sample-deployment
-        //         spec:
-        //           replicas: 1
-        //           selector:
-        //             matchLabels:
-        //               app: sample-deployment
-        //           template:
-        //             metadata:
-        //               labels:
-        //                 app: sample-deployment
-        //             spec:
-        //               containers:
-        //                 - name: nginx
-        //                   image: nginx:1.27.1 
-        //                 - name: alpine
-        //                   image: alpine:3.21 
-        //         """;
-        //
-        //
-        //     fakeArgoCDGitOpsRepository.ReadYamlFiles(log, Arg.Any<CancellationToken>()).Returns(returnedFiles);
-        //     fakeArgoCDGitOpsRepository.TryCommitChanges(Arg.Is<ImageUpdateChanges>(i => i.UpdatedImageReferences.Contains("nginx:1.27.1")
-        //                                                                                 && i.UpdatedFiles.ContainsKey("include/file1.yaml")
-        //                                                                                 && i.UpdatedFiles["include/file1.yaml"] == updatedYamlContent),
-        //                                                 commitSummary,
-        //                                                 userCommitDescription,
-        //                                                 log,
-        //                                                 Arg.Any<CancellationToken>())
-        //                               .Returns(true);
-        //
-        //     var updateTarget = new ArgoCDImageUpdateTarget("App Name",
-        //                                                    "docker.io",
-        //                                                    "include",
-        //                                                    new Uri("http://localhost/fake-repo.git"),
-        //                                                    "branch");
-        //
-        //     var imagesToUpdate = new List<ContainerImageReference>
-        //     {
-        //         ContainerImageReference.FromReferenceString("nginx:1.27.1", "docker.io")
-        //     };
-        //
-        //     // Act
-        //     var result = await updater.UpdateImages(updateTarget,
-        //                                             imagesToUpdate,
-        //                                             commitSummary,
-        //                                             userCommitDescription,
-        //                                             false,
-        //                                             log,
-        //                                             CancellationToken);
-        //
-        //     // Assert
-        //     result.ImagesUpdated.Should().BeEquivalentTo(["nginx:1.27.1"]);
-        //     await fakeArgoCDGitOpsRepository.Received()
-        //     .TryCommitChanges(Arg.Any<ImageUpdateChanges>(),
-        //                       commitSummary,
-        //                       userCommitDescription,
-        //                       log,
-        //                       Arg.Any<CancellationToken>());
-        // }
-        //
+        
+        [Test]
+        public void UpdateImages_WithImageMatches_CommitsChangesToGitAndReturnsUpdatedImages()
+        {
+            // Arrange
+            var updater = new Calamari.ArgoCD.Conventions.UpdateArgoCDAppImagesInstallConvention(log,
+                                                                                                 Substitute.For<IGitHubPullRequestCreator>(),
+                                                                                                 fileSystem,
+                                                                                                 new ArgoCommitToGitConfigFactory(log),
+                                                                                                 new CommitMessageGenerator());
+            var variables = new CalamariVariables
+            {
+                [SpecialVariables.Git.SubFolder("repo_name")] = "",
+                [SpecialVariables.Git.Password("repo_name")] = "password",
+                [SpecialVariables.Git.Username("repo_name")] = "username",
+                [SpecialVariables.Git.Url("repo_name")] = OriginPath,
+                [SpecialVariables.Git.BranchName("repo_name")] = argoCdBranchName.Value,
+                [SpecialVariables.Git.DefaultRegistry("repo_name")] = "docker.io",
+                [SpecialVariables.Git.CommitMethod] = "DirectCommit",
+                [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this",
+                [Deployment.SpecialVariables.Packages.Image("nginx")] = "nginx:1.27.1",
+                [Deployment.SpecialVariables.Packages.Purpose("nginx")] = "DockerImageReference",
+            };
+            var runningDeployment = new RunningDeployment(null, variables);
+            runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
+            runningDeployment.StagingDirectory = tempDirectory;
+
+            var existingYamlFile = "include/file1.yaml"; 
+            var filesInRepo = new (string, string)[]
+            {
+                (
+                    existingYamlFile,
+                    @"
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sample-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sample-deployment
+  template:
+    metadata:
+      labels:
+        app: sample-deployment
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.19 
+        - name: alpine
+          image: alpine:3.21 
+"
+                )
+            };
+            OriginRepo.AddFilesToBranch(argoCdBranchName, filesInRepo);
+            
+            //Assert
+            const string updatedYamlContent =
+                @"
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sample-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sample-deployment
+  template:
+    metadata:
+      labels:
+        app: sample-deployment
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.27.1 
+        - name: alpine
+          image: alpine:3.21 
+";
+            // Act
+            updater.Install(runningDeployment);
+        
+            // Assert
+            var clonedRepoPath = CloneOrigin();
+            var fileInRepo = Path.Combine(clonedRepoPath, existingYamlFile);
+            fileSystem.FileExists(fileInRepo).Should().BeTrue();
+            var content = fileSystem.ReadFile(fileInRepo);
+            content.Should().Be(updatedYamlContent);
+        }
+        
         string CloneOrigin()
         {
             var subPath = Guid.NewGuid().ToString();

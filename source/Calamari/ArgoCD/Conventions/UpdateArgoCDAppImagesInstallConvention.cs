@@ -98,7 +98,7 @@ namespace Calamari.ArgoCD.Conventions
                 {
                     fileSystem.OverwriteFile(file, imageReplacementResult.UpdatedContents);
                     updatedImages.UnionWith(imageReplacementResult.UpdatedImageReferences);
-                    updatedFiles.Add(file);
+                    updatedFiles.Add(relativePath);
                     log.Verbose($"Updating file {file} with new image references.");
                     foreach (var change in imageReplacementResult.UpdatedImageReferences)
                     {
