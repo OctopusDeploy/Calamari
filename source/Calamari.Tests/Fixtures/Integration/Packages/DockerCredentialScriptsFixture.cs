@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text;
 using Calamari.Common.Features.EmbeddedResources;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing;
@@ -198,21 +199,23 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
                 Username = TestUsername,
                 Secret = TestPassword
             });
-            ExecutePowerShellScript("store", credentialJson);
+            var result = ExecutePowerShellScript("store", credentialJson);
+            result.ExitCode.Should().Be(0, $"docker-credential store execution failed. Output: {result.Output}, Error: {result.Error}");
+
             
             // Verify credential exists before erase
             var credentialsDir = Path.Combine(dockerConfigPath, "credentials");
-            var existingFiles = Directory.Exists(credentialsDir) ? Directory.GetFiles(credentialsDir, "*.cred") : new string[0];
+            var existingFiles = Directory.Exists(credentialsDir) ? Directory.GetFiles(credentialsDir, "*.cred") : Array.Empty<string>();
             existingFiles.Should().HaveCount(1, $"Expected exactly 1 credential file before erase in '{credentialsDir}', but found: {string.Join(", ", existingFiles)}");
 
             // Act
-            var result = ExecutePowerShellScript("erase", TestServerUrl);
+            result = ExecutePowerShellScript("erase", TestServerUrl);
 
             // Assert
-            result.ExitCode.Should().Be(0, $"Script execution failed. Output: {result.Output}, Error: {result.Error}");
+            result.ExitCode.Should().Be(0, $"docker-credential erase execution failed. Output: {result.Output}, Error: {result.Error}");
             
             // Verify credential was actually erased
-            var remainingFiles = Directory.Exists(credentialsDir) ? Directory.GetFiles(credentialsDir, "*.cred") : new string[0];
+            var remainingFiles = Directory.Exists(credentialsDir) ? Directory.GetFiles(credentialsDir, "*.cred") : Array.Empty<string>();
             remainingFiles.Should().BeEmpty($"Expected no credential files after erase, but found: {string.Join(", ", remainingFiles)}");
         }
 
@@ -345,45 +348,24 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             Console.WriteLine($"[TEST DEBUG] Calamari executable: {calamariExecutable}");
             Console.WriteLine($"[TEST DEBUG] Docker config path: {dockerConfigPath}");
             
-            var psi = new ProcessStartInfo
+            var environmentVariables = new Dictionary<string, string>
             {
-                FileName = "powershell.exe",
-                Arguments = $"-ExecutionPolicy Bypass -File \"{powershellScript}\" -Operation {operation}",
-                UseShellExecute = false,
-                RedirectStandardInput = true,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                WorkingDirectory = tempDirectory
+                ["OCTOPUS_CALAMARI_EXECUTABLE"] = calamariExecutable,
+                ["DOCKER_CONFIG"] = dockerConfigPath,
+                ["OCTOPUS_CREDENTIAL_PASSWORD"] = TestEncryptionPassword
             };
+
+            var result = ExecuteProcessWithInput("powershell.exe", 
+                $"-ExecutionPolicy Bypass -File \"{powershellScript}\" -Operation {operation}",
+                environmentVariables, 
+                input);
             
-            // Set the environment variable for the real Calamari executable
-            psi.EnvironmentVariables["OCTOPUS_CALAMARI_EXECUTABLE"] = calamariExecutable;
+            Console.WriteLine($"[TEST DEBUG] Exit code was {result.ExitCode}");
+            Console.WriteLine($"[TEST DEBUG] Output was {result.Output}");
+            Console.WriteLine($"[TEST DEBUG] Error was {result.Error}");
             
-            // Set up environment for real docker-credential command
-            psi.EnvironmentVariables["DOCKER_CONFIG"] = dockerConfigPath;
-            psi.EnvironmentVariables["OCTOPUS_CREDENTIAL_PASSWORD"] = TestEncryptionPassword;
-
-            using (var process = new System.Diagnostics.Process { StartInfo = psi })
-            {
-                process.Start();
-
-                if (input != null)
-                {
-                    process.StandardInput.WriteLine(input);
-                }
-                process.StandardInput.Close();
-
-                var output = process.StandardOutput.ReadToEnd();
-                var error = process.StandardError.ReadToEnd();
-                process.WaitForExit();
-
-                return new ScriptExecutionResult
-                {
-                    ExitCode = process.ExitCode,
-                    Output = output,
-                    Error = error
-                };
-            }
+            result.ExitCode.Should().Be(0, "Bash script execution failed. Output: {result.Output}, Error: {result.Error}");
+            return result;
         }
 
         ScriptExecutionResult ExecuteBashScript(string operation, string input = null)
@@ -392,26 +374,45 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             Console.WriteLine($"[TEST DEBUG] Calamari executable: {calamariExecutable}");
             Console.WriteLine($"[TEST DEBUG] Docker config path: {dockerConfigPath}");
             
-            var psi = new ProcessStartInfo
+            var environmentVariables = new Dictionary<string, string>
             {
-                FileName = "/bin/bash",
-                Arguments = $"\"{bashScript}\" {operation}",
-                UseShellExecute = false,
-                RedirectStandardInput = true,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                WorkingDirectory = tempDirectory
+                ["OCTOPUS_CALAMARI_EXECUTABLE"] = calamariExecutable,
+                ["DOCKER_CONFIG"] = dockerConfigPath,
+                ["OCTOPUS_CREDENTIAL_PASSWORD"] = TestEncryptionPassword
             };
-            
-            // Set the environment variable for the real Calamari executable
-            psi.EnvironmentVariables["OCTOPUS_CALAMARI_EXECUTABLE"] = calamariExecutable;
-            
-            // Set up environment for real docker-credential command
-            psi.EnvironmentVariables["DOCKER_CONFIG"] = dockerConfigPath;
-            psi.EnvironmentVariables["OCTOPUS_CREDENTIAL_PASSWORD"] = TestEncryptionPassword;
 
-            using (var process = new System.Diagnostics.Process { StartInfo = psi })
+            var result = ExecuteProcessWithInput("/bin/bash", 
+                $"\"{bashScript}\" {operation}",
+                environmentVariables, 
+                input);
+
+            Console.WriteLine($"[TEST DEBUG] Exit code was {result.ExitCode}");
+            Console.WriteLine($"[TEST DEBUG] Output was {result.Output}");
+            Console.WriteLine($"[TEST DEBUG] Error was {result.Error}");
+
+            result.ExitCode.Should().Be(0, "Bash script execution failed. Output: {result.Output}, Error: {result.Error}");
+            
+            return result;
+        }
+
+        ScriptExecutionResult ExecuteProcessWithInput(string fileName, string arguments, Dictionary<string, string> environmentVariables, string input = null)
+        {
+            using (var process = new System.Diagnostics.Process())
             {
+                process.StartInfo.FileName = fileName;
+                process.StartInfo.Arguments = arguments;
+                process.StartInfo.UseShellExecute = false;
+                process.StartInfo.RedirectStandardInput = true;
+                process.StartInfo.RedirectStandardOutput = true;
+                process.StartInfo.RedirectStandardError = true;
+                process.StartInfo.WorkingDirectory = tempDirectory;
+
+                // Set environment variables
+                foreach (var env in environmentVariables)
+                {
+                    process.StartInfo.EnvironmentVariables[env.Key] = env.Value;
+                }
+
                 process.Start();
 
                 if (input != null)
@@ -424,10 +425,6 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
                 var error = process.StandardError.ReadToEnd();
                 process.WaitForExit();
 
-                Console.WriteLine($"[TEST DEBUG] Exit code was {process.ExitCode}");
-                Console.WriteLine($"[TEST DEBUG] Output was {output}");
-                Console.WriteLine($"[TEST DEBUG] Error was {error}");
-                
                 return new ScriptExecutionResult
                 {
                     ExitCode = process.ExitCode,
