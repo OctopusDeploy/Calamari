@@ -2,11 +2,13 @@
 #nullable enable
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages;
 using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Models;
+using Calamari.ArgoCD.Dtos;
 using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.GitHub;
 using Calamari.Common.Commands;
@@ -14,6 +16,7 @@ using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.Conventions;
 using Calamari.Kubernetes;
 
@@ -26,15 +29,18 @@ namespace Calamari.ArgoCD.Conventions
         readonly IGitHubPullRequestCreator pullRequestCreator;
         readonly ArgoCommitToGitConfigFactory argoCommitToGitConfigFactory;
         readonly ICommitMessageGenerator commitMessageGenerator;
+        readonly ICustomPropertiesLoader customPropertiesLoader;
 
         public UpdateArgoCDAppImagesInstallConvention(ILog log, IGitHubPullRequestCreator pullRequestCreator, ICalamariFileSystem fileSystem, ArgoCommitToGitConfigFactory argoCommitToGitConfigFactory,
-                                                      ICommitMessageGenerator commitMessageGenerator)
+                                                      ICommitMessageGenerator commitMessageGenerator,
+                                                      ICustomPropertiesLoader customPropertiesLoader)
         {
             this.log = log;
             this.pullRequestCreator = pullRequestCreator;
             this.fileSystem = fileSystem;
             this.argoCommitToGitConfigFactory = argoCommitToGitConfigFactory;
             this.commitMessageGenerator = commitMessageGenerator;
+            this.customPropertiesLoader = customPropertiesLoader;
         }
 
         public void Install(RunningDeployment deployment)
@@ -42,34 +48,40 @@ namespace Calamari.ArgoCD.Conventions
             var actionConfig = argoCommitToGitConfigFactory.Create(deployment);
             var repositoryFactory = new RepositoryFactory(log, deployment.CurrentDirectory, pullRequestCreator);
             var packageReferences = deployment.Variables.GetContainerPackageNames().Select(p => ContainerImageReference.FromReferenceString(p)).ToList();
+            var argoProperties = customPropertiesLoader.Load<ArgoCDCustomPropertiesDto>();
             
-            var repositoryIndex = 0;
-            foreach (var argoSource in actionConfig.ArgoSourcesToUpdate)
+            int repositoryNumber = 1;
+            foreach (var application in argoProperties.Applications)
             {
-                var repoName = repositoryIndex.ToString();
-                Log.Info($"Writing files to git repository for '{argoSource.Url}'");
-                var repository = repositoryFactory.CloneRepository(repoName, argoSource);
-
-                string defaultRegistry = deployment.Variables.Get(SpecialVariables.Git.DefaultRegistry(repoName)) ?? "docker.io";
-
-                var (updatedFiles, updatedImages) = UpdateFiles(repository.WorkingDirectory, argoSource.SubFolder, defaultRegistry, packageReferences);
-
-                if (updatedFiles.Count > 0)
+                foreach (var applicationSource in application.Sources)
                 {
-                    Log.Info("Staging files in repository");
-                    repository.StageFiles(updatedFiles.ToArray());
+                    var repoName = repositoryNumber.ToString();
+                    Log.Info($"Writing files to git repository for '{applicationSource.Url}'");
+                    var gitConnection = new GitConnection(applicationSource.Username, applicationSource.Password, applicationSource.Url, new GitBranchName(applicationSource.TargetRevision));
+                    var repository = repositoryFactory.CloneRepository(repositoryNumber.ToString(CultureInfo.InvariantCulture), gitConnection);
 
-                    var commitMessage = commitMessageGenerator.GenerateForImageUpdates(new GitCommitSummary(actionConfig.CommitSummary), actionConfig.CommitDescription, updatedImages);
-                    
-                    Log.Info("Commiting changes");
-                    if (repository.CommitChanges(commitMessage))
+                    string defaultRegistry = deployment.Variables.Get(SpecialVariables.Git.DefaultRegistry(repoName)) ?? "docker.io";
+                    var subFolder = applicationSource.Path ?? String.Empty;
+
+                    var (updatedFiles, updatedImages) = UpdateFiles(repository.WorkingDirectory, subFolder, defaultRegistry, packageReferences);
+
+                    if (updatedFiles.Count > 0)
                     {
-                        Log.Info("Changes were commited, pushing to remote");
-                        repository.PushChanges(actionConfig.RequiresPr, argoSource.BranchName, CancellationToken.None).GetAwaiter().GetResult();    
-                    }
-                    else
-                    {
-                        Log.Info("No changes were commited.");
+                        Log.Info("Staging files in repository");
+                        repository.StageFiles(updatedFiles.ToArray());
+
+                        var commitMessage = commitMessageGenerator.GenerateForImageUpdates(new GitCommitSummary(actionConfig.CommitSummary), actionConfig.CommitDescription, updatedImages);
+
+                        Log.Info("Commiting changes");
+                        if (repository.CommitChanges(commitMessage))
+                        {
+                            Log.Info("Changes were commited, pushing to remote");
+                            repository.PushChanges(actionConfig.RequiresPr, new GitBranchName(applicationSource.TargetRevision), CancellationToken.None).GetAwaiter().GetResult();
+                        }
+                        else
+                        {
+                            Log.Info("No changes were commited.");
+                        }
                     }
                 }
             }

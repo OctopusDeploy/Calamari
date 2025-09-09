@@ -1,5 +1,6 @@
 #if NET
 using System.Collections.Generic;
+using System.IO;
 using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages;
 using Calamari.ArgoCD.GitHub;
@@ -24,6 +25,8 @@ namespace Calamari.ArgoCD.Commands
         readonly IGitHubPullRequestCreator pullRequestCreator;
         readonly ArgoCommitToGitConfigFactory configFactory;
         readonly ICommitMessageGenerator commitMessageGenerator;
+        string customPropertiesFile;
+        string customPropertiesPassword;
 
         public UpdateArgoCDAppImagesCommand(ILog log, IVariables variables, ICalamariFileSystem fileSystem, IGitHubPullRequestCreator pullRequestCreator,
                                             ICommitMessageGenerator commitMessageGenerator,
@@ -35,6 +38,12 @@ namespace Calamari.ArgoCD.Commands
             this.pullRequestCreator = pullRequestCreator;
             this.commitMessageGenerator = commitMessageGenerator;
             this.configFactory = configFactory;
+            Options.Add("customPropertiesFile=",
+                        "Name of the custom properties file",
+                        v => customPropertiesFile = Path.GetFullPath(v));
+            Options.Add("customPropertiesPassword=",
+                        "Password to decrypt the custom properties file",
+                        v => customPropertiesPassword = v);
         }
 
         public override int Execute(string[] commandLineArguments)
@@ -43,7 +52,7 @@ namespace Calamari.ArgoCD.Commands
 
             var conventions = new List<IConvention>
             {
-                new UpdateArgoCDAppImagesInstallConvention(log, pullRequestCreator, fileSystem, configFactory, commitMessageGenerator),
+                new UpdateArgoCDAppImagesInstallConvention(log, pullRequestCreator, fileSystem, configFactory, commitMessageGenerator, new CustomPropertiesLoader(fileSystem, customPropertiesFile, customPropertiesPassword)),
             };
                 
             var conventionRunner = new ConventionProcessor(runningDeployment, conventions, log);
