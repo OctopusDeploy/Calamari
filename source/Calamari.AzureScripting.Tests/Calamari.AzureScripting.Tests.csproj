@@ -28,6 +28,24 @@
         <PackageReference Include="Shouldly" Version="2.8.2"/>
         <PackageReference Include="Octopus.Dependencies.AzureCLI" Version="2.0.50" GeneratePathProperty="true"/>
         <PackageReference Include="Octopus.Dependencies.AzureCmdlets" Version="6.13.1" GeneratePathProperty="true"/>
+        <PackageReference Include="FluentAssertions" Version="6.12.2" />
+        <PackageReference Include="nunit" Version="3.13.3" />
+        <PackageReference Include="NUnit3TestAdapter" Version="4.2.1" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.3.0" />
+        <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.25" />
+        <PackageReference Include="NSubstitute" Version="4.2.1" />
+        <PackageReference Include="Shouldly" Version="2.8.2" />
+        <PackageReference Include="Octopus.Dependencies.AzureCLI" Version="2.0.50" GeneratePathProperty="true" />
+        <PackageReference Include="Octopus.Dependencies.AzureCmdlets" Version="6.13.1" GeneratePathProperty="true" />
+        <PackageReference Include="FluentAssertions" Version="6.7.0"/>
+        <PackageReference Include="nunit" Version="3.13.3"/>
+        <PackageReference Include="NUnit3TestAdapter" Version="4.2.1"/>
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.3.0"/>
+        <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.25"/>
+        <PackageReference Include="NSubstitute" Version="4.2.1"/>
+        <PackageReference Include="Shouldly" Version="2.8.2"/>
+        <PackageReference Include="Octopus.Dependencies.AzureCLI" Version="2.0.50" GeneratePathProperty="true"/>
+        <PackageReference Include="Octopus.Dependencies.AzureCmdlets" Version="6.13.1" GeneratePathProperty="true"/>
     </ItemGroup>
     <ItemGroup>
 
