@@ -3,8 +3,6 @@ using System.Threading.Tasks;
 using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.GitHub;
 using Calamari.Testing.Helpers;
-using Calamari.Tests.ArgoCD.Git;
-using NUnit.Framework;
 
 namespace Calamari.Tests.ArgoCD.GitHub
 {
