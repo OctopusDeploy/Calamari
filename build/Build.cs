@@ -76,7 +76,7 @@ namespace Calamari.Build
 
         static readonly List<string> CalamariProjectsToSkipConsolidation = new() { "Calamari.CloudAccounts", "Calamari.Common", "Calamari.ConsolidateCalamariPackages" };
 
-        CalamariPackageMetadata[] PackagesToPublish = new CalamariPackageMetadata[0];
+        CalamariPackageMetadata[] PackagesToPublish = Array.Empty<CalamariPackageMetadata>();
         List<Project> CalamariProjects = new();
         List<Task> ProjectCompressionTasks = new();
 
@@ -247,45 +247,28 @@ namespace Calamari.Build
 
                                CalamariProjects = calamariProjects;
 
-                               // All cross-platform Target Frameworks contain dots, all NetFx Target Frameworks don't
-                               // eg: net40, net452, net48 vs netcoreapp3.1, net5.0, net6.0
-                               bool IsCrossPlatform(string targetFramework) => targetFramework.Contains('.');
-
-                               var calamariPackages =
-                                   calamariProjects.SelectMany(project => project.GetTargetFrameworks()!, (p, f) => new
-                                                   {
-                                                       Project = p,
-                                                       Framework = f,
-                                                       CrossPlatform = IsCrossPlatform(f)
-                                                   })
-                                                   .ToList();
-
-                               // for NetFx target frameworks, we use "netfx" as the architecture, and ignore defined runtime identifiers
-                               var netFxPackages =
-                                   calamariPackages.Where(p => !p.CrossPlatform)
-                                                   .Select(packageToBuild => new CalamariPackageMetadata()
-                                                   {
-                                                       Project = packageToBuild.Project,
-                                                       Framework = packageToBuild.Framework,
-                                                       Architecture = null,
-                                                       IsCrossPlatform = packageToBuild.CrossPlatform
-                                                   });
+                               var calamariPackages = calamariProjects
+                                                      .SelectMany(project => project.GetTargetFrameworks()!, (p, f) => new
+                                                      {
+                                                          Project = p,
+                                                          Framework = f,
+                                                      })
+                                                      .ToList();
+                               
 
                                // for cross-platform frameworks, we combine each runtime identifier with each target framework
                                var crossPlatformPackages =
-                                   calamariPackages.Where(p => p.CrossPlatform)
-                                                   .Where(p => string.IsNullOrWhiteSpace(TargetFramework) || p.Framework == TargetFramework)
+                                   calamariPackages.Where(p => string.IsNullOrWhiteSpace(TargetFramework) || p.Framework == TargetFramework)
                                                    .SelectMany(packageToBuild => GetRuntimeIdentifiers(packageToBuild.Project) ?? Enumerable.Empty<string>(),
                                                                (packageToBuild, runtimeIdentifier) => new CalamariPackageMetadata()
                                                                {
                                                                    Project = packageToBuild.Project,
                                                                    Framework = packageToBuild.Framework,
-                                                                   Architecture = runtimeIdentifier,
-                                                                   IsCrossPlatform = packageToBuild.CrossPlatform
+                                                                   Architecture = runtimeIdentifier
                                                                })
                                                    .Distinct(t => new { t.Project?.Name, t.Architecture, t.Framework });
 
-                               PackagesToPublish = crossPlatformPackages.Concat(netFxPackages).ToArray();
+                               PackagesToPublish = crossPlatformPackages.ToArray();
                            });
 
         Target RestoreCalamariProjects =>
@@ -312,12 +295,6 @@ namespace Calamari.Build
 
                                var buildTasks = PackagesToPublish.Select(async calamariPackageMetadata =>
                                                                          {
-                                                                             if (!OperatingSystem.IsWindows() && !calamariPackageMetadata.IsCrossPlatform)
-                                                                             {
-                                                                                 Log.Warning($"Not Building {calamariPackageMetadata.Framework}: can only publish netfx on a Windows OS");
-                                                                                 return;
-                                                                             }
-
                                                                              var projectName = calamariPackageMetadata.Project?.Name ?? throw new Exception("Could not find project name");
                                                                              var projectSemaphore = semaphores.GetOrAdd(projectName, _ => new SemaphoreSlim(1, 1));
 
@@ -389,16 +366,10 @@ namespace Calamari.Build
 
         async Task<AbsolutePath?> PublishPackageAsync(CalamariPackageMetadata calamariPackageMetadata)
         {
-            if (!OperatingSystem.IsWindows() && !calamariPackageMetadata.IsCrossPlatform)
-            {
-                Log.Warning($"Not publishing {calamariPackageMetadata.Framework}: can only publish netfx on a Windows OS");
-                return null;
-            }
-
             Log.Information($"Publishing {calamariPackageMetadata.Project?.Name} for framework '{calamariPackageMetadata.Framework}' and arch '{calamariPackageMetadata.Architecture}'");
 
             var project = calamariPackageMetadata.Project;
-            var outputDirectory = PublishDirectory / project?.Name / (calamariPackageMetadata.IsCrossPlatform ? calamariPackageMetadata.Architecture : "netfx");
+            var outputDirectory = PublishDirectory / project?.Name /  calamariPackageMetadata.Architecture;
 
             await Task.Run(() =>
                                DotNetPublish(s =>
