@@ -57,7 +57,6 @@ namespace Calamari.ArgoCD.Git
             foreach (var file in filesToStage)
             {
                 var fileToAdd = file.StartsWith("./") ? file.Substring(2) : file;
-                log.Verbose($"Starting stage file {fileToAdd}");
                 repository.Index.Add(fileToAdd);
             }
         }

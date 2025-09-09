@@ -1,4 +1,4 @@
-#if NET6_0
+#if NET
 #nullable enable
 using System;
 using System.Collections.Generic;
