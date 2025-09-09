@@ -1,8 +1,10 @@
 #if NET
 using System;
 using System.IO;
+using System.Linq;
 using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages;
+using Calamari.ArgoCD.Dtos;
 using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.GitHub;
 using Calamari.Common.Commands;
@@ -16,6 +18,7 @@ using Calamari.Tests.Fixtures.Integration.FileSystem;
 using FluentAssertions;
 using LibGit2Sharp;
 using NSubstitute;
+using NSubstitute.Exceptions;
 using NUnit.Framework;
 
 namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
@@ -41,6 +44,27 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
             RepositoryHelpers.CreateBranchIn(argoCDBranchName, OriginPath);
         }
 
+        ICustomPropertiesLoader SetupCustomPropertiesLoader()
+        {
+            var customPropertiesFactory = Substitute.For<ICustomPropertiesLoader>();
+            customPropertiesFactory.Load<ArgoCDCustomPropertiesDto>()
+                                   .Returns(new ArgoCDCustomPropertiesDto(new[]
+                                   {
+                                       new ArgoCDApplicationDto("Gateway1",
+                                                                "App1",
+                                                                "docker.io",
+                                                                new[]
+                                                                {
+                                                                    new ArgoCDApplicationSourceDto(OriginPath,
+                                                                                                   "username",
+                                                                                                   "password",
+                                                                                                   argoCDBranchName.Value,
+                                                                                                   "")
+                                                                })
+                                   }));
+            return customPropertiesFactory;
+        }
+
         [Test]
         public void UpdateImages_WithNoMatchingFiles_ReturnsEmptySet()
         {
@@ -49,14 +73,10 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
                                                                      Substitute.For<IGitHubPullRequestCreator>(),
                                                                      fileSystem,
                                                                      new ArgoCommitToGitConfigFactory(log),
-                                                                     new CommitMessageGenerator());
+                                                                     new CommitMessageGenerator(),
+                                                                     SetupCustomPropertiesLoader());
             var variables = new CalamariVariables
             {
-                [SpecialVariables.Git.SubFolder("repo_name")] = "",
-                [SpecialVariables.Git.Password("repo_name")] = "password",
-                [SpecialVariables.Git.Username("repo_name")] = "username",
-                [SpecialVariables.Git.Url("repo_name")] = OriginPath,
-                [SpecialVariables.Git.BranchName("repo_name")] = argoCDBranchName.Value,
                 [SpecialVariables.Git.DefaultRegistry("repo_name")] = "docker.io",
                 [SpecialVariables.Git.CommitMethod] = "DirectCommit",
                 [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this",
@@ -73,25 +93,22 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
             // Assert
             var resultRepo = CloneOrigin();
             var filesInRepo = fileSystem.EnumerateFilesRecursively(resultRepo, "*");
-            filesInRepo.Should().BeEmpty();
+            var ignoredGitSubfolder = filesInRepo.Where(file => !file.Contains(".git"));
+            ignoredGitSubfolder.Should().BeEmpty();
         }
 
         [Test]
         public void UpdateImages_WithNoImageMatches_ReturnsEmptySetAndCommitsNoChanges()
         {
             // Arrange
-            var updater = new Calamari.ArgoCD.Conventions.UpdateArgoCDAppImagesInstallConvention(log,
-                                                                                                 Substitute.For<IGitHubPullRequestCreator>(),
-                                                                                                 fileSystem,
-                                                                                                 new ArgoCommitToGitConfigFactory(log),
-                                                                                                 new CommitMessageGenerator());
+            var updater = new UpdateArgoCDAppImagesInstallConvention(log,
+                                                                     Substitute.For<IGitHubPullRequestCreator>(),
+                                                                     fileSystem,
+                                                                     new ArgoCommitToGitConfigFactory(log),
+                                                                     new CommitMessageGenerator(),
+                                                                     SetupCustomPropertiesLoader());
             var variables = new CalamariVariables
             {
-                [SpecialVariables.Git.SubFolder("repo_name")] = "",
-                [SpecialVariables.Git.Password("repo_name")] = "password",
-                [SpecialVariables.Git.Username("repo_name")] = "username",
-                [SpecialVariables.Git.Url("repo_name")] = OriginPath,
-                [SpecialVariables.Git.BranchName("repo_name")] = argoCDBranchName.Value,
                 [SpecialVariables.Git.DefaultRegistry("repo_name")] = "docker.io",
                 [SpecialVariables.Git.CommitMethod] = "DirectCommit",
                 [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this",
@@ -110,29 +127,24 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
             // Assert
             log.StandardOut.Should().Contain(s => s.Contains($"Processing file include/file1.yaml"));
             log.StandardOut.Should().Contain("No changes made to file include/file1.yaml as no image references were updated.");
-            
+
             var resultRepo = CloneOrigin();
             var repoFileContent = fileSystem.ReadFile(Path.Combine(resultRepo, "include/file1.yaml"));
             repoFileContent.Should().Be("No Yaml here");
-
         }
 
         [Test]
         public void UpdateImages_WithImageMatches_CommitsChangesToGitAndReturnsUpdatedImages()
         {
             // Arrange
-            var updater = new Calamari.ArgoCD.Conventions.UpdateArgoCDAppImagesInstallConvention(log,
-                                                                                                 Substitute.For<IGitHubPullRequestCreator>(),
-                                                                                                 fileSystem,
-                                                                                                 new ArgoCommitToGitConfigFactory(log),
-                                                                                                 new CommitMessageGenerator());
+            var updater = new UpdateArgoCDAppImagesInstallConvention(log,
+                                                                     Substitute.For<IGitHubPullRequestCreator>(),
+                                                                     fileSystem,
+                                                                     new ArgoCommitToGitConfigFactory(log),
+                                                                     new CommitMessageGenerator(),
+                                                                     SetupCustomPropertiesLoader());
             var variables = new CalamariVariables
             {
-                [SpecialVariables.Git.SubFolder("repo_name")] = "",
-                [SpecialVariables.Git.Password("repo_name")] = "password",
-                [SpecialVariables.Git.Username("repo_name")] = "username",
-                [SpecialVariables.Git.Url("repo_name")] = OriginPath,
-                [SpecialVariables.Git.BranchName("repo_name")] = argoCDBranchName.Value,
                 [SpecialVariables.Git.DefaultRegistry("repo_name")] = "docker.io",
                 [SpecialVariables.Git.CommitMethod] = "DirectCommit",
                 [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this",

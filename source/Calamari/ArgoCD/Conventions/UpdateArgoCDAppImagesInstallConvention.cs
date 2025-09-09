@@ -59,11 +59,10 @@ namespace Calamari.ArgoCD.Conventions
                     Log.Info($"Writing files to git repository for '{applicationSource.Url}'");
                     var gitConnection = new GitConnection(applicationSource.Username, applicationSource.Password, applicationSource.Url, new GitBranchName(applicationSource.TargetRevision));
                     var repository = repositoryFactory.CloneRepository(repositoryNumber.ToString(CultureInfo.InvariantCulture), gitConnection);
-
-                    string defaultRegistry = deployment.Variables.Get(SpecialVariables.Git.DefaultRegistry(repoName)) ?? "docker.io";
+                    
                     var subFolder = applicationSource.Path ?? String.Empty;
 
-                    var (updatedFiles, updatedImages) = UpdateFiles(repository.WorkingDirectory, subFolder, defaultRegistry, packageReferences);
+                    var (updatedFiles, updatedImages) = UpdateFiles(repository.WorkingDirectory, subFolder, application.DefaultRegistry, packageReferences);
 
                     if (updatedFiles.Count > 0)
                     {

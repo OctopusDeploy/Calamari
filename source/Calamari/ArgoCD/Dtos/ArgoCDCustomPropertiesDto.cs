@@ -14,15 +14,18 @@ namespace Calamari.ArgoCD.Dtos
     
     public class ArgoCDApplicationDto
     {
-        public ArgoCDApplicationDto(string gatewayId, string name, ArgoCDApplicationSourceDto[] sources)
+        public ArgoCDApplicationDto(string gatewayId, string name, string defaultRegistry, ArgoCDApplicationSourceDto[] sources)
         {
             GatewayId = gatewayId;
             Name = name;
+            DefaultRegistry = defaultRegistry;
             Sources = sources;
         }
 
         public string GatewayId { get; }
         public string Name { get; set; }
+        
+        public string DefaultRegistry { get; set; }
         public ArgoCDApplicationSourceDto[] Sources { get; set; }
     }
 
