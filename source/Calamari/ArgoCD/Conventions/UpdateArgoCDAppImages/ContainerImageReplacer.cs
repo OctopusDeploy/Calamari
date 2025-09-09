@@ -187,7 +187,7 @@ namespace Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages
 
                         // Pattern ensures we only update `image: <IMAGENAME>` lines
                         // Ignores comments and white space, while preserving any quotes around the image name 
-                        var pattern = $@"(?<=^\s*image:\s*)([""']?){Regex.Escape(container.Image)}\1(?=\s*(#.*)?$)";
+                        var pattern = $@"(?<=^\s*-?\simage:\s*)([""']?){Regex.Escape(container.Image)}\1(?=\s*(#.*)?$)";
                         document = Regex.Replace(document,
                                                  pattern,
                                                  match =>

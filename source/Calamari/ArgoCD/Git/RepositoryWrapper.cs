@@ -1,5 +1,6 @@
 #if NET
 using System;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Calamari.ArgoCD.GitHub;
@@ -53,11 +54,10 @@ namespace Calamari.ArgoCD.Git
         
         public void StageFiles(string[] filesToStage)
         {
-            //find files which have changed in fs??? <---   
             foreach (var file in filesToStage)
             {
                 var fileToAdd = file.StartsWith("./") ? file.Substring(2) : file;
-                // if a file does not exist - what should we do? throw and continue? or just throw?
+                log.Verbose($"Starting stage file {fileToAdd}");
                 repository.Index.Add(fileToAdd);
             }
         }

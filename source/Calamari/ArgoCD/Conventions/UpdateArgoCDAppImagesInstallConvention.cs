@@ -25,10 +25,10 @@ namespace Calamari.ArgoCD.Conventions
         readonly ILog log;
         readonly IGitHubPullRequestCreator pullRequestCreator;
         readonly ArgoCommitToGitConfigFactory argoCommitToGitConfigFactory;
-        readonly CommitMessageGenerator commitMessageGenerator;
+        readonly ICommitMessageGenerator commitMessageGenerator;
 
         public UpdateArgoCDAppImagesInstallConvention(ILog log, IGitHubPullRequestCreator pullRequestCreator, ICalamariFileSystem fileSystem, ArgoCommitToGitConfigFactory argoCommitToGitConfigFactory,
-                                                      CommitMessageGenerator commitMessageGenerator)
+                                                      ICommitMessageGenerator commitMessageGenerator)
         {
             this.log = log;
             this.pullRequestCreator = pullRequestCreator;
@@ -52,9 +52,7 @@ namespace Calamari.ArgoCD.Conventions
 
                 string defaultRegistry = deployment.Variables.Get(SpecialVariables.Git.DefaultRegistry(repoName)) ?? "docker.io";
 
-                var pathToUpdate = Path.Combine(repository.WorkingDirectory, argoSource.SubFolder);
-
-                var (updatedFiles, updatedImages) = UpdateFiles(pathToUpdate, defaultRegistry, packageReferences);
+                var (updatedFiles, updatedImages) = UpdateFiles(repository.WorkingDirectory, argoSource.SubFolder, defaultRegistry, packageReferences);
 
                 if (updatedFiles.Count > 0)
                 {
@@ -78,10 +76,12 @@ namespace Calamari.ArgoCD.Conventions
         }
 
         (HashSet<string>, HashSet<string>) UpdateFiles(string rootPath,
+                                                       string subFolder,
                                                        string defaultRegistry,
                                                        List<ContainerImageReference> imagesToUpdate)
         {
-            var yamlFiles = FindYamlFiles(rootPath);
+            var absSubFolder = Path.Combine(rootPath, subFolder);
+            var yamlFiles = FindYamlFiles(absSubFolder);
 
             var updatedFiles = new HashSet<string>();
             var updatedImages = new HashSet<string>();
@@ -98,6 +98,7 @@ namespace Calamari.ArgoCD.Conventions
                 {
                     fileSystem.OverwriteFile(file, imageReplacementResult.UpdatedContents);
                     updatedImages.UnionWith(imageReplacementResult.UpdatedImageReferences);
+                    log.Verbose($"Content = {imageReplacementResult.UpdatedContents}");
                     updatedFiles.Add(relativePath);
                     log.Verbose($"Updating file {file} with new image references.");
                     foreach (var change in imageReplacementResult.UpdatedImageReferences)

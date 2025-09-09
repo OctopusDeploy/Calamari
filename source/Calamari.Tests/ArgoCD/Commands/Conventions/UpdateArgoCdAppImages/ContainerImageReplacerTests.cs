@@ -8,25 +8,26 @@ using NUnit.Framework;
 
 namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
 {
-    [TestFixture]
-    public class ContainerImageReplacerTests
+  [TestFixture]
+  public class ContainerImageReplacerTests
+  {
+    readonly string DefaultContainerRegistry = "docker.io";
+    readonly List<ContainerImageReference> imagesToUpdate;
+
+    public ContainerImageReplacerTests()
     {
-        readonly List<ContainerImageReference> imagesToUpdate;
+      imagesToUpdate = new List<ContainerImageReference>
+      {
+        // We know this won't be null after parse
+        ContainerImageReference.FromReferenceString("nginx:1.25"),
+        ContainerImageReference.FromReferenceString("busybox:stable")
+      };
+    }
 
-        public ContainerImageReplacerTests()
-        {
-            imagesToUpdate = new List<ContainerImageReference>
-            {
-                // We know this won't be null after parse
-                ContainerImageReference.FromReferenceString("nginx:1.25"),
-                ContainerImageReference.FromReferenceString("busybox:stable")
-            };
-        }
-
-        [Test]
-        public void UpdateImages_WithNoNewImages_ReturnsSameYaml()
-        {
-            const string inputYaml = @"
+    [Test]
+    public void UpdateImages_WithNoNewImages_ReturnsSameYaml()
+    {
+      const string inputYaml = @"
                                      kind: Deployment
                                      spec:
                                        template:
@@ -35,45 +36,45 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
                                              - image: nginx:1.19
                                      ";
 
-            var imageReplacer = new ContainerImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry);
+      var imageReplacer = new ContainerImageReplacer(inputYaml, DefaultContainerRegistry);
 
-            var result = imageReplacer.UpdateImages(new List<ContainerImageReference>());
+      var result = imageReplacer.UpdateImages(new List<ContainerImageReference>());
 
-            result.UpdatedContents.Should().Be(inputYaml);
-            result.UpdatedImageReferences.Should().BeEmpty();
-        }
+      result.UpdatedContents.Should().Be(inputYaml);
+      result.UpdatedImageReferences.Should().BeEmpty();
+    }
 
-        [Test]
-        public void UpdateImages_WithEmptyYaml_ReturnsEmpty()
-        {
-            var imageReplacer = new ContainerImageReplacer(string.Empty, ArgoCDConstants.DefaultContainerRegistry);
+    [Test]
+    public void UpdateImages_WithEmptyYaml_ReturnsEmpty()
+    {
+      var imageReplacer = new ContainerImageReplacer(string.Empty, DefaultContainerRegistry);
 
-            var result = imageReplacer.UpdateImages(new List<ContainerImageReference>());
+      var result = imageReplacer.UpdateImages(new List<ContainerImageReference>());
 
-            result.UpdatedContents.Should().BeEmpty();
-            result.UpdatedImageReferences.Should().BeEmpty();
-        }
+      result.UpdatedContents.Should().BeEmpty();
+      result.UpdatedImageReferences.Should().BeEmpty();
+    }
 
-        [Test]
-        public void UpdateImages_WithInvalidDocuments_IgnoresDocuments()
-        {
-            const string invalidYaml = @"
+    [Test]
+    public void UpdateImages_WithInvalidDocuments_IgnoresDocuments()
+    {
+      const string invalidYaml = @"
                                        this: is: not: valid: yaml
                                        - just:
                                          - random: stuff
                                        ";
-            var imageReplacer = new ContainerImageReplacer(invalidYaml, ArgoCDConstants.DefaultContainerRegistry);
-            var result = imageReplacer.UpdateImages(new List<ContainerImageReference>());
+      var imageReplacer = new ContainerImageReplacer(invalidYaml, DefaultContainerRegistry);
+      var result = imageReplacer.UpdateImages(new List<ContainerImageReference>());
 
-            result.UpdatedContents.Should().NotBeNull();
-            result.UpdatedContents.Should().Be(invalidYaml);
-            result.UpdatedImageReferences.Should().BeEmpty();
-        }
+      result.UpdatedContents.Should().NotBeNull();
+      result.UpdatedContents.Should().Be(invalidYaml);
+      result.UpdatedImageReferences.Should().BeEmpty();
+    }
 
-        [Test]
-        public void UpdateImages_WithResourcesWithoutImages_LeavesYamlUnchanged()
-        {
-            const string yamlWithoutImages = @"
+    [Test]
+    public void UpdateImages_WithResourcesWithoutImages_LeavesYamlUnchanged()
+    {
+      const string yamlWithoutImages = @"
                                              kind: Service
                                              metadata:
                                                name: my-service
@@ -82,18 +83,18 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
                                                  - port: 80
                                              ";
 
-            var imageReplacer = new ContainerImageReplacer(yamlWithoutImages, ArgoCDConstants.DefaultContainerRegistry);
+      var imageReplacer = new ContainerImageReplacer(yamlWithoutImages, DefaultContainerRegistry);
 
-            var result = imageReplacer.UpdateImages(new List<ContainerImageReference> { ContainerImageReference.FromReferenceString("nginx:1.25") });
+      var result = imageReplacer.UpdateImages(new List<ContainerImageReference> { ContainerImageReference.FromReferenceString("nginx:1.25") });
 
-            result.UpdatedContents.Should().Be(yamlWithoutImages);
-            result.UpdatedImageReferences.Should().BeEmpty();
-        }
+      result.UpdatedContents.Should().Be(yamlWithoutImages);
+      result.UpdatedImageReferences.Should().BeEmpty();
+    }
 
-        [Test]
-        public void UpdateImages_WithArgoAppManifest_LeavesYamlUnchanged()
-        {
-            const string argoApp = @"
+    [Test]
+    public void UpdateImages_WithArgoAppManifest_LeavesYamlUnchanged()
+    {
+      const string argoApp = @"
                                    apiVersion: argoproj.io/v1alpha1
                                    kind: Application
                                    metadata:
@@ -119,18 +120,18 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
                                          - CreateNamespace=true
                                    ";
 
-            var imageReplacer = new ContainerImageReplacer(argoApp, ArgoCDConstants.DefaultContainerRegistry);
+      var imageReplacer = new ContainerImageReplacer(argoApp, DefaultContainerRegistry);
 
-            var result = imageReplacer.UpdateImages(new List<ContainerImageReference> { ContainerImageReference.FromReferenceString("nginx:1.25") });
+      var result = imageReplacer.UpdateImages(new List<ContainerImageReference> { ContainerImageReference.FromReferenceString("nginx:1.25") });
 
-            result.UpdatedContents.Should().Be(argoApp);
-            result.UpdatedImageReferences.Should().BeEmpty();
-        }
+      result.UpdatedContents.Should().Be(argoApp);
+      result.UpdatedImageReferences.Should().BeEmpty();
+    }
 
-        [Test]
-        public void UpdateImages_WithYamlComments_PreservesComments()
-        {
-            const string yamlWithComments = @"
+    [Test]
+    public void UpdateImages_WithYamlComments_PreservesComments()
+    {
+      const string yamlWithComments = @"
                                             \# This is a comment
                                             kind: Deployment
                                             spec:
@@ -139,79 +140,83 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
                                                   containers:
                                                     - image: nginx:1.19 # Another comment
                                             ";
-            var imageReplacer = new ContainerImageReplacer(yamlWithComments, ArgoCDConstants.DefaultContainerRegistry);
+      var imageReplacer = new ContainerImageReplacer(yamlWithComments, DefaultContainerRegistry);
 
-            var result = imageReplacer.UpdateImages(new List<ContainerImageReference> { ContainerImageReference.FromReferenceString("nginx:1.25") });
+      var result = imageReplacer.UpdateImages(new List<ContainerImageReference> { ContainerImageReference.FromReferenceString("nginx:1.25") });
 
-            result.UpdatedContents.Should().Be(yamlWithComments);
-        }
+      result.UpdatedContents.Should().Be(yamlWithComments);
+    }
 
-        [Test]
-        public void UpdateImages_WithQuotedReference_PreservesQuotes()
-        {
-            const string inputYaml = @"apiVersion: v1
+    [Test]
+    public void UpdateImages_WithQuotedReference_PreservesQuotes()
+    {
+      const string inputYaml = @"apiVersion: v1
 kind: Pod
 spec:
   containers:
     - name: my-container
       image: ""nginx:1.19""";
-            const string expectedYaml = @"apiVersion: v1
+      const string expectedYaml = @"apiVersion: v1
 kind: Pod
 spec:
   containers:
     - name: my-container
       image: ""nginx:1.25""";
-            var imageReplacer = new ContainerImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry);
+      var imageReplacer = new ContainerImageReplacer(inputYaml, DefaultContainerRegistry);
 
-            var updatedImage = new List<ContainerImageReference>
-            {
-                ContainerImageReference.FromReferenceString("nginx:1.25")
-            };
+      var updatedImage = new List<ContainerImageReference>
+      {
+        ContainerImageReference.FromReferenceString("nginx:1.25")
+      };
 
-            var result = imageReplacer.UpdateImages(updatedImage);
+      var result = imageReplacer.UpdateImages(updatedImage);
 
-            result.UpdatedContents.Should().NotBeNull();
-            result.UpdatedContents.Should().Be(expectedYaml);
-            result.UpdatedImageReferences.Count.Should().Be(1);
-            result.UpdatedImageReferences.Should().ContainSingle(r => r == "nginx:1.25");
-        }
+      result.UpdatedContents.Should().NotBeNull();
+      result.UpdatedContents.Should().Be(expectedYaml);
+      result.UpdatedImageReferences.Count.Should().Be(1);
+      result.UpdatedImageReferences.Should().ContainSingle(r => r == "nginx:1.25");
+    }
 
-        [Test]
-        public void DoesNotUpdateComments()
-        {
-          var commentLine = "#image: nginx:1.19 being used here";
-          string inputYaml = @"apiVersion: v1
+    [Test]
+    public void DoesNotUpdateComments()
+    {
+      var commentLine = "#image: nginx:1.19 being used here";
+      string inputYaml = @"apiVersion: v1
 kind: Pod
 spec:
   containers:
     - name: my-container
-      " + commentLine + @"
+      "
+                         + commentLine
+                         + @"
       image: nginx:1.19";
-          
-            string expectedYaml = @"apiVersion: v1
+
+      string expectedYaml = @"apiVersion: v1
 kind: Pod
 spec:
   containers:
     - name: my-container
-      " + commentLine + @"
+      "
+                            + commentLine
+                            + @"
       image: nginx:1.25";
-            var imageReplacer = new ContainerImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry);
+      var imageReplacer = new ContainerImageReplacer(inputYaml, DefaultContainerRegistry);
 
-            var updatedImage = new List<ContainerImageReference>
-            {
-                ContainerImageReference.FromReferenceString("nginx:1.25")
-            };
+      var updatedImage = new List<ContainerImageReference>
+      {
+        ContainerImageReference.FromReferenceString("nginx:1.25")
+      };
 
-            var result = imageReplacer.UpdateImages(updatedImage);
+      var result = imageReplacer.UpdateImages(updatedImage);
 
-            result.UpdatedContents.Should().NotBeNull();
-            result.UpdatedContents.Should().Be(expectedYaml);
-        }
+      result.UpdatedContents.Should().NotBeNull();
+      result.UpdatedContents.Should().Be(expectedYaml);
+    }
 
-        [Test]
-        public void UpdateImages_WithPodWithUpdates_ReturnsUpdatedYaml()
-        {
-            const string inputYaml = @"
+    [Test]
+    public void UpdateImages_WithPodWithUpdates_ReturnsUpdatedYaml()
+    {
+      const string inputYaml = @"
 apiVersion: v1
 kind: Pod
 metadata:
@@ -227,7 +232,7 @@ spec:
       image: busybox:unstable #Update Init
       command: [""echo"", ""Init container added""]
 ";
-            const string expectedYaml = @"
+      const string expectedYaml = @"
 apiVersion: v1
 kind: Pod
 metadata:
@@ -243,21 +248,21 @@ spec:
       image: busybox:stable #Update Init
       command: [""echo"", ""Init container added""]
 ";
-            var imageReplacer = new ContainerImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry);
+      var imageReplacer = new ContainerImageReplacer(inputYaml, DefaultContainerRegistry);
 
-            var result = imageReplacer.UpdateImages(imagesToUpdate);
+      var result = imageReplacer.UpdateImages(imagesToUpdate);
 
-            result.UpdatedContents.Should().NotBeNull();
-            result.UpdatedContents.Should().Be(expectedYaml);
-            result.UpdatedImageReferences.Count.Should().Be(2);
-            result.UpdatedImageReferences.Should().ContainSingle(r => r == "nginx:1.25");
-            result.UpdatedImageReferences.Should().ContainSingle(r => r == "busybox:stable");
-        }
+      result.UpdatedContents.Should().NotBeNull();
+      result.UpdatedContents.Should().Be(expectedYaml);
+      result.UpdatedImageReferences.Count.Should().Be(2);
+      result.UpdatedImageReferences.Should().ContainSingle(r => r == "nginx:1.25");
+      result.UpdatedImageReferences.Should().ContainSingle(r => r == "busybox:stable");
+    }
 
-        [Test]
-        public void UpdateImages_WithPodWithUpdatesForMultipleContainers_ReturnsUpdatedYaml()
-        {
-            const string inputYaml = @"
+    [Test]
+    public void UpdateImages_WithPodWithUpdatesForMultipleContainers_ReturnsUpdatedYaml()
+    {
+      const string inputYaml = @"
 apiVersion: v1
 kind: Pod
 metadata:
@@ -270,7 +275,7 @@ spec:
       image: busybox:unstable
       command: [""echo"", ""Init container added""]
 ";
-            const string expectedYaml = @"
+      const string expectedYaml = @"
 apiVersion: v1
 kind: Pod
 metadata:
@@ -283,21 +288,21 @@ spec:
       image: busybox:stable
       command: [""echo"", ""Init container added""]
 ";
-            var imageReplacer = new ContainerImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry);
+      var imageReplacer = new ContainerImageReplacer(inputYaml, DefaultContainerRegistry);
 
-            var result = imageReplacer.UpdateImages(imagesToUpdate);
+      var result = imageReplacer.UpdateImages(imagesToUpdate);
 
-            result.UpdatedContents.Should().NotBeNull();
-            result.UpdatedContents.Should().Be(expectedYaml);
-            result.UpdatedImageReferences.Count.Should().Be(2);
-            result.UpdatedImageReferences.Should().ContainSingle(r => r == "nginx:1.25");
-            result.UpdatedImageReferences.Should().ContainSingle(r => r == "busybox:stable");
-        }
+      result.UpdatedContents.Should().NotBeNull();
+      result.UpdatedContents.Should().Be(expectedYaml);
+      result.UpdatedImageReferences.Count.Should().Be(2);
+      result.UpdatedImageReferences.Should().ContainSingle(r => r == "nginx:1.25");
+      result.UpdatedImageReferences.Should().ContainSingle(r => r == "busybox:stable");
+    }
 
-        [Test]
-        public void UpdateImages_WithPodWithUpdatesToMultipleInstancesOfSameImage_ReturnsUpdatedYaml()
-        {
-            const string inputYaml = @"
+    [Test]
+    public void UpdateImages_WithPodWithUpdatesToMultipleInstancesOfSameImage_ReturnsUpdatedYaml()
+    {
+      const string inputYaml = @"
 apiVersion: v1
 kind: Pod
 metadata:
@@ -311,7 +316,7 @@ spec:
     - name: older-nginx
       image: nginx:1.12
 ";
-            const string expectedYaml = @"
+      const string expectedYaml = @"
 apiVersion: v1
 kind: Pod
 metadata:
@@ -325,31 +330,31 @@ spec:
     - name: older-nginx
       image: nginx:1.25
 ";
-            var imageReplacer = new ContainerImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry);
+      var imageReplacer = new ContainerImageReplacer(inputYaml, DefaultContainerRegistry);
 
-            var updatedImage = new List<ContainerImageReference>
-            {
-                ContainerImageReference.FromReferenceString("nginx:1.25"),
-            };
+      var updatedImage = new List<ContainerImageReference>
+      {
+        ContainerImageReference.FromReferenceString("nginx:1.25"),
+      };
 
-            var result = imageReplacer.UpdateImages(updatedImage);
+      var result = imageReplacer.UpdateImages(updatedImage);
 
-            result.UpdatedContents.Should().NotBeNull();
-            result.UpdatedContents.Should().Be(expectedYaml);
-            result.UpdatedImageReferences.Count.Should().Be(1);
-            result.UpdatedImageReferences.Should().ContainSingle(r => r == "nginx:1.25");
-        }
+      result.UpdatedContents.Should().NotBeNull();
+      result.UpdatedContents.Should().Be(expectedYaml);
+      result.UpdatedImageReferences.Count.Should().Be(1);
+      result.UpdatedImageReferences.Should().ContainSingle(r => r == "nginx:1.25");
+    }
 
-        // Tests for Kubernetes resources that have a spec.template.spec path to their containers
-        [Theory]
-        [TestCase("Deployment")]
-        [TestCase("StatefulSet")]
-        [TestCase("DaemonSet")]
-        [TestCase("ReplicaSet")]
-        [TestCase("Job", "batch/v1")]
-        public void UpdateImages_SpecTemplateSpecPath_ReturnsUpdatedYaml(string kind, string api = "apps/v1")
-        {
-            var inputYaml = @$"
+    // Tests for Kubernetes resources that have a spec.template.spec path to their containers
+    [Theory]
+    [TestCase("Deployment")]
+    [TestCase("StatefulSet")]
+    [TestCase("DaemonSet")]
+    [TestCase("ReplicaSet")]
+    [TestCase("Job", "batch/v1")]
+    public void UpdateImages_SpecTemplateSpecPath_ReturnsUpdatedYaml(string kind, string api = "apps/v1")
+    {
+      var inputYaml = @$"
 apiVersion: {api}
 kind: {kind}
 metadata:
@@ -374,7 +379,7 @@ spec:
           image: busybox:unstable #Update Init
           command: [""echo"", ""Init container added""]
 ";
-            var expectedYaml = @$"
+      var expectedYaml = @$"
 apiVersion: {api}
 kind: {kind}
 metadata:
@@ -399,21 +404,21 @@ spec:
           image: busybox:stable #Update Init
           command: [""echo"", ""Init container added""]
 ";
-            var imageReplacer = new ContainerImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry);
+      var imageReplacer = new ContainerImageReplacer(inputYaml, DefaultContainerRegistry);
 
-            var result = imageReplacer.UpdateImages(imagesToUpdate);
+      var result = imageReplacer.UpdateImages(imagesToUpdate);
 
-            result.UpdatedContents.Should().NotBeNull();
-            result.UpdatedContents.Should().Be(expectedYaml);
-            result.UpdatedImageReferences.Count.Should().Be(2);
-            result.UpdatedImageReferences.Should().ContainSingle(r => r == "nginx:1.25");
-            result.UpdatedImageReferences.Should().ContainSingle(r => r == "busybox:stable");
-        }
+      result.UpdatedContents.Should().NotBeNull();
+      result.UpdatedContents.Should().Be(expectedYaml);
+      result.UpdatedImageReferences.Count.Should().Be(2);
+      result.UpdatedImageReferences.Should().ContainSingle(r => r == "nginx:1.25");
+      result.UpdatedImageReferences.Should().ContainSingle(r => r == "busybox:stable");
+    }
 
-        [Test]
-        public void UpdateImages_ForReplicationController_ReturnsUpdatedYaml()
-        {
-            const string inputYaml = @"
+    [Test]
+    public void UpdateImages_ForReplicationController_ReturnsUpdatedYaml()
+    {
+      const string inputYaml = @"
 apiVersion: v1
 kind: ReplicationController
 metadata:
@@ -438,7 +443,7 @@ spec:
           command: [""echo"", ""Init container added""]
 
 ";
-            const string expectedYaml = @"
+      const string expectedYaml = @"
 apiVersion: v1
 kind: ReplicationController
 metadata:
@@ -463,21 +468,21 @@ spec:
           command: [""echo"", ""Init container added""]
 
 ";
-            var imageReplacer = new ContainerImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry);
+      var imageReplacer = new ContainerImageReplacer(inputYaml, DefaultContainerRegistry);
 
-            var result = imageReplacer.UpdateImages(imagesToUpdate);
+      var result = imageReplacer.UpdateImages(imagesToUpdate);
 
-            result.UpdatedContents.Should().NotBeNull();
-            result.UpdatedContents.Should().Be(expectedYaml);
-            result.UpdatedImageReferences.Count.Should().Be(2);
-            result.UpdatedImageReferences.Should().ContainSingle(r => r == "nginx:1.25");
-            result.UpdatedImageReferences.Should().ContainSingle(r => r == "busybox:stable");
-        }
+      result.UpdatedContents.Should().NotBeNull();
+      result.UpdatedContents.Should().Be(expectedYaml);
+      result.UpdatedImageReferences.Count.Should().Be(2);
+      result.UpdatedImageReferences.Should().ContainSingle(r => r == "nginx:1.25");
+      result.UpdatedImageReferences.Should().ContainSingle(r => r == "busybox:stable");
+    }
 
-        [Test]
-        public void UpdateImages_TemplateSpecPath_ReturnsUpdatedYaml()
-        {
-            const string inputYaml = @"
+    [Test]
+    public void UpdateImages_TemplateSpecPath_ReturnsUpdatedYaml()
+    {
+      const string inputYaml = @"
 apiVersion: v1
 kind: PodTemplate
 metadata:
@@ -498,7 +503,7 @@ template:
         command: [""echo"", ""Init container added""]
 ";
 
-            const string expectedYaml = @"
+      const string expectedYaml = @"
 apiVersion: v1
 kind: PodTemplate
 metadata:
@@ -518,21 +523,21 @@ template:
         image: busybox:stable #Update Init
         command: [""echo"", ""Init container added""]
 ";
-            var imageReplacer = new ContainerImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry);
+      var imageReplacer = new ContainerImageReplacer(inputYaml, DefaultContainerRegistry);
 
-            var result = imageReplacer.UpdateImages(imagesToUpdate);
+      var result = imageReplacer.UpdateImages(imagesToUpdate);
 
-            result.UpdatedContents.Should().NotBeNull();
-            result.UpdatedContents.Should().Be(expectedYaml);
-            result.UpdatedImageReferences.Count.Should().Be(2);
-            result.UpdatedImageReferences.Should().ContainSingle(r => r == "nginx:1.25");
-            result.UpdatedImageReferences.Should().ContainSingle(r => r == "busybox:stable");
-        }
+      result.UpdatedContents.Should().NotBeNull();
+      result.UpdatedContents.Should().Be(expectedYaml);
+      result.UpdatedImageReferences.Count.Should().Be(2);
+      result.UpdatedImageReferences.Should().ContainSingle(r => r == "nginx:1.25");
+      result.UpdatedImageReferences.Should().ContainSingle(r => r == "busybox:stable");
+    }
 
-        [Test]
-        public void UpdateImages_WithCronJobResource_ReturnsUpdatedYaml()
-        {
-            const string inputYaml = @"
+    [Test]
+    public void UpdateImages_WithCronJobResource_ReturnsUpdatedYaml()
+    {
+      const string inputYaml = @"
 apiVersion: batch/v1
 kind: CronJob
 metadata:
@@ -557,7 +562,7 @@ spec:
               command: [""echo"", ""Init container added""]
           restartPolicy: OnFailure
 ";
-            const string expectedYaml = @"
+      const string expectedYaml = @"
 apiVersion: batch/v1
 kind: CronJob
 metadata:
@@ -582,21 +587,21 @@ spec:
               command: [""echo"", ""Init container added""]
           restartPolicy: OnFailure
 ";
-            var imageReplacer = new ContainerImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry);
+      var imageReplacer = new ContainerImageReplacer(inputYaml, DefaultContainerRegistry);
 
-            var result = imageReplacer.UpdateImages(imagesToUpdate);
+      var result = imageReplacer.UpdateImages(imagesToUpdate);
 
-            result.UpdatedContents.Should().NotBeNull();
-            result.UpdatedContents.Should().Be(expectedYaml);
-            result.UpdatedImageReferences.Count.Should().Be(2);
-            result.UpdatedImageReferences.Should().ContainSingle(r => r == "nginx:1.25");
-            result.UpdatedImageReferences.Should().ContainSingle(r => r == "busybox:stable");
-        }
+      result.UpdatedContents.Should().NotBeNull();
+      result.UpdatedContents.Should().Be(expectedYaml);
+      result.UpdatedImageReferences.Count.Should().Be(2);
+      result.UpdatedImageReferences.Should().ContainSingle(r => r == "nginx:1.25");
+      result.UpdatedImageReferences.Should().ContainSingle(r => r == "busybox:stable");
+    }
 
-        [Test]
-        public void UpdateImages_WithMultipleDocuments_CompletesSuccessfully()
-        {
-            const string inputYaml = @"
+    [Test]
+    public void UpdateImages_WithMultipleDocuments_CompletesSuccessfully()
+    {
+      const string inputYaml = @"
 apiVersion: v1
 kind: Pod
 metadata:
@@ -615,7 +620,7 @@ spec:
   ports:
     - port: 80
 ";
-            const string expectedYaml = @"
+      const string expectedYaml = @"
 apiVersion: v1
 kind: Pod
 metadata:
@@ -634,20 +639,20 @@ spec:
   ports:
     - port: 80
 ";
-            var imageReplacer = new ContainerImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry);
+      var imageReplacer = new ContainerImageReplacer(inputYaml, DefaultContainerRegistry);
 
-            var result = imageReplacer.UpdateImages(imagesToUpdate);
+      var result = imageReplacer.UpdateImages(imagesToUpdate);
 
-            result.UpdatedContents.Should().NotBeNull();
-            result.UpdatedContents.Should().Be(expectedYaml);
-            result.UpdatedImageReferences.Count.Should().Be(1);
-            result.UpdatedImageReferences.Should().ContainSingle(r => r == "nginx:1.25");
-        }
+      result.UpdatedContents.Should().NotBeNull();
+      result.UpdatedContents.Should().Be(expectedYaml);
+      result.UpdatedImageReferences.Count.Should().Be(1);
+      result.UpdatedImageReferences.Should().ContainSingle(r => r == "nginx:1.25");
+    }
 
-        [Test]
-        public void UpdateImages_WithNoChangeToTag_ReturnsNoChanges()
-        {
-            const string inputYaml = @"
+    [Test]
+    public void UpdateImages_WithNoChangeToTag_ReturnsNoChanges()
+    {
+      const string inputYaml = @"
                                       apiVersion: v1
                                       kind: Pod
                                       metadata:
@@ -657,20 +662,20 @@ spec:
                                           - name: nginx
                                             image: nginx:1.19
                                       ";
-            var imageReplacer = new ContainerImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry);
+      var imageReplacer = new ContainerImageReplacer(inputYaml, DefaultContainerRegistry);
 
-            var result = imageReplacer.UpdateImages(new List<ContainerImageReference> { ContainerImageReference.FromReferenceString("nginx:1.19") });
+      var result = imageReplacer.UpdateImages(new List<ContainerImageReference> { ContainerImageReference.FromReferenceString("nginx:1.19") });
 
-            result.UpdatedContents.Should().NotBeNull();
-            result.UpdatedContents.Should().Be(inputYaml);
+      result.UpdatedContents.Should().NotBeNull();
+      result.UpdatedContents.Should().Be(inputYaml);
 
-            result.UpdatedImageReferences.Count.Should().Be(0);
-        }
+      result.UpdatedImageReferences.Count.Should().Be(0);
+    }
 
-        [Test]
-        public void UpdateImages_WithPodUpdatesUsingCustomRegistry_ReturnsUpdatedYaml()
-        {
-            const string inputYaml = @"
+    [Test]
+    public void UpdateImages_WithPodUpdatesUsingCustomRegistry_ReturnsUpdatedYaml()
+    {
+      const string inputYaml = @"
 apiVersion: v1
 kind: Pod
 metadata:
@@ -686,7 +691,7 @@ spec:
       image: busybox:unstable #Update Init
       command: [""echo"", ""Init container added""]
 ";
-            const string expectedYaml = @"
+      const string expectedYaml = @"
 apiVersion: v1
 kind: Pod
 metadata:
@@ -703,28 +708,28 @@ spec:
       command: [""echo"", ""Init container added""]
 ";
 
-            List<ContainerImageReference> customRegistryImagesToUpdate = new List<ContainerImageReference>
-            {
-                // We know this won't be null after parse
-                ContainerImageReference.FromReferenceString("my-custom.io/nginx:1.25"),
-                ContainerImageReference.FromReferenceString("my-custom.io/busybox:stable")
-            };
+      List<ContainerImageReference> customRegistryImagesToUpdate = new List<ContainerImageReference>
+      {
+        // We know this won't be null after parse
+        ContainerImageReference.FromReferenceString("my-custom.io/nginx:1.25"),
+        ContainerImageReference.FromReferenceString("my-custom.io/busybox:stable")
+      };
 
-            var imageReplacer = new ContainerImageReplacer(inputYaml, "my-custom.io");
+      var imageReplacer = new ContainerImageReplacer(inputYaml, "my-custom.io");
 
-            var result = imageReplacer.UpdateImages(customRegistryImagesToUpdate);
+      var result = imageReplacer.UpdateImages(customRegistryImagesToUpdate);
 
-            result.UpdatedContents.Should().NotBeNull();
-            result.UpdatedContents.Should().Be(expectedYaml);
-            result.UpdatedImageReferences.Count.Should().Be(2);
-            result.UpdatedImageReferences.Should().ContainSingle(r => r == "nginx:1.25");
-            result.UpdatedImageReferences.Should().ContainSingle(r => r == "busybox:stable");
-        }
+      result.UpdatedContents.Should().NotBeNull();
+      result.UpdatedContents.Should().Be(expectedYaml);
+      result.UpdatedImageReferences.Count.Should().Be(2);
+      result.UpdatedImageReferences.Should().ContainSingle(r => r == "nginx:1.25");
+      result.UpdatedImageReferences.Should().ContainSingle(r => r == "busybox:stable");
+    }
 
-        [Test]
-        public void UpdateImages_WithPodUpdatesUsingCustomRegistry_OnlyUpdatesCustomMatches()
-        {
-            const string inputYaml = @"
+    [Test]
+    public void UpdateImages_WithPodUpdatesUsingCustomRegistry_OnlyUpdatesCustomMatches()
+    {
+      const string inputYaml = @"
 apiVersion: v1
 kind: Pod
 metadata:
@@ -740,7 +745,7 @@ spec:
       image: busybox:unstable #Update Init
       command: [""echo"", ""Init container added""]
 ";
-            const string expectedYaml = @"
+      const string expectedYaml = @"
 apiVersion: v1
 kind: Pod
 metadata:
@@ -757,22 +762,76 @@ spec:
       command: [""echo"", ""Init container added""]
 ";
 
-            List<ContainerImageReference> customRegistryImagesToUpdate = new List<ContainerImageReference>
-              {
-                // We know this won't be null after parse
-                ContainerImageReference.FromReferenceString("docker.io/nginx:1.25"), //This container should be ignored because it has a fully qualified registry that doesn't match the custom
-                ContainerImageReference.FromReferenceString("my-custom.io/busybox:stable")
-            };
+      List<ContainerImageReference> customRegistryImagesToUpdate = new List<ContainerImageReference>
+      {
+        // We know this won't be null after parse
+        ContainerImageReference.FromReferenceString("docker.io/nginx:1.25"), //This container should be ignored because it has a fully qualified registry that doesn't match the custom
+        ContainerImageReference.FromReferenceString("my-custom.io/busybox:stable")
+      };
 
-            var imageReplacer = new ContainerImageReplacer(inputYaml, "my-custom.io");
+      var imageReplacer = new ContainerImageReplacer(inputYaml, "my-custom.io");
 
-            var result = imageReplacer.UpdateImages(customRegistryImagesToUpdate);
+      var result = imageReplacer.UpdateImages(customRegistryImagesToUpdate);
 
-            result.UpdatedContents.Should().NotBeNull();
-            result.UpdatedContents.Should().Be(expectedYaml);
-            result.UpdatedImageReferences.Count.Should().Be(1);
-            result.UpdatedImageReferences.Should().ContainSingle(r => r == "busybox:stable");
-        }
+      result.UpdatedContents.Should().NotBeNull();
+      result.UpdatedContents.Should().Be(expectedYaml);
+      result.UpdatedImageReferences.Count.Should().Be(1);
+      result.UpdatedImageReferences.Should().ContainSingle(r => r == "busybox:stable");
     }
+
+
+    [Test]
+    public void WhyDoesntGuestBookwork()
+    {
+      var inputYaml = @"
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: guestbook-ui
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: guestbook-ui
+  template:
+    metadata:
+      labels:
+        app: guestbook-ui
+    spec:
+      containers:
+      - image: quay.io/argoprojlabs/argocd-e2e-container:0.1
+        name: guestbook-ui
+        ports:
+        - containerPort: 80";
+
+      var expectedOutput = @"
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: guestbook-ui
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: guestbook-ui
+  template:
+    metadata:
+      labels:
+        app: guestbook-ui
+    spec:
+      containers:
+      - image: quay.io/argoprojlabs/argocd-e2e-container:0.3
+        name: guestbook-ui
+        ports:
+        - containerPort: 80";
+
+      var imageReplacer = new ContainerImageReplacer(inputYaml, "my-custom.io");
+
+      var result = imageReplacer.UpdateImages(new List<ContainerImageReference> { ContainerImageReference.FromReferenceString("quay.io/argoprojlabs/argocd-e2e-container:0.3") });
+      result.UpdatedContents.Should().Be(expectedOutput);
+    }
+  }
 }
 #endif
