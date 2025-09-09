@@ -2,14 +2,18 @@
 #nullable enable
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using Calamari.ArgoCD.Dtos;
 using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.GitHub;
 using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.Conventions;
 
 namespace Calamari.ArgoCD.Conventions
@@ -21,51 +25,68 @@ namespace Calamari.ArgoCD.Conventions
         readonly string packageSubfolder;
         readonly IGitHubPullRequestCreator pullRequestCreator;
         readonly ArgoCommitToGitConfigFactory argoCommitToGitConfigFactory;
+        readonly ICustomPropertiesLoader customPropertiesLoader;
 
-        public UpdateGitRepositoryInstallConvention(ICalamariFileSystem fileSystem, string packageSubfolder, ILog log, IGitHubPullRequestCreator pullRequestCreator,
-                                                    ArgoCommitToGitConfigFactory argoCommitToGitConfigFactory)
+        public UpdateGitRepositoryInstallConvention(ICalamariFileSystem fileSystem,
+                                                    string packageSubfolder,
+                                                    ILog log,
+                                                    IGitHubPullRequestCreator pullRequestCreator,
+                                                    ArgoCommitToGitConfigFactory argoCommitToGitConfigFactory,
+                                                    ICustomPropertiesLoader customPropertiesLoader)
         {
             this.fileSystem = fileSystem;
             this.log = log;
             this.pullRequestCreator = pullRequestCreator;
             this.argoCommitToGitConfigFactory = argoCommitToGitConfigFactory;
+            this.customPropertiesLoader = customPropertiesLoader;
             this.packageSubfolder = packageSubfolder;
         }
-        
+
         public void Install(RunningDeployment deployment)
         {
             Log.Info("Executing Commit To Git operation");
             var actionConfig = argoCommitToGitConfigFactory.Create(deployment);
             var packageFiles = GetReferencedPackageFiles(actionConfig);
-            
-            var repositoryFactory = new RepositoryFactory(log, actionConfig.WorkingDirectory, pullRequestCreator);
 
-            var repositoryIndex = 0;
-            foreach (var argoSource in actionConfig.ArgoSourcesToUpdate)
+            var repositoryFactory = new RepositoryFactory(log, deployment.CurrentDirectory, pullRequestCreator);
+
+            var argoProperties = customPropertiesLoader.Load<ArgoCDCustomPropertiesDto>();
+
+            log.Info($"Found the following applications: '{argoProperties.Applications.Select(a => a.Name).Join(",")}'");
+
+            int repositoryNumber = 1;
+            foreach (var application in argoProperties.Applications)
             {
-                var repoName = repositoryIndex.ToString();
-                Log.Info($"Writing files to git repository for '{argoSource.Url}'");
-                var repository = repositoryFactory.CloneRepository(repoName, argoSource);
-
-                var repositoryFiles = packageFiles.Select(f => new FileCopySpecification(f, repository.WorkingDirectory, argoSource.SubFolder)).ToList();
-                Log.VerboseFormat("Copying files into subfolder '{0}'", argoSource.SubFolder);
-                CopyFiles(repositoryFiles);
-                
-                Log.Info("Staging files in repository");
-                repository.StageFiles(repositoryFiles.Select(fcs => fcs.DestinationRelativePath).ToArray());
-                
-                Log.Info("Commiting changes");
-                if (repository.CommitChanges(actionConfig.CommitSummary, actionConfig.CommitDescription))
+                foreach (var applicationSource in application.Sources)
                 {
-                    Log.Info("Changes were commited, pushing to remote");
-                    repository.PushChanges(actionConfig.RequiresPr, argoSource.BranchName, CancellationToken.None).GetAwaiter().GetResult();    
-                }
-                else
-                {
-                    Log.Info("No changes were commited.");
-                }
+                    Log.Info($"Writing files to repository '{applicationSource.Url}' for '{application.Name}'");
+                    var gitConnection = new GitConnection(applicationSource.Username, applicationSource.Password, applicationSource.Url, new GitBranchName(applicationSource.TargetRevision));
+                    var repository = repositoryFactory.CloneRepository(repositoryNumber.ToString(CultureInfo.InvariantCulture), gitConnection);
 
-                repositoryIndex++;
+                    Log.Info($"Copying files into repository {applicationSource.Url}");
+                    var subFolder = applicationSource.Path ?? String.Empty;
+                    Log.VerboseFormat("Copying files into subfolder '{0}'", subFolder);
+
+                    var repositoryFiles = packageFiles.Select(f => new FileCopySpecification(f, repository.WorkingDirectory, subFolder)).ToList();
+                    Log.VerboseFormat("Copying files into subfolder '{0}'", applicationSource.Path!);
+                    CopyFiles(repositoryFiles);
+
+                    Log.Info("Staging files in repository");
+                    repository.StageFiles(repositoryFiles.Select(fcs => fcs.DestinationRelativePath).ToArray());
+
+                    Log.Info("Commiting changes");
+                    if (repository.CommitChanges(actionConfig.CommitSummary, actionConfig.CommitDescription))
+                    {
+                        Log.Info("Changes were commited, pushing to remote");
+                        repository.PushChanges(actionConfig.RequiresPr, new GitBranchName(applicationSource.TargetRevision), CancellationToken.None).GetAwaiter().GetResult();    
+                    }
+                    else
+                    {
+                        Log.Info("No changes were commited.");
+                    }
+
+                    repositoryNumber++;
+                }     
             }
         }
 
@@ -78,13 +99,13 @@ namespace Calamari.ArgoCD.Conventions
                 fileSystem.CopyFile(file.SourceAbsolutePath, file.DestinationAbsolutePath);
             }
         }
-        
+
         static void EnsureParentDirectoryExists(string filePath)
         {
             var destinationDirectory = Path.GetDirectoryName(filePath);
             if (destinationDirectory != null)
             {
-                Directory.CreateDirectory(destinationDirectory);        
+                Directory.CreateDirectory(destinationDirectory);
             }
         }
         
@@ -95,7 +116,7 @@ namespace Calamari.ArgoCD.Conventions
             log.Info($"Found {filesToApply.Length} files to apply");
             return filesToApply;
         }
-        
+
         IPackageRelativeFile[] SelectFiles(string pathToExtractedPackageFiles, ArgoCommitToGitConfig config)
         {
             var absInputPath = Path.Combine(pathToExtractedPackageFiles, config.InputSubPath);
