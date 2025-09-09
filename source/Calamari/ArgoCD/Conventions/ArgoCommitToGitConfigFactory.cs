@@ -1,20 +1,18 @@
-using System.Collections.Generic;
-using Calamari.ArgoCD.Git;
+using System;
 using Calamari.Common.Commands;
 using Calamari.Common.FeatureToggles;
-using Calamari.Common.Plumbing.Extensions;
-using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes;
 
 namespace Calamari.ArgoCD.Conventions
 {
     public class ArgoCommitToGitConfigFactory
     {
-        readonly ILog log;
+        readonly INonSensitiveVariables nonSensitiveVariables;
 
-        public ArgoCommitToGitConfigFactory(ILog log)
+        public ArgoCommitToGitConfigFactory(INonSensitiveVariables nonSensitiveVariables)
         {
-            this.log = log;
+            this.nonSensitiveVariables = nonSensitiveVariables;
         }
 
         public ArgoCommitToGitConfig Create(RunningDeployment deployment)
@@ -23,8 +21,11 @@ namespace Calamari.ArgoCD.Conventions
             var recursive = deployment.Variables.GetFlag(SpecialVariables.Git.Recursive, false);
             
             var requiresPullRequest = RequiresPullRequest(deployment);
-            var summary = deployment.Variables.GetMandatoryVariable(SpecialVariables.Git.CommitMessageSummary);
-            var description = deployment.Variables.Get(SpecialVariables.Git.CommitMessageDescription) ?? string.Empty;
+
+            // TODO #project-argo-cd-in-octopus: put both types of variables on RunningDeployment and encapsulate so the dev thinks about whether
+            // the variable is sensitive
+            var summary = EvaluateNonsensitiveExpression(nonSensitiveVariables.GetMandatoryVariableRaw(SpecialVariables.Git.CommitMessageSummary));
+            var description = EvaluateNonsensitiveExpression(nonSensitiveVariables.GetRaw(SpecialVariables.Git.CommitMessageDescription) ?? string.Empty);
             
             return new ArgoCommitToGitConfig(
                                            deployment.CurrentDirectory,
@@ -38,6 +39,20 @@ namespace Calamari.ArgoCD.Conventions
         bool RequiresPullRequest(RunningDeployment deployment)
         {
             return OctopusFeatureToggles.ArgoCDCreatePullRequestFeatureToggle.IsEnabled(deployment.Variables) && deployment.Variables.Get(SpecialVariables.Git.CommitMethod) == SpecialVariables.Git.GitCommitMethods.PullRequest;
+        }
+
+        string EvaluateNonsensitiveExpression(string expression)
+        {
+            var result = nonSensitiveVariables.Evaluate(expression, out string error);
+                
+            //We always want to throw when substitution fails
+            if (!string.IsNullOrEmpty(error))
+            {
+                var message = $"Parsing variable with Octostache returned the following error: `{error}`";
+                throw new CommandException($"{message}. This may be due to missing or sensitive variables.");
+            }
+
+            return result;
         }
     }
 }

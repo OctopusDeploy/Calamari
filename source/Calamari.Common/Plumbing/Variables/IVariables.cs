@@ -34,5 +34,6 @@ namespace Calamari.Common.Plumbing.Variables
         string SaveAsString();
 
         string GetMandatoryVariable(string variableName);
+        string GetMandatoryVariableRaw(string variableName);
     }
 }
