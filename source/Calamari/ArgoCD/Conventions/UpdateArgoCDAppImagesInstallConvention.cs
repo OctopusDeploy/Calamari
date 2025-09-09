@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages;
+using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Helm;
 using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Models;
 using Calamari.ArgoCD.Dtos;
 using Calamari.ArgoCD.Git;
@@ -28,7 +29,10 @@ namespace Calamari.ArgoCD.Conventions
         readonly ICommitMessageGenerator commitMessageGenerator;
         readonly ICustomPropertiesLoader customPropertiesLoader;
 
-        public UpdateArgoCDAppImagesInstallConvention(ILog log, IGitHubPullRequestCreator pullRequestCreator, ICalamariFileSystem fileSystem, ArgoCommitToGitConfigFactory argoCommitToGitConfigFactory,
+        public UpdateArgoCDAppImagesInstallConvention(ILog log,
+                                                      IGitHubPullRequestCreator pullRequestCreator,
+                                                      ICalamariFileSystem fileSystem,
+                                                      ArgoCommitToGitConfigFactory argoCommitToGitConfigFactory,
                                                       ICommitMessageGenerator commitMessageGenerator,
                                                       ICustomPropertiesLoader customPropertiesLoader)
         {
@@ -46,46 +50,94 @@ namespace Calamari.ArgoCD.Conventions
             var repositoryFactory = new RepositoryFactory(log, deployment.CurrentDirectory, pullRequestCreator);
             var packageReferences = deployment.Variables.GetContainerPackageNames().Select(p => ContainerImageReference.FromReferenceString(p)).ToList();
             var argoProperties = customPropertiesLoader.Load<ArgoCDCustomPropertiesDto>();
-            
+
             int repositoryNumber = 1;
+            var updatedApplications = new List<string>();
+            var newImagesWritten = new HashSet<string>();
+            var gitReposUpdated = new HashSet<Uri>();
+            var updatedFiles = new HashSet<string>();
+
             foreach (var application in argoProperties.Applications)
             {
-                foreach (var applicationSource in application.Sources)
+                // update the directory apps, THEN do the reference work - needs to work more like the Server Solution
+                var directorySources = application.Sources.Where(s => s.SourceType.Equals("DirectorySource", StringComparison.OrdinalIgnoreCase));
+                foreach (var applicationSource in directorySources)
                 {
+                    var repoPath = repositoryNumber++.ToString(CultureInfo.InvariantCulture);
                     Log.Info($"Writing files to git repository for '{applicationSource.Url}'");
                     var gitConnection = new GitConnection(applicationSource.Username, applicationSource.Password, applicationSource.Url, new GitBranchName(applicationSource.TargetRevision));
-                    var repository = repositoryFactory.CloneRepository(repositoryNumber.ToString(CultureInfo.InvariantCulture), gitConnection);
-                    
-                    var subFolder = applicationSource.Path ?? String.Empty;
+                    var repository = repositoryFactory.CloneRepository(repoPath, gitConnection);
 
-                    var (updatedFiles, updatedImages) = HandleDirectorySource(repository.WorkingDirectory, subFolder, application.DefaultRegistry, packageReferences);
+                    var updatedImages = HandleBasicSource(repository,
+                                                          application.DefaultRegistry,
+                                                          applicationSource,
+                                                          packageReferences,
+                                                          actionConfig);
+                    newImagesWritten.UnionWith(updatedImages);
+                }
 
-                    if (updatedFiles.Count > 0)
-                    {
-                        Log.Info("Staging files in repository");
-                        repository.StageFiles(updatedFiles.ToArray());
-
-                        var commitMessage = commitMessageGenerator.GenerateForImageUpdates(new GitCommitSummary(actionConfig.CommitSummary), actionConfig.CommitDescription, updatedImages);
-
-                        Log.Info("Commiting changes");
-                        if (repository.CommitChanges(commitMessage))
-                        {
-                            Log.Info("Changes were commited, pushing to remote");
-                            repository.PushChanges(actionConfig.RequiresPr, new GitBranchName(applicationSource.TargetRevision), CancellationToken.None).GetAwaiter().GetResult();
-                        }
-                        else
-                        {
-                            Log.Info("No changes were commited.");
-                        }
-                    }
+                foreach (var key in application.HelmAnnotations.Keys)
+                {
+                    var repoPath = repositoryNumber++.ToString(CultureInfo.InvariantCulture);
+                    var (files, images) = HandleHelmSource(application,
+                                                           repositoryFactory,
+                                                           key,
+                                                           application.HelmAnnotations[key],
+                                                           packageReferences,
+                                                           actionConfig,
+                                                           repoPath);
                 }
             }
         }
 
-        (HashSet<string>, HashSet<string>) HandleDirectorySource(string rootPath,
-                                                       string subFolder,
-                                                       string defaultRegistry,
-                                                       List<ContainerImageReference> imagesToUpdate)
+        HashSet<string> HandleBasicSource(RepositoryWrapper repository,
+                                          string defaultRegistry,
+                                          ArgoCDApplicationSourceDto applicationSource,
+                                          List<ContainerImageReference> packageReferences,
+                                          IGitCommitParameters actionConfig)
+        {
+            var subFolder = applicationSource.Path ?? String.Empty;
+            var (updatedFiles, updatedImages) = UpdateKubernetesYaml(repository.WorkingDirectory, subFolder, defaultRegistry, packageReferences);
+
+            if (updatedFiles.Count > 0)
+            {
+                PushToRemote(repository,
+                             new GitBranchName(applicationSource.TargetRevision),
+                             actionConfig,
+                             updatedFiles,
+                             updatedImages);
+            }
+
+            return updatedImages;
+        }
+
+        void PushToRemote(RepositoryWrapper repository,
+                          GitBranchName branchName,
+                          IGitCommitParameters commitParameters,
+                          HashSet<string> updatedFiles,
+                          HashSet<string> updatedImages)
+        {
+            Log.Info("Staging files in repository");
+            repository.StageFiles(updatedFiles.ToArray());
+
+            var commitMessage = commitMessageGenerator.GenerateForImageUpdates(new GitCommitSummary(commitParameters.CommitSummary), commitParameters.CommitDescription, updatedImages);
+
+            Log.Info("Commiting changes");
+            if (repository.CommitChanges(commitMessage))
+            {
+                Log.Info("Changes were commited, pushing to remote");
+                repository.PushChanges(commitParameters.RequiresPr, branchName, CancellationToken.None).GetAwaiter().GetResult();
+            }
+            else
+            {
+                Log.Info("No changes were commited.");
+            }
+        }
+
+        (HashSet<string>, HashSet<string>) UpdateKubernetesYaml(string rootPath,
+                                                                string subFolder,
+                                                                string defaultRegistry,
+                                                                List<ContainerImageReference> imagesToUpdate)
         {
             var absSubFolder = Path.Combine(rootPath, subFolder);
             var yamlFiles = FindYamlFiles(absSubFolder);
@@ -95,7 +147,7 @@ namespace Calamari.ArgoCD.Conventions
             foreach (var file in yamlFiles)
             {
                 var relativePath = Path.GetRelativePath(rootPath, file);
-                log.Verbose($"Processing file {relativePath}.");    
+                log.Verbose($"Processing file {relativePath}.");
                 var fileContent = fileSystem.ReadFile(file);
 
                 var imageReplacer = new ContainerImageReplacer(fileContent, defaultRegistry);
@@ -120,30 +172,90 @@ namespace Calamari.ArgoCD.Conventions
 
             return (updatedFiles, updatedImages);
         }
-        
-        HelmRefUpdatedResult HandleHelmSource(ArgoCDApplicationToUpdate app, string refKey, List<string> imagePathAnnotations, IArgoCDHelmVariablesImageUpdater imageUpdater, ArgoCDUpdateActionVariables stepVariables,
-                                                                 ILog log, CancellationToken ct)
+
+        //This replicates ArgoCDHelmVariablesImageUpdater.UpdateImages
+        HelmRefUpdatedResult HandleHelmSource(ArgoCDApplicationDto app,
+                                              RepositoryFactory repositoryFactory,
+                                              string refKey,
+                                              List<string> imagePathAnnotations,
+                                              List<ContainerImageReference> imagesToUpdate,
+                                              IGitCommitParameters commitParams,
+                                              string repoPath)
         {
             try
             {
-                var helmUpdateResult = imageUpdater.UpdateImages(app,
-                                                                       refKey,
-                                                                       imagePathAnnotations,
-                                                                       stepVariables.ImageReferences,
-                                                                       stepVariables.CommitMessageSummary,
-                                                                       stepVariables.CommitMessageDescription,
-                                                                       stepVariables.CreatePullRequest,
-                                                                       log,
-                                                                       ct).GetAwaiter().GetResult();
+                var helmValuesRef = GetHelmImageReference(refKey, app);
+                var repository = repositoryFactory.CloneRepository(repoPath, helmValuesRef.GitConnection);
+                log.Info($"Processing file at {helmValuesRef.Path}.");
+                var valuesFilePath = Path.Combine(repoPath, helmValuesRef.Path);
+                var fileContent = fileSystem.ReadFile(valuesFilePath);
 
-                return helmUpdateResult;
+                var helmImageReplacer = new HelmContainerImageReplacer(fileContent, app.DefaultRegistry, imagePathAnnotations);
+                var imageUpdateResult = helmImageReplacer.UpdateImages(imagesToUpdate);
+
+                if (imageUpdateResult.UpdatedImageReferences.Count > 0)
+                {
+                    try
+                    {
+                        fileSystem.OverwriteFile(fileContent, imageUpdateResult.UpdatedContents);
+                        PushToRemote(repository,
+                                     helmValuesRef.GitConnection.BranchName,
+                                     commitParams,
+                                     new HashSet<string>() { helmValuesRef.Path },
+                                     imageUpdateResult.UpdatedImageReferences);
+
+                        return new HelmRefUpdatedResult(helmValuesRef.GitConnection.Url, imageUpdateResult.UpdatedImageReferences);
+                    }
+                    catch (Exception ex)
+                    {
+                        log.Error($"Failed to commit changes to the Git Repository: {ex.Message}");
+                        throw;
+                    }
+                }
+
+                return new HelmRefUpdatedResult(helmValuesRef.GitConnection.Url, new HashSet<string>()); // Nothing was changed
             }
             catch (Exception ex)
             {
-                throw new ActivityFailedException($"Failed to update Helm images for Argo CD app {app.Application.Name}.", ex);
+                throw new CommandException($"Failed to update Helm images for Argo CD app {app.Name}.", ex);
             }
         }
-        
+
+        static HelmValueFileReference GetHelmImageReference(string refKey, ArgoCDApplicationDto app)
+        {
+            var valueFileReference = app.Sources.Where(s => s.SourceType.Equals("Helm"))
+                                        .Select(h => h.Path)
+                                        .Distinct()
+                                        .Where(vf => vf.StartsWith('$'))
+                                        .Select(vf => new
+                                        {
+                                            RefName = vf.Split('/')[0].TrimStart('$'),
+                                            Path = vf.Substring(vf.IndexOf('/') + 1),
+                                            FullReference = vf
+                                        })
+                                        .Join(
+                                              app.Sources.Where(s => s.SourceType.Equals("Ref")).Where(r => r.Path == refKey), //TODO(tmm): part of the hack
+                                              valueFile => valueFile.RefName,
+                                              refSource => refSource.Path, //TODO(tmm): This is a hack to handle the fact that Ref-sources don't _really_ fit into our DTO
+                                              (valueFile, refSource) => new HelmValueFileReference(
+                                                                                                   valueFile.Path,
+                                                                                                   valueFile.FullReference,
+                                                                                                   new GitConnection(
+                                                                                                                     refSource.Username,
+                                                                                                                     refSource.Password,
+                                                                                                                     refSource.Url,
+                                                                                                                     new GitBranchName(refSource.TargetRevision)
+                                                                                                                    ))
+                                             )
+                                        .FirstOrDefault();
+
+            if (valueFileReference == null)
+            {
+                throw new InvalidOperationException(refKey);
+            }
+
+            return valueFileReference;
+        }
 
         //NOTE: rootPath needs to include the subfolder
         IEnumerable<string> FindYamlFiles(string rootPath)

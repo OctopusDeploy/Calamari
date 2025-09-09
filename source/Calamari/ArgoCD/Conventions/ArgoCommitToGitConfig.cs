@@ -1,6 +1,13 @@
 namespace Calamari.ArgoCD.Conventions
 {
-    public class ArgoCommitToGitConfig
+    public interface IGitCommitParameters
+    {
+        public string CommitSummary { get; }
+        public string CommitDescription { get; }
+        public bool RequiresPr { get; }
+    }
+    
+    public class ArgoCommitToGitConfig : IGitCommitParameters
     {
         public ArgoCommitToGitConfig(string workingDirectory, string inputSubPath, bool recurseInputPath, string commitSummary, string commitDescription,
                                    bool requiresPr)

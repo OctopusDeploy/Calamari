@@ -1,3 +1,4 @@
+#if NET
 #nullable enable
 using System;
 using System.Collections.Generic;
@@ -180,3 +181,4 @@ namespace Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Helm
         }
     }
 }
+#endif

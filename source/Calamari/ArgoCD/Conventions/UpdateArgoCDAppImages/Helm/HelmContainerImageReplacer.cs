@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Models;
-using Octopus.Core.Features.Kubernetes.ArgoCD.Helm;
 
 namespace Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Helm
 {

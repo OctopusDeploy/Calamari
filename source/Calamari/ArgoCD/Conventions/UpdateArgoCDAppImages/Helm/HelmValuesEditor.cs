@@ -1,35 +1,39 @@
-using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Helm;
+#if NET
+using System;
 using Octostache;
 
-namespace Octopus.Core.Features.Kubernetes.ArgoCD.Helm;
-
-public class HelmValuesEditor
+namespace Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Helm
 {
-    /// <summary>
-    /// Converts YAML into a Variable Dictionary that can be used to resolve the value of
-    /// a dot-notation path and used with HelmTemplate/Octostache syntax.
-    /// </summary>
-    public static VariableDictionary GenerateVariableDictionary(HelmYamlParser parsedYaml)
+    public class HelmValuesEditor
     {
-        var allValuesPaths = parsedYaml.CreateDotPathsForNodes();
-
-        var variableDictionary = new VariableDictionary();
-        foreach (var path in allValuesPaths)
+        /// <summary>
+        /// Converts YAML into a Variable Dictionary that can be used to resolve the value of
+        /// a dot-notation path and used with HelmTemplate/Octostache syntax.
+        /// </summary>
+        public static VariableDictionary GenerateVariableDictionary(HelmYamlParser parsedYaml)
         {
-            var value = parsedYaml.GetValueAtPath(path);
-            variableDictionary.Set(path, value);
+            var allValuesPaths = parsedYaml.CreateDotPathsForNodes();
+
+            var variableDictionary = new VariableDictionary();
+            foreach (var path in allValuesPaths)
+            {
+                var value = parsedYaml.GetValueAtPath(path);
+                variableDictionary.Set(path, value);
+            }
+
+            return variableDictionary;
         }
 
-        return variableDictionary;
-    }
-    
-    /// <summary>
-    /// Updates the value of yaml a node and returns it as a strung (preserving formatting).
-    /// </summary>
-    public static string UpdateNodeValue(string yamlContent, string path, string newValue)
-    {
-        // Recreates HelmYamlParser rather than pass in because we maintain state as a string rather than yaml to preserve formatting.
-        var yamlProcessor = new HelmYamlParser(yamlContent);
-        return yamlProcessor.UpdateContentForPath(path, newValue);
+        /// <summary>
+        /// Updates the value of yaml a node and returns it as a strung (preserving formatting).
+        /// </summary>
+        public static string UpdateNodeValue(string yamlContent, string path, string newValue)
+        {
+            // Recreates HelmYamlParser rather than pass in because we maintain state as a string rather than yaml to preserve formatting.
+            var yamlProcessor = new HelmYamlParser(yamlContent);
+            return yamlProcessor.UpdateContentForPath(path, newValue);
+        }
     }
 }
+
+#endif
