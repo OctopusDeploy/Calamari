@@ -2,8 +2,6 @@ using System.Collections.Generic;
 using Calamari.ArgoCD.Git;
 using Calamari.Common.Commands;
 using Calamari.Common.FeatureToggles;
-using Calamari.Common.Plumbing.Extensions;
-using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes;
 
@@ -11,12 +9,10 @@ namespace Calamari.ArgoCD.Conventions
 {
     public class ArgoCommitToGitConfigFactory
     {
-        readonly ILog log;
         readonly INonSensitiveVariables nonSensitiveVariables;
 
-        public ArgoCommitToGitConfigFactory(ILog log, INonSensitiveVariables nonSensitiveVariables)
+        public ArgoCommitToGitConfigFactory(INonSensitiveVariables nonSensitiveVariables)
         {
-            this.log = log;
             this.nonSensitiveVariables = nonSensitiveVariables;
         }
 
@@ -27,6 +23,8 @@ namespace Calamari.ArgoCD.Conventions
             
             var requiresPullRequest = RequiresPullRequest(deployment);
 
+            // TODO #project-argo-cd-in-octopus: put both types of variables on RunningDeployment and encapsulate so the dev thinks about whether
+            // the variable is sensitive
             var summary = nonSensitiveVariables.GetMandatoryVariable(SpecialVariables.Git.CommitMessageSummary);
             var description = nonSensitiveVariables.Get(SpecialVariables.Git.CommitMessageDescription) ?? string.Empty;
             

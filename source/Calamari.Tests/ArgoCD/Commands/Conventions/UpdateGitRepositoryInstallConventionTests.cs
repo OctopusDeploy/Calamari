@@ -78,7 +78,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
 
             var customPropertiesLoader = SetupCustomPropertiesLoader();
 
-            var convention = new UpdateGitRepositoryInstallConvention(fileSystem, CommitToGitCommand.PackageDirectoryName, log, Substitute.For<IGitHubPullRequestCreator>(), new ArgoCommitToGitConfigFactory(log, nonSensitiveCalamariVariables), customPropertiesLoader);
+            var convention = new UpdateGitRepositoryInstallConvention(fileSystem, CommitToGitCommand.PackageDirectoryName, log, Substitute.For<IGitHubPullRequestCreator>(), new ArgoCommitToGitConfigFactory(nonSensitiveCalamariVariables), customPropertiesLoader);
             convention.Install(runningDeployment);
 
             var resultPath = CloneOrigin();
@@ -126,7 +126,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             
             var customPropertiesLoader = SetupCustomPropertiesLoader();
 
-            var convention = new UpdateGitRepositoryInstallConvention(fileSystem, CommitToGitCommand.PackageDirectoryName, log, Substitute.For<IGitHubPullRequestCreator>(), new ArgoCommitToGitConfigFactory(log, nonSensitiveCalamariVariables), customPropertiesLoader);
+            var convention = new UpdateGitRepositoryInstallConvention(fileSystem, CommitToGitCommand.PackageDirectoryName, log, Substitute.For<IGitHubPullRequestCreator>(), new ArgoCommitToGitConfigFactory(nonSensitiveCalamariVariables), customPropertiesLoader);
             convention.Install(runningDeployment);
             
             var resultPath = CloneOrigin();
