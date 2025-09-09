@@ -4,14 +4,14 @@
         <AssemblyName>Calamari.GoogleCloudScripting</AssemblyName>
         <OutputType>Exe</OutputType>
         <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
-        <LangVersion>8</LangVersion>
+        <LangVersion>10</LangVersion>
         <IsPackable>false</IsPackable>
         <ValidateExecutableReferencesMatchSelfContained>false</ValidateExecutableReferencesMatchSelfContained>
-        <TargetFrameworks>net462;net6.0</TargetFrameworks>
+        <TargetFramework>net6.0</TargetFramework>
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Calamari.GoogleCloudAccounts\Calamari.GoogleCloudAccounts.csproj" />
-        <ProjectReference Include="..\Calamari.Scripting\Calamari.Scripting.csproj" />
+        <ProjectReference Include="..\Calamari.GoogleCloudAccounts\Calamari.GoogleCloudAccounts.csproj"/>
+        <ProjectReference Include="..\Calamari.Scripting\Calamari.Scripting.csproj"/>
     </ItemGroup>
 </Project>
