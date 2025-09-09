@@ -1,6 +1,8 @@
+using System;
+
 #if NET
 
-namespace Octopus.Core.Features.Kubernetes.ArgoCD.Models
+namespace Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Models
 {
     public record HelmValueFileReference(string Path, string FullReference, ArgoCDRefApplicationSource RefSource);    
 }

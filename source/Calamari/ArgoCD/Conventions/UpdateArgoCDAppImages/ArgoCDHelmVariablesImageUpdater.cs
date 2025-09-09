@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Helm;
 using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Models;
 using Calamari.Common.Plumbing.Logging;
-using Octopus.Core.Features.Kubernetes.ArgoCD.Models;
 
 namespace Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages
 {
@@ -27,8 +26,15 @@ namespace Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages
                                                 CancellationToken ct);
     }
 
-    public class ArgoCDHelmVariablesImageUpdater(IGitOpsRepositoryFactory gitOpsRepositoryFactory) : IArgoCDHelmVariablesImageUpdater
+    public class ArgoCDHelmVariablesImageUpdater : IArgoCDHelmVariablesImageUpdater
     {
+        IGitOpsRepositoryFactory gitOpsRepositoryFactory1;
+
+        public ArgoCDHelmVariablesImageUpdater(IGitOpsRepositoryFactory gitOpsRepositoryFactory)
+        {
+            gitOpsRepositoryFactory1 = gitOpsRepositoryFactory;
+        }
+
         static HelmValueFileReference GetHelmImageReference(string refKey, ArgoCDApplicationToUpdate app)
         {
             var valueFileReference = app.Application.ApplicationSources.OfType<ArgoCDHelmApplicationSource>()
@@ -74,7 +80,7 @@ namespace Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages
             // Get the specified Ref soruce from the application.
             var helmValuesRef = GetHelmImageReference(refKey, app);
 
-            var repository = await gitOpsRepositoryFactory.Create(new ArgoCDImageUpdateTarget(helmValuesRef.RefSource.Ref,
+            var repository = await gitOpsRepositoryFactory1.Create(new ArgoCDImageUpdateTarget(helmValuesRef.RefSource.Ref,
                                                                                               app.DefaultClusterRegistry,
                                                                                               "./",
                                                                                               helmValuesRef.RefSource.RepositoryUrl,

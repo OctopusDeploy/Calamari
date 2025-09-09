@@ -12,13 +12,10 @@ using Calamari.ArgoCD.Dtos;
 using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.GitHub;
 using Calamari.Common.Commands;
-using Calamari.Common.FeatureToggles;
-using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.Conventions;
-using Calamari.Kubernetes;
 
 namespace Calamari.ArgoCD.Conventions
 {
@@ -125,19 +122,19 @@ namespace Calamari.ArgoCD.Conventions
         }
         
         HelmRefUpdatedResult HandleHelmSource(ArgoCDApplicationToUpdate app, string refKey, List<string> imagePathAnnotations, IArgoCDHelmVariablesImageUpdater imageUpdater, ArgoCDUpdateActionVariables stepVariables,
-                                                                 ITaskLog taskLog, CancellationToken ct)
+                                                                 ILog log, CancellationToken ct)
         {
             try
             {
-                var helmUpdateResult = await imageUpdater.UpdateImages(app,
+                var helmUpdateResult = imageUpdater.UpdateImages(app,
                                                                        refKey,
                                                                        imagePathAnnotations,
                                                                        stepVariables.ImageReferences,
                                                                        stepVariables.CommitMessageSummary,
                                                                        stepVariables.CommitMessageDescription,
                                                                        stepVariables.CreatePullRequest,
-                                                                       taskLog,
-                                                                       ct);
+                                                                       log,
+                                                                       ct).GetAwaiter().GetResult();
 
                 return helmUpdateResult;
             }
