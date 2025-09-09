@@ -10,7 +10,6 @@ using Calamari.ArgoCD.GitHub;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
-using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.Conventions;
 
 namespace Calamari.ArgoCD.Conventions
@@ -22,20 +21,17 @@ namespace Calamari.ArgoCD.Conventions
         readonly string packageSubfolder;
         readonly IGitHubPullRequestCreator pullRequestCreator;
         readonly ArgoCommitToGitConfigFactory argoCommitToGitConfigFactory;
-        readonly INonSensitiveVariables nonSensitiveVariables;
 
         public UpdateGitRepositoryInstallConvention(ICalamariFileSystem fileSystem,
                                                     string packageSubfolder,
                                                     ILog log,
                                                     IGitHubPullRequestCreator pullRequestCreator,
-                                                    ArgoCommitToGitConfigFactory argoCommitToGitConfigFactory,
-                                                    INonSensitiveVariables nonSensitiveVariables)
+                                                    ArgoCommitToGitConfigFactory argoCommitToGitConfigFactory)
         {
             this.fileSystem = fileSystem;
             this.log = log;
             this.pullRequestCreator = pullRequestCreator;
             this.argoCommitToGitConfigFactory = argoCommitToGitConfigFactory;
-            this.nonSensitiveVariables = nonSensitiveVariables;
             this.packageSubfolder = packageSubfolder;
         }
         

@@ -77,7 +77,7 @@ namespace Calamari.ArgoCD.Commands
                                                   d.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
                                               }),
                 new SubstituteInFilesConvention(new NonSensitiveSubstituteInFilesBehaviour(substituteInFiles, PackageDirectoryName)),
-                new UpdateGitRepositoryInstallConvention(fileSystem, PackageDirectoryName, log, pullRequestCreator, configFactory, nonSensitiveVariables),
+                new UpdateGitRepositoryInstallConvention(fileSystem, PackageDirectoryName, log, pullRequestCreator, configFactory),
             };
 
             var runningDeployment = new RunningDeployment(pathToPackage, variables);

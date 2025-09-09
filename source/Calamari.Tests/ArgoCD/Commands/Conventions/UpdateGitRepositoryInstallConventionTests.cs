@@ -1,6 +1,7 @@
 #if NET
 using System;
 using System.IO;
+using System.Linq;
 using Calamari.ArgoCD.Commands;
 using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Git;
@@ -40,7 +41,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             tempDirectory = fileSystem.CreateTemporaryDirectory();
             Directory.CreateDirectory(PackageDirectory);
 
-            Repository BareOrigin = RepositoryHelpers.CreateBareRepository(OriginPath);
+            RepositoryHelpers.CreateBareRepository(OriginPath);
             RepositoryHelpers.CreateBranchIn(argoCdBranchName, OriginPath);
         }
         
@@ -59,24 +60,29 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             const string nestedFilename = "nested/second.yaml";
             CreateFileUnderPackageDirectory(nestedFilename);
             
-            var variables = new CalamariVariables
+            var allVariables = new CalamariVariables
+            {
+                [SpecialVariables.Git.Password("repo_name")] = "password",
+                [SpecialVariables.Git.Username("repo_name")] = "username",
+            };
+            var nonSensitiveCalamariVariables = new NonSensitiveCalamariVariables()
             {
                 [KnownVariables.OriginalPackageDirectoryPath] = WorkingDirectory,
                 [SpecialVariables.Git.InputPath] = "",
                 [SpecialVariables.Git.SubFolder("repo_name")] = "",
-                [SpecialVariables.Git.Password("repo_name")] = "password",
-                [SpecialVariables.Git.Username("repo_name")] = "username",
                 [SpecialVariables.Git.Url("repo_name")] = OriginPath,
                 [SpecialVariables.Git.BranchName("repo_name")] = argoCdBranchName.Value,
                 [SpecialVariables.Git.Recursive] = "True",
                 [SpecialVariables.Git.CommitMethod] = "DirectCommit",
                 [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this"
             };
-            var runningDeployment = new RunningDeployment("./arbitraryFile.txt", variables);
+            allVariables.Merge(nonSensitiveCalamariVariables);
+
+            var runningDeployment = new RunningDeployment("./arbitraryFile.txt", allVariables);
             runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
             runningDeployment.StagingDirectory = WorkingDirectory;
             
-            var convention = new UpdateGitRepositoryInstallConvention(fileSystem, CommitToGitCommand.PackageDirectoryName, log, Substitute.For<IGitHubPullRequestCreator>(), new ArgoCommitToGitConfigFactory(log));
+            var convention = new UpdateGitRepositoryInstallConvention(fileSystem, CommitToGitCommand.PackageDirectoryName, log, Substitute.For<IGitHubPullRequestCreator>(), new ArgoCommitToGitConfigFactory(log, nonSensitiveCalamariVariables));
             convention.Install(runningDeployment);
 
             var resultPath = CloneOrigin();
@@ -94,24 +100,29 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             const string nestedFilename = "nested/second.yaml";
             CreateFileUnderPackageDirectory(nestedFilename);
             
-            var variables = new CalamariVariables
+            var allVariables = new CalamariVariables
+            {
+                [SpecialVariables.Git.Password("repo_name")] = "password",
+                [SpecialVariables.Git.Username("repo_name")] = "username",
+            };
+            var nonSensitiveCalamariVariables = new NonSensitiveCalamariVariables()
             {
                 [KnownVariables.OriginalPackageDirectoryPath] = WorkingDirectory,
                 [SpecialVariables.Git.InputPath] = "",
                 [SpecialVariables.Git.SubFolder("repo_name")] = "",
-                [SpecialVariables.Git.Password("repo_name")] = "password",
-                [SpecialVariables.Git.Username("repo_name")] = "username",
                 [SpecialVariables.Git.Url("repo_name")] = OriginPath,
                 [SpecialVariables.Git.BranchName("repo_name")] = argoCdBranchName.Value,
                 [SpecialVariables.Git.Recursive] = "False",
                 [SpecialVariables.Git.CommitMethod] = "DirectCommit",
                 [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this"
             };
-            var runningDeployment = new RunningDeployment("./arbitraryFile.txt", variables);
+            allVariables.Merge(nonSensitiveCalamariVariables);
+
+            var runningDeployment = new RunningDeployment("./arbitraryFile.txt", allVariables);
             runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
-            runningDeployment.StagingDirectory = WorkingDirectory;    
-            
-            var convention = new UpdateGitRepositoryInstallConvention(fileSystem, CommitToGitCommand.PackageDirectoryName, log, Substitute.For<IGitHubPullRequestCreator>(), new ArgoCommitToGitConfigFactory(log));
+            runningDeployment.StagingDirectory = WorkingDirectory;
+
+            var convention = new UpdateGitRepositoryInstallConvention(fileSystem, CommitToGitCommand.PackageDirectoryName, log, Substitute.For<IGitHubPullRequestCreator>(), new ArgoCommitToGitConfigFactory(log, nonSensitiveCalamariVariables));
             convention.Install(runningDeployment);
             
             var resultPath = CloneOrigin();

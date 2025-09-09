@@ -4,6 +4,7 @@ using Calamari.Common.Commands;
 using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes;
 
 namespace Calamari.ArgoCD.Conventions
@@ -11,10 +12,12 @@ namespace Calamari.ArgoCD.Conventions
     public class ArgoCommitToGitConfigFactory
     {
         readonly ILog log;
+        readonly INonSensitiveVariables nonSensitiveVariables;
 
-        public ArgoCommitToGitConfigFactory(ILog log)
+        public ArgoCommitToGitConfigFactory(ILog log, INonSensitiveVariables nonSensitiveVariables)
         {
             this.log = log;
+            this.nonSensitiveVariables = nonSensitiveVariables;
         }
 
         public ArgoCommitToGitConfig Create(RunningDeployment deployment)
@@ -24,8 +27,8 @@ namespace Calamari.ArgoCD.Conventions
             
             var requiresPullRequest = RequiresPullRequest(deployment);
 
-            var summary = deployment.GetMandatoryNonSensitiveVariable(SpecialVariables.Git.CommitMessageSummary);
-            var description = deployment.GetNonSensitiveVariable(SpecialVariables.Git.CommitMessageDescription) ?? string.Empty;
+            var summary = nonSensitiveVariables.GetMandatoryVariable(SpecialVariables.Git.CommitMessageSummary);
+            var description = nonSensitiveVariables.Get(SpecialVariables.Git.CommitMessageDescription) ?? string.Empty;
             
             var repositoryIndexes = deployment.Variables.GetIndexes(SpecialVariables.Git.Index);
             log.Info($"Found the following repository indicies '{repositoryIndexes.Join(",")}'");
