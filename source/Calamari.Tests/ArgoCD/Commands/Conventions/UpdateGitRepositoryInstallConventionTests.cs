@@ -61,11 +61,6 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             const string nestedFilename = "nested/second.yaml";
             CreateFileUnderPackageDirectory(nestedFilename);
             
-            var allVariables = new CalamariVariables
-            {
-                [SpecialVariables.Git.Password("repo_name")] = "password",
-                [SpecialVariables.Git.Username("repo_name")] = "username",
-            };
             var nonSensitiveCalamariVariables = new NonSensitiveCalamariVariables()
             {
                 [KnownVariables.OriginalPackageDirectoryPath] = WorkingDirectory,
@@ -74,6 +69,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                 [SpecialVariables.Git.CommitMethod] = "DirectCommit",
                 [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this"
             };
+            var allVariables = new CalamariVariables();
             allVariables.Merge(nonSensitiveCalamariVariables);
 
             var runningDeployment = new RunningDeployment("./arbitraryFile.txt", allVariables);
@@ -113,11 +109,6 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             const string nestedFilename = "nested/second.yaml";
             CreateFileUnderPackageDirectory(nestedFilename);
             
-            var allVariables = new CalamariVariables
-            {
-                [SpecialVariables.Git.Password("repo_name")] = "password",
-                [SpecialVariables.Git.Username("repo_name")] = "username",
-            };
             var nonSensitiveCalamariVariables = new NonSensitiveCalamariVariables()
             {
                 [KnownVariables.OriginalPackageDirectoryPath] = WorkingDirectory,
@@ -126,6 +117,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                 [SpecialVariables.Git.CommitMethod] = "DirectCommit",
                 [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this"
             };
+            var allVariables = new CalamariVariables();
             allVariables.Merge(nonSensitiveCalamariVariables);
 
             var runningDeployment = new RunningDeployment("./arbitraryFile.txt", allVariables);
