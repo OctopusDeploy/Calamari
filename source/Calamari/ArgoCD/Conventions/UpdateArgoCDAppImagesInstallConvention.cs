@@ -55,14 +55,13 @@ namespace Calamari.ArgoCD.Conventions
             {
                 foreach (var applicationSource in application.Sources)
                 {
-                    var repoName = repositoryNumber.ToString();
                     Log.Info($"Writing files to git repository for '{applicationSource.Url}'");
                     var gitConnection = new GitConnection(applicationSource.Username, applicationSource.Password, applicationSource.Url, new GitBranchName(applicationSource.TargetRevision));
                     var repository = repositoryFactory.CloneRepository(repositoryNumber.ToString(CultureInfo.InvariantCulture), gitConnection);
                     
                     var subFolder = applicationSource.Path ?? String.Empty;
 
-                    var (updatedFiles, updatedImages) = UpdateFiles(repository.WorkingDirectory, subFolder, application.DefaultRegistry, packageReferences);
+                    var (updatedFiles, updatedImages) = HandleDirectorySource(repository.WorkingDirectory, subFolder, application.DefaultRegistry, packageReferences);
 
                     if (updatedFiles.Count > 0)
                     {
@@ -86,7 +85,7 @@ namespace Calamari.ArgoCD.Conventions
             }
         }
 
-        (HashSet<string>, HashSet<string>) UpdateFiles(string rootPath,
+        (HashSet<string>, HashSet<string>) HandleDirectorySource(string rootPath,
                                                        string subFolder,
                                                        string defaultRegistry,
                                                        List<ContainerImageReference> imagesToUpdate)
@@ -124,6 +123,30 @@ namespace Calamari.ArgoCD.Conventions
 
             return (updatedFiles, updatedImages);
         }
+        
+        HelmRefUpdatedResult HandleHelmSource(ArgoCDApplicationToUpdate app, string refKey, List<string> imagePathAnnotations, IArgoCDHelmVariablesImageUpdater imageUpdater, ArgoCDUpdateActionVariables stepVariables,
+                                                                 ITaskLog taskLog, CancellationToken ct)
+        {
+            try
+            {
+                var helmUpdateResult = await imageUpdater.UpdateImages(app,
+                                                                       refKey,
+                                                                       imagePathAnnotations,
+                                                                       stepVariables.ImageReferences,
+                                                                       stepVariables.CommitMessageSummary,
+                                                                       stepVariables.CommitMessageDescription,
+                                                                       stepVariables.CreatePullRequest,
+                                                                       taskLog,
+                                                                       ct);
+
+                return helmUpdateResult;
+            }
+            catch (Exception ex)
+            {
+                throw new ActivityFailedException($"Failed to update Helm images for Argo CD app {app.Application.Name}.", ex);
+            }
+        }
+        
 
         //NOTE: rootPath needs to include the subfolder
         IEnumerable<string> FindYamlFiles(string rootPath)
