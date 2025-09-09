@@ -261,10 +261,10 @@ namespace Calamari.GoogleCloudAccounts
                                                         "--service-account-token-lifetime-seconds=3600",
                                                         "--subject-token-type=urn:ietf:params:oauth:token-type:jwt",
                                                         "--credential-source-type=text",
-                                                        $"--credential-source-file={jwtFilePath}",
+                                                        $"--credential-source-file=\"{jwtFilePath}\"",
                                                         "--app-id-uri",
                                                         serverUri,
-                                                        $"--output-file={jsonAuthFilePath}");
+                                                        $"--output-file=\"{jsonAuthFilePath}\"");
                 if (createConfigResult.ExitCode != 0)
                 {
                     log.Error("Failed to create credential config with gcloud.");
@@ -273,7 +273,7 @@ namespace Calamari.GoogleCloudAccounts
 
                 if (ExecuteCommand("auth",
                                    "login",
-                                   $"--cred-file={jsonAuthFilePath}")
+                                   $"--cred-file=\"{jsonAuthFilePath}\"")
                         .ExitCode
                     != 0)
                 {
