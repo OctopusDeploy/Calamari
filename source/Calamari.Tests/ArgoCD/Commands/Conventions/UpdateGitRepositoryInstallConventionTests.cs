@@ -1,6 +1,7 @@
 #if NET
 using System;
 using System.IO;
+using System.Linq;
 using Calamari.ArgoCD.Commands;
 using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Dtos;
@@ -60,7 +61,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             const string nestedFilename = "nested/second.yaml";
             CreateFileUnderPackageDirectory(nestedFilename);
             
-            var variables = new CalamariVariables
+            var nonSensitiveCalamariVariables = new NonSensitiveCalamariVariables()
             {
                 [KnownVariables.OriginalPackageDirectoryPath] = WorkingDirectory,
                 [SpecialVariables.Git.InputPath] = "",
@@ -68,13 +69,16 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                 [SpecialVariables.Git.CommitMethod] = "DirectCommit",
                 [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this"
             };
-            var runningDeployment = new RunningDeployment("./arbitraryFile.txt", variables);
+            var allVariables = new CalamariVariables();
+            allVariables.Merge(nonSensitiveCalamariVariables);
+
+            var runningDeployment = new RunningDeployment("./arbitraryFile.txt", allVariables);
             runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
             runningDeployment.StagingDirectory = WorkingDirectory;
 
             var customPropertiesLoader = SetupCustomPropertiesLoader();
 
-            var convention = new UpdateGitRepositoryInstallConvention(fileSystem, CommitToGitCommand.PackageDirectoryName, log, Substitute.For<IGitHubPullRequestCreator>(), new ArgoCommitToGitConfigFactory(log), customPropertiesLoader);
+            var convention = new UpdateGitRepositoryInstallConvention(fileSystem, CommitToGitCommand.PackageDirectoryName, log, Substitute.For<IGitHubPullRequestCreator>(), new ArgoCommitToGitConfigFactory(nonSensitiveCalamariVariables), customPropertiesLoader);
             convention.Install(runningDeployment);
 
             var resultPath = CloneOrigin();
@@ -105,7 +109,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             const string nestedFilename = "nested/second.yaml";
             CreateFileUnderPackageDirectory(nestedFilename);
             
-            var variables = new CalamariVariables
+            var nonSensitiveCalamariVariables = new NonSensitiveCalamariVariables()
             {
                 [KnownVariables.OriginalPackageDirectoryPath] = WorkingDirectory,
                 [SpecialVariables.Git.InputPath] = "",
@@ -113,13 +117,16 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                 [SpecialVariables.Git.CommitMethod] = "DirectCommit",
                 [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this"
             };
-            var runningDeployment = new RunningDeployment("./arbitraryFile.txt", variables);
+            var allVariables = new CalamariVariables();
+            allVariables.Merge(nonSensitiveCalamariVariables);
+
+            var runningDeployment = new RunningDeployment("./arbitraryFile.txt", allVariables);
             runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
             runningDeployment.StagingDirectory = WorkingDirectory;    
             
             var customPropertiesLoader = SetupCustomPropertiesLoader();
 
-            var convention = new UpdateGitRepositoryInstallConvention(fileSystem, CommitToGitCommand.PackageDirectoryName, log, Substitute.For<IGitHubPullRequestCreator>(), new ArgoCommitToGitConfigFactory(log), customPropertiesLoader);
+            var convention = new UpdateGitRepositoryInstallConvention(fileSystem, CommitToGitCommand.PackageDirectoryName, log, Substitute.For<IGitHubPullRequestCreator>(), new ArgoCommitToGitConfigFactory(nonSensitiveCalamariVariables), customPropertiesLoader);
             convention.Install(runningDeployment);
             
             var resultPath = CloneOrigin();
