@@ -15,6 +15,7 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.Conventions;
+using Newtonsoft.Json;
 
 namespace Calamari.ArgoCD.Conventions
 {
@@ -52,18 +53,22 @@ namespace Calamari.ArgoCD.Conventions
 
             var argoProperties = customPropertiesLoader.Load<ArgoCDCustomPropertiesDto>();
 
+            var gitCredentials = argoProperties.Credentials.ToDictionary(c => c.Url);
             log.Info($"Found the following applications: '{argoProperties.Applications.Select(a => a.Name).Join(",")}'");
 
             int repositoryNumber = 1;
             foreach (var application in argoProperties.Applications)
             {
-                foreach (var applicationSource in application.Sources)
+                var applicationFromYaml = JsonConvert.DeserializeObject<ArgoCDApplicationFromYaml>(application.Manifest)!;
+                foreach (var applicationSource in applicationFromYaml.Spec.GetSourceList())
                 {
-                    Log.Info($"Writing files to repository '{applicationSource.Url}' for '{application.Name}'");
-                    var gitConnection = new GitConnection(applicationSource.Username, applicationSource.Password, applicationSource.Url, new GitBranchName(applicationSource.TargetRevision));
+                    Log.Info($"Writing files to repository '{applicationSource.RepoURL}' for '{application.Name}'");
+                    
+                    var gitCredential = gitCredentials[applicationSource.RepoURL];
+                    var gitConnection = new GitConnection(gitCredential.Username, gitCredential.Password, applicationSource.RepoURL, new GitBranchName(applicationSource.TargetRevision));
                     var repository = repositoryFactory.CloneRepository(repositoryNumber.ToString(CultureInfo.InvariantCulture), gitConnection);
 
-                    Log.Info($"Copying files into repository {applicationSource.Url}");
+                    Log.Info($"Copying files into repository {applicationSource.RepoURL}");
                     var subFolder = applicationSource.Path ?? String.Empty;
                     Log.VerboseFormat("Copying files into subfolder '{0}'", subFolder);
 
