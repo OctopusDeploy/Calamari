@@ -1,5 +1,4 @@
-using System.Collections.Generic;
-using Calamari.ArgoCD.Git;
+using System;
 using Calamari.Common.Commands;
 using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Variables;
@@ -25,8 +24,8 @@ namespace Calamari.ArgoCD.Conventions
 
             // TODO #project-argo-cd-in-octopus: put both types of variables on RunningDeployment and encapsulate so the dev thinks about whether
             // the variable is sensitive
-            var summary = nonSensitiveVariables.GetMandatoryVariable(SpecialVariables.Git.CommitMessageSummary);
-            var description = nonSensitiveVariables.Get(SpecialVariables.Git.CommitMessageDescription) ?? string.Empty;
+            var summary = EvaluateNonsensitiveExpression(nonSensitiveVariables.GetMandatoryVariableRaw(SpecialVariables.Git.CommitMessageSummary));
+            var description = EvaluateNonsensitiveExpression(nonSensitiveVariables.GetRaw(SpecialVariables.Git.CommitMessageDescription) ?? string.Empty);
             
             return new ArgoCommitToGitConfig(
                                            deployment.CurrentDirectory,
@@ -40,6 +39,20 @@ namespace Calamari.ArgoCD.Conventions
         bool RequiresPullRequest(RunningDeployment deployment)
         {
             return OctopusFeatureToggles.ArgoCDCreatePullRequestFeatureToggle.IsEnabled(deployment.Variables) && deployment.Variables.Get(SpecialVariables.Git.CommitMethod) == SpecialVariables.Git.GitCommitMethods.PullRequest;
+        }
+
+        string EvaluateNonsensitiveExpression(string expression)
+        {
+            var result = nonSensitiveVariables.Evaluate(expression, out string error);
+                
+            //We always want to throw when substitution fails
+            if (!string.IsNullOrEmpty(error))
+            {
+                var message = $"Parsing variable with Octostache returned the following error: `{error}`";
+                throw new CommandException($"{message}. This may be due to missing or sensitive variables.");
+            }
+
+            return result;
         }
     }
 }
