@@ -88,7 +88,7 @@ namespace Calamari.Tests.ArgoCD.Git
             await repository.PushChanges(false, branchName, CancellationToken.None);
             
             //ensure the remote contains the file
-            var originFileContent = RepositoryHelpers.ReadFileFromBranch(bareOrigin, branchName, filename);
+            var originFileContent = bareOrigin.ReadFileFromBranch(branchName, filename);
             originFileContent.Should().Be(fileContents);
         }
         
