@@ -32,7 +32,7 @@ namespace Calamari.ArgoCD.Git
             var repositoryPath = Path.Combine(repositoryParentDirectory, repositoryName);
             Directory.CreateDirectory(repositoryPath);
             return CheckoutGitRepository(gitConnection, repositoryPath);            
-        }   
+        }
         
         RepositoryWrapper CheckoutGitRepository(IGitConnection gitConnection, string checkoutPath)
         {

@@ -47,7 +47,7 @@ namespace Calamari.ArgoCD.Git
             catch (EmptyCommitException)
             {
                 return false;
-            } 
+            }
         }
         
         public void StageFiles(string[] filesToStage)
