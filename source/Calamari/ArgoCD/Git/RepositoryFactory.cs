@@ -23,7 +23,7 @@ namespace Calamari.ArgoCD.Git
         {
             this.log = log;
             this.repositoryParentDirectory = repositoryParentDirectory;
-            pullRequestCreator = gitHubPullRequestCreator;
+            this.pullRequestCreator = gitHubPullRequestCreator;
         }
 
         public RepositoryWrapper CloneRepository(string repositoryName, IGitConnection gitConnection)
@@ -66,7 +66,6 @@ namespace Calamari.ArgoCD.Git
             {
                 repo.CreateBranch(branchToCheckout, remoteBranch.Tip);
             }
-
             LibGit2Sharp.Commands.Checkout(repo, branchToCheckout);
 
             return new RepositoryWrapper(repo, log, gitConnection, pullRequestCreator);
