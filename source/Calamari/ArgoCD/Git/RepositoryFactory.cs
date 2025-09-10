@@ -2,7 +2,6 @@
 using System;
 using System.IO;
 using Calamari.ArgoCD.Conventions;
-using Calamari.ArgoCD.Dtos;
 using Calamari.ArgoCD.GitHub;
 using Calamari.Common.Plumbing.Logging;
 using LibGit2Sharp;

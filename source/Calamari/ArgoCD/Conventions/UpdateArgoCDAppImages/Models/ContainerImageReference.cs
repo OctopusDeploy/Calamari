@@ -9,7 +9,7 @@ namespace Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Models
         public const string DefaultContainerRegistry = "docker.io";
         ContainerImageReference(string registry, string imageName, string tag, string customRegistry)
         {
-            // Trim special case of "index.docker.io" to "docker.io" - simplifes check furtther down, and we never want to write out the full "index." version anyway.
+            // Trim special case of "index.docker.io" to "docker.io" - simplifies check further down, and we never want to write out the full "index." version anyway.
             if (registry.Equals($"index.{DefaultContainerRegistry}", StringComparison.OrdinalIgnoreCase))
             {
                 registry = DefaultContainerRegistry;
