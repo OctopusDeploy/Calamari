@@ -57,7 +57,6 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
                                        new ArgoCDApplicationDto("Gateway1",
                                                                 "App1",
                                                                 "docker.io",
-                                                                new Dictionary<string, List<string>>(),
                                                                 new[]
                                                                 {
                                                                     new ArgoCDApplicationSourceDto(OriginPath,

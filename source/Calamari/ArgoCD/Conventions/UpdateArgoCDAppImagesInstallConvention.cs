@@ -7,7 +7,6 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages;
-using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Helm;
 using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Models;
 using Calamari.ArgoCD.Dtos;
 using Calamari.ArgoCD.Git;
@@ -76,18 +75,6 @@ namespace Calamari.ArgoCD.Conventions
                                                           packageReferences,
                                                           actionConfig);
                     newImagesWritten.UnionWith(updatedImages);
-                }
-
-                foreach (var key in application.HelmAnnotations.Keys)
-                {
-                    var repoPath = repositoryNumber++.ToString(CultureInfo.InvariantCulture);
-                    var (files, images) = HandleHelmSource(application,
-                                                           repositoryFactory,
-                                                           key,
-                                                           application.HelmAnnotations[key],
-                                                           packageReferences,
-                                                           actionConfig,
-                                                           repoPath);
                 }
             }
         }
@@ -173,90 +160,6 @@ namespace Calamari.ArgoCD.Conventions
             }
 
             return (updatedFiles, updatedImages);
-        }
-
-        //This replicates ArgoCDHelmVariablesImageUpdater.UpdateImages
-        HelmRefUpdatedResult HandleHelmSource(ArgoCDApplicationDto app,
-                                              RepositoryFactory repositoryFactory,
-                                              string refKey,
-                                              List<string> imagePathAnnotations,
-                                              List<ContainerImageReference> imagesToUpdate,
-                                              IGitCommitParameters commitParams,
-                                              string repoPath)
-        {
-            try
-            {
-                var helmValuesRef = GetHelmImageReference(refKey, app);
-                var repository = repositoryFactory.CloneRepository(repoPath, helmValuesRef.GitConnection);
-                log.Info($"Processing file at {helmValuesRef.Path}.");
-                var valuesFilePath = Path.Combine(repoPath, helmValuesRef.Path);
-                var fileContent = fileSystem.ReadFile(valuesFilePath);
-
-                var helmImageReplacer = new HelmContainerImageReplacer(fileContent, app.DefaultRegistry, imagePathAnnotations);
-                var imageUpdateResult = helmImageReplacer.UpdateImages(imagesToUpdate);
-
-                if (imageUpdateResult.UpdatedImageReferences.Count > 0)
-                {
-                    try
-                    {
-                        fileSystem.OverwriteFile(fileContent, imageUpdateResult.UpdatedContents);
-                        PushToRemote(repository,
-                                     helmValuesRef.GitConnection.BranchName,
-                                     commitParams,
-                                     new HashSet<string>() { helmValuesRef.Path },
-                                     imageUpdateResult.UpdatedImageReferences);
-
-                        return new HelmRefUpdatedResult(helmValuesRef.GitConnection.Url, imageUpdateResult.UpdatedImageReferences);
-                    }
-                    catch (Exception ex)
-                    {
-                        log.Error($"Failed to commit changes to the Git Repository: {ex.Message}");
-                        throw;
-                    }
-                }
-
-                return new HelmRefUpdatedResult(helmValuesRef.GitConnection.Url, new HashSet<string>()); // Nothing was changed
-            }
-            catch (Exception ex)
-            {
-                throw new CommandException($"Failed to update Helm images for Argo CD app {app.Name}.", ex);
-            }
-        }
-
-        static HelmValueFileReference GetHelmImageReference(string refKey, ArgoCDApplicationDto app)
-        {
-            var valueFileReference = app.Sources.Where(s => s.SourceType.Equals("Helm"))
-                                        .Select(h => h.Path)
-                                        .Distinct()
-                                        .Where(vf => vf.StartsWith('$'))
-                                        .Select(vf => new
-                                        {
-                                            RefName = vf.Split('/')[0].TrimStart('$'),
-                                            Path = vf.Substring(vf.IndexOf('/') + 1),
-                                            FullReference = vf
-                                        })
-                                        .Join(
-                                              app.Sources.Where(s => s.SourceType.Equals("Ref")).Where(r => r.Path == refKey), //TODO(tmm): part of the hack
-                                              valueFile => valueFile.RefName,
-                                              refSource => refSource.Path, //TODO(tmm): This is a hack to handle the fact that Ref-sources don't _really_ fit into our DTO
-                                              (valueFile, refSource) => new HelmValueFileReference(
-                                                                                                   valueFile.Path,
-                                                                                                   valueFile.FullReference,
-                                                                                                   new GitConnection(
-                                                                                                                     refSource.Username,
-                                                                                                                     refSource.Password,
-                                                                                                                     refSource.Url,
-                                                                                                                     new GitBranchName(refSource.TargetRevision)
-                                                                                                                    ))
-                                             )
-                                        .FirstOrDefault();
-
-            if (valueFileReference == null)
-            {
-                throw new InvalidOperationException(refKey);
-            }
-
-            return valueFileReference;
         }
 
         //NOTE: rootPath needs to include the subfolder

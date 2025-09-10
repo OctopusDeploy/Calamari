@@ -16,19 +16,17 @@ namespace Calamari.ArgoCD.Dtos
 
     public record ArgoCDApplicationDto
     {
-        public ArgoCDApplicationDto(string gatewayId, string name, string defaultRegistry, Dictionary<string, List<string>> helmAnnotations, ArgoCDApplicationSourceDto[] sources)
+        public ArgoCDApplicationDto(string gatewayId, string name, string defaultRegistry, ArgoCDApplicationSourceDto[] sources)
         {
             GatewayId = gatewayId;
             Name = name;
             DefaultRegistry = defaultRegistry;
-            HelmAnnotations = helmAnnotations;
             Sources = sources;
         }
 
         public string GatewayId { get; }
         public string Name { get; set; }
         public string DefaultRegistry { get; set; }
-        public Dictionary<string, List<string>> HelmAnnotations { get; set; }
         public ArgoCDApplicationSourceDto[] Sources { get; set; }
     }
 
