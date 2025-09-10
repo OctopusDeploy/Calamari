@@ -2,6 +2,7 @@
 using System;
 using System.IO;
 using Calamari.ArgoCD.Conventions;
+using Calamari.ArgoCD.Dtos;
 using Calamari.ArgoCD.GitHub;
 using Calamari.Common.Plumbing.Logging;
 using LibGit2Sharp;
@@ -32,7 +33,7 @@ namespace Calamari.ArgoCD.Git
             var repositoryPath = Path.Combine(repositoryParentDirectory, repositoryName);
             Directory.CreateDirectory(repositoryPath);
             return CheckoutGitRepository(gitConnection, repositoryPath);            
-        }
+        }   
         
         RepositoryWrapper CheckoutGitRepository(IGitConnection gitConnection, string checkoutPath)
         {

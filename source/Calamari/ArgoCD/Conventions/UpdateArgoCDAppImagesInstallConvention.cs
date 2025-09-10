@@ -27,6 +27,7 @@ namespace Calamari.ArgoCD.Conventions
         readonly ArgoCommitToGitConfigFactory argoCommitToGitConfigFactory;
         readonly ICommitMessageGenerator commitMessageGenerator;
         readonly ICustomPropertiesLoader customPropertiesLoader;
+        int repositoryNumber = 1;
 
         public UpdateArgoCDAppImagesInstallConvention(ILog log,
                                                       IGitHubPullRequestCreator pullRequestCreator,
@@ -47,51 +48,53 @@ namespace Calamari.ArgoCD.Conventions
         {
             var actionConfig = argoCommitToGitConfigFactory.Create(deployment);
             var repositoryFactory = new RepositoryFactory(log, deployment.CurrentDirectory, pullRequestCreator);
-            var packageReferences = deployment.Variables.GetContainerPackageNames().Select(p => ContainerImageReference.FromReferenceString(p)).ToList();
             var argoProperties = customPropertiesLoader.Load<ArgoCDCustomPropertiesDto>();
+            
+            log.Info($"Found {argoProperties.Applications.Length} Argo CD apps to update");
+            var updatedApplications = new List<string>();
+            var newImagesWritten = new HashSet<string>();
+            var gitReposUpdated = new HashSet<string>();
 
-            int repositoryNumber = 1;
-
-            Log.Info($"Updating {argoProperties.Applications.Length} applications.");
-            foreach (var application in argoProperties.Applications)
+            var outputWriter = new ArgoCDImageUpdateOutputWriter(log);
+            
+            foreach (var appToUpdate in argoProperties.Applications)
             {
-                Log.Info($"Updating '{application.Name}'");
-                var directorySources = application.Sources.Where(s => s.SourceType.Equals("Directory", StringComparison.OrdinalIgnoreCase));
-                foreach (var applicationSource in directorySources)
+                Log.Info($"Updating '{appToUpdate.Name}'");
+                foreach (var source in appToUpdate.Sources.Where(s => s.SourceType.Equals("Directory", StringComparison.OrdinalIgnoreCase)))
                 {
-                    var repoPath = repositoryNumber++.ToString(CultureInfo.InvariantCulture);
-                    Log.Info($"Writing files to git repository for '{applicationSource.Url}'");
-                    var gitConnection = new GitConnection(applicationSource.Username, applicationSource.Password, applicationSource.Url, new GitBranchName(applicationSource.TargetRevision));
-                    var repository = repositoryFactory.CloneRepository(repoPath, gitConnection);
+                    var repository = CreateRepository(source, repositoryFactory);
 
-                    var updatedImages = HandleBasicSource(repository,
-                                                          application.DefaultRegistry,
-                                                          applicationSource,
-                                                          packageReferences,
-                                                          actionConfig);
+                    var (updatedFiles, updatedImages) = UpdateKubernetesYaml(repository.WorkingDirectory, source.Path, appToUpdate.DefaultRegistry, actionConfig.PackageReferences);
+                    
+                    if (updatedImages.Count > 0)
+                    {
+                        PushToRemote(repository,
+                                     new GitBranchName(source.TargetRevision),
+                                     actionConfig,
+                                     updatedFiles,
+                                     updatedImages);
+                        
+                        newImagesWritten.UnionWith(updatedImages);
+                        updatedApplications.Add(appToUpdate.Name);
+                        gitReposUpdated.Add(source.Url);
+                    }
                 }
             }
+            outputWriter.WriteImageUpdateOutput(Array.Empty<string>(),
+                                                gitReposUpdated,
+                                                updatedApplications,
+                                                updatedApplications.Distinct(),
+                                                newImagesWritten.Count
+                                                );
         }
 
-        HashSet<string> HandleBasicSource(RepositoryWrapper repository,
-                                          string defaultRegistry,
-                                          ArgoCDApplicationSourceDto applicationSource,
-                                          List<ContainerImageReference> packageReferences,
-                                          IGitCommitParameters actionConfig)
+        RepositoryWrapper CreateRepository(ArgoCDApplicationSourceDto source, RepositoryFactory repositoryFactory)
         {
-            var subFolder = applicationSource.Path ?? String.Empty;
-            var (updatedFiles, updatedImages) = UpdateKubernetesYaml(repository.WorkingDirectory, subFolder, defaultRegistry, packageReferences);
-
-            if (updatedFiles.Count > 0)
-            {
-                PushToRemote(repository,
-                             new GitBranchName(applicationSource.TargetRevision),
-                             actionConfig,
-                             updatedFiles,
-                             updatedImages);
-            }
-
-            return updatedImages;
+            var gitConnection = GitConnection.Create(source);
+            var repoPath = repositoryNumber++.ToString(CultureInfo.InvariantCulture);
+            Log.Info($"Writing files to git repository for '{gitConnection.Url}'");
+            var repository = repositoryFactory.CloneRepository(repoPath, gitConnection);
+            return repository;
         }
 
         (HashSet<string>, HashSet<string>) UpdateKubernetesYaml(string rootPath,
@@ -132,6 +135,7 @@ namespace Calamari.ArgoCD.Conventions
 
             return (updatedFiles, updatedImages);
         }
+        
         void PushToRemote(RepositoryWrapper repository,
                           GitBranchName branchName,
                           IGitCommitParameters commitParameters,

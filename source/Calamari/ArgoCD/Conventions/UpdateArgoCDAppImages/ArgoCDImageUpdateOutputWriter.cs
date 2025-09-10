@@ -16,7 +16,7 @@ namespace Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages
         }
 
         public void WriteImageUpdateOutput(IEnumerable<string> gateways,
-                                           IEnumerable<Uri> gitRepos,
+                                           IEnumerable<string> gitRepos,
                                            IEnumerable<string> totalApplications,
                                            IEnumerable<string> updatedApplications,
                                            int imagesUpdatedCount)
@@ -27,7 +27,8 @@ namespace Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages
             var updatedApps = ToCommaSeparatedString(updatedApplications);
 
             log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.GitUris, gitUris);
-            log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.MatchingApplications, totalApps);
+            //will need to do this on server side, as only relevant apps are sent here.
+            //log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.MatchingApplications, totalApps);
             log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.UpdatedApplications, updatedApps);
             log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.UpdatedImages, imagesUpdatedCount.ToString());
 

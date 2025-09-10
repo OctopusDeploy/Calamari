@@ -1,4 +1,8 @@
+#if NET
 using System;
+using System.Linq;
+using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages;
+using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Models;
 using Calamari.Common.Commands;
 using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Variables;
@@ -26,14 +30,15 @@ namespace Calamari.ArgoCD.Conventions
             // the variable is sensitive
             var summary = EvaluateNonsensitiveExpression(nonSensitiveVariables.GetMandatoryVariableRaw(SpecialVariables.Git.CommitMessageSummary));
             var description = EvaluateNonsensitiveExpression(nonSensitiveVariables.GetRaw(SpecialVariables.Git.CommitMessageDescription) ?? string.Empty);
-            
+            var packageReferences = deployment.Variables.GetContainerPackageNames().Select(p => ContainerImageReference.FromReferenceString(p)).ToList();
             return new ArgoCommitToGitConfig(
                                            deployment.CurrentDirectory,
                                            inputPath,
                                            recursive,
                                            summary,
                                            description,
-                                           requiresPullRequest);
+                                           requiresPullRequest,
+                                           packageReferences);
         }
         
         bool RequiresPullRequest(RunningDeployment deployment)
@@ -56,3 +61,4 @@ namespace Calamari.ArgoCD.Conventions
         }
     }
 }
+#endif

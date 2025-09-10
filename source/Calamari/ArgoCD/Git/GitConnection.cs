@@ -1,5 +1,6 @@
 #nullable enable
 using System;
+using Calamari.ArgoCD.Dtos;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes;
 
@@ -31,5 +32,10 @@ namespace Calamari.ArgoCD.Git
         public string? Password { get; }
         public string Url { get; }
         public GitBranchName BranchName { get; }
+        
+        public static GitConnection Create(ArgoCDApplicationSourceDto source)
+        {
+            return new GitConnection(source.Username, source.Password, source.Url, new GitBranchName(source.TargetRevision));
+        }
     }
 }
