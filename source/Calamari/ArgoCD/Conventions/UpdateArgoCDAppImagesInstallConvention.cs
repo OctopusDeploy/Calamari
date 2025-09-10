@@ -57,10 +57,12 @@ namespace Calamari.ArgoCD.Conventions
             var gitReposUpdated = new HashSet<Uri>();
             var updatedFiles = new HashSet<string>();
 
+            Log.Info($"Updating {argoProperties.Applications.Length} applications.");
             foreach (var application in argoProperties.Applications)
             {
+                Log.Info($"Updating '{application.Name}'");
                 // update the directory apps, THEN do the reference work - needs to work more like the Server Solution
-                var directorySources = application.Sources.Where(s => s.SourceType.Equals("DirectorySource", StringComparison.OrdinalIgnoreCase));
+                var directorySources = application.Sources.Where(s => s.SourceType.Equals("Directory", StringComparison.OrdinalIgnoreCase));
                 foreach (var applicationSource in directorySources)
                 {
                     var repoPath = repositoryNumber++.ToString(CultureInfo.InvariantCulture);

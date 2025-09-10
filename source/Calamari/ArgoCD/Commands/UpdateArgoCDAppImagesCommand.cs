@@ -48,7 +48,6 @@ namespace Calamari.ArgoCD.Commands
 
         public override int Execute(string[] commandLineArguments)
         {
-            log.Info($"Executing command line arguments: {string.Join(" ", commandLineArguments)}");
             Options.Parse(commandLineArguments);
             var runningDeployment = new RunningDeployment(null, variables);
 
