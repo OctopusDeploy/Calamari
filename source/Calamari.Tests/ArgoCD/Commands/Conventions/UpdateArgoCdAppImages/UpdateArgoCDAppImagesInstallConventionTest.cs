@@ -1,5 +1,6 @@
 #if NET
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Calamari.ArgoCD.Conventions;
@@ -18,7 +19,6 @@ using Calamari.Tests.Fixtures.Integration.FileSystem;
 using FluentAssertions;
 using LibGit2Sharp;
 using NSubstitute;
-using NSubstitute.Exceptions;
 using NUnit.Framework;
 
 namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
@@ -34,6 +34,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
         string OriginPath => Path.Combine(tempDirectory, "origin");
         Repository originRepo;
         GitBranchName argoCDBranchName = new GitBranchName("devBranch");
+        NonSensitiveCalamariVariables nonSensitiveCalamariVariables = new NonSensitiveCalamariVariables();
 
         [SetUp]
         public void Init()
@@ -42,6 +43,9 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
 
             originRepo = RepositoryHelpers.CreateBareRepository(OriginPath);
             RepositoryHelpers.CreateBranchIn(argoCDBranchName, OriginPath);
+            
+            nonSensitiveCalamariVariables.Add(SpecialVariables.Git.CommitMessageSummary, "Commit Summary");
+            nonSensitiveCalamariVariables.Add(SpecialVariables.Git.CommitMessageDescription, "Commit Description");
         }
 
         ICustomPropertiesLoader SetupCustomPropertiesLoader()
@@ -53,13 +57,15 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
                                        new ArgoCDApplicationDto("Gateway1",
                                                                 "App1",
                                                                 "docker.io",
+                                                                new Dictionary<string, List<string>>(),
                                                                 new[]
                                                                 {
                                                                     new ArgoCDApplicationSourceDto(OriginPath,
                                                                                                    "username",
                                                                                                    "password",
                                                                                                    argoCDBranchName.Value,
-                                                                                                   "")
+                                                                                                   "",
+                                                                                                   "Directory")
                                                                 })
                                    }));
             return customPropertiesFactory;
@@ -72,12 +78,11 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
             var updater = new UpdateArgoCDAppImagesInstallConvention(log,
                                                                      Substitute.For<IGitHubPullRequestCreator>(),
                                                                      fileSystem,
-                                                                     new ArgoCommitToGitConfigFactory(log),
+                                                                     new ArgoCommitToGitConfigFactory(nonSensitiveCalamariVariables),
                                                                      new CommitMessageGenerator(),
                                                                      SetupCustomPropertiesLoader());
             var variables = new CalamariVariables
             {
-                [SpecialVariables.Git.DefaultRegistry("repo_name")] = "docker.io",
                 [SpecialVariables.Git.CommitMethod] = "DirectCommit",
                 [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this",
                 [Deployment.SpecialVariables.Packages.Image("nginx")] = "nginx:1.27.1",
@@ -104,12 +109,11 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
             var updater = new UpdateArgoCDAppImagesInstallConvention(log,
                                                                      Substitute.For<IGitHubPullRequestCreator>(),
                                                                      fileSystem,
-                                                                     new ArgoCommitToGitConfigFactory(log),
+                                                                     new ArgoCommitToGitConfigFactory(nonSensitiveCalamariVariables),
                                                                      new CommitMessageGenerator(),
                                                                      SetupCustomPropertiesLoader());
             var variables = new CalamariVariables
             {
-                [SpecialVariables.Git.DefaultRegistry("repo_name")] = "docker.io",
                 [SpecialVariables.Git.CommitMethod] = "DirectCommit",
                 [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this",
                 [Deployment.SpecialVariables.Packages.Image("nginx")] = "nginx:1.27.1",
@@ -140,12 +144,11 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
             var updater = new UpdateArgoCDAppImagesInstallConvention(log,
                                                                      Substitute.For<IGitHubPullRequestCreator>(),
                                                                      fileSystem,
-                                                                     new ArgoCommitToGitConfigFactory(log),
+                                                                     new ArgoCommitToGitConfigFactory(nonSensitiveCalamariVariables),
                                                                      new CommitMessageGenerator(),
                                                                      SetupCustomPropertiesLoader());
             var variables = new CalamariVariables
             {
-                [SpecialVariables.Git.DefaultRegistry("repo_name")] = "docker.io",
                 [SpecialVariables.Git.CommitMethod] = "DirectCommit",
                 [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this",
                 [Deployment.SpecialVariables.Packages.Image("nginx")] = "nginx:1.27.1",

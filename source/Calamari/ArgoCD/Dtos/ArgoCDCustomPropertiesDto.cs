@@ -1,5 +1,6 @@
+#nullable enable
 using System.Collections.Generic;
-using Calamari.ArgoCD.Git;
+
 
 namespace Calamari.ArgoCD.Dtos
 {
@@ -12,38 +13,40 @@ namespace Calamari.ArgoCD.Dtos
 
         public ArgoCDApplicationDto[] Applications { get; set; }
     }
-    
-    public class ArgoCDApplicationDto
+
+    public record ArgoCDApplicationDto
     {
-        public ArgoCDApplicationDto(string gatewayId, string name, string defaultRegistry, ArgoCDApplicationSourceDto[] sources)
+        public ArgoCDApplicationDto(string gatewayId, string name, string defaultRegistry, Dictionary<string, List<string>> helmAnnotations, ArgoCDApplicationSourceDto[] sources)
         {
             GatewayId = gatewayId;
             Name = name;
             DefaultRegistry = defaultRegistry;
+            HelmAnnotations = helmAnnotations;
             Sources = sources;
         }
 
         public string GatewayId { get; }
         public string Name { get; set; }
         public string DefaultRegistry { get; set; }
-        
         public Dictionary<string, List<string>> HelmAnnotations { get; set; }
         public ArgoCDApplicationSourceDto[] Sources { get; set; }
     }
 
     public class ArgoCDApplicationSourceDto
     {
-        public ArgoCDApplicationSourceDto(string url, 
-                                        string username, 
-                                        string password, 
-                                        string targetRevision,
-                                        string path)
+        public ArgoCDApplicationSourceDto(string url,
+                                          string username,
+                                          string password,
+                                          string targetRevision,
+                                          string path,
+                                          string sourceType)
         {
             Url = url;
             Username = username;
             Password = password;
             TargetRevision = targetRevision;
             Path = path;
+            SourceType = sourceType;
         }
 
         public string Url { get; set; }

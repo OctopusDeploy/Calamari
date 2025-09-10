@@ -1,5 +1,6 @@
 #if NET
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Calamari.ArgoCD.Commands;
@@ -93,9 +94,9 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             var customPropertiesFactory = Substitute.For<ICustomPropertiesLoader>();
             customPropertiesFactory.Load<ArgoCDCustomPropertiesDto>().Returns(new ArgoCDCustomPropertiesDto(new[]
             {
-                new ArgoCDApplicationDto("Gateway1", "App1", "docker.io", new[]
+                new ArgoCDApplicationDto("Gateway1", "App1", "docker.io", new Dictionary<string, List<string>>(), new[]
                 {
-                    new ArgoCDApplicationSourceDto(OriginPath, "username", "password", argoCdBranchName.Value, "")
+                    new ArgoCDApplicationSourceDto(OriginPath, "username", "password", argoCdBranchName.Value, "", "Directory")
                 })
             }));
             return customPropertiesFactory;
