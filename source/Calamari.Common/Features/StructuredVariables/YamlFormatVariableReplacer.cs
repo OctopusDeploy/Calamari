@@ -147,7 +147,7 @@ namespace Calamari.Common.Features.StructuredVariables
                                                  writer =>
                                                  {
                                                      writer.NewLine = lineEnding == StringExtensions.LineEnding.Dos ? "\r\n" : "\n";
-                                                     var emitter = new Emitter(writer, indentDetector.GetMostCommonIndent());
+                                                     var emitter = new Emitter(writer, (int)indentDetector.GetMostCommonIndent());
                                                      foreach (var outputEvent in outputEvents)
                                                          emitter.Emit(outputEvent);
                                                  },
@@ -159,7 +159,7 @@ namespace Calamari.Common.Features.StructuredVariables
             }
         }
 
-        List<ParsingEvent> ParseFragment(string? value, string? anchor, string? tag)
+        List<ParsingEvent> ParseFragment(string? value, AnchorName anchor, TagName tag)
         {
             var result = new List<ParsingEvent>();
             try
