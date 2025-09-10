@@ -68,8 +68,6 @@ namespace Calamari.Kubernetes
 
             static string Prefix(string name) => $"{Index}[{name}]"; 
             
-            public static string DefaultRegistry(string name) => $"{Prefix(name)}.DefaultRegistry";
-            
             public static readonly string CommitMessageSummary = "Octopus.Action.ArgoCD.CommitMessageSummary";
             
             public static readonly string CommitMessageDescription = "Octopus.Action.ArgoCD.CommitMessageDescription";
