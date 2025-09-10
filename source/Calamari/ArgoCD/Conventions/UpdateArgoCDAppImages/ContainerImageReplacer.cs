@@ -50,10 +50,14 @@ namespace Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages
                 }
 
                 // If we don't have any documents or the first document is not a mapping with a 'kind' field (i.e. a k8s resource), skip
-                if (yamlStream.Documents.Count == 0 || yamlStream.Documents[0].RootNode is not YamlMappingNode rootNode || !IsPotentialKubernetesResource(rootNode))
+                if (yamlStream.Documents.Count == 0)
                 {
-                    updatedDocuments.Add(document);
-                    continue;
+                    YamlMappingNode? rootNode = yamlStream.Documents[0].RootNode as YamlMappingNode;
+                    if (rootNode is null || !IsPotentialKubernetesResource(rootNode))
+                    {
+                        updatedDocuments.Add(document);
+                        continue;
+                    }
                 }
 
                 try
