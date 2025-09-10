@@ -6,6 +6,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using Calamari.ArgoCD.Domain;
 using Calamari.ArgoCD.Dtos;
 using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.GitHub;
@@ -26,19 +27,22 @@ namespace Calamari.ArgoCD.Conventions
         readonly IGitHubPullRequestCreator pullRequestCreator;
         readonly ArgoCommitToGitConfigFactory argoCommitToGitConfigFactory;
         readonly ICustomPropertiesLoader customPropertiesLoader;
+        readonly IArgoCDApplicationManifestParser argoCdApplicationManifestParser;
 
         public UpdateGitRepositoryInstallConvention(ICalamariFileSystem fileSystem,
                                                     string packageSubfolder,
                                                     ILog log,
                                                     IGitHubPullRequestCreator pullRequestCreator,
                                                     ArgoCommitToGitConfigFactory argoCommitToGitConfigFactory,
-                                                    ICustomPropertiesLoader customPropertiesLoader)
+                                                    ICustomPropertiesLoader customPropertiesLoader,
+                                                    IArgoCDApplicationManifestParser argoCdApplicationManifestParser)
         {
             this.fileSystem = fileSystem;
             this.log = log;
             this.pullRequestCreator = pullRequestCreator;
             this.argoCommitToGitConfigFactory = argoCommitToGitConfigFactory;
             this.customPropertiesLoader = customPropertiesLoader;
+            this.argoCdApplicationManifestParser = argoCdApplicationManifestParser;
             this.packageSubfolder = packageSubfolder;
         }
 
@@ -52,18 +56,22 @@ namespace Calamari.ArgoCD.Conventions
 
             var argoProperties = customPropertiesLoader.Load<ArgoCDCustomPropertiesDto>();
 
+            var gitCredentials = argoProperties.Credentials.ToDictionary(c => c.Url);
             log.Info($"Found the following applications: '{argoProperties.Applications.Select(a => a.Name).Join(",")}'");
 
             int repositoryNumber = 1;
             foreach (var application in argoProperties.Applications)
             {
-                foreach (var applicationSource in application.Sources)
+                var applicationFromYaml = argoCdApplicationManifestParser.ParseManifest(application.Manifest);
+                foreach (var applicationSource in applicationFromYaml.Spec.Sources.OfType<BasicSource>())
                 {
-                    Log.Info($"Writing files to repository '{applicationSource.Url}' for '{application.Name}'");
-                    var gitConnection = new GitConnection(applicationSource.Username, applicationSource.Password, applicationSource.Url, new GitBranchName(applicationSource.TargetRevision));
+                    Log.Info($"Writing files to repository '{applicationSource.RepoUrl}' for '{application.Name}'");
+                    
+                    var gitCredential = gitCredentials[applicationSource.RepoUrl.AbsoluteUri];
+                    var gitConnection = new GitConnection(gitCredential.Username, gitCredential.Password, applicationSource.RepoUrl.AbsoluteUri, new GitBranchName(applicationSource.TargetRevision));
                     var repository = repositoryFactory.CloneRepository(repositoryNumber.ToString(CultureInfo.InvariantCulture), gitConnection);
 
-                    Log.Info($"Copying files into repository {applicationSource.Url}");
+                    Log.Info($"Copying files into repository {applicationSource.RepoUrl}");
                     var subFolder = applicationSource.Path ?? String.Empty;
                     Log.VerboseFormat("Copying files into subfolder '{0}'", subFolder);
 
