@@ -51,16 +51,11 @@ namespace Calamari.ArgoCD.Conventions
             var argoProperties = customPropertiesLoader.Load<ArgoCDCustomPropertiesDto>();
 
             int repositoryNumber = 1;
-            var updatedApplications = new List<string>();
-            var newImagesWritten = new HashSet<string>();
-            var gitReposUpdated = new HashSet<Uri>();
-            var updatedFiles = new HashSet<string>();
 
             Log.Info($"Updating {argoProperties.Applications.Length} applications.");
             foreach (var application in argoProperties.Applications)
             {
                 Log.Info($"Updating '{application.Name}'");
-                // update the directory apps, THEN do the reference work - needs to work more like the Server Solution
                 var directorySources = application.Sources.Where(s => s.SourceType.Equals("Directory", StringComparison.OrdinalIgnoreCase));
                 foreach (var applicationSource in directorySources)
                 {
@@ -74,7 +69,6 @@ namespace Calamari.ArgoCD.Conventions
                                                           applicationSource,
                                                           packageReferences,
                                                           actionConfig);
-                    newImagesWritten.UnionWith(updatedImages);
                 }
             }
         }
@@ -98,29 +92,6 @@ namespace Calamari.ArgoCD.Conventions
             }
 
             return updatedImages;
-        }
-
-        void PushToRemote(RepositoryWrapper repository,
-                          GitBranchName branchName,
-                          IGitCommitParameters commitParameters,
-                          HashSet<string> updatedFiles,
-                          HashSet<string> updatedImages)
-        {
-            Log.Info("Staging files in repository");
-            repository.StageFiles(updatedFiles.ToArray());
-
-            var commitMessage = commitMessageGenerator.GenerateForImageUpdates(new GitCommitSummary(commitParameters.CommitSummary), commitParameters.CommitDescription, updatedImages);
-
-            Log.Info("Commiting changes");
-            if (repository.CommitChanges(commitMessage))
-            {
-                Log.Info("Changes were commited, pushing to remote");
-                repository.PushChanges(commitParameters.RequiresPr, branchName, CancellationToken.None).GetAwaiter().GetResult();
-            }
-            else
-            {
-                Log.Info("No changes were commited.");
-            }
         }
 
         (HashSet<string>, HashSet<string>) UpdateKubernetesYaml(string rootPath,
@@ -160,6 +131,28 @@ namespace Calamari.ArgoCD.Conventions
             }
 
             return (updatedFiles, updatedImages);
+        }
+        void PushToRemote(RepositoryWrapper repository,
+                          GitBranchName branchName,
+                          IGitCommitParameters commitParameters,
+                          HashSet<string> updatedFiles,
+                          HashSet<string> updatedImages)
+        {
+            Log.Info("Staging files in repository");
+            repository.StageFiles(updatedFiles.ToArray());
+
+            var commitMessage = commitMessageGenerator.GenerateForImageUpdates(new GitCommitSummary(commitParameters.CommitSummary), commitParameters.CommitDescription, updatedImages);
+
+            Log.Info("Commiting changes");
+            if (repository.CommitChanges(commitMessage))
+            {
+                Log.Info("Changes were commited, pushing to remote");
+                repository.PushChanges(commitParameters.RequiresPr, branchName, CancellationToken.None).GetAwaiter().GetResult();
+            }
+            else
+            {
+                Log.Info("No changes were commited.");
+            }
         }
 
         //NOTE: rootPath needs to include the subfolder

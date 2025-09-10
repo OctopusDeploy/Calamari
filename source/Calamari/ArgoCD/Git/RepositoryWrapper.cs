@@ -1,6 +1,5 @@
 #if NET
 using System;
-using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Calamari.ArgoCD.GitHub;
@@ -25,7 +24,6 @@ namespace Calamari.ArgoCD.Git
             this.connection = connection;
             this.pullRequestCreator = pullRequestCreator;
         }
-        
         
         // returns true if changes were made to the repository
         public bool CommitChanges(string summary, string description)
