@@ -1,5 +1,6 @@
 #if NET
 using System;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Calamari.ArgoCD.GitHub;
@@ -29,11 +30,17 @@ namespace Calamari.ArgoCD.Git
         // returns true if changes were made to the repository
         public bool CommitChanges(string summary, string description)
         {
+            var fullMessage = GenerateCommitMessage(summary, description);
+            return CommitChanges(fullMessage);
+        }
+
+        public bool CommitChanges(string fullMessage)
+        {
             try
             {
                 var commitTime = DateTimeOffset.Now;
-                var commitMessage = GenerateCommitMessage(summary, description);
-                var commit = repository.Commit(commitMessage,
+                
+                var commit = repository.Commit(fullMessage,
                                                new Signature("Octopus", "octopus@octopus.com", commitTime),
                                                new Signature("Octopus", "octopus@octopus.com", commitTime));
                 log.Verbose($"Committed changes to {commit.Sha}");
@@ -42,16 +49,14 @@ namespace Calamari.ArgoCD.Git
             catch (EmptyCommitException)
             {
                 return false;
-            }
+            } 
         }
         
         public void StageFiles(string[] filesToStage)
         {
-            //find files which have changed in fs??? <---   
             foreach (var file in filesToStage)
             {
                 var fileToAdd = file.StartsWith("./") ? file.Substring(2) : file;
-                // if a file does not exist - what should we do? throw and continue? or just throw?
                 repository.Index.Add(fileToAdd);
             }
         }
