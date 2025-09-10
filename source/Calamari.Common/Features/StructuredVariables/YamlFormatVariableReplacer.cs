@@ -155,7 +155,7 @@ namespace Calamari.Common.Features.StructuredVariables
             }
             catch (Exception e) when (e is SyntaxErrorException || e is SemanticErrorException)
             {
-                throw new StructuredConfigFileParseException(e.Message, e);
+                throw new StructuredConfigFileParseException(e.ToString(), e);
             }
         }
 
