@@ -1,8 +1,6 @@
 #if NET
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using Calamari.ArgoCD.Commands;
 using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Dtos;
@@ -10,7 +8,6 @@ using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.GitHub;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Deployment;
-using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes;
