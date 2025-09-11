@@ -135,8 +135,9 @@ namespace Calamari.Common.Features.StructuredVariables
             var leadingSpaces = comment.Start.Line == comment.End.Line
                 ? (int)(comment.End.Column - comment.Value.Length - comment.Start.Column - outputCommentPrefixLength)
                 : 0;
+            var leadingSpacesAsInt = leadingSpaces > int.MaxValue ? int.MaxValue : (int)leadingSpaces;
             return leadingSpaces > 0
-                ? new Comment(new string(' ', leadingSpaces) + comment.Value,
+                ? new Comment(new string(' ', leadingSpacesAsInt) + comment.Value,
                               comment.IsInline,
                               comment.Start,
                               comment.End)

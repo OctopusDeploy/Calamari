@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using YamlDotNet.Core.Events;
@@ -33,11 +33,12 @@ namespace Calamari.Common.Features.StructuredVariables
 
         public int GetMostCommonIndent()
         {
-            var result = (int?)indents.GroupBy(indent => indent)
-                                .OrderByDescending(group => group.Count())
-                                .FirstOrDefault()
-                                ?.Key; 
-            return result ?? 2;
+            var mostCommonIndent = indents.GroupBy(indent => indent)
+                                          .OrderByDescending(group => group.Count())
+                                          .FirstOrDefault()
+                                          ?.Key
+                                   ?? 2;
+            return mostCommonIndent > int.MaxValue ? int.MaxValue : (int) mostCommonIndent;
         }
     }
 }
