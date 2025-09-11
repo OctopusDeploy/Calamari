@@ -701,7 +701,8 @@ namespace Calamari.Build
         Target BuildCi => d =>
                               d.DependsOn(SetTeamCityVersion)
                                .DependsOn(Pack)
-                               .DependsOn(PackCalamariConsolidatedNugetPackage);
+                               .DependsOn(PackCalamariConsolidatedNugetPackage)
+                               .DependsOn(BuildSoftwareBillOfMaterials); //todo: this should run in a different build config in teamcity
 
         public static int Main() => Execute<Build>(x => IsServerBuild ? x.BuildCi : x.BuildLocal);
 
