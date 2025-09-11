@@ -1,8 +1,10 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using Octopus.OnePassword.Sdk;
 using Serilog;
+using ILogger = Serilog.ILogger;
 
 namespace Calamari.Build.Utilities;
 
@@ -17,9 +19,9 @@ public static class SecretManager
 
     static SecretManagerClient LoadSecretManagerClient()
     {
-        var loggerFactory = new LoggerFactory().AddSerilog(Logger);
+        var loggerFactory = new LoggerFactory().AddSerilog();
         var microsoftLogger = loggerFactory.CreateLogger<SecretManagerClient>();
-        return new SecretManagerClient(SecretManagerAccount, [], microsoftLogger);
+        return new SecretManagerClient(SecretManagerAccount, Array.Empty<string>(), microsoftLogger);
     }
 
     public static string? GetValue(ParameterFromPasswordStore attr, CancellationToken cancellationToken = default) 
