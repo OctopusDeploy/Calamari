@@ -8,6 +8,7 @@ using System.Linq;
 using System.Threading;
 using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages;
 using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Models;
+using Calamari.ArgoCD.Domain;
 using Calamari.ArgoCD.Dtos;
 using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.GitHub;
@@ -27,6 +28,7 @@ namespace Calamari.ArgoCD.Conventions
         readonly ArgoCommitToGitConfigFactory argoCommitToGitConfigFactory;
         readonly ICommitMessageGenerator commitMessageGenerator;
         readonly ICustomPropertiesLoader customPropertiesLoader;
+        readonly IArgoCDApplicationManifestParser argoCdApplicationManifestParser;
         int repositoryNumber = 1;
 
         public UpdateArgoCDAppImagesInstallConvention(ILog log,
@@ -34,7 +36,8 @@ namespace Calamari.ArgoCD.Conventions
                                                       ICalamariFileSystem fileSystem,
                                                       ArgoCommitToGitConfigFactory argoCommitToGitConfigFactory,
                                                       ICommitMessageGenerator commitMessageGenerator,
-                                                      ICustomPropertiesLoader customPropertiesLoader)
+                                                      ICustomPropertiesLoader customPropertiesLoader,
+                                                      IArgoCDApplicationManifestParser argoCdApplicationManifestParser)
         {
             this.log = log;
             this.pullRequestCreator = pullRequestCreator;
@@ -42,13 +45,19 @@ namespace Calamari.ArgoCD.Conventions
             this.argoCommitToGitConfigFactory = argoCommitToGitConfigFactory;
             this.commitMessageGenerator = commitMessageGenerator;
             this.customPropertiesLoader = customPropertiesLoader;
+            this.argoCdApplicationManifestParser = argoCdApplicationManifestParser;
         }
 
         public void Install(RunningDeployment deployment)
         {
+            Log.Info("Executing Commit To Git operation");
             var actionConfig = argoCommitToGitConfigFactory.Create(deployment);
+
             var repositoryFactory = new RepositoryFactory(log, deployment.CurrentDirectory, pullRequestCreator);
+
             var argoProperties = customPropertiesLoader.Load<ArgoCDCustomPropertiesDto>();
+
+            var gitCredentials = argoProperties.Credentials.ToDictionary(c => c.Url);
             
             log.Info($"Found {argoProperties.Applications.Length} Argo CD apps to update");
             var updatedApplications = new List<string>();
@@ -57,26 +66,28 @@ namespace Calamari.ArgoCD.Conventions
 
             var outputWriter = new ArgoCDImageUpdateOutputWriter(log);
             
-            foreach (var appToUpdate in argoProperties.Applications)
+            foreach (var application in argoProperties.Applications)
             {
-                Log.Info($"Updating '{appToUpdate.Name}'");
-                foreach (var source in appToUpdate.Sources.Where(s => s.SourceType.Equals("Directory", StringComparison.OrdinalIgnoreCase)))
+                var applicationFromYaml = argoCdApplicationManifestParser.ParseManifest(application.Manifest);
+                foreach (var applicationSource in applicationFromYaml.Spec.Sources.OfType<BasicSource>())
                 {
-                    var repository = CreateRepository(source, argoProperties.Credentials, repositoryFactory);
+                    var gitCredential = gitCredentials[applicationSource.RepoUrl.AbsoluteUri];
+                    var gitConnection = new GitConnection(gitCredential.Username, gitCredential.Password, applicationSource.RepoUrl.AbsoluteUri, new GitBranchName(applicationSource.TargetRevision));
+                    var repository = repositoryFactory.CloneRepository(repositoryNumber.ToString(CultureInfo.InvariantCulture), gitConnection);
 
-                    var (updatedFiles, updatedImages) = UpdateKubernetesYaml(repository.WorkingDirectory, source.Path, appToUpdate.DefaultRegistry, actionConfig.PackageReferences);
+                    var (updatedFiles, updatedImages) = UpdateKubernetesYaml(repository.WorkingDirectory, applicationSource.Path, application.DefaultRegistry, actionConfig.PackageReferences);
                     
                     if (updatedImages.Count > 0)
                     {
                         PushToRemote(repository,
-                                     new GitBranchName(source.TargetRevision),
+                                     new GitBranchName(applicationSource.TargetRevision),
                                      actionConfig,
                                      updatedFiles,
                                      updatedImages);
                         
                         newImagesWritten.UnionWith(updatedImages);
-                        updatedApplications.Add(appToUpdate.Name);
-                        gitReposUpdated.Add(source.Url);
+                        updatedApplications.Add(applicationFromYaml.Metadata.Name);
+                        gitReposUpdated.Add(applicationSource.RepoUrl.AbsoluteUri);
                     }
                 }
             }

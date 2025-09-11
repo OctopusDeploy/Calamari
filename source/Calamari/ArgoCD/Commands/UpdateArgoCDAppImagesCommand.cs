@@ -53,7 +53,7 @@ namespace Calamari.ArgoCD.Commands
 
             var conventions = new List<IConvention>
             {
-                new UpdateArgoCDAppImagesInstallConvention(log, pullRequestCreator, fileSystem, configFactory, commitMessageGenerator, new CustomPropertiesLoader(fileSystem, customPropertiesFile, customPropertiesPassword)),
+                new UpdateArgoCDAppImagesInstallConvention(log, pullRequestCreator, fileSystem, configFactory, commitMessageGenerator, new CustomPropertiesLoader(fileSystem, customPropertiesFile, customPropertiesPassword), new ArgoCdApplicationManifestParser()),
             };
                 
             var conventionRunner = new ConventionProcessor(runningDeployment, conventions, log);

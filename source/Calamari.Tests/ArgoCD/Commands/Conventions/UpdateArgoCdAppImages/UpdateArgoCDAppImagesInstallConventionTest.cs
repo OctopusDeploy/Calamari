@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages;
+using Calamari.ArgoCD.Domain;
 using Calamari.ArgoCD.Dtos;
 using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.GitHub;
@@ -35,6 +36,9 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
         Repository originRepo;
         GitBranchName argoCDBranchName = new GitBranchName("devBranch");
         NonSensitiveCalamariVariables nonSensitiveCalamariVariables = new NonSensitiveCalamariVariables();
+        
+        readonly IArgoCDApplicationManifestParser argoCdApplicationManifestParser = Substitute.For<IArgoCDApplicationManifestParser>();
+        readonly ICustomPropertiesLoader customPropertiesLoader = Substitute.For<ICustomPropertiesLoader>();
 
         [SetUp]
         public void Init()
@@ -46,31 +50,36 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
             
             nonSensitiveCalamariVariables.Add(SpecialVariables.Git.CommitMessageSummary, "Commit Summary");
             nonSensitiveCalamariVariables.Add(SpecialVariables.Git.CommitMessageDescription, "Commit Description");
-        }
-
-        ICustomPropertiesLoader SetupCustomPropertiesLoader()
-        {
-            var customPropertiesFactory = Substitute.For<ICustomPropertiesLoader>();
-            customPropertiesFactory.Load<ArgoCDCustomPropertiesDto>()
-                                   .Returns(new ArgoCDCustomPropertiesDto(new[]
-                                                                          {
-                                                                              new ArgoCDApplicationDto("Gateway1",
-                                                                                                       "App1",
-                                                                                                       "docker.io",
-                                                                                                       new[]
-                                                                                                       {
-                                                                                                           new ArgoCDApplicationSourceDto($"file://{OriginPath}",
-                                                                                                                                          "",
-                                                                                                                                          argoCDBranchName.Value,
-                                                                                                                                          "Directory")
-                                                                                                       },
-                                                                                                       "yamlManifest")
-                                                                          },
-                                                                          new[]
-                                                                          {
-                                                                              new GitCredentialDto(new Uri(OriginPath).AbsoluteUri, "", "")
-                                                                          }));
-            return customPropertiesFactory;
+            
+            var argoCdCustomPropertiesDto = new ArgoCDCustomPropertiesDto(new[]
+            {
+                new ArgoCDApplicationDto("Gateway1", "App1", "docker.io",new[]
+                {
+                    new ArgoCDApplicationSourceDto(OriginPath, "", argoCDBranchName.Value, "Directory")
+                }, "yaml")
+            }, new GitCredentialDto[]
+            {
+                new GitCredentialDto(new Uri(OriginPath).AbsoluteUri, "", "")
+            });
+            customPropertiesLoader.Load<ArgoCDCustomPropertiesDto>().Returns(argoCdCustomPropertiesDto);
+            
+            var argoCdApplicationFromYaml = new Application()
+            {
+                Spec = new ApplicationSpec()
+                {
+                    Sources = new List<SourceBase>()
+                    {
+                        new BasicSource()
+                        {
+                            RepoUrl = new Uri(OriginPath),
+                            Path = "",
+                            TargetRevision = argoCDBranchName.Value
+                        }  
+                    } 
+                }
+            };
+            argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
+                                           .Returns(argoCdApplicationFromYaml);
         }
 
         [Test]
@@ -82,7 +91,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
                                                                      fileSystem,
                                                                      new ArgoCommitToGitConfigFactory(nonSensitiveCalamariVariables),
                                                                      new CommitMessageGenerator(),
-                                                                     SetupCustomPropertiesLoader());
+                                                                     customPropertiesLoader, argoCdApplicationManifestParser);
             var variables = new CalamariVariables
             {
                 [SpecialVariables.Git.CommitMethod] = "DirectCommit",
@@ -113,7 +122,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
                                                                      fileSystem,
                                                                      new ArgoCommitToGitConfigFactory(nonSensitiveCalamariVariables),
                                                                      new CommitMessageGenerator(),
-                                                                     SetupCustomPropertiesLoader());
+                                                                     customPropertiesLoader, argoCdApplicationManifestParser);
             var variables = new CalamariVariables
             {
                 [SpecialVariables.Git.CommitMethod] = "DirectCommit",
@@ -148,7 +157,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
                                                                      fileSystem,
                                                                      new ArgoCommitToGitConfigFactory(nonSensitiveCalamariVariables),
                                                                      new CommitMessageGenerator(),
-                                                                     SetupCustomPropertiesLoader());
+                                                                     customPropertiesLoader, argoCdApplicationManifestParser);
             var variables = new CalamariVariables
             {
                 [SpecialVariables.Git.CommitMethod] = "DirectCommit",
