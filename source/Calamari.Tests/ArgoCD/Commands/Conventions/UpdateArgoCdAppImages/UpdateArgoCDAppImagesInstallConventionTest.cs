@@ -140,7 +140,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
             updater.Install(runningDeployment);
 
             // Assert
-            log.StandardOut.Should().Contain(s => s.Contains($"Processing file include/file1.yaml"));
+            log.StandardOut.Should().Contain(s => s.Contains($"Processing file include{Path.DirectorySeparatorChar}file1.yaml"));
             log.StandardOut.Should().Contain("No changes made to file include/file1.yaml as no image references were updated.");
 
             var resultRepo = CloneOrigin();
