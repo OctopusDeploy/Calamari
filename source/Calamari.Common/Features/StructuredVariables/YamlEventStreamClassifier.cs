@@ -133,7 +133,7 @@ namespace Calamari.Common.Features.StructuredVariables
             // putting some back based on input file offset information.
             const int outputCommentPrefixLength = 2; // The YamlDotNet Emitter is hard-coded to output `# `
             var leadingSpaces = comment.Start.Line == comment.End.Line
-                ? comment.End.Column - comment.Value.Length - comment.Start.Column - outputCommentPrefixLength
+                ? (int)(comment.End.Column - comment.Value.Length - comment.Start.Column - outputCommentPrefixLength)
                 : 0;
             return leadingSpaces > 0
                 ? new Comment(new string(' ', leadingSpaces) + comment.Value,

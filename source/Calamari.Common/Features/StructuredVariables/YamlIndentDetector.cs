@@ -7,8 +7,8 @@ namespace Calamari.Common.Features.StructuredVariables
 {
     public class YamlIndentDetector
     {
-        readonly List<int> indents = new List<int>();
-        int lastNestingChangeColumn = 1;
+        readonly List<long> indents = new List<long>();
+        long lastNestingChangeColumn = 1;
 
         public void Process(ParsingEvent ev)
         {
@@ -26,18 +26,18 @@ namespace Calamari.Common.Features.StructuredVariables
                 lastNestingChangeColumn = ev.Start.Column;
         }
 
-        static bool IndentDoesNotCrashYamlDotNetEmitter(int indent)
+        static bool IndentDoesNotCrashYamlDotNetEmitter(long indent)
         {
             return indent >= 2 && indent <= 9;
         }
 
         public int GetMostCommonIndent()
         {
-            return indents.GroupBy(indent => indent)
-                          .OrderByDescending(group => group.Count())
-                          .FirstOrDefault()
-                          ?.Key
-                   ?? 2;
+            var result = (int?)indents.GroupBy(indent => indent)
+                                .OrderByDescending(group => group.Count())
+                                .FirstOrDefault()
+                                ?.Key; 
+            return result ?? 2;
         }
     }
 }
