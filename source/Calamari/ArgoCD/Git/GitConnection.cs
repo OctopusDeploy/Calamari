@@ -33,9 +33,9 @@ namespace Calamari.ArgoCD.Git
         public string Url { get; }
         public GitBranchName BranchName { get; }
         
-        public static GitConnection Create(ArgoCDApplicationSourceDto source)
+        public static GitConnection Create(ArgoCDApplicationSourceDto source, GitCredentialDto gitCredentials)
         {
-            return new GitConnection(source.Username, source.Password, source.Url, new GitBranchName(source.TargetRevision));
+            return new GitConnection(gitCredentials.Username, gitCredentials.Password, source.Url, new GitBranchName(source.TargetRevision));
         }
     }
 }

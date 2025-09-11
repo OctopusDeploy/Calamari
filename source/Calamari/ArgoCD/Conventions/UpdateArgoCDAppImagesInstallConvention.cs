@@ -62,7 +62,7 @@ namespace Calamari.ArgoCD.Conventions
                 Log.Info($"Updating '{appToUpdate.Name}'");
                 foreach (var source in appToUpdate.Sources.Where(s => s.SourceType.Equals("Directory", StringComparison.OrdinalIgnoreCase)))
                 {
-                    var repository = CreateRepository(source, repositoryFactory);
+                    var repository = CreateRepository(source, argoProperties.Credentials, repositoryFactory);
 
                     var (updatedFiles, updatedImages) = UpdateKubernetesYaml(repository.WorkingDirectory, source.Path, appToUpdate.DefaultRegistry, actionConfig.PackageReferences);
                     
@@ -88,9 +88,10 @@ namespace Calamari.ArgoCD.Conventions
                                                 );
         }
 
-        RepositoryWrapper CreateRepository(ArgoCDApplicationSourceDto source, RepositoryFactory repositoryFactory)
+        RepositoryWrapper CreateRepository(ArgoCDApplicationSourceDto source, GitCredentialDto[] credentials, RepositoryFactory repositoryFactory)
         {
-            var gitConnection = GitConnection.Create(source);
+            var credentialsToUse = credentials.First(cred => cred.Url.Equals(source.Url, StringComparison.OrdinalIgnoreCase));
+            var gitConnection = GitConnection.Create(source, credentialsToUse);
             var repoPath = repositoryNumber++.ToString(CultureInfo.InvariantCulture);
             Log.Info($"Writing files to git repository for '{gitConnection.Url}'");
             var repository = repositoryFactory.CloneRepository(repoPath, gitConnection);

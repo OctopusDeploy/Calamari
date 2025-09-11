@@ -18,7 +18,7 @@ namespace Calamari.ArgoCD.Dtos
 
     public class ArgoCDApplicationDto
     {
-        public ArgoCDApplicationDto(string gatewayId, string name, ArgoCDApplicationSourceDto[] sources, string manifest)
+        public ArgoCDApplicationDto(string gatewayId, string name, string defaultRegistry, ArgoCDApplicationSourceDto[] sources, string manifest)
         {
             GatewayId = gatewayId;
             Name = name;
@@ -36,12 +36,15 @@ namespace Calamari.ArgoCD.Dtos
 
     public class ArgoCDApplicationSourceDto
     {
-        public ArgoCDApplicationSourceDto(string url, string path, string targetRevision)
+        public ArgoCDApplicationSourceDto(string url, string path, string targetRevision, string sourceType)
         {
             Url = url;
             Path = path;
             TargetRevision = targetRevision;
+            SourceType = sourceType;
         }
+
+        public string SourceType { get; set; }
 
         public string Url { get; }
         public string TargetRevision { get; }
