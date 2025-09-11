@@ -146,8 +146,10 @@ namespace Calamari.Common.Features.StructuredVariables
                 fileSystem.OverwriteFile(filePath,
                                                  writer =>
                                                  {
-                                                     writer.NewLine = lineEnding == StringExtensions.LineEnding.Dos ? "\r\n" : "\n";
-                                                     var emitter = new Emitter(writer, (int)indentDetector.GetMostCommonIndent());
+                                                     var settings = new EmitterSettings()
+                                                                    .WithBestIndent(indentDetector.GetMostCommonIndent())
+                                                                    .WithNewLine(lineEnding == StringExtensions.LineEnding.Dos ? "\r\n" : "\n");
+                                                     var emitter = new Emitter(writer, settings);
                                                      foreach (var outputEvent in outputEvents)
                                                          emitter.Emit(outputEvent);
                                                  },
