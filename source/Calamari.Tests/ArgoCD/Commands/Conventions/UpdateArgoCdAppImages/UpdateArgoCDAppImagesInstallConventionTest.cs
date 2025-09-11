@@ -59,7 +59,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
                                                                                                        "docker.io",
                                                                                                        new[]
                                                                                                        {
-                                                                                                           new ArgoCDApplicationSourceDto(OriginPath,
+                                                                                                           new ArgoCDApplicationSourceDto($"file://{OriginPath}",
                                                                                                                                           "",
                                                                                                                                           argoCDBranchName.Value,
                                                                                                                                           "Directory")
