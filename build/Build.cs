@@ -270,13 +270,30 @@ partial class Build : NukeBuild
                                                            nugetVersion);
                            if (OperatingSystem.IsWindows())
                            {
-                               outputDirectory.Copy(LegacyCalamariDirectory / RootProjectName, ExistsPolicy.DirectoryMerge | ExistsPolicy.FileFail);
-                           }
-                           else
+                               SourceDirectory.GlobDirectories("**/bin", "**/obj", "**/TestResults").ForEach(d => d.DeleteDirectory());
+                               ArtifactsDirectory.CreateOrCleanDirectory();
+                               PublishDirectory.CreateOrCleanDirectory();
+                           });
+        
+        Target RestoreCalamari =>
+            d =>
+                d.DependsOn(Clean)
+                 .Executes(() =>
                            {
-                               Log.Warning($"Skipping the bundling of {RootProjectName} into the Calamari.Legacy bundle. "
-                                           + "This is required for providing .Net Framework executables for legacy Target Operating Systems");
-                           }
+                               if (OperatingSystem.IsWindows())
+                               {
+                                   DotNetRestore(s => s.SetProjectFile(RootProjectName))
+                               }
+                               
+                               
+                               PackagesToPublish
+                                   .Select(p => p.Architecture)
+                                   .Distinct()
+                                   .ForEach(rid => DotNetRestore(s =>
+                                                                     s.SetProjectFile(Solution)
+                                                                      .SetProperty("DisableImplicitNuGetFallbackFolder", true)
+                                                                      .SetRuntime(rid)));
+                               var localRuntime = FixedRuntimes.Windows;
 
                            DoPublish(RootProjectName,
                                      OperatingSystem.IsWindows() ? Frameworks.Net462 : Frameworks.Net60,
@@ -287,44 +304,59 @@ partial class Build : NukeBuild
                                DoPublish(RootProjectName, Frameworks.Net60, nugetVersion, rid);
                        });
 
-    Target GetCalamariFlavourProjectsToPublish =>
-        d =>
-            d.DependsOn(Compile)
-             .Executes(() =>
-                       {
-                           var flavours = GetCalamariFlavours();
-                           var migratedCalamariFlavoursTests = flavours.Select(f => $"{f}.Tests");
-                           var calamariFlavourProjects = Solution.Projects
-                                                                 .Where(project => flavours.Contains(project.Name)
-                                                                                   || migratedCalamariFlavoursTests.Contains(project.Name));
+        Target CompileCalamari =>
+            d =>
+                d.DependsOn(CheckForbiddenWords)
+                 .DependsOn(RestoreCalamari)
+                 .Executes(() =>
+                           {
+                               Log.Information("Compiling Calamari v{CalamariVersion}", NugetVersion.Value);
 
                            // Calamari.Scripting is a library that other calamari flavours depend on; not a flavour on its own right.
                            // Unlike other *Calamari* tests, we would still want to produce Calamari.Scripting.Zip and its tests, like its flavours.
                            var calamariScripting = "Calamari.Scripting";
                            var calamariScriptingProjectAndTest = Solution.Projects.Where(project => project.Name == calamariScripting || project.Name == $"{calamariScripting}.Tests");
 
-                           var calamariProjects = calamariFlavourProjects
-                                                  .Concat(calamariScriptingProjectAndTest)
-                                                  .ToList();
+        Target CalamariConsolidationTests =>
+            d =>
+                d.DependsOn(CompileCalamari)
+                 .OnlyWhenStatic(() => !IsLocalBuild)
+                 .Executes(() =>
+                           {
+                               DotNetTest(s => s
+                                               .SetProjectFile(ConsolidateCalamariPackagesProject)
+                                               .SetConfiguration(Configuration));
+                           });
 
-                           CalamariProjects = calamariProjects;
+        Target PublishCalamari =>
+            d =>
+                d.DependsOn(CompileCalamari)
+                 .DependsOn(PublishAzureWebAppNetCoreShim)
+                 .Executes(() =>
+                           {
+                               var nugetVersion = NugetVersion.Value;
+                               var outputDirectory = DoPublish(RootProjectName,
+                                                               OperatingSystem.IsWindows() ? Frameworks.Net462 : Frameworks.Net60,
+                                                               nugetVersion);
+                               if (OperatingSystem.IsWindows())
+                               {
+                                   CopyDirectoryRecursively(outputDirectory, (LegacyCalamariDirectory / RootProjectName), DirectoryExistsPolicy.Merge);
+                               }
+                               else
+                               {
+                                   Log.Warning($"Skipping the bundling of {RootProjectName} into the Calamari.Legacy bundle. "
+                                               + "This is required for providing .Net Framework executables for legacy Target Operating Systems");
+                               }
+                               
+                               DoPublish(RootProjectName, OperatingSystem.IsWindows() ? Frameworks.Net462 : Frameworks.Net60, nugetVersion, FixedRuntimes.Cloud);
 
-                           // All cross-platform Target Frameworks contain dots, all NetFx Target Frameworks don't
-                           // eg: net40, net452, net48 vs netcoreapp3.1, net5.0, net6.0
-                           bool IsCrossPlatform(string targetFramework) => targetFramework.Contains('.');
-
-                               DoPublish(RootProjectName,
-                                         OperatingSystem.IsWindows() ? Frameworks.Net462 : Frameworks.Net60,
-                                         nugetVersion,
-                                         FixedRuntimes.Cloud);
-
-                               foreach (var rid in GetRuntimeIdentifiers(Solution.GetProject(RootProjectName)!)!)
+                               foreach (var rid in GetRuntimeIdentifiers(Solution.GetProject(RootProjectName)!))
                                    DoPublish(RootProjectName, Frameworks.Net60, nugetVersion, rid);
                            });
 
         Target GetCalamariFlavourProjectsToPublish =>
             d =>
-                d.DependsOn(Compile)
+                d.DependsOn(CompileCalamari)
                  .Executes(() =>
                            {
                                var flavours = GetCalamariFlavours();
@@ -658,15 +690,8 @@ partial class Build : NukeBuild
             return;
         }
 
-        var compressionTask = Task.Run(() => compressionSource.CompressTo($"{ArtifactsDirectory / project.Name}.zip"));
-        ProjectCompressionTasks.Add(compressionTask);
-    }
-
-    Target PublishAzureWebAppNetCoreShim =>
-        _ => _.DependsOn(Restore)
-              .Executes(() =>
-                        {
-                            if (!OperatingSystem.IsWindows())
+        Target PublishAzureWebAppNetCoreShim =>
+            _ => _.Executes(() =>
                             {
                                 Log.Warning("Unable to build Calamari.AzureWebApp.NetCoreShim as it's a Full Framework application and can only be compiled on Windows");
                                 return;
@@ -676,14 +701,13 @@ partial class Build : NukeBuild
 
                             var outputPath = PublishDirectory / project.Name;
 
-                            DotNetPublish(s => s
-                                               .SetConfiguration(Configuration)
-                                               .SetProject(project.Path)
-                                               .SetFramework(Frameworks.Net462)
-                                               .EnableNoRestore()
-                                               .SetVersion(NugetVersion.Value)
-                                               .SetInformationalVersion(OctoVersionInfo.Value?.InformationalVersion)
-                                               .SetOutput(outputPath));
+                                DotNetPublish(s => s
+                                                   .SetConfiguration(Configuration)
+                                                   .SetProject(project.Path)
+                                                   .SetFramework(Frameworks.Net462)
+                                                   .SetVersion(NugetVersion.Value)
+                                                   .SetInformationalVersion(OctoVersionInfo.Value?.InformationalVersion)
+                                                   .SetOutput(outputPath));
 
                             var archivePath = SourceDirectory / "Calamari.AzureWebApp" / "netcoreshim" / "netcoreshim.zip";
                             archivePath.DeleteFile();
@@ -691,13 +715,11 @@ partial class Build : NukeBuild
                             outputPath.CompressTo(archivePath);
                         });
 
-    Target PackLegacyCalamari =>
-        d =>
-            d.DependsOn(Publish)
-             .DependsOn(PublishCalamariProjects)
-             .Executes(() =>
-                       {
-                           if (!OperatingSystem.IsWindows())
+        Target PackLegacyCalamari =>
+            d =>
+                d.DependsOn(PublishCalamari)
+                 .DependsOn(PublishCalamariProjects)
+                 .Executes(() =>
                            {
                                return;
                            }
@@ -706,14 +728,11 @@ partial class Build : NukeBuild
                            LegacyCalamariDirectory.ZipTo(ArtifactsDirectory / $"Calamari.Legacy.{NugetVersion.Value}.zip");
                        });
 
-    Target PackBinaries =>
-        d =>
-            d.DependsOn(Publish)
-             .DependsOn(PublishCalamariProjects)
-             .Executes(async () =>
-                       {
-                           var nugetVersion = NugetVersion.Value;
-                           var packageActions = new List<Action>
+        Target PackBinaries =>
+            d =>
+                d.DependsOn(PublishCalamari)
+                 .DependsOn(PublishCalamariProjects)
+                 .Executes(async () =>
                            {
                                () => DoPackage(RootProjectName,
                                                OperatingSystem.IsWindows() ? Frameworks.Net462 : Frameworks.Net60,
@@ -758,17 +777,11 @@ partial class Build : NukeBuild
                            await RunPackActions(packageActions);
                        });
 
-    Target PackTests =>
-        d =>
-            d.DependsOn(Publish)
-             .DependsOn(PublishCalamariProjects)
-             .Executes(async () =>
-                       {
-                           var nugetVersion = NugetVersion.Value;
-                           var defaultTarget = OperatingSystem.IsWindows() ? Frameworks.Net462 : Frameworks.Net60;
-                           AbsolutePath binFolder = SourceDirectory / "Calamari.Tests" / "bin" / Configuration / defaultTarget;
-                           Directory.Exists(binFolder);
-                           var actions = new List<Action>
+        Target PackTests =>
+            d =>
+                d.DependsOn(PublishCalamari)
+                 .DependsOn(PublishCalamariProjects)
+                 .Executes(async () =>
                            {
                                () => binFolder.CompressTo( ArtifactsDirectory / "Binaries.zip")
                            };
