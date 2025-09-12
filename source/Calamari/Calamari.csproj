@@ -18,7 +18,6 @@
     <Product>Calamari</Product>
     <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
     <ApplicationManifest>Calamari.exe.manifest</ApplicationManifest>
-    <TargetFrameworks>net462;net6.0</TargetFrameworks>
     <LangVersion>8</LangVersion>
     <!-- CS8632: The annotation for nullable reference types should only be used in code within a '#nullable' annotations context. -->
     <NoWarn>CS8632</NoWarn>
@@ -92,7 +91,7 @@
   <ItemGroup Condition=" '$(TargetFramework)' == 'net6.0' ">
     <PackageReference Include="KubernetesClient" Version="15.0.1" />
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
     <PackageReference Include="LibGit2Sharp" Version="0.30.0" />
   </ItemGroup>
   <!--
