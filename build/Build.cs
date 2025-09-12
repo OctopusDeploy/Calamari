@@ -203,7 +203,7 @@ partial class Build : NukeBuild
                            {
                                Log.Warning("Building Calamari on a non-windows machine will result "
                                            + "in the {DefaultNugetPackageName} and {CloudNugetPackageName} "
-                                           + "nuget packages being built as .Net Core 6.0 packages "
+                                           + "nuget packages being built as .Net Core 8.0 packages "
                                            + "instead of as .Net Framework. "
                                            + "This can cause compatibility issues when running certain "
                                            + "deployment steps in Octopus Server",
