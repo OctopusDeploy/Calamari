@@ -146,8 +146,10 @@ namespace Calamari.Common.Features.StructuredVariables
                 fileSystem.OverwriteFile(filePath,
                                                  writer =>
                                                  {
-                                                     writer.NewLine = lineEnding == StringExtensions.LineEnding.Dos ? "\r\n" : "\n";
-                                                     var emitter = new Emitter(writer, indentDetector.GetMostCommonIndent());
+                                                     var settings = new EmitterSettings()
+                                                                    .WithBestIndent(indentDetector.GetMostCommonIndent())
+                                                                    .WithNewLine(lineEnding == StringExtensions.LineEnding.Dos ? "\r\n" : "\n");
+                                                     var emitter = new Emitter(writer, settings);
                                                      foreach (var outputEvent in outputEvents)
                                                          emitter.Emit(outputEvent);
                                                  },
@@ -155,7 +157,7 @@ namespace Calamari.Common.Features.StructuredVariables
             }
             catch (Exception e) when (e is SyntaxErrorException || e is SemanticErrorException)
             {
-                throw new StructuredConfigFileParseException(e.Message, e);
+                throw new StructuredConfigFileParseException(e.ToString(), e);
             }
             catch (Exception e) when (e is YamlException)
             {
@@ -164,7 +166,7 @@ namespace Calamari.Common.Features.StructuredVariables
             }
         }
 
-        List<ParsingEvent> ParseFragment(string? value, string? anchor, string? tag)
+        List<ParsingEvent> ParseFragment(string? value, AnchorName anchor, TagName tag)
         {
             var result = new List<ParsingEvent>();
             try
