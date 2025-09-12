@@ -85,7 +85,7 @@ namespace Calamari.Tests.ArgoCD.Git
             File.WriteAllText(Path.Combine(RepositoryRootPath, filename), fileContents);
             repository.StageFiles(new[] { filename });
             repository.CommitChanges("Summary Message", "A file has changed").Should().BeTrue();
-            await repository.PushChanges(false, branchName, CancellationToken.None);
+            await repository.PushChanges(false, "Summary Message", "A file has changed", branchName, CancellationToken.None);
             
             //ensure the remote contains the file
             var originFileContent = bareOrigin.ReadFileFromBranch(branchName, filename);
@@ -99,8 +99,8 @@ namespace Calamari.Tests.ArgoCD.Git
             File.WriteAllText(Path.Combine(RepositoryRootPath, filename), "");
             repository.StageFiles(new[] { filename });
             repository.CommitChanges("Summary Message", "There is no data to comm it").Should().BeTrue();
-            await repository.PushChanges(false, new GitBranchName("arbitraryBranch1"), CancellationToken.None);
-            await repository.PushChanges(false, new GitBranchName("arbitraryBranch2"), CancellationToken.None);
+            await repository.PushChanges(false, "Summary Message", "There is no data to comm it", new GitBranchName("arbitraryBranch1"), CancellationToken.None);
+            await repository.PushChanges(false, "Summary Message", "There is no data to comm it", new GitBranchName("arbitraryBranch2"), CancellationToken.None);
         }
 
         [Test]
@@ -113,7 +113,7 @@ namespace Calamari.Tests.ArgoCD.Git
             var commitDescription = "A commit description";
             repository.CommitChanges(commitSummary, commitDescription).Should().BeTrue();
             var prBranch = new GitBranchName("arbitraryBranch");
-            await repository.PushChanges(true, prBranch, CancellationToken.None);
+            await repository.PushChanges(true,  commitSummary, commitDescription, prBranch, CancellationToken.None);
             await gitHubPullRequestCreator.Received(1)
                                     .CreatePullRequest(log,
                                                        gitConnection,

@@ -86,7 +86,7 @@ namespace Calamari.ArgoCD.Conventions
                     if (repository.CommitChanges(actionConfig.CommitParameters.Summary, actionConfig.CommitParameters.Description))
                     {
                         Log.Info("Changes were commited, pushing to remote");
-                        repository.PushChanges(actionConfig.CommitParameters.RequiresPr, new GitBranchName(applicationSource.TargetRevision), CancellationToken.None).GetAwaiter().GetResult();    
+                        repository.PushChanges(actionConfig.CommitParameters.RequiresPr, actionConfig.CommitParameters.Summary, actionConfig.CommitParameters.Description, new GitBranchName(applicationSource.TargetRevision), CancellationToken.None).GetAwaiter().GetResult();    
                     }
                     else
                     {

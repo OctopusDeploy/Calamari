@@ -28,16 +28,10 @@ namespace Calamari.ArgoCD.Git
         // returns true if changes were made to the repository
         public bool CommitChanges(string summary, string description)
         {
-            var fullMessage = GenerateCommitMessage(summary, description);
-            return CommitChanges(fullMessage);
-        }
-
-        public bool CommitChanges(string fullMessage)
-        {
             try
             {
                 var commitTime = DateTimeOffset.Now;
-                
+                var fullMessage = GenerateCommitMessage(summary, description);
                 var commit = repository.Commit(fullMessage,
                                                new Signature("Octopus", "octopus@octopus.com", commitTime),
                                                new Signature("Octopus", "octopus@octopus.com", commitTime));
@@ -59,7 +53,7 @@ namespace Calamari.ArgoCD.Git
             }
         }
         
-        public async Task PushChanges(bool requiresPullRequest, GitBranchName branchName, CancellationToken cancellationToken)
+        public async Task PushChanges(bool requiresPullRequest, string summary, string description, GitBranchName branchName, CancellationToken cancellationToken)
         {
             var currentBranchName = repository.GetBranchName(branchName);
             var pushToBranchName = currentBranchName;
@@ -71,10 +65,7 @@ namespace Calamari.ArgoCD.Git
             PushChanges(pushToBranchName);
             if (requiresPullRequest)
             {
-                var commit = repository.Head.Tip; //this is a BIT dodgy - as it assumes we're pushing head.
-                var commitSummary = commit.MessageShort;
-                var commitDescription = commit.Message.Substring(commitSummary.Length).Trim('\n');
-                await pullRequestCreator.CreatePullRequest(log, connection, commitSummary, commitDescription, new GitBranchName(pushToBranchName),  new GitBranchName(currentBranchName), cancellationToken);
+                await pullRequestCreator.CreatePullRequest(log, connection, summary, description, new GitBranchName(pushToBranchName),  new GitBranchName(currentBranchName), cancellationToken);
             }
         }
 

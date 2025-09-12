@@ -149,13 +149,13 @@ namespace Calamari.ArgoCD.Conventions
             Log.Info("Staging files in repository");
             repository.StageFiles(updatedFiles.ToArray());
 
-            var commitMessage = commitMessageGenerator.GenerateForImageUpdates(new GitCommitSummary(commitParameters.Summary), commitParameters.Description, updatedImages);
+            var commitDescription = commitMessageGenerator.GenerateDescription(updatedImages, commitParameters.Description); 
 
             Log.Info("Commiting changes");
-            if (repository.CommitChanges(commitMessage))
+            if (repository.CommitChanges(commitParameters.Summary, commitDescription))
             {
                 Log.Info("Changes were commited, pushing to remote");
-                repository.PushChanges(commitParameters.RequiresPr, branchName, CancellationToken.None).GetAwaiter().GetResult();
+                repository.PushChanges(commitParameters.RequiresPr,  commitParameters.Summary, commitDescription, branchName, CancellationToken.None).GetAwaiter().GetResult();
             }
             else
             {
