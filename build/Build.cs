@@ -150,13 +150,8 @@ namespace Calamari.Build
                 d.DependsOn(Clean)
                  .Executes(() =>
                            {
-                               var localRuntime = FixedRuntimes.Windows;
-
-                               if (!OperatingSystem.IsWindows())
-                                   localRuntime = FixedRuntimes.Linux;
-
+                               //restores all packages for all projects and all runtime identifiers
                                DotNetRestore(s => s.SetProjectFile(Solution)
-                                                   .SetRuntime(localRuntime)
                                                    .SetProperty("DisableImplicitNuGetFallbackFolder", true));
                            });
 
@@ -164,6 +159,7 @@ namespace Calamari.Build
             d =>
                 d.DependsOn(CheckForbiddenWords)
                  .DependsOn(Restore)
+                 .DependsOn(PublishAzureWebAppNetCoreShim)
                  .Executes(() =>
                            {
                                Log.Information("Compiling Calamari v{CalamariVersion}", NugetVersion.Value);
@@ -196,7 +192,7 @@ namespace Calamari.Build
                                if (!OperatingSystem.IsWindows())
                                    Log.Warning("Building Calamari on a non-windows machine will result "
                                                + "in the {DefaultNugetPackageName} and {CloudNugetPackageName} "
-                                               + "nuget packages being built as .Net Core 6.0 packages "
+                                               + "nuget packages being built as .Net Core 8.0 packages "
                                                + "instead of as .Net Framework. "
                                                + "This can cause compatibility issues when running certain "
                                                + "deployment steps in Octopus Server",
@@ -559,7 +555,10 @@ namespace Calamari.Build
                                Directory.Exists(binFolder);
                                var actions = new List<Action>
                                {
-                                   () => CompressionTasks.Compress(binFolder, ArtifactsDirectory / "Binaries.zip")
+                                   () =>
+                                   {
+                                       CompressionTasks.Compress(binFolder, ArtifactsDirectory / "Binaries.zip");
+                                   }
                                };
 
                                // Create a Zip for each runtime for testing
@@ -828,14 +827,36 @@ namespace Calamari.Build
         IReadOnlyCollection<string> GetRuntimeIdentifiers(Project? project)
         {
             if (project is null)
-                return Array.Empty<string>();
+                return [];
 
             var runtimes = project.GetRuntimeIdentifiers();
 
             if (!string.IsNullOrWhiteSpace(TargetRuntime))
                 runtimes = runtimes?.Where(x => x == TargetRuntime).ToList().AsReadOnly();
 
-            return runtimes ?? Array.Empty<string>();
+            return runtimes ?? [];
+        }
+
+        HashSet<string> GetTargetFrameworks(Project? project)
+        {
+            if (project is null)
+            {
+                return [];
+            }
+
+            var frameworks = project.GetTargetFrameworks() ?? [];
+            if (!string.IsNullOrWhiteSpace(TargetFramework))
+            {
+                frameworks = frameworks.Where(f => f == TargetFramework).ToList().AsReadOnly();
+            }
+
+            //if this is not windows, don't bother trying to do net462
+            if (!OperatingSystem.IsWindows())
+            {
+                frameworks = frameworks.Where(f => f != Frameworks.Net462).ToList().AsReadOnly();
+            }
+
+            return frameworks.ToHashSet();
         }
 
         //All libraries/flavours now support .NET Core
