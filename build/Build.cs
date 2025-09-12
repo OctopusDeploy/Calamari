@@ -194,7 +194,6 @@ partial class Build : NukeBuild
                        {
                            var nugetVersion = NugetVersion.Value;
                            if (OperatingSystem.IsWindows())
-                           {
                                var outputDirectory = DoPublish(RootProjectName, Frameworks.Net462, nugetVersion);
                                outputDirectory.Copy(LegacyCalamariDirectory / RootProjectName, ExistsPolicy.DirectoryMerge | ExistsPolicy.FileFail);
                                DoPublish(RootProjectName, Frameworks.Net462, nugetVersion, FixedRuntimes.Cloud);
@@ -632,7 +631,18 @@ partial class Build : NukeBuild
                                });
                            }
 
+        Target CalamariConsolidationTests =>
+            d =>
+                d.DependsOn(Compile)
+                 .OnlyWhenStatic(() => !IsLocalBuild)
+                 .Executes(() =>
                            foreach (var flavour in GetCalamariFlavours())
+                           {
+                               DotNetTest(s => s
+                                               .SetProjectFile(ConsolidateCalamariPackagesProject)
+                                               .SetConfiguration(Configuration)
+                                               .EnableNoBuild());
+                           });
                            {
                                if (Solution.GetProject(flavour) != null)
                                {
