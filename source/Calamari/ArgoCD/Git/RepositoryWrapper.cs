@@ -31,8 +31,8 @@ namespace Calamari.ArgoCD.Git
             try
             {
                 var commitTime = DateTimeOffset.Now;
-                var fullMessage = GenerateCommitMessage(summary, description);
-                var commit = repository.Commit(fullMessage,
+                var commitMessage = GenerateCommitMessage(summary, description);
+                var commit = repository.Commit(commitMessage,
                                                new Signature("Octopus", "octopus@octopus.com", commitTime),
                                                new Signature("Octopus", "octopus@octopus.com", commitTime));
                 log.Verbose($"Committed changes to {commit.Sha}");

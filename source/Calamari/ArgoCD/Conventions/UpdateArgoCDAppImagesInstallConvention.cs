@@ -51,7 +51,7 @@ namespace Calamari.ArgoCD.Conventions
         public void Install(RunningDeployment deployment)
         {
             Log.Info("Executing Update Argo CD Application Images");
-            var actionConfig = deploymentConfigFactory.CreateUpdateImageConfig(deployment);
+            var deploymentConfig = deploymentConfigFactory.CreateUpdateImageConfig(deployment);
 
             var repositoryFactory = new RepositoryFactory(log, deployment.CurrentDirectory, pullRequestCreator);
 
@@ -63,10 +63,12 @@ namespace Calamari.ArgoCD.Conventions
             var updatedApplications = new List<string>();
             var newImagesWritten = new HashSet<string>();
             var gitReposUpdated = new HashSet<string>();
+            var gatewayIds = new HashSet<string>();
             
             foreach (var application in argoProperties.Applications)
             {
                 var applicationFromYaml = argoCdApplicationManifestParser.ParseManifest(application.Manifest);
+                gatewayIds.Add(application.GatewayId);
                 
                 foreach (var applicationSource in applicationFromYaml.Spec.Sources.OfType<BasicSource>())
                 {
@@ -74,13 +76,13 @@ namespace Calamari.ArgoCD.Conventions
                     var gitConnection = new GitConnection(gitCredential.Username, gitCredential.Password, applicationSource.RepoUrl.AbsoluteUri, new GitBranchName(applicationSource.TargetRevision));
                     var repository = repositoryFactory.CloneRepository(repositoryNumber.ToString(CultureInfo.InvariantCulture), gitConnection);
 
-                    var (updatedFiles, updatedImages) = UpdateKubernetesYaml(repository.WorkingDirectory, applicationSource.Path, application.DefaultRegistry, actionConfig.PackageReferences);
+                    var (updatedFiles, updatedImages) = UpdateKubernetesYaml(repository.WorkingDirectory, applicationSource.Path, application.DefaultRegistry, deploymentConfig.PackageReferences);
                     
                     if (updatedImages.Count > 0)
                     {
                         PushToRemote(repository,
                                      new GitBranchName(applicationSource.TargetRevision),
-                                     actionConfig.CommitParameters,
+                                     deploymentConfig.CommitParameters,
                                      updatedFiles,
                                      updatedImages);
                         
@@ -91,9 +93,8 @@ namespace Calamari.ArgoCD.Conventions
                 }
             }
             
-            // TODO(tmm): Need to get the ArgoGatewayIDs into here
             var outputWriter = new ArgoCDImageUpdateOutputWriter(log);
-            outputWriter.WriteImageUpdateOutput(Array.Empty<string>(),
+            outputWriter.WriteImageUpdateOutput(gatewayIds,
                                                 gitReposUpdated,
                                                 argoProperties.Applications.Select(a => a.Name),
                                                 updatedApplications.Distinct(),

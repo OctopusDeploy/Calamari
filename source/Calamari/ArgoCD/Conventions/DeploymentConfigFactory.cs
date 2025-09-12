@@ -21,9 +21,9 @@ namespace Calamari.ArgoCD.Conventions
 
         public ArgoCommitToGitConfig CreateCommitToGitConfig(RunningDeployment deployment)
         {
+            var commitParameters = CommitParameters(deployment);
             var inputPath = deployment.Variables.Get(SpecialVariables.Git.InputPath, string.Empty);
             var recursive = deployment.Variables.GetFlag(SpecialVariables.Git.Recursive, false);
-            var commitParameters = CommitParameters(deployment);
             
             return new ArgoCommitToGitConfig(
                                            deployment.CurrentDirectory,

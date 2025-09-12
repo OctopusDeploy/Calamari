@@ -49,8 +49,8 @@ namespace Calamari.ArgoCD.Conventions
         public void Install(RunningDeployment deployment)
         {
             Log.Info("Executing Commit To Git operation");
-            var actionConfig = deploymentConfigFactory.CreateCommitToGitConfig(deployment);
-            var packageFiles = GetReferencedPackageFiles(actionConfig);
+            var deploymentConfig = deploymentConfigFactory.CreateCommitToGitConfig(deployment);
+            var packageFiles = GetReferencedPackageFiles(deploymentConfig);
 
             var repositoryFactory = new RepositoryFactory(log, deployment.CurrentDirectory, pullRequestCreator);
 
@@ -83,10 +83,10 @@ namespace Calamari.ArgoCD.Conventions
                     repository.StageFiles(repositoryFiles.Select(fcs => fcs.DestinationRelativePath).ToArray());
 
                     Log.Info("Commiting changes");
-                    if (repository.CommitChanges(actionConfig.CommitParameters.Summary, actionConfig.CommitParameters.Description))
+                    if (repository.CommitChanges(deploymentConfig.CommitParameters.Summary, deploymentConfig.CommitParameters.Description))
                     {
                         Log.Info("Changes were commited, pushing to remote");
-                        repository.PushChanges(actionConfig.CommitParameters.RequiresPr, actionConfig.CommitParameters.Summary, actionConfig.CommitParameters.Description, new GitBranchName(applicationSource.TargetRevision), CancellationToken.None).GetAwaiter().GetResult();    
+                        repository.PushChanges(deploymentConfig.CommitParameters.RequiresPr, deploymentConfig.CommitParameters.Summary, deploymentConfig.CommitParameters.Description, new GitBranchName(applicationSource.TargetRevision), CancellationToken.None).GetAwaiter().GetResult();    
                     }
                     else
                     {
