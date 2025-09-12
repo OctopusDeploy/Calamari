@@ -171,17 +171,6 @@ namespace Calamari.Build
                                                  .SetInformationalVersion(OctoVersionInfo.Value?.InformationalVersion));
                            });
 
-        Target CalamariConsolidationTests =>
-            d =>
-                d.DependsOn(Compile)
-                 .OnlyWhenStatic(() => !IsLocalBuild)
-                 .Executes(() =>
-                           {
-                               DotNetTest(s => s
-                                               .SetProjectFile(ConsolidateCalamariPackagesProject)
-                                               .SetConfiguration(Configuration)
-                                               .EnableNoBuild());
-                           });
 
         Target Publish =>
             d =>
@@ -611,6 +600,17 @@ namespace Calamari.Build
                                    CopyFile(file, LocalPackagesDirectory / Path.GetFileName(file), FileExistsPolicy.Overwrite);
                            });
 
+        Target CalamariConsolidationTests =>
+            d =>
+                d.DependsOn(Compile)
+                 .OnlyWhenStatic(() => !IsLocalBuild)
+                 .Executes(() =>
+                           {
+                               DotNetTest(s => s
+                                               .SetProjectFile(ConsolidateCalamariPackagesProject)
+                                               .SetConfiguration(Configuration)
+                                               .EnableNoBuild());
+                           });
         Target PackageConsolidatedCalamariZip =>
             d =>
                 d.DependsOn(CalamariConsolidationTests)
