@@ -36,15 +36,12 @@ namespace Calamari.ArgoCD.Dtos
 
     public class ArgoCDApplicationSourceDto
     {
-        public ArgoCDApplicationSourceDto(string url, string path, string targetRevision, string sourceType)
+        public ArgoCDApplicationSourceDto(string url, string path, string targetRevision)
         {
             Url = url;
             Path = path;
             TargetRevision = targetRevision;
-            SourceType = sourceType;
         }
-
-        public string SourceType { get; set; }
 
         public string Url { get; }
         public string TargetRevision { get; }

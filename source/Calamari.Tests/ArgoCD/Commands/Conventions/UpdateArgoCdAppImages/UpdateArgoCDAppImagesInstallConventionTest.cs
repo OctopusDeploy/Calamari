@@ -55,7 +55,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
             {
                 new ArgoCDApplicationDto("Gateway1", "App1", "docker.io",new[]
                 {
-                    new ArgoCDApplicationSourceDto(OriginPath, "", argoCDBranchName.Value, "Directory")
+                    new ArgoCDApplicationSourceDto(OriginPath, "", argoCDBranchName.Value)
                 }, "yaml")
             }, new GitCredentialDto[]
             {
@@ -89,15 +89,15 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
             var updater = new UpdateArgoCDAppImagesInstallConvention(log,
                                                                      Substitute.For<IGitHubPullRequestCreator>(),
                                                                      fileSystem,
-                                                                     new ArgoCommitToGitConfigFactory(nonSensitiveCalamariVariables),
+                                                                     new DeploymentConfigFactory(nonSensitiveCalamariVariables),
                                                                      new CommitMessageGenerator(),
                                                                      customPropertiesLoader, argoCdApplicationManifestParser);
             var variables = new CalamariVariables
             {
                 [SpecialVariables.Git.CommitMethod] = "DirectCommit",
                 [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this",
-                [Deployment.SpecialVariables.Packages.Image("nginx")] = "nginx:1.27.1",
-                [Deployment.SpecialVariables.Packages.Purpose("nginx")] = "DockerImageReference",
+                [PackageVariables.IndexedPackageId("nginx")] = "nginx:1.27.1",
+                [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
             };
             var runningDeployment = new RunningDeployment(null, variables);
             runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
@@ -120,15 +120,15 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
             var updater = new UpdateArgoCDAppImagesInstallConvention(log,
                                                                      Substitute.For<IGitHubPullRequestCreator>(),
                                                                      fileSystem,
-                                                                     new ArgoCommitToGitConfigFactory(nonSensitiveCalamariVariables),
+                                                                     new DeploymentConfigFactory(nonSensitiveCalamariVariables),
                                                                      new CommitMessageGenerator(),
                                                                      customPropertiesLoader, argoCdApplicationManifestParser);
             var variables = new CalamariVariables
             {
                 [SpecialVariables.Git.CommitMethod] = "DirectCommit",
                 [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this",
-                [Deployment.SpecialVariables.Packages.Image("nginx")] = "nginx:1.27.1",
-                [Deployment.SpecialVariables.Packages.Purpose("nginx")] = "DockerImageReference",
+                [PackageVariables.IndexedPackageId("nginx")] = "nginx:1.27.1",
+                [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
             };
             var runningDeployment = new RunningDeployment(null, variables);
             runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
@@ -155,15 +155,15 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
             var updater = new UpdateArgoCDAppImagesInstallConvention(log,
                                                                      Substitute.For<IGitHubPullRequestCreator>(),
                                                                      fileSystem,
-                                                                     new ArgoCommitToGitConfigFactory(nonSensitiveCalamariVariables),
+                                                                     new DeploymentConfigFactory(nonSensitiveCalamariVariables),
                                                                      new CommitMessageGenerator(),
                                                                      customPropertiesLoader, argoCdApplicationManifestParser);
             var variables = new CalamariVariables
             {
                 [SpecialVariables.Git.CommitMethod] = "DirectCommit",
                 [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this",
-                [Deployment.SpecialVariables.Packages.Image("nginx")] = "nginx:1.27.1",
-                [Deployment.SpecialVariables.Packages.Purpose("nginx")] = "DockerImageReference",
+                [PackageVariables.IndexedPackageId("nginx")] = "nginx:1.27.1",
+                [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
             };
             var runningDeployment = new RunningDeployment(null, variables);
             runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;

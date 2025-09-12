@@ -105,24 +105,6 @@ namespace Calamari.Deployment
             {
                 return $"Octopus.Action.Package[{key}].PackageFilePath";
             }
-
-            public static readonly string PackageCollection = "Octopus.Action.Package";
-
-            public static string Prefix(string name) => $"Octopus.Action.Package[{name}]";
-
-            public static string PackageId(string name) => $"Octopus.Action.Package[{name}].PackageId";
-
-            public static string FeedId(string name) => $"Octopus.Action.Package[{name}].FeedId";
-
-            public static string PackageVersion(string name) => $"Octopus.Action.Package[{name}].PackageVersion";
-
-            public static string ShouldDownloadOnTentacle(string name) => $"Octopus.Action.Package[{name}].DownloadOnTentacle";
-
-            public static string OriginalPath(string name) => $"Octopus.Action.Package[{name}].OriginalPath";
-
-            public static string Image(string name) => $"Octopus.Action.Package[{name}].Image";
-            
-            public static string Purpose(string name) => $"Octopus.Action.Package[{name}].Purpose";
         }
 
         public static class Vhd

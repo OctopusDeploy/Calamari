@@ -10,11 +10,11 @@ using Calamari.Kubernetes;
 
 namespace Calamari.ArgoCD.Conventions
 {
-    public class ArgoCommitToGitConfigFactory
+    public class DeploymentConfigFactory
     {
         readonly INonSensitiveVariables nonSensitiveVariables;
 
-        public ArgoCommitToGitConfigFactory(INonSensitiveVariables nonSensitiveVariables)
+        public DeploymentConfigFactory(INonSensitiveVariables nonSensitiveVariables)
         {
             this.nonSensitiveVariables = nonSensitiveVariables;
         }
@@ -23,22 +23,20 @@ namespace Calamari.ArgoCD.Conventions
         {
             var inputPath = deployment.Variables.Get(SpecialVariables.Git.InputPath, string.Empty);
             var recursive = deployment.Variables.GetFlag(SpecialVariables.Git.Recursive, false);
+            var commitParameters = CommitParameters(deployment);
             
-            var requiresPullRequest = RequiresPullRequest(deployment);
-
-            // TODO #project-argo-cd-in-octopus: put both types of variables on RunningDeployment and encapsulate so the dev thinks about whether
-            // the variable is sensitive
-            var summary = EvaluateNonsensitiveExpression(nonSensitiveVariables.GetMandatoryVariableRaw(SpecialVariables.Git.CommitMessageSummary));
-            var description = EvaluateNonsensitiveExpression(nonSensitiveVariables.GetRaw(SpecialVariables.Git.CommitMessageDescription) ?? string.Empty);
-            var packageReferences = deployment.Variables.GetContainerPackageNames().Select(p => ContainerImageReference.FromReferenceString(p)).ToList();
             return new ArgoCommitToGitConfig(
                                            deployment.CurrentDirectory,
                                            inputPath,
                                            recursive,
-                                           summary,
-                                           description,
-                                           requiresPullRequest,
-                                           packageReferences);
+                                           commitParameters);
+        }
+
+        public UpdateArgoCDAppDeploymentConfig CreateOther(RunningDeployment deployment)
+        {
+            var commitParameters = CommitParameters(deployment);
+            var packageReferences = deployment.Variables.GetContainerPackageNames().Select(p => ContainerImageReference.FromReferenceString(p)).ToList();
+            return new UpdateArgoCDAppDeploymentConfig(commitParameters, packageReferences);
         }
         
         bool RequiresPullRequest(RunningDeployment deployment)
@@ -46,6 +44,15 @@ namespace Calamari.ArgoCD.Conventions
             return OctopusFeatureToggles.ArgoCDCreatePullRequestFeatureToggle.IsEnabled(deployment.Variables) && deployment.Variables.Get(SpecialVariables.Git.CommitMethod) == SpecialVariables.Git.GitCommitMethods.PullRequest;
         }
 
+        GitCommitParameters CommitParameters(RunningDeployment deployment)
+        {
+            var requiresPullRequest = RequiresPullRequest(deployment);
+            // TODO #project-argo-cd-in-octopus: put both types of variables on RunningDeployment and encapsulate so the dev thinks about whether
+            // the variable is sensitive
+            var summary = EvaluateNonsensitiveExpression(nonSensitiveVariables.GetMandatoryVariableRaw(SpecialVariables.Git.CommitMessageSummary));
+            var description = EvaluateNonsensitiveExpression(nonSensitiveVariables.GetRaw(SpecialVariables.Git.CommitMessageDescription) ?? string.Empty);
+            return new GitCommitParameters(summary, description, requiresPullRequest);
+        }
         string EvaluateNonsensitiveExpression(string expression)
         {
             var result = nonSensitiveVariables.Evaluate(expression, out string error);

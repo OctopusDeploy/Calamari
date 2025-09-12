@@ -25,7 +25,7 @@ namespace Calamari.ArgoCD.Conventions
         readonly ICalamariFileSystem fileSystem;
         readonly ILog log;
         readonly IGitHubPullRequestCreator pullRequestCreator;
-        readonly ArgoCommitToGitConfigFactory argoCommitToGitConfigFactory;
+        readonly DeploymentConfigFactory deploymentConfigFactory;
         readonly ICommitMessageGenerator commitMessageGenerator;
         readonly ICustomPropertiesLoader customPropertiesLoader;
         readonly IArgoCDApplicationManifestParser argoCdApplicationManifestParser;
@@ -34,7 +34,7 @@ namespace Calamari.ArgoCD.Conventions
         public UpdateArgoCDAppImagesInstallConvention(ILog log,
                                                       IGitHubPullRequestCreator pullRequestCreator,
                                                       ICalamariFileSystem fileSystem,
-                                                      ArgoCommitToGitConfigFactory argoCommitToGitConfigFactory,
+                                                      DeploymentConfigFactory deploymentConfigFactory,
                                                       ICommitMessageGenerator commitMessageGenerator,
                                                       ICustomPropertiesLoader customPropertiesLoader,
                                                       IArgoCDApplicationManifestParser argoCdApplicationManifestParser)
@@ -42,7 +42,7 @@ namespace Calamari.ArgoCD.Conventions
             this.log = log;
             this.pullRequestCreator = pullRequestCreator;
             this.fileSystem = fileSystem;
-            this.argoCommitToGitConfigFactory = argoCommitToGitConfigFactory;
+            this.deploymentConfigFactory = deploymentConfigFactory;
             this.commitMessageGenerator = commitMessageGenerator;
             this.customPropertiesLoader = customPropertiesLoader;
             this.argoCdApplicationManifestParser = argoCdApplicationManifestParser;
@@ -50,8 +50,8 @@ namespace Calamari.ArgoCD.Conventions
 
         public void Install(RunningDeployment deployment)
         {
-            Log.Info("Executing Commit To Git operation");
-            var actionConfig = argoCommitToGitConfigFactory.Create(deployment);
+            Log.Info("Executing Update Argo CD Application Images");
+            var actionConfig = deploymentConfigFactory.CreateOther(deployment);
 
             var repositoryFactory = new RepositoryFactory(log, deployment.CurrentDirectory, pullRequestCreator);
 
@@ -63,12 +63,11 @@ namespace Calamari.ArgoCD.Conventions
             var updatedApplications = new List<string>();
             var newImagesWritten = new HashSet<string>();
             var gitReposUpdated = new HashSet<string>();
-
-            var outputWriter = new ArgoCDImageUpdateOutputWriter(log);
             
             foreach (var application in argoProperties.Applications)
             {
                 var applicationFromYaml = argoCdApplicationManifestParser.ParseManifest(application.Manifest);
+                
                 foreach (var applicationSource in applicationFromYaml.Spec.Sources.OfType<BasicSource>())
                 {
                     var gitCredential = gitCredentials[applicationSource.RepoUrl.AbsoluteUri];
@@ -81,7 +80,7 @@ namespace Calamari.ArgoCD.Conventions
                     {
                         PushToRemote(repository,
                                      new GitBranchName(applicationSource.TargetRevision),
-                                     actionConfig,
+                                     actionConfig.CommitParameters,
                                      updatedFiles,
                                      updatedImages);
                         
@@ -91,22 +90,15 @@ namespace Calamari.ArgoCD.Conventions
                     }
                 }
             }
+            
+            // TODO(tmm): Need to get the ArgoGatewayIDs into here
+            var outputWriter = new ArgoCDImageUpdateOutputWriter(log);
             outputWriter.WriteImageUpdateOutput(Array.Empty<string>(),
                                                 gitReposUpdated,
-                                                updatedApplications,
+                                                argoProperties.Applications.Select(a => a.Name),
                                                 updatedApplications.Distinct(),
                                                 newImagesWritten.Count
                                                 );
-        }
-
-        RepositoryWrapper CreateRepository(ArgoCDApplicationSourceDto source, GitCredentialDto[] credentials, RepositoryFactory repositoryFactory)
-        {
-            var credentialsToUse = credentials.First(cred => cred.Url.Equals(source.Url, StringComparison.OrdinalIgnoreCase));
-            var gitConnection = GitConnection.Create(source, credentialsToUse);
-            var repoPath = repositoryNumber++.ToString(CultureInfo.InvariantCulture);
-            Log.Info($"Writing files to git repository for '{gitConnection.Url}'");
-            var repository = repositoryFactory.CloneRepository(repoPath, gitConnection);
-            return repository;
         }
 
         (HashSet<string>, HashSet<string>) UpdateKubernetesYaml(string rootPath,
@@ -150,14 +142,14 @@ namespace Calamari.ArgoCD.Conventions
         
         void PushToRemote(RepositoryWrapper repository,
                           GitBranchName branchName,
-                          IGitCommitParameters commitParameters,
+                          GitCommitParameters commitParameters,
                           HashSet<string> updatedFiles,
                           HashSet<string> updatedImages)
         {
             Log.Info("Staging files in repository");
             repository.StageFiles(updatedFiles.ToArray());
 
-            var commitMessage = commitMessageGenerator.GenerateForImageUpdates(new GitCommitSummary(commitParameters.CommitSummary), commitParameters.CommitDescription, updatedImages);
+            var commitMessage = commitMessageGenerator.GenerateForImageUpdates(new GitCommitSummary(commitParameters.Summary), commitParameters.Description, updatedImages);
 
             Log.Info("Commiting changes");
             if (repository.CommitChanges(commitMessage))

@@ -33,7 +33,7 @@ namespace Calamari.ArgoCD.Commands
         readonly IExtractPackage extractPackage;
         readonly INonSensitiveSubstituteInFiles substituteInFiles;
         readonly IGitHubPullRequestCreator pullRequestCreator;
-        readonly ArgoCommitToGitConfigFactory configFactory;
+        readonly DeploymentConfigFactory configFactory;
         PathToPackage pathToPackage;
         string customPropertiesFile;
         string customPropertiesPassword;
@@ -46,7 +46,7 @@ namespace Calamari.ArgoCD.Commands
             IExtractPackage extractPackage,
             INonSensitiveSubstituteInFiles substituteInFiles,
             IGitHubPullRequestCreator pullRequestCreator,
-            ArgoCommitToGitConfigFactory configFactory)
+            DeploymentConfigFactory configFactory)
         {
             this.log = log;
             this.variables = variables;

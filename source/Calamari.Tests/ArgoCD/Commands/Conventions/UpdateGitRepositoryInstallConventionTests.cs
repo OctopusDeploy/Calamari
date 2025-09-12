@@ -53,7 +53,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             {
                 new ArgoCDApplicationDto("Gateway1", "App1", "docker.io",new[]
                 {
-                    new ArgoCDApplicationSourceDto(OriginPath, "", argoCdBranchName.Value, "Directory")
+                    new ArgoCDApplicationSourceDto(OriginPath, "", argoCdBranchName.Value)
                 }, "yaml")
             }, new GitCredentialDto[]
             {
@@ -113,7 +113,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                                                       CommitToGitCommand.PackageDirectoryName, 
                                                                       log, 
                                                                       Substitute.For<IGitHubPullRequestCreator>(), 
-                                                                      new ArgoCommitToGitConfigFactory(nonSensitiveCalamariVariables), 
+                                                                      new DeploymentConfigFactory(nonSensitiveCalamariVariables), 
                                                                       customPropertiesLoader, 
                                                                       argoCdApplicationManifestParser);
             convention.Install(runningDeployment);
@@ -152,7 +152,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                                                       CommitToGitCommand.PackageDirectoryName, 
                                                                       log, 
                                                                       Substitute.For<IGitHubPullRequestCreator>(), 
-                                                                      new ArgoCommitToGitConfigFactory(nonSensitiveCalamariVariables), 
+                                                                      new DeploymentConfigFactory(nonSensitiveCalamariVariables), 
                                                                       customPropertiesLoader,
                                                                       argoCdApplicationManifestParser);
             convention.Install(runningDeployment);

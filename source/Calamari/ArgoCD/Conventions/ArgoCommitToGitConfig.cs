@@ -4,26 +4,14 @@ using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Models;
 
 namespace Calamari.ArgoCD.Conventions
 {
-    public interface IGitCommitParameters
+    public class ArgoCommitToGitConfig
     {
-        public string CommitSummary { get; }
-        public string CommitDescription { get; }
-        public bool RequiresPr { get; }
-    }
-    
-    public class ArgoCommitToGitConfig : IGitCommitParameters
-    {
-        public ArgoCommitToGitConfig(string workingDirectory, string inputSubPath, bool recurseInputPath, string commitSummary, string commitDescription,
-                                   bool requiresPr,
-                                   List<ContainerImageReference> packageReferences)
+        public ArgoCommitToGitConfig(string workingDirectory, string inputSubPath, bool recurseInputPath, GitCommitParameters commitParameters)
         {
             WorkingDirectory = workingDirectory;
             InputSubPath = inputSubPath;
             RecurseInputPath = recurseInputPath;
-            CommitSummary = commitSummary;
-            CommitDescription = commitDescription;
-            RequiresPr = requiresPr;
-            PackageReferences = packageReferences;
+            CommitParameters = commitParameters;
         }
         
         public string WorkingDirectory { get; set; }
@@ -32,12 +20,7 @@ namespace Calamari.ArgoCD.Conventions
         
         public string InputSubPath { get; }
         public bool RecurseInputPath { get; }
-        
-        public string CommitSummary { get; }
-        public string CommitDescription { get; }
-        public bool RequiresPr { get; }
-        
-        public List<ContainerImageReference> PackageReferences { get; }
+        public GitCommitParameters CommitParameters { get; }
     }
 }
 #endif

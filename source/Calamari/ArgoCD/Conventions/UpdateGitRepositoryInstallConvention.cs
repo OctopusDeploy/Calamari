@@ -25,7 +25,7 @@ namespace Calamari.ArgoCD.Conventions
         readonly ILog log;
         readonly string packageSubfolder;
         readonly IGitHubPullRequestCreator pullRequestCreator;
-        readonly ArgoCommitToGitConfigFactory argoCommitToGitConfigFactory;
+        readonly DeploymentConfigFactory deploymentConfigFactory;
         readonly ICustomPropertiesLoader customPropertiesLoader;
         readonly IArgoCDApplicationManifestParser argoCdApplicationManifestParser;
 
@@ -33,14 +33,14 @@ namespace Calamari.ArgoCD.Conventions
                                                     string packageSubfolder,
                                                     ILog log,
                                                     IGitHubPullRequestCreator pullRequestCreator,
-                                                    ArgoCommitToGitConfigFactory argoCommitToGitConfigFactory,
+                                                    DeploymentConfigFactory deploymentConfigFactory,
                                                     ICustomPropertiesLoader customPropertiesLoader,
                                                     IArgoCDApplicationManifestParser argoCdApplicationManifestParser)
         {
             this.fileSystem = fileSystem;
             this.log = log;
             this.pullRequestCreator = pullRequestCreator;
-            this.argoCommitToGitConfigFactory = argoCommitToGitConfigFactory;
+            this.deploymentConfigFactory = deploymentConfigFactory;
             this.customPropertiesLoader = customPropertiesLoader;
             this.argoCdApplicationManifestParser = argoCdApplicationManifestParser;
             this.packageSubfolder = packageSubfolder;
@@ -49,7 +49,7 @@ namespace Calamari.ArgoCD.Conventions
         public void Install(RunningDeployment deployment)
         {
             Log.Info("Executing Commit To Git operation");
-            var actionConfig = argoCommitToGitConfigFactory.Create(deployment);
+            var actionConfig = deploymentConfigFactory.Create(deployment);
             var packageFiles = GetReferencedPackageFiles(actionConfig);
 
             var repositoryFactory = new RepositoryFactory(log, deployment.CurrentDirectory, pullRequestCreator);
@@ -83,10 +83,10 @@ namespace Calamari.ArgoCD.Conventions
                     repository.StageFiles(repositoryFiles.Select(fcs => fcs.DestinationRelativePath).ToArray());
 
                     Log.Info("Commiting changes");
-                    if (repository.CommitChanges(actionConfig.CommitSummary, actionConfig.CommitDescription))
+                    if (repository.CommitChanges(actionConfig.CommitParameters.Summary, actionConfig.CommitParameters.Description))
                     {
                         Log.Info("Changes were commited, pushing to remote");
-                        repository.PushChanges(actionConfig.RequiresPr, new GitBranchName(applicationSource.TargetRevision), CancellationToken.None).GetAwaiter().GetResult();    
+                        repository.PushChanges(actionConfig.CommitParameters.RequiresPr, new GitBranchName(applicationSource.TargetRevision), CancellationToken.None).GetAwaiter().GetResult();    
                     }
                     else
                     {

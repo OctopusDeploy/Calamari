@@ -23,14 +23,14 @@ namespace Calamari.ArgoCD.Commands
         readonly IVariables variables;
         readonly ICalamariFileSystem fileSystem;
         readonly IGitHubPullRequestCreator pullRequestCreator;
-        readonly ArgoCommitToGitConfigFactory configFactory;
+        readonly DeploymentConfigFactory configFactory;
         readonly ICommitMessageGenerator commitMessageGenerator;
         string customPropertiesFile;
         string customPropertiesPassword;
 
         public UpdateArgoCDAppImagesCommand(ILog log, IVariables variables, ICalamariFileSystem fileSystem, IGitHubPullRequestCreator pullRequestCreator,
                                             ICommitMessageGenerator commitMessageGenerator,
-                                            ArgoCommitToGitConfigFactory configFactory)
+                                            DeploymentConfigFactory configFactory)
         {
             this.log = log;
             this.variables = variables;

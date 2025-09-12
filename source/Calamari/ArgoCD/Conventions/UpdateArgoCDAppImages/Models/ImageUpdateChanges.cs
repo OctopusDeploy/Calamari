@@ -1,3 +1,4 @@
+#if NET
 using System;
 using System.Collections.Generic;
 
@@ -11,7 +12,8 @@ namespace Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Models
             UpdatedImageReferences = updatedImageReferences;
         }
 
-        public HashSet<string> UpdatedFiles { get; }
-        public HashSet<string> UpdatedImageReferences { get; }
+        public IReadOnlySet<string> UpdatedFiles { get; }
+        public IReadOnlySet<string> UpdatedImageReferences { get; }
     }
 }
+#endif
