@@ -26,7 +26,7 @@ namespace Calamari.Tests.Helpers
             File.WriteAllText(Path.Combine(projectPath.FullName, "global.json"),
                 @"{
     ""sdk"": {
-            ""version"": ""6.0.10"",
+            ""version"": ""8.0.10"",
             ""rollForward"": ""latestFeature""
         }
     }");
