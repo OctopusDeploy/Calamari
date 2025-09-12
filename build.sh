@@ -44,6 +44,26 @@ else
             unset DOTNET_VERSION
         fi
     fi
+    
+    # ----- Octopus Deploy Modification -----
+    #
+    # The default behaviour of the Nuke Bootstrapper (when .NET is not already preinstalled) is
+    # to read from the global.json, then install that exact version. It doesn't roll forward.
+    # This means that if our global.json says 8.0.100, and the latest version is 8.0.200, it will
+    # always install 8.0.100 and we will not pick up any security or bug fixes that 8.0.200 carries.
+    #
+    # This means we would need to manually update our global.json file every time there is a new
+    # .NET SDK available, and then all developers would need to immediately install this on their machines.
+    #
+    # In our builds, we want the same "automatic roll-forward" behaviour that we get when we use the dotnet/sdk:8.0 docker
+    # images -- where we always get the latest patch version of the SDK without manual intervention.
+    #
+    # We achieve this with a small tweak to the Nuke bootstrapper to tell it to install the latest version from
+    # the 8.0 channel, regardless of what's in the global.json.
+
+    unset DOTNET_VERSION
+    DOTNET_CHANNEL="8.0"
+    # ----- End Octopus Deploy Modification -----
 
     # Install by channel or version
     DOTNET_DIRECTORY="$TEMP_DIRECTORY/dotnet-unix"
