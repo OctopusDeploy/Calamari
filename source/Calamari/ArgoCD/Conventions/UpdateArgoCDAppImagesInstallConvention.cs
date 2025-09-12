@@ -51,7 +51,7 @@ namespace Calamari.ArgoCD.Conventions
         public void Install(RunningDeployment deployment)
         {
             Log.Info("Executing Update Argo CD Application Images");
-            var actionConfig = deploymentConfigFactory.CreateOther(deployment);
+            var actionConfig = deploymentConfigFactory.CreateUpdateImageConfig(deployment);
 
             var repositoryFactory = new RepositoryFactory(log, deployment.CurrentDirectory, pullRequestCreator);
 

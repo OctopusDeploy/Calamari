@@ -19,7 +19,7 @@ namespace Calamari.ArgoCD.Conventions
             this.nonSensitiveVariables = nonSensitiveVariables;
         }
 
-        public ArgoCommitToGitConfig Create(RunningDeployment deployment)
+        public ArgoCommitToGitConfig CreateCommitToGitConfig(RunningDeployment deployment)
         {
             var inputPath = deployment.Variables.Get(SpecialVariables.Git.InputPath, string.Empty);
             var recursive = deployment.Variables.GetFlag(SpecialVariables.Git.Recursive, false);
@@ -32,7 +32,7 @@ namespace Calamari.ArgoCD.Conventions
                                            commitParameters);
         }
 
-        public UpdateArgoCDAppDeploymentConfig CreateOther(RunningDeployment deployment)
+        public UpdateArgoCDAppDeploymentConfig CreateUpdateImageConfig(RunningDeployment deployment)
         {
             var commitParameters = CommitParameters(deployment);
             var packageReferences = deployment.Variables.GetContainerPackageNames().Select(p => ContainerImageReference.FromReferenceString(p)).ToList();

@@ -49,7 +49,7 @@ namespace Calamari.ArgoCD.Conventions
         public void Install(RunningDeployment deployment)
         {
             Log.Info("Executing Commit To Git operation");
-            var actionConfig = deploymentConfigFactory.Create(deployment);
+            var actionConfig = deploymentConfigFactory.CreateCommitToGitConfig(deployment);
             var packageFiles = GetReferencedPackageFiles(actionConfig);
 
             var repositoryFactory = new RepositoryFactory(log, deployment.CurrentDirectory, pullRequestCreator);

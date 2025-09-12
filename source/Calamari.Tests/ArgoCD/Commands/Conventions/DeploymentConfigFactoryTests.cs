@@ -34,7 +34,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
 
             var factory = new DeploymentConfigFactory(nonSensitiveCalamariVariables);
             
-            var config = factory.Create(runningDeployment);
+            var config = factory.CreateCommitToGitConfig(runningDeployment);
 
             config.CommitParameters.Summary.Should().Be("Summary Bar");
             config.CommitParameters.Description.Should().Be("Description Bar");
@@ -61,7 +61,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
 
             var factory = new DeploymentConfigFactory(nonSensitiveCalamariVariables);
             
-            Action action = () => factory.Create(runningDeployment);
+            Action action = () => factory.CreateCommitToGitConfig(runningDeployment);
 
             action.Should().Throw<CommandException>();
         }
@@ -88,7 +88,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
 
             var factory = new DeploymentConfigFactory(nonSensitiveCalamariVariables);
             
-            Action action = () => factory.Create(runningDeployment);
+            Action action = () => factory.CreateCommitToGitConfig(runningDeployment);
 
             action.Should().Throw<CommandException>();
         }
