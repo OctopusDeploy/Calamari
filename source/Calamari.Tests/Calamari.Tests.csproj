@@ -176,6 +176,9 @@
     <None Update="KubernetesFixtures\ResourceStatus\assets\invalid-syntax.yaml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="Fixtures\StructuredVariables\Samples\invalid-vars.yaml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <None Remove="TestResults\**" />
