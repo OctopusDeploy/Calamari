@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using Calamari.ArgoCD.Commands;
 using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Domain;
@@ -11,7 +10,6 @@ using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.GitHub;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Deployment;
-using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes;
@@ -21,7 +19,6 @@ using Calamari.Tests.Fixtures.Integration.FileSystem;
 using FluentAssertions;
 using LibGit2Sharp;
 using NSubstitute;
-using NuGet.Packaging;
 using NUnit.Framework;
 
 namespace Calamari.Tests.ArgoCD.Commands.Conventions
@@ -54,9 +51,9 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
 
             var argoCdCustomPropertiesDto = new ArgoCDCustomPropertiesDto(new[]
             {
-                new ArgoCDApplicationDto("Gateway1", "App1", new[]
+                new ArgoCDApplicationDto("Gateway1", "App1", "docker.io",new[]
                 {
-                    new ArgoCDApplicationSourceDto(OriginPath, argoCdBranchName.Value, "")
+                    new ArgoCDApplicationSourceDto(OriginPath, "", argoCdBranchName.Value)
                 }, "yaml")
             }, new GitCredentialDto[]
             {
@@ -116,7 +113,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                                                       CommitToGitCommand.PackageDirectoryName, 
                                                                       log, 
                                                                       Substitute.For<IGitHubPullRequestCreator>(), 
-                                                                      new ArgoCommitToGitConfigFactory(nonSensitiveCalamariVariables), 
+                                                                      new DeploymentConfigFactory(nonSensitiveCalamariVariables), 
                                                                       customPropertiesLoader, 
                                                                       argoCdApplicationManifestParser);
             convention.Install(runningDeployment);
@@ -155,7 +152,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                                                       CommitToGitCommand.PackageDirectoryName, 
                                                                       log, 
                                                                       Substitute.For<IGitHubPullRequestCreator>(), 
-                                                                      new ArgoCommitToGitConfigFactory(nonSensitiveCalamariVariables), 
+                                                                      new DeploymentConfigFactory(nonSensitiveCalamariVariables), 
                                                                       customPropertiesLoader,
                                                                       argoCdApplicationManifestParser);
             convention.Install(runningDeployment);

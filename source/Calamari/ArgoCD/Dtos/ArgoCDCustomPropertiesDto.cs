@@ -1,3 +1,7 @@
+#nullable enable
+using System.Collections.Generic;
+
+
 namespace Calamari.ArgoCD.Dtos
 {
     public class ArgoCDCustomPropertiesDto
@@ -11,19 +15,21 @@ namespace Calamari.ArgoCD.Dtos
         public ArgoCDApplicationDto[] Applications { get; }
         public GitCredentialDto[] Credentials { get; }
     }
-    
+
     public class ArgoCDApplicationDto
     {
-        public ArgoCDApplicationDto(string gatewayId, string name, ArgoCDApplicationSourceDto[] sources, string manifest)
+        public ArgoCDApplicationDto(string gatewayId, string name, string defaultRegistry, ArgoCDApplicationSourceDto[] sources, string manifest)
         {
             GatewayId = gatewayId;
             Name = name;
+            DefaultRegistry = defaultRegistry;
             Sources = sources;
             Manifest = manifest;
         }
 
         public string GatewayId { get; }
         public string Name { get; } 
+        public string DefaultRegistry { get; set; }
         public ArgoCDApplicationSourceDto[] Sources { get; }
         public string Manifest { get; }
     }

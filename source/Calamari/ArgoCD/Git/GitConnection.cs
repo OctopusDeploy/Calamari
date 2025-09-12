@@ -1,7 +1,5 @@
 #nullable enable
 using System;
-using Calamari.Common.Plumbing.Variables;
-using Calamari.Kubernetes;
 
 namespace Calamari.ArgoCD.Git
 {
