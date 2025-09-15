@@ -7,6 +7,7 @@ using Calamari.Common.Commands;
 using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes;
+using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.ArgoCD.Conventions
 {
@@ -41,7 +42,21 @@ namespace Calamari.ArgoCD.Conventions
         
         bool RequiresPullRequest(RunningDeployment deployment)
         {
-            return OctopusFeatureToggles.ArgoCDCreatePullRequestFeatureToggle.IsEnabled(deployment.Variables) && deployment.Variables.Get(SpecialVariables.Git.CommitMethod) == SpecialVariables.Git.GitCommitMethods.PullRequest;
+            if (!OctopusFeatureToggles.ArgoCDCreatePullRequestFeatureToggle.IsEnabled(deployment.Variables))
+                return false;
+
+            if (deployment.Variables.Get(SpecialVariables.Git.CreatePullRequestFor) != SpecialVariables.Git.CreatePullRequestOptions.SpecificEnvironments)
+                return true;
+            
+            var environmentId = deployment.Variables.Get(DeploymentEnvironment.Id);
+
+            var isFromProcessTemplate = !deployment.Variables.Get("Octopus.ProcessTemplate.Slug").IsNullOrEmpty();
+            var specificPullRequestEnvironments = deployment.Variables.GetStrings(SpecialVariables.Git.CreatePullRequestsForEnvironments);
+            var parameterPullRequestEnvironments = deployment.Variables.GetStrings(SpecialVariables.Git.CreatePullRequestsForEnvironmentsTemplateParameter);
+            
+            var pullRequestEnvironments = isFromProcessTemplate ? parameterPullRequestEnvironments : specificPullRequestEnvironments;
+            var environmentIncluded = pullRequestEnvironments.Contains(environmentId);
+            return environmentIncluded;
         }
 
         GitCommitParameters CommitParameters(RunningDeployment deployment)

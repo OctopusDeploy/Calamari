@@ -64,10 +64,6 @@ namespace Calamari.Kubernetes
 
         public static class Git
         {
-            public static string Index => "Octopus.Action.Git.Repository";
-
-            static string Prefix(string name) => $"{Index}[{name}]"; 
-            
             public static readonly string CommitMessageSummary = "Octopus.Action.ArgoCD.CommitMessageSummary";
             
             public static readonly string CommitMessageDescription = "Octopus.Action.ArgoCD.CommitMessageDescription";
@@ -82,6 +78,16 @@ namespace Calamari.Kubernetes
             {
                 public const string DirectCommit = "DirectCommit";
                 public const string PullRequest = "PullRequest";
+            }
+
+            public static readonly string CreatePullRequestsForEnvironments = "Octopus.Action.ArgoCD.CreatePullRequestsForEnvironments";
+            public static readonly string CreatePullRequestsForEnvironmentsTemplateParameter = "Octopus.Action.ArgoCD.CreatePullRequestsForEnvironmentsTemplateParameter";
+            public static readonly string CreatePullRequestFor = "Octopus.Action.ArgoCD.CreatePullRequestOptions";
+
+            public static class CreatePullRequestOptions
+            {
+                public const string SpecificEnvironments = "SpecificEnvironments";
+                public const string AllEnvironments = "AllEnvironments";
             }
             
             public static class Output
