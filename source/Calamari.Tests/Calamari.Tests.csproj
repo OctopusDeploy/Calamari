@@ -230,6 +230,7 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="ArgoCD\Commands\Conventions\Builders\" />
     <Folder Include="Fixtures\Nginx\Approved" />
   </ItemGroup>
   <ItemGroup>

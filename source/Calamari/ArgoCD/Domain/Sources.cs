@@ -17,7 +17,7 @@ namespace Calamari.ArgoCD.Domain
     }
 
 
-    public class BasicSource : SourceBase
+    public class BasicSource : SourceBase   
     {
         [JsonPropertyName("path")]
         public string Path { get; set; } = string.Empty;
