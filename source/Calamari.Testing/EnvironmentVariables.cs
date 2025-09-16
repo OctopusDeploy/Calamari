@@ -35,7 +35,7 @@ namespace Calamari.Testing
         [EnvironmentVariable("K8S_OctopusAPITester_Server", "op://Calamari Secrets for Tests/GKS Kubernetes API Test Cluster/Server")]
         KubernetesClusterUrl,
 
-        [EnvironmentVariable("Helm_OctopusAPITester_Username", "op://Calamari Secrets for Tests/Artifactory e2e-reader Test Account/website")]
+        [EnvironmentVariable("Helm_OctopusAPITester_Url", "op://Calamari Secrets for Tests/Artifactory e2e-reader Test Account/website")]
         ArtifactoryUrl,
 
         [EnvironmentVariable("Helm_OctopusAPITester_Username", "op://Calamari Secrets for Tests/Artifactory e2e-reader Test Account/username")]
