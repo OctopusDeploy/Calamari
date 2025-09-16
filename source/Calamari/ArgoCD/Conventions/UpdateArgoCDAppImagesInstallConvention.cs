@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages;
+using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Helm;
 using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Models;
 using Calamari.ArgoCD.Domain;
 using Calamari.ArgoCD.Dtos;
@@ -76,7 +77,7 @@ namespace Calamari.ArgoCD.Conventions
                     var gitConnection = new GitConnection(gitCredential.Username, gitCredential.Password, applicationSource.RepoUrl.AbsoluteUri, new GitBranchName(applicationSource.TargetRevision));
                     var repository = repositoryFactory.CloneRepository(repositoryNumber.ToString(CultureInfo.InvariantCulture), gitConnection);
 
-                    var (updatedFiles, updatedImages) = UpdateKubernetesYaml(repository.WorkingDirectory, applicationSource.Path, application.DefaultRegistry, deploymentConfig.PackageReferences);
+                    var (updatedFiles, updatedImages) = UpdateKubernetesYaml(repository.WorkingDirectory, applicationSource.Path, application.DefaultRegistry, deploymentConfig.ImageReferences);
                     
                     if (updatedImages.Count > 0)
                     {
@@ -89,6 +90,27 @@ namespace Calamari.ArgoCD.Conventions
                         newImagesWritten.UnionWith(updatedImages);
                         updatedApplications.Add(applicationFromYaml.Metadata.Name);
                         gitReposUpdated.Add(applicationSource.RepoUrl.AbsoluteUri);
+                    }
+                }
+                
+                var valuesFilesToUpdate = new HelmValuesFileUpdateTargetParser(applicationFromYaml).GetValuesFilesToUpdate();
+                foreach (var valuesFileSource in valuesFilesToUpdate)
+                {
+                    if (valuesFileSource is InvalidHelmValuesFileImageUpdateTarget invalidSource)
+                    {
+                        log.Warn($"Invalid annotations setup detected.\nAlias defined: {invalidSource.Alias}. Missing corresponding {ArgoCDConstants.Annotations.OctopusImageReplacementPathsKeyWithSpecifier(invalidSource.Alias)} annotation.");
+                        continue;
+                    }
+
+                    var helmUpdateResult = HandleHelmValuesTarget(valuesFileSource,
+                                                                  helmImageUpdater,
+                                                                  deploymentConfig,
+                                                                  CancellationToken.None);
+                    if (helmUpdateResult.ImagesUpdated.Count > 0)
+                    {
+                        newImagesWritten.UnionWith(helmUpdateResult.ImagesUpdated);
+                        updatedApplications.Add(applicationFromYaml.Metadata.Name);
+                        gitReposUpdated.Add(valuesFileSource.RepoUrl.ToString());
                     }
                 }
             }
@@ -140,6 +162,26 @@ namespace Calamari.ArgoCD.Conventions
 
             return (updatedFiles, updatedImages);
         }
+        
+        HelmRefUpdatedResult HandleHelmValuesTarget(HelmValuesFileImageUpdateTarget updateTarget, IArgoCDHelmVariablesImageUpdater imageUpdater,  UpdateArgoCDAppDeploymentConfig config, CancellationToken ct)
+        {
+            try
+            {
+                var helmUpdateResult = imageUpdater.UpdateImages(updateTarget,
+                                                                 config.ImageReferences,
+                                                                 new GitCommitMessage("summary", "body"), //TODO(tmm): this is where everything kinda changes
+                                                                 config.CommitParameters.RequiresPr,
+                                                                       log,
+                                                                       ct).GetAwaiter().GetResult();
+                return helmUpdateResult;
+            }
+            catch (Exception ex)
+            {
+                log.Error($"Failed to update images for Argo CD app {updateTarget.Name} at {updateTarget.RepoUrl}: {ex.Message}");
+                throw new CommandException($"Failed to update Helm images for Argo CD app {updateTarget.AppName}.", ex);
+            }
+        }
+
         
         void PushToRemote(RepositoryWrapper repository,
                           GitBranchName branchName,
