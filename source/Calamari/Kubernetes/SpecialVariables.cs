@@ -74,22 +74,22 @@ namespace Calamari.Kubernetes
             
             public static readonly string Recursive = "Octopus.Action.ArgoCD.RecursiveResourceDetection";
             
-            public static class GitCommitMethods
+            public static class PullRequest
             {
-                public const string DirectCommit = "DirectCommit";
-                public const string PullRequest = "PullRequest";
+                public static readonly string SpecificEnvironments = "Octopus.Action.ArgoCD.PullRequest.SpecificEnvironments";
+                public static readonly string SpecificEnvironmentsTemplateParameter = "Octopus.Action.ArgoCD.PullRequest.SpecificEnvironmentsTemplateParameter";
+
+                public static readonly string CreationMode = "Octopus.Action.ArgoCD.PullRequest.Mode";
+
+                public static readonly string CreateForCurrentEnvironment = "Octopus.Action.ArgoCD.PullRequest.CreateForCurrentEnvironment";
+
+                public static class PullRequestCreationOptions
+                {
+                    public const string SpecificEnvironments = "SpecificEnvironments";
+                    public const string AllEnvironments = "AllEnvironments";
+                }
             }
 
-            public static readonly string CreatePullRequestsForEnvironments = "Octopus.Action.ArgoCD.CreatePullRequestsForEnvironments";
-            public static readonly string CreatePullRequestsForEnvironmentsTemplateParameter = "Octopus.Action.ArgoCD.CreatePullRequestsForEnvironmentsTemplateParameter";
-            public static readonly string CreatePullRequestFor = "Octopus.Action.ArgoCD.CreatePullRequestOptions";
-
-            public static class CreatePullRequestOptions
-            {
-                public const string SpecificEnvironments = "SpecificEnvironments";
-                public const string AllEnvironments = "AllEnvironments";
-            }
-            
             public static class Output
             {
                 public static readonly string GatewayIds = "ArgoCD.GatewayIds";
