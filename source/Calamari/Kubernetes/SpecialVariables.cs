@@ -76,18 +76,7 @@ namespace Calamari.Kubernetes
             
             public static class PullRequest
             {
-                public static readonly string SpecificEnvironments = "Octopus.Action.ArgoCD.PullRequest.SpecificEnvironments";
-                public static readonly string SpecificEnvironmentsTemplateParameter = "Octopus.Action.ArgoCD.PullRequest.SpecificEnvironmentsTemplateParameter";
-
-                public static readonly string CreationMode = "Octopus.Action.ArgoCD.PullRequest.Mode";
-
                 public static readonly string CreateForCurrentEnvironment = "Octopus.Action.ArgoCD.PullRequest.CreateForCurrentEnvironment";
-
-                public static class PullRequestCreationOptions
-                {
-                    public const string SpecificEnvironments = "SpecificEnvironments";
-                    public const string AllEnvironments = "AllEnvironments";
-                }
             }
 
             public static class Output
