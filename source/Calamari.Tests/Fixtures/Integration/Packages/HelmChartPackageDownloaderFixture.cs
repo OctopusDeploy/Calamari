@@ -28,7 +28,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         [OneTimeSetUp]
         public async Task TestFixtureSetUp()
         {
-            FeedPassword = await ExternalVariables.Get(ExternalVariable.HelmPassword, cancellationToken);
+            FeedPassword = await ExternalVariables.Get(ExternalVariable.ArtifactoryPassword, cancellationToken);
             Environment.SetEnvironmentVariable("TentacleHome", home);
         }
 
