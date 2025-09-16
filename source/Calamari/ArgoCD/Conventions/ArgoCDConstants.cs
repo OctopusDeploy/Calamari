@@ -1,3 +1,4 @@
+#if NET
 using System;
 using System.Collections.Generic;
 
@@ -41,3 +42,4 @@ namespace Calamari.ArgoCD.Conventions
         public static readonly IReadOnlySet<string> KustomizationFileNames = new HashSet<string> { "kustomization.yaml", "kustomization.yml", "Kustomization" };
     }
 }
+#endif

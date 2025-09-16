@@ -17,7 +17,7 @@ namespace Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Helm
 
         public static IEnumerable<string> GenerateValuesFilePaths(this HelmSource helmSource)
         {
-            return helmSource.Helm.ValueFiles.Select(file => file.StartsWith('$')
+            return helmSource.Helm.ValueFiles.Select(file => file.StartsWith("$")
                                                     ? file
                                                     : helmSource.GenerateInlineValuesAbsolutePath(file));
         }

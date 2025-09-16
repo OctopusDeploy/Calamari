@@ -1,3 +1,4 @@
+#if NET
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -55,3 +56,4 @@ namespace Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Helm
         }
     }
 }
+#endif

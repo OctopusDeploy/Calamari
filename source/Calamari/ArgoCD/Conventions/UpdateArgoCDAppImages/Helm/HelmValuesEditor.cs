@@ -1,3 +1,4 @@
+#if NET
 using System;
 using Octostache;
 
@@ -34,3 +35,5 @@ namespace Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Helm
         }
     }
 }
+
+#endif
