@@ -205,24 +205,33 @@ public class HelmValuesFileUpdateTargetParserTests
     public void GetValuesFilesToUpdate_WithAliasedInlineValuesFile_WithNoAnnotations_ReturnsInvalidTarget()
     {
         const string valuesFileName = "values.yaml";
-        var commonSourceBuilder = new ArgoCDApplicationSourceBuilder(defaultSpaceId);
-        var helmSource = new ArgoCDHelmApplicationSourceBuilder(commonSourceBuilder)
-            .WithValuesFile(valuesFileName)
-            .Build();
-
-        var annotations = new Dictionary<string, string>
+        var helmSource = new HelmSource()
         {
-            [$"{ArgoCDConstants.Annotations.OctopusImageReplaceAliasKey}.Alias1"] = valuesFileName,
+            Path = "./",
+            RepoUrl = new Uri("https://example.com/repo.git"),
+            Helm = new HelmConfig()
+            {
+                ValueFiles = new List<string>() { valuesFileName }
+            }
+        };
+        
+        var toUpdate = new Application()
+        {
+            Metadata = new Metadata()
+            {
+                Name = "TheApp",
+                Annotations = new Dictionary<string, string>()
+                {
+                    {$"{ArgoCDConstants.Annotations.OctopusImageReplaceAliasKey}.Alias1", valuesFileName}
+                }
+            },
+            Spec = new ApplicationSpec()
+            {
+                Sources = new List<SourceBase>() { helmSource },
+            }
         };
 
-        var app = new ArgoCDApplicationBuilder(defaultGateway)
-            .WithAnnotations(annotations)
-            .WithSource(helmSource)
-            .Build();
-
-        var toUpdate = new ArgoCDApplicationToUpdate(defaultGatewayId, ArgoCDConstants.DefaultContainerRegistry, app);
-
-        var sut = new HelmValuesFileUpdateTargetParser(toUpdate);
+        var sut = new HelmValuesFileUpdateTargetParser(toUpdate, ArgoCDConstants.DefaultContainerRegistry);
 
         // Act
         var result = sut.GetValuesFilesToUpdate();
@@ -237,19 +246,33 @@ public class HelmValuesFileUpdateTargetParserTests
     {
         const string valuesFileName1 = "values1.yaml";
         const string valuesFileName2 = "values2.yaml";
-        var commonSourceBuilder = new ArgoCDApplicationSourceBuilder(defaultSpaceId);
-        var helmSource = new ArgoCDHelmApplicationSourceBuilder(commonSourceBuilder)
-            .WithValuesFile(valuesFileName1)
-            .WithValuesFile(valuesFileName2)
-            .Build();
+        var helmSource = new HelmSource()
+        {
+            Path = "./",
+            RepoUrl = new Uri("https://example.com/repo.git"),
+            Helm = new HelmConfig()
+            {
+                ValueFiles = new List<string>() { valuesFileName1, valuesFileName2 }
+            }
+        };
 
-        var app = new ArgoCDApplicationBuilder(defaultGateway)
-            .WithSource(helmSource)
-            .Build();
+        
+        var toUpdate = new Application()
+        {
+            Metadata = new Metadata()
+            {
+                Name = "TheApp",
+                Annotations = new Dictionary<string, string>()
+                {
+                }
+            },
+            Spec = new ApplicationSpec()
+            {
+                Sources = new List<SourceBase>() { helmSource },
+            }
+        };
 
-        var toUpdate = new ArgoCDApplicationToUpdate(defaultGatewayId, ArgoCDConstants.DefaultContainerRegistry, app);
-
-        var sut = new HelmValuesFileUpdateTargetParser(toUpdate);
+        var sut = new HelmValuesFileUpdateTargetParser(toUpdate, ArgoCDConstants.DefaultContainerRegistry);
 
         // Act
         var result = sut.GetValuesFilesToUpdate();
@@ -263,41 +286,50 @@ public class HelmValuesFileUpdateTargetParserTests
     {
         const string valuesFileName1 = "values1.yaml";
         const string valuesFileName2 = "values2.yaml";
-        var commonSourceBuilder = new ArgoCDApplicationSourceBuilder(defaultSpaceId);
-        var helmSource = new ArgoCDHelmApplicationSourceBuilder(commonSourceBuilder)
-            .WithValuesFile(valuesFileName1)
-            .WithValuesFile(valuesFileName2)
-            .Build();
-
-        var annotations = new Dictionary<string, string>
+        var helmSource = new HelmSource()
         {
-            [$"{ArgoCDConstants.Annotations.OctopusImageReplaceAliasKey}.Alias1"] = valuesFileName2,
-            [$"{ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey}.Alias1"] = DoubleItemPathAnnotationValue
+            Path = "./",
+            RepoUrl = new Uri("https://example.com/repo.git"),
+            Helm = new HelmConfig()
+            {
+                ValueFiles = new List<string>() { valuesFileName1, valuesFileName2 }
+            }
         };
 
-        var app = new ArgoCDApplicationBuilder(defaultGateway)
-            .WithAnnotations(annotations)
-            .WithSource(helmSource)
-            .Build();
+        
+        var toUpdate = new Application()
+        {
+            Metadata = new Metadata()
+            {
+                Name = "TheApp",
+                Annotations = new Dictionary<string, string>()
+                {
+                    {$"{ArgoCDConstants.Annotations.OctopusImageReplaceAliasKey}.Alias1", valuesFileName2},
+                    {$"{ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey}.Alias1", DoubleItemPathAnnotationValue}
+                }
+            },
+            Spec = new ApplicationSpec()
+            {
+                Sources = new List<SourceBase>() { helmSource },
+            }
+        };
 
-        var toUpdate = new ArgoCDApplicationToUpdate(defaultGatewayId, ArgoCDConstants.DefaultContainerRegistry, app);
-
-        var sut = new HelmValuesFileUpdateTargetParser(toUpdate);
+        var sut = new HelmValuesFileUpdateTargetParser(toUpdate, ArgoCDConstants.DefaultContainerRegistry);
 
         // Act
         var result = sut.GetValuesFilesToUpdate();
 
         // Assert
-        var expectedSource = new HelmValuesFileImageUpdateTarget(app.Name,
+        var expectedSource = new HelmValuesFileImageUpdateTarget(toUpdate.Metadata.Name,
             ArgoCDConstants.DefaultContainerRegistry,
             ArgoCDConstants.RefSourcePath,
-            helmSource.RepositoryUrl,
+            helmSource.RepoUrl,
             helmSource.TargetRevision,
             valuesFileName2,
-            [HelmPath1, HelmPath2]
+            new List<string> {HelmPath1, HelmPath2}
         );
 
-        result.Should().BeEquivalentTo([expectedSource]);
+        result.Should().BeEquivalentTo(expectedSource);
     }
 
     [Test]
