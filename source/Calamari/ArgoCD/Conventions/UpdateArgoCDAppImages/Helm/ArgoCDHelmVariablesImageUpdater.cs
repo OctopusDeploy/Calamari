@@ -21,8 +21,15 @@ namespace Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Helm
                                                 CancellationToken ct);
     }
 
-    public class ArgoCDHelmVariablesImageUpdater(IGitOpsRepositoryFactory gitOpsRepositoryFactory) : IArgoCDHelmVariablesImageUpdater
+    public class ArgoCDHelmVariablesImageUpdater : IArgoCDHelmVariablesImageUpdater
     {
+        IGitOpsRepositoryFactory gitOpsRepositoryFactory1;
+
+        public ArgoCDHelmVariablesImageUpdater(IGitOpsRepositoryFactory gitOpsRepositoryFactory)
+        {
+            gitOpsRepositoryFactory1 = gitOpsRepositoryFactory;
+        }
+
         public async Task<HelmRefUpdatedResult> UpdateImages(HelmValuesFileImageUpdateTarget target,
                                                              List<ContainerImageReference> imagesToUpdate,
                                                              GitCommitMessage commitMessage,
@@ -30,7 +37,7 @@ namespace Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Helm
                                                              ILog log,
                                                              CancellationToken ct)
         {
-            var repository = await gitOpsRepositoryFactory.Create(target, log, createPullRequest, ct);
+            var repository = await gitOpsRepositoryFactory1.Create(target, log, createPullRequest, ct);
 
             var fileContent = await repository.ReadFileContents(target.FileName, ct);
             log.Info($"Processing file at {target.FileName}.");
@@ -56,6 +63,10 @@ namespace Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Helm
 
             return new HelmRefUpdatedResult(target.RepoUrl, []);
         }
+    }
+
+    interface IGitOpsRepositoryFactory
+    {
     }
 }
 #endif

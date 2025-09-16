@@ -23,5 +23,5 @@ public record InvalidHelmValuesFileImageUpdateTarget(
     string FileName,
     string Alias)
     : HelmValuesFileImageUpdateTarget(AppName, DefaultClusterRegistry, Path, RepoUrl, TargetRevision,
-        FileName, []);
+        FileName, new List<string>());
 #endif
