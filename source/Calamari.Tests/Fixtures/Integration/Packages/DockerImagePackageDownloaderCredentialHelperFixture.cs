@@ -25,7 +25,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
     [RequiresNonAmazonLinuxPlatform("1Password Connect is not available on AmazonLinux running on AWS")]
     public class DockerImagePackageDownloaderCredentialHelperFixture
     {
-        static readonly string DockerHubFeedUri = "https://index.docker.io";
+        static string dockerHubFeedUri;
         static string dockerTestUsername;
         static string dockerTestPassword;
         static readonly CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
@@ -35,6 +35,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         [OneTimeSetUp]
         public async Task TestFixtureSetUp()
         {
+            dockerHubFeedUri = await ExternalVariables.Get(ExternalVariable.DockerHubOrgAccessUrl, cancellationToken);
             dockerTestUsername = await ExternalVariables.Get(ExternalVariable.DockerHubOrgAccessUsername, cancellationToken);
             dockerTestPassword = await ExternalVariables.Get(ExternalVariable.DockerHubOrgAccessToken, cancellationToken);
             Environment.SetEnvironmentVariable("TentacleHome", Home);
@@ -59,7 +60,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             // Act
             var pkg = downloader.DownloadPackage("octopusdeploy/octo-prerelease",
                 new SemanticVersion("7.3.7-alpine"), "docker-feed",
-                new Uri(DockerHubFeedUri), dockerTestUsername, dockerTestPassword, true, 1,
+                new Uri(dockerHubFeedUri), dockerTestUsername, dockerTestPassword, true, 1,
                 TimeSpan.FromSeconds(10));
 
             // Assert
@@ -87,7 +88,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             // Act
             var pkg = downloader.DownloadPackage("octopusdeploy/octo-prerelease",
                 new SemanticVersion("7.3.7-alpine"), "docker-feed",
-                new Uri(DockerHubFeedUri), dockerTestUsername, dockerTestPassword, true, 1,
+                new Uri(dockerHubFeedUri), dockerTestUsername, dockerTestPassword, true, 1,
                 TimeSpan.FromSeconds(10));
 
             // Assert
@@ -112,7 +113,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             // Act
             var pkg = downloader.DownloadPackage("alpine",
                 new SemanticVersion("3.6.5"), "docker-feed",
-                new Uri(DockerHubFeedUri), null, null, true, 1,
+                new Uri(dockerHubFeedUri), null, null, true, 1,
                 TimeSpan.FromSeconds(10));
 
             // Assert
@@ -136,7 +137,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             // Act
             var pkg = downloader.DownloadPackage("octopusdeploy/octo-prerelease",
                 new SemanticVersion("7.3.7-alpine"), "docker-feed",
-                new Uri(DockerHubFeedUri), dockerTestUsername, dockerTestPassword, true, 1,
+                new Uri(dockerHubFeedUri), dockerTestUsername, dockerTestPassword, true, 1,
                 TimeSpan.FromSeconds(10));
 
             // Verify no unencrypted credential warnings in the log
@@ -198,7 +199,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             // Act
             var pkg = downloader.DownloadPackage("octopusdeploy/octo-prerelease",
                 new SemanticVersion("7.3.7-alpine"), "docker-feed",
-                new Uri(DockerHubFeedUri), dockerTestUsername, dockerTestPassword, true, 1,
+                new Uri(dockerHubFeedUri), dockerTestUsername, dockerTestPassword, true, 1,
                 TimeSpan.FromSeconds(10));
 
             // Assert
@@ -226,13 +227,13 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             // Act - Download from Docker Hub first
             var pkg1 = downloader.DownloadPackage("octopusdeploy/octo-prerelease",
                 new SemanticVersion("7.3.7-alpine"), "docker-feed",
-                new Uri(DockerHubFeedUri), dockerTestUsername, dockerTestPassword, true, 1,
+                new Uri(dockerHubFeedUri), dockerTestUsername, dockerTestPassword, true, 1,
                 TimeSpan.FromSeconds(10));
             
             // Then download from the same registry again (should reuse or recreate config)
             var pkg2 = downloader.DownloadPackage("alpine",
                 new SemanticVersion("3.6.5"), "docker-feed",
-                new Uri(DockerHubFeedUri), null, null, true, 1,
+                new Uri(dockerHubFeedUri), null, null, true, 1,
                 TimeSpan.FromSeconds(10));
 
             // Assert
