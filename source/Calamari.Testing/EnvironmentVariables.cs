@@ -120,7 +120,7 @@ namespace Calamari.Testing
         {
             var logger = new LoggerConfiguration()
                          .MinimumLevel.Verbose()
-                         .WriteTo.Console(outputTemplate: "{Level:u3}|{Message:lj}{NewLine}", theme: ConsoleTheme.None)
+                         .WriteTo.Console(outputTemplate: "{Level:u3}|{Message:lj}{NewLine}")
                          .CreateLogger();
 
             var loggerFactory = new LoggerFactory();
