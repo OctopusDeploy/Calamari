@@ -76,7 +76,7 @@ namespace Calamari.Kubernetes
             
             public static class PullRequest
             {
-                public static readonly string CreateForCurrentEnvironment = "Octopus.Action.ArgoCD.PullRequest.CreateForCurrentEnvironment";
+                public static readonly string Create = "Octopus.Action.ArgoCD.PullRequest.Create";
             }
 
             public static class Output

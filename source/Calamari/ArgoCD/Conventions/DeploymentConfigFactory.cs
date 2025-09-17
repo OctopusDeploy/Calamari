@@ -42,7 +42,7 @@ namespace Calamari.ArgoCD.Conventions
         
         bool RequiresPullRequest(RunningDeployment deployment)
         {
-            return deployment.Variables.GetFlag(SpecialVariables.Git.PullRequest.CreateForCurrentEnvironment);
+            return deployment.Variables.GetFlag(SpecialVariables.Git.PullRequest.Create);
         }
 
         GitCommitParameters CommitParameters(RunningDeployment deployment)
