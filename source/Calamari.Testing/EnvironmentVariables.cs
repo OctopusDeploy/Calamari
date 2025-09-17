@@ -152,20 +152,15 @@ namespace Calamari.Testing
 
             if (SecretManagerIsEnabled)
             {
-                if (!string.IsNullOrEmpty(attr.SecretReference))
+                var valueFromSecretManager = string.IsNullOrEmpty(attr.SecretReference)
+                    ? null
+                    : await SecretManagerClient.Value.GetSecret(attr.SecretReference, cancellationToken, throwOnNotFound: false);
+                if (!string.IsNullOrEmpty(valueFromSecretManager))
                 {
-                    var valueFromSecretManager = await SecretManagerClient.Value.GetSecret(attr.SecretReference, cancellationToken, throwOnNotFound: false);
-                    if (!string.IsNullOrEmpty(valueFromSecretManager))
-                    {
-                        return valueFromSecretManager;
-                    }
-                    return attr.DefaultValue ?? 
-                           throw new Exception($"Unable to locate {attr.Name} as an environment variable, nor does its secretReference exist in the Octopus Secret Manager (1Password), and no default value is specified.");
+                    return valueFromSecretManager;
                 }
-
                 return attr.DefaultValue ?? 
-                       throw new Exception($"Unable to locate {attr.Name} as an environment variable, nor does it have a secretReference provided, nor is a default value specified.");
-
+                    throw new Exception($"Unable to locate {attr.Name} as an environment variable, nor does its secretReference exist in the Octopus Secret Manager (1Password), and no default value is specified.");
             }
 
             return attr.DefaultValue
