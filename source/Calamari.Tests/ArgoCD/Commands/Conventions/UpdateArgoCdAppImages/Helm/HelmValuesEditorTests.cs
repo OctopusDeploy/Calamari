@@ -58,8 +58,8 @@ public class HelmValuesEditorTests
      node2Child1: ""node2child1value""
      node2Child2: 42
 ";
-        
-        result.Should().Be(expected);
+        //ensure platform-agnostic multiline comparison
+        result.ReplaceLineEndings().Should().Be(expected.ReplaceLineEndings());
     }
 }
 

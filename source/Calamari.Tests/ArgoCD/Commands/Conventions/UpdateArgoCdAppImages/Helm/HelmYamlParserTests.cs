@@ -71,7 +71,8 @@ root:
 
             var result = sut.UpdateContentForPath("root.node1", "69");
 
-            result.Should().Be(expectedUpdate);
+            //ensure platform-agnostic multiline comparison
+            result.ReplaceLineEndings().Should().Be(expectedUpdate.ReplaceLineEndings());
         }
 
         [Test]
@@ -93,7 +94,8 @@ root:
 
             var result = sut.UpdateContentForPath("root.node2", "stable");
 
-            result.Should().Be(expectedUpdate);
+            //ensure platform-agnostic multiline comparison
+            result.ReplaceLineEndings().Should().Be(expectedUpdate.ReplaceLineEndings());
         }
 
         [Test]
@@ -115,7 +117,8 @@ root:
 
             var result = sut.UpdateContentForPath("root.node2", "stable");
 
-            result.Should().Be(expectedUpdate);
+            //ensure platform-agnostic multiline comparison
+            result.ReplaceLineEndings().Should().Be(expectedUpdate.ReplaceLineEndings());
         }
 
         [Test]
@@ -137,7 +140,8 @@ root:
 
             var result = sut.UpdateContentForPath("root.node1", "69");
 
-            result.Should().Be(expectedUpdate);
+            //ensure platform-agnostic multiline comparison
+            result.ReplaceLineEndings().Should().Be(expectedUpdate.ReplaceLineEndings());
         }
     }
 }
