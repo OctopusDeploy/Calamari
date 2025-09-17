@@ -24,27 +24,25 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
     [TestFixture]
     public class DockerImagePackageDownloaderFixture
     {
-        static string authFeedUri;
-        static string feedUsername;
-        static string feedPassword;
-        static readonly string Home = Path.GetTempPath();
-
-        static string dockerHubFeedUri;
-        static string dockerTestUsername;
-        static string dockerTestPassword;
+            
+        async Task<string> authFeedUri() => await ExternalVariables.Get(ExternalVariable.ArtifactoryUrl, CancellationToken.None); 
+        async Task<string> feedUsername() => await ExternalVariables.Get(ExternalVariable.ArtifactoryUsername, cancellationToken);
+        async Task<string> feedPassword() => await ExternalVariables.Get(ExternalVariable.ArtifactoryPassword, cancellationToken);
+        async Task<string> dockerHubFeedUri() => await ExternalVariables.Get(ExternalVariable.DockerHubOrgAccessUrl, cancellationToken);
+        async Task<string> dockerTestUsername() => await ExternalVariables.Get(ExternalVariable.DockerHubOrgAccessUsername, cancellationToken);
+        async Task<string> dockerTestPassword() =>  await ExternalVariables.Get(ExternalVariable.DockerHubOrgAccessToken, cancellationToken);
         static readonly CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
         readonly CancellationToken cancellationToken = CancellationTokenSource.Token;
-
-        [OneTimeSetUp]
-        public async Task TestFixtureSetUp()
-        {
-            authFeedUri = await ExternalVariables.Get(ExternalVariable.ArtifactoryUrl, cancellationToken);
-            feedUsername = await ExternalVariables.Get(ExternalVariable.ArtifactoryUsername, cancellationToken);
-            feedPassword = await ExternalVariables.Get(ExternalVariable.ArtifactoryPassword, cancellationToken);
-            dockerHubFeedUri = await ExternalVariables.Get(ExternalVariable.DockerHubOrgAccessUrl, cancellationToken);
-            dockerTestUsername = await ExternalVariables.Get(ExternalVariable.DockerHubOrgAccessUsername, cancellationToken);
-            dockerTestPassword = await ExternalVariables.Get(ExternalVariable.DockerHubOrgAccessToken, cancellationToken);
-        }
+        //
+        // [OneTimeSetUp]
+        // public async Task TestFixtureSetUp()
+        // {
+        //     feedUsername = 
+        //     feedPassword = 
+        //     dockerHubFeedUri = 
+        //     dockerTestUsername = 
+        //     dockerTestPassword
+        // }
 
         [OneTimeTearDown]
         public void TestFixtureTearDown()
@@ -54,12 +52,12 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
 
         [Test]
         [RequiresDockerInstalled]
-        public void PackageWithoutCredentials_Loads()
+        public async Task PackageWithoutCredentials_Loads()
         {
             var downloader = GetDownloader();
             var pkg = downloader.DownloadPackage("alpine",
                 new SemanticVersion("3.6.5"), "docker-feed",
-                new Uri(dockerHubFeedUri), null, null, true, 1,
+                new Uri(await dockerHubFeedUri()), null, null, true, 1,
                 TimeSpan.FromSeconds(3));
 
             Assert.AreEqual("alpine", pkg.PackageId);
@@ -69,7 +67,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
 
         [Test]
         [RequiresDockerInstalled]
-        public void DockerHubWithCredentials_Loads()
+        public async Task DockerHubWithCredentials_Loads()
         {
             const string privateImage = "octopustestaccount/octopetshop-productservice";
             var version =  new SemanticVersion("13.0");
@@ -78,8 +76,9 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             var pkg = downloader.DownloadPackage(privateImage,
                 version,
                 "docker-feed",
-                new Uri(dockerHubFeedUri),
-                dockerTestUsername, dockerTestPassword,
+                new Uri(await dockerHubFeedUri()),
+                await dockerTestUsername(), 
+                await dockerTestPassword(),
                 true,
                 1,
                 TimeSpan.FromSeconds(3));
@@ -91,14 +90,14 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
 
         [Test]
         [RequiresDockerInstalled]
-        public void PackageWithCredentials_Loads()
+        public async Task PackageWithCredentials_Loads()
         {
             var downloader = GetDownloader();
             var pkg = downloader.DownloadPackage("octopus-echo",
                 new SemanticVersion("1.1"),
                 "docker-feed",
-                new Uri(authFeedUri),
-                feedUsername, feedPassword,
+                new Uri(await authFeedUri()),
+                await feedUsername(), await feedPassword(),
                 true, 1,
                 TimeSpan.FromSeconds(3));
 
@@ -114,14 +113,14 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             var memoryLog = new InMemoryLog();
             var downloader = GetDownloader(memoryLog);
             
-            var exception = Assert.Throws<CommandException>(() => downloader.DownloadPackage("octopus-echo",
-                new SemanticVersion("1.1"), "docker-feed",
-                new Uri(authFeedUri),
-                "Nonexistantuser", "SuperDooper",
-                true, 
-                //we don't want to perform too many of these otherwise jfrog / artifactory gets sad at us
-                2,
-                TimeSpan.FromSeconds(5)));
+            var exception = Assert.ThrowsAsync<CommandException>(async () => downloader.DownloadPackage("octopus-echo",
+                                                                                                        new SemanticVersion("1.1"), "docker-feed",
+                                                                                                        new Uri(await authFeedUri()),
+                                                                                                        "Nonexistantuser", "SuperDooper",
+                                                                                                        true, 
+                                                                                                        //we don't want to perform too many of these otherwise jfrog / artifactory gets sad at us
+                                                                                                        2,
+                                                                                                        TimeSpan.FromSeconds(5)));
             
             StringAssert.Contains("Unable to log in Docker registry", exception.Message);
             memoryLog.Messages
@@ -135,18 +134,18 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         [RequiresDockerInstalled]
         [TestCase("octopustestaccount/octopetshop-productservice", "13.0")]
         [TestCase("alpine", "3.6.5")]
-        public void CachedDockerHubPackage_DoesNotGenerateImageNotCachedMessage(string image, string tag)
+        public async Task CachedDockerHubPackage_DoesNotGenerateImageNotCachedMessage(string image, string tag)
         {
-            PreCacheImage(image, tag, dockerHubFeedUri, dockerTestUsername, dockerTestPassword);
+            PreCacheImage(image, tag, await dockerHubFeedUri(), await dockerTestUsername(), await dockerTestPassword());
             
             var log = new InMemoryLog();
             var downloader = GetDownloader(log);
             downloader.DownloadPackage(image, 
                                        new SemanticVersion(tag), 
                                        "docker-feed", 
-                                       new Uri(dockerHubFeedUri), 
-                                       dockerTestUsername, 
-                                       dockerTestPassword, 
+                                       new Uri(await dockerHubFeedUri()), 
+                                       await dockerTestUsername(), 
+                                       await dockerTestPassword(), 
                                        true, 
                                        1, 
                                        TimeSpan.FromSeconds(3));
@@ -156,21 +155,21 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         
         [Test]
         [RequiresDockerInstalled]
-        public void CachedNonDockerHubPackage_DoesNotGenerateImageNotCachedMessage()
+        public async Task CachedNonDockerHubPackage_DoesNotGenerateImageNotCachedMessage()
         {
             const string image = "octopus-echo";
             const string tag = "1.1";
             var log = new InMemoryLog();
             var downloader = GetDownloader(log);
 
-            PreCacheImage(image, tag, authFeedUri, feedUsername, feedPassword);
+            PreCacheImage(image, tag, await authFeedUri(), await feedUsername(), await feedPassword());
 
             downloader.DownloadPackage(image, 
                                        new SemanticVersion(tag), 
                                        "docker-feed", 
-                                       new Uri(authFeedUri), 
-                                       feedUsername,
-                                       feedPassword,  
+                                       new Uri(await authFeedUri()), 
+                                       await feedUsername(),
+                                       await feedPassword(),  
                                        true, 
                                        1, 
                                        TimeSpan.FromSeconds(3));
@@ -182,7 +181,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         [RequiresDockerInstalled]
         [TestCase("octopustestaccount/octopetshop-productservice", "13.0")]
         [TestCase("alpine", "3.6.5")]
-        public void NotCachedDockerHubPackage_GeneratesImageNotCachedMessage(string image, string tag)
+        public async Task NotCachedDockerHubPackage_GeneratesImageNotCachedMessage(string image, string tag)
         {
             var log = new InMemoryLog();
             var downloader = GetDownloader(log);
@@ -192,9 +191,9 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             downloader.DownloadPackage(image, 
                                        new SemanticVersion(tag), 
                                        "docker-feed", 
-                                       new Uri(dockerHubFeedUri), 
-                                       dockerTestUsername, 
-                                       dockerTestPassword, 
+                                       new Uri(await dockerHubFeedUri()), 
+                                       await dockerTestUsername(), 
+                                       await dockerTestPassword(), 
                                        true, 
                                        1, 
                                        TimeSpan.FromSeconds(3));
@@ -204,11 +203,11 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         
         [Test]
         [RequiresDockerInstalled]
-        public void NotCachedNonDockerHubPackage_GeneratesImageNotCachedMessage()
+        public async Task NotCachedNonDockerHubPackage_GeneratesImageNotCachedMessage()
         {
             const string image = "octopus-echo";
             const string tag = "1.1";
-            var feed = new Uri(authFeedUri);
+            var feed = new Uri(await authFeedUri());
             var imageFullName = $"{feed.Authority}/{image}";
             var log = new InMemoryLog();
             var downloader = GetDownloader(log);
@@ -219,8 +218,8 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
                                        new SemanticVersion(tag), 
                                        "docker-feed", 
                                        feed, 
-                                       feedUsername, 
-                                       feedPassword, 
+                                       await feedUsername(), 
+                                       await feedPassword(), 
                                        true, 
                                        1, 
                                        TimeSpan.FromSeconds(3));
