@@ -38,6 +38,9 @@ namespace Calamari.Testing
         [EnvironmentVariable("Helm_OctopusAPITester_Url", "op://Calamari Secrets for Tests/Artifactory e2e-reader Test Account/url")]
         ArtifactoryUrl,
 
+        [EnvironmentVariable("Helm_OctopusAPITester_Url", "op://Calamari Secrets for Tests/Artifactory e2e-reader Test Account/docker-url")]
+        ArtifactoryDockerUrl,
+
         [EnvironmentVariable("Helm_OctopusAPITester_Username", "op://Calamari Secrets for Tests/Artifactory e2e-reader Test Account/username")]
         ArtifactoryUsername,
 

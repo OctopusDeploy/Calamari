@@ -36,7 +36,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         [OneTimeSetUp]
         public async Task TestFixtureSetUp()
         {
-            authFeedUri = await ExternalVariables.Get(ExternalVariable.ArtifactoryUrl, cancellationToken);
+            authFeedUri = await ExternalVariables.Get(ExternalVariable.ArtifactoryDockerUrl, cancellationToken);
             feedUsername = await ExternalVariables.Get(ExternalVariable.ArtifactoryUsername, cancellationToken);
             feedPassword = await ExternalVariables.Get(ExternalVariable.ArtifactoryPassword, cancellationToken);
             dockerHubFeedUri = await ExternalVariables.Get(ExternalVariable.DockerHubOrgAccessUrl, cancellationToken);
