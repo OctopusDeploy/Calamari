@@ -13,7 +13,7 @@
     <!-- The assembly '{0}' is not inside the 'lib' folder and hence it won't be added as a reference when the 
            package is installed into a project. Move it into the 'lib' folder if it needs to be referenced. -->
     <NoWarn>NU5100</NoWarn>
-    <>true</>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
 
   <ItemGroup>
