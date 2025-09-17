@@ -2,10 +2,12 @@
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Calamari.Common.Plumbing.Logging;
 using Microsoft.Extensions.Logging;
 using Octopus.OnePassword.Sdk;
+using Serilog;
 using Serilog.Extensions.Logging;
+using Serilog.Sinks.SystemConsole.Themes;
+using Log = Calamari.Common.Plumbing.Logging.Log;
 
 namespace Calamari.Testing
 {
@@ -116,8 +118,13 @@ namespace Calamari.Testing
 
         static SecretManagerClient LoadSecretManagerClient()
         {
+            var logger = new LoggerConfiguration()
+                         .MinimumLevel.Verbose()
+                         .WriteTo.Console(outputTemplate: "{Level:u3}|{Message:lj}{NewLine}", theme: ConsoleTheme.None)
+                         .CreateLogger();
+
             var loggerFactory = new LoggerFactory();
-            loggerFactory.AddProvider(new SerilogLoggerProvider(Logger, false));
+            loggerFactory.AddProvider(new SerilogLoggerProvider(logger, false));
             var microsoftLogger = loggerFactory.CreateLogger<SecretManagerClient>();
             return new SecretManagerClient(SecretManagerAccount, microsoftLogger);
         }
@@ -152,16 +159,20 @@ namespace Calamari.Testing
 
             if (SecretManagerIsEnabled)
             {
-                var valueFromSecretManager = string.IsNullOrEmpty(attr.SecretReference)
-                    ? null
-                    : await SecretManagerClient.Value.GetSecret(attr.SecretReference, cancellationToken, throwOnNotFound: false);
-                if (!string.IsNullOrEmpty(valueFromSecretManager))
+                if (!string.IsNullOrEmpty(attr.SecretReference))
                 {
-                    return valueFromSecretManager;
+                    var valueFromSecretManager = await SecretManagerClient.Value.GetSecret(attr.SecretReference, cancellationToken, throwOnNotFound: false);
+                    if (!string.IsNullOrEmpty(valueFromSecretManager))
+                    {
+                        return valueFromSecretManager;
+                    }
+                    return attr.DefaultValue ?? 
+                           throw new Exception($"Unable to locate {attr.Name} as an environment variable, nor does its secretReference exist in the Octopus Secret Manager (1Password), and no default value is specified.");
                 }
 
                 return attr.DefaultValue ?? 
-                throw new Exception($"Unable to locate {attr.Name} as an environment variable, nor does its secretReference exist in the Octopus Secret Manager (1Password), and no default value is specified.");
+                       throw new Exception($"Unable to locate {attr.Name} as an environment variable, nor does it have a secretReference provided, nor is a default value specified.");
+
             }
 
             return attr.DefaultValue
