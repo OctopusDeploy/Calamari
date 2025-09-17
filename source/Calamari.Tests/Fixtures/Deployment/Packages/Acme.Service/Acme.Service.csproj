@@ -11,5 +11,9 @@
     <PackageLicenseUrl>https://github.com/OctopusDeploy/Calamari/blob/main/LICENSE.txt</PackageLicenseUrl>
     <NuspecFile>Acme.Service.nuspec</NuspecFile>
     <NuspecProperties>Version=$(Version)</NuspecProperties>
+    <!-- The assembly '{0}' is not inside the 'lib' folder and hence it won't be added as a reference when the 
+         package is installed into a project. Move it into the 'lib' folder if it needs to be referenced. -->
+    <NoWarn>NU5100</NoWarn>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
 </Project>
