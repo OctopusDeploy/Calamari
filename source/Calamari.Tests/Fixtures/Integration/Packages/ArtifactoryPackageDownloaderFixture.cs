@@ -42,7 +42,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
                     fileSystem.EnsureDirectoryExists(cacheDirectory);
 
                     feedUri = new Uri("https://octopusdeploy.jfrog.io");
-                    var sensitiveValue = await ExternalVariables.Get(ExternalVariable.ArtifactoryE2EPassword, cancellationToken);
+                    var sensitiveValue = await ExternalVariables.Get(ExternalVariable.ArtifactoryAdminToken, cancellationToken);
                     feedCredentials = new NetworkCredential("", sensitiveValue.ToString());
         
                     var log = Substitute.For<ILog>();
