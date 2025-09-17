@@ -41,7 +41,8 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
                     cacheDirectory = Path.Combine(currentDirectory, testDirectory);
                     fileSystem.EnsureDirectoryExists(cacheDirectory);
 
-                    feedUri = new Uri("https://octopusdeploy.jfrog.io");
+                    var authFeedUri = await ExternalVariables.Get(ExternalVariable.ArtifactoryUrl, cancellationToken);
+                    feedUri = new Uri(authFeedUri);
                     var sensitiveValue = await ExternalVariables.Get(ExternalVariable.ArtifactoryAdminToken, cancellationToken);
                     feedCredentials = new NetworkCredential("", sensitiveValue.ToString());
         
