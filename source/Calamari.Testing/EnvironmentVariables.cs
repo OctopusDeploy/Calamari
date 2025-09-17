@@ -1,14 +1,11 @@
 ﻿using System;
-using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Calamari.Common.Plumbing.Logging;
 using Microsoft.Extensions.Logging;
 using Octopus.OnePassword.Sdk;
-using Serilog;
 using Serilog.Extensions.Logging;
-using Serilog.Sinks.SystemConsole.Themes;
-using Log = Calamari.Common.Plumbing.Logging.Log;
 
 namespace Calamari.Testing
 {
@@ -110,7 +107,7 @@ namespace Calamari.Testing
 
     public static class ExternalVariables
     {
-        // static readonly Serilog.ILogger Logger = Serilog.Log.ForContext(typeof(ExternalVariables));
+        static readonly Serilog.ILogger Logger = Serilog.Log.ForContext(typeof(ExternalVariables));
 
         static readonly bool SecretManagerIsEnabled = Convert.ToBoolean(Environment.GetEnvironmentVariable("CALAMARI__Tests__SecretManagerEnabled") ?? "True");
         static readonly string SecretManagerAccount = Environment.GetEnvironmentVariable("CALAMARI__Tests__SecretManagerAccount") ?? "octopusdeploy.1password.com";
@@ -119,18 +116,8 @@ namespace Calamari.Testing
 
         static SecretManagerClient LoadSecretManagerClient()
         {
-            var path = Path.Combine(Path.GetTempPath(), "ExternalVariables.log");
-            var logger = new LoggerConfiguration()
-                         .MinimumLevel.Verbose()
-                         .WriteTo.Console(outputTemplate: "{Level:u3}|{Message:lj}{NewLine}")
-                         .WriteTo.File(path, outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
-                         .CreateLogger();
-
-            Console.WriteLine($"##teamcity[importData type='streamToBuildLog' filePattern='{path}' wrapFileContentInBlock='false' quiet='false']");
-            Console.WriteLine($"##teamcity[publishArtifacts '{path}']");
-            
             var loggerFactory = new LoggerFactory();
-            loggerFactory.AddProvider(new SerilogLoggerProvider(logger, false));
+            loggerFactory.AddProvider(new SerilogLoggerProvider(Logger, false));
             var microsoftLogger = loggerFactory.CreateLogger<SecretManagerClient>();
             return new SecretManagerClient(SecretManagerAccount, microsoftLogger);
         }
