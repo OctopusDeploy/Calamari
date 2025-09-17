@@ -109,7 +109,7 @@ namespace Calamari.Testing
 
     public static class ExternalVariables
     {
-        static readonly Serilog.ILogger Logger = Serilog.Log.ForContext(typeof(ExternalVariables));
+        // static readonly Serilog.ILogger Logger = Serilog.Log.ForContext(typeof(ExternalVariables));
 
         static readonly bool SecretManagerIsEnabled = Convert.ToBoolean(Environment.GetEnvironmentVariable("CALAMARI__Tests__SecretManagerEnabled") ?? "True");
         static readonly string SecretManagerAccount = Environment.GetEnvironmentVariable("CALAMARI__Tests__SecretManagerAccount") ?? "octopusdeploy.1password.com";
@@ -121,8 +121,11 @@ namespace Calamari.Testing
             var logger = new LoggerConfiguration()
                          .MinimumLevel.Verbose()
                          .WriteTo.Console(outputTemplate: "{Level:u3}|{Message:lj}{NewLine}")
+                         .WriteTo.File("ExternalVariables.log", outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
                          .CreateLogger();
 
+            Console.WriteLine($"##teamcity[importData type='streamToBuildLog' filePattern='ExternalVariables.log' wrapFileContentInBlock='false' quiet='false']");
+            
             var loggerFactory = new LoggerFactory();
             loggerFactory.AddProvider(new SerilogLoggerProvider(logger, false));
             var microsoftLogger = loggerFactory.CreateLogger<SecretManagerClient>();
