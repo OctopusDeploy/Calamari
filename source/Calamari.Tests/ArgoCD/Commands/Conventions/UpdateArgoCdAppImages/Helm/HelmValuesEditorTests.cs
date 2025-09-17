@@ -12,15 +12,14 @@ public class HelmValuesEditorTests
     [Test]
     public void GenerateVariableDictionary_ReturnsDictionaryOfNodeValuesWithValues()
     {
-        const string yamlContent = @"
-                                   root:
-                                     node1: ""node1value""
-                                     node2:
-                                        node2Nest:
-                                            node2nestedValue: ""banana""
-                                        node2Child1: ""node2child1value""
-                                        node2Child2: 42
-                                   ";
+        const string yamlContent = @"root:
+  node1: ""node1value""
+  node2:
+     node2Nest:
+         node2nestedValue: ""banana""
+     node2Child1: ""node2child1value""
+     node2Child2: 42
+";
         
         var parser = new HelmYamlParser(yamlContent);
 
@@ -41,8 +40,7 @@ public class HelmValuesEditorTests
     [Test]
     public void UpdateNodeValue_ReturnsModifiedYaml()
     {
-        const string yamlContent = @"
-root:
+        const string yamlContent = @"root:
   node1: ""node1value""
   node2:
      node2Nest:
@@ -52,8 +50,7 @@ root:
 ";
         var result = HelmValuesEditor.UpdateNodeValue(yamlContent, "root.node1", "awesome new value");
         
-        const string expected = @"
-root:
+        const string expected = @"root:
   node1: ""awesome new value""
   node2:
      node2Nest:
