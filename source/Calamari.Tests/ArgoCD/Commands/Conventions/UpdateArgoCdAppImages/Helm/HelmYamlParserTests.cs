@@ -78,18 +78,18 @@ root:
         public void UpdateNodeValue_WithDoubleQuoteDelimitedNodeValue_PreservesDelimitersWithNewValue()
         {
             const string yamlContent = @"
-                                    root:
-                                      node1: 42
-                                      node2: ""latest""
-                                    ";
+root:
+  node1: 42
+  node2: ""latest""
+";
 
             var sut = new HelmYamlParser(yamlContent);
 
             const string expectedUpdate = @"
-                                       root:
-                                         node1: 42
-                                         node2: ""stable""
-                                       ";
+root:
+  node1: 42
+  node2: ""stable""
+";
 
             var result = sut.UpdateContentForPath("root.node2", "stable");
 
@@ -100,18 +100,18 @@ root:
         public void UpdateNodeValue_WithSingleQuoteDelimitedNodeValue_PreservesDelimitersWithNewValue()
         {
             const string yamlContent = @"
-                                    root:
-                                      node1: 42
-                                      node2: 'latest'
-                                    ";
+root:
+  node1: 42
+  node2: 'latest'
+";
 
             var sut = new HelmYamlParser(yamlContent);
 
             const string expectedUpdate = @"
-                                       root:
-                                         node1: 42
-                                         node2: 'stable'
-                                       ";
+root:
+  node1: 42
+  node2: 'stable'
+";
 
             var result = sut.UpdateContentForPath("root.node2", "stable");
 
@@ -122,18 +122,18 @@ root:
         public void UpdateNodeValue_RespectsTrailingWhitespaceFromInput()
         {
             const string yamlContent = @"
-                                    root:
-                                      node1: 42
-                                      
-                                    ";
+root:
+  node1: 42
+  
+";
 
             var sut = new HelmYamlParser(yamlContent);
 
             const string expectedUpdate = @"
-                                    root:
-                                      node1: 69
-                                    
-                                    ";
+root:
+  node1: 69
+  
+";
 
             var result = sut.UpdateContentForPath("root.node1", "69");
 
