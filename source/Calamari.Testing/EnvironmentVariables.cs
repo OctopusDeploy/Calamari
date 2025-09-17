@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -118,13 +119,15 @@ namespace Calamari.Testing
 
         static SecretManagerClient LoadSecretManagerClient()
         {
+            var path = Path.Combine(Path.GetTempPath(), "ExternalVariables.log");
             var logger = new LoggerConfiguration()
                          .MinimumLevel.Verbose()
                          .WriteTo.Console(outputTemplate: "{Level:u3}|{Message:lj}{NewLine}")
-                         .WriteTo.File("ExternalVariables.log", outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
+                         .WriteTo.File(path, outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
                          .CreateLogger();
 
-            Console.WriteLine($"##teamcity[importData type='streamToBuildLog' filePattern='ExternalVariables.log' wrapFileContentInBlock='false' quiet='false']");
+            Console.WriteLine($"##teamcity[importData type='streamToBuildLog' filePattern='{path}' wrapFileContentInBlock='false' quiet='false']");
+            Console.WriteLine($"##teamcity[publishArtifacts '{path}']");
             
             var loggerFactory = new LoggerFactory();
             loggerFactory.AddProvider(new SerilogLoggerProvider(logger, false));
