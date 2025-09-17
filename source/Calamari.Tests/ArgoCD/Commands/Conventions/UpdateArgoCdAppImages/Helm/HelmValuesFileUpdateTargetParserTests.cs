@@ -155,7 +155,7 @@ public class HelmValuesFileUpdateTargetParserTests
             new List<string>() {HelmPath1, HelmPath2}
         );
 
-        result.Should().BeEquivalentTo(expectedSource);
+        result.Should().BeEquivalentTo(new List<HelmValuesFileImageUpdateTarget>() {expectedSource}, options => options.ComparingByMembers<HelmValuesFileImageUpdateTarget>());
     }
 
     [Test]
@@ -334,7 +334,8 @@ public class HelmValuesFileUpdateTargetParserTests
             new List<string> {HelmPath1, HelmPath2}
         );
 
-        result.Should().BeEquivalentTo(expectedSource);
+        result.Should().HaveCount(1);
+        result[0].Should().BeEquivalentTo(expectedSource, options => options.ComparingByMembers<HelmValuesFileImageUpdateTarget>());
     }
 
     [Test]
@@ -397,130 +398,171 @@ public class HelmValuesFileUpdateTargetParserTests
             new List<string>(){HelmPath3}
         );
 
-        result.Should().BeEquivalentTo(expected1, expected2);
+        result.Should().BeEquivalentTo(new List<HelmValuesFileImageUpdateTarget>() {expected1, expected2}, options => options.ComparingByMembers<HelmValuesFileImageUpdateTarget>());
     }
-    //
-    // [Test]
-    // public void GetValuesFilesToUpdate_WithSingleRefValuesFile_WithNoAnnotations_ReturnsEmptyList()
-    // {
-    //     const string valuesRef = "the-values";
-    //     const string valuesFilePath = "files/values.yaml";
-    //     var commonSourceBuilder = new ArgoCDApplicationSourceBuilder(defaultSpaceId);
-    //     var refSource = new ArgoCDRefApplicationSourceBuilder(commonSourceBuilder)
-    //         .WithRef(valuesRef)
-    //         .Build();
-    //
-    //     var helmSource = new ArgoCDHelmApplicationSourceBuilder(commonSourceBuilder)
-    //         .WithValuesFile($"${valuesRef}/{valuesFilePath}")
-    //         .Build();
-    //
-    //     var app = new ArgoCDApplicationBuilder(defaultGateway)
-    //         .WithSource(refSource)
-    //         .WithSource(helmSource)
-    //         .Build();
-    //
-    //     var toUpdate = new ArgoCDApplicationToUpdate(defaultGatewayId, ArgoCDConstants.DefaultContainerRegistry, app);
-    //
-    //     var sut = new HelmValuesFileUpdateTargetParser(toUpdate);
-    //
-    //     // Act
-    //     var result = sut.GetValuesFilesToUpdate();
-    //
-    //     // Assert
-    //     result.Should().BeEmpty();
-    // }
-    //
-    // [Test]
-    // public void GetValuesFilesToUpdate_WithSingleRefValuesFile_WithMatchingAnnotations_WithNoAlias_ReturnsSourceForFileInRef()
-    // {
-    //     const string valuesRef = "the-values";
-    //     const string valuesFilePath = "files/values.yaml";
-    //     var commonSourceBuilder = new ArgoCDApplicationSourceBuilder(defaultSpaceId);
-    //     var refSource = new ArgoCDRefApplicationSourceBuilder(commonSourceBuilder)
-    //         .WithRef(valuesRef)
-    //         .Build();
-    //
-    //     var helmSource = new ArgoCDHelmApplicationSourceBuilder(commonSourceBuilder)
-    //         .WithValuesFile($"${valuesRef}/{valuesFilePath}")
-    //         .Build();
-    //
-    //     var annotations = new Dictionary<string, string>
-    //     {
-    //         [$"{ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey}.{valuesRef}"] = DoubleItemPathAnnotationValue
-    //     };
-    //
-    //     var app = new ArgoCDApplicationBuilder(defaultGateway)
-    //         .WithAnnotations(annotations)
-    //         .WithSource(refSource)
-    //         .WithSource(helmSource)
-    //         .Build();
-    //
-    //     var toUpdate = new ArgoCDApplicationToUpdate(defaultGatewayId, ArgoCDConstants.DefaultContainerRegistry, app);
-    //
-    //     var sut = new HelmValuesFileUpdateTargetParser(toUpdate);
-    //
-    //     // Act
-    //     var result = sut.GetValuesFilesToUpdate();
-    //
-    //     // Assert
-    //     var expectedSource = new HelmValuesFileImageUpdateTarget(app.Name,
-    //         ArgoCDConstants.DefaultContainerRegistry,
-    //         ArgoCDConstants.RefSourcePath,
-    //         refSource.RepositoryUrl,
-    //         refSource.TargetRevision,
-    //         valuesFilePath,
-    //         [HelmPath1, HelmPath2]
-    //     );
-    //
-    //     result.Should().BeEquivalentTo([expectedSource]);
-    // }
-    //
-    // [Test]
-    // public void GetValuesFilesToUpdate_WithSingleRefValuesFile_WithMatchingAnnotations_WithAliasToRefFile_ReturnsSourceForFileInRef()
-    // {
-    //     const string alias = "Alias1";
-    //     const string valuesRef = "the-values";
-    //     const string valuesFilePath = "files/values.yaml";
-    //     var commonSourceBuilder = new ArgoCDApplicationSourceBuilder(defaultSpaceId);
-    //     var refSource = new ArgoCDRefApplicationSourceBuilder(commonSourceBuilder)
-    //         .WithRef(valuesRef)
-    //         .Build();
-    //
-    //     var helmSource = new ArgoCDHelmApplicationSourceBuilder(commonSourceBuilder)
-    //         .WithValuesFile($"${valuesRef}/{valuesFilePath}")
-    //         .Build();
-    //
-    //     var annotations = new Dictionary<string, string>
-    //     {
-    //         [$"{ArgoCDConstants.Annotations.OctopusImageReplaceAliasKey}.{alias}"] = $"${valuesRef}/{valuesFilePath}",
-    //         [$"{ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey}.{alias}"] = DoubleItemPathAnnotationValue
-    //     };
-    //
-    //     var app = new ArgoCDApplicationBuilder(defaultGateway)
-    //         .WithAnnotations(annotations)
-    //         .WithSource(refSource)
-    //         .WithSource(helmSource)
-    //         .Build();
-    //
-    //     var toUpdate = new ArgoCDApplicationToUpdate(defaultGatewayId, ArgoCDConstants.DefaultContainerRegistry, app);
-    //
-    //     var sut = new HelmValuesFileUpdateTargetParser(toUpdate);
-    //
-    //     // Act
-    //     var result = sut.GetValuesFilesToUpdate();
-    //
-    //     // Assert
-    //     var expectedSource = new HelmValuesFileImageUpdateTarget(app.Name,
-    //         ArgoCDConstants.DefaultContainerRegistry,
-    //         ArgoCDConstants.RefSourcePath,
-    //         refSource.RepositoryUrl,
-    //         refSource.TargetRevision,
-    //         valuesFilePath,
-    //         [HelmPath1, HelmPath2]
-    //     );
-    //
-    //     result.Should().BeEquivalentTo([expectedSource]);
-    // }
+    
+    [Test]
+    public void GetValuesFilesToUpdate_WithSingleRefValuesFile_WithNoAnnotations_ReturnsEmptyList()
+    {
+        const string valuesRef = "the-values";
+        const string valuesFilePath = "files/values.yaml";
+        
+        var refSource = new ReferenceSource()
+        {
+            RepoUrl = new Uri("https://example.com/repo.git"),
+            TargetRevision = "main",
+            Ref = valuesRef,
+        };
+        
+        var helmSource = new HelmSource()
+        {
+            Path = "./",
+            RepoUrl = new Uri("https://example.com/repo.git"),
+            Helm = new HelmConfig()
+            {
+                ValueFiles = new List<string>() { $"${valuesRef}/{valuesFilePath}" }
+            }
+        };
+    
+        var toUpdate = new Application()
+        {
+            Metadata = new Metadata()
+            {
+                Name = "TheApp",
+                Annotations = new Dictionary<string, string>()
+                {
+                }
+            },
+            Spec = new ApplicationSpec()
+            {
+                Sources = new List<SourceBase>() { refSource, helmSource },
+            }
+        };
+    
+        var sut = new HelmValuesFileUpdateTargetParser(toUpdate, ArgoCDConstants.DefaultContainerRegistry);
+    
+        // Act
+        var result = sut.GetValuesFilesToUpdate();
+    
+        // Assert
+        result.Should().BeEmpty();
+    }
+    
+    [Test]
+    public void GetValuesFilesToUpdate_WithSingleRefValuesFile_WithMatchingAnnotations_WithNoAlias_ReturnsSourceForFileInRef()
+    {
+        const string valuesRef = "the-values";
+        const string valuesFilePath = "files/values.yaml";
+        
+        var refSource = new ReferenceSource()
+        {
+            RepoUrl = new Uri("https://example.com/repo.git"),
+            TargetRevision = "main",
+            Ref = valuesRef,
+        };
+        
+        var helmSource = new HelmSource()
+        {
+            Path = "./",
+            RepoUrl = new Uri("https://example.com/repo.git"),
+            Helm = new HelmConfig()
+            {
+                ValueFiles = new List<string>() { $"${valuesRef}/{valuesFilePath}" }
+            }
+        };
+        
+        var toUpdate = new Application()
+        {
+            Metadata = new Metadata()
+            {
+                Name = "TheApp",
+                Annotations = new Dictionary<string, string>()
+                {
+                    {$"{ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey}.{valuesRef}", DoubleItemPathAnnotationValue}
+                }
+            },
+            Spec = new ApplicationSpec()
+            {
+                Sources = new List<SourceBase>() { refSource, helmSource },
+            }
+        };
+
+        var sut = new HelmValuesFileUpdateTargetParser(toUpdate, ArgoCDConstants.DefaultContainerRegistry);
+    
+        // Act
+        var result = sut.GetValuesFilesToUpdate();
+    
+        // Assert
+        var expectedSource = new HelmValuesFileImageUpdateTarget(toUpdate.Metadata.Name,
+            ArgoCDConstants.DefaultContainerRegistry,
+            ArgoCDConstants.RefSourcePath,
+            refSource.RepoUrl,
+            refSource.TargetRevision,
+            valuesFilePath,
+            new List<string>() {HelmPath1, HelmPath2}
+        );
+    
+        result.Should().BeEquivalentTo(new List<HelmValuesFileImageUpdateTarget>(){expectedSource}, options => options.ComparingByMembers<HelmValuesFileImageUpdateTarget>());
+    }
+    
+    [Test]
+    public void GetValuesFilesToUpdate_WithSingleRefValuesFile_WithMatchingAnnotations_WithAliasToRefFile_ReturnsSourceForFileInRef()
+    {
+        const string alias = "Alias1";
+        const string valuesRef = "the-values";
+        const string valuesFilePath = "files/values.yaml";
+        
+        var refSource = new ReferenceSource()
+        {
+            RepoUrl = new Uri("https://example.com/repo.git"),
+            TargetRevision = "main",
+            Ref = valuesRef,
+        };
+        
+        var helmSource = new HelmSource()
+        {
+            Path = "./",
+            RepoUrl = new Uri("https://example.com/repo.git"),
+            Helm = new HelmConfig()
+            {
+                ValueFiles = new List<string>() { $"${valuesRef}/{valuesFilePath}" }
+            }
+        };
+        
+        var toUpdate = new Application()
+        {
+            Metadata = new Metadata()
+            {
+                Name = "TheApp",
+                Annotations = new Dictionary<string, string>()
+                {
+                    {$"{ArgoCDConstants.Annotations.OctopusImageReplaceAliasKey}.{alias}",  $"${valuesRef}/{valuesFilePath}"},
+                    {$"{ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey}.{alias}", DoubleItemPathAnnotationValue}
+                }
+            },
+            Spec = new ApplicationSpec()
+            {
+                Sources = new List<SourceBase>() { refSource, helmSource },
+            }
+        };
+    
+        var sut = new HelmValuesFileUpdateTargetParser(toUpdate,  ArgoCDConstants.DefaultContainerRegistry);
+    
+        // Act
+        var result = sut.GetValuesFilesToUpdate();
+    
+        // Assert
+        var expectedSource = new HelmValuesFileImageUpdateTarget(toUpdate.Metadata.Name,
+            ArgoCDConstants.DefaultContainerRegistry,
+            ArgoCDConstants.RefSourcePath,
+            refSource.RepoUrl,
+            refSource.TargetRevision,
+            valuesFilePath,
+            new List<string>(){HelmPath1, HelmPath2}
+        );
+    
+        result.Should().BeEquivalentTo(new List<HelmValuesFileImageUpdateTarget>() {expectedSource}, options => options.ComparingByMembers<HelmValuesFileImageUpdateTarget>());
+    }
     //
     // [Test]
     // public void GetValuesFilesToUpdate_WithSingleRefValuesFile_WithAliasToRefFile_ButAnnotationsDirectlyAgainstRef_ReturnsInvalidSource()
