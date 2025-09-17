@@ -94,8 +94,6 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
                                                                      customPropertiesLoader, argoCdApplicationManifestParser);
             var variables = new CalamariVariables
             {
-                [SpecialVariables.Git.CommitMethod] = "DirectCommit",
-                [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this",
                 [PackageVariables.IndexedPackageId("nginx")] = "nginx:1.27.1",
                 [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
             };
@@ -125,8 +123,6 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
                                                                      customPropertiesLoader, argoCdApplicationManifestParser);
             var variables = new CalamariVariables
             {
-                [SpecialVariables.Git.CommitMethod] = "DirectCommit",
-                [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this",
                 [PackageVariables.IndexedPackageId("nginx")] = "nginx:1.27.1",
                 [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
             };
@@ -160,8 +156,6 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
                                                                      customPropertiesLoader, argoCdApplicationManifestParser);
             var variables = new CalamariVariables
             {
-                [SpecialVariables.Git.CommitMethod] = "DirectCommit",
-                [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this",
                 [PackageVariables.IndexedPackageId("nginx")] = "nginx:1.27.1",
                 [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
             };

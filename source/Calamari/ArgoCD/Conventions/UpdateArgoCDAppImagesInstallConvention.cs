@@ -116,7 +116,7 @@ namespace Calamari.ArgoCD.Conventions
                         PushToRemote(repository,
                                      new GitBranchName(valuesFileSource.TargetRevision),
                                      deploymentConfig.CommitParameters,
-                                     new HashSet<string>(helmUpdateResult.ImagesUpdated),
+                                     new HashSet<string>() {Path.Combine(valuesFileSource.Path, valuesFileSource.FileName)},
                                      helmUpdateResult.ImagesUpdated);
                         
                         newImagesWritten.UnionWith(helmUpdateResult.ImagesUpdated);
