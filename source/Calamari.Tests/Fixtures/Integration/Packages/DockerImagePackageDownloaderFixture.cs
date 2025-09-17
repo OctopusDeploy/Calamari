@@ -32,7 +32,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         string dockerTestPassword;  
         static readonly CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
         readonly CancellationToken cancellationToken = CancellationTokenSource.Token;
-        
+
         [OneTimeSetUp]
         public async Task TestFixtureSetUp()
         {
@@ -97,7 +97,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
                 new SemanticVersion("1.1"),
                 "docker-feed",
                 new Uri(authFeedUri),
-                feedUsername, feedPassword,
+                feedUsername,feedPassword,
                 true, 1,
                 TimeSpan.FromSeconds(3));
 
