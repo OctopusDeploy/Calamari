@@ -1,8 +1,8 @@
 #if NET
 using System;
 using System.Collections.Generic;
-using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages;
-using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Models;
+using Calamari.ArgoCD;
+using Calamari.ArgoCD.Models;
 using FluentAssertions;
 using NUnit.Framework;
 

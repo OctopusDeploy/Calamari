@@ -2,24 +2,26 @@
 #nullable enable
 using System;
 
-namespace Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Models
+namespace Calamari.ArgoCD.Models
 {
     public class ContainerImageReference
     {
-        public const string DefaultContainerRegistry = "docker.io";
-        ContainerImageReference(string registry, string imageName, string tag, string customRegistry)
+        ContainerImageReference(string registry, string imageName, string tag, string defaultRegistry)
         {
             // Trim special case of "index.docker.io" to "docker.io" - simplifies check further down, and we never want to write out the full "index." version anyway.
-            if (registry.Equals($"index.{DefaultContainerRegistry}", StringComparison.OrdinalIgnoreCase))
+            if (registry.Equals($"index.{ArgoCDConstants.DefaultContainerRegistry}", StringComparison.OrdinalIgnoreCase))
             {
-                registry = DefaultContainerRegistry;
+                registry = ArgoCDConstants.DefaultContainerRegistry;
             }
 
             ImageName = imageName;
             Tag = tag;
             Registry = registry;
 
-            CustomRegistry = string.IsNullOrEmpty(customRegistry) ? null : customRegistry;
+            //if you don't provide a default registry, we assume its the defined constant.
+            DefaultRegistry = string.IsNullOrEmpty(defaultRegistry)
+                ? ArgoCDConstants.DefaultContainerRegistry
+                : defaultRegistry;
         }
 
         public static ContainerImageReference FromReferenceString(string containerImageReference, string defaultRegistry = "")
@@ -82,7 +84,7 @@ namespace Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Models
         public string ImageName { get; }
         public string Tag { get; }
 
-        internal string? CustomRegistry { get; }
+        string DefaultRegistry { get; }
 
         public bool IsMatch(ContainerImageReference other)
         {
@@ -104,14 +106,15 @@ namespace Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Models
             return false;
         }
 
-        public string WithTag(string tag)
+        string ToOriginalFormatName()
         {
-            return $"{AsQualifiedString()}:{tag}";
+            //This will return the same format as originally supplied
+            return string.IsNullOrEmpty(Registry) ? ImageName : $"{Registry}/{ImageName}";
         }
 
-        string AsQualifiedString()
+        public string WithTag(string tag)
         {
-            return string.IsNullOrEmpty(Registry) ? ImageName : $"{Registry}/{ImageName}";
+            return $"{ToOriginalFormatName()}:{tag}";
         }
 
         static bool RegistriesMatch(ContainerImageReference reference1, ContainerImageReference reference2)
@@ -120,18 +123,15 @@ namespace Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Models
 
             string NormalizeRegistry(ContainerImageReference imageReference)
             {
-                if (!string.IsNullOrWhiteSpace(imageReference.Registry))
-                {
-                    return imageReference.Registry;
-                }
-
-                return string.IsNullOrEmpty(imageReference.CustomRegistry) ? DefaultContainerRegistry : imageReference.CustomRegistry;
+                return !string.IsNullOrWhiteSpace(imageReference.Registry)
+                    ? imageReference.Registry
+                    : imageReference.DefaultRegistry;
             }
         }
 
         public override string ToString()
         {
-            return string.IsNullOrEmpty(Tag) ? AsQualifiedString() : $"{AsQualifiedString()}:{Tag}";
+            return string.IsNullOrEmpty(Tag) ? ToOriginalFormatName() : $"{ToOriginalFormatName()}:{Tag}";
         }
     }
 }
