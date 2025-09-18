@@ -231,6 +231,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="ArgoCD\Commands\Conventions\Builders\" />
+    <Folder Include="ArgoCD\Commands\Conventions\UpdateArgoCdAppImages\Helm\" />
     <Folder Include="Fixtures\Nginx\Approved" />
   </ItemGroup>
   <ItemGroup>
