@@ -26,7 +26,11 @@
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Nuke.Common" Version="8.1.4" />
+        <PackageReference Include="Nuke.Common" Version="8.1.4">
+            <!-- this version of nuke has a source generator that requires a newer compiler than is in net6 -->
+            <!-- remove this when we upgrade to net8 or later -->
+            <ExcludeAssets>analyzers</ExcludeAssets>
+        </PackageReference>
         <PackageReference Include="Octopus.OctoVersion.Tool" Version="1.0.9" ExcludeAssets="all" />
         <PackageReference Include="AzureSignTool" Version="6.0.1" ExcludeAssets="all" />
     </ItemGroup>
