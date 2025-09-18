@@ -312,14 +312,8 @@ partial class Build : NukeBuild
                                               .SelectMany(project => GetRuntimeIdentifiers(project)
                                                               .Select(rid =>
                                                                       {
-                                                                          var framework = Frameworks.Net60;
-                                                                          
-                                                                          //AzureServiceFabric is only compiled and distributed in net6.0-windows
-                                                                          if (project.Name == "Calamari.AzureServiceFabric")
-                                                                          {
-                                                                              framework = Frameworks.Net60Windows;
-                                                                          }
-                                                                          
+                                                                          //we are making the bold assumption all projects only have  a single target framework
+                                                                          var framework = project.GetTargetFrameworks()?.Single() ?? Frameworks.Net60;
                                                                           return new CalamariPackageMetadata
                                                                           {
                                                                               Project = project,
