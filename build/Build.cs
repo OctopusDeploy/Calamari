@@ -274,40 +274,19 @@ partial class Build : NukeBuild
                                ArtifactsDirectory.CreateOrCleanDirectory();
                                PublishDirectory.CreateOrCleanDirectory();
                            });
-        
-        Target RestoreCalamari =>
+
+        Target RestoreSolution =>
             d =>
                 d.DependsOn(Clean)
                  .Executes(() =>
                            {
-                               if (OperatingSystem.IsWindows())
-                               {
-                                   DotNetRestore(s => s.SetProjectFile(RootProjectName))
-                               }
-                               
-                               
-                               PackagesToPublish
-                                   .Select(p => p.Architecture)
-                                   .Distinct()
-                                   .ForEach(rid => DotNetRestore(s =>
-                                                                     s.SetProjectFile(Solution)
-                                                                      .SetProperty("DisableImplicitNuGetFallbackFolder", true)
-                                                                      .SetRuntime(rid)));
-                               var localRuntime = FixedRuntimes.Windows;
-
-                           DoPublish(RootProjectName,
-                                     OperatingSystem.IsWindows() ? Frameworks.Net462 : Frameworks.Net60,
-                                     nugetVersion,
-                                     FixedRuntimes.Cloud);
-
-                           foreach (var rid in GetRuntimeIdentifiers(Solution.GetProject(RootProjectName)!))
-                               DoPublish(RootProjectName, Frameworks.Net60, nugetVersion, rid);
-                       });
+                               DotNetRestore(s => s.SetProjectFile(Solution));
+                           });
 
         Target CompileCalamari =>
             d =>
                 d.DependsOn(CheckForbiddenWords)
-                 .DependsOn(RestoreCalamari)
+                 .DependsOn(RestoreSolution)
                  .Executes(() =>
                            {
                                Log.Information("Compiling Calamari v{CalamariVersion}", NugetVersion.Value);
@@ -347,7 +326,7 @@ partial class Build : NukeBuild
                                    Log.Warning($"Skipping the bundling of {RootProjectName} into the Calamari.Legacy bundle. "
                                                + "This is required for providing .Net Framework executables for legacy Target Operating Systems");
                                }
-                               
+
                                DoPublish(RootProjectName, OperatingSystem.IsWindows() ? Frameworks.Net462 : Frameworks.Net60, nugetVersion, FixedRuntimes.Cloud);
 
                                foreach (var rid in GetRuntimeIdentifiers(Solution.GetProject(RootProjectName)!))
@@ -383,7 +362,6 @@ partial class Build : NukeBuild
                                                           Framework = f,
                                                       })
                                                       .ToList();
-                               
 
                                // for cross-platform frameworks, we combine each runtime identifier with each target framework
                                var crossPlatformPackages =
@@ -619,7 +597,7 @@ partial class Build : NukeBuild
             Log.Information($"Publishing {calamariPackageMetadata.Project?.Name} for framework '{calamariPackageMetadata.Framework}' and arch '{calamariPackageMetadata.Architecture}'");
 
             var project = calamariPackageMetadata.Project;
-            var outputDirectory = PublishDirectory / project?.Name /  calamariPackageMetadata.Architecture;
+            var outputDirectory = PublishDirectory / project?.Name / calamariPackageMetadata.Architecture;
 
             await Task.Run(() =>
                                DotNetPublish(s =>
