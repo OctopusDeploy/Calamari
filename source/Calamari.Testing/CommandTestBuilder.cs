@@ -1,8 +1,6 @@
-﻿#if NETSTANDARD
+﻿
 using NuGet.Packaging;
 using NuGet.Versioning;
-#else
-#endif
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -21,6 +19,7 @@ using Calamari.Testing.Helpers;
 using Calamari.Testing.LogParser;
 using FluentAssertions;
 using NuGet;
+using NuGet.Packaging;
 using Octopus.CoreUtilities;
 using KnownVariables = Calamari.Common.Plumbing.Variables.KnownVariables;
 using OSPlatform = System.Runtime.InteropServices.OSPlatform;
@@ -94,13 +93,8 @@ namespace Calamari.Testing
         {
             var metadata = new ManifestMetadata
             {
-#if NETSTANDARD
                 Authors = new [] {"octopus@e2eTests"},
                 Version = new NuGetVersion(packageVersion),
-#else
-                Authors = "octopus@e2eTests",
-                Version = packageVersion,
-#endif
                 Id = packageId,
                 Description = nameof(CommandTestBuilder)
             };
