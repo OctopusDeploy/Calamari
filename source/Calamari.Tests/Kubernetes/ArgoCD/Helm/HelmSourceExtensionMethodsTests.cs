@@ -6,163 +6,164 @@ using Calamari.ArgoCD.Helm;
 using FluentAssertions;
 using NUnit.Framework;
 
-namespace Calamari.Tests.Kubernetes.ArgoCD.Helm;
-
-public class HelmSourceExtensionMethodsTests
+namespace Calamari.Tests.Kubernetes.ArgoCD.Helm
 {
-    [Test]
-    public void GenerateInlineValuesAbsolutePath_WithRootPath_OutputsValidPath()
+    public class HelmSourceExtensionMethodsTests
     {
-        const string repoUrl = "https://github.com/helm-test/test";
-        const string revision = "main";
-        const string valuesFile = "config/values.yaml";
-
-        var helmSource = new HelmSource()
+        [Test]
+        public void GenerateInlineValuesAbsolutePath_WithRootPath_OutputsValidPath()
         {
-            RepoUrl = new Uri(repoUrl),
-            TargetRevision = revision,
-            Path = "./",
-            Helm = new HelmConfig
+            const string repoUrl = "https://github.com/helm-test/test";
+            const string revision = "main";
+            const string valuesFile = "config/values.yaml";
+
+            var helmSource = new HelmSource()
             {
-                ValueFiles = new List<string> { valuesFile }
-            }
-        };
+                RepoUrl = new Uri(repoUrl),
+                TargetRevision = revision,
+                Path = "./",
+                Helm = new HelmConfig
+                {
+                    ValueFiles = new List<string> { valuesFile }
+                }
+            };
 
-        // Act
-        var result = helmSource.GenerateInlineValuesAbsolutePath(valuesFile);
+            // Act
+            var result = helmSource.GenerateInlineValuesAbsolutePath(valuesFile);
 
-        // Assert
-        result.Should().Be("https://github.com/helm-test/test/main/config/values.yaml");
-    }
+            // Assert
+            result.Should().Be("https://github.com/helm-test/test/main/config/values.yaml");
+        }
 
-    [Test]
-    public void GenerateInlineValuesAbsolutePath_WithDefinedPath_OutputsValidPath()
-    {
-        const string repoUrl = "https://github.com/helm-test/test";
-        const string revision = "main";
-        const string valuesFile = "config/values.yaml";
-
-        var helmSource = new HelmSource()
+        [Test]
+        public void GenerateInlineValuesAbsolutePath_WithDefinedPath_OutputsValidPath()
         {
-            RepoUrl = new Uri(repoUrl),
-            TargetRevision = revision,
-            Path = "cool",
-            Helm = new HelmConfig()
+            const string repoUrl = "https://github.com/helm-test/test";
+            const string revision = "main";
+            const string valuesFile = "config/values.yaml";
+
+            var helmSource = new HelmSource()
             {
-                ValueFiles = new List<string>() { valuesFile }
-            }
-        };
+                RepoUrl = new Uri(repoUrl),
+                TargetRevision = revision,
+                Path = "cool",
+                Helm = new HelmConfig()
+                {
+                    ValueFiles = new List<string>() { valuesFile }
+                }
+            };
 
-        // Act
-        var result = helmSource.GenerateInlineValuesAbsolutePath(valuesFile);
+            // Act
+            var result = helmSource.GenerateInlineValuesAbsolutePath(valuesFile);
 
-        // Assert
-        result.Should().Be("https://github.com/helm-test/test/main/cool/config/values.yaml");
-    }
+            // Assert
+            result.Should().Be("https://github.com/helm-test/test/main/cool/config/values.yaml");
+        }
 
-    [Test]
-    public void GenerateInlineValuesAbsolutePath_WithExcessSlashCharacters_OutputsValidPath()
-    {
-        const string repoUrl = "https://github.com/helm-test/slash-app/";
-        const string revision = "/dev/";
-        const string valuesFile = "/config/values.yaml";
-
-        var helmSource = new HelmSource()
+        [Test]
+        public void GenerateInlineValuesAbsolutePath_WithExcessSlashCharacters_OutputsValidPath()
         {
-            RepoUrl = new Uri(repoUrl),
-            TargetRevision = revision,
-            Path = "/slash/",
-            Helm = new HelmConfig()
+            const string repoUrl = "https://github.com/helm-test/slash-app/";
+            const string revision = "/dev/";
+            const string valuesFile = "/config/values.yaml";
+
+            var helmSource = new HelmSource()
             {
-                ValueFiles = new List<string>() { valuesFile }
-            }
-        };
+                RepoUrl = new Uri(repoUrl),
+                TargetRevision = revision,
+                Path = "/slash/",
+                Helm = new HelmConfig()
+                {
+                    ValueFiles = new List<string>() { valuesFile }
+                }
+            };
 
-        // Act
-        var result = helmSource.GenerateInlineValuesAbsolutePath(valuesFile);
+            // Act
+            var result = helmSource.GenerateInlineValuesAbsolutePath(valuesFile);
 
-        // Assert
-        result.Should().Be("https://github.com/helm-test/slash-app/dev/slash/config/values.yaml");
-    }
+            // Assert
+            result.Should().Be("https://github.com/helm-test/slash-app/dev/slash/config/values.yaml");
+        }
 
-    [Test]
-    public void GenerateValuesFilePaths_WithSingleInlineFile_ReturnsQualifiedPath()
-    {
-        const string repoUrl = "https://github.com/helm-test/test";
-        const string revision = "main";
-        const string valuesFile = "config/values.yaml";
-
-        var helmSource = new HelmSource()
+        [Test]
+        public void GenerateValuesFilePaths_WithSingleInlineFile_ReturnsQualifiedPath()
         {
-            RepoUrl = new Uri(repoUrl),
-            TargetRevision = revision,
-            Path = "cool",
-            Helm = new HelmConfig
+            const string repoUrl = "https://github.com/helm-test/test";
+            const string revision = "main";
+            const string valuesFile = "config/values.yaml";
+
+            var helmSource = new HelmSource()
             {
-                ValueFiles = new List<string> { valuesFile }
-            }
-        };
+                RepoUrl = new Uri(repoUrl),
+                TargetRevision = revision,
+                Path = "cool",
+                Helm = new HelmConfig
+                {
+                    ValueFiles = new List<string> { valuesFile }
+                }
+            };
 
-        // Act
-        var result = helmSource.GenerateValuesFilePaths().ToList();
+            // Act
+            var result = helmSource.GenerateValuesFilePaths().ToList();
 
-        result.Count.Should().Be(1);
-        result.Should().Contain("https://github.com/helm-test/test/main/cool/config/values.yaml");
-    }
+            result.Count.Should().Be(1);
+            result.Should().Contain("https://github.com/helm-test/test/main/cool/config/values.yaml");
+        }
 
-    [Test]
-    public void GenerateValuesFilePaths_WithMultipleInlineFile_ReturnsQualifiedPathsForEachFile()
-    {
-        const string repoUrl = "https://github.com/helm-test/test";
-        const string revision = "main";
-        const string valuesFile = "config/values.yaml";
-        const string valuesFile2 = "values/dir/values.yaml";
-
-        var helmSource = new HelmSource()
+        [Test]
+        public void GenerateValuesFilePaths_WithMultipleInlineFile_ReturnsQualifiedPathsForEachFile()
         {
-            RepoUrl = new Uri(repoUrl),
-            TargetRevision = revision,
-            Path = "cool",
-            Helm = new HelmConfig
+            const string repoUrl = "https://github.com/helm-test/test";
+            const string revision = "main";
+            const string valuesFile = "config/values.yaml";
+            const string valuesFile2 = "values/dir/values.yaml";
+
+            var helmSource = new HelmSource()
             {
-                ValueFiles = new List<string> { valuesFile, valuesFile2 }
-            }
-        };
+                RepoUrl = new Uri(repoUrl),
+                TargetRevision = revision,
+                Path = "cool",
+                Helm = new HelmConfig
+                {
+                    ValueFiles = new List<string> { valuesFile, valuesFile2 }
+                }
+            };
 
-        // Act
-        var result = helmSource.GenerateValuesFilePaths().ToList();
+            // Act
+            var result = helmSource.GenerateValuesFilePaths().ToList();
 
-        result.Count.Should().Be(2);
-        result.Should().Contain("https://github.com/helm-test/test/main/cool/config/values.yaml");
-        result.Should().Contain("https://github.com/helm-test/test/main/cool/values/dir/values.yaml");
-    }
+            result.Count.Should().Be(2);
+            result.Should().Contain("https://github.com/helm-test/test/main/cool/config/values.yaml");
+            result.Should().Contain("https://github.com/helm-test/test/main/cool/values/dir/values.yaml");
+        }
 
-    [Test]
-    public void GenerateValuesFilePaths_WithRefSources_IncludesRefFilePath()
-    {
-        const string repoUrl = "https://github.com/helm-test/test";
-        const string revision = "main";
-        const string valuesFile = "config/values.yaml";
-        const string valuesFile2 = "values/dir/values.yaml";
-        const string refValuesFile = "$ref-name/values.yaml";
-        
-        var helmSource = new HelmSource()
+        [Test]
+        public void GenerateValuesFilePaths_WithRefSources_IncludesRefFilePath()
         {
-            RepoUrl = new Uri(repoUrl),
-            TargetRevision = revision,
-            Path = "cool",
-            Helm = new HelmConfig
+            const string repoUrl = "https://github.com/helm-test/test";
+            const string revision = "main";
+            const string valuesFile = "config/values.yaml";
+            const string valuesFile2 = "values/dir/values.yaml";
+            const string refValuesFile = "$ref-name/values.yaml";
+
+            var helmSource = new HelmSource()
             {
-                ValueFiles = new List<string> { valuesFile, valuesFile2, refValuesFile }
-            }
-        };
+                RepoUrl = new Uri(repoUrl),
+                TargetRevision = revision,
+                Path = "cool",
+                Helm = new HelmConfig
+                {
+                    ValueFiles = new List<string> { valuesFile, valuesFile2, refValuesFile }
+                }
+            };
 
-        // Act
-        var result = helmSource.GenerateValuesFilePaths().ToList();
+            // Act
+            var result = helmSource.GenerateValuesFilePaths().ToList();
 
-        result.Count.Should().Be(3);
-        result.Should().Contain("https://github.com/helm-test/test/main/cool/config/values.yaml");
-        result.Should().Contain("https://github.com/helm-test/test/main/cool/values/dir/values.yaml");
-        result.Should().Contain(refValuesFile);
+            result.Count.Should().Be(3);
+            result.Should().Contain("https://github.com/helm-test/test/main/cool/config/values.yaml");
+            result.Should().Contain("https://github.com/helm-test/test/main/cool/values/dir/values.yaml");
+            result.Should().Contain(refValuesFile);
+        }
     }
 }

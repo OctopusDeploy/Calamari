@@ -3,18 +3,17 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Calamari.ArgoCD;
-using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Models;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Testing.Helpers;
 using FluentAssertions;
 using NUnit.Framework;
 
-namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages.Kustomize
+namespace Calamari.Tests.Kubernetes.ArgoCD
 {
     public class KustomizeImageReplacerTests
     {
-        readonly List<ContainerImageReference> imagesToUpdate = new()
+        readonly List<ContainerImageReference> imagesToUpdate = new List<ContainerImageReference>()
         {
             // We know this won't be null after parse
             ContainerImageReference.FromReferenceString("nginx:1.25", ArgoCDConstants.DefaultContainerRegistry),

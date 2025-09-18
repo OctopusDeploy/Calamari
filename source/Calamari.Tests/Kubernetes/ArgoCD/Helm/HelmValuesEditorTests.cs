@@ -5,42 +5,14 @@ using FluentAssertions;
 using NUnit.Framework;
 using Octostache;
 
-namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages.Helm;
-
-public class HelmValuesEditorTests
+namespace Calamari.Tests.Kubernetes.ArgoCD.Helm
 {
-    [Test]
-    public void GenerateVariableDictionary_ReturnsDictionaryOfNodeValuesWithValues()
+    public class HelmValuesEditorTests
     {
-        const string yamlContent = @"root:
-  node1: ""node1value""
-  node2:
-     node2Nest:
-         node2nestedValue: ""banana""
-     node2Child1: ""node2child1value""
-     node2Child2: 42
-";
-        
-        var parser = new HelmYamlParser(yamlContent);
-
-        var result = HelmValuesEditor.GenerateVariableDictionary(parser);
-
-
-        var expected = new VariableDictionary
+        [Test]
+        public void GenerateVariableDictionary_ReturnsDictionaryOfNodeValuesWithValues()
         {
-            { "root.node1", "node1value" },
-            { "root.node2.node2Child2", "42" },
-            { "root.node2.node2Child1", "node2child1value" },
-            { "root.node2.node2Nest.node2nestedValue", "banana"}
-        };
-        
-        result.Should().BeEquivalentTo(expected);
-    }
-
-    [Test]
-    public void UpdateNodeValue_ReturnsModifiedYaml()
-    {
-        const string yamlContent = @"root:
+            const string yamlContent = @"root:
   node1: ""node1value""
   node2:
      node2Nest:
@@ -48,9 +20,36 @@ public class HelmValuesEditorTests
      node2Child1: ""node2child1value""
      node2Child2: 42
 ";
-        var result = HelmValuesEditor.UpdateNodeValue(yamlContent, "root.node1", "awesome new value");
-        
-        const string expected = @"root:
+
+            var parser = new HelmYamlParser(yamlContent);
+
+            var result = HelmValuesEditor.GenerateVariableDictionary(parser);
+
+            var expected = new VariableDictionary
+            {
+                { "root.node1", "node1value" },
+                { "root.node2.node2Child2", "42" },
+                { "root.node2.node2Child1", "node2child1value" },
+                { "root.node2.node2Nest.node2nestedValue", "banana" }
+            };
+
+            result.Should().BeEquivalentTo(expected);
+        }
+
+        [Test]
+        public void UpdateNodeValue_ReturnsModifiedYaml()
+        {
+            const string yamlContent = @"root:
+  node1: ""node1value""
+  node2:
+     node2Nest:
+         node2nestedValue: ""banana""
+     node2Child1: ""node2child1value""
+     node2Child2: 42
+";
+            var result = HelmValuesEditor.UpdateNodeValue(yamlContent, "root.node1", "awesome new value");
+
+            const string expected = @"root:
   node1: ""awesome new value""
   node2:
      node2Nest:
@@ -58,9 +57,9 @@ public class HelmValuesEditorTests
      node2Child1: ""node2child1value""
      node2Child2: 42
 ";
-        //ensure platform-agnostic multiline comparison
-        result.ReplaceLineEndings().Should().Be(expected.ReplaceLineEndings());
+            //ensure platform-agnostic multiline comparison
+            result.ReplaceLineEndings().Should().Be(expected.ReplaceLineEndings());
+        }
     }
 }
-
 #endif
