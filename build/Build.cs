@@ -311,7 +311,7 @@ partial class Build : NukeBuild
                                                                      {
                                                                          if (!OperatingSystem.IsWindows() && !calamariPackageMetadata.IsCrossPlatform)
                                                                          {
-                                                                             Log.Warning("Not Building {ArgFramework}: can only publish netfx on a Windows OS", calamariPackageMetadata.Framework);
+                                                                             Log.Warning("Not Building {Framework}: can only publish netfx on a Windows OS", calamariPackageMetadata.Framework);
                                                                              return;
                                                                          }
 
