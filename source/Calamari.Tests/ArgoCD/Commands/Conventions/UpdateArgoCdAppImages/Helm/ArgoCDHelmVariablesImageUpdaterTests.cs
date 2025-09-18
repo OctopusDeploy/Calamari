@@ -199,46 +199,64 @@ image:
         
         updater.Install(runningDeployment);
         
-
         //Assert
         var resultRepo = CloneOrigin();
         var valuesFileContent = fileSystem.ReadFile(Path.Combine(resultRepo, "files", "values.yml"));
         valuesFileContent.Should().Contain("nginx:1.27.1");
     }
-    //
-    // [Test]
-    // public async Task UpdateImages_WithMultipleMatchesInSameValuesFile_ReturnsResultWithImagesUpdated()
-    // {
-    //     const string multiImageValuesFile = """
-    //                                         image1:
-    //                                            name: nginx:1.22
-    //                                         image2:
-    //                                            name: alpine
-    //                                            tag: latest
-    //                                         """;
-    //
-    //     var annotations = new List<string> { "{{ .Values.image1.name }}", "{{ .Values.image2.name }}:{{ .Values.image2.tag }}" };
-    //
-    //     var imagesToUpdate = new List<ContainerImageReference>
-    //     {
-    //         ContainerImageReference.FromReferenceString("docker.io/nginx:1.27"),
-    //         ContainerImageReference.FromReferenceString("docker.io/alpine:2.2")
-    //     };
-    //
-    //     fakeGitOpsRepository.ReadFileContents(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(multiImageValuesFile);
-    //
-    //     var sut = new ArgoCDHelmVariablesImageUpdater(fakeGitOpsRepositoryTestory);
-    //
-    //     var updateTarget = new HelmValuesFileImageUpdateTarget("AppName", "docker.io", "./", new Uri("https://example.com/repo.git"), "main",
-    //         "files/values.yml", annotations);
-    //
-    //     // Act
-    //     var result = await sut.UpdateImages(updateTarget, imagesToUpdate, new GitCommitMessage(gitCommitSummary, UserCommitDescription), CreatePullRequest, fakeTaskLog,
-    //         CancellationToken);
-    //
-    //     result.ImagesUpdated.Should().Contain("docker.io/nginx:1.27");
-    //     result.ImagesUpdated.Should().Contain("docker.io/alpine:2.2");
-    // }
+    
+    [Test]
+    public void UpdateImages_WithMultipleMatchesInSameValuesFile_ReturnsResultWithImagesUpdated()
+    {
+        //Arrange
+        const string multiImageValuesFile = @"
+image1:
+   name: nginx:1.22
+image2:
+   name: alpine
+   tag: latest
+";
+        originRepo.AddFilesToBranch(argoCDBranchName, ("files/values.yml", multiImageValuesFile));
+        
+        argoCdApplicationFromYaml.Metadata.Annotations = new Dictionary<string, string>()
+        {
+            { ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey, "{{ .Values.image1.name }}, {{ .Values.image2.name }}:{{ .Values.image2.tag }}" }
+        };
+        
+        var updater = new UpdateArgoCDAppImagesInstallConvention(log,
+                                                                 Substitute.For<IGitHubPullRequestCreator>(),
+                                                                 fileSystem,
+                                                                 new DeploymentConfigFactory(nonSensitiveCalamariVariables),
+                                                                 new CommitMessageGenerator(),
+                                                                 customPropertiesLoader, argoCdApplicationManifestParser);
+        var variables = new CalamariVariables
+        {
+            [PackageVariables.IndexedPackageId("nginx")] = "nginx:1.27.1",
+            [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
+            [PackageVariables.IndexedPackageId("alpine")] = "alpine:2.2",
+            [PackageVariables.IndexedPackagePurpose("alpine")] = "DockerImageReference",
+        };
+        
+    
+        //Act
+        var runningDeployment = new RunningDeployment(null, variables);
+        runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
+        runningDeployment.StagingDirectory = tempDirectory;
+        
+        updater.Install(runningDeployment);
+        
+        //Assert
+        var resultRepo = CloneOrigin();
+        var valuesFileContent = fileSystem.ReadFile(Path.Combine(resultRepo, "files", "values.yml"));
+        valuesFileContent.Should()
+                         .Be(@"
+image1:
+   name: nginx:1.27.1
+image2:
+   name: alpine
+   tag: 2.2
+");
+    }
     
     string CloneOrigin()
     {
