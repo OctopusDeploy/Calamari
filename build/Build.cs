@@ -315,7 +315,7 @@ partial class Build : NukeBuild
                                                                              return;
                                                                          }
 
-                                                                         var projectName = calamariPackageMetadata.Project.Name ?? throw new Exception("Could not find project name");
+                                                                         var projectName = calamariPackageMetadata.Project.Name;
                                                                          var projectSemaphore = semaphores.GetOrAdd(projectName, _ => new SemaphoreSlim(1, 1));
 
                                                                          // for NetFx target frameworks, we use "netfx" as the architecture, and ignore defined runtime identifiers, here we'll just block on all netfx
@@ -326,7 +326,7 @@ partial class Build : NukeBuild
                                                                          await architectureSemaphore.WaitAsync();
                                                                          try
                                                                          {
-                                                                             Log.Information("Building {ProjectName} for framework '{ArgFramework}' and arch '{ArgArchitecture}'", calamariPackageMetadata.Project.Name, calamariPackageMetadata.Framework, calamariPackageMetadata.Architecture);
+                                                                             Log.Information("Building {ProjectName} for framework '{Framework}' and arch '{Architecture}'", calamariPackageMetadata.Project.Name, calamariPackageMetadata.Framework, calamariPackageMetadata.Architecture);
 
                                                                              await Task.Run(() =>
                                                                                                 DotNetBuild(s =>
@@ -417,7 +417,7 @@ partial class Build : NukeBuild
     {
         if (!OperatingSystem.IsWindows())
         {
-            Log.Warning($"Skipping the bundling of Calamari projects into the Calamari.Legacy bundle; "
+            Log.Warning($"Skipping the bundling of Calamari projects into the Calamari.Legacy bundle - "
                         + "this is required for providing .Net Framework executables for legacy Target Operating Systems");
             return;
         }
@@ -490,7 +490,7 @@ partial class Build : NukeBuild
                            }
 
                            Log.Verbose($"Compressing Calamari.Legacy");
-                           LegacyCalamariDirectory.CompressTo(ArtifactsDirectory / $"Calamari.Legacy.{NugetVersion.Value}.zip");
+                           LegacyCalamariDirectory.ZipTo(ArtifactsDirectory / $"Calamari.Legacy.{NugetVersion.Value}.zip");
                        });
 
     Target PackBinaries =>
@@ -606,8 +606,10 @@ partial class Build : NukeBuild
                            var calamariNupkgs = Directory.GetFiles(ArtifactsDirectory, "Calamari.*.nupkg");
                            var octopusCalamariNpkgs = Directory.GetFiles(ArtifactsDirectory, "Octopus.Calamari.*.nupkg");
 
-                           foreach (var file in calamariNupkgs.Concat(octopusCalamariNpkgs).Select(x => (AbsolutePath)x))
+                           foreach (AbsolutePath file in calamariNupkgs.Concat(octopusCalamariNpkgs).Where(f => f != null))
+                           {
                                file.Copy(LocalPackagesDirectory / Path.GetFileName(file), ExistsPolicy.FileOverwrite);
+                           }
                        });
 
     Target PackageConsolidatedCalamariZip =>
