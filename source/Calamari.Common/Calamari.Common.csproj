@@ -6,15 +6,8 @@
         <PlatformTarget>anycpu</PlatformTarget>
         <TargetFramework>netstandard2.1</TargetFramework>
     </PropertyGroup>
-    <PropertyGroup Condition=" '$(TargetFramework)' == 'net462' ">
-        <DefineConstants>$(DefineConstants);USE_ALPHAFS_FOR_LONG_FILE_PATH_SUPPORT;HAS_SSL3</DefineConstants>
-    </PropertyGroup>
-    <PropertyGroup Condition=" '$(TargetFramework)' == 'netstandard2.1' ">
+    <PropertyGroup>
         <DefineConstants>$(DefineConstants);USE_NUGET_V3_LIBS;WORKAROUND_FOR_EMPTY_STRING_BUG;HAS_NULLABLE_REF_TYPES</DefineConstants>
-    </PropertyGroup>
-
-    <PropertyGroup Condition="'$(TargetFramework)' == 'net462' ">
-        <NoWarn>CS8600;CS8601;CS8602;CS8603;CS8604</NoWarn>
     </PropertyGroup>
 
     <ItemGroup>
