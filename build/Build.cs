@@ -314,8 +314,8 @@ partial class Build : NukeBuild
                                                                       {
                                                                           var framework = Frameworks.Net60;
                                                                           
-                                                                          //AzureWebApp is only compiled and distributed in net6.0-windows
-                                                                          if (project.Name == "Calamari.AzureWebApp")
+                                                                          //AzureServiceFabric is only compiled and distributed in net6.0-windows
+                                                                          if (project.Name == "Calamari.AzureServiceFabric")
                                                                           {
                                                                               framework = Frameworks.Net60Windows;
                                                                           }
