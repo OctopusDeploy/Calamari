@@ -427,10 +427,11 @@ partial class Build : NukeBuild
             .Where(d => d.Framework == Frameworks.Net462 && d.Project.GetOutputType() == "Exe")
             .ForEach(calamariPackageMetadata =>
                      {
-                         Log.Information("Copying {ProjectName} for legacy Calamari '{ObjFramework}' and arch '{ObjArchitecture}'", calamariPackageMetadata.Project.Name, calamariPackageMetadata.Framework, calamariPackageMetadata.Architecture);
+                         Log.Information("Copying {ProjectName} for legacy Calamari '{Framework}' and arch '{Architecture}'", 
+                        calamariPackageMetadata.Project.Name, calamariPackageMetadata.Framework, calamariPackageMetadata.Architecture);
                          var project = calamariPackageMetadata.Project ?? throw new Exception("Could not find project name - ");
                          var publishedPath = PublishDirectory / project.Name / "netfx";
-                         publishedPath.Copy(LegacyCalamariDirectory / project.Name, ExistsPolicy.DirectoryMerge);
+                         publishedPath.Copy(LegacyCalamariDirectory / project.Name, ExistsPolicy.DirectoryMerge | ExistsPolicy.FileFail);
                      });
     }
 
@@ -789,18 +790,18 @@ partial class Build : NukeBuild
                                              AzureKeyVaultAppSecret, AzureKeyVaultTenantId, AzureKeyVaultCertificateName,
                                              SigningCertificatePath, SigningCertificatePassword);
 
-        var nuspec = $"{publishedTo}/{packageId}.nuspec";
-        var path = (AbsolutePath)$"{projectDir}/{project}.nuspec";
-        path.Copy( nuspec, ExistsPolicy.FileOverwrite);
-        var text = File.ReadAllText(nuspec);
+        AbsolutePath nuspecSrc = $"{projectDir}/{project}.nuspec";
+        AbsolutePath nuspecDest = $"{publishedTo}/{packageId}.nuspec";
+        nuspecSrc.Copy(nuspecDest, ExistsPolicy.FileOverwrite);
+        var text = File.ReadAllText(nuspecDest);
         text = text.Replace("$id$", packageId)
                    .Replace("$version$", version);
-        File.WriteAllText(nuspec, text);
+        File.WriteAllText(nuspecDest, text);
 
         NuGetPack(s =>
                       s.SetBasePath(publishedTo)
                        .SetOutputDirectory(ArtifactsDirectory)
-                       .SetTargetPath(nuspec)
+                       .SetTargetPath(nuspecDest)
                        .SetVersion(NugetVersion.Value)
                        .SetVerbosity(NuGetVerbosity.Normal)
                        .SetProperties(nugetPackProperties));
