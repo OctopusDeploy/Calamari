@@ -323,8 +323,7 @@ partial class Build : NukeBuild
 
         Target BuildCalamariProjects =>
             d =>
-                d.DependsOn(RestoreSolution)
-                 .DependsOn(GetCalamariFlavourProjectsToPublish)
+                d.DependsOn(GetCalamariFlavourProjectsToPublish)
                  .DependsOn(PublishAzureWebAppNetCoreShim)
                  .Executes(async () =>
                            {
@@ -346,14 +345,12 @@ partial class Build : NukeBuild
                                                                              {
                                                                                  Log.Information($"Building {calamariPackageMetadata.Project?.Name} for framework '{calamariPackageMetadata.Framework}' and arch '{calamariPackageMetadata.Architecture}'");
 
-                                                                                 await Task.Run(() =>
-                                                                                                    DotNetBuild(s =>
-                                                                                                                    s.SetProjectFile(calamariPackageMetadata.Project)
-                                                                                                                     .SetConfiguration(Configuration)
-                                                                                                                     .SetFramework(calamariPackageMetadata.Framework)
-                                                                                                                     .EnableNoRestore()
-                                                                                                                     .SetRuntime(calamariPackageMetadata.Architecture)
-                                                                                                                     .EnableSelfContained()));
+                                                                                 await Task.Run(() => DotNetBuild(s =>
+                                                                                                                      s.SetProjectFile(calamariPackageMetadata.Project)
+                                                                                                                       .SetConfiguration(Configuration)
+                                                                                                                       .SetFramework(calamariPackageMetadata.Framework)
+                                                                                                                       .SetRuntime(calamariPackageMetadata.Architecture)
+                                                                                                                       .EnableSelfContained()));
                                                                              }
                                                                              finally
                                                                              {
@@ -586,7 +583,6 @@ partial class Build : NukeBuild
 
                             outputPath.CompressTo(archivePath);
                         });
-
 
         Target CopyToLocalPackages =>
             d =>
