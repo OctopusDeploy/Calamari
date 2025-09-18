@@ -324,6 +324,12 @@ partial class Build : NukeBuild
                                               .ToList();
 
                                PackagesToPublish = packages;
+
+                               Log.Information("Packages to publish:");
+                               foreach (var calamariPackageMetadata in packages)
+                               {
+                                   Log.Information("Project: {Project}, Framework: {Framework}, Arch: {Architecture}", calamariPackageMetadata.Project.Name, calamariPackageMetadata.Framework, calamariPackageMetadata.Architecture);
+                               }
                            });
 
         Target BuildCalamariProjects =>
