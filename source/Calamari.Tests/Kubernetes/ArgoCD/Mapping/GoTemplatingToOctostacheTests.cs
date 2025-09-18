@@ -1,8 +1,7 @@
 using System;
-using FluentAssertions;
 using NUnit.Framework;
 
-namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages.Mapping;
+namespace Calamari.Tests.Kubernetes.ArgoCD.Mapping;
 
 public class GoTemplatingToOctostacheConverterTests
 {

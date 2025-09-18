@@ -2,10 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Calamari.ArgoCD.Domain;
+using Calamari.ArgoCD.Helm;
 using FluentAssertions;
 using NUnit.Framework;
 
-namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages.Helm;
+namespace Calamari.Tests.Kubernetes.ArgoCD.Helm;
 
 public class HelmSourceExtensionMethodsTests
 {

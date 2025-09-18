@@ -87,6 +87,17 @@ namespace Calamari.Common.Plumbing.Extensions
             
             return new string(camelCase);
         }
+        
+        public static string? DetectLineEnding(this string input)
+        {
+            return input.Contains("\r\n") 
+                ? "\r\n" 
+                : input.Contains("\n") 
+                    ? "\n" 
+                    : input.Contains("\r") 
+                        ? "\r" 
+                        : null;
+        }
 
         public static string EnsureDoubleQuoteIfContainsSpaces(this string text) => EnsureDoubleQuote(text, t => t.Contains(" "));
         public static string EnsureDoubleQuote(this string text) => EnsureDoubleQuote(text, t => !t.EndsWith("\"") && !t.StartsWith("\""));
