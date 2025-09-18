@@ -14,7 +14,8 @@
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <!-- Error CS0649 : Field '{0}}' is never assigned to, and will always have its default value null -->
         <!-- Error CS9057 : The analyzer assembly 'Nuke.SourceGenerators.dll' references version '4.7.0.0' of the compiler, which is newer than the currently running version '4.3.0.0'. - this can be removed when we upgrade to .net8 or later -->
-        <NoWarn>CS0649;CS0169;CS9057</NoWarn>
+        <!-- Error CS8032: An instance of analyzer Nuke.SourceGenerators.StronglyTypedSolutionGenerator cannot be created from {path} : Could not load file or assembly 'Microsoft.CodeAnalysis, Version=4.7.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35'. The system cannot find the file specified. - this can be removed when we upgrade to .net8 or later -->
+        <NoWarn>CS0649;CS9057;CS8032</NoWarn>
     </PropertyGroup>
 
     <PropertyGroup>
@@ -26,11 +27,7 @@
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Nuke.Common" Version="8.1.4">
-            <!-- this version of nuke has a source generator that requires a newer compiler than is in net6 -->
-            <!-- remove this when we upgrade to net8 or later -->
-            <ExcludeAssets>analyzers</ExcludeAssets>
-        </PackageReference>
+        <PackageReference Include="Nuke.Common" Version="8.1.4" />
         <PackageReference Include="Octopus.OctoVersion.Tool" Version="1.0.9" ExcludeAssets="all" />
         <PackageReference Include="AzureSignTool" Version="6.0.1" ExcludeAssets="all" />
     </ItemGroup>
