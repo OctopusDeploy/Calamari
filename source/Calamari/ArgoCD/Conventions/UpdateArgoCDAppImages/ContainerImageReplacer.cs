@@ -12,10 +12,11 @@ using YamlDotNet.RepresentationModel;
 
 namespace Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages
 {
-    public class ContainerImageReplacer
+    public class ContainerImageReplacer : IContainerImageReplacer
     {
         readonly string yamlContent;
         readonly string defaultRegistry;
+
         public ContainerImageReplacer(string yamlContent, string defaultRegistry)
         {
             this.yamlContent = yamlContent;
@@ -161,7 +162,6 @@ namespace Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages
                     break;
             }
 
-
             return (updatedDocument, imageReplacements);
         }
 
@@ -185,9 +185,9 @@ namespace Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages
                     {
                         var newReference = currentReference.WithTag(matchedUpdate.Tag);
 
-                        // Pattern ensures we only update `image: <IMAGENAME>` lines
+                        // Pattern ensures we only update lines with  `image: <IMAGENAME>` OR  `- image: <IMAGENANME>`.
                         // Ignores comments and white space, while preserving any quotes around the image name 
-                        var pattern = $@"(?<=^\s*-?\simage:\s*)([""']?){Regex.Escape(container.Image)}\1(?=\s*(#.*)?$)";
+                        var pattern = $@"(?<=^\s*-?\s*image:\s*)([""']?){Regex.Escape(container.Image)}\1(?=\s*(#.*)?$)";
                         document = Regex.Replace(document,
                                                  pattern,
                                                  match =>

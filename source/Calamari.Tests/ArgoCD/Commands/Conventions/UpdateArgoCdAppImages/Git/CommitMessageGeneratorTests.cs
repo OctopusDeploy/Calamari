@@ -1,11 +1,12 @@
 using System;
 using System.Collections.Generic;
 using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages;
+using Calamari.ArgoCD.Git;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NUnit.Framework;
 
-namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
+namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages.Git
 {
     [TestFixture]
     public class CommitMessageGeneratorTests
