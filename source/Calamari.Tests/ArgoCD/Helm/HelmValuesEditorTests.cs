@@ -5,7 +5,7 @@ using FluentAssertions;
 using NUnit.Framework;
 using Octostache;
 
-namespace Calamari.Tests.Kubernetes.ArgoCD.Helm
+namespace Calamari.Tests.ArgoCD.Helm
 {
     public class HelmValuesEditorTests
     {

@@ -3,7 +3,7 @@ using Calamari.ArgoCD.Mapping;
 using FluentAssertions;
 using NUnit.Framework;
 
-namespace Calamari.Tests.Kubernetes.ArgoCD.Mapping
+namespace Calamari.Tests.ArgoCD.Mapping
 {
     public class GoTemplatingToOctostacheConverterTests
     {

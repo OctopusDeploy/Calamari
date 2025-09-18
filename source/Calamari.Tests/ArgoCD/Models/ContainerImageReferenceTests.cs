@@ -4,7 +4,7 @@ using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Models;
 using FluentAssertions;
 using NUnit.Framework;
 
-namespace Calamari.Tests.Kubernetes.ArgoCD.Models
+namespace Calamari.Tests.ArgoCD.Models
 {
     public class ContainerImageReferenceTests
     {

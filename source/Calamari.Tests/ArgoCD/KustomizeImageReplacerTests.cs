@@ -9,7 +9,7 @@ using Calamari.Testing.Helpers;
 using FluentAssertions;
 using NUnit.Framework;
 
-namespace Calamari.Tests.Kubernetes.ArgoCD
+namespace Calamari.Tests.ArgoCD
 {
     public class KustomizeImageReplacerTests
     {
@@ -331,7 +331,7 @@ resources:
 - configMap.yaml
 ";
 
-            const string expectedYaml = $@"
+            string expectedYaml = $@"
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 metadata:

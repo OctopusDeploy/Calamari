@@ -6,7 +6,7 @@ using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NUnit.Framework;
 
-namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
+namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages.Git
 {
     [TestFixture]
     public class CommitMessageGeneratorTests

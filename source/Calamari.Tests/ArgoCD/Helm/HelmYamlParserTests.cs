@@ -4,7 +4,7 @@ using Calamari.ArgoCD.Helm;
 using FluentAssertions;
 using NUnit.Framework;
 
-namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages.Helm
+namespace Calamari.Tests.ArgoCD.Helm
 {
     public class HelmYamlParserTests
     {

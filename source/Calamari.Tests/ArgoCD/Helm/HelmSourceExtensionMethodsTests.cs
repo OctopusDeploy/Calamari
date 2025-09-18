@@ -6,7 +6,7 @@ using Calamari.ArgoCD.Helm;
 using FluentAssertions;
 using NUnit.Framework;
 
-namespace Calamari.Tests.Kubernetes.ArgoCD.Helm
+namespace Calamari.Tests.ArgoCD.Helm
 {
     public class HelmSourceExtensionMethodsTests
     {

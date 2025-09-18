@@ -5,7 +5,7 @@ using FluentAssertions;
 using NUnit.Framework;
 using Octostache;
 
-namespace Calamari.Tests.Kubernetes.ArgoCD.Models
+namespace Calamari.Tests.ArgoCD.Models
 {
     public class TemplatedImagePathTests
     {
@@ -97,7 +97,7 @@ namespace Calamari.Tests.Kubernetes.ArgoCD.Models
         [Test]
         public void Parse_WithEmptyTemplate_ThrowsArgumentException()
         {
-            var parse = () => TemplatedImagePath.Parse("", new VariableDictionary(), "");
+            Action parse = () => TemplatedImagePath.Parse("", new VariableDictionary(), "");
 
             parse.Should()
                  .Throw<ArgumentException>()
@@ -107,7 +107,7 @@ namespace Calamari.Tests.Kubernetes.ArgoCD.Models
         [Test]
         public void Parse_WithEmptyVariableDictionary_ThrowsArgumentException()
         {
-            var parse = () => TemplatedImagePath.Parse("{{ .Values.registry }}", new VariableDictionary(), "");
+            Action parse = () => TemplatedImagePath.Parse("{{ .Values.registry }}", new VariableDictionary(), "");
 
             parse.Should()
                  .Throw<ArgumentException>()
@@ -117,7 +117,7 @@ namespace Calamari.Tests.Kubernetes.ArgoCD.Models
         [Test]
         public void Parse_WithEmptyDefaultRegistry_ThrowsArgumentException()
         {
-            var parse = () => TemplatedImagePath.Parse("{{ .Values.registry }}", new VariableDictionary { { "fully-qualified-image-reference", "docker.io/nginx:1.27" } }, "");
+            Action parse = () => TemplatedImagePath.Parse("{{ .Values.registry }}", new VariableDictionary { { "fully-qualified-image-reference", "docker.io/nginx:1.27" } }, "");
 
             parse.Should()
                  .Throw<ArgumentException>()
@@ -130,7 +130,7 @@ namespace Calamari.Tests.Kubernetes.ArgoCD.Models
             const string template = "{{ .Values.fully-qualified-image-reference }}";
             var variables = new VariableDictionary { { "fully-qualified-image-reference", "this is not a valid container reference" } };
 
-            var parse = () => TemplatedImagePath.Parse(template, variables, "docker.io");
+            Action parse = () => TemplatedImagePath.Parse(template, variables, "docker.io");
 
             parse.Should().Throw<InvalidOperationException>();
         }

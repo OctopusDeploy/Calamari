@@ -22,7 +22,7 @@ using LibGit2Sharp;
 using NSubstitute;
 using NUnit.Framework;
 
-namespace Calamari.Tests.Kubernetes.ArgoCD.Helm
+namespace Calamari.Tests.ArgoCD.Helm
 {
 // This class is REALLY the helm side of the InstallConventionTest
     public class ArgoCDHelmVariablesImageUpdaterTests

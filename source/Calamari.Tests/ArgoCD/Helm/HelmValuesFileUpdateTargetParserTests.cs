@@ -9,7 +9,7 @@ using Calamari.ArgoCD.Models;
 using FluentAssertions;
 using NUnit.Framework;
 
-namespace Calamari.Tests.Kubernetes.ArgoCD.Helm
+namespace Calamari.Tests.ArgoCD.Helm
 {
     public class HelmValuesFileUpdateTargetParserTests
     {
@@ -190,7 +190,7 @@ namespace Calamari.Tests.Kubernetes.ArgoCD.Helm
             var sut = new HelmValuesFileUpdateTargetParser(toUpdate, ArgoCDConstants.DefaultContainerRegistry);
 
             // Act
-            var action = () => sut.GetValuesFilesToUpdate();
+            Action action = () => sut.GetValuesFilesToUpdate();
 
             var expectedPaths = $"{helmSource.RepoUrl}/{helmSource.TargetRevision}/{helmSource.Path}/{valuesFileName1}, {helmSource.RepoUrl}/{helmSource.TargetRevision}/{helmSource.Path}/{valuesFileName2}";
 
@@ -652,7 +652,7 @@ namespace Calamari.Tests.Kubernetes.ArgoCD.Helm
             var sut = new HelmValuesFileUpdateTargetParser(toUpdate, ArgoCDConstants.DefaultContainerRegistry);
 
             // Act
-            var act = () => sut.GetValuesFilesToUpdate();
+            Action act = () => sut.GetValuesFilesToUpdate();
 
             // Assert
             act.Should().Throw<InvalidHelmImageReplaceAnnotationsException>();
