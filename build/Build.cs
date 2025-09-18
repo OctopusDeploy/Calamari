@@ -310,12 +310,23 @@ partial class Build : NukeBuild
                                //all packages are cross-platform
                                var packages = calamariProjects
                                               .SelectMany(project => GetRuntimeIdentifiers(project)
-                                                              .Select(rid => new CalamariPackageMetadata
-                                                              {
-                                                                  Project = project,
-                                                                  Framework = Frameworks.Net60,
-                                                                  Architecture = rid
-                                                              }))
+                                                              .Select(rid =>
+                                                                      {
+                                                                          var framework = Frameworks.Net60;
+                                                                          
+                                                                          //AzureWebApp is only compiled and distributed in net6.0-windows
+                                                                          if (project.Name == "Calamari.AzureWebApp")
+                                                                          {
+                                                                              framework = Frameworks.Net60Windows;
+                                                                          }
+                                                                          
+                                                                          return new CalamariPackageMetadata
+                                                                          {
+                                                                              Project = project,
+                                                                              Framework = framework,
+                                                                              Architecture = rid
+                                                                          };
+                                                                      }))
                                               .ToList();
 
                                PackagesToPublish = packages;
