@@ -252,14 +252,14 @@ image2:
             //Assert
             var resultRepo = CloneOrigin();
             var valuesFileContent = fileSystem.ReadFile(Path.Combine(resultRepo, "files", "values.yml"));
-            valuesFileContent.Should()
+            valuesFileContent.ReplaceLineEndings().Should()
                              .Be(@"
 image1:
    name: nginx:1.27.1
 image2:
    name: alpine
    tag: 2.2
-");
+".ReplaceLineEndings());
         }
 
         string CloneOrigin()
