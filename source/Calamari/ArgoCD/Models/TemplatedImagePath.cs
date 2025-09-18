@@ -27,12 +27,10 @@ namespace Calamari.ArgoCD.Models
             {
                 throw new ArgumentException("Template cannot be null or whitespace.", nameof(template));
             }
-
             if (variables.GetNames().Count <= 0)
             {
                 throw new ArgumentException("Variables cannot be empty.", nameof(variables));
             }
-
             if (string.IsNullOrWhiteSpace(defaultRegistry))
             {
                 throw new ArgumentException("Default registry cannot be null or whitespace.", nameof(defaultRegistry));

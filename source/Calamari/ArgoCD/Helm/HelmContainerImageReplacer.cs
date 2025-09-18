@@ -9,15 +9,15 @@ namespace Calamari.ArgoCD.Helm
 {
     public class HelmContainerImageReplacer
     {
-        readonly string yamlContent1;
-        readonly string defaultClusterRegistry1;
-        readonly List<string> imagePathAnnotations1;
+        readonly string yamlContent;
+        readonly string defaultClusterRegistry;
+        readonly List<string> imagePathAnnotations;
 
         public HelmContainerImageReplacer(string yamlContent, string defaultClusterRegistry, List<string> imagePathAnnotations)
         {
-            yamlContent1 = yamlContent;
-            defaultClusterRegistry1 = defaultClusterRegistry;
-            imagePathAnnotations1 = imagePathAnnotations;
+            this.yamlContent = yamlContent;
+            this.defaultClusterRegistry = defaultClusterRegistry;
+            this.imagePathAnnotations = imagePathAnnotations;
         }
 
         // TODO: Add testing for multiple instances of the same image
@@ -25,12 +25,12 @@ namespace Calamari.ArgoCD.Helm
         {
             var updatedImages = new HashSet<string>();
 
-            var originalYamlParser = new HelmYamlParser(yamlContent1); // Parse and track the original yaml so that content can be read from it.
+            var originalYamlParser = new HelmYamlParser(yamlContent); // Parse and track the original yaml so that content can be read from it.
 
             var imagePathDictionary = HelmValuesEditor.GenerateVariableDictionary(originalYamlParser);
-            var existingImageReferences = imagePathAnnotations1.Select(p => TemplatedImagePath.Parse(p, imagePathDictionary, defaultClusterRegistry1));
+            var existingImageReferences = imagePathAnnotations.Select(p => TemplatedImagePath.Parse(p, imagePathDictionary, defaultClusterRegistry));
 
-            var fileContent = yamlContent1;
+            var fileContent = yamlContent;
             foreach (var existingImageReference in existingImageReferences)
             {
                 var matchedUpdate = imagesToUpdate.FirstOrDefault(i => i.IsMatch(existingImageReference.ImageReference));
@@ -45,7 +45,7 @@ namespace Calamari.ArgoCD.Helm
                     {
                         // We re-read the node value with the image details so we can ensure we only write out the image ref components expected
                         var imageTagNodeValue = originalYamlParser.GetValueAtPath(existingImageReference.TagPath);
-                        var replacementImageRef = ContainerImageReference.FromReferenceString(imageTagNodeValue, defaultClusterRegistry1).WithTag(matchedUpdate.Tag);
+                        var replacementImageRef = ContainerImageReference.FromReferenceString(imageTagNodeValue, defaultClusterRegistry).WithTag(matchedUpdate.Tag);
                         fileContent = HelmValuesEditor.UpdateNodeValue(fileContent, existingImageReference.TagPath, replacementImageRef);
                     }
 

@@ -17,7 +17,6 @@ namespace Calamari.ArgoCD.Helm
     public class HelmYamlParser
     {
         readonly char[] whitespaceButNotNewlines = { ' ', '\t', '\f', '\v' };
-
         public HelmYamlParser(string yamlContent)
         {
             yamlString = yamlContent.Trim(whitespaceButNotNewlines);
@@ -108,7 +107,6 @@ namespace Calamari.ArgoCD.Helm
                 default:
                     throw new NotSupportedException("Modifying Folded or Ambiguous Scar Values is not supported.");
             }
-
             int currentLine = 1;
 
             while (reader.ReadLine() is { } line)
@@ -124,7 +122,6 @@ namespace Calamari.ArgoCD.Helm
                 {
                     result.AppendLine(line);
                 }
-
                 currentLine++;
             }
 
@@ -172,7 +169,6 @@ namespace Calamari.ArgoCD.Helm
                     {
                         paths.Add(currentPath);
                     }
-
                     break;
                 }
             }

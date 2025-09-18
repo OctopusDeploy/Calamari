@@ -89,7 +89,7 @@ namespace Calamari.ArgoCD
 
                 //update or insert the newTag node
                 var newTagNode = imageNode.GetChildNodeIfExists<YamlScalarNode>(NewTagNodeKey);
-                if (!(newTagNode is null))
+                if (newTagNode != null)
                 {
                     newTagNode.Value = matchedUpdate.Tag;
                     if (newTagNode.Style != ScalarStyle.SingleQuoted && newTagNode.Style != ScalarStyle.DoubleQuoted)

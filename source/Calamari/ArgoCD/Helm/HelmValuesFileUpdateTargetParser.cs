@@ -70,7 +70,6 @@ namespace Calamari.ArgoCD.Helm
                                                                file,
                                                                ConvertAnnotationToList(definedPathsForSource));
                 }
-
                 var valueFilesPathsString = string.Join(", ", source.GenerateValuesFilePaths());
                 throw new InvalidHelmImageReplaceAnnotationsException($"Cannot use {ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey} without an alias when multiple inline values files are present.\n Values Files: {valueFilesPathsString}");
             }
