@@ -154,12 +154,18 @@ namespace Calamari.ArgoCD.Helm
                 }
                 case List<object> list:
                 {
-                    for (var index = 0; index < list.Count; index++)
-                    {
-                        var newPath = $"{currentPath}[{index}]";
-                        FlattenObject(list[index], newPath, paths);
-                    }
-
+                /* NOTE: We currently ignore Index style sections
+                // E.g.
+                    images:
+                       - nginx:
+                           value: docker.io/nginx
+                           version: 2.12
+                       - cache:
+                           value: redis
+                           version: 1.98
+                This approach with helm is massively UNCOMMON as it makes it difficult to reference images directly inside charts
+                Given this, and the fact it also makes it hard for us to resolve values, we just ignore in favour of Dictionary/Map/Flat objects
+                */
                     break;
                 }
                 default:

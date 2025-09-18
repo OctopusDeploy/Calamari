@@ -9,6 +9,69 @@ namespace Calamari.Tests.ArgoCD.Helm
 {
     public class HelmValuesEditorTests
     {
+        
+    [Test]
+    public void GenerateVariableDictionary_IgnoresIndexedMaps()
+    {
+        const string yamlContent = @"
+images:
+- nginx:
+    value: docker.io/nginx
+    version: 2.12
+- cache:
+    value: redis
+    version: 1.98
+";
+        
+        var parser = new HelmYamlParser(yamlContent);
+
+        var result = HelmValuesEditor.GenerateVariableDictionary(parser);
+
+        result.Should().BeEmpty();
+    }
+    
+    [Test]
+    public void GenerateVariableDictionary_IgnoresArrayStyleElements()
+    {
+        const string yamlContent = @"
+image:
+  pullPolicy: IfNotPresent
+  repository: harrisonmeister/gitops-simple-app
+  tag: ""1.0""
+
+ingress:
+  enabled: false
+  annotations:
+    {}
+  hosts:
+    - host: novasphere-dev.harrisonmeister
+      paths: []
+  tls: []
+service:
+  type: NodePort
+  port: 8080
+  nodePort: 30501
+";
+
+        var parser = new HelmYamlParser(yamlContent);
+
+        var result = HelmValuesEditor.GenerateVariableDictionary(parser);
+
+        var expected = new VariableDictionary
+        {
+            { "image.pullPolicy", "IfNotPresent" },
+            { "image.repository", "harrisonmeister/gitops-simple-app" },
+            { "image.tag", "1.0" },
+            { "ingress.enabled", "false" },
+            { "service.type", "NodePort" },
+            { "service.port", "8080" },
+            { "service.nodePort", "30501" },
+        };
+
+        result.Should().BeEquivalentTo(expected);
+    }
+        
+        
         [Test]
         public void GenerateVariableDictionary_ReturnsDictionaryOfNodeValuesWithValues()
         {

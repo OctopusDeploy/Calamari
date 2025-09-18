@@ -1,6 +1,7 @@
 ﻿#if NET
 #nullable enable
 using System;
+using System.IO;
 using Calamari.Common.Plumbing.FileSystem;
 
 namespace Calamari.ArgoCD
@@ -11,7 +12,7 @@ namespace Calamari.ArgoCD
         {
             foreach (var fileName in ArgoCDConstants.KustomizationFileNames)
             {
-                if (fileSystem.FileExists(fileName))
+                if (fileSystem.FileExists(Path.Combine(rootPath, fileName)))
                 {
                     return fileName;
                 }
