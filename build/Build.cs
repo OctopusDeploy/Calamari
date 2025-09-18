@@ -148,7 +148,6 @@ partial class Build : NukeBuild
 
         List<CalamariPackageMetadata> PackagesToPublish = new();
         List<Project> CalamariProjects = new();
-        List<Task> ProjectCompressionTasks = new();
 
         public Build()
         {
@@ -267,7 +266,15 @@ partial class Build : NukeBuild
                                                            nugetVersion);
                            if (OperatingSystem.IsWindows())
                            {
-                               SourceDirectory.GlobDirectories("**/bin", "**/obj", "**/TestResults").ForEach(d => d.DeleteDirectory());
+                               IEnumerable<AbsolutePath> dirs = SourceDirectory.GlobDirectories("**/bin", "**/obj", "**/TestResults");
+
+                               if (IsLocalBuild)
+                               {
+                                   //Don't clean the consolidate files locally (it makes running nuke hard)
+                                   dirs = dirs.WhereNot(p => p.ContainsDirectory("*Calamari.ConsolidateCalamariPackages*"));
+                               }
+
+                               dirs.ForEach(d => d.DeleteDirectory());
                                ArtifactsDirectory.CreateOrCleanDirectory();
                                PublishDirectory.CreateOrCleanDirectory();
                            });
@@ -341,21 +348,32 @@ partial class Build : NukeBuild
                                var globalSemaphore = new SemaphoreSlim(3);
                                var semaphores = new ConcurrentDictionary<string, SemaphoreSlim>();
 
+                               //build all the projects in sequence (for now)
+                               // foreach (var calamariPackageMetadata in PackagesToPublish)
+                               // {
+                               //     Log.Information($"Building {calamariPackageMetadata.Project?.Name} for framework '{calamariPackageMetadata.Framework}' and arch '{calamariPackageMetadata.Architecture}'");
+                               //
+                               //     await Task.Run(() => DotNetBuild(s =>
+                               //                                          s.SetProjectFile(calamariPackageMetadata.Project)
+                               //                                           .SetConfiguration(Configuration)
+                               //                                           .SetFramework(calamariPackageMetadata.Framework)
+                               //                                           .SetRuntime(calamariPackageMetadata.Architecture)
+                               //                                           .EnableSelfContained()));
+                               // }
+
                                var buildTasks = PackagesToPublish.Select(async calamariPackageMetadata =>
                                                                          {
                                                                              var projectName = calamariPackageMetadata.Project.Name;
                                                                              var projectSemaphore = semaphores.GetOrAdd(projectName, _ => new SemaphoreSlim(1, 1));
-
-                                                                             // for NetFx target frameworks, we use "netfx" as the architecture, and ignore defined runtime identifiers, here we'll just block on all netfx
                                                                              var architectureSemaphore = semaphores.GetOrAdd(calamariPackageMetadata.Architecture, _ => new SemaphoreSlim(1, 1));
-
+                               
                                                                              await globalSemaphore.WaitAsync();
                                                                              await projectSemaphore.WaitAsync();
                                                                              await architectureSemaphore.WaitAsync();
                                                                              try
                                                                              {
                                                                                  Log.Information($"Building {calamariPackageMetadata.Project?.Name} for framework '{calamariPackageMetadata.Framework}' and arch '{calamariPackageMetadata.Architecture}'");
-
+                               
                                                                                  await Task.Run(() => DotNetBuild(s =>
                                                                                                                       s.SetProjectFile(calamariPackageMetadata.Project)
                                                                                                                        .SetConfiguration(Configuration)
@@ -370,7 +388,7 @@ partial class Build : NukeBuild
                                                                                  globalSemaphore.Release();
                                                                              }
                                                                          });
-
+                               
                                await Task.WhenAll(buildTasks);
                            });
 
@@ -382,6 +400,7 @@ partial class Build : NukeBuild
                                var semaphore = new SemaphoreSlim(4);
                                var outputPaths = new ConcurrentBag<AbsolutePath?>();
 
+                               Log.Information("Publishing projects...");
                                var publishTasks = PackagesToPublish.Select(async package =>
                                                                            {
                                                                                await semaphore.WaitAsync();
@@ -399,14 +418,17 @@ partial class Build : NukeBuild
                                await Task.WhenAll(publishTasks);
 
                                // Sign and compress tasks
+                               Log.Information("Signing published binaries...");
                                var signTasks = outputPaths
                                                .Where(output => output != null && !output.ToString().Contains("Tests"))
                                                .Select(output => Task.Run(() => SignDirectory(output!)))
                                                .ToList();
 
                                await Task.WhenAll(signTasks);
-                               CalamariProjects.ForEach(CompressCalamariProject);
-                               await Task.WhenAll(ProjectCompressionTasks);
+                               
+                               Log.Information("Compressing published projects...");
+                               var compressTasks = CalamariProjects.Select(async proj => await CompressCalamariProject(proj));
+                               await Task.WhenAll(compressTasks);
                            });
 
                            // for cross-platform frameworks, we combine each runtime identifier with each target framework
@@ -528,10 +550,10 @@ partial class Build : NukeBuild
     {
         if (!OperatingSystem.IsWindows() && !calamariPackageMetadata.IsCrossPlatform)
         {
-            Log.Information($"Publishing {calamariPackageMetadata.Project?.Name} for framework '{calamariPackageMetadata.Framework}' and arch '{calamariPackageMetadata.Architecture}'");
+            Log.Information($"Publishing {calamariPackageMetadata.Project.Name} for framework '{calamariPackageMetadata.Framework}' and arch '{calamariPackageMetadata.Architecture}'");
 
             var project = calamariPackageMetadata.Project;
-            var outputDirectory = PublishDirectory / project?.Name / calamariPackageMetadata.Architecture;
+            var outputDirectory = PublishDirectory / project.Name / calamariPackageMetadata.Architecture;
 
             await Task.Run(() =>
                                DotNetPublish(s =>
@@ -549,24 +571,17 @@ partial class Build : NukeBuild
             return outputDirectory;
         }
 
-        void CompressCalamariProject(Project project)
+        async Task CompressCalamariProject(Project project)
         {
-            Log.Verbose($"Compressing Calamari flavour {PublishDirectory}/{project.Name}");
+            Log.Information($"Compressing Calamari flavour {PublishDirectory}/{project.Name}");
             var compressionSource = PublishDirectory / project.Name;
             if (!Directory.Exists(compressionSource))
             {
-                Log.Verbose($"Skipping compression for {project.Name} since nothing was built");
+                Log.Information($"Skipping compression for {project.Name} since nothing was built");
                 return;
             }
 
-    void CompressCalamariProject(Project project)
-    {
-        Log.Verbose("Compressing Calamari flavour {PublishDirectory}/{ProjectName}", PublishDirectory, project.Name);
-        var compressionSource = PublishDirectory / project.Name;
-        if (!Directory.Exists(compressionSource))
-        {
-            Log.Verbose("Skipping compression for {ProjectName} since nothing was built", project.Name);
-            return;
+            await Task.Run(() => CompressionTasks.CompressZip(compressionSource, $"{ArtifactsDirectory / project.Name}.zip"));
         }
 
         Target PublishAzureWebAppNetCoreShim =>
