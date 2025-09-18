@@ -7,12 +7,13 @@ using Calamari.Common.Commands;
 using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes;
+using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.ArgoCD.Conventions
 {
     public class DeploymentConfigFactory
     {
-        readonly INonSensitiveVariables nonSensitiveVariables;
+        readonly INonSensitiveVariables nonSensitiveVariables; 
 
         public DeploymentConfigFactory(INonSensitiveVariables nonSensitiveVariables)
         {
@@ -41,7 +42,7 @@ namespace Calamari.ArgoCD.Conventions
         
         bool RequiresPullRequest(RunningDeployment deployment)
         {
-            return OctopusFeatureToggles.ArgoCDCreatePullRequestFeatureToggle.IsEnabled(deployment.Variables) && deployment.Variables.Get(SpecialVariables.Git.CommitMethod) == SpecialVariables.Git.GitCommitMethods.PullRequest;
+            return deployment.Variables.GetFlag(SpecialVariables.Git.PullRequest.Create);
         }
 
         GitCommitParameters CommitParameters(RunningDeployment deployment)

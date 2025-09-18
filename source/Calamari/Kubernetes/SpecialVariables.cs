@@ -64,10 +64,6 @@ namespace Calamari.Kubernetes
 
         public static class Git
         {
-            public static string Index => "Octopus.Action.Git.Repository";
-
-            static string Prefix(string name) => $"{Index}[{name}]"; 
-            
             public static readonly string CommitMessageSummary = "Octopus.Action.ArgoCD.CommitMessageSummary";
             
             public static readonly string CommitMessageDescription = "Octopus.Action.ArgoCD.CommitMessageDescription";
@@ -78,12 +74,11 @@ namespace Calamari.Kubernetes
             
             public static readonly string Recursive = "Octopus.Action.ArgoCD.RecursiveResourceDetection";
             
-            public static class GitCommitMethods
+            public static class PullRequest
             {
-                public const string DirectCommit = "DirectCommit";
-                public const string PullRequest = "PullRequest";
+                public static readonly string Create = "Octopus.Action.ArgoCD.PullRequest.Create";
             }
-            
+
             public static class Output
             {
                 public static readonly string GatewayIds = "ArgoCD.GatewayIds";
