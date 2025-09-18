@@ -25,7 +25,7 @@ partial class Build
     // ReSharper disable InconsistentNaming
     [PublicAPI("Called by TeamCity")]
     public Target BuildSoftwareBillOfMaterials => _ => _
-        .Requires(() => Solution)
+        .Requires(() => Solution != null)
         .Requires(() => DependencyTrackUrl)
         .Requires(() => DependencyTrackApiKey)
         .Executes(async () =>
