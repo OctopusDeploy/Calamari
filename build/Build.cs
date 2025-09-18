@@ -429,7 +429,7 @@ partial class Build : NukeBuild
                      {
                          Log.Information("Copying {ProjectName} for legacy Calamari '{Framework}' and arch '{Architecture}'", 
                         calamariPackageMetadata.Project.Name, calamariPackageMetadata.Framework, calamariPackageMetadata.Architecture);
-                         var project = calamariPackageMetadata.Project ?? throw new Exception("Could not find project name - ");
+                         var project = calamariPackageMetadata.Project;
                          var publishedPath = PublishDirectory / project.Name / "netfx";
                          publishedPath.Copy(LegacyCalamariDirectory / project.Name, ExistsPolicy.DirectoryMerge | ExistsPolicy.FileFail);
                      });
@@ -445,7 +445,7 @@ partial class Build : NukeBuild
             return;
         }
 
-        var compressionTask = Task.Run(() => compressionSource.ZipTo($"{ArtifactsDirectory / project.Name}.zip"));
+        var compressionTask = Task.Run(() => compressionSource.CompressTo($"{ArtifactsDirectory / project.Name}.zip"));
         ProjectCompressionTasks.Add(compressionTask);
     }
 
@@ -490,7 +490,7 @@ partial class Build : NukeBuild
                            }
 
                            Log.Verbose($"Compressing Calamari.Legacy");
-                           LegacyCalamariDirectory.ZipTo(ArtifactsDirectory / $"Calamari.Legacy.{NugetVersion.Value}.zip");
+                           LegacyCalamariDirectory.CompressTo(ArtifactsDirectory / $"Calamari.Legacy.{NugetVersion.Value}.zip");
                        });
 
     Target PackBinaries =>
@@ -557,7 +557,7 @@ partial class Build : NukeBuild
                            Directory.Exists(binFolder);
                            var actions = new List<Action>
                            {
-                               () => binFolder.ZipTo( ArtifactsDirectory / "Binaries.zip")
+                               () => binFolder.CompressTo( ArtifactsDirectory / "Binaries.zip")
                            };
 
                            // Create a Zip for each runtime for testing
@@ -570,7 +570,7 @@ partial class Build : NukeBuild
                                                var publishedLocation = DoPublish("Calamari.Tests", Frameworks.Net60, nugetVersion, rid);
                                                var zipName = $"Calamari.Tests.{rid}.{nugetVersion}.zip";
                                                File.Copy(RootDirectory / "global.json", publishedLocation / "global.json");
-                                               publishedLocation.ZipTo(ArtifactsDirectory / zipName);
+                                               publishedLocation.CompressTo(ArtifactsDirectory / zipName);
                                            }
                                        });
 
