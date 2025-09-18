@@ -2,26 +2,53 @@
 using System;
 using System.Collections.Generic;
 
-namespace Calamari.ArgoCD.Models;
+namespace Calamari.ArgoCD.Models
+{
+    public class HelmValuesFileImageUpdateTarget : ArgoCDImageUpdateTarget
+    {
+        public HelmValuesFileImageUpdateTarget(string appName,
+                                               string defaultClusterRegistry,
+                                               string path,
+                                               Uri repoUrl,
+                                               string targetRevision,
+                                               string fileName,
+                                               List<string> imagePathDefinitions) : base(appName,
+                                                                                         defaultClusterRegistry,
+                                                                                         path,
+                                                                                         repoUrl,
+                                                                                         targetRevision)
+        {
+            FileName = fileName;
+            ImagePathDefinitions = imagePathDefinitions;
+        }
 
-public record HelmValuesFileImageUpdateTarget(
-    string AppName,
-    string DefaultClusterRegistry,
-    string Path,
-    Uri RepoUrl,
-    string TargetRevision,
-    string FileName,
-    List<string> ImagePathDefinitions) : ArgoCDImageUpdateTarget(AppName, DefaultClusterRegistry, Path, RepoUrl, TargetRevision);
+        public string FileName { get; }
+        public List<string> ImagePathDefinitions { get; }
+    }
 
-// Allows us to pass issues up the chain for logging without pushing an ITaskLog all the way down the stack
-public record InvalidHelmValuesFileImageUpdateTarget(
-    string AppName,
-    string DefaultClusterRegistry,
-    string Path,
-    Uri RepoUrl,
-    string TargetRevision,
-    string FileName,
-    string Alias)
-    : HelmValuesFileImageUpdateTarget(AppName, DefaultClusterRegistry, Path, RepoUrl, TargetRevision,
-        FileName, new List<string>());
+    // Allows us to pass issues up the chain for logging without pushing an ITaskLog all the way down the stack
+    public class InvalidHelmValuesFileImageUpdateTarget :
+
+    HelmValuesFileImageUpdateTarget
+    {
+        public InvalidHelmValuesFileImageUpdateTarget(string appName,
+                                                      string defaultClusterRegistry,
+                                                      string path,
+                                                      Uri repoUrl,
+                                                      string targetRevision,
+                                                      string fileName,
+                                                      string alias) : base(appName,
+                                                                           defaultClusterRegistry,
+                                                                           path,
+                                                                           repoUrl,
+                                                                           targetRevision,
+                                                                           fileName,
+                                                                           new List<string>())
+        {
+            Alias = alias;
+        }
+
+        public string Alias { get; }
+    }
+}
 #endif

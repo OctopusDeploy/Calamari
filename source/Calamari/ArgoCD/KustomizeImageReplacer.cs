@@ -33,7 +33,7 @@ namespace Calamari.ArgoCD
             this.log = log;
         }
 
-        ImageReplacementResult NoChangeResult => new(yamlContent, new HashSet<string>());
+        ImageReplacementResult NoChangeResult => new ImageReplacementResult(yamlContent, new HashSet<string>());
 
         public ImageReplacementResult UpdateImages(List<ContainerImageReference> imagesToUpdate)
         {
@@ -48,14 +48,14 @@ namespace Calamari.ArgoCD
 
             //we expect this to only be a single document
             //if there are no documents, do nothing
-            if (stream.Documents.Count != 1 || stream.Documents[0].RootNode is not YamlMappingNode rootNode)
+            if (stream.Documents.Count != 1 || !(stream.Documents[0].RootNode is YamlMappingNode rootNode))
             {
                 return NoChangeResult;
             }
 
             //kustomization yaml has the images node at the top level
             var (imageKey, imagesNode) = rootNode.FirstOrDefault(kvp => new YamlScalarNode(ImagesNodeKey).Equals(kvp.Key));
-            if (imagesNode is not YamlSequenceNode imagesSequenceNode || imageKey is null)
+            if (!(imagesNode is YamlSequenceNode imagesSequenceNode) || imageKey is null)
             {
                 log.Verbose("No 'images' sequence found in kustomization file.");
                 return NoChangeResult;
@@ -89,7 +89,7 @@ namespace Calamari.ArgoCD
 
                 //update or insert the newTag node
                 var newTagNode = imageNode.GetChildNodeIfExists<YamlScalarNode>(NewTagNodeKey);
-                if (newTagNode is not null)
+                if (!(newTagNode is null))
                 {
                     newTagNode.Value = matchedUpdate.Tag;
                     if (newTagNode.Style != ScalarStyle.SingleQuoted && newTagNode.Style != ScalarStyle.DoubleQuoted)

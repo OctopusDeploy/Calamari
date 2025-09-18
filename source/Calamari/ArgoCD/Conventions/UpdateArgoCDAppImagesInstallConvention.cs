@@ -146,7 +146,7 @@ namespace Calamari.ArgoCD.Conventions
             HashSet<string> filesToUpdate;
             
             var kustomizationFile = KustomizeDiscovery.TryFindKustomizationFile(fileSystem, absSubFolder);
-            if (kustomizationFile is not null)
+            if (!(kustomizationFile is null))
             {
                 filesToUpdate = new HashSet<string> { kustomizationFile };
                 imageReplacerFactory = yaml => new KustomizeImageReplacer(yaml, defaultRegistry, log);

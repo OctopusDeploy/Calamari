@@ -34,7 +34,7 @@ namespace Calamari.ArgoCD.Helm
             foreach (var existingImageReference in existingImageReferences)
             {
                 var matchedUpdate = imagesToUpdate.FirstOrDefault(i => i.IsMatch(existingImageReference.ImageReference));
-                if (matchedUpdate is not null && !matchedUpdate.Tag.Equals(existingImageReference.ImageReference.Tag, StringComparison.OrdinalIgnoreCase))
+                if (!(matchedUpdate is null) && !matchedUpdate.Tag.Equals(existingImageReference.ImageReference.Tag, StringComparison.OrdinalIgnoreCase))
                 {
                     if (existingImageReference.TagIsTemplateToken)
                     {

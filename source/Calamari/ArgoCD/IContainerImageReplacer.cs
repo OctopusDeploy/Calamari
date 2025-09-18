@@ -3,10 +3,11 @@ using System;
 using System.Collections.Generic;
 using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Models;
 
-namespace Calamari.ArgoCD;
-
-public interface IContainerImageReplacer
+namespace Calamari.ArgoCD
 {
-    ImageReplacementResult UpdateImages(List<ContainerImageReference> imagesToUpdate);
+    public interface IContainerImageReplacer
+    {
+        ImageReplacementResult UpdateImages(List<ContainerImageReference> imagesToUpdate);
+    }
 }
 #endif
