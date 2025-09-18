@@ -75,9 +75,9 @@ partial class Build : NukeBuild
 
     static readonly List<string> CalamariProjectsToSkipConsolidation = new() { "Calamari.CloudAccounts", "Calamari.Common", "Calamari.ConsolidateCalamariPackages" };
 
-    CalamariPackageMetadata[] PackagesToPublish = new CalamariPackageMetadata[0];
+    CalamariPackageMetadata[] PackagesToPublish = Array.Empty<CalamariPackageMetadata>();
     List<Project> CalamariProjects = new();
-    List<Task> ProjectCompressionTasks = new();
+    readonly List<Task> ProjectCompressionTasks = new();
 
     public Build()
     {
@@ -207,7 +207,7 @@ partial class Build : NukeBuild
                                                            nugetVersion);
                            if (OperatingSystem.IsWindows())
                            {
-                               outputDirectory.Copy(LegacyCalamariDirectory / RootProjectName, ExistsPolicy.DirectoryMerge);
+                               outputDirectory.Copy(LegacyCalamariDirectory / RootProjectName, ExistsPolicy.DirectoryMerge | ExistsPolicy.FileFail);
                            }
                            else
                            {
