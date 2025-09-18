@@ -1,9 +1,10 @@
 #if NET
 using System;
-using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Mapping;
+using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Models;
+using Calamari.ArgoCD.Mapping;
 using Octostache;
 
-namespace Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Models
+namespace Calamari.ArgoCD.Models
 {
     public class TemplatedImagePath
     {

@@ -2,8 +2,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Calamari.ArgoCD;
 using Calamari.ArgoCD.Conventions;
-using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Kustomize;
 using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Models;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Testing.Helpers;

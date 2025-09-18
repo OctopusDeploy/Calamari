@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Calamari.ArgoCD.Conventions
+namespace Calamari.ArgoCD
 {
 
     public static class ArgoCDConstants

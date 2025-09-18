@@ -1,7 +1,7 @@
 using System;
 using System.Text.RegularExpressions;
 
-namespace Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Mapping
+namespace Calamari.ArgoCD.Mapping
 {
     public partial class GoTemplatingToOctostacheConverter
     {

@@ -1,6 +1,6 @@
 #if NET
 using System;
-using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Helm;
+using Calamari.ArgoCD.Helm;
 using FluentAssertions;
 using NUnit.Framework;
 using Octostache;

@@ -3,7 +3,7 @@
 using System;
 using Calamari.Common.Plumbing.FileSystem;
 
-namespace Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Kustomize
+namespace Calamari.ArgoCD
 {
     public class KustomizeDiscovery
     {

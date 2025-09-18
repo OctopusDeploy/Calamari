@@ -1,7 +1,7 @@
 #if NET
 using System;
 
-namespace Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Models;
+namespace Calamari.ArgoCD.Models;
 
 public record ArgoCDImageUpdateTarget(
     string Name,

@@ -2,10 +2,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Calamari.ArgoCD;
 using Calamari.ArgoCD.Conventions;
-using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Helm;
 using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Models;
 using Calamari.ArgoCD.Domain;
+using Calamari.ArgoCD.Helm;
+using Calamari.ArgoCD.Models;
 using FluentAssertions;
 using NUnit.Framework;
 

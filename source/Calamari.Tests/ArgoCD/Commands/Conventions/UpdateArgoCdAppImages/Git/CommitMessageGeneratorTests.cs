@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages;
+using Calamari.ArgoCD.Git;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NUnit.Framework;

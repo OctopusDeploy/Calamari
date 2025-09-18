@@ -3,8 +3,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Models;
+using Calamari.ArgoCD.Models;
 
-namespace Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Helm
+namespace Calamari.ArgoCD.Helm
 {
     public class HelmContainerImageReplacer
     {

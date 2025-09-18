@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Models;
+namespace Calamari.ArgoCD.Models;
 
 public record HelmValuesFileImageUpdateTarget(
     string AppName,

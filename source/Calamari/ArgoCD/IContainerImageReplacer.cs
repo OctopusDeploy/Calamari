@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Models;
 
-namespace Calamari.ArgoCD.Conventions;
+namespace Calamari.ArgoCD;
 
 public interface IContainerImageReplacer
 {

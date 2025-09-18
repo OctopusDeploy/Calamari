@@ -9,7 +9,7 @@ using YamlDotNet.Core;
 using YamlDotNet.RepresentationModel;
 using YamlDotNet.Serialization;
 
-namespace Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Helm
+namespace Calamari.ArgoCD.Helm
 {
     /// <summary>
     /// Provides a wrapper around YAML content using yamldotnet

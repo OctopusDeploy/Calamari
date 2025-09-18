@@ -2,7 +2,7 @@
 using System;
 using Octostache;
 
-namespace Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Helm
+namespace Calamari.ArgoCD.Helm
 {
     public class HelmValuesEditor
     {

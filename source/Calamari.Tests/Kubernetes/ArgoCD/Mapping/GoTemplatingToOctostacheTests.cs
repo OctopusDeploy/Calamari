@@ -1,5 +1,4 @@
 using System;
-using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Mapping;
 using FluentAssertions;
 using NUnit.Framework;
 

@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Models;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Kubernetes;
@@ -11,7 +12,7 @@ using YamlDotNet.Core;
 using YamlDotNet.RepresentationModel;
 using YamlDotNet.Serialization;
 
-namespace Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Kustomize
+namespace Calamari.ArgoCD
 {
     public class KustomizeImageReplacer : IContainerImageReplacer
     {

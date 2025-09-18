@@ -1,6 +1,6 @@
 using System;
 
-namespace Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Helm
+namespace Calamari.ArgoCD.Helm
 {
     public class InvalidHelmImageReplaceAnnotationsException : Exception
     {

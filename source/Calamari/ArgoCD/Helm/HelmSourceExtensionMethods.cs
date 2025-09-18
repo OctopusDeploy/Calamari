@@ -1,10 +1,9 @@
-
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using Calamari.ArgoCD.Domain;
 
-namespace Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Helm
+namespace Calamari.ArgoCD.Helm
 {
     public static class HelmSourceExtensionMethods
     {
