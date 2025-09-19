@@ -5,12 +5,12 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Calamari.ArgoCD.Models;
 using k8s;
 using k8s.Models;
-using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Models;
 using YamlDotNet.RepresentationModel;
 
-namespace Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages
+namespace Calamari.ArgoCD
 {
     public class ContainerImageReplacer : IContainerImageReplacer
     {
@@ -161,6 +161,7 @@ namespace Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages
                     imageReplacements.UnionWith(replacementResult);
                     break;
             }
+
 
             return (updatedDocument, imageReplacements);
         }

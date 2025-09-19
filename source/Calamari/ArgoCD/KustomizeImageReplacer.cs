@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Calamari.ArgoCD.Conventions;
-using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Models;
+using Calamari.ArgoCD.Models;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Kubernetes;

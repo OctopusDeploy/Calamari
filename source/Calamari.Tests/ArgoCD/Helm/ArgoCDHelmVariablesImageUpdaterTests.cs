@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.IO;
 using Calamari.ArgoCD;
 using Calamari.ArgoCD.Conventions;
-using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages;
 using Calamari.ArgoCD.Domain;
 using Calamari.ArgoCD.Dtos;
 using Calamari.ArgoCD.Git;

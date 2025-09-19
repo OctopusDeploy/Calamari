@@ -105,7 +105,6 @@ namespace Calamari.ArgoCD.Helm
                                                                file,
                                                                ConvertAnnotationToList(definedPathsForAlias));
                 }
-
                 // Invalid state - alias defined but without corresponding Path annotation 
                 return new InvalidHelmValuesFileImageUpdateTarget(appName,
                                                                   defaultRegistry,
@@ -128,7 +127,6 @@ namespace Calamari.ArgoCD.Helm
                 // Invalid Ref used in Helm Config (which we should get because it never would have deployed properly anyway
                 throw new InvalidHelmImageReplaceAnnotationsException($"File: {file} references a Ref sources that could not be found.");
             }
-
             string? imageReplacementPathsForFile = null;
             // Check for an alias first as these take precedence
             var aliasWithRefValueKey = aliasAnnotations.FirstOrDefault(a => a.Value == file).Key;
@@ -164,7 +162,6 @@ namespace Calamari.ArgoCD.Helm
                                                            relativeFile,
                                                            ConvertAnnotationToList(imageReplacementPathsForFile));
             }
-
             // No alias and no ref keyed replacement paths - ignore
             return null;
         }

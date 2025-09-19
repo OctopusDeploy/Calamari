@@ -1,6 +1,5 @@
 #nullable enable
 using System;
-using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages;
 
 namespace Calamari.ArgoCD.Git
 {
