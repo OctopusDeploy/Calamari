@@ -126,7 +126,7 @@ partial class Build
         DockerTasks.DockerRun(x => x
            .SetName(containerName)
            .SetImage("docker.packages.octopushq.com/octopusdeploy/tool-containers/tool-sbom-cli:latest")
-           .SetVolume($"{PublishDirectory}:/source", $"{ArtifactsDirectory}:/output")
+           .SetVolume($"{RootDirectory}:/source", $"{ArtifactsDirectory}:/output")
            .SetCommand($"trivy")
            .SetArgs("fs", $"/source/{publishedTo}", "--format", "cyclonedx",
                     "--output", $"/output/{outputFile}")
