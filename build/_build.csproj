@@ -30,7 +30,8 @@
         </PackageReference>
         <PackageReference Include="Nuke.Common" Version="8.1.4" />
         <PackageReference Include="Octopus.1Password.Sdk" Version="0.0.127" />
-        <PackageReference Include="Octopus.OctoVersion.Tool" Version="1.0.9" ExcludeAssets="all" />
+        <!-- need to reference an old version here to get net6 support -->
+        <PackageReference Include="Octopus.OctoVersion.Tool" Version="0.3.403" ExcludeAssets="all" />
         <PackageReference Include="AzureSignTool" Version="6.0.1" ExcludeAssets="all" />
         <PackageReference Include="Serilog.Extensions.Logging" Version="8.0.0" />
     </ItemGroup>
