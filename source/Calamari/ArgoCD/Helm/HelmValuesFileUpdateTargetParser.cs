@@ -35,7 +35,7 @@ namespace Calamari.ArgoCD.Helm
             this.defaultRegistry = defaultRegistry;
         }
 
-        public List<HelmChartFileImageUpdateTarget> GetValuesFilesToUpdate()
+        public List<HelmValuesFileImageUpdateTarget> GetValuesFilesToUpdate()
         {
             return helmSources
                    .Where(hs => hs.Helm.ValueFiles.Count > 0)
@@ -43,16 +43,16 @@ namespace Calamari.ArgoCD.Helm
                    .ToList();
         }
 
-        List<HelmChartFileImageUpdateTarget> ExtractValuesFilesForSource(HelmSource source)
+        List<HelmValuesFileImageUpdateTarget> ExtractValuesFilesForSource(HelmSource source)
         {
             return source.Helm.ValueFiles.Select(file => file.StartsWith('$')
                                                 ? ProcessRefValuesFile(file)
                                                 : ProcessInlineValuesFile(source, file))
-                         .OfType<HelmChartFileImageUpdateTarget>()
+                         .OfType<HelmValuesFileImageUpdateTarget>()
                          .ToList();
         }
 
-        HelmChartFileImageUpdateTarget? ProcessInlineValuesFile(HelmSource source, string file)
+        HelmValuesFileImageUpdateTarget? ProcessInlineValuesFile(HelmSource source, string file)
         {
             // Check if there is an unaliased annotation
             var definedPathsForSource = imageReplacePathAnnotations
@@ -62,7 +62,7 @@ namespace Calamari.ArgoCD.Helm
             {
                 if (source.Helm.ValueFiles.Count == 1)
                 {
-                    return new HelmChartFileImageUpdateTarget(appName,
+                    return new HelmValuesFileImageUpdateTarget(appName,
                                                                defaultRegistry,
                                                                source.Path,
                                                                source.RepoUrl,
@@ -97,7 +97,7 @@ namespace Calamari.ArgoCD.Helm
                 var definedPathsForAlias = GetKeyedReplacementPathAnnotation(alias);
                 if (definedPathsForAlias != null)
                 {
-                    return new HelmChartFileImageUpdateTarget(appName,
+                    return new HelmValuesFileImageUpdateTarget(appName,
                                                                defaultRegistry,
                                                                source.Path,
                                                                source.RepoUrl,
@@ -106,7 +106,7 @@ namespace Calamari.ArgoCD.Helm
                                                                ConvertAnnotationToList(definedPathsForAlias));
                 }
                 // Invalid state - alias defined but without corresponding Path annotation 
-                return new InvalidHelmChartFileImageUpdateTarget(appName,
+                return new InvalidHelmValuesFileImageUpdateTarget(appName,
                                                                   defaultRegistry,
                                                                   source.Path,
                                                                   source.RepoUrl,
@@ -118,7 +118,7 @@ namespace Calamari.ArgoCD.Helm
             return null;
         }
 
-        HelmChartFileImageUpdateTarget? ProcessRefValuesFile(string file)
+        HelmValuesFileImageUpdateTarget? ProcessRefValuesFile(string file)
         {
             var refName = GetRefFromFilePath(file);
             var refForValuesFile = refSources.FirstOrDefault(r => r.Ref == refName);
@@ -139,7 +139,7 @@ namespace Calamari.ArgoCD.Helm
                 if (string.IsNullOrEmpty(imageReplacementPathsForFile))
                 {
                     // Invalid state - alias defined but without corresponding Path annotation 
-                    return new InvalidHelmChartFileImageUpdateTarget(appName,
+                    return new InvalidHelmValuesFileImageUpdateTarget(appName,
                                                                       defaultRegistry,
                                                                       ArgoCDConstants.RefSourcePath,
                                                                       refForValuesFile.RepoUrl,
@@ -154,7 +154,7 @@ namespace Calamari.ArgoCD.Helm
             if (!string.IsNullOrEmpty(imageReplacementPathsForFile))
             {
                 var relativeFile = file[(file.IndexOf('/') + 1)..];
-                return new HelmChartFileImageUpdateTarget(appName,
+                return new HelmValuesFileImageUpdateTarget(appName,
                                                            defaultRegistry,
                                                            ArgoCDConstants.RefSourcePath,
                                                            refForValuesFile.RepoUrl,
