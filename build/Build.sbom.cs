@@ -111,12 +111,12 @@ partial class Build
     string CreateSBOM(string project, string framework, string version, string? runtimeId = null)
     {
         var containerName = $"calamari-sbom-{framework}";
-        var publishedTo = PublishDirectory /project / framework;
+        var publishedTo = $"{project}/{framework}";
 
         if (!string.IsNullOrEmpty(runtimeId))
         {
             containerName += $"-{runtimeId}";
-            publishedTo /= runtimeId;
+            publishedTo = $"{publishedTo}/{runtimeId}";
             runtimeId = runtimeId != "portable" && runtimeId != "Cloud" ? runtimeId : null;
         }
 
