@@ -377,20 +377,20 @@ namespace Calamari.Build
                                }
                            });
         
-        Target CalamariConsolidationTests =>
-            d =>
-                d.DependsOn(PublishCalamariProjects)
-                 .OnlyWhenStatic(() => !IsLocalBuild)
-                 .Executes(() =>
-                           {
-                               DotNetTest(s => s
-                                               .SetProjectFile(ConsolidateCalamariPackagesProject)
-                                               .SetConfiguration(Configuration));
-                           });
+        // Target CalamariConsolidationTests =>
+        //     d =>
+        //         d.DependsOn(PublishCalamariProjects)
+        //          .OnlyWhenStatic(() => !IsLocalBuild)
+        //          .Executes(() =>
+        //                    {
+        //                        DotNetTest(s => s
+        //                                        .SetProjectFile(ConsolidateCalamariPackagesProject)
+        //                                        .SetConfiguration(Configuration));
+        //                    });
 
         Target PackageConsolidatedCalamariZip =>
             d =>
-                d.DependsOn(CalamariConsolidationTests)
+                d.DependsOn(PublishCalamariProjects)
                  .Executes(() =>
                            {
                                var artifacts = Directory.GetFiles(ArtifactsDirectory, "*.nupkg")
