@@ -15,7 +15,7 @@ namespace Calamari.Build;
 
 partial class Build
 {
-    [Parameter(Name = "DEPENDENCY_TRACK_URL")] 
+    [ParameterFromPasswordStore(Name = "DEPENDENCY_TRACK_URL", SecretReference = "op://Calamari Secrets for Tests/Dependency Track SBOM API/hostname")] 
     readonly string? DependencyTrackUrl;
     [ParameterFromPasswordStore(Name = "DEPENDENCY_TRACK_API_KEY", SecretReference = "op://Calamari Secrets for Tests/Dependency Track SBOM API/credential"), Secret] 
     readonly string? DependencyTrackApiKey;
@@ -25,11 +25,11 @@ partial class Build
     // ReSharper disable InconsistentNaming
     [PublicAPI("Called by TeamCity")]
     public Target BuildSoftwareBillOfMaterials => _ => _
-        .Requires(() => Solution != null)
         .Requires(() => DependencyTrackUrl)
         .Requires(() => DependencyTrackApiKey)
         .Executes(async () =>
         {
+            ArgumentNullException.ThrowIfNull(Solution, nameof(Solution));
             var octoVersionInfo = OctoVersionInfo.Value ?? throw new InvalidOperationException("Required OctoVersionInfo was not populated");
             var combinedFileName = $"calamari.{octoVersionInfo.FullSemVer}-sbom.cdx.json";
 
