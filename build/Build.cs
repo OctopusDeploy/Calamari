@@ -376,7 +376,7 @@ namespace Calamari.Build
                                 file.Copy(LocalPackagesDirectory / Path.GetFileName(file), ExistsPolicy.FileOverwrite);
                                }
                            });
-
+        
         Target CalamariConsolidationTests =>
             d =>
                 d.DependsOn(PublishCalamariProjects)

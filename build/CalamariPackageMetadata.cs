@@ -9,7 +9,6 @@ public class CalamariPackageMetadata
         Project = project;
         Framework = framework;
         Architecture = architecture;
-        IsCrossPlatform = isCrossPlatform;
     }
 
     public Project Project { get; }
