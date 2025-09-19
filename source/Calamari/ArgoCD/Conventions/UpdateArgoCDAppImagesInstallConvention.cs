@@ -90,7 +90,7 @@ namespace Calamari.ArgoCD.Conventions
                                                                                    applicationSource.Path,
                                                                                    applicationSource.RepoUrl,
                                                                                    applicationSource.TargetRevision,
-                                                                                   "Values.yaml",
+                                                                                   "values.yaml", //todo(tmm): What if its called [vValues].ya?ml  ?!!!!
                                                                                    imageReplacePathAnnotations));
                         continue;
                     }
@@ -115,6 +115,7 @@ namespace Calamari.ArgoCD.Conventions
                 valuesFilesToUpdate.AddRange(explicitHelmSources);
                 foreach (var valuesFileSource in valuesFilesToUpdate)
                 {
+                    log.Info($"Reading '{Path.Combine(valuesFileSource.Path, valuesFileSource.FileName)}' from '{valuesFileSource.RepoUrl.AbsoluteUri}'");
                     if (valuesFileSource is InvalidHelmValuesFileImageUpdateTarget invalidSource)
                     {
                         log.Warn($"Invalid annotations setup detected.\nAlias defined: {invalidSource.Alias}. Missing corresponding {ArgoCDConstants.Annotations.OctopusImageReplacementPathsKeyWithSpecifier(invalidSource.Alias)} annotation.");
@@ -211,10 +212,10 @@ namespace Calamari.ArgoCD.Conventions
                                                  List<ContainerImageReference> imagesToUpdate)
         {
             var filepath = Path.Combine(rootPath, target.Path, target.FileName);
+            log.Info($"Processing file at {filepath}.");
             var fileContent = fileSystem.ReadFile(filepath);
-            log.Info($"Processing file at {target.FileName}.");
-
-            var helmImageReplacer = new HelmContainerImageReplacer(fileContent, target.DefaultClusterRegistry, target.ImagePathDefinitions);
+            
+            var helmImageReplacer = new HelmContainerImageReplacer(fileContent, target.DefaultClusterRegistry, target.ImagePathDefinitions, log);
             var imageUpdateResult = helmImageReplacer.UpdateImages(imagesToUpdate);
             
             if (imageUpdateResult.UpdatedImageReferences.Count > 0)

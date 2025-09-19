@@ -118,7 +118,7 @@ image:
             var variables = new CalamariVariables
             {
                 //NOTE: No Packages are defined in the variables
-                // [PackageVariables.IndexedPackageId("nginx")] = "nginx:1.27.1",
+                // [PackageVariables.IndexedImage("nginx")] = "nginx:1.27.1",
                 // [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
             };
 
@@ -152,7 +152,7 @@ image:
                                                                      argoCdApplicationManifestParser);
             var variables = new CalamariVariables
             {
-                [PackageVariables.IndexedPackageId("nginx")] = "nginx:1.27.1",
+                [PackageVariables.IndexedImage("nginx")] = "nginx:1.27.1",
                 [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
             };
 
@@ -189,7 +189,7 @@ image:
                                                                      argoCdApplicationManifestParser);
             var variables = new CalamariVariables
             {
-                [PackageVariables.IndexedPackageId("nginx")] = "nginx:1.27.1",
+                [PackageVariables.IndexedImage("nginx")] = "nginx:1.27.1",
                 [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
             };
 
@@ -235,9 +235,9 @@ image2:
                                                                      argoCdApplicationManifestParser);
             var variables = new CalamariVariables
             {
-                [PackageVariables.IndexedPackageId("nginx")] = "nginx:1.27.1",
+                [PackageVariables.IndexedImage("nginx")] = "nginx:1.27.1",
                 [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
-                [PackageVariables.IndexedPackageId("alpine")] = "alpine:2.2",
+                [PackageVariables.IndexedImage("alpine")] = "alpine:2.2",
                 [PackageVariables.IndexedPackagePurpose("alpine")] = "DockerImageReference",
             };
 
@@ -260,6 +260,42 @@ image2:
    tag: 2.2
 ".ReplaceLineEndings());
         }
+        
+        [Test]
+        public void SeeIfBasicWithHelmChartWillBeDetected()
+        {
+            //Arrange
+            const string multiImageValuesFile = @"
+replicaCount: 1
+
+image:
+  repository: quay.io/argoprojlabs/argocd-e2e-container
+  tag: 0.1
+  pullPolicy: IfNotPresent
+";
+            originRepo.AddFilesToBranch(argoCDBranchName, ("values.yaml", multiImageValuesFile));
+            originRepo.AddFilesToBranch(argoCDBranchName, ("Chart.yaml", multiImageValuesFile));
+            
+            argoCdApplicationFromYaml.Metadata.Annotations = new Dictionary<string, string>()
+            {
+                { ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey, "{{ .Values.image.repository }}:{{ .Values.image.tag }}" }
+            };
+
+            var updater = new UpdateArgoCDAppImagesInstallConvention(log,
+                                                                     Substitute.For<IGitHubPullRequestCreator>(),
+                                                                     fileSystem,
+                                                                     new DeploymentConfigFactory(nonSensitiveCalamariVariables),
+                                                                     new CommitMessageGenerator(),
+                                                                     customPropertiesLoader,
+                                                                     argoCdApplicationManifestParser);
+            var variables = new CalamariVariables
+            {
+                [PackageVariables.IndexedImage("argocd-e2e-container")] = "argoprojlabs/argocd-e2e-container:1.27.1",
+                [PackageVariables.IndexedPackagePurpose("argocd-e2e-container")] = "DockerImageReference",
+            };
+            
+            
+        } 
 
         string CloneOrigin()
         {
