@@ -701,8 +701,7 @@ partial class Build : NukeBuild
     Target BuildCi => d =>
                           d.DependsOn(SetTeamCityVersion)
                            .DependsOn(Pack)
-                           .DependsOn(PackCalamariConsolidatedNugetPackage)
-                           .DependsOn(BuildSoftwareBillOfMaterials); //todo: this should run in a different build config in teamcity
+                           .DependsOn(PackCalamariConsolidatedNugetPackage);
 
     public static int Main() => Execute<Build>(x => IsServerBuild ? x.BuildCi : x.BuildLocal);
 
