@@ -711,4 +711,135 @@ partial class Build : NukeBuild
         var tasks = actions.Select(Task.Run).ToList();
         await Task.WhenAll(tasks);
     }
+    
+    AbsolutePath DoPublish(string project, string framework, string version, string? runtimeId = null)
+    {
+        var publishedTo = PublishDirectory / project / framework;
+
+        if (!runtimeId.IsNullOrEmpty())
+        {
+            publishedTo /= runtimeId;
+            runtimeId = runtimeId != "portable" && runtimeId != "Cloud" ? runtimeId : null;
+        }
+
+        DotNetPublish(s =>
+                          s.SetProject(Solution.GetProject(project))
+                           .SetConfiguration(Configuration)
+                           .SetOutput(publishedTo)
+                           .SetFramework(framework)
+                           .SetVersion(NugetVersion.Value)
+                           .SetVerbosity(BuildVerbosity)
+                           .SetRuntime(runtimeId)
+                           .SetVersion(version)
+                           .EnableSelfContained()
+                     );
+
+        if (WillSignBinaries)
+        {
+            Signing.SignAndTimestampBinaries(publishedTo, AzureKeyVaultUrl, AzureKeyVaultAppId,
+                                             AzureKeyVaultAppSecret, AzureKeyVaultTenantId, AzureKeyVaultCertificateName,
+                                             SigningCertificatePath, SigningCertificatePassword);
+        }
+
+        return publishedTo;
+    }
+
+    void SignProject(string project)
+    {
+        if (!WillSignBinaries)
+            return;
+        var binDirectory = $"{Path.GetDirectoryName(project)}/bin/{Configuration}/";
+        SignDirectory(binDirectory);
+    }
+
+    void SignDirectory(string directory)
+    {
+        if (!WillSignBinaries)
+            return;
+
+        Log.Information("Signing directory: {Directory} and sub-directories", directory);
+        var binariesFolders = Directory.GetDirectories(directory, "*", new EnumerationOptions { RecurseSubdirectories = true });
+        foreach (var subDirectory in binariesFolders.Append(directory))
+        {
+            Signing.SignAndTimestampBinaries(subDirectory, AzureKeyVaultUrl, AzureKeyVaultAppId,
+                                             AzureKeyVaultAppSecret, AzureKeyVaultTenantId, AzureKeyVaultCertificateName,
+                                             SigningCertificatePath, SigningCertificatePassword);
+        }
+    }
+
+    void SignAndPack(string project, DotNetPackSettings dotNetCorePackSettings)
+    {
+        Log.Information("SignAndPack project: {Project}", project);
+        SignProject(project);
+        DotNetPack(dotNetCorePackSettings.SetProject(project));
+    }
+
+    void DoPackage(string project, string framework, string version, string? runtimeId = null)
+    {
+        var publishedTo = PublishDirectory / project / framework;
+        var projectDir = SourceDirectory / project;
+        var packageId = $"{project}";
+        var nugetPackProperties = new Dictionary<string, object>();
+
+        if (!runtimeId.IsNullOrEmpty())
+        {
+            publishedTo /= runtimeId;
+            packageId = $"{project}.{runtimeId}";
+            nugetPackProperties.Add("runtimeId", runtimeId!);
+        }
+
+        if (WillSignBinaries)
+            Signing.SignAndTimestampBinaries(publishedTo, AzureKeyVaultUrl, AzureKeyVaultAppId,
+                                             AzureKeyVaultAppSecret, AzureKeyVaultTenantId, AzureKeyVaultCertificateName,
+                                             SigningCertificatePath, SigningCertificatePassword);
+
+        AbsolutePath nuspecSrc = $"{projectDir}/{project}.nuspec";
+        AbsolutePath nuspecDest = $"{publishedTo}/{packageId}.nuspec";
+        nuspecSrc.Copy(nuspecDest, ExistsPolicy.FileOverwrite);
+        var text = File.ReadAllText(nuspecDest);
+        text = text.Replace("$id$", packageId)
+                   .Replace("$version$", version);
+        File.WriteAllText(nuspecDest, text);
+
+        NuGetPack(s =>
+                      s.SetBasePath(publishedTo)
+                       .SetOutputDirectory(ArtifactsDirectory)
+                       .SetTargetPath(nuspecDest)
+                       .SetVersion(NugetVersion.Value)
+                       .SetVerbosity(NuGetVerbosity.Normal)
+                       .SetProperties(nugetPackProperties));
+    }
+
+    // Sets the Octopus.Server.csproj Calamari.Consolidated package version
+    void SetOctopusServerCalamariVersion(string projectFile)
+    {
+        var text = File.ReadAllText(projectFile);
+        text = Regex.Replace(text, @"<BundledCalamariVersion>([\S])+</BundledCalamariVersion>",
+                             $"<BundledCalamariVersion>{NugetVersion.Value}</BundledCalamariVersion>");
+        File.WriteAllText(projectFile, text);
+    }
+
+    string GetNugetVersion()
+    {
+        return AppendTimestamp
+            ? $"{OctoVersionInfo.Value?.NuGetVersion}-{DateTime.Now:yyyyMMddHHmmss}"
+            : OctoVersionInfo.Value?.NuGetVersion
+              ?? throw new InvalidOperationException("Unable to retrieve valid Nuget Version");
+    }
+
+    IReadOnlyCollection<string> GetRuntimeIdentifiers(Project? project)
+    {
+        if (project is null)
+            return Array.Empty<string>();
+
+        var runtimes = project.GetRuntimeIdentifiers();
+
+        if (!string.IsNullOrWhiteSpace(TargetRuntime))
+            runtimes = runtimes?.Where(x => x == TargetRuntime).ToList().AsReadOnly();
+
+        return runtimes ?? Array.Empty<string>();
+    }
+
+    //All libraries/flavours now support .NET Core
+    static List<string> GetCalamariFlavours() => CalamariPackages.Flavours;
 }
