@@ -428,7 +428,7 @@ partial class Build : NukeBuild
             .ForEach(calamariPackageMetadata =>
                      {
                          Log.Information("Copying {ProjectName} for legacy Calamari '{Framework}' and arch '{Architecture}'",
-                        calamariPackageMetadata.Project.Name, calamariPackageMetadata.Framework, calamariPackageMetadata.Architecture);
+                                         calamariPackageMetadata.Project.Name, calamariPackageMetadata.Framework, calamariPackageMetadata.Architecture);
                          var project = calamariPackageMetadata.Project;
                          var publishedPath = PublishDirectory / project.Name / "netfx";
                          publishedPath.Copy(LegacyCalamariDirectory / project.Name, ExistsPolicy.DirectoryMerge | ExistsPolicy.FileFail);
@@ -698,11 +698,11 @@ partial class Build : NukeBuild
                              d.DependsOn(PackCalamariConsolidatedNugetPackage)
                               .DependsOn(UpdateCalamariVersionOnOctopusServer);
 
-        Target BuildCi => d =>
-                              d.DependsOn(SetTeamCityVersion)
-                               .DependsOn(Pack)
-                               .DependsOn(PackCalamariConsolidatedNugetPackage)
-                               .DependsOn(BuildSoftwareBillOfMaterials); //todo: this should run in a different build config in teamcity
+    Target BuildCi => d =>
+                          d.DependsOn(SetTeamCityVersion)
+                           .DependsOn(Pack)
+                           .DependsOn(PackCalamariConsolidatedNugetPackage)
+                           .DependsOn(BuildSoftwareBillOfMaterials); //todo: this should run in a different build config in teamcity
 
     public static int Main() => Execute<Build>(x => IsServerBuild ? x.BuildCi : x.BuildLocal);
 
@@ -711,7 +711,7 @@ partial class Build : NukeBuild
         var tasks = actions.Select(Task.Run).ToList();
         await Task.WhenAll(tasks);
     }
-    
+
     AbsolutePath DoPublish(string project, string framework, string version, string? runtimeId = null)
     {
         var publishedTo = PublishDirectory / project / framework;
