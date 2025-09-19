@@ -38,10 +38,11 @@ partial class Build
             var results = new List<string>();
             Logging.InBlock("Creating SBOM", () =>
              {
-                 var framework = OperatingSystem.IsWindows() ? Frameworks.Net462 : Frameworks.Net60;
-                 results.Add(CreateSBOM(RootProjectName, framework, NugetVersion.Value, FixedRuntimes.Cloud));
+                 //not worrying about .NET Framework for SBOMs right now - we're hoping to drop it soon.
+                 //var framework = OperatingSystem.IsWindows() ? Frameworks.Net462 : Frameworks.Net60;
+                 //results.Add(CreateSBOM(RootProjectName, framework, NugetVersion.Value, FixedRuntimes.Cloud));
 
-                 foreach (var rid in GetRuntimeIdentifiers(Solution.GetProject(RootProjectName)!)!)
+                 foreach (var rid in GetRuntimeIdentifiers(Solution.GetProject(RootProjectName)!))
                      results.Add(CreateSBOM(RootProjectName, Frameworks.Net60, NugetVersion.Value, rid));
 
                  CombineAndValidateSBOM(octoVersionInfo, results.Select(fileName => $"/sboms/{fileName}").ToArray(), combinedFileName);
