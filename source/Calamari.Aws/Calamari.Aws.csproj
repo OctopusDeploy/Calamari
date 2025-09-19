@@ -1,7 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <Version>1.0.0.0</Version>
-    <OutputType>Exe</OutputType>
     <PlatformTarget>anycpu</PlatformTarget>
     <AssemblyName>Calamari.Aws</AssemblyName>
     <OutputType>Library</OutputType>
@@ -19,7 +18,8 @@
     <ApplicationManifest>Calamari.Aws.exe.manifest</ApplicationManifest>
     <ApplicationIcon />
     <StartupObject />
-    <TargetFrameworks>net462;netstandard2.1</TargetFrameworks>
+    <TargetFramework>net6.0</TargetFramework>
+    <LangVersion>10</LangVersion>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="AWSSDK.EKS" Version="3.7.13.24" />

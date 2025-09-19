@@ -3,10 +3,10 @@
     <PropertyGroup>
         <AssemblyName>Calamari.GoogleCloudScripting.Tests</AssemblyName>
         <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
-        <LangVersion>8</LangVersion>
+        <LangVersion>10</LangVersion>
         <IsPackable>false</IsPackable>
         <Nullable>enable</Nullable>
-        <TargetFrameworks>net462;net6.0</TargetFrameworks>
+        <TargetFramework>net6.0</TargetFramework>
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="nunit" Version="3.13.3" />

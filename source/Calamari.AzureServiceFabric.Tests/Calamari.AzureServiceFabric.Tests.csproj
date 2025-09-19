@@ -4,9 +4,9 @@
         <RootNamespace>Calamari.AzureServiceFabric.Tests</RootNamespace>
         <AssemblyName>Calamari.AzureServiceFabric.Tests</AssemblyName>
         <IsPackable>false</IsPackable>
-        <TargetFrameworks>net462;net6.0-windows</TargetFrameworks>
+        <TargetFramework>net6.0-windows</TargetFramework>
         <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
-        <LangVersion>8.0</LangVersion>
+        <LangVersion>10</LangVersion>
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="FluentAssertions" Version="6.12.2" />
@@ -18,12 +18,12 @@
         <PackageReference Include="Shouldly" Version="3.0.2" />
     </ItemGroup>
     <ItemGroup>
-      <ProjectReference Include="..\Calamari.AzureServiceFabric\Calamari.AzureServiceFabric.csproj" />
-      <ProjectReference Include="..\Calamari.Testing\Calamari.Testing.csproj" />
+        <ProjectReference Include="..\Calamari.AzureServiceFabric\Calamari.AzureServiceFabric.csproj"/>
+        <ProjectReference Include="..\Calamari.Testing\Calamari.Testing.csproj"/>
     </ItemGroup>
     <ItemGroup>
-      <None Update="Packages\MarksServiceFabricAppOfAwesomeness.1.0.0.zip">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </None>
+        <None Update="Packages\MarksServiceFabricAppOfAwesomeness.1.0.0.zip">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
     </ItemGroup>
 </Project>

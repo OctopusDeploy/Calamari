@@ -2,31 +2,31 @@
     <PropertyGroup>
         <AssemblyName>Calamari.AzureScripting</AssemblyName>
         <RootNamespace>Calamari.AzureScripting</RootNamespace>
-        <LangVersion>8</LangVersion>
+        <LangVersion>10</LangVersion>
         <Nullable>enable</Nullable>
         <OutputType>Exe</OutputType>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
         <IsPackable>true</IsPackable>
         <ValidateExecutableReferencesMatchSelfContained>false</ValidateExecutableReferencesMatchSelfContained>
-        <TargetFrameworks>net462;net6.0</TargetFrameworks>
+        <TargetFramework>net6.0</TargetFramework>
     </PropertyGroup>
 
     <ItemGroup>
-        <EmbeddedResource Include="Scripts\*" />
-    </ItemGroup>
-
-    <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
-        <PackageReference Include="System.IO.FileSystem.AccessControl" Version="4.7.0" />
-        <PackageReference Include="System.Security.Principal.Windows" Version="4.7.0" />
+        <EmbeddedResource Include="Scripts\*"/>
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Calamari.Scripting\Calamari.Scripting.csproj" />
-        <ProjectReference Include="..\Calamari.CloudAccounts\Calamari.CloudAccounts.csproj" />
+        <PackageReference Include="System.IO.FileSystem.AccessControl" Version="4.7.0"/>
+        <PackageReference Include="System.Security.Principal.Windows" Version="4.7.0"/>
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.Identity.Client" Version="4.66.2" />
+        <ProjectReference Include="..\Calamari.Scripting\Calamari.Scripting.csproj"/>
+        <ProjectReference Include="..\Calamari.CloudAccounts\Calamari.CloudAccounts.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Identity.Client" Version="4.66.2"/>
     </ItemGroup>
 </Project>
