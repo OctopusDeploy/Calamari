@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
@@ -423,12 +423,12 @@ partial class Build : NukeBuild
         }
 
         packagesToPublish
-            //We only need to bundle executable (not tests or libraries) full framework projects
+            //We only need to bundle executable (not tests or libraries) full framework projects 
             .Where(d => d.Framework == Frameworks.Net462 && d.Project.GetOutputType() == "Exe")
             .ForEach(calamariPackageMetadata =>
                      {
-                         Log.Information("Copying {ProjectName} for legacy Calamari '{Framework}' and arch '{Architecture}'",
-                                         calamariPackageMetadata.Project.Name, calamariPackageMetadata.Framework, calamariPackageMetadata.Architecture);
+                         Log.Information("Copying {ProjectName} for legacy Calamari '{Framework}' and arch '{Architecture}'", 
+                        calamariPackageMetadata.Project.Name, calamariPackageMetadata.Framework, calamariPackageMetadata.Architecture);
                          var project = calamariPackageMetadata.Project;
                          var publishedPath = PublishDirectory / project.Name / "netfx";
                          publishedPath.Copy(LegacyCalamariDirectory / project.Name, ExistsPolicy.DirectoryMerge | ExistsPolicy.FileFail);
