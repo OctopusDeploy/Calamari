@@ -40,6 +40,8 @@ namespace Calamari.ArgoCD
 
         //TODO: AP - Note that these are the same as Argo
         public static readonly IReadOnlySet<string> KustomizationFileNames = new HashSet<string> { "kustomization.yaml", "kustomization.yml", "Kustomization" };
+        
+        public static readonly string HelmChartFileName = "Chart.yaml";
     }
 }
 #endif

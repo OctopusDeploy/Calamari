@@ -13,6 +13,7 @@ using Calamari.ArgoCD.GitHub;
 using Calamari.ArgoCD.Helm;
 using Calamari.ArgoCD.Models;
 using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
@@ -65,6 +66,7 @@ namespace Calamari.ArgoCD.Conventions
             var gitReposUpdated = new HashSet<string>();
             var gatewayIds = new HashSet<string>();
 
+            var valuesFilesToUpdate = new List<HelmChartFileImageUpdateTarget>();
             foreach (var application in argoProperties.Applications)
             {
                 var applicationFromYaml = argoCdApplicationManifestParser.ParseManifest(application.Manifest);
@@ -74,8 +76,26 @@ namespace Calamari.ArgoCD.Conventions
                 {
                     var gitCredential = gitCredentials[applicationSource.RepoUrl.AbsoluteUri];
                     var gitConnection = new GitConnection(gitCredential.Username, gitCredential.Password, applicationSource.RepoUrl.AbsoluteUri, new GitBranchName(applicationSource.TargetRevision));
-                    var repository = repositoryFactory.CloneRepository(repositoryNumber.ToString(CultureInfo.InvariantCulture), gitConnection);
-
+                    var repository = repositoryFactory.CloneRepository(repositoryNumber++.ToString(CultureInfo.InvariantCulture), gitConnection);
+                    
+                    if (applicationFromYaml.Metadata.Annotations.ContainsKey(ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey) && HelmDiscovery.TryFindHelmChartFile(fileSystem, Path.Combine(repository.WorkingDirectory, applicationSource.Path)) != null)
+                    {
+                        log.Info($"Application '{application.Name}' source at `{applicationSource.RepoUrl.AbsoluteUri}' is a helm chart, its values file will be subsequently updated.");
+                        var imageReplacePathAnnotations = applicationFromYaml.Metadata.Annotations
+                                                              .Where(a => a.Key.StartsWith(ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey))
+                                                              .SelectMany(a => HelmValuesFileUpdateTargetParser.ConvertAnnotationToList(a.Value))
+                                                              .ToList();
+                        valuesFilesToUpdate.Add(new HelmChartFileImageUpdateTarget(
+                                                                                   applicationFromYaml.Metadata.Name,
+                                                                                   application.DefaultRegistry,
+                                                                                   applicationSource.Path,
+                                                                                   applicationSource.RepoUrl,
+                                                                                   applicationSource.TargetRevision,
+                                                                                   "Values.yaml",
+                                                                                   imageReplacePathAnnotations));
+                        continue;
+                    }
+                    
                     var (updatedFiles, updatedImages) = UpdateKubernetesYaml(repository.WorkingDirectory, applicationSource.Path, application.DefaultRegistry, deploymentConfig.ImageReferences);
 
                     if (updatedImages.Count > 0)
@@ -92,10 +112,11 @@ namespace Calamari.ArgoCD.Conventions
                     }
                 }
 
-                var valuesFilesToUpdate = new HelmValuesFileUpdateTargetParser(applicationFromYaml, application.DefaultRegistry).GetValuesFilesToUpdate();
+                var explicitHelmSources = new HelmValuesFileUpdateTargetParser(applicationFromYaml, application.DefaultRegistry).GetValuesFilesToUpdate();
+                valuesFilesToUpdate.AddRange(explicitHelmSources);
                 foreach (var valuesFileSource in valuesFilesToUpdate)
                 {
-                    if (valuesFileSource is InvalidHelmValuesFileImageUpdateTarget invalidSource)
+                    if (valuesFileSource is InvalidHelmChartFileImageUpdateTarget invalidSource)
                     {
                         log.Warn($"Invalid annotations setup detected.\nAlias defined: {invalidSource.Alias}. Missing corresponding {ArgoCDConstants.Annotations.OctopusImageReplacementPathsKeyWithSpecifier(invalidSource.Alias)} annotation.");
                         continue;
@@ -103,7 +124,7 @@ namespace Calamari.ArgoCD.Conventions
 
                     var gitCredential = gitCredentials[valuesFileSource.RepoUrl.AbsoluteUri];
                     var gitConnection = new GitConnection(gitCredential.Username, gitCredential.Password, valuesFileSource.RepoUrl.AbsoluteUri, new GitBranchName(valuesFileSource.TargetRevision));
-                    var repository = repositoryFactory.CloneRepository(repositoryNumber.ToString(CultureInfo.InvariantCulture), gitConnection);
+                    var repository = repositoryFactory.CloneRepository(repositoryNumber++.ToString(CultureInfo.InvariantCulture), gitConnection);
                     
                     var helmUpdateResult = UpdateHelmImageValues(repository.WorkingDirectory,
                                                                  valuesFileSource,
@@ -187,7 +208,7 @@ namespace Calamari.ArgoCD.Conventions
         }
 
         HelmRefUpdatedResult UpdateHelmImageValues(string rootPath, 
-                                                 HelmValuesFileImageUpdateTarget target,
+                                                 HelmChartFileImageUpdateTarget target,
                                                  List<ContainerImageReference> imagesToUpdate)
         {
             var filepath = Path.Combine(rootPath, target.Path, target.FileName);

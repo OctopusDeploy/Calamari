@@ -4,9 +4,9 @@ using System.Collections.Generic;
 
 namespace Calamari.ArgoCD.Models
 {
-    public class HelmValuesFileImageUpdateTarget : ArgoCDImageUpdateTarget
+    public class HelmChartFileImageUpdateTarget : ArgoCDImageUpdateTarget
     {
-        public HelmValuesFileImageUpdateTarget(string appName,
+        public HelmChartFileImageUpdateTarget(string appName,
                                                string defaultClusterRegistry,
                                                string path,
                                                Uri repoUrl,
@@ -27,11 +27,11 @@ namespace Calamari.ArgoCD.Models
     }
 
     // Allows us to pass issues up the chain for logging without pushing an ITaskLog all the way down the stack
-    public class InvalidHelmValuesFileImageUpdateTarget :
+    public class InvalidHelmChartFileImageUpdateTarget :
 
-    HelmValuesFileImageUpdateTarget
+    HelmChartFileImageUpdateTarget
     {
-        public InvalidHelmValuesFileImageUpdateTarget(string appName,
+        public InvalidHelmChartFileImageUpdateTarget(string appName,
                                                       string defaultClusterRegistry,
                                                       string path,
                                                       Uri repoUrl,

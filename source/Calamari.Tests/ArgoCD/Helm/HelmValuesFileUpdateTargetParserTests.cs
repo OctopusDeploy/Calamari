@@ -143,7 +143,7 @@ namespace Calamari.Tests.ArgoCD.Helm
             var result = sut.GetValuesFilesToUpdate();
 
             // Assert
-            var expectedSource = new HelmValuesFileImageUpdateTarget(toUpdate.Metadata.Name,
+            var expectedSource = new HelmChartFileImageUpdateTarget(toUpdate.Metadata.Name,
                                                                      ArgoCDConstants.DefaultContainerRegistry,
                                                                      ArgoCDConstants.RefSourcePath,
                                                                      helmSource.RepoUrl,
@@ -152,7 +152,7 @@ namespace Calamari.Tests.ArgoCD.Helm
                                                                      new List<string>() { HelmPath1, HelmPath2 }
                                                                     );
 
-            result.Should().BeEquivalentTo(new List<HelmValuesFileImageUpdateTarget>() { expectedSource }, options => options.ComparingByMembers<HelmValuesFileImageUpdateTarget>());
+            result.Should().BeEquivalentTo(new List<HelmChartFileImageUpdateTarget>() { expectedSource }, options => options.ComparingByMembers<HelmChartFileImageUpdateTarget>());
         }
 
         [Test]
@@ -238,7 +238,7 @@ namespace Calamari.Tests.ArgoCD.Helm
 
             // Assert
             result.Count.Should().Be(1);
-            result[0].Should().BeOfType<InvalidHelmValuesFileImageUpdateTarget>();
+            result[0].Should().BeOfType<InvalidHelmChartFileImageUpdateTarget>();
         }
 
         [Test]
@@ -320,7 +320,7 @@ namespace Calamari.Tests.ArgoCD.Helm
             var result = sut.GetValuesFilesToUpdate();
 
             // Assert
-            var expectedSource = new HelmValuesFileImageUpdateTarget(toUpdate.Metadata.Name,
+            var expectedSource = new HelmChartFileImageUpdateTarget(toUpdate.Metadata.Name,
                                                                      ArgoCDConstants.DefaultContainerRegistry,
                                                                      ArgoCDConstants.RefSourcePath,
                                                                      helmSource.RepoUrl,
@@ -330,7 +330,7 @@ namespace Calamari.Tests.ArgoCD.Helm
                                                                     );
 
             result.Should().HaveCount(1);
-            result[0].Should().BeEquivalentTo(expectedSource, options => options.ComparingByMembers<HelmValuesFileImageUpdateTarget>());
+            result[0].Should().BeEquivalentTo(expectedSource, options => options.ComparingByMembers<HelmChartFileImageUpdateTarget>());
         }
 
         [Test]
@@ -375,7 +375,7 @@ namespace Calamari.Tests.ArgoCD.Helm
                             .ToList(); // Add ordering so we can assert properly.
 
             // Assert
-            var expected1 = new HelmValuesFileImageUpdateTarget(toUpdate.Metadata.Name,
+            var expected1 = new HelmChartFileImageUpdateTarget(toUpdate.Metadata.Name,
                                                                 ArgoCDConstants.DefaultContainerRegistry,
                                                                 helmSource.Path,
                                                                 helmSource.RepoUrl,
@@ -384,7 +384,7 @@ namespace Calamari.Tests.ArgoCD.Helm
                                                                 new List<string> { HelmPath1, HelmPath2 }
                                                                );
 
-            var expected2 = new HelmValuesFileImageUpdateTarget(toUpdate.Metadata.Name,
+            var expected2 = new HelmChartFileImageUpdateTarget(toUpdate.Metadata.Name,
                                                                 ArgoCDConstants.DefaultContainerRegistry,
                                                                 helmSource.Path,
                                                                 helmSource.RepoUrl,
@@ -393,7 +393,7 @@ namespace Calamari.Tests.ArgoCD.Helm
                                                                 new List<string>() { HelmPath3 }
                                                                );
 
-            result.Should().BeEquivalentTo(new List<HelmValuesFileImageUpdateTarget>() { expected1, expected2 }, options => options.ComparingByMembers<HelmValuesFileImageUpdateTarget>());
+            result.Should().BeEquivalentTo(new List<HelmChartFileImageUpdateTarget>() { expected1, expected2 }, options => options.ComparingByMembers<HelmChartFileImageUpdateTarget>());
         }
 
         [Test]
@@ -488,7 +488,7 @@ namespace Calamari.Tests.ArgoCD.Helm
             var result = sut.GetValuesFilesToUpdate();
 
             // Assert
-            var expectedSource = new HelmValuesFileImageUpdateTarget(toUpdate.Metadata.Name,
+            var expectedSource = new HelmChartFileImageUpdateTarget(toUpdate.Metadata.Name,
                                                                      ArgoCDConstants.DefaultContainerRegistry,
                                                                      ArgoCDConstants.RefSourcePath,
                                                                      refSource.RepoUrl,
@@ -497,7 +497,7 @@ namespace Calamari.Tests.ArgoCD.Helm
                                                                      new List<string>() { HelmPath1, HelmPath2 }
                                                                     );
 
-            result.Should().BeEquivalentTo(new List<HelmValuesFileImageUpdateTarget>() { expectedSource }, options => options.ComparingByMembers<HelmValuesFileImageUpdateTarget>());
+            result.Should().BeEquivalentTo(new List<HelmChartFileImageUpdateTarget>() { expectedSource }, options => options.ComparingByMembers<HelmChartFileImageUpdateTarget>());
         }
 
         [Test]
@@ -547,7 +547,7 @@ namespace Calamari.Tests.ArgoCD.Helm
             var result = sut.GetValuesFilesToUpdate();
 
             // Assert
-            var expectedSource = new HelmValuesFileImageUpdateTarget(toUpdate.Metadata.Name,
+            var expectedSource = new HelmChartFileImageUpdateTarget(toUpdate.Metadata.Name,
                                                                      ArgoCDConstants.DefaultContainerRegistry,
                                                                      ArgoCDConstants.RefSourcePath,
                                                                      refSource.RepoUrl,
@@ -556,7 +556,7 @@ namespace Calamari.Tests.ArgoCD.Helm
                                                                      new List<string>() { HelmPath1, HelmPath2 }
                                                                     );
 
-            result.Should().BeEquivalentTo(new List<HelmValuesFileImageUpdateTarget>() { expectedSource }, options => options.ComparingByMembers<HelmValuesFileImageUpdateTarget>());
+            result.Should().BeEquivalentTo(new List<HelmChartFileImageUpdateTarget>() { expectedSource }, options => options.ComparingByMembers<HelmChartFileImageUpdateTarget>());
         }
 
         [Test]
@@ -606,7 +606,7 @@ namespace Calamari.Tests.ArgoCD.Helm
 
             // Assert
             result.Count.Should().Be(1);
-            result[0].Should().BeOfType<InvalidHelmValuesFileImageUpdateTarget>();
+            result[0].Should().BeOfType<InvalidHelmChartFileImageUpdateTarget>();
         }
 
         [Test]
@@ -715,7 +715,7 @@ namespace Calamari.Tests.ArgoCD.Helm
                             .ToHashSet();
 
             // Assert
-            var expected2 = new HelmValuesFileImageUpdateTarget(toUpdate.Metadata.Name,
+            var expected2 = new HelmChartFileImageUpdateTarget(toUpdate.Metadata.Name,
                                                                 ArgoCDConstants.DefaultContainerRegistry,
                                                                 ArgoCDConstants.RefSourcePath,
                                                                 refSource2.RepoUrl,
@@ -724,7 +724,7 @@ namespace Calamari.Tests.ArgoCD.Helm
                                                                 new List<string>() { HelmPath3 }
                                                                );
 
-            var expected1 = new HelmValuesFileImageUpdateTarget(toUpdate.Metadata.Name,
+            var expected1 = new HelmChartFileImageUpdateTarget(toUpdate.Metadata.Name,
                                                                 ArgoCDConstants.DefaultContainerRegistry,
                                                                 ArgoCDConstants.RefSourcePath,
                                                                 refSource1.RepoUrl,
@@ -733,7 +733,7 @@ namespace Calamari.Tests.ArgoCD.Helm
                                                                 new List<string>() { HelmPath1, HelmPath2 }
                                                                );
 
-            result.Should().BeEquivalentTo(new HashSet<HelmValuesFileImageUpdateTarget>() { expected2, expected1 }, options => options.ComparingByMembers<HelmValuesFileImageUpdateTarget>());
+            result.Should().BeEquivalentTo(new HashSet<HelmChartFileImageUpdateTarget>() { expected2, expected1 }, options => options.ComparingByMembers<HelmChartFileImageUpdateTarget>());
         }
 
         [Test]
@@ -805,7 +805,7 @@ namespace Calamari.Tests.ArgoCD.Helm
                             .ToList(); // order for assert
 
             // Assert
-            var expected1 = new HelmValuesFileImageUpdateTarget(toUpdate.Metadata.Name,
+            var expected1 = new HelmChartFileImageUpdateTarget(toUpdate.Metadata.Name,
                                                                 ArgoCDConstants.DefaultContainerRegistry,
                                                                 ArgoCDConstants.RefSourcePath,
                                                                 refSource1.RepoUrl,
@@ -813,7 +813,7 @@ namespace Calamari.Tests.ArgoCD.Helm
                                                                 valuesFile1Path,
                                                                 new List<string>() { HelmPath1, HelmPath2 });
 
-            var expected2 = new HelmValuesFileImageUpdateTarget(toUpdate.Metadata.Name,
+            var expected2 = new HelmChartFileImageUpdateTarget(toUpdate.Metadata.Name,
                                                                 ArgoCDConstants.DefaultContainerRegistry,
                                                                 ArgoCDConstants.RefSourcePath,
                                                                 refSource2.RepoUrl,
@@ -822,7 +822,7 @@ namespace Calamari.Tests.ArgoCD.Helm
                                                                 new List<string>() { HelmPath3 });
             ;
 
-            result.Should().BeEquivalentTo(new List<HelmValuesFileImageUpdateTarget>() { expected1, expected2 }, options => options.ComparingByMembers<HelmValuesFileImageUpdateTarget>());
+            result.Should().BeEquivalentTo(new List<HelmChartFileImageUpdateTarget>() { expected1, expected2 }, options => options.ComparingByMembers<HelmChartFileImageUpdateTarget>());
         }
 
         [Test]
@@ -880,7 +880,7 @@ namespace Calamari.Tests.ArgoCD.Helm
             var result = sut.GetValuesFilesToUpdate();
 
             // Assert
-            var expected1 = new HelmValuesFileImageUpdateTarget(toUpdate.Metadata.Name,
+            var expected1 = new HelmChartFileImageUpdateTarget(toUpdate.Metadata.Name,
                                                                 ArgoCDConstants.DefaultContainerRegistry,
                                                                 helmSource.Path,
                                                                 helmSource.RepoUrl,
@@ -888,7 +888,7 @@ namespace Calamari.Tests.ArgoCD.Helm
                                                                 inlineValuesFilePath,
                                                                 new List<string>() { HelmPath1, HelmPath2 });
 
-            var expected2 = new HelmValuesFileImageUpdateTarget(toUpdate.Metadata.Name,
+            var expected2 = new HelmChartFileImageUpdateTarget(toUpdate.Metadata.Name,
                                                                 ArgoCDConstants.DefaultContainerRegistry,
                                                                 ArgoCDConstants.RefSourcePath,
                                                                 refSource.RepoUrl,
@@ -896,7 +896,7 @@ namespace Calamari.Tests.ArgoCD.Helm
                                                                 valuesRefFilePath,
                                                                 new List<string>() { HelmPath3 });
 
-            result.Should().BeEquivalentTo(new List<HelmValuesFileImageUpdateTarget>() { expected2, expected1 }, options => options.ComparingByMembers<HelmValuesFileImageUpdateTarget>());
+            result.Should().BeEquivalentTo(new List<HelmChartFileImageUpdateTarget>() { expected2, expected1 }, options => options.ComparingByMembers<HelmChartFileImageUpdateTarget>());
         }
 
         [Test]
@@ -950,7 +950,7 @@ namespace Calamari.Tests.ArgoCD.Helm
             var result = sut.GetValuesFilesToUpdate();
 
             // Assert
-            var expected1 = new HelmValuesFileImageUpdateTarget(toUpdate.Metadata.Name,
+            var expected1 = new HelmChartFileImageUpdateTarget(toUpdate.Metadata.Name,
                                                                 ArgoCDConstants.DefaultContainerRegistry,
                                                                 ArgoCDConstants.RefSourcePath,
                                                                 refSource.RepoUrl,
@@ -958,7 +958,7 @@ namespace Calamari.Tests.ArgoCD.Helm
                                                                 valuesRefFile1,
                                                                 new List<string>() { HelmPath1, HelmPath2 });
 
-            var expected2 = new HelmValuesFileImageUpdateTarget(toUpdate.Metadata.Name,
+            var expected2 = new HelmChartFileImageUpdateTarget(toUpdate.Metadata.Name,
                                                                 ArgoCDConstants.DefaultContainerRegistry,
                                                                 ArgoCDConstants.RefSourcePath,
                                                                 refSource.RepoUrl,
@@ -966,7 +966,7 @@ namespace Calamari.Tests.ArgoCD.Helm
                                                                 valuesRefFile2,
                                                                 new List<string>() { HelmPath3 });
 
-            result.Should().BeEquivalentTo(new List<HelmValuesFileImageUpdateTarget>() { expected1, expected2 }, options => options.ComparingByMembers<HelmValuesFileImageUpdateTarget>());
+            result.Should().BeEquivalentTo(new List<HelmChartFileImageUpdateTarget>() { expected1, expected2 }, options => options.ComparingByMembers<HelmChartFileImageUpdateTarget>());
         }
 
         [Test]
@@ -1017,14 +1017,14 @@ namespace Calamari.Tests.ArgoCD.Helm
 
             // Assert
 
-            var expected1 = new HelmValuesFileImageUpdateTarget(toUpdate.Metadata.Name,
+            var expected1 = new HelmChartFileImageUpdateTarget(toUpdate.Metadata.Name,
                                                                 ArgoCDConstants.DefaultContainerRegistry,
                                                                 ArgoCDConstants.RefSourcePath,
                                                                 refSource.RepoUrl,
                                                                 refSource.TargetRevision,
                                                                 valuesRefFile1,
                                                                 new List<string>() { HelmPath1, HelmPath2 });
-            result.Should().BeEquivalentTo(new List<HelmValuesFileImageUpdateTarget>() { expected1 }, options => options.ComparingByMembers<HelmValuesFileImageUpdateTarget>());
+            result.Should().BeEquivalentTo(new List<HelmChartFileImageUpdateTarget>() { expected1 }, options => options.ComparingByMembers<HelmChartFileImageUpdateTarget>());
         }
 
         [Test]
@@ -1092,7 +1092,7 @@ namespace Calamari.Tests.ArgoCD.Helm
             // Assert
             result.Count.Should().Be(2);
 
-            var expected1 = new HelmValuesFileImageUpdateTarget(toUpdate.Metadata.Name,
+            var expected1 = new HelmChartFileImageUpdateTarget(toUpdate.Metadata.Name,
                                                                 ArgoCDConstants.DefaultContainerRegistry,
                                                                 ArgoCDConstants.RefSourcePath,
                                                                 helmSource1.RepoUrl,
@@ -1100,7 +1100,7 @@ namespace Calamari.Tests.ArgoCD.Helm
                                                                 valuesFile1,
                                                                 new List<string>() { HelmPath1, HelmPath2 });
 
-            var expected2 = new HelmValuesFileImageUpdateTarget(toUpdate.Metadata.Name,
+            var expected2 = new HelmChartFileImageUpdateTarget(toUpdate.Metadata.Name,
                                                                 ArgoCDConstants.DefaultContainerRegistry,
                                                                 helmSource2.Path,
                                                                 helmSource2.RepoUrl,
@@ -1108,7 +1108,7 @@ namespace Calamari.Tests.ArgoCD.Helm
                                                                 valuesFile2,
                                                                 new List<string>() { HelmPath1, HelmPath2 });
 
-            result.Should().BeEquivalentTo(new List<HelmValuesFileImageUpdateTarget>() { expected1, expected2 }, options => options.ComparingByMembers<HelmValuesFileImageUpdateTarget>());
+            result.Should().BeEquivalentTo(new List<HelmChartFileImageUpdateTarget>() { expected1, expected2 }, options => options.ComparingByMembers<HelmChartFileImageUpdateTarget>());
         }
     }
 }
