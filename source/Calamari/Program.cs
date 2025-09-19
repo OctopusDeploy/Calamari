@@ -7,6 +7,7 @@ using System.Linq;
 using System.Reflection;
 using Autofac.Features.Metadata;
 using Calamari.ArgoCD.Conventions;
+using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages;
 using Calamari.ArgoCD.GitHub;
 using Calamari.Commands;
 using Calamari.Common;
@@ -86,9 +87,6 @@ namespace Calamari
             builder.RegisterType<WindowsX509CertificateStore>().As<IWindowsX509CertificateStore>().SingleInstance();
             builder.RegisterType<ApiResourceScopeLookup>().As<IApiResourceScopeLookup>().SingleInstance();
             builder.RegisterType<KubernetesManifestNamespaceResolver>().As<IKubernetesManifestNamespaceResolver>().InstancePerLifetimeScope();
-            builder.RegisterType<GitHubClientFactory>().As<IGitHubClientFactory>().InstancePerLifetimeScope();
-            builder.RegisterType<GitHubPullRequestCreator>().As<IGitHubPullRequestCreator>().InstancePerLifetimeScope();
-            builder.RegisterType<ArgoCommitToGitConfigFactory>().AsSelf().InstancePerLifetimeScope();
             
             builder.RegisterType<KubernetesDiscovererFactory>()
                    .As<IKubernetesDiscovererFactory>()
@@ -122,6 +120,18 @@ namespace Calamari
                    .Where(x => typeof(ILaunchTool).IsAssignableFrom(x) && !x.IsAbstract && !x.IsInterface)
                    .WithMetadataFrom<LaunchToolAttribute>()
                    .As<ILaunchTool>();
+            
+            RegisterArgoCDComponents(builder);
+        }
+
+        void RegisterArgoCDComponents(ContainerBuilder builder)
+        {
+#if NET
+            builder.RegisterType<DeploymentConfigFactory>().AsSelf().InstancePerLifetimeScope();
+            builder.RegisterType<CommitMessageGenerator>().As<ICommitMessageGenerator>().InstancePerLifetimeScope();
+            builder.RegisterType<GitHubClientFactory>().As<IGitHubClientFactory>().InstancePerLifetimeScope();
+            builder.RegisterType<GitHubPullRequestCreator>().As<IGitHubPullRequestCreator>().InstancePerLifetimeScope();
+#endif
         }
 
         IEnumerable<Assembly> GetExtensionAssemblies()

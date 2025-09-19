@@ -25,7 +25,6 @@ namespace Calamari.ArgoCD.Git
             this.pullRequestCreator = pullRequestCreator;
         }
         
-        
         // returns true if changes were made to the repository
         public bool CommitChanges(string summary, string description)
         {
@@ -47,16 +46,14 @@ namespace Calamari.ArgoCD.Git
         
         public void StageFiles(string[] filesToStage)
         {
-            //find files which have changed in fs??? <---   
             foreach (var file in filesToStage)
             {
                 var fileToAdd = file.StartsWith("./") ? file.Substring(2) : file;
-                // if a file does not exist - what should we do? throw and continue? or just throw?
                 repository.Index.Add(fileToAdd);
             }
         }
         
-        public async Task PushChanges(bool requiresPullRequest, GitBranchName branchName, CancellationToken cancellationToken)
+        public async Task PushChanges(bool requiresPullRequest, string summary, string description, GitBranchName branchName, CancellationToken cancellationToken)
         {
             var currentBranchName = repository.GetBranchName(branchName);
             var pushToBranchName = currentBranchName;
@@ -68,10 +65,7 @@ namespace Calamari.ArgoCD.Git
             PushChanges(pushToBranchName);
             if (requiresPullRequest)
             {
-                var commit = repository.Head.Tip; //this is a BIT dodgy - as it assumes we're pushing head.
-                var commitSummary = commit.MessageShort;
-                var commitDescription = commit.Message.Substring(commitSummary.Length).Trim('\n');
-                await pullRequestCreator.CreatePullRequest(log, connection, commitSummary, commitDescription, new GitBranchName(pushToBranchName),  new GitBranchName(currentBranchName), cancellationToken);
+                await pullRequestCreator.CreatePullRequest(log, connection, summary, description, new GitBranchName(pushToBranchName),  new GitBranchName(currentBranchName), cancellationToken);
             }
         }
 

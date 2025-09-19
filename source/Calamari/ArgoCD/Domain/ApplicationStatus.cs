@@ -45,6 +45,7 @@ namespace Calamari.ArgoCD.Domain
     public enum SourceType
     {
         Directory,
-        Helm
+        Helm,
+        Kustomize
     }
 }

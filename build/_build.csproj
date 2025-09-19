@@ -11,6 +11,11 @@
         <NukeTelemetryVersion>1</NukeTelemetryVersion>
         <PublishDir>..\build\outputs\$(RuntimeIdentifier)\nukebuild</PublishDir>
         <Nullable>enable</Nullable>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <!-- Error CS0649 : Field '{0}}' is never assigned to, and will always have its default value null -->
+        <!-- Error CS9057 : The analyzer assembly 'Nuke.SourceGenerators.dll' references version '4.7.0.0' of the compiler, which is newer than the currently running version '4.3.0.0'. - this can be removed when we upgrade to .net8 or later -->
+        <!-- Error CS8032: An instance of analyzer Nuke.SourceGenerators.StronglyTypedSolutionGenerator cannot be created from {path} : Could not load file or assembly 'Microsoft.CodeAnalysis, Version=4.7.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35'. The system cannot find the file specified. - this can be removed when we upgrade to .net8 or later -->
+        <NoWarn>CS0649;CS9057;CS8032</NoWarn>
     </PropertyGroup>
 
     <PropertyGroup>

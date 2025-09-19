@@ -23,6 +23,8 @@ namespace Calamari.Common.Plumbing.Variables
 
         public static string IndexedPackageVersion(string packageReferenceName) => $"Octopus.Action.Package[{packageReferenceName}].PackageVersion";
 
+        public static string IndexedPackagePurpose(string packageReferenceName) => $"Octopus.Action.Package[{packageReferenceName}].Purpose";
+        
         public static string IndexedOriginalPath(string packageReferenceName)
         {
             return $"Octopus.Action.Package[{packageReferenceName}].OriginalPath";

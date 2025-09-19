@@ -64,16 +64,6 @@ namespace Calamari.Kubernetes
 
         public static class Git
         {
-            public static string Index => "Octopus.Action.Git.Repository";
-
-            static string Prefix(string name) => $"{Index}[{name}]"; 
-        
-            public static string BranchName(string name) => $"{Prefix(name)}.Branch";
-            public static string Url(string name)  => $"{Prefix(name)}.Url";
-            public static string Username(string name) => $"{Prefix(name)}.Username";
-            public static string Password(string name) => $"{Prefix(name)}.Password";
-            public static string SubFolder(string name) => $"{Prefix(name)}.SubFolder";
-            
             public static readonly string CommitMessageSummary = "Octopus.Action.ArgoCD.CommitMessageSummary";
             
             public static readonly string CommitMessageDescription = "Octopus.Action.ArgoCD.CommitMessageDescription";
@@ -84,10 +74,18 @@ namespace Calamari.Kubernetes
             
             public static readonly string Recursive = "Octopus.Action.ArgoCD.RecursiveResourceDetection";
             
-            public static class GitCommitMethods
+            public static class PullRequest
             {
-                public const string DirectCommit = "DirectCommit";
-                public const string PullRequest = "PullRequest";
+                public static readonly string Create = "Octopus.Action.ArgoCD.PullRequest.Create";
+            }
+
+            public static class Output
+            {
+                public static readonly string GatewayIds = "ArgoCD.GatewayIds";
+                public static readonly string GitUris = "ArgoCD.GitUris";
+                public static readonly string MatchingApplications = "ArgoCD.TotalMatchingApplications";
+                public static readonly string UpdatedApplications = "ArgoCD.UpdatedApplications";
+                public static readonly string UpdatedImages = "ArgoCD.UpdatedImages";
             }
         }
 

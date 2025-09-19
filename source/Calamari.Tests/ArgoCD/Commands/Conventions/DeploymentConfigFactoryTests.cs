@@ -10,7 +10,7 @@ using NUnit.Framework;
 namespace Calamari.Tests.ArgoCD.Commands.Conventions
 {
     [TestFixture]
-    public class ArgoCommitToGitConfigFactoryTests
+    public class DeploymentConfigFactoryTests
     {
         [Test]
         public void Create_CommitMessageFieldsDontReferenceSensitiveVariables_Evaluated()
@@ -32,12 +32,12 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
 
             var runningDeployment = new RunningDeployment("./arbitraryFile.txt", allVariables);
 
-            var factory = new ArgoCommitToGitConfigFactory(nonSensitiveCalamariVariables);
+            var factory = new DeploymentConfigFactory(nonSensitiveCalamariVariables);
             
-            var config = factory.Create(runningDeployment);
+            var config = factory.CreateCommitToGitConfig(runningDeployment);
 
-            config.CommitSummary.Should().Be("Summary Bar");
-            config.CommitDescription.Should().Be("Description Bar");
+            config.CommitParameters.Summary.Should().Be("Summary Bar");
+            config.CommitParameters.Description.Should().Be("Description Bar");
         }
         
         [Test]
@@ -59,9 +59,9 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
 
             var runningDeployment = new RunningDeployment("./arbitraryFile.txt", allVariables);
 
-            var factory = new ArgoCommitToGitConfigFactory(nonSensitiveCalamariVariables);
+            var factory = new DeploymentConfigFactory(nonSensitiveCalamariVariables);
             
-            Action action = () => factory.Create(runningDeployment);
+            Action action = () => factory.CreateCommitToGitConfig(runningDeployment);
 
             action.Should().Throw<CommandException>();
         }
@@ -86,9 +86,9 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
 
             var runningDeployment = new RunningDeployment("./arbitraryFile.txt", allVariables);
 
-            var factory = new ArgoCommitToGitConfigFactory(nonSensitiveCalamariVariables);
+            var factory = new DeploymentConfigFactory(nonSensitiveCalamariVariables);
             
-            Action action = () => factory.Create(runningDeployment);
+            Action action = () => factory.CreateCommitToGitConfig(runningDeployment);
 
             action.Should().Throw<CommandException>();
         }

@@ -1,0 +1,257 @@
+#if NET
+#nullable enable
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Threading;
+using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages;
+using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Models;
+using Calamari.ArgoCD.Domain;
+using Calamari.ArgoCD.Dtos;
+using Calamari.ArgoCD.Git;
+using Calamari.ArgoCD.GitHub;
+using Calamari.ArgoCD.Helm;
+using Calamari.ArgoCD.Models;
+using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
+using Calamari.Deployment.Conventions;
+
+namespace Calamari.ArgoCD.Conventions
+{
+    public class UpdateArgoCDAppImagesInstallConvention : IInstallConvention
+    {
+        readonly ICalamariFileSystem fileSystem;
+        readonly ILog log;
+        readonly IGitHubPullRequestCreator pullRequestCreator;
+        readonly DeploymentConfigFactory deploymentConfigFactory;
+        readonly ICommitMessageGenerator commitMessageGenerator;
+        readonly ICustomPropertiesLoader customPropertiesLoader;
+        readonly IArgoCDApplicationManifestParser argoCdApplicationManifestParser;
+        int repositoryNumber = 1;
+
+        public UpdateArgoCDAppImagesInstallConvention(ILog log,
+                                                      IGitHubPullRequestCreator pullRequestCreator,
+                                                      ICalamariFileSystem fileSystem,
+                                                      DeploymentConfigFactory deploymentConfigFactory,
+                                                      ICommitMessageGenerator commitMessageGenerator,
+                                                      ICustomPropertiesLoader customPropertiesLoader,
+                                                      IArgoCDApplicationManifestParser argoCdApplicationManifestParser)
+        {
+            this.log = log;
+            this.pullRequestCreator = pullRequestCreator;
+            this.fileSystem = fileSystem;
+            this.deploymentConfigFactory = deploymentConfigFactory;
+            this.commitMessageGenerator = commitMessageGenerator;
+            this.customPropertiesLoader = customPropertiesLoader;
+            this.argoCdApplicationManifestParser = argoCdApplicationManifestParser;
+        }
+
+        public void Install(RunningDeployment deployment)
+        {
+            Log.Info("Executing Update Argo CD Application Images");
+            var deploymentConfig = deploymentConfigFactory.CreateUpdateImageConfig(deployment);
+
+            var repositoryFactory = new RepositoryFactory(log, deployment.CurrentDirectory, pullRequestCreator);
+
+            var argoProperties = customPropertiesLoader.Load<ArgoCDCustomPropertiesDto>();
+
+            var gitCredentials = argoProperties.Credentials.ToDictionary(c => c.Url);
+
+            log.Info($"Found {argoProperties.Applications.Length} Argo CD apps to update");
+            var updatedApplications = new List<string>();
+            var newImagesWritten = new HashSet<string>();
+            var gitReposUpdated = new HashSet<string>();
+            var gatewayIds = new HashSet<string>();
+
+            foreach (var application in argoProperties.Applications)
+            {
+                var applicationFromYaml = argoCdApplicationManifestParser.ParseManifest(application.Manifest);
+                gatewayIds.Add(application.GatewayId);
+
+                foreach (var applicationSource in applicationFromYaml.Spec.Sources.OfType<BasicSource>())
+                {
+                    var gitCredential = gitCredentials[applicationSource.RepoUrl.AbsoluteUri];
+                    var gitConnection = new GitConnection(gitCredential.Username, gitCredential.Password, applicationSource.RepoUrl.AbsoluteUri, new GitBranchName(applicationSource.TargetRevision));
+                    var repository = repositoryFactory.CloneRepository(repositoryNumber.ToString(CultureInfo.InvariantCulture), gitConnection);
+
+                    var (updatedFiles, updatedImages) = UpdateKubernetesYaml(repository.WorkingDirectory, applicationSource.Path, application.DefaultRegistry, deploymentConfig.ImageReferences);
+
+                    if (updatedImages.Count > 0)
+                    {
+                        PushToRemote(repository,
+                                     new GitBranchName(applicationSource.TargetRevision),
+                                     deploymentConfig.CommitParameters,
+                                     updatedFiles,
+                                     updatedImages);
+
+                        newImagesWritten.UnionWith(updatedImages);
+                        updatedApplications.Add(applicationFromYaml.Metadata.Name);
+                        gitReposUpdated.Add(applicationSource.RepoUrl.AbsoluteUri);
+                    }
+                }
+
+                var valuesFilesToUpdate = new HelmValuesFileUpdateTargetParser(applicationFromYaml, application.DefaultRegistry).GetValuesFilesToUpdate();
+                foreach (var valuesFileSource in valuesFilesToUpdate)
+                {
+                    if (valuesFileSource is InvalidHelmValuesFileImageUpdateTarget invalidSource)
+                    {
+                        log.Warn($"Invalid annotations setup detected.\nAlias defined: {invalidSource.Alias}. Missing corresponding {ArgoCDConstants.Annotations.OctopusImageReplacementPathsKeyWithSpecifier(invalidSource.Alias)} annotation.");
+                        continue;
+                    }
+
+                    var gitCredential = gitCredentials[valuesFileSource.RepoUrl.AbsoluteUri];
+                    var gitConnection = new GitConnection(gitCredential.Username, gitCredential.Password, valuesFileSource.RepoUrl.AbsoluteUri, new GitBranchName(valuesFileSource.TargetRevision));
+                    var repository = repositoryFactory.CloneRepository(repositoryNumber.ToString(CultureInfo.InvariantCulture), gitConnection);
+                    
+                    var helmUpdateResult = UpdateHelmImageValues(repository.WorkingDirectory,
+                                                                 valuesFileSource,
+                                                                 deploymentConfig.ImageReferences
+                                                                 );
+                    if (helmUpdateResult.ImagesUpdated.Count > 0)
+                    {
+                        PushToRemote(repository,
+                                     new GitBranchName(valuesFileSource.TargetRevision),
+                                     deploymentConfig.CommitParameters,
+                                     new HashSet<string>() {Path.Combine(valuesFileSource.Path, valuesFileSource.FileName)},
+                                     helmUpdateResult.ImagesUpdated);
+                        
+                        newImagesWritten.UnionWith(helmUpdateResult.ImagesUpdated);
+                        updatedApplications.Add(applicationFromYaml.Metadata.Name);
+                        gitReposUpdated.Add(valuesFileSource.RepoUrl.ToString());
+                    }
+                }
+            }
+
+            var outputWriter = new ArgoCDImageUpdateOutputWriter(log);
+            outputWriter.WriteImageUpdateOutput(gatewayIds,
+                                                gitReposUpdated,
+                                                argoProperties.Applications.Select(a => a.Name),
+                                                updatedApplications.Distinct(),
+                                                newImagesWritten.Count
+                                               );
+        }
+
+        (HashSet<string>, HashSet<string>) UpdateKubernetesYaml(string rootPath,
+                                                                string subFolder,
+                                                                string defaultRegistry,
+                                                                List<ContainerImageReference> imagesToUpdate)
+        {
+            var absSubFolder = Path.Combine(rootPath, subFolder);
+            
+            Func<string, IContainerImageReplacer> imageReplacerFactory;
+            HashSet<string> filesToUpdate;
+            
+            var kustomizationFile = KustomizeDiscovery.TryFindKustomizationFile(fileSystem, absSubFolder);
+            if (kustomizationFile != null)
+            {
+                filesToUpdate = new HashSet<string> { kustomizationFile };
+                imageReplacerFactory = yaml => new KustomizeImageReplacer(yaml, defaultRegistry, log);
+            }
+            else
+            {
+                filesToUpdate = FindYamlFiles(absSubFolder).ToHashSet();
+                imageReplacerFactory = yaml => new ContainerImageReplacer(yaml, defaultRegistry);
+            }
+
+            var updatedFiles = new HashSet<string>();
+            var updatedImages = new HashSet<string>();
+            foreach (var file in filesToUpdate)
+            {
+                var relativePath = Path.GetRelativePath(rootPath, file);
+                log.Verbose($"Processing file {relativePath}.");
+                var content = fileSystem.ReadFile(file);
+
+                var imageReplacer =  imageReplacerFactory(content);
+                var imageReplacementResult = imageReplacer.UpdateImages(imagesToUpdate);
+
+                if (imageReplacementResult.UpdatedImageReferences.Count > 0)
+                {
+                    fileSystem.OverwriteFile(file, imageReplacementResult.UpdatedContents);
+                    updatedImages.UnionWith(imageReplacementResult.UpdatedImageReferences);
+                    updatedFiles.Add(relativePath);
+                    log.Verbose($"Updating file {file} with new image references.");
+                    foreach (var change in imageReplacementResult.UpdatedImageReferences)
+                    {
+                        log.Verbose($"Updated image reference: {change}");
+                    }
+                }
+                else
+                {
+                    log.Verbose($"No changes made to file {relativePath} as no image references were updated.");
+                }
+            }
+
+            return (updatedFiles, updatedImages);
+        }
+
+        HelmRefUpdatedResult UpdateHelmImageValues(string rootPath, 
+                                                 HelmValuesFileImageUpdateTarget target,
+                                                 List<ContainerImageReference> imagesToUpdate)
+        {
+            var filepath = Path.Combine(rootPath, target.Path, target.FileName);
+            var fileContent = fileSystem.ReadFile(filepath);
+            log.Info($"Processing file at {target.FileName}.");
+
+            var helmImageReplacer = new HelmContainerImageReplacer(fileContent, target.DefaultClusterRegistry, target.ImagePathDefinitions);
+            var imageUpdateResult = helmImageReplacer.UpdateImages(imagesToUpdate);
+            
+            if (imageUpdateResult.UpdatedImageReferences.Count > 0)
+            {
+                fileSystem.OverwriteFile(filepath, imageUpdateResult.UpdatedContents);
+                try
+                {
+                    return new HelmRefUpdatedResult(target.RepoUrl, imageUpdateResult.UpdatedImageReferences);
+                }
+                catch (Exception ex)
+                {
+                    log.Error($"Failed to commit changes to the Git Repository: {ex.Message}");
+                    throw;
+                }
+            }
+
+            return new HelmRefUpdatedResult(target.RepoUrl, new HashSet<string>());
+        }
+
+        void PushToRemote(RepositoryWrapper repository,
+                          GitBranchName branchName,
+                          GitCommitParameters commitParameters,
+                          HashSet<string> updatedFiles,
+                          HashSet<string> updatedImages)
+        {
+            Log.Info("Staging files in repository");
+            repository.StageFiles(updatedFiles.ToArray());
+
+            var commitDescription = commitMessageGenerator.GenerateDescription(updatedImages, commitParameters.Description);
+
+            Log.Info("Commiting changes");
+            if (repository.CommitChanges(commitParameters.Summary, commitDescription))
+            {
+                Log.Info("Changes were commited, pushing to remote");
+                repository.PushChanges(commitParameters.RequiresPr,
+                                       commitParameters.Summary,
+                                       commitDescription,
+                                       branchName,
+                                       CancellationToken.None)
+                          .GetAwaiter()
+                          .GetResult();
+            }
+            else
+            {
+                Log.Info("No changes were commited.");
+            }
+        }
+
+        //NOTE: rootPath needs to include the subfolder
+        IEnumerable<string> FindYamlFiles(string rootPath)
+        {
+            var yamlFileGlob = "**/*.yaml";
+            return fileSystem.EnumerateFilesWithGlob(rootPath, yamlFileGlob);
+        }
+    }
+}
+
+#endif

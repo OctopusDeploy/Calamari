@@ -1,16 +1,17 @@
+#if NET
+using System.Collections.Generic;
+using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Models;
+
 namespace Calamari.ArgoCD.Conventions
 {
     public class ArgoCommitToGitConfig
     {
-        public ArgoCommitToGitConfig(string workingDirectory, string inputSubPath, bool recurseInputPath, string commitSummary, string commitDescription,
-                                   bool requiresPr)
+        public ArgoCommitToGitConfig(string workingDirectory, string inputSubPath, bool recurseInputPath, GitCommitParameters commitParameters)
         {
             WorkingDirectory = workingDirectory;
             InputSubPath = inputSubPath;
             RecurseInputPath = recurseInputPath;
-            CommitSummary = commitSummary;
-            CommitDescription = commitDescription;
-            RequiresPr = requiresPr;
+            CommitParameters = commitParameters;
         }
         
         public string WorkingDirectory { get; set; }
@@ -19,9 +20,7 @@ namespace Calamari.ArgoCD.Conventions
         
         public string InputSubPath { get; }
         public bool RecurseInputPath { get; }
-        
-        public string CommitSummary { get; }
-        public string CommitDescription { get; }
-        public bool RequiresPr { get; }
+        public GitCommitParameters CommitParameters { get; }
     }
 }
+#endif
