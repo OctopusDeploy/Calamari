@@ -12,6 +12,7 @@ using Calamari.Build.Utilities;
 using Nuke.Common.IO;
 using Nuke.Common.Tooling;
 using Serilog;
+using SharpCompress;
 
 namespace Calamari.Build;
 
@@ -151,24 +152,33 @@ partial class Build
     {
         if (runtimeId != null)
         {
+            Log.Information("Looking for runtime specific publish output for runtime '{RuntimeId}'", runtimeId);
+            Log.Information("Checking if {Path} exists", SourceDirectory / project / "bin" / Configuration / framework / runtimeId / $"{project}.deps.json");
             if (File.Exists(SourceDirectory / project / "bin" / Configuration / framework / runtimeId / $"{project}.deps.json"))
                 return (SourceDirectory, $"{project}/bin/{Configuration}/{framework}/{runtimeId}");
+            Log.Information("Checking if {Path} exists", RootDirectory / project / "bin" / Configuration / framework / runtimeId / $"{project}.deps.json");
             if (File.Exists(RootDirectory / project / "bin" / Configuration / framework / runtimeId / $"{project}.deps.json"))
                 return (RootDirectory, $"{project}/bin/{Configuration}/{framework}/{runtimeId}");
         }
 
+        Log.Information("Checking if {Path} exists", SourceDirectory / project / "bin" / Configuration / framework / $"{project}.deps.json");
         if (File.Exists(SourceDirectory / project / "bin" / Configuration / framework / $"{project}.deps.json"))
             return (SourceDirectory, $"{project}/bin/{Configuration}/{framework}");
 
+        Log.Information("Checking if {Path} exists", RootDirectory / project / "bin" / Configuration / framework / $"{project}.deps.json");
         if (File.Exists(RootDirectory / project / "bin" / Configuration / framework / $"{project}.deps.json"))
             return (RootDirectory, $"{project}/bin/{Configuration}/{framework}");
 
+        Log.Information("Checking if {Path} exists", SourceDirectory / project / runtimeId / $"{project}.deps.json");
         if (File.Exists(SourceDirectory / project / runtimeId / $"{project}.deps.json"))
             return (SourceDirectory, $"{project}/{runtimeId}"); 
         
+        Log.Information("Checking if {Path} exists", RootDirectory / project / runtimeId / $"{project}.deps.json");
         if (File.Exists(RootDirectory / project / runtimeId / $"{project}.deps.json"))
             return (RootDirectory, $"{project}/{runtimeId}"); 
 
+        RootDirectory.GetFiles(depth: 10).ForEach(file => Log.Information("{File}", file.GetRelativePathTo(RootDirectory)));
+        
         throw new DirectoryNotFoundException($"Could not find published output for projectg '{project}', framework '{framework}' and runtime '{runtimeId}' - unable to create SBOM");
     }
 
