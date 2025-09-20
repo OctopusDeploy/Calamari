@@ -192,33 +192,28 @@ partial class Build : NukeBuild
              .DependsOn(PublishAzureWebAppNetCoreShim)
              .Executes(() =>
                        {
-                           if (!OperatingSystem.IsWindows())
-                               Log.Warning("Building Calamari on a non-windows machine will result "
-                                           + "in the {DefaultNugetPackageName} and {CloudNugetPackageName} "
-                                           + "nuget packages being built as .Net Core 6.0 packages "
-                                           + "instead of as .Net Framework. "
-                                           + "This can cause compatibility issues when running certain "
-                                           + "deployment steps in Octopus Server",
-                                           RootProjectName, $"{RootProjectName}.{FixedRuntimes.Cloud}");
-
                            var nugetVersion = NugetVersion.Value;
-                           var outputDirectory = DoPublish(RootProjectName,
-                                                           OperatingSystem.IsWindows() ? Frameworks.Net462 : Frameworks.Net60,
-                                                           nugetVersion);
                            if (OperatingSystem.IsWindows())
                            {
+                               Log.Warning("Building Calamari on a non-windows machine will result "
+                                        + "in the {DefaultNugetPackageName} and {CloudNugetPackageName} "
+                                        + "nuget packages being built as .Net Core 6.0 packages "
+                                        + "instead of as .Net Framework. "
+                                        + "This can cause compatibility issues when running certain "
+                                        + "deployment steps in Octopus Server",
+                                        RootProjectName, $"{RootProjectName}.{FixedRuntimes.Cloud}");
+                               var outputDirectory = DoPublish(RootProjectName, Frameworks.Net462, nugetVersion);
                                outputDirectory.Copy(LegacyCalamariDirectory / RootProjectName, ExistsPolicy.DirectoryMerge | ExistsPolicy.FileFail);
                            }
                            else
                            {
+                               foreach (var rid in GetRuntimeIdentifiers(Solution.GetProject(RootProjectName)!))
+                               {
+                                   DoPublish(RootProjectName, Frameworks.Net60, nugetVersion, rid);
+                               }
                                Log.Warning($"Skipping the bundling of {RootProjectName} into the Calamari.Legacy bundle. "
                                            + "This is required for providing .Net Framework executables for legacy Target Operating Systems");
                            }
-
-                           DoPublish(RootProjectName,
-                                     OperatingSystem.IsWindows() ? Frameworks.Net462 : Frameworks.Net60,
-                                     nugetVersion,
-                                     FixedRuntimes.Cloud);
 
                            foreach (var rid in GetRuntimeIdentifiers(Solution.GetProject(RootProjectName)!))
                                DoPublish(RootProjectName, Frameworks.Net60, nugetVersion, rid);

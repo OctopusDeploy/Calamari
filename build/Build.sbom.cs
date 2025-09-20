@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
@@ -9,6 +10,7 @@ using Nuke.Common.Tools.Docker;
 using Nuke.Common.Tools.OctoVersion;
 using Calamari.Build.Utilities;
 using Nuke.Common.IO;
+using Nuke.Common.Tooling;
 using Serilog;
 
 namespace Calamari.Build;
@@ -27,6 +29,7 @@ partial class Build
     public Target BuildSoftwareBillOfMaterials => _ => _
         .Requires(() => DependencyTrackUrl)
         .Requires(() => DependencyTrackApiKey)
+        .DependsOn(Publish)
         .Executes(async () =>
         {
             ArgumentNullException.ThrowIfNull(Solution, nameof(Solution));
@@ -55,13 +58,15 @@ partial class Build
         Logging.InBlock($"Ensuring trivy container exists locally", () =>
         {
             DockerTasks.DockerPull(x => x
-                .SetName("docker.packages.octopushq.com/octopusdeploy/tool-containers/tool-sbom-cli:latest"));
+                .SetName("docker.packages.octopushq.com/octopusdeploy/tool-containers/tool-sbom-cli:latest")
+                .SetPlatform("linux/amd64"));
         });
 
         Logging.InBlock($"Ensuring cyclonedx/cyclonedx-cli container exists locally", () =>
         {
             DockerTasks.DockerPull(x => x
-                .SetName("cyclonedx/cyclonedx-cli:latest"));
+                .SetName("cyclonedx/cyclonedx-cli:latest")
+                .SetPlatform("linux/amd64"));
         });
     }
 
@@ -91,8 +96,9 @@ partial class Build
             
             DockerTasks.DockerRun(x => x
                 .SetName(containerName)
+                .SetPlatform("linux/amd64")
                 .SetImage("docker.packages.octopushq.com/octopusdeploy/tool-containers/tool-sbom-cli:latest")
-                .SetVolume($"{ArtifactsDirectory}:/sboms", $"{ArtifactsDirectory}:/sboms")
+                .SetVolume($"{ArtifactsDirectory}:/sboms")
                 .SetCommand($"sbom-uploader")
                 .SetEnv(
                         $"SBOM_UPLOADER_URL={DependencyTrackUrl}",
@@ -114,6 +120,9 @@ partial class Build
         var containerName = $"calamari-sbom-{framework}";
         var publishedTo = $"{project}/{framework}";
 
+        if (!Directory.Exists(publishedTo))
+            publishedTo = $"{project}/bin/{Configuration}/{framework}";
+
         if (!string.IsNullOrEmpty(runtimeId))
         {
             containerName += $"-{runtimeId}";
@@ -121,12 +130,16 @@ partial class Build
             runtimeId = runtimeId != "portable" && runtimeId != "Cloud" ? runtimeId : null;
         }
 
+        if (!Directory.Exists(SourceDirectory / publishedTo))
+            throw new DirectoryNotFoundException($"Could not find published output for {project} in {SourceDirectory / publishedTo} - unable to create SBOM");
+
         var outputFile = $"{project}.{version}{(string.IsNullOrEmpty(runtimeId) ? "" : $".{runtimeId}")}.sbom.cdx.json";
         ContainersWeHaveCreated.Add(containerName);
         DockerTasks.DockerRun(x => x
            .SetName(containerName)
+           .SetPlatform("linux/amd64")
            .SetImage("docker.packages.octopushq.com/octopusdeploy/tool-containers/tool-sbom-cli:latest")
-           .SetVolume($"{RootDirectory}:/source", $"{ArtifactsDirectory}:/output")
+           .SetVolume($"{SourceDirectory}:/source", $"{ArtifactsDirectory}:/output")
            .SetCommand($"trivy")
            .SetArgs("fs", $"/source/{publishedTo}", "--format", "cyclonedx",
                     "--output", $"/output/{outputFile}")
@@ -150,6 +163,7 @@ partial class Build
                 .ToArray();
             DockerTasks.DockerRun(x => x
                 .SetName(containerName)
+                .SetPlatform("linux/amd64")
                 .SetRm(true)
                 .SetVolume($"{ArtifactsDirectory}:/sboms")
                 .SetImage("cyclonedx/cyclonedx-cli")
@@ -164,6 +178,7 @@ partial class Build
             ContainersWeHaveCreated.Add(containerName);
             DockerTasks.DockerRun(x => x
                 .SetName($"octopus-sbom-validator-{octoVersionInfo.FullSemVer}")
+                .SetPlatform("linux/amd64")
                 .SetRm(true)
                 .SetVolume($"{ArtifactsDirectory}:/sboms")
                 .SetImage("cyclonedx/cyclonedx-cli")
