@@ -118,7 +118,8 @@ partial class Build
     string CreateSBOM(string project, string framework, string version, string? runtimeId = null)
     {
         var containerName = $"calamari-sbom-{project}-{framework}{runtimeId}";
-        var publishedTo = GetPublishedTo(project, framework, runtimeId);
+        var (directory, relativePath) = GetPublishedTo(project, framework, runtimeId);
+        Log.Information("Creating SBOM for {Project} from {Directory}/{RelativePath}", project, directory, relativePath);
 
         var runtimeSuffix = GetRuntimeSuffix(runtimeId);
         
@@ -128,9 +129,9 @@ partial class Build
            .SetName(containerName)
            .SetPlatform("linux/amd64")
            .SetImage("docker.packages.octopushq.com/octopusdeploy/tool-containers/tool-sbom-cli:latest")
-           .SetVolume($"{SourceDirectory}:/source", $"{ArtifactsDirectory}:/output")
+           .SetVolume($"{directory}:/source", $"{ArtifactsDirectory}:/output")
            .SetCommand($"trivy")
-           .SetArgs("fs", $"/source/{publishedTo}", "--format", "cyclonedx",
+           .SetArgs("fs", $"/source/{relativePath}", "--format", "cyclonedx",
                     "--output", $"/output/{outputFile}")
            .SetRm(true));
 
@@ -146,18 +147,29 @@ partial class Build
         return $".{runtimeId}";
     }
 
-    string GetPublishedTo(string project, string framework, string? runtimeId)
+    (AbsolutePath directory, string Path) GetPublishedTo(string project, string framework, string? runtimeId)
     {
-        if (runtimeId != null && File.Exists(SourceDirectory / project / "bin" / Configuration / framework / runtimeId / $"{project}.deps.json"))
-            return $"{project}/bin/{Configuration}/{framework}/{runtimeId}";
+        if (runtimeId != null)
+        {
+            if (File.Exists(SourceDirectory / project / "bin" / Configuration / framework / runtimeId / $"{project}.deps.json"))
+                return (SourceDirectory, $"{project}/bin/{Configuration}/{framework}/{runtimeId}");
+            if (File.Exists(RootDirectory / project / "bin" / Configuration / framework / runtimeId / $"{project}.deps.json"))
+                return (RootDirectory, $"{project}/bin/{Configuration}/{framework}/{runtimeId}");
+        }
 
         if (File.Exists(SourceDirectory / project / "bin" / Configuration / framework / $"{project}.deps.json"))
-            return $"{project}/bin/{Configuration}/{framework}";
+            return (SourceDirectory, $"{project}/bin/{Configuration}/{framework}");
+
+        if (File.Exists(RootDirectory / project / "bin" / Configuration / framework / $"{project}.deps.json"))
+            return (RootDirectory, $"{project}/bin/{Configuration}/{framework}");
 
         if (File.Exists(SourceDirectory / project / runtimeId / $"{project}.deps.json"))
-            return $"{project}/{runtimeId}"; 
+            return (SourceDirectory, $"{project}/{runtimeId}"); 
+        
+        if (File.Exists(RootDirectory / project / runtimeId / $"{project}.deps.json"))
+            return (RootDirectory, $"{project}/{runtimeId}"); 
 
-        throw new DirectoryNotFoundException($"Could not find published output for projectg '{project}', framework '{framework}' and runtime '{framework} in {SourceDirectory} - unable to create SBOM");
+        throw new DirectoryNotFoundException($"Could not find published output for projectg '{project}', framework '{framework}' and runtime '{runtimeId}' - unable to create SBOM");
     }
 
     void CombineAndValidateSBOM(OctoVersionInfo octoVersionInfo, string[] inputFiles, string outputFileName)
