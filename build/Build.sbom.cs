@@ -117,28 +117,12 @@ partial class Build
     /// <returns>the created SBOM filename</returns>
     string CreateSBOM(string project, string framework, string version, string? runtimeId = null)
     {
-        var containerName = $"calamari-sbom-{framework}";
-        var publishedTo = $"{project}/{framework}";
-        Log.Information("Creating SBOM for {Project} targeting {Framework}{Empty}", project, framework, string.IsNullOrEmpty(runtimeId) ? "" : $" and runtime {runtimeId}");
+        var containerName = $"calamari-sbom-{project}-{framework}{runtimeId}";
+        var publishedTo = GetPublishedTo(project, framework, runtimeId);
 
-        if (!Directory.Exists(SourceDirectory / publishedTo))
-        {
-            Log.Information("Did not find folder for {Project} in {PublishedTo}, trying path {NewPath}", project, SourceDirectory / publishedTo, $"{project}/bin/{Configuration}/{framework}");
-            publishedTo = $"{project}/bin/{Configuration}/{framework}";
-        }
-
-        if (!string.IsNullOrEmpty(runtimeId))
-        {
-            containerName += $"-{runtimeId}";
-            publishedTo = $"{publishedTo}/{runtimeId}";
-            Log.Information("Looking for published output in {PublishedTo}", SourceDirectory / publishedTo);
-            runtimeId = runtimeId != "portable" && runtimeId != "Cloud" ? runtimeId : null;
-        }
-
-        if (!Directory.Exists(SourceDirectory / publishedTo))
-            throw new DirectoryNotFoundException($"Could not find published output for {project} in {SourceDirectory / publishedTo} - unable to create SBOM");
-
-        var outputFile = $"{project}.{version}{(string.IsNullOrEmpty(runtimeId) ? "" : $".{runtimeId}")}.sbom.cdx.json";
+        var runtimeSuffix = GetRuntimeSuffix(runtimeId);
+        
+        var outputFile = $"{project}.{version}{runtimeSuffix}.sbom.cdx.json";
         ContainersWeHaveCreated.Add(containerName);
         DockerTasks.DockerRun(x => x
            .SetName(containerName)
@@ -153,6 +137,27 @@ partial class Build
         TeamCity.Instance?.PublishArtifacts(ArtifactsDirectory / outputFile);
         
         return outputFile;
+    }
+
+    static string GetRuntimeSuffix(string? runtimeId)
+    {
+        if (runtimeId is null or "portable" or "Cloud")
+            return "";
+        return $".{runtimeId}";
+    }
+
+    string GetPublishedTo(string project, string framework, string? runtimeId)
+    {
+        if (runtimeId != null && File.Exists(SourceDirectory / project / "bin" / Configuration / framework / runtimeId / $"{project}.deps.json"))
+            return $"{project}/bin/{Configuration}/{framework}/{runtimeId}";
+
+        if (File.Exists(SourceDirectory / project / "bin" / Configuration / framework / $"{project}.deps.json"))
+            return $"{project}/bin/{Configuration}/{framework}";
+
+        if (File.Exists(SourceDirectory / project / runtimeId / $"{project}.deps.json"))
+            return $"{project}/{runtimeId}"; 
+
+        throw new DirectoryNotFoundException($"Could not find published output for projectg '{project}', framework '{framework}' and runtime '{framework} in {SourceDirectory} - unable to create SBOM");
     }
 
     void CombineAndValidateSBOM(OctoVersionInfo octoVersionInfo, string[] inputFiles, string outputFileName)
