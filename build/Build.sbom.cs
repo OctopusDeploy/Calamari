@@ -120,7 +120,7 @@ partial class Build
         var containerName = $"calamari-sbom-{framework}";
         var publishedTo = $"{project}/{framework}";
 
-        if (!Directory.Exists(publishedTo))
+        if (!Directory.Exists(SourceDirectory / publishedTo))
             publishedTo = $"{project}/bin/{Configuration}/{framework}";
 
         if (!string.IsNullOrEmpty(runtimeId))
