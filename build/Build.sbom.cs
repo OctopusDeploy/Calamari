@@ -177,9 +177,11 @@ partial class Build
         if (File.Exists(RootDirectory / project / runtimeId / $"{project}.deps.json"))
             return (RootDirectory, $"{project}/{runtimeId}"); 
 
-        RootDirectory.GetFiles(depth: 10).ForEach(file => Log.Information("{File}", file.GetRelativePathTo(RootDirectory)));
+        Directory
+            .EnumerateFiles(RootDirectory, "*.deps.json", SearchOption.AllDirectories)
+            .ForEach(file => Log.Information("Found deps.json at {File}", file));
         
-        throw new DirectoryNotFoundException($"Could not find published output for projectg '{project}', framework '{framework}' and runtime '{runtimeId}' - unable to create SBOM");
+        throw new DirectoryNotFoundException($"Could not find published output for project '{project}', framework '{framework}' and runtime '{runtimeId}' - unable to create SBOM");
     }
 
     void CombineAndValidateSBOM(OctoVersionInfo octoVersionInfo, string[] inputFiles, string outputFileName)
