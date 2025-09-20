@@ -119,14 +119,19 @@ partial class Build
     {
         var containerName = $"calamari-sbom-{framework}";
         var publishedTo = $"{project}/{framework}";
+        Log.Information("Creating SBOM for {Project} targeting {Framework}{Empty}", project, framework, string.IsNullOrEmpty(runtimeId) ? "" : $" and runtime {runtimeId}");
 
         if (!Directory.Exists(SourceDirectory / publishedTo))
+        {
+            Log.Information("Did not find folder for {Project} in {PublishedTo}, trying path {NewPath}", project, SourceDirectory / publishedTo, $"{project}/bin/{Configuration}/{framework}");
             publishedTo = $"{project}/bin/{Configuration}/{framework}";
+        }
 
         if (!string.IsNullOrEmpty(runtimeId))
         {
             containerName += $"-{runtimeId}";
             publishedTo = $"{publishedTo}/{runtimeId}";
+            Log.Information("Looking for published output in {PublishedTo}", SourceDirectory / publishedTo);
             runtimeId = runtimeId != "portable" && runtimeId != "Cloud" ? runtimeId : null;
         }
 
