@@ -9,6 +9,7 @@ using Nuke.Common.CI.TeamCity;
 using Nuke.Common.Tools.Docker;
 using Nuke.Common.Tools.OctoVersion;
 using Calamari.Build.Utilities;
+using Nuke.Common.IO;
 using Serilog;
 
 namespace Calamari.Build;
@@ -42,6 +43,7 @@ partial class Build
             var results = new List<string>();
             Logging.InBlock("Creating individual SBOMs", () =>
             {
+                ArtifactsDirectory.CreateOrCleanDirectory();
                 var components = Directory
                     .EnumerateFiles(RootDirectory, "*.deps.json", SearchOption.AllDirectories)
                     .Where(path => !path.Contains("/obj/"))
