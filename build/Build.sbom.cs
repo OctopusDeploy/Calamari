@@ -48,7 +48,7 @@ partial class Build
                     .Where(path => !path.Contains("/TestResults/"))
                     .Where(path => !path.Contains("/.git/"))
                     .Where(path => !path.Contains(".Test"))
-                    .Where(path => !path.Contains("/_build/"))
+                    .Where(path => !path.Contains("/_build"))
                     .Select(ResolveCalamariComponent);
 
                 foreach (var component in components)
