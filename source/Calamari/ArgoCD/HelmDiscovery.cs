@@ -17,6 +17,27 @@ namespace Calamari.ArgoCD
 
             return null;
         }
+        
+        public static string? TryFindValuesFile(ICalamariFileSystem fileSystem, string rootPath)
+        {
+            string[] filenames = {"values", "Values"};
+
+            foreach (var filename in filenames)
+            {
+                foreach (var ext in ArgoCDConstants.SupportedAppFileExtensions)
+                {
+                    var fullFilename = $"{filename}{ext}";
+                    var path = Path.Combine(rootPath, fullFilename);
+                    if (fileSystem.FileExists(path))
+                    {
+                        return fullFilename; // JUST the basename, no path.
+                    }
+                }
+            }
+
+            return null;
+
+        }
     }
 }
 #endif

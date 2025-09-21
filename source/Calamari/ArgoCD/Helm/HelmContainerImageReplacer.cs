@@ -35,9 +35,9 @@ namespace Calamari.ArgoCD.Helm
             var fileContent = yamlContent;
             foreach (var existingImageReference in existingImageReferences)
             {
-                log.Info($"Apply template {existingImageReference.TagPath}, {existingImageReference.ImageReference.ToString()}");
+                log.Verbose($"Apply template {existingImageReference.TagPath}, {existingImageReference.ImageReference.ToString()}");
                 var imagesString = imagesToUpdate.Select(i => i.ToString());
-                log.Info($"Images to Update = {string.Join(",", imagesString)}");
+                log.Verbose($"Images to Update = {string.Join(",", imagesString)}");
                 var matchedUpdate = imagesToUpdate.FirstOrDefault(i => i.IsMatch(existingImageReference.ImageReference));
                 if (matchedUpdate != null && !matchedUpdate.Tag.Equals(existingImageReference.ImageReference.Tag, StringComparison.OrdinalIgnoreCase))
                 {

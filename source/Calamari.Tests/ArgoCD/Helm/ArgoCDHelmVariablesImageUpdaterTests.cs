@@ -272,7 +272,7 @@ image:
   tag: 0.1
   pullPolicy: IfNotPresent
 ";
-            originRepo.AddFilesToBranch(argoCDBranchName, (Path.Combine("files", "values.yaml"), multiImageValuesFile)); //AHHH - values.yaml vs values.yml
+            originRepo.AddFilesToBranch(argoCDBranchName, (Path.Combine("files", "values.yaml"), multiImageValuesFile));
             originRepo.AddFilesToBranch(argoCDBranchName, (Path.Combine("files", "Chart.yaml"), "Content Is Arbitrary"));
             
             argoCdApplicationFromYaml = new Application()
