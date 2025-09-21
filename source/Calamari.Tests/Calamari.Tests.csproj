@@ -232,33 +232,13 @@
     <None Remove="KubernetesFixtures\Scripts\KubernetesHealthCheck.ps1" />
     <None Remove="KubernetesFixtures\Scripts\KubernetesHealthCheck.sh" />
   </ItemGroup>
-  <!--
-    In netcore 2.1.3, the framework stopped calculating package definitions automatically "for perf"
-    (see https://github.com/dotnet/sdk/issues/2342)
-    So, we need to add a dependency onto `GetToolFiles` to calculate them first.
-    Unfortunately, RunResolvePackageDependencies doesn't exist for the full fat framework, so we
-    define a new empty target if it's not already defined to keep it happy.
-  -->
-  <Target Name="RunResolvePackageDependencies" Condition="'$(RunResolvePackageDependencies)' != ''" />
   <Target Name="CopyTools" AfterTargets="Build" DependsOnTargets="RunResolvePackageDependencies">
-    <CreateItem Include="@(PackageDefinitions)" Condition="'%(Name)' == 'ScriptCS'">
-      <Output TaskParameter="Include" ItemName="ScriptCSRef" />
-    </CreateItem>
-    <PropertyGroup>
-      <ScriptCS>@(ScriptCSRef->'%(ResolvedPath)')/tools/*.*</ScriptCS>
-      <ScriptCSExe Condition="'$(TargetFramework)' == 'net6.0'">@(ScriptCSRef->'%(ResolvedPath)')/tools/*.exe</ScriptCSExe>
-    </PropertyGroup>
     <ItemGroup>
-      <ScriptCSFiles Include="$(ScriptCS)" />
-      <ScriptCSFilesExe Condition="'$(TargetFramework)' == 'net6.0'" Include="$(ScriptCSExe)" />
-      <DotnetScriptFiles Condition="'$(TargetFramework)' == 'net6.0'" Include="$(MSBuildProjectDirectory)/../Calamari.Scripting/DotnetScript/dotnet-script.*.zip" />
-      <DotnetScriptFilesExe Condition="'$(TargetFramework)' == 'net6.0'" Include="$(OutDir)/dotnet-script/*.sh;$(OutDir)/dotnet-script/*.exe" />
+      <DotnetScriptFiles Include="$(MSBuildProjectDirectory)/../Calamari.Scripting/DotnetScript/dotnet-script.*.zip" />
+      <DotnetScriptFilesExe Include="$(OutDir)/dotnet-script/*.sh;$(OutDir)/dotnet-script/*.exe" />
     </ItemGroup>
-    <Exec Command="chmod +x %(ScriptCSFilesExe.Identity)" IgnoreExitCode="true" Condition="'$(TargetFramework)' == 'net6.0'" />
-    <Copy SourceFiles="@(ScriptCSFiles)" DestinationFolder="$(OutDir)/ScriptCS/" SkipUnchangedFiles="true" />
     <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(OutDir)/" SkipUnchangedFiles="true" />
-    <Exec Command="chmod +x %(DotnetScriptFilesExe.Identity)" IgnoreExitCode="true" Condition="'$(TargetFramework)' == 'net6.0'" />
-    <Copy SourceFiles="@(ScriptCSFiles)" DestinationFolder="$(PublishDir)/ScriptCS/" Condition="'$(PublishDir)' != ''" />
-    <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(PublishDir)/" Condition="'$(PublishDir)' != '' And '$(TargetFramework)' == 'net6.0'" />
+    <Exec Command="chmod +x %(DotnetScriptFilesExe.Identity)" IgnoreExitCode="true" />
+    <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(PublishDir)/" Condition="'$(PublishDir)' != ''" />
   </Target>
 </Project>
