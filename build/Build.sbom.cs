@@ -44,10 +44,11 @@ partial class Build
             {
                 var components = Directory
                     .EnumerateFiles(RootDirectory, "*.deps.json", SearchOption.AllDirectories)
-                    .Where(path => !path.Contains("obj/"))
-                    .Where(path => !path.Contains("TestResults/"))
-                    .Where(path => !path.Contains(".git/"))
+                    .Where(path => !path.Contains("/obj/"))
+                    .Where(path => !path.Contains("/TestResults/"))
+                    .Where(path => !path.Contains("/.git/"))
                     .Where(path => !path.Contains(".Test"))
+                    .Where(path => !path.Contains("/_build/"))
                     .Select(ResolveCalamariComponent);
 
                 foreach (var component in components)
