@@ -15,7 +15,7 @@ public class RuntimeTargetParser
             if (parts.Length == 0 || parts.Length > 2)
                 throw new InvalidOperationException($"Could not parse the runtime target name '{runtimeTargetName}'.");
 
-            Framework = parts[0];
+            Framework = parts[0].Replace(".NETCoreApp,Version=v", "net");
             if (parts.Length == 2)
                 Runtime = parts[1];
         }
