@@ -267,19 +267,39 @@ image2:
             //Arrange
             const string multiImageValuesFile = @"
 replicaCount: 1
-
 image:
   repository: quay.io/argoprojlabs/argocd-e2e-container
   tag: 0.1
   pullPolicy: IfNotPresent
 ";
-            originRepo.AddFilesToBranch(argoCDBranchName, ("values.yaml", multiImageValuesFile));
-            originRepo.AddFilesToBranch(argoCDBranchName, ("Chart.yaml", multiImageValuesFile));
+            originRepo.AddFilesToBranch(argoCDBranchName, (Path.Combine("files", "values.yaml"), multiImageValuesFile)); //AHHH - values.yaml vs values.yml
+            originRepo.AddFilesToBranch(argoCDBranchName, (Path.Combine("files", "Chart.yaml"), "Content Is Arbitrary"));
             
-            argoCdApplicationFromYaml.Metadata.Annotations = new Dictionary<string, string>()
+            argoCdApplicationFromYaml = new Application()
             {
-                { ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey, "{{ .Values.image.repository }}:{{ .Values.image.tag }}" }
+                Metadata = new Metadata()
+                {
+                    Namespace = "MyAppp",
+                    Annotations = new Dictionary<string, string>()
+                    {
+                        { ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey, "{{ .Values.image.repository }}:{{ .Values.image.tag }}" }
+                    }
+                },
+                Spec = new ApplicationSpec()
+                {
+                    Sources = new List<SourceBase>()
+                    {
+                        new BasicSource()
+                        {
+                            RepoUrl = new Uri(OriginPath),
+                            Path = "files",
+                            TargetRevision = argoCDBranchName.Value,
+                        }
+                    }
+                }
             };
+            argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
+                                           .Returns(argoCdApplicationFromYaml);
 
             var updater = new UpdateArgoCDAppImagesInstallConvention(log,
                                                                      Substitute.For<IGitHubPullRequestCreator>(),
@@ -290,11 +310,27 @@ image:
                                                                      argoCdApplicationManifestParser);
             var variables = new CalamariVariables
             {
-                [PackageVariables.IndexedImage("argocd-e2e-container")] = "argoprojlabs/argocd-e2e-container:1.27.1",
+                [PackageVariables.IndexedImage("argocd-e2e-container")] = "quay.io/argoprojlabs/argocd-e2e-container:0.3",
                 [PackageVariables.IndexedPackagePurpose("argocd-e2e-container")] = "DockerImageReference",
             };
             
-            
+            //Act
+            var runningDeployment = new RunningDeployment(null, variables);
+            runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
+            runningDeployment.StagingDirectory = tempDirectory;
+
+            updater.Install(runningDeployment);
+            //Assert
+            var resultRepo = CloneOrigin();
+            var valuesFileContent = fileSystem.ReadFile(Path.Combine(resultRepo, "files", "values.yaml"));
+            valuesFileContent.ReplaceLineEndings().Should()
+                             .Be(@"
+replicaCount: 1
+image:
+  repository: quay.io/argoprojlabs/argocd-e2e-container
+  tag: 0.3
+  pullPolicy: IfNotPresent
+".ReplaceLineEndings());
         } 
 
         string CloneOrigin()
