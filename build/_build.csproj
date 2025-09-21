@@ -28,7 +28,7 @@
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="Nuke.Common" Version="8.1.4" />
-        <PackageReference Include="Octopus.OctoVersion.Tool" Version="1.0.9" ExcludeAssets="all" />
+        <PackageReference Include="Octopus.OctoVersion.Tool" Version="0.3.403" ExcludeAssets="all" />
         <PackageReference Include="AzureSignTool" Version="6.0.1" ExcludeAssets="all" />
     </ItemGroup>
     <ItemGroup>
