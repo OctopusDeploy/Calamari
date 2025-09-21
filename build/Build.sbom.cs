@@ -9,7 +9,6 @@ using Nuke.Common.CI.TeamCity;
 using Nuke.Common.Tools.Docker;
 using Nuke.Common.Tools.OctoVersion;
 using Calamari.Build.Utilities;
-using Nuke.Common.IO;
 using Serilog;
 
 namespace Calamari.Build;
@@ -53,7 +52,7 @@ partial class Build
 
                 foreach (var component in components)
                 {
-                    var sbomFile = CreateSBOM(component.Project, component.Framework, octoVersionInfo.FullSemVer, component.Runtime);
+                    var sbomFile = CreateSBOM(component.Directory, component.Project, component.Framework, octoVersionInfo.FullSemVer, component.Runtime);
                     results.Add(sbomFile);
                 }
 
@@ -137,13 +136,12 @@ partial class Build
     }
 
     /// <returns>the created SBOM filename</returns>
-    string CreateSBOM(string project, string framework, string version, string? runtimeId = null)
+    string CreateSBOM(string directory, string project, string framework, string version, string? runtimeId)
     {
         return Logging.InBlock($"Creating SBOM for project '{project}', framework '{framework}' and runtime '{runtimeId}'", () =>
              {
                  var containerName = $"calamari-sbom-{project}-{framework}{runtimeId}";
-                 var (directory, relativePath) = GetPublishedTo(project, framework, runtimeId);
-                 Log.Information("Creating SBOM for {Project} from {Directory}/{RelativePath}", project, directory, relativePath);
+                 Log.Information("Creating SBOM for {Project} from {Directory}/", project, directory);
 
                  var runtimeSuffix = GetRuntimeSuffix(runtimeId);
 
@@ -155,7 +153,7 @@ partial class Build
                                             .SetImage("docker.packages.octopushq.com/octopusdeploy/tool-containers/tool-sbom-cli:latest")
                                             .SetVolume($"{directory}:/source", $"{ArtifactsDirectory}:/output")
                                             .SetCommand($"trivy")
-                                            .SetArgs("fs", $"/source/{relativePath}", "--format", "cyclonedx",
+                                            .SetArgs("fs", $"/source", "--format", "cyclonedx",
                                                      "--output", $"/output/{outputFile}")
                                             .SetRm(true));
 
@@ -170,38 +168,6 @@ partial class Build
         if (runtimeId is null or "portable" or "Cloud")
             return "";
         return $".{runtimeId}";
-    }
-
-    (AbsolutePath directory, string Path) GetPublishedTo(string project, string framework, string? runtimeId)
-    {
-        if (runtimeId != null)
-        {
-            Log.Information("Looking for runtime specific publish output for runtime '{RuntimeId}'", runtimeId);
-            Log.Information("Checking if {Path} exists", SourceDirectory / project / "bin" / Configuration / framework / runtimeId / $"{project}.deps.json");
-            if (File.Exists(SourceDirectory / project / "bin" / Configuration / framework / runtimeId / $"{project}.deps.json"))
-                return (SourceDirectory, $"{project}/bin/{Configuration}/{framework}/{runtimeId}");
-            Log.Information("Checking if {Path} exists", RootDirectory / project / "bin" / Configuration / framework / runtimeId / $"{project}.deps.json");
-            if (File.Exists(RootDirectory / project / "bin" / Configuration / framework / runtimeId / $"{project}.deps.json"))
-                return (RootDirectory, $"{project}/bin/{Configuration}/{framework}/{runtimeId}");
-        }
-
-        Log.Information("Checking if {Path} exists", SourceDirectory / project / "bin" / Configuration / framework / $"{project}.deps.json");
-        if (File.Exists(SourceDirectory / project / "bin" / Configuration / framework / $"{project}.deps.json"))
-            return (SourceDirectory, $"{project}/bin/{Configuration}/{framework}");
-
-        Log.Information("Checking if {Path} exists", RootDirectory / project / "bin" / Configuration / framework / $"{project}.deps.json");
-        if (File.Exists(RootDirectory / project / "bin" / Configuration / framework / $"{project}.deps.json"))
-            return (RootDirectory, $"{project}/bin/{Configuration}/{framework}");
-
-        Log.Information("Checking if {Path} exists", SourceDirectory / project / runtimeId / $"{project}.deps.json");
-        if (File.Exists(SourceDirectory / project / runtimeId / $"{project}.deps.json"))
-            return (SourceDirectory, $"{project}/{runtimeId}"); 
-        
-        Log.Information("Checking if {Path} exists", RootDirectory / project / runtimeId / $"{project}.deps.json");
-        if (File.Exists(RootDirectory / project / runtimeId / $"{project}.deps.json"))
-            return (RootDirectory, $"{project}/{runtimeId}"); 
-
-        throw new DirectoryNotFoundException($"Could not find published output for project '{project}', framework '{framework}' and runtime '{runtimeId}' - unable to create SBOM");
     }
 
     void CombineAndValidateSBOM(OctoVersionInfo octoVersionInfo, string[] inputFiles, string outputFileName)
