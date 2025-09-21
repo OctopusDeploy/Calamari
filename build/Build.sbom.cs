@@ -43,16 +43,37 @@ partial class Build
             var results = new List<string>();
             Logging.InBlock("Creating individual SBOMs", () =>
             {
-                //not worrying about .NET Framework for SBOMs right now - we're hoping to drop it soon.
-                //var framework = OperatingSystem.IsWindows() ? Frameworks.Net462 : Frameworks.Net60;
-                //results.Add(CreateSBOM(RootProjectName, framework, NugetVersion.Value, FixedRuntimes.Cloud));
+                var components = Directory
+                    .EnumerateFiles(RootDirectory, "*.deps.json", SearchOption.AllDirectories)
+                    .Where(path => !path.Contains("obj/"))
+                    .Where(path => !path.Contains("TestResults/"))
+                    .Where(path => !path.Contains(".git/"))
+                    .Where(path => !path.Contains(".Test"))
+                    .Select(ResolveCalamariComponent);
 
-                foreach (var rid in GetRuntimeIdentifiers(Solution.GetProject(RootProjectName)!))
-                    results.Add(CreateSBOM(RootProjectName, Frameworks.Net60, NugetVersion.Value, rid));
+                foreach (var component in components)
+                {
+                    var sbomFile = CreateSBOM(component.Project, component.Framework, octoVersionInfo.FullSemVer, component.Runtime);
+                    results.Add(sbomFile);
+                }
+
             });
             CombineAndValidateSBOM(octoVersionInfo, results.Select(fileName => $"/sboms/{fileName}").ToArray(), combinedFileName);
             await UploadToDependencyTrack(octoVersionInfo, combinedFileName);
         });
+
+    static CalamariComponent ResolveCalamariComponent(string x)
+    {
+        var runtimeTarget = RuntimeTargetParser.ParseFromFile(x);
+
+        return new CalamariComponent(
+            Directory: Path.GetDirectoryName(x) ?? throw new InvalidOperationException($"Could not determine directory name for '{x}'"),
+            Project: Path.GetFileName(x).Replace(".deps.json", ""),
+            Framework: runtimeTarget.Framework,
+            Runtime: runtimeTarget.Runtime
+        );
+    }
+    
 
     static void EnsureDockerImagesExistLocally()
     {
@@ -237,3 +258,5 @@ partial class Build
             }
         });
 }
+
+record CalamariComponent(string Directory, string Project, string Framework, string? Runtime);
