@@ -10,9 +10,7 @@ using Nuke.Common.Tools.Docker;
 using Nuke.Common.Tools.OctoVersion;
 using Calamari.Build.Utilities;
 using Nuke.Common.IO;
-using Nuke.Common.Tooling;
 using Serilog;
-using SharpCompress;
 
 namespace Calamari.Build;
 
@@ -37,6 +35,9 @@ partial class Build
             var octoVersionInfo = OctoVersionInfo.Value ?? throw new InvalidOperationException("Required OctoVersionInfo was not populated");
             var combinedFileName = $"calamari.{octoVersionInfo.FullSemVer}-sbom.cdx.json";
 
+            // redirect all docker output to stdout, as lots of it goes as stderr when it's just progress messages
+            DockerTasks.DockerLogger = (_, message) => Log.Information("[Docker] {Message}", message);
+            
             EnsureDockerImagesExistLocally();
 
             var results = new List<string>();
@@ -118,27 +119,30 @@ partial class Build
     /// <returns>the created SBOM filename</returns>
     string CreateSBOM(string project, string framework, string version, string? runtimeId = null)
     {
-        var containerName = $"calamari-sbom-{project}-{framework}{runtimeId}";
-        var (directory, relativePath) = GetPublishedTo(project, framework, runtimeId);
-        Log.Information("Creating SBOM for {Project} from {Directory}/{RelativePath}", project, directory, relativePath);
+        return Logging.InBlock($"Creating SBOM for project '{project}', framework '{framework}' and runtime '{runtimeId}'", () =>
+             {
+                 var containerName = $"calamari-sbom-{project}-{framework}{runtimeId}";
+                 var (directory, relativePath) = GetPublishedTo(project, framework, runtimeId);
+                 Log.Information("Creating SBOM for {Project} from {Directory}/{RelativePath}", project, directory, relativePath);
 
-        var runtimeSuffix = GetRuntimeSuffix(runtimeId);
-        
-        var outputFile = $"{project}.{version}{runtimeSuffix}.sbom.cdx.json";
-        ContainersWeHaveCreated.Add(containerName);
-        DockerTasks.DockerRun(x => x
-           .SetName(containerName)
-           .SetPlatform("linux/amd64")
-           .SetImage("docker.packages.octopushq.com/octopusdeploy/tool-containers/tool-sbom-cli:latest")
-           .SetVolume($"{directory}:/source", $"{ArtifactsDirectory}:/output")
-           .SetCommand($"trivy")
-           .SetArgs("fs", $"/source/{relativePath}", "--format", "cyclonedx",
-                    "--output", $"/output/{outputFile}")
-           .SetRm(true));
+                 var runtimeSuffix = GetRuntimeSuffix(runtimeId);
 
-        TeamCity.Instance?.PublishArtifacts(ArtifactsDirectory / outputFile);
-        
-        return outputFile;
+                 var outputFile = $"{project}.{version}{runtimeSuffix}.sbom.cdx.json";
+                 ContainersWeHaveCreated.Add(containerName);
+                 DockerTasks.DockerRun(x => x
+                                            .SetName(containerName)
+                                            .SetPlatform("linux/amd64")
+                                            .SetImage("docker.packages.octopushq.com/octopusdeploy/tool-containers/tool-sbom-cli:latest")
+                                            .SetVolume($"{directory}:/source", $"{ArtifactsDirectory}:/output")
+                                            .SetCommand($"trivy")
+                                            .SetArgs("fs", $"/source/{relativePath}", "--format", "cyclonedx",
+                                                     "--output", $"/output/{outputFile}")
+                                            .SetRm(true));
+
+                 TeamCity.Instance?.PublishArtifacts(ArtifactsDirectory / outputFile);
+
+                 return outputFile;
+             });
     }
 
     static string GetRuntimeSuffix(string? runtimeId)
@@ -177,10 +181,6 @@ partial class Build
         if (File.Exists(RootDirectory / project / runtimeId / $"{project}.deps.json"))
             return (RootDirectory, $"{project}/{runtimeId}"); 
 
-        Directory
-            .EnumerateFiles(RootDirectory, "*.deps.json", SearchOption.AllDirectories)
-            .ForEach(file => Log.Information("Found deps.json at {File}", file));
-        
         throw new DirectoryNotFoundException($"Could not find published output for project '{project}', framework '{framework}' and runtime '{runtimeId}' - unable to create SBOM");
     }
 

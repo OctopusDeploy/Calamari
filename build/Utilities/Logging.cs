@@ -16,8 +16,17 @@ public class Logging
                                return Task.CompletedTask;
                            }).GetAwaiter().GetResult();;
     }
+    
+    public static T InBlock<T>(string blockName, Func<T> action)
+    {
+        return InBlock(blockName, async () =>
+                           {
+                               await Task.CompletedTask;
+                               return action.Invoke();
+                           }).GetAwaiter().GetResult();
+    }
 
-    public static async Task InBlock(string blockName, Func<Task> action)
+    public static async Task<T> InBlock<T>(string blockName, Func<Task<T>> action)
     {
         var stopWatch = Stopwatch.StartNew();
 
@@ -30,9 +39,10 @@ public class Logging
             Log.Information("{BlockName}{HeaderDelimiter}", blockName, new string('-', 30));
         }
 
+        T result;
         try
         {
-            await action();
+            result = await action();
             Log.Information("{BlockName} SUCCEEDED in {Elapsed:000}", blockName, stopWatch.Elapsed);
         }
         catch (Exception e)
@@ -47,5 +57,7 @@ public class Logging
                 TeamCity.Instance.CloseBlock(blockName);
             }
         }
+
+        return result;
     }
 }
