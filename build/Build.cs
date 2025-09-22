@@ -169,7 +169,8 @@ namespace Calamari.Build
 
                                // Calamari.Scripting is a library that other calamari flavours depend on; not a flavour on its own right.
                                // Unlike other *Calamari* tests, we would still want to produce Calamari.Scripting.Zip and its tests, like its flavours.
-                               projectNames.Add("Calamari.Scripting");
+                               //We put this at the front of the list so they build in the correct order?
+                               projectNames.Insert(0, "Calamari.Scripting");
 
                                //its assumed each project has a corresponding test project
                                var testProjectNames = projectNames.Select(f => $"{f}.Tests");
