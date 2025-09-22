@@ -122,7 +122,7 @@ image:
                 // [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
             };
 
-            originRepo.AddFilesToBranch(argoCDBranchName, (Path.Combine("files", "values.yml"), DefaultValuesFile));
+            originRepo.AddFilesToBranch(argoCDBranchName, ("files/values.yml", DefaultValuesFile));
 
             //Act
             var runningDeployment = new RunningDeployment(null, variables);
@@ -272,10 +272,9 @@ image:
   tag: 0.1
   pullPolicy: IfNotPresent
 ";
-            //attempt to force string concatenation at runtime (not compiletime)
-            var root = "files";
-            originRepo.AddFilesToBranch(argoCDBranchName, (Path.Combine(root, "values.yaml"), multiImageValuesFile));
-            originRepo.AddFilesToBranch(argoCDBranchName, (Path.Combine(root, "Chart.yaml"), "Content Is Arbitrary"));
+
+            originRepo.AddFilesToBranch(argoCDBranchName, ("files/values.yaml", multiImageValuesFile));
+            originRepo.AddFilesToBranch(argoCDBranchName, ("files/Chart.yaml", "Content Is Arbitrary"));
             
             argoCdApplicationFromYaml = new Application()
             {
