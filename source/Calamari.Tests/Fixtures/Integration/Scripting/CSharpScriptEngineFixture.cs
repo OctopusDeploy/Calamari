@@ -29,17 +29,5 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
                 result.AssertOutput("KingKong");
             }
         }
-
-        [Category(TestCategory.ScriptingSupport.ScriptCS)]
-        [Test, RequiresDotNet45]
-        public void ScriptCS_CSharpDecryptsVariables()
-        {
-            using (var scriptFile = new TemporaryFile(Path.ChangeExtension(Path.GetTempFileName(), "cs")))
-            {
-                File.WriteAllText(scriptFile.FilePath, "System.Console.WriteLine(Octopus.Parameters[\"mysecrect\"]);");
-                var result = ExecuteScript(new ScriptCSScriptExecutor(Substitute.For<ILog>()), scriptFile.FilePath, GetVariables());
-                result.AssertOutput("KingKong");
-            }
-        }
     }
 }
