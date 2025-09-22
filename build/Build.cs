@@ -229,20 +229,21 @@ namespace Calamari.Build
                                                                              var projectName = calamariPackageMetadata.Project.Name;
                                                                              var projectSemaphore = semaphores.GetOrAdd(projectName, _ => new SemaphoreSlim(1, 1));
                                                                              var architectureSemaphore = semaphores.GetOrAdd(calamariPackageMetadata.Architecture, _ => new SemaphoreSlim(1, 1));
-                               
+
                                                                              await globalSemaphore.WaitAsync();
                                                                              await projectSemaphore.WaitAsync();
                                                                              await architectureSemaphore.WaitAsync();
                                                                              try
                                                                              {
                                                                                  Log.Information($"Building {calamariPackageMetadata.Project.Name} for framework '{calamariPackageMetadata.Framework}' and arch '{calamariPackageMetadata.Architecture}'");
-                               
+
                                                                                  await Task.Run(() => DotNetBuild(s =>
                                                                                                                       s.SetProjectFile(calamariPackageMetadata.Project)
                                                                                                                        .SetConfiguration(Configuration)
                                                                                                                        .SetFramework(calamariPackageMetadata.Framework)
                                                                                                                        .SetRuntime(calamariPackageMetadata.Architecture)
-                                                                                                                       .EnableSelfContained()));
+                                                                                                                       .EnableSelfContained()
+                                                                                                                       .SetVerbosity(projectName == "Calamari.Tests" ? DotNetVerbosity.detailed : DotNetVerbosity.minimal)));
                                                                              }
                                                                              finally
                                                                              {
@@ -251,7 +252,7 @@ namespace Calamari.Build
                                                                                  globalSemaphore.Release();
                                                                              }
                                                                          });
-                               
+
                                await Task.WhenAll(buildTasks);
                            });
 
@@ -288,7 +289,7 @@ namespace Calamari.Build
                                                .ToList();
 
                                await Task.WhenAll(signTasks);
-                               
+
                                Log.Information("Compressing published projects...");
                                var compressTasks = CalamariProjects.Select(async proj => await CompressCalamariProject(proj));
                                await Task.WhenAll(compressTasks);
@@ -373,11 +374,12 @@ namespace Calamari.Build
                                var calamariNupkgs = Directory.GetFiles(ArtifactsDirectory, "Calamari.*.nupkg");
                                var octopusCalamariNpkgs = Directory.GetFiles(ArtifactsDirectory, "Octopus.Calamari.*.nupkg");
 
-                               foreach (AbsolutePath file in calamariNupkgs.Concat(octopusCalamariNpkgs).WhereNotNull()){
-                                file.Copy(LocalPackagesDirectory / Path.GetFileName(file), ExistsPolicy.FileOverwrite);
+                               foreach (AbsolutePath file in calamariNupkgs.Concat(octopusCalamariNpkgs).WhereNotNull())
+                               {
+                                   file.Copy(LocalPackagesDirectory / Path.GetFileName(file), ExistsPolicy.FileOverwrite);
                                }
                            });
-        
+
         // Target CalamariConsolidationTests =>
         //     d =>
         //         d.DependsOn(PublishCalamariProjects)
