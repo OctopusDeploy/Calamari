@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Text.Json;
 
-namespace Calamari.Build;
+namespace Calamari.Build.Utilities;
 
 public class RuntimeTargetParser
 {
