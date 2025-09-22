@@ -2,35 +2,35 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Calamari.ArgoCD.Git;
 using Octopus.CoreUtilities.Extensions;
 
-namespace Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages
+namespace Calamari.ArgoCD.Git
 {
-
     public interface ICommitMessageGenerator
     {
-        string GenerateForImageUpdates(GitCommitSummary summary, string? userDescription, HashSet<string> updatedImages);
+        string GenerateForImageUpdates(GitCommitMessage commitMessage, HashSet<string> updatedImages);
+
         string GenerateDescription(HashSet<string> updatedImages, string? userDescription);
     }
 
     public class CommitMessageGenerator : ICommitMessageGenerator
     {
-        public string GenerateForImageUpdates(GitCommitSummary summary, string? userDescription, HashSet<string> updatedImages)
+        public string GenerateForImageUpdates(GitCommitMessage commitMessage, HashSet<string> updatedImages)
         {
-            var description = GenerateDescription(updatedImages, userDescription);
-            return $"{summary.Value}\n\n{description}";
+            var imageUpdateListText = GenerateUpdatedImagesListCommitBody(updatedImages);
+            return $"{commitMessage}\n\n{imageUpdateListText}";
         }
 
+        // TODO: This is a leaky abstraction - figure out how to remove
         public string GenerateDescription(HashSet<string> updatedImages, string? userDescription)
         {
-            var updatedImagesList = GenerateUpdatedImagesList(updatedImages);
+            var updatedImagesList = GenerateUpdatedImagesListCommitBody(updatedImages);
             return string.IsNullOrEmpty(userDescription)
                 ? updatedImagesList
                 : $"{userDescription}\n\n{updatedImagesList}";
         }
 
-        string GenerateUpdatedImagesList(HashSet<string> updatedImages)
+        string GenerateUpdatedImagesListCommitBody(HashSet<string> updatedImages)
         {
             if (updatedImages.Any())
             {

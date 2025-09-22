@@ -4,7 +4,7 @@ using System.Linq;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Kubernetes;
 
-namespace Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages
+namespace Calamari.ArgoCD
 {
     public class ArgoCDImageUpdateOutputWriter
     {

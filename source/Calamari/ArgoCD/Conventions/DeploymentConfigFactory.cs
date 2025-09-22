@@ -1,8 +1,7 @@
 #if NET
 using System;
 using System.Linq;
-using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages;
-using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Models;
+using Calamari.ArgoCD.Models;
 using Calamari.Common.Commands;
 using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Variables;

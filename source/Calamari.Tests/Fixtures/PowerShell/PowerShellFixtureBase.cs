@@ -25,6 +25,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         Core
     }
 
+#pragma warning disable CA1416 // API not supported on all platforms
     public abstract class PowerShellFixtureBase : CalamariFixture
     {
         protected abstract PowerShellEdition PowerShellEdition { get; }
@@ -706,4 +707,5 @@ namespace Calamari.Tests.Fixtures.PowerShell
             }
         }
     }
+#pragma warning restore CA1416 // API not supported on all platforms
 }
