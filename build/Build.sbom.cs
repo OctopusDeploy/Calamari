@@ -22,7 +22,7 @@ partial class Build
     [ParameterFromPasswordStore(Name = "DEPENDENCY_TRACK_API_KEY", SecretReference = "op://Calamari Secrets for Tests/Dependency Track SBOM API/credential"), Secret] 
     readonly string? DependencyTrackApiKey;
     [Parameter(Name = "OCTOPUS_INTERNAL_DOCKER_REGISTRY")] 
-    readonly string InternalDockerRegistry;
+    readonly string? InternalDockerRegistry;
     
     readonly List<string> ContainersWeHaveCreated = new();
     
