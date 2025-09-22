@@ -79,7 +79,7 @@ namespace Calamari.Build
             // Mimic the behaviour of this attribute, but lazily so we don't pay the OctoVersion cost when it isn't needed
             OctoVersionInfo = new Lazy<OctoVersionInfo?>(() =>
                                                          {
-                                                             var attribute = new OctoVersionAttribute { BranchMember = nameof(BranchName), Framework = "net8.0" };
+                                                             var attribute = new OctoVersionAttribute { BranchMember = nameof(BranchName), Framework = "net6.0" };
 
                                                              // the Attribute does all the work such as calling TeamCity.Instance?.SetBuildNumber for us
                                                              var version = attribute.GetValue(null!, this);
