@@ -15,6 +15,7 @@
             This package contains a compression process which flattens and expands multiple zips
             into a single archive.
         </Description>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     </PropertyGroup>
     <ItemGroup>
       <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />

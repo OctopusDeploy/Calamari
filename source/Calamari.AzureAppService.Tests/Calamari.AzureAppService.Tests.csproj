@@ -7,6 +7,9 @@
     <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
     <LangVersion>8.0</LangVersion>
     <TargetFrameworks>net462;net6.0</TargetFrameworks>
+    <!-- CS8632: The annotation for nullable reference types should only be used in code within a '#nullable' annotations context. -->
+    <NoWarn>CS8632</NoWarn>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
 
   <ItemGroup>
