@@ -111,7 +111,7 @@ namespace Calamari.Aws.Integration.CloudFormation.Templates
                     response.WriteResponseStreamToFileAsync(ParametersFile, false, new CancellationTokenSource().Token).GetAwaiter().GetResult();
                 }
             }
-            catch (UriFormatException ex)
+            catch (UriFormatException)
             {
                 log.Error($"The parameters URL of {templateParameterS3Url} is invalid");
                 throw;
