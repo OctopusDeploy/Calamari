@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
@@ -84,7 +84,7 @@ partial class Build : NukeBuild
         // Mimic the behaviour of this attribute, but lazily so we don't pay the OctoVersion cost when it isn't needed
         OctoVersionInfo = new Lazy<OctoVersionInfo?>(() =>
                                                      {
-                                                         var attribute = new OctoVersionAttribute { BranchMember = nameof(BranchName), Framework = "net8.0" };
+                                                         var attribute = new OctoVersionAttribute { BranchMember = nameof(BranchName), Framework = "net6.0" };
 
                                                          // the Attribute does all the work such as calling TeamCity.Instance?.SetBuildNumber for us
                                                          var version = attribute.GetValue(null!, this);
@@ -192,7 +192,15 @@ partial class Build : NukeBuild
              .DependsOn(PublishAzureWebAppNetCoreShim)
              .Executes(() =>
                        {
-                           if (!OperatingSystem.IsWindows())
+                           var nugetVersion = NugetVersion.Value;
+                           if (OperatingSystem.IsWindows())
+                           {
+                               var outputDirectory = DoPublish(RootProjectName, Frameworks.Net462, nugetVersion);
+                               outputDirectory.Copy(LegacyCalamariDirectory / RootProjectName, ExistsPolicy.DirectoryMerge | ExistsPolicy.FileFail);
+                               DoPublish(RootProjectName, Frameworks.Net462, nugetVersion, FixedRuntimes.Cloud);
+                           }
+                           else
+                           {
                                Log.Warning("Building Calamari on a non-windows machine will result "
                                            + "in the {DefaultNugetPackageName} and {CloudNugetPackageName} "
                                            + "nuget packages being built as .Net Core 6.0 packages "
@@ -201,24 +209,13 @@ partial class Build : NukeBuild
                                            + "deployment steps in Octopus Server",
                                            RootProjectName, $"{RootProjectName}.{FixedRuntimes.Cloud}");
 
-                           var nugetVersion = NugetVersion.Value;
-                           var outputDirectory = DoPublish(RootProjectName,
-                                                           OperatingSystem.IsWindows() ? Frameworks.Net462 : Frameworks.Net60,
-                                                           nugetVersion);
-                           if (OperatingSystem.IsWindows())
-                           {
-                               outputDirectory.Copy(LegacyCalamariDirectory / RootProjectName, ExistsPolicy.DirectoryMerge | ExistsPolicy.FileFail);
-                           }
-                           else
-                           {
+                               DoPublish(RootProjectName, Frameworks.Net60, nugetVersion);
+
                                Log.Warning($"Skipping the bundling of {RootProjectName} into the Calamari.Legacy bundle. "
                                            + "This is required for providing .Net Framework executables for legacy Target Operating Systems");
+                               
+                               DoPublish(RootProjectName, Frameworks.Net60, nugetVersion, FixedRuntimes.Cloud);
                            }
-
-                           DoPublish(RootProjectName,
-                                     OperatingSystem.IsWindows() ? Frameworks.Net462 : Frameworks.Net60,
-                                     nugetVersion,
-                                     FixedRuntimes.Cloud);
 
                            foreach (var rid in GetRuntimeIdentifiers(Solution.GetProject(RootProjectName)!))
                                DoPublish(RootProjectName, Frameworks.Net60, nugetVersion, rid);
