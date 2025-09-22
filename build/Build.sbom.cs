@@ -10,6 +10,7 @@ using Nuke.Common.Tools.Docker;
 using Nuke.Common.Tools.OctoVersion;
 using Calamari.Build.Utilities;
 using Nuke.Common.IO;
+using Nuke.Common.Tooling;
 using Serilog;
 
 namespace Calamari.Build;
@@ -132,7 +133,8 @@ partial class Build
                         $"SBOM_UPLOADER_PARENT={parentName}",
                         $"SBOM_UPLOADER_TAGS={projectName},{parentName}")
                 .SetArgs(args)
-                .SetRm(true));
+                .SetRm(true)
+                .SetProcessLogInvocation(false)); // don't log the invocation, as in this version of nuke (8.1.4), it logs the api key
             
             return Task.CompletedTask;
         });
