@@ -232,7 +232,7 @@
     <None Remove="KubernetesFixtures\Scripts\KubernetesHealthCheck.ps1" />
     <None Remove="KubernetesFixtures\Scripts\KubernetesHealthCheck.sh" />
   </ItemGroup>
-  <Target Name="CopyTools" AfterTargets="Build" DependsOnTargets="RunResolvePackageDependencies">
+  <Target Name="CopyTools" AfterTargets="Build">
     <ItemGroup>
       <DotnetScriptFiles Include="$(MSBuildProjectDirectory)/../Calamari.Scripting/DotnetScript/dotnet-script.*.zip" />
       <DotnetScriptFilesExe Include="$(OutDir)/dotnet-script/*.sh;$(OutDir)/dotnet-script/*.exe" />
