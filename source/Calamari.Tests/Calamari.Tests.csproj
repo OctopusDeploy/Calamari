@@ -231,14 +231,25 @@
     <None Remove="KubernetesFixtures\Scripts\KubernetesDeployment.sh" />
     <None Remove="KubernetesFixtures\Scripts\KubernetesHealthCheck.ps1" />
     <None Remove="KubernetesFixtures\Scripts\KubernetesHealthCheck.sh" />
+      
   </ItemGroup>
-  <Target Name="CopyTools" AfterTargets="Build">
-    <ItemGroup>
+    <Target Name="GetToolFiles">
       <DotnetScriptFiles Include="$(MSBuildProjectDirectory)/../Calamari.Scripting/DotnetScript/dotnet-script.*.zip" />
+  </Target>
+    
+  <Target Name="CopyToolsAfterBuild" AfterTargets="Build" DependsOnTargets="GetToolFiles">
+    <ItemGroup>
       <DotnetScriptFilesExe Include="$(OutDir)/dotnet-script/*.sh;$(OutDir)/dotnet-script/*.exe" />
     </ItemGroup>
     <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(OutDir)/" SkipUnchangedFiles="true" />
     <Exec Command="chmod +x %(DotnetScriptFilesExe.Identity)" IgnoreExitCode="true" />
-    <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(PublishDir)/" Condition="'$(PublishDir)' != ''" />
+  </Target>
+    
+  <Target Name="CopyToolsAfterPublish" AfterTargets="Publish" DependsOnTargets="GetToolFiles">
+    <ItemGroup>
+      <DotnetScriptFilesExe Include="$(PublishDir)/dotnet-script/*.sh;$(PublishDir)/dotnet-script/*.exe" />
+    </ItemGroup>
+    <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(PublishDir)/" SkipUnchangedFiles="true" />
+    <Exec Command="chmod +x %(DotnetScriptFilesExe.Identity)" IgnoreExitCode="true" />
   </Target>
 </Project>
