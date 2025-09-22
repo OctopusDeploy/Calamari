@@ -233,9 +233,12 @@
     <None Remove="KubernetesFixtures\Scripts\KubernetesHealthCheck.sh" />
       
   </ItemGroup>
-    <Target Name="GetToolFiles">
+    
+  <Target Name="GetToolFiles">
+    <ItemGroup>
       <DotnetScriptFiles Include="$(MSBuildProjectDirectory)/../Calamari.Scripting/DotnetScript/dotnet-script.*.zip" />
-  </Target>
+    </ItemGroup>
+  </Target>    
     
   <Target Name="CopyToolsAfterBuild" AfterTargets="Build" DependsOnTargets="GetToolFiles">
     <ItemGroup>
