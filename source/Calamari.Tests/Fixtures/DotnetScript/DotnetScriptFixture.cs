@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Testing.Helpers;
-using Calamari.Testing.Requirements;
 using Calamari.Tests.Helpers;
 using NUnit.Framework;
 
@@ -15,7 +14,7 @@ namespace Calamari.Tests.Fixtures.DotnetScript
     {
         static readonly Dictionary<string, string> RunWithDotnetScriptVariable = new Dictionary<string, string>() { { ScriptVariables.UseDotnetScript, bool.TrueString } };
         
-        [Test, RequiresDotNetCore]
+        [Test]
         public void ShouldPrintEncodedVariable()
         {
             var (output, _) = RunScript("PrintEncodedVariable.csx", RunWithDotnetScriptVariable);
@@ -24,7 +23,7 @@ namespace Calamari.Tests.Fixtures.DotnetScript
             output.AssertOutput("##octopus[setVariable name='RG9ua2V5' value='S29uZw==']");
         }
 
-        [Test, RequiresDotNetCore]
+        [Test]
         public void ShouldPrintSensitiveVariable()
         {
             var (output, _) = RunScript("PrintSensitiveVariable.csx", RunWithDotnetScriptVariable);
@@ -33,7 +32,7 @@ namespace Calamari.Tests.Fixtures.DotnetScript
             output.AssertOutput("##octopus[setVariable name='UGFzc3dvcmQ=' value='Y29ycmVjdCBob3JzZSBiYXR0ZXJ5IHN0YXBsZQ==' sensitive='VHJ1ZQ==']");
         }
 
-        [Test, RequiresDotNetCore]
+        [Test]
         public void ShouldCreateArtifact()
         {
             var (output, _) = RunScript("CreateArtifact.csx", RunWithDotnetScriptVariable);
@@ -43,7 +42,7 @@ namespace Calamari.Tests.Fixtures.DotnetScript
             output.AssertOutput("name='bXlGaWxlLnR4dA==' length='MTAw']");
         }
 
-        [Test, RequiresDotNetCore]
+        [Test]
         public void ShouldUpdateProgress()
         {
             var (output, _) = RunScript("UpdateProgress.csx", RunWithDotnetScriptVariable);
@@ -52,7 +51,7 @@ namespace Calamari.Tests.Fixtures.DotnetScript
             output.AssertOutput("##octopus[progress percentage='NTA=' message='SGFsZiBXYXk=']");
         }
 
-        [Test, RequiresDotNetCore]
+        [Test]
         public void ShouldCallHello()
         {
             var (output, _) = RunScript("Hello.csx", new Dictionary<string, string>()
@@ -70,7 +69,7 @@ namespace Calamari.Tests.Fixtures.DotnetScript
             output.AssertOutput("This is dotnet script");
         }
 
-        [Test, RequiresDotNetCore]
+        [Test]
         public void ShouldCallHelloWithSensitiveVariable()
         {
             var (output, _) = RunScript("Hello.csx", new Dictionary<string, string>()
@@ -83,7 +82,7 @@ namespace Calamari.Tests.Fixtures.DotnetScript
             output.AssertOutput("Hello NameToEncrypt");
         }
 
-        [Test, RequiresDotNetCore]
+        [Test]
         public void ShouldConsumeParametersWithQuotes()
         {
             var (output, _) = RunScript("Parameters.csx", new Dictionary<string, string>()
@@ -96,7 +95,7 @@ namespace Calamari.Tests.Fixtures.DotnetScript
             output.AssertOutput("Parameters Para meter0Parameter1");
         }
 
-        [Test, RequiresDotNetCore]
+        [Test]
         public void ShouldConsumeParametersWithoutParametersPrefix()
         {
             var (output, _) = RunScript("Parameters.csx", new Dictionary<string, string>()
@@ -111,7 +110,6 @@ namespace Calamari.Tests.Fixtures.DotnetScript
 
         [TestCase(true)]
         [TestCase(false)]
-        [RequiresDotNetCore]
         public void UsingIsolatedAssemblyLoadContext(bool enableIsolatedLoadContext)
         {
             var (output, _) = RunScript("IsolatedLoadContext.csx",
