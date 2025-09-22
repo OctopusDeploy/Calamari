@@ -122,7 +122,7 @@ image:
                 // [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
             };
 
-            originRepo.AddFilesToBranch(argoCDBranchName, (Path.Combine("files", "values.yml", DefaultValuesFile));
+            originRepo.AddFilesToBranch(argoCDBranchName, (Path.Combine("files", "values.yml"), DefaultValuesFile));
 
             //Act
             var runningDeployment = new RunningDeployment(null, variables);
