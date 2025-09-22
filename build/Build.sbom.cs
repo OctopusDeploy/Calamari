@@ -21,6 +21,8 @@ partial class Build
     readonly string? DependencyTrackUrl;
     [ParameterFromPasswordStore(Name = "DEPENDENCY_TRACK_API_KEY", SecretReference = "op://Calamari Secrets for Tests/Dependency Track SBOM API/credential"), Secret] 
     readonly string? DependencyTrackApiKey;
+    [Parameter(Name = "OCTOPUS_INTERNAL_DOCKER_REGISTRY")] 
+    readonly string InternalDockerRegistry;
     
     readonly List<string> ContainersWeHaveCreated = new();
     
@@ -29,6 +31,7 @@ partial class Build
     public Target BuildSoftwareBillOfMaterials => _ => _
         .Requires(() => DependencyTrackUrl)
         .Requires(() => DependencyTrackApiKey)
+        .Requires(() => InternalDockerRegistry)
         .DependsOn(Publish)
         .Executes(async () =>
         {
@@ -78,12 +81,12 @@ partial class Build
     }
     
 
-    static void EnsureDockerImagesExistLocally()
+    void EnsureDockerImagesExistLocally()
     {
         Logging.InBlock($"Ensuring trivy container exists locally", () =>
         {
             DockerTasks.DockerPull(x => x
-                .SetName("docker.packages.octopushq.com/octopusdeploy/tool-containers/tool-sbom-cli:latest")
+                .SetName($"{InternalDockerRegistry}/octopusdeploy/tool-containers/tool-sbom-cli:latest")
                 .SetPlatform("linux/amd64"));
         });
 
@@ -122,7 +125,7 @@ partial class Build
             DockerTasks.DockerRun(x => x
                 .SetName(containerName)
                 .SetPlatform("linux/amd64")
-                .SetImage("docker.packages.octopushq.com/octopusdeploy/tool-containers/tool-sbom-cli:latest")
+                .SetImage($"{InternalDockerRegistry}/octopusdeploy/tool-containers/tool-sbom-cli:latest")
                 .SetVolume($"{ArtifactsDirectory}:/sboms")
                 .SetCommand($"sbom-uploader")
                 .SetEnv(
@@ -155,7 +158,7 @@ partial class Build
                  DockerTasks.DockerRun(x => x
                                             .SetName(containerName)
                                             .SetPlatform("linux/amd64")
-                                            .SetImage("docker.packages.octopushq.com/octopusdeploy/tool-containers/tool-sbom-cli:latest")
+                                            .SetImage($"{InternalDockerRegistry}/octopusdeploy/tool-containers/tool-sbom-cli:latest")
                                             .SetVolume($"{directory}:/source", $"{ArtifactsDirectory}:/output")
                                             .SetCommand($"trivy")
                                             .SetArgs("fs", $"/source", "--format", "cyclonedx",
