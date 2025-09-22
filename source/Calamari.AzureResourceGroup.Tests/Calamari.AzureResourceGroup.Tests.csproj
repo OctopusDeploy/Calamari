@@ -1,50 +1,51 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <RootNamespace>Calamari.AzureResourceGroup.Tests</RootNamespace>
-    <AssemblyName>Calamari.AzureResourceGroup.Tests</AssemblyName>
-    <IsPackable>false</IsPackable>
-    <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
-    <TargetFrameworks>net462;net6.0</TargetFrameworks>
-  </PropertyGroup>
-  <ItemGroup>
-    <PackageReference Include="nunit" Version="3.13.3" />
-    <PackageReference Include="NUnit3TestAdapter" Version="4.4.2" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.3.0" />
-    <PackageReference Include="Octopus.Dependencies.AzureCLI" Version="2.41.0" GeneratePathProperty="true" />
-    <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.25" />
-  </ItemGroup>
-  <Target Name="GetPackageFiles" AfterTargets="ResolveReferences" DependsOnTargets="RunResolvePackageDependencies">
+    <PropertyGroup>
+        <RootNamespace>Calamari.AzureResourceGroup.Tests</RootNamespace>
+        <AssemblyName>Calamari.AzureResourceGroup.Tests</AssemblyName>
+        <IsPackable>false</IsPackable>
+        <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
+        <TargetFramework>net6.0</TargetFramework>
+        <LangVersion>10</LangVersion>
+    </PropertyGroup>
     <ItemGroup>
-      <Content Include="$(PkgOctopus_Dependencies_AzureCLI)/*.nupkg">
-        <Visible>false</Visible>
-        <Link>Octopus.Dependencies.AzureCLI.nupkg</Link>
-        <Pack>true</Pack>
-        <PackageCopyToOutput>true</PackageCopyToOutput>
-        <PackageFlatten>true</PackageFlatten>
-        <PackagePath>contentFiles/any/any/Octopus.Dependencies.AzureCLI.nupkg</PackagePath>
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </Content>
+        <PackageReference Include="nunit" Version="3.13.3"/>
+        <PackageReference Include="NUnit3TestAdapter" Version="4.4.2"/>
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.3.0"/>
+        <PackageReference Include="Octopus.Dependencies.AzureCLI" Version="2.41.0" GeneratePathProperty="true"/>
+        <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.25"/>
     </ItemGroup>
-  </Target>
-  <ItemGroup>
-    <ProjectReference Include="..\Calamari.AzureResourceGroup\Calamari.AzureResourceGroup.csproj" />
-    <ProjectReference Include="..\Calamari.Testing\Calamari.Testing.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Update="Packages\AzureResourceGroup\azure_website_params.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Packages\AzureResourceGroup\azure_website_template.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Packages\AzureResourceGroup\Default.aspx">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Packages\Bicep\parameters.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Packages\Bicep\azure_website_template.bicep">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
+    <Target Name="GetPackageFiles" AfterTargets="ResolveReferences" DependsOnTargets="RunResolvePackageDependencies">
+        <ItemGroup>
+            <Content Include="$(PkgOctopus_Dependencies_AzureCLI)/*.nupkg">
+                <Visible>false</Visible>
+                <Link>Octopus.Dependencies.AzureCLI.nupkg</Link>
+                <Pack>true</Pack>
+                <PackageCopyToOutput>true</PackageCopyToOutput>
+                <PackageFlatten>true</PackageFlatten>
+                <PackagePath>contentFiles/any/any/Octopus.Dependencies.AzureCLI.nupkg</PackagePath>
+                <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            </Content>
+        </ItemGroup>
+    </Target>
+    <ItemGroup>
+        <ProjectReference Include="..\Calamari.AzureResourceGroup\Calamari.AzureResourceGroup.csproj"/>
+        <ProjectReference Include="..\Calamari.Testing\Calamari.Testing.csproj"/>
+    </ItemGroup>
+    <ItemGroup>
+        <None Update="Packages\AzureResourceGroup\azure_website_params.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Update="Packages\AzureResourceGroup\azure_website_template.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Update="Packages\AzureResourceGroup\Default.aspx">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Update="Packages\Bicep\parameters.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Update="Packages\Bicep\azure_website_template.bicep">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
 </Project>

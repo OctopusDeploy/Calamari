@@ -5,8 +5,8 @@
         <AssemblyName>Calamari.Terraform.Tests</AssemblyName>
         <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
         <IsPackable>false</IsPackable>
-        <LangVersion>9</LangVersion>
-        <TargetFrameworks>net462;net6.0</TargetFrameworks>
+        <LangVersion>10</LangVersion>
+        <TargetFramework>net6.0</TargetFramework>
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="FluentAssertions" Version="7.2.0" />
@@ -20,8 +20,8 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Calamari.Terraform\Calamari.Terraform.csproj" />
-        <ProjectReference Include="..\Calamari.Testing\Calamari.Testing.csproj" />
+        <ProjectReference Include="..\Calamari.Terraform\Calamari.Terraform.csproj"/>
+        <ProjectReference Include="..\Calamari.Testing\Calamari.Testing.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

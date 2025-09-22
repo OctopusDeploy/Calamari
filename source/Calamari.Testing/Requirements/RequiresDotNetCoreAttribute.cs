@@ -4,15 +4,11 @@ using NUnit.Framework.Internal;
 
 namespace Calamari.Testing.Requirements
 {
-    public class RequiresDotNetCoreAttribute: NUnitAttribute, IApplyToTest
+    public class RequiresDotNetCoreAttribute : NUnitAttribute, IApplyToTest
     {
         static bool IsNetCore()
         {
-            #if NETCORE
-                return true;
-            #else
-                return false;
-            #endif
+            return true;
         }
 
         public void ApplyToTest(Test test)
