@@ -160,7 +160,7 @@ partial class Build
                                                      "--output", $"/output/{outputFile}")
                                             .SetRm(true));
 
-                 TeamCity.Instance?.PublishArtifacts(ArtifactsDirectory / outputFile);
+                 TeamCity.Instance?.PublishArtifacts($"{ArtifactsDirectory / outputFile}=>component-sboms/");
 
                  return outputFile;
              });
