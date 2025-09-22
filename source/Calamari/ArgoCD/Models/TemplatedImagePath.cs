@@ -1,6 +1,5 @@
 #if NET
 using System;
-using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Models;
 using Calamari.ArgoCD.Mapping;
 using Octostache;
 

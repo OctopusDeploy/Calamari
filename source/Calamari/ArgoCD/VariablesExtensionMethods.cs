@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Calamari.Common.Plumbing.Variables;
 
-namespace Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages
+namespace Calamari.ArgoCD
 {
     public static class VariablesExtensionMethods
     {

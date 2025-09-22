@@ -122,7 +122,7 @@ namespace Calamari.Azure.Kubernetes.Discovery
                 accountType = targetDiscoveryContext?.Authentication?.AuthenticationMethod ?? throw new Exception("AuthenticationMethod is null");
                 return true;
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 Log.Warn("Could not read authentication method of target discovery context.");
                 accountType = null;

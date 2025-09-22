@@ -1,6 +1,5 @@
 #if NET
 using System.Collections.Generic;
-using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Models;
 
 namespace Calamari.ArgoCD.Conventions
 {

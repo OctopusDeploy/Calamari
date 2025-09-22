@@ -106,7 +106,7 @@ namespace Calamari.Aws.Kubernetes.Discovery
                     .GetValue("Type", StringComparison.OrdinalIgnoreCase).Value<string>() ?? throw new Exception("Credentials type is null");
                 return true;
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 Log.Warn("Could not read authentication method of target discovery context.");
                 credentialsType = null;

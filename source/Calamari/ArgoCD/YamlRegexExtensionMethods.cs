@@ -1,10 +1,11 @@
 using System;
 using System.Text.RegularExpressions;
 
-namespace Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages
+namespace Calamari.ArgoCD
 {
     public static class YamlRegexExtensionMethods
     {
+
         static readonly Regex TrailingDocumentSeparatorRegex =
             new Regex(@"(?m)^\s*---\s*$", RegexOptions.Compiled);
 
