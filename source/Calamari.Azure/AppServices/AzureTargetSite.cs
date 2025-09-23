@@ -91,7 +91,7 @@ namespace Calamari.Azure.AppServices
                              ? "No Deployment Slot specified"
                              : $"Using Deployment Slot '{slotName}'");
 
-            return new AzureTargetSite(account.SubscriptionNumber, resourceGroupName, webAppName, slotName);
+            return new AzureTargetSite(account.SubscriptionNumber, resourceGroupName!, webAppName!, slotName);
         }
     }
 }
