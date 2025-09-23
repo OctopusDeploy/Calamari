@@ -6,6 +6,7 @@
     <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
     <LangVersion>8.0</LangVersion>
     <IsPackable>false</IsPackable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="nunit" Version="3.13.3"/>
