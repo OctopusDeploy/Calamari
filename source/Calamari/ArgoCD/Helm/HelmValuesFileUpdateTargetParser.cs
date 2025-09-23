@@ -166,7 +166,7 @@ namespace Calamari.ArgoCD.Helm
             return null;
         }
 
-        static List<string> ConvertAnnotationToList(string annotationValue)
+        public static List<string> ConvertAnnotationToList(string annotationValue)
         {
             return annotationValue.Split(',').Select(a => a.Trim()).ToList();
         }

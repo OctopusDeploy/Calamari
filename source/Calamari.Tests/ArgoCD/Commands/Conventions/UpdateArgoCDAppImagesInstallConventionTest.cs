@@ -93,7 +93,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
                                                                      customPropertiesLoader, argoCdApplicationManifestParser);
             var variables = new CalamariVariables
             {
-                [PackageVariables.IndexedPackageId("nginx")] = "nginx:1.27.1",
+                [PackageVariables.IndexedImage("nginx")] = "index.docker.io/nginx:1.27.1",
                 [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
             };
             var runningDeployment = new RunningDeployment(null, variables);
@@ -122,7 +122,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
                                                                      customPropertiesLoader, argoCdApplicationManifestParser);
             var variables = new CalamariVariables
             {
-                [PackageVariables.IndexedPackageId("nginx")] = "nginx:1.27.1",
+                [PackageVariables.IndexedImage("nginx")] = "docker.io/nginx:1.27.1",
                 [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
             };
             var runningDeployment = new RunningDeployment(null, variables);
@@ -155,7 +155,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
                                                                      customPropertiesLoader, argoCdApplicationManifestParser);
             var variables = new CalamariVariables
             {
-                [PackageVariables.IndexedPackageId("nginx")] = "nginx:1.27.1",
+                [PackageVariables.IndexedImage("nginx")] = "index.docker.io/nginx:1.27.1",
                 [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
             };
             var runningDeployment = new RunningDeployment(null, variables);
@@ -192,6 +192,10 @@ spec:
             };
             originRepo.AddFilesToBranch(argoCDBranchName, filesInRepo);
 
+            // Act
+            updater.Install(runningDeployment);
+
+
             //Assert
             const string updatedYamlContent =
                 @"
@@ -215,10 +219,7 @@ spec:
         - name: alpine
           image: alpine:3.21 
 ";
-            // Act
-            updater.Install(runningDeployment);
-
-            // Assert
+            
             var clonedRepoPath = CloneOrigin();
             var fileInRepo = Path.Combine(clonedRepoPath, existingYamlFile);
             fileSystem.FileExists(fileInRepo).Should().BeTrue();
