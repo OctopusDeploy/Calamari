@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Calamari.ArgoCD.GitHub;
 using Calamari.Common.Plumbing.Logging;
 using LibGit2Sharp;
+using NuGet.Commands;
 
 namespace Calamari.ArgoCD.Git
 {
@@ -40,6 +41,7 @@ namespace Calamari.ArgoCD.Git
             }
             catch (EmptyCommitException)
             {
+                log.Verbose("No changes required committing.");
                 return false;
             }
         }
@@ -80,15 +82,20 @@ namespace Calamari.ArgoCD.Git
             repository.Branches.Update(repository.Head, 
                                        branch => branch.Remote = remote.Name,
                                        branch => branch.UpstreamBranch = $"refs/heads/{branchName}");
-            
-            log.Info($"Pushing changes to branch '{branchName}' with original credentials");
+
+            PushStatusError? errorsDetected = null;
             var pushOptions = new PushOptions
             {
                 CredentialsProvider = (url, usernameFromUrl, types) =>
-                                          new UsernamePasswordCredentials { Username = connection.Username, Password = connection.Password }
+                                          new UsernamePasswordCredentials { Username = connection.Username, Password = connection.Password },
+                OnPushStatusError = errors => errorsDetected = errors
             };
             
             repository.Network.Push(repository.Head, pushOptions);
+            if (errorsDetected != null)
+            {
+                throw new CommandException($"Failed to push to branch {branchName} - {errorsDetected.Message}");
+            }
         }
         
         string GenerateCommitMessage(string summary, string description)
