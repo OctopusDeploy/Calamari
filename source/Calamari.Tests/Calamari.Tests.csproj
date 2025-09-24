@@ -177,6 +177,12 @@
     <None Update="KubernetesFixtures\ResourceStatus\assets\invalid-syntax.yaml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Remove="KubernetesFixtures\Kind\docker-desktop-network-routing.yaml" />
+    <EmbeddedResource Include="KubernetesFixtures\Kind\docker-desktop-network-routing.yaml" />
+    <None Remove="KubernetesFixtures\Kind\linux-network-routing.yaml" />
+    <EmbeddedResource Include="KubernetesFixtures\Kind\linux-network-routing.yaml" />
+    <None Remove="KubernetesFixtures\Kind\kind-config.yaml" />
+    <EmbeddedResource Include="KubernetesFixtures\Kind\kind-config.yaml" />
   </ItemGroup>
   <ItemGroup>
     <None Remove="TestResults\**" />
