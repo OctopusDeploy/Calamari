@@ -6,6 +6,7 @@
         <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
         <LangVersion>default</LangVersion>
         <TargetFrameworks>net462;netstandard2.1</TargetFrameworks>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(TargetFramework)' == 'netstandard2.1' ">
         <DefineConstants>$(DefineConstants);NETCORE</DefineConstants>
