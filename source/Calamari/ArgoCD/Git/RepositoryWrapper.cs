@@ -3,9 +3,9 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Calamari.ArgoCD.GitHub;
+using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Logging;
 using LibGit2Sharp;
-using NuGet.Commands;
 
 namespace Calamari.ArgoCD.Git
 {
