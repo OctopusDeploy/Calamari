@@ -47,7 +47,7 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
             foreach (var executableName in executableNames)
             {
                 var (_, commandOutput) = ExecuteCommandAndReturnOutput(commandLineRunner,
-                                                                       environmentVars ?? new Dictionary<string, string>(),
+                                                                       environmentVars,
                                                                        CalamariEnvironment.IsRunningOnWindows ? "where" : "which",
                                                                        executableName);
                 
@@ -65,7 +65,7 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
             return null;
         }
 
-        static (bool wasSuccessful, CaptureCommandOutput) ExecuteCommandAndReturnOutput(ICommandLineRunner commandLineRunner, Dictionary<string, string> envVars, string exe, params string[] arguments)
+        static (bool wasSuccessful, CaptureCommandOutput) ExecuteCommandAndReturnOutput(ICommandLineRunner commandLineRunner, Dictionary<string, string>? envVars, string exe, params string[] arguments)
         {
             var captureCommandOutput = new CaptureCommandOutput();
             var invocation = new CommandLineInvocation(exe, arguments)
