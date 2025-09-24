@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using Calamari.Common.Plumbing.Extensions;
-using Calamari.Common.Plumbing.ServiceMessages;
 using FluentAssertions;
-using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 using NUnit.Framework.Constraints;
 
@@ -59,70 +56,28 @@ namespace Calamari.Testing.Helpers
             Assert.That(variable, resolveConstraint);
         }
 
-        public void AssertServiceMessage(string name, IResolveConstraint? resolveConstraint = null, Dictionary<string, object>? properties = null, string message = "", params object[] args)
+        public void AssertPackageDeltaVerificationServiceMessage(string message = "")
         {
-            switch (name)
+            if (!string.IsNullOrWhiteSpace(message))
             {
-                case ServiceMessageNames.CalamariFoundPackage.Name:
-                    Assert.That(captured.CalamariFoundPackage, resolveConstraint, message, args);
-                    break;
-                case ServiceMessageNames.FoundPackage.Name:
-                    Assert.That(captured.FoundPackage, Is.Not.Null);
-                    if (properties != null)
-                    {
-                        Assert.That(resolveConstraint, Is.Not.Null, "Resolve constraint was not provided");
-                        foreach (var property in properties)
-                        {
-                            var fp = JObject.FromObject(captured.FoundPackage);
-                            string value;
-                            if (property.Key.Contains("."))
-                            {
-                                var props = property.Key.Split(new[] {'.'}, StringSplitOptions.RemoveEmptyEntries);
-                                value = fp[props[0]][props[1]].ToString();
-                            }
-                            else
-                            {
-                                value = fp[property.Key].ToString();
-                            }
-
-                            AssertServiceMessageValue(property.Key, property.Value, value, resolveConstraint);
-                        }
-                    }
-
-                    break;
-                case ServiceMessageNames.PackageDeltaVerification.Name:
-                    if (!string.IsNullOrWhiteSpace(message))
-                    {
-                        Assert.That(captured?.DeltaError?.Replace("\r\n", "\n"), Is.EqualTo(message));
-                        break;
-                    }
-
-                    Assert.That(captured.DeltaVerification, Is.Not.Null);
-                    if (properties != null)
-                    {
-                        foreach (var property in properties)
-                        {
-                            var dv = JObject.FromObject(captured.DeltaVerification);
-                            string value;
-                            if (property.Key.Contains("."))
-                            {
-                                var props = property.Key.Split(new[] {'.'}, StringSplitOptions.RemoveEmptyEntries);
-                                value = dv[props[0]][props[1]].ToString();
-                            }
-                            else
-                            {
-                                value = dv[property.Key].ToString();
-                            }
-
-                            AssertServiceMessageValue(property.Key, property.Value, value, resolveConstraint);
-                        }
-                    }
-
-                    break;
+                Assert.That(captured?.DeltaError?.Replace("\r\n", "\n"), Is.EqualTo(message));
+                return;
             }
+
+            Assert.That(captured.DeltaVerification, Is.Not.Null);
+        }
+        
+        public void AssertCalamariFoundPackageServiceMessage(IResolveConstraint resolveConstraint, string message = "", params object[] args)
+        {
+            Assert.That(captured.CalamariFoundPackage, resolveConstraint, message, args);
+        }
+        
+        public void AssertFoundPackageServiceMessage()
+        {
+            Assert.That(captured.FoundPackage, Is.Not.Null);
         }
 
-        static void AssertServiceMessageValue(string property, object expected, string actual, IResolveConstraint? resolveConstraint)
+        static void AssertServiceMessageValue(string property, object expected, string actual, IResolveConstraint resolveConstraint)
         {
             Assert.That(actual, Is.Not.Null);
             Assert.That(actual, Is.Not.Empty);

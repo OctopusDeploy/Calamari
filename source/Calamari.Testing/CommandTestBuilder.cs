@@ -226,7 +226,8 @@ namespace Calamari.Testing
 
                 if (!context.withStagedPackageArgument)
                 {
-                    var packageId = context.Variables.GetRaw("Octopus.Test.PackagePath");
+                    var variableName = "Octopus.Test.PackagePath";
+                    var packageId = context.Variables.GetRaw(variableName) ?? throw new Exception($"No packageId was specified in the '{variableName}' variable");
                     if (File.Exists(packageId))
                     {
                         var fileName = new FileInfo(packageId).Name;
