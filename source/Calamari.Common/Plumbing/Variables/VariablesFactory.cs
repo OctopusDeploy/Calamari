@@ -67,8 +67,9 @@ namespace Calamari.Common.Plumbing.Variables
             }
         }
 
-        CalamariExecutionVariableCollection LoadExecutionVariablesFromFile(CommonOptions options)
+        IEnumerable<CalamariExecutionVariable> LoadExecutionVariablesFromFile(CommonOptions options)
         {
+            var results = new List<CalamariExecutionVariable>();
             foreach (var variableFilePath in options.InputVariables.VariableFiles.Where(f => !string.IsNullOrEmpty(f)))
             {
                 var sensitiveFilePassword = options.InputVariables.VariablesPassword;
@@ -80,19 +81,18 @@ namespace Calamari.Common.Plumbing.Variables
                 {
                     //deserialize the target variables from the json
                     var targetVariables = CalamariExecutionVariableCollection.FromJson(json);
-
-                    //append to the main collection
-                    return targetVariables;
+                    results.AddRange(targetVariables);
                 }
                 catch (JsonReaderException)
                 {
                     throw new CommandException("Unable to parse variables as valid JSON.");
                 }
             }
-            return new CalamariExecutionVariableCollection();
+
+            return results;
         }
 
-        CalamariExecutionVariableCollection ReadOutputVariablesFromOfflineDropPreviousSteps(CommonOptions options)
+        IEnumerable<CalamariExecutionVariable> ReadOutputVariablesFromOfflineDropPreviousSteps(CommonOptions options)
         {
             var outputVariablesFilePath = options.InputVariables.OutputVariablesFile;
             if (string.IsNullOrEmpty(outputVariablesFilePath))
@@ -112,6 +112,7 @@ namespace Calamari.Common.Plumbing.Variables
 
         IEnumerable<CalamariExecutionVariable> ReadDeprecatedVariablesFormatFromFiles(CommonOptions options)
         {
+            var results = new List<CalamariExecutionVariable>();
             foreach (var variableFilePath in options.InputVariables.DeprecatedFormatVariableFiles.Where(f => !string.IsNullOrEmpty(f)))
             {
                 var sensitiveFilePassword = options.InputVariables.DeprecatedVariablesPassword;
@@ -124,14 +125,15 @@ namespace Calamari.Common.Plumbing.Variables
                     var outputVariables = JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
 
                     // We don't know if the previous variables were sensitive or not, so treat them as non-sensitive */
-                    return outputVariables.Select(ov => new CalamariExecutionVariable(ov.Key, ov.Value, false));
+                    results.AddRange(outputVariables.Select(ov => new CalamariExecutionVariable(ov.Key, ov.Value, false)));
                 }
                 catch (JsonReaderException)
                 {
                     throw new CommandException("Unable to parse variables as valid JSON.");
                 }
             }
-            return Enumerable.Empty<CalamariExecutionVariable>();
+
+            return results;
         }
 
         void ImportExecutionVariablesIntoVariableCollection(IVariables variables, Func<CalamariExecutionVariable, bool> targetVariablePredicate)
