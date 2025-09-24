@@ -159,6 +159,11 @@ namespace Calamari.Common.Features.StructuredVariables
             {
                 throw new StructuredConfigFileParseException(e.ToString(), e);
             }
+            catch (Exception e) when (e is YamlException)
+            {
+                log.Error($"YamlException: {variables.GetNames()[0]}");
+                throw new StructuredConfigFileParseException(e.Message, e);
+            }
         }
 
         List<ParsingEvent> ParseFragment(string? value, AnchorName anchor, TagName tag)
