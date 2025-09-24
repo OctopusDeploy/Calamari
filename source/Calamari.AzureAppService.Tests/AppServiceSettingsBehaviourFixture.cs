@@ -152,14 +152,6 @@ namespace Calamari.AzureAppService.Tests
             await AssertAppSettings(settings.setting, connectionStrings.connStrings);
         }
 
-        private new (string json, IEnumerable<AppSetting> setting) BuildAppSettingsJson(IEnumerable<(string name, string value, bool isSlotSetting)> settings)
-        {
-            var appSettings = settings.Select(setting => new AppSetting
-                                                  { Name = setting.name, Value = setting.value, SlotSetting = setting.isSlotSetting });
-
-            return (JsonConvert.SerializeObject(appSettings), appSettings);
-        }
-
         private (string json, ConnectionStringDictionary connStrings) BuildConnectionStringJson(
             IEnumerable<(string name, string value, ConnectionStringType type, bool isSlotSetting)> connStrings)
         {
