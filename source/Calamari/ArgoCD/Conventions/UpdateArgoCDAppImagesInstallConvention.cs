@@ -78,8 +78,14 @@ namespace Calamari.ArgoCD.Conventions
                     var repository = repositoryFactory.CloneRepository(repositoryNumber++.ToString(CultureInfo.InvariantCulture), gitConnection);
 
                     var repoSubPath = Path.Combine(repository.WorkingDirectory, applicationSource.Path);
-                    if (applicationFromYaml.Metadata.Annotations.ContainsKey(ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey) && HelmDiscovery.TryFindHelmChartFile(fileSystem, Path.Combine(repository.WorkingDirectory, applicationSource.Path)) != null)
+                    var chartFile = HelmDiscovery.TryFindHelmChartFile(fileSystem, Path.Combine(repository.WorkingDirectory, applicationSource.Path)); 
+                    if (chartFile != null)
                     {
+                        if (!applicationFromYaml.Metadata.Annotations.ContainsKey(ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey))
+                        {
+                            GenerateHelmAnnotationLogMessages(application, applicationFromYaml, applicationSource,deployment);
+                            continue;
+                        }
                         log.Info($"Application '{application.Name}' source at `{applicationSource.RepoUrl.AbsoluteUri}' is a helm chart, its values file will be subsequently updated.");
                         var imageReplacePathAnnotations = applicationFromYaml.Metadata.Annotations
                                                               .Where(a => a.Key.StartsWith(ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey))
@@ -261,6 +267,17 @@ namespace Calamari.ArgoCD.Conventions
             {
                 Log.Info("No changes were commited.");
             }
+        }
+
+        void GenerateHelmAnnotationLogMessages(ArgoCDApplicationDto appDto, Application app, BasicSource source, RunningDeployment deployment)
+        {
+            var urlForArgoInstance = $"{deployment.Variables.Get("Octopus.Web.BaseUrl")}/app#/{deployment.Variables.Get("Octopus.Space.Id")}/infrastructure/argocdinstances/{appDto.GatewayId}/applications";
+            var docsURL = "https://octopus.com/docs";
+            log.WarnFormat("Argo CD Application '{0}' contains a helm chart ({1}), however the application is missing Octopus-specific annotations required for image-tag updating in Helm.",
+                           app.Metadata.Name, Path.Combine(source.Path, ArgoCDConstants.HelmChartFileName));
+            log.WarnFormat("Required annotations can be found at '{0}'.", log.FormatLink(urlForArgoInstance));
+            log.WarnFormat("Further documentation can be found in '{0}'.", log.FormatLink(docsURL));
+            
         }
 
         //NOTE: rootPath needs to include the subfolder
