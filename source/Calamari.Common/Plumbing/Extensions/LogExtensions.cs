@@ -14,12 +14,12 @@ namespace Calamari.Common.Plumbing.Extensions
 
         public static void LogMetric(this ILog log, string metricName, object metricValue, string? operationId = null)
         {
-            var serviceMessageParameters = new Dictionary<string, string>
-            {
-                { ServiceMessageNames.CalamariDeploymentMetric.OperationIdAttribute, operationId },
-                { ServiceMessageNames.CalamariDeploymentMetric.MetricAttribute, metricName },
-                { ServiceMessageNames.CalamariDeploymentMetric.ValueAttribute, metricValue.ToString() },
-            };
+            var serviceMessageParameters = new Dictionary<string, string>();
+            if (operationId != null)
+                serviceMessageParameters.Add(ServiceMessageNames.CalamariDeploymentMetric.OperationIdAttribute, operationId);
+            
+            serviceMessageParameters.Add(ServiceMessageNames.CalamariDeploymentMetric.MetricAttribute, metricName);
+            serviceMessageParameters.Add(ServiceMessageNames.CalamariDeploymentMetric.ValueAttribute, metricValue.ToString());
 
             log.WriteServiceMessage(new ServiceMessage(ServiceMessageNames.CalamariDeploymentMetric.Name, serviceMessageParameters));
         }

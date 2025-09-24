@@ -47,7 +47,7 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
             foreach (var executableName in executableNames)
             {
                 var (_, commandOutput) = ExecuteCommandAndReturnOutput(commandLineRunner,
-                                                                       environmentVars,
+                                                                       environmentVars ?? new Dictionary<string, string>(),
                                                                        CalamariEnvironment.IsRunningOnWindows ? "where" : "which",
                                                                        executableName);
                 

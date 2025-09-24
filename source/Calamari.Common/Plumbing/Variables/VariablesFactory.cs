@@ -57,17 +57,17 @@ namespace Calamari.Common.Plumbing.Variables
                 
                 executionVariables = new CalamariExecutionVariableCollection();
 
-                LoadExecutionVariablesFromFile(options);
+                executionVariables.AddRange(LoadExecutionVariablesFromFile(options));
 
                 // This exists as the V2 pipeline stores both the parameters and the contents of the variables files for resiliency
                 // This should be removed once the first version this is deployed to has rolled out to most cloud customers
-                ReadDeprecatedVariablesFormatFromFiles(options);
+                executionVariables.AddRange(ReadDeprecatedVariablesFormatFromFiles(options));
 
-                ReadOutputVariablesFromOfflineDropPreviousSteps(options);
+                executionVariables.AddRange(ReadOutputVariablesFromOfflineDropPreviousSteps(options));
             }
         }
 
-        void LoadExecutionVariablesFromFile(CommonOptions options)
+        CalamariExecutionVariableCollection LoadExecutionVariablesFromFile(CommonOptions options)
         {
             foreach (var variableFilePath in options.InputVariables.VariableFiles.Where(f => !string.IsNullOrEmpty(f)))
             {
@@ -82,26 +82,27 @@ namespace Calamari.Common.Plumbing.Variables
                     var targetVariables = CalamariExecutionVariableCollection.FromJson(json);
 
                     //append to the main collection
-                    executionVariables.AddRange(targetVariables);
+                    return targetVariables;
                 }
                 catch (JsonReaderException)
                 {
                     throw new CommandException("Unable to parse variables as valid JSON.");
                 }
             }
+            return new CalamariExecutionVariableCollection();
         }
 
-        void ReadOutputVariablesFromOfflineDropPreviousSteps(CommonOptions options)
+        CalamariExecutionVariableCollection ReadOutputVariablesFromOfflineDropPreviousSteps(CommonOptions options)
         {
             var outputVariablesFilePath = options.InputVariables.OutputVariablesFile;
             if (string.IsNullOrEmpty(outputVariablesFilePath))
-                return;
+                return new CalamariExecutionVariableCollection();
 
             var rawVariables = DecryptWithMachineKey(fileSystem.ReadFile(outputVariablesFilePath), options.InputVariables.OutputVariablesPassword);
             try
             {
                 var variables = CalamariExecutionVariableCollection.FromJson(rawVariables);
-                executionVariables.AddRange(variables);
+                return variables;
             }
             catch (JsonReaderException)
             {
@@ -109,7 +110,7 @@ namespace Calamari.Common.Plumbing.Variables
             }
         }
 
-        void ReadDeprecatedVariablesFormatFromFiles(CommonOptions options)
+        IEnumerable<CalamariExecutionVariable> ReadDeprecatedVariablesFormatFromFiles(CommonOptions options)
         {
             foreach (var variableFilePath in options.InputVariables.DeprecatedFormatVariableFiles.Where(f => !string.IsNullOrEmpty(f)))
             {
@@ -123,13 +124,14 @@ namespace Calamari.Common.Plumbing.Variables
                     var outputVariables = JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
 
                     // We don't know if the previous variables were sensitive or not, so treat them as non-sensitive */
-                    executionVariables.AddRange(outputVariables.Select(ov => new CalamariExecutionVariable(ov.Key, ov.Value, false)));
+                    return outputVariables.Select(ov => new CalamariExecutionVariable(ov.Key, ov.Value, false));
                 }
                 catch (JsonReaderException)
                 {
                     throw new CommandException("Unable to parse variables as valid JSON.");
                 }
             }
+            return Enumerable.Empty<CalamariExecutionVariable>();
         }
 
         void ImportExecutionVariablesIntoVariableCollection(IVariables variables, Func<CalamariExecutionVariable, bool> targetVariablePredicate)
