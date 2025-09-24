@@ -143,17 +143,17 @@ namespace Calamari.Common.Features.StructuredVariables
                         log.Info(StructuredConfigMessages.NoStructuresFound);
                 }
 
-                fileSystem.OverwriteFile(filePath,
-                                                 writer =>
-                                                 {
-                                                     var settings = new EmitterSettings()
-                                                                    .WithBestIndent(indentDetector.GetMostCommonIndent())
-                                                                    .WithNewLine(lineEnding == StringExtensions.LineEnding.Dos ? "\r\n" : "\n");
-                                                     var emitter = new Emitter(writer, settings);
-                                                     foreach (var outputEvent in outputEvents)
-                                                         emitter.Emit(outputEvent);
-                                                 },
-                                                 encoding);
+                using var writer = new StringWriter();
+                var settings = new EmitterSettings()
+                               .WithBestIndent(indentDetector.GetMostCommonIndent())
+                               .WithNewLine(lineEnding == StringExtensions.LineEnding.Dos ? "\r\n" : "\n");
+                var emitter = new Emitter(writer, settings);
+                foreach (var outputEvent in outputEvents)
+                {
+                    emitter.Emit(outputEvent);
+                }
+                    
+                fileSystem.OverwriteFile(filePath, writer.ToString(), encoding);
             }
             catch (Exception e) when (e is SyntaxErrorException || e is SemanticErrorException)
             {
