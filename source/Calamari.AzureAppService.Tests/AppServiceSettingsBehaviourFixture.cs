@@ -21,7 +21,7 @@ namespace Calamari.AzureAppService.Tests
     [TestFixture]
     public class AppServiceSettingsBehaviorFixture : AppServiceIntegrationTest
     {
-        string? slotName;
+        string slotName;
         AppServiceConfigurationDictionary existingSettings;
         ConnectionStringDictionary existingConnectionStrings;
 
@@ -152,7 +152,7 @@ namespace Calamari.AzureAppService.Tests
             await AssertAppSettings(settings.setting, connectionStrings.connStrings);
         }
 
-        private (string json, IEnumerable<AppSetting> setting) BuildAppSettingsJson(IEnumerable<(string name, string value, bool isSlotSetting)> settings)
+        private new (string json, IEnumerable<AppSetting> setting) BuildAppSettingsJson(IEnumerable<(string name, string value, bool isSlotSetting)> settings)
         {
             var appSettings = settings.Select(setting => new AppSetting
                                                   { Name = setting.name, Value = setting.value, SlotSetting = setting.isSlotSetting });
