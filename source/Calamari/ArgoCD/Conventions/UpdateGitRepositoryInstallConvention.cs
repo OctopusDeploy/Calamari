@@ -65,6 +65,10 @@ namespace Calamari.ArgoCD.Conventions
                 var applicationFromYaml = argoCdApplicationManifestParser.ParseManifest(application.Manifest);
                 foreach (var applicationSource in applicationFromYaml.Spec.Sources.OfType<BasicSource>())
                 {
+                if (spec.PurgeOutputDirectory)
+                {
+                    repository.StageFilesForRemoval(argoSource.SubFolder, spec.RecurseInputPath);
+                }
                     Log.Info($"Writing files to repository '{applicationSource.RepoUrl}' for '{application.Name}'");
                     
                     var gitCredential = gitCredentials[applicationSource.RepoUrl.AbsoluteUri];

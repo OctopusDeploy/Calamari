@@ -43,6 +43,38 @@ namespace Calamari.ArgoCD.Git
                 return false;
             }
         }
+
+        public void StageFilesForRemoval(string subPath, bool recursive)
+        {
+            var cleansedSubPath = subPath;
+            if (cleansedSubPath.StartsWith("./"))
+            {
+                cleansedSubPath = cleansedSubPath.Substring(2);
+            }
+
+            List<IndexEntry> filesToRemove = new List<IndexEntry>();
+            if (recursive)
+            {
+                Log.Verbose("Removing files recursively...");
+                repository.Index.ForEach(i => log.Info($"{i.Path} {i.Mode} {i.StageLevel} )"));
+                //Log.Verbose($"Identified Files = {repository.Index.Select(i => $"{i.Path}")}");
+                Log.Info($"cleansedSubPath = {cleansedSubPath}");
+                filesToRemove.AddRange(repository.Index.Where(i => i.Path.StartsWith(cleansedSubPath)).ToArray());
+            }
+            else
+            {
+                Log.Info($"Removing files which match {cleansedSubPath}");
+                // not sure how to handle platform-specific paths.
+                filesToRemove.AddRange(repository.Index.Where(i => i.Path.StartsWith(cleansedSubPath)
+                                                                   && (i.Path.EndsWith("yaml") || i.Path.EndsWith("yml"))
+                                                                   && !i.Path.Substring(cleansedSubPath.Length).Contains("/")
+                                                                   && i.Mode != Mode.Directory)
+                                                 .ToArray());
+            }
+            Log.Info($"Removing {filesToRemove.Select(i => i.Path).Join(",")}");
+            Log.Info($"Removing {filesToRemove.Count()} files from {subPath}");
+            filesToRemove.ForEach(i => repository.Index.Remove(i.Path));
+        }
         
         public void StageFiles(string[] filesToStage)
         {
