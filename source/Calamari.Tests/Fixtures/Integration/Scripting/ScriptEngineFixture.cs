@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Calamari.Common.Features.Scripting;
+using Calamari.Common.Features.Scripting.DotnetScript;
 using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Testing.Helpers;
@@ -45,7 +46,7 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
 
         void DeterminesCorrectScriptTypePreferenceOrder(IEnumerable<ScriptSyntax> expected)
         {
-            var engine = new ScriptEngine(new List<IScriptWrapper>(), Substitute.For<ILog>());
+            var engine = new ScriptEngine(new List<IScriptWrapper>(), Substitute.For<ILog>(), new DotnetScriptCompilationWarningOutputSink());
             var supportedTypes = engine.GetSupportedTypes();
 
             supportedTypes.Should().Equal(expected);

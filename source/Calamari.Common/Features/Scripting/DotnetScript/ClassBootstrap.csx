@@ -28,6 +28,7 @@ public static class Octopus
             throw new Exception("Octopus can only be initialized once.");
         }
         Parameters = new OctopusParametersDictionary(password);
+        WriteVerbose("Script compiled successfully, executing...");
         LogEnvironmentInformation();
     }
 

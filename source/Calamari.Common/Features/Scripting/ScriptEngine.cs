@@ -29,11 +29,13 @@ namespace Calamari.Common.Features.Scripting
     {
         readonly IEnumerable<IScriptWrapper> scriptWrapperHooks;
         readonly ILog log;
+        readonly DotnetScriptCompilationWarningOutputSink dotnetScriptCompilationWarningOutputSink;
 
-        public ScriptEngine(IEnumerable<IScriptWrapper> scriptWrapperHooks, ILog log)
+        public ScriptEngine(IEnumerable<IScriptWrapper> scriptWrapperHooks, ILog log, DotnetScriptCompilationWarningOutputSink dotnetScriptCompilationWarningOutputSink)
         {
             this.scriptWrapperHooks = scriptWrapperHooks;
             this.log = log;
+            this.dotnetScriptCompilationWarningOutputSink = dotnetScriptCompilationWarningOutputSink;
         }
 
         public ScriptSyntax[] GetSupportedTypes()
@@ -102,7 +104,7 @@ namespace Calamari.Common.Features.Scripting
                 case ScriptSyntax.PowerShell:
                     return new PowerShellScriptExecutor(log);
                 case ScriptSyntax.CSharp:
-                    return runDotnetScript ? (IScriptExecutor) new DotnetScriptExecutor(commandLineRunner, log) : new ScriptCSScriptExecutor(log);
+                    return runDotnetScript ? (IScriptExecutor) new DotnetScriptExecutor(commandLineRunner, log, dotnetScriptCompilationWarningOutputSink) : new ScriptCSScriptExecutor(log);
                 case ScriptSyntax.Bash:
                     return new BashScriptExecutor(log);
                 case ScriptSyntax.Python:

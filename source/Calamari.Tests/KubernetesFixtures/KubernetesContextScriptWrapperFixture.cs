@@ -12,6 +12,7 @@ using Calamari.Aws.Integration;
 using Calamari.Common.Features.EmbeddedResources;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
+using Calamari.Common.Features.Scripting.DotnetScript;
 using Calamari.Common.Features.Scripts;
 using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.FileSystem;
@@ -23,6 +24,7 @@ using Calamari.Testing.Requirements;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
+using NSubstitute;
 using NUnit.Framework;
 
 namespace Calamari.Tests.KubernetesFixtures
@@ -450,7 +452,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 wrappers.Add(new AwsScriptWrapper(log, variables) { VerifyAmazonLogin = () => Task.FromResult(true) });
             }
 
-            var engine = new ScriptEngine(wrappers, log);
+            var engine = new ScriptEngine(wrappers, log, new DotnetScriptCompilationWarningOutputSink());
             var result = engine.Execute(new Script(scriptName), variables, runner, environmentVariables);
 
             return new CalamariResult(result.ExitCode, new CaptureCommandInvocationOutputSink());

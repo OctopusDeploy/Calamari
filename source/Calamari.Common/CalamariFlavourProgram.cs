@@ -13,6 +13,7 @@ using Calamari.Common.Features.FunctionScriptContributions;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
+using Calamari.Common.Features.Scripting.DotnetScript;
 using Calamari.Common.Features.StructuredVariables;
 using Calamari.Common.Features.Substitutions;
 using Calamari.Common.Plumbing;
@@ -122,6 +123,8 @@ namespace Calamari.Common
             var assemblies = GetAllAssembliesToRegister().ToArray();
 
             builder.RegisterAssemblyTypes(assemblies).AssignableTo<ICodeGenFunctions>().As<ICodeGenFunctions>().SingleInstance();
+
+            builder.RegisterType<DotnetScriptCompilationWarningOutputSink>().AsSelf().SingleInstance();
 
             builder.RegisterAssemblyTypes(assemblies)
                 .AssignableTo<IScriptWrapper>()

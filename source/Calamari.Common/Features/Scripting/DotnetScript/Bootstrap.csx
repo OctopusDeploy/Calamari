@@ -23,6 +23,7 @@ public static void Initialize(string password)
         throw new Exception("Octopus can only be initialized once.");
     }
     OctopusParameters = new OctopusParametersDictionary(password);
+    WriteVerbose("Script compiled successfully, executing...");
     LogEnvironmentInformation();
 }
 
