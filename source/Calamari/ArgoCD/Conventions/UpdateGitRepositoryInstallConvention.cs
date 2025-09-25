@@ -130,14 +130,13 @@ namespace Calamari.ArgoCD.Conventions
             var inputIsDirectory = config.InputSubPath.EndsWith("/"); // needs to be platform agnostic.
             
             var absInputPath = Path.Combine(pathToExtractedPackageFiles, config.InputSubPath);
-            if (inputIsDirectory)
+            if (!inputIsDirectory)
             {
                 if (File.Exists(absInputPath))
                 {
                     return new[] { new PackageRelativeFile(absolutePath: absInputPath, packageRelativePath: Path.GetFileName(absInputPath)) };
                 }
-                log.Warn($"Unable to locate {config.InputSubPath} in supplied package files, no changes will be made");
-                return Array.Empty<IPackageRelativeFile>();
+                throw new CommandException($"Unable to locate file '{config.InputSubPath}' in supplied package files, no changes will be made");
             }
             
             if (Directory.Exists(absInputPath))
@@ -163,7 +162,7 @@ namespace Calamari.ArgoCD.Conventions
                                        })
                                .ToArray<IPackageRelativeFile>();
             }
-            throw new InvalidOperationException($"Supplied input path '{config.InputSubPath}' does not exist within the supplied package");
+            throw new CommandException($"Unable to locate directory '{config.InputSubPath}' within the supplied package");
         }
     }
 }
