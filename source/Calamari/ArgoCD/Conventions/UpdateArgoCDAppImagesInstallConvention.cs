@@ -167,7 +167,7 @@ namespace Calamari.ArgoCD.Conventions
                                                                  .ToList();
             if (imageReplacePathAnnotations.IsNullOrEmpty())
             {
-                GenerateHelmAnnotationLogMessages(application, applicationFromYaml, applicationSource,deployment);
+                GenerateHelmAnnotationLogMessages(applicationFromYaml, applicationSource);
             }
             else
             {
@@ -292,14 +292,12 @@ namespace Calamari.ArgoCD.Conventions
             }
         }
 
-        void GenerateHelmAnnotationLogMessages(ArgoCDApplicationDto appDto, Application app, BasicSource source, RunningDeployment deployment)
+        void GenerateHelmAnnotationLogMessages(Application app, BasicSource source)
         {
-            var urlForArgoInstance = $"{deployment.Variables.Get("Octopus.Web.BaseUrl")}/app#/{deployment.Variables.Get("Octopus.Space.Id")}/infrastructure/argocdinstances/{appDto.GatewayId}/applications";
             var docsURL = "https://octopus.com/docs";
             log.WarnFormat("Argo CD Application '{0}' contains a helm chart ({1}), however the application is missing Octopus-specific annotations required for image-tag updating in Helm.",
                            app.Metadata.Name, Path.Combine(source.Path, ArgoCDConstants.HelmChartFileName));
-            log.WarnFormat("Required annotations can be found at {0}.", log.FormatLink(urlForArgoInstance));
-            log.WarnFormat("Further documentation can be found in {0}.", log.FormatLink(docsURL));
+            log.WarnFormat("Annotation creation documentation can be found {0}.", log.FormatLink(docsURL, "here"));
             
         }
 
