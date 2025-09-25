@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using Calamari.Common.Features.Scripting.DotnetScript;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Testing.Helpers;
 using Calamari.Testing.Requirements;
 using Calamari.Tests.Helpers;
+using FluentAssertions;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.DotnetScript
@@ -131,6 +133,33 @@ namespace Calamari.Tests.Fixtures.DotnetScript
                 output.AssertFailure();
                 output.AssertErrorOutput("Could not load file or assembly 'NuGet.Protocol, Version=6.10.0.");
             }
+        }
+
+        [Test]
+        public void HasInvalidSyntax_ShouldWriteExtraWarningLine()
+        {
+            var (output, _) = RunScript("InvalidSyntax.csx", new Dictionary<string, string>()
+            {
+                [ScriptVariables.UseDotnetScript] = bool.TrueString
+            });
+
+            output.CapturedOutput.AllMessages.Should().Contain(DotnetScriptCompilerWarningWrapper.WarningLogLine);
+
+            //We are expecting failure
+            output.AssertFailure();
+        }
+        
+        [Test]
+        public void ThrowsException_ShowNotWriteExtraWarningLine()
+        {
+            var (output, _) = RunScript("ThrowsException.csx", new Dictionary<string, string>()
+            {
+                [ScriptVariables.UseDotnetScript] = bool.TrueString
+            });
+
+            output.CapturedOutput.AllMessages.Should().NotContain(DotnetScriptCompilerWarningWrapper.WarningLogLine);
+            //We are expecting failure
+            output.AssertFailure();
         }
     }
 }
