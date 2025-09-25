@@ -165,6 +165,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
         [Test]
         public void InputPathIndicatesFileButIsDirectoryThereforeNoFilesAreChanged()
         {
+            // Arrange
             const string firstFilename = "first.yaml";
             CreateFileUnderPackageDirectory(firstFilename);
             const string nestedFilename = "nested/second.yaml";
@@ -192,11 +193,12 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                                                       new DeploymentConfigFactory(nonSensitiveCalamariVariables), 
                                                                       customPropertiesLoader,
                                                                       argoCdApplicationManifestParser);
-            convention.Install(runningDeployment);
             
-            var resultPath = CloneOrigin();
-            File.Exists(Path.Combine(resultPath, firstFilename)).Should().BeTrue();
-            File.Exists(Path.Combine(resultPath, nestedFilename)).Should().BeFalse();
+            // Act
+            Action act = () => convention.Install(runningDeployment);
+            
+            // Assert
+            act.Should().Throw<CommandException>();
         }
 
         //Accepts a relative path and creates a file under the package directory, which
