@@ -1,10 +1,14 @@
 #if NET
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Calamari.ArgoCD.GitHub;
+using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
 using LibGit2Sharp;
+using SharpCompress;
 
 namespace Calamari.ArgoCD.Git
 {
@@ -55,10 +59,8 @@ namespace Calamari.ArgoCD.Git
             List<IndexEntry> filesToRemove = new List<IndexEntry>();
             if (recursive)
             {
-                Log.Verbose("Removing files recursively...");
-                repository.Index.ForEach(i => log.Info($"{i.Path} {i.Mode} {i.StageLevel} )"));
-                //Log.Verbose($"Identified Files = {repository.Index.Select(i => $"{i.Path}")}");
-                Log.Info($"cleansedSubPath = {cleansedSubPath}");
+                Log.Verbose("Removing files recursively.");
+                repository.Index.ForEach(i => log.Info($" - {i.Path}"));
                 filesToRemove.AddRange(repository.Index.Where(i => i.Path.StartsWith(cleansedSubPath)).ToArray());
             }
             else
@@ -71,8 +73,6 @@ namespace Calamari.ArgoCD.Git
                                                                    && i.Mode != Mode.Directory)
                                                  .ToArray());
             }
-            Log.Info($"Removing {filesToRemove.Select(i => i.Path).Join(",")}");
-            Log.Info($"Removing {filesToRemove.Count()} files from {subPath}");
             filesToRemove.ForEach(i => repository.Index.Remove(i.Path));
         }
         

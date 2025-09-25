@@ -65,10 +65,6 @@ namespace Calamari.ArgoCD.Conventions
                 var applicationFromYaml = argoCdApplicationManifestParser.ParseManifest(application.Manifest);
                 foreach (var applicationSource in applicationFromYaml.Spec.Sources.OfType<BasicSource>())
                 {
-                if (spec.PurgeOutputDirectory)
-                {
-                    repository.StageFilesForRemoval(argoSource.SubFolder, spec.RecurseInputPath);
-                }
                     Log.Info($"Writing files to repository '{applicationSource.RepoUrl}' for '{application.Name}'");
                     
                     var gitCredential = gitCredentials[applicationSource.RepoUrl.AbsoluteUri];
@@ -78,6 +74,11 @@ namespace Calamari.ArgoCD.Conventions
                     Log.Info($"Copying files into repository {applicationSource.RepoUrl}");
                     var subFolder = applicationSource.Path ?? String.Empty;
                     Log.VerboseFormat("Copying files into subfolder '{0}'", subFolder);
+                    
+                    if (deploymentConfig.PurgeOutputDirectory)
+                    {
+                        repository.StageFilesForRemoval(subFolder, deploymentConfig.RecurseInputPath);
+                    }
 
                     var repositoryFiles = packageFiles.Select(f => new FileCopySpecification(f, repository.WorkingDirectory, subFolder)).ToList();
                     Log.VerboseFormat("Copying files into subfolder '{0}'", applicationSource.Path!);

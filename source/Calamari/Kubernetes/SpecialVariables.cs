@@ -73,6 +73,8 @@ namespace Calamari.Kubernetes
             public static readonly string InputPath = "Octopus.Action.ArgoCD.InputPath";
             
             public static readonly string Recursive = "Octopus.Action.ArgoCD.RecursiveResourceDetection";
+
+            public static readonly string PurgeOutput = "Octopus.Action.ArgoCD.PurgeOutputFolder";
             
             public static class PullRequest
             {
