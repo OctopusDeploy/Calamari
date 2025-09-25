@@ -163,7 +163,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
         }
 
         [Test]
-        public void InputPathIndicatesFileButIsDirectoryThereforeNoFilesAreChanged()
+        public void InputPathIndicatesFileButIsDirectoryThereforeOperationThrows()
         {
             // Arrange
             const string firstFilename = "first.yaml";
