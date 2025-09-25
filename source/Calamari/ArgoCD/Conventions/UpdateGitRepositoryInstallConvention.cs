@@ -127,10 +127,17 @@ namespace Calamari.ArgoCD.Conventions
 
         IPackageRelativeFile[] SelectFiles(string pathToExtractedPackageFiles, ArgoCommitToGitConfig config)
         {
+            var inputIsDirectory = config.InputSubPath.EndsWith("/"); // needs to be platform agnostic.
+            
             var absInputPath = Path.Combine(pathToExtractedPackageFiles, config.InputSubPath);
-            if (File.Exists(absInputPath))
+            if (inputIsDirectory)
             {
-                return new[] { new PackageRelativeFile(absolutePath: absInputPath, packageRelativePath: Path.GetFileName(absInputPath)) };
+                if (File.Exists(absInputPath))
+                {
+                    return new[] { new PackageRelativeFile(absolutePath: absInputPath, packageRelativePath: Path.GetFileName(absInputPath)) };
+                }
+                log.Warn($"Unable to locate {config.InputSubPath} in supplied package files, no changes will be made");
+                return Array.Empty<IPackageRelativeFile>();
             }
             
             if (Directory.Exists(absInputPath))

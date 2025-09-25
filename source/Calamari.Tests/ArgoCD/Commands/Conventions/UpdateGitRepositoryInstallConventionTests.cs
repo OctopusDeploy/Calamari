@@ -97,7 +97,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             var nonSensitiveCalamariVariables = new NonSensitiveCalamariVariables()
             {
                 [KnownVariables.OriginalPackageDirectoryPath] = WorkingDirectory,
-                [SpecialVariables.Git.InputPath] = "",
+                [SpecialVariables.Git.InputPath] = "./",
                 [SpecialVariables.Git.Recursive] = "True",
                 [SpecialVariables.Git.CommitMethod] = "DirectCommit",
                 [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this"
@@ -136,7 +136,44 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             var nonSensitiveCalamariVariables = new NonSensitiveCalamariVariables()
             {
                 [KnownVariables.OriginalPackageDirectoryPath] = WorkingDirectory,
-                [SpecialVariables.Git.InputPath] = "",
+                [SpecialVariables.Git.InputPath] = "./",
+                [SpecialVariables.Git.Recursive] = "False",
+                [SpecialVariables.Git.CommitMethod] = "DirectCommit",
+                [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this"
+            };
+            var allVariables = new CalamariVariables();
+            allVariables.Merge(nonSensitiveCalamariVariables);
+
+            var runningDeployment = new RunningDeployment("./arbitraryFile.txt", allVariables);
+            runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
+            runningDeployment.StagingDirectory = WorkingDirectory;    
+           
+            var convention = new UpdateGitRepositoryInstallConvention(fileSystem, 
+                                                                      CommitToGitCommand.PackageDirectoryName, 
+                                                                      log, 
+                                                                      Substitute.For<IGitHubPullRequestCreator>(), 
+                                                                      new DeploymentConfigFactory(nonSensitiveCalamariVariables), 
+                                                                      customPropertiesLoader,
+                                                                      argoCdApplicationManifestParser);
+            convention.Install(runningDeployment);
+            
+            var resultPath = CloneOrigin();
+            File.Exists(Path.Combine(resultPath, firstFilename)).Should().BeTrue();
+            File.Exists(Path.Combine(resultPath, nestedFilename)).Should().BeFalse();
+        }
+
+        [Test]
+        public void InputPathIndicatesFileButIsDirectoryThereforeNoFilesAreChanged()
+        {
+            const string firstFilename = "first.yaml";
+            CreateFileUnderPackageDirectory(firstFilename);
+            const string nestedFilename = "nested/second.yaml";
+            CreateFileUnderPackageDirectory(nestedFilename);
+            
+            var nonSensitiveCalamariVariables = new NonSensitiveCalamariVariables()
+            {
+                [KnownVariables.OriginalPackageDirectoryPath] = WorkingDirectory,
+                [SpecialVariables.Git.InputPath] = "nested", //lack of closing "/"
                 [SpecialVariables.Git.Recursive] = "False",
                 [SpecialVariables.Git.CommitMethod] = "DirectCommit",
                 [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this"
