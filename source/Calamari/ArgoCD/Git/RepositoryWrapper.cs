@@ -8,6 +8,7 @@ using Calamari.ArgoCD.GitHub;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
 using LibGit2Sharp;
+using Microsoft.IdentityModel.Tokens;
 using SharpCompress;
 
 namespace Calamari.ArgoCD.Git
@@ -61,7 +62,7 @@ namespace Calamari.ArgoCD.Git
             }
             else
             {
-                if(!cleansedSubPath.EndsWith("/"))
+                if(!cleansedSubPath.EndsWith("/") && !cleansedSubPath.IsNullOrEmpty())
                 {
                     cleansedSubPath += "/";
                 } 

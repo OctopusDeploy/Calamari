@@ -7,12 +7,10 @@ using System.Threading.Tasks;
 using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.GitHub;
 using Calamari.Common.Plumbing.FileSystem;
-using Calamari.Common.Plumbing.Logging;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
 using FluentAssertions;
 using LibGit2Sharp;
-using Microsoft.Azure.Management.Network.Fluent.Models;
 using NSubstitute;
 using NUnit.Framework;
 
