@@ -7,7 +7,7 @@ namespace Calamari.ArgoCD.Domain
     [JsonDerivedType(typeof(BasicSource), "basic")]
     [JsonDerivedType(typeof(HelmSource), "helm")]
     [JsonDerivedType(typeof(ReferenceSource), "reference")]
-    public abstract class SourceBase
+    public class SourceBase
     {
         [JsonPropertyName("repoURL")]
         public Uri RepoUrl { get; set; } = new Uri("about:blank");
