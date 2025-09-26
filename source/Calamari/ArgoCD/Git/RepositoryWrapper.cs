@@ -54,6 +54,10 @@ namespace Calamari.ArgoCD.Git
         public void StageFilesForRemoval(string subPath, bool recursive)
         {
             var cleansedSubPath = subPath.StartsWith("./") ? subPath.Substring(2) : subPath;
+            if(!cleansedSubPath.EndsWith("/") && !cleansedSubPath.IsNullOrEmpty())
+            {
+                cleansedSubPath += "/";
+            } 
             
             List<IndexEntry> filesToRemove = new List<IndexEntry>();
             if (recursive)
@@ -64,10 +68,6 @@ namespace Calamari.ArgoCD.Git
             }
             else
             {
-                if(!cleansedSubPath.EndsWith("/") && !cleansedSubPath.IsNullOrEmpty())
-                {
-                    cleansedSubPath += "/";
-                } 
                 Log.Info($"Removing files which match {cleansedSubPath}");
                 // not sure how to handle platform-specific paths.
                 filesToRemove.AddRange(repository.Index.Where(i => i.Path.StartsWith(cleansedSubPath)

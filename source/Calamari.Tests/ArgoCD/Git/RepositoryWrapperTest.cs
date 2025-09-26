@@ -141,18 +141,21 @@ namespace Calamari.Tests.ArgoCD.Git
         }
 
         [Test]
-        [TestCase("", false, 2)]
-        [TestCase("./", false, 2)]
+        [TestCase("", false, 3)]
+        [TestCase("./", false, 3)]
         [TestCase("", true, 0)]
         [TestCase("./", true, 0)]
-        [TestCase("nested_1", false, 2)]
-        [TestCase("nested_1", true, 1)]
-        [TestCase("nested_1/nested_2", true, 2)]
+        [TestCase("nested_1", false, 3)]
+        [TestCase("nested_1", true, 2)]
+        [TestCase("nested_1/nested_2", true, 3)]
+        [TestCase("nested", true, 3)]
+        [TestCase("nest", true, 4)]
         public void RemoveFiles(string subPath, bool recurse, int totalFilesRemaining)
         {
             //Arrange
             bareOrigin.AddFilesToBranch(branchName,
                                         ("file.yaml", ""),
+                                        ("nested/file.txt", ""),
                                         ("nested_1/file.yaml", ""),
                                         ("nested_1/nested_2/file.yaml", ""));
             
