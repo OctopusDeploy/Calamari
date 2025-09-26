@@ -77,7 +77,7 @@ namespace Calamari.ArgoCD.Conventions
                     
                     if (deploymentConfig.PurgeOutputDirectory)
                     {
-                        repository.StageFilesForRemoval(subFolder, deploymentConfig.RecurseInputPath);
+                        repository.RecursivelyStageFilesForRemoval(subFolder);
                     }
 
                     var repositoryFiles = packageFiles.Select(f => new FileCopySpecification(f, repository.WorkingDirectory, subFolder)).ToList();

@@ -141,16 +141,13 @@ namespace Calamari.Tests.ArgoCD.Git
         }
 
         [Test]
-        [TestCase("", false, 3)]
-        [TestCase("./", false, 3)]
-        [TestCase("", true, 0)]
-        [TestCase("./", true, 0)]
-        [TestCase("nested_1", false, 3)]
-        [TestCase("nested_1", true, 2)]
-        [TestCase("nested_1/nested_2", true, 3)]
-        [TestCase("nested", true, 3)]
-        [TestCase("nest", true, 4)]
-        public void RemoveFiles(string subPath, bool recurse, int totalFilesRemaining)
+        [TestCase("", 0)]
+        [TestCase("./", 0)]
+        [TestCase("nested_1", 2)]
+        [TestCase("nested_1/nested_2", 3)]
+        [TestCase("nested", 3)]
+        [TestCase("nest", 4)]
+        public void RemoveFiles(string subPath, int totalFilesRemaining)
         {
             //Arrange
             bareOrigin.AddFilesToBranch(branchName,
@@ -164,7 +161,7 @@ namespace Calamari.Tests.ArgoCD.Git
             
             // Act
             var sut = repositoryFactory.CloneRepository($"{repositoryPath}/sut", gitConnection);
-            sut.StageFilesForRemoval(subPath, recurse);
+            sut.RecursivelyStageFilesForRemoval(subPath);
             sut.CommitChanges("Deleted files", string.Empty);
             sut.PushChanges(branchName.Value);
             
