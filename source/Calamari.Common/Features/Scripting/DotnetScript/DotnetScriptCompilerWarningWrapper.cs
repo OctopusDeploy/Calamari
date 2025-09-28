@@ -7,7 +7,7 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
 {
     public class DotnetScriptCompilerWarningWrapper : IScriptWrapper
     {
-        public const string WarningLogLine = "dotnet-script failed to execute the script. This may be due to syntax differences between dotnet-script and ScriptCS. As of 2025.4, ScriptCS is no longer supported.";
+        public const string WarningLogLine = "dotnet-script failed to execute the script. This may be due to syntax differences between dotnet-script and ScriptCS. As of 2025.4, ScriptCS is [no longer supported](https://oc.to/scriptcs-deprecation).";
         
         readonly ILog log;
         readonly DotnetScriptCompilationWarningOutputSink outputSink;
