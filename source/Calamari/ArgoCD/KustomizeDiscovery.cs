@@ -12,9 +12,10 @@ namespace Calamari.ArgoCD
         {
             foreach (var fileName in ArgoCDConstants.KustomizationFileNames)
             {
-                if (fileSystem.FileExists(Path.Combine(rootPath, fileName)))
+                var absPath = Path.Combine(rootPath, fileName);
+                if (fileSystem.FileExists(absPath))
                 {
-                    return fileName;
+                    return absPath;
                 }
             }
 

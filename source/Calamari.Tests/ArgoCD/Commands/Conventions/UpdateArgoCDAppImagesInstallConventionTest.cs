@@ -227,6 +227,49 @@ spec:
             content.Should().Be(updatedYamlContent);
         }
 
+        [Test]
+        public void UpdateImages_ForKustomizeFileWorks()
+        {
+            // Arrange
+            var updater = new UpdateArgoCDAppImagesInstallConvention(log,
+                                                                     Substitute.For<IGitHubPullRequestCreator>(),
+                                                                     fileSystem,
+                                                                     new DeploymentConfigFactory(nonSensitiveCalamariVariables),
+                                                                     new CommitMessageGenerator(),
+                                                                     customPropertiesLoader,
+                                                                     argoCdApplicationManifestParser);
+            var variables = new CalamariVariables
+            {
+                [PackageVariables.IndexedImage("nginx")] = "index.docker.io/nginx:1.27.1",
+                [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
+            };
+            var runningDeployment = new RunningDeployment(null, variables);
+            runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
+            runningDeployment.StagingDirectory = tempDirectory;
+
+            var kustomizeFile = "kustomization.yaml";
+            var filesInRepo = new (string, string)[]
+            {
+                (kustomizeFile,
+                 @"
+images:
+- name: ""docker.io/nginx""
+  newTag: ""1.25""
+")
+            };
+            originRepo.AddFilesToBranch(argoCDBranchName, filesInRepo);
+            
+            // Act
+            updater.Install(runningDeployment);
+            
+            // Assert
+            var clonedRepoPath = CloneOrigin();
+            var fileInRepo = Path.Combine(clonedRepoPath, kustomizeFile);
+            fileSystem.FileExists(fileInRepo).Should().BeTrue();
+            var content = fileSystem.ReadFile(fileInRepo);
+            content.Should().Contain("1.27.1");
+        }
+
         string CloneOrigin()
         {
             var subPath = Guid.NewGuid().ToString();
