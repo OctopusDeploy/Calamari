@@ -23,13 +23,11 @@ namespace Calamari.ArgoCD.Conventions
         {
             var commitParameters = CommitParameters(deployment);
             var inputPath = deployment.Variables.Get(SpecialVariables.Git.InputPath, string.Empty);
-            var recursive = deployment.Variables.GetFlag(SpecialVariables.Git.Recursive, false);
             var purgeOutput = deployment.Variables.GetFlag(SpecialVariables.Git.PurgeOutput, false);
             
             return new ArgoCommitToGitConfig(
                                            deployment.CurrentDirectory,
                                            inputPath,
-                                           recursive,
                                            purgeOutput,
                                            commitParameters);
         }
