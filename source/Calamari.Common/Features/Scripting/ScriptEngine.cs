@@ -74,27 +74,27 @@ namespace Calamari.Common.Features.Scripting
             bool.TryParse(variables.Get(ScriptVariables.UseDotnetScript, bool.FalseString), out bool useDotnetScript);
             // get the type of script
             return scriptWrapperHooks
-                .Where(hook => hook.IsEnabled(scriptSyntax))
-                /*
-                 * Sort the list in descending order of priority to ensure that
-                 * authentication script wrappers are called before any tool
-                 * script wrapper that might rely on the auth having being performed
-                 */
-                .OrderByDescending(hook => hook.Priority)
-                .Aggregate(
-                    // The last wrapper is always the TerminalScriptWrapper
-                    new TerminalScriptWrapper(GetScriptExecutor(scriptSyntax, variables, commandLineRunner, useDotnetScript), variables),
-                    (IScriptWrapper current, IScriptWrapper next) =>
-                    {
-                        // the next wrapper is pointed to the current one
-                        next.NextWrapper = current;
-                        /*
-                     * The next wrapper is carried across to the next aggregate call,
-                     * or is returned as the result of the aggregate call. This means
-                     * the last item in the list is the return value.
-                     */
-                        return next;
-                    });
+                   .Where(hook => hook.IsEnabled(scriptSyntax))
+                   /*
+                    * Sort the list in descending order of priority to ensure that
+                    * authentication script wrappers are called before any tool
+                    * script wrapper that might rely on the auth having being performed
+                    */
+                   .OrderByDescending(hook => hook.Priority)
+                   .Aggregate(
+                              // The last wrapper is always the TerminalScriptWrapper
+                              new TerminalScriptWrapper(GetScriptExecutor(scriptSyntax, variables, commandLineRunner, useDotnetScript), variables),
+                              (IScriptWrapper current, IScriptWrapper next) =>
+                              {
+                                  // the next wrapper is pointed to the current one
+                                  next.NextWrapper = current;
+                                  /*
+                                   * The next wrapper is carried across to the next aggregate call,
+                                   * or is returned as the result of the aggregate call. This means
+                                   * the last item in the list is the return value.
+                                   */
+                                  return next;
+                              });
         }
 
         IScriptExecutor GetScriptExecutor(ScriptSyntax scriptSyntax, IVariables variables, ICommandLineRunner commandLineRunner, bool runDotnetScript = false)
@@ -104,7 +104,13 @@ namespace Calamari.Common.Features.Scripting
                 case ScriptSyntax.PowerShell:
                     return new PowerShellScriptExecutor(log);
                 case ScriptSyntax.CSharp:
-                    return runDotnetScript ? (IScriptExecutor) new DotnetScriptExecutor(commandLineRunner, log, dotnetScriptCompilationWarningOutputSink) : new ScriptCSScriptExecutor(log);
+                    if (runDotnetScript)
+                        return new DotnetScriptExecutor(commandLineRunner, log, dotnetScriptCompilationWarningOutputSink);
+                    else
+                    {
+                        dotnetScriptCompilationWarningOutputSink.AssumeSuccessfullyCompiled();
+                        return new ScriptCSScriptExecutor(log);
+                    }
                 case ScriptSyntax.Bash:
                     return new BashScriptExecutor(log);
                 case ScriptSyntax.Python:

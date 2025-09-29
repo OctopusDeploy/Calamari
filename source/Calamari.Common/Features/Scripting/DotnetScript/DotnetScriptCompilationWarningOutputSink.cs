@@ -18,5 +18,13 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
                 SuccessfullyCompiled = true;
             }
         }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public void AssumeSuccessfullyCompiled()
+        {
+            SuccessfullyCompiled = true;
+        }
     }
 }
