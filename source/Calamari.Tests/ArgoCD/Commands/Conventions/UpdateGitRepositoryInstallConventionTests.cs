@@ -99,7 +99,6 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             {
                 [KnownVariables.OriginalPackageDirectoryPath] = WorkingDirectory,
                 [SpecialVariables.Git.InputPath] = "",
-                [SpecialVariables.Git.Recursive] = "True",
                 [SpecialVariables.Git.CommitMethod] = "DirectCommit",
                 [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this"
             };
@@ -125,87 +124,6 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             resultFirstContent.Should().Be(firstFilename);
             resultNestedContent.Should().Be(nestedFilename);
         }
-
-        [Test]
-        public void DoesNotCopyFilesRecursivelyIfNotSet()
-        {
-            const string firstFilename = "first.yaml";
-            CreateFileUnderPackageDirectory(firstFilename);
-            const string nestedFilename = "nested/second.yaml";
-            CreateFileUnderPackageDirectory(nestedFilename);
-            
-            var nonSensitiveCalamariVariables = new NonSensitiveCalamariVariables()
-            {
-                [KnownVariables.OriginalPackageDirectoryPath] = WorkingDirectory,
-                [SpecialVariables.Git.InputPath] = "",
-                [SpecialVariables.Git.Recursive] = "False",
-                [SpecialVariables.Git.CommitMethod] = "DirectCommit",
-                [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this"
-            };
-            var allVariables = new CalamariVariables();
-            allVariables.Merge(nonSensitiveCalamariVariables);
-
-            var runningDeployment = new RunningDeployment("./arbitraryFile.txt", allVariables);
-            runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
-            runningDeployment.StagingDirectory = WorkingDirectory;    
-           
-            var convention = new UpdateGitRepositoryInstallConvention(fileSystem, 
-                                                                      CommitToGitCommand.PackageDirectoryName, 
-                                                                      log, 
-                                                                      Substitute.For<IGitHubPullRequestCreator>(), 
-                                                                      new DeploymentConfigFactory(nonSensitiveCalamariVariables), 
-                                                                      customPropertiesLoader,
-                                                                      argoCdApplicationManifestParser);
-            convention.Install(runningDeployment);
-            
-            var resultPath = CloneOrigin();
-            File.Exists(Path.Combine(resultPath, firstFilename)).Should().BeTrue();
-            File.Exists(Path.Combine(resultPath, nestedFilename)).Should().BeFalse();
-        }
-
-        [Test]
-        public void EnsureOutputDirectoryIsPurgedWhenVariableIsSetAndNotRecursive()
-        {
-            // Arrange
-            const string firstFilename = "first.yaml";
-            CreateFileUnderPackageDirectory(firstFilename);
-            
-            var nonSensitiveCalamariVariables = new NonSensitiveCalamariVariables()
-            {
-                [KnownVariables.OriginalPackageDirectoryPath] = WorkingDirectory,
-                [SpecialVariables.Git.InputPath] = "",
-                [SpecialVariables.Git.Recursive] = "False",
-                [SpecialVariables.Git.CommitMethod] = "DirectCommit",
-                [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this",
-                [SpecialVariables.Git.PurgeOutput] = "True",
-            };
-            
-            //add arbitrary file to the origin repo
-            var fileToPurge = "removeThis.yaml";
-            originRepo.AddFilesToBranch(argoCdBranchName, (fileToPurge, "This file to be removed"));
-            
-            var allVariables = new CalamariVariables();
-            allVariables.Merge(nonSensitiveCalamariVariables);
-
-            var runningDeployment = new RunningDeployment("./arbitraryFile.txt", allVariables);
-            runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
-            runningDeployment.StagingDirectory = WorkingDirectory;
-            
-            // Act
-            var convention = new UpdateGitRepositoryInstallConvention(fileSystem, 
-                                                                      CommitToGitCommand.PackageDirectoryName, 
-                                                                      log, 
-                                                                      Substitute.For<IGitHubPullRequestCreator>(), 
-                                                                      new DeploymentConfigFactory(nonSensitiveCalamariVariables), 
-                                                                      customPropertiesLoader,
-                                                                      argoCdApplicationManifestParser);
-            convention.Install(runningDeployment);
-            
-            // Assert
-            var resultPath = CloneOrigin();
-            File.Exists(Path.Combine(resultPath, firstFilename)).Should().BeTrue();
-            File.Exists(Path.Combine(resultPath, fileToPurge)).Should().BeFalse();
-        }
         
         [Test]
         public void EnsureOutputDirectoryIsPurgedWhenVariableIsSetRecursiveDeletion()
@@ -218,7 +136,6 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             {
                 [KnownVariables.OriginalPackageDirectoryPath] = WorkingDirectory,
                 [SpecialVariables.Git.InputPath] = "",
-                [SpecialVariables.Git.Recursive] = "True",
                 [SpecialVariables.Git.CommitMethod] = "DirectCommit",
                 [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this",
                 [SpecialVariables.Git.PurgeOutput] = "True",

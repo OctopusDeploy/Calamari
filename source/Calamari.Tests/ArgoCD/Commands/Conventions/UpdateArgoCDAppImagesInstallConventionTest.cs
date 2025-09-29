@@ -21,7 +21,7 @@ using LibGit2Sharp;
 using NSubstitute;
 using NUnit.Framework;
 
-namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
+namespace Calamari.Tests.ArgoCD.Commands.Conventions
 {
     [TestFixture]
     public class UpdateArgoCDAppImagesInstallConventionTests
