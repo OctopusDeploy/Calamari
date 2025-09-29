@@ -297,7 +297,7 @@ namespace Calamari.ArgoCD.Conventions
             var docsURL = "https://oc.to/argo-cd-helm-image-annotations";
             log.WarnFormat("Argo CD Application '{0}' contains a helm chart ({1}), however the application is missing Octopus-specific annotations required for image-tag updating in Helm.",
                            app.Metadata.Name, Path.Combine(source.Path, ArgoCDConstants.HelmChartFileName));
-            log.WarnFormat("Annotation creation documentation can be found {0}.", log.FormatLink(docsURL, "here"));
+            log.WarnFormat("Annotation creation documentation can be found {0}.", log.FormatShortLink("argo-cd-helm-image-annotations", "here"));
             
         }
 
