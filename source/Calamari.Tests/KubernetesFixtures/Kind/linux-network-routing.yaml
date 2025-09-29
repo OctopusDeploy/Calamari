@@ -1,0 +1,16 @@
+﻿apiVersion: v1
+kind: Endpoints
+metadata:
+  name: dockerhost
+  namespace: default
+subsets:
+  - addresses:
+      - ip: 172.17.0.1 # this is the gateway IP in the "bridge" docker network
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dockerhost
+  namespace: default
+spec:
+  clusterIP: None

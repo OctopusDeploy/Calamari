@@ -1,0 +1,8 @@
+﻿apiVersion: v1
+kind: Service
+metadata:
+  name: dockerhost
+  namespace: default
+spec:
+  type: ExternalName
+  externalName: host.docker.internal

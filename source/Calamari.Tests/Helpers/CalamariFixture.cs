@@ -22,7 +22,7 @@ namespace Calamari.Tests.Helpers
         protected InMemoryLog Log;
 
         [SetUp]
-        public void SetUpCalamariFixture()
+        public virtual void SetUpCalamariFixture()
         {
             Log = new InMemoryLog();
         }
