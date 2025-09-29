@@ -44,12 +44,15 @@ namespace Calamari.Common.Features.Packages.NuGet
             {
                 foreach (var entry in archive.Entries)
                 {
+                    if (entry.Key == null)
+                        continue;
+                    
                     var unescapedKey = UnescapePath(entry.Key);
 
                     if (IsExcludedPath(unescapedKey))
                         continue;
 
-                    var targetDirectory = Path.Combine(directory, Path.GetDirectoryName(unescapedKey));
+                    var targetDirectory = Path.Combine(directory, Path.GetDirectoryName(unescapedKey) ?? string.Empty);
 
                     if (!Directory.Exists(targetDirectory))
                         Directory.CreateDirectory(targetDirectory);

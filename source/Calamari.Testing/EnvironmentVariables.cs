@@ -115,7 +115,7 @@ namespace Calamari.Testing
         {
             var missingVariables = Enum.GetValues(typeof(ExternalVariable))
                                        .Cast<ExternalVariable>()
-                                       .Select(prop => EnvironmentVariableAttribute.Get(prop))
+                                       .Select(prop => EnvironmentVariableAttribute.Get(prop) ?? throw new Exception($"`{prop}` does not include a {nameof(EnvironmentVariableAttribute)}."))
                                        .Where(attr => Environment.GetEnvironmentVariable(attr.Name) == null)
                                        .ToList();
 
@@ -143,10 +143,10 @@ namespace Calamari.Testing
             {
                 var valueFromSecretManager = string.IsNullOrEmpty(attr.SecretReference)
                     ? null
-                    : await SecretManagerClient.Value.GetSecret(attr.SecretReference, cancellationToken, throwOnNotFound: false);
+                    : await SecretManagerClient.Value.GetSecret(attr.SecretReference!, cancellationToken, throwOnNotFound: false);
                 if (!string.IsNullOrEmpty(valueFromSecretManager))
                 {
-                    return valueFromSecretManager;
+                    return valueFromSecretManager!;
                 }
 
                 return attr.DefaultValue ?? 

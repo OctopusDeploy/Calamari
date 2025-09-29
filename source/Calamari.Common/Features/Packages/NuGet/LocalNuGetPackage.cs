@@ -43,6 +43,9 @@ namespace Calamari.Common.Features.Packages.NuGet
             {
                 foreach (var entry in archive.Entries)
                 {
+                    if (entry.Key == null)
+                        continue;
+                    
                     if (entry.IsDirectory || !IsManifest(entry.Key))
                         continue;
 

@@ -74,6 +74,11 @@ namespace Calamari.ArgoCD.Conventions
                     Log.Info($"Copying files into repository {applicationSource.RepoUrl}");
                     var subFolder = applicationSource.Path ?? String.Empty;
                     Log.VerboseFormat("Copying files into subfolder '{0}'", subFolder);
+                    
+                    if (deploymentConfig.PurgeOutputDirectory)
+                    {
+                        repository.RecursivelyStageFilesForRemoval(subFolder);
+                    }
 
                     var repositoryFiles = packageFiles.Select(f => new FileCopySpecification(f, repository.WorkingDirectory, subFolder)).ToList();
                     Log.VerboseFormat("Copying files into subfolder '{0}'", applicationSource.Path!);
