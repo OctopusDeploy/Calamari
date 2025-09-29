@@ -361,5 +361,19 @@ namespace Calamari.Tests.Fixtures.StructuredVariables
             this.Assent(ReplaceToHex(new CalamariVariables{{"dagger", "\uFFE6"}}, "enc-windows1252-dos-nobom.yaml"),
                 AssentConfiguration.Default);
         }
+        
+        [TestCase("invalidList", "[\"One\", \"Two\", \"Three, \"Four\"]")] 
+        [TestCase("aaa:bbb:invalidListNested", "[\"One\", \"Two\", \"Three, \"Four\"]")]
+        public void InvalidYamlVariableIsReportedToUser(string varName, string varValue)
+        {
+            try
+            {
+                Replace(new CalamariVariables { { varName, varValue } }, "invalid-vars.yaml");
+            }
+            catch
+            {
+                Log.MessagesErrorFormatted.Should().Contain($"YamlException: {varName}");
+            }
+        }
     }
 }
