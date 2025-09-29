@@ -8,6 +8,7 @@ using Calamari.Common.Features.Scripting.Python;
 using Calamari.Common.Features.Scripting.ScriptCS;
 using Calamari.Common.Features.Scripting.WindowsPowerShell;
 using Calamari.Common.Features.Scripts;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
@@ -105,9 +106,21 @@ namespace Calamari.Common.Features.Scripting
                     return new PowerShellScriptExecutor(log);
                 case ScriptSyntax.CSharp:
                     if (runDotnetScript)
+                    {
+                        var isDotNetScriptCompileWarningFeatureToggleEnabled = OctopusFeatureToggles.DotNetScriptCompilationWarningFeatureToggle.IsEnabled(variables);
+                        
+                        //if this feature toggle is NOT enabled, then we want to suppress this warning
+                        //We will be targetting specific customers with this warning (specifically those we are force migrating from ScriptCS to dotnet-script
+                        if (!isDotNetScriptCompileWarningFeatureToggleEnabled)
+                        {
+                            dotnetScriptCompilationWarningOutputSink.AssumeSuccessfullyCompiled();
+                        }
+                        
                         return new DotnetScriptExecutor(commandLineRunner, log, dotnetScriptCompilationWarningOutputSink);
+                    }
                     else
                     {
+                        //ScriptCS never needs to worry about this warning, so suppress
                         dotnetScriptCompilationWarningOutputSink.AssumeSuccessfullyCompiled();
                         return new ScriptCSScriptExecutor(log);
                     }

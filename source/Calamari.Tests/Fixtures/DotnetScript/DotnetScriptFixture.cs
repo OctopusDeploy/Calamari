@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Calamari.Common.Features.Scripting.DotnetScript;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Testing.Helpers;
@@ -17,7 +18,7 @@ namespace Calamari.Tests.Fixtures.DotnetScript
     public class DotnetScriptFixture : CalamariFixture
     {
         static readonly Dictionary<string, string> RunWithDotnetScriptVariable = new Dictionary<string, string>() { { ScriptVariables.UseDotnetScript, bool.TrueString } };
-        
+
         [Test]
         public void ShouldPrintEncodedVariable()
         {
@@ -58,15 +59,16 @@ namespace Calamari.Tests.Fixtures.DotnetScript
         [Test]
         public void ShouldCallHello()
         {
-            var (output, _) = RunScript("Hello.csx", new Dictionary<string, string>()
-            {
-                ["Name"] = "Paul",
-                ["Variable2"] = "DEF",
-                ["Variable3"] = "GHI",
-                ["Foo_bar"] = "Hello",
-                ["Host"] = "Never",
-                [ScriptVariables.UseDotnetScript] = bool.TrueString
-            });
+            var (output, _) = RunScript("Hello.csx",
+                                        new Dictionary<string, string>()
+                                        {
+                                            ["Name"] = "Paul",
+                                            ["Variable2"] = "DEF",
+                                            ["Variable3"] = "GHI",
+                                            ["Foo_bar"] = "Hello",
+                                            ["Host"] = "Never",
+                                            [ScriptVariables.UseDotnetScript] = bool.TrueString
+                                        });
 
             output.AssertSuccess();
             output.AssertOutput("Hello Paul");
@@ -76,11 +78,13 @@ namespace Calamari.Tests.Fixtures.DotnetScript
         [Test]
         public void ShouldCallHelloWithSensitiveVariable()
         {
-            var (output, _) = RunScript("Hello.csx", new Dictionary<string, string>()
-            {
-                ["Name"] = "NameToEncrypt",
-                [ScriptVariables.UseDotnetScript] = bool.TrueString
-            }, sensitiveVariablesPassword: "5XETGOgqYR2bRhlfhDruEg==");
+            var (output, _) = RunScript("Hello.csx",
+                                        new Dictionary<string, string>()
+                                        {
+                                            ["Name"] = "NameToEncrypt",
+                                            [ScriptVariables.UseDotnetScript] = bool.TrueString
+                                        },
+                                        sensitiveVariablesPassword: "5XETGOgqYR2bRhlfhDruEg==");
 
             output.AssertSuccess();
             output.AssertOutput("Hello NameToEncrypt");
@@ -89,11 +93,12 @@ namespace Calamari.Tests.Fixtures.DotnetScript
         [Test]
         public void ShouldConsumeParametersWithQuotes()
         {
-            var (output, _) = RunScript("Parameters.csx", new Dictionary<string, string>()
-            {
-                [SpecialVariables.Action.Script.ScriptParameters] = "-- \"Para meter0\" Parameter1",
-                [ScriptVariables.UseDotnetScript] = bool.TrueString
-            });
+            var (output, _) = RunScript("Parameters.csx",
+                                        new Dictionary<string, string>()
+                                        {
+                                            [SpecialVariables.Action.Script.ScriptParameters] = "-- \"Para meter0\" Parameter1",
+                                            [ScriptVariables.UseDotnetScript] = bool.TrueString
+                                        });
 
             output.AssertSuccess();
             output.AssertOutput("Parameters Para meter0Parameter1");
@@ -102,11 +107,12 @@ namespace Calamari.Tests.Fixtures.DotnetScript
         [Test]
         public void ShouldConsumeParametersWithoutParametersPrefix()
         {
-            var (output, _) = RunScript("Parameters.csx", new Dictionary<string, string>()
-            {
-                [SpecialVariables.Action.Script.ScriptParameters] = "Parameter0 Parameter1",
-                [ScriptVariables.UseDotnetScript] = bool.TrueString
-            });
+            var (output, _) = RunScript("Parameters.csx",
+                                        new Dictionary<string, string>()
+                                        {
+                                            [SpecialVariables.Action.Script.ScriptParameters] = "Parameter0 Parameter1",
+                                            [ScriptVariables.UseDotnetScript] = bool.TrueString
+                                        });
 
             output.AssertSuccess();
             output.AssertOutput("Parameters Parameter0Parameter1");
@@ -136,26 +142,44 @@ namespace Calamari.Tests.Fixtures.DotnetScript
         }
 
         [Test]
-        public void HasInvalidSyntax_ShouldWriteExtraWarningLine()
+        public void HasInvalidSyntax_FeatureToggleIsEnabled_ShouldWriteExtraWarningLine()
         {
-            var (output, _) = RunScript("InvalidSyntax.csx", new Dictionary<string, string>()
-            {
-                [ScriptVariables.UseDotnetScript] = bool.TrueString
-            });
+            var (output, _) = RunScript("InvalidSyntax.csx",
+                                        new Dictionary<string, string>()
+                                        {
+                                            [ScriptVariables.UseDotnetScript] = bool.TrueString,
+                                            [KnownVariables.EnabledFeatureToggles] = OctopusFeatureToggles.KnownSlugs.DotNetScriptCompilationWarningFeatureToggle
+                                        });
 
             output.CapturedOutput.AllMessages.Should().Contain(DotnetScriptCompilerWarningWrapper.WarningLogLine);
 
             //We are expecting failure
             output.AssertFailure();
         }
-        
+
         [Test]
-        public void ThrowsException_ShowNotWriteExtraWarningLine()
+        public void HasInvalidSyntax_FeatureToggleIsDisabled_ShouldNotWriteExtraWarningLine()
         {
-            var (output, _) = RunScript("ThrowsException.csx", new Dictionary<string, string>()
-            {
-                [ScriptVariables.UseDotnetScript] = bool.TrueString
-            });
+            var (output, _) = RunScript("InvalidSyntax.csx",
+                                        new Dictionary<string, string>()
+                                        {
+                                            [ScriptVariables.UseDotnetScript] = bool.TrueString
+                                        });
+
+            output.CapturedOutput.AllMessages.Should().NotContain(DotnetScriptCompilerWarningWrapper.WarningLogLine);
+
+            //We are expecting failure
+            output.AssertFailure();
+        }
+
+        [Test]
+        public void ThrowsException_ShouldNotWriteExtraWarningLine()
+        {
+            var (output, _) = RunScript("ThrowsException.csx",
+                                        new Dictionary<string, string>()
+                                        {
+                                            [ScriptVariables.UseDotnetScript] = bool.TrueString
+                                        });
 
             output.CapturedOutput.AllMessages.Should().NotContain(DotnetScriptCompilerWarningWrapper.WarningLogLine);
             //We are expecting failure

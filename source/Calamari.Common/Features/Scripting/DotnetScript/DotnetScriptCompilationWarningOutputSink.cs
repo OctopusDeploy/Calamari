@@ -20,7 +20,7 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
         }
 
         /// <summary>
-        /// 
+        /// Marks the sink as assuming successful compilation. This results in the warning message not being outputted
         /// </summary>
         public void AssumeSuccessfullyCompiled()
         {
