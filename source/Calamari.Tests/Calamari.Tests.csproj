@@ -177,6 +177,12 @@
     <None Update="KubernetesFixtures\ResourceStatus\assets\invalid-syntax.yaml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="Fixtures\DotnetScript\Scripts\ThrowsException.csx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Fixtures\ScriptCS\Scripts\InvalidSyntax.csx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <None Remove="TestResults\**" />

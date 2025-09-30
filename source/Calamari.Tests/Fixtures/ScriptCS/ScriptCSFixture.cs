@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
+using Calamari.Common.Features.Scripting.DotnetScript;
 using Calamari.Deployment;
 using Calamari.Testing.Helpers;
 using Calamari.Testing.Requirements;
 using Calamari.Tests.Helpers;
+using FluentAssertions;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.ScriptCS
@@ -95,6 +97,16 @@ namespace Calamari.Tests.Fixtures.ScriptCS
 
             output.AssertSuccess();
             output.AssertOutput("Parameters Parameter0Parameter1");
+        }
+        
+        [Test, RequiresDotNet45]
+        public void HasInvalidSyntax_ShowNotWriteExtraWarningLine()
+        {
+            var (output, _) = RunScript("InvalidSyntax.csx", new Dictionary<string, string>());
+
+            output.CapturedOutput.AllMessages.Should().NotContain(DotnetScriptCompilerWarningWrapper.WarningLogLine);
+            //We are expecting failure
+            output.AssertFailure();
         }
     }
 }
