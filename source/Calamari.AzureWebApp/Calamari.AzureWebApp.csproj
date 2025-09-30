@@ -8,18 +8,8 @@
         <TargetFramework>net6.0</TargetFramework>
         <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
         <LangVersion>10</LangVersion>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     </PropertyGroup>
-  <PropertyGroup>
-    <AssemblyName>Calamari.AzureWebApp</AssemblyName>
-    <RootNamespace>Calamari.AzureWebApp</RootNamespace>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <IsPackable>false</IsPackable>
-    <OutputType>Exe</OutputType>
-    <TargetFrameworks>net462;net6.0</TargetFrameworks>
-    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
-    <LangVersion>8.0</LangVersion>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-  </PropertyGroup>
 
     <ItemGroup>
         <PackageReference Include="Azure.Core" Version="1.44.1"/>

@@ -18,8 +18,6 @@ using Calamari.Common.Plumbing.Variables;
 using Calamari.Testing.Helpers;
 using Calamari.Testing.LogParser;
 using FluentAssertions;
-using NuGet;
-using NuGet.Packaging;
 using Octopus.CoreUtilities;
 using KnownVariables = Calamari.Common.Plumbing.Variables.KnownVariables;
 using OSPlatform = System.Runtime.InteropServices.OSPlatform;
@@ -38,7 +36,7 @@ namespace Calamari.Testing
             where TCalamari : CalamariFlavourProgramAsync
             where TCommand : PipelineCommand
         {
-            return new CommandTestBuilder<TCalamari>(typeof(TCommand).GetCustomAttribute<CommandAttribute>().Name);
+            return new CommandTestBuilder<TCalamari>(typeof(TCommand).GetCustomAttribute<CommandAttribute>()!.Name);
         }
 
         public static CommandTestBuilder<TCalamari> Create<TCalamari>(string command)
@@ -51,7 +49,7 @@ namespace Calamari.Testing
             where TCalamari : CalamariFlavourProgram
             where TCommand : ICommand
         {
-            return new CommandTestBuilder<TCalamari>(typeof(TCommand).GetCustomAttribute<CommandAttribute>().Name);
+            return new CommandTestBuilder<TCalamari>(typeof(TCommand).GetCustomAttribute<CommandAttribute>()!.Name);
         }
 
         public static CommandTestBuilderContext WithFilesToCopy(this CommandTestBuilderContext context, string path)

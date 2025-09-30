@@ -7,7 +7,6 @@
         <IsPackable>false</IsPackable>
         <Nullable>enable</Nullable>
         <TargetFramework>net6.0</TargetFramework>
-        <TargetFrameworks>net462;net6.0</TargetFrameworks>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     </PropertyGroup>
     <ItemGroup>

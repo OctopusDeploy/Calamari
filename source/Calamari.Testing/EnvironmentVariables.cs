@@ -175,7 +175,7 @@ namespace Calamari.Testing
 
         public static EnvironmentVariableAttribute? Get(object enm)
         {
-            var mi = enm?.GetType().GetMember(enm.ToString());
+            var mi = enm.GetType().GetMember(enm.ToString()!);
             if (mi == null || mi.Length <= 0)
             {
                 return null;

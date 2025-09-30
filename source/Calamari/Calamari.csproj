@@ -20,8 +20,6 @@
     <ApplicationManifest>Calamari.exe.manifest</ApplicationManifest>
     <LangVersion>10</LangVersion>
     <TargetFramework>net6.0</TargetFramework>
-    <TargetFrameworks>net462;net6.0</TargetFrameworks>
-    <LangVersion>8</LangVersion>
     <!-- CS8632: The annotation for nullable reference types should only be used in code within a '#nullable' annotations context. -->
     <NoWarn>CS8632</NoWarn>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>

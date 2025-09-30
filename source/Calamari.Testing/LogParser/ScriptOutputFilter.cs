@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Calamari.Common.Plumbing.ServiceMessages;
+using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Testing.LogParser
 {
@@ -47,7 +48,7 @@ namespace Calamari.Testing.LogParser
 
         public bool TryGetValue(string name, out TestOutputVariable value)
         {
-            return items.TryGetValue(name, out value);
+            return items.TryGetValue(name, out value!);
         }
 
         public TestOutputVariable this[string name]
@@ -132,9 +133,9 @@ namespace Calamari.Testing.LogParser
         public string[] GetStrings(params string[] propertyNames)
         {
             var values = Properties.Where(x => propertyNames.Contains(x.Key))
-                .Select(x => x.Value)
-                .ToList();
-            if (!values.Any())
+                                   .Select(x => x.Value)
+                                   .ToList();
+            if (!Enumerable.Any(values))
             {
                 return new string[0];
             }
@@ -142,8 +143,9 @@ namespace Calamari.Testing.LogParser
             var allValues = new List<string>();
             foreach (var v in values.Where(v => !string.IsNullOrWhiteSpace(v)))
             {
-                allValues.AddRange(v.Split(new [] {','}, StringSplitOptions.RemoveEmptyEntries).Select(_ => _.Trim()));
+                allValues.AddRange(v.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(_ => _.Trim()));
             }
+
             return allValues.ToArray();
         }
     }
@@ -154,8 +156,8 @@ namespace Calamari.Testing.LogParser
         readonly ServiceMessageParser parser;
 
         readonly Action<string> nullTarget = s =>
-        {
-        };
+                                             {
+                                             };
 
         readonly TestOutputVariableCollection testOutputVariables = new TestOutputVariableCollection();
         readonly List<CollectedArtifact> artifacts = new List<CollectedArtifact>();
@@ -203,7 +205,6 @@ namespace Calamari.Testing.LogParser
         public string? DeltaPackageError { get; set; }
 
         public string? ResultMessage { get; private set; }
-
 
         public void Write(IEnumerable<ProcessOutput> output)
         {
@@ -291,7 +292,7 @@ namespace Calamari.Testing.LogParser
 
                     if (name != null)
                     {
-                        artifacts.Add(new CollectedArtifact(name, path) {Length = length});
+                        artifacts.Add(new CollectedArtifact(name, path) { Length = length });
                     }
 
                     break;
@@ -313,8 +314,14 @@ namespace Calamari.Testing.LogParser
                     var fileExtension = serviceMessage.GetValue(ScriptServiceMessageNames.FoundPackage.FileExtensionAttribute);
                     if (id != null && version != null)
                     {
-                        foundPackages.Add(new FoundPackage(id, version, versionFormat, remotePath, hash, fileExtension));
+                        foundPackages.Add(new FoundPackage(id,
+                                                           version,
+                                                           versionFormat,
+                                                           remotePath,
+                                                           hash,
+                                                           fileExtension));
                     }
+
                     break;
 
                 case ScriptServiceMessageNames.PackageDeltaVerification.Name:
@@ -322,10 +329,11 @@ namespace Calamari.Testing.LogParser
                     var deltaVerificationHash = serviceMessage.GetValue(ScriptServiceMessageNames.PackageDeltaVerification.HashAttribute);
                     var deltaVerificationSize = serviceMessage.GetValue(ScriptServiceMessageNames.PackageDeltaVerification.SizeAttribute);
                     DeltaPackageError = serviceMessage.GetValue(ScriptServiceMessageNames.PackageDeltaVerification.Error);
-                    if (deltaVerificationRemotePath != null && deltaVerificationHash != null)
+                    if (deltaVerificationRemotePath != null && deltaVerificationHash != null && deltaVerificationSize != null)
                     {
                         DeltaPackageVerifcation = new DeltaPackage(deltaVerificationRemotePath, deltaVerificationHash, long.Parse(deltaVerificationSize));
                     }
+
                     break;
 
                 case ScriptServiceMessageNames.StdOutBehaviour.Default:
@@ -355,6 +363,7 @@ namespace Calamari.Testing.LogParser
                     {
                         actions.Add(new TestScriptOutputAction(serviceMessage.Name, serviceMessage.Properties));
                     }
+
                     break;
             }
         }
@@ -366,19 +375,20 @@ namespace Calamari.Testing.LogParser
 
         void PopulateSupportedScriptActionNames()
         {
-            if (supportedScriptActionNames.Any())
+            if (Enumerable.Any(supportedScriptActionNames))
                 return;
 
             var actionNames = GetAllFieldValues(
-                    typeof(ScriptServiceMessageNames.ScriptOutputActions),
-                    x => Attribute.IsDefined(x, typeof(ServiceMessageNameAttribute)))
-                .Select(x => x.ToString());
+                                                typeof(ScriptServiceMessageNames.ScriptOutputActions),
+                                                x => Attribute.IsDefined(x, typeof(ServiceMessageNameAttribute)))
+                              .Select(x => x?.ToString())
+                              .WhereNotNull();
             supportedScriptActionNames.AddRange(actionNames);
         }
 
-        static IEnumerable<object> GetAllFieldValues(Type t, Func<FieldInfo, bool> filter)
+        static IEnumerable<object?> GetAllFieldValues(Type t, Func<FieldInfo, bool> filter)
         {
-            var values = new List<object>();
+            var values = new List<object?>();
             var fields = t.GetFields();
             values.AddRange(fields.Where(filter).Select(x => x.GetValue(null)));
 
