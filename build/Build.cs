@@ -211,19 +211,6 @@ namespace Calamari.Build
                                var globalSemaphore = new SemaphoreSlim(3);
                                var semaphores = new ConcurrentDictionary<string, SemaphoreSlim>();
 
-                               //build all the projects in sequence (for now)
-                               // foreach (var calamariPackageMetadata in PackagesToPublish)
-                               // {
-                               //     Log.Information($"Building {calamariPackageMetadata.Project?.Name} for framework '{calamariPackageMetadata.Framework}' and arch '{calamariPackageMetadata.Architecture}'");
-                               //
-                               //     await Task.Run(() => DotNetBuild(s =>
-                               //                                          s.SetProjectFile(calamariPackageMetadata.Project)
-                               //                                           .SetConfiguration(Configuration)
-                               //                                           .SetFramework(calamariPackageMetadata.Framework)
-                               //                                           .SetRuntime(calamariPackageMetadata.Architecture)
-                               //                                           .EnableSelfContained()));
-                               // }
-
                                var buildTasks = PackagesToPublish.Select(async calamariPackageMetadata =>
                                                                          {
                                                                              var projectName = calamariPackageMetadata.Project.Name;
