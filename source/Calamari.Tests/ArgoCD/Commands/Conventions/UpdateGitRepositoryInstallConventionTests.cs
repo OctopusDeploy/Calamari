@@ -88,12 +88,16 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
         }
 
         [Test]
-        public void ExecuteCopiesFilesFromPackageIntoRepo()
+        public void ExecuteCopiesFilesOfAnyNameFromPackageIntoRepo()
         {
             const string firstFilename = "first.yaml";
             CreateFileUnderPackageDirectory(firstFilename);
             const string nestedFilename = "nested/second.yaml";
             CreateFileUnderPackageDirectory(nestedFilename);
+            const string thirdFilename = "nested/third";
+            CreateFileUnderPackageDirectory(thirdFilename);
+            const string fourthFilename = "nested/fourth.fourth";
+            CreateFileUnderPackageDirectory(fourthFilename);
             
             var nonSensitiveCalamariVariables = new NonSensitiveCalamariVariables()
             {
@@ -123,6 +127,8 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             var resultNestedContent = File.ReadAllText(Path.Combine(resultPath, nestedFilename));
             resultFirstContent.Should().Be(firstFilename);
             resultNestedContent.Should().Be(nestedFilename);
+            fileSystem.FileExists(Path.Combine(resultPath, thirdFilename)).Should().BeTrue();
+            fileSystem.FileExists(Path.Combine(resultPath, fourthFilename)).Should().BeTrue();
         }
         
         [Test]
