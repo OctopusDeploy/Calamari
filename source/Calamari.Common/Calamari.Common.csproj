@@ -10,13 +10,7 @@
     <PropertyGroup>
         <DefineConstants>$(DefineConstants);USE_NUGET_V3_LIBS;WORKAROUND_FOR_EMPTY_STRING_BUG;HAS_NULLABLE_REF_TYPES</DefineConstants>
     </PropertyGroup>
-
     <ItemGroup>
-    <PropertyGroup Condition="'$(TargetFramework)' == 'net462' ">
-        <NoWarn>CS8600;CS8601;CS8602;CS8603;CS8604;NU5104</NoWarn>
-    </PropertyGroup>
-
-    <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
         <PackageReference Include="NuGet.Commands" Version="5.11.5" />
         <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="4.5.0" />
         <PackageReference Include="System.IO.FileSystem.AccessControl" Version="5.0.0" />
