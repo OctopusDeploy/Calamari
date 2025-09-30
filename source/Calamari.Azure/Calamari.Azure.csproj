@@ -9,7 +9,6 @@
         <LangVersion>10</LangVersion>
         <TargetFramework>net6.0</TargetFramework>
         <LangVersion>8.0</LangVersion>
-        <TargetFrameworks>net462;net6.0</TargetFrameworks>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     </PropertyGroup>
     <ItemGroup>
