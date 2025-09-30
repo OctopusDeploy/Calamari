@@ -13,9 +13,7 @@ namespace Calamari.ArgoCD.Conventions
             CommitParameters = commitParameters;
         }
         
-        public string WorkingDirectory { get; set; }
-
-        public string[] FileGlobs => new[] { "*.yaml", "*.yml" };
+        public string WorkingDirectory { get; }
         
         public string InputSubPath { get; }
         public bool PurgeOutputDirectory { get; }
