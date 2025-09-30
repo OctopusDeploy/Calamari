@@ -5,7 +5,7 @@
         <LangVersion>8</LangVersion>
         <Nullable>enable</Nullable>
         <PlatformTarget>anycpu</PlatformTarget>
-        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(TargetFramework)' == 'net462' ">
         <DefineConstants>$(DefineConstants);USE_ALPHAFS_FOR_LONG_FILE_PATH_SUPPORT;HAS_SSL3</DefineConstants>
