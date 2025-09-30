@@ -218,18 +218,22 @@ namespace Calamari.Testing
                     contents.CopyTo(fileStream);
                 }
 
-                if (!context.withStagedPackageArgument)
+                if (context.withStagedPackageArgument)
+                    return;
+                
+                var variableName = "Octopus.Test.PackagePath";
+                var packageId = context.Variables.GetRaw(variableName);
+                if (string.IsNullOrEmpty(packageId))
+                    return;
+                
+                if (File.Exists(packageId))
                 {
-                    var packageId = context.Variables.GetRaw("Octopus.Test.PackagePath");
-                    if (File.Exists(packageId))
-                    {
-                        var fileName = new FileInfo(packageId).Name;
-                        File.Copy(packageId, Path.Combine(workingPath, fileName));
-                    }
-                    else if (Directory.Exists(packageId))
-                    {
-                        Copy(packageId, workingPath);
-                    }
+                    var fileName = new FileInfo(packageId).Name;
+                    File.Copy(packageId, Path.Combine(workingPath, fileName));
+                }
+                else if (Directory.Exists(packageId))
+                {
+                    Copy(packageId!, workingPath);
                 }
             }
 

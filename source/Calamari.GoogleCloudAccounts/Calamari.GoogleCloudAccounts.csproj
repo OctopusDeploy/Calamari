@@ -4,6 +4,9 @@
         <RootNamespace>Calamari.GoogleCloudAccounts</RootNamespace>
         <LangVersion>latest</LangVersion>
         <TargetFramework>netstandard2.1</TargetFramework>
+        <!-- CS8632: The annotation for nullable reference types should only be used in code within a '#nullable' annotations context. -->
+        <NoWarn>CS8632</NoWarn>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     </PropertyGroup>
     <ItemGroup>
         <ProjectReference Include="..\Calamari.Common\Calamari.Common.csproj" />

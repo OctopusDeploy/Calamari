@@ -14,8 +14,8 @@ namespace Calamari.Common.Features.Deployment.Journal
         {
             Guard.NotNullOrWhiteSpace(packageId, "Deployed package must have an Id");
             Guard.NotNullOrWhiteSpace(packageVersion, "Deployed package must have a version");
-            PackageId = packageId;
-            PackageVersion = packageVersion;
+            PackageId = packageId!;
+            PackageVersion = packageVersion!;
             DeployedFrom = deployedFrom;
         }
 

@@ -7,6 +7,33 @@
         <LangVersion>10</LangVersion>
         <IsPackable>false</IsPackable>
     </PropertyGroup>
+  <PropertyGroup>
+    <RootNamespace>Calamari.AzureWebApp.Tests</RootNamespace>
+    <AssemblyName>Calamari.AzureWebApp.Tests</AssemblyName>
+    <TargetFrameworks>net462;net6.0</TargetFrameworks>
+    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
+    <LangVersion>8.0</LangVersion>
+    <IsPackable>false</IsPackable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="nunit" Version="3.13.3"/>
+    <PackageReference Include="NUnit3TestAdapter" Version="3.17.0"/>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.10.0"/>
+    <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.25"/>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Calamari.AzureWebApp\Calamari.AzureWebApp.csproj"/>
+    <ProjectReference Include="..\Calamari.Testing\Calamari.Testing.csproj"/>
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="Packages\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+
+  <Target Name="GetNetCoreShimFiles">
     <ItemGroup>
         <PackageReference Include="nunit" Version="3.13.3"/>
         <PackageReference Include="NUnit3TestAdapter" Version="3.17.0"/>

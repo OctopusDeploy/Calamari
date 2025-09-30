@@ -6,6 +6,9 @@
         <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
         <LangVersion>10</LangVersion>
         <TargetFramework>net6.0</TargetFramework>
+        <LangVersion>default</LangVersion>
+        <TargetFrameworks>net462;netstandard2.1</TargetFrameworks>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="Assent" Version="1.6.1" />

@@ -3,7 +3,6 @@ using System.IO;
 using System.Text.RegularExpressions;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
-using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Integration.FileSystem;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Deployment.Packages;
@@ -101,7 +100,7 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
                     var patchResult = ApplyDelta(basisFile.FilePath, basisFile.Hash, deltaFile.FilePath, NewFileName);
                     patchResult.AssertSuccess();
 
-                    patchResult.AssertServiceMessage(ServiceMessageNames.PackageDeltaVerification.Name);
+                    patchResult.AssertPackageDeltaVerificationServiceMessage();
                     patchResult.AssertOutput("Applying delta to {0} with hash {1} and storing as {2}", basisFile.FilePath,
                         basisFile.Hash, patchResult.CapturedOutput.DeltaVerification.FullPathOnRemoteMachine);
                     Assert.AreEqual(newFile.Hash, patchResult.CapturedOutput.DeltaVerification.Hash);
@@ -116,7 +115,7 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
             var result = ApplyDelta("", "Hash", "Delta", "New");
 
             result.AssertSuccess();
-            result.AssertServiceMessage(ServiceMessageNames.PackageDeltaVerification.Name, message: "No basis file was specified. Please pass --basisFileName MyPackage.1.0.0.0.nupkg");
+            result.AssertPackageDeltaVerificationServiceMessage(message: "No basis file was specified. Please pass --basisFileName MyPackage.1.0.0.0.nupkg");
         }
 
         [Test]
@@ -125,7 +124,7 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
             var result = ApplyDelta("Basis", "", "Delta", "New");
 
             result.AssertSuccess();
-            result.AssertServiceMessage(ServiceMessageNames.PackageDeltaVerification.Name, message: "No file hash was specified. Please pass --fileHash MyFileHash");
+            result.AssertPackageDeltaVerificationServiceMessage(message: "No file hash was specified. Please pass --fileHash MyFileHash");
         }
         [Test]
         public void ShouldWriteErrorWhenNoDeltaFileIsSpecified()
@@ -133,7 +132,7 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
             var result = ApplyDelta("Basis", "Hash", "", "New");
 
             result.AssertSuccess();
-            result.AssertServiceMessage(ServiceMessageNames.PackageDeltaVerification.Name, message: $"No delta file was specified. Please pass --deltaFileName MyPackage.1.0.0.0_to_1.0.0.1.octodelta");
+            result.AssertPackageDeltaVerificationServiceMessage(message: $"No delta file was specified. Please pass --deltaFileName MyPackage.1.0.0.0_to_1.0.0.1.octodelta");
         }
 
         [Test]
@@ -142,7 +141,7 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
             var result = ApplyDelta("Basis", "Hash", "Delta", "");
 
             result.AssertSuccess();
-            result.AssertServiceMessage(ServiceMessageNames.PackageDeltaVerification.Name, message: "No new file name was specified. Please pass --newFileName MyPackage.1.0.0.1.nupkg");
+            result.AssertPackageDeltaVerificationServiceMessage(message: "No new file name was specified. Please pass --newFileName MyPackage.1.0.0.1.nupkg");
         }
 
         [Test]
@@ -152,7 +151,7 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
             var result = ApplyDelta(basisFile, "Hash", "Delta", "New");
 
             result.AssertSuccess();
-            result.AssertServiceMessage(ServiceMessageNames.PackageDeltaVerification.Name, message: "Could not find basis file: " + basisFile);
+            result.AssertPackageDeltaVerificationServiceMessage(message: "Could not find basis file: " + basisFile);
         }
 
         [Test]
@@ -164,7 +163,7 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
                 var result = ApplyDelta(basisFile.FilePath, basisFile.Hash, deltaFilePath, "New");
 
                 result.AssertSuccess();
-                result.AssertServiceMessage(ServiceMessageNames.PackageDeltaVerification.Name, message: "Could not find delta file: " + deltaFilePath);
+                result.AssertPackageDeltaVerificationServiceMessage(message: "Could not find delta file: " + deltaFilePath);
             }
         }
 
@@ -185,7 +184,7 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
                 var result = ApplyDelta(basisFile.FilePath, otherBasisFileHash, deltaFilePath, NewFileName, messageOnError: true);
 
                 result.AssertSuccess();
-                result.AssertServiceMessage(ServiceMessageNames.PackageDeltaVerification.Name, message: $"Basis file hash `{basisFile.Hash}` does not match the file hash specified `{otherBasisFileHash}`");
+                result.AssertPackageDeltaVerificationServiceMessage(message: $"Basis file hash `{basisFile.Hash}` does not match the file hash specified `{otherBasisFileHash}`");
             }
         }
 
@@ -208,7 +207,7 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
                 result.AssertOutputMatches(
                     $".*\nApplying delta to {Regex.Escape(basisFile.FilePath)} with hash {basisFile.Hash} and storing as {Regex.Escape(DownloadPath)}.*");
                 result.AssertOutput("The delta file appears to be corrupt.");
-                result.AssertServiceMessage(ServiceMessageNames.PackageDeltaVerification.Name, message: "The following command: OctoDiff\nFailed with exit code: 2\n");
+                result.AssertPackageDeltaVerificationServiceMessage(message: "The following command: OctoDiff\nFailed with exit code: 2\n");
             }
         }
     }

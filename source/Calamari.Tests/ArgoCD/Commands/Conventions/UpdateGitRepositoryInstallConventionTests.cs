@@ -36,7 +36,8 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
 
         string OriginPath => Path.Combine(tempDirectory, "origin");
         string RepoUrl => OriginPath;
-
+        Repository originRepo;
+        
         GitBranchName argoCdBranchName = new GitBranchName("devBranch");
 
         [SetUp]
@@ -46,7 +47,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             tempDirectory = fileSystem.CreateTemporaryDirectory();
             Directory.CreateDirectory(PackageDirectory);
 
-            RepositoryHelpers.CreateBareRepository(OriginPath);
+            originRepo = RepositoryHelpers.CreateBareRepository(OriginPath);
             RepositoryHelpers.CreateBranchIn(argoCdBranchName, OriginPath);
 
             var argoCdCustomPropertiesDto = new ArgoCDCustomPropertiesDto(new[]
@@ -98,7 +99,6 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             {
                 [KnownVariables.OriginalPackageDirectoryPath] = WorkingDirectory,
                 [SpecialVariables.Git.InputPath] = "",
-                [SpecialVariables.Git.Recursive] = "True",
                 [SpecialVariables.Git.CommitMethod] = "DirectCommit",
                 [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this"
             };
@@ -124,30 +124,35 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             resultFirstContent.Should().Be(firstFilename);
             resultNestedContent.Should().Be(nestedFilename);
         }
-
+        
         [Test]
-        public void DoesNotCopyFilesRecursivelyIfNotSet()
+        public void EnsureOutputDirectoryIsPurgedWhenVariableIsSetRecursiveDeletion()
         {
+            // Arrange
             const string firstFilename = "first.yaml";
             CreateFileUnderPackageDirectory(firstFilename);
-            const string nestedFilename = "nested/second.yaml";
-            CreateFileUnderPackageDirectory(nestedFilename);
             
             var nonSensitiveCalamariVariables = new NonSensitiveCalamariVariables()
             {
                 [KnownVariables.OriginalPackageDirectoryPath] = WorkingDirectory,
                 [SpecialVariables.Git.InputPath] = "",
-                [SpecialVariables.Git.Recursive] = "False",
                 [SpecialVariables.Git.CommitMethod] = "DirectCommit",
-                [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this"
+                [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this",
+                [SpecialVariables.Git.PurgeOutput] = "True",
             };
+            
+            //add arbitrary file to the origin repo
+            var fileToPurge = "subDirectory/removeThis.yaml";
+            originRepo.AddFilesToBranch(argoCdBranchName, (fileToPurge, "This file to be removed"));
+            
             var allVariables = new CalamariVariables();
             allVariables.Merge(nonSensitiveCalamariVariables);
 
             var runningDeployment = new RunningDeployment("./arbitraryFile.txt", allVariables);
             runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
-            runningDeployment.StagingDirectory = WorkingDirectory;    
-           
+            runningDeployment.StagingDirectory = WorkingDirectory;
+            
+            // Act
             var convention = new UpdateGitRepositoryInstallConvention(fileSystem, 
                                                                       CommitToGitCommand.PackageDirectoryName, 
                                                                       log, 
@@ -157,9 +162,10 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                                                       argoCdApplicationManifestParser);
             convention.Install(runningDeployment);
             
+            // Assert
             var resultPath = CloneOrigin();
             File.Exists(Path.Combine(resultPath, firstFilename)).Should().BeTrue();
-            File.Exists(Path.Combine(resultPath, nestedFilename)).Should().BeFalse();
+            File.Exists(Path.Combine(resultPath, fileToPurge)).Should().BeFalse();
         }
 
         //Accepts a relative path and creates a file under the package directory, which

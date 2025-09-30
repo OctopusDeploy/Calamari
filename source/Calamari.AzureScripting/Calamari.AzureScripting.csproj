@@ -10,6 +10,8 @@
         <IsPackable>true</IsPackable>
         <ValidateExecutableReferencesMatchSelfContained>false</ValidateExecutableReferencesMatchSelfContained>
         <TargetFramework>net6.0</TargetFramework>
+        <TargetFrameworks>net462;net6.0</TargetFrameworks>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     </PropertyGroup>
 
     <ItemGroup>

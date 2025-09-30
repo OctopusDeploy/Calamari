@@ -66,7 +66,7 @@ namespace Calamari.ArgoCD.Conventions
                 foreach (var applicationSource in applicationFromYaml.Spec.Sources.OfType<BasicSource>())
                 {
                     Log.Info($"Writing files to repository '{applicationSource.RepoUrl}' for '{application.Name}'");
-                    
+
                     var gitCredential = gitCredentials[applicationSource.RepoUrl.AbsoluteUri];
                     var gitConnection = new GitConnection(gitCredential.Username, gitCredential.Password, applicationSource.RepoUrl.AbsoluteUri, new GitBranchName(applicationSource.TargetRevision));
                     var repository = repositoryFactory.CloneRepository(repositoryNumber.ToString(CultureInfo.InvariantCulture), gitConnection);
@@ -74,6 +74,11 @@ namespace Calamari.ArgoCD.Conventions
                     Log.Info($"Copying files into repository {applicationSource.RepoUrl}");
                     var subFolder = applicationSource.Path ?? String.Empty;
                     Log.VerboseFormat("Copying files into subfolder '{0}'", subFolder);
+
+                    if (deploymentConfig.PurgeOutputDirectory)
+                    {
+                        repository.RecursivelyStageFilesForRemoval(subFolder);
+                    }
 
                     var repositoryFiles = packageFiles.Select(f => new FileCopySpecification(f, repository.WorkingDirectory, subFolder)).ToList();
                     Log.VerboseFormat("Copying files into subfolder '{0}'", applicationSource.Path!);
@@ -86,7 +91,13 @@ namespace Calamari.ArgoCD.Conventions
                     if (repository.CommitChanges(deploymentConfig.CommitParameters.Summary, deploymentConfig.CommitParameters.Description))
                     {
                         Log.Info("Changes were commited, pushing to remote");
-                        repository.PushChanges(deploymentConfig.CommitParameters.RequiresPr, deploymentConfig.CommitParameters.Summary, deploymentConfig.CommitParameters.Description, new GitBranchName(applicationSource.TargetRevision), CancellationToken.None).GetAwaiter().GetResult();    
+                        repository.PushChanges(deploymentConfig.CommitParameters.RequiresPr,
+                                               deploymentConfig.CommitParameters.Summary,
+                                               deploymentConfig.CommitParameters.Description,
+                                               new GitBranchName(applicationSource.TargetRevision),
+                                               CancellationToken.None)
+                                  .GetAwaiter()
+                                  .GetResult();
                     }
                     else
                     {
@@ -94,7 +105,7 @@ namespace Calamari.ArgoCD.Conventions
                     }
 
                     repositoryNumber++;
-                }     
+                }
             }
         }
 
@@ -116,10 +127,10 @@ namespace Calamari.ArgoCD.Conventions
                 Directory.CreateDirectory(destinationDirectory);
             }
         }
-        
-         IPackageRelativeFile[] GetReferencedPackageFiles(ArgoCommitToGitConfig config)
+
+        IPackageRelativeFile[] GetReferencedPackageFiles(ArgoCommitToGitConfig config)
         {
-            log.Info($"Selecting files from package using '{config.InputSubPath}' (recursive: {config.RecurseInputPath})");
+            log.Info($"Selecting files from package using '{config.InputSubPath}'");
             var filesToApply = SelectFiles(Path.Combine(config.WorkingDirectory, packageSubfolder), config);
             log.Info($"Found {filesToApply.Length} files to apply");
             return filesToApply;
@@ -132,30 +143,17 @@ namespace Calamari.ArgoCD.Conventions
             {
                 return new[] { new PackageRelativeFile(absolutePath: absInputPath, packageRelativePath: Path.GetFileName(absInputPath)) };
             }
-            
+
             if (Directory.Exists(absInputPath))
             {
-                IEnumerable<string> fileList;
-                if (config.RecurseInputPath)
-                {
-                    fileList = fileSystem.EnumerateFilesRecursively(absInputPath, config.FileGlobs);
-                }
-                else
-                {
-                    fileList = fileSystem.EnumerateFiles(absInputPath, config.FileGlobs);
-                }
-                
-                return fileList.Select(absoluteFilepath =>
+                return fileSystem.EnumerateFilesRecursively(absInputPath, config.FileGlobs).Select(absoluteFilepath =>
                                        {
-#if NET
                                            var relativePath = Path.GetRelativePath(absInputPath, absoluteFilepath);
-#else
-                                                  var relativePath = absoluteFilepath.Substring(absInputPath.Length + 1);
-#endif
                                            return new PackageRelativeFile(absoluteFilepath, relativePath);
                                        })
                                .ToArray<IPackageRelativeFile>();
             }
+
             throw new InvalidOperationException($"Supplied input path '{config.InputSubPath}' does not exist within the supplied package");
         }
     }

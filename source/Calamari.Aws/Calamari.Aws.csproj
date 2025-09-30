@@ -20,6 +20,8 @@
     <StartupObject />
     <TargetFramework>net6.0</TargetFramework>
     <LangVersion>10</LangVersion>
+    <TargetFrameworks>net462;netstandard2.1</TargetFrameworks>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="AWSSDK.EKS" Version="3.7.13.24" />

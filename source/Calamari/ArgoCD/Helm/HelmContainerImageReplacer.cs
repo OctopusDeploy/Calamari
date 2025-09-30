@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Calamari.ArgoCD.Models;
+using Calamari.Common.Plumbing.Logging;
 
 namespace Calamari.ArgoCD.Helm
 {
@@ -11,12 +12,14 @@ namespace Calamari.ArgoCD.Helm
         readonly string yamlContent;
         readonly string defaultClusterRegistry;
         readonly List<string> imagePathAnnotations;
+        readonly ILog log;
 
-        public HelmContainerImageReplacer(string yamlContent, string defaultClusterRegistry, List<string> imagePathAnnotations)
+        public HelmContainerImageReplacer(string yamlContent, string defaultClusterRegistry, List<string> imagePathAnnotations, ILog log)
         {
             this.yamlContent = yamlContent;
             this.defaultClusterRegistry = defaultClusterRegistry;
             this.imagePathAnnotations = imagePathAnnotations;
+            this.log = log;
         }
 
         // TODO: Add testing for multiple instances of the same image
@@ -27,11 +30,14 @@ namespace Calamari.ArgoCD.Helm
             var originalYamlParser = new HelmYamlParser(yamlContent); // Parse and track the original yaml so that content can be read from it.
 
             var imagePathDictionary = HelmValuesEditor.GenerateVariableDictionary(originalYamlParser);
-            var existingImageReferences = imagePathAnnotations.Select(p => TemplatedImagePath.Parse(p, imagePathDictionary, defaultClusterRegistry));
-
+            var existingImageReferences = imagePathAnnotations.Select(p => TemplatedImagePath.Parse(p, imagePathDictionary, defaultClusterRegistry)).ToList();
+            
             var fileContent = yamlContent;
             foreach (var existingImageReference in existingImageReferences)
             {
+                log.Verbose($"Apply template {existingImageReference.TagPath}, {existingImageReference.ImageReference.ToString()}");
+                var imagesString = imagesToUpdate.Select(i => i.ToString());
+                log.Verbose($"Images to Update = {string.Join(",", imagesString)}");
                 var matchedUpdate = imagesToUpdate.FirstOrDefault(i => i.IsMatch(existingImageReference.ImageReference));
                 if (matchedUpdate != null && !matchedUpdate.Tag.Equals(existingImageReference.ImageReference.Tag, StringComparison.OrdinalIgnoreCase))
                 {

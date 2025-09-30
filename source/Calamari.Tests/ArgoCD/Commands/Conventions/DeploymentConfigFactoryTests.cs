@@ -18,7 +18,6 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             var nonSensitiveCalamariVariables = new NonSensitiveCalamariVariables()
             {
                 [SpecialVariables.Git.InputPath] = "",
-                [SpecialVariables.Git.Recursive] = "True",
                 [SpecialVariables.Git.CommitMethod] = "DirectCommit",
                 [SpecialVariables.Git.CommitMessageSummary] = "Summary #{Foo}",
                 [SpecialVariables.Git.CommitMessageDescription] = "Description #{Foo}",
@@ -46,7 +45,6 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             var nonSensitiveCalamariVariables = new NonSensitiveCalamariVariables()
             {
                 [SpecialVariables.Git.InputPath] = "",
-                [SpecialVariables.Git.Recursive] = "True",
                 [SpecialVariables.Git.CommitMethod] = "DirectCommit",
                 [SpecialVariables.Git.CommitMessageSummary] = "Sh... #{SuperSecret}",
                 ["Foo"] = "Bar",
@@ -72,7 +70,6 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             var nonSensitiveCalamariVariables = new NonSensitiveCalamariVariables()
             {
                 [SpecialVariables.Git.InputPath] = "",
-                [SpecialVariables.Git.Recursive] = "True",
                 [SpecialVariables.Git.CommitMethod] = "DirectCommit",
                 [SpecialVariables.Git.CommitMessageSummary] = "Summary #{Foo}",
                 [SpecialVariables.Git.CommitMessageDescription] = "Sh... #{SuperSecret}",

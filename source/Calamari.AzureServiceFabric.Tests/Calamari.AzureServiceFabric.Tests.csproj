@@ -7,6 +7,8 @@
         <TargetFramework>net6.0-windows</TargetFramework>
         <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
         <LangVersion>10</LangVersion>
+        <LangVersion>8.0</LangVersion>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="FluentAssertions" Version="7.2.0" />

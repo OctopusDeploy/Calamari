@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <RootNamespace>Calamari.AzureAppService.Tests</RootNamespace>
@@ -8,6 +8,15 @@
         <LangVersion>10</LangVersion>
         <TargetFramework>net6.0</TargetFramework>
     </PropertyGroup>
+  <PropertyGroup>
+    <RootNamespace>Calamari.AzureAppService.Tests</RootNamespace>
+    <AssemblyName>Calamari.AzureAppService.Tests</AssemblyName>
+    <IsPackable>false</IsPackable>
+    <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
+    <LangVersion>8.0</LangVersion>
+    <TargetFrameworks>net462;net6.0</TargetFrameworks>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
 
     <ItemGroup>
         <PackageReference Include="Azure.Identity" Version="1.13.1"/>
