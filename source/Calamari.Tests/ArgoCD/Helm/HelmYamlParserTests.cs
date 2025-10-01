@@ -143,6 +143,40 @@ root:
             //ensure platform-agnostic multiline comparison
             result.ReplaceLineEndings().Should().Be(expectedUpdate.ReplaceLineEndings());
         }
+
+        [Test]
+        public void CreateDotPathsForNodes_WithExistingDotNotationKeys_IgnoresThoseKeys()
+        {
+            const string yamlContent = @"
+image.name: nginx
+image.tag: latest
+";
+            
+            var sut = new HelmYamlParser(yamlContent);
+
+            var result = sut.CreateDotPathsForNodes();
+
+            result.Should().BeEmpty();
+        }
+        
+        [Test]
+        public void CreateDotPathsForNodes_WithMixOfDotNotationAndNestedKeysKeys_ReturnsCorrectKeys()
+        {
+            const string yamlContent = @"
+image1.name: nginx
+image1.tag: latest
+image2:
+  name: alpine
+  tag: 1.29
+";
+            
+            var sut = new HelmYamlParser(yamlContent);
+
+            var result = sut.CreateDotPathsForNodes();
+
+            result.Should().BeEquivalentTo("image2.name", "image2.tag");
+        }
+        
     }
 }
 
