@@ -146,8 +146,12 @@ namespace Calamari.ArgoCD.Helm
                     foreach (var kvp in dict)
                     {
                         var key = kvp.Key.ToString() ?? "";
-                        var newPath = string.IsNullOrEmpty(currentPath) ? key : $"{currentPath}.{key}";
-                        FlattenObject(kvp.Value, newPath, paths);
+                        // Ignore any keys that are using dot notation. Helm does not support these specifying values.
+                        if (!key.Contains('.'))
+                        {
+                            var newPath = string.IsNullOrEmpty(currentPath) ? key : $"{currentPath}.{key}";
+                            FlattenObject(kvp.Value, newPath, paths);
+                        }
                     }
 
                     break;
