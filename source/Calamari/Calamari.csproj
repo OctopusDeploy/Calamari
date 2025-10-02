@@ -89,9 +89,7 @@
     </None>
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' == 'net8.0' ">
-    <PackageReference Include="KubernetesClient" Version="15.0.1" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
+    <PackageReference Include="KubernetesClient" Version="17.0.14" />
     <PackageReference Include="LibGit2Sharp" Version="0.31.0" />
   </ItemGroup>
   <!--
