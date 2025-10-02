@@ -453,7 +453,7 @@ namespace Calamari.AzureAppService.Tests
                                                                                        SiteConfig = new SiteConfigProperties
                                                                                        {
                                                                                            IsAlwaysOn = true,
-                                                                                           LinuxFxVersion = "DOTNET|6.0",
+                                                                                           LinuxFxVersion = "DOTNET|8.0",
                                                                                            Use32BitWorkerProcess = true,
                                                                                            AppSettings = new List<AppServiceNameValuePair>
                                                                                            {
