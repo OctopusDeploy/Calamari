@@ -149,8 +149,13 @@ namespace Calamari.ArgoCD.Conventions
 
         RepositoryWrapper CreateRepository(Dictionary<string, GitCredentialDto> gitCredentials, SourceBase source, RepositoryFactory repositoryFactory)
         {
-            var gitCredential = gitCredentials[source.RepoUrl.AbsoluteUri];
-            var gitConnection = new GitConnection(gitCredential.Username, gitCredential.Password, source.RepoUrl.AbsoluteUri, new GitBranchName(source.TargetRevision));
+            var gitCredential = gitCredentials.GetValueOrDefault(source.RepoUrl.AbsoluteUri);
+            if (gitCredential == null)
+            {
+                log.Info($"No Git credentials found for: '{source.RepoUrl.AbsoluteUri}', will attempt to clone repository anonymously.");
+            }
+            
+            var gitConnection = new GitConnection(gitCredential?.Username, gitCredential?.Password, source.RepoUrl.AbsoluteUri, new GitBranchName(source.TargetRevision));
             return repositoryFactory.CloneRepository(repositoryNumber++.ToString(CultureInfo.InvariantCulture), gitConnection);
         }
         
