@@ -9,7 +9,6 @@
         <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
         <IsPackable>true</IsPackable>
         <ValidateExecutableReferencesMatchSelfContained>false</ValidateExecutableReferencesMatchSelfContained>
-        <TargetFrameworks>net462;net6.0</TargetFrameworks>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <TargetFrameworks>net462;net8.0</TargetFrameworks>
     </PropertyGroup>
@@ -18,9 +17,6 @@
         <EmbeddedResource Include="Scripts\*" />
     </ItemGroup>
 
-    <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
-        <PackageReference Include="System.IO.FileSystem.AccessControl" Version="5.0.0" />
-        <PackageReference Include="System.Security.Principal.Windows" Version="5.0.0" />
     <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
         <PackageReference Include="System.IO.FileSystem.AccessControl" Version="4.7.0" />
         <PackageReference Include="System.Security.Principal.Windows" Version="4.7.0" />

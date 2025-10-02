@@ -6,7 +6,6 @@
         <LangVersion>8</LangVersion>
         <IsPackable>false</IsPackable>
         <Nullable>enable</Nullable>
-        <TargetFrameworks>net462;net6.0</TargetFrameworks>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <TargetFrameworks>net462;net8.0</TargetFrameworks>
     </PropertyGroup>
