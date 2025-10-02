@@ -19,7 +19,7 @@ using Calamari.Deployment.Conventions;
 
 namespace Calamari.ArgoCD.Conventions
 {
-    public class UpdateGitRepositoryInstallConvention : IInstallConvention
+    public class UpdateArgoCDApplicationManifestsInstallConvention : IInstallConvention
     {
         readonly ICalamariFileSystem fileSystem;
         readonly ILog log;
@@ -29,7 +29,7 @@ namespace Calamari.ArgoCD.Conventions
         readonly ICustomPropertiesLoader customPropertiesLoader;
         readonly IArgoCDApplicationManifestParser argoCdApplicationManifestParser;
 
-        public UpdateGitRepositoryInstallConvention(ICalamariFileSystem fileSystem,
+        public UpdateArgoCDApplicationManifestsInstallConvention(ICalamariFileSystem fileSystem,
                                                     string packageSubfolder,
                                                     ILog log,
                                                     IGitHubPullRequestCreator pullRequestCreator,
@@ -48,7 +48,7 @@ namespace Calamari.ArgoCD.Conventions
 
         public void Install(RunningDeployment deployment)
         {
-            Log.Info("Executing Commit To Git operation");
+            Log.Info("Executing Update Argo CD Application manifests operation");
             var deploymentConfig = deploymentConfigFactory.CreateCommitToGitConfig(deployment);
             var packageFiles = GetReferencedPackageFiles(deploymentConfig);
 

@@ -24,13 +24,13 @@ using NUnit.Framework;
 namespace Calamari.Tests.ArgoCD.Commands.Conventions
 {
     [TestFixture]
-    public class UpdateGitRepositoryInstallConventionTests
+    public class UpdateArgoCDApplicationManifestsInstallConventionTests
     {
         readonly ICalamariFileSystem fileSystem = TestCalamariPhysicalFileSystem.GetPhysicalFileSystem();
         InMemoryLog log;
         string tempDirectory;
         string WorkingDirectory => Path.Combine(tempDirectory, "working");
-        string PackageDirectory => Path.Combine(WorkingDirectory, CommitToGitCommand.PackageDirectoryName);
+        string PackageDirectory => Path.Combine(WorkingDirectory, UpdateArgoCDAppManifestsCommand.PackageDirectoryName);
         readonly IArgoCDApplicationManifestParser argoCdApplicationManifestParser = Substitute.For<IArgoCDApplicationManifestParser>();
         readonly ICustomPropertiesLoader customPropertiesLoader = Substitute.For<ICustomPropertiesLoader>();
 
@@ -109,8 +109,8 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
             runningDeployment.StagingDirectory = WorkingDirectory;
             
-            var convention = new UpdateGitRepositoryInstallConvention(fileSystem, 
-                                                                      CommitToGitCommand.PackageDirectoryName, 
+            var convention = new UpdateArgoCDApplicationManifestsInstallConvention(fileSystem, 
+                                                                      UpdateArgoCDAppManifestsCommand.PackageDirectoryName, 
                                                                       log, 
                                                                       Substitute.For<IGitHubPullRequestCreator>(), 
                                                                       new DeploymentConfigFactory(nonSensitiveCalamariVariables), 
@@ -153,8 +153,8 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             runningDeployment.StagingDirectory = WorkingDirectory;
             
             // Act
-            var convention = new UpdateGitRepositoryInstallConvention(fileSystem, 
-                                                                      CommitToGitCommand.PackageDirectoryName, 
+            var convention = new UpdateArgoCDApplicationManifestsInstallConvention(fileSystem, 
+                                                                      UpdateArgoCDAppManifestsCommand.PackageDirectoryName, 
                                                                       log, 
                                                                       Substitute.For<IGitHubPullRequestCreator>(), 
                                                                       new DeploymentConfigFactory(nonSensitiveCalamariVariables), 
@@ -166,6 +166,78 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             var resultPath = CloneOrigin();
             File.Exists(Path.Combine(resultPath, firstFilename)).Should().BeTrue();
             File.Exists(Path.Combine(resultPath, fileToPurge)).Should().BeFalse();
+        }
+
+        [Test]
+        public void ThowCommandExceptionWhenApplicationHasMultipleSources()
+        {
+            // Arrange
+            var argoCdCustomPropertiesDto = new ArgoCDCustomPropertiesDto(new[]
+            {
+                new ArgoCDApplicationDto("Gateway1", "App1", "docker.io",new[]
+                {
+                    new ArgoCDApplicationSourceDto(OriginPath, "", argoCdBranchName.Value),
+                    new ArgoCDApplicationSourceDto("https://github.com/do-a-thing/repo", ".", "main")
+                }, "yaml")
+            }, new GitCredentialDto[]
+            {
+                new GitCredentialDto(new Uri(RepoUrl).AbsoluteUri, "", "")
+            });
+            customPropertiesLoader.Load<ArgoCDCustomPropertiesDto>().Returns(argoCdCustomPropertiesDto);
+            
+            var argoCdApplicationFromYaml = new Application()
+            {
+                Spec = new ApplicationSpec()
+                {
+                    Sources = new List<SourceBase>()
+                    {
+                        new BasicSource()
+                        {
+                            RepoUrl = new Uri(RepoUrl),
+                            Path = "",
+                            TargetRevision = argoCdBranchName.Value
+                        },
+                        new BasicSource
+                        {
+                            RepoUrl = new Uri("https://github.com/do-a-thing/repo"),
+                            Path = "",
+                            TargetRevision ="main"
+                        }
+                    } 
+                }
+            };
+            argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
+                                           .Returns(argoCdApplicationFromYaml);
+            
+            var nonSensitiveCalamariVariables = new NonSensitiveCalamariVariables()
+            {
+                [KnownVariables.OriginalPackageDirectoryPath] = WorkingDirectory,
+                [SpecialVariables.Git.InputPath] = "",
+                [SpecialVariables.Git.CommitMethod] = "DirectCommit",
+                [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this"
+            };
+            var allVariables = new CalamariVariables();
+            allVariables.Merge(nonSensitiveCalamariVariables);
+
+            var runningDeployment = new RunningDeployment("./arbitraryFile.txt", allVariables);
+            runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
+            runningDeployment.StagingDirectory = WorkingDirectory;
+            
+            // Act
+            var convention = new UpdateArgoCDApplicationManifestsInstallConvention(fileSystem, 
+                                                                                   UpdateArgoCDAppManifestsCommand.PackageDirectoryName, 
+                                                                                   log, 
+                                                                                   Substitute.For<IGitHubPullRequestCreator>(), 
+                                                                                   new DeploymentConfigFactory(nonSensitiveCalamariVariables), 
+                                                                                   customPropertiesLoader,
+                                                                                   argoCdApplicationManifestParser);
+            Action action = () => convention.Install(runningDeployment);
+            
+            //Assert
+            action.Should()
+                  .Throw<CommandException>()
+                  .WithMessage($"Application * has multiple sources and cannot be updated.");
+
         }
 
         //Accepts a relative path and creates a file under the package directory, which
