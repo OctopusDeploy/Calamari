@@ -23,10 +23,10 @@ namespace Calamari.Common.Features.Substitutions
             this.variables = variables;
         }
 
-        public void SubstituteBasedSettingsInSuppliedVariables(string currentDirectory)
+        public void SubstituteBasedSettingsInSuppliedVariables(string currentDirectory, bool warnIfFileNotFound = true)
         {
             var filesToTarget = variables.GetPaths(PackageVariables.SubstituteInFilesTargets);
-            Substitute(currentDirectory, filesToTarget);
+            Substitute(currentDirectory, filesToTarget, warnIfFileNotFound);
         }
 
         public void Substitute(string currentDirectory, IList<string> filesToTarget, bool warnIfFileNotFound = true)

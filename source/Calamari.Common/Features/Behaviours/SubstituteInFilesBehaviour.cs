@@ -28,9 +28,11 @@ namespace Calamari.Common.Features.Behaviours
             return context.Variables.IsFeatureEnabled(KnownVariables.Features.SubstituteInFiles);
         }
 
+        public bool WarnIfFilesNotFound { get; set; } = true;
+
         public Task Execute(RunningDeployment context)
         {
-            substituteInFiles.SubstituteBasedSettingsInSuppliedVariables(Path.Combine(context.CurrentDirectory, subdirectory));
+            substituteInFiles.SubstituteBasedSettingsInSuppliedVariables(Path.Combine(context.CurrentDirectory, subdirectory), WarnIfFilesNotFound);
             return Task.CompletedTask;
         }
     }

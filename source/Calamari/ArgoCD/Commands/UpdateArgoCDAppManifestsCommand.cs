@@ -84,7 +84,12 @@ namespace Calamari.ArgoCD.Commands
                                                   d.StagingDirectory = workingDirectory;
                                                   d.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
                                               }),
-                new SubstituteInFilesConvention(new NonSensitiveSubstituteInFilesBehaviour(substituteInFiles, PackageDirectoryName)),
+                new SubstituteInFilesConvention(new NonSensitiveSubstituteInFilesBehaviour(substituteInFiles, PackageDirectoryName)
+                {
+                    //we don't want to log a warning if files are not found
+                    WarnIfFilesNotFound = false
+                }),
+                
                 new UpdateArgoCDApplicationManifestsInstallConvention(fileSystem, PackageDirectoryName, log, pullRequestCreator, configFactory, new CustomPropertiesLoader(fileSystem, customPropertiesFile, customPropertiesPassword), new ArgoCdApplicationManifestParser()),
             };
 
