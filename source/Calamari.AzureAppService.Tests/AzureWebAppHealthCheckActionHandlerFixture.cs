@@ -38,7 +38,7 @@ namespace Calamari.AzureAppService.Tests
                                                                            {
                                                                                SiteConfig = new SiteConfigProperties
                                                                                {
-                                                                                   NetFrameworkVersion = "v6.0"
+                                                                                   NetFrameworkVersion = "v8.0"
                                                                                }
                                                                            });
             WebSiteResource = webSiteResource;
