@@ -19,12 +19,12 @@ using Calamari.Deployment.Conventions;
 
 namespace Calamari.ArgoCD.Commands
 {
-    [Command(Name, Description = "Write populated templates from a package into one or more git repositories")]
-    public class CommitToGitCommand : Command
+    [Command(Name, Description = "Update Kubernetes manifests from a package for one or more Argo CD Applications, persisting them in a Git repository")]
+    public class UpdateArgoCDAppManifestsCommand : Command
     {
         public const string PackageDirectoryName = "package";
 
-        public const string Name = "commit-to-git";
+        public const string Name = "update-argo-cd-app-manifests";
 
         readonly ILog log;
         readonly IVariables variables;
@@ -38,7 +38,7 @@ namespace Calamari.ArgoCD.Commands
         string customPropertiesFile;
         string customPropertiesPassword;
 
-        public CommitToGitCommand(
+        public UpdateArgoCDAppManifestsCommand(
             ILog log,
             IVariables variables,
             INonSensitiveVariables nonSensitiveVariables,
@@ -85,7 +85,7 @@ namespace Calamari.ArgoCD.Commands
                                                   d.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
                                               }),
                 new SubstituteInFilesConvention(new NonSensitiveSubstituteInFilesBehaviour(substituteInFiles, PackageDirectoryName)),
-                new UpdateGitRepositoryInstallConvention(fileSystem, PackageDirectoryName, log, pullRequestCreator, configFactory, new CustomPropertiesLoader(fileSystem, customPropertiesFile, customPropertiesPassword), new ArgoCdApplicationManifestParser()),
+                new UpdateArgoCDApplicationManifestsInstallConvention(fileSystem, PackageDirectoryName, log, pullRequestCreator, configFactory, new CustomPropertiesLoader(fileSystem, customPropertiesFile, customPropertiesPassword), new ArgoCdApplicationManifestParser()),
             };
 
             var runningDeployment = new RunningDeployment(pathToPackage, variables);

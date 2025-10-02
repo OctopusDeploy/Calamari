@@ -19,7 +19,7 @@ using Calamari.Deployment.Conventions;
 
 namespace Calamari.ArgoCD.Conventions
 {
-    public class UpdateGitRepositoryInstallConvention : IInstallConvention
+    public class UpdateArgoCDApplicationManifestsInstallConvention : IInstallConvention
     {
         readonly ICalamariFileSystem fileSystem;
         readonly ILog log;
@@ -29,7 +29,7 @@ namespace Calamari.ArgoCD.Conventions
         readonly ICustomPropertiesLoader customPropertiesLoader;
         readonly IArgoCDApplicationManifestParser argoCdApplicationManifestParser;
 
-        public UpdateGitRepositoryInstallConvention(ICalamariFileSystem fileSystem,
+        public UpdateArgoCDApplicationManifestsInstallConvention(ICalamariFileSystem fileSystem,
                                                     string packageSubfolder,
                                                     ILog log,
                                                     IGitHubPullRequestCreator pullRequestCreator,
@@ -48,7 +48,7 @@ namespace Calamari.ArgoCD.Conventions
 
         public void Install(RunningDeployment deployment)
         {
-            Log.Info("Executing Commit To Git operation");
+            Log.Info("Executing Update Argo CD Application manifests operation");
             var deploymentConfig = deploymentConfigFactory.CreateCommitToGitConfig(deployment);
             var packageFiles = GetReferencedPackageFiles(deploymentConfig);
 
@@ -59,10 +59,17 @@ namespace Calamari.ArgoCD.Conventions
             var gitCredentials = argoProperties.Credentials.ToDictionary(c => c.Url);
             log.Info($"Found the following applications: '{argoProperties.Applications.Select(a => a.Name).Join(",")}'");
 
-            int repositoryNumber = 1;
+            var repositoryNumber = 1;
             foreach (var application in argoProperties.Applications)
             {
                 var applicationFromYaml = argoCdApplicationManifestParser.ParseManifest(application.Manifest);
+
+                //currently, if an application has multiple sources, we cannot update it (as we don't know which source to update), so just run away
+                if (applicationFromYaml.Spec.Sources.Count > 1)
+                {
+                    throw new CommandException($"Application {application.Name} has multiple sources and cannot be updated.");
+                }
+                
                 foreach (var applicationSource in applicationFromYaml.Spec.Sources.OfType<BasicSource>())
                 {
                     Log.Info($"Writing files to repository '{applicationSource.RepoUrl}' for '{application.Name}'");
@@ -77,7 +84,7 @@ namespace Calamari.ArgoCD.Conventions
                     var repository = repositoryFactory.CloneRepository(repositoryNumber.ToString(CultureInfo.InvariantCulture), gitConnection);
 
                     Log.Info($"Copying files into repository {applicationSource.RepoUrl}");
-                    var subFolder = applicationSource.Path ?? String.Empty;
+                    var subFolder = applicationSource.Path ?? string.Empty;
                     Log.VerboseFormat("Copying files into subfolder '{0}'", subFolder);
 
                     if (deploymentConfig.PurgeOutputDirectory)
