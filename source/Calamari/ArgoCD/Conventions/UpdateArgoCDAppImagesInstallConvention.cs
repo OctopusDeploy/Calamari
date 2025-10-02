@@ -65,10 +65,10 @@ namespace Calamari.ArgoCD.Conventions
             var newImagesWritten = new HashSet<string>();
             var gitReposUpdated = new HashSet<string>();
             var gatewayIds = new HashSet<string>();
-
-            var valuesFilesToUpdate = new List<HelmValuesFileImageUpdateTarget>();
+            
             foreach (var application in argoProperties.Applications)
             {
+                var valuesFilesToUpdate = new List<HelmValuesFileImageUpdateTarget>();
                 var applicationFromYaml = argoCdApplicationManifestParser.ParseManifest(application.Manifest);
                 gatewayIds.Add(application.GatewayId);
 
