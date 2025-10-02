@@ -67,8 +67,13 @@ namespace Calamari.ArgoCD.Conventions
                 {
                     Log.Info($"Writing files to repository '{applicationSource.RepoUrl}' for '{application.Name}'");
 
-                    var gitCredential = gitCredentials[applicationSource.RepoUrl.AbsoluteUri];
-                    var gitConnection = new GitConnection(gitCredential.Username, gitCredential.Password, applicationSource.RepoUrl.AbsoluteUri, new GitBranchName(applicationSource.TargetRevision));
+                    var gitCredential = gitCredentials.GetValueOrDefault(applicationSource.RepoUrl.AbsoluteUri);
+                    if (gitCredential == null)
+                    {
+                        log.Info($"No Git credentials found for: '{applicationSource.RepoUrl.AbsoluteUri}', will attempt to clone repository anonymously.");
+                    }
+
+                    var gitConnection = new GitConnection(gitCredential?.Username, gitCredential?.Password, applicationSource.RepoUrl.AbsoluteUri, new GitBranchName(applicationSource.TargetRevision));
                     var repository = repositoryFactory.CloneRepository(repositoryNumber.ToString(CultureInfo.InvariantCulture), gitConnection);
 
                     Log.Info($"Copying files into repository {applicationSource.RepoUrl}");
