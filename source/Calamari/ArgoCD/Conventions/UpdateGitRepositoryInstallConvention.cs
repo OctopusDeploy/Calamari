@@ -151,7 +151,7 @@ namespace Calamari.ArgoCD.Conventions
 
             if (Directory.Exists(absInputPath))
             {
-                return fileSystem.EnumerateFilesRecursively(absInputPath, config.FileGlobs).Select(absoluteFilepath =>
+                return fileSystem.EnumerateFilesRecursively(absInputPath, "*").Select(absoluteFilepath =>
                                        {
                                            var relativePath = Path.GetRelativePath(absInputPath, absoluteFilepath);
                                            return new PackageRelativeFile(absoluteFilepath, relativePath);
