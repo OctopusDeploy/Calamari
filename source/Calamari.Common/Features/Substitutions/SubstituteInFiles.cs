@@ -11,29 +11,34 @@ namespace Calamari.Common.Features.Substitutions
     public class SubstituteInFiles : ISubstituteInFiles
     {
         readonly ILog log;
-        readonly ICalamariFileSystem fileSystem;
+        readonly ISubstituteFileMatcher fileMatcher;
         readonly IFileSubstituter substituter;
         readonly IVariables variables;
 
-        public SubstituteInFiles(ILog log, ICalamariFileSystem fileSystem, IFileSubstituter substituter, IVariables variables)
+        public SubstituteInFiles(ILog log, ISubstituteFileMatcher fileMatcher, IFileSubstituter substituter, IVariables variables)
         {
             this.log = log;
-            this.fileSystem = fileSystem;
+            this.fileMatcher = fileMatcher;
             this.substituter = substituter;
             this.variables = variables;
         }
 
-        public void SubstituteBasedSettingsInSuppliedVariables(string currentDirectory, bool warnIfFileNotFound = true)
+        public void SubstituteBasedSettingsInSuppliedVariables(string currentDirectory,
+                                                               bool warnIfFileNotFound = true,
+                                                               ISubstituteFileMatcher? customFileMatcher = null)
         {
             var filesToTarget = variables.GetPaths(PackageVariables.SubstituteInFilesTargets);
-            Substitute(currentDirectory, filesToTarget, warnIfFileNotFound);
+            Substitute(currentDirectory, filesToTarget, warnIfFileNotFound, customFileMatcher);
         }
 
-        public void Substitute(string currentDirectory, IList<string> filesToTarget, bool warnIfFileNotFound = true)
+        public void Substitute(string currentDirectory,
+                               IList<string> filesToTarget,
+                               bool warnIfFileNotFound = true,
+                               ISubstituteFileMatcher? customFileMatcher = null)
         {
             foreach (var target in filesToTarget)
             {
-                var matchingFiles = MatchingFiles(currentDirectory, target);
+                var matchingFiles = (customFileMatcher ?? fileMatcher).FindMatchingFiles(currentDirectory, target);
 
                 if (!matchingFiles.Any())
                 {
@@ -46,20 +51,6 @@ namespace Calamari.Common.Features.Substitutions
                 foreach (var file in matchingFiles)
                     substituter.PerformSubstitution(file);
             }
-        }
-
-        List<string> MatchingFiles(string currentDirectory, string target)
-        {
-            var files = fileSystem.EnumerateFilesWithGlob(currentDirectory, target).Select(Path.GetFullPath).ToList();
-
-            foreach (var path in variables.GetStrings(ActionVariables.AdditionalPaths)
-                .Where(s => !string.IsNullOrWhiteSpace(s)))
-            {
-                var pathFiles = fileSystem.EnumerateFilesWithGlob(path, target).Select(Path.GetFullPath);
-                files.AddRange(pathFiles);
-            }
-
-            return files;
         }
     }
 }

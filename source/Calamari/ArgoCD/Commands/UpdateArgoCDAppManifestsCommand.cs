@@ -34,6 +34,7 @@ namespace Calamari.ArgoCD.Commands
         readonly INonSensitiveSubstituteInFiles substituteInFiles;
         readonly IGitHubPullRequestCreator pullRequestCreator;
         readonly DeploymentConfigFactory configFactory;
+        readonly IArgoCDManifestsFileMatcher argoCDManifestsFileMatcher;
         PathToPackage pathToPackage;
         string customPropertiesFile;
         string customPropertiesPassword;
@@ -46,7 +47,8 @@ namespace Calamari.ArgoCD.Commands
             IExtractPackage extractPackage,
             INonSensitiveSubstituteInFiles substituteInFiles,
             IGitHubPullRequestCreator pullRequestCreator,
-            DeploymentConfigFactory configFactory)
+            DeploymentConfigFactory configFactory,
+            IArgoCDManifestsFileMatcher argoCDManifestsFileMatcher)
         {
             this.log = log;
             this.variables = variables;
@@ -55,6 +57,7 @@ namespace Calamari.ArgoCD.Commands
             this.substituteInFiles = substituteInFiles;
             this.pullRequestCreator = pullRequestCreator;
             this.configFactory = configFactory;
+            this.argoCDManifestsFileMatcher = argoCDManifestsFileMatcher;
             this.nonSensitiveVariables = nonSensitiveVariables;
 
             Options.Add("package=",
@@ -80,24 +83,28 @@ namespace Calamari.ArgoCD.Commands
                                                   var packageDirectory = Path.Combine(workingDirectory, PackageDirectoryName);
                                                   fileSystem.EnsureDirectoryExists(packageDirectory);
                                                   extractPackage.ExtractToCustomDirectory(pathToPackage, packageDirectory);
-                                                  
+
                                                   d.StagingDirectory = workingDirectory;
                                                   d.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
                                               }),
-                new SubstituteInFilesConvention(new NonSensitiveSubstituteInFilesBehaviour(substituteInFiles, PackageDirectoryName)
-                {
-                    //we don't want to log a warning if files are not found
-                    WarnIfFilesNotFound = false
-                }),
-                
-                new UpdateArgoCDApplicationManifestsInstallConvention(fileSystem, PackageDirectoryName, log, pullRequestCreator, configFactory, new CustomPropertiesLoader(fileSystem, customPropertiesFile, customPropertiesPassword), new ArgoCdApplicationManifestParser()),
+
+                new SubstituteInFilesConvention(new NonSensitiveSubstituteInFilesBehaviour(substituteInFiles, PackageDirectoryName, argoCDManifestsFileMatcher)),
+
+                new UpdateArgoCDApplicationManifestsInstallConvention(fileSystem,
+                                                                      PackageDirectoryName,
+                                                                      log,
+                                                                      pullRequestCreator,
+                                                                      configFactory,
+                                                                      new CustomPropertiesLoader(fileSystem, customPropertiesFile, customPropertiesPassword),
+                                                                      new ArgoCdApplicationManifestParser(),
+                                                                      argoCDManifestsFileMatcher),
             };
 
             var runningDeployment = new RunningDeployment(pathToPackage, variables);
 
             var conventionRunner = new ConventionProcessor(runningDeployment, conventions, log);
             conventionRunner.RunConventions(logExceptions: false);
-            
+
             return 0;
         }
     }
