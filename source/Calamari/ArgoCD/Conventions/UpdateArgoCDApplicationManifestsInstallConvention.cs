@@ -28,14 +28,16 @@ namespace Calamari.ArgoCD.Conventions
         readonly DeploymentConfigFactory deploymentConfigFactory;
         readonly ICustomPropertiesLoader customPropertiesLoader;
         readonly IArgoCDApplicationManifestParser argoCdApplicationManifestParser;
+        readonly IArgoCDManifestsFileMatcher argoCDManifestsFileMatcher;
 
         public UpdateArgoCDApplicationManifestsInstallConvention(ICalamariFileSystem fileSystem,
-                                                    string packageSubfolder,
-                                                    ILog log,
-                                                    IGitHubPullRequestCreator pullRequestCreator,
-                                                    DeploymentConfigFactory deploymentConfigFactory,
-                                                    ICustomPropertiesLoader customPropertiesLoader,
-                                                    IArgoCDApplicationManifestParser argoCdApplicationManifestParser)
+                                                                 string packageSubfolder,
+                                                                 ILog log,
+                                                                 IGitHubPullRequestCreator pullRequestCreator,
+                                                                 DeploymentConfigFactory deploymentConfigFactory,
+                                                                 ICustomPropertiesLoader customPropertiesLoader,
+                                                                 IArgoCDApplicationManifestParser argoCdApplicationManifestParser,
+                                                                 IArgoCDManifestsFileMatcher argoCDManifestsFileMatcher)
         {
             this.fileSystem = fileSystem;
             this.log = log;
@@ -43,6 +45,7 @@ namespace Calamari.ArgoCD.Conventions
             this.deploymentConfigFactory = deploymentConfigFactory;
             this.customPropertiesLoader = customPropertiesLoader;
             this.argoCdApplicationManifestParser = argoCdApplicationManifestParser;
+            this.argoCDManifestsFileMatcher = argoCDManifestsFileMatcher;
             this.packageSubfolder = packageSubfolder;
         }
 
@@ -148,26 +151,8 @@ namespace Calamari.ArgoCD.Conventions
             return filesToApply;
         }
 
-        IPackageRelativeFile[] SelectFiles(string pathToExtractedPackageFiles, ArgoCommitToGitConfig config)
-        {
-            var absInputPath = Path.Combine(pathToExtractedPackageFiles, config.InputSubPath);
-            if (File.Exists(absInputPath))
-            {
-                return new[] { new PackageRelativeFile(absolutePath: absInputPath, packageRelativePath: Path.GetFileName(absInputPath)) };
-            }
-
-            if (Directory.Exists(absInputPath))
-            {
-                return fileSystem.EnumerateFilesRecursively(absInputPath, "*").Select(absoluteFilepath =>
-                                       {
-                                           var relativePath = Path.GetRelativePath(absInputPath, absoluteFilepath);
-                                           return new PackageRelativeFile(absoluteFilepath, relativePath);
-                                       })
-                               .ToArray<IPackageRelativeFile>();
-            }
-
-            throw new InvalidOperationException($"Supplied input path '{config.InputSubPath}' does not exist within the supplied package");
-        }
+        IPackageRelativeFile[] SelectFiles(string pathToExtractedPackageFiles, ArgoCommitToGitConfig config) 
+            => argoCDManifestsFileMatcher.FindMatchingPackageFiles(pathToExtractedPackageFiles, config.InputSubPath);
     }
 }
 #endif

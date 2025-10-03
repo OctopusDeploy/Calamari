@@ -119,7 +119,8 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                                                       Substitute.For<IGitHubPullRequestCreator>(), 
                                                                       new DeploymentConfigFactory(nonSensitiveCalamariVariables), 
                                                                       customPropertiesLoader, 
-                                                                      argoCdApplicationManifestParser);
+                                                                      argoCdApplicationManifestParser,
+                                                                      new ArgoCDManifestsFileMatcher(fileSystem));
             convention.Install(runningDeployment);
 
             var resultPath = CloneOrigin();
@@ -165,7 +166,8 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                                                       Substitute.For<IGitHubPullRequestCreator>(), 
                                                                       new DeploymentConfigFactory(nonSensitiveCalamariVariables), 
                                                                       customPropertiesLoader,
-                                                                      argoCdApplicationManifestParser);
+                                                                      argoCdApplicationManifestParser,
+                                                                      new ArgoCDManifestsFileMatcher(fileSystem));
             convention.Install(runningDeployment);
             
             // Assert
@@ -236,7 +238,8 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                                                                    Substitute.For<IGitHubPullRequestCreator>(), 
                                                                                    new DeploymentConfigFactory(nonSensitiveCalamariVariables), 
                                                                                    customPropertiesLoader,
-                                                                                   argoCdApplicationManifestParser);
+                                                                                   argoCdApplicationManifestParser,
+                                                                                   new ArgoCDManifestsFileMatcher(fileSystem));
             Action action = () => convention.Install(runningDeployment);
             
             //Assert

@@ -6,31 +6,30 @@ using Calamari.Common.Features.Substitutions;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Variables;
-using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Common.Features.Behaviours
 {
     public class SubstituteInFilesBehaviour : IBehaviour
     {
         readonly ISubstituteInFiles substituteInFiles;
-        private readonly string subdirectory;
+        readonly string subdirectory;
+        readonly ISubstituteFileMatcher? customFileMatcher;
 
         public SubstituteInFilesBehaviour(
             ISubstituteInFiles substituteInFiles,
-            string subdirectory = "")
+            string subdirectory = "",
+            ISubstituteFileMatcher? customFileMatcher = null)
         {
             this.substituteInFiles = substituteInFiles;
             this.subdirectory = subdirectory;
+            this.customFileMatcher = customFileMatcher;
         }
 
-        public bool IsEnabled(RunningDeployment context)
-        {
-            return context.Variables.IsFeatureEnabled(KnownVariables.Features.SubstituteInFiles);
-        }
+        public bool IsEnabled(RunningDeployment context) => context.Variables.IsFeatureEnabled(KnownVariables.Features.SubstituteInFiles);
 
         public Task Execute(RunningDeployment context)
         {
-            substituteInFiles.SubstituteBasedSettingsInSuppliedVariables(Path.Combine(context.CurrentDirectory, subdirectory));
+            substituteInFiles.SubstituteBasedSettingsInSuppliedVariables(Path.Combine(context.CurrentDirectory, subdirectory), customFileMatcher: customFileMatcher);
             return Task.CompletedTask;
         }
     }

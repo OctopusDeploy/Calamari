@@ -34,7 +34,7 @@ namespace Calamari.Tests.Fixtures.Deployment.Conventions
             fileSystem.EnumerateFilesWithGlob(StagingDirectory, glob).Returns(new[] { Path.Combine(StagingDirectory, actualMatch) });
 
             var substituter = Substitute.For<IFileSubstituter>();
-            new SubstituteInFiles(new InMemoryLog(), fileSystem, substituter, variables)
+            new SubstituteInFiles(new InMemoryLog(), new GlobSubstituteFileMatcher(fileSystem, variables), substituter, variables)
                 .SubstituteBasedSettingsInSuppliedVariables(deployment.CurrentDirectory);
 
             substituter.Received().PerformSubstitution(Path.Combine(StagingDirectory, actualMatch));

@@ -682,7 +682,7 @@ namespace Calamari.Tests.AWS
                                                      log,
                                                      variables,
                                                      fileSystem,
-                                                     new SubstituteInFiles(log, fileSystem, new FileSubstituter(log, fileSystem, variables), variables),
+                                                     new SubstituteInFiles(log, new GlobSubstituteFileMatcher(fileSystem, variables), new FileSubstituter(log, fileSystem, variables), variables),
                                                      new ExtractPackage(new CombinedPackageExtractor(log, fileSystem, variables, new CommandLineRunner(log, variables)), fileSystem, variables, log),
                                                      new StructuredConfigVariablesService(new PrioritisedList<IFileFormatVariableReplacer>
                                                                                           {
@@ -747,7 +747,7 @@ namespace Calamari.Tests.AWS
                                                      log,
                                                      variables,
                                                      fileSystem,
-                                                     new SubstituteInFiles(log, fileSystem, new FileSubstituter(log, fileSystem, variables), variables),
+                                                     new SubstituteInFiles(log, new GlobSubstituteFileMatcher(fileSystem, variables), new FileSubstituter(log, fileSystem, variables), variables),
                                                      new ExtractPackage(new CombinedPackageExtractor(log, fileSystem, variables, new CommandLineRunner(log, variables)), fileSystem, variables, log),
                                                      new StructuredConfigVariablesService(new PrioritisedList<IFileFormatVariableReplacer>
                                                                                           {
