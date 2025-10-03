@@ -38,7 +38,8 @@ namespace Calamari.Common.Features.Substitutions
         {
             foreach (var target in filesToTarget)
             {
-                var matchingFiles = (customFileMatcher ?? fileMatcher).FindMatchingFiles(currentDirectory, target);
+                var usedMatcher = customFileMatcher ?? fileMatcher;
+                var matchingFiles = usedMatcher.FindMatchingFiles(currentDirectory, target);
 
                 if (!matchingFiles.Any())
                 {
