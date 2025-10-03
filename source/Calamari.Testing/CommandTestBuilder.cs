@@ -1,8 +1,6 @@
-﻿#if NETSTANDARD
+﻿
 using NuGet.Packaging;
 using NuGet.Versioning;
-#else
-#endif
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -20,7 +18,6 @@ using Calamari.Common.Plumbing.Variables;
 using Calamari.Testing.Helpers;
 using Calamari.Testing.LogParser;
 using FluentAssertions;
-using NuGet;
 using Octopus.CoreUtilities;
 using KnownVariables = Calamari.Common.Plumbing.Variables.KnownVariables;
 using OSPlatform = System.Runtime.InteropServices.OSPlatform;
@@ -39,7 +36,7 @@ namespace Calamari.Testing
             where TCalamari : CalamariFlavourProgramAsync
             where TCommand : PipelineCommand
         {
-            return new CommandTestBuilder<TCalamari>(typeof(TCommand).GetCustomAttribute<CommandAttribute>().Name);
+            return new CommandTestBuilder<TCalamari>(typeof(TCommand).GetCustomAttribute<CommandAttribute>()!.Name);
         }
 
         public static CommandTestBuilder<TCalamari> Create<TCalamari>(string command)
@@ -52,7 +49,7 @@ namespace Calamari.Testing
             where TCalamari : CalamariFlavourProgram
             where TCommand : ICommand
         {
-            return new CommandTestBuilder<TCalamari>(typeof(TCommand).GetCustomAttribute<CommandAttribute>().Name);
+            return new CommandTestBuilder<TCalamari>(typeof(TCommand).GetCustomAttribute<CommandAttribute>()!.Name);
         }
 
         public static CommandTestBuilderContext WithFilesToCopy(this CommandTestBuilderContext context, string path)
@@ -94,13 +91,8 @@ namespace Calamari.Testing
         {
             var metadata = new ManifestMetadata
             {
-#if NETSTANDARD
                 Authors = new [] {"octopus@e2eTests"},
                 Version = new NuGetVersion(packageVersion),
-#else
-                Authors = "octopus@e2eTests",
-                Version = packageVersion,
-#endif
                 Id = packageId,
                 Description = nameof(CommandTestBuilder)
             };
