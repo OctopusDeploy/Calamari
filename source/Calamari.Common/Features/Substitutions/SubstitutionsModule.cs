@@ -6,6 +6,8 @@ namespace Calamari.Common.Features.Substitutions
     {
         protected override void Load(ContainerBuilder builder)
         {
+            builder.RegisterType<GlobSubstituteFileMatcher>().As<ISubstituteFileMatcher>().InstancePerLifetimeScope();
+            
             //all variables
             builder.RegisterType<SubstituteInFiles>().As<ISubstituteInFiles>().InstancePerLifetimeScope();
             builder.RegisterType<FileSubstituter>().As<IFileSubstituter>().InstancePerLifetimeScope();

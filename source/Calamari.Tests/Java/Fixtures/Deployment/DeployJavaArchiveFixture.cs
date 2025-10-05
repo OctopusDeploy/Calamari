@@ -136,7 +136,7 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
                 variables,
                 fileSystem,
                 commandLineRunner,
-                new SubstituteInFiles(log, fileSystem, new FileSubstituter(log, fileSystem, variables), variables),
+                new SubstituteInFiles(log, new GlobSubstituteFileMatcher(fileSystem, variables), new FileSubstituter(log, fileSystem, variables), variables),
                 new ExtractPackage(new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner), fileSystem, variables, log),
                 new StructuredConfigVariablesService(new PrioritisedList<IFileFormatVariableReplacer>
                 {
