@@ -59,8 +59,7 @@ namespace Calamari.ArgoCD.Git
                 cleansedSubPath += "/";
             } 
             
-            Log.Verbose("Removing files recursively.");
-            repository.Index.ForEach(i => log.Info($" - {i.Path}"));
+            Log.Info("Removing files recursively.");
             List<IndexEntry> filesToRemove = repository.Index.Where(i => i.Path.StartsWith(cleansedSubPath)).ToList();
             filesToRemove.ForEach(i => repository.Index.Remove(i.Path));
         }
