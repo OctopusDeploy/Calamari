@@ -18,34 +18,18 @@ namespace Calamari.ArgoCD.Dtos
 
     public class ArgoCDApplicationDto
     {
-        public ArgoCDApplicationDto(string gatewayId, string name, string defaultRegistry, ArgoCDApplicationSourceDto[] sources, string manifest)
+        public ArgoCDApplicationDto(string gatewayId, string name, string defaultRegistry, string manifest)
         {
             GatewayId = gatewayId;
             Name = name;
             DefaultRegistry = defaultRegistry;
-            Sources = sources;
             Manifest = manifest;
         }
 
         public string GatewayId { get; }
         public string Name { get; } 
         public string DefaultRegistry { get; set; }
-        public ArgoCDApplicationSourceDto[] Sources { get; }
         public string Manifest { get; }
-    }
-
-    public class ArgoCDApplicationSourceDto
-    {
-        public ArgoCDApplicationSourceDto(string url, string path, string targetRevision)
-        {
-            Url = url;
-            Path = path;
-            TargetRevision = targetRevision;
-        }
-
-        public string Url { get; }
-        public string TargetRevision { get; }
-        public string Path { get; }
     }
 
     public class GitCredentialDto
