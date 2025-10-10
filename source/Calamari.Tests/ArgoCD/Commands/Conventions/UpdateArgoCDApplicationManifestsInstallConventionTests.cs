@@ -52,10 +52,10 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
 
             var argoCdCustomPropertiesDto = new ArgoCDCustomPropertiesDto(new[]
             {
-                new ArgoCDApplicationDto("Gateway1", "App1", "docker.io",new[]
+                new ArgoCDApplicationDto("Gateway1", "App1", "argocd",new[]
                 {
                     new ArgoCDApplicationSourceDto(OriginPath, "", argoCdBranchName.Value)
-                }, "yaml")
+                }, "yaml", "docker.io","http://my-argo.com")
             }, new GitCredentialDto[]
             {
                 new GitCredentialDto(new Uri(RepoUrl).AbsoluteUri, "", "")
@@ -182,11 +182,11 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             // Arrange
             var argoCdCustomPropertiesDto = new ArgoCDCustomPropertiesDto(new[]
             {
-                new ArgoCDApplicationDto("Gateway1", "App1", "docker.io",new[]
+                new ArgoCDApplicationDto("Gateway1", "App1", "argocd",new[]
                 {
                     new ArgoCDApplicationSourceDto(OriginPath, "", argoCdBranchName.Value),
                     new ArgoCDApplicationSourceDto("https://github.com/do-a-thing/repo", ".", "main")
-                }, "yaml")
+                }, "yaml","docker.io", "http://my-argo.com")
             }, new GitCredentialDto[]
             {
                 new GitCredentialDto(new Uri(RepoUrl).AbsoluteUri, "", "")

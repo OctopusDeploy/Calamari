@@ -68,6 +68,8 @@ namespace Calamari.ArgoCD.Conventions
             
             foreach (var application in argoProperties.Applications)
             {
+                var instanceLinks = application.InstanceWebUiUrl != null ? new ArgoCDInstanceLinks(application.InstanceWebUiUrl) : null;
+                
                 var valuesFilesToUpdate = new List<HelmValuesFileImageUpdateTarget>();
                 var applicationFromYaml = argoCdApplicationManifestParser.ParseManifest(application.Manifest);
                 gatewayIds.Add(application.GatewayId);
@@ -136,6 +138,13 @@ namespace Calamari.ArgoCD.Conventions
                         gitReposUpdated.Add(valuesFileSource.RepoUrl.ToString());
                     }
                 }
+                
+                //if we have links, use that to generate a link, otherwise just put the name there
+                var appName = instanceLinks != null
+                    ? log.FormatLink(application.Name, instanceLinks.ApplicationDetails(application.Name, application.KubernetesNamespace))
+                    : application.Name;
+                
+                log.InfoFormat("Updated Application {0}", appName);
             }
 
             var outputWriter = new ArgoCDImageUpdateOutputWriter(log);

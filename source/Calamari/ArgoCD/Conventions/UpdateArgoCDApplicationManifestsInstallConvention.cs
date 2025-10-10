@@ -65,6 +65,8 @@ namespace Calamari.ArgoCD.Conventions
             var repositoryNumber = 1;
             foreach (var application in argoProperties.Applications)
             {
+                var instanceLinks = application.InstanceWebUiUrl != null ? new ArgoCDInstanceLinks(application.InstanceWebUiUrl) : null;
+                
                 var applicationFromYaml = argoCdApplicationManifestParser.ParseManifest(application.Manifest);
 
                 //currently, if an application has multiple sources, we cannot update it (as we don't know which source to update), so just run away
@@ -121,6 +123,13 @@ namespace Calamari.ArgoCD.Conventions
 
                     repositoryNumber++;
                 }
+
+                //if we have links, use that to generate a link, otherwise just put the name there
+                var appName = instanceLinks != null
+                    ? log.FormatLink(application.Name, instanceLinks.ApplicationDetails(application.Name, application.KubernetesNamespace))
+                    : application.Name;
+                
+                log.InfoFormat("Updated Application {0}", appName);
             }
         }
 
