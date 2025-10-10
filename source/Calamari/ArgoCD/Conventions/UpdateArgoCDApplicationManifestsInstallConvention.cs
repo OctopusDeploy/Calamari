@@ -75,6 +75,7 @@ namespace Calamari.ArgoCD.Conventions
                     throw new CommandException($"Application {application.Name} has multiple sources and cannot be updated.");
                 }
                 
+                var didUpdateSomething = false;
                 foreach (var applicationSource in applicationFromYaml.Spec.Sources.OfType<BasicSource>())
                 {
                     Log.Info($"Writing files to repository '{applicationSource.RepoUrl}' for '{application.Name}'");
@@ -115,6 +116,8 @@ namespace Calamari.ArgoCD.Conventions
                                                CancellationToken.None)
                                   .GetAwaiter()
                                   .GetResult();
+                        
+                        didUpdateSomething = true;
                     }
                     else
                     {
@@ -128,8 +131,12 @@ namespace Calamari.ArgoCD.Conventions
                 var appName = instanceLinks != null
                     ? log.FormatLink(instanceLinks.ApplicationDetails(application.Name, application.KubernetesNamespace), application.Name)
                     : application.Name;
+
+                var message = didUpdateSomething
+                    ? "Updated Application {0}"
+                    : "Nothing to update for Application {0}";
                 
-                log.InfoFormat("Updated Application {0}", appName);
+                log.InfoFormat(message, appName);
             }
         }
 
