@@ -141,7 +141,7 @@ namespace Calamari.ArgoCD.Conventions
                 
                 //if we have links, use that to generate a link, otherwise just put the name there
                 var appName = instanceLinks != null
-                    ? log.FormatLink(application.Name, instanceLinks.ApplicationDetails(application.Name, application.KubernetesNamespace))
+                    ? log.FormatLink(instanceLinks.ApplicationDetails(application.Name, application.KubernetesNamespace), application.Name)
                     : application.Name;
                 
                 log.InfoFormat("Updated Application {0}", appName);
