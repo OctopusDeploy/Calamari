@@ -52,10 +52,10 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             
             var argoCdCustomPropertiesDto = new ArgoCDCustomPropertiesDto(new[]
             {
-                new ArgoCDApplicationDto("Gateway1", "App1", "docker.io",new[]
+                new ArgoCDApplicationDto("Gateway1", "App1", "argocd",new[]
                 {
                     new ArgoCDApplicationSourceDto(OriginPath, "", argoCDBranchName.Value)
-                }, "yaml")
+                }, "yaml", "docker.io","http://my-argo.com")
             }, new GitCredentialDto[]
             {
                 new GitCredentialDto(new Uri(OriginPath).AbsoluteUri, "", "")

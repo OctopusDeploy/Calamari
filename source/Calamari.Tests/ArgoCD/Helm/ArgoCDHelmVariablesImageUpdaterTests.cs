@@ -59,12 +59,14 @@ image:
                                                                           {
                                                                               new ArgoCDApplicationDto("Gateway1",
                                                                                                        "App1",
-                                                                                                       "docker.io",
+                                                                                                       "argocd",
                                                                                                        new[]
                                                                                                        {
                                                                                                            new ArgoCDApplicationSourceDto(OriginPath, "", argoCDBranchName.Value)
                                                                                                        },
-                                                                                                       "yaml")
+                                                                                                       "yaml",
+                                                                                                       "docker.io",
+                                                                                                       null)
                                                                           },
                                                                           new GitCredentialDto[]
                                                                           {

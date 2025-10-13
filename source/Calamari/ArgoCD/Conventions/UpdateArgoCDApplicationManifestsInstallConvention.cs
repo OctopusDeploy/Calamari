@@ -65,6 +65,8 @@ namespace Calamari.ArgoCD.Conventions
             var repositoryNumber = 1;
             foreach (var application in argoProperties.Applications)
             {
+                var instanceLinks = application.InstanceWebUiUrl != null ? new ArgoCDInstanceLinks(application.InstanceWebUiUrl) : null;
+                
                 var applicationFromYaml = argoCdApplicationManifestParser.ParseManifest(application.Manifest);
 
                 //currently, if an application has multiple sources, we cannot update it (as we don't know which source to update), so just run away
@@ -73,6 +75,7 @@ namespace Calamari.ArgoCD.Conventions
                     throw new CommandException($"Application {application.Name} has multiple sources and cannot be updated.");
                 }
                 
+                var didUpdateSomething = false;
                 foreach (var applicationSource in applicationFromYaml.Spec.Sources.OfType<BasicSource>())
                 {
                     Log.Info($"Writing files to repository '{applicationSource.RepoUrl}' for '{application.Name}'");
@@ -113,6 +116,8 @@ namespace Calamari.ArgoCD.Conventions
                                                CancellationToken.None)
                                   .GetAwaiter()
                                   .GetResult();
+                        
+                        didUpdateSomething = true;
                     }
                     else
                     {
@@ -121,6 +126,17 @@ namespace Calamari.ArgoCD.Conventions
 
                     repositoryNumber++;
                 }
+
+                //if we have links, use that to generate a link, otherwise just put the name there
+                var appName = instanceLinks != null
+                    ? log.FormatLink(instanceLinks.ApplicationDetails(application.Name, application.KubernetesNamespace), application.Name)
+                    : application.Name;
+
+                var message = didUpdateSomething
+                    ? "Updated Application {0}"
+                    : "Nothing to update for Application {0}";
+                
+                log.InfoFormat(message, appName);
             }
         }
 
