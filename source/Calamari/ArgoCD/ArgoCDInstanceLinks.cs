@@ -13,7 +13,7 @@ namespace Calamari.ArgoCD
 
         public string ApplicationDetails(string name, string kubernetesNamespace)
         {
-            return $"{webUiUri}/{kubernetesNamespace}/{name}";
+            return $"{webUiUri}/applications/{kubernetesNamespace}/{name}";
         }
     }
 }
