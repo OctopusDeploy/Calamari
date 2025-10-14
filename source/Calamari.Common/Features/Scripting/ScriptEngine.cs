@@ -5,7 +5,6 @@ using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting.Bash;
 using Calamari.Common.Features.Scripting.DotnetScript;
 using Calamari.Common.Features.Scripting.Python;
-using Calamari.Common.Features.Scripting.ScriptCS;
 using Calamari.Common.Features.Scripting.WindowsPowerShell;
 using Calamari.Common.Features.Scripts;
 using Calamari.Common.FeatureToggles;
@@ -72,7 +71,6 @@ namespace Calamari.Common.Features.Scripting
         /// </returns>
         IScriptWrapper BuildWrapperChain(ScriptSyntax scriptSyntax, IVariables variables, ICommandLineRunner commandLineRunner)
         {
-            bool.TryParse(variables.Get(ScriptVariables.UseDotnetScript, bool.FalseString), out bool useDotnetScript);
             // get the type of script
             return scriptWrapperHooks
                    .Where(hook => hook.IsEnabled(scriptSyntax))
@@ -84,7 +82,7 @@ namespace Calamari.Common.Features.Scripting
                    .OrderByDescending(hook => hook.Priority)
                    .Aggregate(
                               // The last wrapper is always the TerminalScriptWrapper
-                              new TerminalScriptWrapper(GetScriptExecutor(scriptSyntax, variables, commandLineRunner, useDotnetScript), variables),
+                              new TerminalScriptWrapper(GetScriptExecutor(scriptSyntax, variables, commandLineRunner), variables),
                               (IScriptWrapper current, IScriptWrapper next) =>
                               {
                                   // the next wrapper is pointed to the current one
@@ -98,32 +96,24 @@ namespace Calamari.Common.Features.Scripting
                               });
         }
 
-        IScriptExecutor GetScriptExecutor(ScriptSyntax scriptSyntax, IVariables variables, ICommandLineRunner commandLineRunner, bool runDotnetScript = false)
+        IScriptExecutor GetScriptExecutor(ScriptSyntax scriptSyntax, IVariables variables, ICommandLineRunner commandLineRunner)
         {
             switch (scriptSyntax)
             {
                 case ScriptSyntax.PowerShell:
                     return new PowerShellScriptExecutor(log);
                 case ScriptSyntax.CSharp:
-                    if (runDotnetScript)
+                    var isDotNetScriptCompileWarningFeatureToggleEnabled = OctopusFeatureToggles.DotNetScriptCompilationWarningFeatureToggle.IsEnabled(variables);
+
+                    //if this feature toggle is NOT enabled, then we want to suppress this warning
+                    //We will be targetting specific customers with this warning (specifically those we are force migrating from ScriptCS to dotnet-script
+                    if (!isDotNetScriptCompileWarningFeatureToggleEnabled)
                     {
-                        var isDotNetScriptCompileWarningFeatureToggleEnabled = OctopusFeatureToggles.DotNetScriptCompilationWarningFeatureToggle.IsEnabled(variables);
-                        
-                        //if this feature toggle is NOT enabled, then we want to suppress this warning
-                        //We will be targetting specific customers with this warning (specifically those we are force migrating from ScriptCS to dotnet-script
-                        if (!isDotNetScriptCompileWarningFeatureToggleEnabled)
-                        {
-                            dotnetScriptCompilationWarningOutputSink.AssumeSuccessfullyCompiled();
-                        }
-                        
-                        return new DotnetScriptExecutor(commandLineRunner, log, dotnetScriptCompilationWarningOutputSink);
-                    }
-                    else
-                    {
-                        //ScriptCS never needs to worry about this warning, so suppress
                         dotnetScriptCompilationWarningOutputSink.AssumeSuccessfullyCompiled();
-                        return new ScriptCSScriptExecutor(log);
                     }
+
+                    return new DotnetScriptExecutor(commandLineRunner, log, dotnetScriptCompilationWarningOutputSink);
+
                 case ScriptSyntax.Bash:
                     return new BashScriptExecutor(log);
                 case ScriptSyntax.Python:

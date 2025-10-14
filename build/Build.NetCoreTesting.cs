@@ -13,7 +13,7 @@ partial class Build
             .Executes(() =>
             {
                 const string testFilter =
-                    "TestCategory != Windows & TestCategory != scriptcs & TestCategory != PlatformAgnostic & TestCategory != RunOnceOnWindowsAndLinux";
+                    "TestCategory != Windows & TestCategory != PlatformAgnostic & TestCategory != RunOnceOnWindowsAndLinux";
 
                 DotNetTasks.DotNetTest(settings => settings
                     .SetProjectFile("Binaries/Calamari.Tests.dll")
