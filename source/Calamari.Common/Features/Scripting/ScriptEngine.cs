@@ -106,14 +106,13 @@ namespace Calamari.Common.Features.Scripting
                     var isDotNetScriptCompileWarningFeatureToggleEnabled = OctopusFeatureToggles.DotNetScriptCompilationWarningFeatureToggle.IsEnabled(variables);
 
                     //if this feature toggle is NOT enabled, then we want to suppress this warning
-                    //We will be targetting specific customers with this warning (specifically those we are force migrating from ScriptCS to dotnet-script
+                    //We will be targeting specific customers with this warning (specifically those we are force migrating from ScriptCS to dotnet-script
                     if (!isDotNetScriptCompileWarningFeatureToggleEnabled)
                     {
                         dotnetScriptCompilationWarningOutputSink.AssumeSuccessfullyCompiled();
                     }
 
                     return new DotnetScriptExecutor(commandLineRunner, log, dotnetScriptCompilationWarningOutputSink);
-
                 case ScriptSyntax.Bash:
                     return new BashScriptExecutor(log);
                 case ScriptSyntax.Python:
