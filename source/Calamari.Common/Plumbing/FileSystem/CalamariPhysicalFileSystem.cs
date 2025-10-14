@@ -290,10 +290,12 @@ namespace Calamari.Common.Plumbing.FileSystem
 
         public void RemoveReadOnlyAttributeFromFile(string filePath)
         {
-            var doAThing = new FileInfo(filePath);
-            if (doAThing.IsReadOnly)
+            var fileInfo = new FileInfo(filePath);
+            
+            //I'm not sure of any side affects or IO of doing this when not needed, so just doing if required
+            if (fileInfo.IsReadOnly)
             {
-                doAThing.IsReadOnly = false;
+                fileInfo.IsReadOnly = false;
             }
         }
 
