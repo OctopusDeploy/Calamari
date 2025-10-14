@@ -55,7 +55,7 @@ namespace Calamari.ArgoCD.Conventions
             var deploymentConfig = deploymentConfigFactory.CreateCommitToGitConfig(deployment);
             var packageFiles = GetReferencedPackageFiles(deploymentConfig);
 
-            var repositoryFactory = new RepositoryFactory(log, deployment.CurrentDirectory, pullRequestCreator);
+            var repositoryFactory = new RepositoryFactory(log, fileSystem, deployment.CurrentDirectory, pullRequestCreator);
 
             var argoProperties = customPropertiesLoader.Load<ArgoCDCustomPropertiesDto>();
 
@@ -66,7 +66,7 @@ namespace Calamari.ArgoCD.Conventions
             foreach (var application in argoProperties.Applications)
             {
                 var instanceLinks = application.InstanceWebUiUrl != null ? new ArgoCDInstanceLinks(application.InstanceWebUiUrl) : null;
-                
+
                 var applicationFromYaml = argoCdApplicationManifestParser.ParseManifest(application.Manifest);
 
                 //currently, if an application has multiple sources, we cannot update it (as we don't know which source to update), so just run away
@@ -74,7 +74,7 @@ namespace Calamari.ArgoCD.Conventions
                 {
                     throw new CommandException($"Application {application.Name} has multiple sources and cannot be updated.");
                 }
-                
+
                 var didUpdateSomething = false;
                 foreach (var applicationSource in applicationFromYaml.Spec.Sources.OfType<BasicSource>())
                 {
@@ -87,41 +87,42 @@ namespace Calamari.ArgoCD.Conventions
                     }
 
                     var gitConnection = new GitConnection(gitCredential?.Username, gitCredential?.Password, applicationSource.RepoUrl.AbsoluteUri, new GitBranchName(applicationSource.TargetRevision));
-                    var repository = repositoryFactory.CloneRepository(repositoryNumber.ToString(CultureInfo.InvariantCulture), gitConnection);
-
-                    Log.Info($"Copying files into repository {applicationSource.RepoUrl}");
-                    var subFolder = applicationSource.Path ?? string.Empty;
-                    Log.VerboseFormat("Copying files into subfolder '{0}'", subFolder);
-
-                    if (deploymentConfig.PurgeOutputDirectory)
+                    using (var repository = repositoryFactory.CloneRepository(repositoryNumber.ToString(CultureInfo.InvariantCulture), gitConnection))
                     {
-                        repository.RecursivelyStageFilesForRemoval(subFolder);
-                    }
+                        Log.Info($"Copying files into repository {applicationSource.RepoUrl}");
+                        var subFolder = applicationSource.Path ?? string.Empty;
+                        Log.VerboseFormat("Copying files into subfolder '{0}'", subFolder);
 
-                    var repositoryFiles = packageFiles.Select(f => new FileCopySpecification(f, repository.WorkingDirectory, subFolder)).ToList();
-                    Log.VerboseFormat("Copying files into subfolder '{0}'", applicationSource.Path!);
-                    CopyFiles(repositoryFiles);
+                        if (deploymentConfig.PurgeOutputDirectory)
+                        {
+                            repository.RecursivelyStageFilesForRemoval(subFolder);
+                        }
 
-                    Log.Info("Staging files in repository");
-                    repository.StageFiles(repositoryFiles.Select(fcs => fcs.DestinationRelativePath).ToArray());
+                        var repositoryFiles = packageFiles.Select(f => new FileCopySpecification(f, repository.WorkingDirectory, subFolder)).ToList();
+                        Log.VerboseFormat("Copying files into subfolder '{0}'", applicationSource.Path!);
+                        CopyFiles(repositoryFiles);
 
-                    Log.Info("Commiting changes");
-                    if (repository.CommitChanges(deploymentConfig.CommitParameters.Summary, deploymentConfig.CommitParameters.Description))
-                    {
-                        Log.Info("Changes were commited, pushing to remote");
-                        repository.PushChanges(deploymentConfig.CommitParameters.RequiresPr,
-                                               deploymentConfig.CommitParameters.Summary,
-                                               deploymentConfig.CommitParameters.Description,
-                                               new GitBranchName(applicationSource.TargetRevision),
-                                               CancellationToken.None)
-                                  .GetAwaiter()
-                                  .GetResult();
-                        
-                        didUpdateSomething = true;
-                    }
-                    else
-                    {
-                        Log.Info("No changes were commited.");
+                        Log.Info("Staging files in repository");
+                        repository.StageFiles(repositoryFiles.Select(fcs => fcs.DestinationRelativePath).ToArray());
+
+                        Log.Info("Commiting changes");
+                        if (repository.CommitChanges(deploymentConfig.CommitParameters.Summary, deploymentConfig.CommitParameters.Description))
+                        {
+                            Log.Info("Changes were commited, pushing to remote");
+                            repository.PushChanges(deploymentConfig.CommitParameters.RequiresPr,
+                                                   deploymentConfig.CommitParameters.Summary,
+                                                   deploymentConfig.CommitParameters.Description,
+                                                   new GitBranchName(applicationSource.TargetRevision),
+                                                   CancellationToken.None)
+                                      .GetAwaiter()
+                                      .GetResult();
+
+                            didUpdateSomething = true;
+                        }
+                        else
+                        {
+                            Log.Info("No changes were commited.");
+                        }
                     }
 
                     repositoryNumber++;
@@ -135,7 +136,7 @@ namespace Calamari.ArgoCD.Conventions
                 var message = didUpdateSomething
                     ? "Updated Application {0}"
                     : "Nothing to update for Application {0}";
-                
+
                 log.InfoFormat(message, appName);
             }
         }
@@ -167,7 +168,7 @@ namespace Calamari.ArgoCD.Conventions
             return filesToApply;
         }
 
-        IPackageRelativeFile[] SelectFiles(string pathToExtractedPackageFiles, ArgoCommitToGitConfig config) 
+        IPackageRelativeFile[] SelectFiles(string pathToExtractedPackageFiles, ArgoCommitToGitConfig config)
             => argoCDManifestsFileMatcher.FindMatchingPackageFiles(pathToExtractedPackageFiles, config.InputSubPath);
     }
 }

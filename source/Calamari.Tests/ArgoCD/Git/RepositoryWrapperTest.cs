@@ -36,12 +36,13 @@ namespace Calamari.Tests.ArgoCD.Git
         public void Init()
         {
             log = new InMemoryLog();
+
             tempDirectory = fileSystem.CreateTemporaryDirectory();
 
             bareOrigin = RepositoryHelpers.CreateBareRepository(OriginPath);
             RepositoryHelpers.CreateBranchIn(branchName, OriginPath);
 
-            var repositoryFactory = new RepositoryFactory(log, tempDirectory, gitHubPullRequestCreator);
+            var repositoryFactory = new RepositoryFactory(log, fileSystem, tempDirectory, gitHubPullRequestCreator);
             gitConnection = new GitConnection(null, null, OriginPath, branchName);
             repository = repositoryFactory.CloneRepository(repositoryPath, gitConnection);
         }
@@ -141,6 +142,26 @@ namespace Calamari.Tests.ArgoCD.Git
         }
 
         [Test]
+        public async Task WhenDisposingOfARepository_TheCheckoutDirectoryIsRemoved()
+        {
+            //Arrange 
+            const string filename = "newFile.txt";
+            const string fileContents = "Lorem ipsum dolor sit amet";
+            await File.WriteAllTextAsync(Path.Combine(RepositoryRootPath, filename), fileContents);
+            
+            repository.StageFiles(new[] { filename });
+            repository.CommitChanges("Summary Message", "A file has changed").Should().BeTrue();
+            
+            // Act
+            repository.Dispose();
+            
+            // Assert
+            fileSystem.DirectoryExists(RepositoryRootPath)
+                      .Should()
+                      .BeFalse();
+        }
+
+        [Test]
         [TestCase("", 0)]
         [TestCase("./", 0)]
         [TestCase("nested_1", 2)]
@@ -155,23 +176,23 @@ namespace Calamari.Tests.ArgoCD.Git
                                         ("nested/file.txt", ""),
                                         ("nested_1/file.yaml", ""),
                                         ("nested_1/nested_2/file.yaml", ""));
-            
-            var repositoryFactory = new RepositoryFactory(log, tempDirectory, gitHubPullRequestCreator);
+
+            var repositoryFactory = new RepositoryFactory(log, fileSystem, tempDirectory, gitHubPullRequestCreator);
             gitConnection = new GitConnection(null, null, OriginPath, branchName);
-            
+
             // Act
             var sut = repositoryFactory.CloneRepository($"{repositoryPath}/sut", gitConnection);
             sut.RecursivelyStageFilesForRemoval(subPath);
             sut.CommitChanges("Deleted files", string.Empty);
             sut.PushChanges(branchName.Value);
-            
+
             //Assert
             var result = CloneOrigin();
             var files = fileSystem.EnumerateFilesWithGlob(result, "**/*");
             var notGitFiles = files.Where(file => !file.Contains(".git")).ToList();
             notGitFiles.Count.Should().Be(totalFilesRemaining);
         }
-        
+
         string CloneOrigin()
         {
             var subPath = Guid.NewGuid().ToString();
