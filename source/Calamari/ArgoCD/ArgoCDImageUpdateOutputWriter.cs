@@ -26,6 +26,7 @@ namespace Calamari.ArgoCD
             var totalApps = ToCommaSeparatedString(totalApplications);
             var updatedApps = ToCommaSeparatedString(updatedApplications);
 
+            log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.GatewayIds, gatewayIds);
             log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.GitUris, gitUris);
             log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.MatchingApplications, totalApps);
             log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.UpdatedApplications, updatedApps);
