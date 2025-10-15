@@ -134,9 +134,6 @@
     <None Include="Fixtures\DotnetScript\Scripts\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Fixtures\ScriptCS\Scripts\**">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
     <None Include="KubernetesFixtures\Charts\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
@@ -178,9 +175,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Fixtures\DotnetScript\Scripts\ThrowsException.csx">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Fixtures\ScriptCS\Scripts\InvalidSyntax.csx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
@@ -272,30 +266,20 @@
   -->
   <Target Name="RunResolvePackageDependencies" Condition="'$(RunResolvePackageDependencies)' != ''" />
   <Target Name="CopyTools" AfterTargets="Build" DependsOnTargets="RunResolvePackageDependencies">
-    <CreateItem Include="@(PackageDefinitions)" Condition="'%(Name)' == 'ScriptCS'">
-      <Output TaskParameter="Include" ItemName="ScriptCSRef" />
-    </CreateItem>
     <CreateItem Include="@(PackageDefinitions)" Condition=" '$(TargetFramework)' == 'net462' And '%(Name)' == 'NuGet.CommandLine'">
       <Output TaskParameter="Include" ItemName="NuGetCommandLineRef" />
     </CreateItem>
     <PropertyGroup>
-      <ScriptCS>@(ScriptCSRef->'%(ResolvedPath)')/tools/*.*</ScriptCS>
-      <ScriptCSExe Condition="'$(TargetFramework)' == 'net6.0'">@(ScriptCSRef->'%(ResolvedPath)')/tools/*.exe</ScriptCSExe>
       <NuGetCommandLine>@(NuGetCommandLineRef->'%(ResolvedPath)')/tools/*.*</NuGetCommandLine>
     </PropertyGroup>
     <ItemGroup>
-      <ScriptCSFiles Include="$(ScriptCS)" />
-      <ScriptCSFilesExe Condition="'$(TargetFramework)' == 'net6.0'" Include="$(ScriptCSExe)" />
       <DotnetScriptFiles Condition="'$(TargetFramework)' == 'net6.0'" Include="$(MSBuildProjectDirectory)/../Calamari.Scripting/DotnetScript/dotnet-script.*.zip" />
       <DotnetScriptFilesExe Condition="'$(TargetFramework)' == 'net6.0'" Include="$(OutDir)/dotnet-script/*.sh;$(OutDir)/dotnet-script/*.exe" />
       <NuGetFiles Include="$(NuGetCommandLine)" Condition=" '$(TargetFramework)' == 'net462'" />
     </ItemGroup>
-    <Exec Command="chmod +x %(ScriptCSFilesExe.Identity)" IgnoreExitCode="true" Condition="'$(TargetFramework)' == 'net6.0'" />
-    <Copy SourceFiles="@(ScriptCSFiles)" DestinationFolder="$(OutDir)/ScriptCS/" SkipUnchangedFiles="true" />
     <Copy SourceFiles="@(NuGetFiles)" DestinationFolder="$(OutDir)/NuGet/" SkipUnchangedFiles="true" Condition="'$(TargetFramework)' == 'net462'" />
     <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(OutDir)/" SkipUnchangedFiles="true" />
     <Exec Command="chmod +x %(DotnetScriptFilesExe.Identity)" IgnoreExitCode="true" Condition="'$(TargetFramework)' == 'net6.0'" />
-    <Copy SourceFiles="@(ScriptCSFiles)" DestinationFolder="$(PublishDir)/ScriptCS/" Condition="'$(PublishDir)' != ''" />
     <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(PublishDir)/" Condition="'$(PublishDir)' != '' And '$(TargetFramework)' == 'net6.0'" />
   </Target>
 </Project>

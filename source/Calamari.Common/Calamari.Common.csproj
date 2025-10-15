@@ -59,7 +59,6 @@
       <EmbeddedResource Include="Features\Scripting\Python\InstallDependencies.py" />
       <EmbeddedResource Include="Features\Scripting\DotnetScript\Bootstrap.csx" />
       <EmbeddedResource Include="Features\Scripting\DotnetScript\ClassBootstrap.csx" />
-      <EmbeddedResource Include="Features\Scripting\ScriptCS\Bootstrap.csx" />
       <EmbeddedResource Include="Features\Scripting\WindowsPowerShell\Bootstrap.ps1" />
       <EmbeddedResource Include="Features\Scripting\WindowsPowerShell\DebugBootstrap.ps1" />
     </ItemGroup>

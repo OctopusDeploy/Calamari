@@ -48,7 +48,6 @@
     <PackageReference Include="Octopus.Octodiff" Version="2.0.547" />
     <PackageReference Include="Octopus.Versioning" Version="5.1.876" />
     <PackageReference Include="Octopus.CoreUtilities" Version="2.1.449" />
-    <PackageReference Include="scriptcs" Version="0.17.1" />
     <PackageReference Include="Octostache" Version="3.7.0" />
     <PackageReference Include="SharpCompress" Version="0.37.2" />
     <PackageReference Include="Sprache" Version="2.3.0" />
@@ -97,7 +96,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Remove="Integration\Scripting\Bash\Bootstrap.sh" />
-    <None Remove="Integration\Scripting\ScriptCS\Bootstrap.csx" />
     <None Remove="Integration\Scripting\DotnetScript\Bootstrap.csx" />
     <None Remove="Integration\Scripting\DotnetScript\ClassBootstrap.csx" />
     <None Remove="Integration\Scripting\Python\Configuration.py" />
