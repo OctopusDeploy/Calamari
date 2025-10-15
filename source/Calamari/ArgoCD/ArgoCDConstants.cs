@@ -20,9 +20,22 @@ namespace Calamari.ArgoCD
 
         public class Annotations
         {
-            public const string OctopusProjectAnnotationKey = "argo.octopus.com/project";
-            public const string OctopusEnvironmentAnnotationKey = "argo.octopus.com/environment";
-            public const string OctopusTenantAnnotationKey = "argo.octopus.com/tenant";
+            const string Prefix = "argo.octopus.com";
+
+            public static readonly string OctopusProjectAnnotationKeyPrefix = $"{Prefix}/project";
+            public static string OctopusProjectAnnotationKey(string sourceName) => string.IsNullOrEmpty(sourceName) 
+                ? OctopusProjectAnnotationKeyPrefix 
+                : $"{OctopusProjectAnnotationKeyPrefix}.{sourceName}";
+
+            public static readonly string OctopusEnvironmentAnnotationKeyPrefix = $"{Prefix}/environment";
+            public static string OctopusEnvironmentAnnotationKey(string sourceName) => string.IsNullOrEmpty(sourceName) 
+                ? OctopusEnvironmentAnnotationKeyPrefix 
+                : $"{OctopusEnvironmentAnnotationKeyPrefix}.{sourceName}";
+
+            public static readonly string OctopusTenantAnnotationKeyPrefix = $"{Prefix}/tenant";
+            public static string OctopusTenantAnnotationKey(string sourceName) => string.IsNullOrEmpty(sourceName) 
+                ? OctopusTenantAnnotationKeyPrefix 
+                : $"{OctopusTenantAnnotationKeyPrefix}.{sourceName}";
 
             public const string OctopusDefaultClusterRegistryAnnotationKey = "argo.octopus.com/default-container-registry";
 
