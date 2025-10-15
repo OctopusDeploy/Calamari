@@ -72,6 +72,9 @@ namespace Calamari.ArgoCD.Conventions
 
                 var valuesFilesToUpdate = new List<HelmValuesFileImageUpdateTarget>();
                 var applicationFromYaml = argoCdApplicationManifestParser.ParseManifest(application.Manifest);
+
+                ApplicationSourceValidator.ValidateApplicationSources(applicationFromYaml);
+                
                 gatewayIds.Add(application.GatewayId);
 
                 var didUpdateSomething = false;

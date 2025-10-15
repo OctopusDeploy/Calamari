@@ -75,6 +75,9 @@ namespace Calamari.ArgoCD.Conventions
                     throw new CommandException($"Application {application.Name} has multiple sources and cannot be updated.");
                 }
                 
+                ApplicationSourceValidator.ValidateApplicationSources(applicationFromYaml);
+
+                
                 var didUpdateSomething = false;
                 foreach (var applicationSource in applicationFromYaml.Spec.Sources.OfType<BasicSource>())
                 {
