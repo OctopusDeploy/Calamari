@@ -30,7 +30,6 @@ namespace Calamari.ArgoCD.Conventions
         readonly ICommitMessageGenerator commitMessageGenerator;
         readonly ICustomPropertiesLoader customPropertiesLoader;
         readonly IArgoCDApplicationManifestParser argoCdApplicationManifestParser;
-        int repositoryNumber = 1;
 
         public UpdateArgoCDAppImagesInstallConvention(ILog log,
                                                       IGitHubPullRequestCreator pullRequestCreator,
@@ -51,16 +50,21 @@ namespace Calamari.ArgoCD.Conventions
 
         public void Install(RunningDeployment deployment)
         {
-            Log.Info("Executing Update Argo CD Application Images");
+            log.Verbose("Executing Update Argo CD Application Images");
             var deploymentConfig = deploymentConfigFactory.CreateUpdateImageConfig(deployment);
 
-            var repositoryFactory = new RepositoryFactory(log, deployment.CurrentDirectory, pullRequestCreator);
+            var repositoryFactory = new RepositoryFactory(log, fileSystem, deployment.CurrentDirectory, pullRequestCreator);
 
             var argoProperties = customPropertiesLoader.Load<ArgoCDCustomPropertiesDto>();
 
             var gitCredentials = argoProperties.Credentials.ToDictionary(c => c.Url);
 
-            log.Info($"Found {argoProperties.Applications.Length} Argo CD apps to update");
+            log.InfoFormat("Found {0} Argo CD applications to update", argoProperties.Applications.Length);
+            foreach (var app in argoProperties.Applications)
+            {
+                log.VerboseFormat("- {0}", app.Name);
+            }
+            
             var updatedApplications = new List<string>();
             var newImagesWritten = new HashSet<string>();
             var gitReposUpdated = new HashSet<string>();
@@ -77,36 +81,38 @@ namespace Calamari.ArgoCD.Conventions
                 var didUpdateSomething = false;
                 foreach (var applicationSource in applicationFromYaml.Spec.Sources.OfType<BasicSource>())
                 {
-                    var repository = CreateRepository(gitCredentials, applicationSource, repositoryFactory);
-                    var repoSubPath = Path.Combine(repository.WorkingDirectory, applicationSource.Path);
-
-                    var chartFile = HelmDiscovery.TryFindHelmChartFile(fileSystem, Path.Combine(repository.WorkingDirectory, applicationSource.Path));
-                    if (chartFile != null)
+                    using (var repository = CreateRepository(gitCredentials, applicationSource, repositoryFactory))
                     {
-                        HandleAsHelmChart(deployment,
-                                          applicationFromYaml,
-                                          application,
-                                          applicationSource,
-                                          valuesFilesToUpdate,
-                                          repoSubPath);
-                        continue;
-                    }
+                        var repoSubPath = Path.Combine(repository.WorkingDirectory, applicationSource.Path);
 
-                    var (updatedFiles, updatedImages) = UpdateKubernetesYaml(repository.WorkingDirectory, applicationSource.Path, application.DefaultRegistry, deploymentConfig.ImageReferences);
+                        var chartFile = HelmDiscovery.TryFindHelmChartFile(fileSystem, Path.Combine(repository.WorkingDirectory, applicationSource.Path));
+                        if (chartFile != null)
+                        {
+                            HandleAsHelmChart(deployment,
+                                              applicationFromYaml,
+                                              application,
+                                              applicationSource,
+                                              valuesFilesToUpdate,
+                                              repoSubPath);
+                            continue;
+                        }
 
-                    if (updatedImages.Count > 0)
-                    {
-                        var didPush = PushToRemote(repository,
-                                                   new GitBranchName(applicationSource.TargetRevision),
-                                                   deploymentConfig.CommitParameters,
-                                                   updatedFiles,
-                                                   updatedImages);
+                        var (updatedFiles, updatedImages) = UpdateKubernetesYaml(repository.WorkingDirectory, applicationSource.Path, application.DefaultRegistry, deploymentConfig.ImageReferences);
 
-                        didUpdateSomething |= didPush;
+                        if (updatedImages.Count > 0)
+                        {
+                            var didPush = PushToRemote(repository,
+                                                       new GitBranchName(applicationSource.TargetRevision),
+                                                       deploymentConfig.CommitParameters,
+                                                       updatedFiles,
+                                                       updatedImages);
 
-                        newImagesWritten.UnionWith(updatedImages);
-                        updatedApplications.Add(applicationFromYaml.Metadata.Name);
-                        gitReposUpdated.Add(applicationSource.RepoUrl.AbsoluteUri);
+                            didUpdateSomething |= didPush;
+
+                            newImagesWritten.UnionWith(updatedImages);
+                            updatedApplications.Add(applicationFromYaml.Metadata.Name);
+                            gitReposUpdated.Add(applicationSource.RepoUrl.AbsoluteUri);
+                        }
                     }
                 }
 
@@ -125,25 +131,27 @@ namespace Calamari.ArgoCD.Conventions
                         RepoUrl = valuesFileSource.RepoUrl,
                         TargetRevision = valuesFileSource.TargetRevision,
                     };
-                    var repository = CreateRepository(gitCredentials, sourceBase, repositoryFactory);
-
-                    var helmUpdateResult = UpdateHelmImageValues(repository.WorkingDirectory,
-                                                                 valuesFileSource,
-                                                                 deploymentConfig.ImageReferences
-                                                                );
-                    if (helmUpdateResult.ImagesUpdated.Count > 0)
+                    
+                    using (var repository = CreateRepository(gitCredentials, sourceBase, repositoryFactory))
                     {
-                        var didPush =PushToRemote(repository,
-                                                  new GitBranchName(valuesFileSource.TargetRevision),
-                                                  deploymentConfig.CommitParameters,
-                                                  new HashSet<string>() { Path.Combine(valuesFileSource.Path, valuesFileSource.FileName) },
-                                                  helmUpdateResult.ImagesUpdated);
-                        
-                        didUpdateSomething |= didPush;
+                        var helmUpdateResult = UpdateHelmImageValues(repository.WorkingDirectory,
+                                                                     valuesFileSource,
+                                                                     deploymentConfig.ImageReferences
+                                                                    );
+                        if (helmUpdateResult.ImagesUpdated.Count > 0)
+                        {
+                            var didPush = PushToRemote(repository,
+                                                       new GitBranchName(valuesFileSource.TargetRevision),
+                                                       deploymentConfig.CommitParameters,
+                                                       new HashSet<string>() { Path.Combine(valuesFileSource.Path, valuesFileSource.FileName) },
+                                                       helmUpdateResult.ImagesUpdated);
 
-                        newImagesWritten.UnionWith(helmUpdateResult.ImagesUpdated);
-                        updatedApplications.Add(applicationFromYaml.Metadata.Name);
-                        gitReposUpdated.Add(valuesFileSource.RepoUrl.ToString());
+                            didUpdateSomething |= didPush;
+
+                            newImagesWritten.UnionWith(helmUpdateResult.ImagesUpdated);
+                            updatedApplications.Add(applicationFromYaml.Metadata.Name);
+                            gitReposUpdated.Add(valuesFileSource.RepoUrl.ToString());
+                        }
                     }
                 }
 
@@ -155,7 +163,7 @@ namespace Calamari.ArgoCD.Conventions
                 var message = didUpdateSomething
                     ? "Updated Application {0}"
                     : "Nothing to update for Application {0}";
-                
+
                 log.InfoFormat(message, appName);
             }
 
@@ -177,7 +185,7 @@ namespace Calamari.ArgoCD.Conventions
             }
 
             var gitConnection = new GitConnection(gitCredential?.Username, gitCredential?.Password, source.RepoUrl.AbsoluteUri, new GitBranchName(source.TargetRevision));
-            return repositoryFactory.CloneRepository(repositoryNumber++.ToString(CultureInfo.InvariantCulture), gitConnection);
+            return repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), gitConnection);
         }
 
         void HandleAsHelmChart(RunningDeployment deployment,

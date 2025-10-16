@@ -145,7 +145,8 @@ namespace Calamari.Common.Plumbing.FileSystem
                     if (Directory.Exists(path))
                     {
                         var dir = new DirectoryInfo(path);
-                        dir.Attributes = dir.Attributes & ~FileAttributes.ReadOnly;
+                        //we remove any readonly attributes
+                        dir.Attributes &= ~FileAttributes.ReadOnly;
                         dir.Delete(true);
                         EnsureDirectoryDeleted(path, options);
                     }
@@ -285,6 +286,17 @@ namespace Calamari.Common.Plumbing.FileSystem
         public byte[] ReadAllBytes(string path)
         {
             return File.ReadAllBytes(path);
+        }
+
+        public void RemoveReadOnlyAttributeFromFile(string filePath)
+        {
+            var fileInfo = new FileInfo(filePath);
+            
+            //I'm not sure of any side affects or IO of doing this when not needed, so just doing if required
+            if (fileInfo.IsReadOnly)
+            {
+                fileInfo.IsReadOnly = false;
+            }
         }
 
         public void OverwriteFile(string path, string contents, Encoding? encoding = null)
