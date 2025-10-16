@@ -3,6 +3,7 @@ using System;
 using System.IO;
 using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.GitHub;
+using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
@@ -40,13 +41,15 @@ namespace Calamari.ArgoCD.Git
 
         RepositoryWrapper CheckoutGitRepository(IGitConnection gitConnection, string checkoutPath)
         {
-            //Todo - cannot make this work
-            // var options = new CloneOptions
-            // {
-            //     BranchName = gitConnection.BranchName
-            // };
+            //if the branch name is head, then we just clone the default
+            //if it's not head, then clone the branch immediately
+            var options = gitConnection.BranchName.Value.Equals("HEAD", StringComparison.OrdinalIgnoreCase)
+                ? new CloneOptions()
+                : new CloneOptions
+                {
+                    BranchName = gitConnection.BranchName.Value
+                };
 
-            var options = new CloneOptions();
             if (gitConnection.Username != null && gitConnection.Password != null)
             {
                 options.FetchOptions.CredentialsProvider = (url, usernameFromUrl, types) => new UsernamePasswordCredentials
@@ -58,7 +61,7 @@ namespace Calamari.ArgoCD.Git
 
             string repoPath;
             log.InfoFormat("Cloning repository {0}", log.FormatLink(gitConnection.Url));
-            using (var timedOp = log.BeginTimedOperation("Cloning repository"))
+            using (var timedOp = log.BeginTimedOperation("cloning repository"))
             {
                 try
                 {
@@ -67,9 +70,8 @@ namespace Calamari.ArgoCD.Git
                 }
                 catch (Exception e)
                 {
-                    log.ErrorFormat("Failed to clone Git repository at {0}. Are you sure this is a Git repository?", gitConnection.Url);
                     timedOp.Abandon(e);
-                    throw;
+                    throw new CommandException($"Failed to clone Git repository at {gitConnection.Url}. Are you sure this is a Git repository?");
                 }
             }
 
@@ -78,16 +80,16 @@ namespace Calamari.ArgoCD.Git
             //this is required to handle the issue around "HEAD"
             var branchToCheckout = repo.GetBranchName(gitConnection.BranchName);
             var remoteBranch = repo.Branches[$"origin/{branchToCheckout}"];
-
-            log.VerboseFormat("Checking out branch {0} @ {1}", branchToCheckout, remoteBranch.Tip.Sha);
-
+            
+            log.VerboseFormat("Checking out '{0}' @ {1}", branchToCheckout, remoteBranch.Tip.Sha.Substring(0, 10));
+            
             //A local branch is required such that libgit2sharp can create "tracking" data
             // libgit2sharp does not support pushing from a detached head
             if (repo.Branches[branchToCheckout] == null)
             {
                 repo.CreateBranch(branchToCheckout, remoteBranch.Tip);
             }
-
+            
             LibGit2Sharp.Commands.Checkout(repo, branchToCheckout);
 
             return new RepositoryWrapper(repo,

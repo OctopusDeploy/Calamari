@@ -51,7 +51,7 @@ namespace Calamari.ArgoCD.Conventions
 
         public void Install(RunningDeployment deployment)
         {
-            Log.Info("Executing Update Argo CD Application manifests operation");
+            log.Verbose("Executing Update Argo CD Application manifests operation");
             var deploymentConfig = deploymentConfigFactory.CreateCommitToGitConfig(deployment);
             var packageFiles = GetReferencedPackageFiles(deploymentConfig);
 
@@ -60,38 +60,43 @@ namespace Calamari.ArgoCD.Conventions
             var argoProperties = customPropertiesLoader.Load<ArgoCDCustomPropertiesDto>();
 
             var gitCredentials = argoProperties.Credentials.ToDictionary(c => c.Url);
-            log.Info($"Found the following applications: '{argoProperties.Applications.Select(a => a.Name).Join(",")}'");
+            log.InfoFormat("Found {0} Argo CD applications to update", argoProperties.Applications.Length);
+            foreach (var app in argoProperties.Applications)
+            {
+                log.VerboseFormat("- {0}", app.Name);
+            }
 
-            var repositoryNumber = 1;
             foreach (var application in argoProperties.Applications)
             {
                 var instanceLinks = application.InstanceWebUiUrl != null ? new ArgoCDInstanceLinks(application.InstanceWebUiUrl) : null;
-
+                
+                //if we have links, use that to generate a link, otherwise just put the name there
+                var linkifiedAppName = instanceLinks != null
+                    ? log.FormatLink(instanceLinks.ApplicationDetails(application.Name, application.KubernetesNamespace), application.Name)
+                    : application.Name;
+                
                 var applicationFromYaml = argoCdApplicationManifestParser.ParseManifest(application.Manifest);
 
                 //currently, if an application has multiple sources, we cannot update it (as we don't know which source to update), so just run away
                 if (applicationFromYaml.Spec.Sources.Count > 1)
                 {
-                    throw new CommandException($"Application {application.Name} has multiple sources and cannot be updated.");
+                    throw new CommandException($"Application {linkifiedAppName} has multiple sources and cannot be updated.");
                 }
 
                 var didUpdateSomething = false;
                 foreach (var applicationSource in applicationFromYaml.Spec.Sources.OfType<BasicSource>())
                 {
-                    Log.Info($"Writing files to repository '{applicationSource.RepoUrl}' for '{application.Name}'");
-
                     var gitCredential = gitCredentials.GetValueOrDefault(applicationSource.RepoUrl.AbsoluteUri);
                     if (gitCredential == null)
                     {
-                        log.Info($"No Git credentials found for: '{applicationSource.RepoUrl.AbsoluteUri}', will attempt to clone repository anonymously.");
+                        log.Info($"No Git credentials found for {applicationSource.RepoUrl.AbsoluteUri}, will attempt to clone repository anonymously.");
                     }
 
                     var gitConnection = new GitConnection(gitCredential?.Username, gitCredential?.Password, applicationSource.RepoUrl.AbsoluteUri, new GitBranchName(applicationSource.TargetRevision));
-                    using (var repository = repositoryFactory.CloneRepository(repositoryNumber.ToString(CultureInfo.InvariantCulture), gitConnection))
+                    using (var repository = repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), gitConnection))
                     {
-                        Log.Info($"Copying files into repository {applicationSource.RepoUrl}");
                         var subFolder = applicationSource.Path ?? string.Empty;
-                        Log.VerboseFormat("Copying files into subfolder '{0}'", subFolder);
+                        log.VerboseFormat("Copying files into '{0}'", subFolder);
 
                         if (deploymentConfig.PurgeOutputDirectory)
                         {
@@ -99,16 +104,15 @@ namespace Calamari.ArgoCD.Conventions
                         }
 
                         var repositoryFiles = packageFiles.Select(f => new FileCopySpecification(f, repository.WorkingDirectory, subFolder)).ToList();
-                        Log.VerboseFormat("Copying files into subfolder '{0}'", applicationSource.Path!);
                         CopyFiles(repositoryFiles);
 
-                        Log.Info("Staging files in repository");
+                        log.Info("Staging files in repository");
                         repository.StageFiles(repositoryFiles.Select(fcs => fcs.DestinationRelativePath).ToArray());
 
-                        Log.Info("Commiting changes");
+                        log.Info("Commiting changes");
                         if (repository.CommitChanges(deploymentConfig.CommitParameters.Summary, deploymentConfig.CommitParameters.Description))
                         {
-                            Log.Info("Changes were commited, pushing to remote");
+                            log.Info("Changes were commited, pushing to remote");
                             repository.PushChanges(deploymentConfig.CommitParameters.RequiresPr,
                                                    deploymentConfig.CommitParameters.Summary,
                                                    deploymentConfig.CommitParameters.Description,
@@ -121,23 +125,16 @@ namespace Calamari.ArgoCD.Conventions
                         }
                         else
                         {
-                            Log.Info("No changes were commited.");
+                            log.Info("No changes were commited");
                         }
                     }
-
-                    repositoryNumber++;
                 }
-
-                //if we have links, use that to generate a link, otherwise just put the name there
-                var appName = instanceLinks != null
-                    ? log.FormatLink(instanceLinks.ApplicationDetails(application.Name, application.KubernetesNamespace), application.Name)
-                    : application.Name;
 
                 var message = didUpdateSomething
                     ? "Updated Application {0}"
                     : "Nothing to update for Application {0}";
 
-                log.InfoFormat(message, appName);
+                log.InfoFormat(message, linkifiedAppName);
             }
         }
 
@@ -145,18 +142,18 @@ namespace Calamari.ArgoCD.Conventions
         {
             foreach (var file in repositoryFiles)
             {
-                Log.VerboseFormat($"Copying '{file.SourceAbsolutePath}' to '{file.DestinationAbsolutePath}'");
+                log.VerboseFormat($"Copying '{file.SourceAbsolutePath}' to '{file.DestinationAbsolutePath}'");
                 EnsureParentDirectoryExists(file.DestinationAbsolutePath);
                 fileSystem.CopyFile(file.SourceAbsolutePath, file.DestinationAbsolutePath);
             }
         }
 
-        static void EnsureParentDirectoryExists(string filePath)
+        void EnsureParentDirectoryExists(string filePath)
         {
             var destinationDirectory = Path.GetDirectoryName(filePath);
             if (destinationDirectory != null)
             {
-                Directory.CreateDirectory(destinationDirectory);
+                fileSystem.CreateDirectory(destinationDirectory);
             }
         }
 

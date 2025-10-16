@@ -30,7 +30,6 @@ namespace Calamari.ArgoCD.Conventions
         readonly ICommitMessageGenerator commitMessageGenerator;
         readonly ICustomPropertiesLoader customPropertiesLoader;
         readonly IArgoCDApplicationManifestParser argoCdApplicationManifestParser;
-        int repositoryNumber = 1;
 
         public UpdateArgoCDAppImagesInstallConvention(ILog log,
                                                       IGitHubPullRequestCreator pullRequestCreator,
@@ -51,7 +50,7 @@ namespace Calamari.ArgoCD.Conventions
 
         public void Install(RunningDeployment deployment)
         {
-            Log.Info("Executing Update Argo CD Application Images");
+            log.Verbose("Executing Update Argo CD Application Images");
             var deploymentConfig = deploymentConfigFactory.CreateUpdateImageConfig(deployment);
 
             var repositoryFactory = new RepositoryFactory(log, fileSystem, deployment.CurrentDirectory, pullRequestCreator);
@@ -60,7 +59,12 @@ namespace Calamari.ArgoCD.Conventions
 
             var gitCredentials = argoProperties.Credentials.ToDictionary(c => c.Url);
 
-            log.Info($"Found {argoProperties.Applications.Length} Argo CD apps to update");
+            log.InfoFormat("Found {0} Argo CD applications to update", argoProperties.Applications.Length);
+            foreach (var app in argoProperties.Applications)
+            {
+                log.VerboseFormat("- {0}", app.Name);
+            }
+            
             var updatedApplications = new List<string>();
             var newImagesWritten = new HashSet<string>();
             var gitReposUpdated = new HashSet<string>();
@@ -181,7 +185,7 @@ namespace Calamari.ArgoCD.Conventions
             }
 
             var gitConnection = new GitConnection(gitCredential?.Username, gitCredential?.Password, source.RepoUrl.AbsoluteUri, new GitBranchName(source.TargetRevision));
-            return repositoryFactory.CloneRepository(repositoryNumber++.ToString(CultureInfo.InvariantCulture), gitConnection);
+            return repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), gitConnection);
         }
 
         void HandleAsHelmChart(RunningDeployment deployment,
