@@ -201,3 +201,6 @@ source/Calamari.Tests/Some sample text
 
 # CodeRush settings
 .cr/
+
+# This is always built on the build server, so we can just use that one. We just need one in the repo as a signal for the existing build system
+netcoreshim.zip
