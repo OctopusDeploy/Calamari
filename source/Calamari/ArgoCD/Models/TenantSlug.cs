@@ -10,8 +10,8 @@ namespace Calamari.ArgoCD.Models
         }
     }
     
-    public static class TenantSlugExtensionMethods
+    static class TenantSlugExtensionMethods
     {
-        public static TenantSlug ToTenantSlug(this string value) => new TenantSlug(value);
+        public static TenantSlug? ToTenantSlug(this string? value) => string.IsNullOrWhiteSpace(value) ? null : new TenantSlug(value.Trim());
     }
 }

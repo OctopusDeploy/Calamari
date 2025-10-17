@@ -10,8 +10,8 @@ namespace Calamari.ArgoCD.Models
         }
     }
     
-    public static class EnvironmentSlugExtensionMethods
+    static class EnvironmentSlugExtensionMethods
     {
-        public static EnvironmentSlug ToEnvironmentSlug(this string value) => new EnvironmentSlug(value);
+        public static EnvironmentSlug? ToEnvironmentSlug(this string? value) => string.IsNullOrWhiteSpace(value) ? null : new EnvironmentSlug(value.Trim());
     }
 }

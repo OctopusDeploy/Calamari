@@ -59,6 +59,7 @@ namespace Calamari.ArgoCD.Conventions
             var argoProperties = customPropertiesLoader.Load<ArgoCDCustomPropertiesDto>();
 
             var gitCredentials = argoProperties.Credentials.ToDictionary(c => c.Url);
+            var deploymentScope = deployment.Variables.GetDeploymentScope();
 
             log.Info($"Found {argoProperties.Applications.Length} Argo CD apps to update");
             var updatedApplications = new List<string>();
@@ -94,8 +95,6 @@ namespace Calamari.ArgoCD.Conventions
                     }
 
                     var annotatedScope = ScopingAnnotationReader.GetScopeForApplicationSource(applicationSource.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources);
-                    var deploymentScope = deployment.Variables.GetDeploymentScope();
-
                     if (annotatedScope == deploymentScope)
                     {
                         log.Info($"Application source '{applicationSource.Name}' matches this deployment P/E/T', will update");
@@ -132,7 +131,6 @@ namespace Calamari.ArgoCD.Conventions
                     }
                     
                     var annotatedScope = ScopingAnnotationReader.GetScopeForApplicationSource(valuesFileSource.SourceName, applicationFromYaml.Metadata.Annotations, containsMultipleSources);
-                    var deploymentScope = deployment.Variables.GetDeploymentScope();
                     if (annotatedScope == deploymentScope)
                     {
                         log.Info($"Application source '{valuesFileSource.SourceName}' matches this deployment P/E/T', will update");

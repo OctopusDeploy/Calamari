@@ -10,8 +10,8 @@ namespace Calamari.ArgoCD.Models
         }
     }
     
-    public static class ProjectSlugExtensionMethods
+    static class ProjectSlugExtensionMethods
     {
-        public static ProjectSlug ToProjectSlug(this string value) => new ProjectSlug(value);
+        public static ProjectSlug? ToProjectSlug(this string? value) => string.IsNullOrWhiteSpace(value) ? null : new ProjectSlug(value.Trim());
     }
 }
