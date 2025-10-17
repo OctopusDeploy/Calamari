@@ -9,6 +9,7 @@ namespace Calamari.Common.Plumbing.Variables
         public static class Tenant
         {
             public static string Id = "Octopus.Deployment.Tenant.Id";
+            public static readonly string Slug = "Octopus.Deployment.Tenant.Slug";
             public static string Name = "Octopus.Deployment.Tenant.Name";
         }
     }

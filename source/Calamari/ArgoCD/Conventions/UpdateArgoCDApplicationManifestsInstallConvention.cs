@@ -10,6 +10,7 @@ using Calamari.ArgoCD.Domain;
 using Calamari.ArgoCD.Dtos;
 using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.GitHub;
+using Calamari.ArgoCD.Models;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
@@ -60,6 +61,8 @@ namespace Calamari.ArgoCD.Conventions
             var argoProperties = customPropertiesLoader.Load<ArgoCDCustomPropertiesDto>();
 
             var gitCredentials = argoProperties.Credentials.ToDictionary(c => c.Url);
+            var deploymentScope = deployment.Variables.GetDeploymentScope();
+
             log.Info($"Found the following applications: '{argoProperties.Applications.Select(a => a.Name).Join(",")}'");
 
             var repositoryNumber = 1;
@@ -68,6 +71,7 @@ namespace Calamari.ArgoCD.Conventions
                 var instanceLinks = application.InstanceWebUiUrl != null ? new ArgoCDInstanceLinks(application.InstanceWebUiUrl) : null;
                 
                 var applicationFromYaml = argoCdApplicationManifestParser.ParseManifest(application.Manifest);
+                bool containsMultipleSources = applicationFromYaml.Spec.Sources.Count > 1;
 
                 //currently, if an application has multiple sources, we cannot update it (as we don't know which source to update), so just run away
                 if (applicationFromYaml.Spec.Sources.Count > 1)
@@ -78,6 +82,14 @@ namespace Calamari.ArgoCD.Conventions
                 var didUpdateSomething = false;
                 foreach (var applicationSource in applicationFromYaml.Spec.Sources.OfType<BasicSource>())
                 {
+                    var annotatedScope = ScopingAnnotationReader.GetScopeForApplicationSource(applicationSource.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources);
+                    if (annotatedScope != deploymentScope)
+                    {
+                        log.Info($"Application source '{applicationSource.Name}' doesn't match this deployment P/E/T', will not update");
+                        continue;
+                    }
+                    log.Info($"Application source '{applicationSource.Name}' matches this deployment P/E/T', will update");
+
                     Log.Info($"Writing files to repository '{applicationSource.RepoUrl}' for '{application.Name}'");
 
                     var gitCredential = gitCredentials.GetValueOrDefault(applicationSource.RepoUrl.AbsoluteUri);

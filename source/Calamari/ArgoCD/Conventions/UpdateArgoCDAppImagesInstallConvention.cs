@@ -59,6 +59,7 @@ namespace Calamari.ArgoCD.Conventions
             var argoProperties = customPropertiesLoader.Load<ArgoCDCustomPropertiesDto>();
 
             var gitCredentials = argoProperties.Credentials.ToDictionary(c => c.Url);
+            var deploymentScope = deployment.Variables.GetDeploymentScope();
 
             log.Info($"Found {argoProperties.Applications.Length} Argo CD apps to update");
             var updatedApplications = new List<string>();
@@ -73,6 +74,7 @@ namespace Calamari.ArgoCD.Conventions
                 var valuesFilesToUpdate = new List<HelmValuesFileImageUpdateTarget>();
                 var applicationFromYaml = argoCdApplicationManifestParser.ParseManifest(application.Manifest);
                 gatewayIds.Add(application.GatewayId);
+                bool containsMultipleSources = applicationFromYaml.Spec.Sources.Count > 1;
 
                 var didUpdateSomething = false;
                 foreach (var applicationSource in applicationFromYaml.Spec.Sources.OfType<BasicSource>())
@@ -92,21 +94,29 @@ namespace Calamari.ArgoCD.Conventions
                         continue;
                     }
 
-                    var (updatedFiles, updatedImages) = UpdateKubernetesYaml(repository.WorkingDirectory, applicationSource.Path, application.DefaultRegistry, deploymentConfig.ImageReferences);
-
-                    if (updatedImages.Count > 0)
+                    var annotatedScope = ScopingAnnotationReader.GetScopeForApplicationSource(applicationSource.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources);
+                    if (annotatedScope == deploymentScope)
                     {
-                        var didPush = PushToRemote(repository,
-                                                   new GitBranchName(applicationSource.TargetRevision),
-                                                   deploymentConfig.CommitParameters,
-                                                   updatedFiles,
-                                                   updatedImages);
+                        log.Info($"Application source '{applicationSource.Name}' matches this deployment P/E/T', will update");
+                        var (updatedFiles, updatedImages) = UpdateKubernetesYaml(repository.WorkingDirectory, applicationSource.Path, application.DefaultRegistry, deploymentConfig.ImageReferences);
+                        if (updatedImages.Count > 0)
+                        {
+                            var didPush = PushToRemote(repository,
+                                                       new GitBranchName(applicationSource.TargetRevision),
+                                                       deploymentConfig.CommitParameters,
+                                                       updatedFiles,
+                                                       updatedImages);
 
-                        didUpdateSomething |= didPush;
+                            didUpdateSomething |= didPush;
 
-                        newImagesWritten.UnionWith(updatedImages);
-                        updatedApplications.Add(applicationFromYaml.Metadata.Name);
-                        gitReposUpdated.Add(applicationSource.RepoUrl.AbsoluteUri);
+                            newImagesWritten.UnionWith(updatedImages);
+                            updatedApplications.Add(applicationFromYaml.Metadata.Name);
+                            gitReposUpdated.Add(applicationSource.RepoUrl.AbsoluteUri);
+                        }
+                    }
+                    else
+                    {
+                        log.Info($"Application source '{applicationSource.Name}' doesn't match this deployment P/E/T', will not update");
                     }
                 }
 
@@ -119,31 +129,41 @@ namespace Calamari.ArgoCD.Conventions
                         log.Warn($"Invalid annotations setup detected.\nAlias defined: {invalidSource.Alias}. Missing corresponding {ArgoCDConstants.Annotations.OctopusImageReplacementPathsKeyWithSpecifier(invalidSource.Alias)} annotation.");
                         continue;
                     }
-
-                    var sourceBase = new SourceBase()
+                    
+                    var annotatedScope = ScopingAnnotationReader.GetScopeForApplicationSource(valuesFileSource.SourceName, applicationFromYaml.Metadata.Annotations, containsMultipleSources);
+                    if (annotatedScope == deploymentScope)
                     {
-                        RepoUrl = valuesFileSource.RepoUrl,
-                        TargetRevision = valuesFileSource.TargetRevision,
-                    };
-                    var repository = CreateRepository(gitCredentials, sourceBase, repositoryFactory);
+                        log.Info($"Application source '{valuesFileSource.SourceName}' matches this deployment P/E/T', will update");
 
-                    var helmUpdateResult = UpdateHelmImageValues(repository.WorkingDirectory,
-                                                                 valuesFileSource,
-                                                                 deploymentConfig.ImageReferences
-                                                                );
-                    if (helmUpdateResult.ImagesUpdated.Count > 0)
+                        var sourceBase = new SourceBase()
+                        {
+                            RepoUrl = valuesFileSource.RepoUrl,
+                            TargetRevision = valuesFileSource.TargetRevision,
+                        };
+                        var repository = CreateRepository(gitCredentials, sourceBase, repositoryFactory);
+
+                        var helmUpdateResult = UpdateHelmImageValues(repository.WorkingDirectory,
+                                                                     valuesFileSource,
+                                                                     deploymentConfig.ImageReferences
+                                                                    );
+                        if (helmUpdateResult.ImagesUpdated.Count > 0)
+                        {
+                            var didPush = PushToRemote(repository,
+                                                       new GitBranchName(valuesFileSource.TargetRevision),
+                                                       deploymentConfig.CommitParameters,
+                                                       new HashSet<string>() { Path.Combine(valuesFileSource.Path, valuesFileSource.FileName) },
+                                                       helmUpdateResult.ImagesUpdated);
+
+                            didUpdateSomething |= didPush;
+
+                            newImagesWritten.UnionWith(helmUpdateResult.ImagesUpdated);
+                            updatedApplications.Add(applicationFromYaml.Metadata.Name);
+                            gitReposUpdated.Add(valuesFileSource.RepoUrl.ToString());
+                        }
+                    }
+                    else
                     {
-                        var didPush =PushToRemote(repository,
-                                                  new GitBranchName(valuesFileSource.TargetRevision),
-                                                  deploymentConfig.CommitParameters,
-                                                  new HashSet<string>() { Path.Combine(valuesFileSource.Path, valuesFileSource.FileName) },
-                                                  helmUpdateResult.ImagesUpdated);
-                        
-                        didUpdateSomething |= didPush;
-
-                        newImagesWritten.UnionWith(helmUpdateResult.ImagesUpdated);
-                        updatedApplications.Add(applicationFromYaml.Metadata.Name);
-                        gitReposUpdated.Add(valuesFileSource.RepoUrl.ToString());
+                        log.Info($"Application source '{valuesFileSource.SourceName}' doesn't match this deployment P/E/T', will not update");
                     }
                 }
 
@@ -199,7 +219,8 @@ namespace Calamari.ArgoCD.Conventions
             {
                 log.Info($"Application '{application.Name}' source at `{applicationSource.RepoUrl.AbsoluteUri}' is a helm chart, its values file will be subsequently updated.");
                 valuesFilesToUpdate.Add(new HelmValuesFileImageUpdateTarget(
-                                                                            applicationFromYaml.Metadata.Name,
+                                                                            applicationFromYaml.Metadata.Name.ToApplicationName(),
+                                                                            applicationSource.Name.ToApplicationSourceName(),
                                                                             application.DefaultRegistry,
                                                                             applicationSource.Path,
                                                                             applicationSource.RepoUrl,

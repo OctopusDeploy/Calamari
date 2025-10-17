@@ -18,15 +18,15 @@ namespace Calamari.Tests.ArgoCD.Helm
         const string HelmPath3 = "{{ .Values.another-image.version }}";
         readonly string DoubleItemPathAnnotationValue = $"{HelmPath1}, {HelmPath2}";
 
-        public HelmValuesFileUpdateTargetParserTests()
-        {
-        }
-
         [Test]
         public void GetValuesFilesToUpdate_WithNoSources_ReturnsEmptyList()
         {
             var toUpdate = new Application()
             {
+                Metadata = new Metadata()
+                {
+                    Name = "Foo"
+                }
             };
 
             var sut = new HelmValuesFileUpdateTargetParser(toUpdate, "defaultRegistry");
@@ -52,6 +52,7 @@ namespace Calamari.Tests.ArgoCD.Helm
             {
                 Metadata = new Metadata()
                 {
+                    Name = "Foo",
                     Annotations = new Dictionary<string, string>()
                     {
                     }
@@ -87,6 +88,7 @@ namespace Calamari.Tests.ArgoCD.Helm
             {
                 Metadata = new Metadata()
                 {
+                    Name = "Foo",
                     Annotations = new Dictionary<string, string>()
                     {
                     }
@@ -143,7 +145,8 @@ namespace Calamari.Tests.ArgoCD.Helm
             var result = sut.GetValuesFilesToUpdate();
 
             // Assert
-            var expectedSource = new HelmValuesFileImageUpdateTarget(toUpdate.Metadata.Name,
+            var expectedSource = new HelmValuesFileImageUpdateTarget(toUpdate.Metadata.Name.ToApplicationName(),
+                                                                     helmSource.Name?.ToApplicationSourceName(),
                                                                      ArgoCDConstants.DefaultContainerRegistry,
                                                                      ArgoCDConstants.RefSourcePath,
                                                                      helmSource.RepoUrl,
@@ -320,7 +323,8 @@ namespace Calamari.Tests.ArgoCD.Helm
             var result = sut.GetValuesFilesToUpdate();
 
             // Assert
-            var expectedSource = new HelmValuesFileImageUpdateTarget(toUpdate.Metadata.Name,
+            var expectedSource = new HelmValuesFileImageUpdateTarget(toUpdate.Metadata.Name.ToApplicationName(),
+                                                                     helmSource.Name?.ToApplicationSourceName(),
                                                                      ArgoCDConstants.DefaultContainerRegistry,
                                                                      ArgoCDConstants.RefSourcePath,
                                                                      helmSource.RepoUrl,
@@ -375,7 +379,8 @@ namespace Calamari.Tests.ArgoCD.Helm
                             .ToList(); // Add ordering so we can assert properly.
 
             // Assert
-            var expected1 = new HelmValuesFileImageUpdateTarget(toUpdate.Metadata.Name,
+            var expected1 = new HelmValuesFileImageUpdateTarget(toUpdate.Metadata.Name.ToApplicationName(),
+                                                                helmSource.Name?.ToApplicationSourceName(),
                                                                 ArgoCDConstants.DefaultContainerRegistry,
                                                                 helmSource.Path,
                                                                 helmSource.RepoUrl,
@@ -384,7 +389,8 @@ namespace Calamari.Tests.ArgoCD.Helm
                                                                 new List<string> { HelmPath1, HelmPath2 }
                                                                );
 
-            var expected2 = new HelmValuesFileImageUpdateTarget(toUpdate.Metadata.Name,
+            var expected2 = new HelmValuesFileImageUpdateTarget(toUpdate.Metadata.Name.ToApplicationName(),
+                                                                helmSource.Name?.ToApplicationSourceName(),
                                                                 ArgoCDConstants.DefaultContainerRegistry,
                                                                 helmSource.Path,
                                                                 helmSource.RepoUrl,
@@ -488,7 +494,8 @@ namespace Calamari.Tests.ArgoCD.Helm
             var result = sut.GetValuesFilesToUpdate();
 
             // Assert
-            var expectedSource = new HelmValuesFileImageUpdateTarget(toUpdate.Metadata.Name,
+            var expectedSource = new HelmValuesFileImageUpdateTarget(toUpdate.Metadata.Name.ToApplicationName(),
+                                                                     refSource.Name?.ToApplicationSourceName(),
                                                                      ArgoCDConstants.DefaultContainerRegistry,
                                                                      ArgoCDConstants.RefSourcePath,
                                                                      refSource.RepoUrl,
@@ -547,7 +554,8 @@ namespace Calamari.Tests.ArgoCD.Helm
             var result = sut.GetValuesFilesToUpdate();
 
             // Assert
-            var expectedSource = new HelmValuesFileImageUpdateTarget(toUpdate.Metadata.Name,
+            var expectedSource = new HelmValuesFileImageUpdateTarget(toUpdate.Metadata.Name.ToApplicationName(),
+                                                                     refSource.Name?.ToApplicationSourceName(),
                                                                      ArgoCDConstants.DefaultContainerRegistry,
                                                                      ArgoCDConstants.RefSourcePath,
                                                                      refSource.RepoUrl,
@@ -715,7 +723,8 @@ namespace Calamari.Tests.ArgoCD.Helm
                             .ToHashSet();
 
             // Assert
-            var expected2 = new HelmValuesFileImageUpdateTarget(toUpdate.Metadata.Name,
+            var expected2 = new HelmValuesFileImageUpdateTarget(toUpdate.Metadata.Name.ToApplicationName(),
+                                                                refSource2.Name?.ToApplicationSourceName(),
                                                                 ArgoCDConstants.DefaultContainerRegistry,
                                                                 ArgoCDConstants.RefSourcePath,
                                                                 refSource2.RepoUrl,
@@ -724,7 +733,8 @@ namespace Calamari.Tests.ArgoCD.Helm
                                                                 new List<string>() { HelmPath3 }
                                                                );
 
-            var expected1 = new HelmValuesFileImageUpdateTarget(toUpdate.Metadata.Name,
+            var expected1 = new HelmValuesFileImageUpdateTarget(toUpdate.Metadata.Name.ToApplicationName(),
+                                                                refSource1.Name?.ToApplicationSourceName(),
                                                                 ArgoCDConstants.DefaultContainerRegistry,
                                                                 ArgoCDConstants.RefSourcePath,
                                                                 refSource1.RepoUrl,
@@ -805,7 +815,8 @@ namespace Calamari.Tests.ArgoCD.Helm
                             .ToList(); // order for assert
 
             // Assert
-            var expected1 = new HelmValuesFileImageUpdateTarget(toUpdate.Metadata.Name,
+            var expected1 = new HelmValuesFileImageUpdateTarget(toUpdate.Metadata.Name.ToApplicationName(),
+                                                                refSource1.Name?.ToApplicationSourceName(),
                                                                 ArgoCDConstants.DefaultContainerRegistry,
                                                                 ArgoCDConstants.RefSourcePath,
                                                                 refSource1.RepoUrl,
@@ -813,11 +824,12 @@ namespace Calamari.Tests.ArgoCD.Helm
                                                                 valuesFile1Path,
                                                                 new List<string>() { HelmPath1, HelmPath2 });
 
-            var expected2 = new HelmValuesFileImageUpdateTarget(toUpdate.Metadata.Name,
+            var expected2 = new HelmValuesFileImageUpdateTarget(toUpdate.Metadata.Name.ToApplicationName(),
+                                                                refSource2.Name?.ToApplicationSourceName(),
                                                                 ArgoCDConstants.DefaultContainerRegistry,
                                                                 ArgoCDConstants.RefSourcePath,
                                                                 refSource2.RepoUrl,
-                                                                refSource1.TargetRevision,
+                                                                refSource2.TargetRevision,
                                                                 valuesFile2Path,
                                                                 new List<string>() { HelmPath3 });
             ;
@@ -880,7 +892,8 @@ namespace Calamari.Tests.ArgoCD.Helm
             var result = sut.GetValuesFilesToUpdate();
 
             // Assert
-            var expected1 = new HelmValuesFileImageUpdateTarget(toUpdate.Metadata.Name,
+            var expected1 = new HelmValuesFileImageUpdateTarget(toUpdate.Metadata.Name.ToApplicationName(),
+                                                                helmSource.Name?.ToApplicationSourceName(),
                                                                 ArgoCDConstants.DefaultContainerRegistry,
                                                                 helmSource.Path,
                                                                 helmSource.RepoUrl,
@@ -888,7 +901,8 @@ namespace Calamari.Tests.ArgoCD.Helm
                                                                 inlineValuesFilePath,
                                                                 new List<string>() { HelmPath1, HelmPath2 });
 
-            var expected2 = new HelmValuesFileImageUpdateTarget(toUpdate.Metadata.Name,
+            var expected2 = new HelmValuesFileImageUpdateTarget(toUpdate.Metadata.Name.ToApplicationName(),
+                                                                refSource.Name?.ToApplicationSourceName(),
                                                                 ArgoCDConstants.DefaultContainerRegistry,
                                                                 ArgoCDConstants.RefSourcePath,
                                                                 refSource.RepoUrl,
@@ -950,7 +964,8 @@ namespace Calamari.Tests.ArgoCD.Helm
             var result = sut.GetValuesFilesToUpdate();
 
             // Assert
-            var expected1 = new HelmValuesFileImageUpdateTarget(toUpdate.Metadata.Name,
+            var expected1 = new HelmValuesFileImageUpdateTarget(toUpdate.Metadata.Name.ToApplicationName(),
+                                                                refSource.Name?.ToApplicationSourceName(),
                                                                 ArgoCDConstants.DefaultContainerRegistry,
                                                                 ArgoCDConstants.RefSourcePath,
                                                                 refSource.RepoUrl,
@@ -958,7 +973,8 @@ namespace Calamari.Tests.ArgoCD.Helm
                                                                 valuesRefFile1,
                                                                 new List<string>() { HelmPath1, HelmPath2 });
 
-            var expected2 = new HelmValuesFileImageUpdateTarget(toUpdate.Metadata.Name,
+            var expected2 = new HelmValuesFileImageUpdateTarget(toUpdate.Metadata.Name.ToApplicationName(),
+                                                                refSource.Name?.ToApplicationSourceName(),
                                                                 ArgoCDConstants.DefaultContainerRegistry,
                                                                 ArgoCDConstants.RefSourcePath,
                                                                 refSource.RepoUrl,
@@ -1017,7 +1033,8 @@ namespace Calamari.Tests.ArgoCD.Helm
 
             // Assert
 
-            var expected1 = new HelmValuesFileImageUpdateTarget(toUpdate.Metadata.Name,
+            var expected1 = new HelmValuesFileImageUpdateTarget(toUpdate.Metadata.Name.ToApplicationName(),
+                                                                refSource.Name?.ToApplicationSourceName(),
                                                                 ArgoCDConstants.DefaultContainerRegistry,
                                                                 ArgoCDConstants.RefSourcePath,
                                                                 refSource.RepoUrl,
@@ -1092,7 +1109,8 @@ namespace Calamari.Tests.ArgoCD.Helm
             // Assert
             result.Count.Should().Be(2);
 
-            var expected1 = new HelmValuesFileImageUpdateTarget(toUpdate.Metadata.Name,
+            var expected1 = new HelmValuesFileImageUpdateTarget(toUpdate.Metadata.Name.ToApplicationName(),
+                                                                helmSource1.Name.ToApplicationSourceName(),
                                                                 ArgoCDConstants.DefaultContainerRegistry,
                                                                 ArgoCDConstants.RefSourcePath,
                                                                 helmSource1.RepoUrl,
@@ -1100,7 +1118,8 @@ namespace Calamari.Tests.ArgoCD.Helm
                                                                 valuesFile1,
                                                                 new List<string>() { HelmPath1, HelmPath2 });
 
-            var expected2 = new HelmValuesFileImageUpdateTarget(toUpdate.Metadata.Name,
+            var expected2 = new HelmValuesFileImageUpdateTarget(toUpdate.Metadata.Name.ToApplicationName(),
+                                                                helmSource2.Name.ToApplicationSourceName(),
                                                                 ArgoCDConstants.DefaultContainerRegistry,
                                                                 helmSource2.Path,
                                                                 helmSource2.RepoUrl,
