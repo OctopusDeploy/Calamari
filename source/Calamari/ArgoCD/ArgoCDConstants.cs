@@ -1,6 +1,8 @@
 #if NET
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using Calamari.ArgoCD.Models;
 
 namespace Calamari.ArgoCD
 {
@@ -23,17 +25,17 @@ namespace Calamari.ArgoCD
             const string Prefix = "argo.octopus.com";
 
             public static readonly string OctopusProjectAnnotationKeyPrefix = $"{Prefix}/project";
-            public static string OctopusProjectAnnotationKey(string sourceName) => string.IsNullOrEmpty(sourceName) 
+            public static string OctopusProjectAnnotationKey(ApplicationSourceName? sourceName) => sourceName == null 
                 ? OctopusProjectAnnotationKeyPrefix 
                 : $"{OctopusProjectAnnotationKeyPrefix}.{sourceName}";
 
             public static readonly string OctopusEnvironmentAnnotationKeyPrefix = $"{Prefix}/environment";
-            public static string OctopusEnvironmentAnnotationKey(string sourceName) => string.IsNullOrEmpty(sourceName) 
+            public static string OctopusEnvironmentAnnotationKey(ApplicationSourceName? sourceName) => sourceName == null 
                 ? OctopusEnvironmentAnnotationKeyPrefix 
                 : $"{OctopusEnvironmentAnnotationKeyPrefix}.{sourceName}";
 
             public static readonly string OctopusTenantAnnotationKeyPrefix = $"{Prefix}/tenant";
-            public static string OctopusTenantAnnotationKey(string sourceName) => string.IsNullOrEmpty(sourceName) 
+            public static string OctopusTenantAnnotationKey(ApplicationSourceName? sourceName) => sourceName == null 
                 ? OctopusTenantAnnotationKeyPrefix 
                 : $"{OctopusTenantAnnotationKeyPrefix}.{sourceName}";
 

@@ -12,6 +12,6 @@ namespace Calamari.ArgoCD.Models
     
     public static class ApplicationNameExtensionMethods
     {
-        public static ApplicationName ToApplicationName(this string value) => new ApplicationName(value);
+        public static ApplicationName ToApplicationName(this string value) => string.IsNullOrWhiteSpace(value) ? null : new ApplicationName(value.Trim());
     }
 }

@@ -99,7 +99,7 @@ namespace Calamari.ArgoCD.Helm
                 if (definedPathsForAlias != null)
                 {
                     return new HelmValuesFileImageUpdateTarget(appName,
-                                                               source.Name?.ToApplicationSourceName(),
+                                                               source.Name.ToApplicationSourceName(),
                                                                defaultRegistry,
                                                                source.Path,
                                                                source.RepoUrl,
@@ -109,7 +109,7 @@ namespace Calamari.ArgoCD.Helm
                 }
                 // Invalid state - alias defined but without corresponding Path annotation 
                 return new InvalidHelmValuesFileImageUpdateTarget(appName,
-                                                                  source.Name?.ToApplicationSourceName(),
+                                                                  source.Name.ToApplicationSourceName(),
                                                                   defaultRegistry,
                                                                   source.Path,
                                                                   source.RepoUrl,
@@ -143,7 +143,7 @@ namespace Calamari.ArgoCD.Helm
                 {
                     // Invalid state - alias defined but without corresponding Path annotation 
                     return new InvalidHelmValuesFileImageUpdateTarget(appName,
-                                                                      refForValuesFile.Name?.ToApplicationSourceName(),
+                                                                      refForValuesFile.Name.ToApplicationSourceName(),
                                                                       defaultRegistry,
                                                                       ArgoCDConstants.RefSourcePath,
                                                                       refForValuesFile.RepoUrl,
@@ -159,7 +159,7 @@ namespace Calamari.ArgoCD.Helm
             {
                 var relativeFile = file[(file.IndexOf('/') + 1)..];
                 return new HelmValuesFileImageUpdateTarget(appName,
-                                                           refForValuesFile.Name?.ToApplicationSourceName(),
+                                                           refForValuesFile.Name.ToApplicationSourceName(),
                                                            defaultRegistry,
                                                            ArgoCDConstants.RefSourcePath,
                                                            refForValuesFile.RepoUrl,

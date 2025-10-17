@@ -10,8 +10,8 @@ namespace Calamari.ArgoCD.Models
         }
     }
     
-    public static class ApplicationSourceNameExtensionMethods
+    static class ApplicationSourceNameExtensionMethods
     {
-        public static ApplicationSourceName? ToApplicationSourceName(this string value) => string.IsNullOrWhiteSpace(value) ? null : new ApplicationSourceName(value.Trim());
+        public static ApplicationSourceName? ToApplicationSourceName(this string? value) => string.IsNullOrWhiteSpace(value) ? null : new ApplicationSourceName(value.Trim());
     }
 }

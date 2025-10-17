@@ -73,6 +73,7 @@ namespace Calamari.ArgoCD.Conventions
                 var valuesFilesToUpdate = new List<HelmValuesFileImageUpdateTarget>();
                 var applicationFromYaml = argoCdApplicationManifestParser.ParseManifest(application.Manifest);
                 gatewayIds.Add(application.GatewayId);
+                bool containsMultipleSources = applicationFromYaml.Spec.Sources.Count > 1;
 
                 var didUpdateSomething = false;
                 foreach (var applicationSource in applicationFromYaml.Spec.Sources.OfType<BasicSource>())
@@ -92,7 +93,7 @@ namespace Calamari.ArgoCD.Conventions
                         continue;
                     }
 
-                    var annotatedScope = ScopingAnnotationReader.ReadScopeMapping(applicationFromYaml.Metadata.Annotations, applicationSource.Name);
+                    var annotatedScope = ScopingAnnotationReader.GetScopeForApplicationSource(applicationSource.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources);
                     var deploymentScope = deployment.Variables.GetDeploymentScope();
 
                     if (annotatedScope == deploymentScope)
@@ -130,7 +131,7 @@ namespace Calamari.ArgoCD.Conventions
                         continue;
                     }
                     
-                    var annotatedScope = ScopingAnnotationReader.ReadScopeMapping(applicationFromYaml.Metadata.Annotations, valuesFileSource.SourceName?.Value);
+                    var annotatedScope = ScopingAnnotationReader.GetScopeForApplicationSource(valuesFileSource.SourceName, applicationFromYaml.Metadata.Annotations, containsMultipleSources);
                     var deploymentScope = deployment.Variables.GetDeploymentScope();
                     if (annotatedScope == deploymentScope)
                     {
@@ -221,7 +222,7 @@ namespace Calamari.ArgoCD.Conventions
                 log.Info($"Application '{application.Name}' source at `{applicationSource.RepoUrl.AbsoluteUri}' is a helm chart, its values file will be subsequently updated.");
                 valuesFilesToUpdate.Add(new HelmValuesFileImageUpdateTarget(
                                                                             applicationFromYaml.Metadata.Name.ToApplicationName(),
-                                                                            applicationSource.Name?.ToApplicationSourceName(),
+                                                                            applicationSource.Name.ToApplicationSourceName(),
                                                                             application.DefaultRegistry,
                                                                             applicationSource.Path,
                                                                             applicationSource.RepoUrl,
