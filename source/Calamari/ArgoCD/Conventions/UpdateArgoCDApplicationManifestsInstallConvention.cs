@@ -82,7 +82,7 @@ namespace Calamari.ArgoCD.Conventions
 
                     if (sourcesWithMatchingScopes.Count > 1)
                     {
-                        log.Warn($"Multiple sources match this Project/Environment/Tenant combination, they will all be updated with the same contents: {string.Join(", ", sourcesWithMatchingScopes.Select(s => s.s.Name))}");
+                        log.Warn($"Multiple sources are associated with this deployment, they will all be updated with the same contents: {string.Join(", ", sourcesWithMatchingScopes.Select(s => s.s.Name))}");
                     }
                 }
                 
