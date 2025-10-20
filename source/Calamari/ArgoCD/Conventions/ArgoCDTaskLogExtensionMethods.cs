@@ -1,6 +1,9 @@
 #if NET
 #nullable enable
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using Calamari.ArgoCD.Domain;
 using Calamari.ArgoCD.Models;
 using Calamari.Common.Plumbing.Logging;
 
@@ -19,6 +22,21 @@ namespace Calamari.ArgoCD.Conventions
             else
             {
                 log.Verbose($"Not updating application source {applicationNameInLogs} because it's not associated with this deployment");
+            }
+        }
+
+        public static void LogUnnamedAnnotationsInMultiSourceApplication(this ILog log, Application application)
+        {
+            if (application.Spec.Sources.Count <= 1)
+                return;
+            
+            var unnamedAnnotations = ArgoCDConstants.Annotations.GetUnnamedAnnotationKeys()
+                                                    .Where(application.Metadata.Annotations.ContainsKey)
+                                                    .ToArray();
+
+            if (unnamedAnnotations.Any())
+            {
+                log.Warn($"The application '{application.Metadata.Name}' requires all annotations to be qualified by source name since it contains multiple sources. Found these unqualified annotations: {string.Join(", ", unnamedAnnotations)}.");
             }
         }
     }

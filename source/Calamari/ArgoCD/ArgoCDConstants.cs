@@ -39,6 +39,16 @@ namespace Calamari.ArgoCD
                 ? OctopusTenantAnnotationKeyPrefix 
                 : $"{OctopusTenantAnnotationKeyPrefix}.{sourceName}";
 
+            public static IReadOnlyCollection<string> GetUnnamedAnnotationKeys()
+            {
+                return new []
+                {
+                    OctopusProjectAnnotationKey(null),
+                    OctopusEnvironmentAnnotationKey(null),
+                    OctopusTenantAnnotationKey(null)
+                };
+            }
+            
             public const string OctopusDefaultClusterRegistryAnnotationKey = "argo.octopus.com/default-container-registry";
 
             public const string OctopusImageReplacementPathsKey = "argo.octopus.com/image-replace-paths";

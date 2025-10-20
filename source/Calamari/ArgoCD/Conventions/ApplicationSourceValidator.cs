@@ -21,42 +21,5 @@ namespace Calamari.ArgoCD.Conventions
                 }
             }
         }
-
-        public static IEnumerable<KeyValuePair<string, string>> GetUnnamedAnnotations(IDictionary<string, string> annotations)
-        {
-            var unprocessedKeys = new []
-            {
-                ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(null),
-                ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(null),
-                ArgoCDConstants.Annotations.OctopusTenantAnnotationKey(null)
-            };
-            
-            return annotations.Where(a => unprocessedKeys.Contains(a.Key));
-        }
-
-        public static bool ContainsMultipleSourcesAndUnnamedAnnotations(Application application)
-        {
-            if (application.Spec.Sources.Count <= 1)
-            {
-                return false;
-            }
-
-            if (application.Metadata.Annotations.ContainsKey(ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(null)))
-            {
-                return true;
-            }
-            
-            if (application.Metadata.Annotations.ContainsKey(ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(null)))
-            {
-                return true;
-            }
-
-            if (application.Metadata.Annotations.ContainsKey(ArgoCDConstants.Annotations.OctopusTenantAnnotationKey(null)))
-            {
-                return true;
-            }
-
-            return false;
-        }
     }
 }

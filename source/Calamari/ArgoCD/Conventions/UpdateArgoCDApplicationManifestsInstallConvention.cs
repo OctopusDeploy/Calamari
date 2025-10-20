@@ -80,7 +80,7 @@ namespace Calamari.ArgoCD.Conventions
                                                     deploymentScope);
                 
                 ApplicationSourceValidator.ValidateApplicationSources(applicationFromYaml);
-
+                log.LogUnnamedAnnotationsInMultiSourceApplication(applicationFromYaml);
                 
                 var didUpdateSomething = false;
                 foreach (var applicationSource in sourcesToInspect)
