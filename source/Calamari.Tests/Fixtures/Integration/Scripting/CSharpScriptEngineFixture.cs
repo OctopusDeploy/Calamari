@@ -25,7 +25,7 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
                 variables.Add(ScriptVariables.UseDotnetScript, bool.TrueString);
                 File.WriteAllText(scriptFile.FilePath, "System.Console.WriteLine(OctopusParameters[\"mysecrect\"]);");
                 var commandLineRunner = new TestCommandLineRunner(new InMemoryLog(), new CalamariVariables());
-                var result = ExecuteScript(new DotnetScriptExecutor(commandLineRunner, Substitute.For<ILog>()), scriptFile.FilePath, variables);
+                var result = ExecuteScript(new DotnetScriptExecutor(commandLineRunner, Substitute.For<ILog>(), new DotnetScriptCompilationWarningOutputSink()), scriptFile.FilePath, variables);
                 result.AssertOutput("KingKong");
             }
         }

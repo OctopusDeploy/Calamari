@@ -1,21 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
+using Calamari.Common.Features.Scripting.DotnetScript;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Testing.Helpers;
 using Calamari.Testing.Requirements;
 using Calamari.Tests.Helpers;
+using FluentAssertions;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.DotnetScript
 {
     [TestFixture]
     [Category(TestCategory.ScriptingSupport.DotnetScript)]
+    [RequiresDotNetCore]
     public class DotnetScriptFixture : CalamariFixture
     {
         static readonly Dictionary<string, string> RunWithDotnetScriptVariable = new Dictionary<string, string>() { { ScriptVariables.UseDotnetScript, bool.TrueString } };
-        
-        [Test, RequiresDotNetCore]
+
+        [Test]
         public void ShouldPrintEncodedVariable()
         {
             var (output, _) = RunScript("PrintEncodedVariable.csx", RunWithDotnetScriptVariable);
@@ -24,7 +28,7 @@ namespace Calamari.Tests.Fixtures.DotnetScript
             output.AssertOutput("##octopus[setVariable name='RG9ua2V5' value='S29uZw==']");
         }
 
-        [Test, RequiresDotNetCore]
+        [Test]
         public void ShouldPrintSensitiveVariable()
         {
             var (output, _) = RunScript("PrintSensitiveVariable.csx", RunWithDotnetScriptVariable);
@@ -33,7 +37,7 @@ namespace Calamari.Tests.Fixtures.DotnetScript
             output.AssertOutput("##octopus[setVariable name='UGFzc3dvcmQ=' value='Y29ycmVjdCBob3JzZSBiYXR0ZXJ5IHN0YXBsZQ==' sensitive='VHJ1ZQ==']");
         }
 
-        [Test, RequiresDotNetCore]
+        [Test]
         public void ShouldCreateArtifact()
         {
             var (output, _) = RunScript("CreateArtifact.csx", RunWithDotnetScriptVariable);
@@ -43,7 +47,7 @@ namespace Calamari.Tests.Fixtures.DotnetScript
             output.AssertOutput("name='bXlGaWxlLnR4dA==' length='MTAw']");
         }
 
-        [Test, RequiresDotNetCore]
+        [Test]
         public void ShouldUpdateProgress()
         {
             var (output, _) = RunScript("UpdateProgress.csx", RunWithDotnetScriptVariable);
@@ -52,58 +56,63 @@ namespace Calamari.Tests.Fixtures.DotnetScript
             output.AssertOutput("##octopus[progress percentage='NTA=' message='SGFsZiBXYXk=']");
         }
 
-        [Test, RequiresDotNetCore]
+        [Test]
         public void ShouldCallHello()
         {
-            var (output, _) = RunScript("Hello.csx", new Dictionary<string, string>()
-            {
-                ["Name"] = "Paul",
-                ["Variable2"] = "DEF",
-                ["Variable3"] = "GHI",
-                ["Foo_bar"] = "Hello",
-                ["Host"] = "Never",
-                [ScriptVariables.UseDotnetScript] = bool.TrueString
-            });
+            var (output, _) = RunScript("Hello.csx",
+                                        new Dictionary<string, string>()
+                                        {
+                                            ["Name"] = "Paul",
+                                            ["Variable2"] = "DEF",
+                                            ["Variable3"] = "GHI",
+                                            ["Foo_bar"] = "Hello",
+                                            ["Host"] = "Never",
+                                            [ScriptVariables.UseDotnetScript] = bool.TrueString
+                                        });
 
             output.AssertSuccess();
             output.AssertOutput("Hello Paul");
             output.AssertOutput("This is dotnet script");
         }
 
-        [Test, RequiresDotNetCore]
+        [Test]
         public void ShouldCallHelloWithSensitiveVariable()
         {
-            var (output, _) = RunScript("Hello.csx", new Dictionary<string, string>()
-            {
-                ["Name"] = "NameToEncrypt",
-                [ScriptVariables.UseDotnetScript] = bool.TrueString
-            }, sensitiveVariablesPassword: "5XETGOgqYR2bRhlfhDruEg==");
+            var (output, _) = RunScript("Hello.csx",
+                                        new Dictionary<string, string>()
+                                        {
+                                            ["Name"] = "NameToEncrypt",
+                                            [ScriptVariables.UseDotnetScript] = bool.TrueString
+                                        },
+                                        sensitiveVariablesPassword: "5XETGOgqYR2bRhlfhDruEg==");
 
             output.AssertSuccess();
             output.AssertOutput("Hello NameToEncrypt");
         }
 
-        [Test, RequiresDotNetCore]
+        [Test]
         public void ShouldConsumeParametersWithQuotes()
         {
-            var (output, _) = RunScript("Parameters.csx", new Dictionary<string, string>()
-            {
-                [SpecialVariables.Action.Script.ScriptParameters] = "-- \"Para meter0\" Parameter1",
-                [ScriptVariables.UseDotnetScript] = bool.TrueString
-            });
+            var (output, _) = RunScript("Parameters.csx",
+                                        new Dictionary<string, string>()
+                                        {
+                                            [SpecialVariables.Action.Script.ScriptParameters] = "-- \"Para meter0\" Parameter1",
+                                            [ScriptVariables.UseDotnetScript] = bool.TrueString
+                                        });
 
             output.AssertSuccess();
             output.AssertOutput("Parameters Para meter0Parameter1");
         }
 
-        [Test, RequiresDotNetCore]
+        [Test]
         public void ShouldConsumeParametersWithoutParametersPrefix()
         {
-            var (output, _) = RunScript("Parameters.csx", new Dictionary<string, string>()
-            {
-                [SpecialVariables.Action.Script.ScriptParameters] = "Parameter0 Parameter1",
-                [ScriptVariables.UseDotnetScript] = bool.TrueString
-            });
+            var (output, _) = RunScript("Parameters.csx",
+                                        new Dictionary<string, string>()
+                                        {
+                                            [SpecialVariables.Action.Script.ScriptParameters] = "Parameter0 Parameter1",
+                                            [ScriptVariables.UseDotnetScript] = bool.TrueString
+                                        });
 
             output.AssertSuccess();
             output.AssertOutput("Parameters Parameter0Parameter1");
@@ -111,7 +120,6 @@ namespace Calamari.Tests.Fixtures.DotnetScript
 
         [TestCase(true)]
         [TestCase(false)]
-        [RequiresDotNetCore]
         public void UsingIsolatedAssemblyLoadContext(bool enableIsolatedLoadContext)
         {
             var (output, _) = RunScript("IsolatedLoadContext.csx",
@@ -131,6 +139,51 @@ namespace Calamari.Tests.Fixtures.DotnetScript
                 output.AssertFailure();
                 output.AssertErrorOutput("Could not load file or assembly 'NuGet.Protocol, Version=6.10.0.");
             }
+        }
+
+        [Test]
+        public void HasInvalidSyntax_FeatureToggleIsEnabled_ShouldWriteExtraWarningLine()
+        {
+            var (output, _) = RunScript("InvalidSyntax.csx",
+                                        new Dictionary<string, string>()
+                                        {
+                                            [ScriptVariables.UseDotnetScript] = bool.TrueString,
+                                            [KnownVariables.EnabledFeatureToggles] = OctopusFeatureToggles.KnownSlugs.DotNetScriptCompilationWarningFeatureToggle
+                                        });
+
+            output.CapturedOutput.AllMessages.Should().Contain(DotnetScriptCompilerWarningWrapper.WarningLogLine);
+
+            //We are expecting failure
+            output.AssertFailure();
+        }
+
+        [Test]
+        public void HasInvalidSyntax_FeatureToggleIsDisabled_ShouldNotWriteExtraWarningLine()
+        {
+            var (output, _) = RunScript("InvalidSyntax.csx",
+                                        new Dictionary<string, string>()
+                                        {
+                                            [ScriptVariables.UseDotnetScript] = bool.TrueString
+                                        });
+
+            output.CapturedOutput.AllMessages.Should().NotContain(DotnetScriptCompilerWarningWrapper.WarningLogLine);
+
+            //We are expecting failure
+            output.AssertFailure();
+        }
+
+        [Test]
+        public void ThrowsException_ShouldNotWriteExtraWarningLine()
+        {
+            var (output, _) = RunScript("ThrowsException.csx",
+                                        new Dictionary<string, string>()
+                                        {
+                                            [ScriptVariables.UseDotnetScript] = bool.TrueString
+                                        });
+
+            output.CapturedOutput.AllMessages.Should().NotContain(DotnetScriptCompilerWarningWrapper.WarningLogLine);
+            //We are expecting failure
+            output.AssertFailure();
         }
     }
 }

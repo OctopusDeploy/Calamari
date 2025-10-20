@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using Calamari.ArgoCD.Conventions;
-using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages;
+using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.GitHub;
 using Calamari.Commands.Support;
 using Calamari.Common.Commands;
@@ -14,7 +14,7 @@ using Calamari.Deployment.Conventions;
 
 namespace Calamari.ArgoCD.Commands
 {
-    [Command(Name, Description = "Write populated templates from a package into one or more git repositories")]
+    [Command(Name, Description = "Update container image versions for one or more Argo CD Applications, persisting them in a Git repository")]
     public class UpdateArgoCDAppImagesCommand : Command
     {
         public const string Name = "update-argo-cd-app-images";

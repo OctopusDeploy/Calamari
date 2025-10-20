@@ -1,7 +1,7 @@
 using System;
 using Octopus.TinyTypes;
 
-namespace Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages
+namespace Calamari.ArgoCD.Git
 {
     public class GitCommitSummary : CaseSensitiveStringTinyType
     {

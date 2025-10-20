@@ -125,7 +125,7 @@ namespace Calamari.Tests.Fixtures.FindPackage
                     result.AssertOutput("Found 1 earlier version of {0} on this Tentacle", packageId);
                     result.AssertOutput("  - {0}: {1}", packageVersion, destinationFilePath);
 
-                    result.AssertServiceMessage(ServiceMessageNames.FoundPackage.Name, Is.True);
+                    result.AssertFoundPackageServiceMessage();
                     var foundPackage = result.CapturedOutput.FoundPackage;
                     Assert.AreEqual(VersionFactory.CreateSemanticVersion(packageVersion), foundPackage.Version);
                     Assert.AreEqual(acmeWeb.Hash, foundPackage.Hash);
@@ -206,7 +206,7 @@ namespace Calamari.Tests.Fixtures.FindPackage
                     result.AssertOutput("Found 1 earlier version of {0} on this Tentacle", packageId);
                     result.AssertOutput("  - {0}: {1}", packageVersion, destinationFilePath);
 
-                    result.AssertServiceMessage(ServiceMessageNames.FoundPackage.Name, Is.True);
+                    result.AssertFoundPackageServiceMessage();
                     var foundPackage = result.CapturedOutput.FoundPackage;
                     Assert.AreEqual(VersionFactory.CreateSemanticVersion(packageVersion), foundPackage.Version);
                     Assert.AreEqual(acmeWeb.Hash, foundPackage.Hash);
@@ -237,7 +237,7 @@ namespace Calamari.Tests.Fixtures.FindPackage
             result.AssertOutput("Found 1 earlier version of {0} on this Tentacle", mavenPackageId);
             result.AssertOutput("  - {0}: {1}", packageVersion, destinationFilePath);
 
-            result.AssertServiceMessage(ServiceMessageNames.FoundPackage.Name, Is.True);
+            result.AssertFoundPackageServiceMessage();
             var foundPackage = result.CapturedOutput.FoundPackage;
             Assert.AreEqual(VersionFactory.CreateMavenVersion(packageVersion), foundPackage.Version);
             Assert.AreEqual(mavenPackageHash, foundPackage.Hash);
@@ -257,16 +257,14 @@ namespace Calamari.Tests.Fixtures.FindPackage
                 var result = FindPackages(packageId, packageVersion, acmeWeb.Hash);
 
                 result.AssertSuccess();
-                result.AssertServiceMessage(
-                    ServiceMessageNames.CalamariFoundPackage.Name,
-                    Is.True,
+                result.AssertCalamariFoundPackageServiceMessage(Is.True,
                     message: "Expected service message '{0}' to be True",
                     args: ServiceMessageNames.CalamariFoundPackage.Name);
 
                 result.AssertOutput("Package {0} {1} hash {2} has already been uploaded", packageId, packageVersion,
                     acmeWeb.Hash);
 
-                result.AssertServiceMessage(ServiceMessageNames.FoundPackage.Name, Is.True);
+                result.AssertFoundPackageServiceMessage();
                 var foundPackage = result.CapturedOutput.FoundPackage;
                 Assert.AreEqual(VersionFactory.CreateSemanticVersion(packageVersion), foundPackage.Version);
                 Assert.AreEqual(acmeWeb.Hash, foundPackage.Hash);
@@ -285,9 +283,7 @@ namespace Calamari.Tests.Fixtures.FindPackage
             var result = FindPackages(mavenPackageId, packageVersion, mavenPackageHash, VersionFormat.Maven);
 
             result.AssertSuccess();
-            result.AssertServiceMessage(
-                ServiceMessageNames.CalamariFoundPackage.Name,
-                Is.True,
+            result.AssertCalamariFoundPackageServiceMessage(Is.True,
                 message: "Expected service message '{0}' to be True",
                 args: ServiceMessageNames.CalamariFoundPackage.Name);
 

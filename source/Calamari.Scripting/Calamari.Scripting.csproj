@@ -9,6 +9,7 @@
         <IsPackable>true</IsPackable>
         <LangVersion>9</LangVersion>
         <TargetFrameworks>net462;net6.0</TargetFrameworks>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     </PropertyGroup>
 
     <ItemGroup>

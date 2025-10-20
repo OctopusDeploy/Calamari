@@ -93,16 +93,20 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                                   new CommandLineRunner(new SilentLog(), variables),
                                   new Dictionary<string, string>());
 
+            var expectedResources = new HashSet<ResourceIdentifier>()
+            {
+                new ResourceIdentifier(SupportedResourceGroupVersionKinds.DeploymentV1, "deployment", "default"),
+                new ResourceIdentifier(SupportedResourceGroupVersionKinds.IngressV1, "ingress", "default"),
+                new ResourceIdentifier(SupportedResourceGroupVersionKinds.SecretV1, "secret", "default"),
+                new ResourceIdentifier(SupportedResourceGroupVersionKinds.SecretV1, "feed-secret", "default"),
+                new ResourceIdentifier(SupportedResourceGroupVersionKinds.ConfigMapV1, "configmap", "default"),
+                new ResourceIdentifier(SupportedResourceGroupVersionKinds.ServiceV1, "service", "default"),
+                new ResourceIdentifier(new ResourceGroupVersionKind("ourapi", "v1", "CustomResource"), "custom-resource", "default")
+            };
+
             statusCheckContainer.StatusCheck.Should().NotBeNull();
             statusCheckContainer.StatusCheck.CheckedResources.Should()
-                                .BeEquivalentTo(
-                                                new ResourceIdentifier(SupportedResourceGroupVersionKinds.DeploymentV1, "deployment", "default"),
-                                                new ResourceIdentifier(SupportedResourceGroupVersionKinds.IngressV1, "ingress", "default"),
-                                                new ResourceIdentifier(SupportedResourceGroupVersionKinds.SecretV1, "secret", "default"),
-                                                new ResourceIdentifier(SupportedResourceGroupVersionKinds.SecretV1, "feed-secret", "default"),
-                                                new ResourceIdentifier(SupportedResourceGroupVersionKinds.ConfigMapV1, "configmap", "default"),
-                                                new ResourceIdentifier(SupportedResourceGroupVersionKinds.ServiceV1, "service", "default"),
-                                                new ResourceIdentifier(new ResourceGroupVersionKind("ourapi", "v1", "CustomResource"), "custom-resource", "default"));
+                                .BeEquivalentTo(expectedResources);
         }
 
         [Test]
@@ -123,6 +127,11 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
 
             try
             {
+
+                var expectedResources = new HashSet<ResourceIdentifier>()
+                {
+                    new ResourceIdentifier(SupportedResourceGroupVersionKinds.ConfigMapV1, configMapName, "default")
+                };
                 wrapper.ExecuteScript(
                                       new Script("stub"),
                                       Syntax,
@@ -130,7 +139,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                                       new Dictionary<string, string>());
 
                 statusCheckContainer.StatusCheck.Should().NotBeNull();
-                statusCheckContainer.StatusCheck.CheckedResources.Should().BeEquivalentTo(new ResourceIdentifier(SupportedResourceGroupVersionKinds.ConfigMapV1, configMapName, "default"));
+                statusCheckContainer.StatusCheck.CheckedResources.Should().BeEquivalentTo(expectedResources);
             }
             finally
             {
@@ -253,6 +262,11 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
 
             var (wrapper, statusCheckContainer) = CreateResourceStatusReportWrapperAndStatusCheckContainer(variables, fileSystem);
 
+            var expectedResources = new HashSet<ResourceIdentifier>()
+            {
+                new ResourceIdentifier(SupportedResourceGroupVersionKinds.DeploymentV1, "deployment", "default")
+            };
+
             wrapper.ExecuteScript(
                                   new Script("stub"),
                                   Syntax,
@@ -260,7 +274,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                                   new Dictionary<string, string>());
 
             statusCheckContainer.StatusCheck.Should().NotBeNull();
-            statusCheckContainer.StatusCheck.CheckedResources.Should().BeEquivalentTo(new ResourceIdentifier(SupportedResourceGroupVersionKinds.DeploymentV1, "deployment", "default"));
+            statusCheckContainer.StatusCheck.CheckedResources.Should().BeEquivalentTo(expectedResources);
         }
 
         static void AddKubernetesStatusCheckVariables(IVariables variables)

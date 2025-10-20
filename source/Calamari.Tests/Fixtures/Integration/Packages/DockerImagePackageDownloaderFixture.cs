@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
+using Calamari.Common.Features.Scripting.DotnetScript;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
@@ -16,6 +17,7 @@ using Calamari.Testing.Helpers;
 using Calamari.Testing.Requirements;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
+using NSubstitute;
 using NUnit.Framework;
 using Octopus.Versioning.Semver;
 
@@ -258,7 +260,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         static DockerImagePackageDownloader GetDownloader(ILog log)
         {
             var runner = new CommandLineRunner(log, new CalamariVariables());
-            return new DockerImagePackageDownloader(new ScriptEngine(Enumerable.Empty<IScriptWrapper>(), log), CalamariPhysicalFileSystem.GetPhysicalFileSystem(), runner, new CalamariVariables(), log, new FeedLoginDetailsProviderFactory());
+            return new DockerImagePackageDownloader(new ScriptEngine(Enumerable.Empty<IScriptWrapper>(), log, new DotnetScriptCompilationWarningOutputSink()), CalamariPhysicalFileSystem.GetPhysicalFileSystem(), runner, new CalamariVariables(), log, new FeedLoginDetailsProviderFactory());
         }
     }
 }

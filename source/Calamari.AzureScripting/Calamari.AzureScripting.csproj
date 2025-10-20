@@ -10,6 +10,7 @@
         <IsPackable>true</IsPackable>
         <ValidateExecutableReferencesMatchSelfContained>false</ValidateExecutableReferencesMatchSelfContained>
         <TargetFrameworks>net462;net6.0</TargetFrameworks>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     </PropertyGroup>
 
     <ItemGroup>
@@ -17,8 +18,8 @@
     </ItemGroup>
 
     <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
-        <PackageReference Include="System.IO.FileSystem.AccessControl" Version="4.7.0" />
-        <PackageReference Include="System.Security.Principal.Windows" Version="4.7.0" />
+        <PackageReference Include="System.IO.FileSystem.AccessControl" Version="5.0.0" />
+        <PackageReference Include="System.Security.Principal.Windows" Version="5.0.0" />
     </ItemGroup>
 
     <ItemGroup>

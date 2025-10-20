@@ -18,18 +18,23 @@ namespace Calamari.ArgoCD.Dtos
 
     public class ArgoCDApplicationDto
     {
-        public ArgoCDApplicationDto(string gatewayId, string name, string defaultRegistry, ArgoCDApplicationSourceDto[] sources, string manifest)
+        public ArgoCDApplicationDto(string gatewayId, string name, string kubernetesNamespace, ArgoCDApplicationSourceDto[] sources, string manifest, string defaultRegistry, string? instanceWebUIUrl)
         {
             GatewayId = gatewayId;
             Name = name;
+            KubernetesNamespace = kubernetesNamespace;
             DefaultRegistry = defaultRegistry;
+            InstanceWebUiUrl = instanceWebUIUrl;
             Sources = sources;
             Manifest = manifest;
         }
 
         public string GatewayId { get; }
         public string Name { get; } 
+        
+        public string KubernetesNamespace { get; }
         public string DefaultRegistry { get; set; }
+        public string? InstanceWebUiUrl { get; }
         public ArgoCDApplicationSourceDto[] Sources { get; }
         public string Manifest { get; }
     }

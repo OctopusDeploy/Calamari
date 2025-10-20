@@ -1,25 +1,22 @@
 #if NET
 using System.Collections.Generic;
-using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Models;
 
 namespace Calamari.ArgoCD.Conventions
 {
     public class ArgoCommitToGitConfig
     {
-        public ArgoCommitToGitConfig(string workingDirectory, string inputSubPath, bool recurseInputPath, GitCommitParameters commitParameters)
+        public ArgoCommitToGitConfig(string workingDirectory, string inputSubPath, bool purgeOutputDirectory, GitCommitParameters commitParameters)
         {
             WorkingDirectory = workingDirectory;
             InputSubPath = inputSubPath;
-            RecurseInputPath = recurseInputPath;
+            PurgeOutputDirectory = purgeOutputDirectory;
             CommitParameters = commitParameters;
         }
         
-        public string WorkingDirectory { get; set; }
-
-        public string[] FileGlobs => new[] { "*.yaml", "*.yml" };
+        public string WorkingDirectory { get; }
         
         public string InputSubPath { get; }
-        public bool RecurseInputPath { get; }
+        public bool PurgeOutputDirectory { get; }
         public GitCommitParameters CommitParameters { get; }
     }
 }

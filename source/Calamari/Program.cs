@@ -6,8 +6,9 @@ using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using Autofac.Features.Metadata;
+using Calamari.ArgoCD;
 using Calamari.ArgoCD.Conventions;
-using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages;
+using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.GitHub;
 using Calamari.Commands;
 using Calamari.Common;
@@ -120,18 +121,8 @@ namespace Calamari
                    .Where(x => typeof(ILaunchTool).IsAssignableFrom(x) && !x.IsAbstract && !x.IsInterface)
                    .WithMetadataFrom<LaunchToolAttribute>()
                    .As<ILaunchTool>();
-            
-            RegisterArgoCDComponents(builder);
-        }
 
-        void RegisterArgoCDComponents(ContainerBuilder builder)
-        {
-#if NET
-            builder.RegisterType<DeploymentConfigFactory>().AsSelf().InstancePerLifetimeScope();
-            builder.RegisterType<CommitMessageGenerator>().As<ICommitMessageGenerator>().InstancePerLifetimeScope();
-            builder.RegisterType<GitHubClientFactory>().As<IGitHubClientFactory>().InstancePerLifetimeScope();
-            builder.RegisterType<GitHubPullRequestCreator>().As<IGitHubPullRequestCreator>().InstancePerLifetimeScope();
-#endif
+            builder.RegisterModule<ArgoCDModule>();
         }
 
         IEnumerable<Assembly> GetExtensionAssemblies()
