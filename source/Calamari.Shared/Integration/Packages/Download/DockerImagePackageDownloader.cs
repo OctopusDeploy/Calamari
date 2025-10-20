@@ -14,6 +14,9 @@ using Octopus.Versioning;
 
 namespace Calamari.Integration.Packages.Download
 {
+    // Note about moving this class: the ScriptExtractor.GetScript method uses the namespace of this class as part of the	
+    // get Embedded Resource to find the DockerLogin and DockerPull scripts. If you move this file, be sure look at that method	
+    // and make sure it can still find the scripts
     public class DockerImagePackageDownloader : IPackageDownloader
     {
         readonly IScriptEngine scriptEngine;
@@ -172,7 +175,7 @@ namespace Calamari.Integration.Packages.Download
                 throw new CommandException("Unable to log in Docker registry");
             }
         }
-        
+
         bool IsImageCached(string fullImageName)
         {
             var cachedDigests = GetCachedImageDigests();
