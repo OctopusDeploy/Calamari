@@ -1,6 +1,8 @@
 #if NET
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using Calamari.ArgoCD.Models;
 
 namespace Calamari.ArgoCD
 {
@@ -20,9 +22,22 @@ namespace Calamari.ArgoCD
 
         public class Annotations
         {
-            public const string OctopusProjectAnnotationKey = "argo.octopus.com/project";
-            public const string OctopusEnvironmentAnnotationKey = "argo.octopus.com/environment";
-            public const string OctopusTenantAnnotationKey = "argo.octopus.com/tenant";
+            const string Prefix = "argo.octopus.com";
+
+            static readonly string OctopusProjectAnnotationKeyPrefix = $"{Prefix}/project";
+            public static string OctopusProjectAnnotationKey(ApplicationSourceName? sourceName) => sourceName == null 
+                ? OctopusProjectAnnotationKeyPrefix 
+                : $"{OctopusProjectAnnotationKeyPrefix}.{sourceName}";
+
+            static readonly string OctopusEnvironmentAnnotationKeyPrefix = $"{Prefix}/environment";
+            public static string OctopusEnvironmentAnnotationKey(ApplicationSourceName? sourceName) => sourceName == null 
+                ? OctopusEnvironmentAnnotationKeyPrefix 
+                : $"{OctopusEnvironmentAnnotationKeyPrefix}.{sourceName}";
+
+            static readonly string OctopusTenantAnnotationKeyPrefix = $"{Prefix}/tenant";
+            public static string OctopusTenantAnnotationKey(ApplicationSourceName? sourceName) => sourceName == null 
+                ? OctopusTenantAnnotationKeyPrefix 
+                : $"{OctopusTenantAnnotationKeyPrefix}.{sourceName}";
 
             public const string OctopusDefaultClusterRegistryAnnotationKey = "argo.octopus.com/default-container-registry";
 

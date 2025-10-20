@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Calamari.ArgoCD;
 using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Domain;
 using Calamari.ArgoCD.Dtos;
@@ -26,6 +27,9 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
     [TestFixture]
     public class UpdateArgoCDAppImagesInstallConventionTests
     {
+        const string ProjectSlug = "TheProject";
+        const string EnvironmentSlug = "TheEnvironment";
+
         // This is a rough-copy of the ArgoCDAppImageUpdater tests from Octopus
 
         readonly ICalamariFileSystem fileSystem = TestCalamariPhysicalFileSystem.GetPhysicalFileSystem();
@@ -64,6 +68,15 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             
             var argoCdApplicationFromYaml = new Application()
             {
+                Metadata = new Metadata()
+                {
+                    Name = "The app",
+                    Annotations = new Dictionary<string, string>()
+                    {
+                        [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(null)] = ProjectSlug,
+                        [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(null)] = EnvironmentSlug,
+                    }
+                },
                 Spec = new ApplicationSpec()
                 {
                     Sources = new List<SourceBase>()
@@ -95,6 +108,8 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             {
                 [PackageVariables.IndexedImage("nginx")] = "index.docker.io/nginx:1.27.1",
                 [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
+                [ProjectVariables.Slug] = ProjectSlug,
+                [DeploymentEnvironment.Slug] = EnvironmentSlug,
             };
             var runningDeployment = new RunningDeployment(null, variables);
             runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
@@ -124,6 +139,8 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             {
                 [PackageVariables.IndexedImage("nginx")] = "docker.io/nginx:1.27.1",
                 [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
+                [ProjectVariables.Slug] = ProjectSlug,
+                [DeploymentEnvironment.Slug] = EnvironmentSlug,
             };
             var runningDeployment = new RunningDeployment(null, variables);
             runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
@@ -157,6 +174,8 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             {
                 [PackageVariables.IndexedImage("nginx")] = "index.docker.io/nginx:1.27.1",
                 [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
+                [ProjectVariables.Slug] = ProjectSlug,
+                [DeploymentEnvironment.Slug] = EnvironmentSlug,
             };
             var runningDeployment = new RunningDeployment(null, variables);
             runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
@@ -242,6 +261,8 @@ spec:
             {
                 [PackageVariables.IndexedImage("nginx")] = "index.docker.io/nginx:1.27.1",
                 [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
+                [ProjectVariables.Slug] = ProjectSlug,
+                [DeploymentEnvironment.Slug] = EnvironmentSlug,
             };
             var runningDeployment = new RunningDeployment(null, variables);
             runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
