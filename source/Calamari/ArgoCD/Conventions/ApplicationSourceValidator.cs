@@ -12,9 +12,9 @@ namespace Calamari.ArgoCD.Conventions
 
             foreach (var group in groupedByName)
             {
-                if (group.Count() > 1)
+                if (!string.IsNullOrWhiteSpace(group.Key) && group.Count() > 1)
                 {
-                    throw new CommandException($"Application {applicationFromYaml.Metadata.Name} has multiples sources with the name '{group.Key}'. Please ensure all sources have unique names, only one source is allowed to omit the 'name' property.");                   
+                    throw new CommandException($"Application {applicationFromYaml.Metadata.Name} has multiples sources with the name '{group.Key}'. Please ensure all sources have unique names.");                   
                 }
             }
         }

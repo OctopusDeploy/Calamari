@@ -22,10 +22,10 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             action.Should().NotThrow();
         }
 
-        [TestCase(null, "foo")]
-        [TestCase("", "foo")]
-        [TestCase("bar", "foo")]
-        public void TwoSources_MaxOneUnnamed_Valid(params string[] names)
+        [TestCase(null, "foo", "")]
+        [TestCase("", "foo", "")]
+        [TestCase("bar", "foo", null)]
+        public void MultipleSources_ManyUnnamed_Valid(params string[] names)
         {
             var application = CreateApplication(names);
             
@@ -33,17 +33,15 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             action.Should().NotThrow();
         }
         
-        [TestCase("", "")]
-        [TestCase(null, null)]
-        [TestCase(null, "")]
         [TestCase("foo", "foo")]
-        public void TwoSources_DuplicateNames_Throws(params string[] names)
+        [TestCase("bar", "foo", "bar", "")]
+        public void MultipleSources_DuplicateNames_Throws(params string[] names)
         {
             var application = CreateApplication(names);
             
             Action action = () => ApplicationSourceValidator.ValidateApplicationSources(application);
             action.Should().Throw<CommandException>()
-                  .WithMessage($"Application FooApp has multiples sources with the name '{names.First()}'. Please ensure all sources have unique names, only one source is allowed to omit the 'name' property.");
+                  .WithMessage($"Application FooApp has multiples sources with the name '{names.First()}'. Please ensure all sources have unique names.");
         }
         
         static Application CreateApplication(params string[] names)
