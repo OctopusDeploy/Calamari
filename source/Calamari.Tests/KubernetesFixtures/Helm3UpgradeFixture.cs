@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using System.Threading.Tasks;
 using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Variables;
