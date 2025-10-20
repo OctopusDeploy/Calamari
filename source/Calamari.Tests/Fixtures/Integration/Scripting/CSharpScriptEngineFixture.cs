@@ -21,7 +21,6 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
             using (var scriptFile = new TemporaryFile(Path.ChangeExtension(Path.GetTempFileName(), "cs")))
             {
                 var variables = GetVariables();
-                variables.Add(ScriptVariables.UseDotnetScript, bool.TrueString);
                 File.WriteAllText(scriptFile.FilePath, "System.Console.WriteLine(OctopusParameters[\"mysecrect\"]);");
                 var commandLineRunner = new TestCommandLineRunner(new InMemoryLog(), new CalamariVariables());
                 var result = ExecuteScript(new DotnetScriptExecutor(commandLineRunner, Substitute.For<ILog>(), new DotnetScriptCompilationWarningOutputSink()), scriptFile.FilePath, variables);

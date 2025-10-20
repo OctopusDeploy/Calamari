@@ -17,7 +17,7 @@ namespace Calamari.Tests.Fixtures.DotnetScript
     [RequiresDotNetCore]
     public class DotnetScriptFixture : CalamariFixture
     {
-        static readonly Dictionary<string, string> RunWithDotnetScriptVariable = new Dictionary<string, string>() { { ScriptVariables.UseDotnetScript, bool.TrueString } };
+        static readonly Dictionary<string, string> RunWithDotnetScriptVariable = new Dictionary<string, string>();
 
         [Test]
         public void ShouldPrintEncodedVariable()
@@ -67,7 +67,6 @@ namespace Calamari.Tests.Fixtures.DotnetScript
                                             ["Variable3"] = "GHI",
                                             ["Foo_bar"] = "Hello",
                                             ["Host"] = "Never",
-                                            [ScriptVariables.UseDotnetScript] = bool.TrueString
                                         });
 
             output.AssertSuccess();
@@ -82,7 +81,6 @@ namespace Calamari.Tests.Fixtures.DotnetScript
                                         new Dictionary<string, string>()
                                         {
                                             ["Name"] = "NameToEncrypt",
-                                            [ScriptVariables.UseDotnetScript] = bool.TrueString
                                         },
                                         sensitiveVariablesPassword: "5XETGOgqYR2bRhlfhDruEg==");
 
@@ -97,7 +95,6 @@ namespace Calamari.Tests.Fixtures.DotnetScript
                                         new Dictionary<string, string>()
                                         {
                                             [SpecialVariables.Action.Script.ScriptParameters] = "-- \"Para meter0\" Parameter1",
-                                            [ScriptVariables.UseDotnetScript] = bool.TrueString
                                         });
 
             output.AssertSuccess();
@@ -111,7 +108,6 @@ namespace Calamari.Tests.Fixtures.DotnetScript
                                         new Dictionary<string, string>()
                                         {
                                             [SpecialVariables.Action.Script.ScriptParameters] = "Parameter0 Parameter1",
-                                            [ScriptVariables.UseDotnetScript] = bool.TrueString
                                         });
 
             output.AssertSuccess();
@@ -126,7 +122,6 @@ namespace Calamari.Tests.Fixtures.DotnetScript
                                         new Dictionary<string, string>()
                                         {
                                             [SpecialVariables.Action.Script.ScriptParameters] = $"{(enableIsolatedLoadContext ? "--isolated-load-context " : "")}-- Parameter0 Parameter1",
-                                            [ScriptVariables.UseDotnetScript] = bool.TrueString
                                         });
             if (enableIsolatedLoadContext)
             {
@@ -147,7 +142,6 @@ namespace Calamari.Tests.Fixtures.DotnetScript
             var (output, _) = RunScript("InvalidSyntax.csx",
                                         new Dictionary<string, string>()
                                         {
-                                            [ScriptVariables.UseDotnetScript] = bool.TrueString,
                                             [KnownVariables.EnabledFeatureToggles] = OctopusFeatureToggles.KnownSlugs.DotNetScriptCompilationWarningFeatureToggle
                                         });
 
@@ -161,10 +155,7 @@ namespace Calamari.Tests.Fixtures.DotnetScript
         public void HasInvalidSyntax_FeatureToggleIsDisabled_ShouldNotWriteExtraWarningLine()
         {
             var (output, _) = RunScript("InvalidSyntax.csx",
-                                        new Dictionary<string, string>()
-                                        {
-                                            [ScriptVariables.UseDotnetScript] = bool.TrueString
-                                        });
+                                        new Dictionary<string, string>());
 
             output.CapturedOutput.AllMessages.Should().NotContain(DotnetScriptCompilerWarningWrapper.WarningLogLine);
 
@@ -176,10 +167,7 @@ namespace Calamari.Tests.Fixtures.DotnetScript
         public void ThrowsException_ShouldNotWriteExtraWarningLine()
         {
             var (output, _) = RunScript("ThrowsException.csx",
-                                        new Dictionary<string, string>()
-                                        {
-                                            [ScriptVariables.UseDotnetScript] = bool.TrueString
-                                        });
+                                        new Dictionary<string, string>());
 
             output.CapturedOutput.AllMessages.Should().NotContain(DotnetScriptCompilerWarningWrapper.WarningLogLine);
             //We are expecting failure
