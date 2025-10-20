@@ -69,12 +69,11 @@ namespace Calamari.Tests.KubernetesFixtures
                                                             version = pinnedVersion;
 
                                                             log($"Found Terraform version {version} @ {downloadBaseUrl}");
-
+                                                            
                                                             return (version, downloadBaseUrl);
                                                         },
                                                         async (destinationDirectoryName, tuple) =>
                                                         {
-                                                            log($"Downloading Terraform version {tuple.version} from {tuple.data}");
                                                             var fileName = GetTerraformFileName(tuple.version);
                                                             log($"Downloading Terraform version {tuple.version} from {tuple.data}");
 
@@ -509,6 +508,7 @@ namespace Calamari.Tests.KubernetesFixtures
                     await Task.Delay(retryTracker.Sleep());
                 }
             }
+            
             var destinationDirectoryName = TestEnvironment.GetTestPath("Tools", toolName, version);
 
             string ShouldDownload()
@@ -530,11 +530,11 @@ namespace Calamari.Tests.KubernetesFixtures
                     case "kubelogin":
                         path = GetKubeloginExecutablePath(destinationDirectoryName);
                         break;
-                    case "Terraform":
+                    case "Terraform": 
                         path = Directory.EnumerateFiles(destinationDirectoryName)
                                                .FirstOrDefault(f => Path.GetFileName(f).Contains("terraform"));
                         break;
-
+                        
                 }
 
                 if (path == null || !File.Exists(path))
