@@ -95,7 +95,7 @@ namespace Calamari.ArgoCD.Conventions
                     }
 
                     var annotatedScope = ScopingAnnotationReader.GetScopeForApplicationSource(applicationSource.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources);
-                    LogApplicationSourceScopeStatus(annotatedScope, applicationSource.Name.ToApplicationSourceName(), deploymentScope);
+                    log.LogApplicationSourceScopeStatus(annotatedScope, applicationSource.Name.ToApplicationSourceName(), deploymentScope);
 
                     if (annotatedScope == deploymentScope)
                     {
@@ -128,7 +128,7 @@ namespace Calamari.ArgoCD.Conventions
                     }
                     
                     var annotatedScope = ScopingAnnotationReader.GetScopeForApplicationSource(valuesFileSource.SourceName, applicationFromYaml.Metadata.Annotations, containsMultipleSources);
-                    LogApplicationSourceScopeStatus(annotatedScope, valuesFileSource.SourceName, deploymentScope);
+                    log.LogApplicationSourceScopeStatus(annotatedScope, valuesFileSource.SourceName, deploymentScope);
 
                     if (annotatedScope == deploymentScope)
                     {
@@ -179,20 +179,6 @@ namespace Calamari.ArgoCD.Conventions
                                                 updatedApplications.Distinct(),
                                                 newImagesWritten.Count
                                                );
-        }
-
-        void LogApplicationSourceScopeStatus((ProjectSlug? Project, EnvironmentSlug? Environment, TenantSlug? Tenant) annotatedScope, ApplicationSourceName? sourceName, (ProjectSlug? Project, EnvironmentSlug? Environment, TenantSlug? Tenant) deploymentScope)
-        {
-            log.Verbose($"Application source scopes are Project: '{annotatedScope.Project}', Environment: '{annotatedScope.Environment}', Tenant: '{annotatedScope.Tenant}'");
-            string applicationNameInLogs = sourceName == null ? "(unnamed)" : $"'{sourceName.Value}'";
-            if (annotatedScope == deploymentScope)
-            {
-                log.Info($"Updating application source {applicationNameInLogs}");
-            }
-            else
-            {
-                log.Verbose($"Not updating application source {applicationNameInLogs} because it's not associated with this deployment");
-            }
         }
 
         RepositoryWrapper CreateRepository(Dictionary<string, GitCredentialDto> gitCredentials, SourceBase source, RepositoryFactory repositoryFactory)

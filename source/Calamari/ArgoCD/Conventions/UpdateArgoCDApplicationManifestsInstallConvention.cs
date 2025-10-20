@@ -83,7 +83,7 @@ namespace Calamari.ArgoCD.Conventions
                 foreach (var applicationSource in sourcesToInspect)
                 {
                     var annotatedScope = ScopingAnnotationReader.GetScopeForApplicationSource(applicationSource.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources);
-                    LogApplicationSourceScopeStatus(annotatedScope, applicationSource.Name.ToApplicationSourceName(), deploymentScope);
+                    log.LogApplicationSourceScopeStatus(annotatedScope, applicationSource.Name.ToApplicationSourceName(), deploymentScope);
 
                     if (annotatedScope == deploymentScope)
                     {
@@ -167,20 +167,6 @@ namespace Calamari.ArgoCD.Conventions
             }
         }
 
-        void LogApplicationSourceScopeStatus((ProjectSlug? Project, EnvironmentSlug? Environment, TenantSlug? Tenant) annotatedScope, ApplicationSourceName? sourceName, (ProjectSlug? Project, EnvironmentSlug? Environment, TenantSlug? Tenant) deploymentScope)
-        {
-            log.Verbose($"Application source scopes are Project: '{annotatedScope.Project}', Environment: '{annotatedScope.Environment}', Tenant: '{annotatedScope.Tenant}'");
-            string applicationNameInLogs = sourceName == null ? "(unnamed)" : $"'{sourceName.Value}'";
-            if (annotatedScope == deploymentScope)
-            {
-                log.Info($"Updating application source {applicationNameInLogs}");
-            }
-            else
-            {
-                log.Verbose($"Not updating application source {applicationNameInLogs} because it's not associated with this deployment");
-            }
-        }
-        
         void CopyFiles(IEnumerable<IFileCopySpecification> repositoryFiles)
         {
             foreach (var file in repositoryFiles)
