@@ -13,16 +13,16 @@ namespace Calamari.Testing
     {
         [EnvironmentVariable("Azure_OctopusAPITester_SubscriptionId", "op://Calamari Secrets for Tests/Azure - OctopusApiTester/subscription id")]
         AzureSubscriptionId,
-        
+
         [EnvironmentVariable("Azure_OctopusAPITester_TenantId", "op://Calamari Secrets for Tests/Azure - OctopusApiTester/tenant id")]
         AzureSubscriptionTenantId,
-        
+
         [EnvironmentVariable("Azure_OctopusAPITester_Password", "op://Calamari Secrets for Tests/Azure - OctopusApiTester/password")]
         AzureSubscriptionPassword,
-        
+
         [EnvironmentVariable("Azure_OctopusAPITester_ClientId", "op://Calamari Secrets for Tests/Azure - OctopusApiTester/client application id")]
         AzureSubscriptionClientId,
-        
+
         [EnvironmentVariable("GitHub_OctopusAPITester_Username", "op://Calamari Secrets for Tests/GitHub Test Account/username")]
         GitHubUsername,
 
@@ -35,8 +35,11 @@ namespace Calamari.Testing
         [EnvironmentVariable("K8S_OctopusAPITester_Server", "op://Calamari Secrets for Tests/GKS Kubernetes API Test Cluster/Server")]
         KubernetesClusterUrl,
 
-        [EnvironmentVariable("Helm_OctopusAPITester_Username", "op://Calamari Secrets for Tests/Artifactory e2e-reader Test Account/website")]
+        [EnvironmentVariable("Helm_OctopusAPITester_Url", "op://Calamari Secrets for Tests/Artifactory e2e-reader Test Account/url")]
         ArtifactoryUrl,
+
+        [EnvironmentVariable("Helm_OctopusAPITester_Url", "op://Calamari Secrets for Tests/Artifactory e2e-reader Test Account/docker-url")]
+        ArtifactoryDockerUrl,
 
         [EnvironmentVariable("Helm_OctopusAPITester_Username", "op://Calamari Secrets for Tests/Artifactory e2e-reader Test Account/username")]
         ArtifactoryUsername,
@@ -52,10 +55,9 @@ namespace Calamari.Testing
 
         [EnvironmentVariable("DockerHub_TestReaderAccount_Username", "op://Calamari Secrets for Tests/DockerHub Test Reader Org Access Token/Token Username")]
         DockerHubOrgAccessUsername,
-        
+
         [EnvironmentVariable("DockerHub_TestReaderAccount_Token", "op://Calamari Secrets for Tests/DockerHub Test Reader Org Access Token/API Token")]
         DockerHubOrgAccessToken,
-
         [EnvironmentVariable("AWS_E2E_AccessKeyId", "op://Calamari Secrets for Tests/AWS E2E Test User Keys/AccessKeyId")]
         AwsCloudFormationAndS3AccessKey,
 
@@ -89,7 +91,7 @@ namespace Calamari.Testing
         //TODO(tmm): not sure about this one - this is a copy of the github account above.
         [EnvironmentVariable("GitHub_RateLimitingPersonalAccessToken", "op://Calamari Secrets for Tests/GitHub Test Account/PAT")]
         GitHubRateLimitingPersonalAccessToken,
-        
+
         [EnvironmentVariable("SERVICEFABRIC_CLIENTCERT_THUMBPRINT", "op://Calamari Secrets for Tests/Azure - Static Service Fabric Cluster/ClientCertThumbprint")]
         ServiceFabricClientCertThumbprint,
         [EnvironmentVariable("SERVICEFABRIC_CLIENTCERT_STORELOCATION", "op://Calamari Secrets for Tests/Azure - Static Service Fabric Cluster/ClientCertStoreLocation")]
@@ -127,7 +129,7 @@ namespace Calamari.Testing
         {
             var missingVariables = Enum.GetValues(typeof(ExternalVariable))
                                        .Cast<ExternalVariable>()
-                                       .Select(prop => EnvironmentVariableAttribute.Get(prop))
+                                       .Select(prop => EnvironmentVariableAttribute.Get(prop) ?? throw new Exception($"`{prop}` does not include a {nameof(EnvironmentVariableAttribute)}."))
                                        .Where(attr => Environment.GetEnvironmentVariable(attr.Name) == null)
                                        .ToList();
 
@@ -155,13 +157,13 @@ namespace Calamari.Testing
             {
                 var valueFromSecretManager = string.IsNullOrEmpty(attr.SecretReference)
                     ? null
-                    : await SecretManagerClient.Value.GetSecret(attr.SecretReference, cancellationToken, throwOnNotFound: false);
+                    : await SecretManagerClient.Value.GetSecret(attr.SecretReference!, cancellationToken, throwOnNotFound: false);
                 if (!string.IsNullOrEmpty(valueFromSecretManager))
                 {
-                    return valueFromSecretManager;
+                    return valueFromSecretManager!;
                 }
 
-                return attr.DefaultValue ?? 
+                return attr.DefaultValue ??
                 throw new Exception($"Unable to locate {attr.Name} as an environment variable, nor does its secretReference exist in the Octopus Secret Manager (1Password), and no default value is specified.");
             }
 

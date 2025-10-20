@@ -190,6 +190,14 @@ namespace Calamari.AzureAppService.Tests
             webSiteData ??= new WebSiteData(resourceGroup.Data.Location);
             webSiteData.AppServicePlanId = servicePlanResponse.Value.Id;
 
+            //this may have been set already
+            webSiteData.SiteConfig ??= new SiteConfigProperties
+            {
+                //use .NET 8.0
+                NetFrameworkVersion = "v8.0",
+                Use32BitWorkerProcess = false
+            };
+
             var webSiteResponse = await resourceGroup.GetWebSites()
                                                      .CreateOrUpdateAsync(WaitUntil.Completed,
                                                                           resourceGroup.Data.Name,

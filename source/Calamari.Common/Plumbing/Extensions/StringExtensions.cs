@@ -82,10 +82,25 @@ namespace Calamari.Common.Plumbing.Extensions
             var sanitizedText = Regex.Replace(text, @"[^a-zA-Z0-9\s]", " ");
             
             var textInfo = CultureInfo.CurrentCulture.TextInfo;
-            var camelCase = textInfo.ToTitleCase(sanitizedText).Replace(" ","").ToCharArray();
+            var camelCase = textInfo.ToTitleCase(sanitizedText).Replace(" ", string.Empty).ToCharArray();
             camelCase[0] = char.ToLower(camelCase[0]);
             
             return new string(camelCase);
         }
+        
+        public static string? DetectLineEnding(this string input)
+        {
+            return input.Contains("\r\n") 
+                ? "\r\n" 
+                : input.Contains("\n") 
+                    ? "\n" 
+                    : input.Contains("\r") 
+                        ? "\r" 
+                        : null;
+        }
+
+        public static string EnsureDoubleQuoteIfContainsSpaces(this string text) => EnsureDoubleQuote(text, t => t.Contains(" "));
+        public static string EnsureDoubleQuote(this string text) => EnsureDoubleQuote(text, t => !t.EndsWith("\"") && !t.StartsWith("\""));
+        public static string EnsureDoubleQuote(this string text, Predicate<string> shouldQuote) => shouldQuote(text) ? $"\"{text}\"" : text;
     }
 }

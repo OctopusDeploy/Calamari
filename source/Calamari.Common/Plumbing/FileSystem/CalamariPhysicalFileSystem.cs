@@ -502,7 +502,10 @@ namespace Calamari.Common.Plumbing.FileSystem
                     try
                     {
                         Log.VerboseFormat("Attempting to access with OpenOrCreate file mode, Read/Write Access and No file share {0}", filePath);
+#pragma warning disable CS0642  // Possible mistaken empty statement (it's deliberate here)
                         using (File.Open(filePath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None));
+#pragma warning restore CS0642  // Possible mistaken empty statement
+
                         Log.VerboseFormat("Succeeded accessing {0}", filePath);
                     }
                     catch (Exception fileAccessException)

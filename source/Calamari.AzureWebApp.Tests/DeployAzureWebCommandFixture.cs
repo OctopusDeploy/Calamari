@@ -124,7 +124,12 @@ namespace Calamari.AzureWebApp.Tests
         {
             var webSiteData = new WebSiteData(resourceGroupResource.Data.Location)
             {
-                AppServicePlanId = servicePlanResource.Id
+                AppServicePlanId = servicePlanResource.Id,
+                SiteConfig = new SiteConfigProperties
+                {
+                    NetFrameworkVersion = "v8.0",
+                    Use32BitWorkerProcess = false
+                }
             };
 
             var newCount = Interlocked.Increment(ref webAppCount);

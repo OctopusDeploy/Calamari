@@ -27,13 +27,13 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
                 ArtifactoryPackageDownloader downloader;
                 static readonly CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
                 readonly CancellationToken cancellationToken = CancellationTokenSource.Token;
-        
+
                 public ArtifactoryPackageDownloaderFixture()
                 {
                     fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
                 }
-        
-                [OneTimeSetUp] 
+
+                [OneTimeSetUp]
                 public async Task Setup()
                 {
                     testDirectory = "TestFileCache";
@@ -41,10 +41,11 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
                     cacheDirectory = Path.Combine(currentDirectory, testDirectory);
                     fileSystem.EnsureDirectoryExists(cacheDirectory);
 
-                    feedUri = new Uri("https://octopusdeploy.jfrog.io");
+                    var authFeedUri = await ExternalVariables.Get(ExternalVariable.ArtifactoryUrl, cancellationToken);
+                    feedUri = new Uri(authFeedUri);
                     var sensitiveValue = await ExternalVariables.Get(ExternalVariable.ArtifactoryAdminToken, cancellationToken);
                     feedCredentials = new NetworkCredential("", sensitiveValue.ToString());
-        
+
                     var log = Substitute.For<ILog>();
                     var variables = new CalamariVariables
                     {
@@ -54,13 +55,13 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
 
                     downloader = new ArtifactoryPackageDownloader(log, fileSystem, variables);
                 }
-        
-                [OneTimeTearDown] 
+
+                [OneTimeTearDown]
                 public void TearDown()
                 {
                     fileSystem.DeleteDirectory(cacheDirectory);
                 }
-                
+
         [Test]
         public void Downloads_TestWebApp_Zip()
         {
@@ -71,8 +72,8 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
                                                                  version,
                                                                  feedUri,
                                                                  feedCredentials,
-                                                                 cacheDirectory, 
-                                                                 5, 
+                                                                 cacheDirectory,
+                                                                 5,
                                                                  TimeSpan.FromSeconds(1));
 
             packagePhysicalFile.PackageId.Should().Be("com/octopus/TestWebApp2/TestWebApp2");
@@ -92,8 +93,8 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
                                                                  version,
                                                                  feedUri,
                                                                  feedCredentials,
-                                                                 cacheDirectory, 
-                                                                 5, 
+                                                                 cacheDirectory,
+                                                                 5,
                                                                  TimeSpan.FromSeconds(1));
 
             // The packageId for nupkgs uses the id from the nuspec file.
@@ -114,8 +115,8 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
                                                                  version,
                                                                  feedUri,
                                                                  feedCredentials,
-                                                                 cacheDirectory, 
-                                                                 5, 
+                                                                 cacheDirectory,
+                                                                 5,
                                                                  TimeSpan.FromSeconds(1));
 
             packagePhysicalFile.PackageId.Should().Be("octopus/Acme.Web/Acme.Web");

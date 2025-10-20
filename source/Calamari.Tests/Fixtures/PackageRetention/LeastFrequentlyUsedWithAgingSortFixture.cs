@@ -58,7 +58,7 @@ namespace Calamari.Tests.Fixtures.PackageRetention
             packagesToRemove
                 .Select(p => p.Package)
                 .Should()
-                .Equal(new object[]
+                .Equal(new[]
                 {
                     CreatePackageIdentity("package-3", "1.0"),
                     CreatePackageIdentity("package-2", "1.1"),

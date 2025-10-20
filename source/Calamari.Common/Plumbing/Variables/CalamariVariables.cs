@@ -46,5 +46,17 @@ namespace Calamari.Common.Plumbing.Variables
 
             return value;
         }
+        
+        public string GetMandatoryVariableRaw(string variableName)
+        {
+            var value = GetRaw(variableName);
+
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                throw new CommandException($"Variable {variableName} was not supplied");
+            }
+
+            return value;
+        }
     }
 }

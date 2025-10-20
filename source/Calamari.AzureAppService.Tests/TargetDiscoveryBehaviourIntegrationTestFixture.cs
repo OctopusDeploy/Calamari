@@ -302,7 +302,12 @@ namespace Calamari.AzureAppService.Tests
         {
             var data = new WebSiteData(ResourceGroupResource.Data.Location)
             {
-                AppServicePlanId = appServicePlanResource.Id
+                AppServicePlanId = appServicePlanResource.Id,
+                SiteConfig = new SiteConfigProperties
+                {
+                    NetFrameworkVersion = "v8.0",
+                    Use32BitWorkerProcess = false
+                }
             };
 
             if (tags != null)

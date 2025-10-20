@@ -7,6 +7,7 @@ using Calamari.Commands.Java;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
+using Calamari.Common.Features.Scripting.DotnetScript;
 using Calamari.Common.Features.StructuredVariables;
 using Calamari.Common.Features.Substitutions;
 using Calamari.Common.Plumbing.Commands;
@@ -131,11 +132,11 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
             var commandLineRunner = new CommandLineRunner(log, variables);
             var command = new DeployJavaArchiveCommand(
                 log,
-                new ScriptEngine(Enumerable.Empty<IScriptWrapper>(), log),
+                new ScriptEngine(Enumerable.Empty<IScriptWrapper>(), log, new DotnetScriptCompilationWarningOutputSink()),
                 variables,
                 fileSystem,
                 commandLineRunner,
-                new SubstituteInFiles(log, fileSystem, new FileSubstituter(log, fileSystem, variables), variables),
+                new SubstituteInFiles(log, new GlobSubstituteFileMatcher(fileSystem, variables), new FileSubstituter(log, fileSystem, variables), variables),
                 new ExtractPackage(new CombinedPackageExtractor(log, fileSystem, variables, commandLineRunner), fileSystem, variables, log),
                 new StructuredConfigVariablesService(new PrioritisedList<IFileFormatVariableReplacer>
                 {

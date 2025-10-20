@@ -4,7 +4,7 @@
     <Description>A sample project containing a Windows service.</Description>
     <NeutralLanguage>en-US</NeutralLanguage>
     <Authors>ACME Corporation</Authors>
-    <TargetFramework>net40</TargetFramework>
+    <TargetFramework>net462</TargetFramework>
     <AssemblyName>DumpArgs</AssemblyName>
     <PackageId>DumpArgs</PackageId>
     <NuspecFile>DumpArgs.nuspec</NuspecFile>

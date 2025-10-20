@@ -21,8 +21,12 @@ namespace Calamari.Common.Plumbing.Variables
 
         public static string IndexedPackageId(string packageReferenceName) => $"Octopus.Action.Package[{packageReferenceName}].PackageId";
 
+        public static string IndexedImage(string packageReferenceName) => $"Octopus.Action.Package[{packageReferenceName}].Image";
+        
         public static string IndexedPackageVersion(string packageReferenceName) => $"Octopus.Action.Package[{packageReferenceName}].PackageVersion";
 
+        public static string IndexedPackagePurpose(string packageReferenceName) => $"Octopus.Action.Package[{packageReferenceName}].Purpose";
+        
         public static string IndexedOriginalPath(string packageReferenceName)
         {
             return $"Octopus.Action.Package[{packageReferenceName}].OriginalPath";

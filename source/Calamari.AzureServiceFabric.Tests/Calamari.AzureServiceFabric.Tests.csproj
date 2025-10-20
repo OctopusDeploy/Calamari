@@ -7,9 +7,10 @@
         <TargetFrameworks>net462;net6.0-windows</TargetFrameworks>
         <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
         <LangVersion>8.0</LangVersion>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="FluentAssertions" Version="5.10.3" />
+        <PackageReference Include="FluentAssertions" Version="7.2.0" />
         <PackageReference Include="nunit" Version="3.13.3" />
         <PackageReference Include="NUnit3TestAdapter" Version="3.17.0" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.10.0" />

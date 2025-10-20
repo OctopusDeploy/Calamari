@@ -4,14 +4,12 @@ using System.IO;
 using System.Linq;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
-using Calamari.Common.Features.Scripts;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Proxies;
 using Calamari.Common.Plumbing.Variables;
-using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.GoogleCloudAccounts
 {
@@ -216,7 +214,7 @@ namespace Calamari.GoogleCloudAccounts
                 using (var keyFile = new TemporaryFile(Path.Combine(workingDirectory, Path.GetRandomFileName())))
                 {
                     File.WriteAllBytes(keyFile.FilePath, bytes);
-                    if (ExecuteCommand("auth", "activate-service-account", $"--key-file=\"{keyFile.FilePath}\"")
+                    if (ExecuteCommand("auth", "activate-service-account", $"--key-file={keyFile.FilePath.EnsureDoubleQuoteIfContainsSpaces()}")
                             .ExitCode
                         != 0)
                     {
@@ -261,10 +259,10 @@ namespace Calamari.GoogleCloudAccounts
                                                         "--service-account-token-lifetime-seconds=3600",
                                                         "--subject-token-type=urn:ietf:params:oauth:token-type:jwt",
                                                         "--credential-source-type=text",
-                                                        $"--credential-source-file={jwtFilePath}",
+                                                        $"--credential-source-file={jwtFilePath.EnsureDoubleQuoteIfContainsSpaces()}",
                                                         "--app-id-uri",
                                                         serverUri,
-                                                        $"--output-file={jsonAuthFilePath}");
+                                                        $"--output-file={jsonAuthFilePath.EnsureDoubleQuoteIfContainsSpaces()}");
                 if (createConfigResult.ExitCode != 0)
                 {
                     log.Error("Failed to create credential config with gcloud.");
@@ -273,7 +271,7 @@ namespace Calamari.GoogleCloudAccounts
 
                 if (ExecuteCommand("auth",
                                    "login",
-                                   $"--cred-file={jsonAuthFilePath}")
+                                   $"--cred-file={jsonAuthFilePath.EnsureDoubleQuoteIfContainsSpaces()}")
                         .ExitCode
                     != 0)
                 {
