@@ -26,6 +26,9 @@ namespace Calamari.Tests.ArgoCD.Helm
 // This class is REALLY the helm side of the InstallConventionTest
     public class ArgoCDHelmVariablesImageUpdaterTests
     {
+        const string ProjectSlug = "TheProject";
+        const string EnvironmentSlug = "TheEnvironment";
+
         readonly ICalamariFileSystem fileSystem = TestCalamariPhysicalFileSystem.GetPhysicalFileSystem();
         readonly InMemoryLog log = new InMemoryLog();
         string tempDirectory;
@@ -78,7 +81,12 @@ image:
             {
                 Metadata = new Metadata()
                 {
-                    Namespace = "MyAppp",
+                    Name = "MyApp",
+                    Annotations = new Dictionary<string, string>()
+                    {
+                        [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(null)] = ProjectSlug,
+                        [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(null)] = EnvironmentSlug,
+                    }
                 },
                 Spec = new ApplicationSpec()
                 {
@@ -105,10 +113,7 @@ image:
         public void UpdateImages_WithNoImages_ReturnsResultWithEmptyImagesList()
         {
             // Arrange
-            argoCdApplicationFromYaml.Metadata.Annotations = new Dictionary<string, string>()
-            {
-                { ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey, "{{ .Values.image.name }}" }
-            };
+            argoCdApplicationFromYaml.Metadata.Annotations[ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey] = "{{ .Values.image.name }}";
 
             var updater = new UpdateArgoCDAppImagesInstallConvention(log,
                                                                      Substitute.For<IGitHubPullRequestCreator>(),
@@ -119,6 +124,9 @@ image:
                                                                      argoCdApplicationManifestParser);
             var variables = new CalamariVariables
             {
+                [ProjectVariables.Slug] = ProjectSlug,
+                [DeploymentEnvironment.Slug] = EnvironmentSlug,
+
                 //NOTE: No Packages are defined in the variables
                 // [PackageVariables.IndexedImage("nginx")] = "nginx:1.27.1",
                 // [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
@@ -143,8 +151,6 @@ image:
         public void UpdateImages_WithNoAnnotations_ReturnsResultWithEmptyImagesList()
         {
             // Arrange
-            argoCdApplicationFromYaml.Metadata.Annotations = new Dictionary<string, string>();
-
             var updater = new UpdateArgoCDAppImagesInstallConvention(log,
                                                                      Substitute.For<IGitHubPullRequestCreator>(),
                                                                      fileSystem,
@@ -154,6 +160,8 @@ image:
                                                                      argoCdApplicationManifestParser);
             var variables = new CalamariVariables
             {
+                [ProjectVariables.Slug] = ProjectSlug,
+                [DeploymentEnvironment.Slug] = EnvironmentSlug,
                 [PackageVariables.IndexedImage("nginx")] = "nginx:1.27.1",
                 [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
             };
@@ -177,10 +185,7 @@ image:
         public void UpdateImages_WithAMatchingUpdate_ReturnsResultWithImageUpdated()
         {
             // Arrange
-            argoCdApplicationFromYaml.Metadata.Annotations = new Dictionary<string, string>()
-            {
-                { ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey, "{{ .Values.image.name }}" }
-            };
+            argoCdApplicationFromYaml.Metadata.Annotations[ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey] = "{{ .Values.image.name }}";
 
             var updater = new UpdateArgoCDAppImagesInstallConvention(log,
                                                                      Substitute.For<IGitHubPullRequestCreator>(),
@@ -191,6 +196,8 @@ image:
                                                                      argoCdApplicationManifestParser);
             var variables = new CalamariVariables
             {
+                [ProjectVariables.Slug] = ProjectSlug,
+                [DeploymentEnvironment.Slug] = EnvironmentSlug,
                 [PackageVariables.IndexedImage("nginx")] = "nginx:1.27.1",
                 [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
             };
@@ -223,10 +230,7 @@ image2:
 ";
             originRepo.AddFilesToBranch(argoCDBranchName, ("files/values.yml", multiImageValuesFile));
 
-            argoCdApplicationFromYaml.Metadata.Annotations = new Dictionary<string, string>()
-            {
-                { ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey, "{{ .Values.image1.name }}, {{ .Values.image2.name }}:{{ .Values.image2.tag }}" }
-            };
+            argoCdApplicationFromYaml.Metadata.Annotations[ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey] = "{{ .Values.image1.name }}, {{ .Values.image2.name }}:{{ .Values.image2.tag }}";
 
             var updater = new UpdateArgoCDAppImagesInstallConvention(log,
                                                                      Substitute.For<IGitHubPullRequestCreator>(),
@@ -237,6 +241,8 @@ image2:
                                                                      argoCdApplicationManifestParser);
             var variables = new CalamariVariables
             {
+                [ProjectVariables.Slug] = ProjectSlug,
+                [DeploymentEnvironment.Slug] = EnvironmentSlug,
                 [PackageVariables.IndexedImage("nginx")] = "nginx:1.27.1",
                 [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
                 [PackageVariables.IndexedImage("alpine")] = "alpine:2.2",
@@ -285,7 +291,9 @@ image:
                     Namespace = "MyAppp",
                     Annotations = new Dictionary<string, string>()
                     {
-                        { ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey, "{{ .Values.image.repository }}:{{ .Values.image.tag }}" }
+                        [ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey] = "{{ .Values.image.repository }}:{{ .Values.image.tag }}",
+                        [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(null)] = ProjectSlug,
+                        [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(null)] = EnvironmentSlug,
                     }
                 },
                 Spec = new ApplicationSpec()
@@ -313,6 +321,8 @@ image:
                                                                      argoCdApplicationManifestParser);
             var variables = new CalamariVariables
             {
+                [ProjectVariables.Slug] = ProjectSlug,
+                [DeploymentEnvironment.Slug] = EnvironmentSlug,
                 [PackageVariables.IndexedImage("argocd-e2e-container")] = "quay.io/argoprojlabs/argocd-e2e-container:0.3",
                 [PackageVariables.IndexedPackagePurpose("argocd-e2e-container")] = "DockerImageReference",
             };

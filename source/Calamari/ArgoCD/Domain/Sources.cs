@@ -14,6 +14,9 @@ namespace Calamari.ArgoCD.Domain
     
         [JsonPropertyName("targetRevision")]
         public string TargetRevision { get; set; } = string.Empty;
+        
+        [JsonPropertyName("name")]
+        public string Name { get; set; } = string.Empty;
     }
 
 
