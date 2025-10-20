@@ -8,24 +8,12 @@ namespace Calamari.Testing.Requirements
 {
     public class RequiresNonMacAttribute : NUnitAttribute, IApplyToTest
     {
-        readonly string reason;
-
-        public RequiresNonMacAttribute(string reason)
-        {
-            this.reason = reason;
-        }
-
         public void ApplyToTest(Test test)
         {
             if (CalamariEnvironment.IsRunningOnMac)
             {
-                var skipReason = "This test does not run on MacOS";
-                if (!string.IsNullOrWhiteSpace(reason))
-                {
-                    skipReason += $" because {reason}";
-                }
                 test.RunState = RunState.Skipped;
-                test.Properties.Set(PropertyNames.SkipReason, skipReason);
+                test.Properties.Set(PropertyNames.SkipReason, "This test does not run on MacOS");
             }
         }
     }
