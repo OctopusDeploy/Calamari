@@ -69,6 +69,8 @@ namespace Calamari.ArgoCD.Conventions
 
             foreach (var application in argoProperties.Applications)
             {
+                log.InfoFormat("Processing application {0}", application.Name);
+
                 var instanceLinks = application.InstanceWebUiUrl != null ? new ArgoCDInstanceLinks(application.InstanceWebUiUrl) : null;
 
                 var valuesFilesToUpdate = new List<HelmValuesFileImageUpdateTarget>();
