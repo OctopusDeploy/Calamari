@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,16 +13,16 @@ namespace Calamari.Testing
     {
         [EnvironmentVariable("Azure_OctopusAPITester_SubscriptionId", "op://Calamari Secrets for Tests/Azure - OctopusApiTester/subscription id")]
         AzureSubscriptionId,
-
+        
         [EnvironmentVariable("Azure_OctopusAPITester_TenantId", "op://Calamari Secrets for Tests/Azure - OctopusApiTester/tenant id")]
         AzureSubscriptionTenantId,
-
+        
         [EnvironmentVariable("Azure_OctopusAPITester_Password", "op://Calamari Secrets for Tests/Azure - OctopusApiTester/password")]
         AzureSubscriptionPassword,
-
+        
         [EnvironmentVariable("Azure_OctopusAPITester_ClientId", "op://Calamari Secrets for Tests/Azure - OctopusApiTester/client application id")]
         AzureSubscriptionClientId,
-
+        
         [EnvironmentVariable("GitHub_OctopusAPITester_Username", "op://Calamari Secrets for Tests/GitHub Test Account/username")]
         GitHubUsername,
 
@@ -91,7 +91,7 @@ namespace Calamari.Testing
         //TODO(tmm): not sure about this one - this is a copy of the github account above.
         [EnvironmentVariable("GitHub_RateLimitingPersonalAccessToken", "op://Calamari Secrets for Tests/GitHub Test Account/PAT")]
         GitHubRateLimitingPersonalAccessToken,
-
+        
         [EnvironmentVariable("SERVICEFABRIC_CLIENTCERT_THUMBPRINT", "op://Calamari Secrets for Tests/Azure - Static Service Fabric Cluster/ClientCertThumbprint")]
         ServiceFabricClientCertThumbprint,
         [EnvironmentVariable("SERVICEFABRIC_CLIENTCERT_STORELOCATION", "op://Calamari Secrets for Tests/Azure - Static Service Fabric Cluster/ClientCertStoreLocation")]
@@ -163,7 +163,7 @@ namespace Calamari.Testing
                     return valueFromSecretManager!;
                 }
 
-                return attr.DefaultValue ??
+                return attr.DefaultValue ?? 
                 throw new Exception($"Unable to locate {attr.Name} as an environment variable, nor does its secretReference exist in the Octopus Secret Manager (1Password), and no default value is specified.");
             }
 
