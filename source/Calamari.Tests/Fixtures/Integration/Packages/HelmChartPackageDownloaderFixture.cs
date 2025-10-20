@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Net;
 using System.Threading;
@@ -24,11 +24,11 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         HelmChartPackageDownloader downloader;
         static readonly CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
         readonly CancellationToken cancellationToken = CancellationTokenSource.Token;
-
+        
         [OneTimeSetUp]
         public async Task TestFixtureSetUp()
         {
-            var baseUrl = await ExternalVariables.Get(ExternalVariable.ArtifactoryUrl, cancellationToken);
+            var baseUrl = await ExternalVariables.Get(ExternalVariable.ArtifactoryUrl, cancellationToken); 
             authFeedUri =  $"{baseUrl}/octopusdeploy/helm-testing/";
             feedUsername = await ExternalVariables.Get(ExternalVariable.ArtifactoryUsername, cancellationToken);
             feedPassword = await ExternalVariables.Get(ExternalVariable.ArtifactoryPassword, cancellationToken);
@@ -46,7 +46,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         {
             downloader = new HelmChartPackageDownloader(CalamariPhysicalFileSystem.GetPhysicalFileSystem(), new InMemoryLog());
         }
-
+        
         [Test]
         public void PackageWithCredentials_Loads()
         {
@@ -55,7 +55,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             pkg.PackageId.Should().Be("mychart");
             pkg.Version.Should().Be(new SemanticVersion("0.3.7"));
         }
-
+        
         [Test]
         public async Task PackageWithInvalidUrl_Throws()
         {
