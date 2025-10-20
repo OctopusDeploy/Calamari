@@ -90,60 +90,58 @@ namespace Calamari.ArgoCD.Conventions
                 foreach (var applicationSource in sourcesToInspect)
                 {
                     var annotatedScope = ScopingAnnotationReader.GetScopeForApplicationSource(applicationSource.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources);
-                    if (annotatedScope != deploymentScope)
+                    LogApplicationSourceScopeStatus(annotatedScope, applicationSource.Name.ToApplicationSourceName(), deploymentScope);
+
+                    if (annotatedScope == deploymentScope)
                     {
-                        log.Info($"Application source '{applicationSource.Name}' doesn't match this deployment P/E/T', will not update");
-                        continue;
+                        Log.Info($"Writing files to repository '{applicationSource.RepoUrl}' for '{application.Name}'");
+
+                        var gitCredential = gitCredentials.GetValueOrDefault(applicationSource.RepoUrl.AbsoluteUri);
+                        if (gitCredential == null)
+                        {
+                            log.Info($"No Git credentials found for: '{applicationSource.RepoUrl.AbsoluteUri}', will attempt to clone repository anonymously.");
+                        }
+
+                        var gitConnection = new GitConnection(gitCredential?.Username, gitCredential?.Password, applicationSource.RepoUrl.AbsoluteUri, new GitBranchName(applicationSource.TargetRevision));
+                        var repository = repositoryFactory.CloneRepository(repositoryNumber.ToString(CultureInfo.InvariantCulture), gitConnection);
+
+                        Log.Info($"Copying files into repository {applicationSource.RepoUrl}");
+                        var subFolder = applicationSource.Path ?? string.Empty;
+                        Log.VerboseFormat("Copying files into subfolder '{0}'", subFolder);
+
+                        if (deploymentConfig.PurgeOutputDirectory)
+                        {
+                            repository.RecursivelyStageFilesForRemoval(subFolder);
+                        }
+
+                        var repositoryFiles = packageFiles.Select(f => new FileCopySpecification(f, repository.WorkingDirectory, subFolder)).ToList();
+                        Log.VerboseFormat("Copying files into subfolder '{0}'", applicationSource.Path!);
+                        CopyFiles(repositoryFiles);
+
+                        Log.Info("Staging files in repository");
+                        repository.StageFiles(repositoryFiles.Select(fcs => fcs.DestinationRelativePath).ToArray());
+
+                        Log.Info("Commiting changes");
+                        if (repository.CommitChanges(deploymentConfig.CommitParameters.Summary, deploymentConfig.CommitParameters.Description))
+                        {
+                            Log.Info("Changes were commited, pushing to remote");
+                            repository.PushChanges(deploymentConfig.CommitParameters.RequiresPr,
+                                                   deploymentConfig.CommitParameters.Summary,
+                                                   deploymentConfig.CommitParameters.Description,
+                                                   new GitBranchName(applicationSource.TargetRevision),
+                                                   CancellationToken.None)
+                                      .GetAwaiter()
+                                      .GetResult();
+
+                            didUpdateSomething = true;
+                        }
+                        else
+                        {
+                            Log.Info("No changes were commited.");
+                        }
+
+                        repositoryNumber++;
                     }
-                    log.Info($"Application source '{applicationSource.Name}' matches this deployment P/E/T', will update");
-
-                    Log.Info($"Writing files to repository '{applicationSource.RepoUrl}' for '{application.Name}'");
-
-                    var gitCredential = gitCredentials.GetValueOrDefault(applicationSource.RepoUrl.AbsoluteUri);
-                    if (gitCredential == null)
-                    {
-                        log.Info($"No Git credentials found for: '{applicationSource.RepoUrl.AbsoluteUri}', will attempt to clone repository anonymously.");
-                    }
-
-                    var gitConnection = new GitConnection(gitCredential?.Username, gitCredential?.Password, applicationSource.RepoUrl.AbsoluteUri, new GitBranchName(applicationSource.TargetRevision));
-                    var repository = repositoryFactory.CloneRepository(repositoryNumber.ToString(CultureInfo.InvariantCulture), gitConnection);
-
-                    Log.Info($"Copying files into repository {applicationSource.RepoUrl}");
-                    var subFolder = applicationSource.Path ?? string.Empty;
-                    Log.VerboseFormat("Copying files into subfolder '{0}'", subFolder);
-
-                    if (deploymentConfig.PurgeOutputDirectory)
-                    {
-                        repository.RecursivelyStageFilesForRemoval(subFolder);
-                    }
-
-                    var repositoryFiles = packageFiles.Select(f => new FileCopySpecification(f, repository.WorkingDirectory, subFolder)).ToList();
-                    Log.VerboseFormat("Copying files into subfolder '{0}'", applicationSource.Path!);
-                    CopyFiles(repositoryFiles);
-
-                    Log.Info("Staging files in repository");
-                    repository.StageFiles(repositoryFiles.Select(fcs => fcs.DestinationRelativePath).ToArray());
-
-                    Log.Info("Commiting changes");
-                    if (repository.CommitChanges(deploymentConfig.CommitParameters.Summary, deploymentConfig.CommitParameters.Description))
-                    {
-                        Log.Info("Changes were commited, pushing to remote");
-                        repository.PushChanges(deploymentConfig.CommitParameters.RequiresPr,
-                                               deploymentConfig.CommitParameters.Summary,
-                                               deploymentConfig.CommitParameters.Description,
-                                               new GitBranchName(applicationSource.TargetRevision),
-                                               CancellationToken.None)
-                                  .GetAwaiter()
-                                  .GetResult();
-                        
-                        didUpdateSomething = true;
-                    }
-                    else
-                    {
-                        Log.Info("No changes were commited.");
-                    }
-
-                    repositoryNumber++;
                 }
 
                 //if we have links, use that to generate a link, otherwise just put the name there
@@ -159,6 +157,20 @@ namespace Calamari.ArgoCD.Conventions
             }
         }
 
+        void LogApplicationSourceScopeStatus((ProjectSlug? Project, EnvironmentSlug? Environment, TenantSlug? Tenant) annotatedScope, ApplicationSourceName? sourceName, (ProjectSlug? Project, EnvironmentSlug? Environment, TenantSlug? Tenant) deploymentScope)
+        {
+            log.Verbose($"Application source scopes are Project: '{annotatedScope.Project}', Environment: '{annotatedScope.Environment}', Tenant: '{annotatedScope.Tenant}'");
+            string applicationNameInLogs = sourceName == null ? "(unnamed)" : $"'{sourceName.Value}'";
+            if (annotatedScope == deploymentScope)
+            {
+                log.Info($"Updating application source {applicationNameInLogs}");
+            }
+            else
+            {
+                log.Verbose($"Not updating application source {applicationNameInLogs} because it's not associated with this deployment");
+            }
+        }
+        
         void CopyFiles(IEnumerable<IFileCopySpecification> repositoryFiles)
         {
             foreach (var file in repositoryFiles)

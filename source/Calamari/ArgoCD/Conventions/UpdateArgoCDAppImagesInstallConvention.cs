@@ -95,9 +95,10 @@ namespace Calamari.ArgoCD.Conventions
                     }
 
                     var annotatedScope = ScopingAnnotationReader.GetScopeForApplicationSource(applicationSource.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources);
+                    LogApplicationSourceScopeStatus(annotatedScope, applicationSource.Name.ToApplicationSourceName(), deploymentScope);
+
                     if (annotatedScope == deploymentScope)
                     {
-                        log.Info($"Application source '{applicationSource.Name}' matches this deployment P/E/T', will update");
                         var (updatedFiles, updatedImages) = UpdateKubernetesYaml(repository.WorkingDirectory, applicationSource.Path, application.DefaultRegistry, deploymentConfig.ImageReferences);
                         if (updatedImages.Count > 0)
                         {
@@ -114,10 +115,6 @@ namespace Calamari.ArgoCD.Conventions
                             gitReposUpdated.Add(applicationSource.RepoUrl.AbsoluteUri);
                         }
                     }
-                    else
-                    {
-                        log.Info($"Application source '{applicationSource.Name}' doesn't match this deployment P/E/T', will not update");
-                    }
                 }
 
                 var explicitHelmSources = new HelmValuesFileUpdateTargetParser(applicationFromYaml, application.DefaultRegistry).GetValuesFilesToUpdate();
@@ -131,10 +128,10 @@ namespace Calamari.ArgoCD.Conventions
                     }
                     
                     var annotatedScope = ScopingAnnotationReader.GetScopeForApplicationSource(valuesFileSource.SourceName, applicationFromYaml.Metadata.Annotations, containsMultipleSources);
+                    LogApplicationSourceScopeStatus(annotatedScope, valuesFileSource.SourceName, deploymentScope);
+
                     if (annotatedScope == deploymentScope)
                     {
-                        log.Info($"Application source '{valuesFileSource.SourceName}' matches this deployment P/E/T', will update");
-
                         var sourceBase = new SourceBase()
                         {
                             RepoUrl = valuesFileSource.RepoUrl,
@@ -161,10 +158,6 @@ namespace Calamari.ArgoCD.Conventions
                             gitReposUpdated.Add(valuesFileSource.RepoUrl.ToString());
                         }
                     }
-                    else
-                    {
-                        log.Info($"Application source '{valuesFileSource.SourceName}' doesn't match this deployment P/E/T', will not update");
-                    }
                 }
 
                 //if we have links, use that to generate a link, otherwise just put the name there
@@ -186,6 +179,20 @@ namespace Calamari.ArgoCD.Conventions
                                                 updatedApplications.Distinct(),
                                                 newImagesWritten.Count
                                                );
+        }
+
+        void LogApplicationSourceScopeStatus((ProjectSlug? Project, EnvironmentSlug? Environment, TenantSlug? Tenant) annotatedScope, ApplicationSourceName? sourceName, (ProjectSlug? Project, EnvironmentSlug? Environment, TenantSlug? Tenant) deploymentScope)
+        {
+            log.Verbose($"Application source scopes are Project: '{annotatedScope.Project}', Environment: '{annotatedScope.Environment}', Tenant: '{annotatedScope.Tenant}'");
+            string applicationNameInLogs = sourceName == null ? "(unnamed)" : $"'{sourceName.Value}'";
+            if (annotatedScope == deploymentScope)
+            {
+                log.Info($"Updating application source {applicationNameInLogs}");
+            }
+            else
+            {
+                log.Verbose($"Not updating application source {applicationNameInLogs} because it's not associated with this deployment");
+            }
         }
 
         RepositoryWrapper CreateRepository(Dictionary<string, GitCredentialDto> gitCredentials, SourceBase source, RepositoryFactory repositoryFactory)
