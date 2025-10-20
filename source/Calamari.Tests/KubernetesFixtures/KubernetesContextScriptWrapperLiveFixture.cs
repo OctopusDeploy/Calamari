@@ -26,7 +26,8 @@ namespace Calamari.Tests.KubernetesFixtures
         InstallTools installTools;
 
         string terraformWorkingFolder;
-        
+        bool setupInfrastructureCompletedSuccessfully = false;
+
         protected abstract string KubernetesCloudProvider { get; }
 
         protected virtual Task PreInitialise() { return Task.CompletedTask; }
@@ -46,12 +47,14 @@ namespace Calamari.Tests.KubernetesFixtures
             await InstallOptionalTools(installTools);
         
             await InitialiseInfrastructure(terraformWorkingFolder);
+            setupInfrastructureCompletedSuccessfully = true;
         }
 
         [OneTimeTearDown]
         public async Task TearDownInfrastructure()
         {
-            await RunTerraformDestroy(terraformWorkingFolder);
+            if (setupInfrastructureCompletedSuccessfully)
+                await RunTerraformDestroy(terraformWorkingFolder);
         }
 
         [SetUp]
