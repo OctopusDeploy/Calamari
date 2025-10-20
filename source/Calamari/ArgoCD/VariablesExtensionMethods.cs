@@ -21,7 +21,7 @@ namespace Calamari.ArgoCD
             return packageReferences;
         }
 
-        public static (ProjectSlug? Project, EnvironmentSlug? Environment, TenantSlug? Tenant) GetDeploymentScope(this IVariables variables)
+        public static (ProjectSlug Project, EnvironmentSlug Environment, TenantSlug? Tenant) GetDeploymentScope(this IVariables variables)
         {
             return (variables.GetMandatoryVariable(ProjectVariables.Slug).ToProjectSlug(),
                     variables.GetMandatoryVariable(DeploymentEnvironment.Slug).ToEnvironmentSlug(),

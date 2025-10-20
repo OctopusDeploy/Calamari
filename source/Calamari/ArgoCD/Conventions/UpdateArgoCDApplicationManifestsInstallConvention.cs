@@ -74,17 +74,10 @@ namespace Calamari.ArgoCD.Conventions
                 bool containsMultipleSources = applicationFromYaml.Spec.Sources.Count > 1;
                 var sourcesToInspect = applicationFromYaml.Spec.Sources.OfType<BasicSource>().ToList();
 
-                //currently, if an application has multiple sources, we cannot update it (as we don't know which source to update), so just run away
-                if (sourcesToInspect.Count > 1)
-                {
-                    var sourcesWithScopes = sourcesToInspect.Select(s => (s, ScopingAnnotationReader.GetScopeForApplicationSource(s.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources))).ToList();
-                    var sourcesWithMatchingScopes = sourcesWithScopes.Where(s => s.Item2 == deploymentScope).ToList();
-
-                    if (sourcesWithMatchingScopes.Count > 1)
-                    {
-                        log.Warn($"Multiple sources are associated with this deployment, they will all be updated with the same contents: {string.Join(", ", sourcesWithMatchingScopes.Select(s => s.s.Name))}");
-                    }
-                }
+                LogWarningIfUpdatingMultipleSources(sourcesToInspect,
+                                                    applicationFromYaml.Metadata.Annotations,
+                                                    containsMultipleSources,
+                                                    deploymentScope);
                 
                 var didUpdateSomething = false;
                 foreach (var applicationSource in sourcesToInspect)
@@ -154,6 +147,23 @@ namespace Calamari.ArgoCD.Conventions
                     : "Nothing to update for Application {0}";
                 
                 log.InfoFormat(message, appName);
+            }
+        }
+
+        void LogWarningIfUpdatingMultipleSources(List<BasicSource> sourcesToInspect,
+                                                 Dictionary<string, string> applicationAnnotations,
+                                                 bool containsMultipleSources,
+                                                 (ProjectSlug Project, EnvironmentSlug Environment, TenantSlug? Tenant) deploymentScope)
+        {
+            if (sourcesToInspect.Count > 1)
+            {
+                var sourcesWithScopes = sourcesToInspect.Select(s => (s, ScopingAnnotationReader.GetScopeForApplicationSource(s.Name.ToApplicationSourceName(), applicationAnnotations, containsMultipleSources))).ToList();
+                var sourcesWithMatchingScopes = sourcesWithScopes.Where(s => s.Item2 == deploymentScope).ToList();
+
+                if (sourcesWithMatchingScopes.Count > 1)
+                {
+                    log.Warn($"Multiple sources are associated with this deployment, they will all be updated with the same contents: {string.Join(", ", sourcesWithMatchingScopes.Select(s => s.s.Name))}");
+                }
             }
         }
 
