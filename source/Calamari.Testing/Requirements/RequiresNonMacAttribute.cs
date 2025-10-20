@@ -10,11 +10,7 @@ namespace Calamari.Testing.Requirements
     {
         readonly string reason;
 
-        public RequiresNonMacAttribute()
-        {
-        }
-
-        public RequiresNonMacAttribute(string reason, bool onlyOnTeamCity)
+        public RequiresNonMacAttribute(string reason)
         {
             this.reason = reason;
         }

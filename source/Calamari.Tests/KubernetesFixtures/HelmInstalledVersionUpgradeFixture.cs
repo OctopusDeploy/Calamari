@@ -10,7 +10,7 @@ namespace Calamari.Tests.KubernetesFixtures
         [Test]
         [RequiresNonFreeBSDPlatform]
         [RequiresNon32BitWindows]
-        [RequiresNonMac]
+        [RequiresNonMac("Helm is not installed on the Mac build agents")]
         [Category(TestCategory.PlatformAgnostic)]
         public void Upgrade_Succeeds()
         {

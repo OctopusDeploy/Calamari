@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
+using Calamari.Common.Features.Scripting.DotnetScript;
 using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
@@ -21,8 +22,6 @@ using Octopus.Versioning.Semver;
 namespace Calamari.Tests.Fixtures.Integration.Packages
 {
     [TestFixture]
-    [RequiresNonMac("1Password Connect is not yet available on CloudMac", onlyOnTeamCity: true)]
-    [RequiresNonAmazonLinuxPlatform("1Password Connect is not available on AmazonLinux running on AWS")]
     public class DockerImagePackageDownloaderCredentialHelperFixture
     {
         static string dockerHubFeedUri;
@@ -252,7 +251,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         {
             var runner = new CommandLineRunner(log, variables);
             return new DockerImagePackageDownloader(
-                new ScriptEngine(Enumerable.Empty<IScriptWrapper>(), log), 
+                new ScriptEngine(Enumerable.Empty<IScriptWrapper>(), log, new DotnetScriptCompilationWarningOutputSink()), 
                 CalamariPhysicalFileSystem.GetPhysicalFileSystem(), 
                 runner, 
                 variables, 

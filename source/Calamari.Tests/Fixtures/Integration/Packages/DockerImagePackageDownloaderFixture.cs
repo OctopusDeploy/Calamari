@@ -24,8 +24,6 @@ using Octopus.Versioning.Semver;
 namespace Calamari.Tests.Fixtures.Integration.Packages
 {
     [TestFixture]
-    [RequiresNonMac("1Password Connect is not yet available on CloudMac", onlyOnTeamCity: true)]
-    [RequiresNonAmazonLinuxPlatform("1Password Connect is not available on AmazonLinux running on AWS")]
     public class DockerImagePackageDownloaderFixture
     {
         string authFeedUri;
