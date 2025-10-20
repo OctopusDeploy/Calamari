@@ -6,17 +6,19 @@ namespace Calamari.ArgoCD.Models
 {
     public class HelmValuesFileImageUpdateTarget : ArgoCDImageUpdateTarget
     {
-        public HelmValuesFileImageUpdateTarget(string appName,
+        public HelmValuesFileImageUpdateTarget(ApplicationName appName,
+                                               ApplicationSourceName sourceName,
                                                string defaultClusterRegistry,
                                                string path,
                                                Uri repoUrl,
                                                string targetRevision,
                                                string fileName,
                                                List<string> imagePathDefinitions) : base(appName,
-                                                                                         defaultClusterRegistry,
-                                                                                         path,
-                                                                                         repoUrl,
-                                                                                         targetRevision)
+                                                                                        sourceName,
+                                                                                        defaultClusterRegistry,
+                                                                                        path,
+                                                                                        repoUrl,
+                                                                                        targetRevision)
         {
             FileName = fileName;
             ImagePathDefinitions = imagePathDefinitions;
@@ -27,17 +29,17 @@ namespace Calamari.ArgoCD.Models
     }
 
     // Allows us to pass issues up the chain for logging without pushing an ITaskLog all the way down the stack
-    public class InvalidHelmValuesFileImageUpdateTarget :
-
-    HelmValuesFileImageUpdateTarget
+    public class InvalidHelmValuesFileImageUpdateTarget : HelmValuesFileImageUpdateTarget
     {
-        public InvalidHelmValuesFileImageUpdateTarget(string appName,
+        public InvalidHelmValuesFileImageUpdateTarget(ApplicationName appName,
+                                                      ApplicationSourceName sourceName,
                                                       string defaultClusterRegistry,
                                                       string path,
                                                       Uri repoUrl,
                                                       string targetRevision,
                                                       string fileName,
                                                       string alias) : base(appName,
+                                                                           sourceName,
                                                                            defaultClusterRegistry,
                                                                            path,
                                                                            repoUrl,

@@ -65,18 +65,18 @@ namespace Calamari.Tests.KubernetesFixtures
                                                             //TODO(tmm): AzureRM_provider and/or Terraform were causing flakey tests - this pins the required version of terraform
                                                             var pinnedVersion = "1.7.5";
                                                             log($"Overriding terraform version tp {pinnedVersion} to avoid flakey tests");
-                                                            
                                                             downloadBaseUrl = downloadBaseUrl.Replace(version, pinnedVersion);
                                                             version = pinnedVersion;
 
                                                             log($"Found Terraform version {version} @ {downloadBaseUrl}");
-                                                            
+
                                                             return (version, downloadBaseUrl);
                                                         },
                                                         async (destinationDirectoryName, tuple) =>
                                                         {
                                                             log($"Downloading Terraform version {tuple.version} from {tuple.data}");
                                                             var fileName = GetTerraformFileName(tuple.version);
+                                                            log($"Downloading Terraform version {tuple.version} from {tuple.data}");
 
                                                             await DownloadTerraform(fileName, client, tuple.data, destinationDirectoryName);
 
@@ -509,7 +509,6 @@ namespace Calamari.Tests.KubernetesFixtures
                     await Task.Delay(retryTracker.Sleep());
                 }
             }
-
             var destinationDirectoryName = TestEnvironment.GetTestPath("Tools", toolName, version);
 
             string ShouldDownload()
@@ -531,11 +530,11 @@ namespace Calamari.Tests.KubernetesFixtures
                     case "kubelogin":
                         path = GetKubeloginExecutablePath(destinationDirectoryName);
                         break;
-                    case "Terraform": 
+                    case "Terraform":
                         path = Directory.EnumerateFiles(destinationDirectoryName)
                                                .FirstOrDefault(f => Path.GetFileName(f).Contains("terraform"));
                         break;
-                        
+
                 }
 
                 if (path == null || !File.Exists(path))
