@@ -10,7 +10,7 @@ namespace Calamari.ArgoCD.Conventions
 {
     static class ScopingAnnotationReader
     {
-        public static (ProjectSlug?, EnvironmentSlug?, TenantSlug?) GetScopeForApplicationSource(ApplicationSourceName? sourceName, IReadOnlyDictionary<string, string> applicationAnnotations, bool containsMultipleSources)
+        public static (ProjectSlug? Project, EnvironmentSlug? Environment, TenantSlug? Tenant) GetScopeForApplicationSource(ApplicationSourceName? sourceName, IReadOnlyDictionary<string, string> applicationAnnotations, bool containsMultipleSources)
         {
             //If we have multiple sources, scoping annotations can only match named sources
             if (containsMultipleSources && sourceName == null)

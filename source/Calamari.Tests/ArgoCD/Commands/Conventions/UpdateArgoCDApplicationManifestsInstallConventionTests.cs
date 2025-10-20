@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Calamari.ArgoCD;
 using Calamari.ArgoCD.Commands;
 using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Domain;
@@ -26,6 +27,8 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
     [TestFixture]
     public class UpdateArgoCDApplicationManifestsInstallConventionTests
     {
+        const string ProjectSlug = "TheProject";
+        const string EnvironmentSlug = "TheEnvironment";
         readonly ICalamariFileSystem fileSystem = TestCalamariPhysicalFileSystem.GetPhysicalFileSystem();
         InMemoryLog log;
         string tempDirectory;
@@ -64,6 +67,15 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             
             var argoCdApplicationFromYaml = new Application()
             {
+                Metadata = new Metadata()
+                {
+                    Name = "The app",
+                    Annotations = new Dictionary<string, string>()
+                    {
+                        [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(null)] = ProjectSlug,
+                        [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(null)] = EnvironmentSlug,
+                    }
+                },
                 Spec = new ApplicationSpec()
                 {
                     Sources = new List<SourceBase>()
@@ -104,7 +116,9 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                 [KnownVariables.OriginalPackageDirectoryPath] = WorkingDirectory,
                 [SpecialVariables.Git.InputPath] = "",
                 [SpecialVariables.Git.CommitMethod] = "DirectCommit",
-                [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this"
+                [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this",
+                [ProjectVariables.Slug] = ProjectSlug,
+                [DeploymentEnvironment.Slug] = EnvironmentSlug,
             };
             var allVariables = new CalamariVariables();
             allVariables.Merge(nonSensitiveCalamariVariables);
@@ -146,6 +160,8 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                 [SpecialVariables.Git.CommitMethod] = "DirectCommit",
                 [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this",
                 [SpecialVariables.Git.PurgeOutput] = "True",
+                [ProjectVariables.Slug] = ProjectSlug,
+                [DeploymentEnvironment.Slug] = EnvironmentSlug,
             };
             
             //add arbitrary file to the origin repo
@@ -222,7 +238,9 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                 [KnownVariables.OriginalPackageDirectoryPath] = WorkingDirectory,
                 [SpecialVariables.Git.InputPath] = "",
                 [SpecialVariables.Git.CommitMethod] = "DirectCommit",
-                [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this"
+                [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this",
+                [ProjectVariables.Slug] = ProjectSlug,
+                [DeploymentEnvironment.Slug] = EnvironmentSlug,
             };
             var allVariables = new CalamariVariables();
             allVariables.Merge(nonSensitiveCalamariVariables);

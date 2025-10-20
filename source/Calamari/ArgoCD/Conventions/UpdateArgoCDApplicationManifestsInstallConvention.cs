@@ -72,15 +72,22 @@ namespace Calamari.ArgoCD.Conventions
                 
                 var applicationFromYaml = argoCdApplicationManifestParser.ParseManifest(application.Manifest);
                 bool containsMultipleSources = applicationFromYaml.Spec.Sources.Count > 1;
+                var sourcesToInspect = applicationFromYaml.Spec.Sources.OfType<BasicSource>().ToList();
 
                 //currently, if an application has multiple sources, we cannot update it (as we don't know which source to update), so just run away
-                if (applicationFromYaml.Spec.Sources.Count > 1)
+                if (sourcesToInspect.Count > 1)
                 {
-                    throw new CommandException($"Application {application.Name} has multiple sources and cannot be updated.");
+                    var sourcesWithScopes = sourcesToInspect.Select(s => (s, ScopingAnnotationReader.GetScopeForApplicationSource(s.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources))).ToList();
+                    var sourcesWithMatchingScopes = sourcesWithScopes.Where(s => s.Item2 == deploymentScope).ToList();
+
+                    if (sourcesWithMatchingScopes.Count > 1)
+                    {
+                        log.Warn($"Multiple sources match this Project/Environment/Tenant combination, they will all be updated with the same contents: {string.Join(", ", sourcesWithMatchingScopes.Select(s => s.s.Name))}");
+                    }
                 }
                 
                 var didUpdateSomething = false;
-                foreach (var applicationSource in applicationFromYaml.Spec.Sources.OfType<BasicSource>())
+                foreach (var applicationSource in sourcesToInspect)
                 {
                     var annotatedScope = ScopingAnnotationReader.GetScopeForApplicationSource(applicationSource.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources);
                     if (annotatedScope != deploymentScope)

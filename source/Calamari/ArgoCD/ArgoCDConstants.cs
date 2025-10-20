@@ -24,17 +24,17 @@ namespace Calamari.ArgoCD
         {
             const string Prefix = "argo.octopus.com";
 
-            public static readonly string OctopusProjectAnnotationKeyPrefix = $"{Prefix}/project";
+            static readonly string OctopusProjectAnnotationKeyPrefix = $"{Prefix}/project";
             public static string OctopusProjectAnnotationKey(ApplicationSourceName? sourceName) => sourceName == null 
                 ? OctopusProjectAnnotationKeyPrefix 
                 : $"{OctopusProjectAnnotationKeyPrefix}.{sourceName}";
 
-            public static readonly string OctopusEnvironmentAnnotationKeyPrefix = $"{Prefix}/environment";
+            static readonly string OctopusEnvironmentAnnotationKeyPrefix = $"{Prefix}/environment";
             public static string OctopusEnvironmentAnnotationKey(ApplicationSourceName? sourceName) => sourceName == null 
                 ? OctopusEnvironmentAnnotationKeyPrefix 
                 : $"{OctopusEnvironmentAnnotationKeyPrefix}.{sourceName}";
 
-            public static readonly string OctopusTenantAnnotationKeyPrefix = $"{Prefix}/tenant";
+            static readonly string OctopusTenantAnnotationKeyPrefix = $"{Prefix}/tenant";
             public static string OctopusTenantAnnotationKey(ApplicationSourceName? sourceName) => sourceName == null 
                 ? OctopusTenantAnnotationKeyPrefix 
                 : $"{OctopusTenantAnnotationKeyPrefix}.{sourceName}";
