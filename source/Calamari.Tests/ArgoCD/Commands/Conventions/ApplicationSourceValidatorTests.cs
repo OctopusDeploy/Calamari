@@ -4,6 +4,7 @@ using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Domain;
 using Calamari.Common.Commands;
 using FluentAssertions;
+using Microsoft.Azure.Management.ContainerRegistry.Fluent.Models;
 using NUnit.Framework;
 
 namespace Calamari.Tests.ArgoCD.Commands.Conventions
@@ -17,7 +18,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
         public void SingleSource_AnyNameIsFine(params string[] names)
         {
             var application = CreateApplication(names);
-            
+
             Action action = () => ApplicationSourceValidator.ValidateApplicationSources(application);
             action.Should().NotThrow();
         }
@@ -28,35 +29,29 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
         public void MultipleSources_ManyUnnamed_Valid(params string[] names)
         {
             var application = CreateApplication(names);
-            
+
             Action action = () => ApplicationSourceValidator.ValidateApplicationSources(application);
             action.Should().NotThrow();
         }
-        
+
         [TestCase("foo", "foo")]
         [TestCase("bar", "foo", "bar", "")]
         public void MultipleSources_DuplicateNames_Throws(params string[] names)
         {
             var application = CreateApplication(names);
-            
+
             Action action = () => ApplicationSourceValidator.ValidateApplicationSources(application);
-            action.Should().Throw<CommandException>()
+            action.Should()
+                  .Throw<CommandException>()
                   .WithMessage($"Application FooApp has multiples sources with the name '{names.First()}'. Please ensure all sources have unique names.");
         }
-        
+
         static Application CreateApplication(params string[] names)
         {
-            return new Application()
-            {
-                Metadata = new Metadata()
-                {
-                    Name = "FooApp"
-                },
-                Spec = new ApplicationSpec()
-                {
-                    Sources = names.Select(n => new BasicSource { Name = n }).ToList<SourceBase>()
-                }
-            };
+            return new ArgoCDApplicationBuilder()
+                .WithName("FooApp")
+                .WithSources(names.Select(n => new BasicSource { Name = n }).ToList<SourceBase>())
+                .Build();
         }
     }
 }

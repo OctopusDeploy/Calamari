@@ -36,7 +36,7 @@ namespace Calamari.ArgoCD.Conventions
 
             if (unnamedAnnotations.Any())
             {
-                log.Warn($"The application '{application.Metadata.Name}' requires all annotations to be qualified by source name since it contains multiple sources. Found these unqualified annotations: {string.Join(", ", unnamedAnnotations)}.");
+                log.Warn($"The application '{application.Metadata.Name}' requires all annotations to be qualified by source name since it contains multiple sources. Found these unqualified annotations: {string.Join(", ", unnamedAnnotations.Select(a => $"'{a}'"))}.");
             }
         }
     }
