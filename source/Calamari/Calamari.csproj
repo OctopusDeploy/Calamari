@@ -56,7 +56,6 @@
     <PackageReference Include="Octopus.Versioning" Version="5.1.876" />
     <PackageReference Include="Octopus.TinyTypes" Version="2.2.1156" />
     <PackageReference Include="Octopus.CoreUtilities" Version="2.1.449" />
-    <PackageReference Include="scriptcs" Version="0.17.1" />
     <PackageReference Include="SharpCompress" Version="0.37.2" />
     <PackageReference Include="System.Text.Json" Version="8.0.5" />
     <PackageReference Include="YamlDotNet" Version="16.3.0" />
@@ -104,27 +103,14 @@
   -->
   <Target Name="RunResolvePackageDependencies" Condition="'$(RunResolvePackageDependencies)' != ''" />
   <Target Name="GetToolFiles" DependsOnTargets="RunResolvePackageDependencies">
-    <CreateItem Include="@(PackageDefinitions)" Condition="'%(Name)' == 'ScriptCS'">
-      <Output TaskParameter="Include" ItemName="ScriptCSRef" />
-    </CreateItem>
-    <PropertyGroup>
-      <ScriptCS>@(ScriptCSRef->'%(ResolvedPath)')/tools/*.*</ScriptCS>
-    </PropertyGroup>
     <ItemGroup>
-      <ScriptCSFiles Include="$(ScriptCS)" />
       <DotnetScriptFiles Include="$(MSBuildProjectDirectory)/../Calamari.Scripting/DotnetScript/dotnet-script.*.zip"/>
     </ItemGroup>
   </Target>
-  <Target Name="CopyToolsAfterBuild" AfterTargets="Build" DependsOnTargets="GetToolFiles">
-    <Copy SourceFiles="@(ScriptCSFiles)" DestinationFolder="$(OutDir)/ScriptCS/" />
-  </Target>
-  <Target Name="CopyToolsAfterPublish" AfterTargets="Publish" DependsOnTargets="GetToolFiles">
-    <Copy SourceFiles="@(ScriptCSFiles)" DestinationFolder="$(PublishDir)/ScriptCS/" />
-  </Target>
-  <Target Name="CopyDotnetScriptFilesAfterBuild" AfterTargets="Build" Condition="'$(IsCrossTargetingBuild)' == 'false'">
+  <Target Name="CopyDotnetScriptFilesAfterBuild" AfterTargets="Build" DependsOnTargets="GetToolFiles">
     <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(OutDir)/" />
   </Target>
-  <Target Name="CopyDotnetScriptFilesAfterPublish" AfterTargets="Publish">
+  <Target Name="CopyDotnetScriptFilesAfterPublish" AfterTargets="Publish" DependsOnTargets="GetToolFiles">
     <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(PublishDir)/" />
   </Target>
 </Project>
