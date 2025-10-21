@@ -76,9 +76,9 @@ namespace Calamari.ArgoCD.Conventions
                 var valuesFilesToUpdate = new List<HelmValuesFileImageUpdateTarget>();
                 var applicationFromYaml = argoCdApplicationManifestParser.ParseManifest(application.Manifest);
 
-                ApplicationSourceValidator.ValidateApplicationSources(applicationFromYaml);
-                log.LogUnnamedAnnotationsInMultiSourceApplication(applicationFromYaml);
-                
+                var validationResult = ApplicationValidator.Validate(applicationFromYaml);
+                validationResult.Action(log);
+
                 gatewayIds.Add(application.GatewayId);
                 bool containsMultipleSources = applicationFromYaml.Spec.Sources.Count > 1;
 

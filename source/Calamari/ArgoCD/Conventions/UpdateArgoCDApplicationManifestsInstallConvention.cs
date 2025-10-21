@@ -81,8 +81,8 @@ namespace Calamari.ArgoCD.Conventions
                                                     containsMultipleSources,
                                                     deploymentScope);
                 
-                ApplicationSourceValidator.ValidateApplicationSources(applicationFromYaml);
-                log.LogUnnamedAnnotationsInMultiSourceApplication(applicationFromYaml);
+                var validationResult = ApplicationValidator.Validate(applicationFromYaml);
+                validationResult.Action(log);
                 
                 var didUpdateSomething = false;
                 foreach (var applicationSource in sourcesToInspect)
