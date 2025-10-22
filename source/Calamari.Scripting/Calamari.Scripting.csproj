@@ -8,8 +8,8 @@
         <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
         <IsPackable>true</IsPackable>
         <LangVersion>9</LangVersion>
-        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <TargetFrameworks>net462;net8.0</TargetFrameworks>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     </PropertyGroup>
 
     <ItemGroup>
