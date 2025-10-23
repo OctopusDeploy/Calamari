@@ -213,7 +213,7 @@ partial class Build : NukeBuild
 
                                Log.Warning($"Skipping the bundling of {RootProjectName} into the Calamari.Legacy bundle. "
                                            + "This is required for providing .Net Framework executables for legacy Target Operating Systems");
-                               
+
                                DoPublish(RootProjectName, Frameworks.Net80, nugetVersion, FixedRuntimes.Cloud);
                            }
 
@@ -424,8 +424,8 @@ partial class Build : NukeBuild
             .Where(d => d.Framework == Frameworks.Net462 && d.Project.GetOutputType() == "Exe")
             .ForEach(calamariPackageMetadata =>
                      {
-                         Log.Information("Copying {ProjectName} for legacy Calamari '{Framework}' and arch '{Architecture}'", 
-                        calamariPackageMetadata.Project.Name, calamariPackageMetadata.Framework, calamariPackageMetadata.Architecture);
+                         Log.Information("Copying {ProjectName} for legacy Calamari '{Framework}' and arch '{Architecture}'",
+                                         calamariPackageMetadata.Project.Name, calamariPackageMetadata.Framework, calamariPackageMetadata.Architecture);
                          var project = calamariPackageMetadata.Project;
                          var publishedPath = PublishDirectory / project.Name / "netfx";
                          publishedPath.Copy(LegacyCalamariDirectory / project.Name, ExistsPolicy.DirectoryMerge | ExistsPolicy.FileFail);
@@ -549,12 +549,18 @@ partial class Build : NukeBuild
              .Executes(async () =>
                        {
                            var nugetVersion = NugetVersion.Value;
-                           var defaultTarget = OperatingSystem.IsWindows() ? Frameworks.Net462 : Frameworks.Net80;
-                           AbsolutePath binFolder = SourceDirectory / "Calamari.Tests" / "bin" / Configuration / defaultTarget;
-                           Directory.Exists(binFolder);
                            var actions = new List<Action>
                            {
-                               () => binFolder.CompressTo( ArtifactsDirectory / "Binaries.zip")
+                               () =>
+                               {
+                                   //if this is windows, publish a netfx version of the tests project
+                                   if (OperatingSystem.IsWindows())
+                                   {
+                                       var publishedLocation = DoPublish("Calamari.Tests", Frameworks.Net462, nugetVersion);
+                                       var zipName = $"Calamari.Tests.{Frameworks.Net462}.{nugetVersion}.zip";
+                                       publishedLocation.CompressTo(ArtifactsDirectory / zipName);
+                                   }
+                               }
                            };
 
                            // Create a Zip for each runtime for testing
@@ -631,7 +637,7 @@ partial class Build : NukeBuild
                                    PackagePath = artifact
                                });
                            }
-                           
+
                            foreach (var flavour in GetCalamariFlavours())
                            {
                                if (Solution.GetProject(flavour) != null)
