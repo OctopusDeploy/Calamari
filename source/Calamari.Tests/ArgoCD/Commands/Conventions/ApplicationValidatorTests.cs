@@ -56,7 +56,6 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
         [Test]
         public void UnnamedAnnotations_Multisource_HasWarning()
         {
-            InMemoryLog log = new InMemoryLog();
             var application = CreateApplication(new Dictionary<string, string>()
             {
                 ["argo.octopus.com/project"] = "project-a",
