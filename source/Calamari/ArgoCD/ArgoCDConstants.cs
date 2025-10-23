@@ -41,12 +41,11 @@ namespace Calamari.ArgoCD
 
             public const string OctopusDefaultClusterRegistryAnnotationKey = "argo.octopus.com/default-container-registry";
 
-            public const string OctopusImageReplacementPathsKey = "argo.octopus.com/image-replace-paths";
+            static readonly string OctopusImageReplacementPathsKeyPrefix = $"{Prefix}/image-replace-paths";
 
-            public const string OctopusImageReplaceAliasKey = "argo.octopus.com/image-replace-alias";
-
-            public static string OctopusImageReplacementPathsKeyWithSpecifier(string specifier) => $"{OctopusImageReplacementPathsKey}.{specifier}";
-
+            public static string OctopusImageReplacementPathsKey(ApplicationSourceName? sourceName) => sourceName == null 
+                ? OctopusImageReplacementPathsKeyPrefix 
+                : $"{OctopusImageReplacementPathsKeyPrefix}.{sourceName}";
 
             // TODO: Verify that we need this. Here as a placeholder/reminder for now.
             // public const string OctopusStepIdAnnotationKey = "argo.octopus.com/step-id";

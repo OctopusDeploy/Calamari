@@ -11,10 +11,10 @@ namespace Calamari.ArgoCD.Helm
     {
         readonly string yamlContent;
         readonly string defaultClusterRegistry;
-        readonly List<string> imagePathAnnotations;
+        readonly IReadOnlyCollection<string> imagePathAnnotations;
         readonly ILog log;
 
-        public HelmContainerImageReplacer(string yamlContent, string defaultClusterRegistry, List<string> imagePathAnnotations, ILog log)
+        public HelmContainerImageReplacer(string yamlContent, string defaultClusterRegistry, IReadOnlyCollection<string> imagePathAnnotations, ILog log)
         {
             this.yamlContent = yamlContent;
             this.defaultClusterRegistry = defaultClusterRegistry;
