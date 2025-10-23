@@ -305,12 +305,13 @@ namespace Calamari.Tests.ArgoCD.Helm
             result.Targets.Should().BeEquivalentTo(new List<HelmValuesFileImageUpdateTarget>() { expected1, expected2 }, options => options.ComparingByMembers<HelmValuesFileImageUpdateTarget>());
             result.Problems.Should().BeEmpty();
         }
-
+        
         [Test]
-        public void GetValuesFilesToUpdate_WithSingleRefValuesFile_WithNoAnnotations_ReturnsEmptyList()
+        public void GetValuesFilesToUpdate_WithRefValuesFiles_WithNoAnnotations_ReturnsEmptyList()
         {
             const string valuesRef = "the-values";
-            const string valuesFilePath = "files/values.yaml";
+            const string valuesFilePath1 = "files1/values.yaml";
+            const string valuesFilePath2 = "files2/values.yaml";
 
             var refSource = new ReferenceSource()
             {
@@ -325,7 +326,7 @@ namespace Calamari.Tests.ArgoCD.Helm
                 RepoUrl = new Uri("https://example.com/repo.git"),
                 Helm = new HelmConfig()
                 {
-                    ValueFiles = new List<string>() { $"${valuesRef}/{valuesFilePath}" }
+                    ValueFiles = new List<string>() { $"${valuesRef}/{valuesFilePath1}", $"${valuesRef}/{valuesFilePath2}" }
                 }
             };
 
