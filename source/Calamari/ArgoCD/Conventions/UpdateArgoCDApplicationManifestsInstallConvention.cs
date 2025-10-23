@@ -75,11 +75,6 @@ namespace Calamari.ArgoCD.Conventions
 
                 var instanceLinks = application.InstanceWebUiUrl != null ? new ArgoCDInstanceLinks(application.InstanceWebUiUrl) : null;
 
-                //if we have links, use that to generate a link, otherwise just put the name there
-                var linkifiedAppName = instanceLinks != null
-                    ? log.FormatLink(instanceLinks.ApplicationDetails(application.Name, application.KubernetesNamespace), application.Name)
-                    : application.Name;
-
                 var applicationFromYaml = argoCdApplicationManifestParser.ParseManifest(application.Manifest);
                 var containsMultipleSources = applicationFromYaml.Spec.Sources.Count > 1;
                 var sourcesToInspect = applicationFromYaml.Spec.Sources.OfType<BasicSource>().ToList();
@@ -146,6 +141,11 @@ namespace Calamari.ArgoCD.Conventions
                             }
                         }
                     }
+                    
+                    //if we have links, use that to generate a link, otherwise just put the name there
+                    var linkifiedAppName = instanceLinks != null
+                        ? log.FormatLink(instanceLinks.ApplicationDetails(application.Name, application.KubernetesNamespace), application.Name)
+                        : application.Name;
 
                     var message = didUpdateSomething
                         ? "Updated Application {0}"

@@ -174,7 +174,7 @@ namespace Calamari.ArgoCD.Conventions
                 }
 
                 //if we have links, use that to generate a link, otherwise just put the name there
-                var appName = instanceLinks != null
+                var linkifiedAppName = instanceLinks != null
                     ? log.FormatLink(instanceLinks.ApplicationDetails(application.Name, application.KubernetesNamespace), application.Name)
                     : application.Name;
 
@@ -182,7 +182,7 @@ namespace Calamari.ArgoCD.Conventions
                     ? "Updated Application {0}"
                     : "Nothing to update for Application {0}";
 
-                log.InfoFormat(message, appName);
+                log.InfoFormat(message, linkifiedAppName);
             }
 
             var outputWriter = new ArgoCDImageUpdateOutputWriter(log);
