@@ -113,7 +113,7 @@ image:
         public void UpdateImages_WithNoImages_ReturnsResultWithEmptyImagesList()
         {
             // Arrange
-            argoCdApplicationFromYaml.Metadata.Annotations[ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey] = "{{ .Values.image.name }}";
+            argoCdApplicationFromYaml.Metadata.Annotations[ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(null)] = "{{ .Values.image.name }}";
 
             var updater = new UpdateArgoCDAppImagesInstallConvention(log,
                                                                      Substitute.For<IGitHubPullRequestCreator>(),
@@ -185,7 +185,7 @@ image:
         public void UpdateImages_WithAMatchingUpdate_ReturnsResultWithImageUpdated()
         {
             // Arrange
-            argoCdApplicationFromYaml.Metadata.Annotations[ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey] = "{{ .Values.image.name }}";
+            argoCdApplicationFromYaml.Metadata.Annotations[ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(null)] = "{{ .Values.image.name }}";
 
             var updater = new UpdateArgoCDAppImagesInstallConvention(log,
                                                                      Substitute.For<IGitHubPullRequestCreator>(),
@@ -230,7 +230,7 @@ image2:
 ";
             originRepo.AddFilesToBranch(argoCDBranchName, ("files/values.yml", multiImageValuesFile));
 
-            argoCdApplicationFromYaml.Metadata.Annotations[ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey] = "{{ .Values.image1.name }}, {{ .Values.image2.name }}:{{ .Values.image2.tag }}";
+            argoCdApplicationFromYaml.Metadata.Annotations[ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(null)] = "{{ .Values.image1.name }}, {{ .Values.image2.name }}:{{ .Values.image2.tag }}";
 
             var updater = new UpdateArgoCDAppImagesInstallConvention(log,
                                                                      Substitute.For<IGitHubPullRequestCreator>(),
@@ -291,7 +291,7 @@ image:
                     Namespace = "MyAppp",
                     Annotations = new Dictionary<string, string>()
                     {
-                        [ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey] = "{{ .Values.image.repository }}:{{ .Values.image.tag }}",
+                        [ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(null)] = "{{ .Values.image.repository }}:{{ .Values.image.tag }}",
                         [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(null)] = ProjectSlug,
                         [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(null)] = EnvironmentSlug,
                     }

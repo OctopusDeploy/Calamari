@@ -1,6 +1,7 @@
 #if NET
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Calamari.ArgoCD.Domain;
 using Calamari.ArgoCD.Models;
 using Calamari.Common.Commands;
@@ -27,6 +28,19 @@ namespace Calamari.ArgoCD.Conventions
                 environmentAnnotation.ToEnvironmentSlug(),
                 tenantAnnotation.ToTenantSlug()
             );
+        }
+        
+        public static IReadOnlyCollection<string> GetImageReplacePathsForApplicationSource(ApplicationSourceName? sourceName, IReadOnlyDictionary<string, string> applicationAnnotations, bool containsMultipleSources)
+        {
+            //If we have multiple sources, scoping annotations can only match named sources
+            if (containsMultipleSources && sourceName == null)
+            {
+                return new List<string>();
+            }
+
+            applicationAnnotations.TryGetValue(ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(sourceName), out var imagePathsAnnotation);
+            
+            return imagePathsAnnotation?.Split(',').Select(a => a.Trim()).ToList() ?? new  List<string>();
         }
     }
 }
