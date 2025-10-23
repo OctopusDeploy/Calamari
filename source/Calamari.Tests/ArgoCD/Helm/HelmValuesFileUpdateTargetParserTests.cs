@@ -106,7 +106,7 @@ namespace Calamari.Tests.ArgoCD.Helm
 
             // Assert
             result.Targets.Should().BeEmpty();
-            result.Problems.Should().BeEquivalentTo(new [] { new HelmSourceIsMissingImagePathAnnotation(helmSource.Name.ToApplicationSourceName(), helmSource.RepoUrl) });
+            result.Problems.Should().BeEquivalentTo(new [] { new HelmSourceIsMissingImagePathAnnotation(helmSource.Name.ToApplicationSourceName(), helmSource.RepoUrl, null, null) });
         }
 
         [Test]
@@ -198,7 +198,7 @@ namespace Calamari.Tests.ArgoCD.Helm
 
             // Assert
             result.Targets.Should().BeEmpty();
-            result.Problems.Should().BeEquivalentTo(new [] { new HelmSourceIsMissingImagePathAnnotation(helmSource.Name.ToApplicationSourceName(), helmSource.RepoUrl) });
+            result.Problems.Should().BeEquivalentTo(new [] { new HelmSourceIsMissingImagePathAnnotation(helmSource.Name.ToApplicationSourceName(), helmSource.RepoUrl, null, null) });
         }
 
         [Test]
@@ -239,7 +239,10 @@ namespace Calamari.Tests.ArgoCD.Helm
 
             // Assert
             result.Targets.Should().BeEmpty();
-            result.Problems.Should().BeEquivalentTo(new [] { new HelmSourceIsMissingImagePathAnnotation(helmSource.Name.ToApplicationSourceName(), helmSource.RepoUrl) });
+            result.Problems.Should().BeEquivalentTo(new []
+            {
+                new HelmSourceIsMissingImagePathAnnotation(helmSource.Name.ToApplicationSourceName(), helmSource.RepoUrl, null, null)
+            });
         }
 
         [Test]
@@ -348,7 +351,7 @@ namespace Calamari.Tests.ArgoCD.Helm
 
             // Assert
             result.Targets.Should().BeEmpty();
-            result.Problems.Should().BeEquivalentTo(new [] { new HelmSourceIsMissingImagePathAnnotation(helmSource.Name.ToApplicationSourceName(), helmSource.RepoUrl)});
+            result.Problems.Should().BeEquivalentTo(new [] { new HelmSourceIsMissingImagePathAnnotation(helmSource.Name.ToApplicationSourceName(), helmSource.RepoUrl, refSource.Name.ToApplicationSourceName(), refSource.RepoUrl)});
         }
 
         [Test]

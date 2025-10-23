@@ -199,18 +199,24 @@ namespace Calamari.ArgoCD.Conventions
                 {
                     case HelmSourceIsMissingImagePathAnnotation helmSourceIsMissingImagePathAnnotation:
                     {
-                        var annotatedScope = ScopingAnnotationReader.GetScopeForApplicationSource(helmSourceIsMissingImagePathAnnotation.Name, annotations, containsMultipleSources);
+                        var sourceNameForScoping = helmSourceIsMissingImagePathAnnotation.RefRepoUrl != null 
+                            ? helmSourceIsMissingImagePathAnnotation.RefName 
+                            : helmSourceIsMissingImagePathAnnotation.Name;
+                            
+                        var annotatedScope = ScopingAnnotationReader.GetScopeForApplicationSource(sourceNameForScoping, annotations, containsMultipleSources);
                         if (annotatedScope == deploymentScope)
                         {
-                            log.WarnFormat("The Helm source '{0}'({1}) is missing an annotation for the image replace path",
+                            log.WarnFormat("The Helm source '{0}'({1}) is missing an annotation for the image replace path. It will not be updated.",
                                            helmSourceIsMissingImagePathAnnotation.Name,
                                            helmSourceIsMissingImagePathAnnotation.RepoUrl.AbsoluteUri);
                         }
+
                         return;
                     }
                     case RefSourceIsMissing refSourceIsMissing:
                     {
-                        log.WarnFormat("A source referenced by a Helm source '{0}'({1}) is missing: {2}", refSourceIsMissing.HelmSourceName, refSourceIsMissing.HelmSourceRepoUrl.AbsoluteUri, refSourceIsMissing.Ref);
+                        log.WarnFormat("A source referenced by Helm source '{0}'({1}) is missing: {2}", 
+                                       refSourceIsMissing.HelmSourceName, refSourceIsMissing.HelmSourceRepoUrl.AbsoluteUri, refSourceIsMissing.Ref);
                         return;
                     }
                     default:
