@@ -18,7 +18,6 @@ partial class Build
                 DotNetTasks.DotNetTest(settings => settings
                     .SetProjectFile("Binaries/Calamari.Tests.dll")
                     .SetFilter(testFilter)
-                    .SetLoggers("trx")
                     .SetProcessExitHandler(
                         process => process.ExitCode switch
                         {
@@ -39,7 +38,6 @@ partial class Build
                           DotNetTasks.DotNetTest(settings => settings
                                                              .SetProjectFile("Binaries/Calamari.Tests.dll")
                                                              .SetFilter(testFilter)
-                                                             .SetLoggers("trx")
                                                              .SetProcessExitHandler(process => process.ExitCode switch
                                                                                                {
                                                                                                    0 => null, //successful
@@ -59,7 +57,6 @@ partial class Build
                           DotNetTasks.DotNetTest(settings => settings
                                                              .SetProjectFile("Binaries/Calamari.Tests.dll")
                                                              .SetFilter(testFilter)
-                                                             .SetLoggers("trx")
                                                              .SetProcessExitHandler(process => process.ExitCode switch
                                                                                                {
                                                                                                    0 => null, //successful
@@ -78,7 +75,6 @@ partial class Build
                           DotNetTasks.DotNetTest(settings => settings
                                                              .SetProjectFile("Binaries/Calamari.Tests.dll")
                                                              .SetFilter(testFilter)
-                                                             .SetLoggers("trx")
                                                              .SetProcessExitHandler(process => process.ExitCode switch
                                                                                                {
                                                                                                    0 => null, //successful

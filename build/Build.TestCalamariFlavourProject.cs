@@ -41,7 +41,6 @@ partial class Build
             DotNetTasks.DotNetTest(settings => settings
                 .SetProjectFile($"CalamariTests/{testProject}.dll")
                 .SetFilter(CalamariFlavourTestCaseFilter)
-                .SetLoggers("trx")
                 .SetProcessExitHandler(
                     process => process.ExitCode switch
                     {
