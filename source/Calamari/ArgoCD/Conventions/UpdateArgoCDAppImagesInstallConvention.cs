@@ -124,7 +124,7 @@ namespace Calamari.ArgoCD.Conventions
                 }
 
                 var explicitHelmSources = new HelmValuesFileUpdateTargetParser(applicationFromYaml, application.DefaultRegistry).GetValuesFilesToUpdate();
-                LogHelmSourceConfigurationProblems(explicitHelmSources);
+                LogHelmSourceConfigurationProblems(explicitHelmSources, applicationFromYaml.Metadata.Annotations, containsMultipleSources, deploymentScope);
 
                 valuesFilesToUpdate.AddRange(explicitHelmSources.Targets);
                 foreach (var valuesFileSource in valuesFilesToUpdate)
@@ -183,7 +183,10 @@ namespace Calamari.ArgoCD.Conventions
                                                );
         }
 
-        void LogHelmSourceConfigurationProblems((IReadOnlyCollection<HelmValuesFileImageUpdateTarget> Targets, IReadOnlyCollection<HelmSourceConfigurationProblem> Problems) explicitHelmSources)
+        void LogHelmSourceConfigurationProblems((IReadOnlyCollection<HelmValuesFileImageUpdateTarget> Targets, IReadOnlyCollection<HelmSourceConfigurationProblem> Problems) explicitHelmSources,
+                                                IReadOnlyDictionary<string, string> annotations,
+                                                bool containsMultipleSources,
+                                                (ProjectSlug Project, EnvironmentSlug Environment, TenantSlug? Tenant) deploymentScope)
         {
             foreach (var helmSourceConfigurationProblem in explicitHelmSources.Problems)
             {
@@ -196,15 +199,18 @@ namespace Calamari.ArgoCD.Conventions
                 {
                     case HelmSourceIsMissingImagePathAnnotation helmSourceIsMissingImagePathAnnotation:
                     {
-                        //TODO: Only log a warning if any ref sources are scoped to this deployment.
-                        log.WarnFormat("The Helm source '{0}'({1}) is missing an annotation for the image replace path", 
-                                       helmSourceIsMissingImagePathAnnotation.Name, 
-                                       helmSourceIsMissingImagePathAnnotation.RepoUrl.AbsoluteUri);
+                        var annotatedScope = ScopingAnnotationReader.GetScopeForApplicationSource(helmSourceIsMissingImagePathAnnotation.Name, annotations, containsMultipleSources);
+                        if (annotatedScope == deploymentScope)
+                        {
+                            log.WarnFormat("The Helm source '{0}'({1}) is missing an annotation for the image replace path",
+                                           helmSourceIsMissingImagePathAnnotation.Name,
+                                           helmSourceIsMissingImagePathAnnotation.RepoUrl.AbsoluteUri);
+                        }
                         return;
                     }
                     case RefSourceIsMissing refSourceIsMissing:
                     {
-                        log.WarnFormat("A source referenced by a Helm source is missing: {0}", refSourceIsMissing.Ref);
+                        log.WarnFormat("A source referenced by a Helm source '{0}'({1}) is missing: {2}", refSourceIsMissing.HelmSourceName, refSourceIsMissing.HelmSourceRepoUrl.AbsoluteUri, refSourceIsMissing.Ref);
                         return;
                     }
                     default:

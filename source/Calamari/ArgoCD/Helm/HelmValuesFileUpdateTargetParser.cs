@@ -46,12 +46,12 @@ namespace Calamari.ArgoCD.Helm
             {
                 return (Array.Empty<HelmValuesFileImageUpdateTarget>(), new []
                 {
-                    new HelmSourceIsMissingImagePathAnnotation(source.Name, source.RepoUrl)
+                    new HelmSourceIsMissingImagePathAnnotation(source.Name.ToApplicationSourceName(), source.RepoUrl)
                 });
             }
 
             var results = source.Helm.ValueFiles.Select(file => file.StartsWith('$')
-                                                                ? ProcessRefValuesFile(file, definedPathsForSource)
+                                                                ? ProcessRefValuesFile(file, definedPathsForSource, source)
                                                                 : ProcessInlineValuesFile(source, file, definedPathsForSource)).ToArray();
             return (results.Where(t => t.Target != null).Select(v => v.Target!).ToArray(), 
                     results.Where(t => t.Problem != null).Select(v => v.Problem!).ToArray());
@@ -69,13 +69,13 @@ namespace Calamari.ArgoCD.Helm
                                                        definedPathsForSource), null);
         }
 
-        (HelmValuesFileImageUpdateTarget? Target, HelmSourceConfigurationProblem? Problem) ProcessRefValuesFile(string file, IReadOnlyCollection<string> definedPathsForSource)
+        (HelmValuesFileImageUpdateTarget? Target, HelmSourceConfigurationProblem? Problem) ProcessRefValuesFile(string file, IReadOnlyCollection<string> definedPathsForSource, HelmSource source)
         {
             var refName = GetRefFromFilePath(file);
             var refForValuesFile = refSources.FirstOrDefault(r => r.Ref == refName);
             if (refForValuesFile == null)
             {
-                return (null, new RefSourceIsMissing(refName));
+                return (null, new RefSourceIsMissing(refName, source.Name.ToApplicationSourceName(), source.RepoUrl));
             }
             
             var relativeFile = file[(file.IndexOf('/') + 1)..];

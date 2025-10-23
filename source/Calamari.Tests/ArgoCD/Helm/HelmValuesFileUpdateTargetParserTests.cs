@@ -106,7 +106,7 @@ namespace Calamari.Tests.ArgoCD.Helm
 
             // Assert
             result.Targets.Should().BeEmpty();
-            result.Problems.Should().BeEquivalentTo(new [] { new HelmSourceIsMissingImagePathAnnotation(helmSource.Name, helmSource.RepoUrl) });
+            result.Problems.Should().BeEquivalentTo(new [] { new HelmSourceIsMissingImagePathAnnotation(helmSource.Name.ToApplicationSourceName(), helmSource.RepoUrl) });
         }
 
         [Test]
@@ -198,7 +198,7 @@ namespace Calamari.Tests.ArgoCD.Helm
 
             // Assert
             result.Targets.Should().BeEmpty();
-            result.Problems.Should().BeEquivalentTo(new [] { new HelmSourceIsMissingImagePathAnnotation(helmSource.Name, helmSource.RepoUrl) });
+            result.Problems.Should().BeEquivalentTo(new [] { new HelmSourceIsMissingImagePathAnnotation(helmSource.Name.ToApplicationSourceName(), helmSource.RepoUrl) });
         }
 
         [Test]
@@ -239,7 +239,7 @@ namespace Calamari.Tests.ArgoCD.Helm
 
             // Assert
             result.Targets.Should().BeEmpty();
-            result.Problems.Should().BeEquivalentTo(new [] { new HelmSourceIsMissingImagePathAnnotation(helmSource.Name, helmSource.RepoUrl) });
+            result.Problems.Should().BeEquivalentTo(new [] { new HelmSourceIsMissingImagePathAnnotation(helmSource.Name.ToApplicationSourceName(), helmSource.RepoUrl) });
         }
 
         [Test]
@@ -348,7 +348,7 @@ namespace Calamari.Tests.ArgoCD.Helm
 
             // Assert
             result.Targets.Should().BeEmpty();
-            result.Problems.Should().BeEquivalentTo(new [] { new HelmSourceIsMissingImagePathAnnotation(helmSource.Name, helmSource.RepoUrl)});
+            result.Problems.Should().BeEquivalentTo(new [] { new HelmSourceIsMissingImagePathAnnotation(helmSource.Name.ToApplicationSourceName(), helmSource.RepoUrl)});
         }
 
         [Test]
@@ -459,7 +459,7 @@ namespace Calamari.Tests.ArgoCD.Helm
 
             // Assert
             result.Targets.Should().BeEmpty();
-            result.Problems.Should().BeEquivalentTo(new [] { new RefSourceIsMissing(valuesRef) });
+            result.Problems.Should().BeEquivalentTo(new [] { new RefSourceIsMissing(valuesRef, helmSource.Name.ToApplicationSourceName(), helmSource.RepoUrl) });
         }
 
         [Test]

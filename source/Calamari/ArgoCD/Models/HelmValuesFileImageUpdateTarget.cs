@@ -34,24 +34,29 @@ namespace Calamari.ArgoCD.Models
 
     public class HelmSourceIsMissingImagePathAnnotation : HelmSourceConfigurationProblem
     {
-        public HelmSourceIsMissingImagePathAnnotation(string name, Uri repoUrl)
+        public HelmSourceIsMissingImagePathAnnotation(ApplicationSourceName name, Uri repoUrl)
         {
             Name = name;
             RepoUrl = repoUrl;
         }
 
-        public string Name { get;  }
+        public ApplicationSourceName Name { get;  }
         public Uri RepoUrl { get;  }
     }
     
     public class RefSourceIsMissing : HelmSourceConfigurationProblem
     {
-        public RefSourceIsMissing(string @ref)
+        public RefSourceIsMissing(string @ref, ApplicationSourceName helmSourceName, Uri helmSourceRepoUrl)
         {
             Ref = @ref;
+            HelmSourceName = helmSourceName;
+            HelmSourceRepoUrl = helmSourceRepoUrl;
         }
 
         public string Ref { get; }
+        
+        public ApplicationSourceName HelmSourceName { get;  }
+        public Uri HelmSourceRepoUrl { get;  }
     }
 }
 #endif
