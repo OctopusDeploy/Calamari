@@ -68,8 +68,10 @@ namespace Calamari.ArgoCD.Conventions
             var repositoryNumber = 1;
             foreach (var application in argoProperties.Applications)
             {
+                log.InfoFormat("Processing application {0}", application.Name);
+
                 var instanceLinks = application.InstanceWebUiUrl != null ? new ArgoCDInstanceLinks(application.InstanceWebUiUrl) : null;
-                
+             
                 var applicationFromYaml = argoCdApplicationManifestParser.ParseManifest(application.Manifest);
                 bool containsMultipleSources = applicationFromYaml.Spec.Sources.Count > 1;
                 var sourcesToInspect = applicationFromYaml.Spec.Sources.OfType<BasicSource>().ToList();
@@ -78,6 +80,9 @@ namespace Calamari.ArgoCD.Conventions
                                                     applicationFromYaml.Metadata.Annotations,
                                                     containsMultipleSources,
                                                     deploymentScope);
+                
+                var validationResult = ApplicationValidator.Validate(applicationFromYaml);
+                validationResult.Action(log);
                 
                 var didUpdateSomething = false;
                 foreach (var applicationSource in sourcesToInspect)

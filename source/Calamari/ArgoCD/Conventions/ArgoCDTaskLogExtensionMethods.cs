@@ -1,6 +1,9 @@
 #if NET
 #nullable enable
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using Calamari.ArgoCD.Domain;
 using Calamari.ArgoCD.Models;
 using Calamari.Common.Plumbing.Logging;
 
