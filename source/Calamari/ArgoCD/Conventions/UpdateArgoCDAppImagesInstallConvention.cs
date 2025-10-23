@@ -58,6 +58,7 @@ namespace Calamari.ArgoCD.Conventions
             var argoProperties = customPropertiesLoader.Load<ArgoCDCustomPropertiesDto>();
 
             var gitCredentials = argoProperties.Credentials.ToDictionary(c => c.Url);
+            var deploymentScope = deployment.Variables.GetDeploymentScope();
 
             log.InfoFormat("Found {0} Argo CD applications to update", argoProperties.Applications.Length);
             foreach (var app in argoProperties.Applications)
@@ -72,11 +73,18 @@ namespace Calamari.ArgoCD.Conventions
 
             foreach (var application in argoProperties.Applications)
             {
+                log.InfoFormat("Processing application {0}", application.Name);
+
                 var instanceLinks = application.InstanceWebUiUrl != null ? new ArgoCDInstanceLinks(application.InstanceWebUiUrl) : null;
 
                 var valuesFilesToUpdate = new List<HelmValuesFileImageUpdateTarget>();
                 var applicationFromYaml = argoCdApplicationManifestParser.ParseManifest(application.Manifest);
+
+                var validationResult = ApplicationValidator.Validate(applicationFromYaml);
+                validationResult.Action(log);
+
                 gatewayIds.Add(application.GatewayId);
+                bool containsMultipleSources = applicationFromYaml.Spec.Sources.Count > 1;
 
                 var didUpdateSomething = false;
                 foreach (var applicationSource in applicationFromYaml.Spec.Sources.OfType<BasicSource>())
@@ -97,8 +105,12 @@ namespace Calamari.ArgoCD.Conventions
                             continue;
                         }
 
+                    var annotatedScope = ScopingAnnotationReader.GetScopeForApplicationSource(applicationSource.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources);
+                    log.LogApplicationSourceScopeStatus(annotatedScope, applicationSource.Name.ToApplicationSourceName(), deploymentScope);
                         var (updatedFiles, updatedImages) = UpdateKubernetesYaml(repository.WorkingDirectory, applicationSource.Path, application.DefaultRegistry, deploymentConfig.ImageReferences);
 
+                    if (annotatedScope == deploymentScope)
+                        var (updatedFiles, updatedImages) = UpdateKubernetesYaml(repository.WorkingDirectory, applicationSource.Path, application.DefaultRegistry, deploymentConfig.ImageReferences);
                         if (updatedImages.Count > 0)
                         {
                             var didPush = PushToRemote(repository,
@@ -125,15 +137,20 @@ namespace Calamari.ArgoCD.Conventions
                         log.Warn($"Invalid annotations setup detected.\nAlias defined: {invalidSource.Alias}. Missing corresponding {ArgoCDConstants.Annotations.OctopusImageReplacementPathsKeyWithSpecifier(invalidSource.Alias)} annotation.");
                         continue;
                     }
-
-                    var sourceBase = new SourceBase()
-                    {
-                        RepoUrl = valuesFileSource.RepoUrl,
-                        TargetRevision = valuesFileSource.TargetRevision,
-                    };
                     
-                    using (var repository = CreateRepository(gitCredentials, sourceBase, repositoryFactory))
+                    var annotatedScope = ScopingAnnotationReader.GetScopeForApplicationSource(valuesFileSource.SourceName, applicationFromYaml.Metadata.Annotations, containsMultipleSources);
+                    log.LogApplicationSourceScopeStatus(annotatedScope, valuesFileSource.SourceName, deploymentScope);
+
+                    if (annotatedScope == deploymentScope)
                     {
+                        var sourceBase = new SourceBase()
+                        {
+                            RepoUrl = valuesFileSource.RepoUrl,
+                            TargetRevision = valuesFileSource.TargetRevision,
+                        };
+                        using (var repository = CreateRepository(gitCredentials, sourceBase, repositoryFactory))
+                    {
+
                         var helmUpdateResult = UpdateHelmImageValues(repository.WorkingDirectory,
                                                                      valuesFileSource,
                                                                      deploymentConfig.ImageReferences
@@ -207,7 +224,8 @@ namespace Calamari.ArgoCD.Conventions
             {
                 log.Info($"Application '{application.Name}' source at `{applicationSource.RepoUrl.AbsoluteUri}' is a helm chart, its values file will be subsequently updated.");
                 valuesFilesToUpdate.Add(new HelmValuesFileImageUpdateTarget(
-                                                                            applicationFromYaml.Metadata.Name,
+                                                                            applicationFromYaml.Metadata.Name.ToApplicationName(),
+                                                                            applicationSource.Name.ToApplicationSourceName(),
                                                                             application.DefaultRegistry,
                                                                             applicationSource.Path,
                                                                             applicationSource.RepoUrl,

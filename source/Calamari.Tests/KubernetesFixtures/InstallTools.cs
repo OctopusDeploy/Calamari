@@ -55,6 +55,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 TerraformExecutable = await DownloadCli("Terraform",
                                                         async () =>
                                                         {
+                                                            log($"Getting available terraform versions from https://checkpoint-api.hashicorp.com/v1/check/terraform");
                                                             var json = await client.GetAsync("https://checkpoint-api.hashicorp.com/v1/check/terraform");
                                                             json.EnsureSuccessStatusCode();
                                                             var jObject = JObject.Parse(await json.Content.ReadAsStringAsync());
@@ -63,6 +64,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
                                                             //TODO(tmm): AzureRM_provider and/or Terraform were causing flakey tests - this pins the required version of terraform
                                                             var pinnedVersion = "1.7.5";
+                                                            log($"Overriding terraform version tp {pinnedVersion} to avoid flakey tests");
                                                             downloadBaseUrl = downloadBaseUrl.Replace(version, pinnedVersion);
                                                             version = pinnedVersion;
 
@@ -73,6 +75,7 @@ namespace Calamari.Tests.KubernetesFixtures
                                                         async (destinationDirectoryName, tuple) =>
                                                         {
                                                             var fileName = GetTerraformFileName(tuple.version);
+                                                            log($"Downloading Terraform version {tuple.version} from {tuple.data}");
 
                                                             await DownloadTerraform(fileName, client, tuple.data, destinationDirectoryName);
 
@@ -486,8 +489,27 @@ namespace Calamari.Tests.KubernetesFixtures
 
         async Task<string> DownloadCli(string toolName, Func<Task<(string version, string data)>> versionFetcher, Func<string, (string version, string data), Task<string>> downloader)
         {
-            var data = await versionFetcher();
-            var destinationDirectoryName = TestEnvironment.GetTestPath("Tools", toolName, data.version);
+            var retryTracker = new RetryTracker(4, TimeSpan.MaxValue, new LimitedExponentialRetryInterval(3000, 30000, 2));
+            var version = string.Empty;
+            var data = string.Empty;
+            while (retryTracker.Try())
+            {
+                try
+                {
+                    (version, data) = await versionFetcher();
+                }
+                catch
+                {
+                    if (!retryTracker.CanRetry())
+                    {
+                        throw;
+                    }
+
+                    await Task.Delay(retryTracker.Sleep());
+                }
+            }
+            
+            var destinationDirectoryName = TestEnvironment.GetTestPath("Tools", toolName, version);
 
             string ShouldDownload()
             {
@@ -538,7 +560,7 @@ namespace Calamari.Tests.KubernetesFixtures
             {
                 try
                 {
-                    executablePath = await downloader(destinationDirectoryName, data);
+                    executablePath = await downloader(destinationDirectoryName, (version, data));
 
                     AddExecutePermission(executablePath);
                     break;

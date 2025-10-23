@@ -1,6 +1,7 @@
-#if NET
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using Calamari.ArgoCD.Models;
 
 namespace Calamari.ArgoCD
 {
@@ -20,10 +21,33 @@ namespace Calamari.ArgoCD
 
         public class Annotations
         {
-            public const string OctopusProjectAnnotationKey = "argo.octopus.com/project";
-            public const string OctopusEnvironmentAnnotationKey = "argo.octopus.com/environment";
-            public const string OctopusTenantAnnotationKey = "argo.octopus.com/tenant";
+            const string Prefix = "argo.octopus.com";
 
+            static readonly string OctopusProjectAnnotationKeyPrefix = $"{Prefix}/project";
+            public static string OctopusProjectAnnotationKey(ApplicationSourceName? sourceName) => sourceName == null 
+                ? OctopusProjectAnnotationKeyPrefix 
+                : $"{OctopusProjectAnnotationKeyPrefix}.{sourceName}";
+
+            static readonly string OctopusEnvironmentAnnotationKeyPrefix = $"{Prefix}/environment";
+            public static string OctopusEnvironmentAnnotationKey(ApplicationSourceName? sourceName) => sourceName == null 
+                ? OctopusEnvironmentAnnotationKeyPrefix 
+                : $"{OctopusEnvironmentAnnotationKeyPrefix}.{sourceName}";
+
+            static readonly string OctopusTenantAnnotationKeyPrefix = $"{Prefix}/tenant";
+            public static string OctopusTenantAnnotationKey(ApplicationSourceName? sourceName) => sourceName == null 
+                ? OctopusTenantAnnotationKeyPrefix 
+                : $"{OctopusTenantAnnotationKeyPrefix}.{sourceName}";
+
+            public static IReadOnlyCollection<string> GetUnnamedAnnotationKeys()
+            {
+                return new []
+                {
+                    OctopusProjectAnnotationKey(null),
+                    OctopusEnvironmentAnnotationKey(null),
+                    OctopusTenantAnnotationKey(null)
+                };
+            }
+            
             public const string OctopusDefaultClusterRegistryAnnotationKey = "argo.octopus.com/default-container-registry";
 
             public const string OctopusImageReplacementPathsKey = "argo.octopus.com/image-replace-paths";
@@ -39,9 +63,8 @@ namespace Calamari.ArgoCD
         }
 
         //TODO: AP - Note that these are the same as Argo
-        public static readonly IReadOnlySet<string> KustomizationFileNames = new HashSet<string> { "kustomization.yaml", "kustomization.yml", "Kustomization" };
+        public static readonly IReadOnlyCollection<string> KustomizationFileNames = new HashSet<string> { "kustomization.yaml", "kustomization.yml", "Kustomization" };
         
         public static readonly string HelmChartFileName = "Chart.yaml";
     }
 }
-#endif
