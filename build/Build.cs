@@ -110,7 +110,7 @@ partial class Build : NukeBuild
 
     Lazy<string> NugetVersion { get; }
 
-    Target InstallDotNetFramework => d => d.Executes(() => Log.Information("Empty target to let Nuke install the DotNet SDK required"); 
+    Target InstallDotNetFramework => d => d.Executes(() => Log.Information("Empty target to let Nuke install the DotNet SDK required")); 
 
     Target CheckForbiddenWords =>
         d =>
