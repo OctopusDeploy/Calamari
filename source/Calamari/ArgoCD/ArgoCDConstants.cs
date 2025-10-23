@@ -1,4 +1,3 @@
-#if NET
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -39,6 +38,16 @@ namespace Calamari.ArgoCD
                 ? OctopusTenantAnnotationKeyPrefix 
                 : $"{OctopusTenantAnnotationKeyPrefix}.{sourceName}";
 
+            public static IReadOnlyCollection<string> GetUnnamedAnnotationKeys()
+            {
+                return new []
+                {
+                    OctopusProjectAnnotationKey(null),
+                    OctopusEnvironmentAnnotationKey(null),
+                    OctopusTenantAnnotationKey(null)
+                };
+            }
+            
             public const string OctopusDefaultClusterRegistryAnnotationKey = "argo.octopus.com/default-container-registry";
 
             static readonly string OctopusImageReplacementPathsKeyPrefix = $"{Prefix}/image-replace-paths";
@@ -53,9 +62,8 @@ namespace Calamari.ArgoCD
         }
 
         //TODO: AP - Note that these are the same as Argo
-        public static readonly IReadOnlySet<string> KustomizationFileNames = new HashSet<string> { "kustomization.yaml", "kustomization.yml", "Kustomization" };
+        public static readonly IReadOnlyCollection<string> KustomizationFileNames = new HashSet<string> { "kustomization.yaml", "kustomization.yml", "Kustomization" };
         
         public static readonly string HelmChartFileName = "Chart.yaml";
     }
 }
-#endif
