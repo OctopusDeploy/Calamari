@@ -13,6 +13,7 @@
         <TargetFrameworks>net462;net8.0</TargetFrameworks>
         <LangVersion>8</LangVersion>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <EmitLegacyAssetsFileItems>true</EmitLegacyAssetsFileItems>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(TargetFramework)' == 'net8.0' ">
         <DefineConstants>$(DefineConstants);NETCORE;AZURE_CORE;JAVA_SUPPORT</DefineConstants>
