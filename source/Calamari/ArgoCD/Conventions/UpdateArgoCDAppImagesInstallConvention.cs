@@ -65,7 +65,7 @@ namespace Calamari.ArgoCD.Conventions
             {
                 log.VerboseFormat("- {0}", app.Name);
             }
-            
+
             var updatedApplications = new List<string>();
             var newImagesWritten = new HashSet<string>();
             var gitReposUpdated = new HashSet<string>();
@@ -84,7 +84,7 @@ namespace Calamari.ArgoCD.Conventions
                 validationResult.Action(log);
 
                 gatewayIds.Add(application.GatewayId);
-                bool containsMultipleSources = applicationFromYaml.Spec.Sources.Count > 1;
+                var containsMultipleSources = applicationFromYaml.Spec.Sources.Count > 1;
 
                 var didUpdateSomething = false;
                 foreach (var applicationSource in applicationFromYaml.Spec.Sources.OfType<BasicSource>())
@@ -105,25 +105,26 @@ namespace Calamari.ArgoCD.Conventions
                             continue;
                         }
 
-                    var annotatedScope = ScopingAnnotationReader.GetScopeForApplicationSource(applicationSource.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources);
-                    log.LogApplicationSourceScopeStatus(annotatedScope, applicationSource.Name.ToApplicationSourceName(), deploymentScope);
-                        var (updatedFiles, updatedImages) = UpdateKubernetesYaml(repository.WorkingDirectory, applicationSource.Path, application.DefaultRegistry, deploymentConfig.ImageReferences);
+                        var annotatedScope = ScopingAnnotationReader.GetScopeForApplicationSource(applicationSource.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources);
+                        log.LogApplicationSourceScopeStatus(annotatedScope, applicationSource.Name.ToApplicationSourceName(), deploymentScope);
 
-                    if (annotatedScope == deploymentScope)
-                        var (updatedFiles, updatedImages) = UpdateKubernetesYaml(repository.WorkingDirectory, applicationSource.Path, application.DefaultRegistry, deploymentConfig.ImageReferences);
-                        if (updatedImages.Count > 0)
+                        if (annotatedScope == deploymentScope)
                         {
-                            var didPush = PushToRemote(repository,
-                                                       new GitBranchName(applicationSource.TargetRevision),
-                                                       deploymentConfig.CommitParameters,
-                                                       updatedFiles,
-                                                       updatedImages);
+                            var (updatedFiles, updatedImages) = UpdateKubernetesYaml(repository.WorkingDirectory, applicationSource.Path, application.DefaultRegistry, deploymentConfig.ImageReferences);
+                            if (updatedImages.Count > 0)
+                            {
+                                var didPush = PushToRemote(repository,
+                                                           new GitBranchName(applicationSource.TargetRevision),
+                                                           deploymentConfig.CommitParameters,
+                                                           updatedFiles,
+                                                           updatedImages);
 
-                            didUpdateSomething |= didPush;
+                                didUpdateSomething |= didPush;
 
-                            newImagesWritten.UnionWith(updatedImages);
-                            updatedApplications.Add(applicationFromYaml.Metadata.Name);
-                            gitReposUpdated.Add(applicationSource.RepoUrl.AbsoluteUri);
+                                newImagesWritten.UnionWith(updatedImages);
+                                updatedApplications.Add(applicationFromYaml.Metadata.Name);
+                                gitReposUpdated.Add(applicationSource.RepoUrl.AbsoluteUri);
+                            }
                         }
                     }
                 }
@@ -137,7 +138,7 @@ namespace Calamari.ArgoCD.Conventions
                         log.Warn($"Invalid annotations setup detected.\nAlias defined: {invalidSource.Alias}. Missing corresponding {ArgoCDConstants.Annotations.OctopusImageReplacementPathsKeyWithSpecifier(invalidSource.Alias)} annotation.");
                         continue;
                     }
-                    
+
                     var annotatedScope = ScopingAnnotationReader.GetScopeForApplicationSource(valuesFileSource.SourceName, applicationFromYaml.Metadata.Annotations, containsMultipleSources);
                     log.LogApplicationSourceScopeStatus(annotatedScope, valuesFileSource.SourceName, deploymentScope);
 
@@ -149,25 +150,25 @@ namespace Calamari.ArgoCD.Conventions
                             TargetRevision = valuesFileSource.TargetRevision,
                         };
                         using (var repository = CreateRepository(gitCredentials, sourceBase, repositoryFactory))
-                    {
-
-                        var helmUpdateResult = UpdateHelmImageValues(repository.WorkingDirectory,
-                                                                     valuesFileSource,
-                                                                     deploymentConfig.ImageReferences
-                                                                    );
-                        if (helmUpdateResult.ImagesUpdated.Count > 0)
                         {
-                            var didPush = PushToRemote(repository,
-                                                       new GitBranchName(valuesFileSource.TargetRevision),
-                                                       deploymentConfig.CommitParameters,
-                                                       new HashSet<string>() { Path.Combine(valuesFileSource.Path, valuesFileSource.FileName) },
-                                                       helmUpdateResult.ImagesUpdated);
+                            var helmUpdateResult = UpdateHelmImageValues(repository.WorkingDirectory,
+                                                                         valuesFileSource,
+                                                                         deploymentConfig.ImageReferences
+                                                                        );
+                            if (helmUpdateResult.ImagesUpdated.Count > 0)
+                            {
+                                var didPush = PushToRemote(repository,
+                                                           new GitBranchName(valuesFileSource.TargetRevision),
+                                                           deploymentConfig.CommitParameters,
+                                                           new HashSet<string>() { Path.Combine(valuesFileSource.Path, valuesFileSource.FileName) },
+                                                           helmUpdateResult.ImagesUpdated);
 
-                            didUpdateSomething |= didPush;
+                                didUpdateSomething |= didPush;
 
-                            newImagesWritten.UnionWith(helmUpdateResult.ImagesUpdated);
-                            updatedApplications.Add(applicationFromYaml.Metadata.Name);
-                            gitReposUpdated.Add(valuesFileSource.RepoUrl.ToString());
+                                newImagesWritten.UnionWith(helmUpdateResult.ImagesUpdated);
+                                updatedApplications.Add(applicationFromYaml.Metadata.Name);
+                                gitReposUpdated.Add(valuesFileSource.RepoUrl.ToString());
+                            }
                         }
                     }
                 }
