@@ -23,6 +23,7 @@
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="System.DirectoryServices.AccountManagement" Version="4.7.0"/>
+        <PackageReference Include="System.Text.Json" Version="8.0.6" />
         <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.41" />
         <PackageReference Include="WireMock.Net" Version="1.6.9"/>
         <PackageReference Include="XPath2" Version="1.1.5"/>
