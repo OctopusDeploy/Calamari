@@ -70,7 +70,7 @@ namespace Calamari.ArgoCD.Git
                 cleansedSubPath += "/";
             }
 
-            log.Info("Removing files recursively.");
+            log.Info("Removing files recursively");
             List<IndexEntry> filesToRemove = repository.Index.Where(i => i.Path.StartsWith(cleansedSubPath)).ToList();
             filesToRemove.ForEach(i => repository.Index.Remove(i.Path));
         }
@@ -150,23 +150,23 @@ namespace Calamari.ArgoCD.Git
             //free up the repository handles
             repository?.Dispose();
 
-            //delete the repository local
-            log.Verbose("Attempting to delete cloned repository local directory");
+            //delete the local repository
+            log.Verbose("Deleting local repository");
             try
             {
                 //some files in the .git folder can/are ReadOnly which makes them impossible to delete
                 //so just remove the ReadOnly attribute from all files (if they are ReadOnly)
-                foreach (var gitFile in calamariFileSystem.EnumerateFilesWithGlob(repoCheckoutDirectoryPath, ".git/**/*"))
+                foreach (var gitFile in calamariFileSystem.EnumerateFilesRecursively(Path.Combine(repoCheckoutDirectoryPath, ".git")))
                 {
                     calamariFileSystem.RemoveReadOnlyAttributeFromFile(gitFile);
                 }
 
                 calamariFileSystem.DeleteDirectory(repoCheckoutDirectoryPath);
-                log.Verbose("Deleted cloned repository local directory");
+                log.Verbose("Deleted local repository");
             }
             catch (Exception e)
             {
-                log.VerboseFormat("Failed to delete cloned repository local directory.{0}{1}", Environment.NewLine, e);
+                log.VerboseFormat("Failed to delete local repository.{0}{1}", Environment.NewLine, e);
             }
         }
     }

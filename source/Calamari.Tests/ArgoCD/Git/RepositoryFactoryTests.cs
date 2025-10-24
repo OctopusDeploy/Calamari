@@ -43,13 +43,7 @@ namespace Calamari.Tests.ArgoCD.Git
         [TearDown]
         public void Cleanup()
         {
-            //Some files might be ReadOnly, clean up properly by removing the ReadOnly attribute
-            foreach (var file in fileSystem.EnumerateFilesRecursively(tempDirectory))
-            {
-                fileSystem.RemoveReadOnlyAttributeFromFile(file);
-            }
-
-            fileSystem.DeleteDirectory(tempDirectory, FailureOptions.IgnoreFailure);
+            RepositoryTestHelpers.DeleteRepositoryDirectory(fileSystem, tempDirectory);
         }
 
         [Test]
@@ -66,7 +60,7 @@ namespace Calamari.Tests.ArgoCD.Git
         }
 
         [Test]
-        public void CanCloneAnExistingRepositoryAndAssociatedFiles()
+        public void CanCloneAnExistingRepositoryWithExplicitBranchNameAndAssociatedFiles()
         {
             var filename = "firstFile.txt";
             var originalContent = "This is the file content";
