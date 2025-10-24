@@ -69,7 +69,6 @@ namespace Calamari.ArgoCD.Conventions
             var updatedApplications = new List<string>();
             var newImagesWritten = new HashSet<string>();
             var gitReposUpdated = new HashSet<string>();
-            var gatewayIds = new HashSet<string>();
 
             foreach (var application in argoProperties.Applications)
             {
@@ -83,7 +82,6 @@ namespace Calamari.ArgoCD.Conventions
                 var validationResult = ApplicationValidator.Validate(applicationFromYaml);
                 validationResult.Action(log);
 
-                gatewayIds.Add(application.GatewayId);
                 var containsMultipleSources = applicationFromYaml.Spec.Sources.Count > 1;
 
                 var didUpdateSomething = false;
@@ -92,6 +90,7 @@ namespace Calamari.ArgoCD.Conventions
                     using (var repository = CreateRepository(gitCredentials, applicationSource, repositoryFactory))
                     {
                         var repoSubPath = Path.Combine(repository.WorkingDirectory, applicationSource.Path);
+                        log.Verbose($"Reading files from {applicationSource.Path}");
 
                         var chartFile = HelmDiscovery.TryFindHelmChartFile(fileSystem, Path.Combine(repository.WorkingDirectory, applicationSource.Path));
                         if (chartFile != null)
@@ -185,6 +184,7 @@ namespace Calamari.ArgoCD.Conventions
                 log.InfoFormat(message, linkifiedAppName);
             }
 
+            var gatewayIds = argoProperties.Applications.Select(a => a.GatewayId).ToHashSet();
             var outputWriter = new ArgoCDImageUpdateOutputWriter(log);
             outputWriter.WriteImageUpdateOutput(gatewayIds,
                                                 gitReposUpdated,
@@ -251,11 +251,13 @@ namespace Calamari.ArgoCD.Conventions
             {
                 filesToUpdate = new HashSet<string> { kustomizationFile };
                 imageReplacerFactory = yaml => new KustomizeImageReplacer(yaml, defaultRegistry, log);
+                log.Verbose("kustomization file found, will only update images transformer in the kustomization file");
             }
             else
             {
                 filesToUpdate = FindYamlFiles(absSubFolder).ToHashSet();
                 imageReplacerFactory = yaml => new ContainerImageReplacer(yaml, defaultRegistry);
+                log.Verbose($"Found {filesToUpdate.Count} yaml files to process");
             }
 
             var updatedFiles = new HashSet<string>();
