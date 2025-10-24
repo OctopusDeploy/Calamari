@@ -36,11 +36,14 @@ namespace Calamari.AzureAppService
 
             var resourceGroupName = context.Variables.Get(SpecialVariables.Action.Azure.ResourceGroupName);
             var webAppName = context.Variables.Get(SpecialVariables.Action.Azure.WebAppName);
+            var webAppSlot = context.Variables.Get(SpecialVariables.Action.Azure.WebAppSlot);
 
-            return ConfirmWebAppExists(account, resourceGroupName, webAppName);
+            return webAppSlot.IsNullOrEmpty()
+                ? ConfirmWebAppExists(account, resourceGroupName, webAppName)
+                : ConfirmWebAppSlotExists(account, resourceGroupName, webAppName, webAppSlot);
         }
 
-        private async Task ConfirmWebAppExists(IAzureAccount azureAccount, string resourceGroupName, string siteAndSlotName)
+        async Task ConfirmWebAppExists(IAzureAccount azureAccount, string resourceGroupName, string siteAndSlotName)
         {
             var client = azureAccount.CreateArmClient();
 
@@ -48,7 +51,21 @@ namespace Calamari.AzureAppService
 
             //if the website doesn't exist, throw
             if (!await resourceGroupResource.GetWebSites().ExistsAsync(siteAndSlotName))
-                throw new Exception($"Could not find site {siteAndSlotName} in resource group {resourceGroupName}, using Service Principal with subscription {azureAccount.SubscriptionNumber}");
+                throw new Exception($"Could not find site '{siteAndSlotName}' in resource group '{resourceGroupName}', using Service Principal with subscription '{azureAccount.SubscriptionNumber}'");
+        }
+
+        async Task ConfirmWebAppSlotExists(IAzureAccount azureAccount, string resourceGroupName, string webAppName, string webAppSlot)
+        {
+            var client = azureAccount.CreateArmClient();
+
+            var resourceGroupResource = client.GetResourceGroupResource(ResourceGroupResource.CreateResourceIdentifier(azureAccount.SubscriptionNumber, resourceGroupName));
+
+            var webAppResource = await resourceGroupResource.GetWebSites().GetAsync(webAppName);
+            var webApp = webAppResource.Value;
+
+            //if the slot doesn't exist, throw
+            if (!await webApp.GetWebSiteSlots().ExistsAsync(webAppSlot))
+                throw new Exception($"Could not find slot '{webAppSlot}' for site '{webAppName}' in resource group '{resourceGroupName}', using Service Principal with subscription '{azureAccount.SubscriptionNumber}'");
         }
     }
 }
