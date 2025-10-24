@@ -27,14 +27,15 @@ namespace Calamari.ArgoCD.Conventions
 
         public static void LogMissingAnnotationsWarning(this ILog log, (ProjectSlug Project, EnvironmentSlug Environment, TenantSlug? Tenant) deploymentScope)
         {
-            log.Warn("No annotated Argo applications could be found for this deployment");
-            log.Warn("Please ensure application to be updated has been annotated with:");
+            log.Warn("No annotated Argo CD applications could be found for this deployment.");
+            log.Warn("Please annotate your application(s) with the following to allow deployments to find and update them:");
             log.WarnFormat(" - {0}: {1}", ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(".<sourcename>".ToApplicationSourceName()), deploymentScope.Project);
             log.WarnFormat(" - {0}: {1}", ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(".<sourcename>".ToApplicationSourceName()), deploymentScope.Environment);
             if (deploymentScope.Tenant != null)
             {
-                log.WarnFormat(" - {0}: {1}", ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(".<sourcename>".ToApplicationSourceName()), deploymentScope.Tenant);
+                log.WarnFormat(" - {0}: {1}", ArgoCDConstants.Annotations.OctopusTenantAnnotationKey(".<sourcename>".ToApplicationSourceName()), deploymentScope.Tenant);
             }
+            log.WarnFormat("Annotation creation documentation can be found {0}.", log.FormatShortLink("argo-cd-scoping-annotations", "here"));
         }
     }
 }
