@@ -37,7 +37,7 @@ namespace Calamari.AzureAppService
             var resourceGroupName = context.Variables.Get(SpecialVariables.Action.Azure.ResourceGroupName);
             var webAppName = context.Variables.Get(SpecialVariables.Action.Azure.WebAppName);
             var webAppSlot = context.Variables.Get(SpecialVariables.Action.Azure.WebAppSlot);
-            var siteAndSlotName = string.IsNullOrEmpty(webAppSlot) ? webAppName : $"{webAppName}/{webAppSlot}";
+            var siteAndSlotName = string.IsNullOrEmpty(webAppSlot) ? webAppName : $"{webAppName}/slots/{webAppSlot}";
 
             return ConfirmWebAppExists(account, resourceGroupName, siteAndSlotName);
         }
