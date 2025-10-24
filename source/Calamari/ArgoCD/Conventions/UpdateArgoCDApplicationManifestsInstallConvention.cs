@@ -52,38 +52,41 @@ namespace Calamari.ArgoCD.Conventions
 
         public void Install(RunningDeployment deployment)
         {
-            Log.Info("Executing Update Argo CD Application manifests operation");
+            log.Verbose("Executing Update Argo CD Application manifests operation");
             var deploymentConfig = deploymentConfigFactory.CreateCommitToGitConfig(deployment);
             var packageFiles = GetReferencedPackageFiles(deploymentConfig);
 
-            var repositoryFactory = new RepositoryFactory(log, deployment.CurrentDirectory, pullRequestCreator);
+            var repositoryFactory = new RepositoryFactory(log, fileSystem, deployment.CurrentDirectory, pullRequestCreator);
 
             var argoProperties = customPropertiesLoader.Load<ArgoCDCustomPropertiesDto>();
 
             var gitCredentials = argoProperties.Credentials.ToDictionary(c => c.Url);
             var deploymentScope = deployment.Variables.GetDeploymentScope();
 
-            log.Info($"Found the following applications: '{argoProperties.Applications.Select(a => a.Name).Join(",")}'");
+            log.InfoFormat("Found {0} Argo CD applications to update", argoProperties.Applications.Length);
+            foreach (var app in argoProperties.Applications)
+            {
+                log.VerboseFormat("- {0}", app.Name);
+            }
 
-            var repositoryNumber = 1;
             foreach (var application in argoProperties.Applications)
             {
                 log.InfoFormat("Processing application {0}", application.Name);
 
                 var instanceLinks = application.InstanceWebUiUrl != null ? new ArgoCDInstanceLinks(application.InstanceWebUiUrl) : null;
-             
+
                 var applicationFromYaml = argoCdApplicationManifestParser.ParseManifest(application.Manifest);
-                bool containsMultipleSources = applicationFromYaml.Spec.Sources.Count > 1;
+                var containsMultipleSources = applicationFromYaml.Spec.Sources.Count > 1;
                 var sourcesToInspect = applicationFromYaml.Spec.Sources.OfType<BasicSource>().ToList();
 
                 LogWarningIfUpdatingMultipleSources(sourcesToInspect,
                                                     applicationFromYaml.Metadata.Annotations,
                                                     containsMultipleSources,
                                                     deploymentScope);
-                
+
                 var validationResult = ApplicationValidator.Validate(applicationFromYaml);
                 validationResult.Action(log);
-                
+
                 var didUpdateSomething = false;
                 foreach (var applicationSource in sourcesToInspect)
                 {
@@ -92,7 +95,7 @@ namespace Calamari.ArgoCD.Conventions
 
                     if (annotatedScope == deploymentScope)
                     {
-                        Log.Info($"Writing files to repository '{applicationSource.RepoUrl}' for '{application.Name}'");
+                        log.Info($"Writing files to repository '{applicationSource.RepoUrl}' for '{application.Name}'");
 
                         var gitCredential = gitCredentials.GetValueOrDefault(applicationSource.RepoUrl.AbsoluteUri);
                         if (gitCredential == null)
@@ -101,57 +104,55 @@ namespace Calamari.ArgoCD.Conventions
                         }
 
                         var gitConnection = new GitConnection(gitCredential?.Username, gitCredential?.Password, applicationSource.RepoUrl.AbsoluteUri, new GitBranchName(applicationSource.TargetRevision));
-                        var repository = repositoryFactory.CloneRepository(repositoryNumber.ToString(CultureInfo.InvariantCulture), gitConnection);
 
-                        Log.Info($"Copying files into repository {applicationSource.RepoUrl}");
-                        var subFolder = applicationSource.Path ?? string.Empty;
-                        Log.VerboseFormat("Copying files into subfolder '{0}'", subFolder);
-
-                        if (deploymentConfig.PurgeOutputDirectory)
+                        using (var repository = repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), gitConnection))
                         {
-                            repository.RecursivelyStageFilesForRemoval(subFolder);
+                            var subFolder = applicationSource.Path ?? string.Empty;
+                            log.VerboseFormat("Copying files into '{0}'", subFolder);
+
+                            if (deploymentConfig.PurgeOutputDirectory)
+                            {
+                                repository.RecursivelyStageFilesForRemoval(subFolder);
+                            }
+
+                            var repositoryFiles = packageFiles.Select(f => new FileCopySpecification(f, repository.WorkingDirectory, subFolder)).ToList();
+                            CopyFiles(repositoryFiles);
+
+                            log.Info("Staging files in repository");
+                            repository.StageFiles(repositoryFiles.Select(fcs => fcs.DestinationRelativePath).ToArray());
+
+                            log.Info("Commiting changes");
+                            if (repository.CommitChanges(deploymentConfig.CommitParameters.Summary, deploymentConfig.CommitParameters.Description))
+                            {
+                                log.Info("Changes were commited, pushing to remote");
+                                repository.PushChanges(deploymentConfig.CommitParameters.RequiresPr,
+                                                       deploymentConfig.CommitParameters.Summary,
+                                                       deploymentConfig.CommitParameters.Description,
+                                                       new GitBranchName(applicationSource.TargetRevision),
+                                                       CancellationToken.None)
+                                          .GetAwaiter()
+                                          .GetResult();
+
+                                didUpdateSomething = true;
+                            }
+                            else
+                            {
+                                log.Info("No changes were commited");
+                            }
                         }
-
-                        var repositoryFiles = packageFiles.Select(f => new FileCopySpecification(f, repository.WorkingDirectory, subFolder)).ToList();
-                        Log.VerboseFormat("Copying files into subfolder '{0}'", applicationSource.Path!);
-                        CopyFiles(repositoryFiles);
-
-                        Log.Info("Staging files in repository");
-                        repository.StageFiles(repositoryFiles.Select(fcs => fcs.DestinationRelativePath).ToArray());
-
-                        Log.Info("Commiting changes");
-                        if (repository.CommitChanges(deploymentConfig.CommitParameters.Summary, deploymentConfig.CommitParameters.Description))
-                        {
-                            Log.Info("Changes were commited, pushing to remote");
-                            repository.PushChanges(deploymentConfig.CommitParameters.RequiresPr,
-                                                   deploymentConfig.CommitParameters.Summary,
-                                                   deploymentConfig.CommitParameters.Description,
-                                                   new GitBranchName(applicationSource.TargetRevision),
-                                                   CancellationToken.None)
-                                      .GetAwaiter()
-                                      .GetResult();
-
-                            didUpdateSomething = true;
-                        }
-                        else
-                        {
-                            Log.Info("No changes were commited.");
-                        }
-
-                        repositoryNumber++;
                     }
+                    
+                    //if we have links, use that to generate a link, otherwise just put the name there
+                    var linkifiedAppName = instanceLinks != null
+                        ? log.FormatLink(instanceLinks.ApplicationDetails(application.Name, application.KubernetesNamespace), application.Name)
+                        : application.Name;
+
+                    var message = didUpdateSomething
+                        ? "Updated Application {0}"
+                        : "Nothing to update for Application {0}";
+
+                    log.InfoFormat(message, linkifiedAppName);
                 }
-
-                //if we have links, use that to generate a link, otherwise just put the name there
-                var appName = instanceLinks != null
-                    ? log.FormatLink(instanceLinks.ApplicationDetails(application.Name, application.KubernetesNamespace), application.Name)
-                    : application.Name;
-
-                var message = didUpdateSomething
-                    ? "Updated Application {0}"
-                    : "Nothing to update for Application {0}";
-                
-                log.InfoFormat(message, appName);
             }
         }
 
@@ -176,18 +177,18 @@ namespace Calamari.ArgoCD.Conventions
         {
             foreach (var file in repositoryFiles)
             {
-                Log.VerboseFormat($"Copying '{file.SourceAbsolutePath}' to '{file.DestinationAbsolutePath}'");
+                log.VerboseFormat($"Copying '{file.SourceAbsolutePath}' to '{file.DestinationAbsolutePath}'");
                 EnsureParentDirectoryExists(file.DestinationAbsolutePath);
                 fileSystem.CopyFile(file.SourceAbsolutePath, file.DestinationAbsolutePath);
             }
         }
 
-        static void EnsureParentDirectoryExists(string filePath)
+        void EnsureParentDirectoryExists(string filePath)
         {
             var destinationDirectory = Path.GetDirectoryName(filePath);
             if (destinationDirectory != null)
             {
-                Directory.CreateDirectory(destinationDirectory);
+                fileSystem.CreateDirectory(destinationDirectory);
             }
         }
 
@@ -199,7 +200,7 @@ namespace Calamari.ArgoCD.Conventions
             return filesToApply;
         }
 
-        IPackageRelativeFile[] SelectFiles(string pathToExtractedPackageFiles, ArgoCommitToGitConfig config) 
+        IPackageRelativeFile[] SelectFiles(string pathToExtractedPackageFiles, ArgoCommitToGitConfig config)
             => argoCDManifestsFileMatcher.FindMatchingPackageFiles(pathToExtractedPackageFiles, config.InputSubPath);
     }
 }
