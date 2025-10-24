@@ -51,7 +51,7 @@ namespace Calamari.AzureAppService
 
             //if the website doesn't exist, throw
             if (!await resourceGroupResource.GetWebSites().ExistsAsync(siteAndSlotName))
-                throw new Exception($"Could not find site {siteAndSlotName} in resource group {resourceGroupName}, using Service Principal with subscription {azureAccount.SubscriptionNumber}");
+                throw new Exception($"Could not find site '{siteAndSlotName}' in resource group '{resourceGroupName}', using Service Principal with subscription '{azureAccount.SubscriptionNumber}'");
         }
 
         async Task ConfirmWebAppSlotExists(IAzureAccount azureAccount, string resourceGroupName, string webAppName, string webAppSlot)
@@ -65,7 +65,7 @@ namespace Calamari.AzureAppService
 
             //if the slot doesn't exist, throw
             if (!await webApp.GetWebSiteSlots().ExistsAsync(webAppSlot))
-                throw new Exception($"Could not find slot {webAppSlot} for site {webAppName} in resource group {resourceGroupName}, using Service Principal with subscription {azureAccount.SubscriptionNumber}");
+                throw new Exception($"Could not find slot '{webAppSlot}' for site '{webAppName}' in resource group '{resourceGroupName}', using Service Principal with subscription '{azureAccount.SubscriptionNumber}'");
         }
     }
 }
