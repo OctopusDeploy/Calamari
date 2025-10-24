@@ -61,6 +61,12 @@ namespace Calamari.ArgoCD.Conventions
             var gitCredentials = argoProperties.Credentials.ToDictionary(c => c.Url);
             var deploymentScope = deployment.Variables.GetDeploymentScope();
 
+            if (argoProperties.Applications.Length == 0)
+            {
+                log.LogMissingAnnotationsWarning(deploymentScope);
+                return;
+            }
+            
             log.Info($"Found {argoProperties.Applications.Length} Argo CD apps to update");
             var updatedApplications = new List<string>();
             var newImagesWritten = new HashSet<string>();
