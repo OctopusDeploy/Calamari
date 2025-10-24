@@ -276,7 +276,7 @@ namespace Calamari.ArgoCD.Conventions
                     fileSystem.OverwriteFile(file, imageReplacementResult.UpdatedContents);
                     updatedImages.UnionWith(imageReplacementResult.UpdatedImageReferences);
                     updatedFiles.Add(relativePath);
-                    log.Verbose($"Updating file {file} with new image references.");
+                    log.Verbose($"Updating file {relativePath} with new image references.");
                     foreach (var change in imageReplacementResult.UpdatedImageReferences)
                     {
                         log.Verbose($"Updated image reference: {change}");
@@ -359,7 +359,7 @@ namespace Calamari.ArgoCD.Conventions
         //NOTE: rootPath needs to include the subfolder
         IEnumerable<string> FindYamlFiles(string rootPath)
         {
-            var yamlFileGlob = "**/*.yaml";
+            var yamlFileGlob = "**/*.{yaml,yml}";
             return fileSystem.EnumerateFilesWithGlob(rootPath, yamlFileGlob);
         }
     }
