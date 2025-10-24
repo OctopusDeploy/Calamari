@@ -54,7 +54,7 @@ namespace Calamari.ArgoCD.Git
         public void RecursivelyStageFilesForRemoval(string subPath)
         {
             var cleansedSubPath = subPath.StartsWith("./") ? subPath.Substring(2) : subPath;
-            if(!cleansedSubPath.EndsWith("/") && !cleansedSubPath.IsNullOrEmpty())
+            if(!cleansedSubPath.EndsWith("/") && !string.IsNullOrEmpty(cleansedSubPath))
             {
                 cleansedSubPath += "/";
             } 
