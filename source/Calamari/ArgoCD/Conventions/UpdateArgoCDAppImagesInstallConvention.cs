@@ -130,7 +130,7 @@ namespace Calamari.ArgoCD.Conventions
                 }
 
                 var explicitHelmSources = new HelmValuesFileUpdateTargetParser(applicationFromYaml, application.DefaultRegistry).GetValuesFilesToUpdate();
-                LogHelmSourceConfigurationProblems(explicitHelmSources, applicationFromYaml.Metadata.Annotations, containsMultipleSources, deploymentScope);
+                LogHelmSourceConfigurationProblems(explicitHelmSources.Problems, applicationFromYaml.Metadata.Annotations, containsMultipleSources, deploymentScope);
 
                 valuesFilesToUpdate.AddRange(explicitHelmSources.Targets);
                 foreach (var valuesFileSource in valuesFilesToUpdate)
@@ -190,12 +190,12 @@ namespace Calamari.ArgoCD.Conventions
                                                );
         }
 
-        void LogHelmSourceConfigurationProblems((IReadOnlyCollection<HelmValuesFileImageUpdateTarget> Targets, IReadOnlyCollection<HelmSourceConfigurationProblem> Problems) explicitHelmSources,
+        void LogHelmSourceConfigurationProblems(IReadOnlyCollection<HelmSourceConfigurationProblem> helmSourceConfigurationProblems,
                                                 IReadOnlyDictionary<string, string> annotations,
                                                 bool containsMultipleSources,
                                                 (ProjectSlug Project, EnvironmentSlug Environment, TenantSlug? Tenant) deploymentScope)
         {
-            foreach (var helmSourceConfigurationProblem in explicitHelmSources.Problems)
+            foreach (var helmSourceConfigurationProblem in helmSourceConfigurationProblems)
             {
                 LogProblem(helmSourceConfigurationProblem);
             }
