@@ -199,16 +199,12 @@ namespace Calamari.ArgoCD.Conventions
                 {
                     case HelmSourceIsMissingImagePathAnnotation helmSourceIsMissingImagePathAnnotation:
                     {
-                        var sourceNameForScoping = helmSourceIsMissingImagePathAnnotation.RefRepoUrl != null 
-                            ? helmSourceIsMissingImagePathAnnotation.RefName 
-                            : helmSourceIsMissingImagePathAnnotation.Name;
-                            
-                        var annotatedScope = ScopingAnnotationReader.GetScopeForApplicationSource(sourceNameForScoping, annotations, containsMultipleSources);
+                        var annotatedScope = ScopingAnnotationReader.GetScopeForApplicationSource(helmSourceIsMissingImagePathAnnotation.ScopingSourceName, annotations, containsMultipleSources);
                         if (annotatedScope == deploymentScope)
                         {
                             log.WarnFormat("The Helm source '{0}'({1}) is missing an annotation for the image replace path. It will not be updated.",
-                                           helmSourceIsMissingImagePathAnnotation.Name,
-                                           helmSourceIsMissingImagePathAnnotation.RepoUrl.AbsoluteUri);
+                                           helmSourceIsMissingImagePathAnnotation.HelmSourceName,
+                                           helmSourceIsMissingImagePathAnnotation.HelmSourceRepoUrl.AbsoluteUri);
                         }
 
                         return;

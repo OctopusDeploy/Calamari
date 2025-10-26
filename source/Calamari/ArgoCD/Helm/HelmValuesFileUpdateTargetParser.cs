@@ -53,7 +53,7 @@ namespace Calamari.ArgoCD.Helm
         {
             if (!definedPathsForSource.Any())
             {
-                return (null, new HelmSourceIsMissingImagePathAnnotation(source.Name.ToApplicationSourceName(), source.RepoUrl, null, null));
+                return (null, new HelmSourceIsMissingImagePathAnnotation(source.Name.ToApplicationSourceName(), source.RepoUrl));
             }
 
             return (new HelmValuesFileImageUpdateTarget(appName,
@@ -78,7 +78,7 @@ namespace Calamari.ArgoCD.Helm
             if (!definedPathsForSource.Any())
             {
                 return (null,
-                        new HelmSourceIsMissingImagePathAnnotation(source.Name.ToApplicationSourceName(), source.RepoUrl, refForValuesFile.Name.ToApplicationSourceName(), refForValuesFile.RepoUrl)
+                        new HelmSourceIsMissingImagePathAnnotation(source.Name.ToApplicationSourceName(), source.RepoUrl, refForValuesFile.Name.ToApplicationSourceName())
                     );
             }
 

@@ -15,7 +15,6 @@ namespace Calamari.Tests.ArgoCD.Helm
     {
         const string HelmPath1 = "{{ .Values.image.name}}:{{ .Values.image.version}}";
         const string HelmPath2 = "{{ .Values.another-image.name }}";
-        const string HelmPath3 = "{{ .Values.another-image.version }}";
         readonly string DoubleItemPathAnnotationValue = $"{HelmPath1}, {HelmPath2}";
 
         [Test]
@@ -55,8 +54,6 @@ namespace Calamari.Tests.ArgoCD.Helm
                 {
                     Name = "Foo",
                     Annotations = new Dictionary<string, string>()
-                    {
-                    }
                 },
                 Spec = new ApplicationSpec()
                 {
@@ -75,7 +72,7 @@ namespace Calamari.Tests.ArgoCD.Helm
         }
 
         [Test]
-        public void GetValuesFilesToUpdate_WithSingleInlineValuesFile_WithNoAnnotations_ReturnsEmptyList()
+        public void GetValuesFilesToUpdate_WithSingleInlineValuesFile_WithNoAnnotations_ReturnsEmptyListWithProblem()
         {
             var helmSource = new HelmSource()
             {
@@ -106,7 +103,7 @@ namespace Calamari.Tests.ArgoCD.Helm
 
             // Assert
             result.Targets.Should().BeEmpty();
-            result.Problems.Should().BeEquivalentTo(new [] { new HelmSourceIsMissingImagePathAnnotation(helmSource.Name.ToApplicationSourceName(), helmSource.RepoUrl, null, null) });
+            result.Problems.Should().BeEquivalentTo(new [] { new HelmSourceIsMissingImagePathAnnotation(helmSource.Name.ToApplicationSourceName(), helmSource.RepoUrl) });
         }
 
         [Test]
@@ -161,48 +158,7 @@ namespace Calamari.Tests.ArgoCD.Helm
         }
 
         [Test]
-        public void GetValuesFilesToUpdate_WithAliasedInlineValuesFile_WithNoAnnotations_ReturnsInvalidTarget()
-        {
-            const string valuesFileName = "values.yaml";
-            var helmSource = new HelmSource()
-            {
-                Path = "./",
-                RepoUrl = new Uri("https://example.com/repo.git"),
-                TargetRevision = "main",
-                Helm = new HelmConfig()
-                {
-                    ValueFiles = new List<string>() { valuesFileName }
-                }
-            };
-
-            var toUpdate = new Application()
-            {
-                Metadata = new Metadata()
-                {
-                    Name = "TheApp",
-                    Annotations = new Dictionary<string, string>()
-                    {
-                        //{ $"{ArgoCDConstants.Annotations.OctopusImageReplaceAliasKey}.Alias1", valuesFileName }
-                    }
-                },
-                Spec = new ApplicationSpec()
-                {
-                    Sources = new List<SourceBase>() { helmSource },
-                }
-            };
-
-            var sut = new HelmValuesFileUpdateTargetParser(toUpdate, ArgoCDConstants.DefaultContainerRegistry);
-
-            // Act
-            var result = sut.GetValuesFilesToUpdate();
-
-            // Assert
-            result.Targets.Should().BeEmpty();
-            result.Problems.Should().BeEquivalentTo(new [] { new HelmSourceIsMissingImagePathAnnotation(helmSource.Name.ToApplicationSourceName(), helmSource.RepoUrl, null, null) });
-        }
-
-        [Test]
-        public void GetValuesFilesToUpdate_WithMultipleInlineValuesFiles_WithNoAnnotations_ReturnsEmptyList()
+        public void GetValuesFilesToUpdate_WithMultipleInlineValuesFiles_WithNoAnnotations_ReturnsEmptyListWithSingleProblem()
         {
             const string valuesFileName1 = "values1.yaml";
             const string valuesFileName2 = "values2.yaml";
@@ -241,7 +197,7 @@ namespace Calamari.Tests.ArgoCD.Helm
             result.Targets.Should().BeEmpty();
             result.Problems.Should().BeEquivalentTo(new []
             {
-                new HelmSourceIsMissingImagePathAnnotation(helmSource.Name.ToApplicationSourceName(), helmSource.RepoUrl, null, null)
+                new HelmSourceIsMissingImagePathAnnotation(helmSource.Name.ToApplicationSourceName(), helmSource.RepoUrl)
             });
         }
 
@@ -307,7 +263,7 @@ namespace Calamari.Tests.ArgoCD.Helm
         }
         
         [Test]
-        public void GetValuesFilesToUpdate_WithRefValuesFiles_WithNoAnnotations_ReturnsEmptyList()
+        public void GetValuesFilesToUpdate_WithRefValuesFiles_WithNoAnnotations_ReturnsEmptyListWithProblem()
         {
             const string valuesRef = "the-values";
             const string valuesFilePath1 = "files1/values.yaml";
@@ -352,11 +308,11 @@ namespace Calamari.Tests.ArgoCD.Helm
 
             // Assert
             result.Targets.Should().BeEmpty();
-            result.Problems.Should().BeEquivalentTo(new [] { new HelmSourceIsMissingImagePathAnnotation(helmSource.Name.ToApplicationSourceName(), helmSource.RepoUrl, refSource.Name.ToApplicationSourceName(), refSource.RepoUrl)});
+            result.Problems.Should().BeEquivalentTo(new [] { new HelmSourceIsMissingImagePathAnnotation(helmSource.Name.ToApplicationSourceName(), helmSource.RepoUrl, refSource.Name.ToApplicationSourceName())});
         }
 
         [Test]
-        public void GetValuesFilesToUpdate_WithSingleRefValuesFile_WithMatchingAnnotations_WithNoAlias_ReturnsSourceForFileInRef()
+        public void GetValuesFilesToUpdate_WithSingleRefValuesFile_WithMatchingAnnotations_ReturnsSourceForFileInRef()
         {
             const string valuesRef = "the-values";
             const string valuesFilePath = "files/values.yaml";
@@ -416,7 +372,7 @@ namespace Calamari.Tests.ArgoCD.Helm
         }
         
         [Test]
-        public void GetValuesFilesToUpdate_WithSingleRefValuesFile_AgainstNonExistentRef_Throws()
+        public void GetValuesFilesToUpdate_WithSingleRefValuesFile_AgainstNonExistentRef_ReturnsEmptyListWithProblem()
         {
             // NOTE: This is testing against scenario that should never happen
             // because The Argo CD deployment would fail and thus this app would be unlikely to be pulled into Octopus
@@ -467,7 +423,7 @@ namespace Calamari.Tests.ArgoCD.Helm
         }
 
         [Test]
-        public void GetValuesFilesToUpdate_WithMultipleRefValuesFiles_WithMatchingAnnotations_WithNoAlias_ReturnsSourcesForFilesInRefs()
+        public void GetValuesFilesToUpdate_WithMultipleRefValuesFiles_WithMatchingAnnotations_ReturnsSourcesForFilesInRefs()
         {
             // Same file name/path across 2 different refs
             const string valuesRef1 = "the-values";
@@ -544,86 +500,7 @@ namespace Calamari.Tests.ArgoCD.Helm
             result.Targets.Should().BeEquivalentTo(new [] { expected2, expected1 }, options => options.ComparingByMembers<HelmValuesFileImageUpdateTarget>());
             result.Problems.Should().BeEmpty();
         }
-
-        [Test]
-        public void GetValuesFilesToUpdate_WithMultipleRefValuesFiles_WithMatchingAnnotations_WithAliasesToRefs_ReturnsSourcesForFilesInRefs()
-        {
-            //const string alias1 = "values-alias1";
-            const string valuesRef1 = "the-values";
-            const string valuesRef2 = "other-values";
-            const string valuesRepo1Address = "https://github.com/main-repo";
-            const string valuesRepo2Address = "https://github.com/another-repo";
-            const string valuesFile1Path = "values.yaml";
-            const string valuesFile2Path = "config/values.yaml";
-
-            var refSource1 = new ReferenceSource()
-            {
-                RepoUrl = new Uri(valuesRepo1Address),
-                TargetRevision = "main",
-                Ref = valuesRef1,
-            };
-            var refSource2 = new ReferenceSource()
-            {
-                RepoUrl = new Uri(valuesRepo2Address),
-                TargetRevision = "main",
-                Ref = valuesRef2,
-            };
-            var helmSource = new HelmSource()
-            {
-                Path = "./",
-                RepoUrl = new Uri("https://example.com/repo.git"),
-                Helm = new HelmConfig()
-                {
-                    ValueFiles = new List<string>() { $"${valuesRef1}/{valuesFile1Path}", $"${valuesRef2}/{valuesFile2Path}" }
-                },
-                Name = "chart-source"
-            };
-
-            var toUpdate = new Application()
-            {
-                Metadata = new Metadata()
-                {
-                    Name = "TheApp",
-                    Annotations = new Dictionary<string, string>()
-                    {
-                        { $"{ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(helmSource.Name.ToApplicationSourceName())}", DoubleItemPathAnnotationValue },
-                    }
-                },
-                Spec = new ApplicationSpec()
-                {
-                    Sources = new List<SourceBase>() { refSource1, refSource2, helmSource },
-                }
-            };
-
-            var sut = new HelmValuesFileUpdateTargetParser(toUpdate, ArgoCDConstants.DefaultContainerRegistry);
-
-            // Act
-            var result = sut.GetValuesFilesToUpdate();
-
-            // Assert
-            var expected1 = new HelmValuesFileImageUpdateTarget(toUpdate.Metadata.Name.ToApplicationName(),
-                                                                refSource1.Name.ToApplicationSourceName(),
-                                                                ArgoCDConstants.DefaultContainerRegistry,
-                                                                ArgoCDConstants.RefSourcePath,
-                                                                refSource1.RepoUrl,
-                                                                refSource1.TargetRevision,
-                                                                valuesFile1Path,
-                                                                new List<string>() { HelmPath1, HelmPath2 });
-
-            var expected2 = new HelmValuesFileImageUpdateTarget(toUpdate.Metadata.Name.ToApplicationName(),
-                                                                refSource2.Name.ToApplicationSourceName(),
-                                                                ArgoCDConstants.DefaultContainerRegistry,
-                                                                ArgoCDConstants.RefSourcePath,
-                                                                refSource2.RepoUrl,
-                                                                refSource2.TargetRevision,
-                                                                valuesFile2Path,
-                                                                new List<string>() { HelmPath1, HelmPath2 });
-            ;
-
-            result.Targets.Should().BeEquivalentTo(new [] { expected1, expected2 }, options => options.ComparingByMembers<HelmValuesFileImageUpdateTarget>());
-            result.Problems.Should().BeEmpty();
-        }
-
+        
         [Test]
         public void GetValuesFilesToUpdate_WithMixOfInlineAndRef_WithMatchingAnnotations_ReturnsCorrectSources()
         {
