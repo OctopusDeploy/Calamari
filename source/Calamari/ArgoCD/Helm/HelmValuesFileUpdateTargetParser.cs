@@ -42,7 +42,7 @@ namespace Calamari.ArgoCD.Helm
         {
             var definedPathsForSource = ScopingAnnotationReader.GetImageReplacePathsForApplicationSource(source.Name.ToApplicationSourceName(), annotations, containsMultipleSources);
             var results = source.Helm.ValueFiles.Select(file => file.StartsWith('$')
-                                                                ? ProcessRefValuesFile(file, definedPathsForSource, source)
+                                                                ? ProcessRefValuesFile(source, file, definedPathsForSource)
                                                                 : ProcessInlineValuesFile(source, file, definedPathsForSource)).ToArray();
 
             return (results.Where(t => t.Target != null).Select(v => v.Target!).ToArray(),
@@ -66,7 +66,7 @@ namespace Calamari.ArgoCD.Helm
                                                         definedPathsForSource), null);
         }
 
-        (HelmValuesFileImageUpdateTarget? Target, HelmSourceConfigurationProblem? Problem) ProcessRefValuesFile(string file, IReadOnlyCollection<string> definedPathsForSource, HelmSource source)
+        (HelmValuesFileImageUpdateTarget? Target, HelmSourceConfigurationProblem? Problem) ProcessRefValuesFile(HelmSource source, string file, IReadOnlyCollection<string> definedPathsForSource)
         {
             var refName = GetRefFromFilePath(file);
             var refForValuesFile = refSources.FirstOrDefault(r => r.Ref == refName);
