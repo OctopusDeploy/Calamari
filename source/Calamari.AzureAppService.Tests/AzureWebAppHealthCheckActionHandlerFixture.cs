@@ -41,9 +41,9 @@ namespace Calamari.AzureAppService.Tests
 
         [Test]
         [NonParallelizable]
-        public async Task WebAppSlotIsFound_AndNotFoundWhenDeleted()
+        public async Task WebAppIsFound_WithAndWithoutProxy()
         {
-            const string slotName = "Testing";
+            const string slotName = "stage";
             var slot = await WebSiteResource.GetWebSiteSlots()
                                             .CreateOrUpdateAsync(WaitUntil.Completed, slotName, WebSiteResource.Data);
 
@@ -66,12 +66,7 @@ namespace Calamari.AzureAppService.Tests
                                                  })
                                     .WithAssert(result => result.WasSuccessful.Should().BeFalse())
                                     .Execute(false);
-        }
 
-        [Test]
-        [NonParallelizable]
-        public async Task WebAppIsFound_WithAndWithoutProxy()
-        {
             await CommandTestBuilder.CreateAsync<HealthCheckCommand, Program>()
                                     .WithArrange(SetUpVariables)
                                     .WithAssert(result => result.WasSuccessful.Should().BeTrue())
