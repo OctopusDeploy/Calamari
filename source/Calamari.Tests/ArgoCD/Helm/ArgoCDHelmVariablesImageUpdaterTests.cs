@@ -2,12 +2,14 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Calamari.ArgoCD;
 using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Domain;
 using Calamari.ArgoCD.Dtos;
 using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.GitHub;
+using Calamari.ArgoCD.Models;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Deployment;
 using Calamari.Common.Plumbing.FileSystem;
@@ -30,7 +32,7 @@ namespace Calamari.Tests.ArgoCD.Helm
         const string EnvironmentSlug = "TheEnvironment";
 
         readonly ICalamariFileSystem fileSystem = TestCalamariPhysicalFileSystem.GetPhysicalFileSystem();
-        readonly InMemoryLog log = new InMemoryLog();
+        InMemoryLog log;
         string tempDirectory;
         string OriginPath => Path.Combine(tempDirectory, "origin");
         Repository originRepo;
@@ -50,6 +52,7 @@ image:
         [SetUp]
         public void Init()
         {
+            log = new InMemoryLog();
             tempDirectory = fileSystem.CreateTemporaryDirectory();
 
             originRepo = RepositoryHelpers.CreateBareRepository(OriginPath);
@@ -344,6 +347,448 @@ image:
   tag: 0.3
   pullPolicy: IfNotPresent
 ".ReplaceLineEndings());
+        } 
+
+        [Test]
+        public void HandleHelmWithRefSource()
+        {
+            //Arrange
+            const string valuesFile = @"
+replicaCount: 1
+image:
+  repository: quay.io/argoprojlabs/argocd-e2e-container
+  tag: 0.1
+  pullPolicy: IfNotPresent
+";
+
+            originRepo.AddFilesToBranch(argoCDBranchName, ("files/values.yaml", valuesFile));
+            originRepo.AddFilesToBranch(argoCDBranchName, ("files/Chart.yaml", "Content Is Arbitrary"));
+            
+            argoCdApplicationFromYaml = new Application()
+            {
+                Metadata = new Metadata()
+                {
+                    Namespace = "MyAppp",
+                    Annotations = new Dictionary<string, string>()
+                    {
+                        [ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey("helm-source".ToApplicationSourceName())] = "{{ .Values.image.repository }}:{{ .Values.image.tag }}",
+                        [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey("ref-source".ToApplicationSourceName())] = ProjectSlug,
+                        [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey("ref-source".ToApplicationSourceName())] = EnvironmentSlug,
+                    }
+                },
+                Spec = new ApplicationSpec()
+                {
+                    Sources = new List<SourceBase>()
+                    {
+                        new HelmSource()
+                        {
+                            RepoUrl = new Uri("https://github.com/doesnt/exist.git"),
+                            Path = "files",
+                            Helm = new HelmConfig()
+                            {
+                                ValueFiles = new List<string>()
+                                {
+                                    "$values/files/values.yaml"
+                                }
+                            },
+                            Name = "helm-source"
+                        },
+                        new ReferenceSource()
+                        {
+                            RepoUrl = new Uri(OriginPath),
+                            TargetRevision = argoCDBranchName.Value,
+                            Ref = "values",
+                            Name = "ref-source"
+                        }
+                    }
+                }
+            };
+            argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
+                                           .Returns(argoCdApplicationFromYaml);
+
+            var updater = new UpdateArgoCDAppImagesInstallConvention(log,
+                                                                     Substitute.For<IGitHubPullRequestCreator>(),
+                                                                     fileSystem,
+                                                                     new DeploymentConfigFactory(nonSensitiveCalamariVariables),
+                                                                     new CommitMessageGenerator(),
+                                                                     customPropertiesLoader,
+                                                                     argoCdApplicationManifestParser);
+            var variables = new CalamariVariables
+            {
+                [ProjectVariables.Slug] = ProjectSlug,
+                [DeploymentEnvironment.Slug] = EnvironmentSlug,
+                [PackageVariables.IndexedImage("argocd-e2e-container")] = "quay.io/argoprojlabs/argocd-e2e-container:0.3",
+                [PackageVariables.IndexedPackagePurpose("argocd-e2e-container")] = "DockerImageReference",
+            };
+            
+            //Act
+            var runningDeployment = new RunningDeployment(null, variables);
+            runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
+            runningDeployment.StagingDirectory = tempDirectory;
+
+            updater.Install(runningDeployment);
+            //Assert
+            var resultRepo = CloneOrigin();
+            var valuesFileContent = fileSystem.ReadFile(Path.Combine(resultRepo, "files", "values.yaml"));
+            valuesFileContent.ReplaceLineEndings().Should()
+                             .Be(@"
+replicaCount: 1
+image:
+  repository: quay.io/argoprojlabs/argocd-e2e-container
+  tag: 0.3
+  pullPolicy: IfNotPresent
+".ReplaceLineEndings());
+        } 
+
+        [Test]
+        public void DontUpdateSingleSourceWithWrongScoping()
+        {
+            //Arrange
+            const string valuesFile = @"
+replicaCount: 1
+image:
+  repository: quay.io/argoprojlabs/argocd-e2e-container
+  tag: 0.1
+  pullPolicy: IfNotPresent
+";
+
+            originRepo.AddFilesToBranch(argoCDBranchName, ("files/values.yaml", valuesFile));
+            originRepo.AddFilesToBranch(argoCDBranchName, ("files/Chart.yaml", "Content Is Arbitrary"));
+            
+            argoCdApplicationFromYaml = new Application()
+            {
+                Metadata = new Metadata()
+                {
+                    Namespace = "MyAppp",
+                    Annotations = new Dictionary<string, string>()
+                    {
+                        [ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(null)] = "{{ .Values.image.repository }}:{{ .Values.image.tag }}",
+                        [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(null)] = ProjectSlug,
+                        [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(null)] = EnvironmentSlug,
+                    }
+                },
+                Spec = new ApplicationSpec()
+                {
+                    Sources = new List<SourceBase>()
+                    {
+                        new BasicSource()
+                        {
+                            RepoUrl = new Uri(OriginPath),
+                            Path = "files",
+                            TargetRevision = argoCDBranchName.Value,
+                            Name = "wrong-scoping"
+                        }
+                    }
+                }
+            };
+            argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
+                                           .Returns(argoCdApplicationFromYaml);
+
+            var updater = new UpdateArgoCDAppImagesInstallConvention(log,
+                                                                     Substitute.For<IGitHubPullRequestCreator>(),
+                                                                     fileSystem,
+                                                                     new DeploymentConfigFactory(nonSensitiveCalamariVariables),
+                                                                     new CommitMessageGenerator(),
+                                                                     customPropertiesLoader,
+                                                                     argoCdApplicationManifestParser);
+            var variables = new CalamariVariables
+            {
+                [ProjectVariables.Slug] = ProjectSlug,
+                [DeploymentEnvironment.Slug] = EnvironmentSlug,
+                [PackageVariables.IndexedImage("argocd-e2e-container")] = "quay.io/argoprojlabs/argocd-e2e-container:0.3",
+                [PackageVariables.IndexedPackagePurpose("argocd-e2e-container")] = "DockerImageReference",
+            };
+            
+            //Act
+            var runningDeployment = new RunningDeployment(null, variables);
+            runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
+            runningDeployment.StagingDirectory = tempDirectory;
+
+            updater.Install(runningDeployment);
+            //Assert
+            var resultRepo = CloneOrigin();
+            var valuesFileContent = fileSystem.ReadFile(Path.Combine(resultRepo, "files", "values.yaml"));
+            valuesFileContent.ReplaceLineEndings().Should()
+                             .Be(@"
+replicaCount: 1
+image:
+  repository: quay.io/argoprojlabs/argocd-e2e-container
+  tag: 0.1
+  pullPolicy: IfNotPresent
+".ReplaceLineEndings());
+        } 
+        
+        [Test]
+        public void DontUpdateHelmRefSourceWithWrongScoping()
+        {
+            //Arrange
+            const string valuesFile = @"
+replicaCount: 1
+image:
+  repository: quay.io/argoprojlabs/argocd-e2e-container
+  tag: 0.1
+  pullPolicy: IfNotPresent
+";
+
+            originRepo.AddFilesToBranch(argoCDBranchName, ("files/values.yaml", valuesFile));
+            originRepo.AddFilesToBranch(argoCDBranchName, ("files/Chart.yaml", "Content Is Arbitrary"));
+            
+            argoCdApplicationFromYaml = new Application()
+            {
+                Metadata = new Metadata()
+                {
+                    Namespace = "MyAppp",
+                    Annotations = new Dictionary<string, string>()
+                    {
+                        [ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey("helm-source".ToApplicationSourceName())] = "{{ .Values.image.repository }}:{{ .Values.image.tag }}",
+                        [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey("ref-source".ToApplicationSourceName())] = ProjectSlug,
+                        [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey("ref-source".ToApplicationSourceName())] = EnvironmentSlug,
+                    }
+                },
+                Spec = new ApplicationSpec()
+                {
+                    Sources = new List<SourceBase>()
+                    {
+                        new HelmSource()
+                        {
+                            RepoUrl = new Uri("https://github.com/doesnt/exist.git"),
+                            Path = "files",
+                            Helm = new HelmConfig()
+                            {
+                                ValueFiles = new List<string>()
+                                {
+                                    "$values/files/values.yaml"
+                                }
+                            },
+                            Name = "helm-source"
+                        },
+                        new ReferenceSource()
+                        {
+                            RepoUrl = new Uri(OriginPath),
+                            TargetRevision = argoCDBranchName.Value,
+                            Ref = "values"
+                        }
+                    }
+                }
+            };
+            argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
+                                           .Returns(argoCdApplicationFromYaml);
+
+            var updater = new UpdateArgoCDAppImagesInstallConvention(log,
+                                                                     Substitute.For<IGitHubPullRequestCreator>(),
+                                                                     fileSystem,
+                                                                     new DeploymentConfigFactory(nonSensitiveCalamariVariables),
+                                                                     new CommitMessageGenerator(),
+                                                                     customPropertiesLoader,
+                                                                     argoCdApplicationManifestParser);
+            var variables = new CalamariVariables
+            {
+                [ProjectVariables.Slug] = ProjectSlug,
+                [DeploymentEnvironment.Slug] = EnvironmentSlug,
+                [PackageVariables.IndexedImage("argocd-e2e-container")] = "quay.io/argoprojlabs/argocd-e2e-container:0.3",
+                [PackageVariables.IndexedPackagePurpose("argocd-e2e-container")] = "DockerImageReference",
+            };
+            
+            //Act
+            var runningDeployment = new RunningDeployment(null, variables);
+            runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
+            runningDeployment.StagingDirectory = tempDirectory;
+
+            updater.Install(runningDeployment);
+            //Assert
+            var resultRepo = CloneOrigin();
+            var valuesFileContent = fileSystem.ReadFile(Path.Combine(resultRepo, "files", "values.yaml"));
+            valuesFileContent.ReplaceLineEndings().Should()
+                             .Be(@"
+replicaCount: 1
+image:
+  repository: quay.io/argoprojlabs/argocd-e2e-container
+  tag: 0.1
+  pullPolicy: IfNotPresent
+".ReplaceLineEndings());
+        } 
+    
+        [Test]
+        public void WarnButDontUpdateHelmRefSourceWithMissingImagePath()
+        {
+            //Arrange
+            const string valuesFile = @"
+replicaCount: 1
+image:
+  repository: quay.io/argoprojlabs/argocd-e2e-container
+  tag: 0.1
+  pullPolicy: IfNotPresent
+";
+
+            originRepo.AddFilesToBranch(argoCDBranchName, ("files/values.yaml", valuesFile));
+            originRepo.AddFilesToBranch(argoCDBranchName, ("files/Chart.yaml", "Content Is Arbitrary"));
+            
+            argoCdApplicationFromYaml = new Application()
+            {
+                Metadata = new Metadata()
+                {
+                    Namespace = "MyAppp",
+                    Annotations = new Dictionary<string, string>()
+                    {
+                        [ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey("helm-source".ToApplicationSourceName())] = "{{ .Values.image.repository }}:{{ .Values.image.tag }}",
+                        [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey("ref-source".ToApplicationSourceName())] = ProjectSlug,
+                        [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey("ref-source".ToApplicationSourceName())] = EnvironmentSlug,
+                    }
+                },
+                Spec = new ApplicationSpec()
+                {
+                    Sources = new List<SourceBase>()
+                    {
+                        new HelmSource()
+                        {
+                            RepoUrl = new Uri("https://github.com/doesnt/exist.git"),
+                            Path = "files",
+                            Helm = new HelmConfig()
+                            {
+                                ValueFiles = new List<string>()
+                                {
+                                    "$values/files/values.yaml"
+                                }
+                            }
+                        },
+                        new ReferenceSource()
+                        {
+                            RepoUrl = new Uri(OriginPath),
+                            TargetRevision = argoCDBranchName.Value,
+                            Ref = "values",
+                            Name = "ref-source"
+                        }
+                    }
+                }
+            };
+            argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
+                                           .Returns(argoCdApplicationFromYaml);
+
+            var updater = new UpdateArgoCDAppImagesInstallConvention(log,
+                                                                     Substitute.For<IGitHubPullRequestCreator>(),
+                                                                     fileSystem,
+                                                                     new DeploymentConfigFactory(nonSensitiveCalamariVariables),
+                                                                     new CommitMessageGenerator(),
+                                                                     customPropertiesLoader,
+                                                                     argoCdApplicationManifestParser);
+            var variables = new CalamariVariables
+            {
+                [ProjectVariables.Slug] = ProjectSlug,
+                [DeploymentEnvironment.Slug] = EnvironmentSlug,
+                [PackageVariables.IndexedImage("argocd-e2e-container")] = "quay.io/argoprojlabs/argocd-e2e-container:0.3",
+                [PackageVariables.IndexedPackagePurpose("argocd-e2e-container")] = "DockerImageReference",
+            };
+            
+            //Act
+            var runningDeployment = new RunningDeployment(null, variables);
+            runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
+            runningDeployment.StagingDirectory = tempDirectory;
+
+            updater.Install(runningDeployment);
+            //Assert
+            var resultRepo = CloneOrigin();
+            var valuesFileContent = fileSystem.ReadFile(Path.Combine(resultRepo, "files", "values.yaml"));
+            valuesFileContent.ReplaceLineEndings().Should()
+                             .Be(@"
+replicaCount: 1
+image:
+  repository: quay.io/argoprojlabs/argocd-e2e-container
+  tag: 0.1
+  pullPolicy: IfNotPresent
+".ReplaceLineEndings());
+
+            log.MessagesWarnFormatted.Should().Contain("The Helm source 'https://github.com/doesnt/exist.git' is missing an annotation for the image replace path. It will not be updated.");
+        } 
+
+        [Test]
+        public void DontWarnHelmRefSourceWithMissingImagePathIfRefSourceNotInScope()
+        {
+            //Arrange
+            const string valuesFile = @"
+replicaCount: 1
+image:
+  repository: quay.io/argoprojlabs/argocd-e2e-container
+  tag: 0.1
+  pullPolicy: IfNotPresent
+";
+
+            originRepo.AddFilesToBranch(argoCDBranchName, ("files/values.yaml", valuesFile));
+            originRepo.AddFilesToBranch(argoCDBranchName, ("files/Chart.yaml", "Content Is Arbitrary"));
+            
+            argoCdApplicationFromYaml = new Application()
+            {
+                Metadata = new Metadata()
+                {
+                    Namespace = "MyAppp",
+                    Annotations = new Dictionary<string, string>()
+                    {
+                        [ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey("helm-source".ToApplicationSourceName())] = "{{ .Values.image.repository }}:{{ .Values.image.tag }}",
+                        [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey("dont-exist".ToApplicationSourceName())] = ProjectSlug,
+                        [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey("dont-exist".ToApplicationSourceName())] = EnvironmentSlug,
+                    }
+                },
+                Spec = new ApplicationSpec()
+                {
+                    Sources = new List<SourceBase>()
+                    {
+                        new HelmSource()
+                        {
+                            RepoUrl = new Uri("https://github.com/doesnt/exist.git"),
+                            Path = "files",
+                            Helm = new HelmConfig()
+                            {
+                                ValueFiles = new List<string>()
+                                {
+                                    "$values/files/values.yaml"
+                                }
+                            }
+                        },
+                        new ReferenceSource()
+                        {
+                            RepoUrl = new Uri(OriginPath),
+                            TargetRevision = argoCDBranchName.Value,
+                            Ref = "values"
+                        }
+                    }
+                }
+            };
+            argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
+                                           .Returns(argoCdApplicationFromYaml);
+
+            var updater = new UpdateArgoCDAppImagesInstallConvention(log,
+                                                                     Substitute.For<IGitHubPullRequestCreator>(),
+                                                                     fileSystem,
+                                                                     new DeploymentConfigFactory(nonSensitiveCalamariVariables),
+                                                                     new CommitMessageGenerator(),
+                                                                     customPropertiesLoader,
+                                                                     argoCdApplicationManifestParser);
+            var variables = new CalamariVariables
+            {
+                [ProjectVariables.Slug] = ProjectSlug,
+                [DeploymentEnvironment.Slug] = EnvironmentSlug,
+                [PackageVariables.IndexedImage("argocd-e2e-container")] = "quay.io/argoprojlabs/argocd-e2e-container:0.3",
+                [PackageVariables.IndexedPackagePurpose("argocd-e2e-container")] = "DockerImageReference",
+            };
+            
+            //Act
+            var runningDeployment = new RunningDeployment(null, variables);
+            runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
+            runningDeployment.StagingDirectory = tempDirectory;
+
+            updater.Install(runningDeployment);
+            //Assert
+            var resultRepo = CloneOrigin();
+            var valuesFileContent = fileSystem.ReadFile(Path.Combine(resultRepo, "files", "values.yaml"));
+            valuesFileContent.ReplaceLineEndings().Should()
+                             .Be(@"
+replicaCount: 1
+image:
+  repository: quay.io/argoprojlabs/argocd-e2e-container
+  tag: 0.1
+  pullPolicy: IfNotPresent
+".ReplaceLineEndings());
+
+            log.MessagesWarnFormatted.Should().NotContain("The Helm source 'https://github.com/doesnt/exist.git' is missing an annotation for the image replace path. It will not be updated.");
         } 
 
         string CloneOrigin()
