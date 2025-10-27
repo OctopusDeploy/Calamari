@@ -17,7 +17,7 @@ partial class Build
                     "TestCategory != Windows & TestCategory != PlatformAgnostic & TestCategory != RunOnceOnWindowsAndLinux";
 
                 var runningInTeamCity = TeamCity.Instance is not null;
-                var outputDirectory = "Binaries";
+                var outputDirectory = RootDirectory / "outputs";
 
                 DotNetTasks.DotNetTest(settings => settings
                                                    .SetProjectFile("Binaries/Calamari.Tests.dll")
@@ -42,7 +42,7 @@ partial class Build
                           const string testFilter = "(TestCategory != Windows & TestCategory != PlatformAgnostic) | TestCategory = RunOnceOnWindowsAndLinux";
 
                           var runningInTeamCity = TeamCity.Instance is not null;
-                          var outputDirectory = "Binaries";
+                          var outputDirectory = RootDirectory / "outputs";
                           
                           DotNetTasks.DotNetTest(settings => settings
                                                              .SetProjectFile("Binaries/Calamari.Tests.dll")
@@ -67,7 +67,7 @@ partial class Build
                           const string testFilter = "TestCategory != macOs & TestCategory != Nix & TestCategory != PlatformAgnostic & TestCategory != nixMacOS & TestCategory != RunOnceOnWindowsAndLinux & TestCategory != ModifiesSystemProxy";
 
                           var runningInTeamCity = TeamCity.Instance is not null;
-                          var outputDirectory = "Binaries";
+                          var outputDirectory = RootDirectory / "outputs";
                           
                           DotNetTasks.DotNetTest(settings => settings
                                                              .SetProjectFile("Binaries/Calamari.Tests.dll")
@@ -91,7 +91,7 @@ partial class Build
                           const string testFilter = "TestCategory = Windows & TestCategory = ModifiesSystemProxy";
 
                           var runningInTeamCity = TeamCity.Instance is not null;
-                          var outputDirectory = "Binaries";
+                          var outputDirectory = RootDirectory / "outputs";
                           
                           DotNetTasks.DotNetTest(settings => settings
                                                              .SetProjectFile("Binaries/Calamari.Tests.dll")
