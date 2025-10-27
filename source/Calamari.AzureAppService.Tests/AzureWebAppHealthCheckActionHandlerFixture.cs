@@ -41,6 +41,35 @@ namespace Calamari.AzureAppService.Tests
 
         [Test]
         [NonParallelizable]
+        public async Task WebAppSlotIsFound_AndNotFoundWhenDeleted()
+        {
+            const string slotName = "Testing";
+            var slot = await WebSiteResource.GetWebSiteSlots()
+                                            .CreateOrUpdateAsync(WaitUntil.Completed, slotName, WebSiteResource.Data);
+
+            await CommandTestBuilder.CreateAsync<HealthCheckCommand, Program>()
+                                    .WithArrange(context =>
+                                                 {
+                                                     SetUpVariables(context);
+                                                     context.Variables.Add(SpecialVariables.Action.Azure.WebAppSlot, slotName);
+                                                 })
+                                    .WithAssert(result => result.WasSuccessful.Should().BeTrue())
+                                    .Execute();
+            
+            await slot.Value.DeleteAsync(WaitUntil.Completed);
+            
+            await CommandTestBuilder.CreateAsync<HealthCheckCommand, Program>()
+                                    .WithArrange(context =>
+                                                 {
+                                                     SetUpVariables(context);
+                                                     context.Variables.Add(SpecialVariables.Action.Azure.WebAppSlot, slotName);
+                                                 })
+                                    .WithAssert(result => result.WasSuccessful.Should().BeFalse())
+                                    .Execute(false);
+        }
+
+        [Test]
+        [NonParallelizable]
         public async Task WebAppIsFound_WithAndWithoutProxy()
         {
             await CommandTestBuilder.CreateAsync<HealthCheckCommand, Program>()
@@ -65,35 +94,6 @@ namespace Calamari.AzureAppService.Tests
             var randomName = Randomizer.CreateRandomizer().GetString(34, "abcdefghijklmnopqrstuvwxyz1234567890");
             await CommandTestBuilder.CreateAsync<HealthCheckCommand, Program>()
                                     .WithArrange(SetUpVariables)
-                                    .WithAssert(result => result.WasSuccessful.Should().BeFalse())
-                                    .Execute(false);
-        }
-
-        [Test]
-        [NonParallelizable]
-        public async Task WebAppSlotIsFound_AndNotFoundWhenDeleted()
-        {
-            const string slotName = "Testing";
-            var slot = await WebSiteResource.GetWebSiteSlots()
-                                          .CreateOrUpdateAsync(WaitUntil.Completed, slotName, WebSiteResource.Data);
-
-            await CommandTestBuilder.CreateAsync<HealthCheckCommand, Program>()
-                                    .WithArrange(context =>
-                                                 {
-                                                     SetUpVariables(context);
-                                                     context.Variables.Add(SpecialVariables.Action.Azure.WebAppSlot, slotName);
-                                                 })
-                                    .WithAssert(result => result.WasSuccessful.Should().BeTrue())
-                                    .Execute();
-            
-            await slot.Value.DeleteAsync(WaitUntil.Completed);
-            
-            await CommandTestBuilder.CreateAsync<HealthCheckCommand, Program>()
-                                    .WithArrange(context =>
-                                                 {
-                                                     SetUpVariables(context);
-                                                        context.Variables.Add(SpecialVariables.Action.Azure.WebAppSlot, slotName);
-                                                 })
                                     .WithAssert(result => result.WasSuccessful.Should().BeFalse())
                                     .Execute(false);
         }
