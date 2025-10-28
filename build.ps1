@@ -83,6 +83,11 @@ else {
         ExecSafe { & powershell $DotNetInstallFile -InstallDir $DotNetDirectory -Version $DotNetVersion -NoPath }
     }
     $env:DOTNET_EXE = "$DotNetDirectory\dotnet.exe"
+
+    # ----- Octopus Deploy Modification -----
+    # Update the path with the temporary dotnet exe so it can be found by anything be run out of this shell
+    $env:PATH = "$($env:Path);$($env:env:DOTNET_EXE)"
+    # ----- End Octopus Deploy Modification -----
 }
 
 Write-Output "Microsoft (R) .NET Core SDK version $(& $env:DOTNET_EXE --version)"
