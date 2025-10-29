@@ -76,7 +76,7 @@ else
     
     # ----- Octopus Deploy Modification -----
     # Update the path with the temporary dotnet exe so it can be found by anything be run out of this shell
-    export PATH="$PATH:$DOTNET_DIRECTORY/dotnet"
+    export PATH="$PATH:$DOTNET_DIRECTORY"
     # ----- End Octopus Deploy Modification -----
 fi
 
