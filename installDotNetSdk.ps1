@@ -1,9 +1,3 @@
-[CmdletBinding()]
-Param(
-    [Parameter(Position=0,Mandatory=$false,ValueFromRemainingArguments=$true)]
-    [string[]]$BuildArguments
-)
-
 Write-Output "PowerShell $($PSVersionTable.PSEdition) version $($PSVersionTable.PSVersion)"
 
 Set-StrictMode -Version 2.0; $ErrorActionPreference = "Stop"; $ConfirmPreference = "None"; trap { Write-Error $_ -ErrorAction Continue; exit 1 }
@@ -52,10 +46,8 @@ $DotNetChannel = "8.0"
 $DotNetDirectory = "$TempDirectory\dotnet-win"
 if (!(Test-Path variable:DotNetVersion)) {
     ExecSafe { & powershell $DotNetInstallFile -Channel $DotNetChannel }
-} else
-{
+} else {
     ExecSafe { & powershell $DotNetInstallFile -Version $DotNetVersion }
 }
 
-
-
+[Environment]::SetEnvironmentVariable("Path", "$($env:Path);%LocalAppData%\Microsoft\dotnet", [System.EnvironmentVariableTarget]::Machine)
