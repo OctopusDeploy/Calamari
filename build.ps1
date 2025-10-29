@@ -87,6 +87,8 @@ else {
     # ----- Octopus Deploy Modification -----
     # Update the path with the temporary dotnet exe so it can be found by anything be run out of this shell
     $env:PATH = "$($env:Path);$($env:DOTNET_EXE)"
+    # We update the global path
+    [Environment]::SetEnvironmentVariable("Path", $env:Path, [System.EnvironmentVariableTarget]::Machine)
     # ----- End Octopus Deploy Modification -----
 }
 
@@ -94,4 +96,5 @@ Write-Output "Microsoft (R) .NET Core SDK version $(& $env:DOTNET_EXE --version)
 
 ExecSafe { & $env:DOTNET_EXE build $BuildProjectFile /nodeReuse:false /p:UseSharedCompilation=false -nologo -clp:NoSummary --verbosity quiet }
 ExecSafe { & $env:DOTNET_EXE run --project $BuildProjectFile --no-build -- $BuildArguments }
+
 
