@@ -38,9 +38,9 @@
 
     <ItemGroup>
         <PackageReference Include="Autofac" Version="4.8.0" />
-        <PackageReference Include="Globfish" Version="1.0.4" />
         <PackageReference Include="JavaPropertiesParser" Version="0.2.1" />
         <PackageReference Include="Microsoft.Web.Xdt" Version="3.1.0" />
+        <PackageReference Include="Octopus.Globfish" Version="1.0.8" />
         <PackageReference Include="Octopus.Versioning" Version="5.1.876" />
         <PackageReference Include="Octopus.TinyTypes" Version="2.2.1156" />
         <PackageReference Include="Octopus.CoreUtilities" Version="2.1.449" />
