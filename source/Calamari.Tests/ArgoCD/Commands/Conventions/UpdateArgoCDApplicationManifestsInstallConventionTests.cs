@@ -8,6 +8,7 @@ using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Domain;
 using Calamari.ArgoCD.Dtos;
 using Calamari.ArgoCD.Git;
+using Calamari.ArgoCD.Git.GitVendorApiAdapters;
 using Calamari.ArgoCD.GitHub;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Deployment;
@@ -130,11 +131,11 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             var convention = new UpdateArgoCDApplicationManifestsInstallConvention(fileSystem, 
                                                                       UpdateArgoCDAppManifestsCommand.PackageDirectoryName, 
                                                                       log, 
-                                                                      Substitute.For<IGitHubPullRequestCreator>(), 
                                                                       new DeploymentConfigFactory(nonSensitiveCalamariVariables), 
                                                                       customPropertiesLoader, 
                                                                       argoCdApplicationManifestParser,
-                                                                      new ArgoCDManifestsFileMatcher(fileSystem));
+                                                                      new ArgoCDManifestsFileMatcher(fileSystem), 
+                                                                      Substitute.For<IGitVendorAgnosticApiAdapterFactory>());
             convention.Install(runningDeployment);
 
             var resultPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCdBranchName);
@@ -179,11 +180,11 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             var convention = new UpdateArgoCDApplicationManifestsInstallConvention(fileSystem, 
                                                                       UpdateArgoCDAppManifestsCommand.PackageDirectoryName, 
                                                                       log, 
-                                                                      Substitute.For<IGitHubPullRequestCreator>(), 
                                                                       new DeploymentConfigFactory(nonSensitiveCalamariVariables), 
                                                                       customPropertiesLoader,
                                                                       argoCdApplicationManifestParser,
-                                                                      new ArgoCDManifestsFileMatcher(fileSystem));
+                                                                      new ArgoCDManifestsFileMatcher(fileSystem),
+                                                                      Substitute.For<IGitVendorAgnosticApiAdapterFactory>());
             convention.Install(runningDeployment);
             
             // Assert
