@@ -27,9 +27,23 @@
     <PackageReference Include="System.Text.Json" Version="8.0.5" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Calamari.AzureScripting\Calamari.AzureScripting.csproj" />
     <ProjectReference Include="..\Calamari.CloudAccounts\Calamari.CloudAccounts.csproj" />
     <ProjectReference Include="..\Calamari.Azure\Calamari.Azure.csproj" />
     <ProjectReference Include="..\Calamari.Common\Calamari.Common.csproj" />
   </ItemGroup>
 
+  <!-- Extract dotnet-script zip files to support C# script execution -->
+  <Target Name="RunResolvePackageDependencies" Condition="'$(RunResolvePackageDependencies)' != ''" />
+  <Target Name="GetToolFiles" DependsOnTargets="RunResolvePackageDependencies">
+    <ItemGroup>
+      <DotnetScriptFiles Include="$(MSBuildProjectDirectory)/../Calamari.Scripting/DotnetScript/dotnet-script.*.zip"/>
+    </ItemGroup>
+  </Target>
+  <Target Name="CopyDotnetScriptFilesAfterBuild" AfterTargets="Build" DependsOnTargets="GetToolFiles">
+    <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(OutDir)/" />
+  </Target>
+  <Target Name="CopyDotnetScriptFilesAfterPublish" AfterTargets="Publish" DependsOnTargets="GetToolFiles">
+    <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(PublishDir)/" />
+  </Target>
 </Project>
