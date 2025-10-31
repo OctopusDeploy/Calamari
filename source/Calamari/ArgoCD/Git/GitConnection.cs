@@ -7,7 +7,7 @@ namespace Calamari.ArgoCD.Git
     {
         public string? Username { get;  }
         public string? Password { get;  }
-        public string Url { get;  }
+        public Uri Url { get;  }
     }
     
     public interface IGitConnection : IRepositoryConnection
@@ -17,7 +17,7 @@ namespace Calamari.ArgoCD.Git
 
     public class GitConnection : IGitConnection
     {
-        public GitConnection(string? username, string? password, string url, GitBranchName branchName)
+        public GitConnection(string? username, string? password, Uri url, GitBranchName branchName)
         {
             Username = username;
             Password = password;
@@ -27,7 +27,7 @@ namespace Calamari.ArgoCD.Git
 
         public string? Username { get; }
         public string? Password { get; }
-        public string Url { get; }
+        public Uri Url { get; }
         public GitBranchName BranchName { get; }
     }
 }

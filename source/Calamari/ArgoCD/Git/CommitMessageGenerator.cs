@@ -8,19 +8,11 @@ namespace Calamari.ArgoCD.Git
 {
     public interface ICommitMessageGenerator
     {
-        string GenerateForImageUpdates(GitCommitMessage commitMessage, HashSet<string> updatedImages);
-
         string GenerateDescription(HashSet<string> updatedImages, string? userDescription);
     }
 
     public class CommitMessageGenerator : ICommitMessageGenerator
     {
-        public string GenerateForImageUpdates(GitCommitMessage commitMessage, HashSet<string> updatedImages)
-        {
-            var imageUpdateListText = GenerateUpdatedImagesListCommitBody(updatedImages);
-            return $"{commitMessage}\n\n{imageUpdateListText}";
-        }
-
         // TODO: This is a leaky abstraction - figure out how to remove
         public string GenerateDescription(HashSet<string> updatedImages, string? userDescription)
         {

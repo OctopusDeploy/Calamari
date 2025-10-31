@@ -5,9 +5,8 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Calamari.ArgoCD.GitHub;
+using Calamari.ArgoCD.Git.GitVendorApiAdapters;
 using Calamari.Common.Commands;
-using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using LibGit2Sharp;
@@ -23,7 +22,7 @@ namespace Calamari.ArgoCD.Git
         readonly string repoCheckoutDirectoryPath;
         readonly ILog log;
         readonly IGitConnection connection;
-        readonly IGitHubPullRequestCreator pullRequestCreator;
+        readonly IGitVendorApiAdapter? vendorApiAdapter;
 
         public string WorkingDirectory => repository.Info.WorkingDirectory;
 
@@ -32,14 +31,14 @@ namespace Calamari.ArgoCD.Git
                                  string repoCheckoutDirectoryPath,
                                  ILog log,
                                  IGitConnection connection,
-                                 IGitHubPullRequestCreator pullRequestCreator)
+                                 IGitVendorApiAdapter? vendorApiAdapter)
         {
             this.repository = repository;
             this.calamariFileSystem = calamariFileSystem;
             this.repoCheckoutDirectoryPath = repoCheckoutDirectoryPath;
             this.log = log;
             this.connection = connection;
-            this.pullRequestCreator = pullRequestCreator;
+            this.vendorApiAdapter = vendorApiAdapter;
         }
 
         // returns true if changes were made to the repository
@@ -52,7 +51,7 @@ namespace Calamari.ArgoCD.Git
                 var commit = repository.Commit(commitMessage,
                                                new Signature("Octopus", "octopus@octopus.com", commitTime),
                                                new Signature("Octopus", "octopus@octopus.com", commitTime));
-                log.Verbose($"Committed changes to {commit.Sha}");
+                log.Verbose($"Committed changes to {commit.ShortSha()}");
                 return true;
             }
             catch (EmptyCommitException)
@@ -91,23 +90,62 @@ namespace Calamari.ArgoCD.Git
                                       CancellationToken cancellationToken)
         {
             var currentBranchName = repository.GetBranchName(branchName);
-            var pushToBranchName = currentBranchName;
-            if (requiresPullRequest)
-            {
-                pushToBranchName = CalculateBranchName();
-            }
+            var commit = repository.Head.Tip; //We currently only support pushing to the head of the branch
+                
+            var pushToBranchName = requiresPullRequest ?
+                CalculateBranchName() :
+                currentBranchName;
 
             log.Info($"Pushing changes to branch '{pushToBranchName}'");
             PushChanges(pushToBranchName);
+
+            if (vendorApiAdapter != null)
+            {
+                var url = vendorApiAdapter.GenerateCommitUrl(commit.Sha);
+                log.Info($"Commit [{commit.ShortSha()}]({url}) pushed");    
+            }
+            else
+            {
+                log.Info($"Commit {commit.ShortSha()} pushed");    
+            }
+            
             if (requiresPullRequest)
             {
-                await pullRequestCreator.CreatePullRequest(log,
-                                                           connection,
-                                                           summary,
-                                                           description,
-                                                           new GitBranchName(pushToBranchName),
-                                                           new GitBranchName(currentBranchName),
-                                                           cancellationToken);
+                await CreatePullRequest(summary, description, cancellationToken, pushToBranchName, currentBranchName);
+            }
+        }
+
+        async Task CreatePullRequest(string summary,
+                                     string description,
+                                     CancellationToken cancellationToken,
+                                     string pushToBranchName,
+                                     string currentBranchName)
+        {
+            
+            
+            if (vendorApiAdapter == null)
+            {
+                throw new NotSupportedException("No Git provider can be resolved based on the provided repository details");
+            }
+            
+            try
+            {
+                log.Verbose($"Attempting to create pull request to {connection.Url}");
+                var pullRequest = await vendorApiAdapter.CreatePullRequest(summary,
+                                                                           description,
+                                                                           new GitBranchName("refs/heads/"+ pushToBranchName),
+                                                                           new GitBranchName("refs/heads/"+ currentBranchName),
+                                                                           cancellationToken);
+                
+                log.SetOutputVariableButDoNotAddToVariables("PullRequest.Title", pullRequest.Title);
+                log.SetOutputVariableButDoNotAddToVariables("PullRequest.Number", pullRequest.Number.ToString());
+                log.SetOutputVariableButDoNotAddToVariables("PullRequest.Url", pullRequest.Url);
+
+                log.Info($"Pull Request [{pullRequest.Title} (#{pullRequest.Number})]({pullRequest.Url}) Created");
+            }
+            catch (Exception e)
+            {
+                throw new Exception("Pull Request Creation Failed", e);
             }
         }
 
@@ -118,7 +156,7 @@ namespace Calamari.ArgoCD.Git
 
         public void PushChanges(string branchName)
         {
-            var remote = repository.Network.Remotes["origin"];
+            var remote = repository.Network.Remotes.Single();
             repository.Branches.Update(repository.Head,
                                        branch => branch.Remote = remote.Name,
                                        branch => branch.UpstreamBranch = $"refs/heads/{branchName}");

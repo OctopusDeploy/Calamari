@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Calamari.ArgoCD.Conventions;
+using Calamari.ArgoCD.Git.GitVendorApiAdapters;
 using Calamari.ArgoCD.GitHub;
 using Calamari.Commands;
 using Calamari.Commands.Support;
@@ -32,9 +33,9 @@ namespace Calamari.ArgoCD.Commands
         readonly ICalamariFileSystem fileSystem;
         readonly IExtractPackage extractPackage;
         readonly INonSensitiveSubstituteInFiles substituteInFiles;
-        readonly IGitHubPullRequestCreator pullRequestCreator;
         readonly DeploymentConfigFactory configFactory;
         readonly IArgoCDManifestsFileMatcher argoCDManifestsFileMatcher;
+        readonly IGitVendorAgnosticApiAdapterFactory gitVendorAgnosticApiAdapterFactory;
         PathToPackage pathToPackage;
         string customPropertiesFile;
         string customPropertiesPassword;
@@ -46,18 +47,18 @@ namespace Calamari.ArgoCD.Commands
             ICalamariFileSystem fileSystem,
             IExtractPackage extractPackage,
             INonSensitiveSubstituteInFiles substituteInFiles,
-            IGitHubPullRequestCreator pullRequestCreator,
             DeploymentConfigFactory configFactory,
-            IArgoCDManifestsFileMatcher argoCDManifestsFileMatcher)
+            IArgoCDManifestsFileMatcher argoCDManifestsFileMatcher,
+            IGitVendorAgnosticApiAdapterFactory gitVendorAgnosticApiAdapterFactory)
         {
             this.log = log;
             this.variables = variables;
             this.fileSystem = fileSystem;
             this.extractPackage = extractPackage;
             this.substituteInFiles = substituteInFiles;
-            this.pullRequestCreator = pullRequestCreator;
             this.configFactory = configFactory;
             this.argoCDManifestsFileMatcher = argoCDManifestsFileMatcher;
+            this.gitVendorAgnosticApiAdapterFactory = gitVendorAgnosticApiAdapterFactory;
             this.nonSensitiveVariables = nonSensitiveVariables;
 
             Options.Add("package=",
@@ -93,11 +94,11 @@ namespace Calamari.ArgoCD.Commands
                 new UpdateArgoCDApplicationManifestsInstallConvention(fileSystem,
                                                                       PackageDirectoryName,
                                                                       log,
-                                                                      pullRequestCreator,
                                                                       configFactory,
                                                                       new CustomPropertiesLoader(fileSystem, customPropertiesFile, customPropertiesPassword),
                                                                       new ArgoCdApplicationManifestParser(),
-                                                                      argoCDManifestsFileMatcher),
+                                                                      argoCDManifestsFileMatcher,
+                                                                      gitVendorAgnosticApiAdapterFactory),
             };
 
             var runningDeployment = new RunningDeployment(pathToPackage, variables);
