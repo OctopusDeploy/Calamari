@@ -3,7 +3,7 @@ using System;
 using System.IO;
 using System.Text;
 using Calamari.ArgoCD.Git;
-using Calamari.ArgoCD.GitHub;
+using Calamari.ArgoCD.Git.GitVendorApiAdapters;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Testing.Helpers;
@@ -37,7 +37,7 @@ namespace Calamari.Tests.ArgoCD.Git
             bareOrigin = RepositoryHelpers.CreateBareRepository(OriginPath);
             RepositoryHelpers.CreateBranchIn(branchName, OriginPath);
 
-            repositoryFactory = new RepositoryFactory(log, fileSystem, tempDirectory, Substitute.For<IGitHubPullRequestCreator>());
+            repositoryFactory = new RepositoryFactory(log, fileSystem, tempDirectory, new GitVendorAgnosticApiAdapterFactory(Array.Empty<IGitVendorApiAdapterFactory>()));
         }
 
         [TearDown]
@@ -51,7 +51,7 @@ namespace Calamari.Tests.ArgoCD.Git
         {
             var connection = new GitConnection("username",
                                                "password",
-                                               "file://doesNotExist",
+                                               new Uri("file://doesNotExist"),
                                                branchName);
 
             Action action = () => repositoryFactory.CloneRepository("name", connection);
@@ -66,7 +66,7 @@ namespace Calamari.Tests.ArgoCD.Git
             var originalContent = "This is the file content";
             CreateCommitOnOrigin(branchName.Value, filename, originalContent);
 
-            var connection = new GitConnection(null, null, OriginPath, branchName);
+            var connection = new GitConnection(null, null, new Uri(OriginPath), branchName);
             var clonedRepository = repositoryFactory.CloneRepository("CanCloneAnExistingRepository", connection);
 
             clonedRepository.Should().NotBeNull();
@@ -83,7 +83,7 @@ namespace Calamari.Tests.ArgoCD.Git
             var originalContent = "This is the file content";
             CreateCommitOnOrigin(RepositoryHelpers.MainBranchName, filename, originalContent);
 
-            var connection = new GitConnection(null, null, OriginPath, new GitBranchName("HEAD"));
+            var connection = new GitConnection(null, null, new Uri(OriginPath), new GitBranchName("HEAD"));
             var clonedRepository = repositoryFactory.CloneRepository("CanCloneAnExistingRepository", connection);
 
             clonedRepository.Should().NotBeNull();

@@ -1,8 +1,7 @@
 #if NET
 using System;
 using System.IO;
-using Calamari.ArgoCD.Conventions;
-using Calamari.ArgoCD.GitHub;
+using Calamari.ArgoCD.Git.GitVendorApiAdapters;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
@@ -21,14 +20,14 @@ namespace Calamari.ArgoCD.Git
         readonly ILog log;
         readonly ICalamariFileSystem fileSystem;
         readonly string repositoryParentDirectory;
-        readonly IGitHubPullRequestCreator pullRequestCreator;
+        readonly IGitVendorAgnosticApiAdapterFactory vendorAgnosticApiAdapterFactory;
 
-        public RepositoryFactory(ILog log, ICalamariFileSystem fileSystem, string repositoryParentDirectory, IGitHubPullRequestCreator gitHubPullRequestCreator)
+        public RepositoryFactory(ILog log, ICalamariFileSystem fileSystem, string repositoryParentDirectory, IGitVendorAgnosticApiAdapterFactory vendorAgnosticApiAdapterFactory)
         {
             this.log = log;
             this.fileSystem = fileSystem;
             this.repositoryParentDirectory = repositoryParentDirectory;
-            this.pullRequestCreator = gitHubPullRequestCreator;
+            this.vendorAgnosticApiAdapterFactory = vendorAgnosticApiAdapterFactory;
         }
 
         public RepositoryWrapper CloneRepository(string repositoryName, IGitConnection gitConnection)
@@ -60,12 +59,12 @@ namespace Calamari.ArgoCD.Git
             }
 
             string repoPath;
-            log.InfoFormat("Cloning repository {0}", log.FormatLink(gitConnection.Url));
+            log.InfoFormat("Cloning repository {0}", log.FormatLink(gitConnection.Url.AbsoluteUri));
             using (var timedOp = log.BeginTimedOperation("cloning repository"))
             {
                 try
                 {
-                    repoPath = Repository.Clone(gitConnection.Url, checkoutPath, options);
+                    repoPath = Repository.Clone(gitConnection.Url.AbsoluteUri, checkoutPath, options);
                     timedOp.Complete();
                 }
                 catch (Exception e)
@@ -81,7 +80,7 @@ namespace Calamari.ArgoCD.Git
             var branchToCheckout = repo.GetBranchName(gitConnection.BranchName);
             var remoteBranch = repo.Branches[$"origin/{branchToCheckout}"];
             
-            log.VerboseFormat("Checking out '{0}' @ {1}", branchToCheckout, remoteBranch.Tip.Sha.Substring(0, 10));
+            log.VerboseFormat("Checking out '{0}' @ {1}", branchToCheckout, remoteBranch.Tip.ShortSha());
             
             //A local branch is required such that libgit2sharp can create "tracking" data
             // libgit2sharp does not support pushing from a detached head
@@ -91,13 +90,14 @@ namespace Calamari.ArgoCD.Git
             }
             
             LibGit2Sharp.Commands.Checkout(repo, branchToCheckout);
-
+            
+            var gitVendorApiAdapter = vendorAgnosticApiAdapterFactory.TryCreateGitVendorApiAdaptor(gitConnection);
             return new RepositoryWrapper(repo,
                                          fileSystem,
                                          checkoutPath,
                                          log,
                                          gitConnection,
-                                         pullRequestCreator);
+                                         gitVendorApiAdapter);
         }
     }
 }

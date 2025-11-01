@@ -1,6 +1,7 @@
 ﻿using Autofac;
 using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Git;
+using Calamari.ArgoCD.Git.GitVendorApiAdapters;
 using Calamari.ArgoCD.GitHub;
 
 namespace Calamari.ArgoCD
@@ -12,8 +13,13 @@ namespace Calamari.ArgoCD
 #if NET
             builder.RegisterType<DeploymentConfigFactory>().AsSelf().InstancePerLifetimeScope();
             builder.RegisterType<CommitMessageGenerator>().As<ICommitMessageGenerator>().InstancePerLifetimeScope();
-            builder.RegisterType<GitHubClientFactory>().As<IGitHubClientFactory>().InstancePerLifetimeScope();
-            builder.RegisterType<GitHubPullRequestCreator>().As<IGitHubPullRequestCreator>().InstancePerLifetimeScope();
+            
+            builder.RegisterAssemblyTypes(GetType().Assembly)
+                   .AssignableTo<IGitVendorApiAdapterFactory>()
+                   .Except<GitVendorAgnosticApiAdapterFactory>()
+                   .As<IGitVendorApiAdapterFactory>();
+            
+            builder.RegisterType<GitVendorAgnosticApiAdapterFactory>().As<IGitVendorAgnosticApiAdapterFactory>().InstancePerLifetimeScope();
             builder.RegisterType<ArgoCDManifestsFileMatcher>().As<IArgoCDManifestsFileMatcher>().InstancePerLifetimeScope();
 #endif
         }
