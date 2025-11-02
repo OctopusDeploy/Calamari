@@ -22,7 +22,7 @@ namespace Calamari.ArgoCD.GitHub
         }
 
         //We only support github.com for now (Not GitHub Enterprise Server nor GHE.com)
-        static bool IsGitHub(Uri repoUrl)
+        public static bool IsGitHub(Uri repoUrl)
         {
             return repoUrl.Host.Equals("github.com", StringComparison.OrdinalIgnoreCase)
                 //Handle www.github.com
