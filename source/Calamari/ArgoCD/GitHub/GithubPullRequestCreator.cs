@@ -35,7 +35,7 @@ namespace Calamari.ArgoCD.GitHub
         {
             log.Verbose("Attempting to use Git Credentials to talk to GitHub...");
 
-            var (repoOwner, repoName) = GitHubRepositoryOwnerParser.ParseOwnerAndRepository(new Uri(gitConnection.Url));
+            var (repoOwner, repoName) = GitHubRepositoryOwnerParser.ParseOwnerAndRepository(gitConnection.Url);
             
             try
             {

@@ -51,7 +51,7 @@ namespace Calamari.Tests.ArgoCD.Git
         {
             var connection = new GitConnection("username",
                                                "password",
-                                               "file://doesNotExist",
+                                               new Uri("file://doesNotExist"),
                                                branchName);
 
             Action action = () => repositoryFactory.CloneRepository("name", connection);
@@ -66,7 +66,7 @@ namespace Calamari.Tests.ArgoCD.Git
             var originalContent = "This is the file content";
             CreateCommitOnOrigin(branchName, filename, originalContent);
 
-            var connection = new GitConnection(null, null, OriginPath, branchName);
+            var connection = new GitConnection(null, null, new Uri(OriginPath), branchName);
             var clonedRepository = repositoryFactory.CloneRepository("CanCloneAnExistingRepository", connection);
 
             clonedRepository.Should().NotBeNull();
@@ -83,7 +83,7 @@ namespace Calamari.Tests.ArgoCD.Git
             var originalContent = "This is the file content";
             CreateCommitOnOrigin(RepositoryHelpers.MainBranchName, filename, originalContent);
 
-            var connection = new GitConnection(null, null, OriginPath, new GitHead());
+            var connection = new GitConnection(null, null, new Uri(OriginPath), new GitHead());
             var clonedRepository = repositoryFactory.CloneRepository("CanCloneAnExistingRepository", connection);
 
             clonedRepository.Should().NotBeNull();
