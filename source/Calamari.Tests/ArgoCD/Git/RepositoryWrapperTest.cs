@@ -43,7 +43,7 @@ namespace Calamari.Tests.ArgoCD.Git
             RepositoryHelpers.CreateBranchIn(branchName, OriginPath);
 
             var repositoryFactory = new RepositoryFactory(log, fileSystem, tempDirectory, gitHubPullRequestCreator);
-            gitConnection = new GitConnection(null, null, OriginPath, branchName);
+            gitConnection = new GitConnection(null, null, new Uri(OriginPath), branchName);
             repository = repositoryFactory.CloneRepository(repositoryPath, gitConnection);
         }
 
@@ -178,7 +178,7 @@ namespace Calamari.Tests.ArgoCD.Git
                                         ("nested_1/nested_2/file.yaml", ""));
 
             var repositoryFactory = new RepositoryFactory(log, fileSystem, tempDirectory, gitHubPullRequestCreator);
-            gitConnection = new GitConnection(null, null, OriginPath, branchName);
+            gitConnection = new GitConnection(null, null, new Uri(OriginPath), branchName);
 
             // Act
             var sut = repositoryFactory.CloneRepository($"{repositoryPath}/sut", gitConnection);

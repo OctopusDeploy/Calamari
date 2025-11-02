@@ -66,7 +66,7 @@ namespace Calamari.ArgoCD.Git
             {
                 try
                 {
-                    repoPath = Repository.Clone(gitConnection.Url, checkoutPath, options);
+                    repoPath = Repository.Clone(gitConnection.Url.AbsoluteUri, checkoutPath, options);
                     timedOp.Complete();
                 }
                 catch (Exception e)

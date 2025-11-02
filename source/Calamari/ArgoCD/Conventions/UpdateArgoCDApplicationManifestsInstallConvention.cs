@@ -103,7 +103,7 @@ namespace Calamari.ArgoCD.Conventions
                             log.Info($"No Git credentials found for: '{applicationSource.RepoUrl.AbsoluteUri}', will attempt to clone repository anonymously.");
                         }
 
-                        var gitConnection = new GitConnection(gitCredential?.Username, gitCredential?.Password, applicationSource.RepoUrl.AbsoluteUri, GitReference.CreateFromString(applicationSource.TargetRevision));
+                        var gitConnection = new GitConnection(gitCredential?.Username, gitCredential?.Password, applicationSource.RepoUrl, GitReference.CreateFromString(applicationSource.TargetRevision));
 
                         using (var repository = repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), gitConnection))
                         {

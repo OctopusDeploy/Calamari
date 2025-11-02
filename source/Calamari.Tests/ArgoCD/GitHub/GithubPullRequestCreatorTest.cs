@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Calamari.ArgoCD.Git;
@@ -21,7 +22,7 @@ namespace Calamari.Tests.ArgoCD.GitHub
             var connection = new GitConnection(
                                               "yourGithubUsername",
                                               "ADD_PAT_HERE",
-                                              "https://github.com/rain-on/PopulatedArgoCd.git",
+                                              new Uri("https://github.com/rain-on/PopulatedArgoCd.git"),
                                               GitBranchName.CreateFromFriendlyName("NOT_USED_IN_THIS_TEST"));
 
             await prCreator.CreatePullRequest(log,
