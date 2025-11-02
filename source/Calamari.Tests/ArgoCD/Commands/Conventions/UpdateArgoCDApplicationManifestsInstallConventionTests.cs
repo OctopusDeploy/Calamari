@@ -40,8 +40,8 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
         string OriginPath => Path.Combine(tempDirectory, "origin");
         string RepoUrl => OriginPath;
         Repository originRepo;
-        
-        GitBranchName argoCdBranchName = new GitBranchName("devBranch");
+
+        readonly GitBranchName argoCdBranchName = GitBranchName.CreateFromFriendlyName("devBranch");
 
         [SetUp]
         public void Init()
@@ -137,7 +137,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                                                       new ArgoCDManifestsFileMatcher(fileSystem));
             convention.Install(runningDeployment);
 
-            var resultPath = CloneOrigin();
+            var resultPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCdBranchName);
             var resultFirstContent = File.ReadAllText(Path.Combine(resultPath, firstFilename));
             var resultNestedContent = File.ReadAllText(Path.Combine(resultPath, nestedFilename));
             resultFirstContent.Should().Be(firstFilename);
@@ -187,7 +187,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             convention.Install(runningDeployment);
             
             // Assert
-            var resultPath = CloneOrigin();
+            var resultPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCdBranchName);
             File.Exists(Path.Combine(resultPath, firstFilename)).Should().BeTrue();
             File.Exists(Path.Combine(resultPath, fileToPurge)).Should().BeFalse();
         }
@@ -204,17 +204,6 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             }
 
             File.WriteAllText(packageFile, filename);
-        }
-
-        string CloneOrigin()
-        {
-            var subPath = Guid.NewGuid().ToString();
-            var resultPath = Path.Combine(tempDirectory, subPath);
-            Repository.Clone(OriginPath, resultPath);
-            var resultRepo = new Repository(resultPath);
-            LibGit2Sharp.Commands.Checkout(resultRepo, $"origin/{argoCdBranchName}");
-
-            return resultPath;
         }
     }
 }

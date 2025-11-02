@@ -24,7 +24,7 @@ namespace Calamari.Tests.ArgoCD.Git
         string tempDirectory;
         string OriginPath => Path.Combine(tempDirectory, "origin");
         Repository bareOrigin;
-        GitBranchName branchName = new GitBranchName("devBranch");
+        readonly GitBranchName branchName = GitBranchName.CreateFromFriendlyName("devBranch");
 
         RepositoryFactory repositoryFactory;
 
@@ -43,7 +43,7 @@ namespace Calamari.Tests.ArgoCD.Git
         [TearDown]
         public void Cleanup()
         {
-            RepositoryTestHelpers.DeleteRepositoryDirectory(fileSystem, tempDirectory);
+            RepositoryHelpers.DeleteRepositoryDirectory(fileSystem, tempDirectory);
         }
 
         [Test]
@@ -64,7 +64,7 @@ namespace Calamari.Tests.ArgoCD.Git
         {
             var filename = "firstFile.txt";
             var originalContent = "This is the file content";
-            CreateCommitOnOrigin(branchName.Value, filename, originalContent);
+            CreateCommitOnOrigin(branchName, filename, originalContent);
 
             var connection = new GitConnection(null, null, OriginPath, branchName);
             var clonedRepository = repositoryFactory.CloneRepository("CanCloneAnExistingRepository", connection);
@@ -83,7 +83,7 @@ namespace Calamari.Tests.ArgoCD.Git
             var originalContent = "This is the file content";
             CreateCommitOnOrigin(RepositoryHelpers.MainBranchName, filename, originalContent);
 
-            var connection = new GitConnection(null, null, OriginPath, new GitBranchName("HEAD"));
+            var connection = new GitConnection(null, null, OriginPath, new GitHead());
             var clonedRepository = repositoryFactory.CloneRepository("CanCloneAnExistingRepository", connection);
 
             clonedRepository.Should().NotBeNull();
@@ -93,12 +93,12 @@ namespace Calamari.Tests.ArgoCD.Git
             fileContent.Should().Be(originalContent);
         }
 
-        void CreateCommitOnOrigin(string branchName, string fileName, string content)
+        void CreateCommitOnOrigin(GitBranchName branchName, string fileName, string content)
         {
             var message = $"Commit: Message";
             var signature = new Signature("Author", "author@place.com", DateTimeOffset.Now);
 
-            var branch = bareOrigin.Branches[branchName];
+            var branch = bareOrigin.Branches[branchName.Value];
             var treeDefinition = TreeDefinition.From(branch.Tip.Tree);
             var blobID = bareOrigin.ObjectDatabase.Write<Blob>(Encoding.UTF8.GetBytes((content)));
             treeDefinition.Add(fileName, blobID, Mode.NonExecutableFile);

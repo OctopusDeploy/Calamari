@@ -37,8 +37,8 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
         string tempDirectory;
         string OriginPath => Path.Combine(tempDirectory, "origin");
         Repository originRepo;
-        GitBranchName argoCDBranchName = new GitBranchName("devBranch");
-        NonSensitiveCalamariVariables nonSensitiveCalamariVariables = new NonSensitiveCalamariVariables();
+        readonly GitBranchName argoCDBranchName = GitBranchName.CreateFromFriendlyName("devBranch");
+        readonly NonSensitiveCalamariVariables nonSensitiveCalamariVariables = new NonSensitiveCalamariVariables();
         
         readonly IArgoCDApplicationManifestParser argoCdApplicationManifestParser = Substitute.For<IArgoCDApplicationManifestParser>();
         readonly ICustomPropertiesLoader customPropertiesLoader = Substitute.For<ICustomPropertiesLoader>();
@@ -119,7 +119,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             updater.Install(runningDeployment);
 
             // Assert
-            var resultRepo = CloneOrigin();
+            var resultRepo = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             var filesInRepo = fileSystem.EnumerateFilesRecursively(resultRepo, "*");
             var ignoredGitSubfolder = filesInRepo.Where(file => !file.Contains(".git"));
             ignoredGitSubfolder.Should().BeEmpty();
@@ -155,7 +155,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             log.StandardOut.Should().Contain(s => s.Contains($"Processing file include{Path.DirectorySeparatorChar}file1.yaml"));
             log.StandardOut.Should().Contain($"No changes made to file include{Path.DirectorySeparatorChar}file1.yaml as no image references were updated.");
 
-            var resultRepo = CloneOrigin();
+            var resultRepo = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             var repoFileContent = fileSystem.ReadFile(Path.Combine(resultRepo, "include/file1.yaml"));
             repoFileContent.Should().Be("No Yaml here");
         }
@@ -239,7 +239,7 @@ spec:
           image: alpine:3.21 
 ";
             
-            var clonedRepoPath = CloneOrigin();
+            var clonedRepoPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             var fileInRepo = Path.Combine(clonedRepoPath, existingYamlFile);
             fileSystem.FileExists(fileInRepo).Should().BeTrue();
             var content = fileSystem.ReadFile(fileInRepo);
@@ -284,22 +284,11 @@ images:
             updater.Install(runningDeployment);
             
             // Assert
-            var clonedRepoPath = CloneOrigin();
+            var clonedRepoPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             var fileInRepo = Path.Combine(clonedRepoPath, kustomizeFile);
             fileSystem.FileExists(fileInRepo).Should().BeTrue();
             var content = fileSystem.ReadFile(fileInRepo);
             content.Should().Contain("1.27.1");
-        }
-
-        string CloneOrigin()
-        {
-            var subPath = Guid.NewGuid().ToString();
-            var resultPath = Path.Combine(tempDirectory, subPath);
-            Repository.Clone(OriginPath, resultPath);
-            var resultRepo = new Repository(resultPath);
-            LibGit2Sharp.Commands.Checkout(resultRepo, $"origin/{argoCDBranchName}");
-
-            return resultPath;
         }
     }
 }
