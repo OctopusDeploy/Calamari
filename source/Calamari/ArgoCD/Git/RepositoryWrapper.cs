@@ -7,12 +7,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using Calamari.ArgoCD.GitHub;
 using Calamari.Common.Commands;
-using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using LibGit2Sharp;
 using Microsoft.IdentityModel.Tokens;
-using SharpCompress;
 
 namespace Calamari.ArgoCD.Git
 {
@@ -94,7 +92,7 @@ namespace Calamari.ArgoCD.Git
             var pushToBranchName = currentBranchName;
             if (requiresPullRequest)
             {
-                pushToBranchName = new GitBranchName(CalculateBranchName());
+                pushToBranchName = CalculateBranchName();
             }
 
             log.Info($"Pushing changes to branch '{pushToBranchName.ToFriendlyName()}'");
@@ -111,9 +109,9 @@ namespace Calamari.ArgoCD.Git
             }
         }
 
-        string CalculateBranchName()
+        GitBranchName CalculateBranchName()
         {
-            return $"{GitBranchName.Prefix}octopus-argo-cd-{Guid.NewGuid().ToString("N").Substring(0, 10)}";
+            return GitBranchName.CreateFromFriendlyName($"octopus-argo-cd-{Guid.NewGuid().ToString("N").Substring(0, 10)}");
         }
 
         public void PushChanges(GitBranchName branchName)
