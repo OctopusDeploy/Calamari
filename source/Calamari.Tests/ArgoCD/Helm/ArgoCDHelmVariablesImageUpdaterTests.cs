@@ -36,7 +36,7 @@ namespace Calamari.Tests.ArgoCD.Helm
         string tempDirectory;
         string OriginPath => Path.Combine(tempDirectory, "origin");
         Repository originRepo;
-        GitBranchName argoCDBranchName = new GitBranchName("devBranch");
+        GitBranchName argoCDBranchName = new GitBranchName("refs/heads/devBranch");
         NonSensitiveCalamariVariables nonSensitiveCalamariVariables = new NonSensitiveCalamariVariables();
 
         readonly IArgoCDApplicationManifestParser argoCdApplicationManifestParser = Substitute.For<IArgoCDApplicationManifestParser>();
@@ -145,7 +145,7 @@ image:
             updater.Install(runningDeployment);
 
             //Assert
-            var resultRepo = CloneOrigin();
+            var resultRepo = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             var valuesFileContent = fileSystem.ReadFile(Path.Combine(resultRepo, "files", "values.yml"));
             valuesFileContent.Should().Be(DefaultValuesFile);
         }
@@ -179,7 +179,7 @@ image:
             updater.Install(runningDeployment);
 
             //Assert
-            var resultRepo = CloneOrigin();
+            var resultRepo = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             var valuesFileContent = fileSystem.ReadFile(Path.Combine(resultRepo, "files", "values.yml"));
             valuesFileContent.Should().Be(DefaultValuesFile);
         }
@@ -215,7 +215,7 @@ image:
             updater.Install(runningDeployment);
 
             //Assert
-            var resultRepo = CloneOrigin();
+            var resultRepo = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             var valuesFileContent = fileSystem.ReadFile(Path.Combine(resultRepo, "files", "values.yml"));
             valuesFileContent.Should().Contain("nginx:1.27.1");
         }
@@ -260,7 +260,7 @@ image2:
             updater.Install(runningDeployment);
 
             //Assert
-            var resultRepo = CloneOrigin();
+            var resultRepo = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             var valuesFileContent = fileSystem.ReadFile(Path.Combine(resultRepo, "files", "values.yml"));
             valuesFileContent.ReplaceLineEndings().Should()
                              .Be(@"
@@ -337,7 +337,7 @@ image:
 
             updater.Install(runningDeployment);
             //Assert
-            var resultRepo = CloneOrigin();
+            var resultRepo = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             var valuesFileContent = fileSystem.ReadFile(Path.Combine(resultRepo, "files", "values.yaml"));
             valuesFileContent.ReplaceLineEndings().Should()
                              .Be(@"
@@ -428,7 +428,7 @@ image:
 
             updater.Install(runningDeployment);
             //Assert
-            var resultRepo = CloneOrigin();
+            var resultRepo = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             var valuesFileContent = fileSystem.ReadFile(Path.Combine(resultRepo, "files", "values.yaml"));
             valuesFileContent.ReplaceLineEndings().Should()
                              .Be(@"
@@ -506,7 +506,7 @@ image:
 
             updater.Install(runningDeployment);
             //Assert
-            var resultRepo = CloneOrigin();
+            var resultRepo = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             var valuesFileContent = fileSystem.ReadFile(Path.Combine(resultRepo, "files", "values.yaml"));
             valuesFileContent.ReplaceLineEndings().Should()
                              .Be(@"
@@ -596,7 +596,7 @@ image:
 
             updater.Install(runningDeployment);
             //Assert
-            var resultRepo = CloneOrigin();
+            var resultRepo = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             var valuesFileContent = fileSystem.ReadFile(Path.Combine(resultRepo, "files", "values.yaml"));
             valuesFileContent.ReplaceLineEndings().Should()
                              .Be(@"
@@ -686,7 +686,7 @@ image:
 
             updater.Install(runningDeployment);
             //Assert
-            var resultRepo = CloneOrigin();
+            var resultRepo = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             var valuesFileContent = fileSystem.ReadFile(Path.Combine(resultRepo, "files", "values.yaml"));
             valuesFileContent.ReplaceLineEndings().Should()
                              .Be(@"
@@ -777,7 +777,7 @@ image:
 
             updater.Install(runningDeployment);
             //Assert
-            var resultRepo = CloneOrigin();
+            var resultRepo = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             var valuesFileContent = fileSystem.ReadFile(Path.Combine(resultRepo, "files", "values.yaml"));
             valuesFileContent.ReplaceLineEndings().Should()
                              .Be(@"
@@ -790,17 +790,9 @@ image:
 
             log.MessagesWarnFormatted.Should().NotContain("The Helm source 'https://github.com/doesnt/exist.git' is missing an annotation for the image replace path. It will not be updated.");
         } 
-
-        string CloneOrigin()
-        {
-            var subPath = Guid.NewGuid().ToString();
-            var resultPath = Path.Combine(tempDirectory, subPath);
-            Repository.Clone(OriginPath, resultPath);
-            var resultRepo = new Repository(resultPath);
-            LibGit2Sharp.Commands.Checkout(resultRepo, $"origin/{argoCDBranchName}");
-
-            return resultPath;
-        }
     }
+    
+    
 }
+
 #endif

@@ -87,17 +87,17 @@ namespace Calamari.ArgoCD.Git
         public async Task PushChanges(bool requiresPullRequest,
                                       string summary,
                                       string description,
-                                      GitBranchName branchName,
+                                      GitReference branchName,
                                       CancellationToken cancellationToken)
         {
             var currentBranchName = repository.GetBranchName(branchName);
             var pushToBranchName = currentBranchName;
             if (requiresPullRequest)
             {
-                pushToBranchName = CalculateBranchName();
+                pushToBranchName = new GitBranchName(CalculateBranchName());
             }
 
-            log.Info($"Pushing changes to branch '{pushToBranchName}'");
+            log.Info($"Pushing changes to branch '{pushToBranchName.ToFriendlyName()}'");
             PushChanges(pushToBranchName);
             if (requiresPullRequest)
             {
@@ -105,23 +105,23 @@ namespace Calamari.ArgoCD.Git
                                                            connection,
                                                            summary,
                                                            description,
-                                                           new GitBranchName(pushToBranchName),
-                                                           new GitBranchName(currentBranchName),
+                                                           pushToBranchName,
+                                                           currentBranchName,
                                                            cancellationToken);
             }
         }
 
         string CalculateBranchName()
         {
-            return $"octopus-argo-cd-{Guid.NewGuid().ToString("N").Substring(0, 10)}";
+            return $"{GitBranchName.Prefix}octopus-argo-cd-{Guid.NewGuid().ToString("N").Substring(0, 10)}";
         }
 
-        public void PushChanges(string branchName)
+        public void PushChanges(GitBranchName branchName)
         {
-            var remote = repository.Network.Remotes["origin"];
+            var remote = repository.Network.Remotes.First();
             repository.Branches.Update(repository.Head,
                                        branch => branch.Remote = remote.Name,
-                                       branch => branch.UpstreamBranch = $"refs/heads/{branchName}");
+                                       branch => branch.UpstreamBranch = branchName.Value);
 
             PushStatusError? errorsDetected = null;
             var pushOptions = new PushOptions
@@ -134,7 +134,7 @@ namespace Calamari.ArgoCD.Git
             repository.Network.Push(repository.Head, pushOptions);
             if (errorsDetected != null)
             {
-                throw new CommandException($"Failed to push to branch {branchName} - {errorsDetected.Message}");
+                throw new CommandException($"Failed to push to branch {branchName.ToFriendlyName()} - {errorsDetected.Message}");
             }
         }
 

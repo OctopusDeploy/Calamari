@@ -26,7 +26,7 @@ namespace Calamari.Tests.ArgoCD.Git
         string OriginPath => Path.Combine(tempDirectory, "origin");
         string repositoryPath = "repository";
         Repository bareOrigin;
-        GitBranchName branchName = new GitBranchName("devBranch");
+        GitBranchName branchName = GitBranchName.CreateFromFriendlyName("devBranch");
 
         IGitHubPullRequestCreator gitHubPullRequestCreator = Substitute.For<IGitHubPullRequestCreator>();
         IGitConnection gitConnection;
@@ -50,7 +50,7 @@ namespace Calamari.Tests.ArgoCD.Git
         [TearDown]
         public void Cleanup()
         {
-            RepositoryTestHelpers.DeleteRepositoryDirectory(fileSystem, tempDirectory);
+            RepositoryHelpers.DeleteRepositoryDirectory(fileSystem, tempDirectory);
         }
 
         string RepositoryRootPath => Path.Combine(tempDirectory, repositoryPath);
@@ -107,12 +107,12 @@ namespace Calamari.Tests.ArgoCD.Git
             await repository.PushChanges(false,
                                          "Summary Message",
                                          "There is no data to comm it",
-                                         new GitBranchName("arbitraryBranch1"),
+                                         GitBranchName.CreateFromFriendlyName("arbitraryBranch1"),
                                          CancellationToken.None);
             await repository.PushChanges(false,
                                          "Summary Message",
                                          "There is no data to comm it",
-                                         new GitBranchName("arbitraryBranch2"),
+                                         GitBranchName.CreateFromFriendlyName("arbitraryBranch2"),
                                          CancellationToken.None);
         }
 
@@ -125,7 +125,7 @@ namespace Calamari.Tests.ArgoCD.Git
             var commitSummary = "Summary Message";
             var commitDescription = "A commit description";
             repository.CommitChanges(commitSummary, commitDescription).Should().BeTrue();
-            var prBranch = new GitBranchName("arbitraryBranch");
+            var prBranch = GitBranchName.CreateFromFriendlyName("arbitraryBranch");
             await repository.PushChanges(true,
                                          commitSummary,
                                          commitDescription,
@@ -184,7 +184,7 @@ namespace Calamari.Tests.ArgoCD.Git
             var sut = repositoryFactory.CloneRepository($"{repositoryPath}/sut", gitConnection);
             sut.RecursivelyStageFilesForRemoval(subPath);
             sut.CommitChanges("Deleted files", string.Empty);
-            sut.PushChanges(branchName.Value);
+            sut.PushChanges(branchName);
 
             //Assert
             var result = CloneOrigin();
@@ -199,7 +199,7 @@ namespace Calamari.Tests.ArgoCD.Git
             var resultPath = Path.Combine(tempDirectory, subPath);
             Repository.Clone(OriginPath, resultPath);
             var resultRepo = new Repository(resultPath);
-            LibGit2Sharp.Commands.Checkout(resultRepo, $"origin/{branchName.Value}");
+            LibGit2Sharp.Commands.Checkout(resultRepo, branchName.ToFriendlyName());
 
             return resultPath;
         }

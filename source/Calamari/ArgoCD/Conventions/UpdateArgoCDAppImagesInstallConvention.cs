@@ -113,7 +113,7 @@ namespace Calamari.ArgoCD.Conventions
                             if (updatedImages.Count > 0)
                             {
                                 var didPush = PushToRemote(repository,
-                                                           new GitBranchName(applicationSource.TargetRevision),
+                                                           GitReference.CreateFromString(applicationSource.TargetRevision),
                                                            deploymentConfig.CommitParameters,
                                                            updatedFiles,
                                                            updatedImages);
@@ -235,7 +235,7 @@ namespace Calamari.ArgoCD.Conventions
                 log.Info($"No Git credentials found for: '{source.RepoUrl.AbsoluteUri}', will attempt to clone repository anonymously.");
             }
 
-            var gitConnection = new GitConnection(gitCredential?.Username, gitCredential?.Password, source.RepoUrl.AbsoluteUri, new GitBranchName(source.TargetRevision));
+            var gitConnection = new GitConnection(gitCredential?.Username, gitCredential?.Password, source.RepoUrl.AbsoluteUri,GitReference.CreateFromString(source.TargetRevision));
             return repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), gitConnection);
         }
 
@@ -352,7 +352,7 @@ namespace Calamari.ArgoCD.Conventions
         }
 
         bool PushToRemote(RepositoryWrapper repository,
-                          GitBranchName branchName,
+                          GitReference branchName,
                           GitCommitParameters commitParameters,
                           HashSet<string> updatedFiles,
                           HashSet<string> updatedImages)

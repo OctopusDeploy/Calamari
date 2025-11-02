@@ -22,14 +22,14 @@ namespace Calamari.Tests.ArgoCD.GitHub
                                               "yourGithubUsername",
                                               "ADD_PAT_HERE",
                                               "https://github.com/rain-on/PopulatedArgoCd.git",
-                                              new GitBranchName("NOT_USED_IN_THIS_TEST"));
+                                              GitBranchName.CreateFromFriendlyName("NOT_USED_IN_THIS_TEST"));
 
             await prCreator.CreatePullRequest(log,
                                         connection,
                                         "The Title",
                                         "The body",
-                                        new GitBranchName("blork"),
-                                        new GitBranchName("main"),
+                                        GitBranchName.CreateFromFriendlyName("blork"),
+                                        GitBranchName.CreateFromFriendlyName("main"),
                                         CancellationToken.None);
         }
     }
