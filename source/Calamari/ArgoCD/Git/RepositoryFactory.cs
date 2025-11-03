@@ -1,6 +1,7 @@
 #if NET
 using System;
 using System.IO;
+using Calamari.ArgoCD.Git.GitVendorApiAdapters;
 using System.Linq;
 using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.GitHub;
@@ -22,14 +23,14 @@ namespace Calamari.ArgoCD.Git
         readonly ILog log;
         readonly ICalamariFileSystem fileSystem;
         readonly string repositoryParentDirectory;
-        readonly IGitHubPullRequestCreator pullRequestCreator;
+        readonly IGitVendorAgnosticApiAdapterFactory vendorAgnosticApiAdapterFactory;
 
-        public RepositoryFactory(ILog log, ICalamariFileSystem fileSystem, string repositoryParentDirectory, IGitHubPullRequestCreator gitHubPullRequestCreator)
+        public RepositoryFactory(ILog log, ICalamariFileSystem fileSystem, string repositoryParentDirectory, IGitVendorAgnosticApiAdapterFactory vendorAgnosticApiAdapterFactory)
         {
             this.log = log;
             this.fileSystem = fileSystem;
             this.repositoryParentDirectory = repositoryParentDirectory;
-            this.pullRequestCreator = gitHubPullRequestCreator;
+            this.vendorAgnosticApiAdapterFactory = vendorAgnosticApiAdapterFactory;
         }
 
         public RepositoryWrapper CloneRepository(string repositoryName, IGitConnection gitConnection)
@@ -82,7 +83,7 @@ namespace Calamari.ArgoCD.Git
             var branchToCheckout = repo.GetBranchName(gitConnection.GitReference);
             var remoteBranch = repo.Branches.First(f => f.IsRemote && f.UpstreamBranchCanonicalName == branchToCheckout.Value);
             
-            log.VerboseFormat("Checking out '{0}' @ {1}", branchToCheckout.ToFriendlyName(), remoteBranch.Tip.Sha.Substring(0, 10));
+            log.VerboseFormat("Checking out '{0}' @ {1}", branchToCheckout, remoteBranch.Tip.Sha.Substring(0, 10));
             
             //A local branch is required such that libgit2sharp can create "tracking" data
             // libgit2sharp does not support pushing from a detached head
@@ -92,13 +93,14 @@ namespace Calamari.ArgoCD.Git
             }
             
             LibGit2Sharp.Commands.Checkout(repo, branchToCheckout.ToFriendlyName());
-
+            
+            var gitVendorApiAdapter = vendorAgnosticApiAdapterFactory.TryCreateGitVendorApiAdaptor(gitConnection);
             return new RepositoryWrapper(repo,
                                          fileSystem,
                                          checkoutPath,
                                          log,
                                          gitConnection,
-                                         pullRequestCreator);
+                                         gitVendorApiAdapter);
         }
     }
 }
