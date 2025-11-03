@@ -167,7 +167,7 @@ namespace Calamari.ArgoCD.Conventions
             var sourceIdentity = string.IsNullOrEmpty(sourceToUpdate.Name) ? sourceToUpdate.RepoUrl.ToString() : sourceToUpdate.Name;
             if (sourceToUpdate is ReferenceSource)
             {
-                if (!(sourceToUpdate.Path is null))
+                if (sourceToUpdate.Path != null)
                 {
                     log.WarnFormat("Unable to update ref source '{0}' as a path has been explicitly specified.", sourceIdentity);
                     log.Warn("Please split the source into separate sources and update annotations.");
@@ -176,7 +176,7 @@ namespace Calamari.ArgoCD.Conventions
                 return true;
             }
                         
-            if (sourceToUpdate.Path is null)
+            if (sourceToUpdate.Path == null)
             {
                 log.WarnFormat("Unable to update source '{0}' as a path has not been specified.", sourceIdentity);
                 return false;
