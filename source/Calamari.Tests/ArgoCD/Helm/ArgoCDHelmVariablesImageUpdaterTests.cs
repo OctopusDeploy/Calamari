@@ -8,6 +8,7 @@ using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Domain;
 using Calamari.ArgoCD.Dtos;
 using Calamari.ArgoCD.Git;
+using Calamari.ArgoCD.Git.GitVendorApiAdapters;
 using Calamari.ArgoCD.GitHub;
 using Calamari.ArgoCD.Models;
 using Calamari.Common.Commands;
@@ -119,12 +120,12 @@ image:
             argoCdApplicationFromYaml.Metadata.Annotations[ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(null)] = "{{ .Values.image.name }}";
 
             var updater = new UpdateArgoCDAppImagesInstallConvention(log,
-                                                                     Substitute.For<IGitHubPullRequestCreator>(),
                                                                      fileSystem,
                                                                      new DeploymentConfigFactory(nonSensitiveCalamariVariables),
                                                                      new CommitMessageGenerator(),
                                                                      customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser);
+                                                                     argoCdApplicationManifestParser, 
+                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>());
             var variables = new CalamariVariables
             {
                 [ProjectVariables.Slug] = ProjectSlug,
@@ -155,12 +156,12 @@ image:
         {
             // Arrange
             var updater = new UpdateArgoCDAppImagesInstallConvention(log,
-                                                                     Substitute.For<IGitHubPullRequestCreator>(),
                                                                      fileSystem,
                                                                      new DeploymentConfigFactory(nonSensitiveCalamariVariables),
                                                                      new CommitMessageGenerator(),
                                                                      customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser);
+                                                                     argoCdApplicationManifestParser, 
+                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>());
             var variables = new CalamariVariables
             {
                 [ProjectVariables.Slug] = ProjectSlug,
@@ -191,12 +192,12 @@ image:
             argoCdApplicationFromYaml.Metadata.Annotations[ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(null)] = "{{ .Values.image.name }}";
 
             var updater = new UpdateArgoCDAppImagesInstallConvention(log,
-                                                                     Substitute.For<IGitHubPullRequestCreator>(),
                                                                      fileSystem,
                                                                      new DeploymentConfigFactory(nonSensitiveCalamariVariables),
                                                                      new CommitMessageGenerator(),
                                                                      customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser);
+                                                                     argoCdApplicationManifestParser, 
+                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>());
             var variables = new CalamariVariables
             {
                 [ProjectVariables.Slug] = ProjectSlug,
@@ -236,12 +237,12 @@ image2:
             argoCdApplicationFromYaml.Metadata.Annotations[ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(null)] = "{{ .Values.image1.name }}, {{ .Values.image2.name }}:{{ .Values.image2.tag }}";
 
             var updater = new UpdateArgoCDAppImagesInstallConvention(log,
-                                                                     Substitute.For<IGitHubPullRequestCreator>(),
                                                                      fileSystem,
                                                                      new DeploymentConfigFactory(nonSensitiveCalamariVariables),
                                                                      new CommitMessageGenerator(),
                                                                      customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser);
+                                                                     argoCdApplicationManifestParser, 
+                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>());
             var variables = new CalamariVariables
             {
                 [ProjectVariables.Slug] = ProjectSlug,
@@ -316,12 +317,12 @@ image:
                                            .Returns(argoCdApplicationFromYaml);
 
             var updater = new UpdateArgoCDAppImagesInstallConvention(log,
-                                                                     Substitute.For<IGitHubPullRequestCreator>(),
                                                                      fileSystem,
                                                                      new DeploymentConfigFactory(nonSensitiveCalamariVariables),
                                                                      new CommitMessageGenerator(),
                                                                      customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser);
+                                                                     argoCdApplicationManifestParser, 
+                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>());
             var variables = new CalamariVariables
             {
                 [ProjectVariables.Slug] = ProjectSlug,
@@ -407,12 +408,12 @@ image:
                                            .Returns(argoCdApplicationFromYaml);
 
             var updater = new UpdateArgoCDAppImagesInstallConvention(log,
-                                                                     Substitute.For<IGitHubPullRequestCreator>(),
                                                                      fileSystem,
                                                                      new DeploymentConfigFactory(nonSensitiveCalamariVariables),
                                                                      new CommitMessageGenerator(),
                                                                      customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser);
+                                                                     argoCdApplicationManifestParser, 
+                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>());
             var variables = new CalamariVariables
             {
                 [ProjectVariables.Slug] = ProjectSlug,
@@ -485,12 +486,12 @@ image:
                                            .Returns(argoCdApplicationFromYaml);
 
             var updater = new UpdateArgoCDAppImagesInstallConvention(log,
-                                                                     Substitute.For<IGitHubPullRequestCreator>(),
                                                                      fileSystem,
                                                                      new DeploymentConfigFactory(nonSensitiveCalamariVariables),
                                                                      new CommitMessageGenerator(),
                                                                      customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser);
+                                                                     argoCdApplicationManifestParser, 
+                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>());
             var variables = new CalamariVariables
             {
                 [ProjectVariables.Slug] = ProjectSlug,
@@ -575,12 +576,12 @@ image:
                                            .Returns(argoCdApplicationFromYaml);
 
             var updater = new UpdateArgoCDAppImagesInstallConvention(log,
-                                                                     Substitute.For<IGitHubPullRequestCreator>(),
                                                                      fileSystem,
                                                                      new DeploymentConfigFactory(nonSensitiveCalamariVariables),
                                                                      new CommitMessageGenerator(),
                                                                      customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser);
+                                                                     argoCdApplicationManifestParser, 
+                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>());
             var variables = new CalamariVariables
             {
                 [ProjectVariables.Slug] = ProjectSlug,
@@ -665,12 +666,12 @@ image:
                                            .Returns(argoCdApplicationFromYaml);
 
             var updater = new UpdateArgoCDAppImagesInstallConvention(log,
-                                                                     Substitute.For<IGitHubPullRequestCreator>(),
                                                                      fileSystem,
                                                                      new DeploymentConfigFactory(nonSensitiveCalamariVariables),
                                                                      new CommitMessageGenerator(),
                                                                      customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser);
+                                                                     argoCdApplicationManifestParser, 
+                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>());
             var variables = new CalamariVariables
             {
                 [ProjectVariables.Slug] = ProjectSlug,
@@ -756,12 +757,12 @@ image:
                                            .Returns(argoCdApplicationFromYaml);
 
             var updater = new UpdateArgoCDAppImagesInstallConvention(log,
-                                                                     Substitute.For<IGitHubPullRequestCreator>(),
                                                                      fileSystem,
                                                                      new DeploymentConfigFactory(nonSensitiveCalamariVariables),
                                                                      new CommitMessageGenerator(),
                                                                      customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser);
+                                                                     argoCdApplicationManifestParser, 
+                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>());
             var variables = new CalamariVariables
             {
                 [ProjectVariables.Slug] = ProjectSlug,

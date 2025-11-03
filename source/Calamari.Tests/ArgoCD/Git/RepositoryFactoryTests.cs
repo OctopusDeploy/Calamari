@@ -3,7 +3,7 @@ using System;
 using System.IO;
 using System.Text;
 using Calamari.ArgoCD.Git;
-using Calamari.ArgoCD.GitHub;
+using Calamari.ArgoCD.Git.GitVendorApiAdapters;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Testing.Helpers;
@@ -37,7 +37,7 @@ namespace Calamari.Tests.ArgoCD.Git
             bareOrigin = RepositoryHelpers.CreateBareRepository(OriginPath);
             RepositoryHelpers.CreateBranchIn(branchName, OriginPath);
 
-            repositoryFactory = new RepositoryFactory(log, fileSystem, tempDirectory, Substitute.For<IGitHubPullRequestCreator>());
+            repositoryFactory = new RepositoryFactory(log, fileSystem, tempDirectory, new GitVendorAgnosticApiAdapterFactory(Array.Empty<IGitVendorApiAdapterFactory>()));
         }
 
         [TearDown]

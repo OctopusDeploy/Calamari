@@ -9,6 +9,7 @@ using System.Threading;
 using Calamari.ArgoCD.Domain;
 using Calamari.ArgoCD.Dtos;
 using Calamari.ArgoCD.Git;
+using Calamari.ArgoCD.Git.GitVendorApiAdapters;
 using Calamari.ArgoCD.GitHub;
 using Calamari.ArgoCD.Helm;
 using Calamari.ArgoCD.Models;
@@ -25,27 +26,27 @@ namespace Calamari.ArgoCD.Conventions
     {
         readonly ICalamariFileSystem fileSystem;
         readonly ILog log;
-        readonly IGitHubPullRequestCreator pullRequestCreator;
         readonly DeploymentConfigFactory deploymentConfigFactory;
         readonly ICommitMessageGenerator commitMessageGenerator;
         readonly ICustomPropertiesLoader customPropertiesLoader;
         readonly IArgoCDApplicationManifestParser argoCdApplicationManifestParser;
+        readonly IGitVendorAgnosticApiAdapterFactory gitVendorAgnosticApiAdapterFactory;
 
         public UpdateArgoCDAppImagesInstallConvention(ILog log,
-                                                      IGitHubPullRequestCreator pullRequestCreator,
                                                       ICalamariFileSystem fileSystem,
                                                       DeploymentConfigFactory deploymentConfigFactory,
                                                       ICommitMessageGenerator commitMessageGenerator,
                                                       ICustomPropertiesLoader customPropertiesLoader,
-                                                      IArgoCDApplicationManifestParser argoCdApplicationManifestParser)
+                                                      IArgoCDApplicationManifestParser argoCdApplicationManifestParser,
+                                                      IGitVendorAgnosticApiAdapterFactory gitVendorAgnosticApiAdapterFactory)
         {
             this.log = log;
-            this.pullRequestCreator = pullRequestCreator;
             this.fileSystem = fileSystem;
             this.deploymentConfigFactory = deploymentConfigFactory;
             this.commitMessageGenerator = commitMessageGenerator;
             this.customPropertiesLoader = customPropertiesLoader;
             this.argoCdApplicationManifestParser = argoCdApplicationManifestParser;
+            this.gitVendorAgnosticApiAdapterFactory = gitVendorAgnosticApiAdapterFactory;
         }
 
         public void Install(RunningDeployment deployment)
@@ -53,7 +54,7 @@ namespace Calamari.ArgoCD.Conventions
             log.Verbose("Executing Update Argo CD Application Images");
             var deploymentConfig = deploymentConfigFactory.CreateUpdateImageConfig(deployment);
 
-            var repositoryFactory = new RepositoryFactory(log, fileSystem, deployment.CurrentDirectory, pullRequestCreator);
+            var repositoryFactory = new RepositoryFactory(log, fileSystem, deployment.CurrentDirectory, gitVendorAgnosticApiAdapterFactory);
 
             var argoProperties = customPropertiesLoader.Load<ArgoCDCustomPropertiesDto>();
 
@@ -357,28 +358,25 @@ namespace Calamari.ArgoCD.Conventions
                           HashSet<string> updatedFiles,
                           HashSet<string> updatedImages)
         {
-            Log.Info("Staging files in repository");
+            log.Info("Staging files in repository");
             repository.StageFiles(updatedFiles.ToArray());
 
             var commitDescription = commitMessageGenerator.GenerateDescription(updatedImages, commitParameters.Description);
 
-            Log.Info("Commiting changes");
-            if (repository.CommitChanges(commitParameters.Summary, commitDescription))
-            {
-                Log.Info("Changes were commited, pushing to remote");
-                repository.PushChanges(commitParameters.RequiresPr,
-                                       commitParameters.Summary,
-                                       commitDescription,
-                                       branchName,
-                                       CancellationToken.None)
-                          .GetAwaiter()
-                          .GetResult();
+            log.Info("Commiting changes");
+            if (!repository.CommitChanges(commitParameters.Summary, commitDescription))
+                return false;
 
-                return true;
-            }
+            log.Verbose("Pushing to remote");
+            repository.PushChanges(commitParameters.RequiresPr,
+                                   commitParameters.Summary,
+                                   commitDescription,
+                                   branchName,
+                                   CancellationToken.None)
+                      .GetAwaiter()
+                      .GetResult();
 
-            Log.Info("No changes were commited.");
-            return false;
+            return true;
         }
 
         void GenerateHelmAnnotationLogMessages(Application app, BasicSource source)
