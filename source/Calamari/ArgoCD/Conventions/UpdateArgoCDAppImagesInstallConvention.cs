@@ -93,7 +93,7 @@ namespace Calamari.ArgoCD.Conventions
                     if (annotatedScope == deploymentScope)
                     {
                         var sourceIdentity = applicationSource.Name.IsNullOrEmpty() ? applicationSource.RepoUrl.ToString() : applicationSource.Name;
-                        if (applicationSource.Path.IsNullOrEmpty())
+                        if (applicationSource.Path == null)
                         {
                             log.WarnFormat("Unable to update source '{0}' as a path has not been specified.", sourceIdentity);
                             continue;

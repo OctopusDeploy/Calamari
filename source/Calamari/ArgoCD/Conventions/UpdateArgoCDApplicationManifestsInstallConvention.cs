@@ -97,7 +97,7 @@ namespace Calamari.ArgoCD.Conventions
                     {
                         log.Info($"Writing files to repository '{applicationSource.RepoUrl}' for '{application.Name}'");
 
-                        if (TryCalculateOutputPath(applicationSource, out var outputPath))
+                        if (!TryCalculateOutputPath(applicationSource, out var outputPath))
                         {
                             continue;
                         }
@@ -167,14 +167,12 @@ namespace Calamari.ArgoCD.Conventions
             var sourceIdentity = string.IsNullOrEmpty(sourceToUpdate.Name) ? sourceToUpdate.RepoUrl.ToString() : sourceToUpdate.Name;
             if (sourceToUpdate is ReferenceSource)
             {
-                if (!string.IsNullOrEmpty(sourceToUpdate.Path))
+                if (!(sourceToUpdate.Path is null))
                 {
                     log.WarnFormat("Unable to update ref source '{0}' as a path has been explicitly specified.", sourceIdentity);
-                    log.Warn("Please split the source into separate sources and update annotations");
+                    log.Warn("Please split the source into separate sources and update annotations.");
                     return false;
                 }
-
-                outputPath = "/"; // always update ref sources from the root
                 return true;
             }
                         

@@ -10,6 +10,7 @@ using Calamari.ArgoCD.Dtos;
 using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.Git.GitVendorApiAdapters;
 using Calamari.ArgoCD.GitHub;
+using Calamari.ArgoCD.Models;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Deployment;
 using Calamari.Common.Plumbing.FileSystem;
@@ -65,31 +66,22 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                 new GitCredentialDto(new Uri(RepoUrl).AbsoluteUri, "", "")
             });
             customPropertiesLoader.Load<ArgoCDCustomPropertiesDto>().Returns(argoCdCustomPropertiesDto);
-            
-            var argoCdApplicationFromYaml = new Application()
-            {
-                Metadata = new Metadata()
-                {
-                    Name = "The app",
-                    Annotations = new Dictionary<string, string>()
-                    {
-                        [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(null)] = ProjectSlug,
-                        [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(null)] = EnvironmentSlug,
-                    }
-                },
-                Spec = new ApplicationSpec()
-                {
-                    Sources = new List<SourceBase>()
-                    {
-                        new BasicSource()
-                        {
-                            RepoUrl = new Uri(RepoUrl),
-                            Path = "",
-                            TargetRevision = argoCdBranchName.Value
-                        }  
-                    } 
-                }
-            };
+
+            var argoCdApplicationFromYaml = new ArgoCDApplicationBuilder()
+                                            .WithName("The App")
+                                            .WithAnnotations(new Dictionary<string, string>()
+                                            {
+                                                [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(null)] = ProjectSlug,
+                                                [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(null)] = EnvironmentSlug,
+                                            })
+                                            .WithSource(new BasicSource()
+                                            {
+                                                RepoUrl = new Uri(RepoUrl),
+                                                Path = "",
+                                                TargetRevision = argoCdBranchName.Value
+                                            })
+                                            .Build();
+
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
                                          .Returns(argoCdApplicationFromYaml);
         }
@@ -191,6 +183,216 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             var resultPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCdBranchName);
             File.Exists(Path.Combine(resultPath, firstFilename)).Should().BeTrue();
             File.Exists(Path.Combine(resultPath, fileToPurge)).Should().BeFalse();
+        }
+
+        [Test]
+        public void CanTemplateFilesIntoAHelmSource()
+        {
+            const string firstFilename = "first.yaml";
+            CreateFileUnderPackageDirectory(firstFilename);
+            
+            var nonSensitiveCalamariVariables = new NonSensitiveCalamariVariables()
+            {
+                [KnownVariables.OriginalPackageDirectoryPath] = WorkingDirectory,
+                [SpecialVariables.Git.InputPath] = "",
+                [SpecialVariables.Git.CommitMethod] = "DirectCommit",
+                [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this",
+                [ProjectVariables.Slug] = ProjectSlug,
+                [DeploymentEnvironment.Slug] = EnvironmentSlug,
+            };
+            var allVariables = new CalamariVariables();
+            allVariables.Merge(nonSensitiveCalamariVariables);
+            
+            var runningDeployment = new RunningDeployment("./arbitraryFile.txt", allVariables);
+            runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
+            runningDeployment.StagingDirectory = WorkingDirectory;
+            
+            var argoCDAppWithHelmSource = new ArgoCDApplicationBuilder()
+                                            .WithName("The App")
+                                            .WithAnnotations(new Dictionary<string, string>()
+                                            {
+                                                [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(null)] = ProjectSlug,
+                                                [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(null)] = EnvironmentSlug,
+                                            })
+                                            .WithSource(new HelmSource()
+                                            {
+                                                RepoUrl = new Uri(RepoUrl),
+                                                Path = "",
+                                                TargetRevision = argoCdBranchName.Value,
+                                                Helm = new HelmConfig()
+                                                {
+                                                    ValueFiles = new List<string>()
+                                                    {
+                                                        "subpath/values1.yaml",
+                                                        "otherPath/values2.yaml",
+                                                        "$ref/otherRepoPath/values.yaml"
+                                                    }
+                                                }
+                                            })
+                                            .Build();
+
+            argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
+                                           .Returns(argoCDAppWithHelmSource);
+            
+            var convention = new UpdateArgoCDApplicationManifestsInstallConvention(fileSystem, 
+                                                                                   UpdateArgoCDAppManifestsCommand.PackageDirectoryName, 
+                                                                                   log, 
+                                                                                   new DeploymentConfigFactory(nonSensitiveCalamariVariables), 
+                                                                                   customPropertiesLoader, 
+                                                                                   argoCdApplicationManifestParser,
+                                                                                   new ArgoCDManifestsFileMatcher(fileSystem), 
+                                                                                   Substitute.For<IGitVendorAgnosticApiAdapterFactory>());
+            
+            convention.Install(runningDeployment);
+            
+            // Assert
+            var resultPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCdBranchName);
+            File.Exists(Path.Combine(resultPath, firstFilename)).Should().BeTrue();
+        }
+
+        [Test]
+        public void CanUpdateReferenceSource()
+        {
+            const string firstFilename = "first.yaml";
+            CreateFileUnderPackageDirectory(firstFilename);
+            
+            var nonSensitiveCalamariVariables = new NonSensitiveCalamariVariables()
+            {
+                [KnownVariables.OriginalPackageDirectoryPath] = WorkingDirectory,
+                [SpecialVariables.Git.InputPath] = "",
+                [SpecialVariables.Git.CommitMethod] = "DirectCommit",
+                [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this",
+                [ProjectVariables.Slug] = ProjectSlug,
+                [DeploymentEnvironment.Slug] = EnvironmentSlug,
+            };
+            var allVariables = new CalamariVariables();
+            allVariables.Merge(nonSensitiveCalamariVariables);
+            
+            var runningDeployment = new RunningDeployment("./arbitraryFile.txt", allVariables);
+            runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
+            runningDeployment.StagingDirectory = WorkingDirectory;
+            
+            var argoCDAppWithHelmSource = new ArgoCDApplicationBuilder()
+                                            .WithName("The App")
+                                            .WithAnnotations(new Dictionary<string, string>()
+                                            {
+                                                [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(new ApplicationSourceName("refSourceName"))] = ProjectSlug,
+                                                [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(new ApplicationSourceName("refSourceName"))] = EnvironmentSlug,
+                                            })
+                                            .WithSource(new HelmSource
+                                            {
+                                                RepoUrl = new Uri("https://github.com/org/repo"),
+                                                Path = "",
+                                                TargetRevision = argoCdBranchName.Value,
+                                                Helm = new HelmConfig
+                                                {
+                                                    ValueFiles = new List<string>()
+                                                    {
+                                                        "subpath/values1.yaml",
+                                                        "otherPath/values2.yaml",
+                                                        "$ref/otherRepoPath/values.yaml"
+                                                    }
+                                                }
+                                            })
+                                            .WithSource(new ReferenceSource
+                                                            {
+                                                                Name = "refSourceName",
+                                                                Ref = "valuesFiles",
+                                                                TargetRevision = argoCdBranchName.Value,
+                                                                RepoUrl = new Uri(RepoUrl)
+                                                            })
+                                            .Build();
+
+            argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
+                                           .Returns(argoCDAppWithHelmSource);
+            
+            var convention = new UpdateArgoCDApplicationManifestsInstallConvention(fileSystem, 
+                                                                                   UpdateArgoCDAppManifestsCommand.PackageDirectoryName, 
+                                                                                   log, 
+                                                                                   new DeploymentConfigFactory(nonSensitiveCalamariVariables), 
+                                                                                   customPropertiesLoader, 
+                                                                                   argoCdApplicationManifestParser,
+                                                                                   new ArgoCDManifestsFileMatcher(fileSystem), 
+                                                                                   Substitute.For<IGitVendorAgnosticApiAdapterFactory>());
+            
+            convention.Install(runningDeployment);
+            
+            // Assert
+            var resultPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCdBranchName);
+            File.Exists(Path.Combine(resultPath, firstFilename)).Should().BeTrue();
+        }
+
+        [Test]
+        public void WillNotUpdateAReferenceSourceWhichHasAPath()
+        {
+            const string firstFilename = "first.yaml";
+            CreateFileUnderPackageDirectory(firstFilename);
+            
+            var nonSensitiveCalamariVariables = new NonSensitiveCalamariVariables()
+            {
+                [KnownVariables.OriginalPackageDirectoryPath] = WorkingDirectory,
+                [SpecialVariables.Git.InputPath] = "",
+                [SpecialVariables.Git.CommitMethod] = "DirectCommit",
+                [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this",
+                [ProjectVariables.Slug] = ProjectSlug,
+                [DeploymentEnvironment.Slug] = EnvironmentSlug,
+            };
+            var allVariables = new CalamariVariables();
+            allVariables.Merge(nonSensitiveCalamariVariables);
+            
+            var runningDeployment = new RunningDeployment("./arbitraryFile.txt", allVariables);
+            runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
+            runningDeployment.StagingDirectory = WorkingDirectory;
+            
+            var argoCDAppWithHelmSource = new ArgoCDApplicationBuilder()
+                                            .WithName("The App")
+                                            .WithAnnotations(new Dictionary<string, string>()
+                                            {
+                                                [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(new ApplicationSourceName("refSourceName"))] = ProjectSlug,
+                                                [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(new ApplicationSourceName("refSourceName"))] = EnvironmentSlug,
+                                            })
+                                            .WithSource(new HelmSource
+                                            {
+                                                RepoUrl = new Uri("https://github.com/org/repo"),
+                                                Path = "",
+                                                TargetRevision = argoCdBranchName.Value,
+                                                Helm = new HelmConfig
+                                                {
+                                                    ValueFiles = new List<string>()
+                                                    {
+                                                        "subpath/values1.yaml",
+                                                        "otherPath/values2.yaml",
+                                                        "$ref/otherRepoPath/values.yaml"
+                                                    }
+                                                }
+                                            })
+                                            .WithSource(new ReferenceSource
+                                                            {
+                                                                Name = "refSourceName",
+                                                                Ref = "valuesFiles",
+                                                                Path = "otherPath/values1.yaml", //this should cause an error
+                                                                TargetRevision = argoCdBranchName.Value,
+                                                                RepoUrl = new Uri(RepoUrl)
+                                                            })
+                                            .Build();
+
+            argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
+                                           .Returns(argoCDAppWithHelmSource);
+            
+            var convention = new UpdateArgoCDApplicationManifestsInstallConvention(fileSystem, 
+                                                                                   UpdateArgoCDAppManifestsCommand.PackageDirectoryName, 
+                                                                                   log, 
+                                                                                   new DeploymentConfigFactory(nonSensitiveCalamariVariables), 
+                                                                                   customPropertiesLoader, 
+                                                                                   argoCdApplicationManifestParser,
+                                                                                   new ArgoCDManifestsFileMatcher(fileSystem), 
+                                                                                   Substitute.For<IGitVendorAgnosticApiAdapterFactory>());
+            
+            convention.Install(runningDeployment);
+            
+            //Assert
+            var resultPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCdBranchName);
+            File.Exists(Path.Combine(resultPath, firstFilename)).Should().BeFalse();
         }
 
         //Accepts a relative path and creates a file under the package directory, which

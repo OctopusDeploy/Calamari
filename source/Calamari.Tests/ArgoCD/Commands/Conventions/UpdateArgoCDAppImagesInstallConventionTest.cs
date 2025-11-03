@@ -66,31 +66,22 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                 new GitCredentialDto(new Uri(OriginPath).AbsoluteUri, "", "")
             });
             customPropertiesLoader.Load<ArgoCDCustomPropertiesDto>().Returns(argoCdCustomPropertiesDto);
+
+            var argoCdApplicationFromYaml = new ArgoCDApplicationBuilder()
+                                            .WithName("The app")
+                                            .WithAnnotations(new Dictionary<string, string>()
+                                            {
+                                                [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(null)] = ProjectSlug,
+                                                [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(null)] = EnvironmentSlug,
+                                            })
+                                            .WithSource(new BasicSource()
+                                            {
+                                                RepoUrl = new Uri(OriginPath),
+                                                Path = "",
+                                                TargetRevision = argoCDBranchName.Value
+                                            })
+                                            .Build();
             
-            var argoCdApplicationFromYaml = new Application()
-            {
-                Metadata = new Metadata()
-                {
-                    Name = "The app",
-                    Annotations = new Dictionary<string, string>()
-                    {
-                        [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(null)] = ProjectSlug,
-                        [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(null)] = EnvironmentSlug,
-                    }
-                },
-                Spec = new ApplicationSpec()
-                {
-                    Sources = new List<SourceBase>()
-                    {
-                        new BasicSource()
-                        {
-                            RepoUrl = new Uri(OriginPath),
-                            Path = "",
-                            TargetRevision = argoCDBranchName.Value
-                        }  
-                    } 
-                }
-            };
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
                                            .Returns(argoCdApplicationFromYaml);
         }
