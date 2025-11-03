@@ -78,9 +78,8 @@ namespace Calamari.ArgoCD.Conventions
 
                 var applicationFromYaml = argoCdApplicationManifestParser.ParseManifest(application.Manifest);
                 var containsMultipleSources = applicationFromYaml.Spec.Sources.Count > 1;
-                var sourcesToInspect = applicationFromYaml.Spec.Sources.OfType<BasicSource>().ToList();
 
-                LogWarningIfUpdatingMultipleSources(sourcesToInspect,
+                LogWarningIfUpdatingMultipleSources(applicationFromYaml.Spec.Sources,
                                                     applicationFromYaml.Metadata.Annotations,
                                                     containsMultipleSources,
                                                     deploymentScope);
@@ -89,7 +88,7 @@ namespace Calamari.ArgoCD.Conventions
                 validationResult.Action(log);
 
                 var didUpdateSomething = false;
-                foreach (var applicationSource in sourcesToInspect)
+                foreach (var applicationSource in applicationFromYaml.Spec.Sources)
                 {
                     var annotatedScope = ScopingAnnotationReader.GetScopeForApplicationSource(applicationSource.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources);
                     log.LogApplicationSourceScopeStatus(annotatedScope, applicationSource.Name.ToApplicationSourceName(), deploymentScope);
@@ -97,6 +96,11 @@ namespace Calamari.ArgoCD.Conventions
                     if (annotatedScope == deploymentScope)
                     {
                         log.Info($"Writing files to repository '{applicationSource.RepoUrl}' for '{application.Name}'");
+
+                        if (!TryCalculateOutputPath(applicationSource, out var outputPath))
+                        {
+                            continue;
+                        }
 
                         var gitCredential = gitCredentials.GetValueOrDefault(applicationSource.RepoUrl.AbsoluteUri);
                         if (gitCredential == null)
@@ -108,7 +112,7 @@ namespace Calamari.ArgoCD.Conventions
 
                         using (var repository = repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), gitConnection))
                         {
-                            var subFolder = applicationSource.Path ?? string.Empty;
+                            var subFolder = outputPath;
                             log.VerboseFormat("Copying files into '{0}'", subFolder);
 
                             if (deploymentConfig.PurgeOutputDirectory)
@@ -157,7 +161,32 @@ namespace Calamari.ArgoCD.Conventions
             }
         }
 
-        void LogWarningIfUpdatingMultipleSources(List<BasicSource> sourcesToInspect,
+        bool TryCalculateOutputPath(SourceBase sourceToUpdate, out string outputPath)
+        {
+            outputPath = "";
+            var sourceIdentity = string.IsNullOrEmpty(sourceToUpdate.Name) ? sourceToUpdate.RepoUrl.ToString() : sourceToUpdate.Name;
+            if (sourceToUpdate is ReferenceSource)
+            {
+                if (!(sourceToUpdate.Path is null))
+                {
+                    log.WarnFormat("Unable to update ref source '{0}' as a path has been explicitly specified.", sourceIdentity);
+                    log.Warn("Please split the source into separate sources and update annotations.");
+                    return false;
+                }
+                return true;
+            }
+                        
+            if (sourceToUpdate.Path is null)
+            {
+                log.WarnFormat("Unable to update source '{0}' as a path has not been specified.", sourceIdentity);
+                return false;
+            }
+            outputPath = sourceToUpdate.Path;
+            return true;
+        }
+
+        //TODO(tmm): should we be removing this warning now
+        void LogWarningIfUpdatingMultipleSources(List<SourceBase> sourcesToInspect,
                                                  Dictionary<string, string> applicationAnnotations,
                                                  bool containsMultipleSources,
                                                  (ProjectSlug Project, EnvironmentSlug Environment, TenantSlug? Tenant) deploymentScope)

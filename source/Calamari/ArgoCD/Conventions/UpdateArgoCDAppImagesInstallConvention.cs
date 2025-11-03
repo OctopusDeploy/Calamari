@@ -88,29 +88,34 @@ namespace Calamari.ArgoCD.Conventions
                 var didUpdateSomething = false;
                 foreach (var applicationSource in applicationFromYaml.Spec.Sources.OfType<BasicSource>())
                 {
-                    using (var repository = CreateRepository(gitCredentials, applicationSource, repositoryFactory))
+                    var annotatedScope = ScopingAnnotationReader.GetScopeForApplicationSource(applicationSource.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources);
+                    log.LogApplicationSourceScopeStatus(annotatedScope, applicationSource.Name.ToApplicationSourceName(), deploymentScope);
+                    if (annotatedScope == deploymentScope)
                     {
-                        var repoSubPath = Path.Combine(repository.WorkingDirectory, applicationSource.Path);
-                        log.Verbose($"Reading files from {applicationSource.Path}");
-
-                        var chartFile = HelmDiscovery.TryFindHelmChartFile(fileSystem, Path.Combine(repository.WorkingDirectory, applicationSource.Path));
-                        if (chartFile != null)
+                        var sourceIdentity = applicationSource.Name.IsNullOrEmpty() ? applicationSource.RepoUrl.ToString() : applicationSource.Name;
+                        if (applicationSource.Path == null)
                         {
-                            HandleAsHelmChart(deployment,
-                                              applicationFromYaml,
-                                              application,
-                                              applicationSource,
-                                              valuesFilesToUpdate,
-                                              repoSubPath);
+                            log.WarnFormat("Unable to update source '{0}' as a path has not been specified.", sourceIdentity);
                             continue;
                         }
-
-                        var annotatedScope = ScopingAnnotationReader.GetScopeForApplicationSource(applicationSource.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources);
-                        log.LogApplicationSourceScopeStatus(annotatedScope, applicationSource.Name.ToApplicationSourceName(), deploymentScope);
-
-                        if (annotatedScope == deploymentScope)
+                        
+                        using (var repository = CreateRepository(gitCredentials, applicationSource, repositoryFactory))
                         {
-                            var (updatedFiles, updatedImages) = UpdateKubernetesYaml(repository.WorkingDirectory, applicationSource.Path, application.DefaultRegistry, deploymentConfig.ImageReferences);
+                            var repoSubPath = Path.Combine(repository.WorkingDirectory, applicationSource.Path!);
+                            log.Verbose($"Reading files from {applicationSource.Path}");
+
+                            var chartFile = HelmDiscovery.TryFindHelmChartFile(fileSystem, Path.Combine(repository.WorkingDirectory, applicationSource.Path!));
+                            if (chartFile != null)
+                            {
+                                HandleAsHelmChart(applicationFromYaml,
+                                                  application,
+                                                  applicationSource,
+                                                  valuesFilesToUpdate,
+                                                  repoSubPath);
+                                continue;
+                            }
+                            
+                            var (updatedFiles, updatedImages) = UpdateKubernetesYaml(repository.WorkingDirectory, applicationSource.Path!, application.DefaultRegistry, deploymentConfig.ImageReferences);
                             if (updatedImages.Count > 0)
                             {
                                 var didPush = PushToRemote(repository,
@@ -240,8 +245,7 @@ namespace Calamari.ArgoCD.Conventions
             return repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), gitConnection);
         }
 
-        void HandleAsHelmChart(RunningDeployment deployment,
-                               Application applicationFromYaml,
+        void HandleAsHelmChart(Application applicationFromYaml,
                                ArgoCDApplicationDto application,
                                BasicSource applicationSource,
                                List<HelmValuesFileImageUpdateTarget> valuesFilesToUpdate,
@@ -253,7 +257,7 @@ namespace Calamari.ArgoCD.Conventions
                                                                                                                applicationFromYaml.Spec.Sources.Count > 1);
             if (!imageReplacePaths.Any())
             {
-                GenerateHelmAnnotationLogMessages(applicationFromYaml, applicationSource);
+                GenerateHelmAnnotationLogMessages(applicationFromYaml, repoSubPath);
             }
             else
             {
@@ -379,11 +383,11 @@ namespace Calamari.ArgoCD.Conventions
             return true;
         }
 
-        void GenerateHelmAnnotationLogMessages(Application app, BasicSource source)
+        void GenerateHelmAnnotationLogMessages(Application app, string subPath)
         {
             log.WarnFormat("Argo CD Application '{0}' contains a helm chart ({1}), however the application is missing Octopus-specific annotations required for image-tag updating in Helm.",
                            app.Metadata.Name,
-                           Path.Combine(source.Path, ArgoCDConstants.HelmChartFileName));
+                           Path.Combine(subPath, ArgoCDConstants.HelmChartFileName));
             log.WarnFormat("Annotation creation documentation can be found {0}.", log.FormatShortLink("argo-cd-helm-image-annotations", "here"));
         }
 

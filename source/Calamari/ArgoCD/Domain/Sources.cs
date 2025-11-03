@@ -17,20 +17,19 @@ namespace Calamari.ArgoCD.Domain
         
         [JsonPropertyName("name")]
         public string Name { get; set; } = string.Empty;
+
+        [JsonPropertyName("path")]
+        public string? Path { get; set; } = null;
     }
 
 
     public class BasicSource : SourceBase
     {
-        [JsonPropertyName("path")]
-        public string Path { get; set; } = string.Empty;
     }
 
 
     public class HelmSource : SourceBase
     {
-        [JsonPropertyName("path")]
-        public string Path { get; set; } = string.Empty;
     
         [JsonPropertyName("helm")]
         public HelmConfig Helm { get; set; } = new HelmConfig();
