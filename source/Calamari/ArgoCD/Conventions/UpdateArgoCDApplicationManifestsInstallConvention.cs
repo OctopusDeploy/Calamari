@@ -163,10 +163,10 @@ namespace Calamari.ArgoCD.Conventions
         bool TryCalculateOutputPath(SourceBase sourceToUpdate, out string outputPath)
         {
             outputPath = "";
-            var sourceIdentity = sourceToUpdate.Name.IsNullOrEmpty() ? sourceToUpdate.RepoUrl.ToString() : sourceToUpdate.Name;
+            var sourceIdentity = string.IsNullOrEmpty(sourceToUpdate.Name) ? sourceToUpdate.RepoUrl.ToString() : sourceToUpdate.Name;
             if (sourceToUpdate is ReferenceSource)
             {
-                if (!sourceToUpdate.Path.IsNullOrEmpty())
+                if (!string.IsNullOrEmpty(sourceToUpdate.Path))
                 {
                     log.WarnFormat("Unable to update ref source '{0}' as a path has been explicitly specified.", sourceIdentity);
                     log.Warn("Please split the source into separate sources and update annotations");

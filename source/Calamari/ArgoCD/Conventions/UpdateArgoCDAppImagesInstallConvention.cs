@@ -91,15 +91,15 @@ namespace Calamari.ArgoCD.Conventions
                     log.LogApplicationSourceScopeStatus(annotatedScope, applicationSource.Name.ToApplicationSourceName(), deploymentScope);
                     if (annotatedScope == deploymentScope)
                     {
+                        var sourceIdentity = applicationSource.Name.IsNullOrEmpty() ? applicationSource.RepoUrl.ToString() : applicationSource.Name;
+                        if (applicationSource.Path.IsNullOrEmpty())
+                        {
+                            log.WarnFormat("Unable to update source '{0}' as a path has not been specified.", sourceIdentity);
+                            continue;
+                        }
+                        
                         using (var repository = CreateRepository(gitCredentials, applicationSource, repositoryFactory))
                         {
-                            var sourceIdentity = applicationSource.Name.IsNullOrEmpty() ? applicationSource.RepoUrl.ToString() : applicationSource.Name;
-
-                            if (applicationSource.Path.IsNullOrEmpty())
-                            {
-                                log.WarnFormat("Unable to update source '{0}' as a path has not been specified.", sourceIdentity);
-                                continue;
-                            }
                             var repoSubPath = Path.Combine(repository.WorkingDirectory, applicationSource.Path!);
                             log.Verbose($"Reading files from {applicationSource.Path}");
 
