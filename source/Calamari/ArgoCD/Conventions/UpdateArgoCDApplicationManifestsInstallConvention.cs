@@ -17,7 +17,6 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.Conventions;
-using Microsoft.IdentityModel.Tokens;
 
 namespace Calamari.ArgoCD.Conventions
 {
@@ -78,9 +77,8 @@ namespace Calamari.ArgoCD.Conventions
 
                 var applicationFromYaml = argoCdApplicationManifestParser.ParseManifest(application.Manifest);
                 var containsMultipleSources = applicationFromYaml.Spec.Sources.Count > 1;
-                var sourcesToInspect = applicationFromYaml.Spec.Sources;
 
-                LogWarningIfUpdatingMultipleSources(sourcesToInspect,
+                LogWarningIfUpdatingMultipleSources(applicationFromYaml.Spec.Sources,
                                                     applicationFromYaml.Metadata.Annotations,
                                                     containsMultipleSources,
                                                     deploymentScope);
@@ -89,7 +87,7 @@ namespace Calamari.ArgoCD.Conventions
                 validationResult.Action(log);
 
                 var didUpdateSomething = false;
-                foreach (var applicationSource in sourcesToInspect)
+                foreach (var applicationSource in applicationFromYaml.Spec.Sources)
                 {
                     var annotatedScope = ScopingAnnotationReader.GetScopeForApplicationSource(applicationSource.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources);
                     log.LogApplicationSourceScopeStatus(annotatedScope, applicationSource.Name.ToApplicationSourceName(), deploymentScope);
@@ -97,7 +95,11 @@ namespace Calamari.ArgoCD.Conventions
                     if (annotatedScope == deploymentScope)
                     {
                         log.Info($"Writing files to repository '{applicationSource.RepoUrl}' for '{application.Name}'");
-                        string outputPath = CalculateOutputPath(applicationSource);
+
+                        if (TryCalculateOutputPath(applicationSource, out var outputPath))
+                        {
+                            continue;
+                        }
 
                         var gitCredential = gitCredentials.GetValueOrDefault(applicationSource.RepoUrl.AbsoluteUri);
                         if (gitCredential == null)
@@ -158,8 +160,9 @@ namespace Calamari.ArgoCD.Conventions
             }
         }
 
-        string CalculateOutputPath(SourceBase sourceToUpdate)
+        bool TryCalculateOutputPath(SourceBase sourceToUpdate, out string outputPath)
         {
+            outputPath = "";
             var sourceIdentity = sourceToUpdate.Name.IsNullOrEmpty() ? sourceToUpdate.RepoUrl.ToString() : sourceToUpdate.Name;
             if (sourceToUpdate is ReferenceSource)
             {
@@ -167,20 +170,23 @@ namespace Calamari.ArgoCD.Conventions
                 {
                     log.WarnFormat("Unable to update ref source '{0}' as a path has been explicitly specified.", sourceIdentity);
                     log.Warn("Please split the source into separate sources and update annotations");
-                    throw new CommandException("Unable to update a ref source with an explicit path");
+                    return false;
                 }
-                return "/"; // always update ref sources from the root
+
+                outputPath = "/"; // always update ref sources from the root
+                return true;
             }
                         
             if (sourceToUpdate.Path is null)
             {
                 log.WarnFormat("Unable to update source '{0}' as a path has not been specified.", sourceIdentity);
-                throw new CommandException("Unable to update source due to missing path.");
+                return false;
             }
-
-            return sourceToUpdate.Path;
+            outputPath = sourceToUpdate.Path;
+            return true;
         }
 
+        //TODO(tmm): should we be removing this warning now
         void LogWarningIfUpdatingMultipleSources(List<SourceBase> sourcesToInspect,
                                                  Dictionary<string, string> applicationAnnotations,
                                                  bool containsMultipleSources,

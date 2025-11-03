@@ -87,14 +87,14 @@ namespace Calamari.ArgoCD.Conventions
                 var didUpdateSomething = false;
                 foreach (var applicationSource in applicationFromYaml.Spec.Sources.OfType<BasicSource>())
                 {
-                    using (var repository = CreateRepository(gitCredentials, applicationSource, repositoryFactory))
+                    var annotatedScope = ScopingAnnotationReader.GetScopeForApplicationSource(applicationSource.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources);
+                    log.LogApplicationSourceScopeStatus(annotatedScope, applicationSource.Name.ToApplicationSourceName(), deploymentScope);
+                    if (annotatedScope == deploymentScope)
                     {
-                        var annotatedScope = ScopingAnnotationReader.GetScopeForApplicationSource(applicationSource.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources);
-                        log.LogApplicationSourceScopeStatus(annotatedScope, applicationSource.Name.ToApplicationSourceName(), deploymentScope);
-
-                        var sourceIdentity = applicationSource.Name.IsNullOrEmpty() ? applicationSource.RepoUrl.ToString() : applicationSource.Name;
-                        if (annotatedScope == deploymentScope)
+                        using (var repository = CreateRepository(gitCredentials, applicationSource, repositoryFactory))
                         {
+                            var sourceIdentity = applicationSource.Name.IsNullOrEmpty() ? applicationSource.RepoUrl.ToString() : applicationSource.Name;
+
                             if (applicationSource.Path.IsNullOrEmpty())
                             {
                                 log.WarnFormat("Unable to update source '{0}' as a path has not been specified.", sourceIdentity);
@@ -244,7 +244,7 @@ namespace Calamari.ArgoCD.Conventions
             return repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), gitConnection);
         }
 
-        void HandleAsHelmChart( Application applicationFromYaml,
+        void HandleAsHelmChart(Application applicationFromYaml,
                                ArgoCDApplicationDto application,
                                BasicSource applicationSource,
                                List<HelmValuesFileImageUpdateTarget> valuesFilesToUpdate,
@@ -256,7 +256,7 @@ namespace Calamari.ArgoCD.Conventions
                                                                                                                applicationFromYaml.Spec.Sources.Count > 1);
             if (!imageReplacePaths.Any())
             {
-                GenerateHelmAnnotationLogMessages(applicationFromYaml, applicationSource);
+                GenerateHelmAnnotationLogMessages(applicationFromYaml, repoSubPath);
             }
             else
             {
