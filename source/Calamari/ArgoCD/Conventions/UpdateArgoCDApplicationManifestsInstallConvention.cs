@@ -17,6 +17,7 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.Conventions;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Calamari.ArgoCD.Conventions
 {
@@ -77,7 +78,7 @@ namespace Calamari.ArgoCD.Conventions
 
                 var applicationFromYaml = argoCdApplicationManifestParser.ParseManifest(application.Manifest);
                 var containsMultipleSources = applicationFromYaml.Spec.Sources.Count > 1;
-                var sourcesToInspect = applicationFromYaml.Spec.Sources.OfType<BasicSource>().ToList();
+                var sourcesToInspect = applicationFromYaml.Spec.Sources;
 
                 LogWarningIfUpdatingMultipleSources(sourcesToInspect,
                                                     applicationFromYaml.Metadata.Annotations,
@@ -96,6 +97,7 @@ namespace Calamari.ArgoCD.Conventions
                     if (annotatedScope == deploymentScope)
                     {
                         log.Info($"Writing files to repository '{applicationSource.RepoUrl}' for '{application.Name}'");
+                        string outputPath = CalculateOutputPath(applicationSource);
 
                         var gitCredential = gitCredentials.GetValueOrDefault(applicationSource.RepoUrl.AbsoluteUri);
                         if (gitCredential == null)
@@ -107,7 +109,7 @@ namespace Calamari.ArgoCD.Conventions
 
                         using (var repository = repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), gitConnection))
                         {
-                            var subFolder = applicationSource.Path ?? string.Empty;
+                            var subFolder = outputPath;
                             log.VerboseFormat("Copying files into '{0}'", subFolder);
 
                             if (deploymentConfig.PurgeOutputDirectory)
@@ -156,7 +158,30 @@ namespace Calamari.ArgoCD.Conventions
             }
         }
 
-        void LogWarningIfUpdatingMultipleSources(List<BasicSource> sourcesToInspect,
+        string CalculateOutputPath(SourceBase sourceToUpdate)
+        {
+            var sourceIdentity = sourceToUpdate.Name.IsNullOrEmpty() ? sourceToUpdate.RepoUrl.ToString() : sourceToUpdate.Name;
+            if (sourceToUpdate is ReferenceSource)
+            {
+                if (!sourceToUpdate.Path.IsNullOrEmpty())
+                {
+                    log.WarnFormat("Unable to update ref source '{0}' as a path has been explicitly specified.", sourceIdentity);
+                    log.Warn("Please split the source into separate sources and update annotations");
+                    throw new CommandException("Unable to update a ref source with an explicit path");
+                }
+                return "/"; // always update ref sources from the root
+            }
+                        
+            if (sourceToUpdate.Path is null)
+            {
+                log.WarnFormat("Unable to update source '{0}' as a path has not been specified.", sourceIdentity);
+                throw new CommandException("Unable to update source due to missing path.");
+            }
+
+            return sourceToUpdate.Path;
+        }
+
+        void LogWarningIfUpdatingMultipleSources(List<SourceBase> sourcesToInspect,
                                                  Dictionary<string, string> applicationAnnotations,
                                                  bool containsMultipleSources,
                                                  (ProjectSlug Project, EnvironmentSlug Environment, TenantSlug? Tenant) deploymentScope)
