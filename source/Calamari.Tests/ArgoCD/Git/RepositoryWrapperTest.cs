@@ -144,8 +144,8 @@ namespace Calamari.Tests.ArgoCD.Git
                                                  .CreatePullRequest(
                                                                     commitSummary,
                                                                     commitDescription,
-                                                                    prBranch,
                                                                     Arg.Any<GitBranchName>(),
+                                                                    prBranch,
                                                                     Arg.Any<CancellationToken>());
         }
 
