@@ -158,8 +158,7 @@ namespace Calamari.ArgoCD.Conventions
                                                                         );
                             if (helmUpdateResult.ImagesUpdated.Count > 0)
                             {
-                                var didPush = PushToRemote(repository,
-                                                           new GitBranchName(valuesFileSource.TargetRevision),
+                                var didPush = PushToRemote(repository, GitReference.CreateFromString(valuesFileSource.TargetRevision),
                                                            deploymentConfig.CommitParameters,
                                                            new HashSet<string>() { Path.Combine(valuesFileSource.Path, valuesFileSource.FileName) },
                                                            helmUpdateResult.ImagesUpdated);
