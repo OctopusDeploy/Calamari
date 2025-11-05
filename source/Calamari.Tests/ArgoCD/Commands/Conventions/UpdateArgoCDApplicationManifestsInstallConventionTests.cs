@@ -42,7 +42,8 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
         string RepoUrl => OriginPath;
         Repository originRepo;
 
-        readonly GitBranchName argoCdBranchName = GitBranchName.CreateFromFriendlyName("devBranch");
+        const string ArgoCDBranchFriendlyName = "devBranch";
+        readonly GitBranchName argoCDBranchName = GitBranchName.CreateFromFriendlyName(ArgoCDBranchFriendlyName);
 
         [SetUp]
         public void Init()
@@ -52,13 +53,13 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             Directory.CreateDirectory(PackageDirectory);
 
             originRepo = RepositoryHelpers.CreateBareRepository(OriginPath);
-            RepositoryHelpers.CreateBranchIn(argoCdBranchName, OriginPath);
+            RepositoryHelpers.CreateBranchIn(argoCDBranchName, OriginPath);
 
             var argoCdCustomPropertiesDto = new ArgoCDCustomPropertiesDto(new[]
             {
                 new ArgoCDApplicationDto("Gateway1", "App1", "argocd",new[]
                 {
-                    new ArgoCDApplicationSourceDto(OriginPath, "", argoCdBranchName.Value)
+                    new ArgoCDApplicationSourceDto(OriginPath, "", ArgoCDBranchFriendlyName)
                 }, "yaml", "docker.io","http://my-argo.com")
             }, new GitCredentialDto[]
             {
@@ -77,7 +78,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                             {
                                                 RepoUrl = new Uri(RepoUrl),
                                                 Path = "",
-                                                TargetRevision = argoCdBranchName.Value
+                                                TargetRevision = ArgoCDBranchFriendlyName
                                             })
                                             .Build();
 
@@ -129,7 +130,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                                                       Substitute.For<IGitVendorAgnosticApiAdapterFactory>());
             convention.Install(runningDeployment);
 
-            var resultPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCdBranchName);
+            var resultPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             var resultFirstContent = File.ReadAllText(Path.Combine(resultPath, firstFilename));
             var resultNestedContent = File.ReadAllText(Path.Combine(resultPath, nestedFilename));
             resultFirstContent.Should().Be(firstFilename);
@@ -158,7 +159,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             
             //add arbitrary file to the origin repo
             var fileToPurge = "subDirectory/removeThis.yaml";
-            originRepo.AddFilesToBranch(argoCdBranchName, (fileToPurge, "This file to be removed"));
+            originRepo.AddFilesToBranch(argoCDBranchName, (fileToPurge, "This file to be removed"));
             
             var allVariables = new CalamariVariables();
             allVariables.Merge(nonSensitiveCalamariVariables);
@@ -179,7 +180,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             convention.Install(runningDeployment);
             
             // Assert
-            var resultPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCdBranchName);
+            var resultPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             File.Exists(Path.Combine(resultPath, firstFilename)).Should().BeTrue();
             File.Exists(Path.Combine(resultPath, fileToPurge)).Should().BeFalse();
         }
@@ -217,7 +218,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                             {
                                                 RepoUrl = new Uri(RepoUrl),
                                                 Path = "",
-                                                TargetRevision = argoCdBranchName.Value,
+                                                TargetRevision = ArgoCDBranchFriendlyName,
                                                 Helm = new HelmConfig()
                                                 {
                                                     ValueFiles = new List<string>()
@@ -245,7 +246,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             convention.Install(runningDeployment);
             
             // Assert
-            var resultPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCdBranchName);
+            var resultPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             File.Exists(Path.Combine(resultPath, firstFilename)).Should().BeTrue();
         }
 
@@ -282,7 +283,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                             {
                                                 RepoUrl = new Uri("https://github.com/org/repo"),
                                                 Path = "",
-                                                TargetRevision = argoCdBranchName.Value,
+                                                TargetRevision = argoCDBranchName.Value,
                                                 Helm = new HelmConfig
                                                 {
                                                     ValueFiles = new List<string>()
@@ -297,7 +298,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                                             {
                                                                 Name = "refSourceName",
                                                                 Ref = "valuesFiles",
-                                                                TargetRevision = argoCdBranchName.Value,
+                                                                TargetRevision = ArgoCDBranchFriendlyName,
                                                                 RepoUrl = new Uri(RepoUrl)
                                                             })
                                             .Build();
@@ -317,7 +318,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             convention.Install(runningDeployment);
             
             // Assert
-            var resultPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCdBranchName);
+            var resultPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             File.Exists(Path.Combine(resultPath, firstFilename)).Should().BeTrue();
         }
 
@@ -354,7 +355,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                             {
                                                 RepoUrl = new Uri("https://github.com/org/repo"),
                                                 Path = "",
-                                                TargetRevision = argoCdBranchName.Value,
+                                                TargetRevision = ArgoCDBranchFriendlyName,
                                                 Helm = new HelmConfig
                                                 {
                                                     ValueFiles = new List<string>()
@@ -370,7 +371,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                                                 Name = "refSourceName",
                                                                 Ref = "valuesFiles",
                                                                 Path = "otherPath/values1.yaml", //this should cause an error
-                                                                TargetRevision = argoCdBranchName.Value,
+                                                                TargetRevision = ArgoCDBranchFriendlyName,
                                                                 RepoUrl = new Uri(RepoUrl)
                                                             })
                                             .Build();
@@ -390,7 +391,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             convention.Install(runningDeployment);
             
             //Assert
-            var resultPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCdBranchName);
+            var resultPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             File.Exists(Path.Combine(resultPath, firstFilename)).Should().BeFalse();
         }
 

@@ -38,7 +38,9 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
         string tempDirectory;
         string OriginPath => Path.Combine(tempDirectory, "origin");
         Repository originRepo;
-        readonly GitBranchName argoCDBranchName = GitBranchName.CreateFromFriendlyName("devBranch");
+        
+        const string ArgoCDBranchFriendlyName = "devBranch";
+        readonly GitBranchName argoCDBranchName = GitBranchName.CreateFromFriendlyName(ArgoCDBranchFriendlyName);
         readonly NonSensitiveCalamariVariables nonSensitiveCalamariVariables = new NonSensitiveCalamariVariables();
         
         readonly IArgoCDApplicationManifestParser argoCdApplicationManifestParser = Substitute.For<IArgoCDApplicationManifestParser>();
@@ -59,7 +61,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             {
                 new ArgoCDApplicationDto("Gateway1", "App1", "argocd",new[]
                 {
-                    new ArgoCDApplicationSourceDto(OriginPath, "", argoCDBranchName.Value)
+                    new ArgoCDApplicationSourceDto(OriginPath, "", ArgoCDBranchFriendlyName)
                 }, "yaml", "docker.io","http://my-argo.com")
             }, new GitCredentialDto[]
             {
@@ -78,7 +80,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                             {
                                                 RepoUrl = new Uri(OriginPath),
                                                 Path = "",
-                                                TargetRevision = argoCDBranchName.Value
+                                                TargetRevision = ArgoCDBranchFriendlyName
                                             })
                                             .Build();
             
