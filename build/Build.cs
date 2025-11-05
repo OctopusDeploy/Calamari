@@ -783,7 +783,7 @@ namespace Calamari.Build
             if (!runtimeId.IsNullOrEmpty())
             {
                 publishedTo /= runtimeId;
-                packageId = $"{project}.{runtimeId}";
+                packageId = $"Octopus.{project}.{runtimeId}";
                 nugetPackProperties.Add("runtimeId", runtimeId!);
             }
 
