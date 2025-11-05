@@ -84,11 +84,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
-  <ItemGroup>
-    <None Include="..\..\LICENSE.txt" Pack="true" PackagePath="">
-      <Link>LICENSE.txt</Link>
-    </None>
-  </ItemGroup>
   <!--
     In netcore 2.1.3, the framework stopped calculating package definitions automatically "for perf"
     (see https://github.com/dotnet/sdk/issues/2342)
