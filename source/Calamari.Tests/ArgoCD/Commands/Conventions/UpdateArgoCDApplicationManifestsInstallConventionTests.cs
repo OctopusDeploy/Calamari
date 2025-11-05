@@ -283,21 +283,21 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                             {
                                                 RepoUrl = new Uri("https://github.com/org/repo"),
                                                 Path = "",
-                                                TargetRevision = argoCDBranchName.Value,
+                                                TargetRevision = ArgoCDBranchFriendlyName,
                                                 Helm = new HelmConfig
                                                 {
                                                     ValueFiles = new List<string>()
                                                     {
                                                         "subpath/values1.yaml",
                                                         "otherPath/values2.yaml",
-                                                        "$ref/otherRepoPath/values.yaml"
+                                                        "$values/otherRepoPath/values.yaml"
                                                     }
                                                 }
                                             })
                                             .WithSource(new ReferenceSource
                                                             {
                                                                 Name = "refSourceName",
-                                                                Ref = "valuesFiles",
+                                                                Ref = "values",
                                                                 TargetRevision = ArgoCDBranchFriendlyName,
                                                                 RepoUrl = new Uri(RepoUrl)
                                                             })
