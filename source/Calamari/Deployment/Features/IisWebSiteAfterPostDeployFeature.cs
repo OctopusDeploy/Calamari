@@ -95,7 +95,7 @@ namespace Calamari.Deployment.Features
 
         static string StripLocalAccountIdentifierFromUsername(string username)
         {
-            //The NTAccount class doesnt work with local accounts represented in the format of .\username
+            //The NTAccount class doesn't work with local accounts represented in the format of .\username
             //an exception is thrown when attempting to call NTAccount.Translate().
             //The following expression is to remove .\ from the beginning of usernames, we still allow for usernames in the format of machine\user or domain\user
             return Regex.Replace(username, "\\.\\\\(.*)", "$1", RegexOptions.None);
