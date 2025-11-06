@@ -13,17 +13,17 @@
         <PackageReference Include="nunit" Version="3.13.3" />
         <PackageReference Include="NUnit3TestAdapter" Version="4.2.1" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.3.0" />
+        <PackageReference Include="Octopus.Calamari.Cloud" Version="31.8.0-hotfix0003" />
+        <PackageReference Include="Octopus.Calamari.linux-x64" Version="31.8.0-hotfix0003" />
+        <PackageReference Include="Octopus.Calamari.osx-x64" Version="31.8.0-hotfix0003" />
+        <PackageReference Include="Octopus.Calamari.win-x64" Version="31.8.0-hotfix0003" />
         <PackageReference Include="SharpCompress" Version="0.37.2" />
         <PackageReference Include="TestStack.BDDfy" Version="4.3.2" />
     </ItemGroup>
     <ItemGroup>
         <!-- These references are imported so that the Integration test has something to work with -->
         <PackageReference Include="Calamari" Version="12.0.2" GeneratePathProperty="true" />
-        <PackageReference Include="Calamari.Cloud" Version="12.0.2" GeneratePathProperty="true" />
         <PackageReference Include="Sashimi.Terraform" Version="0.1.7-enh-packcalamari0002" GeneratePathProperty="true" />
-        <PackageReference Include="Calamari.linux-x64" Version="12.0.2" GeneratePathProperty="true" />
-        <PackageReference Include="Calamari.osx-x64" Version="12.0.2" GeneratePathProperty="true" />
-        <PackageReference Include="Calamari.win-x64" Version="12.0.2" GeneratePathProperty="true" />
     </ItemGroup>
     <ItemGroup>
       <ProjectReference Include="..\Calamari.ConsolidateCalamariPackages\Calamari.ConsolidateCalamariPackages.csproj" />
