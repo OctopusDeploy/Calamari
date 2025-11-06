@@ -438,7 +438,7 @@ partial class Build : NukeBuild
     }
 
     Target PublishAzureWebAppNetCoreShim =>
-        _ => _.DependsOn(Restore)
+        td => td.DependsOn(Restore)
               .Executes(() =>
                         {
                             if (!OperatingSystem.IsWindows())
