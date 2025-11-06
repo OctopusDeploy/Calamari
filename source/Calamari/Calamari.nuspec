@@ -8,7 +8,7 @@
     <licenseUrl>https://github.com/OctopusDeploy/Calamari/blob/main/LICENSE.txt</licenseUrl>
     <projectUrl>https://github.com/OctopusDeploy/Calamari/</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>Contains the command-line Calamari tool that is used by Tentacle to perform depoyment actions on machines.</description>
+    <description>Contains the command-line Calamari tool that is used by Tentacle to perform deployment actions on machines.</description>
     <language>en-US</language>
     <tags></tags>
   </metadata>
