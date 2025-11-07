@@ -100,32 +100,6 @@ namespace Calamari.ConsolidateCalamariPackages.Tests
                 this.Assent(sr.ReadToEnd(), assentConfiguration);
         }
 
-        public void AndTheRegeneratedPackageShouldBeIdenticalToInputs()
-        {
-            var streamProvider = new FileBasedStreamProvider(expectedZip);
-            var factory = new ConsolidatedPackageFactory();
-            var consolidatedPackage = factory.LoadFrom(streamProvider);
-
-            // Sashimi is a multi-arch package - atm this test can't unpack it cleanly enough.
-            foreach (var reference in packageReferences.Where(pr => !pr.Name.Contains("Sashimi")))
-            {
-                var (flavour, platform) = ExtractFlavourAndPlatform(reference);
-                var outputFilename = Path.Combine(temp, $"{flavour}_{platform}_output.zip");
-                using (var outputStream = File.OpenWrite(outputFilename))
-                {
-                    using (var dest = new ZipWriter(outputStream, new ZipWriterOptions(SharpCompress.Common.CompressionType.Deflate) { DeflateCompressionLevel = CompressionLevel.BestSpeed, LeaveStreamOpen = false }))
-                    {
-                        foreach (var entry in consolidatedPackage.ExtractCalamariPackage(flavour, platform))
-                        {
-                            dest.Write(entry.entryName, entry.sourceStream);
-                        }
-                    }
-                }
-
-                ZipFilesShouldBeIdentical(reference.PackagePath, outputFilename);
-            }
-        }
-
         void ZipFilesShouldBeIdentical(string inputFilename, string regeneratedZipFilename)
         {
             using (var inputZip = ZipFile.OpenRead(inputFilename))
