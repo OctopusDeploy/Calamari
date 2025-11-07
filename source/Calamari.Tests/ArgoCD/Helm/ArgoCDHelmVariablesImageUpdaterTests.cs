@@ -8,6 +8,7 @@ using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Domain;
 using Calamari.ArgoCD.Dtos;
 using Calamari.ArgoCD.Git;
+using Calamari.ArgoCD.Git.GitVendorApiAdapters;
 using Calamari.ArgoCD.GitHub;
 using Calamari.ArgoCD.Models;
 using Calamari.Common.Commands;
@@ -36,7 +37,7 @@ namespace Calamari.Tests.ArgoCD.Helm
         string tempDirectory;
         string OriginPath => Path.Combine(tempDirectory, "origin");
         Repository originRepo;
-        GitBranchName argoCDBranchName = new GitBranchName("devBranch");
+        GitBranchName argoCDBranchName = new GitBranchName("refs/heads/devBranch");
         NonSensitiveCalamariVariables nonSensitiveCalamariVariables = new NonSensitiveCalamariVariables();
 
         readonly IArgoCDApplicationManifestParser argoCdApplicationManifestParser = Substitute.For<IArgoCDApplicationManifestParser>();
@@ -119,12 +120,12 @@ image:
             argoCdApplicationFromYaml.Metadata.Annotations[ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(null)] = "{{ .Values.image.name }}";
 
             var updater = new UpdateArgoCDAppImagesInstallConvention(log,
-                                                                     Substitute.For<IGitHubPullRequestCreator>(),
                                                                      fileSystem,
                                                                      new DeploymentConfigFactory(nonSensitiveCalamariVariables),
                                                                      new CommitMessageGenerator(),
                                                                      customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser);
+                                                                     argoCdApplicationManifestParser, 
+                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>());
             var variables = new CalamariVariables
             {
                 [ProjectVariables.Slug] = ProjectSlug,
@@ -145,7 +146,7 @@ image:
             updater.Install(runningDeployment);
 
             //Assert
-            var resultRepo = CloneOrigin();
+            var resultRepo = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             var valuesFileContent = fileSystem.ReadFile(Path.Combine(resultRepo, "files", "values.yml"));
             valuesFileContent.Should().Be(DefaultValuesFile);
         }
@@ -155,12 +156,12 @@ image:
         {
             // Arrange
             var updater = new UpdateArgoCDAppImagesInstallConvention(log,
-                                                                     Substitute.For<IGitHubPullRequestCreator>(),
                                                                      fileSystem,
                                                                      new DeploymentConfigFactory(nonSensitiveCalamariVariables),
                                                                      new CommitMessageGenerator(),
                                                                      customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser);
+                                                                     argoCdApplicationManifestParser, 
+                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>());
             var variables = new CalamariVariables
             {
                 [ProjectVariables.Slug] = ProjectSlug,
@@ -179,7 +180,7 @@ image:
             updater.Install(runningDeployment);
 
             //Assert
-            var resultRepo = CloneOrigin();
+            var resultRepo = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             var valuesFileContent = fileSystem.ReadFile(Path.Combine(resultRepo, "files", "values.yml"));
             valuesFileContent.Should().Be(DefaultValuesFile);
         }
@@ -191,12 +192,12 @@ image:
             argoCdApplicationFromYaml.Metadata.Annotations[ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(null)] = "{{ .Values.image.name }}";
 
             var updater = new UpdateArgoCDAppImagesInstallConvention(log,
-                                                                     Substitute.For<IGitHubPullRequestCreator>(),
                                                                      fileSystem,
                                                                      new DeploymentConfigFactory(nonSensitiveCalamariVariables),
                                                                      new CommitMessageGenerator(),
                                                                      customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser);
+                                                                     argoCdApplicationManifestParser, 
+                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>());
             var variables = new CalamariVariables
             {
                 [ProjectVariables.Slug] = ProjectSlug,
@@ -215,7 +216,7 @@ image:
             updater.Install(runningDeployment);
 
             //Assert
-            var resultRepo = CloneOrigin();
+            var resultRepo = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             var valuesFileContent = fileSystem.ReadFile(Path.Combine(resultRepo, "files", "values.yml"));
             valuesFileContent.Should().Contain("nginx:1.27.1");
         }
@@ -236,12 +237,12 @@ image2:
             argoCdApplicationFromYaml.Metadata.Annotations[ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(null)] = "{{ .Values.image1.name }}, {{ .Values.image2.name }}:{{ .Values.image2.tag }}";
 
             var updater = new UpdateArgoCDAppImagesInstallConvention(log,
-                                                                     Substitute.For<IGitHubPullRequestCreator>(),
                                                                      fileSystem,
                                                                      new DeploymentConfigFactory(nonSensitiveCalamariVariables),
                                                                      new CommitMessageGenerator(),
                                                                      customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser);
+                                                                     argoCdApplicationManifestParser, 
+                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>());
             var variables = new CalamariVariables
             {
                 [ProjectVariables.Slug] = ProjectSlug,
@@ -260,7 +261,7 @@ image2:
             updater.Install(runningDeployment);
 
             //Assert
-            var resultRepo = CloneOrigin();
+            var resultRepo = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             var valuesFileContent = fileSystem.ReadFile(Path.Combine(resultRepo, "files", "values.yml"));
             valuesFileContent.ReplaceLineEndings().Should()
                              .Be(@"
@@ -316,12 +317,12 @@ image:
                                            .Returns(argoCdApplicationFromYaml);
 
             var updater = new UpdateArgoCDAppImagesInstallConvention(log,
-                                                                     Substitute.For<IGitHubPullRequestCreator>(),
                                                                      fileSystem,
                                                                      new DeploymentConfigFactory(nonSensitiveCalamariVariables),
                                                                      new CommitMessageGenerator(),
                                                                      customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser);
+                                                                     argoCdApplicationManifestParser, 
+                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>());
             var variables = new CalamariVariables
             {
                 [ProjectVariables.Slug] = ProjectSlug,
@@ -337,7 +338,7 @@ image:
 
             updater.Install(runningDeployment);
             //Assert
-            var resultRepo = CloneOrigin();
+            var resultRepo = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             var valuesFileContent = fileSystem.ReadFile(Path.Combine(resultRepo, "files", "values.yaml"));
             valuesFileContent.ReplaceLineEndings().Should()
                              .Be(@"
@@ -407,12 +408,12 @@ image:
                                            .Returns(argoCdApplicationFromYaml);
 
             var updater = new UpdateArgoCDAppImagesInstallConvention(log,
-                                                                     Substitute.For<IGitHubPullRequestCreator>(),
                                                                      fileSystem,
                                                                      new DeploymentConfigFactory(nonSensitiveCalamariVariables),
                                                                      new CommitMessageGenerator(),
                                                                      customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser);
+                                                                     argoCdApplicationManifestParser, 
+                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>());
             var variables = new CalamariVariables
             {
                 [ProjectVariables.Slug] = ProjectSlug,
@@ -428,7 +429,7 @@ image:
 
             updater.Install(runningDeployment);
             //Assert
-            var resultRepo = CloneOrigin();
+            var resultRepo = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             var valuesFileContent = fileSystem.ReadFile(Path.Combine(resultRepo, "files", "values.yaml"));
             valuesFileContent.ReplaceLineEndings().Should()
                              .Be(@"
@@ -485,12 +486,12 @@ image:
                                            .Returns(argoCdApplicationFromYaml);
 
             var updater = new UpdateArgoCDAppImagesInstallConvention(log,
-                                                                     Substitute.For<IGitHubPullRequestCreator>(),
                                                                      fileSystem,
                                                                      new DeploymentConfigFactory(nonSensitiveCalamariVariables),
                                                                      new CommitMessageGenerator(),
                                                                      customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser);
+                                                                     argoCdApplicationManifestParser, 
+                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>());
             var variables = new CalamariVariables
             {
                 [ProjectVariables.Slug] = ProjectSlug,
@@ -506,7 +507,7 @@ image:
 
             updater.Install(runningDeployment);
             //Assert
-            var resultRepo = CloneOrigin();
+            var resultRepo = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             var valuesFileContent = fileSystem.ReadFile(Path.Combine(resultRepo, "files", "values.yaml"));
             valuesFileContent.ReplaceLineEndings().Should()
                              .Be(@"
@@ -575,12 +576,12 @@ image:
                                            .Returns(argoCdApplicationFromYaml);
 
             var updater = new UpdateArgoCDAppImagesInstallConvention(log,
-                                                                     Substitute.For<IGitHubPullRequestCreator>(),
                                                                      fileSystem,
                                                                      new DeploymentConfigFactory(nonSensitiveCalamariVariables),
                                                                      new CommitMessageGenerator(),
                                                                      customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser);
+                                                                     argoCdApplicationManifestParser, 
+                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>());
             var variables = new CalamariVariables
             {
                 [ProjectVariables.Slug] = ProjectSlug,
@@ -596,7 +597,7 @@ image:
 
             updater.Install(runningDeployment);
             //Assert
-            var resultRepo = CloneOrigin();
+            var resultRepo = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             var valuesFileContent = fileSystem.ReadFile(Path.Combine(resultRepo, "files", "values.yaml"));
             valuesFileContent.ReplaceLineEndings().Should()
                              .Be(@"
@@ -665,12 +666,12 @@ image:
                                            .Returns(argoCdApplicationFromYaml);
 
             var updater = new UpdateArgoCDAppImagesInstallConvention(log,
-                                                                     Substitute.For<IGitHubPullRequestCreator>(),
                                                                      fileSystem,
                                                                      new DeploymentConfigFactory(nonSensitiveCalamariVariables),
                                                                      new CommitMessageGenerator(),
                                                                      customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser);
+                                                                     argoCdApplicationManifestParser, 
+                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>());
             var variables = new CalamariVariables
             {
                 [ProjectVariables.Slug] = ProjectSlug,
@@ -686,7 +687,7 @@ image:
 
             updater.Install(runningDeployment);
             //Assert
-            var resultRepo = CloneOrigin();
+            var resultRepo = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             var valuesFileContent = fileSystem.ReadFile(Path.Combine(resultRepo, "files", "values.yaml"));
             valuesFileContent.ReplaceLineEndings().Should()
                              .Be(@"
@@ -756,12 +757,12 @@ image:
                                            .Returns(argoCdApplicationFromYaml);
 
             var updater = new UpdateArgoCDAppImagesInstallConvention(log,
-                                                                     Substitute.For<IGitHubPullRequestCreator>(),
                                                                      fileSystem,
                                                                      new DeploymentConfigFactory(nonSensitiveCalamariVariables),
                                                                      new CommitMessageGenerator(),
                                                                      customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser);
+                                                                     argoCdApplicationManifestParser, 
+                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>());
             var variables = new CalamariVariables
             {
                 [ProjectVariables.Slug] = ProjectSlug,
@@ -777,7 +778,7 @@ image:
 
             updater.Install(runningDeployment);
             //Assert
-            var resultRepo = CloneOrigin();
+            var resultRepo = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             var valuesFileContent = fileSystem.ReadFile(Path.Combine(resultRepo, "files", "values.yaml"));
             valuesFileContent.ReplaceLineEndings().Should()
                              .Be(@"
@@ -790,17 +791,9 @@ image:
 
             log.MessagesWarnFormatted.Should().NotContain("The Helm source 'https://github.com/doesnt/exist.git' is missing an annotation for the image replace path. It will not be updated.");
         } 
-
-        string CloneOrigin()
-        {
-            var subPath = Guid.NewGuid().ToString();
-            var resultPath = Path.Combine(tempDirectory, subPath);
-            Repository.Clone(OriginPath, resultPath);
-            var resultRepo = new Repository(resultPath);
-            LibGit2Sharp.Commands.Checkout(resultRepo, $"origin/{argoCDBranchName}");
-
-            return resultPath;
-        }
     }
+    
+    
 }
+
 #endif

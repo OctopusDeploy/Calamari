@@ -53,6 +53,7 @@
     <PackageReference Include="Microsoft.Web.Administration" Version="11.1.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="Octokit" Version="14.0.0" />
+    <PackageReference Include="NGitLab" Version="10.4.1" />
     <PackageReference Include="Octopus.Versioning" Version="5.1.876" />
     <PackageReference Include="Octopus.TinyTypes" Version="2.2.1156" />
     <PackageReference Include="Octopus.CoreUtilities" Version="2.1.449" />

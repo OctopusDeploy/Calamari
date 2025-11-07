@@ -785,12 +785,12 @@ partial class Build : NukeBuild
         var packageId = $"{project}";
         var nugetPackProperties = new Dictionary<string, object>();
 
-        if (!runtimeId.IsNullOrEmpty())
-        {
-            publishedTo /= runtimeId;
-            packageId = $"{project}.{runtimeId}";
-            nugetPackProperties.Add("runtimeId", runtimeId!);
-        }
+            if (!runtimeId.IsNullOrEmpty())
+            {
+                publishedTo /= runtimeId;
+                packageId = $"Octopus.{project}.{runtimeId}";
+                nugetPackProperties.Add("runtimeId", runtimeId!);
+            }
 
         if (WillSignBinaries)
             Signing.SignAndTimestampBinaries(publishedTo, AzureKeyVaultUrl, AzureKeyVaultAppId,

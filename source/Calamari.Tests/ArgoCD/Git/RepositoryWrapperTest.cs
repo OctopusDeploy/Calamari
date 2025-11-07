@@ -5,7 +5,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Calamari.ArgoCD.Git;
-using Calamari.ArgoCD.GitHub;
+using Calamari.ArgoCD.Git.GitVendorApiAdapters;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
@@ -26,11 +26,12 @@ namespace Calamari.Tests.ArgoCD.Git
         string OriginPath => Path.Combine(tempDirectory, "origin");
         string repositoryPath = "repository";
         Repository bareOrigin;
-        GitBranchName branchName = new GitBranchName("devBranch");
+        GitBranchName branchName = GitBranchName.CreateFromFriendlyName("devBranch");
 
-        IGitHubPullRequestCreator gitHubPullRequestCreator = Substitute.For<IGitHubPullRequestCreator>();
         IGitConnection gitConnection;
         RepositoryWrapper repository;
+        IGitVendorAgnosticApiAdapterFactory gitVendorAgnosticApiAdapterFactory = Substitute.For<IGitVendorAgnosticApiAdapterFactory>();
+        IGitVendorApiAdapter gitVendorApiAdapter = Substitute.For<IGitVendorApiAdapter>();
 
         [SetUp]
         public void Init()
@@ -42,15 +43,23 @@ namespace Calamari.Tests.ArgoCD.Git
             bareOrigin = RepositoryHelpers.CreateBareRepository(OriginPath);
             RepositoryHelpers.CreateBranchIn(branchName, OriginPath);
 
-            var repositoryFactory = new RepositoryFactory(log, fileSystem, tempDirectory, gitHubPullRequestCreator);
-            gitConnection = new GitConnection(null, null, OriginPath, branchName);
+            gitVendorApiAdapter.CreatePullRequest(Arg.Any<string>(),
+                                                  Arg.Any<string>(),
+                                                  Arg.Any<GitBranchName>(),
+                                                  Arg.Any<GitBranchName>(),
+                                                  Arg.Any<CancellationToken>())
+                               .Returns(new PullRequest("title", 1, "url"));
+            gitVendorAgnosticApiAdapterFactory.TryCreateGitVendorApiAdaptor(Arg.Any<IRepositoryConnection>()).Returns(gitVendorApiAdapter);
+            
+            var repositoryFactory = new RepositoryFactory(log, fileSystem, tempDirectory, gitVendorAgnosticApiAdapterFactory);
+            gitConnection = new GitConnection(null, null, new Uri(OriginPath), branchName);
             repository = repositoryFactory.CloneRepository(repositoryPath, gitConnection);
         }
 
         [TearDown]
         public void Cleanup()
         {
-            RepositoryTestHelpers.DeleteRepositoryDirectory(fileSystem, tempDirectory);
+            RepositoryHelpers.DeleteRepositoryDirectory(fileSystem, tempDirectory);
         }
 
         string RepositoryRootPath => Path.Combine(tempDirectory, repositoryPath);
@@ -107,12 +116,12 @@ namespace Calamari.Tests.ArgoCD.Git
             await repository.PushChanges(false,
                                          "Summary Message",
                                          "There is no data to comm it",
-                                         new GitBranchName("arbitraryBranch1"),
+                                         GitBranchName.CreateFromFriendlyName("arbitraryBranch1"),
                                          CancellationToken.None);
             await repository.PushChanges(false,
                                          "Summary Message",
                                          "There is no data to comm it",
-                                         new GitBranchName("arbitraryBranch2"),
+                                         GitBranchName.CreateFromFriendlyName("arbitraryBranch2"),
                                          CancellationToken.None);
         }
 
@@ -120,25 +129,24 @@ namespace Calamari.Tests.ArgoCD.Git
         public async Task WhenCreatingAPrThePrTitleAndBodyMatchTheCommitMessageFields()
         {
             string filename = "newFile.txt";
-            File.WriteAllText(Path.Combine(RepositoryRootPath, filename), "");
+            await File.WriteAllTextAsync(Path.Combine(RepositoryRootPath, filename), "");
             repository.StageFiles(new[] { filename });
             var commitSummary = "Summary Message";
             var commitDescription = "A commit description";
             repository.CommitChanges(commitSummary, commitDescription).Should().BeTrue();
-            var prBranch = new GitBranchName("arbitraryBranch");
+            var prBranch = GitBranchName.CreateFromFriendlyName("arbitraryBranch");
             await repository.PushChanges(true,
                                          commitSummary,
                                          commitDescription,
                                          prBranch,
                                          CancellationToken.None);
-            await gitHubPullRequestCreator.Received(1)
-                                          .CreatePullRequest(log,
-                                                             gitConnection,
-                                                             commitSummary,
-                                                             commitDescription,
-                                                             Arg.Any<GitBranchName>(),
-                                                             prBranch,
-                                                             Arg.Any<CancellationToken>());
+            await gitVendorApiAdapter.Received(1)
+                                                 .CreatePullRequest(
+                                                                    commitSummary,
+                                                                    commitDescription,
+                                                                    Arg.Any<GitBranchName>(),
+                                                                    prBranch,
+                                                                    Arg.Any<CancellationToken>());
         }
 
         [Test]
@@ -177,14 +185,14 @@ namespace Calamari.Tests.ArgoCD.Git
                                         ("nested_1/file.yaml", ""),
                                         ("nested_1/nested_2/file.yaml", ""));
 
-            var repositoryFactory = new RepositoryFactory(log, fileSystem, tempDirectory, gitHubPullRequestCreator);
-            gitConnection = new GitConnection(null, null, OriginPath, branchName);
+            var repositoryFactory = new RepositoryFactory(log, fileSystem, tempDirectory, gitVendorAgnosticApiAdapterFactory);
+            gitConnection = new GitConnection(null, null, new Uri(OriginPath), branchName);
 
             // Act
             var sut = repositoryFactory.CloneRepository($"{repositoryPath}/sut", gitConnection);
             sut.RecursivelyStageFilesForRemoval(subPath);
             sut.CommitChanges("Deleted files", string.Empty);
-            sut.PushChanges(branchName.Value);
+            sut.PushChanges(branchName);
 
             //Assert
             var result = CloneOrigin();
@@ -199,7 +207,7 @@ namespace Calamari.Tests.ArgoCD.Git
             var resultPath = Path.Combine(tempDirectory, subPath);
             Repository.Clone(OriginPath, resultPath);
             var resultRepo = new Repository(resultPath);
-            LibGit2Sharp.Commands.Checkout(resultRepo, $"origin/{branchName.Value}");
+            LibGit2Sharp.Commands.Checkout(resultRepo, branchName.ToFriendlyName());
 
             return resultPath;
         }

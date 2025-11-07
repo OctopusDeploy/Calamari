@@ -9,6 +9,7 @@ using System.Threading;
 using Calamari.ArgoCD.Domain;
 using Calamari.ArgoCD.Dtos;
 using Calamari.ArgoCD.Git;
+using Calamari.ArgoCD.Git.GitVendorApiAdapters;
 using Calamari.ArgoCD.GitHub;
 using Calamari.ArgoCD.Models;
 using Calamari.Common.Commands;
@@ -25,28 +26,28 @@ namespace Calamari.ArgoCD.Conventions
         readonly ICalamariFileSystem fileSystem;
         readonly ILog log;
         readonly string packageSubfolder;
-        readonly IGitHubPullRequestCreator pullRequestCreator;
         readonly DeploymentConfigFactory deploymentConfigFactory;
         readonly ICustomPropertiesLoader customPropertiesLoader;
         readonly IArgoCDApplicationManifestParser argoCdApplicationManifestParser;
         readonly IArgoCDManifestsFileMatcher argoCDManifestsFileMatcher;
+        readonly IGitVendorAgnosticApiAdapterFactory gitVendorAgnosticApiAdapterFactory;
 
         public UpdateArgoCDApplicationManifestsInstallConvention(ICalamariFileSystem fileSystem,
                                                                  string packageSubfolder,
                                                                  ILog log,
-                                                                 IGitHubPullRequestCreator pullRequestCreator,
                                                                  DeploymentConfigFactory deploymentConfigFactory,
                                                                  ICustomPropertiesLoader customPropertiesLoader,
                                                                  IArgoCDApplicationManifestParser argoCdApplicationManifestParser,
-                                                                 IArgoCDManifestsFileMatcher argoCDManifestsFileMatcher)
+                                                                 IArgoCDManifestsFileMatcher argoCDManifestsFileMatcher,
+                                                                 IGitVendorAgnosticApiAdapterFactory gitVendorAgnosticApiAdapterFactory)
         {
             this.fileSystem = fileSystem;
             this.log = log;
-            this.pullRequestCreator = pullRequestCreator;
             this.deploymentConfigFactory = deploymentConfigFactory;
             this.customPropertiesLoader = customPropertiesLoader;
             this.argoCdApplicationManifestParser = argoCdApplicationManifestParser;
             this.argoCDManifestsFileMatcher = argoCDManifestsFileMatcher;
+            this.gitVendorAgnosticApiAdapterFactory = gitVendorAgnosticApiAdapterFactory;
             this.packageSubfolder = packageSubfolder;
         }
 
@@ -56,7 +57,7 @@ namespace Calamari.ArgoCD.Conventions
             var deploymentConfig = deploymentConfigFactory.CreateCommitToGitConfig(deployment);
             var packageFiles = GetReferencedPackageFiles(deploymentConfig);
 
-            var repositoryFactory = new RepositoryFactory(log, fileSystem, deployment.CurrentDirectory, pullRequestCreator);
+            var repositoryFactory = new RepositoryFactory(log, fileSystem, deployment.CurrentDirectory, gitVendorAgnosticApiAdapterFactory);
 
             var argoProperties = customPropertiesLoader.Load<ArgoCDCustomPropertiesDto>();
 
@@ -77,9 +78,8 @@ namespace Calamari.ArgoCD.Conventions
 
                 var applicationFromYaml = argoCdApplicationManifestParser.ParseManifest(application.Manifest);
                 var containsMultipleSources = applicationFromYaml.Spec.Sources.Count > 1;
-                var sourcesToInspect = applicationFromYaml.Spec.Sources.OfType<BasicSource>().ToList();
 
-                LogWarningIfUpdatingMultipleSources(sourcesToInspect,
+                LogWarningIfUpdatingMultipleSources(applicationFromYaml.Spec.Sources,
                                                     applicationFromYaml.Metadata.Annotations,
                                                     containsMultipleSources,
                                                     deploymentScope);
@@ -88,7 +88,7 @@ namespace Calamari.ArgoCD.Conventions
                 validationResult.Action(log);
 
                 var didUpdateSomething = false;
-                foreach (var applicationSource in sourcesToInspect)
+                foreach (var applicationSource in applicationFromYaml.Spec.Sources)
                 {
                     var annotatedScope = ScopingAnnotationReader.GetScopeForApplicationSource(applicationSource.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources);
                     log.LogApplicationSourceScopeStatus(annotatedScope, applicationSource.Name.ToApplicationSourceName(), deploymentScope);
@@ -97,17 +97,23 @@ namespace Calamari.ArgoCD.Conventions
                     {
                         log.Info($"Writing files to repository '{applicationSource.RepoUrl}' for '{application.Name}'");
 
+                        if (!TryCalculateOutputPath(applicationSource, out var outputPath))
+                        {
+                            continue;
+                        }
+
                         var gitCredential = gitCredentials.GetValueOrDefault(applicationSource.RepoUrl.AbsoluteUri);
                         if (gitCredential == null)
                         {
                             log.Info($"No Git credentials found for: '{applicationSource.RepoUrl.AbsoluteUri}', will attempt to clone repository anonymously.");
                         }
 
-                        var gitConnection = new GitConnection(gitCredential?.Username, gitCredential?.Password, applicationSource.RepoUrl.AbsoluteUri, new GitBranchName(applicationSource.TargetRevision));
+                        var targetBranch = GitReference.CreateFromString(applicationSource.TargetRevision);
+                        var gitConnection = new GitConnection(gitCredential?.Username, gitCredential?.Password, applicationSource.RepoUrl, targetBranch);
 
                         using (var repository = repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), gitConnection))
                         {
-                            var subFolder = applicationSource.Path ?? string.Empty;
+                            var subFolder = outputPath;
                             log.VerboseFormat("Copying files into '{0}'", subFolder);
 
                             if (deploymentConfig.PurgeOutputDirectory)
@@ -128,7 +134,7 @@ namespace Calamari.ArgoCD.Conventions
                                 repository.PushChanges(deploymentConfig.CommitParameters.RequiresPr,
                                                        deploymentConfig.CommitParameters.Summary,
                                                        deploymentConfig.CommitParameters.Description,
-                                                       new GitBranchName(applicationSource.TargetRevision),
+                                                       targetBranch,
                                                        CancellationToken.None)
                                           .GetAwaiter()
                                           .GetResult();
@@ -156,7 +162,32 @@ namespace Calamari.ArgoCD.Conventions
             }
         }
 
-        void LogWarningIfUpdatingMultipleSources(List<BasicSource> sourcesToInspect,
+        bool TryCalculateOutputPath(SourceBase sourceToUpdate, out string outputPath)
+        {
+            outputPath = "";
+            var sourceIdentity = string.IsNullOrEmpty(sourceToUpdate.Name) ? sourceToUpdate.RepoUrl.ToString() : sourceToUpdate.Name;
+            if (sourceToUpdate is ReferenceSource)
+            {
+                if (sourceToUpdate.Path != null)
+                {
+                    log.WarnFormat("Unable to update ref source '{0}' as a path has been explicitly specified.", sourceIdentity);
+                    log.Warn("Please split the source into separate sources and update annotations.");
+                    return false;
+                }
+                return true;
+            }
+                        
+            if (sourceToUpdate.Path == null)
+            {
+                log.WarnFormat("Unable to update source '{0}' as a path has not been specified.", sourceIdentity);
+                return false;
+            }
+            outputPath = sourceToUpdate.Path;
+            return true;
+        }
+
+        //TODO(tmm): should we be removing this warning now
+        void LogWarningIfUpdatingMultipleSources(List<SourceBase> sourcesToInspect,
                                                  Dictionary<string, string> applicationAnnotations,
                                                  bool containsMultipleSources,
                                                  (ProjectSlug Project, EnvironmentSlug Environment, TenantSlug? Tenant) deploymentScope)

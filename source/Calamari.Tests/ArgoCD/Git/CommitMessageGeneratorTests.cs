@@ -11,11 +11,11 @@ namespace Calamari.Tests.ArgoCD.Git
     public class CommitMessageGeneratorTests
     {
         readonly CommitMessageGenerator commitMessageGenerator = new CommitMessageGenerator();
-        
+
         [Test]
         public void SummaryWithNoImages_SummaryAndNoImage()
         {
-            var result = commitMessageGenerator.GenerateForImageUpdates(new GitCommitMessage("Foo"), new HashSet<string>());
+            var result = commitMessageGenerator.GenerateDescription(new HashSet<string>(), "Foo");
 
             var expected = @"Foo
 
@@ -27,7 +27,7 @@ No images updated".ReplaceLineEndings("\n");
         [Test]
         public void SummaryWithOneImage_SummaryAndImage()
         {
-            var result = commitMessageGenerator.GenerateForImageUpdates(new GitCommitMessage("Foo"), new HashSet<string>() { "nginx" });
+            var result = commitMessageGenerator.GenerateDescription( new HashSet<string>() { "nginx" }, "Foo");
 
             var expected = @"Foo
 
@@ -40,7 +40,7 @@ Images updated:
         [Test]
         public void SummaryWithThreeImages_SummaryAndImagesSorted()
         {
-            var result = commitMessageGenerator.GenerateForImageUpdates(new GitCommitMessage("Foo"), new HashSet<string>() {"nginx", "alpine", "ubuntu"});
+            var result = commitMessageGenerator.GenerateDescription(new HashSet<string>() {"nginx", "alpine", "ubuntu"}, "Foo");
 
             var expected = @"Foo
 
@@ -58,11 +58,9 @@ Images updated:
             var description = @"Dolores animi quia quae enim hic.
 
 Quibusdam qui maxime eos et magnam quod minus rerum perferendis eum iusto neque et tenetur. Porro illum praesentium sit dolorem rerum accusantium enim repellendus qui iste.".ReplaceLineEndings("\n");
-            var result = commitMessageGenerator.GenerateForImageUpdates(new GitCommitMessage("Foo", description), new HashSet<string>() {"nginx"});
+            var result = commitMessageGenerator.GenerateDescription( new HashSet<string>() {"nginx"},description);
 
-            var expected = @"Foo
-
-Dolores animi quia quae enim hic.
+            var expected = @"Dolores animi quia quae enim hic.
 
 Quibusdam qui maxime eos et magnam quod minus rerum perferendis eum iusto neque et tenetur. Porro illum praesentium sit dolorem rerum accusantium enim repellendus qui iste.
 
