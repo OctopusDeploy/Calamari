@@ -12,10 +12,7 @@ using NuGet.Packaging;
 using NUnit.Framework;
 using Octopus.Calamari.ConsolidatedPackage;
 using Serilog;
-using SharpCompress.Writers;
-using SharpCompress.Writers.Zip;
 using TestStack.BDDfy;
-using CompressionLevel = SharpCompress.Compressors.Deflate.CompressionLevel;
 
 namespace Calamari.ConsolidateCalamariPackages.Tests
 {
