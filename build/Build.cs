@@ -498,7 +498,7 @@ namespace Calamari.Build
                  .Executes(() =>
                            {
                                Directory.CreateDirectory(LocalPackagesDirectory);
-                               foreach (var file in Directory.GetFiles(ArtifactsDirectory, "Calamari.*.nupkg"))
+                               foreach (var file in Directory.GetFiles(ArtifactsDirectory, "Octopus.Calamari.*.nupkg"))
                                    CopyFile(file, LocalPackagesDirectory / Path.GetFileName(file), FileExistsPolicy.Overwrite);
                            });
 
@@ -672,7 +672,7 @@ namespace Calamari.Build
         {
             var publishedTo = PublishDirectory / project / framework;
             var projectDir = SourceDirectory / project;
-            var packageId = $"{project}";
+            var packageId = project.Equals(RootProjectName) ? $"Octopus.{project}" :  $"{project}";
             var nugetPackProperties = new Dictionary<string, object>();
 
             if (!runtimeId.IsNullOrEmpty())
@@ -707,8 +707,8 @@ namespace Calamari.Build
         void SetOctopusServerCalamariVersion(string projectFile)
         {
             var text = File.ReadAllText(projectFile);
-            text = Regex.Replace(text, @"<PackageReference Include=""Calamari.Consolidated"" Version=""([\S])+""",
-                                 $"<PackageReference Include=\"Calamari.Consolidated\" Version=\"{NugetVersion.Value}\"");
+            text = Regex.Replace(text, @"<PackageReference Include=""Octopus.Calamari.Consolidated"" Version=""([\S])+""",
+                                 $"<PackageReference Include=\"Octopus.Calamari.Consolidated\" Version=\"{NugetVersion.Value}\"");
             File.WriteAllText(projectFile, text);
         }
 
