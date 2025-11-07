@@ -36,7 +36,7 @@ namespace Calamari.ConsolidateCalamariPackages.Tests
             File.Delete(temp);
             Directory.CreateDirectory(temp);
             packageReferences = new List<BuildPackageReference>();
-            expectedZip = Path.Combine(temp, $"Calamari.3327050d788658cd16da010e75580d32.zip");
+            expectedZip = Path.Combine(temp, $"Calamari.54d634ceb0b28d3d0463f4cd674461c5.zip");
         }
 
         public void TearDown()
