@@ -24,8 +24,8 @@ namespace Octopus.Calamari.ConsolidatedPackage
 
         public IReadOnlyList<SourceFile> GetSourceFiles(ILogger log)
         {
-            var isNetFx = Name == "Calamari";
-            var isCloud = Name == "Calamari.Cloud";
+            var isNetFx = Name == "Octopus.Calamari";
+            var isCloud = Name == "Octopus.Calamari.Cloud";
             var platform = isNetFx || isCloud
                 ? "netfx"
                 : Name.Split('.')[1];
