@@ -68,7 +68,7 @@ namespace Calamari.Build
 
         [GitVersion] readonly GitVersion? GitVersionInfo;
 
-        static readonly List<string> CalamariProjectsToSkipConsolidation = new() { "Calamari.CloudAccounts", "Calamari.Common", "Calamari.ConsolidateCalamariPackages" };
+        static readonly List<string> CalamariProjectsToSkipConsolidation = new() { "Octopus.Calamari.CloudAccounts", "Octopus.Calamari.Common", "Octopus.Calamari.ConsolidateCalamariPackages" };
 
         List<Task> SignDirectoriesTasks = new();
         List<Task> ProjectCompressionTasks = new();
