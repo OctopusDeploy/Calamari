@@ -519,7 +519,7 @@ namespace Calamari.Build
                                    var metadata = nuspecReader.GetMetadata().ToList();
                                    packageReferences.Add(new BuildPackageReference
                                    {
-                                       Name = metadata.Where(kvp => kvp.Key == "id").Select(i => i.Value).First(),
+                                       Name = Regex.Replace(metadata.Where(kvp => kvp.Key == "id").Select(i => i.Value).First(), @"^Octopus\.", ""),
                                        Version = metadata.Where(kvp => kvp.Key == "version").Select(i => i.Value).First(),
                                        PackagePath = artifact
                                    });

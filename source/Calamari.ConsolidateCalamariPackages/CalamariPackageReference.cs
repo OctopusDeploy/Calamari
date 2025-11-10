@@ -24,11 +24,11 @@ namespace Octopus.Calamari.ConsolidatedPackage
 
         public IReadOnlyList<SourceFile> GetSourceFiles(ILogger log)
         {
-            var isNetFx = Name == "Octopus.Calamari";
-            var isCloud = Name == "Octopus.Calamari.Cloud";
+            var isNetFx = Name == "Calamari";
+            var isCloud = Name == "Calamari.Cloud";
             var platform = isNetFx || isCloud
                 ? "netfx"
-                : Name.Split('.')[2];
+                : Name.Split('.')[1];
 
             if (!File.Exists(PackagePath))
                 throw new Exception($"Could not find the source NuGet package {PackagePath} does not exist");
@@ -41,7 +41,7 @@ namespace Octopus.Calamari.ConsolidatedPackage
                           .Where(e => !e.FullName.StartsWith("package/services"))
                           .Select(entry => new SourceFile
                           {
-                              PackageId = isCloud ? "Octopus.Calamari.Cloud" : "Octopus.Calamari",
+                              PackageId = isCloud ? "Calamari.Cloud" : "Calamari",
                               Version = Version,
                               Platform = platform,
                               ArchivePath = PackagePath,
