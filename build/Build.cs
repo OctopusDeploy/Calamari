@@ -68,7 +68,7 @@ namespace Calamari.Build
 
         [GitVersion] readonly GitVersion? GitVersionInfo;
 
-        static readonly List<string> CalamariProjectsToSkipConsolidation = new() { "Octopus.Calamari.CloudAccounts", "Octopus.Calamari.Common", "Octopus.Calamari.ConsolidateCalamariPackages" };
+        static readonly List<string> NuGetPackagesToExludeFromConsolidation = new() { "Octopus.Calamari.CloudAccounts", "Octopus.Calamari.Common", "Octopus.Calamari.ConsolidateCalamariPackages", "Octopus.Calamari.ConsolidatePackage", "Octopus.Calamari.ConsolidatePackage.Api" };
 
         List<Task> SignDirectoriesTasks = new();
         List<Task> ProjectCompressionTasks = new();
@@ -509,7 +509,8 @@ namespace Calamari.Build
                  .Executes(() =>
                            {
                                var artifacts = Directory.GetFiles(ArtifactsDirectory, "*.nupkg")
-                                                        .Where(a => !CalamariProjectsToSkipConsolidation.Any(a.Contains));
+                                                        .Where(a => !NuGetPackagesToExludeFromConsolidation.Any(a.Contains));
+                               
                                var packageReferences = new List<BuildPackageReference>();
                                foreach (var artifact in artifacts)
                                {
@@ -536,6 +537,12 @@ namespace Calamari.Build
                                            PackagePath = ArtifactsDirectory / $"{flavour}.zip"
                                        });
                                    }
+                               }
+
+                               Log.Information("Package References:");
+                               foreach (var packageReference in packageReferences)
+                               {
+                                   Log.Information($"- {packageReference.Name}, {packageReference.Version} @ {packageReference.PackagePath}");
                                }
 
                                Directory.CreateDirectory(ConsolidatedPackageDirectory);
