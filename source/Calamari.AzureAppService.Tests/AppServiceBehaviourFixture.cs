@@ -415,7 +415,7 @@ namespace Calamari.AzureAppService.Tests
                                                                         storageAccountName,
                                                                         new StorageAccountCreateOrUpdateContent(
                                                                                                                 new StorageSku(StorageSkuName.StandardLrs),
-                                                                                                                StorageKind.Storage,
+                                                                                                                StorageKind.StorageV2,
                                                                                                                 ResourceGroupResource.Data.Location)
                                                                        );
 
