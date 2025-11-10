@@ -28,7 +28,7 @@ namespace Octopus.Calamari.ConsolidatedPackage
             var isCloud = Name == "Octopus.Calamari.Cloud";
             var platform = isNetFx || isCloud
                 ? "netfx"
-                : Name.Split('.')[1];
+                : Name.Split('.')[2];
 
             if (!File.Exists(PackagePath))
                 throw new Exception($"Could not find the source NuGet package {PackagePath} does not exist");
@@ -41,7 +41,7 @@ namespace Octopus.Calamari.ConsolidatedPackage
                           .Where(e => !e.FullName.StartsWith("package/services"))
                           .Select(entry => new SourceFile
                           {
-                              PackageId = isCloud ? "Calamari.Cloud" : "Calamari",
+                              PackageId = isCloud ? "Octopus.Calamari.Cloud" : "Octopus.Calamari",
                               Version = Version,
                               Platform = platform,
                               ArchivePath = PackagePath,
