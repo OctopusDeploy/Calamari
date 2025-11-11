@@ -63,7 +63,7 @@ namespace Octopus.Calamari.ConsolidatedPackage
         {
             var calamariPackages = packageReferences
                 .Where(p => !CalamariPackages.Flavours.Contains(p.Name))
-                .Where(p => p.Name.StartsWith("Octopus.Calamari"))
+                .Where(p => p.Name.StartsWith("Calamari"))
                 .Select(p => new CalamariPackageReference(hasher, p));
             
             var calamariFlavourPackages = packageReferences
