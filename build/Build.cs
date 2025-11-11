@@ -213,7 +213,7 @@ partial class Build : NukeBuild
 
                                Log.Warning($"Skipping the bundling of {RootProjectName} into the Calamari.Legacy bundle. "
                                            + "This is required for providing .Net Framework executables for legacy Target Operating Systems");
-                               
+
                                DoPublish(RootProjectName, Frameworks.Net60, nugetVersion, FixedRuntimes.Cloud);
                            }
 
@@ -420,11 +420,11 @@ partial class Build : NukeBuild
         }
 
         packagesToPublish
-            //We only need to bundle executable (not tests or libraries) full framework projects 
+            //We only need to bundle executable (not tests or libraries) full framework projects
             .Where(d => d.Framework == Frameworks.Net462 && d.Project.GetOutputType() == "Exe")
             .ForEach(calamariPackageMetadata =>
                      {
-                         Log.Information("Copying {ProjectName} for legacy Calamari '{Framework}' and arch '{Architecture}'", 
+                         Log.Information("Copying {ProjectName} for legacy Calamari '{Framework}' and arch '{Architecture}'",
                         calamariPackageMetadata.Project.Name, calamariPackageMetadata.Framework, calamariPackageMetadata.Architecture);
                          var project = calamariPackageMetadata.Project;
                          var publishedPath = PublishDirectory / project.Name / "netfx";
@@ -562,13 +562,17 @@ partial class Build : NukeBuild
                            actions.Add(() =>
                                        {
                                            //run each build in sequence as it's the same project and we get issues
-                                           foreach (var rid in GetRuntimeIdentifiers(Solution.GetProject("Calamari.Tests")!))
-                                           {
-                                               var publishedLocation = DoPublish("Calamari.Tests", Frameworks.Net60, nugetVersion, rid);
-                                               var zipName = $"Calamari.Tests.{rid}.{nugetVersion}.zip";
-                                               File.Copy(RootDirectory / "global.json", publishedLocation / "global.json");
-                                               publishedLocation.CompressTo(ArtifactsDirectory / zipName);
-                                           }
+                                            foreach (var rid in GetRuntimeIdentifiers(Solution.GetProject("Calamari.Tests")!))
+                                            {
+                                                var publishedLocation = DoPublish("Calamari.Tests", Frameworks.Net60, nugetVersion, rid);
+                                                var zipName = $"Calamari.Tests.{rid}.{nugetVersion}.zip";
+                                                File.Copy(RootDirectory / "global.json", publishedLocation / "global.json");
+
+                                                // copy the calamari.deps.json to the test folder so that tests can find calamari when running
+                                                // by default, it only gets Calamari.Tests.deps.json
+                                                File.Copy(PublishDirectory / "Calamari" / Frameworks.Net60 / rid / "Calamari.deps.json", publishedLocation / "Calamari.deps.json");
+                                                publishedLocation.CompressTo(ArtifactsDirectory / zipName);
+                                            }
                                        });
 
                            //I don't think this is _actually_ necessary to build...
@@ -707,7 +711,7 @@ partial class Build : NukeBuild
         var tasks = actions.Select(Task.Run).ToList();
         await Task.WhenAll(tasks);
     }
-
+    
     AbsolutePath DoPublish(string project, string framework, string version, string? runtimeId = null)
     {
         var publishedTo = PublishDirectory / project / framework;
