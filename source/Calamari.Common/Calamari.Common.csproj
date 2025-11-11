@@ -5,6 +5,12 @@
         <LangVersion>8</LangVersion>
         <Nullable>enable</Nullable>
         <PlatformTarget>anycpu</PlatformTarget>
+        <PackageId>Octopus.Calamari.Common</PackageId>
+        <Authors>Octopus Deploy</Authors>
+        <Owners>Octopus Deploy</Owners>        
+        <Title>Calamari.Common</Title>
+        <PackageProjectUrl>https://github.com/OctopusDeploy/Calamari/</PackageProjectUrl>
+        <PackageLicenseUrl>https://github.com/OctopusDeploy/Calamari/blob/main/LICENSE.txt</PackageLicenseUrl>        
     </PropertyGroup>
     <PropertyGroup Condition=" '$(TargetFramework)' == 'net462' ">
         <DefineConstants>$(DefineConstants);USE_ALPHAFS_FOR_LONG_FILE_PATH_SUPPORT;HAS_SSL3</DefineConstants>
