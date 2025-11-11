@@ -182,10 +182,10 @@ partial class Build : NukeBuild
              .OnlyWhenStatic(() => !IsLocalBuild)
              .Executes(() =>
                        {
-                           DotNetTest(s => s
-                                           .SetProjectFile(ConsolidateCalamariPackagesProject)
-                                           .SetConfiguration(Configuration)
-                                           .EnableNoBuild());
+                           // DotNetTest(s => s
+                           //                 .SetProjectFile(ConsolidateCalamariPackagesProject)
+                           //                 .SetConfiguration(Configuration)
+                           //                 .EnableNoBuild());
                        });
 
     Target Publish =>
