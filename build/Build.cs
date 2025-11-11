@@ -68,7 +68,7 @@ namespace Calamari.Build
 
         [GitVersion] readonly GitVersion? GitVersionInfo;
 
-        static readonly List<string> CalamariProjectsToSkipConsolidation = new() { "Calamari.CloudAccounts", "Calamari.Common", "Calamari.ConsolidateCalamariPackages" };
+        static readonly List<string> NuGetPackagesToExludeFromConsolidation = new() { "Octopus.Calamari.CloudAccounts", "Octopus.Calamari.Common", "Octopus.Calamari.ConsolidateCalamariPackages", "Octopus.Calamari.ConsolidatedPackage", "Octopus.Calamari.ConsolidatedPackage.Api" };
 
         List<Task> SignDirectoriesTasks = new();
         List<Task> ProjectCompressionTasks = new();
@@ -498,7 +498,7 @@ namespace Calamari.Build
                  .Executes(() =>
                            {
                                Directory.CreateDirectory(LocalPackagesDirectory);
-                               foreach (var file in Directory.GetFiles(ArtifactsDirectory, "Calamari.*.nupkg"))
+                               foreach (var file in Directory.GetFiles(ArtifactsDirectory, "Octopus.Calamari.*.nupkg"))
                                    CopyFile(file, LocalPackagesDirectory / Path.GetFileName(file), FileExistsPolicy.Overwrite);
                            });
 
@@ -509,7 +509,8 @@ namespace Calamari.Build
                  .Executes(() =>
                            {
                                var artifacts = Directory.GetFiles(ArtifactsDirectory, "*.nupkg")
-                                                        .Where(a => !CalamariProjectsToSkipConsolidation.Any(a.Contains));
+                                                        .Where(a => !NuGetPackagesToExludeFromConsolidation.Any(a.Contains));
+                               
                                var packageReferences = new List<BuildPackageReference>();
                                foreach (var artifact in artifacts)
                                {
@@ -519,7 +520,7 @@ namespace Calamari.Build
                                    var metadata = nuspecReader.GetMetadata().ToList();
                                    packageReferences.Add(new BuildPackageReference
                                    {
-                                       Name = metadata.Where(kvp => kvp.Key == "id").Select(i => i.Value).First(),
+                                       Name = Regex.Replace(metadata.Where(kvp => kvp.Key == "id").Select(i => i.Value).First(), @"^Octopus\.", ""),
                                        Version = metadata.Where(kvp => kvp.Key == "version").Select(i => i.Value).First(),
                                        PackagePath = artifact
                                    });
@@ -536,6 +537,12 @@ namespace Calamari.Build
                                            PackagePath = ArtifactsDirectory / $"{flavour}.zip"
                                        });
                                    }
+                               }
+
+                               Log.Information("Package References:");
+                               foreach (var packageReference in packageReferences)
+                               {
+                                   Log.Information($"- {packageReference.Name}, {packageReference.Version} @ {packageReference.PackagePath}");
                                }
 
                                Directory.CreateDirectory(ConsolidatedPackageDirectory);
@@ -672,7 +679,7 @@ namespace Calamari.Build
         {
             var publishedTo = PublishDirectory / project / framework;
             var projectDir = SourceDirectory / project;
-            var packageId = $"{project}";
+            var packageId = project.Equals(RootProjectName) ? $"Octopus.{project}" :  $"{project}";
             var nugetPackProperties = new Dictionary<string, object>();
 
             if (!runtimeId.IsNullOrEmpty())
@@ -707,8 +714,8 @@ namespace Calamari.Build
         void SetOctopusServerCalamariVersion(string projectFile)
         {
             var text = File.ReadAllText(projectFile);
-            text = Regex.Replace(text, @"<PackageReference Include=""Calamari.Consolidated"" Version=""([\S])+""",
-                                 $"<PackageReference Include=\"Calamari.Consolidated\" Version=\"{NugetVersion.Value}\"");
+            text = Regex.Replace(text, @"<PackageReference Include=""Octopus.Calamari.Consolidated"" Version=""([\S])+""",
+                                 $"<PackageReference Include=\"Octopus.Calamari.Consolidated\" Version=\"{NugetVersion.Value}\"");
             File.WriteAllText(projectFile, text);
         }
 
