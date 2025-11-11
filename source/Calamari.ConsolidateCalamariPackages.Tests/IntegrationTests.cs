@@ -4,8 +4,8 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Text.RegularExpressions;
-using Assent;
+using System.Text.Json;
+using Calamari.ConsolidateCalamariPackages.Tests.TestModels;
 using FluentAssertions;
 using NSubstitute;
 using NuGet.Packaging;
@@ -19,50 +19,57 @@ namespace Calamari.ConsolidateCalamariPackages.Tests
     [TestFixture]
     public class IntegrationTests
     {
-        readonly Assent.Configuration assentConfiguration = new Assent.Configuration().UsingSanitiser(s => Sanitise4PartVersions(SanitiseHash(s)));
-        static readonly string TestPackagesDirectory = "../../../testPackages";
+        const string ExpectedHash = "54d634ceb0b28d3d0463f4cd674461c5";
         
-        private string temp;
-        private string expectedZip;
-        private List<BuildPackageReference> packageReferences;
-        private bool returnValue;
+        IndexFile expectedIndexFile;
+        
+        const string TestPackagesDirectory = "./testPackages";
+        string tempPath;
+        string consolidatedPackageName;
+        List<BuildPackageReference> packageReferences;
+        bool returnValue;
         
         public void SetUp()
         {
-            temp = Path.GetTempFileName();
-            File.Delete(temp);
-            Directory.CreateDirectory(temp);
+            tempPath = Path.GetTempFileName(); 
+            File.Delete(tempPath);
+            Directory.CreateDirectory(tempPath);
             packageReferences = new List<BuildPackageReference>();
-            expectedZip = Path.Combine(temp, $"Calamari.54d634ceb0b28d3d0463f4cd674461c5.zip");
+            consolidatedPackageName = Path.Combine(tempPath, $"Calamari.{ExpectedHash}.zip");
+
+            var expectedIndexString = File.ReadAllText("./ExpectedIndex.json");
+            expectedIndexFile = JsonSerializer.Deserialize<IndexFile>(expectedIndexString);
         }
         
         public void TearDown()
         {
-            Directory.Delete(temp, true);
+            Directory.Delete(tempPath, true);
             Directory.Delete(TestPackagesDirectory, true);
         }
         
-        public void GivenABunchOfPackageReferences()
+        public void GivenAFolderOfNugetPackages()
         {
-            var artifacts = Directory.GetFiles(TestPackagesDirectory, "*.nupkg");
-            foreach (var artifact in artifacts)
+            var packages = Directory.GetFiles(TestPackagesDirectory, "*.nupkg");
+            
+            // Unpack all Nuget packages in the temp directory, read their manifest, and add each file to the list of package references.
+            foreach (var package in packages)
             {
-                using (var zip = ZipFile.OpenRead(artifact))
+                using (var zip = ZipFile.OpenRead(package))
                 {
                     var nuspecFileStream = zip.Entries.First(e => e.Name.EndsWith(".nuspec")).Open();
                     var nuspecReader = new NuspecReader(nuspecFileStream);
-                    var metadata = nuspecReader.GetMetadata();
+                    var metadata = nuspecReader.GetMetadata().ToList();
                     packageReferences.Add(new BuildPackageReference
                     {
                         Name = metadata.Where(kvp => kvp.Key == "id").Select(i => i.Value).First(),
                         Version = metadata.Where(kvp => kvp.Key == "version").Select(i => i.Value).First(),
-                        PackagePath = artifact
+                        PackagePath = package
                     });
                 }
             }
         }
         
-        public void WhenTheTaskIsExecuted()
+        public void WhenConsolidated()
         {
             var sw = Stopwatch.StartNew();
             var task = new Consolidate(Substitute.For<ILogger>())
@@ -70,81 +77,50 @@ namespace Calamari.ConsolidateCalamariPackages.Tests
                 AssemblyVersion = "1.2.3"
             };
         
-            (returnValue, _) = task.Execute(temp, packageReferences);
+            (returnValue, _) = task.Execute(tempPath, packageReferences);
             Console.WriteLine($"Time: {sw.ElapsedMilliseconds:n0}ms");
         }
         
-        public void ThenTheReturnValueIsTrue()
-            => returnValue.Should().BeTrue();
+        public void ThenTheReturnValueIsTrue() => returnValue.Should().BeTrue();
         
         public void AndThenThePackageIsCreated()
         {
-            Directory.GetFiles(temp).Should().BeEquivalentTo(new[] {expectedZip});
-            Console.WriteLine($"Package Size: {new FileInfo(expectedZip).Length / 1024 / 1024}MB");
+            Directory.GetFiles(tempPath).Should().ContainSingle(consolidatedPackageName);
+            
+            Console.WriteLine($"Package Size: {new FileInfo(consolidatedPackageName).Length / 1024 / 1024}MB");
         }
         
-        public void AndThenThePackageContentsShouldBe()
+        public void AndThenThePackageContentsShouldMatch()
         {
-            using (var zip = ZipFile.Open(expectedZip, ZipArchiveMode.Read))
-                this.Assent(string.Join("\r\n", zip.Entries.Select(e => SanitiseHash(e.FullName)).OrderBy(k => k)), assentConfiguration);
+            using (var zip = ZipFile.Open(consolidatedPackageName, ZipArchiveMode.Read))
+            {
+                var expectedFileList = File.ReadAllText("./ExpectedZipFileList.txt");
+                var actualFileList = string.Join(Environment.NewLine, zip.Entries.Select(e => e.FullName.SanitiseHash().Sanitise4PartVersions()).OrderBy(s => s).ToList());
+                
+                actualFileList.Should().Be(expectedFileList);
+            }
         }
         
-        public void AndThenTheIndexShouldBe()
+        public void AndThenTheIndexShouldMatchExpectedIndex()
         {
-            using (var zip = ZipFile.Open(expectedZip, ZipArchiveMode.Read))
+            // NOTE: We migrated to this because different platforms change the order of files
+            // and this approach removes any flakiness around that.
+            
+            // Read the index out of the package and ensure it matches the expected index
+            using (var zip = ZipFile.Open(consolidatedPackageName, ZipArchiveMode.Read))
             using (var entry = zip.Entries.First(e => e.FullName == "index.json").Open())
             using (var sr = new StreamReader(entry))
-                this.Assent(sr.ReadToEnd(), assentConfiguration);
-        }
-        
-        void ZipFilesShouldBeIdentical(string inputFilename, string regeneratedZipFilename)
-        {
-            using (var inputZip = ZipFile.OpenRead(inputFilename))
             {
-                var sourceEntries = inputZip.Entries.Where(e =>
-                                                               !e.FullName.StartsWith("_rels") && !e.FullName.StartsWith("package") && !e.FullName.Equals("[Content_Types].xml")
-                                                          )
-                                            .ToList();
-                using (var regenZip = ZipFile.OpenRead(regeneratedZipFilename))
-                {
-                    //NOTE: some files appear multiple times in the regenerated zip file
-                    var regenNames = regenZip.Entries.Select(e => e.FullName).Distinct().ToList();
-                    var sourceNames = sourceEntries.Select(e => e.FullName).ToList();
-                    var missingNames = sourceNames.Where(s => !regenNames.Contains(s)).ToList();
-                    var addedNames = regenNames.Where(s => !sourceNames.Contains(s)).ToList();
-                    sourceNames.Should().BeEquivalentTo(regenNames);
-                }
+                var actualString = sr.ReadToEnd();
+                var actualIndexFile  = JsonSerializer.Deserialize<IndexFile>(actualString);
+                
+                actualIndexFile.Should().BeEquivalentTo(expectedIndexFile);
             }
         }
         
-        static (string flavour, string platform) ExtractFlavourAndPlatform(BuildPackageReference packReference)
-        {
-            if (IsNetfx(packReference.Name))
-            {
-                return (packReference.Name, "netfx");
-            }
-        
-            var packageName = packReference.Name;
-            var flavour = packageName.Split(".")[1];
-            var platform = packageName.Substring(flavour.Length).Trim('.');
-        
-            return (flavour, platform);
-        }
-        
-        static bool IsNetfx(string packageId)
-        {
-            return packageId.Equals("Octopus.Calamari") || packageId.Equals("Octopus.Calamari.Cloud");
-        }
-        
-        private static string SanitiseHash(string s) 
-        => Regex.Replace(s, "[a-z0-9]{32}", "<hash>");
-        
-        
-        private static string Sanitise4PartVersions(string s)
-            => Regex.Replace(s, @"[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+", "<version>");
         
         [Test]
-        public void Execute()
+        public void CheckFileConsolidation()
             => this.BDDfy();
     }
 }
