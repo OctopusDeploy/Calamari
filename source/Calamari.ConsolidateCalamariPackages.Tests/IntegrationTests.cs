@@ -27,7 +27,7 @@ namespace Calamari.ConsolidateCalamariPackages.Tests
         string tempPath;
         string consolidatedPackageName;
         List<BuildPackageReference> packageReferences;
-        bool returnValue;
+        bool successfullyConsolidated = false;
         
         public void SetUp()
         {
@@ -77,11 +77,11 @@ namespace Calamari.ConsolidateCalamariPackages.Tests
                 AssemblyVersion = "1.2.3"
             };
         
-            (returnValue, _) = task.Execute(tempPath, packageReferences);
+            (successfullyConsolidated, _) = task.Execute(tempPath, packageReferences);
             Console.WriteLine($"Time: {sw.ElapsedMilliseconds:n0}ms");
         }
         
-        public void ThenTheReturnValueIsTrue() => returnValue.Should().BeTrue();
+        public void ThenSuccessfullyConsolidatedIsTrue() => successfullyConsolidated.Should().BeTrue();
         
         public void AndThenThePackageIsCreated()
         {
