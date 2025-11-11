@@ -73,7 +73,7 @@ partial class Build : NukeBuild
     //this is instantiated in the constructor
     readonly Lazy<OctoVersionInfo?> OctoVersionInfo;
 
-    static readonly List<string> CalamariProjectsToSkipConsolidation = new() { "Calamari.CloudAccounts", "Calamari.Common", "Calamari.ConsolidateCalamariPackages" };
+    static readonly List<string> NuGetPackagesToExludeFromConsolidation = new() { "Octopus.Calamari.CloudAccounts", "Octopus.Calamari.Common", "Octopus.Calamari.ConsolidateCalamariPackages", "Octopus.Calamari.ConsolidatedPackage", "Octopus.Calamari.ConsolidatedPackage.Api" };
 
     CalamariPackageMetadata[] PackagesToPublish = Array.Empty<CalamariPackageMetadata>();
     List<Project> CalamariProjects = new();
@@ -624,7 +624,7 @@ partial class Build : NukeBuild
              .Executes(() =>
                        {
                            var artifacts = Directory.GetFiles(ArtifactsDirectory, "*.nupkg")
-                                                    .Where(a => !CalamariProjectsToSkipConsolidation.Any(a.Contains));
+                                                    .Where(a => !NuGetPackagesToExludeFromConsolidation.Any(a.Contains));
                            var packageReferences = new List<BuildPackageReference>();
                            foreach (var artifact in artifacts)
                            {
@@ -634,7 +634,7 @@ partial class Build : NukeBuild
                                var metadata = nuspecReader.GetMetadata().ToList();
                                packageReferences.Add(new BuildPackageReference
                                {
-                                   Name = metadata.Where(kvp => kvp.Key == "id").Select(i => i.Value).First(),
+                                   Name = Regex.Replace(metadata.Where(kvp => kvp.Key == "id").Select(i => i.Value).First(), @"^Octopus\.", ""),
                                    Version = metadata.Where(kvp => kvp.Key == "version").Select(i => i.Value).First(),
                                    PackagePath = artifact
                                });
@@ -782,7 +782,7 @@ partial class Build : NukeBuild
     {
         var publishedTo = PublishDirectory / project / framework;
         var projectDir = SourceDirectory / project;
-        var packageId = $"{project}";
+        var packageId = project.Equals(RootProjectName) ? $"Octopus.{project}" :  $"{project}";
         var nugetPackProperties = new Dictionary<string, object>();
 
             if (!runtimeId.IsNullOrEmpty())

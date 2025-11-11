@@ -4,7 +4,7 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <AssemblyName>Calamari</AssemblyName>
     <OutputType>Exe</OutputType>
-    <PackageId>Calamari</PackageId>
+    <PackageId>Octopus.Calamari</PackageId>
     <GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>
     <PackageProjectUrl>https://github.com/OctopusDeploy/Calamari</PackageProjectUrl>
     <PackageLicense>https://github.com/OctopusDeploy/Calamari/blob/main/LICENSE.txt</PackageLicense>
