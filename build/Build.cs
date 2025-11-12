@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
@@ -73,7 +73,7 @@ partial class Build : NukeBuild
     //this is instantiated in the constructor
     readonly Lazy<OctoVersionInfo?> OctoVersionInfo;
 
-    static readonly List<string> CalamariProjectsToSkipConsolidation = new() { "Calamari.CloudAccounts", "Calamari.Common", "Calamari.ConsolidateCalamariPackages" };
+        static readonly List<string> NuGetPackagesToExludeFromConsolidation = new() { "Octopus.Calamari.CloudAccounts", "Octopus.Calamari.Common", "Octopus.Calamari.ConsolidateCalamariPackages", "Octopus.Calamari.ConsolidatedPackage", "Octopus.Calamari.ConsolidatedPackage.Api" };
 
     CalamariPackageMetadata[] PackagesToPublish = Array.Empty<CalamariPackageMetadata>();
     List<Project> CalamariProjects = new();
@@ -593,44 +593,40 @@ partial class Build : NukeBuild
              .DependsOn(PackBinaries)
              .DependsOn(PackLegacyCalamari);
 
-    Target CopyToLocalPackages =>
-        d =>
-            d.Requires(() => IsLocalBuild)
-             .DependsOn(PackBinaries)
-             .Executes(() =>
-                       {
-                           Directory.CreateDirectory(LocalPackagesDirectory);
-                           var calamariNupkgs = Directory.GetFiles(ArtifactsDirectory, "Calamari.*.nupkg");
-                           var octopusCalamariNpkgs = Directory.GetFiles(ArtifactsDirectory, "Octopus.Calamari.*.nupkg");
-
-                           foreach (AbsolutePath file in calamariNupkgs.Concat(octopusCalamariNpkgs).Where(f => f != null))
+        Target CopyToLocalPackages =>
+            d =>
+                d.Requires(() => IsLocalBuild)
+                 .DependsOn(PackBinaries)
+                 .Executes(() =>
                            {
-                               file.Copy(LocalPackagesDirectory / Path.GetFileName(file), ExistsPolicy.FileOverwrite);
-                           }
-                       });
+                               Directory.CreateDirectory(LocalPackagesDirectory);
+                               foreach (var file in Directory.GetFiles(ArtifactsDirectory, "Octopus.Calamari.*.nupkg"))
+                                   CopyFile(file, LocalPackagesDirectory / Path.GetFileName(file), FileExistsPolicy.Overwrite);
+                           });
 
-    Target PackageConsolidatedCalamariZip =>
-        d =>
-            d.DependsOn(CalamariConsolidationTests)
-             .DependsOn(PackBinaries)
-             .Executes(() =>
-                       {
-                           var artifacts = Directory.GetFiles(ArtifactsDirectory, "*.nupkg")
-                                                    .Where(a => !CalamariProjectsToSkipConsolidation.Any(a.Contains));
-                           var packageReferences = new List<BuildPackageReference>();
-                           foreach (var artifact in artifacts)
+        Target PackageConsolidatedCalamariZip =>
+            d =>
+                d.DependsOn(CalamariConsolidationTests)
+                 .DependsOn(PackBinaries)
+                 .Executes(() =>
                            {
-                               using var zip = ZipFile.OpenRead(artifact);
-                               var nuspecFileStream = zip.Entries.First(e => e.Name.EndsWith(".nuspec")).Open();
-                               var nuspecReader = new NuspecReader(nuspecFileStream);
-                               var metadata = nuspecReader.GetMetadata().ToList();
-                               packageReferences.Add(new BuildPackageReference
+                               var artifacts = Directory.GetFiles(ArtifactsDirectory, "*.nupkg")
+                                                        .Where(a => !NuGetPackagesToExludeFromConsolidation.Any(a.Contains));
+                               
+                               var packageReferences = new List<BuildPackageReference>();
+                               foreach (var artifact in artifacts)
                                {
-                                   Name = metadata.Where(kvp => kvp.Key == "id").Select(i => i.Value).First(),
-                                   Version = metadata.Where(kvp => kvp.Key == "version").Select(i => i.Value).First(),
-                                   PackagePath = artifact
-                               });
-                           }
+                                   using var zip = ZipFile.OpenRead(artifact);
+                                   var nuspecFileStream = zip.Entries.First(e => e.Name.EndsWith(".nuspec")).Open();
+                                   var nuspecReader = new NuspecReader(nuspecFileStream);
+                                   var metadata = nuspecReader.GetMetadata().ToList();
+                                   packageReferences.Add(new BuildPackageReference
+                                   {
+                                       Name = Regex.Replace(metadata.Where(kvp => kvp.Key == "id").Select(i => i.Value).First(), @"^Octopus\.", ""),
+                                       Version = metadata.Where(kvp => kvp.Key == "version").Select(i => i.Value).First(),
+                                       PackagePath = artifact
+                                   });
+                               }
 
                            foreach (var flavour in GetCalamariFlavours())
                            {
@@ -770,12 +766,12 @@ partial class Build : NukeBuild
         DotNetPack(dotNetCorePackSettings.SetProject(project));
     }
 
-    void DoPackage(string project, string framework, string version, string? runtimeId = null)
-    {
-        var publishedTo = PublishDirectory / project / framework;
-        var projectDir = SourceDirectory / project;
-        var packageId = $"{project}";
-        var nugetPackProperties = new Dictionary<string, object>();
+        void DoPackage(string project, string framework, string version, string? runtimeId = null)
+        {
+            var publishedTo = PublishDirectory / project / framework;
+            var projectDir = SourceDirectory / project;
+            var packageId = project.Equals(RootProjectName) ? $"Octopus.{project}" :  $"{project}";
+            var nugetPackProperties = new Dictionary<string, object>();
 
             if (!runtimeId.IsNullOrEmpty())
             {
@@ -836,6 +832,7 @@ partial class Build : NukeBuild
         return runtimes ?? Array.Empty<string>();
     }
 
-    //All libraries/flavours now support .NET Core
-    static List<string> GetCalamariFlavours() => CalamariPackages.Flavours;
+        //All libraries/flavours now support .NET Core
+        static List<string> GetCalamariFlavours() => CalamariPackages.Flavours;
+    }
 }
