@@ -6,6 +6,7 @@
         <Nullable>enable</Nullable>
         <PlatformTarget>anycpu</PlatformTarget>
         <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+        <PackageId>Octopus.Calamari.Common</PackageId>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(TargetFramework)' == 'net462' ">
         <DefineConstants>$(DefineConstants);USE_ALPHAFS_FOR_LONG_FILE_PATH_SUPPORT;HAS_SSL3</DefineConstants>

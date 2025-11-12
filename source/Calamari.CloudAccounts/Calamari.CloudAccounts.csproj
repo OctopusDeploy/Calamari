@@ -3,6 +3,7 @@
     <PropertyGroup>
         <RootNamespace>Calamari.CloudAccounts</RootNamespace>
         <TargetFrameworks>net462;netstandard2.1</TargetFrameworks>
+        <PackageId>Octopus.Calamari.CloudAccounts</PackageId>
     </PropertyGroup>
 
     <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
