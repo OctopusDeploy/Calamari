@@ -3,7 +3,7 @@
     <ItemGroup>
       <TargetCalamari
         Include="@(None);@(Content)"
-        Condition="$([System.Text.RegularExpressions.Regex]::IsMatch('%(Filename)', '^Calamari\.([a-zA-Z0-9]*)$')) AND '%(Extension)' == '.zip'" />
+        Condition="$([System.Text.RegularExpressions.Regex]::IsMatch('%(Filename)', '^Octopus.Calamari\.([a-zA-Z0-9]*)$')) AND '%(Extension)' == '.zip'" />
       <OldCalamari Include="$(OutDir)\Calamari.*.zip" />
       <OldCalamari Remove="@(TargetCalamari)" MatchOnMetadata="Filename" />
     </ItemGroup>
