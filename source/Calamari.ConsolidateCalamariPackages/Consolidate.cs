@@ -70,11 +70,12 @@ namespace Octopus.Calamari.ConsolidatedPackage
                 .Where(p => MigratedCalamariFlavours.Flavours.Contains(p.Name))
                 .Select(p => new CalamariFlavourPackageReference(hasher, p));
 
-            var sashimiPackages = packageReferences
-                .Where(p => p.Name.StartsWith("Sashimi."))
-                .Select(p => new SashimiPackageReference(hasher, p));
+            // DEPRECATED
+            // var sashimiPackages = packageReferences
+            //     .Where(p => p.Name.StartsWith("Sashimi."))
+            //     .Select(p => new SashimiPackageReference(hasher, p));
 
-            return calamariPackages.Concat<IPackageReference>(sashimiPackages).Concat(calamariFlavourPackages).ToArray();
+            return calamariPackages.Concat<IPackageReference>(calamariFlavourPackages).ToArray();
         }
     }
 }
