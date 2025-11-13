@@ -50,7 +50,7 @@ namespace Calamari.ConsolidateCalamariPackages.Tests
         {
             return new Dictionary<string, PackagePropertiesToTest>
             {
-                { "Calamari", new PackagePropertiesToTest(isWindows ? AllArchitectures : NetCoreArchitectures, true) },
+                { "Calamari", new PackagePropertiesToTest(AllArchitectures , true) },
                 { "Calamari.Cloud", new PackagePropertiesToTest(WindowsOnlyArchitectures, true) },
                 { "Calamari.AzureServiceFabric", new PackagePropertiesToTest(new[] { "netfx", "win-x64" }, false) },
                 { "Calamari.AzureAppService", new PackagePropertiesToTest(isWindows ? AllArchitectures : NetCoreArchitectures, false) },
