@@ -547,7 +547,7 @@ namespace Calamari.Build
         Target CalamariConsolidationVerification =>
             d =>
                 d.DependsOn(PackageConsolidatedCalamariZip)
-                 .OnlyWhenDynamic(() => string.IsNullOrEmpty(TargetRuntime))
+                 .OnlyWhenDynamic(() => string.IsNullOrEmpty(TargetRuntime), "TargetRuntime is not restricted")
                  .Executes(() =>
                            {
                                Environment.SetEnvironmentVariable("CONSOLIDATED_ZIP", ConsolidatedPackagePath);
@@ -647,8 +647,8 @@ namespace Calamari.Build
                                .SetVersion(NugetVersion.Value)
                                .SetVerbosity(BuildVerbosity)
                                .SetRuntime(runtimeId)
-                               .SetVersion(version)
-                               .EnableSelfContained());
+                               .SetVersion(version));
+                               // .EnableSelfContained());
 
             if (WillSignBinaries)
                 Signing.SignAndTimestampBinaries(publishedTo, AzureKeyVaultUrl, AzureKeyVaultAppId,
@@ -755,9 +755,9 @@ namespace Calamari.Build
 
         static List<string> GetCalamariFlavours()
         {
-            return IsLocalBuild && !OperatingSystem.IsWindows()
-                ? MigratedCalamariFlavours.CrossPlatformFlavours
-                : MigratedCalamariFlavours.Flavours;
+            return OperatingSystem.IsWindows() ? 
+                MigratedCalamariFlavours.Flavours : 
+                MigratedCalamariFlavours.NetCoreEnabledFlavours;
         }
     }
 }

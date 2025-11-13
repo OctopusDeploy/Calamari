@@ -6,22 +6,26 @@ namespace Octopus.Calamari.ConsolidatedPackage
 {
     public static class MigratedCalamariFlavours
     {
-        public static List<string> Flavours => FullFrameworkOnlyFlavours.Concat(CrossPlatformFlavours).ToList();
+        public static List<string> Flavours => FullFrameworkWindowsOnlyFlavours.Concat(NetCoreEnabledFlavours).Concat(WindowsOnlyNetCoreEnabledFlavours).ToList();
 
-        public static List<string> FullFrameworkOnlyFlavours = new()
+        public static readonly List<string> FullFrameworkWindowsOnlyFlavours = new()
         {
             "Calamari.AzureWebApp",
-            "Calamari.AzureServiceFabric",
             "Calamari.",
         };
 
-        public static List<string> CrossPlatformFlavours = new()
+        public static readonly List<string> NetCoreEnabledFlavours = new()
         {
             "Calamari.AzureAppService",
             "Calamari.AzureResourceGroup",
             "Calamari.GoogleCloudScripting",
             "Calamari.AzureScripting",
             "Calamari.Terraform"
+        };
+
+        public static readonly List<string> WindowsOnlyNetCoreEnabledFlavours = new()
+        {
+            "Calamari.AzureServiceFabric",
         };
     }
 }
