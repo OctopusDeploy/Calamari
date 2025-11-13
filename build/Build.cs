@@ -555,7 +555,8 @@ namespace Calamari.Build
                                Environment.SetEnvironmentVariable("IS_WINDOWS", OperatingSystem.IsWindows().ToString());
 
                                Log.Warning($"CONSOLIDATED_ZIP: {Environment.GetEnvironmentVariable("CONSOLIDATED_ZIP")}");
-                               Log.Warning($"EXPECTED_VERSION {Environment.GetEnvironmentVariable("EXPECTED_VERSION")}");
+                               Log.Warning($"EXPECTED_VERSION: {Environment.GetEnvironmentVariable("EXPECTED_VERSION")}");
+                               Log.Warning($"IS_WINDOWS: {Environment.GetEnvironmentVariable("IS_WINDOWS")}");
                                DotNetTest(s => s
                                                .SetProjectFile(ConsolidateCalamariPackagesProject)
                                                .SetConfiguration(Configuration)
