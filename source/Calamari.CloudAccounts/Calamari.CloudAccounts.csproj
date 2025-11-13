@@ -4,6 +4,13 @@
         <RootNamespace>Calamari.CloudAccounts</RootNamespace>
         <TargetFrameworks>net462;netstandard2.1</TargetFrameworks>
         <PackageId>Octopus.Calamari.CloudAccounts</PackageId>
+        <Title>Calamari.CloudAccounts</Title>
+        <Authors>Octopus Deploy</Authors>
+        <Copyright>Octopus Deploy Pty Ltd</Copyright>
+        <PackageProjectUrl>https://github.com/OctopusDeploy/Calamari</PackageProjectUrl>
+        <PackageLicenseUrl>https://github.com/OctopusDeploy/Calamari/blob/main/LICENSE.txt</PackageLicenseUrl>
+        <RepositoryUrl>https://github.com/OctopusDeploy/Calamari</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
     </PropertyGroup>
 
     <ItemGroup Condition="'$(TargetFramework)' == 'net462'">

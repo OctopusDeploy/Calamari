@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
@@ -608,12 +608,10 @@ partial class Build : NukeBuild
              .Executes(() =>
                        {
                            Directory.CreateDirectory(LocalPackagesDirectory);
-                           var calamariNupkgs = Directory.GetFiles(ArtifactsDirectory, "Calamari.*.nupkg");
-                           var octopusCalamariNpkgs = Directory.GetFiles(ArtifactsDirectory, "Octopus.Calamari.*.nupkg");
-
-                           foreach (AbsolutePath file in calamariNupkgs.Concat(octopusCalamariNpkgs).Where(f => f != null))
+                           foreach (AbsolutePath file in Directory.GetFiles(ArtifactsDirectory, "Octopus.Calamari.*.nupkg"))
                            {
-                               file.Copy(LocalPackagesDirectory / Path.GetFileName(file), ExistsPolicy.FileOverwrite);
+                               var target = LocalPackagesDirectory / Path.GetFileName(file);
+                               file.Copy(target, ExistsPolicy.FileOverwrite);
                            }
                        });
 
@@ -625,6 +623,7 @@ partial class Build : NukeBuild
                        {
                            var artifacts = Directory.GetFiles(ArtifactsDirectory, "*.nupkg")
                                                     .Where(a => !NuGetPackagesToExludeFromConsolidation.Any(a.Contains));
+
                            var packageReferences = new List<BuildPackageReference>();
                            foreach (var artifact in artifacts)
                            {
@@ -782,15 +781,15 @@ partial class Build : NukeBuild
     {
         var publishedTo = PublishDirectory / project / framework;
         var projectDir = SourceDirectory / project;
-        var packageId = project.Equals(RootProjectName) ? $"Octopus.{project}" :  $"{project}";
+        var packageId = project.Equals(RootProjectName) ? $"Octopus.{project}" : $"{project}";
         var nugetPackProperties = new Dictionary<string, object>();
 
-            if (!runtimeId.IsNullOrEmpty())
-            {
-                publishedTo /= runtimeId;
-                packageId = $"Octopus.{project}.{runtimeId}";
-                nugetPackProperties.Add("runtimeId", runtimeId!);
-            }
+        if (!runtimeId.IsNullOrEmpty())
+        {
+            publishedTo /= runtimeId;
+            packageId = $"Octopus.{project}.{runtimeId}";
+            nugetPackProperties.Add("runtimeId", runtimeId!);
+        }
 
         if (WillSignBinaries)
             Signing.SignAndTimestampBinaries(publishedTo, AzureKeyVaultUrl, AzureKeyVaultAppId,

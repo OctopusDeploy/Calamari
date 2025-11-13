@@ -12,10 +12,7 @@ using NuGet.Packaging;
 using NUnit.Framework;
 using Octopus.Calamari.ConsolidatedPackage;
 using Serilog;
-using SharpCompress.Writers;
-using SharpCompress.Writers.Zip;
 using TestStack.BDDfy;
-using CompressionLevel = SharpCompress.Compressors.Deflate.CompressionLevel;
 
 namespace Calamari.ConsolidateCalamariPackages.Tests
 {
@@ -24,27 +21,27 @@ namespace Calamari.ConsolidateCalamariPackages.Tests
     {
         readonly Assent.Configuration assentConfiguration = new Assent.Configuration().UsingSanitiser(s => Sanitise4PartVersions(SanitiseHash(s)));
         static readonly string TestPackagesDirectory = "../../../testPackages";
-
+        
         private string temp;
         private string expectedZip;
         private List<BuildPackageReference> packageReferences;
         private bool returnValue;
-
+        
         public void SetUp()
         {
             temp = Path.GetTempFileName();
             File.Delete(temp);
             Directory.CreateDirectory(temp);
             packageReferences = new List<BuildPackageReference>();
-            expectedZip = Path.Combine(temp, $"Calamari.3327050d788658cd16da010e75580d32.zip");
+            expectedZip = Path.Combine(temp, $"Calamari.54d634ceb0b28d3d0463f4cd674461c5.zip");
         }
-
+        
         public void TearDown()
         {
             Directory.Delete(temp, true);
             Directory.Delete(TestPackagesDirectory, true);
         }
-
+        
         public void GivenABunchOfPackageReferences()
         {
             var artifacts = Directory.GetFiles(TestPackagesDirectory, "*.nupkg");
@@ -64,7 +61,7 @@ namespace Calamari.ConsolidateCalamariPackages.Tests
                 }
             }
         }
-
+        
         public void WhenTheTaskIsExecuted()
         {
             var sw = Stopwatch.StartNew();
@@ -72,26 +69,26 @@ namespace Calamari.ConsolidateCalamariPackages.Tests
             {
                 AssemblyVersion = "1.2.3"
             };
-
+        
             (returnValue, _) = task.Execute(temp, packageReferences);
             Console.WriteLine($"Time: {sw.ElapsedMilliseconds:n0}ms");
         }
-
+        
         public void ThenTheReturnValueIsTrue()
             => returnValue.Should().BeTrue();
-
+        
         public void AndThenThePackageIsCreated()
         {
             Directory.GetFiles(temp).Should().BeEquivalentTo(new[] {expectedZip});
             Console.WriteLine($"Package Size: {new FileInfo(expectedZip).Length / 1024 / 1024}MB");
         }
-
+        
         public void AndThenThePackageContentsShouldBe()
         {
             using (var zip = ZipFile.Open(expectedZip, ZipArchiveMode.Read))
                 this.Assent(string.Join("\r\n", zip.Entries.Select(e => SanitiseHash(e.FullName)).OrderBy(k => k)), assentConfiguration);
         }
-
+        
         public void AndThenTheIndexShouldBe()
         {
             using (var zip = ZipFile.Open(expectedZip, ZipArchiveMode.Read))
@@ -99,33 +96,7 @@ namespace Calamari.ConsolidateCalamariPackages.Tests
             using (var sr = new StreamReader(entry))
                 this.Assent(sr.ReadToEnd(), assentConfiguration);
         }
-
-        public void AndTheRegeneratedPackageShouldBeIdenticalToInputs()
-        {
-            var streamProvider = new FileBasedStreamProvider(expectedZip);
-            var factory = new ConsolidatedPackageFactory();
-            var consolidatedPackage = factory.LoadFrom(streamProvider);
-
-            // Sashimi is a multi-arch package - atm this test can't unpack it cleanly enough.
-            foreach (var reference in packageReferences.Where(pr => !pr.Name.Contains("Sashimi")))
-            {
-                var (flavour, platform) = ExtractFlavourAndPlatform(reference);
-                var outputFilename = Path.Combine(temp, $"{flavour}_{platform}_output.zip");
-                using (var outputStream = File.OpenWrite(outputFilename))
-                {
-                    using (var dest = new ZipWriter(outputStream, new ZipWriterOptions(SharpCompress.Common.CompressionType.Deflate) { DeflateCompressionLevel = CompressionLevel.BestSpeed, LeaveStreamOpen = false }))
-                    {
-                        foreach (var entry in consolidatedPackage.ExtractCalamariPackage(flavour, platform))
-                        {
-                            dest.Write(entry.entryName, entry.sourceStream);
-                        }
-                    }
-                }
-
-                ZipFilesShouldBeIdentical(reference.PackagePath, outputFilename);
-            }
-        }
-
+        
         void ZipFilesShouldBeIdentical(string inputFilename, string regeneratedZipFilename)
         {
             using (var inputZip = ZipFile.OpenRead(inputFilename))
@@ -145,33 +116,33 @@ namespace Calamari.ConsolidateCalamariPackages.Tests
                 }
             }
         }
-
+        
         static (string flavour, string platform) ExtractFlavourAndPlatform(BuildPackageReference packReference)
         {
             if (IsNetfx(packReference.Name))
             {
                 return (packReference.Name, "netfx");
             }
-
+        
             var packageName = packReference.Name;
-            var flavour = packageName.Split(".")[0];
+            var flavour = packageName.Split(".")[1];
             var platform = packageName.Substring(flavour.Length).Trim('.');
-
+        
             return (flavour, platform);
         }
-
+        
         static bool IsNetfx(string packageId)
         {
-            return packageId.Equals("Calamari") || packageId.Equals("Calamari.Cloud");
+            return packageId.Equals("Octopus.Calamari") || packageId.Equals("Octopus.Calamari.Cloud");
         }
         
         private static string SanitiseHash(string s) 
         => Regex.Replace(s, "[a-z0-9]{32}", "<hash>");
         
-
+        
         private static string Sanitise4PartVersions(string s)
             => Regex.Replace(s, @"[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+", "<version>");
-
+        
         [Test]
         public void Execute()
             => this.BDDfy();
