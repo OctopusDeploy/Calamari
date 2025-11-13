@@ -4,6 +4,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using NuGet.Packaging;
 using Nuke.Common;
@@ -72,6 +73,8 @@ namespace Calamari.Build
 
         List<Task> SignDirectoriesTasks = new();
         List<Task> ProjectCompressionTasks = new();
+
+        string ConsolidatedPackagePath = "";
 
         public Build()
         {
@@ -155,18 +158,6 @@ namespace Calamari.Build
                                                  .EnableNoRestore()
                                                  .SetVersion(NugetVersion.Value)
                                                  .SetInformationalVersion(GitVersionInfo?.InformationalVersion));
-                           });
-
-        Target CalamariConsolidationTests =>
-            d =>
-                d.DependsOn(Compile)
-                 .OnlyWhenStatic(() => !IsLocalBuild)
-                 .Executes(() =>
-                           {
-                               DotNetTest(s => s
-                                               .SetProjectFile(ConsolidateCalamariPackagesProject)
-                                               .SetConfiguration(Configuration)
-                                               .EnableNoBuild());
                            });
 
         Target Publish =>
@@ -504,13 +495,12 @@ namespace Calamari.Build
 
         Target PackageConsolidatedCalamariZip =>
             d =>
-                d.DependsOn(CalamariConsolidationTests)
-                 .DependsOn(PackBinaries)
+                d.DependsOn(PackBinaries)
                  .Executes(() =>
                            {
                                var artifacts = Directory.GetFiles(ArtifactsDirectory, "*.nupkg")
-                                                        .Where(a => !NuGetPackagesToExludeFromConsolidation.Any(a.Contains));
-                               
+                                                        .Where(a => !NuGetPackagesToExcludeFromConsolidation.Any(a.Contains));
+
                                var packageReferences = new List<BuildPackageReference>();
                                foreach (var artifact in artifacts)
                                {
@@ -551,12 +541,34 @@ namespace Calamari.Build
                                if (!result)
                                    throw new Exception("Failed to consolidate calamari Packages");
 
+                               ConsolidatedPackagePath = packageFilename;
                                Log.Information($"Created consolidated package zip: {packageFilename}");
+                           });
+
+        Target CalamariConsolidationVerification =>
+            d =>
+                d.DependsOn(PackageConsolidatedCalamariZip)
+                 .Executes(() =>
+                           {
+                               Environment.SetEnvironmentVariable("CONSOLIDATED_ZIP", ConsolidatedPackagePath);
+                               Environment.SetEnvironmentVariable("EXPECTED_VERSION", NugetVersion.Value);
+                               Environment.SetEnvironmentVariable("IS_WINDOWS", OperatingSystem.IsWindows().ToString());
+
+                               Log.Warning($"CONSOLIDATED_ZIP: {Environment.GetEnvironmentVariable("CONSOLIDATED_ZIP")}");
+                               Log.Warning($"EXPECTED_VERSION {Environment.GetEnvironmentVariable("EXPECTED_VERSION")}");
+                               DotNetTest(s => s
+                                               .SetProjectFile(ConsolidateCalamariPackagesProject)
+                                               .SetConfiguration(Configuration)
+                                               .SetProcessArgumentConfigurator(args =>
+                                                                                   args.Add("--logger:\"console;verbosity=detailed\"")
+                                                                                       .Add("--")
+                                                                                       .Add("NUnit.ShowInternalProperties=true"))
+                                               .EnableNoBuild());
                            });
 
         Target PackCalamariConsolidatedNugetPackage =>
             d =>
-                d.DependsOn(PackageConsolidatedCalamariZip)
+                d.DependsOn(CalamariConsolidationVerification)
                  .Executes(() =>
                            {
                                NuGetPack(s => s.SetTargetPath(BuildDirectory / "Calamari.Consolidated.nuspec")
@@ -679,7 +691,7 @@ namespace Calamari.Build
         {
             var publishedTo = PublishDirectory / project / framework;
             var projectDir = SourceDirectory / project;
-            var packageId = project.Equals(RootProjectName) ? $"Octopus.{project}" :  $"{project}";
+            var packageId = project.Equals(RootProjectName) ? $"Octopus.{project}" : $"{project}";
             var nugetPackProperties = new Dictionary<string, object>();
 
             if (!runtimeId.IsNullOrEmpty())
