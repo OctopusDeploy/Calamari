@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
@@ -73,7 +73,7 @@ partial class Build : NukeBuild
     //this is instantiated in the constructor
     readonly Lazy<OctoVersionInfo?> OctoVersionInfo;
 
-    static readonly List<string> CalamariProjectsToSkipConsolidation = new() { "Calamari.CloudAccounts", "Calamari.Common", "Calamari.ConsolidateCalamariPackages" };
+    static readonly List<string> NuGetPackagesToExludeFromConsolidation = new() { "Octopus.Calamari.CloudAccounts", "Octopus.Calamari.Common", "Octopus.Calamari.ConsolidateCalamariPackages", "Octopus.Calamari.ConsolidatedPackage", "Octopus.Calamari.ConsolidatedPackage.Api" };
 
     CalamariPackageMetadata[] PackagesToPublish = Array.Empty<CalamariPackageMetadata>();
     List<Project> CalamariProjects = new();
@@ -213,7 +213,7 @@ partial class Build : NukeBuild
 
                                Log.Warning($"Skipping the bundling of {RootProjectName} into the Calamari.Legacy bundle. "
                                            + "This is required for providing .Net Framework executables for legacy Target Operating Systems");
-                               
+
                                DoPublish(RootProjectName, Frameworks.Net60, nugetVersion, FixedRuntimes.Cloud);
                            }
 
@@ -424,8 +424,8 @@ partial class Build : NukeBuild
             .Where(d => d.Framework == Frameworks.Net462 && d.Project.GetOutputType() == "Exe")
             .ForEach(calamariPackageMetadata =>
                      {
-                         Log.Information("Copying {ProjectName} for legacy Calamari '{Framework}' and arch '{Architecture}'", 
-                        calamariPackageMetadata.Project.Name, calamariPackageMetadata.Framework, calamariPackageMetadata.Architecture);
+                         Log.Information("Copying {ProjectName} for legacy Calamari '{Framework}' and arch '{Architecture}'",
+                                         calamariPackageMetadata.Project.Name, calamariPackageMetadata.Framework, calamariPackageMetadata.Architecture);
                          var project = calamariPackageMetadata.Project;
                          var publishedPath = PublishDirectory / project.Name / "netfx";
                          publishedPath.Copy(LegacyCalamariDirectory / project.Name, ExistsPolicy.DirectoryMerge | ExistsPolicy.FileFail);
@@ -554,7 +554,7 @@ partial class Build : NukeBuild
                            Directory.Exists(binFolder);
                            var actions = new List<Action>
                            {
-                               () => binFolder.CompressTo( ArtifactsDirectory / "Binaries.zip")
+                               () => binFolder.CompressTo(ArtifactsDirectory / "Binaries.zip")
                            };
 
                            // Create a Zip for each runtime for testing
@@ -600,12 +600,10 @@ partial class Build : NukeBuild
              .Executes(() =>
                        {
                            Directory.CreateDirectory(LocalPackagesDirectory);
-                           var calamariNupkgs = Directory.GetFiles(ArtifactsDirectory, "Calamari.*.nupkg");
-                           var octopusCalamariNpkgs = Directory.GetFiles(ArtifactsDirectory, "Octopus.Calamari.*.nupkg");
-
-                           foreach (AbsolutePath file in calamariNupkgs.Concat(octopusCalamariNpkgs).Where(f => f != null))
+                           foreach (AbsolutePath file in Directory.GetFiles(ArtifactsDirectory, "Octopus.Calamari.*.nupkg"))
                            {
-                               file.Copy(LocalPackagesDirectory / Path.GetFileName(file), ExistsPolicy.FileOverwrite);
+                               var target = LocalPackagesDirectory / Path.GetFileName(file);
+                               file.Copy(target, ExistsPolicy.FileOverwrite);
                            }
                        });
 
@@ -616,7 +614,8 @@ partial class Build : NukeBuild
              .Executes(() =>
                        {
                            var artifacts = Directory.GetFiles(ArtifactsDirectory, "*.nupkg")
-                                                    .Where(a => !CalamariProjectsToSkipConsolidation.Any(a.Contains));
+                                                    .Where(a => !NuGetPackagesToExludeFromConsolidation.Any(a.Contains));
+
                            var packageReferences = new List<BuildPackageReference>();
                            foreach (var artifact in artifacts)
                            {
@@ -626,7 +625,7 @@ partial class Build : NukeBuild
                                var metadata = nuspecReader.GetMetadata().ToList();
                                packageReferences.Add(new BuildPackageReference
                                {
-                                   Name = metadata.Where(kvp => kvp.Key == "id").Select(i => i.Value).First(),
+                                   Name = Regex.Replace(metadata.Where(kvp => kvp.Key == "id").Select(i => i.Value).First(), @"^Octopus\.", ""),
                                    Version = metadata.Where(kvp => kvp.Key == "version").Select(i => i.Value).First(),
                                    PackagePath = artifact
                                });
@@ -774,15 +773,15 @@ partial class Build : NukeBuild
     {
         var publishedTo = PublishDirectory / project / framework;
         var projectDir = SourceDirectory / project;
-        var packageId = $"{project}";
+        var packageId = project.Equals(RootProjectName) ? $"Octopus.{project}" : $"{project}";
         var nugetPackProperties = new Dictionary<string, object>();
 
-            if (!runtimeId.IsNullOrEmpty())
-            {
-                publishedTo /= runtimeId;
-                packageId = $"Octopus.{project}.{runtimeId}";
-                nugetPackProperties.Add("runtimeId", runtimeId!);
-            }
+        if (!runtimeId.IsNullOrEmpty())
+        {
+            publishedTo /= runtimeId;
+            packageId = $"Octopus.{project}.{runtimeId}";
+            nugetPackProperties.Add("runtimeId", runtimeId!);
+        }
 
         if (WillSignBinaries)
             Signing.SignAndTimestampBinaries(publishedTo, AzureKeyVaultUrl, AzureKeyVaultAppId,
