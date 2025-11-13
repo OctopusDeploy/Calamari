@@ -547,6 +547,7 @@ namespace Calamari.Build
         Target CalamariConsolidationVerification =>
             d =>
                 d.DependsOn(PackageConsolidatedCalamariZip)
+                 .OnlyWhenDynamic(() => string.IsNullOrEmpty(TargetRuntime))
                  .Executes(() =>
                            {
                                Environment.SetEnvironmentVariable("CONSOLIDATED_ZIP", ConsolidatedPackagePath);

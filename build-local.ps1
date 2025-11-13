@@ -23,6 +23,19 @@ Write-Host "
 ##################################################################################################
 " -ForegroundColor Cyan
 
+# If -Runtime was provided, Consolidation Verification will be disabled
+if (-not [string]::IsNullOrEmpty($Runtime)) {
+    $RuntimeSpecifiedWarning = @"
+###################################################################################
+# WARNING:                                                                        #
+# Limiting to a specific Runtime will cause Consolidation Tests to be excluded    #
+# from execution because they expect all Calamari Flavours for the local platform #
+# to have been built and consolidated.                                            #
+###################################################################################
+"@
+    Write-Host $RuntimeSpecifiedWarning -ForegroundColor Yellow
+}
+
 ./build.ps1 -BuildVerbosity Minimal -Verbosity Normal -PackInParallel -AppendTimestamp -SetOctopusServerVersion -TargetFramework "$Framework" -TargetRuntime "$Runtime"
 
 Write-Host "
