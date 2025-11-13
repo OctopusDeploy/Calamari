@@ -28,7 +28,6 @@ namespace Calamari.ConsolidateCalamariPackages.Tests
         string consolidatedFilePath = "";
         IConsolidatedPackageIndex consolidatedPackageIndex;
         string expectedVersion = "";
-        bool isWindows;
 
         static readonly string[] NetCoreArchitectures =
         {
