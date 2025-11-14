@@ -644,8 +644,8 @@ namespace Calamari.Build
                                .SetVersion(NugetVersion.Value)
                                .SetVerbosity(BuildVerbosity)
                                .SetRuntime(runtimeId)
-                               .SetVersion(version));
-                               // .EnableSelfContained());
+                               .SetVersion(version)
+                               .EnableSelfContained());
 
             if (WillSignBinaries)
                 Signing.SignAndTimestampBinaries(publishedTo, AzureKeyVaultUrl, AzureKeyVaultAppId,
