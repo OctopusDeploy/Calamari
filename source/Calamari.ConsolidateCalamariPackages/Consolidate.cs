@@ -61,15 +61,16 @@ namespace Octopus.Calamari.ConsolidatedPackage
 
         static IReadOnlyList<IPackageReference> GetPackages(Hasher hasher, IEnumerable<BuildPackageReference> packageReferences)
         {
-            var calamariPackages = packageReferences
-                .Where(p => !MigratedCalamariFlavours.Flavours.Contains(p.Name))
-                .Where(p => p.Name.StartsWith("Calamari"))
-                .Select(p => new CalamariPackageReference(hasher, p));
+            var packageReferencesList = packageReferences.ToList();
             
-            var calamariFlavourPackages = packageReferences
-                .Where(p => MigratedCalamariFlavours.Flavours.Contains(p.Name))
-                .Select(p => new CalamariFlavourPackageReference(hasher, p));
-
+            var calamariPackages = packageReferencesList
+                                   .Where(p => !MigratedCalamariFlavours.Flavours.Contains(p.Name))
+                                   .Where(p => p.Name.StartsWith("Calamari"))
+                                   .Select(p => new CalamariPackageReference(hasher, p));
+            
+            var calamariFlavourPackages = packageReferencesList
+                                          .Where(p => MigratedCalamariFlavours.Flavours.Contains(p.Name))
+                                          .Select(p => new CalamariFlavourPackageReference(hasher, p));
 
             return calamariPackages.Concat<IPackageReference>(calamariFlavourPackages).ToArray();
         }
