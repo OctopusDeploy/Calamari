@@ -744,7 +744,7 @@ namespace Calamari.Build
                                .SetVerbosity(BuildVerbosity)
                                .SetRuntime(runtimeId)
                                .SetVersion(version)
-                               .EnableSelfContained()
+                               .SetSelfContained(OperatingSystem.IsWindows()) // This is here purely to make the local build experience on non-Windows devices workable - Publish breaks on non-Windows platforms with SelfContained = true
                          );
 
             if (WillSignBinaries)
@@ -852,7 +852,13 @@ namespace Calamari.Build
             return runtimes ?? Array.Empty<string>();
         }
 
-        //All libraries/flavours now support .NET Core
-        static List<string> GetCalamariFlavours() => CalamariPackages.Flavours;
+        // Although all libraries/flavours now support .NET Core, ServiceFabric can currently only be built on Windows devices
+        // This is here purely to make the local build experience on non-Windows devices (with testing) workable
+        static List<string> GetCalamariFlavours()
+        {
+            return OperatingSystem.IsWindows() ? 
+                CalamariPackages.Flavours : 
+                CalamariPackages.CrossPlatformFlavours;
+        }
     }
 }

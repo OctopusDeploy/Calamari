@@ -56,7 +56,7 @@ namespace Calamari.ConsolidateCalamariPackages.Tests
                 { "Calamari.AzureResourceGroup", new PackagePropertiesToTest(isWindows ? AllArchitectures : NetCoreArchitectures, false) },
                 { "Calamari.GoogleCloudScripting", new PackagePropertiesToTest(isWindows ? AllArchitectures : NetCoreArchitectures, false) },
                 { "Calamari.AzureScripting", new PackagePropertiesToTest(isWindows ? AllArchitectures : NetCoreArchitectures, false) },
-                { "Calamari.AzureWebApp", new PackagePropertiesToTest(WindowsOnlyArchitectures, false) },
+                { "Calamari.AzureWebApp", new PackagePropertiesToTest(isWindows ? new[] { "netfx", "win-x64" } : new[] {"win-x64"}, false) },
                 { "Calamari.Terraform", new PackagePropertiesToTest(isWindows ? AllArchitectures : NetCoreArchitectures, false) }
             };
         }
@@ -69,7 +69,7 @@ namespace Calamari.ConsolidateCalamariPackages.Tests
                 return true;
             }
 
-            return MigratedCalamariFlavours.NetCoreEnabledFlavours.Contains(packageId) || packageId == "Calamari" || packageId == "Calamari.Cloud";
+            return CalamariPackages.CrossPlatformFlavours.Contains(packageId) || packageId == "Calamari" || packageId == "Calamari.Cloud";
         }
 
         static IEnumerable<string> ExpectedPackages()
