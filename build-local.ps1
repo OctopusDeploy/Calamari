@@ -23,6 +23,18 @@ Write-Host "
 ##################################################################################################
 " -ForegroundColor Cyan
 
+# If -Runtime was provided, Consolidation Verification will be disabled
+if (-not [string]::IsNullOrEmpty($Runtime)) {
+    $RuntimeSpecifiedWarning = @"
+###################################################################################
+# WARNING:                                                                        #
+# Limiting to a specific Runtime will cause Consolidation Tests to be excluded    #
+# from execution because they expect all Calamari Flavours for the local platform #
+# to have been built and consolidated.                                            #
+###################################################################################
+"@
+    Write-Host $RuntimeSpecifiedWarning -ForegroundColor Yellow
+
 $branch = & git branch --show-current
 
 Write-Host "Branch: $branch"
