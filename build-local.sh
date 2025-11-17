@@ -57,6 +57,18 @@ WarningMessage="${Yellow}\
 ╬════════════════════════════════════════════════════════╬\
 ${NoColour}"
 
+RuntimeSpecifiedWarning="${Yellow}\
+
+╬════════════════════════════════════════════════════════╬
+║ WARNING:                                               ║
+║ Limiting to a specific Runtime will cause              ║
+║ Consolidation Tests to be excluded from execution      ║
+║ because they expect all Calamari Flavours              ║
+║ for the local platoform to have been built and         ║
+║ consolidated.                                          ║
+╬════════════════════════════════════════════════════════╬\
+${NoColour}"
+
 FinishMessage="${Green}\
 ╬══════════════════════════════════════════════════════════════════════════════════════╬
 ║                                                                                      ║
@@ -68,6 +80,10 @@ ${NoColour}"
 echo -e "$StartMessage"
 
 echo -e "$WarningMessage"
+
+if [ -n "$target_runtime" ]; then
+  echo -e "$RuntimeSpecifiedWarning"
+fi
 
 if [ -z "$auto_accept" ]; then
   read -p "Are you sure you want to continue? (Y,n): " option
