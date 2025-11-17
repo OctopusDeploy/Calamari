@@ -4,7 +4,7 @@ Calamari is the command-line tool invoked by Tentacle during a deployment. It kn
 
 You will need the .NET SDK `6.0`, downloadable from https://dotnet.microsoft.com/download
 
-Run `build-bocal.ps1` or `build-local.sh` to build the solution locally.
+Run `build-local.ps1` or `build-local.sh` to build the solution locally.
 
 When the solution is built, several new Calamari nuget packages are created in the `artifacts` directory.
 
