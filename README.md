@@ -62,27 +62,11 @@ Octopus.Server.exe service --instance <instance> --start --nologo --console
 
 ## Releasing
 
-After you finish merging to main to tag the Calamari NuGet package:
+The build server will automatically tag successful builds within the main branch of GitHub.
 
-Firstly, find out what the latest tag is. There are two ways to do this:
+These tagged builds (as well as successful PR builds) will be published to feedz.io
 
-* On your terminal, checkout `main` and `git pull` for good measure
-* Run `git tag` and scroll to the bottom of the list to get the last known tag
-
-Alternatively,
-
-* Check the last build on main as it will be pre-release version of the next `<Major>.<Minor>.<Patch>` version
-
-Finally, tag and push the new release
-
-* Patch, Minor or Major Version the tag according to `<Major>.<Minor>.<Patch>`
-* `git push origin <Major>.<Minor>.<Patch>` to push your newly created tag to Github.
-
-> [!WARNING]
-> Avoid using `git push --tags` as it will push all of your local tags to the remote repository.  
-> This is not recommended as it can cause confusion and potential issues with the build server when it attempts to calculate the release version number due to the potential of unexpected tags being pushed.
-
-This will trigger our build server to build and publish a new version to feedz.io which can be seen here https://feedz.io/org/octopus-deploy/repository/dependencies/packages/Calamari.
+This will trigger our build server to build and publish a new version to feedz.io which can be seen here https://feedz.io/org/octopus-deploy/repository/dependencies/packages/Octopus.Calamari.
 
 ## Debugging
 
