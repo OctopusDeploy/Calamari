@@ -24,38 +24,6 @@ version of Calamari.
 > OctopusDeploy\
 >```
 
-## Usage
-
-To use your own Calamari package with an Octopus 3.0 server, run the following commands
-```
-Octopus.Server.exe service --instance <instance> --stop --nologo --console
-Octopus.Server.exe configure --instance <instance> --customBundledPackageDirectory=<directory> --nologo --console
-Octopus.Server.exe service --instance <instance> --start --nologo --console
-```
-
-where `<directory>` is the directory containing the `Calamari.*.nupkg` files. If your server is setup as the default instance, you may ommit the `--instance <instance>` parameter.
-
-This will add the following setting to your Octopus Server configuration file:
-
-```
-  <set key="Octopus.Deployment.CustomBundledPackageDirectory">C:\GitHub\Calamari\built-packages</set>
-```
-
-The exe and configuration file can normally be found at:
-
-```
-C:\Octopus\OctopusServer\OctopusServer.config
-```
-
-If you want to revert to the bundled package, run the following commands
-```
-Octopus.Server.exe service --instance <instance> --stop --nologo --console
-Octopus.Server.exe configure --instance <instance> --customBundledPackageDirectory= --nologo --console
-Octopus.Server.exe service --instance <instance> --start --nologo --console
-```
-
-** Ensure you update your build to the latest Calamari or revert to the bundled package when you upgrade Octopus Server **
-
 ## Releasing
 
 The build server will automatically tag successful builds within the main branch of GitHub.
