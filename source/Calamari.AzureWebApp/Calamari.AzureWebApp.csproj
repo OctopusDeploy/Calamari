@@ -11,6 +11,7 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
 
+
   <ItemGroup>
     <PackageReference Include="Azure.Core" Version="1.44.1"/>
     <PackageReference Include="Azure.ResourceManager" Version="1.12.0"/>
@@ -29,7 +30,7 @@
     <PackageReference Include="Microsoft.Web.Deployment" Version="4.0.5"/>
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
+  <ItemGroup Condition="'$(IsWindowsNetCoreBuild)' == 'true'">
     <Content Include="netcoreshim/*.*">
       <LinkBase>netcoreshim</LinkBase>
       <Pack>true</Pack>
@@ -55,13 +56,13 @@
 
   <Target Name="GetNetCoreShimFiles">
     <ItemGroup>
-      <NetCoreShimFiles Include="$(MSBuildProjectDirectory)/netcoreshim/netcoreshim.zip" Condition="'$(TargetFramework)' == 'net6.0'" />
+      <NetCoreShimFiles Include="$(MSBuildProjectDirectory)/netcoreshim/netcoreshim.zip" Condition="'$(IsWindowsNetCoreBuild)' == 'true'"/>
     </ItemGroup>
   </Target>
-  <Target Name="CopyNetCoreShimFilesAfterBuild" AfterTargets="Build" DependsOnTargets="GetNetCoreShimFiles">
+  <Target Name="CopyNetCoreShimFilesAfterBuild" AfterTargets="Build" DependsOnTargets="GetNetCoreShimFiles" Condition="'$(IsWindowsNetCoreBuild)' == 'true'" >
     <Unzip SourceFiles="@(NetCoreShimFiles)" DestinationFolder="$(OutDir)/netcoreshim" />
   </Target>
-  <Target Name="CopyNetCoreShimFilesAfterPublish" AfterTargets="Publish" DependsOnTargets="GetNetCoreShimFiles">
+  <Target Name="CopyNetCoreShimFilesAfterPublish" AfterTargets="Publish" DependsOnTargets="GetNetCoreShimFiles" Condition="'$(IsWindowsNetCoreBuild)' == 'true'" >
     <Unzip SourceFiles="@(NetCoreShimFiles)" DestinationFolder="$(PublishDir)/netcoreshim" />
   </Target>
 

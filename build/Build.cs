@@ -73,11 +73,13 @@ partial class Build : NukeBuild
     //this is instantiated in the constructor
     readonly Lazy<OctoVersionInfo?> OctoVersionInfo;
 
-    static readonly List<string> NuGetPackagesToExludeFromConsolidation = new() { "Octopus.Calamari.CloudAccounts", "Octopus.Calamari.Common", "Octopus.Calamari.ConsolidateCalamariPackages", "Octopus.Calamari.ConsolidatedPackage", "Octopus.Calamari.ConsolidatedPackage.Api" };
+    static readonly List<string> NuGetPackagesToExcludeFromConsolidation = new() { "Octopus.Calamari.CloudAccounts", "Octopus.Calamari.Common", "Octopus.Calamari.ConsolidateCalamariPackages", "Octopus.Calamari.ConsolidatedPackage", "Octopus.Calamari.ConsolidatedPackage.Api" };
 
     CalamariPackageMetadata[] PackagesToPublish = Array.Empty<CalamariPackageMetadata>();
     List<Project> CalamariProjects = new();
     readonly List<Task> ProjectCompressionTasks = new();
+
+    string ConsolidatedPackagePath = "";
 
     public Build()
     {
@@ -172,18 +174,6 @@ partial class Build : NukeBuild
                                              .EnableNoRestore()
                                              .SetVersion(NugetVersion.Value)
                                              .SetInformationalVersion(OctoVersionInfo.Value?.InformationalVersion));
-                       });
-
-    Target CalamariConsolidationTests =>
-        d =>
-            d.DependsOn(Compile)
-             .OnlyWhenStatic(() => !IsLocalBuild)
-             .Executes(() =>
-                       {
-                           DotNetTest(s => s
-                                           .SetProjectFile(ConsolidateCalamariPackagesProject)
-                                           .SetConfiguration(Configuration)
-                                           .EnableNoBuild());
                        });
 
     Target Publish =>
@@ -609,12 +599,11 @@ partial class Build : NukeBuild
 
     Target PackageConsolidatedCalamariZip =>
         d =>
-            d.DependsOn(CalamariConsolidationTests)
-             .DependsOn(PackBinaries)
+            d.DependsOn(PackBinaries)
              .Executes(() =>
                        {
                            var artifacts = Directory.GetFiles(ArtifactsDirectory, "*.nupkg")
-                                                    .Where(a => !NuGetPackagesToExludeFromConsolidation.Any(a.Contains));
+                                                    .Where(a => !NuGetPackagesToExcludeFromConsolidation.Any(a.Contains));
 
                            var packageReferences = new List<BuildPackageReference>();
                            foreach (var artifact in artifacts)
@@ -650,12 +639,33 @@ partial class Build : NukeBuild
                            if (!result)
                                throw new Exception("Failed to consolidate calamari Packages");
 
+                           ConsolidatedPackagePath = packageFilename;
                            Log.Information("Created consolidated package zip: {PackageFilename}", packageFilename);
+                       });
+
+    Target CalamariConsolidationVerification =>
+        d =>
+            d.DependsOn(PackageConsolidatedCalamariZip)
+             .OnlyWhenDynamic(() => string.IsNullOrEmpty(TargetRuntime), "TargetRuntime is not restricted")
+             .Executes(() =>
+                       {
+                           Environment.SetEnvironmentVariable("CONSOLIDATED_ZIP", ConsolidatedPackagePath);
+                           Environment.SetEnvironmentVariable("EXPECTED_VERSION", NugetVersion.Value);
+                           Environment.SetEnvironmentVariable("IS_WINDOWS", OperatingSystem.IsWindows().ToString());
+
+                           DotNetTest(s => s
+                                           .SetProjectFile(ConsolidateCalamariPackagesProject)
+                                           .SetConfiguration(Configuration)
+                                           .SetProcessArgumentConfigurator(args =>
+                                                                               args.Add("--logger:\"console;verbosity=detailed\"")
+                                                                                   .Add("--")
+                                                                                   .Add("NUnit.ShowInternalProperties=true"))
+                                           .EnableNoBuild());
                        });
 
     Target PackCalamariConsolidatedNugetPackage =>
         d =>
-            d.DependsOn(PackageConsolidatedCalamariZip)
+            d.DependsOn(CalamariConsolidationVerification)
              .Executes(() =>
                        {
                            NuGetPack(s => s.SetTargetPath(BuildDirectory / "Calamari.Consolidated.nuspec")
@@ -726,7 +736,7 @@ partial class Build : NukeBuild
                            .SetVerbosity(BuildVerbosity)
                            .SetRuntime(runtimeId)
                            .SetVersion(version)
-                           .EnableSelfContained()
+                           .SetSelfContained(OperatingSystem.IsWindows()) // This is here purely to make the local build experience on non-Windows devices workable - Publish breaks on non-Windows platforms with SelfContained = true
                      );
 
         if (WillSignBinaries)
@@ -835,6 +845,10 @@ partial class Build : NukeBuild
         return runtimes ?? Array.Empty<string>();
     }
 
-    //All libraries/flavours now support .NET Core
-    static List<string> GetCalamariFlavours() => CalamariPackages.Flavours;
+    // Although all libraries/flavours now support .NET Core, ServiceFabric can currently only be built on Windows devices
+    // This is here purely to make the local build experience on non-Windows devices (with testing) workable
+    static List<string> GetCalamariFlavours()
+    {
+        return OperatingSystem.IsWindows() ? CalamariPackages.Flavours : CalamariPackages.CrossPlatformFlavours;
+    }
 }
