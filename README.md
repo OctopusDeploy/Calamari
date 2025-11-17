@@ -4,7 +4,7 @@ Calamari is the command-line tool invoked by Tentacle during a deployment. It kn
 
 You will need the .NET SDK `6.0`, downloadable from https://dotnet.microsoft.com/download
 
-Run `build-bocal.ps1` or `build-local.sh` to build the solution locally.
+Run `build-local.ps1` or `build-local.sh` to build the solution locally.
 
 When the solution is built, several new Calamari nuget packages are created in the `artifacts` directory.
 
@@ -23,42 +23,6 @@ version of Calamari.
 >    LocalPackages\ 
 > OctopusDeploy\
 >```
-
-## Usage
-
-> **Octopus Server 2020.3+: Using a custom version of Calamari may not work**
->
-> Calamari is currently being filleted into [Sashimi](https://github.com/OctopusDeploy/Sashimi). Due to the architectural changes involved in this transformation, using a custom version of Calamari with Octopus Server version 2020.3+ may not work. Please get in touch with support@octopus.com if this affects you, to help us make decisions about how we can support custom implementations of deployment steps.
-
-To use your own Calamari package with an Octopus 3.0 server, run the following commands
-```
-Octopus.Server.exe service --instance <instance> --stop --nologo --console
-Octopus.Server.exe configure --instance <instance> --customBundledPackageDirectory=<directory> --nologo --console
-Octopus.Server.exe service --instance <instance> --start --nologo --console
-```
-
-where `<directory>` is the directory containing the `Calamari.*.nupkg` files. If your server is setup as the default instance, you may ommit the `--instance <instance>` parameter.
-
-This will add the following setting to your Octopus Server configuration file:
-
-```
-  <set key="Octopus.Deployment.CustomBundledPackageDirectory">C:\GitHub\Calamari\built-packages</set>
-```
-
-The exe and configuration file can normally be found at:
-
-```
-C:\Octopus\OctopusServer\OctopusServer.config
-```
-
-If you want to revert to the bundled package, run the following commands
-```
-Octopus.Server.exe service --instance <instance> --stop --nologo --console
-Octopus.Server.exe configure --instance <instance> --customBundledPackageDirectory= --nologo --console
-Octopus.Server.exe service --instance <instance> --start --nologo --console
-```
-
-** Ensure you update your build to the latest Calamari or revert to the bundled package when you upgrade Octopus Server **
 
 ## Releasing
 
