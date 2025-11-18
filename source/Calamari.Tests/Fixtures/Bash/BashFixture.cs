@@ -18,12 +18,10 @@ namespace Calamari.Tests.Fixtures.Bash
     [TestFixture]
     public class BashFixture : CalamariFixture
     {
-        [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
-        [TestCase(null)]
         [RequiresBashDotExeIfOnWindows]
-        public void ShouldPrintEncodedVariable(FeatureToggle? featureToggle)
+        public void ShouldPrintEncodedVariable()
         {
-            var (output, _) = RunScript("print-encoded-variable.sh", new Dictionary<string, string>().AddFeatureToggleToDictionary(new List<FeatureToggle?> { featureToggle }));
+            var (output, _) = RunScript("print-encoded-variable.sh", new Dictionary<string, string>());
 
             Assert.Multiple(() =>
                             {
@@ -32,12 +30,10 @@ namespace Calamari.Tests.Fixtures.Bash
                             });
         }
 
-        [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
-        [TestCase(null)]
         [RequiresBashDotExeIfOnWindows]
-        public void ShouldPrintSensitiveVariable(FeatureToggle? featureToggle)
+        public void ShouldPrintSensitiveVariable()
         {
-            var (output, _) = RunScript("print-sensitive-variable.sh", new Dictionary<string, string>().AddFeatureToggleToDictionary(new List<FeatureToggle?>{ featureToggle }));
+            var (output, _) = RunScript("print-sensitive-variable.sh");
 
             Assert.Multiple(() =>
                             {
@@ -46,12 +42,10 @@ namespace Calamari.Tests.Fixtures.Bash
                             });
         }
 
-        [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
-        [TestCase(null)]
         [RequiresBashDotExeIfOnWindows]
-        public void ShouldCreateArtifact(FeatureToggle? featureToggle)
+        public void ShouldCreateArtifact()
         {
-            var (output, _) = RunScript("create-artifact.sh", new Dictionary<string, string>().AddFeatureToggleToDictionary(new List<FeatureToggle?>{ featureToggle }));
+            var (output, _) = RunScript("create-artifact.sh");
 
             const string regexPattern = @"##octopus\[createArtifact path='([\S]+)' name='bXlmaWxl' length='MA==']";
     
@@ -75,12 +69,10 @@ namespace Calamari.Tests.Fixtures.Bash
                             });
         }
 
-        [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
-        [TestCase(null)]
         [RequiresBashDotExeIfOnWindows]
-        public void ShouldUpdateProgress(FeatureToggle? featureToggle)
+        public void ShouldUpdateProgress()
         {
-            var (output, _) = RunScript("update-progress.sh", new Dictionary<string, string>().AddFeatureToggleToDictionary(new List<FeatureToggle?>{ featureToggle }));
+            var (output, _) = RunScript("update-progress.sh");
 
             Assert.Multiple(() =>
                             {
@@ -89,12 +81,10 @@ namespace Calamari.Tests.Fixtures.Bash
                             });
         }
         
-        [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
-        [TestCase(null)]
         [RequiresBashDotExeIfOnWindows]
-        public void ShouldReportKubernetesManifest(FeatureToggle? featureToggle)
+        public void ShouldReportKubernetesManifest()
         {
-            var (output, _) = RunScript("report-kubernetes-manifest.sh", new Dictionary<string, string>().AddFeatureToggleToDictionary(new List<FeatureToggle?>{ featureToggle }));
+            var (output, _) = RunScript("report-kubernetes-manifest.sh");
 
             Assert.Multiple(() =>
                             {
@@ -106,10 +96,8 @@ namespace Calamari.Tests.Fixtures.Bash
                             });
         }
         
-        [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
-        [TestCase(null)]
         [RequiresBashDotExeIfOnWindows]
-        public void ShouldReportKubernetesManifestFile(FeatureToggle? featureToggle)
+        public void ShouldReportKubernetesManifestFile()
         {
             var tempPath = Path.GetTempPath();
             var manifest = @"""apiVersion"": ""v1""
@@ -148,8 +136,10 @@ namespace Calamari.Tests.Fixtures.Bash
                 updatedFilePath = path;
             }
 
-            var additionalVariables = new Dictionary<string, string>().AddFeatureToggleToDictionary(new List<FeatureToggle?> { featureToggle });
-            additionalVariables.Add("ManifestFilePath", updatedFilePath);
+            var additionalVariables = new Dictionary<string, string>
+            {
+                { "ManifestFilePath", updatedFilePath }
+            };
 
             try
             {
@@ -171,14 +161,12 @@ namespace Calamari.Tests.Fixtures.Bash
             }
         }
 
-        [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
-        [TestCase(null)]
         [RequiresBashDotExeIfOnWindows]
-        public void ShouldConsumeParametersWithQuotes(FeatureToggle? featureToggle)
+        public void ShouldConsumeParametersWithQuotes()
         {
             var (output, _) = RunScript("parameters.sh",
                                         new Dictionary<string, string>()
-                                            { [SpecialVariables.Action.Script.ScriptParameters] = "\"Para meter0\" 'Para meter1'" }.AddFeatureToggleToDictionary(new List<FeatureToggle?>{ featureToggle }));
+                                            { [SpecialVariables.Action.Script.ScriptParameters] = "\"Para meter0\" 'Para meter1'" });
 
             Assert.Multiple(() =>
                             {
@@ -187,12 +175,10 @@ namespace Calamari.Tests.Fixtures.Bash
                             });
         }
 
-        [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
-        [TestCase(null)]
         [RequiresBashDotExeIfOnWindows]
-        public void ShouldNotReceiveParametersIfNoneProvided(FeatureToggle? featureToggle)
+        public void ShouldNotReceiveParametersIfNoneProvided()
         {
-            var (output, _) = RunScript("parameters.sh", new Dictionary<string, string>().AddFeatureToggleToDictionary(new List<FeatureToggle?>{ featureToggle }), sensitiveVariablesPassword:
+            var (output, _) = RunScript("parameters.sh", new Dictionary<string, string>(), sensitiveVariablesPassword:
             "5XETGOgqYR2bRhlfhDruEg==");
 
             Assert.Multiple(() =>
@@ -202,10 +188,8 @@ namespace Calamari.Tests.Fixtures.Bash
                             });
         }
 
-        [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
-        [TestCase(null)]
         [RequiresBashDotExeIfOnWindows]
-        public void ShouldCallHello(FeatureToggle? featureToggle)
+        public void ShouldCallHello()
         {
             var (output, _) = RunScript("hello.sh",
                                         new Dictionary<string, string>()
@@ -215,7 +199,7 @@ namespace Calamari.Tests.Fixtures.Bash
                                             ["Variable3"] = "GHI",
                                             ["Foo_bar"] = "Hello",
                                             ["Host"] = "Never",
-                                        }.AddFeatureToggleToDictionary(new List<FeatureToggle?>{ featureToggle }));
+                                        });
 
             Assert.Multiple(() =>
                             {
@@ -225,13 +209,11 @@ namespace Calamari.Tests.Fixtures.Bash
         }
 
         [RequiresBashDotExeIfOnWindows]
-        [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
-        [TestCase(null)]
-        public void ShouldCallHelloWithSensitiveVariable(FeatureToggle? featureToggle)
+        public void ShouldCallHelloWithSensitiveVariable()
         {
             var (output, _) = RunScript("hello.sh",
                                         new Dictionary<string, string>()
-                                            { ["Name"] = "NameToEncrypt" }.AddFeatureToggleToDictionary(new List<FeatureToggle?>{ featureToggle }), sensitiveVariablesPassword:
+                                            { ["Name"] = "NameToEncrypt" }, sensitiveVariablesPassword:
             "5XETGOgqYR2bRhlfhDruEg==");
 
             Assert.Multiple(() =>
@@ -242,13 +224,11 @@ namespace Calamari.Tests.Fixtures.Bash
         }
 
         [RequiresBashDotExeIfOnWindows]
-        [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
-        [TestCase(null)]
-        public void ShouldCallHelloWithNullVariable(FeatureToggle? featureToggle)
+        public void ShouldCallHelloWithNullVariable()
         {
             var (output, _) = RunScript("hello.sh",
                                         new Dictionary<string, string>()
-                                            { ["Name"] = null }.AddFeatureToggleToDictionary(new List<FeatureToggle?>{ featureToggle }));
+                                            { ["Name"] = null });
 
             Assert.Multiple(() =>
                             {
@@ -258,13 +238,11 @@ namespace Calamari.Tests.Fixtures.Bash
         }
 
         [RequiresBashDotExeIfOnWindows]
-        [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
-        [TestCase(null)]
-        public void ShouldCallHelloWithNullSensitiveVariable(FeatureToggle? featureToggle)
+        public void ShouldCallHelloWithNullSensitiveVariable()
         {
             var (output, _) = RunScript("hello.sh",
                                         new Dictionary<string, string>()
-                                            { ["Name"] = null }.AddFeatureToggleToDictionary(new List<FeatureToggle?>{ featureToggle }), sensitiveVariablesPassword:
+                                            { ["Name"] = null }, sensitiveVariablesPassword:
             "5XETGOgqYR2bRhlfhDruEg==");
 
             Assert.Multiple(() =>
@@ -275,12 +253,10 @@ namespace Calamari.Tests.Fixtures.Bash
         }
 
         [RequiresBashDotExeIfOnWindows]
-        [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
-        [TestCase(null)]
-        public void ShouldNotFailOnStdErr(FeatureToggle? featureToggle)
+        public void ShouldNotFailOnStdErr()
         {
             var (output, _) = RunScript("stderr.sh",
-                                        new Dictionary<string, string>().AddFeatureToggleToDictionary(new List<FeatureToggle?>{ featureToggle }));
+                                        new Dictionary<string, string>());
 
             Assert.Multiple(() =>
                             {
@@ -290,13 +266,11 @@ namespace Calamari.Tests.Fixtures.Bash
         }
 
         [RequiresBashDotExeIfOnWindows]
-        [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
-        [TestCase(null)]
-        public void ShouldFailOnStdErrWithTreatScriptWarningsAsErrors(FeatureToggle? featureToggle)
+        public void ShouldFailOnStdErrWithTreatScriptWarningsAsErrors()
         {
             var (output, _) = RunScript("stderr.sh",
                                         new Dictionary<string, string>()
-                                            { [SpecialVariables.Action.FailScriptOnErrorOutput] = "True" }.AddFeatureToggleToDictionary(new List<FeatureToggle?>{ featureToggle }));
+                                            { [SpecialVariables.Action.FailScriptOnErrorOutput] = "True" });
 
             Assert.Multiple(() =>
                             {
@@ -306,23 +280,19 @@ namespace Calamari.Tests.Fixtures.Bash
         }
 
         [RequiresBashDotExeIfOnWindows]
-        [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
-        [TestCase(null)]
-        public void ShouldNotFailOnStdErrFromServiceMessagesWithTreatScriptWarningsAsErrors(FeatureToggle? featureToggle)
+        public void ShouldNotFailOnStdErrFromServiceMessagesWithTreatScriptWarningsAsErrors()
         {
             var (output, _) = RunScript("hello.sh",
                                         new Dictionary<string, string>()
-                                            { [SpecialVariables.Action.FailScriptOnErrorOutput] = "True" }.AddFeatureToggleToDictionary(new List<FeatureToggle?>{ featureToggle }));
+                                            { [SpecialVariables.Action.FailScriptOnErrorOutput] = "True" });
 
             output.AssertSuccess();
         }
 
         [RequiresBashDotExeIfOnWindows]
-        [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
-        [TestCase(null)]
-        public void ShouldSupportStrictVariableUnset(FeatureToggle? featureToggle)
+        public void ShouldSupportStrictVariableUnset()
         {
-            var (output, _) = RunScript("strict-mode.sh", new Dictionary<string, string>().AddFeatureToggleToDictionary(new List<FeatureToggle?>{ featureToggle }));
+            var (output, _) = RunScript("strict-mode.sh", new Dictionary<string, string>());
 
             Assert.Multiple(() =>
                             {
@@ -333,8 +303,6 @@ namespace Calamari.Tests.Fixtures.Bash
 
         static string specialCharacters => "! \" # $ % & ' ( ) * + , - . / : ; < = > ? @ [ \\ ] ^ _ ` { | } ~  \n\u00b1 \u00d7 \u00f7 \u2211 \u220f \u2202 \u221e \u222b \u2248 \u2260 \u2264 \u2265 \u221a \u221b \u2206 \u2207 \u221d  \n$ \u00a2 \u00a3 \u00a5 \u20ac \u20b9 \u20a9 \u20b1 \u20aa \u20bf  \n• ‣ … ′ ″ ‘ ’ “ ” ‽ ¡ ¿ – — ―  \n( ) [ ] { } ⟨ ⟩ « » ‘ ’ “ ”  \n\u2190 \u2191 \u2192 \u2193 \u2194 \u2195 \u2196 \u2197 \u2198 \u2199 \u2b05 \u2b06 \u2b07 \u27a1 \u27f3  \nα β γ δ ε ζ η θ ι κ λ μ ν ξ ο π ρ σ τ υ φ χ ψ ω  \n\u00a9 \u00ae \u2122 § ¶ † ‡ µ #";
 
-        [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
-        [TestCase(null)]
         [RequiresBashDotExeIfOnWindows]
         public void ShouldBeAbleToEnumerateVariableValues(FeatureToggle? featureToggle)
         {
@@ -355,37 +323,34 @@ namespace Calamari.Tests.Fixtures.Bash
                                             ["VariableName.prop.anotherprop 12"] = "Value.prop.12",
                                             ["VariableName`prop`anotherprop` 13"] = "Value`prop`13",
                                             [specialCharacters] = specialCharacters
-                                        }.AddFeatureToggleToDictionary(new List<FeatureToggle?>{ featureToggle }));
+                                        });
 
             output.AssertSuccess();
-            if (featureToggle == FeatureToggle.BashParametersArrayFeatureToggle)
+            var fullOutput = string.Join(Environment.NewLine, output.CapturedOutput.Infos);
+            if (fullOutput.Contains("Bash version 4.2 or later is required to use octopus_parameters"))
             {
-                var fullOutput = string.Join(Environment.NewLine, output.CapturedOutput.Infos);
-                if (fullOutput.Contains("Bash version 4.2 or later is required to use octopus_parameters"))
-                {
-                    output.AssertOutput("Still ran this script");
-                    return;
-                }
-
-                output.AssertOutput(@"Key: VariableName1, Value: Value 1");
-                output.AssertOutput(@"Key: VariableName 2, Value: Value 2");
-                output.AssertOutput(@"Key: VariableName3, Value: Value 3");
-                output.AssertOutput(@"Key: VariableName '4', Value: Value '4'");
-                output.AssertOutput("Key: VariableName \"5\", Value: Value \"5\"");
-                output.AssertOutput(@"Key: VariableName, 6, Value: Value, 6");
-                output.AssertOutput(@"Key: VariableName [7], Value: Value [7]");
-                output.AssertOutput(@"Key: VariableName {8}, Value: Value {8}");
-                output.AssertOutput("Key: VariableName\t9, Value: Value\t9");
-                output.AssertOutput(@"Key: VariableName 10 !@#$%^&*()_+1234567890-=, Value: Value 10 !@#$%^&*()_+1234567890-=");
-                if (CalamariEnvironment.IsRunningOnNix)
-                {
-                    output.AssertOutput("Key: VariableName \n 11, Value: Value \n 11");
-                }
-
-                output.AssertOutput("Key: VariableName.prop.anotherprop 12, Value: Value.prop.12");
-                output.AssertOutput("Key: VariableName`prop`anotherprop` 13, Value: Value`prop`13");
-                output.AssertOutput($"Key: {specialCharacters}, Value: {specialCharacters}");
+                output.AssertOutput("Still ran this script");
+                return;
             }
+
+            output.AssertOutput(@"Key: VariableName1, Value: Value 1");
+            output.AssertOutput(@"Key: VariableName 2, Value: Value 2");
+            output.AssertOutput(@"Key: VariableName3, Value: Value 3");
+            output.AssertOutput(@"Key: VariableName '4', Value: Value '4'");
+            output.AssertOutput("Key: VariableName \"5\", Value: Value \"5\"");
+            output.AssertOutput(@"Key: VariableName, 6, Value: Value, 6");
+            output.AssertOutput(@"Key: VariableName [7], Value: Value [7]");
+            output.AssertOutput(@"Key: VariableName {8}, Value: Value {8}");
+            output.AssertOutput("Key: VariableName\t9, Value: Value\t9");
+            output.AssertOutput(@"Key: VariableName 10 !@#$%^&*()_+1234567890-=, Value: Value 10 !@#$%^&*()_+1234567890-=");
+            if (CalamariEnvironment.IsRunningOnNix)
+            {
+                output.AssertOutput("Key: VariableName \n 11, Value: Value \n 11");
+            }
+
+            output.AssertOutput("Key: VariableName.prop.anotherprop 12, Value: Value.prop.12");
+            output.AssertOutput("Key: VariableName`prop`anotherprop` 13, Value: Value`prop`13");
+            output.AssertOutput($"Key: {specialCharacters}, Value: {specialCharacters}");
         }
     }
 
