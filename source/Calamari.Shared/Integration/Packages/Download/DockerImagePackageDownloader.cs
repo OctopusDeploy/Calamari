@@ -224,7 +224,7 @@ namespace Calamari.Integration.Packages.Download
         {
             var output = "";
             var result = SilentProcessRunner.ExecuteCommand("docker",
-                                                            "image ls --format=\"{{.ID}}\" --no-trunc",
+                                                            "image ls --format=\"{{.ID}}\" --no-trunc --all",
                                                             ".",
                                                             environmentVariables,
                                                             (stdout) => { output += stdout + " "; },
