@@ -35,15 +35,29 @@ namespace Calamari.Testing
         [EnvironmentVariable("K8S_OctopusAPITester_Server", "op://Calamari Secrets for Tests/GKS Kubernetes API Test Cluster/Server")]
         KubernetesClusterUrl,
 
+        [EnvironmentVariable("Helm_OctopusAPITester_Url", "op://Calamari Secrets for Tests/Artifactory e2e-reader Test Account/url")]
+        ArtifactoryUrl,
+
+        [EnvironmentVariable("Helm_OctopusAPITester_Url", "op://Calamari Secrets for Tests/Artifactory e2e-reader Test Account/docker-url")]
+        ArtifactoryDockerUrl,
+
+        [EnvironmentVariable("Helm_OctopusAPITester_Username", "op://Calamari Secrets for Tests/Artifactory e2e-reader Test Account/username")]
+        ArtifactoryUsername,
+
         [EnvironmentVariable("Helm_OctopusAPITester_Password", "op://Calamari Secrets for Tests/Artifactory e2e-reader Test Account/password")]
-        HelmPassword,
+        ArtifactoryPassword,
 
         [EnvironmentVariable("Artifactory_Admin_PAT", "op://Calamari Secrets for Tests/Artifactory Admin PAT/PAT")]
-        ArtifactoryE2EPassword,
+        ArtifactoryAdminToken,
 
-        [EnvironmentVariable("DockerHub_TestReaderAccount_Password", "op://Calamari Secrets for Tests/DockerHub Test Reader Account/password")]
-        DockerReaderPassword,
+        [EnvironmentVariable("DockerHub_TestReaderAccount_Url", "op://Calamari Secrets for Tests/DockerHub Test Reader Org Access Token/Url", "https://index.docker.io/v1/")]
+        DockerHubOrgAccessUrl,
 
+        [EnvironmentVariable("DockerHub_TestReaderAccount_Username", "op://Calamari Secrets for Tests/DockerHub Test Reader Org Access Token/Token Username")]
+        DockerHubOrgAccessUsername,
+
+        [EnvironmentVariable("DockerHub_TestReaderAccount_Token", "op://Calamari Secrets for Tests/DockerHub Test Reader Org Access Token/API Token")]
+        DockerHubOrgAccessToken,
         [EnvironmentVariable("AWS_E2E_AccessKeyId", "op://Calamari Secrets for Tests/AWS E2E Test User Keys/AccessKeyId")]
         AwsCloudFormationAndS3AccessKey,
 
@@ -115,7 +129,7 @@ namespace Calamari.Testing
         {
             var missingVariables = Enum.GetValues(typeof(ExternalVariable))
                                        .Cast<ExternalVariable>()
-                                       .Select(prop => EnvironmentVariableAttribute.Get(prop))
+                                       .Select(prop => EnvironmentVariableAttribute.Get(prop) ?? throw new Exception($"`{prop}` does not include a {nameof(EnvironmentVariableAttribute)}."))
                                        .Where(attr => Environment.GetEnvironmentVariable(attr.Name) == null)
                                        .ToList();
 
@@ -143,10 +157,10 @@ namespace Calamari.Testing
             {
                 var valueFromSecretManager = string.IsNullOrEmpty(attr.SecretReference)
                     ? null
-                    : await SecretManagerClient.Value.GetSecret(attr.SecretReference, cancellationToken, throwOnNotFound: false);
+                    : await SecretManagerClient.Value.GetSecret(attr.SecretReference!, cancellationToken, throwOnNotFound: false);
                 if (!string.IsNullOrEmpty(valueFromSecretManager))
                 {
-                    return valueFromSecretManager;
+                    return valueFromSecretManager!;
                 }
 
                 return attr.DefaultValue ?? 

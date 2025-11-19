@@ -2,9 +2,11 @@
 using System;
 using System.Net;
 using System.Threading.Tasks;
+using Azure;
 using Azure.ResourceManager.AppService;
 using Azure.ResourceManager.AppService.Models;
 using Azure.ResourceManager.Resources;
+using Calamari.AzureAppService.Azure;
 using Calamari.Common.Plumbing.Proxies;
 using Calamari.Testing;
 using FluentAssertions;
@@ -25,22 +27,7 @@ namespace Calamari.AzureAppService.Tests
 
         protected override async Task ConfigureTestResources(ResourceGroupResource resourceGroup)
         {
-            var (_, webSiteResource) = await CreateAppServicePlanAndWebApp(resourceGroup,
-                                                                           new AppServicePlanData(resourceGroup.Data.Location)
-                                                                           {
-                                                                               Sku = new AppServiceSkuDescription
-                                                                               {
-                                                                                   Name = "B1",
-                                                                                   Tier = "Basic"
-                                                                               }
-                                                                           },
-                                                                           new WebSiteData(resourceGroup.Data.Location)
-                                                                           {
-                                                                               SiteConfig = new SiteConfigProperties
-                                                                               {
-                                                                                   NetFrameworkVersion = "v6.0"
-                                                                               }
-                                                                           });
+            var (_, webSiteResource) = await CreateAppServicePlanAndWebApp(resourceGroup);
             WebSiteResource = webSiteResource;
         }
 
@@ -56,6 +43,30 @@ namespace Calamari.AzureAppService.Tests
         [NonParallelizable]
         public async Task WebAppIsFound_WithAndWithoutProxy()
         {
+            const string slotName = "stage";
+            var slot = await WebSiteResource.GetWebSiteSlots()
+                                            .CreateOrUpdateAsync(WaitUntil.Completed, slotName, WebSiteResource.Data);
+
+            await CommandTestBuilder.CreateAsync<HealthCheckCommand, Program>()
+                                    .WithArrange(context =>
+                                                 {
+                                                     SetUpVariables(context);
+                                                     context.Variables.Add(SpecialVariables.Action.Azure.WebAppSlot, slotName);
+                                                 })
+                                    .WithAssert(result => result.WasSuccessful.Should().BeTrue())
+                                    .Execute();
+            
+            await slot.Value.DeleteAsync(WaitUntil.Completed);
+            
+            await CommandTestBuilder.CreateAsync<HealthCheckCommand, Program>()
+                                    .WithArrange(context =>
+                                                 {
+                                                     SetUpVariables(context);
+                                                     context.Variables.Add(SpecialVariables.Action.Azure.WebAppSlot, slotName);
+                                                 })
+                                    .WithAssert(result => result.WasSuccessful.Should().BeFalse())
+                                    .Execute(false);
+
             await CommandTestBuilder.CreateAsync<HealthCheckCommand, Program>()
                                     .WithArrange(SetUpVariables)
                                     .WithAssert(result => result.WasSuccessful.Should().BeTrue())

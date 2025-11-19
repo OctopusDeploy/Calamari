@@ -1,12 +1,12 @@
 #if NET
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Calamari.ArgoCD.Git;
-using Calamari.ArgoCD.GitHub;
+using Calamari.ArgoCD.Git.GitVendorApiAdapters;
 using Calamari.Common.Plumbing.FileSystem;
-using Calamari.Common.Plumbing.Logging;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
 using FluentAssertions;
@@ -20,51 +20,61 @@ namespace Calamari.Tests.ArgoCD.Git
     public class RepositoryWrapperTest
     {
         readonly ICalamariFileSystem fileSystem = TestCalamariPhysicalFileSystem.GetPhysicalFileSystem();
-        
+
         InMemoryLog log;
         string tempDirectory;
         string OriginPath => Path.Combine(tempDirectory, "origin");
         string repositoryPath = "repository";
         Repository bareOrigin;
-        GitBranchName branchName = new GitBranchName("devBranch");
+        GitBranchName branchName = GitBranchName.CreateFromFriendlyName("devBranch");
 
-        IGitHubPullRequestCreator gitHubPullRequestCreator = Substitute.For<IGitHubPullRequestCreator>();
         IGitConnection gitConnection;
         RepositoryWrapper repository;
-        
+        IGitVendorAgnosticApiAdapterFactory gitVendorAgnosticApiAdapterFactory = Substitute.For<IGitVendorAgnosticApiAdapterFactory>();
+        IGitVendorApiAdapter gitVendorApiAdapter = Substitute.For<IGitVendorApiAdapter>();
+
         [SetUp]
         public void Init()
         {
             log = new InMemoryLog();
+
             tempDirectory = fileSystem.CreateTemporaryDirectory();
 
             bareOrigin = RepositoryHelpers.CreateBareRepository(OriginPath);
             RepositoryHelpers.CreateBranchIn(branchName, OriginPath);
 
-            var repositoryFactory = new RepositoryFactory(log, tempDirectory, gitHubPullRequestCreator);
-            gitConnection = new GitConnection(null, null, OriginPath, branchName);
+            gitVendorApiAdapter.CreatePullRequest(Arg.Any<string>(),
+                                                  Arg.Any<string>(),
+                                                  Arg.Any<GitBranchName>(),
+                                                  Arg.Any<GitBranchName>(),
+                                                  Arg.Any<CancellationToken>())
+                               .Returns(new PullRequest("title", 1, "url"));
+            gitVendorAgnosticApiAdapterFactory.TryCreateGitVendorApiAdaptor(Arg.Any<IRepositoryConnection>()).Returns(gitVendorApiAdapter);
+            
+            var repositoryFactory = new RepositoryFactory(log, fileSystem, tempDirectory, gitVendorAgnosticApiAdapterFactory);
+            gitConnection = new GitConnection(null, null, new Uri(OriginPath), branchName);
             repository = repositoryFactory.CloneRepository(repositoryPath, gitConnection);
         }
-        
+
         [TearDown]
         public void Cleanup()
         {
-            fileSystem.DeleteDirectory(tempDirectory, FailureOptions.IgnoreFailure);
+            RepositoryHelpers.DeleteRepositoryDirectory(fileSystem, tempDirectory);
         }
-        
+
         string RepositoryRootPath => Path.Combine(tempDirectory, repositoryPath);
-        
+
         [Test]
         public void StagingANonExistentFileThrowsException()
         {
-            Action act = () => repository.StageFiles(new[] { "nonexistent.txt"});
+            Action act = () => repository.StageFiles(new[] { "nonexistent.txt" });
             act.Should().Throw<LibGit2SharpException>().And.Message.Should().Contain("could not find ");
         }
 
         [Test]
         public void EmptyCommitReturnsFalse()
         {
-            var result = repository.CommitChanges("Summary Message","There is no data to commit");
+            var result = repository.CommitChanges("Summary Message", "There is no data to commit");
             result.Should().BeFalse();
         }
 
@@ -76,7 +86,7 @@ namespace Calamari.Tests.ArgoCD.Git
             File.WriteAllText(Path.Combine(RepositoryRootPath, filename), "");
             repository.StageFiles(new[] { $"./{filename}" });
         }
-        
+
         [Test]
         public async Task StagingARealFileSucceedsAndCanBeCommittedAndPushed()
         {
@@ -85,13 +95,17 @@ namespace Calamari.Tests.ArgoCD.Git
             File.WriteAllText(Path.Combine(RepositoryRootPath, filename), fileContents);
             repository.StageFiles(new[] { filename });
             repository.CommitChanges("Summary Message", "A file has changed").Should().BeTrue();
-            await repository.PushChanges(false, "Summary Message", "A file has changed", branchName, CancellationToken.None);
-            
+            await repository.PushChanges(false,
+                                         "Summary Message",
+                                         "A file has changed",
+                                         branchName,
+                                         CancellationToken.None);
+
             //ensure the remote contains the file
             var originFileContent = bareOrigin.ReadFileFromBranch(branchName, filename);
             originFileContent.Should().Be(fileContents);
         }
-        
+
         [Test]
         public async Task CanPushTheHeadToAnyBranchNameOnRemote()
         {
@@ -99,29 +113,103 @@ namespace Calamari.Tests.ArgoCD.Git
             File.WriteAllText(Path.Combine(RepositoryRootPath, filename), "");
             repository.StageFiles(new[] { filename });
             repository.CommitChanges("Summary Message", "There is no data to comm it").Should().BeTrue();
-            await repository.PushChanges(false, "Summary Message", "There is no data to comm it", new GitBranchName("arbitraryBranch1"), CancellationToken.None);
-            await repository.PushChanges(false, "Summary Message", "There is no data to comm it", new GitBranchName("arbitraryBranch2"), CancellationToken.None);
+            await repository.PushChanges(false,
+                                         "Summary Message",
+                                         "There is no data to comm it",
+                                         GitBranchName.CreateFromFriendlyName("arbitraryBranch1"),
+                                         CancellationToken.None);
+            await repository.PushChanges(false,
+                                         "Summary Message",
+                                         "There is no data to comm it",
+                                         GitBranchName.CreateFromFriendlyName("arbitraryBranch2"),
+                                         CancellationToken.None);
         }
 
         [Test]
         public async Task WhenCreatingAPrThePrTitleAndBodyMatchTheCommitMessageFields()
         {
             string filename = "newFile.txt";
-            File.WriteAllText(Path.Combine(RepositoryRootPath, filename), "");
+            await File.WriteAllTextAsync(Path.Combine(RepositoryRootPath, filename), "");
             repository.StageFiles(new[] { filename });
             var commitSummary = "Summary Message";
             var commitDescription = "A commit description";
             repository.CommitChanges(commitSummary, commitDescription).Should().BeTrue();
-            var prBranch = new GitBranchName("arbitraryBranch");
-            await repository.PushChanges(true,  commitSummary, commitDescription, prBranch, CancellationToken.None);
-            await gitHubPullRequestCreator.Received(1)
-                                    .CreatePullRequest(log,
-                                                       gitConnection,
-                                                       commitSummary,
-                                                       commitDescription,
-                                                       Arg.Any<GitBranchName>(),
-                                                       prBranch,
-                                                       Arg.Any<CancellationToken>());
+            var prBranch = GitBranchName.CreateFromFriendlyName("arbitraryBranch");
+            await repository.PushChanges(true,
+                                         commitSummary,
+                                         commitDescription,
+                                         prBranch,
+                                         CancellationToken.None);
+            await gitVendorApiAdapter.Received(1)
+                                                 .CreatePullRequest(
+                                                                    commitSummary,
+                                                                    commitDescription,
+                                                                    Arg.Any<GitBranchName>(),
+                                                                    prBranch,
+                                                                    Arg.Any<CancellationToken>());
+        }
+
+        [Test]
+        public async Task WhenDisposingOfARepository_TheCheckoutDirectoryIsRemoved()
+        {
+            //Arrange 
+            const string filename = "newFile.txt";
+            const string fileContents = "Lorem ipsum dolor sit amet";
+            await File.WriteAllTextAsync(Path.Combine(RepositoryRootPath, filename), fileContents);
+            
+            repository.StageFiles(new[] { filename });
+            repository.CommitChanges("Summary Message", "A file has changed").Should().BeTrue();
+            
+            // Act
+            repository.Dispose();
+            
+            // Assert
+            fileSystem.DirectoryExists(RepositoryRootPath)
+                      .Should()
+                      .BeFalse();
+        }
+
+        [Test]
+        [TestCase("", 0)]
+        [TestCase("./", 0)]
+        [TestCase("nested_1", 2)]
+        [TestCase("nested_1/nested_2", 3)]
+        [TestCase("nested", 3)]
+        [TestCase("nest", 4)]
+        public void RemoveFiles(string subPath, int totalFilesRemaining)
+        {
+            //Arrange
+            bareOrigin.AddFilesToBranch(branchName,
+                                        ("file.yaml", ""),
+                                        ("nested/file.txt", ""),
+                                        ("nested_1/file.yaml", ""),
+                                        ("nested_1/nested_2/file.yaml", ""));
+
+            var repositoryFactory = new RepositoryFactory(log, fileSystem, tempDirectory, gitVendorAgnosticApiAdapterFactory);
+            gitConnection = new GitConnection(null, null, new Uri(OriginPath), branchName);
+
+            // Act
+            var sut = repositoryFactory.CloneRepository($"{repositoryPath}/sut", gitConnection);
+            sut.RecursivelyStageFilesForRemoval(subPath);
+            sut.CommitChanges("Deleted files", string.Empty);
+            sut.PushChanges(branchName);
+
+            //Assert
+            var result = CloneOrigin();
+            var files = fileSystem.EnumerateFilesWithGlob(result, "**/*");
+            var notGitFiles = files.Where(file => !file.Contains(".git")).ToList();
+            notGitFiles.Count.Should().Be(totalFilesRemaining);
+        }
+
+        string CloneOrigin()
+        {
+            var subPath = Guid.NewGuid().ToString();
+            var resultPath = Path.Combine(tempDirectory, subPath);
+            Repository.Clone(OriginPath, resultPath);
+            var resultRepo = new Repository(resultPath);
+            LibGit2Sharp.Commands.Checkout(resultRepo, branchName.ToFriendlyName());
+
+            return resultPath;
         }
     }
 }

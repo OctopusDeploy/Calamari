@@ -145,7 +145,8 @@ namespace Calamari.Common.Plumbing.FileSystem
                     if (Directory.Exists(path))
                     {
                         var dir = new DirectoryInfo(path);
-                        dir.Attributes = dir.Attributes & ~FileAttributes.ReadOnly;
+                        //we remove any readonly attributes
+                        dir.Attributes &= ~FileAttributes.ReadOnly;
                         dir.Delete(true);
                         EnsureDirectoryDeleted(path, options);
                     }
@@ -285,6 +286,17 @@ namespace Calamari.Common.Plumbing.FileSystem
         public byte[] ReadAllBytes(string path)
         {
             return File.ReadAllBytes(path);
+        }
+
+        public void RemoveReadOnlyAttributeFromFile(string filePath)
+        {
+            var fileInfo = new FileInfo(filePath);
+            
+            //I'm not sure of any side affects or IO of doing this when not needed, so just doing if required
+            if (fileInfo.IsReadOnly)
+            {
+                fileInfo.IsReadOnly = false;
+            }
         }
 
         public void OverwriteFile(string path, string contents, Encoding? encoding = null)
@@ -502,7 +514,10 @@ namespace Calamari.Common.Plumbing.FileSystem
                     try
                     {
                         Log.VerboseFormat("Attempting to access with OpenOrCreate file mode, Read/Write Access and No file share {0}", filePath);
+#pragma warning disable CS0642  // Possible mistaken empty statement (it's deliberate here)
                         using (File.Open(filePath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None));
+#pragma warning restore CS0642  // Possible mistaken empty statement
+
                         Log.VerboseFormat("Succeeded accessing {0}", filePath);
                     }
                     catch (Exception fileAccessException)

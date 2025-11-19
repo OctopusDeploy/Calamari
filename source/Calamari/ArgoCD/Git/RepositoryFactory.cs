@@ -1,8 +1,13 @@
 #if NET
 using System;
 using System.IO;
+using Calamari.ArgoCD.Git.GitVendorApiAdapters;
+using System.Linq;
 using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.GitHub;
+using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.Extensions;
+using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using LibGit2Sharp;
 
@@ -12,63 +17,90 @@ namespace Calamari.ArgoCD.Git
     {
         RepositoryWrapper CloneRepository(string repositoryName, IGitConnection gitConnection);
     }
-    
+
     public class RepositoryFactory : IRepositoryFactory
     {
         readonly ILog log;
+        readonly ICalamariFileSystem fileSystem;
         readonly string repositoryParentDirectory;
-        readonly IGitHubPullRequestCreator pullRequestCreator;
+        readonly IGitVendorAgnosticApiAdapterFactory vendorAgnosticApiAdapterFactory;
 
-        public RepositoryFactory(ILog log, string repositoryParentDirectory, IGitHubPullRequestCreator gitHubPullRequestCreator)
+        public RepositoryFactory(ILog log, ICalamariFileSystem fileSystem, string repositoryParentDirectory, IGitVendorAgnosticApiAdapterFactory vendorAgnosticApiAdapterFactory)
         {
             this.log = log;
+            this.fileSystem = fileSystem;
             this.repositoryParentDirectory = repositoryParentDirectory;
-            this.pullRequestCreator = gitHubPullRequestCreator;
+            this.vendorAgnosticApiAdapterFactory = vendorAgnosticApiAdapterFactory;
         }
 
         public RepositoryWrapper CloneRepository(string repositoryName, IGitConnection gitConnection)
         {
-            Log.Info($"Cloning repository {gitConnection.Url}, checking out branch '{gitConnection.BranchName}'");
             var repositoryPath = Path.Combine(repositoryParentDirectory, repositoryName);
-            Directory.CreateDirectory(repositoryPath);
-            return CheckoutGitRepository(gitConnection, repositoryPath);            
+            fileSystem.CreateDirectory(repositoryPath);
+
+            return CheckoutGitRepository(gitConnection, repositoryPath);
         }
-        
+
         RepositoryWrapper CheckoutGitRepository(IGitConnection gitConnection, string checkoutPath)
         {
-            //Todo - cannot make this work
-            // var options = new CloneOptions
-            // {
-            //     BranchName = gitConnection.BranchName
-            // };
+            //if the branch name is head, then we just clone the default
+            //if it's not head, then clone the branch immediately
+            var options = gitConnection.GitReference is GitHead
+                ? new CloneOptions()
+                : new CloneOptions
+                {
+                    BranchName = (gitConnection.GitReference as GitBranchName)?.ToFriendlyName()
+                };
 
-            var options = new CloneOptions();
             if (gitConnection.Username != null && gitConnection.Password != null)
             {
                 options.FetchOptions.CredentialsProvider = (url, usernameFromUrl, types) => new UsernamePasswordCredentials
-                    {
-                        Username = gitConnection.Username!,
-                        Password = gitConnection.Password!
+                {
+                    Username = gitConnection.Username!,
+                    Password = gitConnection.Password!
                 };
             }
 
-            var repoPath = Repository.Clone(gitConnection.Url, checkoutPath, options);
+            string repoPath;
+            log.InfoFormat("Cloning repository {0}", log.FormatLink(gitConnection.Url));
+            using (var timedOp = log.BeginTimedOperation("cloning repository"))
+            {
+                try
+                {
+                    repoPath = Repository.Clone(gitConnection.Url.AbsoluteUri, checkoutPath, options);
+                    timedOp.Complete();
+                }
+                catch (Exception e)
+                {
+                    timedOp.Abandon(e);
+                    throw new CommandException($"Failed to clone Git repository at {gitConnection.Url}. Are you sure this is a Git repository?");
+                }
+            }
+
             var repo = new Repository(repoPath);
-            
+
             //this is required to handle the issue around "HEAD"
-            var branchToCheckout = repo.GetBranchName(gitConnection.BranchName);
-            Branch remoteBranch = repo.Branches[$"origin/{branchToCheckout}"];
-            log.Verbose($"Checking out {remoteBranch.Tip.Sha}");
+            var branchToCheckout = repo.GetBranchName(gitConnection.GitReference);
+            var remoteBranch = repo.Branches.First(f => f.IsRemote && f.UpstreamBranchCanonicalName == branchToCheckout.Value);
+            
+            log.VerboseFormat("Checking out '{0}' @ {1}", branchToCheckout, remoteBranch.Tip.Sha.Substring(0, 10));
             
             //A local branch is required such that libgit2sharp can create "tracking" data
             // libgit2sharp does not support pushing from a detached head
-            if (repo.Branches[branchToCheckout] == null)
+            if (repo.Branches[branchToCheckout.Value] == null)
             {
-                repo.CreateBranch(branchToCheckout, remoteBranch.Tip);    
+                repo.CreateBranch(branchToCheckout.Value, remoteBranch.Tip);
             }
-            LibGit2Sharp.Commands.Checkout(repo, branchToCheckout);
-
-            return new RepositoryWrapper(repo, log, gitConnection, pullRequestCreator);
+            
+            LibGit2Sharp.Commands.Checkout(repo, branchToCheckout.ToFriendlyName());
+            
+            var gitVendorApiAdapter = vendorAgnosticApiAdapterFactory.TryCreateGitVendorApiAdaptor(gitConnection);
+            return new RepositoryWrapper(repo,
+                                         fileSystem,
+                                         checkoutPath,
+                                         log,
+                                         gitConnection,
+                                         gitVendorApiAdapter);
         }
     }
 }

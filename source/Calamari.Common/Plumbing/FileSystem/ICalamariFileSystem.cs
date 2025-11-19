@@ -54,5 +54,6 @@ namespace Calamari.Common.Plumbing.FileSystem
         string GetFileName(string filePath);
         string GetDirectoryName(string directoryPath);
         byte[] ReadAllBytes(string filePath);
+        void RemoveReadOnlyAttributeFromFile(string filePath);
     }
 }

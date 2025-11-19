@@ -51,7 +51,9 @@ namespace Calamari.Azure
         {
             "AzureGlobalCloud" => AzureAuthorityHosts.AzurePublicCloud,
             "AzureChinaCloud" => AzureAuthorityHosts.AzureChina,
+#pragma warning disable CS0618 // Type or member is obsolete - Microsoft Cloud Germany was closed on October 29th, 2021.
             "AzureGermanCloud" => AzureAuthorityHosts.AzureGermany,
+#pragma warning restore CS0618 // Type or member is obsolete
             "AzureUSGovernment" => AzureAuthorityHosts.AzureGovernment,
             _ => throw new InvalidOperationException($"ARM Environment {name} is not a known Azure Environment name.")
         };

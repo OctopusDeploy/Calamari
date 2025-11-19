@@ -173,9 +173,12 @@ namespace Calamari.Tests.AWS
                                                                                                                             },
                                                                                                                             cancellationToken);
                                        bucketOwnershipControlsResponse.OwnershipControls.Rules.Should()
-                                                                      .BeEquivalentTo(new OwnershipControlsRule
+                                                                      .BeEquivalentTo(new List<OwnershipControlsRule>
                                                                       {
-                                                                          ObjectOwnership = expectedObjectOwnership
+                                                                         new OwnershipControlsRule()
+                                                                         {
+                                                                             ObjectOwnership = expectedObjectOwnership
+                                                                         } 
                                                                       });
                                    });
         }

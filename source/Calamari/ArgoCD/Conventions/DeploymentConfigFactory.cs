@@ -1,18 +1,18 @@
 #if NET
 using System;
 using System.Linq;
-using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages;
-using Calamari.ArgoCD.Conventions.UpdateArgoCDAppImages.Models;
+using Calamari.ArgoCD.Models;
 using Calamari.Common.Commands;
 using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes;
+using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.ArgoCD.Conventions
 {
     public class DeploymentConfigFactory
     {
-        readonly INonSensitiveVariables nonSensitiveVariables;
+        readonly INonSensitiveVariables nonSensitiveVariables; 
 
         public DeploymentConfigFactory(INonSensitiveVariables nonSensitiveVariables)
         {
@@ -23,12 +23,12 @@ namespace Calamari.ArgoCD.Conventions
         {
             var commitParameters = CommitParameters(deployment);
             var inputPath = deployment.Variables.Get(SpecialVariables.Git.InputPath, string.Empty);
-            var recursive = deployment.Variables.GetFlag(SpecialVariables.Git.Recursive, false);
+            var purgeOutput = deployment.Variables.GetFlag(SpecialVariables.Git.PurgeOutput, false);
             
             return new ArgoCommitToGitConfig(
                                            deployment.CurrentDirectory,
                                            inputPath,
-                                           recursive,
+                                           purgeOutput,
                                            commitParameters);
         }
 
@@ -41,7 +41,7 @@ namespace Calamari.ArgoCD.Conventions
         
         bool RequiresPullRequest(RunningDeployment deployment)
         {
-            return OctopusFeatureToggles.ArgoCDCreatePullRequestFeatureToggle.IsEnabled(deployment.Variables) && deployment.Variables.Get(SpecialVariables.Git.CommitMethod) == SpecialVariables.Git.GitCommitMethods.PullRequest;
+            return deployment.Variables.GetFlag(SpecialVariables.Git.PullRequest.Create);
         }
 
         GitCommitParameters CommitParameters(RunningDeployment deployment)

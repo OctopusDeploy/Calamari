@@ -17,7 +17,7 @@ namespace Calamari.Deployment.Conventions
         {
             if (substituteInFilesBehaviour.IsEnabled(deployment))
             {
-                substituteInFilesBehaviour.Execute(deployment).Wait();
+                substituteInFilesBehaviour.Execute(deployment).GetAwaiter().GetResult();
             }
         }
     }

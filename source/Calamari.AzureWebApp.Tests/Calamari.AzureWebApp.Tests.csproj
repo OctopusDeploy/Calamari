@@ -6,6 +6,7 @@
     <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
     <LangVersion>8.0</LangVersion>
     <IsPackable>false</IsPackable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="nunit" Version="3.13.3"/>
@@ -26,15 +27,15 @@
 
   <Target Name="GetNetCoreShimFiles">
     <ItemGroup>
-      <NetCoreShimFiles Include="$(MSBuildProjectDirectory)/../Calamari.AzureWebApp/netcoreshim/netcoreshim.zip" Condition="'$(TargetFramework)' == 'net6.0'" />
+      <NetCoreShimFiles Include="$(MSBuildProjectDirectory)/../Calamari.AzureWebApp/netcoreshim/netcoreshim.zip" Condition="'$(IsWindowsNetCoreBuild)' == 'true'"/>
     </ItemGroup>
   </Target>
 
   <Target Name="CopyNetCoreShimFilesAfterBuild" AfterTargets="Build" DependsOnTargets="GetNetCoreShimFiles">
-    <Unzip SourceFiles="@(NetCoreShimFiles)" DestinationFolder="$(OutDir)/netcoreshim" SkipUnchangedFiles="true" Condition="'$(TargetFramework)' == 'net6.0'" />
+    <Unzip SourceFiles="@(NetCoreShimFiles)" DestinationFolder="$(OutDir)/netcoreshim" SkipUnchangedFiles="true" Condition="'$(IsWindowsNetCoreBuild)' == 'true'" />
   </Target>
 
   <Target Name="CopyNetCoreShimFilesAfterPublish" AfterTargets="Publish" DependsOnTargets="GetNetCoreShimFiles">
-    <Unzip SourceFiles="@(NetCoreShimFiles)" DestinationFolder="$(PublishDir)/netcoreshim" SkipUnchangedFiles="true" Condition="'$(TargetFramework)' == 'net6.0'" />
+    <Unzip SourceFiles="@(NetCoreShimFiles)" DestinationFolder="$(PublishDir)/netcoreshim" SkipUnchangedFiles="true" Condition="'$(IsWindowsNetCoreBuild)' == 'true'"/>
   </Target>
 </Project>

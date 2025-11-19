@@ -12,7 +12,7 @@ namespace Calamari.Common.Plumbing.Extensions
             return new Operation(log, operationMessage);
         }
 
-        public static void LogMetric(this ILog log, string metricName, object metricValue, string? operationId = null)
+        public static void LogMetric(this ILog log, string metricName, object metricValue, string operationId)
         {
             var serviceMessageParameters = new Dictionary<string, string>
             {

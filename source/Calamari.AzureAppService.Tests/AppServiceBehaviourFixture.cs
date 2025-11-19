@@ -415,7 +415,7 @@ namespace Calamari.AzureAppService.Tests
                                                                         storageAccountName,
                                                                         new StorageAccountCreateOrUpdateContent(
                                                                                                                 new StorageSku(StorageSkuName.StandardLrs),
-                                                                                                                StorageKind.Storage,
+                                                                                                                StorageKind.StorageV2,
                                                                                                                 ResourceGroupResource.Data.Location)
                                                                        );
 
@@ -453,7 +453,7 @@ namespace Calamari.AzureAppService.Tests
                                                                                        SiteConfig = new SiteConfigProperties
                                                                                        {
                                                                                            IsAlwaysOn = true,
-                                                                                           LinuxFxVersion = "DOTNET|6.0",
+                                                                                           LinuxFxVersion = "DOTNET|8.0",
                                                                                            Use32BitWorkerProcess = true,
                                                                                            AppSettings = new List<AppServiceNameValuePair>
                                                                                            {

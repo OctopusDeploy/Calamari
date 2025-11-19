@@ -8,7 +8,7 @@ namespace Calamari.Common.Features.Discovery
 {
     public interface ITargetDiscoveryContext
     {
-        public TargetDiscoveryScope Scope { get; }
+        public TargetDiscoveryScope? Scope { get; }
     }
 
     /// <summary>

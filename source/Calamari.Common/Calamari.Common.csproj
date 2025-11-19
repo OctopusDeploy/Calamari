@@ -5,6 +5,13 @@
         <LangVersion>8</LangVersion>
         <Nullable>enable</Nullable>
         <PlatformTarget>anycpu</PlatformTarget>
+        <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+        <PackageId>Octopus.Calamari.Common</PackageId>
+        <Authors>Octopus Deploy</Authors>
+        <Owners>Octopus Deploy</Owners>        
+        <Title>Calamari.Common</Title>
+        <PackageProjectUrl>https://github.com/OctopusDeploy/Calamari/</PackageProjectUrl>
+        <PackageLicenseUrl>https://github.com/OctopusDeploy/Calamari/blob/main/LICENSE.txt</PackageLicenseUrl>        
     </PropertyGroup>
     <PropertyGroup Condition=" '$(TargetFramework)' == 'net462' ">
         <DefineConstants>$(DefineConstants);USE_ALPHAFS_FOR_LONG_FILE_PATH_SUPPORT;HAS_SSL3</DefineConstants>
@@ -14,13 +21,13 @@
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(TargetFramework)' == 'net462' ">
-        <NoWarn>CS8600;CS8601;CS8602;CS8603;CS8604</NoWarn>
+        <NoWarn>CS8600;CS8601;CS8602;CS8603;CS8604;NU5104</NoWarn>
     </PropertyGroup>
 
     <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
         <PackageReference Include="NuGet.Commands" Version="5.11.5" />
-        <PackageReference Include="System.IO.FileSystem.AccessControl" Version="4.3.0" />
         <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="4.5.0" />
+        <PackageReference Include="System.IO.FileSystem.AccessControl" Version="5.0.0" />
         <PackageReference Include="System.Text.Encoding.CodePages" Version="8.0.0" />
         <PackageReference Include="System.Threading.AccessControl" Version="4.3.0" />
     </ItemGroup>
@@ -37,7 +44,7 @@
 
     <ItemGroup>
         <PackageReference Include="Autofac" Version="4.8.0" />
-        <PackageReference Include="Globfish" Version="1.0.4" />
+        <PackageReference Include="Octopus.Globfish" Version="1.0.8" />
         <PackageReference Include="JavaPropertiesParser" Version="0.2.1" />
         <PackageReference Include="Microsoft.Web.Xdt" Version="3.1.0" />
         <PackageReference Include="Octopus.Versioning" Version="5.1.876" />
@@ -58,7 +65,6 @@
       <EmbeddedResource Include="Features\Scripting\Python\InstallDependencies.py" />
       <EmbeddedResource Include="Features\Scripting\DotnetScript\Bootstrap.csx" />
       <EmbeddedResource Include="Features\Scripting\DotnetScript\ClassBootstrap.csx" />
-      <EmbeddedResource Include="Features\Scripting\ScriptCS\Bootstrap.csx" />
       <EmbeddedResource Include="Features\Scripting\WindowsPowerShell\Bootstrap.ps1" />
       <EmbeddedResource Include="Features\Scripting\WindowsPowerShell\DebugBootstrap.ps1" />
     </ItemGroup>
