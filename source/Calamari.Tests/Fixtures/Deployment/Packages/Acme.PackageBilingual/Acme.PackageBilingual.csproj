@@ -18,7 +18,6 @@
     <!-- NU5111: The script file '{0}' is not recognized by NuGet and hence will not be executed during installation of
          this package. Rename it to install.ps1, uninstall.ps1 or init.ps1 and place it directly under 'tools' -->
     <NoWarn>NU5100;NU5110;NU5111</NoWarn>
-    <NoWarn>NU5100;NU5110;NU5111</NoWarn>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
 
