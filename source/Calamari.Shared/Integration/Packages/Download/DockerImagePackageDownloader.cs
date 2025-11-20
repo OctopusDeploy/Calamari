@@ -237,10 +237,14 @@ namespace Calamari.Integration.Packages.Download
                            _ => throw new ArgumentOutOfRangeException(nameof(RuntimeInformation.OSArchitecture))
                        };
 
+            var platform = $"{os}/{arch}";
+            
+            log.Verbose($"Checking if docker image {fullImageName} ({platform}) has already been pulled.");
+
             var output = new List<string>();
             var error = new List<string>();
             var result = SilentProcessRunner.ExecuteCommand("docker",
-                                                            $"image inspect {fullImageName} --platform={os}/{arch} --format=\"{{{{.ID}}}}\"",
+                                                            $"image inspect {fullImageName} --platform={platform} --format=\"{{{{.ID}}}}\"",
                                                             ".",
                                                             environmentVariables,
                                                             stdout => { output.Add(stdout.Trim()); },
@@ -251,8 +255,8 @@ namespace Calamari.Integration.Packages.Download
                 return output;
             }
 
-            //if the output contains "No such image", it means the check succeeded, but the image has not been cached
-            return error.Any(str => str.Contains("No such image")) ? Array.Empty<string>() : null;
+            //if the output contains "No such image" or "does not provide the specified platform", it means the check succeeded, but the image for this platform has not been cached
+            return error.Any(str => str.Contains("No such image") || str.Contains("does not provide the specified platform")) ? Array.Empty<string>() : null;
         }
 
         IEnumerable<string>? GetImageDigests(string fullImageName)
