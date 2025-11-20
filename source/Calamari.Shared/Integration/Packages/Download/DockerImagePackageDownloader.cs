@@ -224,14 +224,23 @@ namespace Calamari.Integration.Packages.Download
 
         IEnumerable<string>? GetCachedImageDigests(string fullImageName)
         {
-            var platform = CalamariEnvironment.IsRunningOnWindows
-                ? "windows/amd64" //we are assuming all windows containers are amd64... Are there event
-                : "$(uname -m)"; //linux uses uname to get the arch
+            var os = CalamariEnvironment.IsRunningOnWindows
+                ? "windows"
+                : "linux";
+
+            var arch = RuntimeInformation.OSArchitecture switch
+                       {
+                           Architecture.Arm => "arm",
+                           Architecture.Arm64 => "arm64",
+                           Architecture.X64 => "amd64",
+                           Architecture.X86 => "386",
+                           _ => throw new ArgumentOutOfRangeException(nameof(RuntimeInformation.OSArchitecture))
+                       };
 
             var output = new List<string>();
             var error = new List<string>();
             var result = SilentProcessRunner.ExecuteCommand("docker",
-                                                            $"image inspect {fullImageName} --platform={platform} --format=\"{{{{.ID}}}}\"",
+                                                            $"image inspect {fullImageName} --platform={os}/{arch} --format=\"{{{{.ID}}}}\"",
                                                             ".",
                                                             environmentVariables,
                                                             stdout => { output.Add(stdout.Trim()); },
