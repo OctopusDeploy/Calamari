@@ -252,8 +252,11 @@ namespace Calamari.Integration.Packages.Download
 
             if (result.ExitCode == 0)
             {
+                log.Verbose($"Docker image {fullImageName} ({platform}) has already been pulled. Digest: {string.Join(Environment.NewLine, output.First())}");
                 return output;
             }
+            
+            log.Verbose($"Failed to inspect image {fullImageName} ({platform}). Message: {string.Join(Environment.NewLine, error.First())}");
 
             //if the output contains "No such image" or "does not provide the specified platform", it means the check succeeded, but the image for this platform has not been cached
             return error.Any(str => str.Contains("No such image") || str.Contains("does not provide the specified platform")) ? Array.Empty<string>() : null;
