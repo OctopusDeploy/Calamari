@@ -31,7 +31,7 @@ namespace Calamari.Integration.Packages.Download
         readonly ILog log;
         readonly IFeedLoginDetailsProviderFactory feedLoginDetailsProviderFactory;
         const string DockerHubRegistry = "index.docker.io";
-        
+
         static readonly HashSet<FeedType> SupportedLoginDetailsFeedTypes = new HashSet<FeedType>
         {
             FeedType.AwsElasticContainerRegistry,
@@ -69,9 +69,10 @@ namespace Calamari.Integration.Packages.Download
                 var feedLoginDetailsProvider = feedLoginDetailsProviderFactory.GetFeedLoginDetailsProvider(feedType);
                 return feedLoginDetailsProvider.GetFeedLoginDetails(variables, username, password, feedUri).GetAwaiter().GetResult();
             }
+
             throw new ArgumentException($"Invalid feed type: {feedTypeStr}");
         }
-        
+
         public PackagePhysicalFileMetadata DownloadPackage(string packageId,
                                                            IVersion version,
                                                            string feedId,
@@ -83,15 +84,14 @@ namespace Calamari.Integration.Packages.Download
                                                            TimeSpan downloadAttemptBackoff)
         {
             var contributedFeedType = variables.Get(AuthenticationVariables.FeedType);
-            if (Enum.TryParse(contributedFeedType, ignoreCase: true, out FeedType feedType) &&
-                SupportedLoginDetailsFeedTypes.Contains(feedType))
+            if (Enum.TryParse(contributedFeedType, ignoreCase: true, out FeedType feedType) && SupportedLoginDetailsFeedTypes.Contains(feedType))
             {
                 var loginDetails = GetContainerRegistryLoginDetails(contributedFeedType, username, password, feedUri);
                 username = loginDetails.Username;
                 password = loginDetails.Password;
                 feedUri = loginDetails.FeedUri;
             }
-            
+
             //Always try re-pull image, docker engine can take care of the rest
             var fullImageName = GetFullImageName(packageId, version, feedUri);
 
@@ -227,17 +227,23 @@ namespace Calamari.Integration.Packages.Download
             var platform = CalamariEnvironment.IsRunningOnWindows
                 ? "windows/amd64" //we are assuming all windows containers are amd64... Are there event
                 : "$(uname -m)"; //linux uses uname to get the arch
-            
-            var output = "";
+
+            var output = new List<string>();
+            var error = new List<string>();
             var result = SilentProcessRunner.ExecuteCommand("docker",
                                                             $"image inspect {fullImageName} --platform={platform} --format=\"{{{{.ID}}}}\"",
                                                             ".",
                                                             environmentVariables,
-                                                            (stdout) => { output += stdout + " "; },
-                                                            (error) => { });
-            return result.ExitCode == 0
-                ? output.Split(' ').Select(digest => digest.Trim())
-                : null;
+                                                            stdout => { output.Add(stdout.Trim()); },
+                                                            stdError => { error.Add(stdError.Trim()); });
+
+            if (result.ExitCode == 0)
+            {
+                return output;
+            }
+
+            //if the output contains "No such image", it means the check succeeded, but the image has not been cached
+            return error.Any(str => str.Contains("No such image")) ? Array.Empty<string>() : null;
         }
 
         IEnumerable<string>? GetImageDigests(string fullImageName)
