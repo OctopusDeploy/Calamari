@@ -11,6 +11,14 @@
     <PackageProjectUrl>https://github.com/OctopusDeploy/Calamari/</PackageProjectUrl>
     <PackageLicenseUrl>https://github.com/OctopusDeploy/Calamari/blob/main/LICENSE.txt</PackageLicenseUrl>
     <NuspecFile>Acme.PackageBilingual.nuspec</NuspecFile>
+    <!-- NU5100: The assembly '{0}' is not inside the 'lib' folder and hence it won't be added as a reference when the 
+         package is installed into a project. Move it into the 'lib' folder if it needs to be referenced. -->
+    <!-- NU5110: The script file '{0}' is outside the 'tools' folder and hence will not be executed during installation 
+         of this package. Move it into the 'tools' folder. -->
+    <!-- NU5111: The script file '{0}' is not recognized by NuGet and hence will not be executed during installation of
+         this package. Rename it to install.ps1, uninstall.ps1 or init.ps1 and place it directly under 'tools' -->
+    <NoWarn>NU5100;NU5110;NU5111</NoWarn>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
 
 </Project>

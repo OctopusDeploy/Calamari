@@ -21,6 +21,10 @@
     <DefineConstants>$(DefineConstants);NETFX;IIS_SUPPORT;USE_NUGET_V2_LIBS;USE_OCTODIFF_EXE;</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="NuGet.CommandLine" Version="7.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="System.DirectoryServices.AccountManagement" Version="4.7.0" />
     <PackageReference Include="WireMock.Net" Version="1.6.9" />
     <PackageReference Include="XPath2" Version="1.1.5" />
