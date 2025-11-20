@@ -134,7 +134,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
 
         [Test]
         [RequiresDockerInstalled]
-        [TestCase("octopustestaccount/octopetshop-productservice", "13.0")]
+        [TestCase("octopusdeploy/kubernetes-agent-tools-base", "1.33")]
         [TestCase("alpine", "3.6.5")]
         public void CachedDockerHubPackage_DoesNotGenerateImageNotCachedMessage(string image, string tag)
         {
@@ -185,7 +185,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         
         [Test]
         [RequiresDockerInstalled]
-        [TestCase("octopustestaccount/octopetshop-productservice", "13.0")]
+        [TestCase("octopusdeploy/kubernetes-agent-tools-base", "1.33")]
         [TestCase("alpine", "3.6.5")]
         public void NotCachedDockerHubPackage_GeneratesImageNotCachedMessage(string image, string tag)
         {

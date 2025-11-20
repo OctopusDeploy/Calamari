@@ -7,7 +7,7 @@
     <description>A sample project containing a Windows Azure cloud service.</description>
     <language>en-US</language>
     <projectUrl>http://tempuri.org/</projectUrl>
-    <licenseUrl>http://tempuri.org/</licenseUrl>
+    <license type="expression">Apache-2.0</license>
   </metadata>
    <files>
     <file src="**/*.*" target="" exclude="*.csproj"/>
