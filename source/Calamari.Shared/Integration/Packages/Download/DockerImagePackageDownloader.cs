@@ -3,12 +3,14 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.EmbeddedResources;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
+using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
@@ -29,7 +31,7 @@ namespace Calamari.Integration.Packages.Download
         readonly ILog log;
         readonly IFeedLoginDetailsProviderFactory feedLoginDetailsProviderFactory;
         const string DockerHubRegistry = "index.docker.io";
-        
+
         static readonly HashSet<FeedType> SupportedLoginDetailsFeedTypes = new HashSet<FeedType>
         {
             FeedType.AwsElasticContainerRegistry,
@@ -67,9 +69,10 @@ namespace Calamari.Integration.Packages.Download
                 var feedLoginDetailsProvider = feedLoginDetailsProviderFactory.GetFeedLoginDetailsProvider(feedType);
                 return feedLoginDetailsProvider.GetFeedLoginDetails(variables, username, password, feedUri).GetAwaiter().GetResult();
             }
+
             throw new ArgumentException($"Invalid feed type: {feedTypeStr}");
         }
-        
+
         public PackagePhysicalFileMetadata DownloadPackage(string packageId,
                                                            IVersion version,
                                                            string feedId,
@@ -81,15 +84,14 @@ namespace Calamari.Integration.Packages.Download
                                                            TimeSpan downloadAttemptBackoff)
         {
             var contributedFeedType = variables.Get(AuthenticationVariables.FeedType);
-            if (Enum.TryParse(contributedFeedType, ignoreCase: true, out FeedType feedType) &&
-                SupportedLoginDetailsFeedTypes.Contains(feedType))
+            if (Enum.TryParse(contributedFeedType, ignoreCase: true, out FeedType feedType) && SupportedLoginDetailsFeedTypes.Contains(feedType))
             {
                 var loginDetails = GetContainerRegistryLoginDetails(contributedFeedType, username, password, feedUri);
                 username = loginDetails.Username;
                 password = loginDetails.Password;
                 feedUri = loginDetails.FeedUri;
             }
-            
+
             //Always try re-pull image, docker engine can take care of the rest
             var fullImageName = GetFullImageName(packageId, version, feedUri);
 
@@ -152,7 +154,7 @@ namespace Calamari.Integration.Packages.Download
 
         bool IsImageCached(string fullImageName)
         {
-            var cachedDigests = GetCachedImageDigests();
+            var cachedDigests = GetCachedImageDigests(fullImageName);
             var selectedDigests = GetImageDigests(fullImageName);
 
             // If there are errors in the above steps, we treat the image as being cached and do not log image-not-cached
@@ -220,18 +222,41 @@ namespace Calamari.Integration.Packages.Download
             return (hash, size);
         }
 
-        IEnumerable<string>? GetCachedImageDigests()
+        IEnumerable<string>? GetCachedImageDigests(string fullImageName)
         {
-            var output = "";
+            var os = CalamariEnvironment.IsRunningOnWindows
+                ? "windows"
+                : "linux";
+
+            var arch = RuntimeInformation.OSArchitecture switch
+                       {
+                           Architecture.Arm => "arm",
+                           Architecture.Arm64 => "arm64",
+                           Architecture.X64 => "amd64",
+                           Architecture.X86 => "386",
+                           _ => throw new ArgumentOutOfRangeException(nameof(RuntimeInformation.OSArchitecture))
+                       };
+
+            var platform = $"{os}/{arch}";
+            
+            log.Verbose($"Checking if docker image {fullImageName} ({platform}) has already been pulled.");
+
+            var output = new List<string>();
+            var error = new List<string>();
             var result = SilentProcessRunner.ExecuteCommand("docker",
-                                                            "image ls --format=\"{{.ID}}\" --no-trunc",
+                                                            $"image inspect {fullImageName} --platform={platform} --format=\"{{{{.ID}}}}\"",
                                                             ".",
                                                             environmentVariables,
-                                                            (stdout) => { output += stdout + " "; },
-                                                            (error) => { });
-            return result.ExitCode == 0
-                ? output.Split(' ').Select(digest => digest.Trim())
-                : null;
+                                                            stdout => { output.Add(stdout.Trim()); },
+                                                            stdError => { error.Add(stdError.Trim()); });
+
+            if (result.ExitCode == 0)
+            {
+                return output;
+            }
+
+            //if the output contains "No such image" or "does not provide the specified platform", it means the check succeeded, but the image for this platform has not been cached
+            return error.Any(str => str.Contains("No such image") || str.Contains("does not provide the specified platform")) ? Array.Empty<string>() : null;
         }
 
         IEnumerable<string>? GetImageDigests(string fullImageName)
@@ -257,7 +282,7 @@ namespace Calamari.Integration.Packages.Download
             try
             {
                 return JArray.Parse(output.ToLowerInvariant())
-                             .Select(token => (string)token.SelectToken("schemav2manifest.config.digest"))
+                             .Select(token => (string)token.SelectToken("descriptor.digest"))
                              .ToList();
             }
             catch
