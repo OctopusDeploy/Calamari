@@ -1,4 +1,4 @@
-#r "nuget: NuGet.Commands, 6.10.0"
+#r "nuget: NuGet.Commands, 6.10.0.107"
 
 using NuGet.Configuration;
 using NuGet.Protocol.Core.Types;

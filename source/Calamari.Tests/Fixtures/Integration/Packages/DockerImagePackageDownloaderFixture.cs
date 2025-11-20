@@ -138,7 +138,9 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         [TestCase("alpine", "3.6.5")]
         public void CachedDockerHubPackage_DoesNotGenerateImageNotCachedMessage(string image, string tag)
         {
+            Console.WriteLine($"Precaching {image}:{tag}");
             PreCacheImage(image, tag, dockerHubFeedUri, dockerTestUsername, dockerTestPassword);
+            Console.WriteLine($"Precached {image}:{tag}");
             
             var log = new InMemoryLog();
             var downloader = GetDownloader(log);
@@ -164,8 +166,10 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             var log = new InMemoryLog();
             var downloader = GetDownloader(log);
 
+            Console.WriteLine($"Precaching {image}:{tag}");
             PreCacheImage(image, tag, authFeedUri, feedUsername, feedPassword);
-
+            Console.WriteLine($"Precached {image}:{tag}");
+            
             downloader.DownloadPackage(image, 
                                        new SemanticVersion(tag), 
                                        "docker-feed", 
@@ -231,15 +235,15 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
 
         static void PreCacheImage(string packageId, string tag, string feedUri, string username, string password)
         {
-            GetDownloader(new SilentLog()).DownloadPackage(packageId, 
-                                                           new SemanticVersion(tag), 
-                                                           "docker-feed", 
-                                                           new Uri(feedUri), 
-                                                           username, 
-                                                           password, 
-                                                           true, 
-                                                           1, 
-                                                           TimeSpan.FromSeconds(3));
+            GetDownloader(new InMemoryLog()).DownloadPackage(packageId, 
+                                                             new SemanticVersion(tag), 
+                                                             "docker-feed", 
+                                                             new Uri(feedUri), 
+                                                             username, 
+                                                             password, 
+                                                             true, 
+                                                             1, 
+                                                             TimeSpan.FromSeconds(3));
         }
 
         static void RemoveCachedImage(string image, string tag)

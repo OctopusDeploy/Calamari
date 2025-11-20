@@ -64,7 +64,7 @@ Option 1 is recommended if you can use the default worker.
 
 #### Drawbacks:
 - It takes ~10 minutes to build and pack Calamari, however you can reduce this significantly by targeting a specific runtime/framework if you don't need the rest
-    - eg `./build-local.sh -y --framework "net6.0" --runtime "linux-x64"` (note that consolidation tests will not run when targeting a specific runtime)
+    - eg `./build-local.sh -y --framework "net8.0" --runtime "linux-x64"` (note that consolidation tests will not run when targeting a specific runtime)
 - You need to restart Server for Calamari changes to take effect
 
 ### Bonus Variables!
