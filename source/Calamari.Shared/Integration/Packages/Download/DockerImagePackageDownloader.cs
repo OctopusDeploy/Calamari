@@ -285,7 +285,7 @@ namespace Calamari.Integration.Packages.Download
             try
             {
                 return JArray.Parse(output.ToLowerInvariant())
-                             .Select(token => (string)token.SelectToken("schemav2manifest.config.digest"))
+                             .Select(token => (string)token.SelectToken("descriptor.digest"))
                              .ToList();
             }
             catch
