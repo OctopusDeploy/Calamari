@@ -3,12 +3,14 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.EmbeddedResources;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Features.Scripting;
 using Calamari.Common.Features.Scripts;
+using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
@@ -152,7 +154,7 @@ namespace Calamari.Integration.Packages.Download
 
         bool IsImageCached(string fullImageName)
         {
-            var cachedDigests = GetCachedImageDigests();
+            var cachedDigests = GetCachedImageDigests(fullImageName);
             var selectedDigests = GetImageDigests(fullImageName);
 
             // If there are errors in the above steps, we treat the image as being cached and do not log image-not-cached
@@ -220,11 +222,15 @@ namespace Calamari.Integration.Packages.Download
             return (hash, size);
         }
 
-        IEnumerable<string>? GetCachedImageDigests()
+        IEnumerable<string>? GetCachedImageDigests(string fullImageName)
         {
+            var platform = CalamariEnvironment.IsRunningOnWindows
+                ? "windows/amd64" //we are assuming all windows containers are amd64... Are there event
+                : "$(uname -m)"; //linux uses uname to get the arch
+            
             var output = "";
             var result = SilentProcessRunner.ExecuteCommand("docker",
-                                                            "image ls --format=\"{{.ID}}\" --no-trunc",
+                                                            $"image inspect {fullImageName} --platform={platform} --format=\"{{{{.ID}}}}\"",
                                                             ".",
                                                             environmentVariables,
                                                             (stdout) => { output += stdout + " "; },
