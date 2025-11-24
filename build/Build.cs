@@ -111,9 +111,7 @@ partial class Build : NukeBuild
     static AbsolutePath LegacyCalamariDirectory => PublishDirectory / "Calamari.Legacy";
 
     Lazy<string> NugetVersion { get; }
-
-    Target InstallDotNetFramework => d => d.Executes(() => Log.Information("Empty target to let Nuke install the DotNet SDK required")); 
-
+    
     Target CheckForbiddenWords =>
         d =>
             d.Executes(() =>

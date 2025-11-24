@@ -56,7 +56,6 @@
 
   <Target Name="GetNetCoreShimFiles">
     <ItemGroup>
-      <NetCoreShimFiles Include="$(MSBuildProjectDirectory)/netcoreshim/netcoreshim.zip" Condition="'$(TargetFramework)' == 'net8.0'" />
       <NetCoreShimFiles Include="$(MSBuildProjectDirectory)/netcoreshim/netcoreshim.zip" Condition="'$(IsWindowsNetCoreBuild)' == 'true'"/>
     </ItemGroup>
   </Target>
