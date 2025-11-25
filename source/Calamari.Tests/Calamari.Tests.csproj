@@ -27,17 +27,17 @@
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="System.DirectoryServices.AccountManagement" Version="4.7.0"/>
-        <PackageReference Include="System.Text.Json" Version="8.0.6" />
-        <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.41" />
+        <PackageReference Include="System.Text.Json" Version="8.0.6"/>
+        <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.41"/>
         <PackageReference Include="WireMock.Net" Version="1.6.9"/>
         <PackageReference Include="XPath2" Version="1.1.5"/>
         <ProjectReference Include="..\Calamari.Testing\Calamari.Testing.csproj"/>
         <ProjectReference Include="..\Calamari\Calamari.csproj"/>
-        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.0" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.0"/>
         <PackageReference Include="NSubstitute" Version="2.0.3"/>
         <PackageReference Include="FluentAssertions" Version="7.2.0"/>
-        <PackageReference Include="NUnit" Version="3.14.0" />
-        <PackageReference Include="NUnit3TestAdapter" Version="5.2.0" />
+        <PackageReference Include="NUnit" Version="3.14.0"/>
+        <PackageReference Include="NUnit3TestAdapter" Version="5.2.0"/>
         <PackageReference Include="Assent" Version="1.6.1"/>
         <PackageReference Include="Polly" Version="8.3.1"/>
         <PackageReference Include="System.ComponentModel.TypeConverter" Version="4.3.0"/>
@@ -46,7 +46,7 @@
     </ItemGroup>
     <ItemGroup Condition="'$(TargetFramework)'=='net8.0'">
         <PackageReference Include="Markdown" Version="2.1.0"/>
-        <PackageReference Include="NGitLab" Version="10.4.1" />
+        <PackageReference Include="NGitLab" Version="10.4.1"/>
         <PackageReference Include="System.ServiceProcess.ServiceController" Version="4.3.0"/>
     </ItemGroup>
     <ItemGroup Condition="'$(TargetFramework)'=='net462'">
@@ -285,29 +285,31 @@
         </ItemGroup>
     </Target>
 
-<Target Name="CopyToolsAfterBuild" AfterTargets="Build" DependsOnTargets="GetToolFiles">
-  <PropertyGroup>
-    <!-- Always use a safe default path -->
-    <UnzipDestination>$(MSBuildProjectDirectory)/bin/$(Configuration)/$(TargetFramework)/</UnzipDestination>
-  </PropertyGroup>
-  <ItemGroup>
-    <DotnetScriptFilesExe Include="$(UnzipDestination)/dotnet-script/*.sh;$(UnzipDestination)/dotnet-script/*.exe"/>
-  </ItemGroup>
-  <Copy SourceFiles="@(NuGetFiles)" DestinationFolder="$(UnzipDestination)/NuGet/" SkipUnchangedFiles="true" Condition="'$(TargetFramework)' == 'net462'"/>
-  <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(UnzipDestination)" SkipUnchangedFiles="true"/>
-  <Exec Command="chmod +x %(DotnetScriptFilesExe.Identity)" IgnoreExitCode="true"/>
-</Target>
+    <Target Name="CopyToolsAfterBuild" AfterTargets="Build" DependsOnTargets="GetToolFiles">
+        <PropertyGroup>
+            <!-- Always use a safe default path -->
+            <UnzipDestination Condition="'$(OutDir)' == '' OR '$(OutDir)' == '/'">$(MSBuildProjectDirectory)/bin/$(Configuration)/$(TargetFramework)/</UnzipDestination>
+            <UnzipPublishDestination Condition="'$(OutDir)' != '' AND '$(OutDir)' != '/'">$(OutDir)</UnzipPublishDestination>
+        </PropertyGroup>
+        <ItemGroup>
+            <DotnetScriptFilesExe Include="$(UnzipDestination)/dotnet-script/*.sh;$(UnzipDestination)/dotnet-script/*.exe"/>
+        </ItemGroup>
+        <Copy SourceFiles="@(NuGetFiles)" DestinationFolder="$(UnzipDestination)/NuGet/" SkipUnchangedFiles="true" Condition="'$(TargetFramework)' == 'net462'"/>
+        <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(UnzipDestination)" SkipUnchangedFiles="true"/>
+        <Exec Command="chmod +x %(DotnetScriptFilesExe.Identity)" IgnoreExitCode="true"/>
+    </Target>
 
-<Target Name="CopyToolsAfterPublish" AfterTargets="Publish" DependsOnTargets="GetToolFiles">
-  <PropertyGroup>
-    <!-- Always use a safe default path for publish -->
-    <UnzipPublishDestination>$(MSBuildProjectDirectory)/bin/$(Configuration)/$(TargetFramework)/publish/</UnzipPublishDestination>
-  </PropertyGroup>
-  <ItemGroup>
-    <DotnetScriptFilesExe Include="$(UnzipPublishDestination)/dotnet-script/*.sh;$(UnzipPublishDestination)/dotnet-script/*.exe"/>
-  </ItemGroup>
-  <Copy SourceFiles="@(NuGetFiles)" DestinationFolder="$(UnzipPublishDestination)/NuGet/" SkipUnchangedFiles="true" Condition="'$(TargetFramework)' == 'net462'"/>
-  <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(UnzipPublishDestination)" SkipUnchangedFiles="true"/>
-  <Exec Command="chmod +x %(DotnetScriptFilesExe.Identity)" IgnoreExitCode="true"/>
-</Target>
+    <Target Name="CopyToolsAfterPublish" AfterTargets="Publish" DependsOnTargets="GetToolFiles">
+        <PropertyGroup>
+            <!-- Always use a safe default path for publish -->
+            <UnzipPublishDestination Condition="'$(PublishDir)' == '' OR '$(PublishDir)' == '/'">$(MSBuildProjectDirectory)/bin/$(Configuration)/$(TargetFramework)/publish/</UnzipPublishDestination>
+            <UnzipPublishDestination Condition="'$(PublishDir)' != '' AND '$(PublishDir)' != '/'">$(PublishDir)</UnzipPublishDestination>
+        </PropertyGroup>
+        <ItemGroup>
+            <DotnetScriptFilesExe Include="$(UnzipPublishDestination)/dotnet-script/*.sh;$(UnzipPublishDestination)/dotnet-script/*.exe"/>
+        </ItemGroup>
+        <Copy SourceFiles="@(NuGetFiles)" DestinationFolder="$(UnzipPublishDestination)/NuGet/" SkipUnchangedFiles="true" Condition="'$(TargetFramework)' == 'net462'"/>
+        <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(UnzipPublishDestination)" SkipUnchangedFiles="true"/>
+        <Exec Command="chmod +x %(DotnetScriptFilesExe.Identity)" IgnoreExitCode="true"/>
+    </Target>
 </Project>
