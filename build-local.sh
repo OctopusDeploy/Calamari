@@ -39,7 +39,7 @@ StartMessage="${Green}\
 ║  This script is intended to only be run locally and not in CI.                                 ║
 ║                                                                                                ║
 ║  If something unexpected is happening in your build or Calamari changes you may want to run    ║
-║  the full build by running ./build.ps1 and check again as something in the optimizations here  ║
+║  the full build by running ./build.sh and check again as something in the optimizations here  ║
 ║                                                                                                ║
 ║  might have caused an issue.                                                                   ║
 ╬════════════════════════════════════════════════════════════════════════════════════════════════╬\
