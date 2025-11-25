@@ -306,10 +306,10 @@
             <UnzipDestination Condition="'$(PublishDir)' != '' AND '$(PublishDir)' != '/'">$(PublishDir)</UnzipDestination>
         </PropertyGroup>
         <ItemGroup>
-            <DotnetScriptFilesExe Include="$(UnzipPublishDestination)/dotnet-script/*.sh;$(UnzipPublishDestination)/dotnet-script/*.exe"/>
+            <DotnetScriptFilesExe Include="$(UnzipDestination)/dotnet-script/*.sh;$(UnzipDestination)/dotnet-script/*.exe"/>
         </ItemGroup>
-        <Copy SourceFiles="@(NuGetFiles)" DestinationFolder="$(UnzipPublishDestination)/NuGet/" SkipUnchangedFiles="true" Condition="'$(TargetFramework)' == 'net462'"/>
-        <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(UnzipPublishDestination)" SkipUnchangedFiles="true"/>
+        <Copy SourceFiles="@(NuGetFiles)" DestinationFolder="$(UnzipDestination)/NuGet/" SkipUnchangedFiles="true" Condition="'$(TargetFramework)' == 'net462'"/>
+        <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(UnzipDestination)" SkipUnchangedFiles="true"/>
         <Exec Command="chmod +x %(DotnetScriptFilesExe.Identity)" IgnoreExitCode="true" Condition="!$([MSBuild]::IsOSPlatform('Windows'))"/>
     </Target>
 </Project>
