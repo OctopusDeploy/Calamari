@@ -289,27 +289,27 @@
         <PropertyGroup>
             <!-- Always use a safe default path -->
             <UnzipDestination Condition="'$(OutDir)' == '' OR '$(OutDir)' == '/'">$(MSBuildProjectDirectory)/bin/$(Configuration)/$(TargetFramework)/</UnzipDestination>
-            <UnzipPublishDestination Condition="'$(OutDir)' != '' AND '$(OutDir)' != '/'">$(OutDir)</UnzipPublishDestination>
+            <UnzipDestination Condition="'$(OutDir)' != '' AND '$(OutDir)' != '/'">$(OutDir)</UnzipDestination>
         </PropertyGroup>
         <ItemGroup>
             <DotnetScriptFilesExe Include="$(UnzipDestination)/dotnet-script/*.sh;$(UnzipDestination)/dotnet-script/*.exe"/>
         </ItemGroup>
         <Copy SourceFiles="@(NuGetFiles)" DestinationFolder="$(UnzipDestination)/NuGet/" SkipUnchangedFiles="true" Condition="'$(TargetFramework)' == 'net462'"/>
         <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(UnzipDestination)" SkipUnchangedFiles="true"/>
-        <Exec Command="chmod +x %(DotnetScriptFilesExe.Identity)" IgnoreExitCode="true"/>
+        <Exec Command="chmod +x %(DotnetScriptFilesExe.Identity)" IgnoreExitCode="true" Condition="!$([MSBuild]::IsOSPlatform('Windows'))"/>
     </Target>
 
     <Target Name="CopyToolsAfterPublish" AfterTargets="Publish" DependsOnTargets="GetToolFiles">
         <PropertyGroup>
             <!-- Always use a safe default path for publish -->
-            <UnzipPublishDestination Condition="'$(PublishDir)' == '' OR '$(PublishDir)' == '/'">$(MSBuildProjectDirectory)/bin/$(Configuration)/$(TargetFramework)/publish/</UnzipPublishDestination>
-            <UnzipPublishDestination Condition="'$(PublishDir)' != '' AND '$(PublishDir)' != '/'">$(PublishDir)</UnzipPublishDestination>
+            <UnzipDestination Condition="'$(PublishDir)' == '' OR '$(PublishDir)' == '/'">$(MSBuildProjectDirectory)/bin/$(Configuration)/$(TargetFramework)/publish/</UnzipDestination>
+            <UnzipDestination Condition="'$(PublishDir)' != '' AND '$(PublishDir)' != '/'">$(PublishDir)</UnzipDestination>
         </PropertyGroup>
         <ItemGroup>
             <DotnetScriptFilesExe Include="$(UnzipPublishDestination)/dotnet-script/*.sh;$(UnzipPublishDestination)/dotnet-script/*.exe"/>
         </ItemGroup>
         <Copy SourceFiles="@(NuGetFiles)" DestinationFolder="$(UnzipPublishDestination)/NuGet/" SkipUnchangedFiles="true" Condition="'$(TargetFramework)' == 'net462'"/>
         <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(UnzipPublishDestination)" SkipUnchangedFiles="true"/>
-        <Exec Command="chmod +x %(DotnetScriptFilesExe.Identity)" IgnoreExitCode="true"/>
+        <Exec Command="chmod +x %(DotnetScriptFilesExe.Identity)" IgnoreExitCode="true" Condition="!$([MSBuild]::IsOSPlatform('Windows'))"/>
     </Target>
 </Project>
