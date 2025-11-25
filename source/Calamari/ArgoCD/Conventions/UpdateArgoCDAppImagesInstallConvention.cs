@@ -2,7 +2,6 @@
 #nullable enable
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -10,7 +9,6 @@ using Calamari.ArgoCD.Domain;
 using Calamari.ArgoCD.Dtos;
 using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.Git.GitVendorApiAdapters;
-using Calamari.ArgoCD.GitHub;
 using Calamari.ArgoCD.Helm;
 using Calamari.ArgoCD.Models;
 using Calamari.Common.Commands;
@@ -18,7 +16,6 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.Conventions;
-using Microsoft.IdentityModel.Tokens;
 using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.ArgoCD.Conventions

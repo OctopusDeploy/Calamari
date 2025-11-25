@@ -10,7 +10,7 @@ using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using LibGit2Sharp;
-using Microsoft.IdentityModel.Tokens;
+using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.ArgoCD.Git
 {
@@ -63,7 +63,7 @@ namespace Calamari.ArgoCD.Git
         public void RecursivelyStageFilesForRemoval(string subPath)
         {
             var cleansedSubPath = subPath.StartsWith("./") ? subPath.Substring(2) : subPath;
-            if (!cleansedSubPath.EndsWith("/") && !string.IsNullOrEmpty(cleansedSubPath))
+            if (!cleansedSubPath.EndsWith("/") && cleansedSubPath.IsNullOrEmpty())
             {
                 cleansedSubPath += "/";
             }
