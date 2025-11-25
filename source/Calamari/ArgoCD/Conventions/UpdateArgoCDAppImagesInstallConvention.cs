@@ -73,7 +73,7 @@ namespace Calamari.ArgoCD.Conventions
                 log.VerboseFormat("- {0}", app.Name);
             }
 
-            var updatedApplications = new List<string>();
+            var updatedApplications = new HashSet<string>();
             var newImagesWritten = new HashSet<string>();
             var gitReposUpdated = new HashSet<string>();
 
@@ -132,9 +132,12 @@ namespace Calamari.ArgoCD.Conventions
 
                                 didUpdateSomething |= didPush;
 
-                                newImagesWritten.UnionWith(updatedImages);
-                                updatedApplications.Add(applicationFromYaml.Metadata.Name);
-                                gitReposUpdated.Add(applicationSource.RepoUrl.AbsoluteUri);
+                                if (didPush)
+                                {
+                                    newImagesWritten.UnionWith(updatedImages);
+                                    updatedApplications.Add(applicationFromYaml.Metadata.Name);
+                                    gitReposUpdated.Add(applicationSource.RepoUrl.AbsoluteUri);
+                                }
                             }
                         }
                     }
@@ -171,9 +174,12 @@ namespace Calamari.ArgoCD.Conventions
 
                                 didUpdateSomething |= didPush;
 
-                                newImagesWritten.UnionWith(helmUpdateResult.ImagesUpdated);
-                                updatedApplications.Add(applicationFromYaml.Metadata.Name);
-                                gitReposUpdated.Add(valuesFileSource.RepoUrl.ToString());
+                                if (didPush)
+                                {
+                                    newImagesWritten.UnionWith(helmUpdateResult.ImagesUpdated);
+                                    updatedApplications.Add(applicationFromYaml.Metadata.Name);
+                                    gitReposUpdated.Add(valuesFileSource.RepoUrl.ToString());
+                                }
                             }
                         }
                     }
@@ -192,11 +198,11 @@ namespace Calamari.ArgoCD.Conventions
             }
 
             var gatewayIds = argoProperties.Applications.Select(a => a.GatewayId).ToHashSet();
-            var outputWriter = new ArgoCDImageUpdateOutputWriter(log);
+            var outputWriter = new ArgoCDOutputVariablesWriter(log);
             outputWriter.WriteImageUpdateOutput(gatewayIds,
                                                 gitReposUpdated,
                                                 argoProperties.Applications.Select(a => a.Name),
-                                                updatedApplications.Distinct(),
+                                                updatedApplications,
                                                 newImagesWritten.Count
                                                );
         }

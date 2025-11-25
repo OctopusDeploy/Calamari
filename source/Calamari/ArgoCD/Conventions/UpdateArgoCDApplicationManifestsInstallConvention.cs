@@ -76,6 +76,9 @@ namespace Calamari.ArgoCD.Conventions
                 log.VerboseFormat("- {0}", app.Name);
             }
 
+            var updatedApplications = new HashSet<string>();
+            var gitReposUpdated = new HashSet<string>();
+
             foreach (var application in argoProperties.Applications)
             {
                 log.InfoFormat("Processing application {0}", application.Name);
@@ -146,6 +149,8 @@ namespace Calamari.ArgoCD.Conventions
                                           .GetResult();
 
                                 didUpdateSomething = true;
+                                updatedApplications.Add(application.Name);
+                                gitReposUpdated.Add(applicationSource.RepoUrl.AbsoluteUri);
                             }
                             else
                             {
@@ -153,19 +158,28 @@ namespace Calamari.ArgoCD.Conventions
                             }
                         }
                     }
-                    
-                    //if we have links, use that to generate a link, otherwise just put the name there
-                    var linkifiedAppName = instanceLinks != null
-                        ? log.FormatLink(instanceLinks.ApplicationDetails(application.Name, application.KubernetesNamespace), application.Name)
-                        : application.Name;
-
-                    var message = didUpdateSomething
-                        ? "Updated Application {0}"
-                        : "Nothing to update for Application {0}";
-
-                    log.InfoFormat(message, linkifiedAppName);
                 }
+                
+                //if we have links, use that to generate a link, otherwise just put the name there
+                var linkifiedAppName = instanceLinks != null
+                    ? log.FormatLink(instanceLinks.ApplicationDetails(application.Name, application.KubernetesNamespace), application.Name)
+                    : application.Name;
+
+                var message = didUpdateSomething
+                    ? "Updated Application {0}"
+                    : "Nothing to update for Application {0}";
+
+                log.InfoFormat(message, linkifiedAppName);
             }
+            
+            var gatewayIds = argoProperties.Applications.Select(a => a.GatewayId).ToHashSet();
+            var outputWriter = new ArgoCDOutputVariablesWriter(log);
+            outputWriter.WriteManifestUpdateOutput(gatewayIds,
+                                                gitReposUpdated,
+                                                argoProperties.Applications.Select(a => a.Name),
+                                                updatedApplications.Distinct()
+                                               );
+
         }
 
         bool TryCalculateOutputPath(SourceBase sourceToUpdate, out string outputPath)
