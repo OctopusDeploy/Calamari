@@ -419,7 +419,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             using var _ = new AssertionScope();
             var serviceMessages = log.Messages.GetServiceMessagesOfType("setVariable");
             serviceMessages.GetPropertyValue("ArgoCD.GatewayIds").Should().Be(GatewayId);
-            serviceMessages.GetPropertyValue("ArgoCD.GitUris").Should().Be(updated ? "file://" + RepoUrl : string.Empty);
+            serviceMessages.GetPropertyValue("ArgoCD.GitUris").Should().Be(updated ? new Uri(RepoUrl).AbsoluteUri : string.Empty);
             serviceMessages.GetPropertyValue("ArgoCD.TotalMatchingApplications").Should().Be("App1");
             serviceMessages.GetPropertyValue("ArgoCD.UpdatedApplications").Should().Be(updated ? "App1" : string.Empty);
         }

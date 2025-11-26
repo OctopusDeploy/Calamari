@@ -405,7 +405,7 @@ service:
             using var _ = new AssertionScope();
             var serviceMessages = log.Messages.GetServiceMessagesOfType("setVariable");
             serviceMessages.GetPropertyValue("ArgoCD.GatewayIds").Should().Be(GatewayId);
-            serviceMessages.GetPropertyValue("ArgoCD.GitUris").Should().Be(updated ? "file://" + OriginPath : string.Empty);
+            serviceMessages.GetPropertyValue("ArgoCD.GitUris").Should().Be(updated ? new Uri(OriginPath).AbsoluteUri : string.Empty);
             serviceMessages.GetPropertyValue("ArgoCD.TotalMatchingApplications").Should().Be("App1");
             serviceMessages.GetPropertyValue("ArgoCD.UpdatedApplications").Should().Be(updated ? "App1" : string.Empty);
             serviceMessages.GetPropertyValue("ArgoCD.UpdatedImages").Should().Be(updated ? "1" : "0");
