@@ -34,7 +34,7 @@ namespace Calamari.Common.Features.Scripting.WindowsPowerShell
             var effectiveEnvironmentVars = environmentVars ?? new Dictionary<string, string>();
 
             // Set unique cache path (XDG_CACHE_HOME) to prevent corruption in parallel executions
-            if (variables.GetFlag(PowerShellVariables.UniqueCachePath, true))
+            if (variables.GetFlag(PowerShellVariables.UniqueCachePath, false))
             {
                 var taskId = variables.Get(KnownVariables.ServerTask.Id) ?? "notask";
                 effectiveEnvironmentVars["XDG_CACHE_HOME"] = Path.Combine(
