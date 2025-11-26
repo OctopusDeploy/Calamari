@@ -38,11 +38,10 @@ namespace Calamari.Common.Features.Scripting.WindowsPowerShell
             if (variables.GetFlag(PowerShellVariables.UniqueCachePath)
                 && !CalamariEnvironment.IsRunningOnWindows)
             {
-                var taskId = variables.Get(KnownVariables.ServerTask.Id) ?? "notask";
+                var workingDirectory = Path.GetDirectoryName(script.File) ?? Environment.CurrentDirectory;
                 effectiveEnvironmentVars["XDG_CACHE_HOME"] = Path.Combine(
-                    Path.GetTempPath(),
+                    workingDirectory,
                     "CalamariPowerShellCache",
-                    taskId,
                     Guid.NewGuid().ToString("N")
                 );
             }
