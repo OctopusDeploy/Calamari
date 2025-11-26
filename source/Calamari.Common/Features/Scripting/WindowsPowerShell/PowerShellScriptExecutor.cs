@@ -31,9 +31,23 @@ namespace Calamari.Common.Features.Scripting.WindowsPowerShell
             var executable = powerShellBootstrapper.PathToPowerShellExecutable(variables);
             var arguments = powerShellBootstrapper.FormatCommandArguments(bootstrapFile, debuggingBootstrapFile, variables);
 
+            var effectiveEnvironmentVars = environmentVars ?? new Dictionary<string, string>();
+
+            // Set unique cache path (XDG_CACHE_HOME) to prevent corruption in parallel executions
+            if (variables.GetFlag(PowerShellVariables.UniqueCachePath, true))
+            {
+                var taskId = variables.Get(KnownVariables.ServerTask.Id) ?? "notask";
+                effectiveEnvironmentVars["XDG_CACHE_HOME"] = Path.Combine(
+                    Path.GetTempPath(),
+                    "CalamariPowerShellCache",
+                    taskId,
+                    Guid.NewGuid().ToString("N")
+                );
+            }
+
             var invocation = new CommandLineInvocation(executable, arguments)
             {
-                EnvironmentVars = environmentVars,
+                EnvironmentVars = effectiveEnvironmentVars,
                 WorkingDirectory = Path.GetDirectoryName(script.File),
                 UserName = powerShellBootstrapper.AllowImpersonation() ? variables.Get(PowerShellVariables.UserName) : null,
                 Password = powerShellBootstrapper.AllowImpersonation() ? ToSecureString(variables.Get(PowerShellVariables.Password)) : null
