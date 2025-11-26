@@ -410,7 +410,7 @@ partial class Build : NukeBuild
         }
 
         packagesToPublish
-            //We only need to bundle executable (not tests or libraries) full framework projects 
+            //We only need to bundle executable (not tests or libraries) full framework projects
             .Where(d => d.Framework == Frameworks.Net462 && d.Project.GetOutputType() == "Exe")
             .ForEach(calamariPackageMetadata =>
                      {
@@ -736,7 +736,7 @@ partial class Build : NukeBuild
                            .SetVerbosity(BuildVerbosity)
                            .SetRuntime(runtimeId)
                            .SetVersion(version)
-                           .SetSelfContained(OperatingSystem.IsWindows()) // This is here purely to make the local build experience on non-Windows devices workable - Publish breaks on non-Windows platforms with SelfContained = true
+                           .SetSelfContained(runtimeId != null)
                      );
 
         if (WillSignBinaries)

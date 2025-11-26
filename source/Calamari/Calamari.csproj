@@ -109,7 +109,7 @@
     </ItemGroup>
   </Target>
   <Target Name="CopyDotnetScriptFilesAfterBuild" AfterTargets="Build" DependsOnTargets="GetToolFiles">
-    <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(OutDir)/" />
+    <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(OutputPath)/" />
   </Target>
   <Target Name="CopyDotnetScriptFilesAfterPublish" AfterTargets="Publish" DependsOnTargets="GetToolFiles">
     <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(PublishDir)/" />
