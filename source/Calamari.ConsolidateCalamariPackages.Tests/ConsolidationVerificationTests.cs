@@ -44,7 +44,7 @@ namespace Calamari.ConsolidateCalamariPackages.Tests
         {
             return new Dictionary<string, PackagePropertiesToTest>
             {
-                { "Calamari", new PackagePropertiesToTest(NetCoreArchitectures, true) },
+                { "Calamari", new PackagePropertiesToTest(NetCoreArchitectures, false /* this is no longer a nuget package */) },
                 { "Calamari.AzureServiceFabric", new PackagePropertiesToTest(new[] { WindowsX64Arch }, false) },
                 { "Calamari.AzureAppService", new PackagePropertiesToTest(NetCoreArchitectures, false) },
                 { "Calamari.AzureResourceGroup", new PackagePropertiesToTest(NetCoreArchitectures, false) },
