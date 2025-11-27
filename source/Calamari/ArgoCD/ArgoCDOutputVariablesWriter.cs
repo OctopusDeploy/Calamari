@@ -19,38 +19,43 @@ namespace Calamari.ArgoCD
                                            IEnumerable<string> gitRepos,
                                            IEnumerable<string> totalApplications,
                                            IEnumerable<string> updatedApplications,
+                                           IEnumerable<int> applicationSourceCounts,
                                            int imagesUpdatedCount)
         {
             var gatewayIds = ToCommaSeparatedString(gateways);
             var gitUris = ToCommaSeparatedString(gitRepos);
             var totalApps = ToCommaSeparatedString(totalApplications);
             var updatedApps = ToCommaSeparatedString(updatedApplications);
+            var sourceCounts = ToCommaSeparatedString(applicationSourceCounts);
 
             log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.GatewayIds, gatewayIds);
             log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.GitUris, gitUris);
             log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.MatchingApplications, totalApps);
             log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.UpdatedApplications, updatedApps);
             log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.UpdatedImages, imagesUpdatedCount.ToString());
-
+            log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.ApplicationSourceCounts, sourceCounts);
         }
         
         public void WriteManifestUpdateOutput(IEnumerable<string> gateways,
                                            IEnumerable<string> gitRepos,
                                            IEnumerable<string> totalApplications,
-                                           IEnumerable<string> updatedApplications)
+                                           IEnumerable<string> updatedApplications,
+                                           IEnumerable<int> applicationSourceCounts)
         {
             var gatewayIds = ToCommaSeparatedString(gateways);
             var gitUris = ToCommaSeparatedString(gitRepos);
             var totalApps = ToCommaSeparatedString(totalApplications);
             var updatedApps = ToCommaSeparatedString(updatedApplications);
+            var sourceCounts = ToCommaSeparatedString(applicationSourceCounts);
 
             log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.GatewayIds, gatewayIds);
             log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.GitUris, gitUris);
             log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.MatchingApplications, totalApps);
             log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.UpdatedApplications, updatedApps);
+            log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.ApplicationSourceCounts, sourceCounts);
         }
 
-        static string ToCommaSeparatedString(IEnumerable<string> items)
+        static string ToCommaSeparatedString<T>(IEnumerable<T> items)
         {
             return string.Join(", ", items);
         }

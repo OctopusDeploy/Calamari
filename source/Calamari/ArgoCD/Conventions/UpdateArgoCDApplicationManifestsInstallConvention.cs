@@ -167,7 +167,8 @@ namespace Calamari.ArgoCD.Conventions
             outputWriter.WriteManifestUpdateOutput(gatewayIds,
                                                 gitReposUpdated,
                                                 argoProperties.Applications.Select(a => a.Name),
-                                                updatedApplications.Distinct()
+                                                updatedApplications.Distinct(),
+                                                argoProperties.Applications.Select(a => a.Sources.Length)
                                                );
 
         }

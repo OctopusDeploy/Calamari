@@ -84,6 +84,7 @@ namespace Calamari.Kubernetes
                 public static readonly string GatewayIds = "ArgoCD.GatewayIds";
                 public static readonly string GitUris = "ArgoCD.GitUris";
                 public static readonly string MatchingApplications = "ArgoCD.TotalMatchingApplications";
+                public static readonly string ApplicationSourceCounts = "ArgoCD.ApplicationSourceCounts";
                 public static readonly string UpdatedApplications = "ArgoCD.UpdatedApplications";
                 public static readonly string UpdatedImages = "ArgoCD.UpdatedImages";
             }

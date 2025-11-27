@@ -422,6 +422,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             serviceMessages.GetPropertyValue("ArgoCD.GitUris").Should().Be(updated ? new Uri(RepoUrl).AbsoluteUri : string.Empty);
             serviceMessages.GetPropertyValue("ArgoCD.TotalMatchingApplications").Should().Be("App1");
             serviceMessages.GetPropertyValue("ArgoCD.UpdatedApplications").Should().Be(updated ? "App1" : string.Empty);
+            serviceMessages.GetPropertyValue("ArgoCD.ApplicationSourceCounts").Should().Be("1");
         }
 
         //Accepts a relative path and creates a file under the package directory, which
