@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <RootNamespace>Calamari.CloudAccounts</RootNamespace>
-        <TargetFramework>netstandard2.1</TargetFramework>
+        <TargetFramework>net8.0</TargetFramework>
         <LangVersion>default</LangVersion>
         <PackageId>Octopus.Calamari.CloudAccounts</PackageId>
         <Title>Calamari.CloudAccounts</Title>

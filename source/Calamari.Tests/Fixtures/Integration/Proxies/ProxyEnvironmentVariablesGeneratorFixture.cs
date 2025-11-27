@@ -4,7 +4,6 @@ using System.Linq;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Proxies;
 using Calamari.Testing.Helpers;
-using Calamari.Testing.Requirements;
 using FluentAssertions;
 using NUnit.Framework;
 

@@ -47,7 +47,6 @@ namespace Calamari.Util
             var matches = DurationRegex.Matches(duration);
 
             var result = matches
-                         .Cast<Match>()
                          .Select(m =>
                                  {
                                      var value = m.Groups[1].Value;
@@ -58,12 +57,8 @@ namespace Calamari.Util
                                      {
                                          return TimeSpan.Zero;
                                      }
-
-#if NETFRAMEWORK
-                                     return TimeSpan.FromTicks((long)Math.Floor(result.InitialTimeSpan.Ticks * double.Parse(value)));
-#else
+                                     
                                      return result.InitialTimeSpan * double.Parse(value);
-#endif
                                  })
                          .Aggregate((accumulator, timeSpan) => accumulator + timeSpan);
             
