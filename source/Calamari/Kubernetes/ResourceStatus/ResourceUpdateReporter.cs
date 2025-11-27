@@ -37,14 +37,12 @@ namespace Calamari.Kubernetes.ResourceStatus
             var createdOrUpdatedResources = GetCreatedOrUpdatedResources(originalStatuses, newStatuses).ToList();
             foreach (var resource in createdOrUpdatedResources)
             {
-                log.Verbose($"Resource Status Check: created or updated {resource.Name}");
                 SendServiceMessage(resource, false, checkCount);
             }
 
             var removedResources = GetRemovedResources(originalStatuses, newStatuses).ToList();
             foreach (var resource in removedResources)
             {
-                log.Verbose($"Resource Status Check: removed {resource.Name}");
                 SendServiceMessage(resource, true, checkCount);
             }
 
@@ -71,13 +69,13 @@ namespace Calamari.Kubernetes.ResourceStatus
             var actionNumber = variables.Get("Octopus.Action.Number", string.Empty);
             var stepNumber = variables.Get("Octopus.Step.Number");
             var stepName = variables.Get("Octopus.Step.Name");
-
+            
             if (actionNumber.IndexOf(".", StringComparison.Ordinal) > 0)
             {
                 stepNumber = actionNumber;
                 stepName = variables.Get("Octopus.Action.Name");
             }
-
+            
             var parameters = new Dictionary<string, string>
             {
                 {ResourceStatusAttributes.Type, "k8s-status"},

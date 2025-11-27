@@ -845,7 +845,7 @@ partial class Build : NukeBuild
         return runtimes ?? Array.Empty<string>();
     }
 
-    // Although all libraries/flavours now support .NET Core, ServiceFabric can currently only be built on Windows devices
+    // Although all libraries/flavours now support .NET Core some can only be built/run on Windows devices
     // This is here purely to make the local build experience on non-Windows devices (with testing) workable
     static List<string> GetCalamariFlavours()
     {

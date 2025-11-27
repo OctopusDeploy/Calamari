@@ -20,7 +20,7 @@ namespace Octopus.Calamari.ConsolidatedPackage
         static readonly List<string> WindowsOnlyNetCoreEnabledFlavours = new()
         {
             "Calamari.AzureServiceFabric",
-            "Calamari.AzureWebApp"
+            "Calamari.AzureWebApp" // .NET core but uses a .NET Framework shim
         };
     }
 }
