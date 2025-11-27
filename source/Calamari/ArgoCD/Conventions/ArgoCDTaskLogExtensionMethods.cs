@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Calamari.ArgoCD.Domain;
+using Calamari.ArgoCD.Dtos;
 using Calamari.ArgoCD.Models;
 using Calamari.Common.Plumbing.Logging;
 
@@ -25,17 +26,33 @@ namespace Calamari.ArgoCD.Conventions
             }
         }
 
-        public static void LogMissingAnnotationsWarning(this ILog log, (ProjectSlug Project, EnvironmentSlug Environment, TenantSlug? Tenant) deploymentScope)
+        static void LogMissingAnnotationsWarning(this ILog log, (ProjectSlug Project, EnvironmentSlug Environment, TenantSlug? Tenant) deploymentScope)
         {
             log.Warn("No annotated Argo CD applications could be found for this deployment.");
             log.Warn("Please annotate your application(s) with the following to allow deployments to find and update them:");
-            log.WarnFormat(" - {0}: {1}", ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(".<sourcename>".ToApplicationSourceName()), deploymentScope.Project);
-            log.WarnFormat(" - {0}: {1}", ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(".<sourcename>".ToApplicationSourceName()), deploymentScope.Environment);
+            log.WarnFormat(" - {0}: {1}", ArgoCDConstants.Annotations.OctopusProjectAnnotationKey("<sourcename>".ToApplicationSourceName()), deploymentScope.Project);
+            log.WarnFormat(" - {0}: {1}", ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey("<sourcename>".ToApplicationSourceName()), deploymentScope.Environment);
             if (deploymentScope.Tenant != null)
             {
-                log.WarnFormat(" - {0}: {1}", ArgoCDConstants.Annotations.OctopusTenantAnnotationKey(".<sourcename>".ToApplicationSourceName()), deploymentScope.Tenant);
+                log.WarnFormat(" - {0}: {1}", ArgoCDConstants.Annotations.OctopusTenantAnnotationKey("<sourcename>".ToApplicationSourceName()), deploymentScope.Tenant);
             }
             log.WarnFormat("Annotation creation documentation can be found {0}.", log.FormatShortLink("argo-cd-scoping-annotations", "here"));
+        }
+        
+        public static void LogApplicationCounts(this ILog log, (ProjectSlug Project, EnvironmentSlug Environment, TenantSlug? Tenant) deploymentScope, ArgoCDApplicationDto[] applications)
+        {
+            if (applications.Length == 0)
+            {
+                log.LogMissingAnnotationsWarning(deploymentScope);
+            }
+            else
+            {
+                log.InfoFormat("Found {0} Argo CD applications to update", applications.Length);
+                foreach (var app in applications)
+                {
+                    log.VerboseFormat("- {0}", app.Name);
+                }
+            }
         }
     }
 }
