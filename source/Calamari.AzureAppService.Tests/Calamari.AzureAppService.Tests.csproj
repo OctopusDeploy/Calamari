@@ -5,8 +5,8 @@
     <AssemblyName>Calamari.AzureAppService.Tests</AssemblyName>
     <IsPackable>false</IsPackable>
     <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
-    <LangVersion>8.0</LangVersion>
-    <TargetFrameworks>net462;net8.0</TargetFrameworks>
+    <LangVersion>10.0</LangVersion>
+    <TargetFramework>net8.0</TargetFramework>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
 

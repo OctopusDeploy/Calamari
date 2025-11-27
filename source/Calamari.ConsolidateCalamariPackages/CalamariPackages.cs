@@ -10,6 +10,7 @@ namespace Octopus.Calamari.ConsolidatedPackage
 
         public static readonly List<string> CrossPlatformFlavours = new()
         {
+            "Calamari",
             "Calamari.AzureAppService",
             "Calamari.AzureResourceGroup",
             "Calamari.GoogleCloudScripting",
