@@ -66,8 +66,6 @@ partial class Build : NukeBuild
     [Parameter($"The name of the current git branch. OctoVersion will use this to calculate the version number. This can be set via the environment variable {CiBranchNameEnvVariable}.", Name = CiBranchNameEnvVariable)]
     string? BranchName { get; set; }
 
-    [Parameter] readonly string? ProjectToBuild;
-
     //this is instantiated in the constructor
     readonly Lazy<OctoVersionInfo?> OctoVersionInfo;
 
