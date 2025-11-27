@@ -530,6 +530,7 @@ partial class Build : NukeBuild
         var allRuntimes = Solution.AllProjects
                                   .SelectMany(p => p.GetRuntimeIdentifiers() ?? Array.Empty<string>())
                                   .Distinct()
+                                  .Where(rid => rid != "win7-x86") //I have no idea where this is coming from, but let's ignore it. My theory is it's coming from the netstandard libs
                                   .ToHashSet();
 
         if (!string.IsNullOrWhiteSpace(TargetRuntime))
