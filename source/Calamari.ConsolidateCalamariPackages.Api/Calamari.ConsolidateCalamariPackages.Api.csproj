@@ -6,7 +6,7 @@
         <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <LangVersion>10</LangVersion>
+        <LangVersion>default</LangVersion>
         <Authors>Octopus Deploy</Authors>
         <Copyright>Octopus Deploy Pty Ltd</Copyright>
         <Description>

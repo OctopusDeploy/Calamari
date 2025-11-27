@@ -6,7 +6,7 @@
         <IsPackable>false</IsPackable>
         <TargetFramework>net8.0-windows</TargetFramework>
         <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
-        <LangVersion>10.0</LangVersion>
+        <LangVersion>default</LangVersion>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     </PropertyGroup>
     <ItemGroup>

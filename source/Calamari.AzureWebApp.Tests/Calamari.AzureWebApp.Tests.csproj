@@ -4,7 +4,7 @@
     <AssemblyName>Calamari.AzureWebApp.Tests</AssemblyName>
     <TargetFramework>net8.0</TargetFramework>
     <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
-    <LangVersion>10.0</LangVersion>
+    <LangVersion>default</LangVersion>
     <IsPackable>false</IsPackable>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>

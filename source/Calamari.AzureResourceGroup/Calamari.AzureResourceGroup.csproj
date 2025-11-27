@@ -2,7 +2,7 @@
     <PropertyGroup>
         <RootNamespace>Calamari.AzureResourceGroup</RootNamespace>
         <AssemblyName>Calamari.AzureResourceGroup</AssemblyName>
-        <LangVersion>10</LangVersion>
+        <LangVersion>default</LangVersion>
         <Nullable>enable</Nullable>
         <OutputType>Exe</OutputType>
         <IsPackable>false</IsPackable>
