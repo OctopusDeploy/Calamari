@@ -66,6 +66,8 @@ partial class Build : NukeBuild
     [Parameter($"The name of the current git branch. OctoVersion will use this to calculate the version number. This can be set via the environment variable {CiBranchNameEnvVariable}.", Name = CiBranchNameEnvVariable)]
     string? BranchName { get; set; }
 
+    [Parameter] readonly string? ProjectToBuild;
+
     //this is instantiated in the constructor
     readonly Lazy<OctoVersionInfo?> OctoVersionInfo;
 
@@ -104,7 +106,6 @@ partial class Build : NukeBuild
     static AbsolutePath LocalPackagesDirectory => RootDirectory / ".." / "LocalPackages";
     static AbsolutePath ConsolidateCalamariPackagesProject => SourceDirectory / "Calamari.ConsolidateCalamariPackages.Tests" / "Calamari.ConsolidateCalamariPackages.Tests.csproj";
     static AbsolutePath ConsolidatedPackageDirectory => ArtifactsDirectory / "consolidated";
-    static AbsolutePath LegacyCalamariDirectory => PublishDirectory / "Calamari.Legacy";
 
     Lazy<string> NugetVersion { get; }
 
@@ -147,6 +148,9 @@ partial class Build : NukeBuild
             d.DependsOn(Clean)
              .Executes(() =>
                        {
+                           //Do one big, default restore
+                           DotNetRestore(s => s.SetProjectFile(Solution));
+                           
                            var allRuntimeIds = ListAllRuntimeIdentifiersInSolution();
                            //we restore for all individual runtimes
                            foreach (var runtimeId in allRuntimeIds)
@@ -225,6 +229,7 @@ partial class Build : NukeBuild
                                                                                                                    .SetFramework(calamariPackageMetadata.Framework)
                                                                                                                    .SetRuntime(calamariPackageMetadata.Architecture)
                                                                                                                    .EnableSelfContained()
+                                                                                                                   .EnableNoRestore() //we _should_ have restored everything earlier
                                                                                                                    .SetVerbosity(projectName == "Calamari.Tests" ? DotNetVerbosity.detailed : DotNetVerbosity.minimal)));
                                                                          }
                                                                          finally
@@ -347,20 +352,6 @@ partial class Build : NukeBuild
                             outputPath.CompressTo(archivePath);
                         });
 
-    Target CopyToLocalPackages =>
-        d =>
-            d.Requires(() => IsLocalBuild)
-             .DependsOn(PublishCalamariProjects)
-             .Executes(() =>
-                       {
-                           Directory.CreateDirectory(LocalPackagesDirectory);
-                           foreach (AbsolutePath file in Directory.GetFiles(ArtifactsDirectory, "Octopus.Calamari.*.nupkg"))
-                           {
-                               var target = LocalPackagesDirectory / Path.GetFileName(file);
-                               file.Copy(target, ExistsPolicy.FileOverwrite);
-                           }
-                       });
-
     Target PackageConsolidatedCalamariZip =>
         d =>
             d.DependsOn(PublishCalamariProjects)
@@ -435,6 +426,20 @@ partial class Build : NukeBuild
                                            .SetBasePath(BuildDirectory)
                                            .SetVersion(NugetVersion.Value)
                                            .SetOutputDirectory(ArtifactsDirectory));
+                       });
+
+    Target CopyToLocalPackages =>
+        d =>
+            d.Requires(() => IsLocalBuild)
+             .DependsOn(PublishCalamariProjects)
+             .Executes(() =>
+                       {
+                           Directory.CreateDirectory(LocalPackagesDirectory);
+                           foreach (AbsolutePath file in Directory.GetFiles(ArtifactsDirectory, "Octopus.Calamari.*.nupkg"))
+                           {
+                               var target = LocalPackagesDirectory / Path.GetFileName(file);
+                               file.Copy(target, ExistsPolicy.FileOverwrite);
+                           }
                        });
 
     Target UpdateCalamariVersionOnOctopusServer =>
