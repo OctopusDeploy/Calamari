@@ -14,13 +14,13 @@ namespace Octopus.Calamari.ConsolidatedPackage
             "Calamari.AzureResourceGroup",
             "Calamari.GoogleCloudScripting",
             "Calamari.AzureScripting",
+            "Calamari.AzureWebApp",
             "Calamari.Terraform"
         };
 
         static readonly List<string> WindowsOnlyNetCoreEnabledFlavours = new()
         {
-            "Calamari.AzureServiceFabric",
-            "Calamari.AzureWebApp" // .NET core but uses a .NET Framework shim
+            "Calamari.AzureServiceFabric"
         };
     }
 }
