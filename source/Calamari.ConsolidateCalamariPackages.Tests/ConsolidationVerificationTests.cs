@@ -57,7 +57,7 @@ namespace Calamari.ConsolidateCalamariPackages.Tests
 
         static bool PackageSupported(string packageId, bool isWindows)
         {
-            var packages = isWindows ? CalamariPackages.Flavours : CalamariPackages.CrossPlatformFlavours;
+            var packages = BuildableCalamariProjects.GetCalamariProjectsToBuild(isWindows);
             return packages.Contains(packageId);
         }
 
