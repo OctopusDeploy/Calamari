@@ -5,7 +5,6 @@ using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Testing.Helpers;
-using Calamari.Testing.Requirements;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NUnit.Framework;
@@ -14,7 +13,6 @@ namespace Calamari.Tests.Fixtures.DotnetScript
 {
     [TestFixture]
     [Category(TestCategory.ScriptingSupport.DotnetScript)]
-    [RequiresDotNetCore]
     public class DotnetScriptFixture : CalamariFixture
     {
         [Test]
