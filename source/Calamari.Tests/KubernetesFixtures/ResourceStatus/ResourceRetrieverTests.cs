@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Amazon.IdentityManagement.Model;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Kubernetes.Integration;
@@ -216,13 +215,13 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                 }
             });
         }
-        
+
         [Test]
         public void HandlesInvalidJson()
         {
             var kubectlGet = new MockKubectlGet();
             var resourceRetriever = new ResourceRetriever(kubectlGet, Substitute.For<ILog>());
-            
+
             kubectlGet.SetResource("rs", "invalid json");
             var results = resourceRetriever.GetAllOwnedResources(
                 new List<ResourceIdentifier>
@@ -235,13 +234,13 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             result.IsSuccess.Should().BeFalse();
             result.ErrorMessage.Should().Contain("Failed to parse JSON");
         }
-        
+
         [Test]
         public void HandlesGetErrors()
         {
             var kubectlGet = new MockKubectlGet();
             var resourceRetriever = new ResourceRetriever(kubectlGet, Substitute.For<ILog>());
-            
+
             Message[] messages = { new Message(Level.Error, "Error getting resource") };
             kubectlGet.SetResource("rs", messages);
             var results = resourceRetriever.GetAllOwnedResources(
@@ -249,7 +248,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                  {
                      new ResourceIdentifier(SupportedResourceGroupVersionKinds.ReplicaSetV1, "rs", "octopus"),
                  },
-                 null, 
+                 null,
                  new Options()
                  {
                      PrintVerboseKubectlOutputOnError = true
@@ -259,14 +258,14 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             result.IsSuccess.Should().BeFalse();
             result.ErrorMessage.Should().Contain("Error getting resource");
         }
-        
-        
+
+
         [Test]
         public void HandlesEmptyResponse()
         {
             var kubectlGet = new MockKubectlGet();
             var resourceRetriever = new ResourceRetriever(kubectlGet, Substitute.For<ILog>());
-            
+
             kubectlGet.SetResource("rs", Array.Empty<Message>());
             var results = resourceRetriever.GetAllOwnedResources(
                  new List<ResourceIdentifier>
@@ -279,7 +278,7 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             result.IsSuccess.Should().BeFalse();
             result.ErrorMessage.Should().Contain("Failed to get resource");
         }
-        
+
         [Test]
         public void HandleChildFailure()
         {
@@ -294,17 +293,17 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
             var kubectlGet = new MockKubectlGet();
             var log = new InMemoryLog();
             var resourceRetriever = new ResourceRetriever(kubectlGet, log);
-            
+
             kubectlGet.SetResource("rs", replicaSet);
             Message[] messages = { new Message(Level.Error, "Error getting resource") };
             kubectlGet.SetAllResources("Pod", messages);
-            
+
             var results = resourceRetriever.GetAllOwnedResources(
                  new List<ResourceIdentifier>
                  {
                      new ResourceIdentifier(SupportedResourceGroupVersionKinds.ReplicaSetV1, "rs", "octopus"),
                  },
-                 null, 
+                 null,
                  new Options()
                  {
                      PrintVerboseKubectlOutputOnError = true
@@ -325,8 +324,37 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
                .Should()
                .Contain(r => r.Contains("Error getting resource"));
         }
+
+        [Test]
+        public void HandlesKubectlFailureWithExitCode()
+        {
+            var kubectlGet = new MockKubectlGet();
+            kubectlGet.SetResource("deploy", new[] {
+                new Message(Level.Error, "Error from server (Forbidden): deployments.apps \"deploy\" is forbidden")
+            });
+
+            var log = new InMemoryLog();
+            var resourceRetriever = new ResourceRetriever(kubectlGet, log);
+
+            var results = resourceRetriever.GetAllOwnedResources(
+                new List<ResourceIdentifier>
+                {
+                    new ResourceIdentifier(SupportedResourceGroupVersionKinds.DeploymentV1, "deploy", "default")
+                },
+                null,
+                new Options { PrintVerboseKubectlOutputOnError = true }
+            ).ToList();
+
+            log.MessagesVerboseFormatted
+                .Should()
+                .Contain(msg => msg.Contains("kubectl failed with exit code: 1"));
+
+            log.MessagesVerboseFormatted
+                .Should()
+                .Contain(msg => msg.Contains("Error from server (Forbidden)"));
+        }
     }
-    
+
 
     public class MockKubectlGet : IKubectlGet
     {
@@ -359,16 +387,18 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         {
             var resourceJson = resourceEntries[resourceIdentity.Name].Select(m => m.Text).Join(string.Empty);
             var rawOutput = resourceEntries[resourceIdentity.Name].Select(m => $"{m.Level}: {m.Text}").ToList();
-            
-            return new KubectlGetResult(resourceJson, rawOutput);
+            var exitCode = resourceEntries[resourceIdentity.Name].Any(m => m.Level == Level.Error) ? 1 : 0;
+
+            return new KubectlGetResult(resourceJson, rawOutput, exitCode);
         }
 
         public KubectlGetResult AllResources(ResourceGroupVersionKind groupVersionKind, string @namespace, IKubectl kubectl)
         {
             var resourceJson = resourcesByKind[groupVersionKind.Kind].Select(m => m.Text).Join(string.Empty);
             var rawOutput = resourcesByKind[groupVersionKind.Kind].Select(m => $"{m.Level}: {m.Text}").ToList();
-            
-            return new KubectlGetResult(resourceJson, rawOutput);
+            var exitCode = resourcesByKind[groupVersionKind.Kind].Any(m => m.Level == Level.Error) ? 1 : 0;
+
+            return new KubectlGetResult(resourceJson, rawOutput, exitCode);
         }
     }
 
@@ -394,13 +424,13 @@ namespace Calamari.Tests.KubernetesFixtures.ResourceStatus
         string name = "";
         string uid = Guid.NewGuid().ToString();
         string ownerUid = Guid.NewGuid().ToString();
-        
+
         public ResourceResponseBuilder WithApiVersion(string apiVersion)
         {
             this.apiVersion = apiVersion;
             return this;
         }
-        
+
         public ResourceResponseBuilder WithKind(string kind)
         {
             this.kind = kind;
