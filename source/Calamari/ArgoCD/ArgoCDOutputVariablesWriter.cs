@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Calamari.ArgoCD.Models;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Kubernetes;
 
@@ -17,42 +18,57 @@ namespace Calamari.ArgoCD
 
         public void WriteImageUpdateOutput(IEnumerable<string> gateways,
                                            IEnumerable<string> gitRepos,
-                                           IEnumerable<string> totalApplications,
-                                           IEnumerable<string> updatedApplications,
-                                           IEnumerable<int> applicationSourceCounts,
+                                           IReadOnlyCollection<(ApplicationName ApplicationName, int SourceCount)> totalApplicationsWithSourceCount,
+                                           IReadOnlyCollection<(ApplicationName ApplicationName, int SourceCount)> updatedApplicationsWithSourceCount,
                                            int imagesUpdatedCount)
         {
-            var gatewayIds = ToCommaSeparatedString(gateways);
-            var gitUris = ToCommaSeparatedString(gitRepos);
-            var totalApps = ToCommaSeparatedString(totalApplications);
-            var updatedApps = ToCommaSeparatedString(updatedApplications);
-            var sourceCounts = ToCommaSeparatedString(applicationSourceCounts);
-
-            log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.GatewayIds, gatewayIds);
-            log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.GitUris, gitUris);
-            log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.MatchingApplications, totalApps);
-            log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.UpdatedApplications, updatedApps);
+            WriteGatewayIds(gateways);
+            WriteGitUris(gitRepos);
+            WriteTotalApplicationsWithSourceCounts(totalApplicationsWithSourceCount);
+            WriteUpdatedApplicationsWithSourceCounts(updatedApplicationsWithSourceCount);
+            
             log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.UpdatedImages, imagesUpdatedCount.ToString());
-            log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.ApplicationSourceCounts, sourceCounts);
         }
-        
+
         public void WriteManifestUpdateOutput(IEnumerable<string> gateways,
-                                           IEnumerable<string> gitRepos,
-                                           IEnumerable<string> totalApplications,
-                                           IEnumerable<string> updatedApplications,
-                                           IEnumerable<int> applicationSourceCounts)
+                                              IEnumerable<string> gitRepos,
+                                              IReadOnlyCollection<(ApplicationName ApplicationName, int SourceCount)> totalApplicationsWithSourceCount,
+                                              IReadOnlyCollection<(ApplicationName ApplicationName, int SourceCount)> updatedApplicationsWithSourceCount)
+        {
+            WriteGatewayIds(gateways);
+            WriteGitUris(gitRepos);
+            WriteTotalApplicationsWithSourceCounts(totalApplicationsWithSourceCount);
+            WriteUpdatedApplicationsWithSourceCounts(updatedApplicationsWithSourceCount);
+        }
+
+        void WriteTotalApplicationsWithSourceCounts(IReadOnlyCollection<(ApplicationName ApplicationName, int SourceCount)> totalApplicationsWithSourceCounts)
+        {
+            var totalApps = ToCommaSeparatedString(totalApplicationsWithSourceCounts.Select(c => c.ApplicationName));
+            log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.MatchingApplications, totalApps);
+
+            var totalSourceCounts = ToCommaSeparatedString(totalApplicationsWithSourceCounts.Select(c => c.SourceCount));
+            log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.MatchingApplicationSourceCounts, totalSourceCounts);
+        }
+
+        void WriteUpdatedApplicationsWithSourceCounts(IReadOnlyCollection<(ApplicationName ApplicationName, int SourceCount)> updatedApplicationsWithSourceCount)
+        {
+            var updatedApps = ToCommaSeparatedString(updatedApplicationsWithSourceCount.Select(c => c.ApplicationName));
+            log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.UpdatedApplications, updatedApps);
+            var updatedSourceCounts = ToCommaSeparatedString(updatedApplicationsWithSourceCount.Select(c => c.SourceCount));
+
+            log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.UpdatedApplicationSourceCounts, updatedSourceCounts);
+        }
+
+        void WriteGitUris(IEnumerable<string> gitRepos)
+        {
+            var gitUris = ToCommaSeparatedString(gitRepos);
+            log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.GitUris, gitUris);
+        }
+
+        void WriteGatewayIds(IEnumerable<string> gateways)
         {
             var gatewayIds = ToCommaSeparatedString(gateways);
-            var gitUris = ToCommaSeparatedString(gitRepos);
-            var totalApps = ToCommaSeparatedString(totalApplications);
-            var updatedApps = ToCommaSeparatedString(updatedApplications);
-            var sourceCounts = ToCommaSeparatedString(applicationSourceCounts);
-
             log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.GatewayIds, gatewayIds);
-            log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.GitUris, gitUris);
-            log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.MatchingApplications, totalApps);
-            log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.UpdatedApplications, updatedApps);
-            log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.ApplicationSourceCounts, sourceCounts);
         }
 
         static string ToCommaSeparatedString<T>(IEnumerable<T> items)

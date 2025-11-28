@@ -77,7 +77,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             customPropertiesLoader.Load<ArgoCDCustomPropertiesDto>().Returns(argoCdCustomPropertiesDto);
 
             var argoCdApplicationFromYaml = new ArgoCDApplicationBuilder()
-                                            .WithName("The App")
+                                            .WithName("App1")
                                             .WithAnnotations(new Dictionary<string, string>()
                                             {
                                                 [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(null)] = ProjectSlug,
@@ -221,7 +221,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             runningDeployment.StagingDirectory = WorkingDirectory;
 
             var argoCDAppWithHelmSource = new ArgoCDApplicationBuilder()
-                                          .WithName("The App")
+                                          .WithName("App1")
                                           .WithAnnotations(new Dictionary<string, string>()
                                           {
                                               [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(null)] = ProjectSlug,
@@ -288,7 +288,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             runningDeployment.StagingDirectory = WorkingDirectory;
 
             var argoCDAppWithHelmSource = new ArgoCDApplicationBuilder()
-                                          .WithName("The App")
+                                          .WithName("App1")
                                           .WithAnnotations(new Dictionary<string, string>()
                                           {
                                               [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(new ApplicationSourceName("refSourceName"))] = ProjectSlug,
@@ -336,7 +336,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             var resultPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             File.Exists(Path.Combine(resultPath, firstFilename)).Should().BeTrue();
 
-            AssertOutputVariables();
+            AssertOutputVariables(matchingApplicationSourceCounts: "2");
         }
 
         [Test]
@@ -362,7 +362,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             runningDeployment.StagingDirectory = WorkingDirectory;
 
             var argoCDAppWithHelmSource = new ArgoCDApplicationBuilder()
-                                          .WithName("The App")
+                                          .WithName("App1")
                                           .WithAnnotations(new Dictionary<string, string>()
                                           {
                                               [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(new ApplicationSourceName("refSourceName"))] = ProjectSlug,
@@ -411,18 +411,19 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             var resultPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             File.Exists(Path.Combine(resultPath, firstFilename)).Should().BeFalse();
 
-            AssertOutputVariables(false);
+            AssertOutputVariables(false, matchingApplicationSourceCounts: "2");
         }
 
-        void AssertOutputVariables(bool updated = true)
+        void AssertOutputVariables(bool updated = true, string matchingApplicationSourceCounts = "1")
         {
             using var _ = new AssertionScope();
             var serviceMessages = log.Messages.GetServiceMessagesOfType("setVariable");
             serviceMessages.GetPropertyValue("ArgoCD.GatewayIds").Should().Be(GatewayId);
             serviceMessages.GetPropertyValue("ArgoCD.GitUris").Should().Be(updated ? new Uri(RepoUrl).AbsoluteUri : string.Empty);
-            serviceMessages.GetPropertyValue("ArgoCD.TotalMatchingApplications").Should().Be("App1");
+            serviceMessages.GetPropertyValue("ArgoCD.MatchingApplications").Should().Be("App1");
+            serviceMessages.GetPropertyValue("ArgoCD.MatchingApplicationSourceCounts").Should().Be(matchingApplicationSourceCounts);
             serviceMessages.GetPropertyValue("ArgoCD.UpdatedApplications").Should().Be(updated ? "App1" : string.Empty);
-            serviceMessages.GetPropertyValue("ArgoCD.ApplicationSourceCounts").Should().Be("1");
+            serviceMessages.GetPropertyValue("ArgoCD.UpdatedApplicationSourceCounts").Should().Be(updated ? "1" : string.Empty);
         }
 
         //Accepts a relative path and creates a file under the package directory, which

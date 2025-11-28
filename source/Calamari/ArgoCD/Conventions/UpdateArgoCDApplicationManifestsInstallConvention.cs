@@ -1,6 +1,7 @@
 #if NET
 #nullable enable
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -66,7 +67,8 @@ namespace Calamari.ArgoCD.Conventions
 
             log.LogApplicationCounts(deploymentScope, argoProperties.Applications);
 
-            var updatedApplications = new HashSet<string>();
+            var updatedApplicationsWithSources = new ConcurrentDictionary<ApplicationName, HashSet<ApplicationSourceName?>>();
+            var totalApplicationsWithSourceCounts = new List<(ApplicationName, int)>();
             var gitReposUpdated = new HashSet<string>();
 
             foreach (var application in argoProperties.Applications)
@@ -77,7 +79,8 @@ namespace Calamari.ArgoCD.Conventions
 
                 var applicationFromYaml = argoCdApplicationManifestParser.ParseManifest(application.Manifest);
                 var containsMultipleSources = applicationFromYaml.Spec.Sources.Count > 1;
-
+                totalApplicationsWithSourceCounts.Add((applicationFromYaml.Metadata.Name.ToApplicationName(), applicationFromYaml.Spec.Sources.Count));
+                
                 LogWarningIfUpdatingMultipleSources(applicationFromYaml.Spec.Sources,
                                                     applicationFromYaml.Metadata.Annotations,
                                                     containsMultipleSources,
@@ -139,7 +142,7 @@ namespace Calamari.ArgoCD.Conventions
                                           .GetResult();
 
                                 didUpdateSomething = true;
-                                updatedApplications.Add(application.Name);
+                                updatedApplicationsWithSources.GetOrAdd(applicationFromYaml.Metadata.Name.ToApplicationName(), _ => new HashSet<ApplicationSourceName?>()).Add(applicationSource.Name.ToApplicationSourceName());
                                 gitReposUpdated.Add(applicationSource.RepoUrl.AbsoluteUri);
                             }
                             else
@@ -166,9 +169,8 @@ namespace Calamari.ArgoCD.Conventions
             var outputWriter = new ArgoCDOutputVariablesWriter(log);
             outputWriter.WriteManifestUpdateOutput(gatewayIds,
                                                 gitReposUpdated,
-                                                argoProperties.Applications.Select(a => a.Name),
-                                                updatedApplications.Distinct(),
-                                                argoProperties.Applications.Select(a => a.Sources.Length)
+                                                totalApplicationsWithSourceCounts,
+                                                updatedApplicationsWithSources.Select(kv => (kv.Key, kv.Value.Count)).ToArray()
                                                );
 
         }

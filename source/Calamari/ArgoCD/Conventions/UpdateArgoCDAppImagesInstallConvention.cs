@@ -1,6 +1,7 @@
 #if NET
 #nullable enable
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -63,7 +64,8 @@ namespace Calamari.ArgoCD.Conventions
             
             log.LogApplicationCounts(deploymentScope, argoProperties.Applications);
 
-            var updatedApplications = new HashSet<string>();
+            var updatedApplicationsWithSources = new ConcurrentDictionary<ApplicationName, HashSet<ApplicationSourceName?>>();
+            var totalApplicationsWithSourceCounts = new List<(ApplicationName, int)>();
             var newImagesWritten = new HashSet<string>();
             var gitReposUpdated = new HashSet<string>();
             var updatedSourcesCount = 0;
@@ -80,6 +82,7 @@ namespace Calamari.ArgoCD.Conventions
                 validationResult.Action(log);
 
                 var containsMultipleSources = applicationFromYaml.Spec.Sources.Count > 1;
+                totalApplicationsWithSourceCounts.Add((applicationFromYaml.Metadata.Name.ToApplicationName(), applicationFromYaml.Spec.Sources.Count));
 
                 var didUpdateSomething = false;
                 foreach (var applicationSource in applicationFromYaml.Spec.Sources.OfType<BasicSource>())
@@ -125,7 +128,7 @@ namespace Calamari.ArgoCD.Conventions
                                 if (didPush)
                                 {
                                     newImagesWritten.UnionWith(updatedImages);
-                                    updatedApplications.Add(applicationFromYaml.Metadata.Name);
+                                    updatedApplicationsWithSources.GetOrAdd(applicationFromYaml.Metadata.Name.ToApplicationName(), _ => new HashSet<ApplicationSourceName?>()).Add(applicationSource.Name.ToApplicationSourceName());
                                     gitReposUpdated.Add(applicationSource.RepoUrl.AbsoluteUri);
                                     updatedSourcesCount++;
                                 }
@@ -168,7 +171,7 @@ namespace Calamari.ArgoCD.Conventions
                                 if (didPush)
                                 {
                                     newImagesWritten.UnionWith(helmUpdateResult.ImagesUpdated);
-                                    updatedApplications.Add(applicationFromYaml.Metadata.Name);
+                                    updatedApplicationsWithSources.GetOrAdd(applicationFromYaml.Metadata.Name.ToApplicationName(), _ => new HashSet<ApplicationSourceName?>()).Add(valuesFileSource.SourceName);
                                     gitReposUpdated.Add(valuesFileSource.RepoUrl.ToString());
                                 }
                             }
@@ -192,9 +195,8 @@ namespace Calamari.ArgoCD.Conventions
             var outputWriter = new ArgoCDOutputVariablesWriter(log);
             outputWriter.WriteImageUpdateOutput(gatewayIds,
                                                 gitReposUpdated,
-                                                argoProperties.Applications.Select(a => a.Name),
-                                                updatedApplications,
-                                                argoProperties.Applications.Select(a => a.Sources.Length),
+                                                totalApplicationsWithSourceCounts,
+                                                updatedApplicationsWithSources.Select(kv => (kv.Key, kv.Value.Count)).ToArray(),
                                                 newImagesWritten.Count
                                                );
         }
