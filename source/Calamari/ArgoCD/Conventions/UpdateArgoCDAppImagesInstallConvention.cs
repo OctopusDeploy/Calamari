@@ -68,7 +68,6 @@ namespace Calamari.ArgoCD.Conventions
             var totalApplicationsWithSourceCounts = new List<(ApplicationName, int, int)>();
             var newImagesWritten = new HashSet<string>();
             var gitReposUpdated = new HashSet<string>();
-            var updatedSourcesCount = 0;
             foreach (var application in argoProperties.Applications)
             {
                 log.InfoFormat("Processing application {0}", application.Name);
@@ -132,7 +131,6 @@ namespace Calamari.ArgoCD.Conventions
                                     newImagesWritten.UnionWith(updatedImages);
                                     updatedApplicationsWithSources.GetOrAdd(applicationFromYaml.Metadata.Name.ToApplicationName(), _ => new HashSet<ApplicationSourceName?>()).Add(applicationSource.Name.ToApplicationSourceName());
                                     gitReposUpdated.Add(applicationSource.RepoUrl.AbsoluteUri);
-                                    updatedSourcesCount++;
                                 }
                             }
                         }

@@ -41,15 +41,15 @@ namespace Calamari.ArgoCD
             WriteUpdatedApplicationsWithSourceCounts(updatedApplicationsWithSourceCounts);
         }
 
-        void WriteTotalApplicationsWithSourceCounts(IReadOnlyCollection<(ApplicationName ApplicationName, int TotalSourceCount, int MatchingSourceCount)> totalApplicationsWithSourceCounts)
+        void WriteTotalApplicationsWithSourceCounts(IReadOnlyCollection<(ApplicationName ApplicationName, int TotalSourceCount, int MatchingSourceCount)> matchingApplicationsWithSourceCounts)
         {
-            var totalApps = ToCommaSeparatedString(totalApplicationsWithSourceCounts.Select(c => c.ApplicationName));
+            var totalApps = ToCommaSeparatedString(matchingApplicationsWithSourceCounts.Select(c => c.ApplicationName));
             log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.MatchingApplications, totalApps);
 
-            var totalSourceCounts = ToCommaSeparatedString(totalApplicationsWithSourceCounts.Select(c => c.TotalSourceCount));
+            var totalSourceCounts = ToCommaSeparatedString(matchingApplicationsWithSourceCounts.Select(c => c.TotalSourceCount));
             log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.MatchingApplicationTotalSourceCounts, totalSourceCounts);
             
-            var matchingSourceCounts = ToCommaSeparatedString(totalApplicationsWithSourceCounts.Select(c => c.MatchingSourceCount));
+            var matchingSourceCounts = ToCommaSeparatedString(matchingApplicationsWithSourceCounts.Select(c => c.MatchingSourceCount));
             log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.MatchingApplicationMatchingSourceCounts, matchingSourceCounts);
         }
 
