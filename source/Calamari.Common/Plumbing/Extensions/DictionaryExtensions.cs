@@ -13,5 +13,15 @@ namespace Calamari.Common.Plumbing.Extensions
             foreach (var obj in items)
                 collection[obj.Key] = obj.Value;
         }
+
+        public static TValue GetOrAdd<TKey, TValue>(this IDictionary<TKey, TValue> collection, TKey key, Func<TKey, TValue> valueFactory)
+        {
+            if (collection.TryGetValue(key, out TValue value))
+                return value;
+
+            var newValue = valueFactory(key);
+            collection[key] = newValue;
+            return newValue;
+        }
     }
 }
