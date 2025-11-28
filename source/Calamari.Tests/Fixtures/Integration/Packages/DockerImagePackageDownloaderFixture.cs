@@ -165,7 +165,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             var downloader = GetDownloader(log);
 
             PreCacheImage(image, tag, authFeedUri, feedUsername, feedPassword);
-
+            
             downloader.DownloadPackage(image, 
                                        new SemanticVersion(tag), 
                                        "docker-feed", 

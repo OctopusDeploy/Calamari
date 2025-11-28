@@ -2,17 +2,17 @@
   <PropertyGroup>
     <RootNamespace>Calamari.AzureWebApp.Tests</RootNamespace>
     <AssemblyName>Calamari.AzureWebApp.Tests</AssemblyName>
-    <TargetFrameworks>net462;net6.0</TargetFrameworks>
+    <TargetFrameworks>net462;net8.0</TargetFrameworks>
     <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
     <LangVersion>8.0</LangVersion>
     <IsPackable>false</IsPackable>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="nunit" Version="3.13.3"/>
-    <PackageReference Include="NUnit3TestAdapter" Version="3.17.0"/>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.10.0"/>
-    <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.25"/>
+    <PackageReference Include="nunit" Version="3.14.0" />
+    <PackageReference Include="NUnit3TestAdapter" Version="5.2.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.0" />
+    <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.41" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Calamari.AzureWebApp\Calamari.AzureWebApp.csproj"/>
@@ -32,7 +32,7 @@
   </Target>
 
   <Target Name="CopyNetCoreShimFilesAfterBuild" AfterTargets="Build" DependsOnTargets="GetNetCoreShimFiles">
-    <Unzip SourceFiles="@(NetCoreShimFiles)" DestinationFolder="$(OutDir)/netcoreshim" SkipUnchangedFiles="true" Condition="'$(IsWindowsNetCoreBuild)' == 'true'" />
+    <Unzip SourceFiles="@(NetCoreShimFiles)" DestinationFolder="$(OutputPath)/netcoreshim" SkipUnchangedFiles="true" Condition="'$(IsWindowsNetCoreBuild)' == 'true'" />
   </Target>
 
   <Target Name="CopyNetCoreShimFilesAfterPublish" AfterTargets="Publish" DependsOnTargets="GetNetCoreShimFiles">
