@@ -1,9 +1,11 @@
-wget https://packages.microsoft.com/config/debian/10/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
+wget https://packages.microsoft.com/config/debian/12/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
 sudo dpkg -i packages-microsoft-prod.deb
+rm packages-microsoft-prod.deb
+
 sudo apt-get update
 sudo apt-get install -y apt-transport-https zip
 sudo apt-get update
-sudo apt-get install -y dotnet-sdk-6.0
+sudo apt-get install -y dotnet-sdk-8.0
 
 export AWS_CLUSTER_URL=${endpoint}
 export AWS_CLUSTER_NAME=${cluster_name}

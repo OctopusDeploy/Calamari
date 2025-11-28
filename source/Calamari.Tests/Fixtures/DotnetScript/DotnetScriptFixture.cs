@@ -5,7 +5,6 @@ using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Testing.Helpers;
-using Calamari.Testing.Requirements;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
 using NUnit.Framework;
@@ -14,7 +13,6 @@ namespace Calamari.Tests.Fixtures.DotnetScript
 {
     [TestFixture]
     [Category(TestCategory.ScriptingSupport.DotnetScript)]
-    [RequiresDotNetCore]
     public class DotnetScriptFixture : CalamariFixture
     {
         [Test]
@@ -124,13 +122,13 @@ namespace Calamari.Tests.Fixtures.DotnetScript
             if (enableIsolatedLoadContext)
             {
                 output.AssertSuccess();
-                output.AssertOutput("NuGet.Commands version: 6.10.0.");
+                output.AssertOutput("NuGet.Commands version: 6.10.1.5");
                 output.AssertOutput("Parameters Parameter0Parameter1");
             }
             else
             {
                 output.AssertFailure();
-                output.AssertErrorOutput("Could not load file or assembly 'NuGet.Protocol, Version=6.10.0.");
+                output.AssertErrorOutput("Could not load file or assembly 'NuGet.Protocol, Version=6.10.1.5");
             }
         }
 
