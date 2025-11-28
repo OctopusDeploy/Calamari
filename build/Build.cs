@@ -66,6 +66,8 @@ partial class Build : NukeBuild
     [Parameter($"The name of the current git branch. OctoVersion will use this to calculate the version number. This can be set via the environment variable {CiBranchNameEnvVariable}.", Name = CiBranchNameEnvVariable)]
     string? BranchName { get; set; }
 
+    [Parameter] readonly string? ProjectToBuild;
+
     //this is instantiated in the constructor
     readonly Lazy<OctoVersionInfo?> OctoVersionInfo;
 
@@ -134,7 +136,8 @@ partial class Build : NukeBuild
 
     Target Clean =>
         d =>
-            d.Executes(() =>
+            d.DependsOn(CheckForbiddenWords)
+             .Executes(() =>
                        {
                            SourceDirectory.GlobDirectories("**/bin", "**/obj", "**/TestResults").ForEach(d => d.DeleteDirectory());
                            ArtifactsDirectory.CreateOrCleanDirectory();
@@ -148,7 +151,7 @@ partial class Build : NukeBuild
                        {
                            //Do one big, default restore
                            DotNetRestore(s => s.SetProjectFile(Solution));
-                           
+
                            var allRuntimeIds = ListAllRuntimeIdentifiersInSolution();
                            //we restore for all individual runtimes
                            foreach (var runtimeId in allRuntimeIds)
@@ -176,6 +179,12 @@ partial class Build : NukeBuild
                            var calamariProjects = Solution.Projects
                                                           .Where(project => allProjectNames.Contains(project.Name))
                                                           .ToList();
+
+                           //if this is not
+                           if (!string.IsNullOrEmpty(ProjectToBuild))
+                           {
+                               calamariProjects = calamariProjects.Where(p => p.Name == ProjectToBuild || p.Name == $"{ProjectToBuild}.Tests").ToList();
+                           }
 
                            CalamariProjects = calamariProjects;
 
@@ -226,9 +235,7 @@ partial class Build : NukeBuild
                                                                                                                    .SetConfiguration(Configuration)
                                                                                                                    .SetFramework(calamariPackageMetadata.Framework)
                                                                                                                    .SetRuntime(calamariPackageMetadata.Architecture)
-                                                                                                                   .EnableSelfContained()
-                                                                                                                   .EnableNoRestore() //we _should_ have restored everything earlier
-                                                                                                                   .SetVerbosity(projectName == "Calamari.Tests" ? DotNetVerbosity.detailed : DotNetVerbosity.minimal)));
+                                                                                                                   .EnableSelfContained()));
                                                                          }
                                                                          finally
                                                                          {
@@ -318,6 +325,8 @@ partial class Build : NukeBuild
 
     Target PublishAzureWebAppNetCoreShim =>
         _ => _.DependsOn(RestoreSolution)
+              //we only build the net core shim when there is the AzureWebApp project is being built
+              .OnlyWhenDynamic(() => CalamariProjects.Any(p => p.Name == "Calamari.AzureWebApp"))
               .Executes(() =>
                         {
                             if (!OperatingSystem.IsWindows())
@@ -349,11 +358,11 @@ partial class Build : NukeBuild
 
                             outputPath.CompressTo(archivePath);
                         });
-
+    
+    
     Target PackageConsolidatedCalamariZip =>
         d =>
-            d.DependsOn(PublishCalamariProjects)
-             .Executes(() =>
+            d.Executes(() =>
                        {
                            var artifacts = Directory.GetFiles(ArtifactsDirectory, "*.nupkg")
                                                     .Where(a => !NuGetPackagesToExcludeFromConsolidation.Any(a.Contains));
@@ -467,12 +476,17 @@ partial class Build : NukeBuild
     Target SetTeamCityVersion => d => d.Executes(() => TeamCity.Instance?.SetBuildNumber(NugetVersion.Value));
 
     Target BuildLocal => d =>
-                             d.DependsOn(PackCalamariConsolidatedNugetPackage)
+                             d.DependsOn(PublishCalamariProjects)
+                              .DependsOn(PackCalamariConsolidatedNugetPackage)
                               .DependsOn(UpdateCalamariVersionOnOctopusServer);
 
     Target BuildCi => d =>
                           d.DependsOn(SetTeamCityVersion)
+                           .DependsOn(PublishCalamariProjects)
                            .DependsOn(PackCalamariConsolidatedNugetPackage);
+
+    Target BuildAndPublishProject => d => d.OnlyWhenDynamic(() => !string.IsNullOrEmpty(ProjectToBuild)).DependsOn(PublishCalamariProjects);
+    
 
     public static int Main() => Execute<Build>(x => IsServerBuild ? x.BuildCi : x.BuildLocal);
 
