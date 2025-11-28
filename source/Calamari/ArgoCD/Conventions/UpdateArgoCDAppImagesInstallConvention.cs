@@ -65,7 +65,7 @@ namespace Calamari.ArgoCD.Conventions
             log.LogApplicationCounts(deploymentScope, argoProperties.Applications);
 
             var updatedApplicationsWithSources = new ConcurrentDictionary<ApplicationName, HashSet<ApplicationSourceName?>>();
-            var totalApplicationsWithSourceCounts = new List<(ApplicationName, int)>();
+            var totalApplicationsWithSourceCounts = new List<(ApplicationName, int, int)>();
             var newImagesWritten = new HashSet<string>();
             var gitReposUpdated = new HashSet<string>();
             var updatedSourcesCount = 0;
@@ -82,7 +82,9 @@ namespace Calamari.ArgoCD.Conventions
                 validationResult.Action(log);
 
                 var containsMultipleSources = applicationFromYaml.Spec.Sources.Count > 1;
-                totalApplicationsWithSourceCounts.Add((applicationFromYaml.Metadata.Name.ToApplicationName(), applicationFromYaml.Spec.Sources.Count));
+                totalApplicationsWithSourceCounts.Add((applicationFromYaml.Metadata.Name.ToApplicationName(), 
+                                                       applicationFromYaml.Spec.Sources.Count, 
+                                                       applicationFromYaml.Spec.Sources.Count(s => ScopingAnnotationReader.GetScopeForApplicationSource(s.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources) == deploymentScope)));
 
                 var didUpdateSomething = false;
                 foreach (var applicationSource in applicationFromYaml.Spec.Sources.OfType<BasicSource>())

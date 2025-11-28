@@ -18,36 +18,39 @@ namespace Calamari.ArgoCD
 
         public void WriteImageUpdateOutput(IEnumerable<string> gateways,
                                            IEnumerable<string> gitRepos,
-                                           IReadOnlyCollection<(ApplicationName ApplicationName, int SourceCount)> totalApplicationsWithSourceCount,
-                                           IReadOnlyCollection<(ApplicationName ApplicationName, int SourceCount)> updatedApplicationsWithSourceCount,
+                                           IReadOnlyCollection<(ApplicationName ApplicationName, int TotalSourceCount, int MatchingSourceCount)> totalApplicationsWithSourceCounts,
+                                           IReadOnlyCollection<(ApplicationName ApplicationName, int SourceCount)> updatedApplicationsWithSourceCounts,
                                            int imagesUpdatedCount)
         {
             WriteGatewayIds(gateways);
             WriteGitUris(gitRepos);
-            WriteTotalApplicationsWithSourceCounts(totalApplicationsWithSourceCount);
-            WriteUpdatedApplicationsWithSourceCounts(updatedApplicationsWithSourceCount);
+            WriteTotalApplicationsWithSourceCounts(totalApplicationsWithSourceCounts);
+            WriteUpdatedApplicationsWithSourceCounts(updatedApplicationsWithSourceCounts);
             
             log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.UpdatedImages, imagesUpdatedCount.ToString());
         }
 
         public void WriteManifestUpdateOutput(IEnumerable<string> gateways,
                                               IEnumerable<string> gitRepos,
-                                              IReadOnlyCollection<(ApplicationName ApplicationName, int SourceCount)> totalApplicationsWithSourceCount,
-                                              IReadOnlyCollection<(ApplicationName ApplicationName, int SourceCount)> updatedApplicationsWithSourceCount)
+                                              IReadOnlyCollection<(ApplicationName ApplicationName, int TotalSourceCount, int MatchingSourceCount)> totalApplicationsWithSourceCounts,
+                                              IReadOnlyCollection<(ApplicationName ApplicationName, int SourceCount)> updatedApplicationsWithSourceCounts)
         {
             WriteGatewayIds(gateways);
             WriteGitUris(gitRepos);
-            WriteTotalApplicationsWithSourceCounts(totalApplicationsWithSourceCount);
-            WriteUpdatedApplicationsWithSourceCounts(updatedApplicationsWithSourceCount);
+            WriteTotalApplicationsWithSourceCounts(totalApplicationsWithSourceCounts);
+            WriteUpdatedApplicationsWithSourceCounts(updatedApplicationsWithSourceCounts);
         }
 
-        void WriteTotalApplicationsWithSourceCounts(IReadOnlyCollection<(ApplicationName ApplicationName, int SourceCount)> totalApplicationsWithSourceCounts)
+        void WriteTotalApplicationsWithSourceCounts(IReadOnlyCollection<(ApplicationName ApplicationName, int TotalSourceCount, int MatchingSourceCount)> totalApplicationsWithSourceCounts)
         {
             var totalApps = ToCommaSeparatedString(totalApplicationsWithSourceCounts.Select(c => c.ApplicationName));
             log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.MatchingApplications, totalApps);
 
-            var totalSourceCounts = ToCommaSeparatedString(totalApplicationsWithSourceCounts.Select(c => c.SourceCount));
-            log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.MatchingApplicationSourceCounts, totalSourceCounts);
+            var totalSourceCounts = ToCommaSeparatedString(totalApplicationsWithSourceCounts.Select(c => c.TotalSourceCount));
+            log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.MatchingApplicationTotalSourceCounts, totalSourceCounts);
+            
+            var matchingSourceCounts = ToCommaSeparatedString(totalApplicationsWithSourceCounts.Select(c => c.MatchingSourceCount));
+            log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.MatchingApplicationMatchingSourceCounts, matchingSourceCounts);
         }
 
         void WriteUpdatedApplicationsWithSourceCounts(IReadOnlyCollection<(ApplicationName ApplicationName, int SourceCount)> updatedApplicationsWithSourceCount)

@@ -397,10 +397,10 @@ service:
             var content = fileSystem.ReadFile(fileInRepo);
             content.Should().Contain("1.27.1");
 
-            AssertOutputVariables(matchingApplicationSourceCounts: "2");
+            AssertOutputVariables(matchingApplicationTotalSourceCounts: "2");
         }
 
-        void AssertOutputVariables(bool updated = true, string matchingApplicationSourceCounts = "1")
+        void AssertOutputVariables(bool updated = true, string matchingApplicationTotalSourceCounts = "1")
         {
             using var _ = new AssertionScope();
             var serviceMessages = log.Messages.GetServiceMessagesOfType("setVariable");
@@ -408,7 +408,8 @@ service:
             serviceMessages.GetPropertyValue("ArgoCD.GitUris").Should().Be(updated ? new Uri(OriginPath).AbsoluteUri : string.Empty);
             serviceMessages.GetPropertyValue("ArgoCD.UpdatedImages").Should().Be(updated ? "1" : "0");
             serviceMessages.GetPropertyValue("ArgoCD.MatchingApplications").Should().Be("App1");
-            serviceMessages.GetPropertyValue("ArgoCD.MatchingApplicationSourceCounts").Should().Be(matchingApplicationSourceCounts);
+            serviceMessages.GetPropertyValue("ArgoCD.MatchingApplicationTotalSourceCounts").Should().Be(matchingApplicationTotalSourceCounts);
+            serviceMessages.GetPropertyValue("ArgoCD.MatchingApplicationMatchingSourceCounts").Should().Be("1");
             serviceMessages.GetPropertyValue("ArgoCD.UpdatedApplications").Should().Be(updated ? "App1" : string.Empty);
             serviceMessages.GetPropertyValue("ArgoCD.UpdatedApplicationSourceCounts").Should().Be(updated ? "1" : string.Empty);
         }
