@@ -32,7 +32,7 @@
   </Target>
 
   <Target Name="CopyNetCoreShimFilesAfterBuild" AfterTargets="Build" DependsOnTargets="GetNetCoreShimFiles">
-    <Unzip SourceFiles="@(NetCoreShimFiles)" DestinationFolder="$(OutDir)/netcoreshim" SkipUnchangedFiles="true" Condition="'$(IsWindowsNetCoreBuild)' == 'true'" />
+    <Unzip SourceFiles="@(NetCoreShimFiles)" DestinationFolder="$(OutputPath)/netcoreshim" SkipUnchangedFiles="true" Condition="'$(IsWindowsNetCoreBuild)' == 'true'" />
   </Target>
 
   <Target Name="CopyNetCoreShimFilesAfterPublish" AfterTargets="Publish" DependsOnTargets="GetNetCoreShimFiles">

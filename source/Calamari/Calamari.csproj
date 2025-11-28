@@ -107,19 +107,10 @@
     </ItemGroup>
   </Target>
 <Target Name="CopyDotnetScriptFilesAfterBuild" AfterTargets="Build" DependsOnTargets="GetToolFiles">
-  <PropertyGroup>
-    <!-- Fallback if OutDir is not set properly -->
-    <SafeOutDir Condition="'$(OutDir)' == '' OR '$(OutDir)' == '/'">$(MSBuildProjectDirectory)/bin/$(Configuration)/$(TargetFramework)/</SafeOutDir>
-    <SafeOutDir Condition="'$(OutDir)' != '' AND '$(OutDir)' != '/'">$(OutDir)</SafeOutDir>
-  </PropertyGroup>
-  <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(SafeOutDir)" />
+  <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(OutputPath)/" />
 </Target>
 
 <Target Name="CopyDotnetScriptFilesAfterPublish" AfterTargets="Publish" DependsOnTargets="GetToolFiles">
-  <PropertyGroup>
-    <SafePublishDir Condition="'$(PublishDir)' == '' OR '$(PublishDir)' == '/'">$(MSBuildProjectDirectory)/bin/$(Configuration)/$(TargetFramework)/publish/</SafePublishDir>
-    <SafePublishDir Condition="'$(PublishDir)' != '' AND '$(PublishDir)' != '/'">$(PublishDir)</SafePublishDir>
-  </PropertyGroup>
-  <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(SafePublishDir)" />
+  <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(PublishDir)/" />
 </Target>
 </Project>
