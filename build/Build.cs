@@ -37,7 +37,7 @@ partial class Build : NukeBuild
 
     [Parameter] readonly bool SignBinaries;
 
-    // When building locally signing isn't really necessary and it could take
+    // When building locally signing isn't really necessary, and it could take
     // up to 3-4 minutes to sign all the binaries as we build for many, many
     // different runtimes so disabling it locally means quicker turn around
     // when doing local development.
@@ -437,7 +437,7 @@ partial class Build : NukeBuild
     }
 
     Target PublishAzureWebAppNetCoreShim =>
-        _ => _.DependsOn(Restore)
+        td => td.DependsOn(Restore)
               .Executes(() =>
                         {
                             if (!OperatingSystem.IsWindows())
