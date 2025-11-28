@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Calamari.Common.Plumbing.Extensions;
@@ -16,46 +17,47 @@ namespace Calamari.Kubernetes.ResourceStatus
     {
         public KubectlGetResult Resource(IResourceIdentity resourceIdentity, IKubectl kubectl)
         {
-            var output = kubectl.ExecuteCommandAndReturnOutput(new[]
-                                {
-                                    "get", 
-                                    $"{resourceIdentity.GroupVersionKind.Kind}.{resourceIdentity.GroupVersionKind.Version}.{resourceIdentity.GroupVersionKind.Group}", 
-                                    resourceIdentity.Name, 
-                                    "-o=jsonpath=\"{@}\"", 
-                                    string.IsNullOrEmpty(resourceIdentity.Namespace) ? "" : $"-n {resourceIdentity.Namespace}"
-                                })
-                                .Output;
+            var commandResult = kubectl.ExecuteCommandAndReturnOutput("get",
+                                $"{resourceIdentity.GroupVersionKind.Kind}.{resourceIdentity.GroupVersionKind.Version}.{resourceIdentity.GroupVersionKind.Group}",
+                                resourceIdentity.Name,
+                                "-o=jsonpath=\"{@}\"",
+                                string.IsNullOrEmpty(resourceIdentity.Namespace) ? "" : $"-n {resourceIdentity.Namespace}");
 
-            return new KubectlGetResult(output.InfoLogs.Join(string.Empty),
-                                        output.Messages.Select(msg => $"{msg.Level}: {msg.Text}").ToList());
+            return ProcessResult(commandResult);
         }
 
         public KubectlGetResult AllResources(ResourceGroupVersionKind groupVersionKind, string @namespace, IKubectl kubectl)
         {
-            var output = kubectl.ExecuteCommandAndReturnOutput(new[]
-                                {
-                                    "get", 
-                                    $"{groupVersionKind.Kind}.{groupVersionKind.Version}.{groupVersionKind.Group}", 
-                                    "-o=jsonpath=\"{@}\"", 
-                                    string.IsNullOrEmpty(@namespace) ? "" : $"-n {@namespace}"
-                                })
-                                .Output;
+            var commandResult = kubectl.ExecuteCommandAndReturnOutput("get",
+                                $"{groupVersionKind.Kind}.{groupVersionKind.Version}.{groupVersionKind.Group}",
+                                "-o=jsonpath=\"{@}\"",
+                                string.IsNullOrEmpty(@namespace) ? "" : $"-n {@namespace}");
 
-            return new KubectlGetResult(output.InfoLogs.Join(string.Empty),
-                                        output.Messages.Select(msg => $"{msg.Level}: {msg.Text}").ToList());
+            return ProcessResult(commandResult);
+        }
+
+        static KubectlGetResult ProcessResult(CommandResultWithOutput commandResult)
+        {
+            return new KubectlGetResult(
+                commandResult.Output.InfoLogs.Join(string.Empty),
+                commandResult.Output.Messages.Select(msg => $"{msg.Level}: {msg.Text}").ToList(),
+                commandResult.Result.ExitCode);
         }
     }
 
     public class KubectlGetResult
     {
-        public KubectlGetResult(string resourceJson, IList<string> rawOutput)
+        public KubectlGetResult(string resourceJson, IList<string> rawOutput, int exitCode)
         {
             ResourceJson = resourceJson;
             RawOutput = rawOutput;
+            ExitCode = exitCode;
         }
 
         public string ResourceJson { get; }
 
         public IList<string> RawOutput { get; }
+
+        public int ExitCode { get; }
     }
 }
