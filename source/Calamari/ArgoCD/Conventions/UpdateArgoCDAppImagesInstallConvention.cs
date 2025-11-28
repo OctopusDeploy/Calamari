@@ -15,6 +15,7 @@ using Calamari.ArgoCD.GitHub;
 using Calamari.ArgoCD.Helm;
 using Calamari.ArgoCD.Models;
 using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
@@ -64,7 +65,7 @@ namespace Calamari.ArgoCD.Conventions
             
             log.LogApplicationCounts(deploymentScope, argoProperties.Applications);
 
-            var updatedApplicationsWithSources = new ConcurrentDictionary<ApplicationName, HashSet<ApplicationSourceName?>>();
+            var updatedApplicationsWithSources = new Dictionary<ApplicationName, HashSet<ApplicationSourceName?>>();
             var totalApplicationsWithSourceCounts = new List<(ApplicationName, int, int)>();
             var newImagesWritten = new HashSet<string>();
             var gitReposUpdated = new HashSet<string>();

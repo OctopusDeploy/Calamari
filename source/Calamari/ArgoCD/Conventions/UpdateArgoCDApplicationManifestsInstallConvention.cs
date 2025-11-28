@@ -67,7 +67,7 @@ namespace Calamari.ArgoCD.Conventions
 
             log.LogApplicationCounts(deploymentScope, argoProperties.Applications);
 
-            var updatedApplicationsWithSources = new ConcurrentDictionary<ApplicationName, HashSet<ApplicationSourceName?>>();
+            var updatedApplicationsWithSources = new Dictionary<ApplicationName, HashSet<ApplicationSourceName?>>();
             var totalApplicationsWithSourceCounts = new List<(ApplicationName, int, int)>();
             var gitReposUpdated = new HashSet<string>();
 
