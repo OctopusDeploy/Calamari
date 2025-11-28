@@ -56,7 +56,7 @@ namespace Calamari.ConsolidateCalamariPackages.Tests
                 { "Calamari.AzureResourceGroup", new PackagePropertiesToTest(isWindows ? AllArchitectures : NetCoreArchitectures, false) },
                 { "Calamari.GoogleCloudScripting", new PackagePropertiesToTest(isWindows ? AllArchitectures : NetCoreArchitectures, false) },
                 { "Calamari.AzureScripting", new PackagePropertiesToTest(isWindows ? AllArchitectures : NetCoreArchitectures, false) },
-                { "Calamari.AzureWebApp", new PackagePropertiesToTest(isWindows ? new[] { "netfx", "win-x64" } : new[] {"win-x64"}, false) },
+                { "Calamari.AzureWebApp", new PackagePropertiesToTest(isWindows ? AllArchitectures : NetCoreArchitectures, false) },
                 { "Calamari.Terraform", new PackagePropertiesToTest(isWindows ? AllArchitectures : NetCoreArchitectures, false) }
             };
         }
@@ -75,9 +75,9 @@ namespace Calamari.ConsolidateCalamariPackages.Tests
         static IEnumerable<string> ExpectedPackages()
         {
             var isWindowsEnvValue = Environment.GetEnvironmentVariable("IS_WINDOWS");
-            
+
             var isWindows = isWindowsEnvValue == null ? RuntimeInformation.IsOSPlatform(OSPlatform.Windows) : bool.Parse(isWindowsEnvValue);
-            
+
             return PackagesWithDetails(isWindows)
                    .Where(kvp => PackageSupported(kvp.Key, isWindows))
                    .Select(kvp => kvp.Key);
@@ -86,9 +86,9 @@ namespace Calamari.ConsolidateCalamariPackages.Tests
         static IEnumerable<TestCaseData> ExpectedPackageArchitectureMappings()
         {
             var isWindowsEnvValue = Environment.GetEnvironmentVariable("IS_WINDOWS");
-            
+
             var isWindows = isWindowsEnvValue == null ? RuntimeInformation.IsOSPlatform(OSPlatform.Windows) : bool.Parse(isWindowsEnvValue);
-            
+
             return PackagesWithDetails(isWindows)
                    .Where(kvp => PackageSupported(kvp.Key, isWindows))
                    .Select(kvp => new TestCaseData(kvp.Key, kvp.Value.Architectures).SetName($"Package_{kvp.Key}_HasExpectedArchitectures"));
@@ -97,21 +97,21 @@ namespace Calamari.ConsolidateCalamariPackages.Tests
         static IEnumerable<TestCaseData> ExpectedPackageNugetStatus()
         {
             var isWindowsEnvValue = Environment.GetEnvironmentVariable("IS_WINDOWS");
-            
+
             var isWindows = isWindowsEnvValue == null ? RuntimeInformation.IsOSPlatform(OSPlatform.Windows) : bool.Parse(isWindowsEnvValue);
-            
+
             return PackagesWithDetails(isWindows)
                 .Where(kvp => PackageSupported(kvp.Key, isWindows))
                 .Select(kvp => new TestCaseData(kvp.Key, kvp.Value.IsNupkg).SetName($"Package {kvp.Key} Has Expected Nuget PackageFlag"));
-                
+
         }
-        
+
         [SetUp]
         public void SetUp()
         {
             consolidatedFilePath = Environment.GetEnvironmentVariable("CONSOLIDATED_ZIP") ?? "";
             expectedVersion = Environment.GetEnvironmentVariable("EXPECTED_VERSION") ?? "";
-            
+
             var indexLoader = new ConsolidatedPackageIndexLoader();
             using (var fileStream = File.OpenRead(consolidatedFilePath))
             {
@@ -132,7 +132,7 @@ namespace Calamari.ConsolidateCalamariPackages.Tests
             var package = consolidatedPackageIndex.GetPackage(packageName);
             package.Version.Should().Be(expectedVersion);
         }
-        
+
         [TestCaseSource(nameof(ExpectedPackageNugetStatus))]
         public void ConsolidatedPackageIndex_FlagsNugetPackagesCorrectly(string packageName, bool isNugetPackage)
         {

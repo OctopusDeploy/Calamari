@@ -6,7 +6,7 @@
     <IsPackable>false</IsPackable>
     <OutputType>Exe</OutputType>
     <TargetFrameworks>net462;net8.0</TargetFrameworks>
-    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
+    <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
     <LangVersion>8.0</LangVersion>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
@@ -41,11 +41,11 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
-  
+
   <ItemGroup>
     <Compile Remove="netcoreshim\**" />
   </ItemGroup>
-  
+
   <ItemGroup>
     <EmbeddedResource Remove="netcoreshim\**" />
   </ItemGroup>
