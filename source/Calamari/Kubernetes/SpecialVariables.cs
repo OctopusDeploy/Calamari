@@ -83,8 +83,11 @@ namespace Calamari.Kubernetes
             {
                 public static readonly string GatewayIds = "ArgoCD.GatewayIds";
                 public static readonly string GitUris = "ArgoCD.GitUris";
-                public static readonly string MatchingApplications = "ArgoCD.TotalMatchingApplications";
+                public static readonly string MatchingApplications = "ArgoCD.MatchingApplications";
+                public static readonly string MatchingApplicationTotalSourceCounts = "ArgoCD.MatchingApplicationTotalSourceCounts";
+                public static readonly string MatchingApplicationMatchingSourceCounts = "ArgoCD.MatchingApplicationMatchingSourceCounts";
                 public static readonly string UpdatedApplications = "ArgoCD.UpdatedApplications";
+                public static readonly string UpdatedApplicationSourceCounts = "ArgoCD.UpdatedApplicationSourceCounts";
                 public static readonly string UpdatedImages = "ArgoCD.UpdatedImages";
             }
         }
