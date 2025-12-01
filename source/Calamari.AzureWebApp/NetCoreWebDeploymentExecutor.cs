@@ -44,6 +44,9 @@ namespace Calamari.AzureWebApp
             {
                 throw new CommandException($"Unable to find {netCoreShimExePath}");
             }
+            
+            var encryptionKey = AesEncryption.RandomString(16);
+            var encryptor = AesEncryption.ForScripts(encryptionKey);
 
             var retry = AzureRetryTracker.GetDefaultRetryTracker();
             while (retry.Try())
@@ -56,12 +59,14 @@ namespace Calamari.AzureWebApp
                     var netCoreShimArguments = BuildNetCoreShimArguments(
                                                                          deployment.CurrentDirectory,
                                                                          BuildPath(targetSite, variables),
-                                                                         DestinationOptions(publishSettings),
+                                                                         DestinationOptions(publishSettings, encryptionKey, encryptor),
                                                                          DeploymentSyncCommandOptions(variables));
 
-                    string resultMessage = null; 
+                    string resultMessage = null;
 
-                    log.Verbose($"Executing {netCoreShimExePath}");
+                    var sanitizedArgs = netCoreShimArguments.Replace(encryptionKey, "********");
+                    log.Verbose($"Executing '{netCoreShimExePath} {sanitizedArgs}'");
+                    
                     var commandResult = SilentProcessRunner.ExecuteCommand(netCoreShimExePath,
                                                                            netCoreShimArguments,
                                                                            netCoreShimExeFolder,
@@ -182,12 +187,9 @@ namespace Calamari.AzureWebApp
             return string.Join(" ", parts);
         }
 
-        static IEnumerable<string> DestinationOptions(WebDeployPublishSettings settings)
+        static IEnumerable<string> DestinationOptions(WebDeployPublishSettings settings, string encryptionKey, AesEncryption encryptor)
         {
             var publishProfile = settings.PublishProfile;
-
-            var encryptionKey = AesEncryption.RandomString(16);
-            var encryptor = AesEncryption.ForScripts(encryptionKey);
 
             //we encrypt the username and password
             var encryptedUserName = Convert.ToBase64String(encryptor.Encrypt(publishProfile.UserName));

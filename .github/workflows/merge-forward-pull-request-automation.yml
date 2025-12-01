@@ -1,0 +1,27 @@
+#From https://github.com/OctopusDeploy/OctopusDeploy/blob/main/.github/workflows/merge-forward-pull-request-automation.yml
+
+name: "Auto-approve Merge-forward Pull Requests"
+
+on:
+  pull_request:
+    branches:    
+      - main
+      - 'release/*'
+
+# Increase the access for the GITHUB_TOKEN
+permissions:
+  # This Allows the GITHUB_TOKEN to approve pull requests
+  pull-requests: write
+
+env:
+  PR_URL: ${{github.event.pull_request.html_url}}
+  # By default, the GitHub Actions workflow will get a GITHUB_TOKEN with read-only permissions.
+  GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+
+jobs:
+  approve-pr:
+    runs-on: ubuntu-latest
+    if: ${{ (github.actor == 'Octobob') && (contains(github.head_ref, 'mergebot')) }}
+    steps:
+      - name: Approve a merge forward PR
+        run: gh pr review --approve "$PR_URL"
