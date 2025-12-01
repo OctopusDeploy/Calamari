@@ -20,6 +20,7 @@ using Calamari.Testing.Helpers;
 using Calamari.Tests.ArgoCD.Git;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
 using FluentAssertions;
+using FluentAssertions.Execution;
 using LibGit2Sharp;
 using NSubstitute;
 using NUnit.Framework;
@@ -50,6 +51,8 @@ image:
   name: nginx:1.18
 ";
 
+        const string GatewayId = "Gateway1";
+
         [SetUp]
         public void Init()
         {
@@ -64,7 +67,7 @@ image:
 
             var argoCdCustomPropertiesDto = new ArgoCDCustomPropertiesDto(new[]
                                                                           {
-                                                                              new ArgoCDApplicationDto("Gateway1",
+                                                                              new ArgoCDApplicationDto(GatewayId,
                                                                                                        "App1",
                                                                                                        "argocd",
                                                                                                        new[]
@@ -85,7 +88,7 @@ image:
             {
                 Metadata = new Metadata()
                 {
-                    Name = "MyApp",
+                    Name = "App1",
                     Annotations = new Dictionary<string, string>()
                     {
                         [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(null)] = ProjectSlug,
@@ -124,7 +127,7 @@ image:
                                                                      new DeploymentConfigFactory(nonSensitiveCalamariVariables),
                                                                      new CommitMessageGenerator(),
                                                                      customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser, 
+                                                                     argoCdApplicationManifestParser,
                                                                      Substitute.For<IGitVendorAgnosticApiAdapterFactory>());
             var variables = new CalamariVariables
             {
@@ -149,6 +152,8 @@ image:
             var resultRepo = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             var valuesFileContent = fileSystem.ReadFile(Path.Combine(resultRepo, "files", "values.yml"));
             valuesFileContent.Should().Be(DefaultValuesFile);
+            
+            AssertOutputVariables(false);
         }
 
         [Test]
@@ -160,7 +165,7 @@ image:
                                                                      new DeploymentConfigFactory(nonSensitiveCalamariVariables),
                                                                      new CommitMessageGenerator(),
                                                                      customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser, 
+                                                                     argoCdApplicationManifestParser,
                                                                      Substitute.For<IGitVendorAgnosticApiAdapterFactory>());
             var variables = new CalamariVariables
             {
@@ -183,6 +188,8 @@ image:
             var resultRepo = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             var valuesFileContent = fileSystem.ReadFile(Path.Combine(resultRepo, "files", "values.yml"));
             valuesFileContent.Should().Be(DefaultValuesFile);
+            
+            AssertOutputVariables(false);
         }
 
         [Test]
@@ -196,7 +203,7 @@ image:
                                                                      new DeploymentConfigFactory(nonSensitiveCalamariVariables),
                                                                      new CommitMessageGenerator(),
                                                                      customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser, 
+                                                                     argoCdApplicationManifestParser,
                                                                      Substitute.For<IGitVendorAgnosticApiAdapterFactory>());
             var variables = new CalamariVariables
             {
@@ -219,6 +226,8 @@ image:
             var resultRepo = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             var valuesFileContent = fileSystem.ReadFile(Path.Combine(resultRepo, "files", "values.yml"));
             valuesFileContent.Should().Contain("nginx:1.27.1");
+            
+            AssertOutputVariables();
         }
 
         [Test]
@@ -241,7 +250,7 @@ image2:
                                                                      new DeploymentConfigFactory(nonSensitiveCalamariVariables),
                                                                      new CommitMessageGenerator(),
                                                                      customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser, 
+                                                                     argoCdApplicationManifestParser,
                                                                      Substitute.For<IGitVendorAgnosticApiAdapterFactory>());
             var variables = new CalamariVariables
             {
@@ -263,7 +272,8 @@ image2:
             //Assert
             var resultRepo = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             var valuesFileContent = fileSystem.ReadFile(Path.Combine(resultRepo, "files", "values.yml"));
-            valuesFileContent.ReplaceLineEndings().Should()
+            valuesFileContent.ReplaceLineEndings()
+                             .Should()
                              .Be(@"
 image1:
    name: nginx:1.27.1
@@ -271,8 +281,10 @@ image2:
    name: alpine
    tag: 2.2
 ".ReplaceLineEndings());
+            
+            AssertOutputVariables(updatedImages: 2);
         }
-        
+
         [Test]
         public void HandleAHelmChartInAnUntaggedApplication()
         {
@@ -287,12 +299,12 @@ image:
 
             originRepo.AddFilesToBranch(argoCDBranchName, ("files/values.yaml", multiImageValuesFile));
             originRepo.AddFilesToBranch(argoCDBranchName, ("files/Chart.yaml", "Content Is Arbitrary"));
-            
+
             argoCdApplicationFromYaml = new Application()
             {
                 Metadata = new Metadata()
                 {
-                    Namespace = "MyAppp",
+                    Name = "App1",
                     Annotations = new Dictionary<string, string>()
                     {
                         [ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(null)] = "{{ .Values.image.repository }}:{{ .Values.image.tag }}",
@@ -321,7 +333,7 @@ image:
                                                                      new DeploymentConfigFactory(nonSensitiveCalamariVariables),
                                                                      new CommitMessageGenerator(),
                                                                      customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser, 
+                                                                     argoCdApplicationManifestParser,
                                                                      Substitute.For<IGitVendorAgnosticApiAdapterFactory>());
             var variables = new CalamariVariables
             {
@@ -330,7 +342,7 @@ image:
                 [PackageVariables.IndexedImage("argocd-e2e-container")] = "quay.io/argoprojlabs/argocd-e2e-container:0.3",
                 [PackageVariables.IndexedPackagePurpose("argocd-e2e-container")] = "DockerImageReference",
             };
-            
+
             //Act
             var runningDeployment = new RunningDeployment(null, variables);
             runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
@@ -340,7 +352,8 @@ image:
             //Assert
             var resultRepo = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             var valuesFileContent = fileSystem.ReadFile(Path.Combine(resultRepo, "files", "values.yaml"));
-            valuesFileContent.ReplaceLineEndings().Should()
+            valuesFileContent.ReplaceLineEndings()
+                             .Should()
                              .Be(@"
 replicaCount: 1
 image:
@@ -348,7 +361,9 @@ image:
   tag: 0.3
   pullPolicy: IfNotPresent
 ".ReplaceLineEndings());
-        } 
+            
+            AssertOutputVariables();
+        }
 
         [Test]
         public void HandleHelmWithRefSource()
@@ -364,12 +379,12 @@ image:
 
             originRepo.AddFilesToBranch(argoCDBranchName, ("files/values.yaml", valuesFile));
             originRepo.AddFilesToBranch(argoCDBranchName, ("files/Chart.yaml", "Content Is Arbitrary"));
-            
+
             argoCdApplicationFromYaml = new Application()
             {
                 Metadata = new Metadata()
                 {
-                    Namespace = "MyAppp",
+                    Name = "App1",
                     Annotations = new Dictionary<string, string>()
                     {
                         [ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey("helm-source".ToApplicationSourceName())] = "{{ .Values.image.repository }}:{{ .Values.image.tag }}",
@@ -412,7 +427,7 @@ image:
                                                                      new DeploymentConfigFactory(nonSensitiveCalamariVariables),
                                                                      new CommitMessageGenerator(),
                                                                      customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser, 
+                                                                     argoCdApplicationManifestParser,
                                                                      Substitute.For<IGitVendorAgnosticApiAdapterFactory>());
             var variables = new CalamariVariables
             {
@@ -421,7 +436,7 @@ image:
                 [PackageVariables.IndexedImage("argocd-e2e-container")] = "quay.io/argoprojlabs/argocd-e2e-container:0.3",
                 [PackageVariables.IndexedPackagePurpose("argocd-e2e-container")] = "DockerImageReference",
             };
-            
+
             //Act
             var runningDeployment = new RunningDeployment(null, variables);
             runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
@@ -431,7 +446,8 @@ image:
             //Assert
             var resultRepo = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             var valuesFileContent = fileSystem.ReadFile(Path.Combine(resultRepo, "files", "values.yaml"));
-            valuesFileContent.ReplaceLineEndings().Should()
+            valuesFileContent.ReplaceLineEndings()
+                             .Should()
                              .Be(@"
 replicaCount: 1
 image:
@@ -439,7 +455,9 @@ image:
   tag: 0.3
   pullPolicy: IfNotPresent
 ".ReplaceLineEndings());
-        } 
+            
+            AssertOutputVariables(matchingApplicationTotalSourceCounts: "2");
+        }
 
         [Test]
         public void DontUpdateSingleSourceWithWrongScoping()
@@ -455,12 +473,12 @@ image:
 
             originRepo.AddFilesToBranch(argoCDBranchName, ("files/values.yaml", valuesFile));
             originRepo.AddFilesToBranch(argoCDBranchName, ("files/Chart.yaml", "Content Is Arbitrary"));
-            
+
             argoCdApplicationFromYaml = new Application()
             {
                 Metadata = new Metadata()
                 {
-                    Namespace = "MyAppp",
+                    Name = "App1",
                     Annotations = new Dictionary<string, string>()
                     {
                         [ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(null)] = "{{ .Values.image.repository }}:{{ .Values.image.tag }}",
@@ -490,7 +508,7 @@ image:
                                                                      new DeploymentConfigFactory(nonSensitiveCalamariVariables),
                                                                      new CommitMessageGenerator(),
                                                                      customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser, 
+                                                                     argoCdApplicationManifestParser,
                                                                      Substitute.For<IGitVendorAgnosticApiAdapterFactory>());
             var variables = new CalamariVariables
             {
@@ -499,7 +517,7 @@ image:
                 [PackageVariables.IndexedImage("argocd-e2e-container")] = "quay.io/argoprojlabs/argocd-e2e-container:0.3",
                 [PackageVariables.IndexedPackagePurpose("argocd-e2e-container")] = "DockerImageReference",
             };
-            
+
             //Act
             var runningDeployment = new RunningDeployment(null, variables);
             runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
@@ -509,7 +527,8 @@ image:
             //Assert
             var resultRepo = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             var valuesFileContent = fileSystem.ReadFile(Path.Combine(resultRepo, "files", "values.yaml"));
-            valuesFileContent.ReplaceLineEndings().Should()
+            valuesFileContent.ReplaceLineEndings()
+                             .Should()
                              .Be(@"
 replicaCount: 1
 image:
@@ -517,8 +536,10 @@ image:
   tag: 0.1
   pullPolicy: IfNotPresent
 ".ReplaceLineEndings());
-        } 
-        
+            
+            AssertOutputVariables(false, matchingApplicationMatchingSourceCounts: "0");
+        }
+
         [Test]
         public void DontUpdateHelmRefSourceWithWrongScoping()
         {
@@ -533,12 +554,12 @@ image:
 
             originRepo.AddFilesToBranch(argoCDBranchName, ("files/values.yaml", valuesFile));
             originRepo.AddFilesToBranch(argoCDBranchName, ("files/Chart.yaml", "Content Is Arbitrary"));
-            
+
             argoCdApplicationFromYaml = new Application()
             {
                 Metadata = new Metadata()
                 {
-                    Namespace = "MyAppp",
+                    Name = "App1",
                     Annotations = new Dictionary<string, string>()
                     {
                         [ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey("helm-source".ToApplicationSourceName())] = "{{ .Values.image.repository }}:{{ .Values.image.tag }}",
@@ -580,7 +601,7 @@ image:
                                                                      new DeploymentConfigFactory(nonSensitiveCalamariVariables),
                                                                      new CommitMessageGenerator(),
                                                                      customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser, 
+                                                                     argoCdApplicationManifestParser,
                                                                      Substitute.For<IGitVendorAgnosticApiAdapterFactory>());
             var variables = new CalamariVariables
             {
@@ -589,7 +610,7 @@ image:
                 [PackageVariables.IndexedImage("argocd-e2e-container")] = "quay.io/argoprojlabs/argocd-e2e-container:0.3",
                 [PackageVariables.IndexedPackagePurpose("argocd-e2e-container")] = "DockerImageReference",
             };
-            
+
             //Act
             var runningDeployment = new RunningDeployment(null, variables);
             runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
@@ -599,7 +620,8 @@ image:
             //Assert
             var resultRepo = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             var valuesFileContent = fileSystem.ReadFile(Path.Combine(resultRepo, "files", "values.yaml"));
-            valuesFileContent.ReplaceLineEndings().Should()
+            valuesFileContent.ReplaceLineEndings()
+                             .Should()
                              .Be(@"
 replicaCount: 1
 image:
@@ -607,8 +629,10 @@ image:
   tag: 0.1
   pullPolicy: IfNotPresent
 ".ReplaceLineEndings());
-        } 
-    
+            
+            AssertOutputVariables(false, matchingApplicationTotalSourceCounts: "2", matchingApplicationMatchingSourceCounts: "0");
+        }
+
         [Test]
         public void WarnButDontUpdateHelmRefSourceWithMissingImagePath()
         {
@@ -623,12 +647,12 @@ image:
 
             originRepo.AddFilesToBranch(argoCDBranchName, ("files/values.yaml", valuesFile));
             originRepo.AddFilesToBranch(argoCDBranchName, ("files/Chart.yaml", "Content Is Arbitrary"));
-            
+
             argoCdApplicationFromYaml = new Application()
             {
                 Metadata = new Metadata()
                 {
-                    Namespace = "MyAppp",
+                    Name = "App1",
                     Annotations = new Dictionary<string, string>()
                     {
                         [ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey("helm-source".ToApplicationSourceName())] = "{{ .Values.image.repository }}:{{ .Values.image.tag }}",
@@ -670,7 +694,7 @@ image:
                                                                      new DeploymentConfigFactory(nonSensitiveCalamariVariables),
                                                                      new CommitMessageGenerator(),
                                                                      customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser, 
+                                                                     argoCdApplicationManifestParser,
                                                                      Substitute.For<IGitVendorAgnosticApiAdapterFactory>());
             var variables = new CalamariVariables
             {
@@ -679,7 +703,7 @@ image:
                 [PackageVariables.IndexedImage("argocd-e2e-container")] = "quay.io/argoprojlabs/argocd-e2e-container:0.3",
                 [PackageVariables.IndexedPackagePurpose("argocd-e2e-container")] = "DockerImageReference",
             };
-            
+
             //Act
             var runningDeployment = new RunningDeployment(null, variables);
             runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
@@ -689,7 +713,8 @@ image:
             //Assert
             var resultRepo = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             var valuesFileContent = fileSystem.ReadFile(Path.Combine(resultRepo, "files", "values.yaml"));
-            valuesFileContent.ReplaceLineEndings().Should()
+            valuesFileContent.ReplaceLineEndings()
+                             .Should()
                              .Be(@"
 replicaCount: 1
 image:
@@ -699,7 +724,9 @@ image:
 ".ReplaceLineEndings());
 
             log.MessagesWarnFormatted.Should().Contain("The Helm source 'https://github.com/doesnt/exist.git' is missing an annotation for the image replace path. It will not be updated.");
-        } 
+            
+            AssertOutputVariables(false, matchingApplicationTotalSourceCounts: "2");
+        }
 
         [Test]
         public void DontWarnHelmRefSourceWithMissingImagePathIfRefSourceNotInScope()
@@ -715,12 +742,12 @@ image:
 
             originRepo.AddFilesToBranch(argoCDBranchName, ("files/values.yaml", valuesFile));
             originRepo.AddFilesToBranch(argoCDBranchName, ("files/Chart.yaml", "Content Is Arbitrary"));
-            
+
             argoCdApplicationFromYaml = new Application()
             {
                 Metadata = new Metadata()
                 {
-                    Namespace = "MyAppp",
+                    Name = "App1",
                     Annotations = new Dictionary<string, string>()
                     {
                         [ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey("helm-source".ToApplicationSourceName())] = "{{ .Values.image.repository }}:{{ .Values.image.tag }}",
@@ -761,7 +788,7 @@ image:
                                                                      new DeploymentConfigFactory(nonSensitiveCalamariVariables),
                                                                      new CommitMessageGenerator(),
                                                                      customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser, 
+                                                                     argoCdApplicationManifestParser,
                                                                      Substitute.For<IGitVendorAgnosticApiAdapterFactory>());
             var variables = new CalamariVariables
             {
@@ -770,7 +797,7 @@ image:
                 [PackageVariables.IndexedImage("argocd-e2e-container")] = "quay.io/argoprojlabs/argocd-e2e-container:0.3",
                 [PackageVariables.IndexedPackagePurpose("argocd-e2e-container")] = "DockerImageReference",
             };
-            
+
             //Act
             var runningDeployment = new RunningDeployment(null, variables);
             runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
@@ -780,7 +807,8 @@ image:
             //Assert
             var resultRepo = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             var valuesFileContent = fileSystem.ReadFile(Path.Combine(resultRepo, "files", "values.yaml"));
-            valuesFileContent.ReplaceLineEndings().Should()
+            valuesFileContent.ReplaceLineEndings()
+                             .Should()
                              .Be(@"
 replicaCount: 1
 image:
@@ -790,10 +818,24 @@ image:
 ".ReplaceLineEndings());
 
             log.MessagesWarnFormatted.Should().NotContain("The Helm source 'https://github.com/doesnt/exist.git' is missing an annotation for the image replace path. It will not be updated.");
-        } 
+
+            AssertOutputVariables(false, matchingApplicationTotalSourceCounts: "2", matchingApplicationMatchingSourceCounts: "0");
+        }
+
+        void AssertOutputVariables(bool updated = true, string matchingApplicationTotalSourceCounts = "1", string matchingApplicationMatchingSourceCounts = "1", int updatedImages = 1)
+        {
+            using var _ = new AssertionScope();
+            var serviceMessages = log.Messages.GetServiceMessagesOfType("setVariable");
+            serviceMessages.GetPropertyValue("ArgoCD.GatewayIds").Should().Be(GatewayId);
+            serviceMessages.GetPropertyValue("ArgoCD.GitUris").Should().Be(updated ? new Uri(OriginPath).AbsoluteUri : string.Empty);
+            serviceMessages.GetPropertyValue("ArgoCD.UpdatedImages").Should().Be(updated ? updatedImages.ToString() : "0");
+            serviceMessages.GetPropertyValue("ArgoCD.MatchingApplications").Should().Be("App1");
+            serviceMessages.GetPropertyValue("ArgoCD.MatchingApplicationTotalSourceCounts").Should().Be(matchingApplicationTotalSourceCounts);
+            serviceMessages.GetPropertyValue("ArgoCD.MatchingApplicationMatchingSourceCounts").Should().Be(matchingApplicationMatchingSourceCounts);
+            serviceMessages.GetPropertyValue("ArgoCD.UpdatedApplications").Should().Be(updated ? "App1" : string.Empty);
+            serviceMessages.GetPropertyValue("ArgoCD.UpdatedApplicationSourceCounts").Should().Be(updated ? "1" : string.Empty);
+        }
     }
-    
-    
 }
 
 #endif
