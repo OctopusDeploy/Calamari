@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Runtime.InteropServices;
 using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.ServiceMessages;
@@ -44,7 +45,12 @@ namespace Calamari.Common.Features.Processes
             catch (Exception ex)
             {
                 if (ex.InnerException is Win32Exception)
+                {
                     commandOutput.WriteError(ConstructWin32ExceptionMessage(invocation.Executable));
+                    
+                    //todo: @robert.erez  - Remove this check if/when we can confirm that the issue is fixed.
+                    LogOpenFileStats(invocation, ex, commandOutput);
+                }
 
                 commandOutput.WriteError(ex.ToString());
                 commandOutput.WriteError("The command that caused the exception was: " + invocation);
@@ -54,6 +60,33 @@ namespace Calamari.Common.Features.Processes
                     -1,
                     ex.ToString(),
                     invocation.WorkingDirectory);
+            }
+        }
+
+        // Variable used for temporarily evaluating a potential bug with file handles being left open.
+        static void LogOpenFileStats(CommandLineInvocation invocation, Exception ex, SplitCommandInvocationOutputSink commandOutput)
+        {
+            if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("TEAMCITY_VERSION")))
+                return; // Only log in our CI environment.
+
+            if (ex.InnerException == null || !ex.InnerException.Message.Contains("Text file busy"))
+                return; // "Text file busy" is the error that indicates a file is open.
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                return; // lsof is not available on Windows.
+
+            try
+            {
+                SilentProcessRunner.ExecuteCommand(
+                                                   "lsof",
+                                                   "",
+                                                   invocation.WorkingDirectory,
+                                                   commandOutput.WriteError,
+                                                   commandOutput.WriteError);
+            }
+            catch (Exception e)
+            {
+                commandOutput.WriteInfo("Something really wrong happened when trying to log open file handles: " + e.Message);
             }
         }
 
