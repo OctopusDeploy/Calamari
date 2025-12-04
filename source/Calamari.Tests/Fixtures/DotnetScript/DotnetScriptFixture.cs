@@ -124,13 +124,13 @@ namespace Calamari.Tests.Fixtures.DotnetScript
             if (enableIsolatedLoadContext)
             {
                 output.AssertSuccess();
-                output.AssertOutput("NuGet.Commands version: 6.10.0.");
+                output.AssertOutput("NuGet.Commands version: 6.10.1.5");
                 output.AssertOutput("Parameters Parameter0Parameter1");
             }
             else
             {
                 output.AssertFailure();
-                output.AssertErrorOutput("Could not load file or assembly 'NuGet.Protocol, Version=6.10.0.");
+                output.AssertErrorOutput("Could not load file or assembly 'NuGet.Protocol, Version=6.10.1.5");
             }
         }
 
