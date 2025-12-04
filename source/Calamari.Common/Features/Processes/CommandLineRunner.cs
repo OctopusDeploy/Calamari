@@ -44,7 +44,20 @@ namespace Calamari.Common.Features.Processes
             catch (Exception ex)
             {
                 if (ex.InnerException is Win32Exception)
+                {
                     commandOutput.WriteError(ConstructWin32ExceptionMessage(invocation.Executable));
+                    
+                    //todo: @robert.erez  - Remove this check if/when we can confirm that the issue is fixed.
+                    if (IsCi && ex.InnerException.Message.Contains("Text file busy"))
+                    {
+                        SilentProcessRunner.ExecuteCommand(
+                                                           "lsof",
+                                                           "",
+                                                           invocation.WorkingDirectory,
+                                                           commandOutput.WriteError,
+                                                           commandOutput.WriteError);
+                    }
+                }
 
                 commandOutput.WriteError(ex.ToString());
                 commandOutput.WriteError("The command that caused the exception was: " + invocation);
@@ -57,6 +70,10 @@ namespace Calamari.Common.Features.Processes
             }
         }
 
+        // Variable used for temporarily evaluating a potential bug with file handles being left open.
+        static readonly bool
+            IsCi = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("TEAMCITY_VERSION"));
+        
         protected virtual List<ICommandInvocationOutputSink> GetCommandOutputs(CommandLineInvocation invocation)
         {
             var outputs = new List<ICommandInvocationOutputSink>
