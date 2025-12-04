@@ -5,7 +5,6 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using Calamari.Common.Features.Processes;
-using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
@@ -14,7 +13,6 @@ using Calamari.Testing;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Helpers;
 using FluentAssertions;
-using Newtonsoft.Json;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.PowerShell
@@ -234,7 +232,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         [Test]
         public void ShouldWriteServiceMessageForPipedArtifacts()
         {
-            var tempPath = Path.GetTempPath(); // There is no nice platform agnostic way to do this until powershell 7 ships and is on all our test agents (this introduces a new "TEMP" drive)
+            var tempPath = Path.GetTempPath(); // There is no nice platform-agnostic way to do this until powershell 7 ships and is on all our test agents (this introduces a new "TEMP" drive)
             var artifacts = Enumerable.Range(0, 3).Select(i =>
                 new Artifact(Path.Combine(tempPath, $"CanCreateArtifactPipedTestFile{i}.artifact"))).ToList();
             foreach (var artifact in artifacts)

@@ -1,13 +1,11 @@
 ﻿using System;
 using System.IO;
 using System.Security.Cryptography.X509Certificates;
-using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Testing;
 using Calamari.Testing.Helpers;
-using Calamari.Testing.Requirements;
 using Calamari.Tests.Helpers;
 using Calamari.Tests.Helpers.Certificates;
 using NUnit.Framework;
