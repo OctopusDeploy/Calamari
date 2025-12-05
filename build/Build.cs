@@ -714,7 +714,7 @@ partial class Build : NukeBuild
                            nukeBuildOutputDirectory.CreateOrCleanDirectory();
                            
                            DotNetPublish(p => p
-                                              .SetProject(RootDirectory / "_build" / "_build.csproj")
+                                              .SetProject(RootDirectory / "build" / "_build.csproj")
                                               .SetConfiguration(Configuration)
                                               .SetRuntime(runtime)
                                               .EnableSelfContained());
