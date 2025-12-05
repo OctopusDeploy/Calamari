@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using Calamari.Build.Utilities;
 using NuGet.Packaging;
 using Nuke.Common;
 using Nuke.Common.CI.TeamCity;
@@ -704,6 +705,14 @@ partial class Build : NukeBuild
                            }
                        });
 
+    Target ZipNukeOutput =>
+        d =>
+            d.Executes(async () =>
+                       {
+                           var nukeBuildOutputDirectory = BuildDirectory / "build" / "outputs" / "win-x64" / "nukebuild";
+                           await Ci.ZipFolderAndUploadArtifact(nukeBuildOutputDirectory, ArtifactsDirectory / $"nukebuild.win-x64.zip");
+                       });
+
     Target SetTeamCityVersion => d => d.Executes(() => TeamCity.Instance?.SetBuildNumber(NugetVersion.Value));
 
     Target BuildLocal => d =>
@@ -713,7 +722,8 @@ partial class Build : NukeBuild
     Target BuildCi => d =>
                           d.DependsOn(SetTeamCityVersion)
                            .DependsOn(Pack)
-                           .DependsOn(PackCalamariConsolidatedNugetPackage);
+                           .DependsOn(PackCalamariConsolidatedNugetPackage)
+                           .DependsOn(ZipNukeOutput);
 
     public static int Main() => Execute<Build>(x => IsServerBuild ? x.BuildCi : x.BuildLocal);
 
