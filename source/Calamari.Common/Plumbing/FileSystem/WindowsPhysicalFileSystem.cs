@@ -5,14 +5,6 @@ namespace Calamari.Common.Plumbing.FileSystem
 {
     public class WindowsPhysicalFileSystem : CalamariPhysicalFileSystem
     {
-        public WindowsPhysicalFileSystem()
-        {
-#if USE_ALPHAFS_FOR_LONG_FILE_PATH_SUPPORT
-            File = new LongPathsFile();
-            Directory = new LongPathsDirectory();
-#endif
-        }
-
         [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
         [return: MarshalAs(UnmanagedType.Bool)]
         static extern bool GetDiskFreeSpaceEx(string lpDirectoryName, out ulong lpFreeBytesAvailable, out ulong lpTotalNumberOfBytes, out ulong lpTotalNumberOfFreeBytes);

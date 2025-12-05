@@ -4,7 +4,6 @@ using System.Linq;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Proxies;
 using Calamari.Testing.Helpers;
-using Calamari.Testing.Requirements;
 using FluentAssertions;
 using NUnit.Framework;
 
@@ -13,7 +12,7 @@ namespace Calamari.Tests.Fixtures.Integration.Proxies
     [TestFixture]
     // These tests currently only work in .NET Framework due to an issue with the .NET Core and proxy caching
     // See https://github.com/OctopusDeploy/Calamari/pull/1504 for more information
-    [RequiresDotNetFramework]
+    [Ignore("Currently there is an issue with .NET Core and proxy caching")]
     public class ProxyEnvironmentVariablesGeneratorFixture
     {
         const string BadproxyUrl = "http://proxy-initializer-fixture-bad-proxy:1234";
