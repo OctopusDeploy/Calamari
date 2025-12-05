@@ -705,12 +705,21 @@ partial class Build : NukeBuild
                            }
                        });
 
-    Target ZipNukeOutput =>
+    Target PublishNukeBuild =>
         d =>
             d.Executes(async () =>
                        {
-                           var nukeBuildOutputDirectory = BuildDirectory / "build" / "outputs" / "win-x64" / "nukebuild";
-                           await Ci.ZipFolderAndUploadArtifact(nukeBuildOutputDirectory, ArtifactsDirectory / $"nukebuild.win-x64.zip");
+                           const string runtime = "win-x64";
+                           var nukeBuildOutputDirectory = BuildDirectory / "outputs" / runtime / "nukebuild";
+                           nukeBuildOutputDirectory.CreateOrCleanDirectory();
+                           
+                           DotNetPublish(p => p
+                                              .SetProject(RootDirectory / "_build" / "_build.csproj")
+                                              .SetConfiguration(Configuration)
+                                              .SetRuntime(runtime)
+                                              .EnableSelfContained());
+                           
+                           await Ci.ZipFolderAndUploadArtifact(nukeBuildOutputDirectory, ArtifactsDirectory / $"nukebuild.{runtime}.zip");
                        });
 
     Target SetTeamCityVersion => d => d.Executes(() => TeamCity.Instance?.SetBuildNumber(NugetVersion.Value));
@@ -723,7 +732,7 @@ partial class Build : NukeBuild
                           d.DependsOn(SetTeamCityVersion)
                            .DependsOn(Pack)
                            .DependsOn(PackCalamariConsolidatedNugetPackage)
-                           .DependsOn(ZipNukeOutput);
+                           .DependsOn(PublishNukeBuild);
 
     public static int Main() => Execute<Build>(x => IsServerBuild ? x.BuildCi : x.BuildLocal);
 
