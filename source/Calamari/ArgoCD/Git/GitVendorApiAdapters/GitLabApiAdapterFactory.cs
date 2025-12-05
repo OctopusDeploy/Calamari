@@ -10,7 +10,7 @@ namespace Calamari.ArgoCD.Git.GitVendorApiAdapters
         {
             return repositoryConnection.Url.Host.Equals("gitlab.com", StringComparison.OrdinalIgnoreCase)
                    //Handle www.gitlab.com
-                   || repositoryConnection.Url.Host.EndsWith(".github.com", StringComparison.OrdinalIgnoreCase);
+                   || repositoryConnection.Url.Host.EndsWith(".gitlab.com", StringComparison.OrdinalIgnoreCase);
         }
 
         public IGitVendorApiAdapter? TryCreateGitVendorApiAdaptor(IRepositoryConnection repositoryConnection)
