@@ -15,8 +15,10 @@ partial class Build
     [PublicAPI]
     Target TestCalamariFlavourProject =>
         target => target
-            .Executes(() =>
+            .Executes(async () =>
                       {
+                          var dotnetPath = await LocateOrInstallDotNetSdk();
+                          
                           var testProject = $"Calamari.{CalamariFlavourToTest}.Tests";
 
                           Log.Verbose("{TestProject} tests will be executed", testProject);
@@ -25,6 +27,7 @@ partial class Build
                           var outputDirectory = RootDirectory / "outputs";
 
                           DotNetTasks.DotNetTest(settings => settings
+                                                             .SetProcessToolPath(dotnetPath)
                                                              .SetProjectFile($"CalamariTests/{testProject}.dll")
                                                              .SetFilter(CalamariFlavourTestCaseFilter)
                                                              .SetProcessExitHandler(process => process.ExitCode switch
