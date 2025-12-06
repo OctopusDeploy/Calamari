@@ -9,30 +9,52 @@ namespace Calamari.Build;
 partial class Build
 {
     [PublicAPI]
-    Target NetCoreTesting =>
+    Target PlatformAgnosticTesting =>
         target => target
             .Executes(() =>
-            {
-                const string testFilter =
-                    "TestCategory != Windows & TestCategory != PlatformAgnostic & TestCategory != RunOnceOnWindowsAndLinux";
+                      {
+                          const string testFilter = "TestCategory = PlatformAgnostic";
+                          
+                          var runningInTeamCity = TeamCity.Instance is not null;
+                          var outputDirectory = RootDirectory / "outputs";
 
-                var runningInTeamCity = TeamCity.Instance is not null;
-                var outputDirectory = RootDirectory / "outputs";
+                          DotNetTasks.DotNetTest(settings => settings
+                                                             .SetProjectFile("Binaries/Calamari.Tests.dll")
+                                                             .SetFilter(testFilter)
+                                                             .SetProcessExitHandler(process => process.ExitCode switch
+                                                                                               {
+                                                                                                   0 => null, //successful
+                                                                                                   1 => null, //some tests failed
+                                                                                                   _ => throw new ProcessException(process)
+                                                                                               })
+                                                             .SetTestAdapterPath(outputDirectory)
+                                                             .AddLoggers("console;verbosity=normal")
+                                                             .When(runningInTeamCity, x => x.EnableTeamCityTestLogger(outputDirectory)));
+                      });
 
-                DotNetTasks.DotNetTest(settings => settings
-                                                   .SetProjectFile("Binaries/Calamari.Tests.dll")
-                                                   .SetFilter(testFilter)
-                                                   .SetProcessExitHandler(process => process.ExitCode switch
-                                                                                     {
-                                                                                         0 => null, //successful
-                                                                                         1 => null, //some tests failed
-                                                                                         _ => throw new ProcessException(process)
-                                                                                     })
-                                                   .SetTestAdapterPath(outputDirectory)
-                                                   .AddLoggers("console;verbosity=normal")
-                                                   .When(runningInTeamCity, x => x.EnableTeamCityTestLogger(outputDirectory)));
-            });
+    [PublicAPI]
+    Target LinuxSpecificTesting =>
+        target => target
+            .Executes(() =>
+                      {
+                          const string testFilter = "TestCategory != Windows & TestCategory != PlatformAgnostic & TestCategory != RunOnceOnWindowsAndLinux";
 
+                          var runningInTeamCity = TeamCity.Instance is not null;
+                          var outputDirectory = RootDirectory / "outputs";
+
+                          DotNetTasks.DotNetTest(settings => settings
+                                                             .SetProjectFile("Binaries/Calamari.Tests.dll")
+                                                             .SetFilter(testFilter)
+                                                             .SetProcessExitHandler(process => process.ExitCode switch
+                                                                                               {
+                                                                                                   0 => null, //successful
+                                                                                                   1 => null, //some tests failed
+                                                                                                   _ => throw new ProcessException(process)
+                                                                                               })
+                                                             .SetTestAdapterPath(outputDirectory)
+                                                             .AddLoggers("console;verbosity=normal")
+                                                             .When(runningInTeamCity, x => x.EnableTeamCityTestLogger(outputDirectory)));
+                      });
 
     [PublicAPI]
     Target OncePerWindowsOrLinuxTesting =>
@@ -43,7 +65,7 @@ partial class Build
 
                           var runningInTeamCity = TeamCity.Instance is not null;
                           var outputDirectory = RootDirectory / "outputs";
-                          
+
                           DotNetTasks.DotNetTest(settings => settings
                                                              .SetProjectFile("Binaries/Calamari.Tests.dll")
                                                              .SetFilter(testFilter)
@@ -57,8 +79,7 @@ partial class Build
                                                              .AddLoggers("console;verbosity=normal")
                                                              .When(runningInTeamCity, x => x.EnableTeamCityTestLogger(outputDirectory)));
                       });
-    
-    
+
     [PublicAPI]
     Target OncePerWindowsTesting =>
         target => target
@@ -68,7 +89,7 @@ partial class Build
 
                           var runningInTeamCity = TeamCity.Instance is not null;
                           var outputDirectory = RootDirectory / "outputs";
-                          
+
                           DotNetTasks.DotNetTest(settings => settings
                                                              .SetProjectFile("Binaries/Calamari.Tests.dll")
                                                              .SetFilter(testFilter)
@@ -82,7 +103,7 @@ partial class Build
                                                              .AddLoggers("console;verbosity=normal")
                                                              .When(runningInTeamCity, x => x.EnableTeamCityTestLogger(outputDirectory)));
                       });
-    
+
     [PublicAPI]
     Target WindowsSystemProxyTesting =>
         target => target
@@ -92,7 +113,7 @@ partial class Build
 
                           var runningInTeamCity = TeamCity.Instance is not null;
                           var outputDirectory = RootDirectory / "outputs";
-                          
+
                           DotNetTasks.DotNetTest(settings => settings
                                                              .SetProjectFile("Binaries/Calamari.Tests.dll")
                                                              .SetFilter(testFilter)
