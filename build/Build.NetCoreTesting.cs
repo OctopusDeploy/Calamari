@@ -23,7 +23,7 @@ partial class Build
                           var runningInTeamCity = TeamCity.Instance is not null;
                           var outputDirectory = RootDirectory / "outputs";
 
-                          var settingsFilePath = TryBuildExcludedTestsSettingsFile();
+                          var settingsFilePath = TryBuildExcludedTestsSettingsFile(testFilter);
 
                           DotNetTasks.DotNetTest(settings =>
                                                  {
@@ -55,7 +55,7 @@ partial class Build
                           var runningInTeamCity = TeamCity.Instance is not null;
                           var outputDirectory = RootDirectory / "outputs";
                           
-                          var settingsFilePath = TryBuildExcludedTestsSettingsFile();
+                          var settingsFilePath = TryBuildExcludedTestsSettingsFile(testFilter);
 
                           DotNetTasks.DotNetTest(settings =>
                                                  {
@@ -86,7 +86,7 @@ partial class Build
                           var runningInTeamCity = TeamCity.Instance is not null;
                           var outputDirectory = RootDirectory / "outputs";
                           
-                          var settingsFilePath = TryBuildExcludedTestsSettingsFile();
+                          var settingsFilePath = TryBuildExcludedTestsSettingsFile(testFilter);
 
                           DotNetTasks.DotNetTest(settings =>
                                                  {
@@ -117,7 +117,7 @@ partial class Build
                           var runningInTeamCity = TeamCity.Instance is not null;
                           var outputDirectory = RootDirectory / "outputs";
                           
-                          var settingsFilePath = TryBuildExcludedTestsSettingsFile();
+                          var settingsFilePath = TryBuildExcludedTestsSettingsFile(testFilter);
 
                           DotNetTasks.DotNetTest(settings =>
                                                  {
@@ -148,7 +148,7 @@ partial class Build
                           var runningInTeamCity = TeamCity.Instance is not null;
                           var outputDirectory = RootDirectory / "outputs";
                           
-                          var settingsFilePath = TryBuildExcludedTestsSettingsFile();
+                          var settingsFilePath = TryBuildExcludedTestsSettingsFile(testFilter);
 
                           DotNetTasks.DotNetTest(settings =>
                                                  {
@@ -170,7 +170,7 @@ partial class Build
                       });
     
     
-    static string? TryBuildExcludedTestsSettingsFile()
+    static string? TryBuildExcludedTestsSettingsFile(string baseFilter)
     {
         var excludedTestsFile = Environment.GetEnvironmentVariable("TeamCityTestExclusionFilePath");
         if (!string.IsNullOrEmpty(excludedTestsFile))
@@ -192,7 +192,7 @@ partial class Build
                 var runSettingsFile = $"""
                                        <RunSettings>
                                            <NUnit>
-                                               <Where>{exclusionWhere}</Where>
+                                               <Where>({baseFilter}) && {exclusionWhere}</Where>
                                            </NUnit>
                                        </RunSettings> 
                                        """;
