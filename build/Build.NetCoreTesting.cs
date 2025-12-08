@@ -188,7 +188,7 @@ partial class Build
                     }
 
                 var exclusionWhere = string.Join(" and ",
-                                                 testSet.Select(test => $"test != \"{test}\""));
+                                                 testSet.Select(test => $"test != '{test}'"));
 
                 //normalize to 'cat' for category https://docs.nunit.org/articles/nunit/running-tests/Test-Selection-Language.html
                 var normalizedBaseFilter = baseFilter.Replace("TestCategory", "cat");
@@ -202,6 +202,9 @@ partial class Build
 
                 var filePath = RootDirectory / "excluded.runSettings";
                 File.WriteAllText(filePath, runSettingsFile);
+                
+                TeamCity.Instance.PublishArtifacts(filePath);
+                
                 return filePath;
             }
         }
