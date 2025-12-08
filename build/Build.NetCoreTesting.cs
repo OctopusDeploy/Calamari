@@ -189,10 +189,13 @@ partial class Build
 
                 var exclusionWhere = string.Join(" and ",
                                                  testSet.Select(test => $"test != \"{test}\""));
+
+                //normalize to 'cat' for category https://docs.nunit.org/articles/nunit/running-tests/Test-Selection-Language.html
+                var normalizedBaseFilter = baseFilter.Replace("TestCategory", "cat");
                 var runSettingsFile = $"""
                                        <RunSettings>
                                            <NUnit>
-                                               <Where>({baseFilter}) && {exclusionWhere}</Where>
+                                               <Where>({normalizedBaseFilter}) && {exclusionWhere}</Where>
                                            </NUnit>
                                        </RunSettings> 
                                        """;
