@@ -191,11 +191,11 @@ partial class Build
                                                  testSet.Select(test => $"test != '{test}'"));
 
                 //normalize to 'cat' for category https://docs.nunit.org/articles/nunit/running-tests/Test-Selection-Language.html
-                var normalizedBaseFilter = baseFilter.Replace("TestCategory", "cat");
+                var normalizedBaseFilter = baseFilter.Replace("TestCategory", "cat").Replace("&", "and").Replace("|", "or");
                 var runSettingsFile = $"""
                                        <RunSettings>
                                            <NUnit>
-                                               <Where>({normalizedBaseFilter}) && {exclusionWhere}</Where>
+                                               <Where>({normalizedBaseFilter}) and {exclusionWhere}</Where>
                                            </NUnit>
                                        </RunSettings> 
                                        """;
