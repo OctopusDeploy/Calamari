@@ -16,9 +16,11 @@ partial class Build
     [PublicAPI]
     Target PlatformAgnosticTesting =>
         target => target
-            .Executes(() =>
+            .Executes(async () =>
                       {
                           const string testFilter = "TestCategory = PlatformAgnostic";
+                          
+                          var dotnetPath = await LocateOrInstallDotNetSdk();
 
                           var runningInTeamCity = TeamCity.Instance is not null;
                           var outputDirectory = RootDirectory / "outputs";
@@ -32,6 +34,7 @@ partial class Build
                                                      settings = settingsFilePath is not null ? settings.SetSettingsFile(settingsFilePath) : settings.SetFilter(testFilter);
 
                                                      return settings
+                                                            .SetProcessToolPath(dotnetPath)
                                                             .SetProcessExitHandler(process => process.ExitCode switch
                                                                                               {
                                                                                                   0 => null, //successful
@@ -48,10 +51,12 @@ partial class Build
     [PublicAPI]
     Target LinuxSpecificTesting =>
         target => target
-            .Executes(() =>
+            .Executes(async () =>
                       {
                           const string testFilter = "TestCategory != Windows & TestCategory != PlatformAgnostic & TestCategory != RunOnceOnWindowsAndLinux";
 
+                          var dotnetPath = await LocateOrInstallDotNetSdk();
+                          
                           var runningInTeamCity = TeamCity.Instance is not null;
                           var outputDirectory = RootDirectory / "outputs";
                           
@@ -64,6 +69,7 @@ partial class Build
                                                      settings = settingsFilePath is not null ? settings.SetSettingsFile(settingsFilePath) : settings.SetFilter(testFilter);
 
                                                      return settings
+                                                            .SetProcessToolPath(dotnetPath)
                                                             .SetProcessExitHandler(process => process.ExitCode switch
                                                                                               {
                                                                                                   0 => null, //successful
@@ -79,10 +85,12 @@ partial class Build
     [PublicAPI]
     Target OncePerWindowsOrLinuxTesting =>
         target => target
-            .Executes(() =>
+            .Executes(async () =>
                       {
                           const string testFilter = "(TestCategory != Windows & TestCategory != PlatformAgnostic) | TestCategory = RunOnceOnWindowsAndLinux";
 
+                          var dotnetPath = await LocateOrInstallDotNetSdk();
+                          
                           var runningInTeamCity = TeamCity.Instance is not null;
                           var outputDirectory = RootDirectory / "outputs";
                           
@@ -95,6 +103,7 @@ partial class Build
                                                      settings = settingsFilePath is not null ? settings.SetSettingsFile(settingsFilePath) : settings.SetFilter(testFilter);
 
                                                      return settings
+                                                            .SetProcessToolPath(dotnetPath)
                                                             .SetProcessExitHandler(process => process.ExitCode switch
                                                                                               {
                                                                                                   0 => null, //successful
@@ -110,10 +119,12 @@ partial class Build
     [PublicAPI]
     Target OncePerWindowsTesting =>
         target => target
-            .Executes(() =>
+            .Executes(async () =>
                       {
                           const string testFilter = "TestCategory != macOs & TestCategory != Nix & TestCategory != PlatformAgnostic & TestCategory != nixMacOS & TestCategory != RunOnceOnWindowsAndLinux & TestCategory != ModifiesSystemProxy";
-
+                          
+                          var dotnetPath = await LocateOrInstallDotNetSdk();
+                          
                           var runningInTeamCity = TeamCity.Instance is not null;
                           var outputDirectory = RootDirectory / "outputs";
                           
@@ -126,6 +137,7 @@ partial class Build
                                                      settings = settingsFilePath is not null ? settings.SetSettingsFile(settingsFilePath) : settings.SetFilter(testFilter);
 
                                                      return settings
+                                                            .SetProcessToolPath(dotnetPath)
                                                             .SetProcessExitHandler(process => process.ExitCode switch
                                                                                               {
                                                                                                   0 => null, //successful
