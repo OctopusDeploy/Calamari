@@ -64,8 +64,6 @@ partial class Build
                                                      settings = settingsFilePath is not null ? settings.SetSettingsFile(settingsFilePath) : settings.SetFilter(testFilter);
 
                                                      return settings
-                                                            .SetProjectFile("Binaries/Calamari.Tests.dll")
-                                                            .SetFilter(testFilter)
                                                             .SetProcessExitHandler(process => process.ExitCode switch
                                                                                               {
                                                                                                   0 => null, //successful
@@ -97,8 +95,6 @@ partial class Build
                                                      settings = settingsFilePath is not null ? settings.SetSettingsFile(settingsFilePath) : settings.SetFilter(testFilter);
 
                                                      return settings
-                                                            .SetProjectFile("Binaries/Calamari.Tests.dll")
-                                                            .SetFilter(testFilter)
                                                             .SetProcessExitHandler(process => process.ExitCode switch
                                                                                               {
                                                                                                   0 => null, //successful
@@ -130,8 +126,6 @@ partial class Build
                                                      settings = settingsFilePath is not null ? settings.SetSettingsFile(settingsFilePath) : settings.SetFilter(testFilter);
 
                                                      return settings
-                                                            .SetProjectFile("Binaries/Calamari.Tests.dll")
-                                                            .SetFilter(testFilter)
                                                             .SetProcessExitHandler(process => process.ExitCode switch
                                                                                               {
                                                                                                   0 => null, //successful
@@ -163,7 +157,6 @@ partial class Build
                                                      settings = settingsFilePath is not null ? settings.SetSettingsFile(settingsFilePath) : settings.SetFilter(testFilter);
 
                                                      return settings
-                                                            .SetFilter(testFilter)
                                                             .SetProcessExitHandler(process => process.ExitCode switch
                                                                                               {
                                                                                                   0 => null, //successful
