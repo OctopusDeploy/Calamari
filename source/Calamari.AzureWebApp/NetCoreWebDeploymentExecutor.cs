@@ -173,11 +173,14 @@ namespace Calamari.AzureWebApp
                                                 IEnumerable<string> destinationOptions,
                                                 IEnumerable<string> syncOptions)
         {
+            var sourcePath = currentDirectory.TrimEnd('\\');
+            var destPath = path.TrimEnd('\\');
+
             var parts = new List<string>
             {
                 "sync",
-                $"--sourcePath=\"{currentDirectory}\"",
-                $"--destPath=\"{path}\"",
+                $"--sourcePath=\"{sourcePath}\"",
+                $"--destPath=\"{destPath}\"",
             };
 
             parts.AddRange(destinationOptions);
