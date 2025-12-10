@@ -3,10 +3,10 @@
     <PropertyGroup>
         <AssemblyName>Calamari.GoogleCloudScripting.Tests</AssemblyName>
         <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
-        <LangVersion>8</LangVersion>
+        <LangVersion>default</LangVersion>
         <IsPackable>false</IsPackable>
         <Nullable>enable</Nullable>
-        <TargetFrameworks>net462;net8.0</TargetFrameworks>
+        <TargetFramework>net8.0</TargetFramework>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     </PropertyGroup>
     <ItemGroup>

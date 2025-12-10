@@ -30,6 +30,6 @@ public class BoostrapperModuleDeploymentTool : IDeploymentTool
     public Maybe<DeploymentToolPackage> GetCompatiblePackage(
         string platform)
     {
-        return platform != "win-x64" && platform != "netfx" ? Maybe<DeploymentToolPackage>.None : new DeploymentToolPackage((IDeploymentTool) this, this.Id, this.modulePaths).AsSome<DeploymentToolPackage>();
+        return platform != "win-x64" ? Maybe<DeploymentToolPackage>.None : new DeploymentToolPackage((IDeploymentTool) this, this.Id, this.modulePaths).AsSome<DeploymentToolPackage>();
     }
 }

@@ -4,10 +4,10 @@
         <AssemblyName>Calamari.GoogleCloudScripting</AssemblyName>
         <OutputType>Exe</OutputType>
         <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
-        <LangVersion>8</LangVersion>
+        <LangVersion>default</LangVersion>
         <IsPackable>false</IsPackable>
         <ValidateExecutableReferencesMatchSelfContained>false</ValidateExecutableReferencesMatchSelfContained>
-        <TargetFrameworks>net462;net8.0</TargetFrameworks>
+        <TargetFramework>net8.0</TargetFramework>
         <!-- CS8632: The annotation for nullable reference types should only be used in code within a '#nullable' annotations context. -->
         <NoWarn>CS8632</NoWarn>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
