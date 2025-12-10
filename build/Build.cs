@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using Calamari.Build.Utilities;
 using NuGet.Packaging;
 using Nuke.Common;
 using Nuke.Common.CI.TeamCity;
@@ -473,6 +474,23 @@ partial class Build : NukeBuild
                            }
                        });
 
+    Target PublishNukeBuild =>
+        d =>
+            d.Executes(async () =>
+                       {
+                           const string runtime = "win-x64";
+                           var nukeBuildOutputDirectory = BuildDirectory / "outputs" / runtime / "nukebuild";
+                           nukeBuildOutputDirectory.CreateOrCleanDirectory();
+                           
+                           DotNetPublish(p => p
+                                              .SetProject(RootDirectory / "build" / "_build.csproj")
+                                              .SetConfiguration(Configuration)
+                                              .SetRuntime(runtime)
+                                              .EnableSelfContained());
+                           
+                           await Ci.ZipFolderAndUploadArtifact(nukeBuildOutputDirectory, ArtifactsDirectory / $"nukebuild.{runtime}.zip");
+                       });
+
     Target SetTeamCityVersion => d => d.Executes(() => TeamCity.Instance?.SetBuildNumber(NugetVersion.Value));
 
     Target BuildLocal => d =>
@@ -483,7 +501,8 @@ partial class Build : NukeBuild
     Target BuildCi => d =>
                           d.DependsOn(SetTeamCityVersion)
                            .DependsOn(PublishCalamariProjects)
-                           .DependsOn(PackCalamariConsolidatedNugetPackage);
+                           .DependsOn(PackCalamariConsolidatedNugetPackage)
+                           .DependsOn(PublishNukeBuild);
 
     Target BuildAndPublishProject => d => d.OnlyWhenDynamic(() => !string.IsNullOrEmpty(ProjectToBuild)).DependsOn(PublishCalamariProjects);
     
