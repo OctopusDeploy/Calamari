@@ -10,7 +10,7 @@ using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using LibGit2Sharp;
-using Microsoft.IdentityModel.Tokens;
+using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.ArgoCD.Git
 {

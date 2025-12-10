@@ -54,6 +54,7 @@ partial class Build
                     .Where(path => !path.Contains("/TestResults/"))
                     .Where(path => !path.Contains("/.git/"))
                     .Where(path => !path.Contains(".Test"))
+                    .Where(path => !path.Contains(".nuke"))
                     .Where(path => !path.Contains("/_build"))
                     .Select(ResolveCalamariComponent);
 
@@ -205,7 +206,7 @@ partial class Build
             var containerName = $"calamari-sbom-validator-{octoVersionInfo.FullSemVer}";
             ContainersWeHaveCreated.Add(containerName);
             DockerTasks.DockerRun(x => x
-                .SetName($"octopus-sbom-validator-{octoVersionInfo.FullSemVer}")
+                .SetName(containerName)
                 .SetPlatform("linux/amd64")
                 .SetRm(true)
                 .SetVolume($"{ArtifactsDirectory}:/sboms")

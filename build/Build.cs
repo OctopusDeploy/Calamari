@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using Calamari.Build.Utilities;
 using NuGet.Packaging;
 using Nuke.Common;
 using Nuke.Common.CI.TeamCity;
@@ -86,7 +87,7 @@ partial class Build : NukeBuild
         // Mimic the behaviour of this attribute, but lazily so we don't pay the OctoVersion cost when it isn't needed
         OctoVersionInfo = new Lazy<OctoVersionInfo?>(() =>
                                                      {
-                                                         var attribute = new OctoVersionAttribute { BranchMember = nameof(BranchName), Framework = "net6.0" };
+                                                         var attribute = new OctoVersionAttribute { BranchMember = nameof(BranchName), Framework = "net8.0" };
 
                                                          // the Attribute does all the work such as calling TeamCity.Instance?.SetBuildNumber for us
                                                          var version = attribute.GetValue(null!, this);
@@ -193,22 +194,22 @@ partial class Build : NukeBuild
                            {
                                Log.Warning("Building Calamari on a non-windows machine will result "
                                            + "in the {DefaultNugetPackageName} and {CloudNugetPackageName} "
-                                           + "nuget packages being built as .Net Core 6.0 packages "
+                                           + "nuget packages being built as .Net Core 8.0 packages "
                                            + "instead of as .Net Framework. "
                                            + "This can cause compatibility issues when running certain "
                                            + "deployment steps in Octopus Server",
                                            RootProjectName, $"{RootProjectName}.{FixedRuntimes.Cloud}");
 
-                               DoPublish(RootProjectName, Frameworks.Net60, nugetVersion);
+                               DoPublish(RootProjectName, Frameworks.Net80, nugetVersion);
 
                                Log.Warning($"Skipping the bundling of {RootProjectName} into the Calamari.Legacy bundle. "
                                            + "This is required for providing .Net Framework executables for legacy Target Operating Systems");
 
-                               DoPublish(RootProjectName, Frameworks.Net60, nugetVersion, FixedRuntimes.Cloud);
+                               DoPublish(RootProjectName, Frameworks.Net80, nugetVersion, FixedRuntimes.Cloud);
                            }
 
                            foreach (var rid in GetRuntimeIdentifiers(Solution.GetProject(RootProjectName)!))
-                               DoPublish(RootProjectName, Frameworks.Net60, nugetVersion, rid);
+                               DoPublish(RootProjectName, Frameworks.Net80, nugetVersion, rid);
                        });
 
     Target GetCalamariFlavourProjectsToPublish =>
@@ -234,7 +235,7 @@ partial class Build : NukeBuild
                            CalamariProjects = calamariProjects;
 
                            // All cross-platform Target Frameworks contain dots, all NetFx Target Frameworks don't
-                           // eg: net40, net452, net48 vs netcoreapp3.1, net5.0, net6.0
+                           // eg: net40, net452, net48 vs netcoreapp3.1, net5.0, net8.0
                            bool IsCrossPlatform(string targetFramework) => targetFramework.Contains('.');
 
                            var calamariPackages =
@@ -410,7 +411,7 @@ partial class Build : NukeBuild
         }
 
         packagesToPublish
-            //We only need to bundle executable (not tests or libraries) full framework projects 
+            //We only need to bundle executable (not tests or libraries) full framework projects
             .Where(d => d.Framework == Frameworks.Net462 && d.Project.GetOutputType() == "Exe")
             .ForEach(calamariPackageMetadata =>
                      {
@@ -490,10 +491,10 @@ partial class Build : NukeBuild
                            var packageActions = new List<Action>
                            {
                                () => DoPackage(RootProjectName,
-                                               OperatingSystem.IsWindows() ? Frameworks.Net462 : Frameworks.Net60,
+                                               OperatingSystem.IsWindows() ? Frameworks.Net462 : Frameworks.Net80,
                                                nugetVersion),
                                () => DoPackage(RootProjectName,
-                                               OperatingSystem.IsWindows() ? Frameworks.Net462 : Frameworks.Net60,
+                                               OperatingSystem.IsWindows() ? Frameworks.Net462 : Frameworks.Net80,
                                                nugetVersion,
                                                FixedRuntimes.Cloud),
                            };
@@ -502,7 +503,7 @@ partial class Build : NukeBuild
                            // ReSharper disable once LoopCanBeConvertedToQuery
                            foreach (var rid in GetRuntimeIdentifiers(Solution.GetProject(RootProjectName)!))
                                packageActions.Add(() => DoPackage(RootProjectName,
-                                                                  Frameworks.Net60,
+                                                                  Frameworks.Net80,
                                                                   nugetVersion,
                                                                   rid));
 
@@ -539,12 +540,18 @@ partial class Build : NukeBuild
              .Executes(async () =>
                        {
                            var nugetVersion = NugetVersion.Value;
-                           var defaultTarget = OperatingSystem.IsWindows() ? Frameworks.Net462 : Frameworks.Net60;
-                           AbsolutePath binFolder = SourceDirectory / "Calamari.Tests" / "bin" / Configuration / defaultTarget;
-                           Directory.Exists(binFolder);
                            var actions = new List<Action>
                            {
-                               () => binFolder.CompressTo(ArtifactsDirectory / "Binaries.zip")
+                               () =>
+                               {
+                                   //if this is windows, publish a netfx version of the tests project
+                                   if (OperatingSystem.IsWindows())
+                                   {
+                                       var publishedLocation = DoPublish("Calamari.Tests", Frameworks.Net462, nugetVersion);
+                                       var zipName = $"Calamari.Tests.{Frameworks.Net462}.{nugetVersion}.zip";
+                                       publishedLocation.CompressTo(ArtifactsDirectory / zipName);
+                                   }
+                               }
                            };
 
                            // Create a Zip for each runtime for testing
@@ -554,7 +561,7 @@ partial class Build : NukeBuild
                                            //run each build in sequence as it's the same project and we get issues
                                            foreach (var rid in GetRuntimeIdentifiers(Solution.GetProject("Calamari.Tests")!))
                                            {
-                                               var publishedLocation = DoPublish("Calamari.Tests", Frameworks.Net60, nugetVersion, rid);
+                                               var publishedLocation = DoPublish("Calamari.Tests", Frameworks.Net80, nugetVersion, rid);
                                                var zipName = $"Calamari.Tests.{rid}.{nugetVersion}.zip";
                                                File.Copy(RootDirectory / "global.json", publishedLocation / "global.json");
                                                publishedLocation.CompressTo(ArtifactsDirectory / zipName);
@@ -698,6 +705,23 @@ partial class Build : NukeBuild
                            }
                        });
 
+    Target PublishNukeBuild =>
+        d =>
+            d.Executes(async () =>
+                       {
+                           const string runtime = "win-x64";
+                           var nukeBuildOutputDirectory = BuildDirectory / "outputs" / runtime / "nukebuild";
+                           nukeBuildOutputDirectory.CreateOrCleanDirectory();
+                           
+                           DotNetPublish(p => p
+                                              .SetProject(RootDirectory / "build" / "_build.csproj")
+                                              .SetConfiguration(Configuration)
+                                              .SetRuntime(runtime)
+                                              .EnableSelfContained());
+                           
+                           await Ci.ZipFolderAndUploadArtifact(nukeBuildOutputDirectory, ArtifactsDirectory / $"nukebuild.{runtime}.zip");
+                       });
+
     Target SetTeamCityVersion => d => d.Executes(() => TeamCity.Instance?.SetBuildNumber(NugetVersion.Value));
 
     Target BuildLocal => d =>
@@ -707,7 +731,8 @@ partial class Build : NukeBuild
     Target BuildCi => d =>
                           d.DependsOn(SetTeamCityVersion)
                            .DependsOn(Pack)
-                           .DependsOn(PackCalamariConsolidatedNugetPackage);
+                           .DependsOn(PackCalamariConsolidatedNugetPackage)
+                           .DependsOn(PublishNukeBuild);
 
     public static int Main() => Execute<Build>(x => IsServerBuild ? x.BuildCi : x.BuildLocal);
 
@@ -736,7 +761,7 @@ partial class Build : NukeBuild
                            .SetVerbosity(BuildVerbosity)
                            .SetRuntime(runtimeId)
                            .SetVersion(version)
-                           .SetSelfContained(OperatingSystem.IsWindows()) // This is here purely to make the local build experience on non-Windows devices workable - Publish breaks on non-Windows platforms with SelfContained = true
+                           .SetSelfContained(runtimeId != null)
                      );
 
         if (WillSignBinaries)
