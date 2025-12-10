@@ -131,7 +131,11 @@ namespace Calamari.Kubernetes.Integration
             buildArgs.Add($"\"{releaseName}\"");
             buildArgs.Add($"\"{packagePath}\"");
 
-            var result = ExecuteCommandAndLogOutput(buildArgs);
+            // Check if we should log output at Info level
+            var logOutputAsInfo = variables.GetFlag(SpecialVariables.Helm.LogOutputAsInfo);
+            var result = logOutputAsInfo
+                ? ExecuteCommandAndLogOutputAsInfo(buildArgs)
+                : ExecuteCommandAndLogOutput(buildArgs);
             return result;
         }
 
@@ -145,6 +149,12 @@ namespace Calamari.Kubernetes.Integration
         {
             ChmodExecutable();
             return base.ExecuteCommandAndLogOutput(new CommandLineInvocation(ExecutableLocation, SanitiseCommandLineArgs(arguments)));
+        }
+
+        CommandResult ExecuteCommandAndLogOutputAsInfo(IEnumerable<string> arguments)
+        {
+            ChmodExecutable();
+            return base.ExecuteCommandAndLogOutputAsInfo(new CommandLineInvocation(ExecutableLocation, SanitiseCommandLineArgs(arguments)));
         }
 
         static string[] SanitiseCommandLineArgs(IEnumerable<string> arguments) => arguments.Where(s => !string.IsNullOrWhiteSpace(s)).ToArray();
