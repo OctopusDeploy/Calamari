@@ -28,7 +28,7 @@ namespace Calamari.Kubernetes.Integration
         public string ExecutableLocation { get; protected set; }
 
         protected CommandResult ExecuteCommandAndLogOutput(CommandLineInvocation invocation)
-            => ExecuteCommandAndLogOutput(invocation, false);
+            => ExecuteCommandAndLogOutput(invocation, false, false);
 
         /// <summary>
         /// This is a special case for when the invocation results in an error
@@ -36,9 +36,15 @@ namespace Calamari.Kubernetes.Integration
         /// 2) we don't want to inform this at an error level when this happens.
         /// </summary>
         protected CommandResult ExecuteCommandAndLogOutputAsVerbose(CommandLineInvocation invocation)
-            => ExecuteCommandAndLogOutput(invocation, true);
+            => ExecuteCommandAndLogOutput(invocation, true, false);
 
-        CommandResult ExecuteCommandAndLogOutput(CommandLineInvocation invocation, bool logOutputAsVerbose)
+        /// <summary>
+        /// Execute command and log successful output at Info level instead of Verbose
+        /// </summary>
+        protected CommandResult ExecuteCommandAndLogOutputAsInfo(CommandLineInvocation invocation)
+            => ExecuteCommandAndLogOutput(invocation, false, true);
+
+        CommandResult ExecuteCommandAndLogOutput(CommandLineInvocation invocation, bool logOutputAsVerbose, bool logSuccessAsInfo)
         {
             invocation.EnvironmentVars = environmentVars;
             invocation.WorkingDirectory = workingDirectory;
@@ -52,7 +58,7 @@ namespace Calamari.Kubernetes.Integration
 
             var result = commandLineRunner.Execute(invocation);
 
-            LogCapturedOutput(result, captureCommandOutput, logOutputAsVerbose);
+            LogCapturedOutput(result, captureCommandOutput, logOutputAsVerbose, logSuccessAsInfo);
 
             return result;
         }
@@ -62,13 +68,21 @@ namespace Calamari.Kubernetes.Integration
             log.Verbose(invocation.ToString());
         }
 
-        void LogCapturedOutput(CommandResult result, CaptureCommandOutput captureCommandOutput, bool logOutputAsVerbose)
+        void LogCapturedOutput(CommandResult result, CaptureCommandOutput captureCommandOutput, bool logOutputAsVerbose, bool logSuccessAsInfo)
         {
             foreach (var message in captureCommandOutput.Messages)
             {
                 if (result.ExitCode == 0)
                 {
-                    log.Verbose(message.Text);
+                    // When logSuccessAsInfo is true, log successful output at Info level
+                    if (logSuccessAsInfo)
+                    {
+                        log.Info(message.Text);
+                    }
+                    else
+                    {
+                        log.Verbose(message.Text);
+                    }
                     continue;
                 }
 
