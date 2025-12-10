@@ -5,8 +5,6 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <IsPackable>false</IsPackable>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>net462;net8.0</TargetFrameworks>
-    <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
     <LangVersion>8.0</LangVersion>
     <TargetFramework>net8.0</TargetFramework>
     <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
