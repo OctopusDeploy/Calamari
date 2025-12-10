@@ -36,6 +36,13 @@ public class CalamariTestRunBuilder(string projectFile, AbsolutePath outputDirec
                        .SetProjectFile(ProjectFile)
                        .SetProcessToolPath(DotNetPath)
                        .SetTestAdapterPath(OutputDirectory)
+                       // This is so we can mute tests that fail
+                       .SetProcessExitHandler(process => process.ExitCode switch
+                                                         {
+                                                             0 => null, //successful
+                                                             1 => null, //some tests failed
+                                                             _ => throw new ProcessException(process)
+                                                         })
                        .AddLoggers("console;verbose=normal")
                        .When(runningInTeamCity, x => x.EnableTeamCityTestLogger(OutputDirectory));
 
@@ -80,7 +87,7 @@ public class CalamariTestRunBuilder(string projectFile, AbsolutePath outputDirec
                 //normalize to 'cat' for category https://docs.nunit.org/articles/nunit/running-tests/Test-Selection-Language.html
                 //replace & and | with words as it's being written into XML
                 var normalizedBaseFilter = baseFilter?.Replace("TestCategory", "cat").Replace("&", "and").Replace("|", "or");
-                
+
                 var whereClause = normalizedBaseFilter is not null
                     ? $"({normalizedBaseFilter}) and {exclusionWhere}"
                     : exclusionWhere;
