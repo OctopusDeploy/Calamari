@@ -7,7 +7,6 @@ using Calamari.Scripting;
 using NUnit.Framework;
 using Calamari.Testing;
 using Calamari.Testing.Requirements;
-using Calamari.Testing.Tools;
 
 namespace Calamari.AzureScripting.Tests
 {
@@ -19,14 +18,6 @@ namespace Calamari.AzureScripting.Tests
         string? tenantId;
         string? subscriptionId;
         
-        static IDeploymentTool AzureCLI = new InPathDeploymentTool("Octopus.Dependencies.AzureCLI", "AzureCLI\\wbin");
-        static IDeploymentTool AzureCmdlets = new BoostrapperModuleDeploymentTool("Octopus.Dependencies.AzureCmdlets",
-                                                                                         new[]
-                                                                                         {
-                                                                                             "Powershell\\Azure.Storage\\4.6.1",
-                                                                                             "Powershell\\Azure\\5.3.0",
-                                                                                             "Powershell",
-                                                                                         });
         static readonly CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
         readonly CancellationToken cancellationToken = CancellationTokenSource.Token;
 
@@ -113,8 +104,6 @@ az group list";
             context.Variables.Add(SpecialVariables.Action.Azure.TenantId, tenantId);
             context.Variables.Add(SpecialVariables.Action.Azure.ClientId, clientId);
             context.Variables.Add(SpecialVariables.Action.Azure.Password, clientSecret);
-            context.WithTool(AzureCLI);
-            context.WithTool(AzureCmdlets);
         }
     }
 }
