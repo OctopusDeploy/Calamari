@@ -11,7 +11,6 @@ using Calamari.CloudAccounts;
 using Calamari.Testing;
 using Calamari.Testing.Azure;
 using Calamari.Testing.Helpers;
-using Calamari.Testing.Tools;
 using NUnit.Framework;
 
 namespace Calamari.AzureResourceGroup.Tests
@@ -31,8 +30,6 @@ namespace Calamari.AzureResourceGroup.Tests
         readonly CancellationToken cancellationToken = CancellationTokenSource.Token;
         readonly string packagePath = TestEnvironment.GetTestPath("Packages", "Bicep");
         SubscriptionResource subscriptionResource;
-
-        static IDeploymentTool AzureCLI = new InPathDeploymentTool("Octopus.Dependencies.AzureCLI", "AzureCLI\\wbin");
 
         [OneTimeSetUp]
         public async Task Setup()
@@ -142,8 +139,6 @@ namespace Calamari.AzureResourceGroup.Tests
 
         void AddDefaults(CommandTestBuilderContext context)
         {
-            context.WithTool(AzureCLI);
-
             context.Variables.Add(AzureScripting.SpecialVariables.Account.AccountType, "AzureServicePrincipal");
             context.Variables.Add(AzureAccountVariables.SubscriptionId, subscriptionId);
             context.Variables.Add(AzureAccountVariables.TenantId, tenantId);
