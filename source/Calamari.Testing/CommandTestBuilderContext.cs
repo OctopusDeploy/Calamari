@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using Calamari.Common.Plumbing.Extensions;
-using Calamari.Testing.Tools;
 using Octostache;
 
 namespace Calamari.Testing
@@ -11,7 +10,6 @@ namespace Calamari.Testing
     {
         public List<(string? filename, Stream contents)> Files = new List<(string?, Stream)>();
         
-        public List<IDeploymentTool> Tools { get; } = new();
 
         internal bool withStagedPackageArgument;
 
@@ -50,12 +48,6 @@ namespace Calamari.Testing
         public CommandTestBuilderContext WithDataFile(Stream fileContents, string? fileName = null, Action<int>? progress = null)
         {
             Files.Add((fileName, fileContents));
-            return this;
-        }
-        
-        public CommandTestBuilderContext WithTool(IDeploymentTool tool)
-        {
-            Tools.Add(tool);
             return this;
         }
     }
