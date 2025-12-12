@@ -44,7 +44,6 @@ partial class Build : NukeBuild
 
     [Parameter(Name = "signing_certificate_password")] [Secret] readonly string SigningCertificatePassword = "Password01!";
 
-    [Parameter] readonly string? TargetRuntime;
 
     const string CiBranchNameEnvVariable = "OCTOVERSION_CurrentBranch";
 
