@@ -135,34 +135,29 @@ partial class Build : NukeBuild
                                DotNetRestore(s => s.SetProjectFile(Solution).SetRuntime(runtimeId));
                            }
                        });
+    
+    HashSet<string> ListAllRuntimeIdentifiersInSolution()
+    {
+        var allRuntimes = Solution.AllProjects
+                                  .SelectMany(p => p.GetRuntimeIdentifiers() ?? [])
+                                  .Distinct()
+                                  .Where(rid => rid != "win7-x86") //I have no idea where this is coming from, but let's ignore it. My theory is it's coming from the netstandard libs
+                                  .ToHashSet();
 
+        if (!string.IsNullOrWhiteSpace(TargetRuntime))
+            allRuntimes = allRuntimes.Where(x => x == TargetRuntime).ToHashSet();
+
+        return allRuntimes;
+    }
 
 
     Target BuildCi => d =>
                           d.DependsOn(PublishCalamariProjects)
-                           .DependsOn(PackCalamariConsolidatedNugetPackage)
-                           .DependsOn(PublishNukeBuild);
-
-    [PublicAPI]
-    Target BuildAndPublishProject => d => d.OnlyWhenDynamic(() => !string.IsNullOrEmpty(ProjectToBuild)).DependsOn(PublishCalamariProjects);
+                           .DependsOn(PackCalamariConsolidatedNugetPackage);
     
 
-    public static int Main() => Execute<Build>(x => IsServerBuild ? x.BuildCi : x.BuildLocal);
+    public static int Main() => Execute<Build>(x => IsLocalBuild ? x.BuildLocal : x.BuildCi);
 
-    void SignDirectory(string directory)
-    {
-        if (!WillSignBinaries)
-            return;
-
-        Log.Information("Signing directory: {Directory} and sub-directories", directory);
-        var binariesFolders = Directory.GetDirectories(directory, "*", new EnumerationOptions { RecurseSubdirectories = true });
-        foreach (var subDirectory in binariesFolders.Append(directory))
-        {
-            Signing.SignAndTimestampBinaries(subDirectory, AzureKeyVaultUrl, AzureKeyVaultAppId,
-                                             AzureKeyVaultAppSecret, AzureKeyVaultTenantId, AzureKeyVaultCertificateName,
-                                             SigningCertificatePath, SigningCertificatePassword);
-        }
-    }
 
     // Sets the Octopus.Server.csproj Calamari.Consolidated package version
     void SetOctopusServerCalamariVersion(string projectFile)

@@ -1,8 +1,5 @@
 ﻿using System.Collections.Generic;
-using System.IO.Compression;
-using System.Text.RegularExpressions;
 using JetBrains.Annotations;
-using NuGet.Packaging;
 using Nuke.Common.Tooling;
 using Nuke.Common.Tools.NuGet;
 using Octopus.Calamari.ConsolidatedPackage;
@@ -19,47 +16,36 @@ public partial class Build
         "Octopus.Calamari.ConsolidatedPackage",
         "Octopus.Calamari.ConsolidatedPackage.Api"
     ];
-    
+
     static AbsolutePath ConsolidateCalamariPackagesProject => KnownPaths.SourceDirectory / "Calamari.ConsolidateCalamariPackages.Tests" / "Calamari.ConsolidateCalamariPackages.Tests.csproj";
-    static AbsolutePath ConsolidatedPackageDirectory => KnownPaths.ArtifactsDirectory / "consolidated";
 
     Target PackageConsolidatedCalamariZip =>
         d =>
             d.Executes(() =>
                        {
-                           var artifacts = Directory.GetFiles(ArtifactsDirectory, "*.nupkg")
-                                                    .Where(a => !NuGetPackagesToExcludeFromConsolidation.Any(a.Contains));
+                           //Look for all zip files in the artifacts directory that aren't tests
+                           var artifacts = Directory.GetFiles(KnownPaths.ArtifactsDirectory, "*.zip")
+                                                    .Where(a => !NuGetPackagesToExcludeFromConsolidation.Any(a.Contains))
+                                                    .Where(a => a.Contains("Tests"));
 
-                           var packageReferences = new List<BuildPackageReference>();
-                           foreach (var artifact in artifacts)
-                           {
-                               using var zip = ZipFile.OpenRead(artifact);
-                               var nuspecFileStream = zip.Entries.First(e => e.Name.EndsWith(".nuspec")).Open();
-                               var nuspecReader = new NuspecReader(nuspecFileStream);
-                               var metadata = nuspecReader.GetMetadata().ToList();
-                               packageReferences.Add(new BuildPackageReference
-                               {
-                                   Name = Regex.Replace(metadata.Where(kvp => kvp.Key == "id").Select(i => i.Value).First(), @"^Octopus\.", ""),
-                                   Version = metadata.Where(kvp => kvp.Key == "version").Select(i => i.Value).First(),
-                                   PackagePath = artifact
-                               });
-                           }
+                           var packageReferences = artifacts.Select(artifactPath => (artifactPath, projectName: Path.GetFileNameWithoutExtension(artifactPath)))
+                                                            .Where(x => Solution.GetProject(x.projectName) is not null)
+                                                            .Select((x) =>
+                                                                    {
+                                                                        var (artifactPath, projectName) = x;
+                                                                        return new BuildPackageReference
+                                                                        {
+                                                                            Name = projectName,
+                                                                            Version = NugetVersion.Value,
+                                                                            PackagePath = artifactPath
+                                                                        };
+                                                                    })
+                                                            .ToList();
 
-                           foreach (var flavour in GetCalamariFlavours())
-                           {
-                               if (Solution.GetProject(flavour) != null)
-                               {
-                                   packageReferences.Add(new BuildPackageReference
-                                   {
-                                       Name = flavour,
-                                       Version = NugetVersion.Value,
-                                       PackagePath = ArtifactsDirectory / $"{flavour}.zip"
-                                   });
-                               }
-                           }
-
-                           Directory.CreateDirectory(ConsolidatedPackageDirectory);
-                           var (result, packageFilename) = new Consolidate(Log.Logger).Execute(ConsolidatedPackageDirectory, packageReferences);
+                           var consolidatedPackageDirectory = KnownPaths.ArtifactsDirectory / "consolidated";
+                           consolidatedPackageDirectory.CreateOrCleanDirectory();
+                           
+                           var (result, packageFilename) = new Consolidate(Log.Logger).Execute(consolidatedPackageDirectory, packageReferences);
 
                            if (!result)
                                throw new Exception("Failed to consolidate calamari Packages");
@@ -76,7 +62,7 @@ public partial class Build
                        {
                            Environment.SetEnvironmentVariable("CONSOLIDATED_ZIP", ConsolidatedPackagePath);
                            Environment.SetEnvironmentVariable("EXPECTED_VERSION", NugetVersion.Value);
-                           Environment.SetEnvironmentVariable("IS_WINDOWS", OperatingSystem.IsWindows().ToString());
+                           Environment.SetEnvironmentVariable("IS_WINDOWS", (OperatingSystem.IsWindows() || !IsLocalBuild).ToString());
 
                            DotNetTest(s => s
                                            .SetProjectFile(ConsolidateCalamariPackagesProject)
@@ -93,10 +79,10 @@ public partial class Build
             d.DependsOn(CalamariConsolidationVerification)
              .Executes(() =>
                        {
-                           NuGetPack(s => 
+                           NuGetPack(s =>
                                          s.SetTargetPath(BuildDirectory / "Calamari.Consolidated.nuspec")
-                                           .SetBasePath(BuildDirectory)
-                                           .SetVersion(NugetVersion.Value)
-                                           .SetOutputDirectory(ArtifactsDirectory));
+                                          .SetBasePath(BuildDirectory)
+                                          .SetVersion(NugetVersion.Value)
+                                          .SetOutputDirectory(ArtifactsDirectory));
                        });
 }
