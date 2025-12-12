@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
 using Calamari.Build.Utilities;
+using JetBrains.Annotations;
 using Nuke.Common.ProjectModel;
 using Octopus.Calamari.ConsolidatedPackage;
 
@@ -22,6 +23,8 @@ public partial class Build
         // Unlike other *Calamari* tests, we would still want to produce Calamari.Scripting.Zip and its tests, like its flavours.
         "Calamari.Scripting"
     ];
+    
+    [Parameter] readonly string? TargetRuntime;
 
     List<CalamariPackageMetadata> PackagesToPublish = new();
     List<Project> CalamariProjects = new();
@@ -99,6 +102,7 @@ public partial class Build
                            await Task.WhenAll(buildTasks);
                        });
 
+    [PublicAPI]
     Target PublishCalamariProjects =>
         d =>
             d.DependsOn(BuildCalamariProjects)
