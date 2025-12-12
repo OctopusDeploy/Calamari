@@ -16,6 +16,16 @@ function encode_servicemessagevalue
 }
 
 # -----------------------------------------------------------------------------
+# Function to base64 encode a service message value
+#		Accepts 1 argument:
+#			string: the value to encode
+# -----------------------------------------------------------------------------
+function encode_unescaped_servicemessagevalue
+{
+  echo -ne "$1" | openssl enc -base64 -A
+}
+
+# -----------------------------------------------------------------------------
 # Function to base64 decode a service message value
 #		Accepts 1 argument:
 #			string: the value to decode
@@ -337,9 +347,9 @@ function report_kubernetes_manifest
   for mf in "${MANIFESTS[@]}"; do
     if [ -z "$mf" ]; then
       continue 
-    fi      
-    
-    MESSAGE="##octopus[k8s-manifest-applied manifest='$(encode_servicemessagevalue "$mf")'"
+    fi
+
+    MESSAGE="##octopus[k8s-manifest-applied manifest='$(encode_unescaped_servicemessagevalue "$mf")'"
     
     if [ -n "$NAMESPACE" ]; then
       MESSAGE="$MESSAGE ns='$(encode_servicemessagevalue "$NAMESPACE")'"
@@ -347,7 +357,7 @@ function report_kubernetes_manifest
     
     MESSAGE="$MESSAGE]"
     
-    echo "$MESSAGE"      
+    echo "$MESSAGE"
   done
 }
 
