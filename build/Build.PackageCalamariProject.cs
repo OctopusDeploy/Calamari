@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
+using Calamari.Build.Utilities;
 using Nuke.Common.ProjectModel;
 using Octopus.Calamari.ConsolidatedPackage;
 
@@ -12,9 +13,15 @@ public partial class Build
     // By default, all projects are built unless the parameter is set specifically
     // Although all libraries/flavours now support .NET Core, ServiceFabric can currently only be built on Windows devices
     // This is here purely to make the local build experience on non-Windows devices (with testing) workable
-    [Parameter(Name = "ProjectToBuild")] readonly string[] ProjectsToBuild = BuildableCalamariProjects.GetCalamariProjectsToBuild(OperatingSystem.IsWindows());
-    
-    
+    [Parameter(Name = "ProjectToBuild", Separator = "+")]
+    readonly string[] ProjectsToBuild =
+    [
+        ..BuildableCalamariProjects.GetCalamariProjectsToBuild(OperatingSystem.IsWindows()),
+
+        // Calamari.Scripting is a library that other calamari flavours depend on; not a flavour on its own right.
+        // Unlike other *Calamari* tests, we would still want to produce Calamari.Scripting.Zip and its tests, like its flavours.
+        "Calamari.Scripting"
+    ];
 
     List<CalamariPackageMetadata> PackagesToPublish = new();
     List<Project> CalamariProjects = new();
@@ -24,14 +31,10 @@ public partial class Build
             d.DependsOn(RestoreSolution)
              .Executes(() =>
                        {
-                           // Calamari.Scripting is a library that other calamari flavours depend on; not a flavour on its own right.
-                           // Unlike other *Calamari* tests, we would still want to produce Calamari.Scripting.Zip and its tests, like its flavours.
-                           string[] projectNames = [..ProjectsToBuild, "Calamari.Scripting"];
-
                            //its assumed each project has a corresponding test project
-                           var testProjectNames = projectNames.Select(p => $"{p}.Tests");
-                           
-                           var allProjectNames = projectNames.Concat(testProjectNames).ToHashSet();
+                           var testProjectNames = ProjectsToBuild.Select(p => $"{p}.Tests");
+
+                           var allProjectNames = ProjectsToBuild.Concat(testProjectNames).ToHashSet();
 
                            var calamariProjects = Solution.Projects.Where(project => allProjectNames.Contains(project.Name)).ToList();
 
@@ -102,33 +105,28 @@ public partial class Build
              .Executes(async () =>
                        {
                            var semaphore = new SemaphoreSlim(4);
-                           var outputPaths = new ConcurrentBag<AbsolutePath?>();
 
-                           Log.Information("Publishing projects...");
-                           var publishTasks = PackagesToPublish.Select(async package =>
-                                                                       {
-                                                                           await semaphore.WaitAsync();
-                                                                           try
-                                                                           {
-                                                                               var outputPath = await PublishPackageAsync(package);
-                                                                               outputPaths.Add(outputPath);
-                                                                           }
-                                                                           finally
-                                                                           {
-                                                                               semaphore.Release();
-                                                                           }
-                                                                       });
+                           Log.Information("Publishing projects and test projects...");
+                           var publishAndSignTasks = PackagesToPublish.Select(async package =>
+                                                                              {
+                                                                                  await semaphore.WaitAsync();
+                                                                                  try
+                                                                                  {
+                                                                                      var outputPath = await PublishPackageAsync(package);
 
-                           await Task.WhenAll(publishTasks);
+                                                                                      //we sign the non-test directories
+                                                                                      if (!outputPath.Contains("Tests"))
+                                                                                      {
+                                                                                          SignDirectory(outputPath);
+                                                                                      }
+                                                                                  }
+                                                                                  finally
+                                                                                  {
+                                                                                      semaphore.Release();
+                                                                                  }
+                                                                              });
 
-                           // Sign and compress tasks
-                           Log.Information("Signing published binaries...");
-                           var signTasks = outputPaths
-                                           .Where(output => output != null && !output.ToString().Contains("Tests"))
-                                           .Select(output => Task.Run(() => SignDirectory(output!)))
-                                           .ToList();
-
-                           await Task.WhenAll(signTasks);
+                           await Task.WhenAll(publishAndSignTasks);
 
                            Log.Information("Compressing published projects...");
                            var compressTasks = CalamariProjects.Select(async proj => await CompressCalamariProject(proj));
@@ -140,35 +138,49 @@ public partial class Build
         Log.Information("Publishing {ProjectName} for framework '{Framework}' and arch '{Architecture}'", calamariPackageMetadata.Project.Name, calamariPackageMetadata.Framework, calamariPackageMetadata.Architecture);
 
         var project = calamariPackageMetadata.Project;
-        var outputDirectory = PublishDirectory / project.Name / calamariPackageMetadata.Architecture;
+        var outputDirectory = KnownPaths.PublishDirectory / project.Name / calamariPackageMetadata.Architecture;
 
-        await Task.Run(() =>
-                           DotNetPublish(s =>
-                                             s.SetConfiguration(Configuration)
-                                              .SetProject(project)
-                                              .SetFramework(calamariPackageMetadata.Framework)
-                                              .SetRuntime(calamariPackageMetadata.Architecture)
-                                              .EnableNoBuild()
-                                              .EnableNoRestore()
-                                              .SetSelfContained(OperatingSystem.IsWindows() || !IsLocalBuild) // This is here purely to make the local build experience on non-Windows devices workable - Publish breaks on non-Windows platforms with SelfContained = true
-                                              .SetOutput(outputDirectory)));
+        await Task.Run(() => DotNetPublish(s =>
+                                               s.SetConfiguration(Configuration)
+                                                .SetProject(project)
+                                                .SetFramework(calamariPackageMetadata.Framework)
+                                                .SetRuntime(calamariPackageMetadata.Architecture)
+                                                .EnableNoBuild()
+                                                .EnableNoRestore()
+                                                .SetSelfContained(OperatingSystem.IsWindows() || !IsLocalBuild) // This is here purely to make the local build experience on non-Windows devices workable - Publish breaks on non-Windows platforms with SelfContained = true
+                                                .SetOutput(outputDirectory)));
 
         File.Copy(RootDirectory / "global.json", outputDirectory / "global.json");
 
         return outputDirectory;
     }
 
-    async Task CompressCalamariProject(Project project)
+    void SignDirectory(string directory)
     {
-        Log.Information($"Compressing Calamari flavour {PublishDirectory}/{project.Name}");
-        var compressionSource = PublishDirectory / project.Name;
-        if (!Directory.Exists(compressionSource))
+        if (!WillSignBinaries)
+            return;
+
+        Log.Information("Signing directory: {Directory} and sub-directories", directory);
+        var binariesFolders = Directory.GetDirectories(directory, "*", new EnumerationOptions { RecurseSubdirectories = true });
+        foreach (var subDirectory in binariesFolders.Append(directory))
+        {
+            Signing.SignAndTimestampBinaries(subDirectory, AzureKeyVaultUrl, AzureKeyVaultAppId,
+                                             AzureKeyVaultAppSecret, AzureKeyVaultTenantId, AzureKeyVaultCertificateName,
+                                             SigningCertificatePath, SigningCertificatePassword);
+        }
+    }
+
+    static async Task CompressCalamariProject(Project project)
+    {
+        Log.Information($"Compressing project {PublishDirectory}/{project.Name}");
+        var sourceDirectory = PublishDirectory / project.Name;
+        if (!Directory.Exists(sourceDirectory))
         {
             Log.Information($"Skipping compression for {project.Name} since nothing was built");
             return;
         }
 
-        await Task.Run(() => compressionSource.CompressTo($"{ArtifactsDirectory / project.Name}.zip"));
+        await Task.Run(() => Ci.ZipFolderAndUploadArtifact(sourceDirectory, KnownPaths.ArtifactsDirectory / $"{project.Name}.zip"));
     }
 
     IReadOnlyCollection<string> GetRuntimeIdentifiers(Project? project)
