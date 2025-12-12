@@ -32,7 +32,7 @@ partial class Build
         .Requires(() => DependencyTrackUrl)
         .Requires(() => DependencyTrackApiKey)
         .Requires(() => InternalDockerRegistry)
-        .DependsOn(Publish)
+        .DependsOn(PublishCalamariProjects)
         .Executes(async () =>
         {
             ArgumentNullException.ThrowIfNull(Solution, nameof(Solution));

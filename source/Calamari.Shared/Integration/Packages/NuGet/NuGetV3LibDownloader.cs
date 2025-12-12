@@ -1,6 +1,4 @@
-﻿#if USE_NUGET_V3_LIBS
-
-using System;
+﻿using System;
 using System.Net;
 using System.Threading;
 using NuGet.Configuration;
@@ -108,5 +106,3 @@ namespace Calamari.Integration.Packages.NuGet
         }
     }
 }
-
-#endif
