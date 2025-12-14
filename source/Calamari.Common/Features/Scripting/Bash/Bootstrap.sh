@@ -16,7 +16,7 @@ function encode_servicemessagevalue
 }
 
 # -----------------------------------------------------------------------------
-# Function to base64 encode a service message value
+# Function to base64 encode a service message value without escaping the value
 #		Accepts 1 argument:
 #			string: the value to encode
 # -----------------------------------------------------------------------------
