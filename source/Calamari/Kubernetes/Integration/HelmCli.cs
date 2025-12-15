@@ -23,15 +23,13 @@ namespace Calamari.Kubernetes.Integration
     {
         readonly ICommandLineRunner commandLineRunner;
         readonly ICalamariFileSystem fileSystem;
-        readonly IVariables variables;
         bool isCustomExecutable;
 
         public HelmCli(ILog log, ICommandLineRunner commandLineRunner, RunningDeployment runningDeployment, ICalamariFileSystem fileSystem)
-            : base(log, commandLineRunner, runningDeployment.CurrentDirectory, runningDeployment.EnvironmentVariables)
+            : base(log, commandLineRunner, runningDeployment.CurrentDirectory, runningDeployment.EnvironmentVariables, runningDeployment.Variables)
         {
             this.commandLineRunner = commandLineRunner;
             this.fileSystem = fileSystem;
-            variables = runningDeployment.Variables;
             ExecutableLocation = SetExecutable();
         }
 
@@ -116,7 +114,7 @@ namespace Calamari.Kubernetes.Integration
 
             return result.Output.MergeInfoLogs();
         }
-        
+
         public CommandResult Upgrade(string releaseName, string packagePath, IEnumerable<string> upgradeArgs)
         {
             var buildArgs = new List<string>
@@ -131,11 +129,7 @@ namespace Calamari.Kubernetes.Integration
             buildArgs.Add($"\"{releaseName}\"");
             buildArgs.Add($"\"{packagePath}\"");
 
-            // Check if we should log output at Info level
-            var logOutputAsInfo = variables.GetFlag(SpecialVariables.Helm.LogOutputAsInfo);
-            var result = logOutputAsInfo
-                ? ExecuteCommandAndLogOutputAsInfo(buildArgs)
-                : ExecuteCommandAndLogOutput(buildArgs);
+            var result = ExecuteCommandAndLogOutput(buildArgs);
             return result;
         }
 
@@ -149,12 +143,6 @@ namespace Calamari.Kubernetes.Integration
         {
             ChmodExecutable();
             return base.ExecuteCommandAndLogOutput(new CommandLineInvocation(ExecutableLocation, SanitiseCommandLineArgs(arguments)));
-        }
-
-        CommandResult ExecuteCommandAndLogOutputAsInfo(IEnumerable<string> arguments)
-        {
-            ChmodExecutable();
-            return base.ExecuteCommandAndLogOutputAsInfo(new CommandLineInvocation(ExecutableLocation, SanitiseCommandLineArgs(arguments)));
         }
 
         static string[] SanitiseCommandLineArgs(IEnumerable<string> arguments) => arguments.Where(s => !string.IsNullOrWhiteSpace(s)).ToArray();

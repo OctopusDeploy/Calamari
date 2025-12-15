@@ -31,7 +31,7 @@ namespace Calamari.Kubernetes.Integration
                        ILog log,
                        ICommandLineRunner commandLineRunner,
                        string workingDirectory,
-                       Dictionary<string, string> environmentVariables) : base(log, commandLineRunner, workingDirectory, environmentVariables)
+                       Dictionary<string, string> environmentVariables) : base(log, commandLineRunner, workingDirectory, environmentVariables, variables)
         {
             customKubectlExecutable = variables.Get("Octopus.Action.Kubernetes.CustomKubectlExecutable");
         }

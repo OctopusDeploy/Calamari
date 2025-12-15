@@ -17,6 +17,7 @@ namespace Calamari.Kubernetes
         public const string OutputKubeConfig = "Octopus.Action.Kubernetes.OutputKubeConfig";
         public const string CustomKubectlExecutable = "Octopus.Action.Kubernetes.CustomKubectlExecutable";
         public const string ResourceStatusCheck = "Octopus.Action.Kubernetes.ResourceStatusCheck";
+        public const string VerboseOutput = "Octopus.Action.Kubernetes.VerboseOutput";
         public const string DeploymentStyle = "Octopus.Action.KubernetesContainers.DeploymentStyle";
         public const string DeploymentWait = "Octopus.Action.KubernetesContainers.DeploymentWait";
         public const string CustomResourceYamlFileName = "Octopus.Action.KubernetesContainers.CustomResourceYamlFileName";
@@ -51,7 +52,6 @@ namespace Calamari.Kubernetes
             public const string CustomHelmExecutable = "Octopus.Action.Helm.CustomHelmExecutable";
             public const string Timeout = "Octopus.Action.Helm.Timeout";
             public const string ChartDirectory = "Octopus.Action.Helm.ChartDirectory";
-            public const string LogOutputAsInfo = "Octopus.Action.Helm.LogOutputAsInfo";
 
             public static class Packages
             {
