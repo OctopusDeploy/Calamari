@@ -6,6 +6,7 @@ using System.ServiceProcess;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Tests.Fixtures.Deployment.Packages;
+using FluentAssertions;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.Deployment
@@ -43,20 +44,38 @@ namespace Calamari.Tests.Fixtures.Deployment
             }
         }
 
+        protected void RunDeploymentAndAssertRunningState(string startMode, string desiredStatus, ServiceControllerStatus serviceStatus)
+        {
+            SetupVariables(startMode, desiredStatus);
+            DeployAndAssert(serviceStatus, null);
+        }
+
         protected void RunDeployment(Action extraAsserts = null)
+        {
+            SetupVariables("auto", null);
+            DeployAndAssert(ServiceControllerStatus.Running, extraAsserts);
+        }
+
+        void SetupVariables(string startMode, string desiredStatus)
         {
             if (string.IsNullOrEmpty(Variables[KnownVariables.Package.EnabledFeatures]))
                 Variables[KnownVariables.Package.EnabledFeatures] = "Octopus.Features.WindowsService";
             Variables["Octopus.Action.WindowsService.CreateOrUpdateService"] = "True";
             Variables["Octopus.Action.WindowsService.ServiceAccount"] = "_CUSTOM";
-            Variables["Octopus.Action.WindowsService.StartMode"] = "auto";
+            Variables["Octopus.Action.WindowsService.StartMode"] = startMode;
+            if (desiredStatus != null)
+                Variables["Octopus.Action.WindowsService.DesiredStatus"] = desiredStatus;
+                
             Variables["Octopus.Action.WindowsService.ServiceName"] = ServiceName;
             if (Variables["Octopus.Action.WindowsService.DisplayName"] == null)
             {
                 Variables["Octopus.Action.WindowsService.DisplayName"] = ServiceName;
             }
             Variables["Octopus.Action.WindowsService.ExecutablePath"] = $"{PackageName}.exe";
+        }
 
+        void DeployAndAssert(ServiceControllerStatus serviceStatus, Action extraAsserts)
+        {
             using (var file = new TemporaryFile(PackageBuilder.BuildSamplePackage(PackageName, "1.0.0")))
             {
                 var result = DeployPackage(file.FilePath);
@@ -68,8 +87,8 @@ namespace Calamari.Tests.Fixtures.Deployment
 
                 using (var installedService = GetInstalledService())
                 {
-                    Assert.NotNull(installedService, "Service is installed");
-                    Assert.AreEqual(ServiceControllerStatus.Running, installedService.Status);
+                    installedService.Should().NotBeNull("Service {0} should be installed", ServiceName);
+                    installedService.Status.Should().Be(serviceStatus);
                 }
 
                 extraAsserts?.Invoke();
