@@ -17,7 +17,7 @@ namespace Calamari.Tests.ArgoCD.Helm
             const string revision = "main";
             const string valuesFile = "config/values.yaml";
 
-            var helmSource = new HelmSource()
+            var helmSource = new ApplicationSource()
             {
                 RepoUrl = new Uri(repoUrl),
                 TargetRevision = revision,
@@ -25,7 +25,8 @@ namespace Calamari.Tests.ArgoCD.Helm
                 Helm = new HelmConfig
                 {
                     ValueFiles = new List<string> { valuesFile }
-                }
+                },
+                SourceType = SourceType.Helm
             };
 
             // Act
@@ -42,7 +43,7 @@ namespace Calamari.Tests.ArgoCD.Helm
             const string revision = "main";
             const string valuesFile = "config/values.yaml";
 
-            var helmSource = new HelmSource()
+            var helmSource = new ApplicationSource()
             {
                 RepoUrl = new Uri(repoUrl),
                 TargetRevision = revision,
@@ -50,7 +51,8 @@ namespace Calamari.Tests.ArgoCD.Helm
                 Helm = new HelmConfig()
                 {
                     ValueFiles = new List<string>() { valuesFile }
-                }
+                },
+                SourceType = SourceType.Helm
             };
 
             // Act
@@ -67,7 +69,7 @@ namespace Calamari.Tests.ArgoCD.Helm
             const string revision = "/dev/";
             const string valuesFile = "/config/values.yaml";
 
-            var helmSource = new HelmSource()
+            var helmSource = new ApplicationSource()
             {
                 RepoUrl = new Uri(repoUrl),
                 TargetRevision = revision,
@@ -75,7 +77,8 @@ namespace Calamari.Tests.ArgoCD.Helm
                 Helm = new HelmConfig()
                 {
                     ValueFiles = new List<string>() { valuesFile }
-                }
+                },
+                SourceType = SourceType.Helm
             };
 
             // Act
@@ -92,7 +95,7 @@ namespace Calamari.Tests.ArgoCD.Helm
             const string revision = "main";
             const string valuesFile = "config/values.yaml";
 
-            var helmSource = new HelmSource()
+            var helmSource = new ApplicationSource()
             {
                 RepoUrl = new Uri(repoUrl),
                 TargetRevision = revision,
@@ -100,7 +103,8 @@ namespace Calamari.Tests.ArgoCD.Helm
                 Helm = new HelmConfig
                 {
                     ValueFiles = new List<string> { valuesFile }
-                }
+                },
+                SourceType = SourceType.Helm
             };
 
             // Act
@@ -118,7 +122,7 @@ namespace Calamari.Tests.ArgoCD.Helm
             const string valuesFile = "config/values.yaml";
             const string valuesFile2 = "values/dir/values.yaml";
 
-            var helmSource = new HelmSource()
+            var helmSource = new ApplicationSource()
             {
                 RepoUrl = new Uri(repoUrl),
                 TargetRevision = revision,
@@ -126,7 +130,8 @@ namespace Calamari.Tests.ArgoCD.Helm
                 Helm = new HelmConfig
                 {
                     ValueFiles = new List<string> { valuesFile, valuesFile2 }
-                }
+                },
+                SourceType = SourceType.Helm
             };
 
             // Act
@@ -146,7 +151,7 @@ namespace Calamari.Tests.ArgoCD.Helm
             const string valuesFile2 = "values/dir/values.yaml";
             const string refValuesFile = "$ref-name/values.yaml";
 
-            var helmSource = new HelmSource()
+            var helmSource = new ApplicationSource()
             {
                 RepoUrl = new Uri(repoUrl),
                 TargetRevision = revision,
@@ -154,7 +159,8 @@ namespace Calamari.Tests.ArgoCD.Helm
                 Helm = new HelmConfig
                 {
                     ValueFiles = new List<string> { valuesFile, valuesFile2, refValuesFile }
-                }
+                },
+                SourceType = SourceType.Helm
             };
 
             // Act

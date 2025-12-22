@@ -41,11 +41,12 @@ namespace Calamari.Tests.ArgoCD.Helm
         [Test]
         public void GetValuesFilesToUpdate_WithDirectoryOnlySources_ReturnsEmptyList()
         {
-            var basicSource = new BasicSource()
+            var basicSource = new ApplicationSource()
             {
                 Path = "./",
                 RepoUrl = new Uri("https://example.com/repo.git"),
                 TargetRevision = "main",
+                SourceType = SourceType.Directory
             };
 
             var toUpdate = new Application()
@@ -57,7 +58,7 @@ namespace Calamari.Tests.ArgoCD.Helm
                 },
                 Spec = new ApplicationSpec()
                 {
-                    Sources = new List<SourceBase>() { basicSource },
+                    Sources = new List<ApplicationSource>() { basicSource },
                 }
             };
 
@@ -74,13 +75,14 @@ namespace Calamari.Tests.ArgoCD.Helm
         [Test]
         public void GetValuesFilesToUpdate_WithSingleInlineValuesFile_WithNoAnnotations_ReturnsEmptyListWithProblem()
         {
-            var helmSource = new HelmSource()
+            var helmSource = new ApplicationSource()
             {
                 Path = "./",
                 Helm = new HelmConfig()
                 {
                     ValueFiles = new List<string>() { "valuesFile.yaml" }
-                }
+                },
+                SourceType = SourceType.Helm
             };
 
             var toUpdate = new Application()
@@ -92,7 +94,7 @@ namespace Calamari.Tests.ArgoCD.Helm
                 },
                 Spec = new ApplicationSpec()
                 {
-                    Sources = new List<SourceBase>() { helmSource },
+                    Sources = new List<ApplicationSource>() { helmSource },
                 }
             };
 
@@ -110,7 +112,7 @@ namespace Calamari.Tests.ArgoCD.Helm
         public void GetValuesFilesToUpdate_WithSingleInlineValuesFile_WithDefaultPathAnnotation_ReturnsSource()
         {
             const string valuesFileName = "values.yaml";
-            var helmSource = new HelmSource()
+            var helmSource = new ApplicationSource()
             {
                 Path = "./",
                 RepoUrl = new Uri("https://example.com/repo.git"),
@@ -118,7 +120,8 @@ namespace Calamari.Tests.ArgoCD.Helm
                 Helm = new HelmConfig()
                 {
                     ValueFiles = new List<string>() { valuesFileName }
-                }
+                },
+                SourceType = SourceType.Helm
             };
 
             var toUpdate = new Application()
@@ -133,7 +136,7 @@ namespace Calamari.Tests.ArgoCD.Helm
                 },
                 Spec = new ApplicationSpec()
                 {
-                    Sources = new List<SourceBase>() { helmSource },
+                    Sources = new List<ApplicationSource>() { helmSource },
                 }
             };
 
@@ -162,7 +165,7 @@ namespace Calamari.Tests.ArgoCD.Helm
         {
             const string valuesFileName1 = "values1.yaml";
             const string valuesFileName2 = "values2.yaml";
-            var helmSource = new HelmSource()
+            var helmSource = new ApplicationSource()
             {
                 Path = "./",
                 RepoUrl = new Uri("https://example.com/repo.git"),
@@ -170,7 +173,8 @@ namespace Calamari.Tests.ArgoCD.Helm
                 Helm = new HelmConfig()
                 {
                     ValueFiles = new List<string>() { valuesFileName1, valuesFileName2 }
-                }
+                },
+                SourceType = SourceType.Helm
             };
 
             var toUpdate = new Application()
@@ -184,7 +188,7 @@ namespace Calamari.Tests.ArgoCD.Helm
                 },
                 Spec = new ApplicationSpec()
                 {
-                    Sources = new List<SourceBase>() { helmSource },
+                    Sources = new List<ApplicationSource>() { helmSource },
                 }
             };
 
@@ -206,14 +210,15 @@ namespace Calamari.Tests.ArgoCD.Helm
         {
             const string valuesFileName1 = "values1.yaml";
             const string valuesFileName2 = "values2.yaml";
-            var helmSource = new HelmSource()
+            var helmSource = new ApplicationSource()
             {
                 Path = "./",
                 RepoUrl = new Uri("https://example.com/repo.git"),
                 Helm = new HelmConfig()
                 {
                     ValueFiles = new List<string>() { valuesFileName1, valuesFileName2 }
-                }
+                },
+                SourceType = SourceType.Helm
             };
 
             var toUpdate = new Application()
@@ -228,7 +233,7 @@ namespace Calamari.Tests.ArgoCD.Helm
                 },
                 Spec = new ApplicationSpec()
                 {
-                    Sources = new List<SourceBase>() { helmSource },
+                    Sources = new List<ApplicationSource>() { helmSource },
                 }
             };
 
@@ -269,21 +274,23 @@ namespace Calamari.Tests.ArgoCD.Helm
             const string valuesFilePath1 = "files1/values.yaml";
             const string valuesFilePath2 = "files2/values.yaml";
 
-            var refSource = new ReferenceSource()
+            var refSource = new ApplicationSource()
             {
                 RepoUrl = new Uri("https://example.com/repo.git"),
                 TargetRevision = "main",
                 Ref = valuesRef,
+                SourceType = SourceType.Directory
             };
 
-            var helmSource = new HelmSource()
+            var helmSource = new ApplicationSource()
             {
                 Path = "./",
                 RepoUrl = new Uri("https://example.com/repo.git"),
                 Helm = new HelmConfig()
                 {
                     ValueFiles = new List<string>() { $"${valuesRef}/{valuesFilePath1}", $"${valuesRef}/{valuesFilePath2}" }
-                }
+                },
+                SourceType = SourceType.Helm
             };
 
             var toUpdate = new Application()
@@ -297,7 +304,7 @@ namespace Calamari.Tests.ArgoCD.Helm
                 },
                 Spec = new ApplicationSpec()
                 {
-                    Sources = new List<SourceBase>() { refSource, helmSource },
+                    Sources = new List<ApplicationSource>() { refSource, helmSource },
                 }
             };
 
@@ -317,14 +324,15 @@ namespace Calamari.Tests.ArgoCD.Helm
             const string valuesRef = "the-values";
             const string valuesFilePath = "files/values.yaml";
 
-            var refSource = new ReferenceSource()
+            var refSource = new ApplicationSource()
             {
                 RepoUrl = new Uri("https://example.com/repo.git"),
                 TargetRevision = "main",
                 Ref = valuesRef,
+                SourceType = SourceType.Directory
             };
 
-            var helmSource = new HelmSource()
+            var helmSource = new ApplicationSource()
             {
                 Path = "./",
                 RepoUrl = new Uri("https://example.com/repo.git"),
@@ -332,7 +340,8 @@ namespace Calamari.Tests.ArgoCD.Helm
                 {
                     ValueFiles = new List<string>() { $"${valuesRef}/{valuesFilePath}" }
                 },
-                Name = "chart-source"
+                Name = "chart-source",
+                SourceType = SourceType.Helm
             };
 
             var toUpdate = new Application()
@@ -347,7 +356,7 @@ namespace Calamari.Tests.ArgoCD.Helm
                 },
                 Spec = new ApplicationSpec()
                 {
-                    Sources = new List<SourceBase>() { refSource, helmSource },
+                    Sources = new List<ApplicationSource>() { refSource, helmSource },
                 }
             };
 
@@ -378,14 +387,15 @@ namespace Calamari.Tests.ArgoCD.Helm
             // because The Argo CD deployment would fail and thus this app would be unlikely to be pulled into Octopus
             const string valuesRef = "the-values";
             const string valuesFilePath = "files/values.yaml";
-            var refSource = new ReferenceSource()
+            var refSource = new ApplicationSource()
             {
                 RepoUrl = new Uri("https://example.com/repo.git"),
                 TargetRevision = "main",
                 Ref = "not-here",
+                SourceType = SourceType.Directory
             };
 
-            var helmSource = new HelmSource()
+            var helmSource = new ApplicationSource()
             {
                 Path = "./",
                 RepoUrl = new Uri("https://example.com/repo.git"),
@@ -393,7 +403,8 @@ namespace Calamari.Tests.ArgoCD.Helm
                 {
                     ValueFiles = new List<string>() { $"${valuesRef}/{valuesFilePath}" }
                 },
-                Name = "chart-source"
+                Name = "chart-source",
+                SourceType = SourceType.Helm
             };
 
             var toUpdate = new Application()
@@ -408,7 +419,7 @@ namespace Calamari.Tests.ArgoCD.Helm
                 },
                 Spec = new ApplicationSpec()
                 {
-                    Sources = new List<SourceBase>() { refSource, helmSource },
+                    Sources = new List<ApplicationSource>() { refSource, helmSource },
                 }
             };
 
@@ -432,19 +443,21 @@ namespace Calamari.Tests.ArgoCD.Helm
             const string valuesRepo2Address = "https://github.com/another-repo";
 
             const string valuesFilePath = "files/values.yaml";
-            var refSource1 = new ReferenceSource()
+            var refSource1 = new ApplicationSource()
             {
                 RepoUrl = new Uri(valuesRepo1Address),
                 TargetRevision = "main",
                 Ref = valuesRef1,
+                SourceType = SourceType.Directory
             };
-            var refSource2 = new ReferenceSource()
+            var refSource2 = new ApplicationSource()
             {
                 RepoUrl = new Uri(valuesRepo2Address),
                 TargetRevision = "main",
                 Ref = valuesRef2,
+                SourceType = SourceType.Directory
             };
-            var helmSource = new HelmSource()
+            var helmSource = new ApplicationSource()
             {
                 Path = "./",
                 RepoUrl = new Uri("https://example.com/repo.git"),
@@ -452,7 +465,8 @@ namespace Calamari.Tests.ArgoCD.Helm
                 {
                     ValueFiles = new List<string>() { $"${valuesRef1}/{valuesFilePath}", $"${valuesRef2}/{valuesFilePath}" }
                 },
-                Name = "chart-source"
+                Name = "chart-source",
+                SourceType = SourceType.Helm
             };
 
             var toUpdate = new Application()
@@ -467,7 +481,7 @@ namespace Calamari.Tests.ArgoCD.Helm
                 },
                 Spec = new ApplicationSpec()
                 {
-                    Sources = new List<SourceBase>() { refSource1, refSource2, helmSource },
+                    Sources = new List<ApplicationSource>() { refSource1, refSource2, helmSource },
                 }
             };
 
@@ -509,13 +523,14 @@ namespace Calamari.Tests.ArgoCD.Helm
             const string valuesRefFilePath = "values.yaml";
             const string inlineValuesFilePath = "app-files/values.yaml";
             const string valuesRepoAddress = "https://github.com/another-repo/values-files-here";
-            var refSource = new ReferenceSource()
+            var refSource = new ApplicationSource()
             {
                 RepoUrl = new Uri(valuesRepoAddress),
                 TargetRevision = "main",
                 Ref = valuesRef,
+                SourceType = SourceType.Directory
             };
-            var helmSource = new HelmSource()
+            var helmSource = new ApplicationSource()
             {
                 Path = "./",
                 RepoUrl = new Uri("https://example.com/repo.git"),
@@ -523,7 +538,8 @@ namespace Calamari.Tests.ArgoCD.Helm
                 {
                     ValueFiles = new List<string>() { $"${valuesRef}/{valuesRefFilePath}", inlineValuesFilePath }
                 },
-                Name = "chart-source"
+                Name = "chart-source",
+                SourceType = SourceType.Helm
             };
 
             var toUpdate = new Application()
@@ -538,7 +554,7 @@ namespace Calamari.Tests.ArgoCD.Helm
                 },
                 Spec = new ApplicationSpec()
                 {
-                    Sources = new List<SourceBase>() { refSource, helmSource },
+                    Sources = new List<ApplicationSource>() { refSource, helmSource },
                 }
             };
 
@@ -578,13 +594,14 @@ namespace Calamari.Tests.ArgoCD.Helm
             const string valuesRefFile2 = "another-path/values.yaml";
             const string valuesRepoAddress = "https://github.com/another-repo/values-files-here";
 
-            var refSource = new ReferenceSource()
+            var refSource = new ApplicationSource()
             {
                 RepoUrl = new Uri(valuesRepoAddress),
                 TargetRevision = "main",
                 Ref = valuesRef,
+                SourceType = SourceType.Directory
             };
-            var helmSource = new HelmSource()
+            var helmSource = new ApplicationSource()
             {
                 Path = "./",
                 RepoUrl = new Uri("https://example.com/repo.git"),
@@ -592,7 +609,8 @@ namespace Calamari.Tests.ArgoCD.Helm
                 {
                     ValueFiles = new List<string>() { $"${valuesRef}/{valuesRefFile1}", $"${valuesRef}/{valuesRefFile2}" }
                 },
-                Name = "chart-source"
+                Name = "chart-source",
+                SourceType = SourceType.Helm
             };
 
             var toUpdate = new Application()
@@ -607,7 +625,7 @@ namespace Calamari.Tests.ArgoCD.Helm
                 },
                 Spec = new ApplicationSpec()
                 {
-                    Sources = new List<SourceBase>() { refSource, helmSource },
+                    Sources = new List<ApplicationSource>() { refSource, helmSource },
                 }
             };
 
@@ -652,7 +670,7 @@ namespace Calamari.Tests.ArgoCD.Helm
             const string helmSource2Repo = "https://github.com/my-repo/my-other-argo-app";
             const string helmSource2Revision = "main";
 
-            var helmSource1 = new HelmSource()
+            var helmSource1 = new ApplicationSource()
             {
                 Path = "./",
                 RepoUrl = new Uri(helmSource1Repo),
@@ -661,10 +679,11 @@ namespace Calamari.Tests.ArgoCD.Helm
                 {
                     ValueFiles = new List<string>() { valuesFile1 }
                 },
-                Name = "helm-1"
+                Name = "helm-1",
+                SourceType = SourceType.Helm
             };
 
-            var helmSource2 = new HelmSource()
+            var helmSource2 = new ApplicationSource()
             {
                 Path = "cool",
                 RepoUrl = new Uri(helmSource2Repo),
@@ -673,7 +692,8 @@ namespace Calamari.Tests.ArgoCD.Helm
                 {
                     ValueFiles = new List<string>() { valuesFile2 }
                 },
-                Name = "helm-2"
+                Name = "helm-2",
+                SourceType = SourceType.Helm
             };
 
             var toUpdate = new Application()
@@ -689,7 +709,7 @@ namespace Calamari.Tests.ArgoCD.Helm
                 },
                 Spec = new ApplicationSpec()
                 {
-                    Sources = new List<SourceBase>() { helmSource1, helmSource2 },
+                    Sources = new List<ApplicationSource>() { helmSource1, helmSource2 },
                 }
             };
 

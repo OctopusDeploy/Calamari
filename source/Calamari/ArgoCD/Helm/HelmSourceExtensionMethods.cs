@@ -7,17 +7,17 @@ namespace Calamari.ArgoCD.Helm
 {
     public static class HelmSourceExtensionMethods
     {
-        public static string GenerateInlineValuesAbsolutePath(this HelmSource helmSource, string fileName)
+        public static string GenerateInlineValuesAbsolutePath(this ApplicationSource helmApplicationSource, string fileName)
         {
-            var path = helmSource.RepoUrl.AddPath(helmSource.TargetRevision).AddPath(helmSource.Path).AddPath(fileName);
+            var path = helmApplicationSource.RepoUrl.AddPath(helmApplicationSource.TargetRevision).AddPath(helmApplicationSource.Path).AddPath(fileName);
             return path.AbsoluteUri;
         }
 
-        public static IEnumerable<string> GenerateValuesFilePaths(this HelmSource helmSource)
+        public static IEnumerable<string> GenerateValuesFilePaths(this ApplicationSource helmApplicationSource)
         {
-            return helmSource.Helm.ValueFiles.Select(file => file.StartsWith("$")
+            return helmApplicationSource.Helm.ValueFiles.Select(file => file.StartsWith("$")
                                                     ? file
-                                                    : helmSource.GenerateInlineValuesAbsolutePath(file));
+                                                    : helmApplicationSource.GenerateInlineValuesAbsolutePath(file));
         }
     }
 }

@@ -8,7 +8,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
     {
         string name = "My App";
         Dictionary<string, string> annotations = new Dictionary<string, string>();
-        readonly List<SourceBase> applicationSources = new List<SourceBase>();
+        readonly List<ApplicationSource> applicationSources = new List<ApplicationSource>();
 
         public ArgoCDApplicationBuilder WithName(string value)
         {
@@ -22,13 +22,13 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             return this;
         }
 
-        public ArgoCDApplicationBuilder WithSource<T>(T source) where T : SourceBase
+        public ArgoCDApplicationBuilder WithSource<T>(T source) where T : ApplicationSource
         {
             applicationSources.Add(source);
             return this;
         }
 
-        public ArgoCDApplicationBuilder WithSources<T>(IEnumerable<T> sources) where T : SourceBase
+        public ArgoCDApplicationBuilder WithSources<T>(IEnumerable<T> sources) where T : ApplicationSource
         {
             applicationSources.AddRange(sources);
             return this;

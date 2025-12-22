@@ -176,13 +176,13 @@ namespace Calamari.ArgoCD.Conventions
 
         }
 
-        bool TryCalculateOutputPath(SourceBase sourceToUpdate, out string outputPath)
+        bool TryCalculateOutputPath(ApplicationSource applicationSourceToUpdate, out string outputPath)
         {
             outputPath = "";
-            var sourceIdentity = string.IsNullOrEmpty(sourceToUpdate.Name) ? sourceToUpdate.RepoUrl.ToString() : sourceToUpdate.Name;
-            if (sourceToUpdate is ReferenceSource)
+            var sourceIdentity = string.IsNullOrEmpty(applicationSourceToUpdate.Name) ? applicationSourceToUpdate.RepoUrl.ToString() : applicationSourceToUpdate.Name;
+            if (applicationSourceToUpdate.Ref != null)
             {
-                if (sourceToUpdate.Path != null)
+                if (applicationSourceToUpdate.Path != null)
                 {
                     log.WarnFormat("Unable to update ref source '{0}' as a path has been explicitly specified.", sourceIdentity);
                     log.Warn("Please split the source into separate sources and update annotations.");
@@ -191,17 +191,17 @@ namespace Calamari.ArgoCD.Conventions
                 return true;
             }
                         
-            if (sourceToUpdate.Path == null)
+            if (applicationSourceToUpdate.Path == null)
             {
                 log.WarnFormat("Unable to update source '{0}' as a path has not been specified.", sourceIdentity);
                 return false;
             }
-            outputPath = sourceToUpdate.Path;
+            outputPath = applicationSourceToUpdate.Path;
             return true;
         }
 
         //TODO(tmm): should we be removing this warning now
-        void LogWarningIfUpdatingMultipleSources(List<SourceBase> sourcesToInspect,
+        void LogWarningIfUpdatingMultipleSources(List<ApplicationSource> sourcesToInspect,
                                                  Dictionary<string, string> applicationAnnotations,
                                                  bool containsMultipleSources,
                                                  (ProjectSlug Project, EnvironmentSlug Environment, TenantSlug? Tenant) deploymentScope)

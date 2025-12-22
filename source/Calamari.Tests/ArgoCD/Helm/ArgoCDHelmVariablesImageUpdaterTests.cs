@@ -97,9 +97,9 @@ image:
                 },
                 Spec = new ApplicationSpec()
                 {
-                    Sources = new List<SourceBase>()
+                    Sources = new List<ApplicationSource>()
                     {
-                        new HelmSource()
+                        new ApplicationSource()
                         {
                             RepoUrl = new Uri(OriginPath),
                             Path = "files",
@@ -107,7 +107,8 @@ image:
                             Helm = new HelmConfig()
                             {
                                 ValueFiles = new List<string>() { "values.yml" }
-                            }
+                            },
+                            SourceType = SourceType.Helm
                         }
                     }
                 }
@@ -314,13 +315,14 @@ image:
                 },
                 Spec = new ApplicationSpec()
                 {
-                    Sources = new List<SourceBase>()
+                    Sources = new List<ApplicationSource>()
                     {
-                        new BasicSource()
+                        new ApplicationSource()
                         {
                             RepoUrl = new Uri(OriginPath),
                             Path = "files",
                             TargetRevision = argoCDBranchName.Value,
+                            SourceType = SourceType.Directory
                         }
                     }
                 }
@@ -394,9 +396,9 @@ image:
                 },
                 Spec = new ApplicationSpec()
                 {
-                    Sources = new List<SourceBase>()
+                    Sources = new List<ApplicationSource>()
                     {
-                        new HelmSource()
+                        new ApplicationSource()
                         {
                             RepoUrl = new Uri("https://github.com/doesnt/exist.git"),
                             Path = "files",
@@ -407,14 +409,16 @@ image:
                                     "$values/files/values.yaml"
                                 }
                             },
-                            Name = "helm-source"
+                            Name = "helm-source",
+                            SourceType = SourceType.Helm
                         },
-                        new ReferenceSource()
+                        new ApplicationSource()
                         {
                             RepoUrl = new Uri(OriginPath),
                             TargetRevision = argoCDBranchName.Value,
                             Ref = "values",
-                            Name = "ref-source"
+                            Name = "ref-source",
+                            SourceType = SourceType.Directory
                         }
                     }
                 }
@@ -488,14 +492,15 @@ image:
                 },
                 Spec = new ApplicationSpec()
                 {
-                    Sources = new List<SourceBase>()
+                    Sources = new List<ApplicationSource>()
                     {
-                        new BasicSource()
+                        new ApplicationSource()
                         {
                             RepoUrl = new Uri(OriginPath),
                             Path = "files",
                             TargetRevision = argoCDBranchName.Value,
-                            Name = "wrong-scoping"
+                            Name = "wrong-scoping",
+                            SourceType = SourceType.Directory
                         }
                     }
                 }
@@ -569,9 +574,9 @@ image:
                 },
                 Spec = new ApplicationSpec()
                 {
-                    Sources = new List<SourceBase>()
+                    Sources = new List<ApplicationSource>()
                     {
-                        new HelmSource()
+                        new ApplicationSource()
                         {
                             RepoUrl = new Uri("https://github.com/doesnt/exist.git"),
                             Path = "files",
@@ -582,13 +587,15 @@ image:
                                     "$values/files/values.yaml"
                                 }
                             },
-                            Name = "helm-source"
+                            Name = "helm-source",
+                            SourceType = SourceType.Helm
                         },
-                        new ReferenceSource()
+                        new ApplicationSource()
                         {
                             RepoUrl = new Uri(OriginPath),
                             TargetRevision = argoCDBranchName.Value,
-                            Ref = "values"
+                            Ref = "values",
+                            SourceType = SourceType.Directory
                         }
                     }
                 }
@@ -662,9 +669,9 @@ image:
                 },
                 Spec = new ApplicationSpec()
                 {
-                    Sources = new List<SourceBase>()
+                    Sources = new List<ApplicationSource>()
                     {
-                        new HelmSource()
+                        new ApplicationSource()
                         {
                             RepoUrl = new Uri("https://github.com/doesnt/exist.git"),
                             Path = "files",
@@ -674,14 +681,16 @@ image:
                                 {
                                     "$values/files/values.yaml"
                                 }
-                            }
+                            },
+                            SourceType = SourceType.Helm
                         },
-                        new ReferenceSource()
+                        new ApplicationSource()
                         {
                             RepoUrl = new Uri(OriginPath),
                             TargetRevision = argoCDBranchName.Value,
                             Ref = "values",
-                            Name = "ref-source"
+                            Name = "ref-source",
+                            SourceType = SourceType.Directory
                         }
                     }
                 }
@@ -757,9 +766,9 @@ image:
                 },
                 Spec = new ApplicationSpec()
                 {
-                    Sources = new List<SourceBase>()
+                    Sources = new List<ApplicationSource>()
                     {
-                        new HelmSource()
+                        new ApplicationSource()
                         {
                             RepoUrl = new Uri("https://github.com/doesnt/exist.git"),
                             Path = "files",
@@ -769,13 +778,15 @@ image:
                                 {
                                     "$values/files/values.yaml"
                                 }
-                            }
+                            },
+                            SourceType = SourceType.Helm
                         },
-                        new ReferenceSource()
+                        new ApplicationSource()
                         {
                             RepoUrl = new Uri(OriginPath),
                             TargetRevision = argoCDBranchName.Value,
-                            Ref = "values"
+                            Ref = "values",
+                            SourceType = SourceType.Directory
                         }
                     }
                 }

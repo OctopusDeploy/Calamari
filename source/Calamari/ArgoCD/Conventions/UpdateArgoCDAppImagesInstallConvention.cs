@@ -84,19 +84,27 @@ namespace Calamari.ArgoCD.Conventions
                                                        applicationFromYaml.Spec.Sources.Count(s => ScopingAnnotationReader.GetScopeForApplicationSource(s.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources) == deploymentScope)));
 
                 var didUpdateSomething = false;
-                foreach (var applicationSource in applicationFromYaml.Spec.Sources.OfType<BasicSource>())
+                for (var index = 0; index < applicationFromYaml.Spec.Sources.Count; index++)
                 {
+                    var applicationSource = applicationFromYaml.Spec.Sources[index];
+
                     var annotatedScope = ScopingAnnotationReader.GetScopeForApplicationSource(applicationSource.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources);
                     log.LogApplicationSourceScopeStatus(annotatedScope, applicationSource.Name.ToApplicationSourceName(), deploymentScope);
                     if (annotatedScope == deploymentScope)
                     {
                         var sourceIdentity = applicationSource.Name.IsNullOrEmpty() ? applicationSource.RepoUrl.ToString() : applicationSource.Name;
+                        if (applicationSource.SourceType == null)
+                        {
+                            log.WarnFormat("Unable to update source '{0}' as its source type was not detected by Argo CD.", sourceIdentity);
+                            continue;   
+                        }
+                        
                         if (applicationSource.Path == null)
                         {
                             log.WarnFormat("Unable to update source '{0}' as a path has not been specified.", sourceIdentity);
                             continue;
                         }
-                        
+
                         using (var repository = CreateRepository(gitCredentials, applicationSource, repositoryFactory))
                         {
                             var repoSubPath = Path.Combine(repository.WorkingDirectory, applicationSource.Path!);
@@ -112,7 +120,7 @@ namespace Calamari.ArgoCD.Conventions
                                                   repoSubPath);
                                 continue;
                             }
-                            
+
                             var (updatedFiles, updatedImages) = UpdateKubernetesYaml(repository.WorkingDirectory, applicationSource.Path!, application.DefaultRegistry, deploymentConfig.ImageReferences);
                             if (updatedImages.Count > 0)
                             {
@@ -146,7 +154,7 @@ namespace Calamari.ArgoCD.Conventions
 
                     if (annotatedScope == deploymentScope)
                     {
-                        var sourceBase = new SourceBase()
+                        var sourceBase = new ApplicationSource()
                         {
                             RepoUrl = valuesFileSource.RepoUrl,
                             TargetRevision = valuesFileSource.TargetRevision,
@@ -236,26 +244,26 @@ namespace Calamari.ArgoCD.Conventions
             }
         }
 
-        RepositoryWrapper CreateRepository(Dictionary<string, GitCredentialDto> gitCredentials, SourceBase source, RepositoryFactory repositoryFactory)
+        RepositoryWrapper CreateRepository(Dictionary<string, GitCredentialDto> gitCredentials, ApplicationSource applicationSource, RepositoryFactory repositoryFactory)
         {
-            var gitCredential = gitCredentials.GetValueOrDefault(source.RepoUrl.AbsoluteUri);
+            var gitCredential = gitCredentials.GetValueOrDefault(applicationSource.RepoUrl.AbsoluteUri);
             if (gitCredential == null)
             {
-                log.Info($"No Git credentials found for: '{source.RepoUrl.AbsoluteUri}', will attempt to clone repository anonymously.");
+                log.Info($"No Git credentials found for: '{applicationSource.RepoUrl.AbsoluteUri}', will attempt to clone repository anonymously.");
             }
 
-            var gitConnection = new GitConnection(gitCredential?.Username, gitCredential?.Password, new Uri(source.RepoUrl.AbsoluteUri), GitReference.CreateFromString(source.TargetRevision));
+            var gitConnection = new GitConnection(gitCredential?.Username, gitCredential?.Password, new Uri(applicationSource.RepoUrl.AbsoluteUri), GitReference.CreateFromString(applicationSource.TargetRevision));
             return repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), gitConnection);
         }
 
         void HandleAsHelmChart(Application applicationFromYaml,
                                ArgoCDApplicationDto application,
-                               BasicSource applicationSource,
+                               ApplicationSource applicationApplicationSource,
                                List<HelmValuesFileImageUpdateTarget> valuesFilesToUpdate,
                                string repoSubPath)
         {
             var imageReplacePaths = ScopingAnnotationReader.GetImageReplacePathsForApplicationSource(
-                                                                                                               applicationSource.Name.ToApplicationSourceName(), 
+                                                                                                               applicationApplicationSource.Name.ToApplicationSourceName(), 
                                                                                                                applicationFromYaml.Metadata.Annotations, 
                                                                                                                applicationFromYaml.Spec.Sources.Count > 1);
             if (!imageReplacePaths.Any())
@@ -264,14 +272,14 @@ namespace Calamari.ArgoCD.Conventions
             }
             else
             {
-                log.Info($"Application '{application.Name}' source at `{applicationSource.RepoUrl.AbsoluteUri}' is a helm chart, its values file will be subsequently updated.");
+                log.Info($"Application '{application.Name}' source at `{applicationApplicationSource.RepoUrl.AbsoluteUri}' is a helm chart, its values file will be subsequently updated.");
                 valuesFilesToUpdate.Add(new HelmValuesFileImageUpdateTarget(
                                                                             applicationFromYaml.Metadata.Name.ToApplicationName(),
-                                                                            applicationSource.Name.ToApplicationSourceName(),
+                                                                            applicationApplicationSource.Name.ToApplicationSourceName(),
                                                                             application.DefaultRegistry,
-                                                                            applicationSource.Path,
-                                                                            applicationSource.RepoUrl,
-                                                                            applicationSource.TargetRevision,
+                                                                            applicationApplicationSource.Path,
+                                                                            applicationApplicationSource.RepoUrl,
+                                                                            applicationApplicationSource.TargetRevision,
                                                                             HelmDiscovery.TryFindValuesFile(fileSystem, repoSubPath),
                                                                             imageReplacePaths));
             }
