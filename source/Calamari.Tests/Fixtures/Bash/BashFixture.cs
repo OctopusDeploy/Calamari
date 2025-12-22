@@ -89,10 +89,10 @@ namespace Calamari.Tests.Fixtures.Bash
             Assert.Multiple(() =>
                             {
                                 output.AssertSuccess();
-                                output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiXG4ia2luZCI6ICJOYW1lc3BhY2UiXG4ibWV0YWRhdGEiOlxuICAibmFtZSI6ICJleGFtcGxlIlxuImxhYmVscyI6XG4gICAgIm5hbWUiOiAiZXhhbXBsZSJcbg==']");
-                                output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiXG4ia2luZCI6ICJOYW1lc3BhY2UiXG4ibWV0YWRhdGEiOlxuICAibmFtZSI6ICJkaWZmcyJcbiJsYWJlbHMiOlxuICAgICJuYW1lIjogImRpZmZzIlxu']");
-                                output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiXG4ia2luZCI6ICJOYW1lc3BhY2UiXG4ibWV0YWRhdGEiOlxuICAibmFtZSI6ICJleGFtcGxlIlxuImxhYmVscyI6XG4gICAgIm5hbWUiOiAiZXhhbXBsZSJcbg==' ns='bXk=']");
-                                output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiXG4ia2luZCI6ICJOYW1lc3BhY2UiXG4ibWV0YWRhdGEiOlxuICAibmFtZSI6ICJkaWZmcyJcbiJsYWJlbHMiOlxuICAgICJuYW1lIjogImRpZmZzIlxu' ns='bXk=']");
+                                output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiCiJraW5kIjogIk5hbWVzcGFjZSIKIm1ldGFkYXRhIjoKICAibmFtZSI6ICJleGFtcGxlIgoibGFiZWxzIjoKICAgICJuYW1lIjogImV4YW1wbGUiCg==']");
+                                output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiCiJraW5kIjogIk5hbWVzcGFjZSIKIm1ldGFkYXRhIjoKICAibmFtZSI6ICJkaWZmcyIKImxhYmVscyI6CiAgICAibmFtZSI6ICJkaWZmcyIK']");
+                                output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiCiJraW5kIjogIk5hbWVzcGFjZSIKIm1ldGFkYXRhIjoKICAibmFtZSI6ICJleGFtcGxlIgoibGFiZWxzIjoKICAgICJuYW1lIjogImV4YW1wbGUiCg==' ns='bXk=']");
+                                output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiCiJraW5kIjogIk5hbWVzcGFjZSIKIm1ldGFkYXRhIjoKICAibmFtZSI6ICJkaWZmcyIKImxhYmVscyI6CiAgICAibmFtZSI6ICJkaWZmcyIK' ns='bXk=']");
                             });
         }
         
@@ -149,10 +149,10 @@ namespace Calamari.Tests.Fixtures.Bash
                 Assert.Multiple(() =>
                                 {
                                     output.AssertSuccess();
-                                    output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiXG4ia2luZCI6ICJOYW1lc3BhY2UiXG4ibWV0YWRhdGEiOlxuICAibmFtZSI6ICJleGFtcGxlIlxuImxhYmVscyI6XG4gICAgIm5hbWUiOiAiZXhhbXBsZSJcbg==']");
-                                    output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiXG4ia2luZCI6ICJOYW1lc3BhY2UiXG4ibWV0YWRhdGEiOlxuICAibmFtZSI6ICJkaWZmcyJcbiJsYWJlbHMiOlxuICAgICJuYW1lIjogImRpZmZzIlxu']");
-                                    output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiXG4ia2luZCI6ICJOYW1lc3BhY2UiXG4ibWV0YWRhdGEiOlxuICAibmFtZSI6ICJleGFtcGxlIlxuImxhYmVscyI6XG4gICAgIm5hbWUiOiAiZXhhbXBsZSJcbg==' ns='bXk=']");
-                                    output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiXG4ia2luZCI6ICJOYW1lc3BhY2UiXG4ibWV0YWRhdGEiOlxuICAibmFtZSI6ICJkaWZmcyJcbiJsYWJlbHMiOlxuICAgICJuYW1lIjogImRpZmZzIlxu' ns='bXk=']");
+                                    output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiCiJraW5kIjogIk5hbWVzcGFjZSIKIm1ldGFkYXRhIjoKICAibmFtZSI6ICJleGFtcGxlIgoibGFiZWxzIjoKICAgICJuYW1lIjogImV4YW1wbGUiCg==']");
+                                    output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiCiJraW5kIjogIk5hbWVzcGFjZSIKIm1ldGFkYXRhIjoKICAibmFtZSI6ICJkaWZmcyIKImxhYmVscyI6CiAgICAibmFtZSI6ICJkaWZmcyIK']");
+                                    output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiCiJraW5kIjogIk5hbWVzcGFjZSIKIm1ldGFkYXRhIjoKICAibmFtZSI6ICJleGFtcGxlIgoibGFiZWxzIjoKICAgICJuYW1lIjogImV4YW1wbGUiCg==' ns='bXk=']");
+                                    output.AssertOutput("##octopus[k8s-manifest-applied manifest='ImFwaVZlcnNpb24iOiAidjEiCiJraW5kIjogIk5hbWVzcGFjZSIKIm1ldGFkYXRhIjoKICAibmFtZSI6ICJkaWZmcyIKImxhYmVscyI6CiAgICAibmFtZSI6ICJkaWZmcyIK' ns='bXk=']");
                                 });
             }
             finally
