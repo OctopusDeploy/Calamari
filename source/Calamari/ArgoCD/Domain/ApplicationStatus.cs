@@ -41,11 +41,11 @@ namespace Calamari.ArgoCD.Domain
         public List<string> Images { get; set; } = new List<string>();
     }
 
-// Note: We only support these types currently. Argo offers Kustomize and Plugin as possible types though.
     public enum SourceType
     {
         Directory,
         Helm,
-        Kustomize
+        Kustomize,
+        Plugin
     }
 }
