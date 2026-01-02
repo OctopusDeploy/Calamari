@@ -41,6 +41,7 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
             cli.EnvironmentVars = environmentVars;
             cli.WorkingDirectory = workingDirectory;
             cli.Isolate = !bypassDotnetScriptIsolation;
+            cli.UseUTF8 = true; /* TODO Make UTF-8 encoding an opt-out setting */
 
             cli.AdditionalInvocationOutputSink = outputSink;
 
