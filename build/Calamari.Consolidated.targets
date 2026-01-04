@@ -4,10 +4,10 @@
       <TargetCalamari
         Include="@(None);@(Content)"
         Condition="$([System.Text.RegularExpressions.Regex]::IsMatch('%(Filename)', '^Octopus.Calamari\.([a-zA-Z0-9]*)$')) AND '%(Extension)' == '.zip'" />
-      <OldCalamari Include="$(OutDir)\Calamari.*.zip" />
+      <OldCalamari Include="$(OutputPath)\Calamari.*.zip" />
       <OldCalamari Remove="@(TargetCalamari)" MatchOnMetadata="Filename" />
     </ItemGroup>
-    <Message Text="Clearing stale Consolidated Calamari packages from $(OutDir)"/>
+    <Message Text="Clearing stale Consolidated Calamari packages from $(OutputPath)"/>
     <Message Text="Current Calamari package to keep is @(TargetCalamari)"/>
     <Message Text="Stale Calamari packages are @(OldCalamari)"/>
     <Delete Files="@(OldCalamari)">

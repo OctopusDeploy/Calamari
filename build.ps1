@@ -55,17 +55,49 @@ else {
         }
     }
 
+    # ----- Octopus Deploy Modification -----
+    #
+    # The default behaviour of the Nuke Bootstrapper (when .NET is not already preinstalled) is
+    # to read from the global.json, then install that exact version. It doesn't roll forward.
+    # This means that if our global.json says 8.0.100, and the latest version is 8.0.200, it will
+    # always install 8.0.100 and we will not pick up any security or bug fixes that 8.0.200 carries.
+    #
+    # This means we would need to manually update our global.json file every time there is a new
+    # .NET SDK available, and then all developers would need to immediately install this on their machines.
+    #
+    # In our builds, we want the same "automatic roll-forward" behaviour that we get when we use the dotnet/sdk:8.0 docker
+    # images -- where we always get the latest patch version of the SDK without manual intervention.
+    #
+    # We achieve this with a small tweak to the Nuke bootstrapper to tell it to install the latest version from
+    # the 8.0 channel, regardless of what's in the global.json.
+
+    Remove-Variable DotNetVersion
+    $DotNetChannel = "8.0"
+    # ----- End Octopus Deploy Modification -----
+
     # Install by channel or version
     $DotNetDirectory = "$TempDirectory\dotnet-win"
     if (!(Test-Path variable:DotNetVersion)) {
-        ExecSafe { & powershell $DotNetInstallFile -InstallDir $DotNetDirectory -Channel $DotNetChannel -NoPath }
+        ExecSafe { & powershell $DotNetInstallFile -InstallDir $DotNetDirectory -Channel $DotNetChannel }
     } else {
-        ExecSafe { & powershell $DotNetInstallFile -InstallDir $DotNetDirectory -Version $DotNetVersion -NoPath }
+        ExecSafe { & powershell $DotNetInstallFile -InstallDir $DotNetDirectory -Version $DotNetVersion }
     }
     $env:DOTNET_EXE = "$DotNetDirectory\dotnet.exe"
+
+    # ----- Octopus Deploy Modification -----
+    # Update the path with the temporary dotnet exe so it can be found by anything be run out of this shell
+    $env:PATH = "$($env:Path);$DotNetDirectory"
+    # We update the global path
+    [Environment]::SetEnvironmentVariable("Path", $env:Path, [System.EnvironmentVariableTarget]::Machine)
+    Write-Output "Updating Path variable to $($env:PATH)"
+    # ----- End Octopus Deploy Modification -----
 }
 
 Write-Output "Microsoft (R) .NET Core SDK version $(& $env:DOTNET_EXE --version)"
 
 ExecSafe { & $env:DOTNET_EXE build $BuildProjectFile /nodeReuse:false /p:UseSharedCompilation=false -nologo -clp:NoSummary --verbosity quiet }
 ExecSafe { & $env:DOTNET_EXE run --project $BuildProjectFile --no-build -- $BuildArguments }
+
+
+
+
