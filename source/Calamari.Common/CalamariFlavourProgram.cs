@@ -37,6 +37,7 @@ namespace Calamari.Common
 
         protected virtual int Run(string[] args)
         {
+            bool logCommandExceptionStackTrace = false;
             try
             {
                 AppDomainConfiguration.SetDefaultRegexMatchTimeout();
@@ -62,6 +63,8 @@ namespace Calamari.Common
 
                 using var container = builder.Build();
                 container.Resolve<VariableLogger>().LogVariables();
+                var stackTraceVariable = container.Resolve<IVariables>().Get(KnownVariables.Calamari.LogCommandExceptionStackTrace);
+                logCommandExceptionStackTrace = string.Equals(stackTraceVariable, "true", StringComparison.OrdinalIgnoreCase);
 
 #if DEBUG
                 var waitForDebugger = container.Resolve<IVariables>().Get(KnownVariables.Calamari.WaitForDebugger);
@@ -82,7 +85,7 @@ namespace Calamari.Common
             }
             catch (Exception ex)
             {
-                return ConsoleFormatter.PrintError(log, ex);
+                return ConsoleFormatter.PrintError(log, ex, logCommandExceptionStackTrace);
             }
         }
 

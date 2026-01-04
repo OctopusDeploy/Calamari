@@ -9,11 +9,15 @@ namespace Calamari.Common.Plumbing.Logging
 {
     public class ConsoleFormatter
     {
-        public static int PrintError(ILog log, Exception ex)
+        public static int PrintError(ILog log, Exception ex, bool logCommandExceptionStackTrace = false)
         {
             if (ex is CommandException)
             {
                 log.Error(ex.Message);
+                if (logCommandExceptionStackTrace)
+                {
+                    log.Verbose(ex.ToString());
+                } 
                 return ExitStatus.CommandExceptionError;
             }
 
