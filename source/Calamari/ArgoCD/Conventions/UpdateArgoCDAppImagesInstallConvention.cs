@@ -242,26 +242,26 @@ namespace Calamari.ArgoCD.Conventions
             }
         }
 
-        RepositoryWrapper CreateRepository(Dictionary<string, GitCredentialDto> gitCredentials, ApplicationSource applicationSource, RepositoryFactory repositoryFactory)
+        RepositoryWrapper CreateRepository(Dictionary<string, GitCredentialDto> gitCredentials, ApplicationSource source, RepositoryFactory repositoryFactory)
         {
-            var gitCredential = gitCredentials.GetValueOrDefault(applicationSource.RepoUrl.AbsoluteUri);
+            var gitCredential = gitCredentials.GetValueOrDefault(source.RepoUrl.AbsoluteUri);
             if (gitCredential == null)
             {
-                log.Info($"No Git credentials found for: '{applicationSource.RepoUrl.AbsoluteUri}', will attempt to clone repository anonymously.");
+                log.Info($"No Git credentials found for: '{source.RepoUrl.AbsoluteUri}', will attempt to clone repository anonymously.");
             }
 
-            var gitConnection = new GitConnection(gitCredential?.Username, gitCredential?.Password, new Uri(applicationSource.RepoUrl.AbsoluteUri), GitReference.CreateFromString(applicationSource.TargetRevision));
+            var gitConnection = new GitConnection(gitCredential?.Username, gitCredential?.Password, new Uri(source.RepoUrl.AbsoluteUri), GitReference.CreateFromString(source.TargetRevision));
             return repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), gitConnection);
         }
 
         void HandleAsHelmChart(Application applicationFromYaml,
                                ArgoCDApplicationDto application,
-                               ApplicationSource applicationApplicationSource,
+                               ApplicationSource applicationSource,
                                List<HelmValuesFileImageUpdateTarget> valuesFilesToUpdate,
                                string repoSubPath)
         {
             var imageReplacePaths = ScopingAnnotationReader.GetImageReplacePathsForApplicationSource(
-                                                                                                               applicationApplicationSource.Name.ToApplicationSourceName(), 
+                                                                                                               applicationSource.Name.ToApplicationSourceName(), 
                                                                                                                applicationFromYaml.Metadata.Annotations, 
                                                                                                                applicationFromYaml.Spec.Sources.Count > 1);
             if (!imageReplacePaths.Any())
@@ -270,14 +270,14 @@ namespace Calamari.ArgoCD.Conventions
             }
             else
             {
-                log.Info($"Application '{application.Name}' source at `{applicationApplicationSource.RepoUrl.AbsoluteUri}' is a helm chart, its values file will be subsequently updated.");
+                log.Info($"Application '{application.Name}' source at `{applicationSource.RepoUrl.AbsoluteUri}' is a helm chart, its values file will be subsequently updated.");
                 valuesFilesToUpdate.Add(new HelmValuesFileImageUpdateTarget(
                                                                             applicationFromYaml.Metadata.Name.ToApplicationName(),
-                                                                            applicationApplicationSource.Name.ToApplicationSourceName(),
+                                                                            applicationSource.Name.ToApplicationSourceName(),
                                                                             application.DefaultRegistry,
-                                                                            applicationApplicationSource.Path,
-                                                                            applicationApplicationSource.RepoUrl,
-                                                                            applicationApplicationSource.TargetRevision,
+                                                                            applicationSource.Path,
+                                                                            applicationSource.RepoUrl,
+                                                                            applicationSource.TargetRevision,
                                                                             HelmDiscovery.TryFindValuesFile(fileSystem, repoSubPath),
                                                                             imageReplacePaths));
             }

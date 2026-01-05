@@ -176,13 +176,13 @@ namespace Calamari.ArgoCD.Conventions
 
         }
 
-        bool TryCalculateOutputPath(ApplicationSource applicationSourceToUpdate, out string outputPath)
+        bool TryCalculateOutputPath(ApplicationSource sourceToUpdate, out string outputPath)
         {
             outputPath = "";
-            var sourceIdentity = string.IsNullOrEmpty(applicationSourceToUpdate.Name) ? applicationSourceToUpdate.RepoUrl.ToString() : applicationSourceToUpdate.Name;
-            if (applicationSourceToUpdate.Ref != null)
+            var sourceIdentity = string.IsNullOrEmpty(sourceToUpdate.Name) ? sourceToUpdate.RepoUrl.ToString() : sourceToUpdate.Name;
+            if (sourceToUpdate.Ref != null)
             {
-                if (applicationSourceToUpdate.Path != null)
+                if (sourceToUpdate.Path != null)
                 {
                     log.WarnFormat("Unable to update ref source '{0}' as a path has been explicitly specified.", sourceIdentity);
                     log.Warn("Please split the source into separate sources and update annotations.");
@@ -191,12 +191,12 @@ namespace Calamari.ArgoCD.Conventions
                 return true;
             }
                         
-            if (applicationSourceToUpdate.Path == null)
+            if (sourceToUpdate.Path == null)
             {
                 log.WarnFormat("Unable to update source '{0}' as a path has not been specified.", sourceIdentity);
                 return false;
             }
-            outputPath = applicationSourceToUpdate.Path;
+            outputPath = sourceToUpdate.Path;
             return true;
         }
 
