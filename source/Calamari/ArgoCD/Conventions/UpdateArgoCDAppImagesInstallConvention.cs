@@ -84,7 +84,8 @@ namespace Calamari.ArgoCD.Conventions
                                                        applicationFromYaml.Spec.Sources.Count(s => ScopingAnnotationReader.GetScopeForApplicationSource(s.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources) == deploymentScope)));
 
                 var didUpdateSomething = false;
-                foreach (var applicationSource in applicationFromYaml.Spec.Sources)
+                //Only deal with sources without explicit configuration for now to preserve previous behaviour
+                foreach (var applicationSource in applicationFromYaml.Spec.Sources.Where(s => s.Helm == null && s.Ref == null))
                 {
                     var annotatedScope = ScopingAnnotationReader.GetScopeForApplicationSource(applicationSource.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources);
                     log.LogApplicationSourceScopeStatus(annotatedScope, applicationSource.Name.ToApplicationSourceName(), deploymentScope);

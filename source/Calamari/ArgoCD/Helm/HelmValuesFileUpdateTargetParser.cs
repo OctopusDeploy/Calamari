@@ -23,7 +23,8 @@ namespace Calamari.ArgoCD.Helm
         {
             annotations = toUpdate.Metadata.Annotations;
             containsMultipleSources = toUpdate.Spec.Sources.Count > 1;
-            helmSources = toUpdate.Spec.Sources.Where(s => s.SourceType == SourceType.Helm).ToList();
+            //Only deal with explicit Helm sources for now to preserve previous behaviour
+            helmSources = toUpdate.Spec.Sources.Where(s => s.SourceType == SourceType.Helm && s.Helm != null).ToList();
             refSources = toUpdate.Spec.Sources.Where(s => s.SourceType == SourceType.Directory && s.Ref != null).ToList();
             appName = toUpdate.Metadata.Name.ToApplicationName();
             this.defaultRegistry = defaultRegistry;
