@@ -18,6 +18,7 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.Conventions;
+using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.ArgoCD.Conventions
 {
@@ -98,6 +99,13 @@ namespace Calamari.ArgoCD.Conventions
 
                     if (annotatedScope == deploymentScope)
                     {
+                        var sourceIdentity = applicationSource.Name.IsNullOrEmpty() ? applicationSource.RepoUrl.ToString() : applicationSource.Name;
+                        if (applicationSource.SourceType == null)
+                        {
+                            log.WarnFormat("Unable to update source '{0}' as its source type was not detected by Argo CD.", sourceIdentity);
+                            continue;   
+                        }
+                        
                         log.Info($"Writing files to repository '{applicationSource.RepoUrl}' for '{application.Name}'");
 
                         if (!TryCalculateOutputPath(applicationSource, out var outputPath))
