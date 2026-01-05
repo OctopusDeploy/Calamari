@@ -91,7 +91,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             return new ArgoCDApplicationBuilder()
                    .WithName("FooApp")
                    .WithAnnotations(annotations)
-                   .WithSources(names.Select(n => new ApplicationSource { Name = n, SourceType = SourceType.Directory}).ToList<ApplicationSource>())
+                   .WithSources(names.Select(n => new ApplicationSource { Name = n}), names.Select(_ => SourceType.Directory))
                    .Build();
         }
     }

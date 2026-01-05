@@ -91,8 +91,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                                 RepoUrl = new Uri(OriginPath),
                                                 Path = "",
                                                 TargetRevision = ArgoCDBranchFriendlyName,
-                                                SourceType = SourceType.Directory
-                                            })
+                                            }, SourceType.Directory)
                                             .Build();
 
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
@@ -366,16 +365,14 @@ service:
                                                   }
                                               },
                                               Name = "helm-source",
-                                              SourceType =  SourceType.Helm
-                                          })
+                                          }, SourceType.Helm)
                                           .WithSource(new ApplicationSource
                                           {
                                               Name = "ref-source",
                                               Ref = "values",
                                               TargetRevision = ArgoCDBranchFriendlyName,
                                               RepoUrl = new Uri(OriginPath),
-                                              SourceType = SourceType.Directory
-                                          })
+                                          }, SourceType.Directory)
                                           .Build();
 
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
@@ -456,9 +453,8 @@ service:
                                           {
                                               RepoUrl = new Uri(OriginPath),
                                               Path = "",
-                                              TargetRevision = ArgoCDBranchFriendlyName,
-                                              SourceType = SourceType.Helm
-                                          })
+                                              TargetRevision = ArgoCDBranchFriendlyName
+                                          },  SourceType.Helm)
                                          
                                           .Build();
 

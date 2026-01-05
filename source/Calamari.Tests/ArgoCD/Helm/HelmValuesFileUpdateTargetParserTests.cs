@@ -46,7 +46,6 @@ namespace Calamari.Tests.ArgoCD.Helm
                 Path = "./",
                 RepoUrl = new Uri("https://example.com/repo.git"),
                 TargetRevision = "main",
-                SourceType = SourceType.Directory
             };
 
             var toUpdate = new Application()
@@ -59,6 +58,10 @@ namespace Calamari.Tests.ArgoCD.Helm
                 Spec = new ApplicationSpec()
                 {
                     Sources = new List<ApplicationSource>() { basicSource },
+                },
+                Status = new ApplicationStatus()
+                {
+                    SourceTypes = new List<SourceType>(new[] { SourceType.Directory })
                 }
             };
 
@@ -82,7 +85,6 @@ namespace Calamari.Tests.ArgoCD.Helm
                 {
                     ValueFiles = new List<string>() { "valuesFile.yaml" }
                 },
-                SourceType = SourceType.Helm
             };
 
             var toUpdate = new Application()
@@ -95,6 +97,10 @@ namespace Calamari.Tests.ArgoCD.Helm
                 Spec = new ApplicationSpec()
                 {
                     Sources = new List<ApplicationSource>() { helmSource },
+                },
+                Status = new ApplicationStatus()
+                {
+                    SourceTypes = new List<SourceType>(new[] { SourceType.Helm })
                 }
             };
 
@@ -121,7 +127,6 @@ namespace Calamari.Tests.ArgoCD.Helm
                 {
                     ValueFiles = new List<string>() { valuesFileName }
                 },
-                SourceType = SourceType.Helm
             };
 
             var toUpdate = new Application()
@@ -137,6 +142,10 @@ namespace Calamari.Tests.ArgoCD.Helm
                 Spec = new ApplicationSpec()
                 {
                     Sources = new List<ApplicationSource>() { helmSource },
+                },
+                Status = new ApplicationStatus()
+                {
+                    SourceTypes = new List<SourceType>(new[] { SourceType.Helm })
                 }
             };
 
@@ -174,7 +183,6 @@ namespace Calamari.Tests.ArgoCD.Helm
                 {
                     ValueFiles = new List<string>() { valuesFileName1, valuesFileName2 }
                 },
-                SourceType = SourceType.Helm
             };
 
             var toUpdate = new Application()
@@ -189,6 +197,10 @@ namespace Calamari.Tests.ArgoCD.Helm
                 Spec = new ApplicationSpec()
                 {
                     Sources = new List<ApplicationSource>() { helmSource },
+                },
+                Status = new ApplicationStatus()
+                {
+                    SourceTypes = new List<SourceType>(new[] { SourceType.Helm })
                 }
             };
 
@@ -218,7 +230,6 @@ namespace Calamari.Tests.ArgoCD.Helm
                 {
                     ValueFiles = new List<string>() { valuesFileName1, valuesFileName2 }
                 },
-                SourceType = SourceType.Helm
             };
 
             var toUpdate = new Application()
@@ -234,6 +245,10 @@ namespace Calamari.Tests.ArgoCD.Helm
                 Spec = new ApplicationSpec()
                 {
                     Sources = new List<ApplicationSource>() { helmSource },
+                },
+                Status = new ApplicationStatus()
+                {
+                    SourceTypes = new List<SourceType>(new[] { SourceType.Helm })
                 }
             };
 
@@ -279,7 +294,6 @@ namespace Calamari.Tests.ArgoCD.Helm
                 RepoUrl = new Uri("https://example.com/repo.git"),
                 TargetRevision = "main",
                 Ref = valuesRef,
-                SourceType = SourceType.Directory
             };
 
             var helmSource = new ApplicationSource()
@@ -290,7 +304,6 @@ namespace Calamari.Tests.ArgoCD.Helm
                 {
                     ValueFiles = new List<string>() { $"${valuesRef}/{valuesFilePath1}", $"${valuesRef}/{valuesFilePath2}" }
                 },
-                SourceType = SourceType.Helm
             };
 
             var toUpdate = new Application()
@@ -305,6 +318,10 @@ namespace Calamari.Tests.ArgoCD.Helm
                 Spec = new ApplicationSpec()
                 {
                     Sources = new List<ApplicationSource>() { refSource, helmSource },
+                },
+                Status = new ApplicationStatus()
+                {
+                    SourceTypes = new List<SourceType>(new[] { SourceType.Directory, SourceType.Helm })
                 }
             };
 
@@ -329,7 +346,6 @@ namespace Calamari.Tests.ArgoCD.Helm
                 RepoUrl = new Uri("https://example.com/repo.git"),
                 TargetRevision = "main",
                 Ref = valuesRef,
-                SourceType = SourceType.Directory
             };
 
             var helmSource = new ApplicationSource()
@@ -341,7 +357,6 @@ namespace Calamari.Tests.ArgoCD.Helm
                     ValueFiles = new List<string>() { $"${valuesRef}/{valuesFilePath}" }
                 },
                 Name = "chart-source",
-                SourceType = SourceType.Helm
             };
 
             var toUpdate = new Application()
@@ -357,6 +372,10 @@ namespace Calamari.Tests.ArgoCD.Helm
                 Spec = new ApplicationSpec()
                 {
                     Sources = new List<ApplicationSource>() { refSource, helmSource },
+                },
+                Status = new ApplicationStatus()
+                {
+                    SourceTypes = new List<SourceType>(new[] { SourceType.Directory, SourceType.Helm })
                 }
             };
 
@@ -392,7 +411,6 @@ namespace Calamari.Tests.ArgoCD.Helm
                 RepoUrl = new Uri("https://example.com/repo.git"),
                 TargetRevision = "main",
                 Ref = "not-here",
-                SourceType = SourceType.Directory
             };
 
             var helmSource = new ApplicationSource()
@@ -404,7 +422,6 @@ namespace Calamari.Tests.ArgoCD.Helm
                     ValueFiles = new List<string>() { $"${valuesRef}/{valuesFilePath}" }
                 },
                 Name = "chart-source",
-                SourceType = SourceType.Helm
             };
 
             var toUpdate = new Application()
@@ -420,6 +437,10 @@ namespace Calamari.Tests.ArgoCD.Helm
                 Spec = new ApplicationSpec()
                 {
                     Sources = new List<ApplicationSource>() { refSource, helmSource },
+                },
+                Status = new ApplicationStatus()
+                {
+                    SourceTypes = new List<SourceType>(new[] { SourceType.Directory, SourceType.Helm })
                 }
             };
 
@@ -448,14 +469,12 @@ namespace Calamari.Tests.ArgoCD.Helm
                 RepoUrl = new Uri(valuesRepo1Address),
                 TargetRevision = "main",
                 Ref = valuesRef1,
-                SourceType = SourceType.Directory
             };
             var refSource2 = new ApplicationSource()
             {
                 RepoUrl = new Uri(valuesRepo2Address),
                 TargetRevision = "main",
                 Ref = valuesRef2,
-                SourceType = SourceType.Directory
             };
             var helmSource = new ApplicationSource()
             {
@@ -466,7 +485,6 @@ namespace Calamari.Tests.ArgoCD.Helm
                     ValueFiles = new List<string>() { $"${valuesRef1}/{valuesFilePath}", $"${valuesRef2}/{valuesFilePath}" }
                 },
                 Name = "chart-source",
-                SourceType = SourceType.Helm
             };
 
             var toUpdate = new Application()
@@ -482,6 +500,10 @@ namespace Calamari.Tests.ArgoCD.Helm
                 Spec = new ApplicationSpec()
                 {
                     Sources = new List<ApplicationSource>() { refSource1, refSource2, helmSource },
+                },
+                Status = new ApplicationStatus()
+                {
+                    SourceTypes = new List<SourceType>(new[] { SourceType.Directory, SourceType.Directory, SourceType.Helm })
                 }
             };
 
@@ -528,7 +550,6 @@ namespace Calamari.Tests.ArgoCD.Helm
                 RepoUrl = new Uri(valuesRepoAddress),
                 TargetRevision = "main",
                 Ref = valuesRef,
-                SourceType = SourceType.Directory
             };
             var helmSource = new ApplicationSource()
             {
@@ -539,7 +560,6 @@ namespace Calamari.Tests.ArgoCD.Helm
                     ValueFiles = new List<string>() { $"${valuesRef}/{valuesRefFilePath}", inlineValuesFilePath }
                 },
                 Name = "chart-source",
-                SourceType = SourceType.Helm
             };
 
             var toUpdate = new Application()
@@ -555,6 +575,10 @@ namespace Calamari.Tests.ArgoCD.Helm
                 Spec = new ApplicationSpec()
                 {
                     Sources = new List<ApplicationSource>() { refSource, helmSource },
+                },
+                Status = new ApplicationStatus()
+                {
+                    SourceTypes = new List<SourceType>(new[] { SourceType.Directory, SourceType.Helm })
                 }
             };
 
@@ -599,7 +623,6 @@ namespace Calamari.Tests.ArgoCD.Helm
                 RepoUrl = new Uri(valuesRepoAddress),
                 TargetRevision = "main",
                 Ref = valuesRef,
-                SourceType = SourceType.Directory
             };
             var helmSource = new ApplicationSource()
             {
@@ -610,7 +633,6 @@ namespace Calamari.Tests.ArgoCD.Helm
                     ValueFiles = new List<string>() { $"${valuesRef}/{valuesRefFile1}", $"${valuesRef}/{valuesRefFile2}" }
                 },
                 Name = "chart-source",
-                SourceType = SourceType.Helm
             };
 
             var toUpdate = new Application()
@@ -626,6 +648,10 @@ namespace Calamari.Tests.ArgoCD.Helm
                 Spec = new ApplicationSpec()
                 {
                     Sources = new List<ApplicationSource>() { refSource, helmSource },
+                },
+                Status = new ApplicationStatus()
+                {
+                    SourceTypes = new List<SourceType>(new[] { SourceType.Directory, SourceType.Helm })
                 }
             };
 
@@ -680,7 +706,6 @@ namespace Calamari.Tests.ArgoCD.Helm
                     ValueFiles = new List<string>() { valuesFile1 }
                 },
                 Name = "helm-1",
-                SourceType = SourceType.Helm
             };
 
             var helmSource2 = new ApplicationSource()
@@ -693,7 +718,6 @@ namespace Calamari.Tests.ArgoCD.Helm
                     ValueFiles = new List<string>() { valuesFile2 }
                 },
                 Name = "helm-2",
-                SourceType = SourceType.Helm
             };
 
             var toUpdate = new Application()
@@ -710,6 +734,10 @@ namespace Calamari.Tests.ArgoCD.Helm
                 Spec = new ApplicationSpec()
                 {
                     Sources = new List<ApplicationSource>() { helmSource1, helmSource2 },
+                },
+                Status = new ApplicationStatus()
+                {
+                    SourceTypes = new List<SourceType>(new[] { SourceType.Helm, SourceType.Helm })
                 }
             };
 

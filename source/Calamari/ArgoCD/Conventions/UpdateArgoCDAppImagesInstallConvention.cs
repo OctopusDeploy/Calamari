@@ -85,14 +85,16 @@ namespace Calamari.ArgoCD.Conventions
 
                 var didUpdateSomething = false;
                 //Only deal with sources without explicit configuration for now to preserve previous behaviour
-                foreach (var applicationSource in applicationFromYaml.Spec.Sources.Where(s => s.Helm == null && s.Ref == null))
+                foreach (var applicationSourceWithMetadata in applicationFromYaml.GetSourcesWithMetadata().Where(s => s.Source.Helm == null && s.Source.Ref == null))
                 {
+                    var applicationSource = applicationSourceWithMetadata.Source;
+                    
                     var annotatedScope = ScopingAnnotationReader.GetScopeForApplicationSource(applicationSource.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources);
                     log.LogApplicationSourceScopeStatus(annotatedScope, applicationSource.Name.ToApplicationSourceName(), deploymentScope);
                     if (annotatedScope == deploymentScope)
                     {
                         var sourceIdentity = applicationSource.Name.IsNullOrEmpty() ? applicationSource.RepoUrl.ToString() : applicationSource.Name;
-                        if (applicationSource.SourceType == null)
+                        if (applicationSourceWithMetadata.SourceType == null)
                         {
                             log.WarnFormat("Unable to update source '{0}' as its source type was not detected by Argo CD.", sourceIdentity);
                             continue;   

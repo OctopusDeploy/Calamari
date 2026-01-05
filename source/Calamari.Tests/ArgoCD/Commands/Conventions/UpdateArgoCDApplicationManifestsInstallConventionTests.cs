@@ -88,8 +88,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                                 RepoUrl = new Uri(RepoUrl),
                                                 Path = "",
                                                 TargetRevision = ArgoCDBranchFriendlyName,
-                                                SourceType = SourceType.Directory
-                                            })
+                                            }, SourceType.Directory)
                                             .Build();
 
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
@@ -241,9 +240,8 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                                       "otherPath/values2.yaml",
                                                       "$ref/otherRepoPath/values.yaml"
                                                   }
-                                              },
-                                              SourceType = SourceType.Helm
-                                          })
+                                              }
+                                          }, SourceType.Helm)
                                           .Build();
 
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
@@ -310,16 +308,14 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                                       "$values/otherRepoPath/values.yaml"
                                                   }
                                               },
-                                              SourceType = SourceType.Helm
-                                          })
+                                          }, SourceType.Helm)
                                           .WithSource(new ApplicationSource
                                           {
                                               Name = "refSourceName",
                                               Ref = "values",
                                               TargetRevision = ArgoCDBranchFriendlyName,
                                               RepoUrl = new Uri(RepoUrl),
-                                              SourceType = SourceType.Directory
-                                          })
+                                          }, SourceType.Directory)
                                           .Build();
 
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
@@ -385,18 +381,17 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                                       "otherPath/values2.yaml",
                                                       "$ref/otherRepoPath/values.yaml"
                                                   }
-                                              },
-                                              SourceType = SourceType.Helm
-                                          })
+                                              }
+                                          }, SourceType.Helm)
                                           .WithSource(new ApplicationSource
-                                          {
-                                              Name = "refSourceName",
-                                              Ref = "valuesFiles",
-                                              Path = "otherPath/values1.yaml", //this should cause an error
-                                              TargetRevision = ArgoCDBranchFriendlyName,
-                                              RepoUrl = new Uri(RepoUrl),
-                                              SourceType = SourceType.Directory
-                                          })
+                                                      {
+                                                          Name = "refSourceName",
+                                                          Ref = "valuesFiles",
+                                                          Path = "otherPath/values1.yaml", //this should cause an error
+                                                          TargetRevision = ArgoCDBranchFriendlyName,
+                                                          RepoUrl = new Uri(RepoUrl),
+                                                      },
+                                                      SourceType.Directory)
                                           .Build();
 
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())

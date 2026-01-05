@@ -22,7 +22,5 @@ namespace Calamari.ArgoCD.Domain
         
         [JsonPropertyName("ref")]
         public string? Ref { get; set; }
-
-        public SourceType? SourceType { get; set; }
     }
 }

@@ -92,15 +92,17 @@ namespace Calamari.ArgoCD.Conventions
                 validationResult.Action(log);
 
                 var didUpdateSomething = false;
-                foreach (var applicationSource in applicationFromYaml.Spec.Sources)
+                foreach (var applicationSourceWithMetadata in applicationFromYaml.GetSourcesWithMetadata())
                 {
+                    var applicationSource = applicationSourceWithMetadata.Source;
+
                     var annotatedScope = ScopingAnnotationReader.GetScopeForApplicationSource(applicationSource.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources);
                     log.LogApplicationSourceScopeStatus(annotatedScope, applicationSource.Name.ToApplicationSourceName(), deploymentScope);
 
                     if (annotatedScope == deploymentScope)
                     {
                         var sourceIdentity = applicationSource.Name.IsNullOrEmpty() ? applicationSource.RepoUrl.ToString() : applicationSource.Name;
-                        if (applicationSource.SourceType == null)
+                        if (applicationSourceWithMetadata.SourceType == null)
                         {
                             log.WarnFormat("Unable to update source '{0}' as its source type was not detected by Argo CD.", sourceIdentity);
                             continue;   

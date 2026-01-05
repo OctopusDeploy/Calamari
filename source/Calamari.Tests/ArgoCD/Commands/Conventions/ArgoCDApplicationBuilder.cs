@@ -9,6 +9,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
         string name = "My App";
         Dictionary<string, string> annotations = new Dictionary<string, string>();
         readonly List<ApplicationSource> applicationSources = new List<ApplicationSource>();
+        readonly List<SourceType> applicationSourceTypes = new List<SourceType>();
 
         public ArgoCDApplicationBuilder WithName(string value)
         {
@@ -22,15 +23,17 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             return this;
         }
 
-        public ArgoCDApplicationBuilder WithSource<T>(T source) where T : ApplicationSource
+        public ArgoCDApplicationBuilder WithSource<T>(T source, SourceType sourceType) where T : ApplicationSource
         {
             applicationSources.Add(source);
+            applicationSourceTypes.Add(sourceType);
             return this;
         }
 
-        public ArgoCDApplicationBuilder WithSources<T>(IEnumerable<T> sources) where T : ApplicationSource
+        public ArgoCDApplicationBuilder WithSources<T>(IEnumerable<T> sources, IEnumerable<SourceType> sourceTypes) where T : ApplicationSource
         {
             applicationSources.AddRange(sources);
+            applicationSourceTypes.AddRange(sourceTypes);
             return this;
         }
 
@@ -46,6 +49,10 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                 Spec = new ApplicationSpec()
                 {
                     Sources = applicationSources
+                },
+                Status = new ApplicationStatus()
+                {
+                    SourceTypes = applicationSourceTypes
                 }
             };
         }

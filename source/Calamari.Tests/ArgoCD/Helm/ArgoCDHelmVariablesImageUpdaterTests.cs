@@ -108,9 +108,12 @@ image:
                             {
                                 ValueFiles = new List<string>() { "values.yml" }
                             },
-                            SourceType = SourceType.Helm
                         }
                     }
+                },
+                Status = new ApplicationStatus()
+                {
+                    SourceTypes = new List<SourceType>(new[] { SourceType.Helm })
                 }
             };
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
@@ -322,9 +325,12 @@ image:
                             RepoUrl = new Uri(OriginPath),
                             Path = "files",
                             TargetRevision = argoCDBranchName.Value,
-                            SourceType = SourceType.Directory
                         }
                     }
+                },
+                Status = new ApplicationStatus()
+                {
+                    SourceTypes = new List<SourceType>(new[] { SourceType.Directory })
                 }
             };
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
@@ -410,7 +416,6 @@ image:
                                 }
                             },
                             Name = "helm-source",
-                            SourceType = SourceType.Helm
                         },
                         new ApplicationSource()
                         {
@@ -418,9 +423,12 @@ image:
                             TargetRevision = argoCDBranchName.Value,
                             Ref = "values",
                             Name = "ref-source",
-                            SourceType = SourceType.Directory
                         }
                     }
+                },
+                Status = new ApplicationStatus()
+                {
+                    SourceTypes = new List<SourceType>(new[] { SourceType.Helm, SourceType.Directory })
                 }
             };
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
@@ -500,9 +508,12 @@ image:
                             Path = "files",
                             TargetRevision = argoCDBranchName.Value,
                             Name = "wrong-scoping",
-                            SourceType = SourceType.Directory
                         }
                     }
+                },
+                Status = new ApplicationStatus()
+                {
+                    SourceTypes = new List<SourceType>(new[] { SourceType.Directory })
                 }
             };
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
@@ -588,16 +599,18 @@ image:
                                 }
                             },
                             Name = "helm-source",
-                            SourceType = SourceType.Helm
                         },
                         new ApplicationSource()
                         {
                             RepoUrl = new Uri(OriginPath),
                             TargetRevision = argoCDBranchName.Value,
                             Ref = "values",
-                            SourceType = SourceType.Directory
                         }
                     }
+                },
+                Status = new ApplicationStatus()
+                {
+                    SourceTypes = new List<SourceType>(new[] { SourceType.Helm, SourceType.Directory })
                 }
             };
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
@@ -682,7 +695,6 @@ image:
                                     "$values/files/values.yaml"
                                 }
                             },
-                            SourceType = SourceType.Helm
                         },
                         new ApplicationSource()
                         {
@@ -690,9 +702,12 @@ image:
                             TargetRevision = argoCDBranchName.Value,
                             Ref = "values",
                             Name = "ref-source",
-                            SourceType = SourceType.Directory
                         }
                     }
+                },
+                Status = new ApplicationStatus()
+                {
+                    SourceTypes = new List<SourceType>(new[] { SourceType.Helm, SourceType.Directory })
                 }
             };
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
@@ -779,16 +794,18 @@ image:
                                     "$values/files/values.yaml"
                                 }
                             },
-                            SourceType = SourceType.Helm
                         },
                         new ApplicationSource()
                         {
                             RepoUrl = new Uri(OriginPath),
                             TargetRevision = argoCDBranchName.Value,
                             Ref = "values",
-                            SourceType = SourceType.Directory
                         }
                     }
+                },
+                Status = new ApplicationStatus()
+                {
+                    SourceTypes = new List<SourceType>(new[] { SourceType.Helm, SourceType.Directory })
                 }
             };
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
