@@ -91,7 +91,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                                 RepoUrl = new Uri(OriginPath),
                                                 Path = "",
                                                 TargetRevision = ArgoCDBranchFriendlyName,
-                                            }, SourceType.Directory)
+                                            }, SourceTypeConstants.Directory)
                                             .Build();
 
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
@@ -365,14 +365,14 @@ service:
                                                   }
                                               },
                                               Name = "helm-source",
-                                          }, SourceType.Helm)
+                                          }, SourceTypeConstants.Helm)
                                           .WithSource(new ApplicationSource
                                           {
                                               Name = "ref-source",
                                               Ref = "values",
                                               TargetRevision = ArgoCDBranchFriendlyName,
                                               RepoUrl = new Uri(OriginPath),
-                                          }, SourceType.Directory)
+                                          }, SourceTypeConstants.Directory)
                                           .Build();
 
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
@@ -454,7 +454,7 @@ service:
                                               RepoUrl = new Uri(OriginPath),
                                               Path = "",
                                               TargetRevision = ArgoCDBranchFriendlyName
-                                          },  SourceType.Helm)
+                                          },  SourceTypeConstants.Helm)
                                          
                                           .Build();
 

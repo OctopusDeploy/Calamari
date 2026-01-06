@@ -14,7 +14,7 @@ namespace Calamari.ArgoCD.Domain
 
         // Always a list - handles both single sourceType and multiple sourceTypes
         [JsonPropertyName("sourceTypes")] 
-        public List<SourceType> SourceTypes { get; set; } = new List<SourceType>();
+        public List<string> SourceTypes { get; set; } = new List<string>();
 
         [JsonPropertyName("summary")]
         public StatusSummary Summary { get; set; } = new StatusSummary();

@@ -61,7 +61,7 @@ namespace Calamari.Tests.ArgoCD.Helm
                 },
                 Status = new ApplicationStatus()
                 {
-                    SourceTypes = new List<SourceType>(new[] { SourceType.Directory })
+                    SourceTypes = new List<string>(new[] { SourceTypeConstants.Directory })
                 }
             };
 
@@ -100,7 +100,7 @@ namespace Calamari.Tests.ArgoCD.Helm
                 },
                 Status = new ApplicationStatus()
                 {
-                    SourceTypes = new List<SourceType>(new[] { SourceType.Helm })
+                    SourceTypes = new List<string>(new[] { SourceTypeConstants.Helm })
                 }
             };
 
@@ -145,7 +145,7 @@ namespace Calamari.Tests.ArgoCD.Helm
                 },
                 Status = new ApplicationStatus()
                 {
-                    SourceTypes = new List<SourceType>(new[] { SourceType.Helm })
+                    SourceTypes = new List<string>(new[] { SourceTypeConstants.Helm })
                 }
             };
 
@@ -200,7 +200,7 @@ namespace Calamari.Tests.ArgoCD.Helm
                 },
                 Status = new ApplicationStatus()
                 {
-                    SourceTypes = new List<SourceType>(new[] { SourceType.Helm })
+                    SourceTypes = new List<string>(new[] { SourceTypeConstants.Helm })
                 }
             };
 
@@ -248,7 +248,7 @@ namespace Calamari.Tests.ArgoCD.Helm
                 },
                 Status = new ApplicationStatus()
                 {
-                    SourceTypes = new List<SourceType>(new[] { SourceType.Helm })
+                    SourceTypes = new List<string>(new[] { SourceTypeConstants.Helm })
                 }
             };
 
@@ -321,7 +321,7 @@ namespace Calamari.Tests.ArgoCD.Helm
                 },
                 Status = new ApplicationStatus()
                 {
-                    SourceTypes = new List<SourceType>(new[] { SourceType.Directory, SourceType.Helm })
+                    SourceTypes = new List<string>(new[] { SourceTypeConstants.Directory, SourceTypeConstants.Helm })
                 }
             };
 
@@ -375,7 +375,7 @@ namespace Calamari.Tests.ArgoCD.Helm
                 },
                 Status = new ApplicationStatus()
                 {
-                    SourceTypes = new List<SourceType>(new[] { SourceType.Directory, SourceType.Helm })
+                    SourceTypes = new List<string>(new[] { SourceTypeConstants.Directory, SourceTypeConstants.Helm })
                 }
             };
 
@@ -440,7 +440,7 @@ namespace Calamari.Tests.ArgoCD.Helm
                 },
                 Status = new ApplicationStatus()
                 {
-                    SourceTypes = new List<SourceType>(new[] { SourceType.Directory, SourceType.Helm })
+                    SourceTypes = new List<string>(new[] { SourceTypeConstants.Directory, SourceTypeConstants.Helm })
                 }
             };
 
@@ -503,7 +503,7 @@ namespace Calamari.Tests.ArgoCD.Helm
                 },
                 Status = new ApplicationStatus()
                 {
-                    SourceTypes = new List<SourceType>(new[] { SourceType.Directory, SourceType.Directory, SourceType.Helm })
+                    SourceTypes = new List<string>(new[] { SourceTypeConstants.Directory, SourceTypeConstants.Directory, SourceTypeConstants.Helm })
                 }
             };
 
@@ -578,7 +578,7 @@ namespace Calamari.Tests.ArgoCD.Helm
                 },
                 Status = new ApplicationStatus()
                 {
-                    SourceTypes = new List<SourceType>(new[] { SourceType.Directory, SourceType.Helm })
+                    SourceTypes = new List<string>(new[] { SourceTypeConstants.Directory, SourceTypeConstants.Helm })
                 }
             };
 
@@ -651,7 +651,7 @@ namespace Calamari.Tests.ArgoCD.Helm
                 },
                 Status = new ApplicationStatus()
                 {
-                    SourceTypes = new List<SourceType>(new[] { SourceType.Directory, SourceType.Helm })
+                    SourceTypes = new List<string>(new[] { SourceTypeConstants.Directory, SourceTypeConstants.Helm })
                 }
             };
 
@@ -737,7 +737,7 @@ namespace Calamari.Tests.ArgoCD.Helm
                 },
                 Status = new ApplicationStatus()
                 {
-                    SourceTypes = new List<SourceType>(new[] { SourceType.Helm, SourceType.Helm })
+                    SourceTypes = new List<string>(new[] { SourceTypeConstants.Helm, SourceTypeConstants.Helm })
                 }
             };
 

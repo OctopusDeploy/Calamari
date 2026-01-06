@@ -88,7 +88,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                                 RepoUrl = new Uri(RepoUrl),
                                                 Path = "",
                                                 TargetRevision = ArgoCDBranchFriendlyName,
-                                            }, SourceType.Directory)
+                                            }, SourceTypeConstants.Directory)
                                             .Build();
 
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
@@ -241,7 +241,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                                       "$ref/otherRepoPath/values.yaml"
                                                   }
                                               }
-                                          }, SourceType.Helm)
+                                          }, SourceTypeConstants.Helm)
                                           .Build();
 
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
@@ -308,14 +308,14 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                                       "$values/otherRepoPath/values.yaml"
                                                   }
                                               },
-                                          }, SourceType.Helm)
+                                          }, SourceTypeConstants.Helm)
                                           .WithSource(new ApplicationSource
                                           {
                                               Name = "refSourceName",
                                               Ref = "values",
                                               TargetRevision = ArgoCDBranchFriendlyName,
                                               RepoUrl = new Uri(RepoUrl),
-                                          }, SourceType.Directory)
+                                          }, SourceTypeConstants.Directory)
                                           .Build();
 
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
@@ -382,7 +382,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                                       "$ref/otherRepoPath/values.yaml"
                                                   }
                                               }
-                                          }, SourceType.Helm)
+                                          }, SourceTypeConstants.Helm)
                                           .WithSource(new ApplicationSource
                                                       {
                                                           Name = "refSourceName",
@@ -391,7 +391,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                                           TargetRevision = ArgoCDBranchFriendlyName,
                                                           RepoUrl = new Uri(RepoUrl),
                                                       },
-                                                      SourceType.Directory)
+                                                      SourceTypeConstants.Directory)
                                           .Build();
 
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())

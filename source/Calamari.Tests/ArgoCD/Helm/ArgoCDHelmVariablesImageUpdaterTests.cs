@@ -113,7 +113,7 @@ image:
                 },
                 Status = new ApplicationStatus()
                 {
-                    SourceTypes = new List<SourceType>(new[] { SourceType.Helm })
+                    SourceTypes = new List<string>(new[] { SourceTypeConstants.Helm })
                 }
             };
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
@@ -330,7 +330,7 @@ image:
                 },
                 Status = new ApplicationStatus()
                 {
-                    SourceTypes = new List<SourceType>(new[] { SourceType.Directory })
+                    SourceTypes = new List<string>(new[] { SourceTypeConstants.Directory })
                 }
             };
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
@@ -428,7 +428,7 @@ image:
                 },
                 Status = new ApplicationStatus()
                 {
-                    SourceTypes = new List<SourceType>(new[] { SourceType.Helm, SourceType.Directory })
+                    SourceTypes = new List<string>(new[] { SourceTypeConstants.Helm, SourceTypeConstants.Directory })
                 }
             };
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
@@ -513,7 +513,7 @@ image:
                 },
                 Status = new ApplicationStatus()
                 {
-                    SourceTypes = new List<SourceType>(new[] { SourceType.Directory })
+                    SourceTypes = new List<string>(new[] { SourceTypeConstants.Directory })
                 }
             };
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
@@ -610,7 +610,7 @@ image:
                 },
                 Status = new ApplicationStatus()
                 {
-                    SourceTypes = new List<SourceType>(new[] { SourceType.Helm, SourceType.Directory })
+                    SourceTypes = new List<string>(new[] { SourceTypeConstants.Helm, SourceTypeConstants.Directory })
                 }
             };
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
@@ -707,7 +707,7 @@ image:
                 },
                 Status = new ApplicationStatus()
                 {
-                    SourceTypes = new List<SourceType>(new[] { SourceType.Helm, SourceType.Directory })
+                    SourceTypes = new List<string>(new[] { SourceTypeConstants.Helm, SourceTypeConstants.Directory })
                 }
             };
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
@@ -805,7 +805,7 @@ image:
                 },
                 Status = new ApplicationStatus()
                 {
-                    SourceTypes = new List<SourceType>(new[] { SourceType.Helm, SourceType.Directory })
+                    SourceTypes = new List<string>(new[] { SourceTypeConstants.Helm, SourceTypeConstants.Directory })
                 }
             };
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
