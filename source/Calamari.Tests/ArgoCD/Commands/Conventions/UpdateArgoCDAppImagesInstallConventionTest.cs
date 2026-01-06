@@ -399,7 +399,6 @@ service:
 
             AssertOutputVariables(matchingApplicationTotalSourceCounts: "2");
         }
-
         
         [Test]
         public void UpdateImages_HelmWithoutHelmConfiguration_CommitsChangesToGitAndReturnsUpdatedImages()
@@ -437,7 +436,7 @@ service:
   type: LoadBalancer
 "
                 ),
-                ("chart.yaml", @"foo")
+                ("Chart.yaml", @"foo")
             };
             originRepo.AddFilesToBranch(argoCDBranchName, filesInRepo);
 
