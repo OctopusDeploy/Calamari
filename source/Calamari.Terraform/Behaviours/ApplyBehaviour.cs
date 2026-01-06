@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Processes;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
@@ -35,13 +37,17 @@ namespace Calamari.Terraform.Behaviours
                                cli.TerraformVariableFiles,
                                cli.ActionParams);
 
+            var args = new List<string>();
+            args.Add("output");
+            if (!OctopusFeatureToggles.AnsiColorsInTaskLogFeatureToggle.IsEnabled(deployment.Variables))
+                args.Add("-no-color");
+            args.Add("-json");
+            
             // Attempt to get the outputs. This will fail if none are defined in versions prior to v0.11.15
             // Please note that we really don't want to log the following command output as it can contain sensitive variables etc. hence the IgnoreCommandOutput()
             if (cli.ExecuteCommand(out var result,
                                    false,
-                                   "output",
-                                   "-no-color",
-                                   "-json")
+                                   args.ToArray())
                    .ExitCode
                 != 0)
                 return Task.CompletedTask;
