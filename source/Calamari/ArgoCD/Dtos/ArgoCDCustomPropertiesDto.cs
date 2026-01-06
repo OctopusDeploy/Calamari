@@ -18,14 +18,13 @@ namespace Calamari.ArgoCD.Dtos
 
     public class ArgoCDApplicationDto
     {
-        public ArgoCDApplicationDto(string gatewayId, string name, string kubernetesNamespace, ArgoCDApplicationSourceDto[] sources, string manifest, string defaultRegistry, string? instanceWebUIUrl)
+        public ArgoCDApplicationDto(string gatewayId, string name, string kubernetesNamespace, string manifest, string defaultRegistry, string? instanceWebUIUrl)
         {
             GatewayId = gatewayId;
             Name = name;
             KubernetesNamespace = kubernetesNamespace;
             DefaultRegistry = defaultRegistry;
             InstanceWebUiUrl = instanceWebUIUrl;
-            Sources = sources;
             Manifest = manifest;
         }
 
@@ -35,24 +34,9 @@ namespace Calamari.ArgoCD.Dtos
         public string KubernetesNamespace { get; }
         public string DefaultRegistry { get; set; }
         public string? InstanceWebUiUrl { get; }
-        public ArgoCDApplicationSourceDto[] Sources { get; }
         public string Manifest { get; }
     }
-
-    public class ArgoCDApplicationSourceDto
-    {
-        public ArgoCDApplicationSourceDto(string url, string path, string targetRevision)
-        {
-            Url = url;
-            Path = path;
-            TargetRevision = targetRevision;
-        }
-
-        public string Url { get; }
-        public string TargetRevision { get; }
-        public string Path { get; }
-    }
-
+    
     public class GitCredentialDto
     {
         public GitCredentialDto(string url, string username, string password)
