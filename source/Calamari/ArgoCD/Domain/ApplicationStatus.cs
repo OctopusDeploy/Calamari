@@ -40,12 +40,4 @@ namespace Calamari.ArgoCD.Domain
         [JsonPropertyName("images")]
         public List<string> Images { get; set; } = new List<string>();
     }
-
-    public enum SourceType
-    {
-        Directory,
-        Helm,
-        Kustomize,
-        Plugin
-    }
 }
