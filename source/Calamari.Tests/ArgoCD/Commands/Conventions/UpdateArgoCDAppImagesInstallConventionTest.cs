@@ -253,7 +253,7 @@ spec:
             var fileInRepo = Path.Combine(clonedRepoPath, existingYamlFile);
             fileSystem.FileExists(fileInRepo).Should().BeTrue();
             var content = fileSystem.ReadFile(fileInRepo);
-            content.Should().Be(updatedYamlContent);
+            content.ReplaceLineEndings().Should().Be(updatedYamlContent.ReplaceLineEndings());
             
             AssertOutputVariables();
         }
@@ -395,13 +395,13 @@ service:
             var fileInRepo = Path.Combine(clonedRepoPath, existingYamlFile);
             fileSystem.FileExists(fileInRepo).Should().BeTrue();
             var content = fileSystem.ReadFile(fileInRepo);
-            content.Should().Be(updatedYamlContent);
+            content.ReplaceLineEndings().Should().Be(updatedYamlContent.ReplaceLineEndings());
 
             AssertOutputVariables(matchingApplicationTotalSourceCounts: "2");
         }
 
         
-             [Test]
+        [Test]
         public void UpdateImages_HelmWithoutHelmConfiguration_CommitsChangesToGitAndReturnsUpdatedImages()
         {
             // Arrange
@@ -478,11 +478,10 @@ service:
             var fileInRepo = Path.Combine(clonedRepoPath, existingYamlFile);
             fileSystem.FileExists(fileInRepo).Should().BeTrue();
             var content = fileSystem.ReadFile(fileInRepo);
-            content.Should().Be(updatedYamlContent);
+            content.ReplaceLineEndings().Should().Be(updatedYamlContent.ReplaceLineEndings());
 
             AssertOutputVariables(matchingApplicationTotalSourceCounts: "1");
         }
-
         
         void AssertOutputVariables(bool updated = true, string matchingApplicationTotalSourceCounts = "1")
         {
