@@ -65,10 +65,6 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                                                               new ArgoCDApplicationDto(GatewayId,
                                                                                                        "App1",
                                                                                                        "argocd",
-                                                                                                       new[]
-                                                                                                       {
-                                                                                                           new ArgoCDApplicationSourceDto(OriginPath, "", ArgoCDBranchFriendlyName)
-                                                                                                       },
                                                                                                        "yaml",
                                                                                                        "docker.io",
                                                                                                        "http://my-argo.com")
