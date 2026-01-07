@@ -36,7 +36,7 @@ namespace Calamari.ArgoCD.Conventions
             {
                 log.WarnFormat(" - {0}: {1}", ArgoCDConstants.Annotations.OctopusTenantAnnotationKey("<sourcename>".ToApplicationSourceName()), deploymentScope.Tenant);
             }
-            log.WarnFormat("Annotation creation documentation can be found {0}.", log.FormatShortLink("argo-cd-scoping-annotations", "here"));
+            log.WarnFormat("Annotation creation documentation can be found {0}.", log.FormatShortLink("argo-cd-annotations-docs", "here"));
         }
         
         public static void LogApplicationCounts(this ILog log, (ProjectSlug Project, EnvironmentSlug Environment, TenantSlug? Tenant) deploymentScope, ArgoCDApplicationDto[] applications)

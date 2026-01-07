@@ -70,10 +70,6 @@ image:
                                                                               new ArgoCDApplicationDto(GatewayId,
                                                                                                        "App1",
                                                                                                        "argocd",
-                                                                                                       new[]
-                                                                                                       {
-                                                                                                           new ArgoCDApplicationSourceDto(OriginPath, "", argoCDBranchName.Value)
-                                                                                                       },
                                                                                                        "yaml",
                                                                                                        "docker.io",
                                                                                                        null)
