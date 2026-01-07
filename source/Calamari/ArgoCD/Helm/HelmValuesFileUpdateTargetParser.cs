@@ -11,8 +11,8 @@ namespace Calamari.ArgoCD.Helm
 {
     public class HelmValuesFileUpdateTargetParser
     {
-        readonly List<HelmSource> helmSources;
-        readonly List<ReferenceSource> refSources;
+        readonly List<ApplicationSource> helmSources;
+        readonly List<ApplicationSource> refSources;
 
         readonly ApplicationName appName;
         readonly string defaultRegistry;
@@ -23,8 +23,9 @@ namespace Calamari.ArgoCD.Helm
         {
             annotations = toUpdate.Metadata.Annotations;
             containsMultipleSources = toUpdate.Spec.Sources.Count > 1;
-            helmSources = toUpdate.Spec.Sources.OfType<HelmSource>().ToList();
-            refSources = toUpdate.Spec.Sources.OfType<ReferenceSource>().ToList();
+            //Only deal with explicit Helm sources for now to preserve previous behaviour
+            helmSources = toUpdate.GetSourcesWithMetadata().Where(s => s.SourceType == SourceType.Helm && s.Source.Helm != null).Select(s => s.Source).ToList();
+            refSources = toUpdate.GetSourcesWithMetadata().Where(s => s.SourceType == SourceType.Directory && s.Source.Ref != null).Select(s => s.Source).ToList();
             appName = toUpdate.Metadata.Name.ToApplicationName();
             this.defaultRegistry = defaultRegistry;
         }
@@ -32,15 +33,18 @@ namespace Calamari.ArgoCD.Helm
         public (IReadOnlyCollection<HelmValuesFileImageUpdateTarget> Targets, IReadOnlyCollection<HelmSourceConfigurationProblem> Problems) GetValuesFilesToUpdate()
         {
             var results = helmSources
-                              .Where(hs => hs.Helm.ValueFiles.Count > 0)
+                              .Where(hs => hs.Helm?.ValueFiles.Count > 0)
                               .Select(ExtractValuesFilesForSource).ToArray();
             
             return (results.SelectMany(v => v.Targets).ToArray(), results.SelectMany(v => v.Problems).ToArray());
         }
 
-        (IReadOnlyCollection<HelmValuesFileImageUpdateTarget> Targets, IReadOnlyCollection<HelmSourceConfigurationProblem> Problems) ExtractValuesFilesForSource(HelmSource source)
+        (IReadOnlyCollection<HelmValuesFileImageUpdateTarget> Targets, IReadOnlyCollection<HelmSourceConfigurationProblem> Problems) ExtractValuesFilesForSource(ApplicationSource source)
         {
             var definedPathsForSource = ScopingAnnotationReader.GetImageReplacePathsForApplicationSource(source.Name.ToApplicationSourceName(), annotations, containsMultipleSources);
+            if (source.Helm == null)
+                return new ValueTuple<IReadOnlyCollection<HelmValuesFileImageUpdateTarget>, IReadOnlyCollection<HelmSourceConfigurationProblem>>();
+            
             var results = source.Helm.ValueFiles.Select(file => file.StartsWith('$')
                                                                 ? ProcessRefValuesFile(source, file, definedPathsForSource)
                                                                 : ProcessInlineValuesFile(source, file, definedPathsForSource)).ToArray();
@@ -49,7 +53,7 @@ namespace Calamari.ArgoCD.Helm
                     results.Where(t => t.Problem != null).Select(v => v.Problem!).Distinct().ToArray());
         }
 
-        (HelmValuesFileImageUpdateTarget? Target, HelmSourceConfigurationProblem? Problem) ProcessInlineValuesFile(HelmSource source, string file, IReadOnlyCollection<string> definedPathsForSource)
+        (HelmValuesFileImageUpdateTarget? Target, HelmSourceConfigurationProblem? Problem) ProcessInlineValuesFile(ApplicationSource source, string file, IReadOnlyCollection<string> definedPathsForSource)
         {
             if (!definedPathsForSource.Any())
             {
@@ -66,7 +70,7 @@ namespace Calamari.ArgoCD.Helm
                                                         definedPathsForSource), null);
         }
 
-        (HelmValuesFileImageUpdateTarget? Target, HelmSourceConfigurationProblem? Problem) ProcessRefValuesFile(HelmSource source, string file, IReadOnlyCollection<string> definedPathsForSource)
+        (HelmValuesFileImageUpdateTarget? Target, HelmSourceConfigurationProblem? Problem) ProcessRefValuesFile(ApplicationSource source, string file, IReadOnlyCollection<string> definedPathsForSource)
         {
             var refName = GetRefFromFilePath(file);
             var refForValuesFile = refSources.FirstOrDefault(r => r.Ref == refName);

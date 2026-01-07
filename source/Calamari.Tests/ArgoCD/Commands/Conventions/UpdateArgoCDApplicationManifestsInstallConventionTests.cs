@@ -79,12 +79,12 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                                 [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(null)] = ProjectSlug,
                                                 [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(null)] = EnvironmentSlug,
                                             })
-                                            .WithSource(new BasicSource()
+                                            .WithSource(new ApplicationSource()
                                             {
                                                 RepoUrl = new Uri(RepoUrl),
                                                 Path = "",
-                                                TargetRevision = ArgoCDBranchFriendlyName
-                                            })
+                                                TargetRevision = ArgoCDBranchFriendlyName,
+                                            }, SourceTypeConstants.Directory)
                                             .Build();
 
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
@@ -223,7 +223,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                               [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(null)] = ProjectSlug,
                                               [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(null)] = EnvironmentSlug,
                                           })
-                                          .WithSource(new HelmSource()
+                                          .WithSource(new ApplicationSource()
                                           {
                                               RepoUrl = new Uri(RepoUrl),
                                               Path = "",
@@ -237,7 +237,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                                       "$ref/otherRepoPath/values.yaml"
                                                   }
                                               }
-                                          })
+                                          }, SourceTypeConstants.Helm)
                                           .Build();
 
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
@@ -290,7 +290,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                               [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(new ApplicationSourceName("refSourceName"))] = ProjectSlug,
                                               [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(new ApplicationSourceName("refSourceName"))] = EnvironmentSlug,
                                           })
-                                          .WithSource(new HelmSource
+                                          .WithSource(new ApplicationSource
                                           {
                                               RepoUrl = new Uri("https://github.com/org/repo"),
                                               Path = "",
@@ -303,15 +303,15 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                                       "otherPath/values2.yaml",
                                                       "$values/otherRepoPath/values.yaml"
                                                   }
-                                              }
-                                          })
-                                          .WithSource(new ReferenceSource
+                                              },
+                                          }, SourceTypeConstants.Helm)
+                                          .WithSource(new ApplicationSource
                                           {
                                               Name = "refSourceName",
                                               Ref = "values",
                                               TargetRevision = ArgoCDBranchFriendlyName,
-                                              RepoUrl = new Uri(RepoUrl)
-                                          })
+                                              RepoUrl = new Uri(RepoUrl),
+                                          }, SourceTypeConstants.Directory)
                                           .Build();
 
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
@@ -364,7 +364,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                               [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(new ApplicationSourceName("refSourceName"))] = ProjectSlug,
                                               [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(new ApplicationSourceName("refSourceName"))] = EnvironmentSlug,
                                           })
-                                          .WithSource(new HelmSource
+                                          .WithSource(new ApplicationSource
                                           {
                                               RepoUrl = new Uri("https://github.com/org/repo"),
                                               Path = "",
@@ -378,15 +378,16 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                                       "$ref/otherRepoPath/values.yaml"
                                                   }
                                               }
-                                          })
-                                          .WithSource(new ReferenceSource
-                                          {
-                                              Name = "refSourceName",
-                                              Ref = "valuesFiles",
-                                              Path = "otherPath/values1.yaml", //this should cause an error
-                                              TargetRevision = ArgoCDBranchFriendlyName,
-                                              RepoUrl = new Uri(RepoUrl)
-                                          })
+                                          }, SourceTypeConstants.Helm)
+                                          .WithSource(new ApplicationSource
+                                                      {
+                                                          Name = "refSourceName",
+                                                          Ref = "valuesFiles",
+                                                          Path = "otherPath/values1.yaml", //this should cause an error
+                                                          TargetRevision = ArgoCDBranchFriendlyName,
+                                                          RepoUrl = new Uri(RepoUrl),
+                                                      },
+                                                      SourceTypeConstants.Directory)
                                           .Build();
 
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
