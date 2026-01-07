@@ -47,7 +47,7 @@ namespace Calamari.ArgoCD.Helm
             
             var results = source.Helm.ValueFiles.Select(file => file.StartsWith('$')
                                                                 ? ProcessRefValuesFile(source, file, definedPathsForSource)
-                                                                : ProcessInlineValuesFile(source, file, definedPathsForSource)).ToArray(); 
+                                                                : ProcessInlineValuesFile(source, file, definedPathsForSource)).ToArray();
 
             return (results.Where(t => t.Target != null).Select(v => v.Target!).ToArray(),
                     results.Where(t => t.Problem != null).Select(v => v.Problem!).Distinct().ToArray());
