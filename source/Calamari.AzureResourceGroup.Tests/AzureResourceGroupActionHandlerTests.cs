@@ -1,9 +1,11 @@
 using System;
 using System.IO;
 using System.Threading.Tasks;
+using Calamari.AzureResourceGroup.Tests.Attributes;
 using Calamari.AzureResourceGroup.Tests.Support;
 using Calamari.Common.Features.Deployment;
 using Calamari.Common.Features.Scripts;
+using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Testing;
 using Calamari.Testing.Azure;
@@ -11,17 +13,18 @@ using Calamari.Testing.Helpers;
 using Calamari.Testing.Requirements;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
+using Xunit.Sdk;
 
 // ReSharper disable MethodHasAsyncOverload - File.ReadAllTextAsync does not exist for .net framework targets
 
 namespace Calamari.AzureResourceGroup.Tests
 {
     [Collection(nameof(AzureResourceGroupFixture))]
-    public class AzureResourceGroupActionHandlerFixture(AzureResourceGroupFixture resourceGroupFixture): CalamariTest
+    public class AzureResourceGroupActionHandlerTests(AzureResourceGroupFixture resourceGroupFixture): CalamariTest
     {
         readonly AzureResourceGroupFixture resourceGroupFixture = resourceGroupFixture;
 
-        [Test]
+        [Fact]
         public async Task Deploy_with_template_in_package()
         {
             var packagePath = TestEnvironment.GetTestPath("Packages", "AzureResourceGroup");
@@ -38,7 +41,7 @@ namespace Calamari.AzureResourceGroup.Tests
                                     .Execute();
         }
 
-        [Test]
+        [Fact]
         public async Task Deploy_with_template_in_git_repository()
         {
             // For the purposes of ARM templates in Calamari, a template in a Git Repository
@@ -59,7 +62,7 @@ namespace Calamari.AzureResourceGroup.Tests
                                     .Execute();
         }
 
-        [Test]
+        [Fact]
         public async Task Deploy_with_template_inline()
         {
             var packagePath = TestEnvironment.GetTestPath("Packages", "AzureResourceGroup");
@@ -83,11 +86,15 @@ namespace Calamari.AzureResourceGroup.Tests
                                     .Execute();
         }
 
-        [Test]
-        [WindowsTest]
-        [RequiresPowerShell5OrAbove]
+        [Fact]
+        [TestPlatforms(TestCategory.CompatibleOS.OnlyWindows)]
         public async Task Deploy_Ensure_Tools_Are_Configured()
         {
+            if (ScriptingEnvironment.SafelyGetPowerShellVersion().Major < 5)
+            {
+                throw SkipException.ForSkip("This test requires PowerShell 5 or above.");
+            }
+            
             var packagePath = TestEnvironment.GetTestPath("Packages", "AzureResourceGroup");
             var templateFileContent = File.ReadAllText(Path.Combine(packagePath, "azure_website_template.json"));
             var paramsFileContent = File.ReadAllText(Path.Combine(packagePath, "azure_website_params.json"));

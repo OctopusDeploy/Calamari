@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Threading.Tasks;
+using Calamari.AzureResourceGroup.Tests.Attributes;
 using Calamari.AzureResourceGroup.Tests.Support;
 using Calamari.Testing;
 using Calamari.Testing.Azure;
@@ -11,13 +12,15 @@ namespace Calamari.AzureResourceGroup.Tests
 {
     [TestPlatforms(TestCategory.CompatibleOS.OnlyWindows)]
     [Collection(nameof(AzureResourceGroupFixture))]
-    public class DeployAzureBicepTemplateCommandFixture(AzureResourceGroupFixture resourceGroupFixture) : CalamariTest
+    public class DeployAzureBicepTemplateCommandTests(AzureResourceGroupFixture resourceGroupFixture) : CalamariTest
     {
         readonly AzureResourceGroupFixture resourceGroupFixture = resourceGroupFixture;
         
         readonly string packagePath = TestEnvironment.GetTestPath("Packages", "Bicep");
 
         static IDeploymentTool AzureCLI = new InPathDeploymentTool("Octopus.Dependencies.AzureCLI", "AzureCLI\\wbin");
+
+        protected override TimeSpan TestTimeout => TimeSpan.FromMinutes(5);
 
         [Fact]
         public async Task DeployAzureBicepTemplate_PackageSource()

@@ -8,11 +8,11 @@ public abstract class CalamariTest
     readonly CancellationTokenSource cancellationTokenSource;
     protected CancellationToken CancellationToken => cancellationTokenSource.Token;
 
-    protected virtual TimeSpan DefaultTestTimeout => TimeSpan.MaxValue;
+    protected virtual TimeSpan TestTimeout => TimeSpan.MaxValue;
 
     protected CalamariTest()
     {
-        var ctsTimeout = new CancellationTokenSource(DefaultTestTimeout);
+        var ctsTimeout = new CancellationTokenSource(TestTimeout);
         cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(ctsTimeout.Token, TestContext.Current.CancellationToken);
     }
 }

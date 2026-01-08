@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using Xunit.v3;
 
-namespace Calamari.AzureResourceGroup.Tests;
+namespace Calamari.AzureResourceGroup.Tests.Attributes;
 
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
 public class TestPlatformsAttribute(string platform) : Attribute, ITraitAttribute

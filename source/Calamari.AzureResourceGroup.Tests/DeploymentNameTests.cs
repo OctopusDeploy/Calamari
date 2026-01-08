@@ -1,5 +1,6 @@
 ﻿namespace Calamari.AzureResourceGroup.Tests
-{ public class DeploymentNameFixture
+{ 
+    public class DeploymentNameTests
     {
         [Fact]
         public void GivenShortStepName_Then_Can_Generate_Deployment_Name_Appropriately()
