@@ -21,7 +21,11 @@ namespace Calamari.ArgoCD.Domain
 
         static SourceType? ParseToEnum(string sourceTypeString)
         {
-            if (!sourceTypeString.IsNullOrEmpty() && Enum.TryParse<SourceType>(sourceTypeString, true, out var sourceType))
+            //Sources without PATH specified (usually the REF sources) end up as empty strings. The Argo UI displays it as `Directory` anyway
+            if (sourceTypeString.IsNullOrEmpty())
+                return SourceType.Directory;
+            
+            if (Enum.TryParse<SourceType>(sourceTypeString, true, out var sourceType))
             {
                 return sourceType;
             }
