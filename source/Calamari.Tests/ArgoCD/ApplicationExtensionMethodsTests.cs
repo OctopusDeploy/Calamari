@@ -79,8 +79,9 @@ namespace Calamari.Tests.ArgoCD
                                              s2 => AssertSource(s2, "s2", 1, null));
     }
     
+    //Sources without PATH specified (usually the REF sources) end up as empty strings. The Argo UI displays it as `Directory` anyway
     [Test]
-    public void GetSourcesWithMetadata_SourceTypeIsEmptyStringOrNull_SourceTypeIsNull()
+    public void GetSourcesWithMetadata_SourceTypeIsEmptyStringOrNull_SourceTypeIsDirectory()
     {
       var names = new[] { "s1", "s2", "s3" };
       var application = new ArgoCDApplicationBuilder()
@@ -91,8 +92,8 @@ namespace Calamari.Tests.ArgoCD
       var sources = application.GetSourcesWithMetadata();
 
       sources.Should().SatisfyRespectively(
-                                           s1 => AssertSource(s1, "s1", 0, null),
-                                           s2 => AssertSource(s2, "s2", 1, null),
+                                           s1 => AssertSource(s1, "s1", 0, SourceType.Directory),
+                                           s2 => AssertSource(s2, "s2", 1, SourceType.Directory),
                                            s2 => AssertSource(s2, "s3", 2, SourceType.Kustomize));
     }
     
