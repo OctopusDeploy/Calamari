@@ -359,8 +359,7 @@ partial class Build : NukeBuild
 
                             outputPath.CompressTo(archivePath);
                         });
-    
-    
+
     Target PackageConsolidatedCalamariZip =>
         d =>
             d.Executes(() =>
@@ -425,9 +424,47 @@ partial class Build : NukeBuild
                                                                                    .Add("NUnit.ShowInternalProperties=true")));
                        });
 
-    Target PackCalamariConsolidatedNugetPackage =>
+    Target PackConsolidationLibrariesNugetPackages =>
         d =>
             d.DependsOn(CalamariConsolidationVerification)
+             .Executes(() =>
+                       {
+                           // Pack the Consolidation Libraries
+                           const string consolidateCalamariPackagesProjectPrefix = "Calamari.ConsolidateCalamariPackages";
+                           var consolidationLibraryProjects = Solution.Projects.Where(project => project.Name.StartsWith(consolidateCalamariPackagesProjectPrefix));
+
+                           foreach (var project in consolidationLibraryProjects)
+                           {
+                               Log.Information("Packaging {ProjectName}", project.Name);
+                               
+                               var outputDirectory = PublishDirectory / project.Name;
+
+                               //publish the consolidated package libraries
+                               DotNetPublish(s =>
+                                                 s.SetConfiguration(Configuration)
+                                                  .SetProject(project)
+                                                  .SetOutput(outputDirectory));
+
+                               File.Copy(RootDirectory / "global.json", outputDirectory / "global.json");
+
+                               //sign the output directory
+                               SignDirectory(outputDirectory);
+
+                               //pack the project
+                               DotNetPack(s => s
+                                               .SetConfiguration(Configuration)
+                                               .SetOutputDirectory(ArtifactsDirectory)
+                                               .SetProject(outputDirectory)
+                                               .EnableNoBuild()
+                                               .EnableNoRestore()
+                                               .EnableIncludeSource()
+                                               .SetVersion(NugetVersion.Value));
+                           }
+                       });
+
+    Target PackCalamariConsolidatedNugetPackage =>
+        d =>
+            d.DependsOn(PackConsolidationLibrariesNugetPackages)
              .Executes(() =>
                        {
                            NuGetPack(s => s.SetTargetPath(BuildDirectory / "Calamari.Consolidated.nuspec")
@@ -481,13 +518,13 @@ partial class Build : NukeBuild
                            const string runtime = "win-x64";
                            var nukeBuildOutputDirectory = BuildDirectory / "outputs" / runtime / "nukebuild";
                            nukeBuildOutputDirectory.CreateOrCleanDirectory();
-                           
+
                            DotNetPublish(p => p
                                               .SetProject(RootDirectory / "build" / "_build.csproj")
                                               .SetConfiguration(Configuration)
                                               .SetRuntime(runtime)
                                               .EnableSelfContained());
-                           
+
                            await Ci.ZipFolderAndUploadArtifact(nukeBuildOutputDirectory, ArtifactsDirectory / $"nukebuild.{runtime}.zip");
                        });
 
@@ -505,7 +542,6 @@ partial class Build : NukeBuild
                            .DependsOn(PublishNukeBuild);
 
     Target BuildAndPublishProject => d => d.OnlyWhenDynamic(() => !string.IsNullOrEmpty(ProjectToBuild)).DependsOn(PublishCalamariProjects);
-    
 
     public static int Main() => Execute<Build>(x => IsServerBuild ? x.BuildCi : x.BuildLocal);
 
