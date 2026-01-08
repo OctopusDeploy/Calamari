@@ -8,7 +8,7 @@ public abstract class CalamariTest
     readonly CancellationTokenSource cancellationTokenSource;
     protected CancellationToken CancellationToken => cancellationTokenSource.Token;
 
-    protected virtual TimeSpan TestTimeout => TimeSpan.MaxValue;
+    protected virtual TimeSpan TestTimeout => TimeSpan.FromMilliseconds(int.MaxValue);
 
     protected CalamariTest()
     {
