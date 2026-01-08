@@ -18,6 +18,7 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.Conventions;
+using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.ArgoCD.Conventions
 {
@@ -91,13 +92,22 @@ namespace Calamari.ArgoCD.Conventions
                 validationResult.Action(log);
 
                 var didUpdateSomething = false;
-                foreach (var applicationSource in applicationFromYaml.Spec.Sources)
+                foreach (var applicationSourceWithMetadata in applicationFromYaml.GetSourcesWithMetadata())
                 {
+                    var applicationSource = applicationSourceWithMetadata.Source;
+
                     var annotatedScope = ScopingAnnotationReader.GetScopeForApplicationSource(applicationSource.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources);
                     log.LogApplicationSourceScopeStatus(annotatedScope, applicationSource.Name.ToApplicationSourceName(), deploymentScope);
 
                     if (annotatedScope == deploymentScope)
                     {
+                        var sourceIdentity = applicationSource.Name.IsNullOrEmpty() ? applicationSource.RepoUrl.ToString() : applicationSource.Name;
+                        if (applicationSourceWithMetadata.SourceType == null)
+                        {
+                            log.WarnFormat("Unable to update source '{0}' as its source type was not detected by Argo CD.", sourceIdentity);
+                            continue;   
+                        }
+                        
                         log.Info($"Writing files to repository '{applicationSource.RepoUrl}' for '{application.Name}'");
 
                         if (!TryCalculateOutputPath(applicationSource, out var outputPath))
@@ -176,11 +186,11 @@ namespace Calamari.ArgoCD.Conventions
 
         }
 
-        bool TryCalculateOutputPath(SourceBase sourceToUpdate, out string outputPath)
+        bool TryCalculateOutputPath(ApplicationSource sourceToUpdate, out string outputPath)
         {
             outputPath = "";
             var sourceIdentity = string.IsNullOrEmpty(sourceToUpdate.Name) ? sourceToUpdate.RepoUrl.ToString() : sourceToUpdate.Name;
-            if (sourceToUpdate is ReferenceSource)
+            if (sourceToUpdate.Ref != null)
             {
                 if (sourceToUpdate.Path != null)
                 {
@@ -201,7 +211,7 @@ namespace Calamari.ArgoCD.Conventions
         }
 
         //TODO(tmm): should we be removing this warning now
-        void LogWarningIfUpdatingMultipleSources(List<SourceBase> sourcesToInspect,
+        void LogWarningIfUpdatingMultipleSources(List<ApplicationSource> sourcesToInspect,
                                                  Dictionary<string, string> applicationAnnotations,
                                                  bool containsMultipleSources,
                                                  (ProjectSlug Project, EnvironmentSlug Environment, TenantSlug? Tenant) deploymentScope)

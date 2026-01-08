@@ -73,7 +73,9 @@ namespace Calamari.ArgoCD.Git
                 catch (Exception e)
                 {
                     timedOp.Abandon(e);
-                    throw new CommandException($"Failed to clone Git repository at {gitConnection.Url}. Are you sure this is a Git repository?");
+                    log.Error("Cloning repository failed");
+                    log.Verbose(e.PrettyPrint());
+                    throw new CommandException($"Failed to clone Git repository at {gitConnection.Url}. Are you sure this is a Git repository? {e.Message}", e);
                 }
             }
 

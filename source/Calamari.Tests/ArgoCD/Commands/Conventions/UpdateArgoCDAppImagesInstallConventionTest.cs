@@ -65,10 +65,6 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                                                               new ArgoCDApplicationDto(GatewayId,
                                                                                                        "App1",
                                                                                                        "argocd",
-                                                                                                       new[]
-                                                                                                       {
-                                                                                                           new ArgoCDApplicationSourceDto(OriginPath, "", ArgoCDBranchFriendlyName)
-                                                                                                       },
                                                                                                        "yaml",
                                                                                                        "docker.io",
                                                                                                        "http://my-argo.com")
@@ -86,12 +82,12 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                                 [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(null)] = ProjectSlug,
                                                 [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(null)] = EnvironmentSlug,
                                             })
-                                            .WithSource(new BasicSource()
+                                            .WithSource(new ApplicationSource()
                                             {
                                                 RepoUrl = new Uri(OriginPath),
                                                 Path = "",
-                                                TargetRevision = ArgoCDBranchFriendlyName
-                                            })
+                                                TargetRevision = ArgoCDBranchFriendlyName,
+                                            }, SourceTypeConstants.Directory)
                                             .Build();
 
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
@@ -253,7 +249,7 @@ spec:
             var fileInRepo = Path.Combine(clonedRepoPath, existingYamlFile);
             fileSystem.FileExists(fileInRepo).Should().BeTrue();
             var content = fileSystem.ReadFile(fileInRepo);
-            content.Should().Be(updatedYamlContent);
+            content.ReplaceLineEndings().Should().Be(updatedYamlContent.ReplaceLineEndings());
             
             AssertOutputVariables();
         }
@@ -352,7 +348,7 @@ service:
                                               [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(new ApplicationSourceName("ref-source"))] = EnvironmentSlug,
                                               [ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(new ApplicationSourceName("helm-source"))] = "{{ .Values.image.repository }}:{{ .Values.image.tag }}",
                                           })
-                                          .WithSource(new HelmSource
+                                          .WithSource(new ApplicationSource
                                           {
                                               RepoUrl = new Uri("https://github.com/org/repo"),
                                               Path = "",
@@ -364,15 +360,15 @@ service:
                                                       "$values/otherRepoPath/values.yaml"
                                                   }
                                               },
-                                              Name = "helm-source"
-                                          })
-                                          .WithSource(new ReferenceSource
+                                              Name = "helm-source",
+                                          }, SourceTypeConstants.Helm)
+                                          .WithSource(new ApplicationSource
                                           {
                                               Name = "ref-source",
                                               Ref = "values",
                                               TargetRevision = ArgoCDBranchFriendlyName,
-                                              RepoUrl = new Uri(OriginPath)
-                                          })
+                                              RepoUrl = new Uri(OriginPath),
+                                          }, SourceTypeConstants.Directory)
                                           .Build();
 
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
@@ -380,26 +376,108 @@ service:
             // Act
             updater.Install(runningDeployment);
 
-//             //Assert
-//             const string updatedYamlContent =
-//                 @"
-// image:
-//   repository: index.docker.io/nginx
-//   tag: ""1.27.1""
-// containerPort: 8080
-// service:
-//   type: LoadBalancer
-// ";
+            //Assert
+            const string updatedYamlContent =
+                @"
+image:
+  repository: index.docker.io/nginx
+  tag: ""1.27.1""
+containerPort: 8080
+service:
+  type: LoadBalancer
+";
 
             var clonedRepoPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             var fileInRepo = Path.Combine(clonedRepoPath, existingYamlFile);
             fileSystem.FileExists(fileInRepo).Should().BeTrue();
             var content = fileSystem.ReadFile(fileInRepo);
-            content.Should().Contain("1.27.1");
+            content.ReplaceLineEndings().Should().Be(updatedYamlContent.ReplaceLineEndings());
 
             AssertOutputVariables(matchingApplicationTotalSourceCounts: "2");
         }
+        
+        [Test]
+        public void UpdateImages_HelmWithoutHelmConfiguration_CommitsChangesToGitAndReturnsUpdatedImages()
+        {
+            // Arrange
+            var updater = new UpdateArgoCDAppImagesInstallConvention(log,
+                                                                     fileSystem,
+                                                                     new DeploymentConfigFactory(nonSensitiveCalamariVariables),
+                                                                     new CommitMessageGenerator(),
+                                                                     customPropertiesLoader,
+                                                                     argoCdApplicationManifestParser,
+                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>());
+            var variables = new CalamariVariables
+            {
+                [PackageVariables.IndexedImage("nginx")] = "index.docker.io/nginx:1.27.1",
+                [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
+                [ProjectVariables.Slug] = ProjectSlug,
+                [DeploymentEnvironment.Slug] = EnvironmentSlug,
+            };
+            var runningDeployment = new RunningDeployment(null, variables);
+            runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
+            runningDeployment.StagingDirectory = tempDirectory;
 
+            var existingYamlFile = "values.yaml";
+            var filesInRepo = new (string, string)[]
+            {
+                (
+                    existingYamlFile,
+                    @"
+image:
+  repository: index.docker.io/nginx
+  tag: ""1.0""
+containerPort: 8080
+service:
+  type: LoadBalancer
+"
+                ),
+                ("Chart.yaml", @"foo")
+            };
+            originRepo.AddFilesToBranch(argoCDBranchName, filesInRepo);
+
+            var argoCDAppWithHelmSource = new ArgoCDApplicationBuilder()
+                                          .WithName("App1")
+                                          .WithAnnotations(new Dictionary<string, string>()
+                                          {
+                                              [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(null)] = ProjectSlug,
+                                              [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(null)] = EnvironmentSlug,
+                                              [ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(null)] = "{{ .Values.image.repository }}:{{ .Values.image.tag }}",
+                                          })
+                                          .WithSource(new ApplicationSource
+                                          {
+                                              RepoUrl = new Uri(OriginPath),
+                                              Path = "",
+                                              TargetRevision = ArgoCDBranchFriendlyName
+                                          },  SourceTypeConstants.Helm)
+                                         
+                                          .Build();
+
+            argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
+                                           .Returns(argoCDAppWithHelmSource);
+            // Act
+            updater.Install(runningDeployment);
+
+            //Assert
+            const string updatedYamlContent =
+                @"
+image:
+  repository: index.docker.io/nginx
+  tag: ""1.27.1""
+containerPort: 8080
+service:
+  type: LoadBalancer
+";
+
+            var clonedRepoPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
+            var fileInRepo = Path.Combine(clonedRepoPath, existingYamlFile);
+            fileSystem.FileExists(fileInRepo).Should().BeTrue();
+            var content = fileSystem.ReadFile(fileInRepo);
+            content.ReplaceLineEndings().Should().Be(updatedYamlContent.ReplaceLineEndings());
+
+            AssertOutputVariables(matchingApplicationTotalSourceCounts: "1");
+        }
+        
         void AssertOutputVariables(bool updated = true, string matchingApplicationTotalSourceCounts = "1")
         {
             using var _ = new AssertionScope();

@@ -59,21 +59,9 @@ namespace Calamari.ArgoCD.Domain.Converters
             return spec;
         }
 
-        static SourceBase DeserializeSource(JsonElement sourceElement, JsonSerializerOptions options)
+        static ApplicationSource DeserializeSource(JsonElement sourceElement, JsonSerializerOptions options)
         {
-            // Determine type based on properties
-            if (sourceElement.TryGetProperty("helm", out _))
-            {
-                return JsonSerializer.Deserialize<HelmSource>(sourceElement.GetRawText(), options);
-            }
-            else if (sourceElement.TryGetProperty("ref", out _))
-            {
-                return JsonSerializer.Deserialize<ReferenceSource>(sourceElement.GetRawText(), options);
-            }
-            else
-            {
-                return JsonSerializer.Deserialize<BasicSource>(sourceElement.GetRawText(), options);
-            }
+            return JsonSerializer.Deserialize<ApplicationSource>(sourceElement.GetRawText(), options);
         }
 
         public override void Write(Utf8JsonWriter writer, ApplicationSpec value, JsonSerializerOptions options)
