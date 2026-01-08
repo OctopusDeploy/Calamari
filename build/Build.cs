@@ -437,24 +437,23 @@ partial class Build : NukeBuild
                            {
                                Log.Information("Packaging {ProjectName}", project.Name);
                                
-                               var outputDirectory = PublishDirectory / project.Name;
+                               var buildDirectory = SourceDirectory / project.Name / "bin" / Configuration;
 
-                               //publish the consolidated package libraries
-                               DotNetPublish(s =>
+                               //Build the consolidated package libraries
+                               DotNetBuild(s =>
                                                  s.SetConfiguration(Configuration)
-                                                  .SetProject(project)
-                                                  .SetOutput(outputDirectory));
+                                                  .SetProjectFile(project));
 
-                               File.Copy(RootDirectory / "global.json", outputDirectory / "global.json");
+                               File.Copy(RootDirectory / "global.json", buildDirectory / "global.json");
 
-                               //sign the output directory
-                               SignDirectory(outputDirectory);
+                               //sign the built directory
+                               SignDirectory(buildDirectory);
 
                                //pack the project
                                DotNetPack(s => s
                                                .SetConfiguration(Configuration)
                                                .SetOutputDirectory(ArtifactsDirectory)
-                                               .SetProject(outputDirectory)
+                                               .SetProject(project)
                                                .EnableNoBuild()
                                                .EnableNoRestore()
                                                .EnableIncludeSource()
