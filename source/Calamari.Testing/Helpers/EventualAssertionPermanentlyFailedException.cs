@@ -26,9 +26,5 @@ namespace Calamari.Testing.Helpers
         public EventualAssertionPermanentlyFailedException(string message, Exception inner) : base(message, inner)
         {
         }
-
-        protected EventualAssertionPermanentlyFailedException(SerializationInfo info, StreamingContext context) : base(info, context)
-        {
-        }
     }
 }

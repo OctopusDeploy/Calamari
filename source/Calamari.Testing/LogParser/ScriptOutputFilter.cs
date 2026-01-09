@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Calamari.Common.Plumbing.ServiceMessages;
+using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.Testing.LogParser
 {
@@ -47,7 +48,7 @@ namespace Calamari.Testing.LogParser
 
         public bool TryGetValue(string name, out TestOutputVariable value)
         {
-            return items.TryGetValue(name, out value);
+            return items.TryGetValue(name, out value!);
         }
 
         public TestOutputVariable this[string name]
@@ -322,7 +323,7 @@ namespace Calamari.Testing.LogParser
                     var deltaVerificationHash = serviceMessage.GetValue(ScriptServiceMessageNames.PackageDeltaVerification.HashAttribute);
                     var deltaVerificationSize = serviceMessage.GetValue(ScriptServiceMessageNames.PackageDeltaVerification.SizeAttribute);
                     DeltaPackageError = serviceMessage.GetValue(ScriptServiceMessageNames.PackageDeltaVerification.Error);
-                    if (deltaVerificationRemotePath != null && deltaVerificationHash != null)
+                    if (deltaVerificationRemotePath != null && deltaVerificationHash != null && deltaVerificationSize != null)
                     {
                         DeltaPackageVerifcation = new DeltaPackage(deltaVerificationRemotePath, deltaVerificationHash, long.Parse(deltaVerificationSize));
                     }
@@ -372,13 +373,15 @@ namespace Calamari.Testing.LogParser
             var actionNames = GetAllFieldValues(
                     typeof(ScriptServiceMessageNames.ScriptOutputActions),
                     x => Attribute.IsDefined(x, typeof(ServiceMessageNameAttribute)))
-                .Select(x => x.ToString());
+                .Select(x => x?.ToString())
+                .WhereNotNull();
+            
             supportedScriptActionNames.AddRange(actionNames);
         }
 
-        static IEnumerable<object> GetAllFieldValues(Type t, Func<FieldInfo, bool> filter)
+        static IEnumerable<object?> GetAllFieldValues(Type t, Func<FieldInfo, bool> filter)
         {
-            var values = new List<object>();
+            var values = new List<object?>();
             var fields = t.GetFields();
             values.AddRange(fields.Where(filter).Select(x => x.GetValue(null)));
 
