@@ -177,16 +177,16 @@ namespace Calamari.ArgoCD.Conventions
                     }
                     else
                     {
-                        return ProcessDirectorySource(application,
+                        return ProcessDirectory(application,
                                                       gitCredentials,
                                                       repositoryFactory,
                                                       deploymentConfig,
-                                                      applicationSource);
+                                                      sourceWithMetadata);
                     }
                 }
                 case SourceType.Helm:
                 {
-                    return WorkOnHelm(applicationFromYaml, application, applicationSource, containsMultipleSources,
+                    return ProcessHelm(applicationFromYaml, application, sourceWithMetadata, containsMultipleSources,
                                       deploymentScope,
                                       gitCredentials,
                                       repositoryFactory,
@@ -195,7 +195,7 @@ namespace Calamari.ArgoCD.Conventions
                 case SourceType.Kustomize:
                 {
                     return ProcessKustomize(application, gitCredentials, repositoryFactory, deploymentConfig,
-                                            applicationSource);
+                                            sourceWithMetadata);
                 }
                 case SourceType.Plugin:
                 {
@@ -217,9 +217,16 @@ namespace Calamari.ArgoCD.Conventions
                                                         Dictionary<string, GitCredentialDto> gitCredentials,
                                                         RepositoryFactory repositoryFactory,
                                                         UpdateArgoCDAppDeploymentConfig deploymentConfig,
-                                                        ApplicationSource applicationSource)
+                                                        ApplicationSourceWithMetadata sourceWithMetadata)
         {
+            var applicationSource = sourceWithMetadata.Source;
+
             ProcessApplicationSourceResult result = new ProcessApplicationSourceResult(applicationSource.RepoUrl);
+            if (applicationSource.Path == null)
+            {
+                log.WarnFormat("Unable to update source '{0}' as a path has not been specified.", sourceWithMetadata.SourceIdentity);
+                return result;
+            }
 
             using (var repository = CreateRepository(gitCredentials, applicationSource, repositoryFactory))
             {
@@ -273,13 +280,20 @@ namespace Calamari.ArgoCD.Conventions
             return result;
         }
 
-        ProcessApplicationSourceResult ProcessDirectorySource(ArgoCDApplicationDto application,
+        ProcessApplicationSourceResult ProcessDirectory(ArgoCDApplicationDto application,
                                                               Dictionary<string, GitCredentialDto> gitCredentials,
                                                               RepositoryFactory repositoryFactory,
                                                               UpdateArgoCDAppDeploymentConfig deploymentConfig,
-                                                              ApplicationSource applicationSource)
+                                                              ApplicationSourceWithMetadata sourceWithMetadata)
         {
+            var applicationSource = sourceWithMetadata.Source;
             ProcessApplicationSourceResult result = new ProcessApplicationSourceResult(applicationSource.RepoUrl);
+            
+            if (applicationSource.Path == null)
+            {
+                log.WarnFormat("Unable to update source '{0}' as a path has not been specified.", sourceWithMetadata.SourceIdentity);
+                return result;
+            }
             
             using (var repository = CreateRepository(gitCredentials, applicationSource, repositoryFactory))
             {
@@ -307,16 +321,23 @@ namespace Calamari.ArgoCD.Conventions
             return result;
         }
 
-        ProcessApplicationSourceResult WorkOnHelm(Application applicationFromYaml,
+        ProcessApplicationSourceResult ProcessHelm(Application applicationFromYaml,
                                                   ArgoCDApplicationDto application,
-                                                  ApplicationSource applicationSource,
+                                                  ApplicationSourceWithMetadata sourceWithMetadata,
                                                   bool containsMultipleSources,
                                                   (ProjectSlug Project, EnvironmentSlug Environment, TenantSlug? Tenant) deploymentScope,
                                                   Dictionary<string, GitCredentialDto> gitCredentials,
                                                   RepositoryFactory repositoryFactory,
                                                   UpdateArgoCDAppDeploymentConfig deploymentConfig)
         {
+            var applicationSource = sourceWithMetadata.Source;
             ProcessApplicationSourceResult result = new ProcessApplicationSourceResult(applicationSource.RepoUrl);
+
+            if (applicationSource.Path == null)
+            {
+                log.WarnFormat("Unable to update source '{0}' as a path has not been specified.", sourceWithMetadata.SourceIdentity);
+                return result;
+            }
 
             var valuesFilesToUpdate = new List<HelmValuesFileImageUpdateTarget>();
             
