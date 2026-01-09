@@ -4,9 +4,9 @@
         <RootNamespace>Calamari.AzureServiceFabric.Tests</RootNamespace>
         <AssemblyName>Calamari.AzureServiceFabric.Tests</AssemblyName>
         <IsPackable>false</IsPackable>
-        <TargetFrameworks>net462;net8.0-windows</TargetFrameworks>
+        <TargetFramework>net8.0-windows</TargetFramework>
         <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
-        <LangVersion>8.0</LangVersion>
+        <LangVersion>default</LangVersion>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     </PropertyGroup>
     <ItemGroup>

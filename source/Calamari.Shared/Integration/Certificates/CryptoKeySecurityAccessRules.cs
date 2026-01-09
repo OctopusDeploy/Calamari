@@ -14,7 +14,6 @@ using static Calamari.Integration.Certificates.WindowsNative.WindowsX509Native;
 
 namespace Calamari.Integration.Certificates
 {
-    #if !NETFX
        [Flags]
     public enum CryptoKeyRights
     {
@@ -254,7 +253,7 @@ namespace Calamari.Integration.Certificates
             return (CryptoKeyRights) accessMask;
         }
     }
-#endif
+    
     public static class CryptoKeySecurityAccessRules
     {
 

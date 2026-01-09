@@ -4,7 +4,8 @@
     <AssemblyName>Calamari.AzureResourceGroup.Tests</AssemblyName>
     <IsPackable>false</IsPackable>
     <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
-    <TargetFrameworks>net462;net8.0</TargetFrameworks>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>default</LangVersion>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
@@ -13,7 +14,6 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.0" />
     <PackageReference Include="Octopus.Dependencies.AzureCLI" Version="2.41.0" GeneratePathProperty="true" />
     <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.41" />
-    <PackageReference Include="System.Configuration.ConfigurationManager" Version="4.7.0" Condition="'$(TargetFramework)' == 'net462'" />
   </ItemGroup>
   <Target Name="GetPackageFiles" AfterTargets="ResolveReferences" DependsOnTargets="RunResolvePackageDependencies">
     <ItemGroup>
