@@ -72,7 +72,6 @@ namespace Calamari.ArgoCD.Conventions
 
                 var instanceLinks = application.InstanceWebUiUrl != null ? new ArgoCDInstanceLinks(application.InstanceWebUiUrl) : null;
 
-                var valuesFilesToUpdate = new List<HelmValuesFileImageUpdateTarget>();
                 var applicationFromYaml = argoCdApplicationManifestParser.ParseManifest(application.Manifest);
 
                 var validationResult = ApplicationValidator.Validate(applicationFromYaml);
@@ -84,107 +83,18 @@ namespace Calamari.ArgoCD.Conventions
                                                        applicationFromYaml.Spec.Sources.Count(s => ScopingAnnotationReader.GetScopeForApplicationSource(s.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources) == deploymentScope)));
 
                 var didUpdateSomething = false;
-                //Only deal with sources without explicit configuration for now to preserve previous behaviour
-                foreach (var applicationSourceWithMetadata in applicationFromYaml.GetSourcesWithMetadata().Where(s => s.Source.Helm == null && s.Source.Ref == null))
+                foreach (var applicationSource in applicationFromYaml.GetSourcesWithMetadata())
                 {
-                    var applicationSource = applicationSourceWithMetadata.Source;
-                    
-                    var annotatedScope = ScopingAnnotationReader.GetScopeForApplicationSource(applicationSource.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources);
-                    log.LogApplicationSourceScopeStatus(annotatedScope, applicationSource.Name.ToApplicationSourceName(), deploymentScope);
-                    if (annotatedScope == deploymentScope)
-                    {
-                        var sourceIdentity = applicationSource.Name.IsNullOrEmpty() ? applicationSource.RepoUrl.ToString() : applicationSource.Name;
-                        if (applicationSourceWithMetadata.SourceType == null)
-                        {
-                            log.WarnFormat("Unable to update source '{0}' as its source type was not detected by Argo CD.", sourceIdentity);
-                            continue;   
-                        }
-                        
-                        if (applicationSource.Path == null)
-                        {
-                            log.WarnFormat("Unable to update source '{0}' as a path has not been specified.", sourceIdentity);
-                            continue;
-                        }
-
-                        using (var repository = CreateRepository(gitCredentials, applicationSource, repositoryFactory))
-                        {
-                            var repoSubPath = Path.Combine(repository.WorkingDirectory, applicationSource.Path!);
-                            log.Verbose($"Reading files from {applicationSource.Path}");
-
-                            var chartFile = HelmDiscovery.TryFindHelmChartFile(fileSystem, Path.Combine(repository.WorkingDirectory, applicationSource.Path!));
-                            if (chartFile != null)
-                            {
-                                HandleAsHelmChart(applicationFromYaml,
-                                                  application,
-                                                  applicationSource,
-                                                  valuesFilesToUpdate,
-                                                  repoSubPath);
-                                continue;
-                            }
-
-                            var (updatedFiles, updatedImages) = UpdateKubernetesYaml(repository.WorkingDirectory, applicationSource.Path!, application.DefaultRegistry, deploymentConfig.ImageReferences);
-                            if (updatedImages.Count > 0)
-                            {
-                                var didPush = PushToRemote(repository,
-                                                           GitReference.CreateFromString(applicationSource.TargetRevision),
-                                                           deploymentConfig.CommitParameters,
-                                                           updatedFiles,
-                                                           updatedImages);
-
-                                didUpdateSomething |= didPush;
-
-                                if (didPush)
-                                {
-                                    newImagesWritten.UnionWith(updatedImages);
-                                    updatedApplicationsWithSources.GetOrAdd(applicationFromYaml.Metadata.Name.ToApplicationName(), _ => new HashSet<ApplicationSourceName?>()).Add(applicationSource.Name.ToApplicationSourceName());
-                                    gitReposUpdated.Add(applicationSource.RepoUrl.AbsoluteUri);
-                                }
-                            }
-                        }
-                    }
+                    didUpdateSomething |= WorkOnSource(applicationSource, applicationFromYaml, containsMultipleSources, deploymentScope,
+                                                      application,
+                                                      gitCredentials,
+                                                      repositoryFactory,
+                                                      deploymentConfig,
+                                                      newImagesWritten,
+                                                      updatedApplicationsWithSources,
+                                                      gitReposUpdated);
                 }
 
-                var explicitHelmSources = new HelmValuesFileUpdateTargetParser(applicationFromYaml, application.DefaultRegistry).GetValuesFilesToUpdate();
-                LogHelmSourceConfigurationProblems(explicitHelmSources.Problems, applicationFromYaml.Metadata.Annotations, containsMultipleSources, deploymentScope);
-
-                valuesFilesToUpdate.AddRange(explicitHelmSources.Targets);
-                foreach (var valuesFileSource in valuesFilesToUpdate)
-                {
-                    var annotatedScope = ScopingAnnotationReader.GetScopeForApplicationSource(valuesFileSource.SourceName, applicationFromYaml.Metadata.Annotations, containsMultipleSources);
-                    log.LogApplicationSourceScopeStatus(annotatedScope, valuesFileSource.SourceName, deploymentScope);
-
-                    if (annotatedScope == deploymentScope)
-                    {
-                        var sourceBase = new ApplicationSource()
-                        {
-                            RepoUrl = valuesFileSource.RepoUrl,
-                            TargetRevision = valuesFileSource.TargetRevision,
-                        };
-                        using (var repository = CreateRepository(gitCredentials, sourceBase, repositoryFactory))
-                        {
-                            var helmUpdateResult = UpdateHelmImageValues(repository.WorkingDirectory,
-                                                                         valuesFileSource,
-                                                                         deploymentConfig.ImageReferences
-                                                                        );
-                            if (helmUpdateResult.ImagesUpdated.Count > 0)
-                            {
-                                var didPush = PushToRemote(repository, GitReference.CreateFromString(valuesFileSource.TargetRevision),
-                                                           deploymentConfig.CommitParameters,
-                                                           new HashSet<string>() { Path.Combine(valuesFileSource.Path, valuesFileSource.FileName) },
-                                                           helmUpdateResult.ImagesUpdated);
-
-                                didUpdateSomething |= didPush;
-
-                                if (didPush)
-                                {
-                                    newImagesWritten.UnionWith(helmUpdateResult.ImagesUpdated);
-                                    updatedApplicationsWithSources.GetOrAdd(applicationFromYaml.Metadata.Name.ToApplicationName(), _ => new HashSet<ApplicationSourceName?>()).Add(valuesFileSource.SourceName);
-                                    gitReposUpdated.Add(valuesFileSource.RepoUrl.ToString());
-                                }
-                            }
-                        }
-                    }
-                }
 
                 //if we have links, use that to generate a link, otherwise just put the name there
                 var linkifiedAppName = instanceLinks != null
@@ -206,6 +116,237 @@ namespace Calamari.ArgoCD.Conventions
                                                 updatedApplicationsWithSources.Select(kv => (kv.Key, kv.Value.Count)).ToArray(),
                                                 newImagesWritten.Count
                                                );
+        }
+
+        bool WorkOnSource(ApplicationSourceWithMetadata sourceWithMetadata,
+                          Application applicationFromYaml,
+                          bool containsMultipleSources,
+                          (ProjectSlug Project, EnvironmentSlug Environment, TenantSlug? Tenant) deploymentScope,
+                          ArgoCDApplicationDto application,
+                          Dictionary<string, GitCredentialDto> gitCredentials,
+                          RepositoryFactory repositoryFactory,
+                          UpdateArgoCDAppDeploymentConfig deploymentConfig,
+                          HashSet<string> newImagesWritten,
+                          Dictionary<ApplicationName, HashSet<ApplicationSourceName?>> updatedApplicationsWithSources,
+                          HashSet<string> gitReposUpdated)
+        {
+            var applicationSource = sourceWithMetadata.Source;
+            var annotatedScope = ScopingAnnotationReader.GetScopeForApplicationSource(applicationSource.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources);
+            log.LogApplicationSourceScopeStatus(annotatedScope, applicationSource.Name.ToApplicationSourceName(), deploymentScope);
+            if (annotatedScope == deploymentScope)
+            {
+                var sourceIdentity = applicationSource.Name.IsNullOrEmpty() ? applicationSource.RepoUrl.ToString() : applicationSource.Name;
+                if (sourceWithMetadata.SourceType == null)
+                {
+                    log.WarnFormat("Unable to update source '{0}' as its source type was not detected by Argo CD.", sourceIdentity);
+                    return false;
+                }
+
+                switch (sourceWithMetadata.SourceType)
+                {
+                    case SourceType.Directory:
+                    {
+                        if (applicationSource.Ref != null)
+                        {
+                            bool didUpdateSomething = false;
+
+                            var helmTargetsForRefSource = new HelmValuesFileUpdateTargetParser(applicationFromYaml, application.DefaultRegistry)
+                                .GetHelmTargetsForRefSource(applicationSource);
+
+                            LogHelmSourceConfigurationProblems(helmTargetsForRefSource.Problems, applicationFromYaml.Metadata.Annotations, containsMultipleSources, deploymentScope);
+
+                            foreach (var valuesFileSource in helmTargetsForRefSource.Targets)
+                            {
+                                didUpdateSomething |= WorkOnHelmUpdateTarget(applicationFromYaml,
+                                                                          gitCredentials,
+                                                                          repositoryFactory,
+                                                                          deploymentConfig,
+                                                                          newImagesWritten,
+                                                                          updatedApplicationsWithSources,
+                                                                          gitReposUpdated,
+                                                                          valuesFileSource);
+                            }
+
+                            return didUpdateSomething;
+                        }
+                        else
+                        {
+                            using (var repository = CreateRepository(gitCredentials, applicationSource, repositoryFactory))
+                            {
+                                var repoSubPath = Path.Combine(repository.WorkingDirectory, applicationSource.Path!);
+                                log.Verbose($"Reading files from {applicationSource.Path}");
+
+                                var (updatedFiles, updatedImages) = UpdateKubernetesYaml(repository.WorkingDirectory, applicationSource.Path!, application.DefaultRegistry, deploymentConfig.ImageReferences);
+                                if (updatedImages.Count > 0)
+                                {
+                                    var didPush = PushToRemote(repository,
+                                                               GitReference.CreateFromString(applicationSource.TargetRevision),
+                                                               deploymentConfig.CommitParameters,
+                                                               updatedFiles,
+                                                               updatedImages);
+
+                                    if (didPush)
+                                    {
+                                        newImagesWritten.UnionWith(updatedImages);
+                                        updatedApplicationsWithSources.GetOrAdd(applicationFromYaml.Metadata.Name.ToApplicationName(), _ => new HashSet<ApplicationSourceName?>()).Add(applicationSource.Name.ToApplicationSourceName());
+                                        gitReposUpdated.Add(applicationSource.RepoUrl.AbsoluteUri);
+                                    }
+                                    
+                                    return didPush;
+                                }
+                            }
+                        }
+
+                        return false;
+                    }
+                    case SourceType.Helm:
+                    {
+                        return WorkOnHelm(applicationFromYaml, application, applicationSource, containsMultipleSources,
+                                   deploymentScope,
+                                   gitCredentials,
+                                   repositoryFactory,
+                                   deploymentConfig,
+                                   newImagesWritten,
+                                   updatedApplicationsWithSources,
+                                   gitReposUpdated);
+                    }
+                    case SourceType.Kustomize:
+                    {
+                        using (var repository = CreateRepository(gitCredentials, applicationSource, repositoryFactory))
+                        {
+                            var repoSubPath = Path.Combine(repository.WorkingDirectory, applicationSource.Path!);
+                            log.Verbose($"Reading files from {applicationSource.Path}");
+                            
+                            var (updatedFiles, updatedImages) = UpdateKubernetesYaml(repository.WorkingDirectory, applicationSource.Path!, application.DefaultRegistry, deploymentConfig.ImageReferences);
+                            if (updatedImages.Count > 0)
+                            {
+                                var didPush = PushToRemote(repository,
+                                                           GitReference.CreateFromString(applicationSource.TargetRevision),
+                                                           deploymentConfig.CommitParameters,
+                                                           updatedFiles,
+                                                           updatedImages);
+
+                                if (didPush)
+                                {
+                                    newImagesWritten.UnionWith(updatedImages);
+                                    updatedApplicationsWithSources.GetOrAdd(applicationFromYaml.Metadata.Name.ToApplicationName(), _ => new HashSet<ApplicationSourceName?>()).Add(applicationSource.Name.ToApplicationSourceName());
+                                    gitReposUpdated.Add(applicationSource.RepoUrl.AbsoluteUri);
+                                }
+                                
+                                return didPush;
+                            }
+                        }
+
+                        return false;
+                    }
+                    case SourceType.Plugin:
+                    {
+                        log.Warn("Can't deal with Plugin");
+                        return false;
+                    }
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+
+                // if (applicationSource.Path == null)
+                // {
+                //     log.WarnFormat("Unable to update source '{0}' as a path has not been specified.", sourceIdentity);
+                //     return false;
+                // }
+            }
+
+            return false;
+        }
+
+        bool WorkOnHelm(Application applicationFromYaml,
+                        ArgoCDApplicationDto application,
+                        ApplicationSource applicationSource,
+                        bool containsMultipleSources,
+                        (ProjectSlug Project, EnvironmentSlug Environment, TenantSlug? Tenant) deploymentScope,
+                        Dictionary<string, GitCredentialDto> gitCredentials,
+                        RepositoryFactory repositoryFactory,
+                        UpdateArgoCDAppDeploymentConfig deploymentConfig,
+                        HashSet<string> newImagesWritten,
+                        Dictionary<ApplicationName, HashSet<ApplicationSourceName?>> updatedApplicationsWithSources,
+                        HashSet<string> gitReposUpdated)
+        {
+            bool didUpdateSomething = false;
+
+            var valuesFilesToUpdate = new List<HelmValuesFileImageUpdateTarget>();
+            
+            //Add implicit sources
+            using (var repository = CreateRepository(gitCredentials, applicationSource, repositoryFactory))
+            {
+                var chartFile = HelmDiscovery.TryFindHelmChartFile(fileSystem, Path.Combine(repository.WorkingDirectory, applicationSource.Path!));
+                if (chartFile != null)
+                {
+                    var repoSubPath = Path.Combine(repository.WorkingDirectory, applicationSource.Path!);
+
+                    HandleAsHelmChart(applicationFromYaml,
+                                      application,
+                                      applicationSource,
+                                      valuesFilesToUpdate,
+                                      repoSubPath);
+                }
+            }
+            
+            var explicitHelmSources = new HelmValuesFileUpdateTargetParser(applicationFromYaml, application.DefaultRegistry).GetValuesFilesToUpdate(applicationSource);
+            LogHelmSourceConfigurationProblems(explicitHelmSources.Problems, applicationFromYaml.Metadata.Annotations, containsMultipleSources, deploymentScope);
+
+            valuesFilesToUpdate.AddRange(explicitHelmSources.Targets);
+            foreach (var valuesFileSource in valuesFilesToUpdate)
+            {
+                didUpdateSomething |= WorkOnHelmUpdateTarget(applicationFromYaml, gitCredentials, repositoryFactory, deploymentConfig,
+                                                            newImagesWritten,
+                                                            updatedApplicationsWithSources,
+                                                            gitReposUpdated,
+                                                            valuesFileSource);
+            }
+
+          
+
+            return didUpdateSomething;
+        }
+
+        bool WorkOnHelmUpdateTarget(Application applicationFromYaml,
+                                    Dictionary<string, GitCredentialDto> gitCredentials,
+                                    RepositoryFactory repositoryFactory,
+                                    UpdateArgoCDAppDeploymentConfig deploymentConfig,
+                                    HashSet<string> newImagesWritten,
+                                    Dictionary<ApplicationName, HashSet<ApplicationSourceName?>> updatedApplicationsWithSources,
+                                    HashSet<string> gitReposUpdated,
+                                    HelmValuesFileImageUpdateTarget valuesFileSource)
+        {
+            var sourceBase = new ApplicationSource()
+            {
+                RepoUrl = valuesFileSource.RepoUrl,
+                TargetRevision = valuesFileSource.TargetRevision,
+            };
+            using (var repository = CreateRepository(gitCredentials, sourceBase, repositoryFactory))
+            {
+                var helmUpdateResult = UpdateHelmImageValues(repository.WorkingDirectory,
+                                                             valuesFileSource,
+                                                             deploymentConfig.ImageReferences
+                                                            );
+                if (helmUpdateResult.ImagesUpdated.Count > 0)
+                {
+                    var didPush = PushToRemote(repository, GitReference.CreateFromString(valuesFileSource.TargetRevision),
+                                               deploymentConfig.CommitParameters,
+                                               new HashSet<string>() { Path.Combine(valuesFileSource.Path, valuesFileSource.FileName) },
+                                               helmUpdateResult.ImagesUpdated);
+
+                    if (didPush)
+                    {
+                        newImagesWritten.UnionWith(helmUpdateResult.ImagesUpdated);
+                        updatedApplicationsWithSources.GetOrAdd(applicationFromYaml.Metadata.Name.ToApplicationName(), _ => new HashSet<ApplicationSourceName?>()).Add(valuesFileSource.SourceName);
+                        gitReposUpdated.Add(valuesFileSource.RepoUrl.ToString());
+                    }
+
+                    return didPush;
+                }
+            }
+
+            return false;
         }
 
         void LogHelmSourceConfigurationProblems(IReadOnlyCollection<HelmSourceConfigurationProblem> helmSourceConfigurationProblems,
@@ -310,6 +451,11 @@ namespace Calamari.ArgoCD.Conventions
                 log.Verbose($"Found {filesToUpdate.Count} yaml files to process");
             }
 
+            return Update(rootPath, imagesToUpdate, filesToUpdate, imageReplacerFactory);
+        }
+
+        (HashSet<string>, HashSet<string>) Update(string rootPath, List<ContainerImageReference> imagesToUpdate, HashSet<string> filesToUpdate, Func<string, IContainerImageReplacer> imageReplacerFactory)
+        {
             var updatedFiles = new HashSet<string>();
             var updatedImages = new HashSet<string>();
             foreach (var file in filesToUpdate)

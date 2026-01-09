@@ -30,9 +30,9 @@ namespace Calamari.ArgoCD.Helm
             this.defaultRegistry = defaultRegistry;
         }
 
-        public (IReadOnlyCollection<HelmValuesFileImageUpdateTarget> Targets, IReadOnlyCollection<HelmSourceConfigurationProblem> Problems) GetValuesFilesToUpdate()
+        public (IReadOnlyCollection<HelmValuesFileImageUpdateTarget> Targets, IReadOnlyCollection<HelmSourceConfigurationProblem> Problems) GetValuesFilesToUpdate(ApplicationSource helmSource)
         {
-            var results = helmSources
+            var results = new [] {helmSource}
                               .Where(hs => hs.Helm?.ValueFiles.Count > 0)
                               .Select(ExtractValuesFilesForSource).ToArray();
             
@@ -97,9 +97,54 @@ namespace Calamari.ArgoCD.Helm
                                                         definedPathsForSource), null);
         }
 
+        public (IReadOnlyCollection<HelmValuesFileImageUpdateTarget> Targets, IReadOnlyCollection<HelmSourceConfigurationProblem> Problems) GetHelmTargetsForRefSource(ApplicationSource refSource)
+        {
+            List<HelmValuesFileImageUpdateTarget> targets = new List<HelmValuesFileImageUpdateTarget>();
+            List<HelmSourceConfigurationProblem> problems = new List<HelmSourceConfigurationProblem>();
+
+            foreach (var helmSource in helmSources)
+            {
+                var definedPathsForSource = ScopingAnnotationReader.GetImageReplacePathsForApplicationSource(helmSource.Name.ToApplicationSourceName(), annotations, containsMultipleSources);
+
+                if (helmSource.Helm != null)
+                {
+                    foreach (var valueFile in helmSource.Helm.ValueFiles)
+                    {
+                        if (ReferencesRef(valueFile, refSource.Ref!))
+                        {
+                            if (!definedPathsForSource.Any())
+                            {
+                                problems.Add(
+                                             new HelmSourceIsMissingImagePathAnnotation(helmSource.Name.ToApplicationSourceName(), helmSource.RepoUrl, refSource.Name.ToApplicationSourceName())
+                                            );
+                            }
+
+                            var relativeFile = valueFile[(valueFile.IndexOf('/') + 1)..];
+
+                            targets.Add(new HelmValuesFileImageUpdateTarget(appName,
+                                                                            refSource.Name.ToApplicationSourceName(),
+                                                                            defaultRegistry,
+                                                                            ArgoCDConstants.RefSourcePath,
+                                                                            refSource.RepoUrl,
+                                                                            refSource.TargetRevision,
+                                                                            relativeFile,
+                                                                            definedPathsForSource));
+                        }
+                    }
+                }
+            }
+
+            return (targets, problems);
+        }
+
         static string GetRefFromFilePath(string filePath)
         {
             return filePath.TrimStart('$')[..(filePath.IndexOf('/') - 1)];
+        }
+        
+        static bool ReferencesRef(string filePath, string refName)
+        {
+            return filePath.StartsWith($"${refName}/");
         }
     }
 }

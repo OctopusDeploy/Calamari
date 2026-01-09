@@ -326,7 +326,7 @@ image:
                 },
                 Status = new ApplicationStatus()
                 {
-                    SourceTypes = new List<string>(new[] { SourceTypeConstants.Directory })
+                    SourceTypes = new List<string>(new[] { SourceTypeConstants.Helm })
                 }
             };
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())

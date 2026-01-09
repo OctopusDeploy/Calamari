@@ -100,7 +100,6 @@ namespace Calamari.ArgoCD.Conventions
             log.InfoFormat("Processing application {0}", application.Name);
 
             ProcessApplicationResult result = new ProcessApplicationResult(application.Name.ToApplicationName());
-            var instanceLinks = application.InstanceWebUiUrl != null ? new ArgoCDInstanceLinks(application.InstanceWebUiUrl) : null;
 
             var applicationFromYaml = argoCdApplicationManifestParser.ParseManifest(application.Manifest);
             var containsMultipleSources = applicationFromYaml.Spec.Sources.Count > 1;
@@ -136,6 +135,7 @@ namespace Calamari.ArgoCD.Conventions
             result.GitReposUpdated.AddRange(processResults.Where(r => r.Updated).Select(r => r.RepositoryUrl.AbsoluteUri));
                 
             //if we have links, use that to generate a link, otherwise just put the name there
+            var instanceLinks = application.InstanceWebUiUrl != null ? new ArgoCDInstanceLinks(application.InstanceWebUiUrl) : null;
             var linkifiedAppName = instanceLinks != null
                 ? log.FormatLink(instanceLinks.ApplicationDetails(applicationName, applicationFromYaml.Metadata.Namespace), applicationName)
                 : applicationName;
