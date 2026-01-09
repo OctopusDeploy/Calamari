@@ -132,7 +132,7 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
             var commandLineRunner = new CommandLineRunner(log, variables);
             var command = new DeployJavaArchiveCommand(
                 log,
-                new ScriptEngine(Enumerable.Empty<IScriptWrapper>(), log, new DotnetScriptCompilationWarningOutputSink()),
+                new ScriptEngine(Enumerable.Empty<IScriptWrapper>(), log),
                 variables,
                 fileSystem,
                 commandLineRunner,
