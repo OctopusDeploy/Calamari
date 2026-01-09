@@ -2,14 +2,14 @@
     <PropertyGroup>
         <AssemblyName>Calamari.AzureScripting</AssemblyName>
         <RootNamespace>Calamari.AzureScripting</RootNamespace>
-        <LangVersion>8</LangVersion>
+        <LangVersion>default</LangVersion>
         <Nullable>enable</Nullable>
         <OutputType>Exe</OutputType>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
         <IsPackable>true</IsPackable>
         <ValidateExecutableReferencesMatchSelfContained>false</ValidateExecutableReferencesMatchSelfContained>
-        <TargetFrameworks>net462;net8.0</TargetFrameworks>
+        <TargetFramework>net8.0</TargetFramework>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     </PropertyGroup>
 
@@ -17,18 +17,15 @@
         <EmbeddedResource Include="Scripts\*" />
     </ItemGroup>
 
-    <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
+    <ItemGroup>
         <PackageReference Include="System.IO.FileSystem.AccessControl" Version="5.0.0" />
         <PackageReference Include="System.Security.Principal.Windows" Version="5.0.0" />
+        <PackageReference Include="Microsoft.Identity.Client" Version="4.66.2" />
     </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\Calamari.Scripting\Calamari.Scripting.csproj" />
         <ProjectReference Include="..\Calamari.CloudAccounts\Calamari.CloudAccounts.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <PackageReference Include="Microsoft.Identity.Client" Version="4.66.2" />
     </ItemGroup>
 
     <!-- Extract dotnet-script zip files to support C# script execution -->

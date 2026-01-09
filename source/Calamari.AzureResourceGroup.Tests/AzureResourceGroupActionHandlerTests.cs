@@ -1,15 +1,11 @@
 using System;
 using System.IO;
-using System.Threading;
 using System.Threading.Tasks;
-using Azure;
-using Azure.Core;
-using Azure.ResourceManager;
-using Azure.ResourceManager.Resources;
-using Calamari.Azure;
-using Calamari.CloudAccounts;
+using Calamari.AzureResourceGroup.Tests.Attributes;
+using Calamari.AzureResourceGroup.Tests.Support;
 using Calamari.Common.Features.Deployment;
 using Calamari.Common.Features.Scripts;
+using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Testing;
 using Calamari.Testing.Azure;
@@ -17,86 +13,18 @@ using Calamari.Testing.Helpers;
 using Calamari.Testing.Requirements;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
+using Xunit.Sdk;
 
 // ReSharper disable MethodHasAsyncOverload - File.ReadAllTextAsync does not exist for .net framework targets
 
 namespace Calamari.AzureResourceGroup.Tests
 {
-    [TestFixture]
-    class AzureResourceGroupActionHandlerFixture
+    [Collection(nameof(AzureResourceGroupFixture))]
+    public class AzureResourceGroupActionHandlerTests(AzureResourceGroupFixture resourceGroupFixture): CalamariTest
     {
-        string clientId;
-        string clientSecret;
-        string tenantId;
-        string subscriptionId;
-        static readonly CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
-        readonly CancellationToken cancellationToken = CancellationTokenSource.Token;
+        readonly AzureResourceGroupFixture resourceGroupFixture = resourceGroupFixture;
 
-        ArmClient armClient;
-        SubscriptionResource subscriptionResource;
-        ResourceGroupResource resourceGroupResource;
-        string resourceGroupName;
-
-        [OneTimeSetUp]
-        public async Task Setup()
-        {
-            var resourceManagementEndpointBaseUri =
-                Environment.GetEnvironmentVariable(AccountVariables.ResourceManagementEndPoint) ?? DefaultVariables.ResourceManagementEndpoint;
-            var activeDirectoryEndpointBaseUri =
-                Environment.GetEnvironmentVariable(AccountVariables.ActiveDirectoryEndPoint) ?? DefaultVariables.ActiveDirectoryEndpoint;
-
-            clientId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionClientId, cancellationToken);
-            clientSecret = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionPassword, cancellationToken);
-            tenantId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionTenantId, cancellationToken);
-            subscriptionId = await ExternalVariables.Get(ExternalVariable.AzureSubscriptionId, cancellationToken);
-
-            var resourceGroupLocation = Environment.GetEnvironmentVariable("AZURE_NEW_RESOURCE_REGION") ?? RandomAzureRegion.GetRandomRegionWithExclusions();
-
-            resourceGroupName = AzureTestResourceHelpers.GetResourceGroupName();
-
-            var servicePrincipalAccount = new AzureServicePrincipalAccount(subscriptionId,
-                                                                           clientId,
-                                                                           tenantId,
-                                                                           clientSecret,
-                                                                           "AzureGlobalCloud",
-                                                                           resourceManagementEndpointBaseUri,
-                                                                           activeDirectoryEndpointBaseUri);
-
-            armClient = servicePrincipalAccount.CreateArmClient(retryOptions =>
-                                                                {
-                                                                    retryOptions.MaxRetries = 5;
-                                                                    retryOptions.Mode = RetryMode.Exponential;
-                                                                    retryOptions.Delay = TimeSpan.FromSeconds(2);
-                                                                    retryOptions.NetworkTimeout = TimeSpan.FromSeconds(200);
-                                                                });
-
-            //create the resource group
-            subscriptionResource = armClient.GetSubscriptionResource(SubscriptionResource.CreateResourceIdentifier(subscriptionId));
-
-            var response = await subscriptionResource
-                                 .GetResourceGroups()
-                                 .CreateOrUpdateAsync(WaitUntil.Completed,
-                                                      resourceGroupName,
-                                                      new ResourceGroupData(new AzureLocation(resourceGroupLocation))
-                                                      {
-                                                          Tags =
-                                                          {
-                                                              [AzureTestResourceHelpers.ResourceGroupTags.LifetimeInDaysKey] = AzureTestResourceHelpers.ResourceGroupTags.LifetimeInDaysValue,
-                                                              [AzureTestResourceHelpers.ResourceGroupTags.SourceKey] = AzureTestResourceHelpers.ResourceGroupTags.SourceValue
-                                                          }
-                                                      });
-
-            resourceGroupResource = response.Value;
-        }
-
-        [OneTimeTearDown]
-        public async Task Cleanup()
-        {
-            await armClient.GetResourceGroupResource(ResourceGroupResource.CreateResourceIdentifier(subscriptionId, resourceGroupName))
-                           .DeleteAsync(WaitUntil.Started);
-        }
-
-        [Test]
+        [Fact]
         public async Task Deploy_with_template_in_package()
         {
             var packagePath = TestEnvironment.GetTestPath("Packages", "AzureResourceGroup");
@@ -113,7 +41,7 @@ namespace Calamari.AzureResourceGroup.Tests
                                     .Execute();
         }
 
-        [Test]
+        [Fact]
         public async Task Deploy_with_template_in_git_repository()
         {
             // For the purposes of ARM templates in Calamari, a template in a Git Repository
@@ -134,7 +62,7 @@ namespace Calamari.AzureResourceGroup.Tests
                                     .Execute();
         }
 
-        [Test]
+        [Fact]
         public async Task Deploy_with_template_inline()
         {
             var packagePath = TestEnvironment.GetTestPath("Packages", "AzureResourceGroup");
@@ -158,11 +86,15 @@ namespace Calamari.AzureResourceGroup.Tests
                                     .Execute();
         }
 
-        [Test]
-        [WindowsTest]
-        [RequiresPowerShell5OrAbove]
+        [Fact]
+        [TestPlatforms(TestCategory.CompatibleOS.OnlyWindows)]
         public async Task Deploy_Ensure_Tools_Are_Configured()
         {
+            if (ScriptingEnvironment.SafelyGetPowerShellVersion().Major < 5)
+            {
+                throw SkipException.ForSkip("This test requires PowerShell 5 or above.");
+            }
+            
             var packagePath = TestEnvironment.GetTestPath("Packages", "AzureResourceGroup");
             var templateFileContent = File.ReadAllText(Path.Combine(packagePath, "azure_website_template.json"));
             var paramsFileContent = File.ReadAllText(Path.Combine(packagePath, "azure_website_params.json"));
@@ -192,19 +124,19 @@ az group list";
                                     .Execute();
         }
 
-        private void AddDefaults(CommandTestBuilderContext context)
+        void AddDefaults(CommandTestBuilderContext context)
         {
             context.Variables.Add("Octopus.Account.AccountType", "AzureServicePrincipal");
-            context.Variables.Add(AzureAccountVariables.SubscriptionId, subscriptionId);
-            context.Variables.Add(AzureAccountVariables.TenantId, tenantId);
-            context.Variables.Add(AzureAccountVariables.ClientId, clientId);
-            context.Variables.Add(AzureAccountVariables.Password, clientSecret);
-            context.Variables.Add(SpecialVariables.Action.Azure.ResourceGroupName, resourceGroupName);
-            context.Variables.Add("ResourceGroup", resourceGroupName);
+            context.Variables.Add(AzureAccountVariables.SubscriptionId, resourceGroupFixture.SubscriptionId);
+            context.Variables.Add(AzureAccountVariables.TenantId, resourceGroupFixture.TenantId);
+            context.Variables.Add(AzureAccountVariables.ClientId, resourceGroupFixture.ClientId);
+            context.Variables.Add(AzureAccountVariables.Password, resourceGroupFixture.ClientSecret);
+            context.Variables.Add(SpecialVariables.Action.Azure.ResourceGroupName, resourceGroupFixture.ResourceGroupName);
+            context.Variables.Add("ResourceGroup", resourceGroupFixture.ResourceGroupName);
             context.Variables.Add("SKU", "Shared");
             //as we have a single resource group, we need to have unique web app name per test
             context.Variables.Add("WebSite", $"Calamari-{Guid.NewGuid():N}");
-            context.Variables.Add("Location", resourceGroupResource.Data.Location);
+            context.Variables.Add("Location", resourceGroupFixture.ResourceGroupResource.Data.Location);
             //this is a storage account prefix, so just make it as random as possible
             //The names of the storage accounts are a max of 7 chars, so we generate a prefix of 17 chars (storage accounts have a max of 24)
             context.Variables.Add("AccountPrefix", AzureTestResourceHelpers.RandomName(length: 17));

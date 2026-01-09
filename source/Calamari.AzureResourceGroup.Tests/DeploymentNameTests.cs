@@ -1,42 +1,43 @@
-﻿using NUnit.Framework;
-
-namespace Calamari.AzureResourceGroup.Tests
-{
-    [TestFixture]
-    public class DeploymentNameFixture
+﻿namespace Calamari.AzureResourceGroup.Tests
+{ 
+    public class DeploymentNameTests
     {
-        [Test]
+        [Fact]
         public void GivenShortStepName_Then_Can_Generate_Deployment_Name_Appropriately()
         {
             // Given / When
             var deploymentName = DeploymentName.FromStepName("StepA");
 
             // Then
-            Assert.That(deploymentName, Has.Length.LessThanOrEqualTo(64));
-            Assert.That(deploymentName, Has.Length.EqualTo(38));
-            Assert.That(deploymentName, Does.StartWith("stepa-"));
+            deploymentName.Should()
+                          .HaveLength(38)
+                          .And
+                          .StartWith("stepa-");
         }
 
-        [Test]
+        [Fact]
         public void GivenNormalStepName_Then_Can_Generate_Deployment_Name_Appropriately()
         {
             // Given / When
             var deploymentName = DeploymentName.FromStepName("1234567890123456789012345678901"); // 31 chars
 
             // Then
-            Assert.That(deploymentName, Has.Length.EqualTo(64));
-            Assert.That(deploymentName, Does.StartWith("1234567890123456789012345678901-"));
+            deploymentName.Should().HaveLength(64)
+                          .And
+                          .StartWith("1234567890123456789012345678901-");
         }
 
-        [Test]
+        [Fact]
         public void GivenLongStepName_Then_Can_Generate_Deployment_Name_Appropriately()
         {
             // Given / When
             var deploymentName = DeploymentName.FromStepName("1234567890123456789012345678901234567890"); // 40 chars
 
             // Then
-            Assert.That(deploymentName, Has.Length.EqualTo(64));
-            Assert.That(deploymentName, Does.StartWith("1234567890123456789012345678901-")); // 27 Characters Allow
+            deploymentName.Should()
+                          .HaveLength(64)
+                          .And
+                          .StartWith("1234567890123456789012345678901-"); // 27 Characters Allow
         }
     }
 }
