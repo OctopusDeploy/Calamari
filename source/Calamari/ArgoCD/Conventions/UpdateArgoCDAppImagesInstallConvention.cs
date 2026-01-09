@@ -156,10 +156,9 @@ namespace Calamari.ArgoCD.Conventions
             if (annotatedScope != deploymentScope)
                 return result;
             
-            var sourceIdentity = applicationSource.Name.IsNullOrEmpty() ? applicationSource.RepoUrl.ToString() : applicationSource.Name;
             if (sourceWithMetadata.SourceType == null)
             {
-                log.WarnFormat("Unable to update source '{0}' as its source type was not detected by Argo CD.", sourceIdentity);
+                log.WarnFormat("Unable to update source '{0}' as its source type was not detected by Argo CD.", sourceWithMetadata.SourceIdentity);
                 return result;
             }
 
@@ -173,7 +172,7 @@ namespace Calamari.ArgoCD.Conventions
                                           gitCredentials,
                                           repositoryFactory,
                                           deploymentConfig,
-                                          applicationSource);
+                                          sourceWithMetadata);
                     }
                     else
                     {
@@ -205,12 +204,6 @@ namespace Calamari.ArgoCD.Conventions
                 default:
                     throw new ArgumentOutOfRangeException();
             }
-
-            // if (applicationSource.Path == null)
-            // {
-            //     log.WarnFormat("Unable to update source '{0}' as a path has not been specified.", sourceIdentity);
-            //     return false;
-            // }
         }
 
         ProcessApplicationSourceResult ProcessKustomize(ArgoCDApplicationDto application,
@@ -259,10 +252,17 @@ namespace Calamari.ArgoCD.Conventions
                                                   Dictionary<string, GitCredentialDto> gitCredentials,
                                                   RepositoryFactory repositoryFactory,
                                                   UpdateArgoCDAppDeploymentConfig deploymentConfig,
-                                                  ApplicationSource applicationSource)
+                                                  ApplicationSourceWithMetadata sourceWithMetadata)
         {
-            ProcessApplicationSourceResult result = new ProcessApplicationSourceResult(applicationSource.RepoUrl);
+            var applicationSource = sourceWithMetadata.Source;
 
+            ProcessApplicationSourceResult result = new ProcessApplicationSourceResult(applicationSource.RepoUrl);
+            if (applicationSource.Path != null)
+            {
+                log.WarnFormat("This source '{0}' contains a Ref, only referenced files will be updated. Please create another source with the same URL if you wish to update files under the path.", sourceWithMetadata.SourceIdentity);
+                return result;
+            }
+            
             var helmTargetsForRefSource = new HelmValuesFileUpdateTargetParser(applicationFromYaml, application.DefaultRegistry)
                 .GetHelmTargetsForRefSource(applicationSource);
 
@@ -270,8 +270,7 @@ namespace Calamari.ArgoCD.Conventions
 
             foreach (var valuesFileSource in helmTargetsForRefSource.Targets)
             {
-                result.UpdatedImages.AddRange(WorkOnHelmUpdateTarget(applicationFromYaml,
-                                                             gitCredentials,
+                result.UpdatedImages.AddRange(ProcessHelmUpdateTarget(gitCredentials,
                                                              repositoryFactory,
                                                              deploymentConfig,
                                                              valuesFileSource));
@@ -363,18 +362,17 @@ namespace Calamari.ArgoCD.Conventions
             valuesFilesToUpdate.AddRange(explicitHelmSources.Targets);
             foreach (var valuesFileSource in valuesFilesToUpdate)
             {
-                result.UpdatedImages.AddRange(WorkOnHelmUpdateTarget(applicationFromYaml, gitCredentials, repositoryFactory, deploymentConfig,
+                result.UpdatedImages.AddRange(ProcessHelmUpdateTarget(gitCredentials, repositoryFactory, deploymentConfig,
                                                                      valuesFileSource));
             }
 
             return result;
         }
 
-        HashSet<string> WorkOnHelmUpdateTarget(Application applicationFromYaml,
-                                    Dictionary<string, GitCredentialDto> gitCredentials,
-                                    RepositoryFactory repositoryFactory,
-                                    UpdateArgoCDAppDeploymentConfig deploymentConfig,
-                                    HelmValuesFileImageUpdateTarget valuesFileSource)
+        HashSet<string> ProcessHelmUpdateTarget(Dictionary<string, GitCredentialDto> gitCredentials,
+                                               RepositoryFactory repositoryFactory,
+                                               UpdateArgoCDAppDeploymentConfig deploymentConfig,
+                                               HelmValuesFileImageUpdateTarget valuesFileSource)
         {
             var sourceBase = new ApplicationSource()
             {
