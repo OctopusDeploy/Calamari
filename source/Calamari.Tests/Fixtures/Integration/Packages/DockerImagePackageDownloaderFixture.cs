@@ -260,7 +260,7 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         static DockerImagePackageDownloader GetDownloader(ILog log)
         {
             var runner = new CommandLineRunner(log, new CalamariVariables());
-            return new DockerImagePackageDownloader(new ScriptEngine(Enumerable.Empty<IScriptWrapper>(), log, new DotnetScriptCompilationWarningOutputSink()), CalamariPhysicalFileSystem.GetPhysicalFileSystem(), runner, new CalamariVariables(), log, new FeedLoginDetailsProviderFactory());
+            return new DockerImagePackageDownloader(new ScriptEngine(Enumerable.Empty<IScriptWrapper>(), log), CalamariPhysicalFileSystem.GetPhysicalFileSystem(), runner, new CalamariVariables(), log, new FeedLoginDetailsProviderFactory());
         }
     }
 }
