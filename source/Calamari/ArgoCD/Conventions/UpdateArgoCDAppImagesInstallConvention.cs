@@ -226,7 +226,7 @@ namespace Calamari.ArgoCD.Conventions
                 var repoSubPath = Path.Combine(repository.WorkingDirectory, applicationSource.Path!);
                 log.Verbose($"Reading files from {applicationSource.Path}");
                             
-                var (updatedFiles, updatedImages) = UpdateKubernetesYaml(repository.WorkingDirectory, applicationSource.Path!, application.DefaultRegistry, deploymentConfig.ImageReferences);
+                var (updatedFiles, updatedImages) = UpdateKustomizeYaml(repository.WorkingDirectory, applicationSource.Path!, application.DefaultRegistry, deploymentConfig.ImageReferences);
                 if (updatedImages.Count > 0)
                 {
                     var didPush = PushToRemote(repository,
@@ -343,16 +343,16 @@ namespace Calamari.ArgoCD.Conventions
             //Add implicit sources
             using (var repository = CreateRepository(gitCredentials, applicationSource, repositoryFactory))
             {
-                var chartFile = HelmDiscovery.TryFindHelmChartFile(fileSystem, Path.Combine(repository.WorkingDirectory, applicationSource.Path!));
-                if (chartFile != null)
+                var repoSubPath = Path.Combine(repository.WorkingDirectory, applicationSource.Path!);
+                var implicitValuesFile = HelmDiscovery.TryFindValuesFile(fileSystem, repoSubPath);
+                if (implicitValuesFile != null)
                 {
-                    var repoSubPath = Path.Combine(repository.WorkingDirectory, applicationSource.Path!);
-
                     HandleAsHelmChart(applicationFromYaml,
                                       application,
                                       applicationSource,
                                       valuesFilesToUpdate,
-                                      repoSubPath);
+                                      repoSubPath,
+                                      implicitValuesFile);
                 }
             }
             
@@ -455,7 +455,8 @@ namespace Calamari.ArgoCD.Conventions
                                ArgoCDApplicationDto application,
                                ApplicationSource applicationSource,
                                List<HelmValuesFileImageUpdateTarget> valuesFilesToUpdate,
-                               string repoSubPath)
+                               string repoSubPath,
+                               string valuesFilename)
         {
             var imageReplacePaths = ScopingAnnotationReader.GetImageReplacePathsForApplicationSource(
                                                                                                                applicationSource.Name.ToApplicationSourceName(), 
@@ -475,12 +476,26 @@ namespace Calamari.ArgoCD.Conventions
                                                                             applicationSource.Path,
                                                                             applicationSource.RepoUrl,
                                                                             applicationSource.TargetRevision,
-                                                                            HelmDiscovery.TryFindValuesFile(fileSystem, repoSubPath),
+                                                                            valuesFilename,
                                                                             imageReplacePaths));
             }
         }
 
         (HashSet<string>, HashSet<string>) UpdateKubernetesYaml(string rootPath,
+                                                                string subFolder,
+                                                                string defaultRegistry,
+                                                                List<ContainerImageReference> imagesToUpdate)
+        {
+            var absSubFolder = Path.Combine(rootPath, subFolder);
+
+            var filesToUpdate = FindYamlFiles(absSubFolder).ToHashSet();
+            Func<string, IContainerImageReplacer> imageReplacerFactory = yaml => new ContainerImageReplacer(yaml, defaultRegistry);
+            log.Verbose($"Found {filesToUpdate.Count} yaml files to process");
+
+            return Update(rootPath, imagesToUpdate, filesToUpdate, imageReplacerFactory);
+        }
+
+        (HashSet<string>, HashSet<string>) UpdateKustomizeYaml(string rootPath,
                                                                 string subFolder,
                                                                 string defaultRegistry,
                                                                 List<ContainerImageReference> imagesToUpdate)
@@ -496,15 +511,11 @@ namespace Calamari.ArgoCD.Conventions
                 filesToUpdate = new HashSet<string> { kustomizationFile };
                 imageReplacerFactory = yaml => new KustomizeImageReplacer(yaml, defaultRegistry, log);
                 log.Verbose("kustomization file found, will only update images transformer in the kustomization file");
-            }
-            else
-            {
-                filesToUpdate = FindYamlFiles(absSubFolder).ToHashSet();
-                imageReplacerFactory = yaml => new ContainerImageReplacer(yaml, defaultRegistry);
-                log.Verbose($"Found {filesToUpdate.Count} yaml files to process");
+                return Update(rootPath, imagesToUpdate, filesToUpdate, imageReplacerFactory);
             }
 
-            return Update(rootPath, imagesToUpdate, filesToUpdate, imageReplacerFactory);
+            log.Verbose("kustomization file found, will only update images transformer in the kustomization file");
+            return (new  HashSet<string>(), new HashSet<string>());
         }
 
         (HashSet<string>, HashSet<string>) Update(string rootPath, List<ContainerImageReference> imagesToUpdate, HashSet<string> filesToUpdate, Func<string, IContainerImageReplacer> imageReplacerFactory)

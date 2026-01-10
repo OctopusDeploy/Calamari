@@ -98,14 +98,15 @@ namespace Calamari.ArgoCD.Helm
 
         public (IReadOnlyCollection<HelmValuesFileImageUpdateTarget> Targets, IReadOnlyCollection<HelmSourceConfigurationProblem> Problems) GetHelmTargetsForRefSource(ApplicationSource refSource)
         {
-            List<HelmValuesFileImageUpdateTarget> targets = new List<HelmValuesFileImageUpdateTarget>();
-            List<HelmSourceConfigurationProblem> problems = new List<HelmSourceConfigurationProblem>();
+            var targets = new List<HelmValuesFileImageUpdateTarget>();
+            var problems = new HashSet<HelmSourceConfigurationProblem>();
 
             foreach (var helmSource in helmSources)
             {
                 if (helmSource.Helm != null)
                 {
                     var definedPathsForSource = ScopingAnnotationReader.GetImageReplacePathsForApplicationSource(helmSource.Name.ToApplicationSourceName(), annotations, containsMultipleSources);
+                   
                     foreach (var valueFile in helmSource.Helm.ValueFiles)
                     {
                         if (ReferencesRef(valueFile, refSource.Ref!))
@@ -115,6 +116,7 @@ namespace Calamari.ArgoCD.Helm
                                 problems.Add(
                                              new HelmSourceIsMissingImagePathAnnotation(helmSource.Name.ToApplicationSourceName(), helmSource.RepoUrl, refSource.Name.ToApplicationSourceName())
                                             );
+                                continue;
                             }
 
                             var relativeFile = valueFile[(valueFile.IndexOf('/') + 1)..];
@@ -133,11 +135,6 @@ namespace Calamari.ArgoCD.Helm
             }
 
             return (targets, problems);
-        }
-
-        static string GetRefFromFilePath(string filePath)
-        {
-            return filePath.TrimStart('$')[..(filePath.IndexOf('/') - 1)];
         }
         
         static bool ReferencesRef(string filePath, string refName)
