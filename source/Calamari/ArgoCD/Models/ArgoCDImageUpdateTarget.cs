@@ -1,4 +1,3 @@
-#if NET
 using System;
 
 namespace Calamari.ArgoCD.Models
@@ -29,4 +28,3 @@ namespace Calamari.ArgoCD.Models
         public string TargetRevision { get; }
     }
 }
-#endif

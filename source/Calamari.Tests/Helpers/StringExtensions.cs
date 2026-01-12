@@ -1,5 +1,4 @@
-﻿//#if NETFRAMEWORK
-using System;
+﻿using System;
 using System.Text.RegularExpressions;
 
 namespace Calamari.Tests.Helpers
@@ -12,4 +11,3 @@ namespace Calamari.Tests.Helpers
         public static string ReplaceLineEndings(this string value, string replacement) => Regex.Replace(value, replacement);
     }
 }
-//#endif

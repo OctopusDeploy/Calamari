@@ -22,9 +22,7 @@ namespace Calamari.Tests.Fixtures.Substitutions
 
         static SubstitutionsFixture()
         {
-#if NETCORE
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance); // Required to use code pages in .NET Standard
-#endif
             AnsiEncoding = Encoding.GetEncoding("windows-1252", EncoderFallback.ExceptionFallback, DecoderFallback.ExceptionFallback);
         }
 

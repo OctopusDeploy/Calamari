@@ -1,4 +1,3 @@
-#if NET
 using System.Collections.Generic;
 using System.IO;
 using Calamari.ArgoCD.Conventions;
@@ -66,4 +65,3 @@ namespace Calamari.ArgoCD.Commands
     }
 }
 
-#endif
