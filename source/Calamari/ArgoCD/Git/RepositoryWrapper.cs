@@ -90,17 +90,16 @@ namespace Calamari.ArgoCD.Git
         {
             var currentBranchName = repository.GetBranchName(branchName);
             var commit = repository.Head.Tip; // We should have just pushed to the tip of this branch
-
+            
             var pushToBranchName = requiresPullRequest ? 
                 CalculateBranchName() :
                 currentBranchName;
-
+            
             log.Info($"Pushing changes to branch '{pushToBranchName.ToFriendlyName()}'");
             PushChanges(pushToBranchName);
 
             if (vendorApiAdapter != null)
             {
-                
                 var url = vendorApiAdapter.GenerateCommitUrl(commit.Sha);
                 log.Info($"Commit {log.FormatLink(url, commit.ShortSha())} pushed");    
             }
@@ -207,6 +206,29 @@ namespace Calamari.ArgoCD.Git
                 log.VerboseFormat("Failed to delete local repository.{0}{1}", Environment.NewLine, e);
             }
         }
+
+        string GetReferenceType(GitReference reference)
+        {
+            if (reference is GitHead)
+            {
+                return "Branch";
+            }
+
+            if (reference is GitBranchName branchRef)
+            {
+
+                if (repository.Tags.Any(t => t.FriendlyName == branchRef.ToFriendlyName()))
+                {
+                    return "Tag";
+                }
+
+                if (repository.Branches.Any(b => b.FriendlyName == branchRef.ToFriendlyName()))
+                {
+                    return "Branch";
+                }
+            }
+        }
+        return "Commit";
     }
 }
 #endif
