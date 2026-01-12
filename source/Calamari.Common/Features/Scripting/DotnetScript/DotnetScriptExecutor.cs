@@ -12,12 +12,10 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
     public class DotnetScriptExecutor : ScriptExecutor
     {
         readonly ICommandLineRunner commandLineRunner;
-        readonly DotnetScriptCompilationWarningOutputSink outputSink;
 
-        public DotnetScriptExecutor(ICommandLineRunner commandLineRunner, ILog log, DotnetScriptCompilationWarningOutputSink outputSink): base(log)
+        public DotnetScriptExecutor(ICommandLineRunner commandLineRunner, ILog log): base(log)
         {
             this.commandLineRunner = commandLineRunner;
-            this.outputSink = outputSink;
         }
         protected override IEnumerable<ScriptExecution> PrepareExecution(Script script,
             IVariables variables,
@@ -41,8 +39,6 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
             cli.EnvironmentVars = environmentVars;
             cli.WorkingDirectory = workingDirectory;
             cli.Isolate = !bypassDotnetScriptIsolation;
-
-            cli.AdditionalInvocationOutputSink = outputSink;
 
             yield return new ScriptExecution(cli, otherTemporaryFiles.Concat(new[] { bootstrapFile, configurationFile }));
         }
