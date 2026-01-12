@@ -62,7 +62,7 @@ namespace Calamari.ArgoCD.Conventions
             
             log.LogApplicationCounts(deploymentScope, argoProperties.Applications);
           
-            var processResults = argoProperties.Applications
+            var applicationResults = argoProperties.Applications
                                                .Select(application =>
                                                            ProcessApplication(application,
                                                                               deploymentScope,
@@ -71,8 +71,8 @@ namespace Calamari.ArgoCD.Conventions
                                                                               deploymentConfig))
                                                .ToList();
            
-            var totalApplicationsWithSourceCounts = processResults.Select(r => (r.ApplicationName, r.TotalSourceCount, r.MatchingSourceCount)).ToList();
-            var updatedApplications = processResults.Where(r => r.Updated).ToList();
+            var totalApplicationsWithSourceCounts = applicationResults.Select(r => (r.ApplicationName, r.TotalSourceCount, r.MatchingSourceCount)).ToList();
+            var updatedApplications = applicationResults.Where(r => r.Updated).ToList();
             var updatedApplicationsWithSources = updatedApplications.Select(r => (r.ApplicationName, r.UpdatedSourceCount)).ToList();
             var gitReposUpdated = updatedApplications.SelectMany(r => r.GitReposUpdated).ToHashSet();
             var newImagesWritten = updatedApplications.SelectMany(r => r.UpdatedImages).ToHashSet();
@@ -356,7 +356,7 @@ namespace Calamari.ArgoCD.Conventions
                 }
             }
             
-            var explicitHelmSources = new HelmValuesFileUpdateTargetParser(applicationFromYaml, application.DefaultRegistry).GetValuesFilesToUpdate(applicationSource);
+            var explicitHelmSources = new HelmValuesFileUpdateTargetParser(applicationFromYaml, application.DefaultRegistry).GetExplicitValuesFilesToUpdate(applicationSource);
             LogHelmSourceConfigurationProblems(explicitHelmSources.Problems, applicationFromYaml.Metadata.Annotations, containsMultipleSources, deploymentScope);
 
             valuesFilesToUpdate.AddRange(explicitHelmSources.Targets);

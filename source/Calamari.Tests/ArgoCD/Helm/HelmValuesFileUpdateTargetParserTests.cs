@@ -68,7 +68,7 @@ namespace Calamari.Tests.ArgoCD.Helm
             var sut = new HelmValuesFileUpdateTargetParser(toUpdate, ArgoCDConstants.DefaultContainerRegistry);
 
             // Act
-            var result = sut.GetValuesFilesToUpdate(basicSource);
+            var result = sut.GetExplicitValuesFilesToUpdate(basicSource);
 
             // Assert
             result.Targets.Should().BeEmpty();
@@ -107,7 +107,7 @@ namespace Calamari.Tests.ArgoCD.Helm
             var sut = new HelmValuesFileUpdateTargetParser(toUpdate, ArgoCDConstants.DefaultContainerRegistry);
 
             // Act
-            var result = sut.GetValuesFilesToUpdate(helmSource);
+            var result = sut.GetExplicitValuesFilesToUpdate(helmSource);
 
             // Assert
             result.Targets.Should().BeEmpty();
@@ -152,7 +152,7 @@ namespace Calamari.Tests.ArgoCD.Helm
             var sut = new HelmValuesFileUpdateTargetParser(toUpdate, ArgoCDConstants.DefaultContainerRegistry);
 
             // Act
-            var result = sut.GetValuesFilesToUpdate(helmSource);
+            var result = sut.GetExplicitValuesFilesToUpdate(helmSource);
 
             // Assert
             var expectedSource = new HelmValuesFileImageUpdateTarget(toUpdate.Metadata.Name.ToApplicationName(),
@@ -207,7 +207,7 @@ namespace Calamari.Tests.ArgoCD.Helm
             var sut = new HelmValuesFileUpdateTargetParser(toUpdate, ArgoCDConstants.DefaultContainerRegistry);
 
             // Act
-            var result = sut.GetValuesFilesToUpdate(helmSource);
+            var result = sut.GetExplicitValuesFilesToUpdate(helmSource);
 
             // Assert
             result.Targets.Should().BeEmpty();
@@ -255,7 +255,7 @@ namespace Calamari.Tests.ArgoCD.Helm
             var sut = new HelmValuesFileUpdateTargetParser(toUpdate, ArgoCDConstants.DefaultContainerRegistry);
 
             // Act
-            var result = sut.GetValuesFilesToUpdate(helmSource);
+            var result = sut.GetExplicitValuesFilesToUpdate(helmSource);
 
             // Assert
             var expected1 = new HelmValuesFileImageUpdateTarget(toUpdate.Metadata.Name.ToApplicationName(),
@@ -609,7 +609,7 @@ namespace Calamari.Tests.ArgoCD.Helm
                                                                 valuesRefFilePath,
                                                                 new List<string>() { HelmPath1, HelmPath2 });
 
-            var result1 = sut.GetValuesFilesToUpdate(helmSource);
+            var result1 = sut.GetExplicitValuesFilesToUpdate(helmSource);
             result1.Targets.Should().BeEquivalentTo(new List<HelmValuesFileImageUpdateTarget>() { expected1 }, options => options.ComparingByMembers<HelmValuesFileImageUpdateTarget>());
             result1.Problems.Should().BeEmpty();
 

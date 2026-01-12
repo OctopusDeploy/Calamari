@@ -67,7 +67,7 @@ namespace Calamari.ArgoCD.Conventions
 
             log.LogApplicationCounts(deploymentScope, argoProperties.Applications);
 
-            var processResults = argoProperties.Applications
+            var applicationResults = argoProperties.Applications
                                                .Select(application => ProcessApplication(application,
                                                                                          deploymentScope,
                                                                                          gitCredentials,
@@ -76,9 +76,9 @@ namespace Calamari.ArgoCD.Conventions
                                                                                          packageFiles))
                                                .ToList();
             
-            var gitReposUpdated = processResults.SelectMany(r => r.GitReposUpdated).ToHashSet();
-            var totalApplicationsWithSourceCounts = processResults.Select(r => (r.ApplicationName, r.TotalSourceCount, r.MatchingSourceCount)).ToList();
-            var updatedApplicationsWithSources = processResults.Where(r => r.UpdatedSourceCount > 0).Select(r => (r.ApplicationName, r.UpdatedSourceCount)).ToList();
+            var gitReposUpdated = applicationResults.SelectMany(r => r.GitReposUpdated).ToHashSet();
+            var totalApplicationsWithSourceCounts = applicationResults.Select(r => (r.ApplicationName, r.TotalSourceCount, r.MatchingSourceCount)).ToList();
+            var updatedApplicationsWithSources = applicationResults.Where(r => r.UpdatedSourceCount > 0).Select(r => (r.ApplicationName, r.UpdatedSourceCount)).ToList();
             
             var gatewayIds = argoProperties.Applications.Select(a => a.GatewayId).ToHashSet();
             var outputWriter = new ArgoCDOutputVariablesWriter(log);
@@ -116,7 +116,7 @@ namespace Calamari.ArgoCD.Conventions
             var validationResult = ApplicationValidator.Validate(applicationFromYaml);
             validationResult.Action(log);
 
-            var processResults = applicationFromYaml
+            var sourceResults = applicationFromYaml
                                  .GetSourcesWithMetadata()
                                  .Select(sourceWithMetadata =>
                                              ProcessSource(deploymentScope,
@@ -130,9 +130,9 @@ namespace Calamari.ArgoCD.Conventions
                                                            applicationName))
                                  .ToList();
             
-            var didUpdateSomething = processResults.Any(r => r.Updated);
-            result.UpdatedSourceCount = processResults.Count(r => r.Updated);
-            result.GitReposUpdated.AddRange(processResults.Where(r => r.Updated).Select(r => r.RepositoryUrl.AbsoluteUri));
+            var didUpdateSomething = sourceResults.Any(r => r.Updated);
+            result.UpdatedSourceCount = sourceResults.Count(r => r.Updated);
+            result.GitReposUpdated.AddRange(sourceResults.Where(r => r.Updated).Select(r => r.RepositoryUrl.AbsoluteUri));
                 
             //if we have links, use that to generate a link, otherwise just put the name there
             var instanceLinks = application.InstanceWebUiUrl != null ? new ArgoCDInstanceLinks(application.InstanceWebUiUrl) : null;
