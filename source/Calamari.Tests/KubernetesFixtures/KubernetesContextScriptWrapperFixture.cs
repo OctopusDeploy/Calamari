@@ -452,7 +452,7 @@ namespace Calamari.Tests.KubernetesFixtures
                 wrappers.Add(new AwsScriptWrapper(log, variables) { VerifyAmazonLogin = () => Task.FromResult(true) });
             }
 
-            var engine = new ScriptEngine(wrappers, log, new DotnetScriptCompilationWarningOutputSink());
+            var engine = new ScriptEngine(wrappers, log);
             var result = engine.Execute(new Script(scriptName), variables, runner, environmentVariables);
 
             return new CalamariResult(result.ExitCode, new CaptureCommandInvocationOutputSink());
