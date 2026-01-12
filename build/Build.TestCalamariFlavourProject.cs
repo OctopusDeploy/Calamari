@@ -40,6 +40,7 @@ partial class Build
 
             DotNetTasks.DotNetTest(settings => settings
                 .SetProjectFile($"CalamariTests/{testProject}.dll")
+                .SetProcessWorkingDirectory("CalamariTests")
                 .SetFilter(CalamariFlavourTestCaseFilter)
                 .SetLoggers("trx")
                 .SetProcessExitHandler(
