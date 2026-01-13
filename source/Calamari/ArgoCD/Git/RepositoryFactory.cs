@@ -45,11 +45,11 @@ namespace Calamari.ArgoCD.Git
         {
             //if the branch name is head, then we just clone the default
             //if it's not head, then clone the branch immediately
-            var options = gitConnection.GitReference is GitHead
+            var options = gitConnection.GitReference.Equals(GitHead.HeadAsTarget)
                 ? new CloneOptions()
                 : new CloneOptions
                 {
-                    BranchName = (gitConnection.GitReference as GitBranchName)?.ToFriendlyName()
+                    BranchName = gitConnection.GitReference //NOTE: this string reference could be a branch, commit, or tag
                 };
 
             if (gitConnection.Username != null && gitConnection.Password != null)
@@ -80,21 +80,22 @@ namespace Calamari.ArgoCD.Git
             }
 
             var repo = new Repository(repoPath);
-
-            //this is required to handle the issue around "HEAD"
-            var branchToCheckout = repo.GetBranchName(gitConnection.GitReference);
-            var remoteBranch = repo.Branches.First(f => f.IsRemote && f.UpstreamBranchCanonicalName == branchToCheckout.Value);
+            var gitReferenceFactory =  new GitReferenceFactory(repo);
+            var targetReference = gitReferenceFactory.CreateGitReference(gitConnection.GitReference);
             
-            log.VerboseFormat("Checking out '{0}' @ {1}", branchToCheckout, remoteBranch.Tip.Sha.Substring(0, 10));
+            //this is required to handle the issue around "HEAD"targetReference
+            var remoteBranch = repo.Branches.First(f => f.IsRemote && f.UpstreamBranchCanonicalName == targetReference.Value);
+            
+            log.VerboseFormat("Checking out '{0}' @ {1}", targetReference, remoteBranch.Tip.Sha.Substring(0, 10));
             
             //A local branch is required such that libgit2sharp can create "tracking" data
             // libgit2sharp does not support pushing from a detached head
-            if (repo.Branches[branchToCheckout.Value] == null)
+            if (repo.Branches[targetReference.Value] == null)
             {
-                repo.CreateBranch(branchToCheckout.Value, remoteBranch.Tip);
+                repo.CreateBranch(targetReference.Value, remoteBranch.Tip);
             }
             
-            LibGit2Sharp.Commands.Checkout(repo, branchToCheckout.ToFriendlyName());
+            LibGit2Sharp.Commands.Checkout(repo, targetReference.GetFriendlyName());
             
             var gitVendorApiAdapter = vendorAgnosticApiAdapterFactory.TryCreateGitVendorApiAdaptor(gitConnection);
             return new RepositoryWrapper(repo,

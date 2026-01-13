@@ -20,5 +20,7 @@ namespace Calamari.ArgoCD.Git
                 new GitBranchName(value) :
                 GitBranchName.CreateFromFriendlyName(value);
         }
+
+        public abstract string GetFriendlyName();
     }
 }

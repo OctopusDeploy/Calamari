@@ -20,7 +20,7 @@ namespace Calamari.ArgoCD.Git
         readonly ICalamariFileSystem calamariFileSystem;
         readonly string repoCheckoutDirectoryPath;
         readonly ILog log;
-        readonly IGitConnection connection;
+        readonly IRepositoryConnection connection;
         readonly IGitVendorApiAdapter? vendorApiAdapter;
 
         public string WorkingDirectory => repository.Info.WorkingDirectory;
@@ -29,7 +29,7 @@ namespace Calamari.ArgoCD.Git
                                  ICalamariFileSystem calamariFileSystem,
                                  string repoCheckoutDirectoryPath,
                                  ILog log,
-                                 IGitConnection connection,
+                                 IRepositoryConnection connection,
                                  IGitVendorApiAdapter? vendorApiAdapter)
         {
             this.repository = repository;
@@ -85,17 +85,16 @@ namespace Calamari.ArgoCD.Git
         public async Task PushChanges(bool requiresPullRequest,
                                       string summary,
                                       string description,
-                                      GitReference branchName,
+                                      GitBranchName currentBranchName,
                                       CancellationToken cancellationToken)
         {
-            var currentBranchName = repository.GetBranchName(branchName);
             var commit = repository.Head.Tip; // We should have just pushed to the tip of this branch
             
             var pushToBranchName = requiresPullRequest ? 
                 CalculateBranchName() :
                 currentBranchName;
             
-            log.Info($"Pushing changes to branch '{pushToBranchName.ToFriendlyName()}'");
+            log.Info($"Pushing changes to branch '{pushToBranchName.GetFriendlyName()}'");
             PushChanges(pushToBranchName);
 
             if (vendorApiAdapter != null)
@@ -171,8 +170,14 @@ namespace Calamari.ArgoCD.Git
             repository.Network.Push(repository.Head, pushOptions);
             if (errorsDetected != null)
             {
-                throw new CommandException($"Failed to push to branch {branchName.ToFriendlyName()} - {errorsDetected.Message}");
+                throw new CommandException($"Failed to push to branch {branchName.GetFriendlyName()} - {errorsDetected.Message}");
             }
+        }
+
+        public GitReference CreateGitReference(string gitReferenceName)
+        {
+            var gitRefFactory = new GitReferenceFactory(repository);
+            return gitRefFactory.CreateGitReference(gitReferenceName);
         }
 
         static string GenerateCommitMessage(string summary, string description)
@@ -206,29 +211,6 @@ namespace Calamari.ArgoCD.Git
                 log.VerboseFormat("Failed to delete local repository.{0}{1}", Environment.NewLine, e);
             }
         }
-
-        string GetReferenceType(GitReference reference)
-        {
-            if (reference is GitHead)
-            {
-                return "Branch";
-            }
-
-            if (reference is GitBranchName branchRef)
-            {
-
-                if (repository.Tags.Any(t => t.FriendlyName == branchRef.ToFriendlyName()))
-                {
-                    return "Tag";
-                }
-
-                if (repository.Branches.Any(b => b.FriendlyName == branchRef.ToFriendlyName()))
-                {
-                    return "Branch";
-                }
-            }
-        }
-        return "Commit";
     }
 }
 #endif

@@ -120,12 +120,16 @@ namespace Calamari.ArgoCD.Conventions
                         {
                             log.Info($"No Git credentials found for: '{applicationSource.RepoUrl.AbsoluteUri}', will attempt to clone repository anonymously.");
                         }
-
-                        var targetBranch = GitReference.CreateFromString(applicationSource.TargetRevision);
-                        var gitConnection = new GitConnection(gitCredential?.Username, gitCredential?.Password, applicationSource.RepoUrl, targetBranch);
-
+                        
+                        var gitConnection = new GitConnection(gitCredential?.Username, gitCredential?.Password, applicationSource.RepoUrl, applicationSource.TargetRevision);
                         using (var repository = repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), gitConnection))
                         {
+                            var targetReference = repository.CreateGitReference(gitConnection.GitReference); 
+                            if (!(targetReference is GitBranchName targetBranch))
+                            {
+                                throw new CommandException($"Unable to update source with url {gitConnection.Url.AbsoluteUri} as its reference ({gitConnection.GitReference}) is not an updatable branch (it appears to be a tag or commit)");
+                            }
+
                             var subFolder = outputPath;
                             log.VerboseFormat("Copying files into '{0}'", subFolder);
 

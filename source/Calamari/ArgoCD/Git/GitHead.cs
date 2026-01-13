@@ -9,5 +9,10 @@ namespace Calamari.ArgoCD.Git
         public GitHead() : base(HeadAsTarget)
         {
         }
+
+        public override string GetFriendlyName()
+        {
+            return HeadAsTarget;
+        }
     }
 }

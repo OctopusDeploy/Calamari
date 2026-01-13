@@ -17,6 +17,7 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.Conventions;
+using Microsoft.Azure.Management.ContainerRegistry.Fluent.Models;
 using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.ArgoCD.Conventions
@@ -108,6 +109,12 @@ namespace Calamari.ArgoCD.Conventions
 
                         using (var repository = CreateRepository(gitCredentials, applicationSource, repositoryFactory))
                         {
+                            var targetReference = repository.CreateGitReference(applicationSource.Ref); 
+                            if (!(targetReference is GitBranchName targetBranch))
+                            {
+                                throw new CommandException($"Unable to update source with url {applicationSource.RepoUrl.AbsoluteUri} as its reference ({applicationSource.Ref}) is not an updatable branch (it appears to be a tag or commit)");
+                            }
+                            
                             var repoSubPath = Path.Combine(repository.WorkingDirectory, applicationSource.Path!);
                             log.Verbose($"Reading files from {applicationSource.Path}");
 
@@ -126,7 +133,7 @@ namespace Calamari.ArgoCD.Conventions
                             if (updatedImages.Count > 0)
                             {
                                 var didPush = PushToRemote(repository,
-                                                           GitReference.CreateFromString(applicationSource.TargetRevision),
+                                                           targetBranch,
                                                            deploymentConfig.CommitParameters,
                                                            updatedFiles,
                                                            updatedImages);
@@ -162,13 +169,18 @@ namespace Calamari.ArgoCD.Conventions
                         };
                         using (var repository = CreateRepository(gitCredentials, sourceBase, repositoryFactory))
                         {
+                            var targetReference = repository.CreateGitReference(sourceBase.Ref); 
+                            if (!(targetReference is GitBranchName targetBranch))
+                            {
+                                throw new CommandException($"Unable to update source with url {sourceBase.RepoUrl.AbsoluteUri} as its reference ({sourceBase.Ref}) is not an updatable branch (it appears to be a tag or commit)");
+                            }
                             var helmUpdateResult = UpdateHelmImageValues(repository.WorkingDirectory,
                                                                          valuesFileSource,
                                                                          deploymentConfig.ImageReferences
                                                                         );
                             if (helmUpdateResult.ImagesUpdated.Count > 0)
                             {
-                                var didPush = PushToRemote(repository, GitReference.CreateFromString(valuesFileSource.TargetRevision),
+                                var didPush = PushToRemote(repository, targetBranch,
                                                            deploymentConfig.CommitParameters,
                                                            new HashSet<string>() { Path.Combine(valuesFileSource.Path, valuesFileSource.FileName) },
                                                            helmUpdateResult.ImagesUpdated);
@@ -253,7 +265,7 @@ namespace Calamari.ArgoCD.Conventions
                 log.Info($"No Git credentials found for: '{source.RepoUrl.AbsoluteUri}', will attempt to clone repository anonymously.");
             }
 
-            var gitConnection = new GitConnection(gitCredential?.Username, gitCredential?.Password, new Uri(source.RepoUrl.AbsoluteUri), GitReference.CreateFromString(source.TargetRevision));
+            var gitConnection = new GitConnection(gitCredential?.Username, gitCredential?.Password, new Uri(source.RepoUrl.AbsoluteUri), source.TargetRevision);
             return repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), gitConnection);
         }
 
@@ -369,7 +381,7 @@ namespace Calamari.ArgoCD.Conventions
         }
 
         bool PushToRemote(RepositoryWrapper repository,
-                          GitReference branchName,
+                          GitBranchName branchName,
                           GitCommitParameters commitParameters,
                           HashSet<string> updatedFiles,
                           HashSet<string> updatedImages)
