@@ -94,6 +94,72 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
         }
 
         [Test]
+        public void UnknownType_DontUpdate()
+        {
+            // Arrange
+            var updater = new UpdateArgoCDAppImagesInstallConvention(log,
+                                                                     fileSystem,
+                                                                     new DeploymentConfigFactory(nonSensitiveCalamariVariables),
+                                                                     new CommitMessageGenerator(),
+                                                                     customPropertiesLoader,
+                                                                     argoCdApplicationManifestParser,
+                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>());
+            var variables = new CalamariVariables
+            {
+                [PackageVariables.IndexedImage("nginx")] = "index.docker.io/nginx:1.27.1",
+                [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
+                [ProjectVariables.Slug] = ProjectSlug,
+                [DeploymentEnvironment.Slug] = EnvironmentSlug,
+            };
+            var runningDeployment = new RunningDeployment(null, variables);
+            runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
+            runningDeployment.StagingDirectory = tempDirectory;
+
+            var kustomizeFile = "kustomization.yaml";
+            var kustomizeFileContents = @"
+images:
+- name: ""docker.io/nginx""
+  newTag: ""1.25""
+";
+            var filesInRepo = new (string, string)[]
+            {
+                (kustomizeFile,
+                 kustomizeFileContents)
+            };
+            originRepo.AddFilesToBranch(argoCDBranchName, filesInRepo);
+
+            var argoCdApplicationFromYaml = new ArgoCDApplicationBuilder()
+                                            .WithName("App1")
+                                            .WithAnnotations(new Dictionary<string, string>()
+                                            {
+                                                [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(null)] = ProjectSlug,
+                                                [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(null)] = EnvironmentSlug,
+                                            })
+                                            .WithSource(new ApplicationSource()
+                                            {
+                                                RepoUrl = new Uri(OriginPath),
+                                                Path = "",
+                                                TargetRevision = ArgoCDBranchFriendlyName,
+                                            }, null)
+                                            .Build();
+
+            argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
+                                           .Returns(argoCdApplicationFromYaml);
+
+            // Act
+            updater.Install(runningDeployment);
+
+            // Assert
+           
+            var clonedRepoPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
+            AssertFileContents(clonedRepoPath, kustomizeFile, kustomizeFileContents);
+
+            log.MessagesWarnFormatted.Should().Contain($"Unable to update source '{new Uri(OriginPath)}' as its source type was not detected by Argo CD.");
+
+            AssertOutputVariables(false);
+        }
+        
+        [Test]
         public void DirectorySource_NoMatchingFiles_DontUpdate()
         {
             // Arrange
@@ -250,7 +316,154 @@ spec:
         }
 
         [Test]
-        public void Kustomize_HasKustomizationFile_Update()
+        public void DirectorySource_NoPath_DontUpdate()
+        {
+            // Arrange
+            var updater = new UpdateArgoCDAppImagesInstallConvention(log,
+                                                                     fileSystem,
+                                                                     new DeploymentConfigFactory(nonSensitiveCalamariVariables),
+                                                                     new CommitMessageGenerator(),
+                                                                     customPropertiesLoader,
+                                                                     argoCdApplicationManifestParser,
+                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>());
+            var variables = new CalamariVariables
+            {
+                [PackageVariables.IndexedImage("nginx")] = "index.docker.io/nginx:1.27.1",
+                [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
+                [ProjectVariables.Slug] = ProjectSlug,
+                [DeploymentEnvironment.Slug] = EnvironmentSlug,
+            };
+            var runningDeployment = new RunningDeployment(null, variables);
+            runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
+            runningDeployment.StagingDirectory = tempDirectory;
+
+            var yamlFilename = "include/file1.yaml";
+            var fileContents = @"
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sample-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sample-deployment
+  template:
+    metadata:
+      labels:
+        app: sample-deployment
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.19 
+        - name: alpine
+          image: alpine:3.21 
+";
+            var filesInRepo = new (string, string)[]
+            {
+                (
+                    yamlFilename,
+                    fileContents
+                )
+            };
+            originRepo.AddFilesToBranch(argoCDBranchName, filesInRepo);
+
+            var argoCdApplicationFromYaml = new ArgoCDApplicationBuilder()
+                                            .WithName("App1")
+                                            .WithAnnotations(new Dictionary<string, string>()
+                                            {
+                                                [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(null)] = ProjectSlug,
+                                                [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(null)] = EnvironmentSlug,
+                                            })
+                                            .WithSource(new ApplicationSource()
+                                            {
+                                                RepoUrl = new Uri(OriginPath),
+                                                TargetRevision = ArgoCDBranchFriendlyName,
+                                            }, SourceTypeConstants.Directory)
+                                            .Build();
+
+            argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
+                                           .Returns(argoCdApplicationFromYaml);
+            
+            // Act
+            updater.Install(runningDeployment);
+
+            //Assert
+            var clonedRepoPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
+            AssertFileContents(clonedRepoPath, yamlFilename, fileContents);
+            
+            log.MessagesWarnFormatted.Should().Contain($"Unable to update source '{new Uri(OriginPath)}' as a path has not been specified.");
+
+            AssertOutputVariables(false);
+        }
+
+        [Test]
+        public void KustomizeSource_NoPath_DontUpdate()
+        {
+            // Arrange
+            var updater = new UpdateArgoCDAppImagesInstallConvention(log,
+                                                                     fileSystem,
+                                                                     new DeploymentConfigFactory(nonSensitiveCalamariVariables),
+                                                                     new CommitMessageGenerator(),
+                                                                     customPropertiesLoader,
+                                                                     argoCdApplicationManifestParser,
+                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>());
+            var variables = new CalamariVariables
+            {
+                [PackageVariables.IndexedImage("nginx")] = "index.docker.io/nginx:1.27.1",
+                [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
+                [ProjectVariables.Slug] = ProjectSlug,
+                [DeploymentEnvironment.Slug] = EnvironmentSlug,
+            };
+            var runningDeployment = new RunningDeployment(null, variables);
+            runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
+            runningDeployment.StagingDirectory = tempDirectory;
+
+            var kustomizeFile = "kustomization.yaml";
+            var kustomizeFileContents = @"
+images:
+- name: ""docker.io/nginx""
+  newTag: ""1.25""
+";
+            var filesInRepo = new (string, string)[]
+            {
+                (kustomizeFile,
+                 kustomizeFileContents)
+            };
+            originRepo.AddFilesToBranch(argoCDBranchName, filesInRepo);
+
+            var argoCdApplicationFromYaml = new ArgoCDApplicationBuilder()
+                                            .WithName("App1")
+                                            .WithAnnotations(new Dictionary<string, string>()
+                                            {
+                                                [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(null)] = ProjectSlug,
+                                                [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(null)] = EnvironmentSlug,
+                                            })
+                                            .WithSource(new ApplicationSource()
+                                            {
+                                                RepoUrl = new Uri(OriginPath),
+                                                TargetRevision = ArgoCDBranchFriendlyName,
+                                            }, SourceTypeConstants.Kustomize)
+                                            .Build();
+
+            argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
+                                           .Returns(argoCdApplicationFromYaml);
+
+            // Act
+            updater.Install(runningDeployment);
+
+            // Assert
+           
+            var clonedRepoPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
+            AssertFileContents(clonedRepoPath, kustomizeFile, kustomizeFileContents);
+
+            log.MessagesWarnFormatted.Should().Contain($"Unable to update source '{new Uri(OriginPath)}' as a path has not been specified.");
+
+            AssertOutputVariables(false);
+        }
+
+        [Test]
+        public void KustomizeSource_HasKustomizationFile_Update()
         {
             // Arrange
             var updater = new UpdateArgoCDAppImagesInstallConvention(log,
@@ -317,7 +530,7 @@ images:
         }
 
 //         [Test]
-//         public void Kustomize_NoKustomizationFile_DontUpdate()
+//         public void KustomizeSource_NoKustomizationFile_DontUpdate()
 //         {
 //             // Arrange
 //             var updater = new UpdateArgoCDAppImagesInstallConvention(log,
