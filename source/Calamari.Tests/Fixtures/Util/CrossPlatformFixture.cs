@@ -46,6 +46,10 @@ namespace Calamari.Tests.Fixtures.Util
         [TestCase("\\$MARIO_BROTHER/blah", "\\$MARIO_BROTHER/blah", Description = "Escaped dollar preserved")]
         [TestCase("$MARIO_BROTHER/blah%2fblah.zip", "LUIGI/blah%2fblah.zip", Description = "Linux-style variable ($VAR) is expanded, but URL-encoded slash (%2f) in filename is preserved")]
         [TestCase("%MARIO_BROTHER%/blah%2fblah.zip", "LUIGI/blah%2fblah.zip", Description = "Windows-style variable (%VAR%) is expanded, and URL-encoded slash (%2f) in filename is preserved")]
+        [TestCase("$MARIO_BROTHER/blah%20blah.zip", "LUIGI/blah%20blah.zip", Description = "Linux-style variable ($VAR) is expanded, but URL-encoded space (%20) in filename is preserved")]
+        [TestCase("%MARIO_BROTHER%/blah%20blah.zip", "LUIGI/blah%20blah.zip", Description = "Windows-style variable (%VAR%) is expanded, and URL-encoded space (%20) in filename is preserved")]
+        [TestCase("$MARIO_BROTHER/blah%2520blah.zip", "LUIGI/blah%2520blah.zip", Description = "Linux-style variable ($VAR) is expanded, but URL-encoded space encoded twice (%2520) in filename is preserved")]
+        [TestCase("%MARIO_BROTHER%/blah%2520blah.zip", "LUIGI/blah%2520blah.zip", Description = "Windows-style variable (%VAR%) is expanded, and URL-encoded space encoded twice (%2520) in filename is preserved")]
         [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
         public void NixEnvironmentVariableReplaced(string inputValue, string expectedResult)
         {
