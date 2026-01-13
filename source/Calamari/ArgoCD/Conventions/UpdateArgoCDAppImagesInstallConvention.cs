@@ -420,12 +420,6 @@ namespace Calamari.ArgoCD.Conventions
 
                         return;
                     }
-                    case RefSourceIsMissing refSourceIsMissing:
-                    {
-                        log.WarnFormat("A source referenced by Helm source '{0}' is missing: {1}", 
-                                       refSourceIsMissing.HelmSourceRepoUrl.AbsoluteUri, refSourceIsMissing.Ref);
-                        return;
-                    }
                     default:
                         throw new ArgumentOutOfRangeException(nameof(helmSourceConfigurationProblem));
                 }
