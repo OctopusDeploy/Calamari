@@ -9,7 +9,6 @@ using Calamari.ArgoCD.Domain;
 using Calamari.ArgoCD.Dtos;
 using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.Git.GitVendorApiAdapters;
-using Calamari.ArgoCD.Models;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Deployment;
 using Calamari.Common.Plumbing.FileSystem;
@@ -160,8 +159,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             log.StandardOut.Should().Contain($"No changes made to file include{Path.DirectorySeparatorChar}file1.yaml as no image references were updated.");
 
             var resultRepo = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
-            var repoFileContent = fileSystem.ReadFile(Path.Combine(resultRepo, "include/file1.yaml"));
-            repoFileContent.Should().Be("No Yaml here");
+            AssertFileContents(resultRepo, "include/file1.yaml", "No Yaml here");
             
             AssertOutputVariables(false);
         }
@@ -188,11 +186,11 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
             runningDeployment.StagingDirectory = tempDirectory;
 
-            var existingYamlFile = "include/file1.yaml";
+            var yamlFilename = "include/file1.yaml";
             var filesInRepo = new (string, string)[]
             {
                 (
-                    existingYamlFile,
+                    yamlFilename,
                     @"
 apiVersion: apps/v1
 kind: Deployment
@@ -246,10 +244,7 @@ spec:
 ";
 
             var clonedRepoPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
-            var fileInRepo = Path.Combine(clonedRepoPath, existingYamlFile);
-            fileSystem.FileExists(fileInRepo).Should().BeTrue();
-            var content = fileSystem.ReadFile(fileInRepo);
-            content.ReplaceLineEndings().Should().Be(updatedYamlContent.ReplaceLineEndings());
+            AssertFileContents(clonedRepoPath, yamlFilename, updatedYamlContent);
             
             AssertOutputVariables();
         }
@@ -310,11 +305,13 @@ images:
             updater.Install(runningDeployment);
 
             // Assert
+            var updatedYamlContent = @"
+images:
+- name: ""docker.io/nginx""
+  newTag: ""1.27.1""
+";
             var clonedRepoPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
-            var fileInRepo = Path.Combine(clonedRepoPath, kustomizeFile);
-            fileSystem.FileExists(fileInRepo).Should().BeTrue();
-            var content = fileSystem.ReadFile(fileInRepo);
-            content.Should().Contain("1.27.1");
+            AssertFileContents(clonedRepoPath, kustomizeFile, updatedYamlContent);
 
             AssertOutputVariables();
         }
@@ -396,14 +393,20 @@ spec:
 
             // Assert
             var clonedRepoPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
-            var fileInRepo = Path.Combine(clonedRepoPath, existingYamlFile);
-            fileSystem.FileExists(fileInRepo).Should().BeTrue();
-            var content = fileSystem.ReadFile(fileInRepo);
-            content.ReplaceLineEndings().Should().Be(existingYamlContent.ReplaceLineEndings());
+            AssertFileContents(clonedRepoPath, existingYamlFile, existingYamlContent);
 
             log.MessagesWarnFormatted.Should().Contain("kustomization file not found, no files will be updated");
 
             AssertOutputVariables(updated: false);
+        }
+
+        void AssertFileContents(string clonedRepoPath, string relativeFilePath, string expectedContent)
+        {
+            var absolutePath = Path.Combine(clonedRepoPath, relativeFilePath);
+            fileSystem.FileExists(absolutePath).Should().BeTrue();
+            
+            var content = fileSystem.ReadFile(absolutePath);
+            content.ReplaceLineEndings().Should().Be(expectedContent.ReplaceLineEndings());
         }
 
         void AssertOutputVariables(bool updated = true, string matchingApplicationTotalSourceCounts = "1")

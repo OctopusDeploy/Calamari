@@ -152,9 +152,8 @@ image:
 
             //Assert
             var resultRepo = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
-            var valuesFileContent = fileSystem.ReadFile(Path.Combine(resultRepo, "files", "values.yml"));
-            valuesFileContent.Should().Be(DefaultValuesFile);
-            
+            AssertFileContents(resultRepo, "files/values.yml", DefaultValuesFile);
+
             AssertOutputVariables(false);
         }
 
@@ -188,12 +187,11 @@ image:
 
             //Assert
             var resultRepo = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
-            var valuesFileContent = fileSystem.ReadFile(Path.Combine(resultRepo, "files", "values.yml"));
-            valuesFileContent.Should().Be(DefaultValuesFile);
-            
+            AssertFileContents(resultRepo, "files/values.yml", DefaultValuesFile);
+
             AssertOutputVariables(false);
         }
-      
+
         [Test]
         public void HelmSourceWithMultipleMatchesInSameValuesFile_Update()
         {
@@ -234,17 +232,16 @@ image2:
             updater.Install(runningDeployment);
 
             //Assert
-            var resultRepo = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
-            var valuesFileContent = fileSystem.ReadFile(Path.Combine(resultRepo, "files", "values.yml"));
-            valuesFileContent.ReplaceLineEndings()
-                             .Should()
-                             .Be(@"
+            var updatedValuesFile = @"
 image1:
    name: nginx:1.27.1
 image2:
    name: alpine
    tag: 2.2
-".ReplaceLineEndings());
+";
+
+            var resultRepo = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
+            AssertFileContents(resultRepo, "files/values.yml", updatedValuesFile);
             
             AssertOutputVariables(updatedImages: 2);
         }
@@ -318,19 +315,11 @@ image:
             runningDeployment.StagingDirectory = tempDirectory;
 
             updater.Install(runningDeployment);
+            
             //Assert
             var resultRepo = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
-            var valuesFileContent = fileSystem.ReadFile(Path.Combine(resultRepo, "files", "values.yaml"));
-            valuesFileContent.ReplaceLineEndings()
-                             .Should()
-                             .Be(@"
-replicaCount: 1
-image:
-  repository: quay.io/argoprojlabs/argocd-e2e-container
-  tag: 0.1
-  pullPolicy: IfNotPresent
-".ReplaceLineEndings());
-            
+            AssertFileContents(resultRepo, "files/values.yaml", valuesFile);
+
             AssertOutputVariables(false, matchingApplicationMatchingSourceCounts: "0");
         }
 
@@ -417,17 +406,8 @@ image:
             updater.Install(runningDeployment);
             //Assert
             var resultRepo = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
-            var valuesFileContent = fileSystem.ReadFile(Path.Combine(resultRepo, "files", "values.yaml"));
-            valuesFileContent.ReplaceLineEndings()
-                             .Should()
-                             .Be(@"
-replicaCount: 1
-image:
-  repository: quay.io/argoprojlabs/argocd-e2e-container
-  tag: 0.1
-  pullPolicy: IfNotPresent
-".ReplaceLineEndings());
-            
+            AssertFileContents(resultRepo, "files/values.yaml", valuesFile);
+
             AssertOutputVariables(false, matchingApplicationTotalSourceCounts: "2", matchingApplicationMatchingSourceCounts: "0");
         }
 
@@ -509,17 +489,14 @@ image:
             updater.Install(runningDeployment);
             //Assert
             var resultRepo = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
-            var valuesFileContent = fileSystem.ReadFile(Path.Combine(resultRepo, "files", "values.yaml"));
-            valuesFileContent.ReplaceLineEndings()
-                             .Should()
-                             .Be(valuesFile.ReplaceLineEndings());
+            AssertFileContents(resultRepo, "files/values.yaml", valuesFile);
 
             log.MessagesWarnFormatted.Should().Contain($"The Helm source '{new Uri(OriginPath)}' is missing an annotation for the image replace path. It will not be updated.");
-            
+
             AssertOutputVariables(false, matchingApplicationTotalSourceCounts: "1");
         }
 
-                [Test]
+        [Test]
         public void HelmSourceWithImplicitValuesFile_MissingImagePath_WarnAndDontUpdate()
         {
             //Arrange
@@ -590,13 +567,10 @@ image:
             updater.Install(runningDeployment);
             //Assert
             var resultRepo = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
-            var valuesFileContent = fileSystem.ReadFile(Path.Combine(resultRepo, "files", "values.yaml"));
-            valuesFileContent.ReplaceLineEndings()
-                             .Should()
-                             .Be(valuesFile.ReplaceLineEndings());
+            AssertFileContents(resultRepo, "files/values.yaml", valuesFile);
 
             log.MessagesWarnFormatted.Should().Contain($"The Helm source '{new Uri(OriginPath)}' is missing an annotation for the image replace path. It will not be updated.");
-            
+
             AssertOutputVariables(false, matchingApplicationTotalSourceCounts: "1");
         }
 
@@ -683,19 +657,10 @@ image:
             updater.Install(runningDeployment);
             //Assert
             var resultRepo = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
-            var valuesFileContent = fileSystem.ReadFile(Path.Combine(resultRepo, "files", "values.yaml"));
-            valuesFileContent.ReplaceLineEndings()
-                             .Should()
-                             .Be(@"
-replicaCount: 1
-image:
-  repository: quay.io/argoprojlabs/argocd-e2e-container
-  tag: 0.1
-  pullPolicy: IfNotPresent
-".ReplaceLineEndings());
+            AssertFileContents(resultRepo, "files/values.yaml", valuesFile);
 
             log.MessagesWarnFormatted.Should().Contain("The Helm source 'https://github.com/doesnt/exist.git' is missing an annotation for the image replace path. It will not be updated.");
-            
+
             AssertOutputVariables(false, matchingApplicationTotalSourceCounts: "2");
         }
 
@@ -781,16 +746,13 @@ image:
             updater.Install(runningDeployment);
             //Assert
             var resultRepo = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
-            var valuesFileContent = fileSystem.ReadFile(Path.Combine(resultRepo, "files", "values.yaml"));
-            valuesFileContent.ReplaceLineEndings()
-                             .Should()
-                             .Be(valuesFile.ReplaceLineEndings());
+            AssertFileContents(resultRepo, "files/values.yaml", valuesFile);
 
             log.MessagesWarnFormatted.Should().NotContain("The Helm source 'https://github.com/doesnt/exist.git' is missing an annotation for the image replace path. It will not be updated.");
 
             AssertOutputVariables(false, matchingApplicationTotalSourceCounts: "2", matchingApplicationMatchingSourceCounts: "0");
         }
-                        
+
         [Test]
         public void HelmSourceWithHelmConfigurationAndImplicitValuesFile_IncludeValuesFileAndUpdate()
         {
@@ -849,16 +811,16 @@ containerPort: 8070
                                               [ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(null)] = "{{ .Values.image.repository }}:{{ .Values.image.tag }}",
                                           })
                                           .WithSource(new ApplicationSource
-                                          {
-                                              RepoUrl = new Uri(OriginPath),
-                                              Path = "",
-                                              TargetRevision = ArgoCDBranchFriendlyName,
-                                              Helm = new HelmConfig()
-                                              {
-                                                  ValueFiles = new List<string>(){ explicitValuesFile}
-                                              }
-                                          },  SourceTypeConstants.Helm)
-                                         
+                                                      {
+                                                          RepoUrl = new Uri(OriginPath),
+                                                          Path = "",
+                                                          TargetRevision = ArgoCDBranchFriendlyName,
+                                                          Helm = new HelmConfig()
+                                                          {
+                                                              ValueFiles = new List<string>() { explicitValuesFile }
+                                                          }
+                                                      },
+                                                      SourceTypeConstants.Helm)
                                           .Build();
 
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
@@ -886,15 +848,8 @@ containerPort: 8070
 ";
 
             var clonedRepoPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
-            var implicitFileInRepo = Path.Combine(clonedRepoPath, implicitValuesFile);
-            fileSystem.FileExists(implicitFileInRepo).Should().BeTrue();
-            var implicitCcontent = fileSystem.ReadFile(implicitFileInRepo);
-            implicitCcontent.ReplaceLineEndings().Should().Be(updatedImplicitYamlContent.ReplaceLineEndings());
-
-            var explicitFileInRepo = Path.Combine(clonedRepoPath, explicitValuesFile);
-            fileSystem.FileExists(explicitFileInRepo).Should().BeTrue();
-            var explicitContent = fileSystem.ReadFile(explicitFileInRepo);
-            explicitContent.ReplaceLineEndings().Should().Be(updatedExplicitYamlContent.ReplaceLineEndings());
+            AssertFileContents(clonedRepoPath, implicitValuesFile, updatedImplicitYamlContent);
+            AssertFileContents(clonedRepoPath, explicitValuesFile, updatedExplicitYamlContent);
 
             AssertOutputVariables(matchingApplicationTotalSourceCounts: "1");
         }
@@ -945,16 +900,16 @@ containerPort: 8070
                                               [ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(null)] = "{{ .Values.image.repository }}:{{ .Values.image.tag }}",
                                           })
                                           .WithSource(new ApplicationSource
-                                          {
-                                              RepoUrl = new Uri(OriginPath),
-                                              Path = "",
-                                              TargetRevision = ArgoCDBranchFriendlyName,
-                                              Helm = new HelmConfig()
-                                              {
-                                                  ValueFiles = new List<string>(){ explicitValuesFile}
-                                              }
-                                          },  SourceTypeConstants.Helm)
-                                         
+                                                      {
+                                                          RepoUrl = new Uri(OriginPath),
+                                                          Path = "",
+                                                          TargetRevision = ArgoCDBranchFriendlyName,
+                                                          Helm = new HelmConfig()
+                                                          {
+                                                              ValueFiles = new List<string>() { explicitValuesFile }
+                                                          }
+                                                      },
+                                                      SourceTypeConstants.Helm)
                                           .Build();
 
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
@@ -972,10 +927,7 @@ containerPort: 8070
 ";
 
             var clonedRepoPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
-            var explicitFileInRepo = Path.Combine(clonedRepoPath, explicitValuesFile);
-            fileSystem.FileExists(explicitFileInRepo).Should().BeTrue();
-            var explicitContent = fileSystem.ReadFile(explicitFileInRepo);
-            explicitContent.ReplaceLineEndings().Should().Be(updatedExplicitYamlContent.ReplaceLineEndings());
+            AssertFileContents(clonedRepoPath, explicitValuesFile, updatedExplicitYamlContent);
 
             AssertOutputVariables(matchingApplicationTotalSourceCounts: "1");
         }
@@ -1038,16 +990,16 @@ containerPort: 8070
                                               [ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(null)] = "{{ .Values.image.repository }}:{{ .Values.image.tag }}",
                                           })
                                           .WithSource(new ApplicationSource
-                                          {
-                                              RepoUrl = new Uri(OriginPath),
-                                              Path = "",
-                                              TargetRevision = ArgoCDBranchFriendlyName,
-                                              Helm = new HelmConfig()
-                                              {
-                                                  ValueFiles = new List<string>(){ explicitValuesFile, implicitValuesFile}
-                                              }
-                                          },  SourceTypeConstants.Helm)
-                                         
+                                                      {
+                                                          RepoUrl = new Uri(OriginPath),
+                                                          Path = "",
+                                                          TargetRevision = ArgoCDBranchFriendlyName,
+                                                          Helm = new HelmConfig()
+                                                          {
+                                                              ValueFiles = new List<string>() { explicitValuesFile, implicitValuesFile }
+                                                          }
+                                                      },
+                                                      SourceTypeConstants.Helm)
                                           .Build();
 
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
@@ -1075,19 +1027,12 @@ containerPort: 8070
 ";
 
             var clonedRepoPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
-            var implicitFileInRepo = Path.Combine(clonedRepoPath, implicitValuesFile);
-            fileSystem.FileExists(implicitFileInRepo).Should().BeTrue();
-            var implicitCcontent = fileSystem.ReadFile(implicitFileInRepo);
-            implicitCcontent.ReplaceLineEndings().Should().Be(updatedImplicitYamlContent.ReplaceLineEndings());
-
-            var explicitFileInRepo = Path.Combine(clonedRepoPath, explicitValuesFile);
-            fileSystem.FileExists(explicitFileInRepo).Should().BeTrue();
-            var explicitContent = fileSystem.ReadFile(explicitFileInRepo);
-            explicitContent.ReplaceLineEndings().Should().Be(updatedExplicitYamlContent.ReplaceLineEndings());
+            AssertFileContents(clonedRepoPath, implicitValuesFile, updatedImplicitYamlContent);
+            AssertFileContents(clonedRepoPath, explicitValuesFile, updatedExplicitYamlContent);
 
             AssertOutputVariables(matchingApplicationTotalSourceCounts: "1");
         }
-        
+
         [Test]
         public void HelmSourceWithImplicitValuesFile_Update()
         {
@@ -1137,12 +1082,12 @@ service:
                                               [ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(null)] = "{{ .Values.image.repository }}:{{ .Values.image.tag }}",
                                           })
                                           .WithSource(new ApplicationSource
-                                          {
-                                              RepoUrl = new Uri(OriginPath),
-                                              Path = "",
-                                              TargetRevision = ArgoCDBranchFriendlyName
-                                          },  SourceTypeConstants.Helm)
-                                         
+                                                      {
+                                                          RepoUrl = new Uri(OriginPath),
+                                                          Path = "",
+                                                          TargetRevision = ArgoCDBranchFriendlyName
+                                                      },
+                                                      SourceTypeConstants.Helm)
                                           .Build();
 
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
@@ -1162,14 +1107,11 @@ service:
 ";
 
             var clonedRepoPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
-            var fileInRepo = Path.Combine(clonedRepoPath, existingYamlFile);
-            fileSystem.FileExists(fileInRepo).Should().BeTrue();
-            var content = fileSystem.ReadFile(fileInRepo);
-            content.ReplaceLineEndings().Should().Be(updatedYamlContent.ReplaceLineEndings());
+            AssertFileContents(clonedRepoPath, existingYamlFile, updatedYamlContent);
 
             AssertOutputVariables(matchingApplicationTotalSourceCounts: "1");
         }
-        
+
         [Test]
         public void RefSourceWithHelmImageMatches_Update()
         {
@@ -1218,26 +1160,28 @@ service:
                                               [ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(new ApplicationSourceName("helm-source"))] = "{{ .Values.image.repository }}:{{ .Values.image.tag }}",
                                           })
                                           .WithSource(new ApplicationSource
-                                          {
-                                              RepoUrl = new Uri("https://github.com/org/repo"),
-                                              Path = "",
-                                              TargetRevision = ArgoCDBranchFriendlyName,
-                                              Helm = new HelmConfig
-                                              {
-                                                  ValueFiles = new List<string>()
-                                                  {
-                                                      "$values/otherRepoPath/values.yaml"
-                                                  }
-                                              },
-                                              Name = "helm-source",
-                                          }, SourceTypeConstants.Helm)
+                                                      {
+                                                          RepoUrl = new Uri("https://github.com/org/repo"),
+                                                          Path = "",
+                                                          TargetRevision = ArgoCDBranchFriendlyName,
+                                                          Helm = new HelmConfig
+                                                          {
+                                                              ValueFiles = new List<string>()
+                                                              {
+                                                                  "$values/otherRepoPath/values.yaml"
+                                                              }
+                                                          },
+                                                          Name = "helm-source",
+                                                      },
+                                                      SourceTypeConstants.Helm)
                                           .WithSource(new ApplicationSource
-                                          {
-                                              Name = "ref-source",
-                                              Ref = "values",
-                                              TargetRevision = ArgoCDBranchFriendlyName,
-                                              RepoUrl = new Uri(OriginPath),
-                                          }, SourceTypeConstants.Directory)
+                                                      {
+                                                          Name = "ref-source",
+                                                          Ref = "values",
+                                                          TargetRevision = ArgoCDBranchFriendlyName,
+                                                          RepoUrl = new Uri(OriginPath),
+                                                      },
+                                                      SourceTypeConstants.Directory)
                                           .Build();
 
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
@@ -1257,14 +1201,11 @@ service:
 ";
 
             var clonedRepoPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
-            var fileInRepo = Path.Combine(clonedRepoPath, existingYamlFile);
-            fileSystem.FileExists(fileInRepo).Should().BeTrue();
-            var content = fileSystem.ReadFile(fileInRepo);
-            content.ReplaceLineEndings().Should().Be(updatedYamlContent.ReplaceLineEndings());
+            AssertFileContents(clonedRepoPath, existingYamlFile, updatedYamlContent);
 
             AssertOutputVariables(matchingApplicationTotalSourceCounts: "2");
         }
-       
+
         [Test]
         public void RefSourceWithHelmImageMatchesAndPath_IgnoresFilesUnderPath()
         {
@@ -1329,7 +1270,7 @@ service:
                 )
             };
             originRepo.AddFilesToBranch(argoCDBranchName, filesInRepo);
-            
+
             var argoCDAppWithHelmSource = new ArgoCDApplicationBuilder()
                                           .WithName("App1")
                                           .WithAnnotations(new Dictionary<string, string>()
@@ -1339,27 +1280,29 @@ service:
                                               [ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(new ApplicationSourceName("helm-source"))] = "{{ .Values.image.repository }}:{{ .Values.image.tag }}",
                                           })
                                           .WithSource(new ApplicationSource
-                                          {
-                                              RepoUrl = new Uri("https://github.com/org/repo"),
-                                              Path = "",
-                                              TargetRevision = ArgoCDBranchFriendlyName,
-                                              Helm = new HelmConfig
-                                              {
-                                                  ValueFiles = new List<string>()
-                                                  {
-                                                      "$values/otherRepoPath/values.yaml"
-                                                  }
-                                              },
-                                              Name = "helm-source",
-                                          }, SourceTypeConstants.Helm)
+                                                      {
+                                                          RepoUrl = new Uri("https://github.com/org/repo"),
+                                                          Path = "",
+                                                          TargetRevision = ArgoCDBranchFriendlyName,
+                                                          Helm = new HelmConfig
+                                                          {
+                                                              ValueFiles = new List<string>()
+                                                              {
+                                                                  "$values/otherRepoPath/values.yaml"
+                                                              }
+                                                          },
+                                                          Name = "helm-source",
+                                                      },
+                                                      SourceTypeConstants.Helm)
                                           .WithSource(new ApplicationSource
-                                          {
-                                              Name = "ref-source",
-                                              Ref = "values",
-                                              Path = "include/",
-                                              TargetRevision = ArgoCDBranchFriendlyName,
-                                              RepoUrl = new Uri(OriginPath),
-                                          }, SourceTypeConstants.Directory)
+                                                      {
+                                                          Name = "ref-source",
+                                                          Ref = "values",
+                                                          Path = "include/",
+                                                          TargetRevision = ArgoCDBranchFriendlyName,
+                                                          RepoUrl = new Uri(OriginPath),
+                                                      },
+                                                      SourceTypeConstants.Directory)
                                           .Build();
 
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
@@ -1379,17 +1322,19 @@ service:
 ";
 
             var clonedRepoPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
-            var fileInRepo = Path.Combine(clonedRepoPath, existingYamlFile);
-            fileSystem.FileExists(fileInRepo).Should().BeTrue();
-            var content = fileSystem.ReadFile(fileInRepo);
-            content.ReplaceLineEndings().Should().Be(updatedYamlContent.ReplaceLineEndings());
-
-            var fileUnderPath = Path.Combine(clonedRepoPath, yamlFileUnderPath);
-            fileSystem.FileExists(fileUnderPath).Should().BeTrue();
-            var updatedContentUnderPath = fileSystem.ReadFile(fileUnderPath);
-            updatedContentUnderPath.ReplaceLineEndings().Should().Be(contentUnderPath.ReplaceLineEndings());
+            AssertFileContents(clonedRepoPath, existingYamlFile, updatedYamlContent);
+            AssertFileContents(clonedRepoPath, yamlFileUnderPath, contentUnderPath);
 
             AssertOutputVariables(matchingApplicationTotalSourceCounts: "2");
+        }
+
+        void AssertFileContents(string clonedRepoPath, string relativeFilePath, string expectedContent)
+        {
+            var absolutePath = Path.Combine(clonedRepoPath, relativeFilePath);
+            fileSystem.FileExists(absolutePath).Should().BeTrue();
+            
+            var content = fileSystem.ReadFile(absolutePath);
+            content.ReplaceLineEndings().Should().Be(expectedContent.ReplaceLineEndings());
         }
 
         void AssertOutputVariables(bool updated = true, string matchingApplicationTotalSourceCounts = "1", string matchingApplicationMatchingSourceCounts = "1", int updatedImages = 1)
