@@ -338,12 +338,11 @@ namespace Calamari.ArgoCD.Conventions
                 log.WarnFormat("Unable to update source '{0}' as a path has not been specified.", sourceWithMetadata.SourceIdentity);
                 return result;
             }
-
-            var valuesFilesToUpdate = new List<HelmValuesFileImageUpdateTarget>();
-            
+           
             var explicitHelmSources = new HelmValuesFileUpdateTargetParser(applicationFromYaml, application.DefaultRegistry).GetExplicitValuesFilesToUpdate(applicationSource);
-            LogHelmSourceConfigurationProblems(explicitHelmSources.Problems, applicationFromYaml.Metadata.Annotations, containsMultipleSources, deploymentScope);
-            valuesFilesToUpdate.AddRange(explicitHelmSources.Targets);
+
+            var valuesFilesToUpdate = new List<HelmValuesFileImageUpdateTarget>(explicitHelmSources.Targets);
+            var valueFileProblems = new List<HelmSourceConfigurationProblem>(explicitHelmSources.Problems);
 
             //Add the implicit value file if needed
             using (var repository = CreateRepository(gitCredentials, applicationSource, repositoryFactory))
@@ -352,13 +351,18 @@ namespace Calamari.ArgoCD.Conventions
                 var implicitValuesFile = HelmDiscovery.TryFindValuesFile(fileSystem, repoSubPath);
                 if (implicitValuesFile != null && explicitHelmSources.Targets.All(t => t.FileName != implicitValuesFile))
                 {
-                    HandleAsHelmChart(applicationFromYaml,
+                    var (target, problem) = AddImplicitValuesFile(applicationFromYaml,
                                       application,
                                       applicationSource,
-                                      valuesFilesToUpdate,
-                                      repoSubPath,
                                       implicitValuesFile);
+                    if (target != null)
+                        valuesFilesToUpdate.Add(target);
+                    
+                    if (problem != null)
+                        valueFileProblems.Add(problem);
                 }
+
+                LogHelmSourceConfigurationProblems(valueFileProblems, applicationFromYaml.Metadata.Annotations, containsMultipleSources, deploymentScope);
 
                 foreach (var valuesFileSource in valuesFilesToUpdate)
                 {
@@ -416,6 +420,8 @@ namespace Calamari.ArgoCD.Conventions
                         {
                             log.WarnFormat("The Helm source '{0}' is missing an annotation for the image replace path. It will not be updated.",
                                            helmSourceIsMissingImagePathAnnotation.HelmSourceRepoUrl.AbsoluteUri);
+                            log.WarnFormat("Annotation creation documentation can be found {0}.", log.FormatShortLink("argo-cd-helm-image-annotations", "here"));
+
                         }
 
                         return;
@@ -438,12 +444,10 @@ namespace Calamari.ArgoCD.Conventions
             return repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), gitConnection);
         }
 
-        void HandleAsHelmChart(Application applicationFromYaml,
-                               ArgoCDApplicationDto application,
-                               ApplicationSource applicationSource,
-                               List<HelmValuesFileImageUpdateTarget> valuesFilesToUpdate,
-                               string repoSubPath,
-                               string valuesFilename)
+        (HelmValuesFileImageUpdateTarget? Target, HelmSourceConfigurationProblem? Problem) AddImplicitValuesFile(Application applicationFromYaml,
+                                                                                                              ArgoCDApplicationDto application,
+                                                                                                              ApplicationSource applicationSource,
+                                                                                                              string valuesFilename)
         {
             var imageReplacePaths = ScopingAnnotationReader.GetImageReplacePathsForApplicationSource(
                                                                                                                applicationSource.Name.ToApplicationSourceName(), 
@@ -451,12 +455,12 @@ namespace Calamari.ArgoCD.Conventions
                                                                                                                applicationFromYaml.Spec.Sources.Count > 1);
             if (!imageReplacePaths.Any())
             {
-                GenerateHelmAnnotationLogMessages(applicationFromYaml, repoSubPath);
+                return (null, new HelmSourceIsMissingImagePathAnnotation(applicationSource.Name.ToApplicationSourceName(), applicationSource.RepoUrl));
             }
             else
             {
                 log.Info($"Application '{application.Name}' source at `{applicationSource.RepoUrl.AbsoluteUri}' is a helm chart, its values file will be subsequently updated.");
-                valuesFilesToUpdate.Add(new HelmValuesFileImageUpdateTarget(
+                return (new HelmValuesFileImageUpdateTarget(
                                                                             applicationFromYaml.Metadata.Name.ToApplicationName(),
                                                                             applicationSource.Name.ToApplicationSourceName(),
                                                                             application.DefaultRegistry,
@@ -464,7 +468,7 @@ namespace Calamari.ArgoCD.Conventions
                                                                             applicationSource.RepoUrl,
                                                                             applicationSource.TargetRevision,
                                                                             valuesFilename,
-                                                                            imageReplacePaths));
+                                                                            imageReplacePaths), null);
             }
         }
 
@@ -590,14 +594,6 @@ namespace Calamari.ArgoCD.Conventions
                       .GetResult();
 
             return true;
-        }
-
-        void GenerateHelmAnnotationLogMessages(Application app, string subPath)
-        {
-            log.WarnFormat("Argo CD Application '{0}' contains a helm chart ({1}), however the application is missing Octopus-specific annotations required for image-tag updating in Helm.",
-                           app.Metadata.Name,
-                           Path.Combine(subPath, ArgoCDConstants.HelmChartFileName));
-            log.WarnFormat("Annotation creation documentation can be found {0}.", log.FormatShortLink("argo-cd-helm-image-annotations", "here"));
         }
 
         //NOTE: rootPath needs to include the subfolder
