@@ -227,8 +227,7 @@ namespace Calamari.ArgoCD.Conventions
                         var annotatedScope = ScopingAnnotationReader.GetScopeForApplicationSource(helmSourceIsMissingImagePathAnnotation.ScopingSourceName, annotations, containsMultipleSources);
                         if (annotatedScope == deploymentScope)
                         {
-                            log.WarnFormat("The Helm source '{0}' is missing an annotation for the image replace path. It will not be updated.",
-                                           helmSourceIsMissingImagePathAnnotation.HelmSourceRepoUrl.AbsoluteUri);
+                            LogMissingHelmImageReplacePath(helmSourceIsMissingImagePathAnnotation.HelmSourceRepoUrl);
                         }
 
                         return;
@@ -269,7 +268,7 @@ namespace Calamari.ArgoCD.Conventions
                                                                                                                applicationFromYaml.Spec.Sources.Count > 1);
             if (!imageReplacePaths.Any())
             {
-                GenerateHelmAnnotationLogMessages(applicationFromYaml, repoSubPath);
+                LogMissingHelmImageReplacePath(applicationSource.RepoUrl);
             }
             else
             {
@@ -395,11 +394,10 @@ namespace Calamari.ArgoCD.Conventions
             return true;
         }
 
-        void GenerateHelmAnnotationLogMessages(Application app, string subPath)
+        void LogMissingHelmImageReplacePath(Uri helmSourceIsMissingImagePathAnnotation)
         {
-            log.WarnFormat("Argo CD Application '{0}' contains a helm chart ({1}), however the application is missing Octopus-specific annotations required for image-tag updating in Helm.",
-                           app.Metadata.Name,
-                           Path.Combine(subPath, ArgoCDConstants.HelmChartFileName));
+            log.WarnFormat("The Helm source '{0}' is missing an annotation for the image replace path. It will not be updated.",
+                           helmSourceIsMissingImagePathAnnotation.AbsoluteUri);
             log.WarnFormat("Annotation creation documentation can be found {0}.", log.FormatShortLink("argo-cd-helm-image-annotations", "here"));
         }
 
