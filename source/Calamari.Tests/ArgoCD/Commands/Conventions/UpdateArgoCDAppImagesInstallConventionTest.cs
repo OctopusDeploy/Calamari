@@ -165,7 +165,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
         }
 
         [Test]
-        public void DirectorySource_Update()
+        public void DirectorySource_ImageMatches_Update()
         {
             // Arrange
             var updater = new UpdateArgoCDAppImagesInstallConvention(log,

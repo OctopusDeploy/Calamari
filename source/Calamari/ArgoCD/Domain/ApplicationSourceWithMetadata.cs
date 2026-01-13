@@ -16,6 +16,6 @@ namespace Calamari.ArgoCD.Domain
         public SourceType? SourceType { get; }
         public int Index { get; }
         
-        public string SourceIdentity => (Source.Name.IsNullOrEmpty() ? Source.RepoUrl.ToString() : Source.Name) + $" ({Index}:{SourceType.ToString() ?? "Unknown"})";
+        public string SourceIdentity => $"Index: [{Index}], Type: {SourceType.ToString() ?? "Unknown"}, Name: {Source.Name ?? "(None)"}";
     }
 }

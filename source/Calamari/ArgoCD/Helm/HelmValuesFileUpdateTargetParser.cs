@@ -85,7 +85,7 @@ namespace Calamari.ArgoCD.Helm
                         if (!definedPathsForSource.Any())
                         {
                             problems.Add(
-                                         new HelmSourceIsMissingImagePathAnnotation(helmSource.Name.ToApplicationSourceName(), helmSource.RepoUrl, refSource.Name.ToApplicationSourceName())
+                                         new HelmSourceIsMissingImagePathAnnotation(helmSource.Name.ToApplicationSourceName(), helmSource.RepoUrl)
                                         );
                             continue;
                         }

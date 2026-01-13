@@ -264,7 +264,7 @@ namespace Calamari.ArgoCD.Conventions
             var helmTargetsForRefSource = new HelmValuesFileUpdateTargetParser(applicationFromYaml, application.DefaultRegistry)
                 .GetHelmTargetsForRefSource(applicationSource);
 
-            LogHelmSourceConfigurationProblems(helmTargetsForRefSource.Problems, applicationFromYaml.Metadata.Annotations, containsMultipleSources, deploymentScope);
+            LogHelmSourceConfigurationProblems(helmTargetsForRefSource.Problems);
 
             using (var repository = CreateRepository(gitCredentials, applicationSource, repositoryFactory))
             {
@@ -361,7 +361,7 @@ namespace Calamari.ArgoCD.Conventions
                         valueFileProblems.Add(problem);
                 }
 
-                LogHelmSourceConfigurationProblems(valueFileProblems, applicationFromYaml.Metadata.Annotations, containsMultipleSources, deploymentScope);
+                LogHelmSourceConfigurationProblems(valueFileProblems);
 
                 foreach (var valuesFileSource in valuesFilesToUpdate)
                 {
@@ -398,10 +398,7 @@ namespace Calamari.ArgoCD.Conventions
             return new HashSet<string>();
         }
 
-        void LogHelmSourceConfigurationProblems(IReadOnlyCollection<HelmSourceConfigurationProblem> helmSourceConfigurationProblems,
-                                                IReadOnlyDictionary<string, string> annotations,
-                                                bool containsMultipleSources,
-                                                (ProjectSlug Project, EnvironmentSlug Environment, TenantSlug? Tenant) deploymentScope)
+        void LogHelmSourceConfigurationProblems(IReadOnlyCollection<HelmSourceConfigurationProblem> helmSourceConfigurationProblems)
         {
             foreach (var helmSourceConfigurationProblem in helmSourceConfigurationProblems)
             {
@@ -414,14 +411,9 @@ namespace Calamari.ArgoCD.Conventions
                 {
                     case HelmSourceIsMissingImagePathAnnotation helmSourceIsMissingImagePathAnnotation:
                     {
-                        var annotatedScope = ScopingAnnotationReader.GetScopeForApplicationSource(helmSourceIsMissingImagePathAnnotation.ScopingSourceName, annotations, containsMultipleSources);
-                        if (annotatedScope == deploymentScope)
-                        {
-                            log.WarnFormat("The Helm source '{0}' is missing an annotation for the image replace path. It will not be updated.",
-                                           helmSourceIsMissingImagePathAnnotation.HelmSourceRepoUrl.AbsoluteUri);
-                            log.WarnFormat("Annotation creation documentation can be found {0}.", log.FormatShortLink("argo-cd-helm-image-annotations", "here"));
-
-                        }
+                        log.WarnFormat("The Helm source '{0}' is missing an annotation for the image replace path. It will not be updated.",
+                                       helmSourceIsMissingImagePathAnnotation.HelmSourceRepoUrl.AbsoluteUri);
+                        log.WarnFormat("Annotation creation documentation can be found {0}.", log.FormatShortLink("argo-cd-helm-image-annotations", "here"));
 
                         return;
                     }
