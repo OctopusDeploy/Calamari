@@ -328,7 +328,7 @@ function report_kubernetes_manifest
       MANIFESTS+=("$CURRENT")
       CURRENT=""
     else
-      CURRENT="$CURRENT$LINE\n"	
+      CURRENT="$CURRENT$LINE"$'\n'
     fi
   done
     
