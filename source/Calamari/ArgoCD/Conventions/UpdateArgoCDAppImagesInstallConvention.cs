@@ -267,12 +267,14 @@ namespace Calamari.ArgoCD.Conventions
 
             LogHelmSourceConfigurationProblems(helmTargetsForRefSource.Problems, applicationFromYaml.Metadata.Annotations, containsMultipleSources, deploymentScope);
 
-            foreach (var valuesFileSource in helmTargetsForRefSource.Targets)
+            using (var repository = CreateRepository(gitCredentials, applicationSource, repositoryFactory))
             {
-                result.UpdatedImages.AddRange(ProcessHelmUpdateTarget(gitCredentials,
-                                                             repositoryFactory,
-                                                             deploymentConfig,
-                                                             valuesFileSource));
+                foreach (var valuesFileSource in helmTargetsForRefSource.Targets)
+                {
+                    result.UpdatedImages.AddRange(ProcessHelmUpdateTarget(repository,
+                                                                          deploymentConfig,
+                                                                          valuesFileSource));
+                }
             }
 
             return result;
@@ -339,12 +341,16 @@ namespace Calamari.ArgoCD.Conventions
 
             var valuesFilesToUpdate = new List<HelmValuesFileImageUpdateTarget>();
             
-            //Add implicit sources
+            var explicitHelmSources = new HelmValuesFileUpdateTargetParser(applicationFromYaml, application.DefaultRegistry).GetExplicitValuesFilesToUpdate(applicationSource);
+            LogHelmSourceConfigurationProblems(explicitHelmSources.Problems, applicationFromYaml.Metadata.Annotations, containsMultipleSources, deploymentScope);
+            valuesFilesToUpdate.AddRange(explicitHelmSources.Targets);
+
+            //Add the implicit value file if needed
             using (var repository = CreateRepository(gitCredentials, applicationSource, repositoryFactory))
             {
                 var repoSubPath = Path.Combine(repository.WorkingDirectory, applicationSource.Path!);
                 var implicitValuesFile = HelmDiscovery.TryFindValuesFile(fileSystem, repoSubPath);
-                if (implicitValuesFile != null)
+                if (implicitValuesFile != null && explicitHelmSources.Targets.All(t => t.FileName != implicitValuesFile))
                 {
                     HandleAsHelmChart(applicationFromYaml,
                                       application,
@@ -353,48 +359,36 @@ namespace Calamari.ArgoCD.Conventions
                                       repoSubPath,
                                       implicitValuesFile);
                 }
-            }
-            
-            var explicitHelmSources = new HelmValuesFileUpdateTargetParser(applicationFromYaml, application.DefaultRegistry).GetExplicitValuesFilesToUpdate(applicationSource);
-            LogHelmSourceConfigurationProblems(explicitHelmSources.Problems, applicationFromYaml.Metadata.Annotations, containsMultipleSources, deploymentScope);
 
-            valuesFilesToUpdate.AddRange(explicitHelmSources.Targets);
-            foreach (var valuesFileSource in valuesFilesToUpdate)
-            {
-                result.UpdatedImages.AddRange(ProcessHelmUpdateTarget(gitCredentials, repositoryFactory, deploymentConfig,
-                                                                     valuesFileSource));
+                foreach (var valuesFileSource in valuesFilesToUpdate)
+                {
+                    result.UpdatedImages.AddRange(ProcessHelmUpdateTarget(repository,
+                                                                          deploymentConfig,
+                                                                          valuesFileSource));
+                }
             }
 
             return result;
         }
 
-        HashSet<string> ProcessHelmUpdateTarget(Dictionary<string, GitCredentialDto> gitCredentials,
-                                               RepositoryFactory repositoryFactory,
+        HashSet<string> ProcessHelmUpdateTarget(RepositoryWrapper repository,
                                                UpdateArgoCDAppDeploymentConfig deploymentConfig,
                                                HelmValuesFileImageUpdateTarget valuesFileSource)
         {
-            var sourceBase = new ApplicationSource()
+            var helmUpdateResult = UpdateHelmImageValues(repository.WorkingDirectory,
+                                                         valuesFileSource,
+                                                         deploymentConfig.ImageReferences
+                                                        );
+            if (helmUpdateResult.ImagesUpdated.Count > 0)
             {
-                RepoUrl = valuesFileSource.RepoUrl,
-                TargetRevision = valuesFileSource.TargetRevision,
-            };
-            using (var repository = CreateRepository(gitCredentials, sourceBase, repositoryFactory))
-            {
-                var helmUpdateResult = UpdateHelmImageValues(repository.WorkingDirectory,
-                                                             valuesFileSource,
-                                                             deploymentConfig.ImageReferences
-                                                            );
-                if (helmUpdateResult.ImagesUpdated.Count > 0)
-                {
-                    var didPush = PushToRemote(repository, GitReference.CreateFromString(valuesFileSource.TargetRevision),
-                                               deploymentConfig.CommitParameters,
-                                               new HashSet<string>() { Path.Combine(valuesFileSource.Path, valuesFileSource.FileName) },
-                                               helmUpdateResult.ImagesUpdated);
+                var didPush = PushToRemote(repository, GitReference.CreateFromString(valuesFileSource.TargetRevision),
+                                           deploymentConfig.CommitParameters,
+                                           new HashSet<string>() { Path.Combine(valuesFileSource.Path, valuesFileSource.FileName) },
+                                           helmUpdateResult.ImagesUpdated);
 
-                    if (didPush)
-                    {
-                        return helmUpdateResult.ImagesUpdated;
-                    }
+                if (didPush)
+                {
+                    return helmUpdateResult.ImagesUpdated;
                 }
             }
 
