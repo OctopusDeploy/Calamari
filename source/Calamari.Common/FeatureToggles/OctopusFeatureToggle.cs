@@ -6,11 +6,9 @@ namespace Calamari.Common.FeatureToggles
     {
         public static class KnownSlugs
         {
-            public const string ArgoCDCreatePullRequestFeatureToggle = "argocd-create-pull-request";
             public const string AnsiColorsInTaskLogFeatureToggle = "ansi-colors";
         };
 
-        public static readonly OctopusFeatureToggle ArgoCDCreatePullRequestFeatureToggle = new OctopusFeatureToggle(KnownSlugs.ArgoCDCreatePullRequestFeatureToggle);
         public static readonly OctopusFeatureToggle AnsiColorsInTaskLogFeatureToggle = new OctopusFeatureToggle(KnownSlugs.AnsiColorsInTaskLogFeatureToggle);
 
         public class OctopusFeatureToggle
