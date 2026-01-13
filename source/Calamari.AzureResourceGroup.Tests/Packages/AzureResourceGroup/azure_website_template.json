@@ -88,6 +88,7 @@
       "type": "Microsoft.Storage/storageAccounts",
       "apiVersion": "2015-05-01-preview",
       "location": "[parameters('storageAccountList')[copyIndex()].location]",
+      "kind": "StorageV2",
       "copy": {
           "name": "storageAccountLoop",
           "count": "[length(parameters('storageAccountList'))]"
