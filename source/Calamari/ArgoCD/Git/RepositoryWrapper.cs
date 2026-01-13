@@ -176,6 +176,18 @@ namespace Calamari.ArgoCD.Git
             }
         }
 
+        public void ValidateReferenceIsBranch(string referenceName)
+        {
+            bool isBranch = referenceName == GitHead.HeadAsTarget ||
+                          referenceName.StartsWith(GitBranchName.Prefix) ||
+                          repository.Branches.Any(b => b.FriendlyName == referenceName);     
+
+            if (!isBranch)
+            {
+                throw new CommandException($"Unable to update source with url {connection.Url} as its targetRevision ({referenceName}) is not an updatable branch (it appears to be a tag or commit)");
+            }
+        }
+
         static string GenerateCommitMessage(string summary, string description)
         {
             return description.Equals(string.Empty)

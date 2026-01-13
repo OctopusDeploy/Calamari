@@ -126,6 +126,11 @@ namespace Calamari.ArgoCD.Conventions
 
                         using (var repository = repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), gitConnection))
                         {
+                            if (!repository.ReferenceIsBranch(applicationSource.TargetRevision))
+                            {
+                                throw new CommandException($"Unable to update repository at {applicationSource.RepoUrl} as the targetRevision ({applicationSource.TargetRevision}) is not an updateable branch, and maybe a tag or commit");
+                            }
+                            
                             var subFolder = outputPath;
                             log.VerboseFormat("Copying files into '{0}'", subFolder);
 
