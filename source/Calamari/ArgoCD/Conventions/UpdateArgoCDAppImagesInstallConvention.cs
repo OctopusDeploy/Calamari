@@ -223,7 +223,6 @@ namespace Calamari.ArgoCD.Conventions
 
             using (var repository = CreateRepository(gitCredentials, applicationSource, repositoryFactory))
             {
-                var repoSubPath = Path.Combine(repository.WorkingDirectory, applicationSource.Path!);
                 log.Verbose($"Reading files from {applicationSource.Path}");
                             
                 var (updatedFiles, updatedImages) = UpdateKustomizeYaml(repository.WorkingDirectory, applicationSource.Path!, application.DefaultRegistry, deploymentConfig.ImageReferences);
@@ -505,7 +504,7 @@ namespace Calamari.ArgoCD.Conventions
                 return Update(rootPath, imagesToUpdate, filesToUpdate, imageReplacerFactory);
             }
 
-            log.Verbose("kustomization file found, will only update images transformer in the kustomization file");
+            log.Warn("kustomization file not found, no files will be updated");
             return (new  HashSet<string>(), new HashSet<string>());
         }
 
