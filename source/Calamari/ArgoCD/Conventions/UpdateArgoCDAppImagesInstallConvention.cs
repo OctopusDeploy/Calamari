@@ -260,7 +260,6 @@ namespace Calamari.ArgoCD.Conventions
             if (applicationSource.Path != null)
             {
                 log.WarnFormat("This source '{0}' contains a Ref, only referenced files will be updated. Please create another source with the same URL if you wish to update files under the path.", sourceWithMetadata.SourceIdentity);
-                return result;
             }
             
             var helmTargetsForRefSource = new HelmValuesFileUpdateTargetParser(applicationFromYaml, application.DefaultRegistry)
@@ -566,7 +565,7 @@ namespace Calamari.ArgoCD.Conventions
                 fileSystem.OverwriteFile(filepath, imageUpdateResult.UpdatedContents);
                 try
                 {
-                    return new HelmRefUpdatedResult(target.RepoUrl, imageUpdateResult.UpdatedImageReferences);
+                    return new HelmRefUpdatedResult(imageUpdateResult.UpdatedImageReferences);
                 }
                 catch (Exception ex)
                 {
@@ -575,7 +574,7 @@ namespace Calamari.ArgoCD.Conventions
                 }
             }
 
-            return new HelmRefUpdatedResult(target.RepoUrl, new HashSet<string>());
+            return new HelmRefUpdatedResult(new HashSet<string>());
         }
 
         bool PushToRemote(RepositoryWrapper repository,
