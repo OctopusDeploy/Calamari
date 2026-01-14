@@ -20,7 +20,7 @@ namespace Calamari.ArgoCD.Git
         readonly ICalamariFileSystem calamariFileSystem;
         readonly string repoCheckoutDirectoryPath;
         readonly ILog log;
-        readonly IGitConnection connection;
+        readonly IRepositoryConnection connection;
         readonly IGitVendorApiAdapter? vendorApiAdapter;
 
         public string WorkingDirectory => repository.Info.WorkingDirectory;
@@ -29,7 +29,7 @@ namespace Calamari.ArgoCD.Git
                                  ICalamariFileSystem calamariFileSystem,
                                  string repoCheckoutDirectoryPath,
                                  ILog log,
-                                 IGitConnection connection,
+                                 IRepositoryConnection connection,
                                  IGitVendorApiAdapter? vendorApiAdapter)
         {
             this.repository = repository;
@@ -85,22 +85,20 @@ namespace Calamari.ArgoCD.Git
         public async Task PushChanges(bool requiresPullRequest,
                                       string summary,
                                       string description,
-                                      GitReference branchName,
+                                      GitBranchName currentBranchName,
                                       CancellationToken cancellationToken)
         {
-            var currentBranchName = repository.GetBranchName(branchName);
             var commit = repository.Head.Tip; // We should have just pushed to the tip of this branch
-
+            
             var pushToBranchName = requiresPullRequest ? 
                 CalculateBranchName() :
                 currentBranchName;
-
-            log.Info($"Pushing changes to branch '{pushToBranchName.ToFriendlyName()}'");
+            
+            log.Info($"Pushing changes to branch '{pushToBranchName.GetFriendlyName()}'");
             PushChanges(pushToBranchName);
 
             if (vendorApiAdapter != null)
             {
-                
                 var url = vendorApiAdapter.GenerateCommitUrl(commit.Sha);
                 log.Info($"Commit {log.FormatLink(url, commit.ShortSha())} pushed");    
             }
@@ -172,8 +170,14 @@ namespace Calamari.ArgoCD.Git
             repository.Network.Push(repository.Head, pushOptions);
             if (errorsDetected != null)
             {
-                throw new CommandException($"Failed to push to branch {branchName.ToFriendlyName()} - {errorsDetected.Message}");
+                throw new CommandException($"Failed to push to branch {branchName.GetFriendlyName()} - {errorsDetected.Message}");
             }
+        }
+
+        public GitReference CreateGitReference(string gitReferenceName)
+        {
+            var gitRefFactory = new GitReferenceFactory(repository);
+            return gitRefFactory.CreateGitReference(gitReferenceName);
         }
 
         static string GenerateCommitMessage(string summary, string description)

@@ -47,11 +47,11 @@ namespace Calamari.ArgoCD.Git.GitVendorApiAdapters
                 title = pullRequestTitle,
                 source = new
                 {
-                    branch = new { name = sourceBranch.ToFriendlyName() },
+                    branch = new { name = sourceBranch.GetFriendlyName() },
                 },
                 destination = new
                 {
-                    branch = new { name = destinationBranch.ToFriendlyName() },
+                    branch = new { name = destinationBranch.GetFriendlyName() },
                 },
                 description = new
                 {

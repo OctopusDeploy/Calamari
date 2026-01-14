@@ -1,19 +1,13 @@
-using System;
-
 namespace Calamari.ArgoCD.Git
 {
-    public class GitBranchName : GitReference
+    public class GitTag : GitReference
     {
-        public const string Prefix = "refs/heads/";
+        public const string Prefix = "refs/tags/";
 
-        public GitBranchName(string value) : base(value)
+        public GitTag(string value) : base(value)
         {
-            if (!Value.StartsWith(Prefix))
-            {
-                throw new InvalidCastException("Branch name must start with 'refs/heads/'");
-            }
         }
-
+        
         public static GitBranchName CreateFromFriendlyName(string friendlyName)
         {
             return new GitBranchName($"{Prefix}{friendlyName}");
