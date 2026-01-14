@@ -3,7 +3,6 @@
     <PropertyGroup>
         <OutputType>Exe</OutputType>
         <TargetFramework>net462</TargetFramework>
-        <LangVersion>default</LangVersion>
         <!-- CS8632: The annotation for nullable reference types should only be used in code within a '#nullable' annotations context. -->
         <NoWarn>CS8632</NoWarn>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
