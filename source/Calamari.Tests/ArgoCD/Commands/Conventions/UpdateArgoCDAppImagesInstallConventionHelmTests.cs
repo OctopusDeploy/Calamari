@@ -655,7 +655,7 @@ image:
             var resultRepo = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             AssertFileContents(resultRepo, "files/values.yaml", valuesFile);
 
-            log.MessagesWarnFormatted.Should().Contain("The Helm source 'https://github.com/doesnt/exist.git' is missing an annotation for the image replace path. It will not be updated.");
+            log.MessagesWarnFormatted.Should().Contain("The Helm source 'Index: 0, Type: Helm, Name: ' is missing an annotation for the image replace path. The source 'Index: 1, Type: Directory, Name: ref-source' will not be updated.");
 
             AssertOutputVariables(false, matchingApplicationTotalSourceCounts: "2");
         }

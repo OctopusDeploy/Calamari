@@ -262,18 +262,18 @@ namespace Calamari.ArgoCD.Conventions
             }
             
             var helmTargetsForRefSource = new HelmValuesFileUpdateTargetParser(applicationFromYaml, application.DefaultRegistry)
-                .GetHelmTargetsForRefSource(applicationSource);
+                .GetHelmTargetsForRefSource(sourceWithMetadata);
 
             LogHelmSourceConfigurationProblems(helmTargetsForRefSource.Problems);
 
             using (var repository = CreateRepository(gitCredentials, applicationSource, repositoryFactory))
             {
-                foreach (var valuesFileSource in helmTargetsForRefSource.Targets)
-                {
-                    result.UpdatedImages.AddRange(ProcessHelmUpdateTarget(repository,
-                                                                          deploymentConfig,
-                                                                          valuesFileSource));
-                }
+                var updatedImages = ProcessHelmUpdateTargets(repository,
+                                                       deploymentConfig,
+                                                       applicationSource,
+                                                       helmTargetsForRefSource.Targets);
+                
+                result.UpdatedImages.AddRange(updatedImages);
             }
 
             return result;
@@ -364,35 +364,36 @@ namespace Calamari.ArgoCD.Conventions
 
                 LogHelmSourceConfigurationProblems(valueFileProblems);
 
-                foreach (var valuesFileSource in valuesFilesToUpdate)
-                {
-                    result.UpdatedImages.AddRange(ProcessHelmUpdateTarget(repository,
-                                                                          deploymentConfig,
-                                                                          valuesFileSource));
-                }
+                result.UpdatedImages.AddRange(ProcessHelmUpdateTargets(repository,
+                                                                       deploymentConfig,
+                                                                       applicationSource,
+                                                                       valuesFilesToUpdate));
             }
 
             return result;
         }
 
-        HashSet<string> ProcessHelmUpdateTarget(RepositoryWrapper repository,
+        HashSet<string> ProcessHelmUpdateTargets(RepositoryWrapper repository,
                                                UpdateArgoCDAppDeploymentConfig deploymentConfig,
-                                               HelmValuesFileImageUpdateTarget target)
+                                               ApplicationSource source,
+                                               IReadOnlyCollection<HelmValuesFileImageUpdateTarget> targets)
         {
-            var helmUpdateResult = UpdateHelmImageValues(repository.WorkingDirectory,
-                                                         target,
-                                                         deploymentConfig.ImageReferences
-                                                        );
-            if (helmUpdateResult.ImagesUpdated.Count > 0)
+            var results = targets.Select(t => UpdateHelmImageValues(repository.WorkingDirectory,
+                                                      t,
+                                                      deploymentConfig.ImageReferences
+                                                     )).ToList();
+
+            var updatedImages = results.SelectMany(r => r.ImagesUpdated).ToHashSet();
+            if (updatedImages.Count > 0)
             {
-                var didPush = PushToRemote(repository, GitReference.CreateFromString(target.TargetRevision),
+                var didPush = PushToRemote(repository, GitReference.CreateFromString(source.TargetRevision),
                                            deploymentConfig.CommitParameters,
-                                           new HashSet<string>() { Path.Combine(target.Path, target.FileName) },
-                                           helmUpdateResult.ImagesUpdated);
+                                           results.Where(r => r.ImagesUpdated.Any()).Select(r => r.RelativeFilepath).ToHashSet(),
+                                           updatedImages);
 
                 if (didPush)
                 {
-                    return helmUpdateResult.ImagesUpdated;
+                    return updatedImages;
                 }
             }
 
@@ -412,8 +413,17 @@ namespace Calamari.ArgoCD.Conventions
                 {
                     case HelmSourceIsMissingImagePathAnnotation helmSourceIsMissingImagePathAnnotation:
                     {
-                        log.WarnFormat("The Helm source '{0}' is missing an annotation for the image replace path. It will not be updated.",
-                                       helmSourceIsMissingImagePathAnnotation.SourceIdentity);
+                        if (helmSourceIsMissingImagePathAnnotation.RefSourceIdentity == null)
+                        {
+                            log.WarnFormat("The Helm source '{0}' is missing an annotation for the image replace path. It will not be updated.",
+                                           helmSourceIsMissingImagePathAnnotation.SourceIdentity);
+                        }
+                        else
+                        {
+                            log.WarnFormat("The Helm source '{0}' is missing an annotation for the image replace path. The source '{1}' will not be updated.",
+                                           helmSourceIsMissingImagePathAnnotation.SourceIdentity,
+                                           helmSourceIsMissingImagePathAnnotation.RefSourceIdentity);
+                        }
                         log.WarnFormat("Annotation creation documentation can be found {0}.", log.FormatShortLink("argo-cd-helm-image-annotations", "here"));
 
                         return;
@@ -447,7 +457,7 @@ namespace Calamari.ArgoCD.Conventions
                                                                                                                applicationFromYaml.Spec.Sources.Count > 1);
             if (!imageReplacePaths.Any())
             {
-                return (null, new HelmSourceIsMissingImagePathAnnotation(applicationSource.SourceIdentity, applicationSource.Source.RepoUrl));
+                return (null, new HelmSourceIsMissingImagePathAnnotation(applicationSource.SourceIdentity));
             }
             else
             {
@@ -549,7 +559,7 @@ namespace Calamari.ArgoCD.Conventions
                 fileSystem.OverwriteFile(filepath, imageUpdateResult.UpdatedContents);
                 try
                 {
-                    return new HelmRefUpdatedResult(imageUpdateResult.UpdatedImageReferences);
+                    return new HelmRefUpdatedResult(imageUpdateResult.UpdatedImageReferences, Path.Combine(target.Path, target.FileName));
                 }
                 catch (Exception ex)
                 {
@@ -558,7 +568,7 @@ namespace Calamari.ArgoCD.Conventions
                 }
             }
 
-            return new HelmRefUpdatedResult(new HashSet<string>());
+            return new HelmRefUpdatedResult(new HashSet<string>(), Path.Combine(target.Path, target.FileName));
         }
 
         bool PushToRemote(RepositoryWrapper repository,
