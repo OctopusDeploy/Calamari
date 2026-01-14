@@ -487,7 +487,7 @@ image:
             var resultRepo = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             AssertFileContents(resultRepo, "files/values.yaml", valuesFile);
 
-            log.MessagesWarnFormatted.Should().Contain($"The Helm source '{new Uri(OriginPath)}' is missing an annotation for the image replace path. It will not be updated.");
+            log.MessagesWarnFormatted.Should().Contain($"The Helm source 'Index: 0, Type: Helm, Name: helm-source' is missing an annotation for the image replace path. It will not be updated.");
 
             AssertOutputVariables(false, matchingApplicationTotalSourceCounts: "1");
         }
@@ -565,7 +565,7 @@ image:
             var resultRepo = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             AssertFileContents(resultRepo, "files/values.yaml", valuesFile);
 
-            log.MessagesWarnFormatted.Should().Contain($"The Helm source '{new Uri(OriginPath)}' is missing an annotation for the image replace path. It will not be updated.");
+            log.MessagesWarnFormatted.Should().Contain($"The Helm source 'Index: 0, Type: Helm, Name: helm-source' is missing an annotation for the image replace path. It will not be updated.");
 
             AssertOutputVariables(false, matchingApplicationTotalSourceCounts: "1");
         }

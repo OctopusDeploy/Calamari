@@ -338,10 +338,11 @@ namespace Calamari.ArgoCD.Conventions
                 return result;
             }
            
-            var explicitHelmSources = new HelmValuesFileUpdateTargetParser(applicationFromYaml, application.DefaultRegistry).GetExplicitValuesFilesToUpdate(applicationSource);
+            var explicitHelmSources = new HelmValuesFileUpdateTargetParser(applicationFromYaml, application.DefaultRegistry)
+                .GetExplicitValuesFilesToUpdate(sourceWithMetadata);
 
             var valuesFilesToUpdate = new List<HelmValuesFileImageUpdateTarget>(explicitHelmSources.Targets);
-            var valueFileProblems = new List<HelmSourceConfigurationProblem>(explicitHelmSources.Problems);
+            var valueFileProblems = new HashSet<HelmSourceConfigurationProblem>(explicitHelmSources.Problems);
 
             //Add the implicit value file if needed
             using (var repository = CreateRepository(gitCredentials, applicationSource, repositoryFactory))
@@ -352,7 +353,7 @@ namespace Calamari.ArgoCD.Conventions
                 {
                     var (target, problem) = AddImplicitValuesFile(applicationFromYaml,
                                       application,
-                                      applicationSource,
+                                      sourceWithMetadata,
                                       implicitValuesFile);
                     if (target != null)
                         valuesFilesToUpdate.Add(target);
@@ -376,17 +377,17 @@ namespace Calamari.ArgoCD.Conventions
 
         HashSet<string> ProcessHelmUpdateTarget(RepositoryWrapper repository,
                                                UpdateArgoCDAppDeploymentConfig deploymentConfig,
-                                               HelmValuesFileImageUpdateTarget valuesFileSource)
+                                               HelmValuesFileImageUpdateTarget target)
         {
             var helmUpdateResult = UpdateHelmImageValues(repository.WorkingDirectory,
-                                                         valuesFileSource,
+                                                         target,
                                                          deploymentConfig.ImageReferences
                                                         );
             if (helmUpdateResult.ImagesUpdated.Count > 0)
             {
-                var didPush = PushToRemote(repository, GitReference.CreateFromString(valuesFileSource.TargetRevision),
+                var didPush = PushToRemote(repository, GitReference.CreateFromString(target.TargetRevision),
                                            deploymentConfig.CommitParameters,
-                                           new HashSet<string>() { Path.Combine(valuesFileSource.Path, valuesFileSource.FileName) },
+                                           new HashSet<string>() { Path.Combine(target.Path, target.FileName) },
                                            helmUpdateResult.ImagesUpdated);
 
                 if (didPush)
@@ -412,7 +413,7 @@ namespace Calamari.ArgoCD.Conventions
                     case HelmSourceIsMissingImagePathAnnotation helmSourceIsMissingImagePathAnnotation:
                     {
                         log.WarnFormat("The Helm source '{0}' is missing an annotation for the image replace path. It will not be updated.",
-                                       helmSourceIsMissingImagePathAnnotation.HelmSourceRepoUrl.AbsoluteUri);
+                                       helmSourceIsMissingImagePathAnnotation.SourceIdentity);
                         log.WarnFormat("Annotation creation documentation can be found {0}.", log.FormatShortLink("argo-cd-helm-image-annotations", "here"));
 
                         return;
@@ -437,27 +438,27 @@ namespace Calamari.ArgoCD.Conventions
 
         (HelmValuesFileImageUpdateTarget? Target, HelmSourceConfigurationProblem? Problem) AddImplicitValuesFile(Application applicationFromYaml,
                                                                                                               ArgoCDApplicationDto application,
-                                                                                                              ApplicationSource applicationSource,
+                                                                                                              ApplicationSourceWithMetadata applicationSource,
                                                                                                               string valuesFilename)
         {
             var imageReplacePaths = ScopingAnnotationReader.GetImageReplacePathsForApplicationSource(
-                                                                                                               applicationSource.Name.ToApplicationSourceName(), 
+                                                                                                               applicationSource.Source.Name.ToApplicationSourceName(), 
                                                                                                                applicationFromYaml.Metadata.Annotations, 
                                                                                                                applicationFromYaml.Spec.Sources.Count > 1);
             if (!imageReplacePaths.Any())
             {
-                return (null, new HelmSourceIsMissingImagePathAnnotation(applicationSource.Name.ToApplicationSourceName(), applicationSource.RepoUrl));
+                return (null, new HelmSourceIsMissingImagePathAnnotation(applicationSource.SourceIdentity, applicationSource.Source.RepoUrl));
             }
             else
             {
-                log.Info($"Application '{application.Name}' source at `{applicationSource.RepoUrl.AbsoluteUri}' is a helm chart, its values file will be subsequently updated.");
+                log.Info($"Application '{application.Name}' source at `{applicationSource.SourceIdentity}' is a helm chart, its values file will be subsequently updated.");
                 return (new HelmValuesFileImageUpdateTarget(
                                                                             applicationFromYaml.Metadata.Name.ToApplicationName(),
-                                                                            applicationSource.Name.ToApplicationSourceName(),
+                                                                            applicationSource.Source.Name.ToApplicationSourceName(),
                                                                             application.DefaultRegistry,
-                                                                            applicationSource.Path,
-                                                                            applicationSource.RepoUrl,
-                                                                            applicationSource.TargetRevision,
+                                                                            applicationSource.Source.Path,
+                                                                            applicationSource.Source.RepoUrl,
+                                                                            applicationSource.Source.TargetRevision,
                                                                             valuesFilename,
                                                                             imageReplacePaths), null);
             }

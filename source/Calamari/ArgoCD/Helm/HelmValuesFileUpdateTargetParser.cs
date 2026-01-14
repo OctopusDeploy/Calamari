@@ -11,7 +11,7 @@ namespace Calamari.ArgoCD.Helm
 {
     public class HelmValuesFileUpdateTargetParser
     {
-        readonly List<ApplicationSource> helmSources;
+        readonly List<ApplicationSourceWithMetadata> helmSources;
 
         readonly ApplicationName appName;
         readonly string defaultRegistry;
@@ -22,25 +22,25 @@ namespace Calamari.ArgoCD.Helm
         {
             annotations = toUpdate.Metadata.Annotations;
             containsMultipleSources = toUpdate.Spec.Sources.Count > 1;
-            helmSources = toUpdate.GetSourcesWithMetadata().Where(s => s.SourceType == SourceType.Helm).Select(s => s.Source).ToList();
+            helmSources = toUpdate.GetSourcesWithMetadata().Where(s => s.SourceType == SourceType.Helm).ToList();
             appName = toUpdate.Metadata.Name.ToApplicationName();
             this.defaultRegistry = defaultRegistry;
         }
 
-        public (IReadOnlyCollection<HelmValuesFileImageUpdateTarget> Targets, IReadOnlyCollection<HelmSourceConfigurationProblem> Problems) GetExplicitValuesFilesToUpdate(ApplicationSource helmSource)
+        public (IReadOnlyCollection<HelmValuesFileImageUpdateTarget> Targets, IReadOnlyCollection<HelmSourceConfigurationProblem> Problems) GetExplicitValuesFilesToUpdate(ApplicationSourceWithMetadata helmSource)
         {
             var results = new [] {helmSource}
-                              .Where(hs => hs.Helm?.ValueFiles.Count > 0)
+                              .Where(hs => hs.Source.Helm?.ValueFiles.Count > 0)
                               .Select(ExtractInlineValuesFilesForSource).ToArray();
             
             return (results.SelectMany(v => v.Targets).ToArray(), results.SelectMany(v => v.Problems).ToArray());
         }
 
-        (IReadOnlyCollection<HelmValuesFileImageUpdateTarget> Targets, IReadOnlyCollection<HelmSourceConfigurationProblem> Problems) ExtractInlineValuesFilesForSource(ApplicationSource source)
+        (IReadOnlyCollection<HelmValuesFileImageUpdateTarget> Targets, IReadOnlyCollection<HelmSourceConfigurationProblem> Problems) ExtractInlineValuesFilesForSource(ApplicationSourceWithMetadata source)
         {
-            var definedPathsForSource = ScopingAnnotationReader.GetImageReplacePathsForApplicationSource(source.Name.ToApplicationSourceName(), annotations, containsMultipleSources);
+            var definedPathsForSource = ScopingAnnotationReader.GetImageReplacePathsForApplicationSource(source.Source.Name.ToApplicationSourceName(), annotations, containsMultipleSources);
             
-            var results = source.Helm?.ValueFiles
+            var results = source.Source.Helm?.ValueFiles
                                 .Where(file => !file.StartsWith('$'))
                                 .Select(file => ProcessInlineValuesFile(source, file, definedPathsForSource)).ToArray()
                                 ?? Array.Empty<(HelmValuesFileImageUpdateTarget? Target, HelmSourceConfigurationProblem? Problem)>();
@@ -49,19 +49,19 @@ namespace Calamari.ArgoCD.Helm
                     results.Where(t => t.Problem != null).Select(v => v.Problem!).Distinct().ToArray());
         }
 
-        (HelmValuesFileImageUpdateTarget? Target, HelmSourceConfigurationProblem? Problem) ProcessInlineValuesFile(ApplicationSource source, string file, IReadOnlyCollection<string> definedPathsForSource)
+        (HelmValuesFileImageUpdateTarget? Target, HelmSourceConfigurationProblem? Problem) ProcessInlineValuesFile(ApplicationSourceWithMetadata source, string file, IReadOnlyCollection<string> definedPathsForSource)
         {
             if (!definedPathsForSource.Any())
             {
-                return (null, new HelmSourceIsMissingImagePathAnnotation(source.Name.ToApplicationSourceName(), source.RepoUrl));
+                return (null, new HelmSourceIsMissingImagePathAnnotation(source.SourceIdentity, source.Source.RepoUrl));
             }
 
             return (new HelmValuesFileImageUpdateTarget(appName,
-                                                        source.Name?.ToApplicationSourceName(),
+                                                        source.Source.Name?.ToApplicationSourceName(),
                                                         defaultRegistry,
-                                                        source.Path,
-                                                        source.RepoUrl,
-                                                        source.TargetRevision,
+                                                        source.Source.Path,
+                                                        source.Source.RepoUrl,
+                                                        source.Source.TargetRevision,
                                                         file,
                                                         definedPathsForSource), null);
         }
@@ -73,19 +73,19 @@ namespace Calamari.ArgoCD.Helm
 
             foreach (var helmSource in helmSources)
             {
-                if (helmSource.Helm == null)
+                if (helmSource.Source.Helm == null)
                     continue;
                 
-                var definedPathsForSource = ScopingAnnotationReader.GetImageReplacePathsForApplicationSource(helmSource.Name.ToApplicationSourceName(), annotations, containsMultipleSources);
+                var definedPathsForSource = ScopingAnnotationReader.GetImageReplacePathsForApplicationSource(helmSource.Source.Name.ToApplicationSourceName(), annotations, containsMultipleSources);
                    
-                foreach (var valueFile in helmSource.Helm.ValueFiles)
+                foreach (var valueFile in helmSource.Source.Helm.ValueFiles)
                 {
                     if (ReferencesRef(valueFile, refSource.Ref!))
                     {
                         if (!definedPathsForSource.Any())
                         {
                             problems.Add(
-                                         new HelmSourceIsMissingImagePathAnnotation(helmSource.Name.ToApplicationSourceName(), helmSource.RepoUrl)
+                                         new HelmSourceIsMissingImagePathAnnotation(helmSource.SourceIdentity, helmSource.Source.RepoUrl)
                                         );
                             continue;
                         }

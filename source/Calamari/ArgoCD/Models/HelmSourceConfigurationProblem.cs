@@ -9,18 +9,18 @@ namespace Calamari.ArgoCD.Models
 
     public class HelmSourceIsMissingImagePathAnnotation : HelmSourceConfigurationProblem
     {
-        public HelmSourceIsMissingImagePathAnnotation(ApplicationSourceName helmSourceName, Uri helmSourceRepoUrl)
+        public HelmSourceIsMissingImagePathAnnotation(string sourceIdentity, Uri helmSourceRepoUrl)
         {
-            HelmSourceName = helmSourceName;
+            SourceIdentity = sourceIdentity;
             HelmSourceRepoUrl = helmSourceRepoUrl;
         }
 
-        public ApplicationSourceName HelmSourceName { get; }
+        public string SourceIdentity { get; }
         public Uri HelmSourceRepoUrl { get; }
 
         bool Equals(HelmSourceIsMissingImagePathAnnotation other)
         {
-            return Equals(HelmSourceName, other.HelmSourceName)
+            return Equals(SourceIdentity, other.SourceIdentity)
                    && Equals(HelmSourceRepoUrl, other.HelmSourceRepoUrl);
         }
 
@@ -37,7 +37,7 @@ namespace Calamari.ArgoCD.Models
 
         public override int GetHashCode()
         {
-            return HashCode.Combine(HelmSourceName, HelmSourceRepoUrl);
+            return HashCode.Combine(SourceIdentity, HelmSourceRepoUrl);
         }
 
         public static bool operator ==(HelmSourceIsMissingImagePathAnnotation left, HelmSourceIsMissingImagePathAnnotation right)
