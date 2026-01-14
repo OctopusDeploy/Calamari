@@ -76,7 +76,6 @@ partial class Build : NukeBuild
 
     List<CalamariPackageMetadata> PackagesToPublish = new();
     List<Project> CalamariProjects = new();
-    readonly List<Task> ProjectCompressionTasks = new();
 
     string ConsolidatedPackagePath = "";
 
@@ -85,7 +84,7 @@ partial class Build : NukeBuild
         // Mimic the behaviour of this attribute, but lazily so we don't pay the OctoVersion cost when it isn't needed
         OctoVersionInfo = new Lazy<OctoVersionInfo?>(() =>
                                                      {
-                                                         var attribute = new OctoVersionAttribute { BranchMember = nameof(BranchName), Framework = "net8.0" };
+                                                         var attribute = new OctoVersionAttribute { BranchMember = nameof(BranchName), Framework = "net8.0"};
 
                                                          // the Attribute does all the work such as calling TeamCity.Instance?.SetBuildNumber for us
                                                          var version = attribute.GetValue(null!, this);
@@ -215,7 +214,7 @@ partial class Build : NukeBuild
              .DependsOn(PublishAzureWebAppNetCoreShim)
              .Executes(async () =>
                        {
-                           var globalSemaphore = new SemaphoreSlim(3);
+                           var globalSemaphore = new SemaphoreSlim(1);
                            var semaphores = new ConcurrentDictionary<string, SemaphoreSlim>();
 
                            var buildTasks = PackagesToPublish.Select(async calamariPackageMetadata =>
