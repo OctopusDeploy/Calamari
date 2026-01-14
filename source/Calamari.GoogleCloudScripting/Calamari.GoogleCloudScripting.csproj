@@ -4,7 +4,6 @@
         <AssemblyName>Calamari.GoogleCloudScripting</AssemblyName>
         <OutputType>Exe</OutputType>
         <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
-        <LangVersion>default</LangVersion>
         <IsPackable>false</IsPackable>
         <ValidateExecutableReferencesMatchSelfContained>false</ValidateExecutableReferencesMatchSelfContained>
         <TargetFramework>net8.0</TargetFramework>

@@ -7,7 +7,6 @@
     <IsPackable>true</IsPackable>
     <OutputType>Exe</OutputType>
     <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
-    <LangVersion>default</LangVersion>
     <NoWarn>NU5104</NoWarn>
     <TargetFramework>net8.0</TargetFramework>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>

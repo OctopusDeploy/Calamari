@@ -3,7 +3,6 @@
     <PropertyGroup>
         <RootNamespace>Calamari.CloudAccounts</RootNamespace>
         <TargetFramework>net8.0</TargetFramework>
-        <LangVersion>default</LangVersion>
         <PackageId>Octopus.Calamari.CloudAccounts</PackageId>
         <Title>Calamari.CloudAccounts</Title>
         <Authors>Octopus Deploy</Authors>

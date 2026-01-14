@@ -19,7 +19,6 @@
     <ApplicationIcon />
     <StartupObject />
     <TargetFramework>net8.0</TargetFramework>
-    <LangVersion>default</LangVersion>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
