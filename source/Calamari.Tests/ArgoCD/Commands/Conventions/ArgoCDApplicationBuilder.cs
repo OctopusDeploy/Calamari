@@ -26,7 +26,10 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
         public ArgoCDApplicationBuilder WithSource<T>(T source, string sourceType) where T : ApplicationSource
         {
             applicationSources.Add(source);
-            applicationSourceTypes.Add(sourceType);
+            if (sourceType != null)
+            {
+                applicationSourceTypes.Add(sourceType);
+            }
             return this;
         }
 

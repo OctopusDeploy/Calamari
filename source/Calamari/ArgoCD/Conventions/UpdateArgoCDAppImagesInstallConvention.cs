@@ -258,7 +258,7 @@ namespace Calamari.ArgoCD.Conventions
             ProcessApplicationSourceResult result = new ProcessApplicationSourceResult(applicationSource.RepoUrl);
             if (applicationSource.Path != null)
             {
-                log.WarnFormat("This source '{0}' contains a Ref, only referenced files will be updated. Please create another source with the same URL if you wish to update files under the path.", sourceWithMetadata.SourceIdentity);
+                log.WarnFormat("The source '{0}' contains a Ref, only referenced files will be updated. Please create another source with the same URL if you wish to update files under the path.", sourceWithMetadata.SourceIdentity);
             }
             
             var helmTargetsForRefSource = new HelmValuesFileUpdateTargetParser(applicationFromYaml, application.DefaultRegistry)
