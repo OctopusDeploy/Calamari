@@ -326,6 +326,7 @@ partial class Build : NukeBuild
 
     Target PublishAzureWebAppNetCoreShim =>
         _ => _.DependsOn(RestoreSolution)
+              .DependsOn(GetCalamariFlavourProjectsToPublish)
               //we only build the net core shim when there is the AzureWebApp project is being built
               .OnlyWhenDynamic(() => CalamariProjects.Any(p => p.Name == "Calamari.AzureWebApp"))
               .Executes(() =>
