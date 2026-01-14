@@ -54,11 +54,7 @@ namespace Calamari.Commands
                 ValidateParameters(out basisFilePath, out deltaFilePath, out newFilePath);
 
                 var tempNewFilePath = newFilePath + ".partial";
-#if USE_OCTODIFF_EXE
-                var factory = new OctoDiffCommandLineRunner(commandLineRunner);
-#else
                 var factory = new OctoDiffLibraryCallRunner();
-#endif
                 var octoDiff = factory.OctoDiff
                     .Action("patch")
                     .PositionalArgument(basisFilePath)

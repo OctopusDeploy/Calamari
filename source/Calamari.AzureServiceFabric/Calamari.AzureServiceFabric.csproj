@@ -5,9 +5,9 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <IsPackable>false</IsPackable>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>net462;net8.0-windows</TargetFrameworks>
+    <TargetFramework>net8.0-windows</TargetFramework>
     <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
-    <LangVersion>8.0</LangVersion>
+    <LangVersion>default</LangVersion>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
 

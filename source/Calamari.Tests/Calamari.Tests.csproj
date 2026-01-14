@@ -10,16 +10,13 @@
         <ApplicationIcon/>
         <StartupObject/>
         <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
-        <TargetFrameworks>net462;net8.0</TargetFrameworks>
-        <LangVersion>8</LangVersion>
+        <TargetFramework>net8.0</TargetFramework>
+        <LangVersion>default</LangVersion>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <EmitLegacyAssetsFileItems>true</EmitLegacyAssetsFileItems>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(TargetFramework)' == 'net8.0' ">
         <DefineConstants>$(DefineConstants);NETCORE;AZURE_CORE;JAVA_SUPPORT</DefineConstants>
-    </PropertyGroup>
-    <PropertyGroup Condition=" '$(TargetFramework)' == 'net462' ">
-        <DefineConstants>$(DefineConstants);NETFX;IIS_SUPPORT;USE_NUGET_V2_LIBS;USE_OCTODIFF_EXE;</DefineConstants>
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="NuGet.CommandLine" Version="7.0.0">
@@ -43,28 +40,9 @@
         <PackageReference Include="System.ComponentModel.TypeConverter" Version="4.3.0"/>
         <ProjectReference Include="..\Calamari.Aws\Calamari.Aws.csproj"/>
         <ProjectReference Include="..\Calamari.Azure\Calamari.Azure.csproj"/>
-    </ItemGroup>
-    <ItemGroup Condition="'$(TargetFramework)'=='net8.0'">
         <PackageReference Include="Markdown" Version="2.1.0"/>
         <PackageReference Include="NGitLab" Version="10.4.1"/>
         <PackageReference Include="System.ServiceProcess.ServiceController" Version="4.3.0"/>
-    </ItemGroup>
-    <ItemGroup Condition="'$(TargetFramework)'=='net462'">
-        <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.3.0"/>
-        <Reference Include="System.Core"/>
-        <Reference Include="System.Net"/>
-        <Reference Include="System.ServiceProcess"/>
-        <Reference Include="System.DirectoryServices.AccountManagement"/>
-        <Reference Include="System.Xml.Linq"/>
-        <Reference Include="System.Data.DataSetExtensions"/>
-        <Reference Include="Microsoft.CSharp"/>
-        <Reference Include="System.Data"/>
-        <Reference Include="System.Xml"/>
-        <Reference Include="WindowsBase"/>
-        <Reference Include="System.IO.Compression"/>
-        <Reference Include="System.IO.Compression.FileSystem"/>
-        <Reference Include="System"/>
-        <Reference Include="System.Security"/>
     </ItemGroup>
     <ItemGroup>
         <EmbeddedResource Include="Fixtures\PowerShell\Scripts\HelloWithVariable.ps1"/>
@@ -273,15 +251,8 @@
     <Target Name="RunResolvePackageDependencies" Condition="'$(RunResolvePackageDependencies)' != ''"/>
 
     <Target Name="GetToolFiles" DependsOnTargets="RunResolvePackageDependencies">
-        <CreateItem Include="@(PackageDefinitions)" Condition=" '$(TargetFramework)' == 'net462' And '%(Name)' == 'NuGet.CommandLine'">
-            <Output TaskParameter="Include" ItemName="NuGetCommandLineRef"/>
-        </CreateItem>
-        <PropertyGroup>
-            <NuGetCommandLine>@(NuGetCommandLineRef->'%(ResolvedPath)')/tools/*.*</NuGetCommandLine>
-        </PropertyGroup>
         <ItemGroup>
             <DotnetScriptFiles Include="$(MSBuildProjectDirectory)/../Calamari.Scripting/DotnetScript/dotnet-script.*.zip"/>
-            <NuGetFiles Include="$(NuGetCommandLine)" Condition=" '$(TargetFramework)' == 'net462'"/>
         </ItemGroup>
     </Target>
 
@@ -292,6 +263,9 @@
         <Copy SourceFiles="@(NuGetFiles)" DestinationFolder="$(OutputPath)/NuGet/" SkipUnchangedFiles="true" Condition="'$(TargetFramework)' == 'net462'"/>
         <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true"/>
         <Exec Command="chmod +x %(DotnetScriptFilesExe.Identity)" IgnoreExitCode="true" Condition="!$([MSBuild]::IsOSPlatform('Windows'))"/>
+
+        <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(OutDir)/" SkipUnchangedFiles="true"/>
+        <Exec Command="chmod +x %(DotnetScriptFilesExe.Identity)" IgnoreExitCode="true"/>
     </Target>
 
     <Target Name="CopyToolsAfterPublish" AfterTargets="Publish" DependsOnTargets="GetToolFiles">
@@ -301,5 +275,8 @@
         <Copy SourceFiles="@(NuGetFiles)" DestinationFolder="$(PublishDir)/NuGet/" SkipUnchangedFiles="true" Condition="'$(TargetFramework)' == 'net462'"/>
         <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(PublishDir)" SkipUnchangedFiles="true"/>
         <Exec Command="chmod +x %(DotnetScriptFilesExe.Identity)" IgnoreExitCode="true" Condition="!$([MSBuild]::IsOSPlatform('Windows'))"/>
+
+        <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(PublishDir)/" SkipUnchangedFiles="true"/>
+        <Exec Command="chmod +x %(DotnetScriptFilesExe.Identity)" IgnoreExitCode="true"/>
     </Target>
 </Project>

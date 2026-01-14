@@ -8,6 +8,5 @@ namespace Calamari.Aws.Deployment
         public AmazonFileUploadException(){}
         public AmazonFileUploadException(string message) : base(message){}
         public AmazonFileUploadException(string message, Exception innerException) : base(message, innerException){}
-        protected AmazonFileUploadException(SerializationInfo info, StreamingContext context) : base(info, context){}
     }
 }

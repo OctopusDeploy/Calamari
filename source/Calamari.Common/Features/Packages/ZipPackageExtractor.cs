@@ -32,18 +32,7 @@ namespace Calamari.Common.Features.Packages
             
             var filesExtracted = 0;
             using var inStream = new FileStream(packageFile, FileMode.Open, FileAccess.Read);
-            
-#if NETFRAMEWORK
-            var readerOptions = new ReaderOptions();
-            if (forceUtf8ZipFiles)
-            {
-                readerOptions.ArchiveEncoding.Forced = System.Text.Encoding.UTF8;
-            }
-
-            using var archive = ZipArchive.Open(inStream, readerOptions);
-#else
             using var archive = ZipArchive.Open(inStream);
-#endif
             
             foreach (var entry in archive.Entries)
             {
