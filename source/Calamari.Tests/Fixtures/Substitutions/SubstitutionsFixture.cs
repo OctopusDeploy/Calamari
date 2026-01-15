@@ -22,7 +22,8 @@ namespace Calamari.Tests.Fixtures.Substitutions
 
         static SubstitutionsFixture()
         {
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance); // Required to use code pages in .NET Standard
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            
             AnsiEncoding = Encoding.GetEncoding("windows-1252", EncoderFallback.ExceptionFallback, DecoderFallback.ExceptionFallback);
         }
 
