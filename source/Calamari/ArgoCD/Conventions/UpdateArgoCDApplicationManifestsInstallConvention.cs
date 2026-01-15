@@ -153,76 +153,74 @@ namespace Calamari.ArgoCD.Conventions
                                                      RepositoryFactory repositoryFactory,
                                                      ArgoCommitToGitConfig deploymentConfig,
                                                      IPackageRelativeFile[] packageFiles,
-                                                     ApplicationSourceWithMetadata applicationSourceWithMetadata,
+                                                     ApplicationSourceWithMetadata sourceWithMetadata,
                                                      Application applicationFromYaml,
                                                      bool containsMultipleSources,
                                                      string applicationName)
         {
-            var applicationSource = applicationSourceWithMetadata.Source;
+            var applicationSource = sourceWithMetadata.Source;
             ProcessApplicationSourceResult result = new ProcessApplicationSourceResult(applicationSource.RepoUrl);
 
             var annotatedScope = ScopingAnnotationReader.GetScopeForApplicationSource(applicationSource.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources);
             log.LogApplicationSourceScopeStatus(annotatedScope, applicationSource.Name.ToApplicationSourceName(), deploymentScope);
 
-            if (annotatedScope == deploymentScope)
+            if (annotatedScope != deploymentScope)
+                return result;
+            
+            if (sourceWithMetadata.SourceType == null)
             {
-                var sourceIdentity = applicationSource.Name.IsNullOrEmpty() ? applicationSource.RepoUrl.ToString() : applicationSource.Name;
-                if (applicationSourceWithMetadata.SourceType == null)
-                {
-                    log.WarnFormat("Unable to update source '{0}' as its source type was not detected by Argo CD.", sourceIdentity);
-                    return result;
-                }
+                log.WarnFormat("Unable to update source '{0}' as its source type was not detected by Argo CD.", sourceWithMetadata.SourceIdentity);
+                return result;
+            }
                         
-                log.Info($"Writing files to repository '{applicationSource.RepoUrl}' for '{applicationName}'");
+            log.Info($"Writing files to repository '{applicationSource.RepoUrl}' for '{applicationName}'");
 
-                if (!TryCalculateOutputPath(applicationSource, out var outputPath))
+            if (!TryCalculateOutputPath(applicationSource, out var outputPath))
+            {
+                return result;
+            }
+
+            var gitCredential = gitCredentials.GetValueOrDefault(applicationSource.RepoUrl.AbsoluteUri);
+            if (gitCredential == null)
+            {
+                log.Info($"No Git credentials found for: '{applicationSource.RepoUrl.AbsoluteUri}', will attempt to clone repository anonymously.");
+            }
+
+            var targetBranch = GitReference.CreateFromString(applicationSource.TargetRevision);
+            var gitConnection = new GitConnection(gitCredential?.Username, gitCredential?.Password, applicationSource.RepoUrl, targetBranch);
+
+            using (var repository = repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), gitConnection))
+            {
+                log.VerboseFormat("Copying files into '{0}'", outputPath);
+
+                if (deploymentConfig.PurgeOutputDirectory)
                 {
-                    return result;
+                    repository.RecursivelyStageFilesForRemoval(outputPath);
                 }
 
-                var gitCredential = gitCredentials.GetValueOrDefault(applicationSource.RepoUrl.AbsoluteUri);
-                if (gitCredential == null)
+                var filesToCopy = packageFiles.Select(f => new FileCopySpecification(f, repository.WorkingDirectory, outputPath)).ToList();
+                CopyFiles(filesToCopy);
+
+                log.Info("Staging files in repository");
+                repository.StageFiles(filesToCopy.Select(fcs => fcs.DestinationRelativePath).ToArray());
+
+                log.Info("Commiting changes");
+                if (repository.CommitChanges(deploymentConfig.CommitParameters.Summary, deploymentConfig.CommitParameters.Description))
                 {
-                    log.Info($"No Git credentials found for: '{applicationSource.RepoUrl.AbsoluteUri}', will attempt to clone repository anonymously.");
+                    log.Info("Changes were commited, pushing to remote");
+                    repository.PushChanges(deploymentConfig.CommitParameters.RequiresPr,
+                                           deploymentConfig.CommitParameters.Summary,
+                                           deploymentConfig.CommitParameters.Description,
+                                           targetBranch,
+                                           CancellationToken.None)
+                              .GetAwaiter()
+                              .GetResult();
+
+                    result.Updated = true;
                 }
-
-                var targetBranch = GitReference.CreateFromString(applicationSource.TargetRevision);
-                var gitConnection = new GitConnection(gitCredential?.Username, gitCredential?.Password, applicationSource.RepoUrl, targetBranch);
-
-                using (var repository = repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), gitConnection))
+                else
                 {
-                    var subFolder = outputPath;
-                    log.VerboseFormat("Copying files into '{0}'", subFolder);
-
-                    if (deploymentConfig.PurgeOutputDirectory)
-                    {
-                        repository.RecursivelyStageFilesForRemoval(subFolder);
-                    }
-
-                    var repositoryFiles = packageFiles.Select(f => new FileCopySpecification(f, repository.WorkingDirectory, subFolder)).ToList();
-                    CopyFiles(repositoryFiles);
-
-                    log.Info("Staging files in repository");
-                    repository.StageFiles(repositoryFiles.Select(fcs => fcs.DestinationRelativePath).ToArray());
-
-                    log.Info("Commiting changes");
-                    if (repository.CommitChanges(deploymentConfig.CommitParameters.Summary, deploymentConfig.CommitParameters.Description))
-                    {
-                        log.Info("Changes were commited, pushing to remote");
-                        repository.PushChanges(deploymentConfig.CommitParameters.RequiresPr,
-                                               deploymentConfig.CommitParameters.Summary,
-                                               deploymentConfig.CommitParameters.Description,
-                                               targetBranch,
-                                               CancellationToken.None)
-                                  .GetAwaiter()
-                                  .GetResult();
-
-                        result.Updated = true;
-                    }
-                    else
-                    {
-                        log.Info("No changes were commited");
-                    }
+                    log.Info("No changes were commited");
                 }
             }
 
