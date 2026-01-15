@@ -1,4 +1,3 @@
-#if NET
 #nullable enable
 using System;
 
@@ -135,4 +134,3 @@ namespace Calamari.ArgoCD.Models
         }
     }
 }
-#endif

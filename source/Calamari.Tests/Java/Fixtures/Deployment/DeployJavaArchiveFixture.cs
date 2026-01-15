@@ -1,5 +1,4 @@
-﻿#if JAVA_SUPPORT
-using System;
+﻿using System;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -158,4 +157,3 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
         }
     }
 }
-#endif

@@ -1,4 +1,3 @@
-#if NET
 using System;
 using System.IO;
 using System.Text;
@@ -115,4 +114,3 @@ namespace Calamari.Tests.ArgoCD.Git
         }
     }
 }
-#endif

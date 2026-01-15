@@ -1,4 +1,3 @@
-#if NET
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -638,4 +637,3 @@ images:
     }
 }
 
-#endif
