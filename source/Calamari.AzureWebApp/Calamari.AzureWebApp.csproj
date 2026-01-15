@@ -8,7 +8,6 @@
     <LangVersion>8.0</LangVersion>
     <TargetFramework>net8.0</TargetFramework>
     <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
-    <LangVersion>default</LangVersion>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
 
