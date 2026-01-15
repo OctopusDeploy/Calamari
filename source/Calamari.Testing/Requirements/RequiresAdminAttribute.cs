@@ -9,7 +9,9 @@ namespace Calamari.Testing.Requirements
     {
         public void BeforeTest(ITest testDetails)
         {
+#pragma warning disable CA1416
             var isAdmin = (new WindowsPrincipal(WindowsIdentity.GetCurrent())).IsInRole(WindowsBuiltInRole.Administrator);
+#pragma warning restore CA1416
             if (!isAdmin)
             {
                 Assert.Ignore("Requires Admin Rights");
@@ -31,18 +33,6 @@ namespace Calamari.Testing.Requirements
             {
                 Assert.Ignore("Requires Windows");
             }
-
-#if NETFX
-            var decimalVersion = Environment.OSVersion.Version.Major + Environment.OSVersion.Version.Minor * 0.1;
-            if(decimalVersion < 6.2)
-            {
-                Assert.Ignore("Requires Windows Server 2012 or above");
-            }
-#else
-            // .NET Core will be new enough.
-#endif
-
-
         }
 
         public void AfterTest(ITest testDetails)

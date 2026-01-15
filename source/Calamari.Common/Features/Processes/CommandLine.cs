@@ -12,7 +12,7 @@ namespace Calamari.Common.Features.Processes
         readonly List<Arg> args = new List<Arg>();
         string? action;
         bool useDotnet;
-        private Dictionary<string,string>? environmentVariables = null;
+        private Dictionary<string, string>? environmentVariables = null;
         private bool outputToLog = true;
         private string? workingDirectory;
 
@@ -217,12 +217,11 @@ namespace Calamari.Common.Features.Processes
                     last -= 1;
                 }
 
-#if WORKAROUND_FOR_EMPTY_STRING_BUG
-// linux under bash on netcore empty "" gets eaten, hand "\0"
-// which gets through as a null string
-            if(argValue == "")
-                argValue = "\0";
-#endif
+                // linux under bash on netcore empty "" gets eaten, hand "\0"
+                // which gets through as a null string
+                if (argValue == "")
+                    argValue = "\0";
+                
                 // Double-quotes are always escaped.
                 return "\"" + argValue.Replace("\"", "\\\"") + "\"";
             }

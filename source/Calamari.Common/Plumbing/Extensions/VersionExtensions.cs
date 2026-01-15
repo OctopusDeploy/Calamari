@@ -1,5 +1,4 @@
-﻿#if USE_NUGET_V3_LIBS
-using System;
+﻿using System;
 using NuGet.Versioning;
 using Octopus.Versioning;
 
@@ -24,4 +23,3 @@ namespace Calamari.Common.Plumbing.Extensions
         }
     }
 }
-#endif
