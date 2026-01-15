@@ -461,6 +461,73 @@ images:
             AssertOutputVariables(false);
         }
 
+         [Test]
+        public void KustomizeSource_HasKustomizationFile_Update()
+        {
+            // Arrange
+            var updater = new UpdateArgoCDAppImagesInstallConvention(log,
+                                                                     fileSystem,
+                                                                     new DeploymentConfigFactory(nonSensitiveCalamariVariables),
+                                                                     new CommitMessageGenerator(),
+                                                                     customPropertiesLoader,
+                                                                     argoCdApplicationManifestParser,
+                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>());
+            var variables = new CalamariVariables
+            {
+                [PackageVariables.IndexedImage("nginx")] = "index.docker.io/nginx:1.27.1",
+                [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
+                [ProjectVariables.Slug] = ProjectSlug,
+                [DeploymentEnvironment.Slug] = EnvironmentSlug,
+            };
+            var runningDeployment = new RunningDeployment(null, variables);
+            runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
+            runningDeployment.StagingDirectory = tempDirectory;
+
+            var kustomizeFile = "kustomization.yaml";
+            var filesInRepo = new (string, string)[]
+            {
+                (kustomizeFile,
+                 @"
+images:
+- name: ""docker.io/nginx""
+  newTag: ""1.25""
+")
+            };
+            originRepo.AddFilesToBranch(argoCDBranchName, filesInRepo);
+
+            var argoCdApplicationFromYaml = new ArgoCDApplicationBuilder()
+                                            .WithName("App1")
+                                            .WithAnnotations(new Dictionary<string, string>()
+                                            {
+                                                [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(null)] = ProjectSlug,
+                                                [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(null)] = EnvironmentSlug,
+                                            })
+                                            .WithSource(new ApplicationSource()
+                                            {
+                                                RepoUrl = new Uri(OriginPath),
+                                                Path = "",
+                                                TargetRevision = ArgoCDBranchFriendlyName,
+                                            }, SourceTypeConstants.Kustomize)
+                                            .Build();
+
+            argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
+                                           .Returns(argoCdApplicationFromYaml);
+
+            // Act
+            updater.Install(runningDeployment);
+
+            // Assert
+            var updatedYamlContent = @"
+images:
+- name: ""docker.io/nginx""
+  newTag: ""1.27.1""
+";
+            var clonedRepoPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
+            AssertFileContents(clonedRepoPath, kustomizeFile, updatedYamlContent);
+
+            AssertOutputVariables();
+        }
+        
         [Test]
         public void KustomizeSource_NoKustomizationFile_DontUpdate()
         {
