@@ -1,4 +1,3 @@
-#if NET
 #nullable enable
 using System;
 using System.Collections.Generic;
@@ -412,4 +411,4 @@ namespace Calamari.ArgoCD.Conventions
     }
 }
 
-#endif
+

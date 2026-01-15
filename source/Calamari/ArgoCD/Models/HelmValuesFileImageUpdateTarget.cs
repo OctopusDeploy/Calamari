@@ -1,4 +1,3 @@
-#if NET
 using System;
 using System.Collections.Generic;
 
@@ -28,4 +27,3 @@ namespace Calamari.ArgoCD.Models
         public IReadOnlyCollection<string> ImagePathDefinitions { get; }
     }
 }
-#endif

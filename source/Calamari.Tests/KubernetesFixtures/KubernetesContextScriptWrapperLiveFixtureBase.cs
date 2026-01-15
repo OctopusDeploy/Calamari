@@ -1,5 +1,4 @@
-﻿#if NETCORE
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using Calamari.Aws.Kubernetes.Discovery;
@@ -189,4 +188,3 @@ namespace Calamari.Tests.KubernetesFixtures
         }
     }
 }
-#endif

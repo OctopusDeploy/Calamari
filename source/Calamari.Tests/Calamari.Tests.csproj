@@ -14,9 +14,6 @@
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <EmitLegacyAssetsFileItems>true</EmitLegacyAssetsFileItems>
     </PropertyGroup>
-    <PropertyGroup Condition=" '$(TargetFramework)' == 'net8.0' ">
-        <DefineConstants>$(DefineConstants);NETCORE;AZURE_CORE;JAVA_SUPPORT</DefineConstants>
-    </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="NuGet.CommandLine" Version="7.0.0">
             <PrivateAssets>all</PrivateAssets>
