@@ -32,13 +32,12 @@ namespace Calamari.ConsolidateCalamariPackages.Tests
         const string WindowsX64Arch = "win-x64";
 
         static readonly string[] NetCoreArchitectures =
-        {
+        [
             "linux-arm",
             "linux-arm64",
             "linux-x64",
-            "osx-x64",
             WindowsX64Arch
-        };
+        ];
 
         static Dictionary<string, PackagePropertiesToTest> PackagesWithDetails()
         {

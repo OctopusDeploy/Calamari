@@ -160,8 +160,9 @@ namespace Calamari.Testing
 
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
                     platform = "linux-x64";
+                
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-                    platform = "osx-x64";
+                    platform = "linux-arm64";
 
                 foreach (var tool in context.Tools)
                 {
