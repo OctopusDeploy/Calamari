@@ -2,13 +2,12 @@
     <PropertyGroup>
         <RootNamespace>Calamari.AzureResourceGroup</RootNamespace>
         <AssemblyName>Calamari.AzureResourceGroup</AssemblyName>
-        <LangVersion>8</LangVersion>
         <Nullable>enable</Nullable>
         <OutputType>Exe</OutputType>
         <IsPackable>false</IsPackable>
         <ValidateExecutableReferencesMatchSelfContained>false</ValidateExecutableReferencesMatchSelfContained>
         <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
-        <TargetFrameworks>net462;net8.0</TargetFrameworks>
+        <TargetFramework>net8.0</TargetFramework>
     </PropertyGroup>
 
     <ItemGroup>

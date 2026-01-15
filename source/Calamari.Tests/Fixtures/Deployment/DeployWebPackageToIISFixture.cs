@@ -15,12 +15,7 @@ using Microsoft.Web.Administration;
 using NUnit.Framework;
 using Polly;
 using FluentAssertions;
-
-#if  NETFX
-using CryptoKeyRights = System.Security.AccessControl.CryptoKeyRights;
-#else
 using CryptoKeyRights = Calamari.Integration.Certificates.CryptoKeyRights;
-#endif
 
 
 namespace Calamari.Tests.Fixtures.Deployment

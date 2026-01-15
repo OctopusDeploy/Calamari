@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <RootNamespace>Calamari.CloudAccounts</RootNamespace>
-        <TargetFrameworks>net462;netstandard2.1</TargetFrameworks>
+        <TargetFramework>net8.0</TargetFramework>
         <PackageId>Octopus.Calamari.CloudAccounts</PackageId>
         <Title>Calamari.CloudAccounts</Title>
         <Authors>Octopus Deploy</Authors>
@@ -12,11 +12,6 @@
         <RepositoryUrl>https://github.com/OctopusDeploy/Calamari</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
     </PropertyGroup>
-
-    <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
-        <PackageReference Include="Microsoft.Net.Http" Version="2.2.29" />
-        <Reference Include="Microsoft.CSharp" />
-    </ItemGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\Calamari.Common\Calamari.Common.csproj" />  

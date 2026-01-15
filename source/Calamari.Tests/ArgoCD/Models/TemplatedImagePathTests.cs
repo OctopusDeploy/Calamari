@@ -1,4 +1,3 @@
-#if NET
 using System;
 using Calamari.ArgoCD.Models;
 using FluentAssertions;
@@ -136,4 +135,3 @@ namespace Calamari.Tests.ArgoCD.Models
         }
     }
 }
-#endif

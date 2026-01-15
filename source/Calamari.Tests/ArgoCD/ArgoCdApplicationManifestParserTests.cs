@@ -1,4 +1,3 @@
-#if NET
 using System;
 using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Domain;
@@ -176,4 +175,3 @@ namespace Calamari.Tests.ArgoCD
         }
     }
 }
-#endif
