@@ -23,14 +23,15 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             return this;
         }
 
-        public ArgoCDApplicationBuilder WithSource<T>(T source, string sourceType) where T : ApplicationSource
+        public ArgoCDApplicationBuilder WithSource(ApplicationSource source, string sourceType)
         {
             applicationSources.Add(source);
-            applicationSourceTypes.Add(sourceType);
+            if (sourceType != null)
+                applicationSourceTypes.Add(sourceType);
             return this;
         }
 
-        public ArgoCDApplicationBuilder WithSources<T>(IEnumerable<T> sources, IEnumerable<string> sourceTypes) where T : ApplicationSource
+        public ArgoCDApplicationBuilder WithSources(IEnumerable<ApplicationSource> sources, IEnumerable<string> sourceTypes)
         {
             applicationSources.AddRange(sources);
             applicationSourceTypes.AddRange(sourceTypes);
