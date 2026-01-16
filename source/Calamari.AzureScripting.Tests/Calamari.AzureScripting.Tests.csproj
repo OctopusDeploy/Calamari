@@ -22,31 +22,6 @@
         <PackageReference Include="Octopus.Server.Extensibility" Version="14.3.2" />
     </ItemGroup>
     <ItemGroup>
-        
-    </ItemGroup>
-    <Target Name="GetPackageFiles" AfterTargets="ResolveReferences" DependsOnTargets="RunResolvePackageDependencies">
-        <ItemGroup>
-            <Content Include="$(PkgOctopus_Dependencies_AzureCLI)/*.nupkg">
-                <Visible>false</Visible>
-                <Link>Octopus.Dependencies.AzureCLI.nupkg</Link>
-                <Pack>true</Pack>
-                <PackageCopyToOutput>true</PackageCopyToOutput>
-                <PackageFlatten>true</PackageFlatten>
-                <PackagePath>contentFiles/any/any/Octopus.Dependencies.AzureCLI.nupkg</PackagePath>
-                <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-            </Content>
-            <Content Include="$(PkgOctopus_Dependencies_AzureCmdlets)/*.nupkg">
-                <Visible>false</Visible>
-                <Link>Octopus.Dependencies.AzureCmdlets.nupkg</Link>
-                <Pack>true</Pack>
-                <PackageCopyToOutput>true</PackageCopyToOutput>
-                <PackageFlatten>true</PackageFlatten>
-                <PackagePath>contentFiles/any/any/Octopus.Dependencies.AzureCmdlets.nupkg</PackagePath>
-                <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-            </Content>
-        </ItemGroup>
-    </Target>
-    <ItemGroup>
       <ProjectReference Include="..\Calamari.AzureScripting\Calamari.AzureScripting.csproj" />
       <ProjectReference Include="..\Calamari.Testing\Calamari.Testing.csproj" />
     </ItemGroup>
