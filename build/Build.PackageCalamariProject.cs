@@ -213,19 +213,4 @@ public partial class Build
 
         return allRuntimes;
     }
-    
-    void SignDirectory(string directory)
-    {
-        if (!WillSignBinaries)
-            return;
-
-        Log.Information("Signing directory: {Directory} and sub-directories", directory);
-        var binariesFolders = Directory.GetDirectories(directory, "*", new EnumerationOptions { RecurseSubdirectories = true });
-        foreach (var subDirectory in binariesFolders.Append(directory))
-        {
-            Signing.SignAndTimestampBinaries(subDirectory, AzureKeyVaultUrl, AzureKeyVaultAppId,
-                                             AzureKeyVaultAppSecret, AzureKeyVaultTenantId, AzureKeyVaultCertificateName,
-                                             SigningCertificatePath, SigningCertificatePassword);
-        }
-    }
 }
