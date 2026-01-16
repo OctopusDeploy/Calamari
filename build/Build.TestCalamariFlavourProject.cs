@@ -1,9 +1,4 @@
 using JetBrains.Annotations;
-using Nuke.Common;
-using Nuke.Common.Tooling;
-using Nuke.Common.Tools.DotNet;
-using Nuke.Common.CI.TeamCity;
-using Serilog;
 
 namespace Calamari.Build;
 
