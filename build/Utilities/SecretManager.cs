@@ -1,9 +1,7 @@
 using System;
 using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Octopus.OnePassword.Sdk;
-using Serilog;
 using ILogger = Serilog.ILogger;
 
 namespace Calamari.Build.Utilities;

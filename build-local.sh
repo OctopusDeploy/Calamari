@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
 auto_accept=""
-target_framework=""
 target_runtime=""
 
 while test $# -gt 0; do
@@ -109,6 +108,6 @@ export OCTOVERSION_MajorMinorPatch="$numericVersion"
 export OCTOVERSION_PreReleaseTagWithDash="-$sanitizedBranch"
 export OCTOVERSION_FullSemVer="$numericVersion-$sanitizedBranch"
 
-./build.sh -BuildVerbosity Minimal -Verbosity Minimal -AppendTimestamp -SetOctopusServerVersion -TargetFramework "$target_framework" -TargetRuntime "$target_runtime"
+./build.sh -BuildVerbosity Minimal -Verbosity Minimal -AppendTimestamp -SetOctopusServerVersion -TargetRuntime "$target_runtime"
 
 echo -e "$FinishMessage"

@@ -1,6 +1,4 @@
-﻿using System.Threading.Tasks;
-
-namespace Calamari.Build;
+﻿namespace Calamari.Build;
 
 partial class Build
 {
