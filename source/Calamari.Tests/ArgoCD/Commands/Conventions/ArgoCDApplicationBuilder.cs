@@ -27,7 +27,9 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
         {
             applicationSources.Add(source);
             if (sourceType != null)
+            {
                 applicationSourceTypes.Add(sourceType);
+            }
             return this;
         }
 

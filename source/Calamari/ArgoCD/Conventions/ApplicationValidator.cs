@@ -11,8 +11,18 @@ namespace Calamari.ArgoCD.Conventions
         {
             return ValidationResult.Merge(
                                           ValidateSourceNames(application),
-                                          ValidateUnnamedAnnotationsInMultiSourceApplication(application)
+                                          ValidateUnnamedAnnotationsInMultiSourceApplication(application),
+                                          ValidateSourceTypes(application)
                                          );
+        }
+
+        static ValidationResult ValidateSourceTypes(Application application)
+        {
+            if (application.Spec.Sources.Count == application.Status.SourceTypes.Count)
+                return ValidationResult.Success;
+            
+            return ValidationResult.Error($"Application '{application.Metadata.Name}' has sources with undetected source types. Please ensure the application is configured correctly in Argo CD.");
+
         }
 
         static ValidationResult ValidateSourceNames(Application application)
@@ -22,7 +32,7 @@ namespace Calamari.ArgoCD.Conventions
             var groupsWithDuplicates = groupedByName.Where(g => g.Key != null && g.Count() > 1).ToArray();
 
             return groupsWithDuplicates.Any() 
-                ? ValidationResult.Error(groupsWithDuplicates.Select(g => $"Application {application.Metadata.Name} has multiples sources with the name '{g.Key}'. Please ensure all sources have unique names.").ToArray()) 
+                ? ValidationResult.Error(groupsWithDuplicates.Select(g => $"Application '{application.Metadata.Name}' has multiples sources with the name '{g.Key}'. Please ensure all sources have unique names.").ToArray()) 
                 : ValidationResult.Success;
         }
 

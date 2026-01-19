@@ -10,8 +10,7 @@ namespace Calamari.ArgoCD.Helm
 {
     public class HelmValuesFileUpdateTargetParser
     {
-        readonly List<ApplicationSource> helmSources;
-        readonly List<ApplicationSource> refSources;
+        readonly List<ApplicationSourceWithMetadata> helmSources;
 
         readonly ApplicationName appName;
         readonly string defaultRegistry;
@@ -22,83 +21,102 @@ namespace Calamari.ArgoCD.Helm
         {
             annotations = toUpdate.Metadata.Annotations;
             containsMultipleSources = toUpdate.Spec.Sources.Count > 1;
-            //Only deal with explicit Helm sources for now to preserve previous behaviour
-            helmSources = toUpdate.GetSourcesWithMetadata().Where(s => s.SourceType == SourceType.Helm && s.Source.Helm != null).Select(s => s.Source).ToList();
-            refSources = toUpdate.GetSourcesWithMetadata().Where(s => s.SourceType == SourceType.Directory && s.Source.Ref != null).Select(s => s.Source).ToList();
+            helmSources = toUpdate.GetSourcesWithMetadata().Where(s => s.SourceType == SourceType.Helm).ToList();
             appName = toUpdate.Metadata.Name.ToApplicationName();
             this.defaultRegistry = defaultRegistry;
         }
 
-        public (IReadOnlyCollection<HelmValuesFileImageUpdateTarget> Targets, IReadOnlyCollection<HelmSourceConfigurationProblem> Problems) GetValuesFilesToUpdate()
+        public (IReadOnlyCollection<HelmValuesFileImageUpdateTarget> Targets, IReadOnlyCollection<HelmSourceConfigurationProblem> Problems) GetExplicitValuesFilesToUpdate(ApplicationSourceWithMetadata helmSource)
         {
-            var results = helmSources
-                              .Where(hs => hs.Helm?.ValueFiles.Count > 0)
-                              .Select(ExtractValuesFilesForSource).ToArray();
+            var results = new [] {helmSource}
+                              .Where(hs => hs.Source.Helm?.ValueFiles.Count > 0)
+                              .Select(ExtractInlineValuesFilesForSource).ToArray();
             
-            return (results.SelectMany(v => v.Targets).ToArray(), results.SelectMany(v => v.Problems).ToArray());
+            return (results.SelectMany(v => v.Targets).ToArray(), results.SelectMany(v => v.Problems).ToHashSet());
         }
 
-        (IReadOnlyCollection<HelmValuesFileImageUpdateTarget> Targets, IReadOnlyCollection<HelmSourceConfigurationProblem> Problems) ExtractValuesFilesForSource(ApplicationSource source)
+        (IReadOnlyCollection<HelmValuesFileImageUpdateTarget> Targets, IReadOnlyCollection<HelmSourceConfigurationProblem> Problems) ExtractInlineValuesFilesForSource(ApplicationSourceWithMetadata source)
         {
-            var definedPathsForSource = ScopingAnnotationReader.GetImageReplacePathsForApplicationSource(source.Name.ToApplicationSourceName(), annotations, containsMultipleSources);
-            if (source.Helm == null)
-                return new ValueTuple<IReadOnlyCollection<HelmValuesFileImageUpdateTarget>, IReadOnlyCollection<HelmSourceConfigurationProblem>>();
+            var definedPathsForSource = ScopingAnnotationReader.GetImageReplacePathsForApplicationSource(source.Source.Name.ToApplicationSourceName(), annotations, containsMultipleSources);
             
-            var results = source.Helm.ValueFiles.Select(file => file.StartsWith('$')
-                                                                ? ProcessRefValuesFile(source, file, definedPathsForSource)
-                                                                : ProcessInlineValuesFile(source, file, definedPathsForSource)).ToArray();
+            var results = source.Source.Helm?.ValueFiles
+                                .Where(file => !file.StartsWith('$'))
+                                .Select(file => ProcessInlineValuesFile(source, file, definedPathsForSource)).ToArray()
+                                ?? Array.Empty<(HelmValuesFileImageUpdateTarget? Target, HelmSourceConfigurationProblem? Problem)>();
 
             return (results.Where(t => t.Target != null).Select(v => v.Target!).ToArray(),
                     results.Where(t => t.Problem != null).Select(v => v.Problem!).Distinct().ToArray());
         }
 
-        (HelmValuesFileImageUpdateTarget? Target, HelmSourceConfigurationProblem? Problem) ProcessInlineValuesFile(ApplicationSource source, string file, IReadOnlyCollection<string> definedPathsForSource)
+        (HelmValuesFileImageUpdateTarget? Target, HelmSourceConfigurationProblem? Problem) ProcessInlineValuesFile(ApplicationSourceWithMetadata source, string file, IReadOnlyCollection<string> definedPathsForSource)
         {
             if (!definedPathsForSource.Any())
             {
-                return (null, new HelmSourceIsMissingImagePathAnnotation(source.Name.ToApplicationSourceName(), source.RepoUrl));
+                return (null, new HelmSourceIsMissingImagePathAnnotation(source.SourceIdentity));
             }
 
             return (new HelmValuesFileImageUpdateTarget(appName,
-                                                        source.Name?.ToApplicationSourceName(),
+                                                        source.Source.Name?.ToApplicationSourceName(),
                                                         defaultRegistry,
-                                                        source.Path,
-                                                        source.RepoUrl,
-                                                        source.TargetRevision,
+                                                        source.Source.Path,
+                                                        source.Source.RepoUrl,
+                                                        source.Source.TargetRevision,
                                                         file,
                                                         definedPathsForSource), null);
         }
 
-        (HelmValuesFileImageUpdateTarget? Target, HelmSourceConfigurationProblem? Problem) ProcessRefValuesFile(ApplicationSource source, string file, IReadOnlyCollection<string> definedPathsForSource)
+        public (IReadOnlyCollection<HelmValuesFileImageUpdateTarget> Targets, IReadOnlyCollection<HelmSourceConfigurationProblem> Problems) GetHelmTargetsForRefSource(ApplicationSourceWithMetadata refSource)
         {
-            var refName = GetRefFromFilePath(file);
-            var refForValuesFile = refSources.FirstOrDefault(r => r.Ref == refName);
-            if (refForValuesFile == null)
-            {
-                return (null, new RefSourceIsMissing(refName, source.Name.ToApplicationSourceName(), source.RepoUrl));
-            }
-
-            if (!definedPathsForSource.Any())
-            {
-                return (null,
-                        new HelmSourceIsMissingImagePathAnnotation(source.Name.ToApplicationSourceName(), source.RepoUrl, refForValuesFile.Name.ToApplicationSourceName())
-                    );
-            }
-
-            var relativeFile = file[(file.IndexOf('/') + 1)..];
-            return (new HelmValuesFileImageUpdateTarget(appName,
-                                                        refForValuesFile.Name.ToApplicationSourceName(),
-                                                        defaultRegistry,
-                                                        ArgoCDConstants.RefSourcePath,
-                                                        refForValuesFile.RepoUrl,
-                                                        refForValuesFile.TargetRevision,
-                                                        relativeFile,
-                                                        definedPathsForSource), null);
+            var targetsAndProblems = helmSources.Select(h => GetUpdateTargetsFromHelmSource(refSource, h)).ToList();
+            
+            //Use the hashset to distinct unique problems arising from multiple value files from the same Helm source
+            return (targetsAndProblems.SelectMany(t => t.Targets).ToList(), targetsAndProblems.SelectMany(t => t.Problems).ToHashSet());
         }
 
-        static string GetRefFromFilePath(string filePath)
+        (IReadOnlyCollection<HelmValuesFileImageUpdateTarget> Targets, IReadOnlyCollection<HelmSourceConfigurationProblem> Problems) GetUpdateTargetsFromHelmSource(ApplicationSourceWithMetadata refSource, ApplicationSourceWithMetadata helmSource)
         {
-            return filePath.TrimStart('$')[..(filePath.IndexOf('/') - 1)];
+            //If there's no Helm section, then the Helm source won't be referencing other sources
+            if (helmSource.Source.Helm == null)
+                return ([], []);
+                
+            var definedPathsForSource = ScopingAnnotationReader.GetImageReplacePathsForApplicationSource(helmSource.Source.Name.ToApplicationSourceName(), annotations, containsMultipleSources);
+
+            var targetsAndProblems = helmSource.Source.Helm.ValueFiles.Select(v => GetUpdateTargetForValueFile(refSource, v, definedPathsForSource, helmSource)).ToList();
+
+            return (targetsAndProblems.Where(t => t.Target != null).Select(t => t.Target!).ToList(), 
+                    targetsAndProblems.Where(t => t.Problem != null).Select(t => t.Problem!).ToHashSet());
+        }
+
+        (HelmValuesFileImageUpdateTarget? Target, HelmSourceConfigurationProblem? Problem) GetUpdateTargetForValueFile(ApplicationSourceWithMetadata refSource,
+                                                                                                                       string valueFile,
+                                                                                                                       IReadOnlyCollection<string> definedPathsForSource,
+                                                                                                                       ApplicationSourceWithMetadata helmSource)
+        {
+            if (ReferencesRef(valueFile, refSource.Source.Ref!))
+            {
+                if (!definedPathsForSource.Any())
+                {
+                    return (null, new HelmSourceIsMissingImagePathAnnotation(helmSource.SourceIdentity, refSource.SourceIdentity));
+                }
+
+                var relativeFile = valueFile[(valueFile.IndexOf('/') + 1)..];
+
+                return (new HelmValuesFileImageUpdateTarget(appName,
+                                                                refSource.Source.Name.ToApplicationSourceName(),
+                                                                defaultRegistry,
+                                                                ArgoCDConstants.RefSourcePath,
+                                                                refSource.Source.RepoUrl,
+                                                                refSource.Source.TargetRevision,
+                                                                relativeFile,
+                                                                definedPathsForSource), null);
+            }
+            
+            return (null, null);
+        }
+
+        static bool ReferencesRef(string filePath, string refName)
+        {
+            return filePath.StartsWith($"${refName}/");
         }
     }
 }

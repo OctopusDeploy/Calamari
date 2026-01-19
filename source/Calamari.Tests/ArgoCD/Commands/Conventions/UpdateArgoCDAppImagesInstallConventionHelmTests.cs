@@ -179,7 +179,7 @@ service:
             var clonedRepoPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             AssertFileContents(clonedRepoPath, existingYamlFile, fileContents);
 
-            log.MessagesWarnFormatted.Should().Contain($"Unable to update source '{new Uri(OriginPath)}' as a path has not been specified.");
+            log.MessagesWarnFormatted.Should().Contain($"Unable to update source 'Index: 0, Type: Helm, Name: (None)' as a path has not been specified.");
 
             AssertOutputVariables(false, matchingApplicationTotalSourceCounts: "1");
         }
@@ -557,7 +557,7 @@ image:
             var resultRepo = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             AssertFileContents(resultRepo, "files/values.yaml", valuesFile);
 
-            log.MessagesWarnFormatted.Should().Contain($"The Helm source '{new Uri(OriginPath)}' is missing an annotation for the image replace path. It will not be updated.");
+            log.MessagesWarnFormatted.Should().Contain($"The Helm source 'Index: 0, Type: Helm, Name: helm-source' is missing an annotation for the image replace path. It will not be updated.");
 
             AssertOutputVariables(false, matchingApplicationTotalSourceCounts: "1");
         }
@@ -635,7 +635,7 @@ image:
             var resultRepo = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             AssertFileContents(resultRepo, "files/values.yaml", valuesFile);
 
-            log.MessagesWarnFormatted.Should().Contain($"The Helm source '{new Uri(OriginPath)}' is missing an annotation for the image replace path. It will not be updated.");
+            log.MessagesWarnFormatted.Should().Contain($"The Helm source 'Index: 0, Type: Helm, Name: helm-source' is missing an annotation for the image replace path. It will not be updated.");
 
             AssertOutputVariables(false, matchingApplicationTotalSourceCounts: "1");
         }
@@ -725,7 +725,7 @@ image:
             var resultRepo = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             AssertFileContents(resultRepo, "files/values.yaml", valuesFile);
 
-            log.MessagesWarnFormatted.Should().Contain("The Helm source 'https://github.com/doesnt/exist.git' is missing an annotation for the image replace path. It will not be updated.");
+            log.MessagesWarnFormatted.Should().Contain("The Helm source 'Index: 0, Type: Helm, Name: (None)' is missing an annotation for the image replace path. The source 'Index: 1, Type: Directory, Name: ref-source' will not be updated.");
 
             AssertOutputVariables(false, matchingApplicationTotalSourceCounts: "2");
         }
@@ -819,106 +819,106 @@ image:
             AssertOutputVariables(false, matchingApplicationTotalSourceCounts: "2", matchingApplicationMatchingSourceCounts: "0");
         }
 
-//         [Test]
-//         public void HelmSourceWithHelmConfigurationAndImplicitValuesFile_IncludeValuesFileAndUpdate()
-//         {
-//             // Arrange
-//             var updater = new UpdateArgoCDAppImagesInstallConvention(log,
-//                                                                      fileSystem,
-//                                                                      new DeploymentConfigFactory(nonSensitiveCalamariVariables),
-//                                                                      new CommitMessageGenerator(),
-//                                                                      customPropertiesLoader,
-//                                                                      argoCdApplicationManifestParser,
-//                                                                      Substitute.For<IGitVendorAgnosticApiAdapterFactory>());
-//             var variables = new CalamariVariables
-//             {
-//                 [PackageVariables.IndexedImage("nginx")] = "index.docker.io/nginx:1.27.1",
-//                 [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
-//                 [ProjectVariables.Slug] = ProjectSlug,
-//                 [DeploymentEnvironment.Slug] = EnvironmentSlug,
-//             };
-//             var runningDeployment = new RunningDeployment(null, variables);
-//             runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
-//             runningDeployment.StagingDirectory = tempDirectory;
-//
-//             var implicitValuesFile = "values.yaml";
-//             var explicitValuesFile = "staging-values.yaml";
-//             var filesInRepo = new (string, string)[]
-//             {
-//                 (
-//                     implicitValuesFile,
-//                     @"
-// image:
-//   repository: index.docker.io/nginx
-//   tag: ""1.0""
-// containerPort: 8080
-// service:
-//   type: LoadBalancer
-// "
-//                 ),
-//                 (
-//                     explicitValuesFile,
-//                     @"
-// image:
-//   repository: index.docker.io/nginx
-//   tag: ""2.0""
-// containerPort: 8070
-// "
-//                 ),
-//             };
-//             originRepo.AddFilesToBranch(argoCDBranchName, filesInRepo);
-//
-//             var argoCDAppWithHelmSource = new ArgoCDApplicationBuilder()
-//                                           .WithName("App1")
-//                                           .WithAnnotations(new Dictionary<string, string>()
-//                                           {
-//                                               [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(null)] = ProjectSlug,
-//                                               [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(null)] = EnvironmentSlug,
-//                                               [ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(null)] = "{{ .Values.image.repository }}:{{ .Values.image.tag }}",
-//                                           })
-//                                           .WithSource(new ApplicationSource
-//                                                       {
-//                                                           RepoUrl = new Uri(OriginPath),
-//                                                           Path = "",
-//                                                           TargetRevision = ArgoCDBranchFriendlyName,
-//                                                           Helm = new HelmConfig()
-//                                                           {
-//                                                               ValueFiles = new List<string>() { explicitValuesFile }
-//                                                           }
-//                                                       },
-//                                                       SourceTypeConstants.Helm)
-//                                           .Build();
-//
-//             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
-//                                            .Returns(argoCDAppWithHelmSource);
-//             // Act
-//             updater.Install(runningDeployment);
-//
-//             //Assert
-//             const string updatedImplicitYamlContent =
-//                 @"
-// image:
-//   repository: index.docker.io/nginx
-//   tag: ""1.27.1""
-// containerPort: 8080
-// service:
-//   type: LoadBalancer
-// ";
-//
-//             const string updatedExplicitYamlContent =
-//                 @"
-// image:
-//   repository: index.docker.io/nginx
-//   tag: ""1.27.1""
-// containerPort: 8070
-// ";
-//
-//             var clonedRepoPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
-//             AssertFileContents(clonedRepoPath, implicitValuesFile, updatedImplicitYamlContent);
-//             AssertFileContents(clonedRepoPath, explicitValuesFile, updatedExplicitYamlContent);
-//
-//             AssertOutputVariables(matchingApplicationTotalSourceCounts: "1");
-//         }
+        [Test]
+        public void HelmSourceWithHelmConfigurationAndImplicitValuesFile_IncludeValuesFileAndUpdate()
+        {
+            // Arrange
+            var updater = new UpdateArgoCDAppImagesInstallConvention(log,
+                                                                     fileSystem,
+                                                                     new DeploymentConfigFactory(nonSensitiveCalamariVariables),
+                                                                     new CommitMessageGenerator(),
+                                                                     customPropertiesLoader,
+                                                                     argoCdApplicationManifestParser,
+                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>());
+            var variables = new CalamariVariables
+            {
+                [PackageVariables.IndexedImage("nginx")] = "index.docker.io/nginx:1.27.1",
+                [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
+                [ProjectVariables.Slug] = ProjectSlug,
+                [DeploymentEnvironment.Slug] = EnvironmentSlug,
+            };
+            var runningDeployment = new RunningDeployment(null, variables);
+            runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
+            runningDeployment.StagingDirectory = tempDirectory;
+
+            var implicitValuesFile = "values.yaml";
+            var explicitValuesFile = "staging-values.yaml";
+            var filesInRepo = new (string, string)[]
+            {
+                (
+                    implicitValuesFile,
+                    @"
+image:
+  repository: index.docker.io/nginx
+  tag: ""1.0""
+containerPort: 8080
+service:
+  type: LoadBalancer
+"
+                ),
+                (
+                    explicitValuesFile,
+                    @"
+image:
+  repository: index.docker.io/nginx
+  tag: ""2.0""
+containerPort: 8070
+"
+                ),
+            };
+            originRepo.AddFilesToBranch(argoCDBranchName, filesInRepo);
+
+            var argoCDAppWithHelmSource = new ArgoCDApplicationBuilder()
+                                          .WithName("App1")
+                                          .WithAnnotations(new Dictionary<string, string>()
+                                          {
+                                              [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(null)] = ProjectSlug,
+                                              [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(null)] = EnvironmentSlug,
+                                              [ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(null)] = "{{ .Values.image.repository }}:{{ .Values.image.tag }}",
+                                          })
+                                          .WithSource(new ApplicationSource
+                                                      {
+                                                          RepoUrl = new Uri(OriginPath),
+                                                          Path = "",
+                                                          TargetRevision = ArgoCDBranchFriendlyName,
+                                                          Helm = new HelmConfig()
+                                                          {
+                                                              ValueFiles = new List<string>() { explicitValuesFile }
+                                                          }
+                                                      },
+                                                      SourceTypeConstants.Helm)
+                                          .Build();
+
+            argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
+                                           .Returns(argoCDAppWithHelmSource);
+            // Act
+            updater.Install(runningDeployment);
+
+            //Assert
+            const string updatedImplicitYamlContent =
+                @"
+image:
+  repository: index.docker.io/nginx
+  tag: ""1.27.1""
+containerPort: 8080
+service:
+  type: LoadBalancer
+";
+
+            const string updatedExplicitYamlContent =
+                @"
+image:
+  repository: index.docker.io/nginx
+  tag: ""1.27.1""
+containerPort: 8070
+";
+
+            var clonedRepoPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
+            AssertFileContents(clonedRepoPath, implicitValuesFile, updatedImplicitYamlContent);
+            AssertFileContents(clonedRepoPath, explicitValuesFile, updatedExplicitYamlContent);
+
+            AssertOutputVariables(matchingApplicationTotalSourceCounts: "1");
+        }
 
         [Test]
         public void HelmSourceWithHelmConfigurationAndNoImplicitValuesFile_ExcludeValuesFileAndUpdate()
@@ -1390,6 +1390,8 @@ service:
             var clonedRepoPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             AssertFileContents(clonedRepoPath, existingYamlFile, updatedYamlContent);
             AssertFileContents(clonedRepoPath, yamlFileUnderPath, contentUnderPath);
+
+            log.MessagesWarnFormatted.Should().Contain($"The source 'Index: 1, Type: Directory, Name: ref-source' contains a Ref, only referenced files will be updated. Please create another source with the same URL if you wish to update files under the path.");
 
             AssertOutputVariables(matchingApplicationTotalSourceCounts: "2");
         }

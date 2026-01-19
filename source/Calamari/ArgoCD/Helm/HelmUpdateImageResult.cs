@@ -5,14 +5,14 @@ namespace Calamari.ArgoCD.Helm
 {
     public class HelmRefUpdatedResult
     {
-        public HelmRefUpdatedResult(Uri repoUrl, HashSet<string> imagesUpdated)
+        public HelmRefUpdatedResult(HashSet<string> imagesUpdated, string relativeFilepath)
         {
-            RepoUrl = repoUrl;
             ImagesUpdated = imagesUpdated;
+            RelativeFilepath = relativeFilepath;
         }
 
-        public Uri RepoUrl { get; }
         public HashSet<string> ImagesUpdated { get; }
+        public string RelativeFilepath { get; }
     }
 }
 
