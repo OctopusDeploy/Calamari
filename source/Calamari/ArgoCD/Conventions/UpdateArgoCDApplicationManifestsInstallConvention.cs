@@ -167,12 +167,6 @@ namespace Calamari.ArgoCD.Conventions
             if (annotatedScope != deploymentScope)
                 return result;
             
-            if (sourceWithMetadata.SourceType == null)
-            {
-                log.WarnFormat("Unable to update source '{0}' as its source type was not detected by Argo CD.", sourceWithMetadata.SourceIdentity);
-                return result;
-            }
-                        
             log.Info($"Writing files to repository '{applicationSource.RepoUrl}' for '{applicationName}'");
 
             if (!TryCalculateOutputPath(applicationSource, out var outputPath))
