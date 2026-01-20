@@ -1,4 +1,5 @@
 using System;
+using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.ArgoCD.Domain
 {
@@ -12,9 +13,9 @@ namespace Calamari.ArgoCD.Domain
         }
 
         public ApplicationSource Source { get; }
-        
         public SourceType? SourceType { get; }
-
         public int Index { get; }
+        
+        public string SourceIdentity => $"Index: {Index}, Type: {SourceType?.ToString() ?? "Unknown"}, Name: {(Source.Name.IsNullOrEmpty() ? "(None)" : Source.Name)}";
     }
 }

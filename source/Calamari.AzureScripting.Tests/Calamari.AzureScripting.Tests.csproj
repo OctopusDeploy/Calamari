@@ -3,11 +3,10 @@
     <PropertyGroup>
         <RootNamespace>Calamari.AzureScripting.Tests</RootNamespace>
         <AssemblyName>Calamari.AzureScripting.Tests</AssemblyName>
-        <LangVersion>8</LangVersion>
         <Nullable>enable</Nullable>
         <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
         <IsPackable>false</IsPackable>
-        <TargetFrameworks>net462;net8.0</TargetFrameworks>
+        <TargetFramework>net8.0</TargetFramework>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     </PropertyGroup>
     <ItemGroup>
@@ -20,37 +19,10 @@
         <PackageReference Include="Shouldly" Version="2.8.2" />
         <PackageReference Include="Octopus.Dependencies.AzureCLI" Version="2.0.50" GeneratePathProperty="true" />
         <PackageReference Include="Octopus.Dependencies.AzureCmdlets" Version="6.13.1" GeneratePathProperty="true" />
+        <PackageReference Include="Octopus.Server.Extensibility" Version="14.3.2" />
     </ItemGroup>
-    <ItemGroup>
-        
-    </ItemGroup>
-    <Target Name="GetPackageFiles" AfterTargets="ResolveReferences" DependsOnTargets="RunResolvePackageDependencies">
-        <ItemGroup>
-            <Content Include="$(PkgOctopus_Dependencies_AzureCLI)/*.nupkg">
-                <Visible>false</Visible>
-                <Link>Octopus.Dependencies.AzureCLI.nupkg</Link>
-                <Pack>true</Pack>
-                <PackageCopyToOutput>true</PackageCopyToOutput>
-                <PackageFlatten>true</PackageFlatten>
-                <PackagePath>contentFiles/any/any/Octopus.Dependencies.AzureCLI.nupkg</PackagePath>
-                <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-            </Content>
-            <Content Include="$(PkgOctopus_Dependencies_AzureCmdlets)/*.nupkg">
-                <Visible>false</Visible>
-                <Link>Octopus.Dependencies.AzureCmdlets.nupkg</Link>
-                <Pack>true</Pack>
-                <PackageCopyToOutput>true</PackageCopyToOutput>
-                <PackageFlatten>true</PackageFlatten>
-                <PackagePath>contentFiles/any/any/Octopus.Dependencies.AzureCmdlets.nupkg</PackagePath>
-                <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-            </Content>
-        </ItemGroup>
-    </Target>
     <ItemGroup>
       <ProjectReference Include="..\Calamari.AzureScripting\Calamari.AzureScripting.csproj" />
       <ProjectReference Include="..\Calamari.Testing\Calamari.Testing.csproj" />
-    </ItemGroup>
-    <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
-      <PackageReference Include="Octopus.Server.Extensibility" Version="14.3.2" />
     </ItemGroup>
 </Project>

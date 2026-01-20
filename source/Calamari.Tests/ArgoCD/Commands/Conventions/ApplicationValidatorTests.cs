@@ -36,12 +36,12 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
 
         [TestCase("foo", "foo")]
         [TestCase("bar", "foo", "bar", "")]
-        public void MultipleSources_DuplicateNames_Throws(params string[] names)
+        public void MultipleSources_DuplicateNames_HasError(params string[] names)
         {
             var application = CreateApplication(names);
 
             var result = ApplicationValidator.Validate(application);
-            result.Errors.Should().BeEquivalentTo($"Application FooApp has multiples sources with the name '{names.First()}'. Please ensure all sources have unique names.");
+            result.Errors.Should().BeEquivalentTo($"Application 'FooApp' has multiples sources with the name '{names.First()}'. Please ensure all sources have unique names.");
         }
 
          [Test]
@@ -81,6 +81,16 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             result.Warnings.Should().BeEmpty();
         }
 
+        [Test]
+        public void SourceTypeDoesntMatch_HasError()
+        {
+            var application = CreateApplication("foo", "bar");
+            application.Status.SourceTypes.Clear();
+            
+            var result = ApplicationValidator.Validate(application);
+            result.Errors.Should().BeEquivalentTo($"Application 'FooApp' has sources with undetected source types. Please ensure the application is configured correctly in Argo CD.");
+        }
+        
         static Application CreateApplication(params string[] names)
         {
             return CreateApplication(new Dictionary<string, string>(), names);

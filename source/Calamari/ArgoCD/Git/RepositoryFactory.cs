@@ -1,4 +1,3 @@
-#if NET
 using System;
 using System.IO;
 using Calamari.ArgoCD.Git.GitVendorApiAdapters;
@@ -106,4 +105,3 @@ namespace Calamari.ArgoCD.Git
         }
     }
 }
-#endif

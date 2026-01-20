@@ -2,9 +2,8 @@
   <PropertyGroup>
     <RootNamespace>Calamari.AzureWebApp.Tests</RootNamespace>
     <AssemblyName>Calamari.AzureWebApp.Tests</AssemblyName>
-    <TargetFrameworks>net462;net8.0</TargetFrameworks>
+    <TargetFramework>net8.0</TargetFramework>
     <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
-    <LangVersion>8.0</LangVersion>
     <IsPackable>false</IsPackable>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
@@ -27,15 +26,16 @@
 
   <Target Name="GetNetCoreShimFiles">
     <ItemGroup>
-      <NetCoreShimFiles Include="$(MSBuildProjectDirectory)/../Calamari.AzureWebApp/netcoreshim/netcoreshim.zip" Condition="'$(IsWindowsNetCoreBuild)' == 'true'"/>
+      <NetCoreShimFiles Include="$(MSBuildProjectDirectory)/../Calamari.AzureWebApp/netcoreshim/netcoreshim.zip" />
     </ItemGroup>
   </Target>
 
   <Target Name="CopyNetCoreShimFilesAfterBuild" AfterTargets="Build" DependsOnTargets="GetNetCoreShimFiles">
     <Unzip SourceFiles="@(NetCoreShimFiles)" DestinationFolder="$(OutputPath)/netcoreshim" SkipUnchangedFiles="true" Condition="'$(IsWindowsNetCoreBuild)' == 'true'" />
+    <Unzip SourceFiles="@(NetCoreShimFiles)" DestinationFolder="$(OutDir)/netcoreshim" SkipUnchangedFiles="true" />
   </Target>
 
   <Target Name="CopyNetCoreShimFilesAfterPublish" AfterTargets="Publish" DependsOnTargets="GetNetCoreShimFiles">
-    <Unzip SourceFiles="@(NetCoreShimFiles)" DestinationFolder="$(PublishDir)/netcoreshim" SkipUnchangedFiles="true" Condition="'$(IsWindowsNetCoreBuild)' == 'true'"/>
+    <Unzip SourceFiles="@(NetCoreShimFiles)" DestinationFolder="$(PublishDir)/netcoreshim" SkipUnchangedFiles="true" />
   </Target>
 </Project>

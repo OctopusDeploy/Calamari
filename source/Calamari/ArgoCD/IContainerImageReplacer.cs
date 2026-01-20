@@ -1,5 +1,4 @@
-﻿#if NET
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Calamari.ArgoCD.Models;
 
@@ -10,4 +9,3 @@ namespace Calamari.ArgoCD
         ImageReplacementResult UpdateImages(List<ContainerImageReference> imagesToUpdate);
     }
 }
-#endif

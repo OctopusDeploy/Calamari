@@ -12,9 +12,6 @@ using Octopus.Versioning.Semver;
 namespace Calamari.Tests.Fixtures.Integration.Packages
 {
     [TestFixture]
-#if NETFX
-    [Ignore("GitHub tests are not run in .netframework to reduce throttling exceptions from GitHub itself.")]
-#endif
     public class GitHubPackageDownloadFixture
     {
         //See "GitHub Test Account"

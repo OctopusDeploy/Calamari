@@ -24,9 +24,8 @@ namespace Calamari.Common.Plumbing.FileSystem
 
         static CalamariPhysicalFileSystem()
         {
-#if NETSTANDARD
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance); // Required to use code pages in .NET Standard
-#endif
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            
             DefaultInputEncodingPrecedence = new List<Encoding>
             {
                 new UTF8Encoding(false, true),

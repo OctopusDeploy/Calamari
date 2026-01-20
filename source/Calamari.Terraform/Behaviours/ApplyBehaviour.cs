@@ -31,23 +31,17 @@ namespace Calamari.Terraform.Behaviours
                                                      commandLineRunner,
                                                      deployment,
                                                      environmentVariables);
-            cli.ExecuteCommand("apply",
-                               "-no-color",
-                               "-auto-approve",
-                               cli.TerraformVariableFiles,
-                               cli.ActionParams);
+            var applyArgs = GetApplyArgs(deployment, cli);
 
-            var args = new List<string>();
-            args.Add("output");
-            if (!OctopusFeatureToggles.AnsiColorsInTaskLogFeatureToggle.IsEnabled(deployment.Variables))
-                args.Add("-no-color");
-            args.Add("-json");
-            
+            cli.ExecuteCommand(applyArgs.ToArray());
+
+            var outputArg = GetOutputArgs(deployment);
+
             // Attempt to get the outputs. This will fail if none are defined in versions prior to v0.11.15
             // Please note that we really don't want to log the following command output as it can contain sensitive variables etc. hence the IgnoreCommandOutput()
             if (cli.ExecuteCommand(out var result,
                                    false,
-                                   args.ToArray())
+                                   outputArg.ToArray())
                    .ExitCode
                 != 0)
                 return Task.CompletedTask;
@@ -71,6 +65,24 @@ namespace Calamari.Terraform.Behaviours
             }
 
             return Task.CompletedTask;
+        }
+
+        static IEnumerable<string> GetOutputArgs(RunningDeployment deployment)
+        {
+            yield return "output";
+            if (!OctopusFeatureToggles.AnsiColorsInTaskLogFeatureToggle.IsEnabled(deployment.Variables))
+                yield return "-no-color";
+            yield return "-json";
+        }
+
+        static IEnumerable<string> GetApplyArgs(RunningDeployment deployment, TerraformCliExecutor cli)
+        {
+            yield return "apply";
+            if (!OctopusFeatureToggles.AnsiColorsInTaskLogFeatureToggle.IsEnabled(deployment.Variables))
+                yield return "-no-color";
+            yield return "-auto-approve";
+            yield return cli.TerraformVariableFiles;
+            yield return cli.ActionParams;
         }
 
         IEnumerable<(string, JToken)> OutputVariables(string result)
