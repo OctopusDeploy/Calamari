@@ -185,6 +185,11 @@ namespace Calamari.ArgoCD.Conventions
 
             using (var repository = repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), gitConnection))
             {
+                if(repository.ValidateReferenceIsBranch(gitConnection.GitReference)
+                {
+                    
+                }
+                
                 log.VerboseFormat("Copying files into '{0}'", outputPath);
 
                 if (deploymentConfig.PurgeOutputDirectory)
