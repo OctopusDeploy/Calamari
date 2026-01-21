@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Git.GitVendorApiAdapters;
-using Calamari.ArgoCD.GitHub;
 using Calamari.Commands;
 using Calamari.Commands.Support;
 using Calamari.Common.Commands;
@@ -16,6 +15,7 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
+using Calamari.Integration.Time;
 
 namespace Calamari.ArgoCD.Commands
 {
@@ -35,6 +35,7 @@ namespace Calamari.ArgoCD.Commands
         readonly DeploymentConfigFactory configFactory;
         readonly IArgoCDManifestsFileMatcher argoCDManifestsFileMatcher;
         readonly IGitVendorAgnosticApiAdapterFactory gitVendorAgnosticApiAdapterFactory;
+        readonly IClock clock;
         PathToPackage pathToPackage;
         string customPropertiesFile;
         string customPropertiesPassword;
@@ -48,7 +49,8 @@ namespace Calamari.ArgoCD.Commands
             INonSensitiveSubstituteInFiles substituteInFiles,
             DeploymentConfigFactory configFactory,
             IArgoCDManifestsFileMatcher argoCDManifestsFileMatcher,
-            IGitVendorAgnosticApiAdapterFactory gitVendorAgnosticApiAdapterFactory)
+            IGitVendorAgnosticApiAdapterFactory gitVendorAgnosticApiAdapterFactory,
+            IClock clock)
         {
             this.log = log;
             this.variables = variables;
@@ -58,6 +60,7 @@ namespace Calamari.ArgoCD.Commands
             this.configFactory = configFactory;
             this.argoCDManifestsFileMatcher = argoCDManifestsFileMatcher;
             this.gitVendorAgnosticApiAdapterFactory = gitVendorAgnosticApiAdapterFactory;
+            this.clock = clock;
             this.nonSensitiveVariables = nonSensitiveVariables;
 
             Options.Add("package=",
@@ -97,7 +100,8 @@ namespace Calamari.ArgoCD.Commands
                                                                       new CustomPropertiesLoader(fileSystem, customPropertiesFile, customPropertiesPassword),
                                                                       new ArgoCdApplicationManifestParser(),
                                                                       argoCDManifestsFileMatcher,
-                                                                      gitVendorAgnosticApiAdapterFactory),
+                                                                      gitVendorAgnosticApiAdapterFactory,
+                                                                      clock),
             };
 
             var runningDeployment = new RunningDeployment(pathToPackage, variables);

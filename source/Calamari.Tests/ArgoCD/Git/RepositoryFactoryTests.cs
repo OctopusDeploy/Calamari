@@ -5,6 +5,7 @@ using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.Git.GitVendorApiAdapters;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Integration.Time;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
 using FluentAssertions;
@@ -36,7 +37,7 @@ namespace Calamari.Tests.ArgoCD.Git
             bareOrigin = RepositoryHelpers.CreateBareRepository(OriginPath);
             RepositoryHelpers.CreateBranchIn(branchName, OriginPath);
 
-            repositoryFactory = new RepositoryFactory(log, fileSystem, tempDirectory, new GitVendorAgnosticApiAdapterFactory(Array.Empty<IGitVendorApiAdapterFactory>()));
+            repositoryFactory = new RepositoryFactory(log, fileSystem, tempDirectory, new GitVendorAgnosticApiAdapterFactory(Array.Empty<IGitVendorApiAdapterFactory>()), new SystemClock());
         }
 
         [TearDown]

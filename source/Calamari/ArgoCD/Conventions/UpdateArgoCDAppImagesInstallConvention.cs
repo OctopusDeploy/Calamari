@@ -15,6 +15,7 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.Conventions;
+using Calamari.Integration.Time;
 using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.ArgoCD.Conventions
@@ -28,6 +29,7 @@ namespace Calamari.ArgoCD.Conventions
         readonly ICustomPropertiesLoader customPropertiesLoader;
         readonly IArgoCDApplicationManifestParser argoCdApplicationManifestParser;
         readonly IGitVendorAgnosticApiAdapterFactory gitVendorAgnosticApiAdapterFactory;
+        readonly IClock clock;
 
         public UpdateArgoCDAppImagesInstallConvention(ILog log,
                                                       ICalamariFileSystem fileSystem,
@@ -35,7 +37,8 @@ namespace Calamari.ArgoCD.Conventions
                                                       ICommitMessageGenerator commitMessageGenerator,
                                                       ICustomPropertiesLoader customPropertiesLoader,
                                                       IArgoCDApplicationManifestParser argoCdApplicationManifestParser,
-                                                      IGitVendorAgnosticApiAdapterFactory gitVendorAgnosticApiAdapterFactory)
+                                                      IGitVendorAgnosticApiAdapterFactory gitVendorAgnosticApiAdapterFactory,
+                                                      IClock clock)
         {
             this.log = log;
             this.fileSystem = fileSystem;
@@ -44,6 +47,7 @@ namespace Calamari.ArgoCD.Conventions
             this.customPropertiesLoader = customPropertiesLoader;
             this.argoCdApplicationManifestParser = argoCdApplicationManifestParser;
             this.gitVendorAgnosticApiAdapterFactory = gitVendorAgnosticApiAdapterFactory;
+            this.clock = clock;
         }
 
         public void Install(RunningDeployment deployment)
@@ -51,7 +55,7 @@ namespace Calamari.ArgoCD.Conventions
             log.Verbose("Executing Update Argo CD Application Images");
             var deploymentConfig = deploymentConfigFactory.CreateUpdateImageConfig(deployment);
 
-            var repositoryFactory = new RepositoryFactory(log, fileSystem, deployment.CurrentDirectory, gitVendorAgnosticApiAdapterFactory);
+            var repositoryFactory = new RepositoryFactory(log, fileSystem, deployment.CurrentDirectory, gitVendorAgnosticApiAdapterFactory, clock);
 
             var argoProperties = customPropertiesLoader.Load<ArgoCDCustomPropertiesDto>();
 
@@ -433,7 +437,14 @@ namespace Calamari.ArgoCD.Conventions
             }
 
             var gitConnection = new GitConnection(gitCredential?.Username, gitCredential?.Password, new Uri(source.RepoUrl.AbsoluteUri), GitReference.CreateFromString(source.TargetRevision));
-            return repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), gitConnection);
+            
+            var repository = repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), gitConnection);
+            if (!repository.ValidateReferenceIsBranch(source.TargetRevision))
+            {
+                throw new CommandException($"Unable to update repository at {source.RepoUrl} as the targetRevision ({source.TargetRevision}) is not an updateable branch, and maybe a tag or commit");
+            }
+
+            return repository;
         }
 
         (HelmValuesFileImageUpdateTarget? Target, HelmSourceConfigurationProblem? Problem) AddImplicitValuesFile(Application applicationFromYaml,

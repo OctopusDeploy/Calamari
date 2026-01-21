@@ -1,7 +1,6 @@
 #nullable enable
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -9,14 +8,13 @@ using Calamari.ArgoCD.Domain;
 using Calamari.ArgoCD.Dtos;
 using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.Git.GitVendorApiAdapters;
-using Calamari.ArgoCD.GitHub;
 using Calamari.ArgoCD.Models;
 using Calamari.Common.Commands;
-using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.Conventions;
+using Calamari.Integration.Time;
 using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.ArgoCD.Conventions
@@ -31,6 +29,7 @@ namespace Calamari.ArgoCD.Conventions
         readonly IArgoCDApplicationManifestParser argoCdApplicationManifestParser;
         readonly IArgoCDManifestsFileMatcher argoCDManifestsFileMatcher;
         readonly IGitVendorAgnosticApiAdapterFactory gitVendorAgnosticApiAdapterFactory;
+        readonly IClock clock;
 
         public UpdateArgoCDApplicationManifestsInstallConvention(ICalamariFileSystem fileSystem,
                                                                  string packageSubfolder,
@@ -39,7 +38,8 @@ namespace Calamari.ArgoCD.Conventions
                                                                  ICustomPropertiesLoader customPropertiesLoader,
                                                                  IArgoCDApplicationManifestParser argoCdApplicationManifestParser,
                                                                  IArgoCDManifestsFileMatcher argoCDManifestsFileMatcher,
-                                                                 IGitVendorAgnosticApiAdapterFactory gitVendorAgnosticApiAdapterFactory)
+                                                                 IGitVendorAgnosticApiAdapterFactory gitVendorAgnosticApiAdapterFactory,
+                                                                 IClock clock)
         {
             this.fileSystem = fileSystem;
             this.log = log;
@@ -48,6 +48,7 @@ namespace Calamari.ArgoCD.Conventions
             this.argoCdApplicationManifestParser = argoCdApplicationManifestParser;
             this.argoCDManifestsFileMatcher = argoCDManifestsFileMatcher;
             this.gitVendorAgnosticApiAdapterFactory = gitVendorAgnosticApiAdapterFactory;
+            this.clock = clock;
             this.packageSubfolder = packageSubfolder;
         }
 
@@ -57,7 +58,7 @@ namespace Calamari.ArgoCD.Conventions
             var deploymentConfig = deploymentConfigFactory.CreateCommitToGitConfig(deployment);
             var packageFiles = GetReferencedPackageFiles(deploymentConfig);
 
-            var repositoryFactory = new RepositoryFactory(log, fileSystem, deployment.CurrentDirectory, gitVendorAgnosticApiAdapterFactory);
+            var repositoryFactory = new RepositoryFactory(log, fileSystem, deployment.CurrentDirectory, gitVendorAgnosticApiAdapterFactory, clock);
 
             var argoProperties = customPropertiesLoader.Load<ArgoCDCustomPropertiesDto>();
 
@@ -185,9 +186,9 @@ namespace Calamari.ArgoCD.Conventions
 
             using (var repository = repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), gitConnection))
             {
-                if(repository.ValidateReferenceIsBranch(gitConnection.GitReference)
+                if (!repository.ValidateReferenceIsBranch(gitConnection.GitReference.Value))
                 {
-                    
+                    throw new CommandException($"Unable to update repository at {applicationSource.RepoUrl} as the targetRevision ({applicationSource.TargetRevision}) is not an updateable branch, and maybe a tag or commit");
                 }
                 
                 log.VerboseFormat("Copying files into '{0}'", outputPath);

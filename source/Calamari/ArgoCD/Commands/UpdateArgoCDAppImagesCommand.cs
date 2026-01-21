@@ -11,6 +11,7 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
+using Calamari.Integration.Time;
 
 namespace Calamari.ArgoCD.Commands
 {
@@ -25,13 +26,15 @@ namespace Calamari.ArgoCD.Commands
         readonly DeploymentConfigFactory configFactory;
         readonly IGitVendorAgnosticApiAdapterFactory gitVendorAgnosticApiAdapterFactory;
         readonly ICommitMessageGenerator commitMessageGenerator;
+        readonly IClock clock;
         string customPropertiesFile;
         string customPropertiesPassword;
 
         public UpdateArgoCDAppImagesCommand(ILog log, IVariables variables, ICalamariFileSystem fileSystem, 
                                             ICommitMessageGenerator commitMessageGenerator,
                                             DeploymentConfigFactory configFactory,
-                                            IGitVendorAgnosticApiAdapterFactory gitVendorAgnosticApiAdapterFactory)
+                                            IGitVendorAgnosticApiAdapterFactory gitVendorAgnosticApiAdapterFactory,
+                                            IClock clock)
         {
             this.log = log;
             this.variables = variables;
@@ -39,6 +42,7 @@ namespace Calamari.ArgoCD.Commands
             this.commitMessageGenerator = commitMessageGenerator;
             this.configFactory = configFactory;
             this.gitVendorAgnosticApiAdapterFactory = gitVendorAgnosticApiAdapterFactory;
+            this.clock = clock;
             Options.Add("customPropertiesFile=",
                         "Name of the custom properties file",
                         v => customPropertiesFile = Path.GetFullPath(v));
@@ -54,7 +58,7 @@ namespace Calamari.ArgoCD.Commands
 
             var conventions = new List<IConvention>
             {
-                new UpdateArgoCDAppImagesInstallConvention(log, fileSystem, configFactory, commitMessageGenerator, new CustomPropertiesLoader(fileSystem, customPropertiesFile, customPropertiesPassword), new ArgoCdApplicationManifestParser(), gitVendorAgnosticApiAdapterFactory),
+                new UpdateArgoCDAppImagesInstallConvention(log, fileSystem, configFactory, commitMessageGenerator, new CustomPropertiesLoader(fileSystem, customPropertiesFile, customPropertiesPassword), new ArgoCdApplicationManifestParser(), gitVendorAgnosticApiAdapterFactory, clock),
             };
                 
             var conventionRunner = new ConventionProcessor(runningDeployment, conventions, log);
