@@ -48,7 +48,7 @@ namespace Calamari.ArgoCD.Git
         {
             try
             {
-                var commitTime = DateTimeOffset.Now;
+                var commitTime = clock.GetUtcTime();
                 var commitMessage = GenerateCommitMessage(summary, description);
                 var commit = repository.Commit(commitMessage,
                                                new Signature("Octopus", "octopus@octopus.com", commitTime),
