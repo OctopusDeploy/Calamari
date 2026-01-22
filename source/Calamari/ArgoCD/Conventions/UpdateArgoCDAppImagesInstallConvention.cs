@@ -437,14 +437,7 @@ namespace Calamari.ArgoCD.Conventions
             }
 
             var gitConnection = new GitConnection(gitCredential?.Username, gitCredential?.Password, new Uri(source.RepoUrl.AbsoluteUri), GitReference.CreateFromString(source.TargetRevision));
-            
-            var repository = repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), gitConnection);
-            if (!repository.ValidateReferenceIsBranch(source.TargetRevision))
-            {
-                throw new CommandException($"Unable to update repository at {source.RepoUrl} as the targetRevision ({source.TargetRevision}) is not an updateable branch, and maybe a tag or commit");
-            }
-
-            return repository;
+            return repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), gitConnection);
         }
 
         (HelmValuesFileImageUpdateTarget? Target, HelmSourceConfigurationProblem? Problem) AddImplicitValuesFile(Application applicationFromYaml,

@@ -16,7 +16,7 @@ namespace Calamari.ArgoCD.Git
 {
     public class RepositoryWrapper : IDisposable
     {
-        readonly Repository repository;
+        readonly IRepository repository;
         readonly ICalamariFileSystem calamariFileSystem;
         readonly string repoCheckoutDirectoryPath;
         readonly ILog log;
@@ -26,7 +26,7 @@ namespace Calamari.ArgoCD.Git
 
         public string WorkingDirectory => repository.Info.WorkingDirectory;
 
-        public RepositoryWrapper(Repository repository,
+        public RepositoryWrapper(IRepository repository,
                                  ICalamariFileSystem calamariFileSystem,
                                  string repoCheckoutDirectoryPath,
                                  ILog log,
@@ -48,7 +48,7 @@ namespace Calamari.ArgoCD.Git
         {
             try
             {
-                var commitTime = clock.GetUtcTime();
+                var commitTime = DateTimeOffset.Now;
                 var commitMessage = GenerateCommitMessage(summary, description);
                 var commit = repository.Commit(commitMessage,
                                                new Signature("Octopus", "octopus@octopus.com", commitTime),
@@ -171,55 +171,12 @@ namespace Calamari.ArgoCD.Git
                                           new UsernamePasswordCredentials { Username = connection.Username, Password = connection.Password },
                 OnPushStatusError = errors => errorsDetected = errors
             };
-
-            FetchRemote("origin", null);
-            MergeIntoTarget("origin");
             
             repository.Network.Push(repository.Head, pushOptions);
             if (errorsDetected != null)
             {
                 throw new CommandException($"Failed to push to branch {branchName.ToFriendlyName()} - {errorsDetected.Message}");
             }
-        }
-
-        public void FetchRemote(string? remoteName, string? branchName)
-        {
-            var remoteToFetch = remoteName ?? "origin";
-            var branchNameToFetch = branchName ?? connection.GitReference.Value;
-            var refSpec = $"+ref/heads/{branchNameToFetch}:refs/remotes/{remoteToFetch}/{branchNameToFetch}";
-            
-            var remote = repository.Network.Remotes[remoteToFetch];
-            LibGit2Sharp.Commands.Fetch(repository, remote.Name, [refSpec], null, string.Empty);
-            
-        }
-
-        public void MergeIntoTarget(string? remoteName)
-        {
-            // assumes we're merging the origin's version of our branch into the current head.
-            
-            var merger = new Signature("Octopus", "octopus@octopus.com", clock.GetUtcTime());
-            var mergeOptions = new MergeOptions()
-            {
-                FastForwardStrategy = FastForwardStrategy.Default // Allows fast-forward if possible
-            }; //
-
-            var remoteToMerge = remoteName ?? "origin";
-            var originBranch = repository.Branches[$"{remoteToMerge}/{connection.GitReference.Value}"];
-            
-            MergeResult mergeResult = repository.Merge(originBranch, merger, mergeOptions);
-
-            if (mergeResult.Status == MergeStatus.Conflicts)
-            {
-                throw new CommandException($"Unable to commit changes due to a merge conflict in repository {connection.Url}");
-            }
-
-        }
-
-        public bool ValidateReferenceIsBranch(string referenceName)
-        {
-            return referenceName == GitHead.HeadAsTarget ||
-                          referenceName.StartsWith(GitBranchName.Prefix) ||
-                          repository.Branches.Any(b => b.FriendlyName == referenceName);     
         }
 
         static string GenerateCommitMessage(string summary, string description)
