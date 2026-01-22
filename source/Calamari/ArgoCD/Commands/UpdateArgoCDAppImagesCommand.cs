@@ -26,15 +26,13 @@ namespace Calamari.ArgoCD.Commands
         readonly DeploymentConfigFactory configFactory;
         readonly IGitVendorAgnosticApiAdapterFactory gitVendorAgnosticApiAdapterFactory;
         readonly ICommitMessageGenerator commitMessageGenerator;
-        readonly IClock clock;
         string customPropertiesFile;
         string customPropertiesPassword;
 
         public UpdateArgoCDAppImagesCommand(ILog log, IVariables variables, ICalamariFileSystem fileSystem, 
                                             ICommitMessageGenerator commitMessageGenerator,
                                             DeploymentConfigFactory configFactory,
-                                            IGitVendorAgnosticApiAdapterFactory gitVendorAgnosticApiAdapterFactory,
-                                            IClock clock)
+                                            IGitVendorAgnosticApiAdapterFactory gitVendorAgnosticApiAdapterFactory)
         {
             this.log = log;
             this.variables = variables;
@@ -42,7 +40,6 @@ namespace Calamari.ArgoCD.Commands
             this.commitMessageGenerator = commitMessageGenerator;
             this.configFactory = configFactory;
             this.gitVendorAgnosticApiAdapterFactory = gitVendorAgnosticApiAdapterFactory;
-            this.clock = clock;
             Options.Add("customPropertiesFile=",
                         "Name of the custom properties file",
                         v => customPropertiesFile = Path.GetFullPath(v));
@@ -54,6 +51,7 @@ namespace Calamari.ArgoCD.Commands
         public override int Execute(string[] commandLineArguments)
         {
             Options.Parse(commandLineArguments);
+            var clock = new SystemClock();
             var runningDeployment = new RunningDeployment(null, variables);
 
             var conventions = new List<IConvention>

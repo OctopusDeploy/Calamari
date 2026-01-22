@@ -35,7 +35,6 @@ namespace Calamari.ArgoCD.Commands
         readonly DeploymentConfigFactory configFactory;
         readonly IArgoCDManifestsFileMatcher argoCDManifestsFileMatcher;
         readonly IGitVendorAgnosticApiAdapterFactory gitVendorAgnosticApiAdapterFactory;
-        readonly IClock clock;
         PathToPackage pathToPackage;
         string customPropertiesFile;
         string customPropertiesPassword;
@@ -49,8 +48,7 @@ namespace Calamari.ArgoCD.Commands
             INonSensitiveSubstituteInFiles substituteInFiles,
             DeploymentConfigFactory configFactory,
             IArgoCDManifestsFileMatcher argoCDManifestsFileMatcher,
-            IGitVendorAgnosticApiAdapterFactory gitVendorAgnosticApiAdapterFactory,
-            IClock clock)
+            IGitVendorAgnosticApiAdapterFactory gitVendorAgnosticApiAdapterFactory)
         {
             this.log = log;
             this.variables = variables;
@@ -60,7 +58,6 @@ namespace Calamari.ArgoCD.Commands
             this.configFactory = configFactory;
             this.argoCDManifestsFileMatcher = argoCDManifestsFileMatcher;
             this.gitVendorAgnosticApiAdapterFactory = gitVendorAgnosticApiAdapterFactory;
-            this.clock = clock;
             this.nonSensitiveVariables = nonSensitiveVariables;
 
             Options.Add("package=",
@@ -77,7 +74,7 @@ namespace Calamari.ArgoCD.Commands
         public override int Execute(string[] commandLineArguments)
         {
             Options.Parse(commandLineArguments);
-
+            var clock = new SystemClock();
             var conventions = new List<IConvention>
             {
                 new DelegateInstallConvention(d =>
