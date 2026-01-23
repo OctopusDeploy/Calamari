@@ -16,7 +16,7 @@ namespace Calamari.ArgoCD.Git
 {
     public class RepositoryWrapper : IDisposable
     {
-        readonly IRepository repository;
+        readonly Repository repository;
         readonly ICalamariFileSystem calamariFileSystem;
         readonly string repoCheckoutDirectoryPath;
         readonly ILog log;
@@ -26,7 +26,7 @@ namespace Calamari.ArgoCD.Git
 
         public string WorkingDirectory => repository.Info.WorkingDirectory;
 
-        public RepositoryWrapper(IRepository repository,
+        public RepositoryWrapper(Repository repository,
                                  ICalamariFileSystem calamariFileSystem,
                                  string repoCheckoutDirectoryPath,
                                  ILog log,
@@ -177,6 +177,13 @@ namespace Calamari.ArgoCD.Git
             {
                 throw new CommandException($"Failed to push to branch {branchName.ToFriendlyName()} - {errorsDetected.Message}");
             }
+        }
+
+        public bool ValidateReferenceIsBranch(string referenceName)
+        {
+            return referenceName == GitHead.HeadAsTarget ||
+                          referenceName.StartsWith(GitBranchName.Prefix) ||
+                          repository.Branches.Any(b => b.FriendlyName == referenceName);     
         }
 
         static string GenerateCommitMessage(string summary, string description)
