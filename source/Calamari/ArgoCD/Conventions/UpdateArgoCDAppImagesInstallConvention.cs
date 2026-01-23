@@ -438,7 +438,7 @@ namespace Calamari.ArgoCD.Conventions
 
             var gitConnection = new GitConnection(gitCredential?.Username, gitCredential?.Password, new Uri(applicationSource.RepoUrl.AbsoluteUri), GitReference.CreateFromString(applicationSource.TargetRevision));
             var repository = repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), gitConnection);
-            if (!repository.ValidateReferenceIsBranch(gitConnection.GitReference.Value))
+            if (!repository.ValidateReferenceIsBranch(applicationSource.TargetRevision)) //note: we don't _know_ this is a branch yet.
             {
                 throw new CommandException($"Unable to update repository at {applicationSource.RepoUrl} as the targetRevision ({applicationSource.TargetRevision}) is not an updateable branch, and maybe a tag or commit");
             }
