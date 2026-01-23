@@ -20,13 +20,13 @@ namespace Calamari.Tests.ArgoCD.Git
             return fileBlob.GetContentText();
         }
         
-        public static void AddFilesToBranch(this Repository repo, GitBranchName branchName, params (string Name, string? Content)[] files)
+        public static Commit AddFilesToBranch(this Repository repo, GitBranchName branchName, params (string Name, string? Content)[] files)
         {
             var signature = new Signature("Arbitrary Coder", "arbitrary@octopus.com", DateTimeOffset.Now);
             var message = "Commit: Code";
 
             var parentCommit = repo.Branches[branchName.Value].Tip;
-            repo.Commit(parentCommit,
+            return repo.Commit(parentCommit,    
                         branchName.Value,
                         message,
                         signature,

@@ -201,6 +201,24 @@ namespace Calamari.Tests.ArgoCD.Git
             notGitFiles.Count.Should().Be(totalFilesRemaining);
         }
 
+        [Test]
+        public void ValidateReferenceDetectsBranchInRepository()
+        {
+            //Arrange
+            var commit = bareOrigin.AddFilesToBranch(branchName, ("file.yaml", ""));
+            
+            var repositoryFactory = new RepositoryFactory(log, fileSystem, tempDirectory, gitVendorAgnosticApiAdapterFactory, new SystemClock());
+            gitConnection = new GitConnection(null, null, new Uri(OriginPath), branchName);
+            
+            // Act
+            var sut = repositoryFactory.CloneRepository($"{repositoryPath}/sut", gitConnection);
+            sut.ValidateReferenceIsBranch(branchName.ToFriendlyName()).Should().BeTrue();
+            sut.ValidateReferenceIsBranch(branchName.Value).Should().BeTrue();
+            sut.ValidateReferenceIsBranch("HEAD").Should().BeTrue();
+            sut.ValidateReferenceIsBranch(commit.Sha).Should().BeFalse();
+            sut.ValidateReferenceIsBranch("arbitraryStringOrTag").Should().BeFalse();
+        }
+
         string CloneOrigin()
         {
             var subPath = Guid.NewGuid().ToString();
