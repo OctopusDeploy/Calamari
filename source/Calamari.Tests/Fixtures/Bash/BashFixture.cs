@@ -352,6 +352,111 @@ namespace Calamari.Tests.Fixtures.Bash
             output.AssertOutput("Key: VariableName`prop`anotherprop` 13, Value: Value`prop`13");
             output.AssertOutput($"Key: {specialCharacters}, Value: {specialCharacters}");
         }
+
+        [RequiresBashDotExeIfOnWindows]
+        public void ShouldPreloadScriptModules()
+        {
+            var (output, _) = RunScript("preload-modules.sh",
+                                        new Dictionary<string, string>()
+                                        {
+                                            ["Octopus.Script.Module[test_module]"] = @"function test_function {
+  echo ""Function from preloaded module""
+}
+
+export PRELOADED_VAR=""module_value""",
+                                            ["Octopus.Script.Module.Language[test_module]"] = "Bash",
+                                            ["Octopus.Action.Script.PreloadScriptModules"] = "test_module"
+                                        });
+
+            Assert.Multiple(() =>
+            {
+                output.AssertSuccess();
+                output.AssertOutput("Calling test_function from preloaded module...");
+                output.AssertOutput("Function from preloaded module");
+                output.AssertOutput("Checking preloaded variable...");
+                output.AssertOutput("PRELOADED_VAR=module_value");
+            });
+        }
+
+        [RequiresBashDotExeIfOnWindows]
+        public void ShouldPreloadMultipleScriptModulesInOrder()
+        {
+            var (output, _) = RunScript("preload-modules.sh",
+                                        new Dictionary<string, string>()
+                                        {
+                                            ["Octopus.Script.Module[module1]"] = @"function test_function {
+  echo ""Module 1""
+}
+
+export PRELOADED_VAR=""value1""",
+                                            ["Octopus.Script.Module.Language[module1]"] = "Bash",
+                                            ["Octopus.Script.Module[module2]"] = @"function test_function {
+  echo ""Module 2""
+}
+
+export PRELOADED_VAR=""value2""",
+                                            ["Octopus.Script.Module.Language[module2]"] = "Bash",
+                                            // module2 sourced last, so it wins
+                                            ["Octopus.Action.Script.PreloadScriptModules"] = "module1,module2"
+                                        });
+
+            Assert.Multiple(() =>
+            {
+                output.AssertSuccess();
+                // Should use module2's function (last wins)
+                output.AssertOutput("Module 2");
+                // Should use module2's variable (last wins)
+                output.AssertOutput("PRELOADED_VAR=value2");
+            });
+        }
+
+        [RequiresBashDotExeIfOnWindows]
+        [TestCase("module1,module2", TestName = "Comma without spaces")]
+        [TestCase("module1, module2", TestName = "Comma with space")]
+        [TestCase("module1 , module2", TestName = "Comma with spaces around")]
+        [TestCase("module1;module2", TestName = "Semicolon without spaces")]
+        [TestCase("module1; module2", TestName = "Semicolon with space")]
+        [TestCase("module1 ; module2", TestName = "Semicolon with spaces around")]
+        [TestCase("module1,module2;module3", TestName = "Mixed delimiters")]
+        [TestCase("module1, module2; module3", TestName = "Mixed delimiters with spaces")]
+        [TestCase("module1,,module2", TestName = "Multiple commas (empty entries)")]
+        [TestCase(" module1 , module2 ", TestName = "Leading and trailing whitespace")]
+        [TestCase("module1,  ,module2", TestName = "Whitespace-only entry")]
+        public void ShouldHandleVariousDelimiterCombinations(string moduleList)
+        {
+            var (output, _) = RunScript("preload-modules.sh",
+                                        new Dictionary<string, string>()
+                                        {
+                                            ["Octopus.Script.Module[module1]"] = @"function test_function {
+  echo ""Module 1""
+}
+
+export PRELOADED_VAR=""from_module1""",
+                                            ["Octopus.Script.Module.Language[module1]"] = "Bash",
+                                            ["Octopus.Script.Module[module2]"] = @"function test_function {
+  echo ""Module 2""
+}
+
+export PRELOADED_VAR=""from_module2""",
+                                            ["Octopus.Script.Module.Language[module2]"] = "Bash",
+                                            ["Octopus.Script.Module[module3]"] = @"function test_function {
+  echo ""Module 3""
+}
+
+export PRELOADED_VAR=""from_module3""",
+                                            ["Octopus.Script.Module.Language[module3]"] = "Bash",
+                                            ["Octopus.Action.Script.PreloadScriptModules"] = moduleList
+                                        });
+
+            Assert.Multiple(() =>
+            {
+                output.AssertSuccess();
+                // All test cases should successfully parse the module names
+                // The exact output depends on which modules are specified and in what order
+                // But all variations should parse correctly without errors
+            });
+        }
+        }
     }
 
     public static class AdditionalVariablesExtensions
