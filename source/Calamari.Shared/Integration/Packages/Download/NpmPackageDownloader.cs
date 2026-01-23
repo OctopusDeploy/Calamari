@@ -56,8 +56,7 @@ namespace Calamari.Integration.Packages.Download
                 packageId,
                 version,
                 feedUri,
-                feedUsername,
-                feedPassword,
+                GetFeedCredentials(feedUsername, feedPassword),
                 cacheDirectory,
                 maxDownloadAttempts,
                 downloadAttemptBackoff);
@@ -72,7 +71,7 @@ namespace Calamari.Integration.Packages.Download
         /// <returns>The path to a cached version of the file, or null if none are found</returns>
         PackagePhysicalFileMetadata? SourceFromCache(string packageId, IVersion version, string cacheDirectory)
         {
-            Log.VerboseFormat("Checking package cache for package {0} v{1}", packageId, version.ToString() ?? string.Empty);
+            Log.VerboseFormat("Checking package cache for package {0} v{1}", packageId, version.ToString());
 
             var files = fileSystem.EnumerateFilesRecursively(cacheDirectory, PackageName.ToSearchPatterns(packageId, version, [".tgz"]));
 
@@ -96,8 +95,7 @@ namespace Calamari.Integration.Packages.Download
         /// <param name="packageId">The package id</param>
         /// <param name="version">The package version</param>
         /// <param name="feedUri">The npm registry uri</param>
-        /// <param name="feedUsername">The npm registry username</param>
-        /// <param name="feedPassword">The npm registry password</param>
+        /// <param name="feedCredentials">The npm registry credentials</param>
         /// <param name="cacheDirectory">The directory to download the file into</param>
         /// <param name="maxDownloadAttempts">How many times to try the download</param>
         /// <param name="downloadAttemptBackoff">How long to wait between attempts</param>
@@ -106,8 +104,7 @@ namespace Calamari.Integration.Packages.Download
             string packageId,
             IVersion version,
             Uri feedUri,
-            string? feedUsername,
-            string? feedPassword,
+            ICredentials feedCredentials,
             string cacheDirectory,
             int maxDownloadAttempts,
             TimeSpan downloadAttemptBackoff)
@@ -120,7 +117,7 @@ namespace Calamari.Integration.Packages.Download
             Log.Info("Downloading NPM package {0} v{1} from feed: '{2}'", packageId, version, feedUri);
             Log.VerboseFormat("Downloaded package will be stored in: '{0}'", cacheDirectory);
 
-            var tarballUrl = GetTarballUrl(packageId, version, feedUri, feedUsername, feedPassword, maxDownloadAttempts, downloadAttemptBackoff);
+            var tarballUrl = GetTarballUrl(packageId, version, feedUri, feedCredentials, maxDownloadAttempts, downloadAttemptBackoff);
 
             var localDownloadName = Path.Combine(cacheDirectory, PackageName.ToCachedFileName(packageId, version, ".tgz"));
 
@@ -129,8 +126,7 @@ namespace Calamari.Integration.Packages.Download
                 localDownloadName,
                 packageId,
                 version,
-                feedUsername,
-                feedPassword,
+                feedCredentials,
                 maxDownloadAttempts,
                 downloadAttemptBackoff);
         }
@@ -142,8 +138,7 @@ namespace Calamari.Integration.Packages.Download
             string packageId,
             IVersion version,
             Uri feedUri,
-            string? feedUsername,
-            string? feedPassword,
+            ICredentials feedCredentials,
             int maxDownloadAttempts,
             TimeSpan downloadAttemptBackoff)
         {
@@ -156,10 +151,7 @@ namespace Calamari.Integration.Packages.Download
                 {
                     using (var handler = new HttpClientHandler())
                     {
-                        if (!string.IsNullOrWhiteSpace(feedUsername))
-                        {
-                            handler.Credentials = new NetworkCredential(feedUsername, feedPassword);
-                        }
+                        handler.Credentials = feedCredentials;
 
                         using (var client = new HttpClient(handler))
                         {
@@ -216,8 +208,7 @@ namespace Calamari.Integration.Packages.Download
             string localDownloadName,
             string packageId,
             IVersion version,
-            string? feedUsername,
-            string? feedPassword,
+            ICredentials feedCredentials,
             int maxDownloadAttempts,
             TimeSpan downloadAttemptBackoff)
         {
@@ -229,10 +220,7 @@ namespace Calamari.Integration.Packages.Download
 
                     using (var handler = new HttpClientHandler())
                     {
-                        if (!string.IsNullOrWhiteSpace(feedUsername))
-                        {
-                            handler.Credentials = new NetworkCredential(feedUsername, feedPassword);
-                        }
+                        handler.Credentials = feedCredentials;
 
                         using (var client = new HttpClient(handler))
                         {
@@ -262,6 +250,16 @@ namespace Calamari.Integration.Packages.Download
             }
 
             throw new CommandException("Failed to download NPM package");
+        }
+
+        static ICredentials GetFeedCredentials(string? feedUsername, string? feedPassword)
+        {
+            ICredentials credentials = CredentialCache.DefaultNetworkCredentials;
+            if (!string.IsNullOrWhiteSpace(feedUsername))
+            {
+                credentials = new NetworkCredential(feedUsername, feedPassword);
+            }
+            return credentials;
         }
     }
 }
