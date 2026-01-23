@@ -78,6 +78,9 @@ namespace Calamari.Integration.Packages.Download
             foreach (var file in files)
             {
                 var package = PackageName.FromFile(file);
+                if (package == null)
+                    continue;
+
                 var idMatches = string.Equals(package.PackageId, packageId, StringComparison.OrdinalIgnoreCase);
                 var versionExactMatch = string.Equals(package.Version.ToString(), version.ToString(), StringComparison.OrdinalIgnoreCase);
                 var nugetVerMatches = package.Version.Equals(version);
