@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Git.GitVendorApiAdapters;
-using Calamari.ArgoCD.GitHub;
 using Calamari.Commands;
 using Calamari.Commands.Support;
 using Calamari.Common.Commands;
@@ -16,6 +15,7 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
+using Calamari.Integration.Time;
 
 namespace Calamari.ArgoCD.Commands
 {
@@ -74,7 +74,7 @@ namespace Calamari.ArgoCD.Commands
         public override int Execute(string[] commandLineArguments)
         {
             Options.Parse(commandLineArguments);
-
+            var clock = new SystemClock();
             var conventions = new List<IConvention>
             {
                 new DelegateInstallConvention(d =>
@@ -97,7 +97,8 @@ namespace Calamari.ArgoCD.Commands
                                                                       new CustomPropertiesLoader(fileSystem, customPropertiesFile, customPropertiesPassword),
                                                                       new ArgoCdApplicationManifestParser(),
                                                                       argoCDManifestsFileMatcher,
-                                                                      gitVendorAgnosticApiAdapterFactory),
+                                                                      gitVendorAgnosticApiAdapterFactory,
+                                                                      clock),
             };
 
             var runningDeployment = new RunningDeployment(pathToPackage, variables);

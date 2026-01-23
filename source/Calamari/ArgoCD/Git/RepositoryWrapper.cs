@@ -8,6 +8,7 @@ using Calamari.ArgoCD.Git.GitVendorApiAdapters;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Integration.Time;
 using LibGit2Sharp;
 using Octopus.CoreUtilities.Extensions;
 
@@ -21,6 +22,7 @@ namespace Calamari.ArgoCD.Git
         readonly ILog log;
         readonly IGitConnection connection;
         readonly IGitVendorApiAdapter? vendorApiAdapter;
+        readonly IClock clock;
 
         public string WorkingDirectory => repository.Info.WorkingDirectory;
 
@@ -29,7 +31,8 @@ namespace Calamari.ArgoCD.Git
                                  string repoCheckoutDirectoryPath,
                                  ILog log,
                                  IGitConnection connection,
-                                 IGitVendorApiAdapter? vendorApiAdapter)
+                                 IGitVendorApiAdapter? vendorApiAdapter,
+                                 IClock clock)
         {
             this.repository = repository;
             this.calamariFileSystem = calamariFileSystem;
@@ -37,6 +40,7 @@ namespace Calamari.ArgoCD.Git
             this.log = log;
             this.connection = connection;
             this.vendorApiAdapter = vendorApiAdapter;
+            this.clock = clock;
         }
 
         // returns true if changes were made to the repository
@@ -44,7 +48,7 @@ namespace Calamari.ArgoCD.Git
         {
             try
             {
-                var commitTime = DateTimeOffset.Now;
+                var commitTime = clock.GetUtcTime();
                 var commitMessage = GenerateCommitMessage(summary, description);
                 var commit = repository.Commit(commitMessage,
                                                new Signature("Octopus", "octopus@octopus.com", commitTime),
@@ -167,7 +171,7 @@ namespace Calamari.ArgoCD.Git
                                           new UsernamePasswordCredentials { Username = connection.Username, Password = connection.Password },
                 OnPushStatusError = errors => errorsDetected = errors
             };
-
+            
             repository.Network.Push(repository.Head, pushOptions);
             if (errorsDetected != null)
             {
