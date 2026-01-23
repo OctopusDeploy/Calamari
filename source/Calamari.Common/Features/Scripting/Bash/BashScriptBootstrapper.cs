@@ -148,7 +148,12 @@ namespace Calamari.Common.Features.Scripting.Bash
                 writer.NewLine = LinuxNewLine;
                 writer.WriteLine("#!/bin/bash");
                 writer.WriteLine("source \"$(pwd)/" + Path.GetFileName(configurationFile) + "\"");
-                writer.WriteLine("shift"); // Shift the variable decryption key out of scope of the user script (see: https://github.com/OctopusDeploy/Calamari/pull/773)
+                writer.WriteLine("shift"); // Shift the variable decryption key out of scope of the user script and script modules (see: https://github.com/OctopusDeploy/Calamari/pull/773)
+                
+                var preloadModules = variables.Get(BashScriptVariables.PreloadScriptModules);
+                if (!string.IsNullOrWhiteSpace(preloadModules))
+                    PreloadScriptModules(writer, preloadModules, scriptModulePaths);
+                    
                 writer.WriteLine("source \"$(pwd)/" + Path.GetFileName(script.File) + "\" " + script.Parameters);
                 writer.Flush();
             }
@@ -156,6 +161,23 @@ namespace Calamari.Common.Features.Scripting.Bash
             File.SetAttributes(bootstrapFile, FileAttributes.Hidden);
             EnsureValidUnixFile(script.File);
             return (bootstrapFile, scriptModulePaths);
+        }
+
+
+        static void PreloadScriptModules(StreamWriter writer, string preloadModules, string[] scriptModulePaths)
+        {
+            var modules = preloadModules.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries);
+            foreach (var module in modules)
+            {
+                var sanitizedName = ScriptVariables.FormatScriptName(module.Trim());
+                var fileName = $"{sanitizedName}.sh";
+                var scriptModule = scriptModulePaths.FirstOrDefault(p => string.Equals(Path.GetFileName(p), fileName, StringComparison.OrdinalIgnoreCase));
+                if (scriptModule != null)
+                {
+                    Log.VerboseFormat("Preloading script module '{0}' by sourcing {1}.", module.Trim(), fileName);
+                    writer.WriteLine("source \"$(pwd)/" + fileName + "\"");
+                }
+            }
         }
 
         static IEnumerable<string> PrepareScriptModules(IVariables variables, string workingDirectory)
