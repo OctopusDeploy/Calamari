@@ -353,6 +353,7 @@ namespace Calamari.Tests.Fixtures.Bash
             output.AssertOutput($"Key: {specialCharacters}, Value: {specialCharacters}");
         }
 
+        [Test]
         [RequiresBashDotExeIfOnWindows]
         public void ShouldPreloadScriptModules()
         {
@@ -378,6 +379,7 @@ export PRELOADED_VAR=""module_value""",
             });
         }
 
+        [Test]
         [RequiresBashDotExeIfOnWindows]
         public void ShouldPreloadMultipleScriptModulesInOrder()
         {
@@ -410,19 +412,21 @@ export PRELOADED_VAR=""value2""",
             });
         }
 
+        [Test]
         [RequiresBashDotExeIfOnWindows]
-        [TestCase("module1,module2", TestName = "Comma without spaces")]
-        [TestCase("module1, module2", TestName = "Comma with space")]
-        [TestCase("module1 , module2", TestName = "Comma with spaces around")]
-        [TestCase("module1;module2", TestName = "Semicolon without spaces")]
-        [TestCase("module1; module2", TestName = "Semicolon with space")]
-        [TestCase("module1 ; module2", TestName = "Semicolon with spaces around")]
-        [TestCase("module1,module2;module3", TestName = "Mixed delimiters")]
-        [TestCase("module1, module2; module3", TestName = "Mixed delimiters with spaces")]
-        [TestCase("module1,,module2", TestName = "Multiple commas (empty entries)")]
-        [TestCase(" module1 , module2 ", TestName = "Leading and trailing whitespace")]
-        [TestCase("module1,  ,module2", TestName = "Whitespace-only entry")]
-        public void ShouldHandleVariousDelimiterCombinations(string moduleList)
+        [TestCase("module1,module2", "module1,module2")]
+        [TestCase("module1, module2", "module1,module2")]
+        [TestCase("module1 , module2", "module1,module2")]
+        [TestCase("module1;module2", "module1,module2")]
+        [TestCase("module1; module2", "module1,module2")]
+        [TestCase("module1 ; module2", "module1,module2")]
+        [TestCase("module1,module2;module3", "module1,module2,module3")]
+        [TestCase("module1, module2; module3", "module1,module2,module3")]
+        [TestCase("module1,,module2", "module1,module2")]
+        [TestCase(" module1 , module2 ", "module1,module2")]
+        [TestCase("module1,  ,module2", "module1,module2")]
+        [TestCase("module1,missing_module", "module1")]
+        public void PreloadModulesShouldHandleVariousDelimiterCombinations(string moduleList, string expectedModules)
         {
             var (output, _) = RunScript("preload-modules.sh",
                                         new Dictionary<string, string>()
@@ -431,19 +435,31 @@ export PRELOADED_VAR=""value2""",
   echo ""Module 1""
 }
 
-export PRELOADED_VAR=""from_module1""",
+if [ -z ""$PRELOADED_VAR"" ]; then
+  export PRELOADED_VAR=""module1""
+else
+  export PRELOADED_VAR=""$PRELOADED_VAR,module1""
+fi",
                                             ["Octopus.Script.Module.Language[module1]"] = "Bash",
                                             ["Octopus.Script.Module[module2]"] = @"function test_function {
   echo ""Module 2""
 }
 
-export PRELOADED_VAR=""from_module2""",
+if [ -z ""$PRELOADED_VAR"" ]; then
+  export PRELOADED_VAR=""module2""
+else
+  export PRELOADED_VAR=""$PRELOADED_VAR,module2""
+fi",
                                             ["Octopus.Script.Module.Language[module2]"] = "Bash",
                                             ["Octopus.Script.Module[module3]"] = @"function test_function {
   echo ""Module 3""
 }
 
-export PRELOADED_VAR=""from_module3""",
+if [ -z ""$PRELOADED_VAR"" ]; then
+  export PRELOADED_VAR=""module3""
+else
+  export PRELOADED_VAR=""$PRELOADED_VAR,module3""
+fi",
                                             ["Octopus.Script.Module.Language[module3]"] = "Bash",
                                             ["Octopus.Action.Script.PreloadScriptModules"] = moduleList
                                         });
@@ -451,11 +467,10 @@ export PRELOADED_VAR=""from_module3""",
             Assert.Multiple(() =>
             {
                 output.AssertSuccess();
-                // All test cases should successfully parse the module names
-                // The exact output depends on which modules are specified and in what order
-                // But all variations should parse correctly without errors
+
+                // Verify expected modules were loaded in the correct order
+                output.AssertOutput($"PRELOADED_VAR={expectedModules}");
             });
-        }
         }
     }
 
