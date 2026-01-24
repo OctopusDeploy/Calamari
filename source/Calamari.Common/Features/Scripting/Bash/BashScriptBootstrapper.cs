@@ -174,7 +174,7 @@ namespace Calamari.Common.Features.Scripting.Bash
                 var scriptModule = scriptModulePaths.FirstOrDefault(p => string.Equals(Path.GetFileName(p), fileName, StringComparison.OrdinalIgnoreCase));
                 if (scriptModule != null)
                 {
-                    Log.VerboseFormat("Preloading script module '{0}' by sourcing {1}.", module.Trim(), fileName);
+                    Log.VerboseFormat("Preloading script module '{0}'.", module.Trim());
                     writer.WriteLine("source \"$(pwd)/" + fileName + "\"");
                 }
             }
