@@ -29,6 +29,8 @@ namespace Calamari.AzureScripting.Tests
                                                                                          });
         static readonly CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
         readonly CancellationToken cancellationToken = CancellationTokenSource.Token;
+        
+        
 
         [OneTimeSetUp]
         public async Task Setup()
@@ -97,7 +99,7 @@ az group list";
                               .WithArrange(context =>
                                            {
                                                AddDefaults(context);
-                                               context.Variables.Add(SpecialVariables.Action.Azure.Environment, "NotARealAzureEnvironment");
+                                               context.Variables.Set(SpecialVariables.Action.Azure.Environment, "NotARealAzureEnvironment");
                                                context.Variables.Add(PowerShellVariables.Edition, ScriptVariables.ScriptSourceOptions.Core);
                                                context.Variables.Add(ScriptVariables.ScriptSource, ScriptVariables.ScriptSourceOptions.Inline);
                                                context.Variables.Add(ScriptVariables.Syntax, ScriptSyntax.PowerShell.ToString());
@@ -108,6 +110,7 @@ az group list";
 
         void AddDefaults(CommandTestBuilderContext context)
         {
+            context.Variables.Add(SpecialVariables.Action.Azure.Environment, "AzureCloud");
             context.Variables.Add(SpecialVariables.Account.AccountType, "AzureServicePrincipal");
             context.Variables.Add(SpecialVariables.Action.Azure.SubscriptionId, subscriptionId);
             context.Variables.Add(SpecialVariables.Action.Azure.TenantId, tenantId);
