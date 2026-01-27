@@ -29,7 +29,7 @@ namespace Calamari.AzureScripting.Tests
                                                                                          });
         static readonly CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
         readonly CancellationToken cancellationToken = CancellationTokenSource.Token;
-        
+
         [OneTimeSetUp]
         public async Task Setup()
         {
