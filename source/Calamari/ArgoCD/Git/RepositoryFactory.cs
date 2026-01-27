@@ -2,12 +2,11 @@ using System;
 using System.IO;
 using Calamari.ArgoCD.Git.GitVendorApiAdapters;
 using System.Linq;
-using Calamari.ArgoCD.Conventions;
-using Calamari.ArgoCD.GitHub;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Integration.Time;
 using LibGit2Sharp;
 
 namespace Calamari.ArgoCD.Git
@@ -23,13 +22,16 @@ namespace Calamari.ArgoCD.Git
         readonly ICalamariFileSystem fileSystem;
         readonly string repositoryParentDirectory;
         readonly IGitVendorAgnosticApiAdapterFactory vendorAgnosticApiAdapterFactory;
+        readonly IClock clock;
 
-        public RepositoryFactory(ILog log, ICalamariFileSystem fileSystem, string repositoryParentDirectory, IGitVendorAgnosticApiAdapterFactory vendorAgnosticApiAdapterFactory)
+        public RepositoryFactory(ILog log, ICalamariFileSystem fileSystem, string repositoryParentDirectory, IGitVendorAgnosticApiAdapterFactory vendorAgnosticApiAdapterFactory,
+                                 IClock clock)
         {
             this.log = log;
             this.fileSystem = fileSystem;
             this.repositoryParentDirectory = repositoryParentDirectory;
             this.vendorAgnosticApiAdapterFactory = vendorAgnosticApiAdapterFactory;
+            this.clock = clock;
         }
 
         public RepositoryWrapper CloneRepository(string repositoryName, IGitConnection gitConnection)
@@ -101,7 +103,8 @@ namespace Calamari.ArgoCD.Git
                                          checkoutPath,
                                          log,
                                          gitConnection,
-                                         gitVendorApiAdapter);
+                                         gitVendorApiAdapter,
+                                         clock);
         }
     }
 }

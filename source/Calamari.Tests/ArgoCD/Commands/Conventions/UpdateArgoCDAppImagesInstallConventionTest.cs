@@ -12,6 +12,7 @@ using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Deployment;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
+using Calamari.Integration.Time;
 using Calamari.Kubernetes;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.ArgoCD.Git;
@@ -102,7 +103,8 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                                                      new CommitMessageGenerator(),
                                                                      customPropertiesLoader,
                                                                      argoCdApplicationManifestParser,
-                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>());
+                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
+                                                                     new SystemClock());
             var variables = new CalamariVariables
             {
                 [PackageVariables.IndexedImage("nginx")] = "index.docker.io/nginx:1.27.1",
@@ -167,7 +169,8 @@ images:
                                                                      new CommitMessageGenerator(),
                                                                      customPropertiesLoader,
                                                                      argoCdApplicationManifestParser,
-                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>());
+                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
+                                                                     new SystemClock());
             var variables = new CalamariVariables
             {
                 [PackageVariables.IndexedImage("nginx")] = "index.docker.io/nginx:1.27.1",
@@ -201,7 +204,8 @@ images:
                                                                      new CommitMessageGenerator(),
                                                                      customPropertiesLoader,
                                                                      argoCdApplicationManifestParser,
-                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>());
+                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
+                                                                     new SystemClock());
             var variables = new CalamariVariables
             {
                 [PackageVariables.IndexedImage("nginx")] = "docker.io/nginx:1.27.1",
@@ -238,7 +242,8 @@ images:
                                                                      new CommitMessageGenerator(),
                                                                      customPropertiesLoader,
                                                                      argoCdApplicationManifestParser,
-                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>());
+                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
+                                                                     new SystemClock());
             var variables = new CalamariVariables
             {
                 [PackageVariables.IndexedImage("nginx")] = "index.docker.io/nginx:1.27.1",
@@ -323,7 +328,8 @@ spec:
                                                                      new CommitMessageGenerator(),
                                                                      customPropertiesLoader,
                                                                      argoCdApplicationManifestParser,
-                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>());
+                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
+                                                                     new SystemClock());
             var variables = new CalamariVariables
             {
                 [PackageVariables.IndexedImage("nginx")] = "index.docker.io/nginx:1.27.1",
@@ -405,7 +411,8 @@ spec:
                                                                      new CommitMessageGenerator(),
                                                                      customPropertiesLoader,
                                                                      argoCdApplicationManifestParser,
-                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>());
+                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
+                                                                     new SystemClock());
             var variables = new CalamariVariables
             {
                 [PackageVariables.IndexedImage("nginx")] = "index.docker.io/nginx:1.27.1",
@@ -470,7 +477,8 @@ images:
                                                                      new CommitMessageGenerator(),
                                                                      customPropertiesLoader,
                                                                      argoCdApplicationManifestParser,
-                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>());
+                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
+                                                                     new SystemClock());
             var variables = new CalamariVariables
             {
                 [PackageVariables.IndexedImage("nginx")] = "index.docker.io/nginx:1.27.1",
@@ -537,7 +545,8 @@ images:
                                                                      new CommitMessageGenerator(),
                                                                      customPropertiesLoader,
                                                                      argoCdApplicationManifestParser,
-                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>());
+                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
+                                                                     new SystemClock());
             var variables = new CalamariVariables
             {
                 [PackageVariables.IndexedImage("nginx")] = "index.docker.io/nginx:1.27.1",

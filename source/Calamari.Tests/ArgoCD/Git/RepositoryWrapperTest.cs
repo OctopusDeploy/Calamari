@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.Git.GitVendorApiAdapters;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Integration.Time;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
 using FluentAssertions;
@@ -50,7 +51,7 @@ namespace Calamari.Tests.ArgoCD.Git
                                .Returns(new PullRequest("title", 1, "url"));
             gitVendorAgnosticApiAdapterFactory.TryCreateGitVendorApiAdaptor(Arg.Any<IRepositoryConnection>()).Returns(gitVendorApiAdapter);
             
-            var repositoryFactory = new RepositoryFactory(log, fileSystem, tempDirectory, gitVendorAgnosticApiAdapterFactory);
+            var repositoryFactory = new RepositoryFactory(log, fileSystem, tempDirectory, gitVendorAgnosticApiAdapterFactory, new SystemClock());
             gitConnection = new GitConnection(null, null, new Uri(OriginPath), branchName);
             repository = repositoryFactory.CloneRepository(repositoryPath, gitConnection);
         }
@@ -184,7 +185,7 @@ namespace Calamari.Tests.ArgoCD.Git
                                         ("nested_1/file.yaml", ""),
                                         ("nested_1/nested_2/file.yaml", ""));
 
-            var repositoryFactory = new RepositoryFactory(log, fileSystem, tempDirectory, gitVendorAgnosticApiAdapterFactory);
+            var repositoryFactory = new RepositoryFactory(log, fileSystem, tempDirectory, gitVendorAgnosticApiAdapterFactory, new SystemClock());
             gitConnection = new GitConnection(null, null, new Uri(OriginPath), branchName);
 
             // Act
