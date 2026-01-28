@@ -1,10 +1,11 @@
 using System;
 using System.IO;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
 using Calamari.Integration.Packages.Download;
 using Calamari.Testing.Helpers;
 using Calamari.Testing.Requirements;
-using Calamari.Tests.Helpers;
+using NSubstitute;
 using NUnit.Framework;
 using Octopus.Versioning;
 
@@ -76,7 +77,8 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
 
         static NpmPackageDownloader GetDownloader()
         {
-            return new NpmPackageDownloader(CalamariPhysicalFileSystem.GetPhysicalFileSystem());
+            var log = Substitute.For<ILog>();
+            return new NpmPackageDownloader(log, CalamariPhysicalFileSystem.GetPhysicalFileSystem());
         }
     }
 }

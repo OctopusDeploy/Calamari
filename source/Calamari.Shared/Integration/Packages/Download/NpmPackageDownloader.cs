@@ -2,6 +2,8 @@ using System;
 using System.IO;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text;
 using System.Text.Json;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Packages;
@@ -21,11 +23,13 @@ namespace Calamari.Integration.Packages.Download
 
         readonly ILog log;
         readonly ICalamariFileSystem fileSystem;
+        readonly HttpClient client;
 
         public NpmPackageDownloader(ILog log, ICalamariFileSystem fileSystem)
         {
             this.log = log;
             this.fileSystem = fileSystem;
+            client = new HttpClient(new HttpClientHandler { AutomaticDecompression = DecompressionMethods.None });
         }
 
         public PackagePhysicalFileMetadata DownloadPackage(
@@ -123,11 +127,9 @@ namespace Calamari.Integration.Packages.Download
 
             var tarballUrl = GetTarballUrl(packageId, version, feedUri, feedCredentials, maxDownloadAttempts, downloadAttemptBackoff);
 
-            var localDownloadName = Path.Combine(cacheDirectory, PackageName.ToCachedFileName(packageId, version, ".tgz"));
-
             return DownloadTarball(
                 tarballUrl,
-                localDownloadName,
+                cacheDirectory,
                 packageId,
                 version,
                 feedCredentials,
@@ -154,22 +156,24 @@ namespace Calamari.Integration.Packages.Download
             var retryStrategy = PackageDownloaderRetryUtils.CreateRetryStrategy<HttpRequestException>(maxDownloadAttempts, downloadAttemptBackoff, log);
             retryStrategy.Execute(() =>
             {
-                using (var handler = new HttpClientHandler())
+                using (var request = new HttpRequestMessage(HttpMethod.Get, metadataUrl))
                 {
-                    handler.Credentials = feedCredentials;
-
-                    using (var client = new HttpClient(handler))
+                    var networkCredential = feedCredentials.GetCredential(feedUri, "Basic");
+                    if (!string.IsNullOrWhiteSpace(networkCredential?.UserName) || !string.IsNullOrWhiteSpace(networkCredential?.Password))
                     {
-                        log.VerboseFormat("Fetching NPM package metadata from {0}", metadataUrl);
-                        var response = client.GetAsync(metadataUrl).GetAwaiter().GetResult();
-
-                        if (!response.IsSuccessStatusCode)
-                        {
-                            throw new HttpRequestException($"Failed to fetch NPM package metadata (Status Code {(int)response.StatusCode}). Reason: {response.ReasonPhrase}");
-                        }
-
-                        metadataJson = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+                        var byteArray = Encoding.ASCII.GetBytes($"{networkCredential.UserName}:{networkCredential.Password}");
+                        request.Headers.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
                     }
+
+                    log.VerboseFormat("Fetching NPM package metadata from {0}", metadataUrl);
+                    var response = client.SendAsync(request).GetAwaiter().GetResult();
+
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        throw new HttpRequestException($"Failed to fetch NPM package metadata (Status Code {(int)response.StatusCode}). Reason: {response.ReasonPhrase}");
+                    }
+
+                    metadataJson = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
                 }
             });
 
@@ -204,42 +208,61 @@ namespace Calamari.Integration.Packages.Download
         /// </summary>
         PackagePhysicalFileMetadata DownloadTarball(
             string tarballUrl,
-            string localDownloadName,
+            string cacheDirectory,
             string packageId,
             IVersion version,
             ICredentials feedCredentials,
             int maxDownloadAttempts,
             TimeSpan downloadAttemptBackoff)
         {
-            log.VerboseFormat("Downloading NPM package from {0} to {1}", tarballUrl, localDownloadName);
+            log.VerboseFormat("Downloading NPM package from {0}", tarballUrl);
 
-            var retryStrategy = PackageDownloaderRetryUtils.CreateRetryStrategy<HttpRequestException>(maxDownloadAttempts, downloadAttemptBackoff, log);
-            retryStrategy.Execute(() =>
+            var tempDirectory = fileSystem.CreateTemporaryDirectory();
+            using (new TemporaryDirectory(tempDirectory))
             {
-                using (var handler = new HttpClientHandler())
+                var stagingDir = Path.Combine(tempDirectory, "staging");
+                if (!Directory.Exists(stagingDir))
                 {
-                    handler.Credentials = feedCredentials;
+                    Directory.CreateDirectory(stagingDir);
+                }
 
-                    using (var client = new HttpClient(handler))
+                var cachedFileName = PackageName.ToCachedFileName(packageId, version, ".tgz");
+                var downloadPath = Path.Combine(stagingDir, cachedFileName);
+
+                var retryStrategy = PackageDownloaderRetryUtils.CreateRetryStrategy<HttpRequestException>(maxDownloadAttempts, downloadAttemptBackoff, log);
+                retryStrategy.Execute(() =>
+                {
+                    using (var request = new HttpRequestMessage(HttpMethod.Get, tarballUrl))
                     {
-                        var response = client.GetAsync(tarballUrl).GetAwaiter().GetResult();
+                        var tarballUri = new Uri(tarballUrl);
+                        var networkCredential = feedCredentials.GetCredential(tarballUri, "Basic");
+                        if (!string.IsNullOrWhiteSpace(networkCredential?.UserName) || !string.IsNullOrWhiteSpace(networkCredential?.Password))
+                        {
+                            var byteArray = System.Text.Encoding.ASCII.GetBytes($"{networkCredential.UserName}:{networkCredential.Password}");
+                            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
+                        }
+
+                        var response = client.SendAsync(request).GetAwaiter().GetResult();
 
                         if (!response.IsSuccessStatusCode)
                         {
                             throw new HttpRequestException($"Failed to download NPM package (Status Code {(int)response.StatusCode}). Reason: {response.ReasonPhrase}");
                         }
 
-                        using (var fileStream = File.Create(localDownloadName))
+                        using (var fileStream = fileSystem.OpenFile(downloadPath, FileAccess.Write))
                         {
                             response.Content.CopyToAsync(fileStream).GetAwaiter().GetResult();
                         }
                     }
-                }
-            });
+                });
 
-            var packagePhysicalFileMetadata = PackagePhysicalFileMetadata.Build(localDownloadName);
-            return packagePhysicalFileMetadata
-                ?? throw new CommandException($"Unable to retrieve metadata for package {packageId}, version {version}");
+                var localDownloadName = Path.Combine(cacheDirectory, cachedFileName);
+                fileSystem.MoveFile(downloadPath, localDownloadName);
+
+                var packagePhysicalFileMetadata = PackagePhysicalFileMetadata.Build(localDownloadName);
+                return packagePhysicalFileMetadata
+                    ?? throw new CommandException($"Unable to retrieve metadata for package {packageId}, version {version}");
+            }
         }
 
         static ICredentials GetFeedCredentials(string? feedUsername, string? feedPassword)
