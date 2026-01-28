@@ -6,7 +6,7 @@ public static class KnownPaths
         
     public static AbsolutePath SourceDirectory => RootDirectory / "source";
 
-    public static AbsolutePath BuildDirectory => RootDirectory / "builds";
+    public static AbsolutePath BuildDirectory => RootDirectory / "build";
 
     public static AbsolutePath ArtifactsDirectory => RootDirectory / "artifacts";
 
