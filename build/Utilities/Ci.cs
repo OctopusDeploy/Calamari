@@ -14,10 +14,8 @@ namespace Calamari.Build.Utilities
 {
     class Ci
     {
-        public static async Task ZipFolderAndUploadArtifact(AbsolutePath folderPath, AbsolutePath outputPath)
+        public static void ZipFolderAndUploadArtifact(AbsolutePath folderPath, AbsolutePath outputPath)
         {
-            await Task.CompletedTask;
-
             if (!Directory.EnumerateFiles(folderPath).Any()
                 && !Directory.EnumerateDirectories(folderPath).Any())
             {
