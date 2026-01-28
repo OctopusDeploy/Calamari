@@ -158,12 +158,7 @@ namespace Calamari.Integration.Packages.Download
             {
                 using (var request = new HttpRequestMessage(HttpMethod.Get, metadataUrl))
                 {
-                    var networkCredential = feedCredentials.GetCredential(feedUri, "Basic");
-                    if (!string.IsNullOrWhiteSpace(networkCredential?.UserName) || !string.IsNullOrWhiteSpace(networkCredential?.Password))
-                    {
-                        var byteArray = Encoding.ASCII.GetBytes($"{networkCredential.UserName}:{networkCredential.Password}");
-                        request.Headers.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
-                    }
+                    SetAuthorizationHeader(request, feedUri, feedCredentials);
 
                     log.VerboseFormat("Fetching NPM package metadata from {0}", metadataUrl);
                     var response = client.SendAsync(request).GetAwaiter().GetResult();
@@ -235,12 +230,7 @@ namespace Calamari.Integration.Packages.Download
                     using (var request = new HttpRequestMessage(HttpMethod.Get, tarballUrl))
                     {
                         var tarballUri = new Uri(tarballUrl);
-                        var networkCredential = feedCredentials.GetCredential(tarballUri, "Basic");
-                        if (!string.IsNullOrWhiteSpace(networkCredential?.UserName) || !string.IsNullOrWhiteSpace(networkCredential?.Password))
-                        {
-                            var byteArray = System.Text.Encoding.ASCII.GetBytes($"{networkCredential.UserName}:{networkCredential.Password}");
-                            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
-                        }
+                        SetAuthorizationHeader(request, tarballUri, feedCredentials);
 
                         var response = client.SendAsync(request).GetAwaiter().GetResult();
 
@@ -265,12 +255,42 @@ namespace Calamari.Integration.Packages.Download
             }
         }
 
+        /// <summary>
+        /// Sets the Authorization header for NPM registry requests.
+        /// Supports both Bearer token authentication (when only password is provided) and Basic auth (username + password).
+        /// </summary>
+        void SetAuthorizationHeader(HttpRequestMessage request, Uri uri, ICredentials feedCredentials)
+        {
+            var networkCredential = feedCredentials.GetCredential(uri, "Basic");
+            if (networkCredential == null)
+                return;
+
+            // If no username is provided but password exists, treat password as a Bearer token
+            // This supports NPM token authentication (e.g., npm token)
+            if (string.IsNullOrWhiteSpace(networkCredential.UserName) && !string.IsNullOrWhiteSpace(networkCredential.Password))
+            {
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", networkCredential.Password);
+            }
+            // If both username and password are provided, use Basic authentication
+            else if (!string.IsNullOrWhiteSpace(networkCredential.UserName) || !string.IsNullOrWhiteSpace(networkCredential.Password))
+            {
+                var byteArray = Encoding.ASCII.GetBytes($"{networkCredential.UserName}:{networkCredential.Password}");
+                request.Headers.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
+            }
+        }
+
         static ICredentials GetFeedCredentials(string? feedUsername, string? feedPassword)
         {
             ICredentials credentials = CredentialCache.DefaultNetworkCredentials;
             if (!string.IsNullOrWhiteSpace(feedUsername))
             {
                 credentials = new NetworkCredential(feedUsername, feedPassword);
+            }
+            else if (!string.IsNullOrWhiteSpace(feedPassword))
+            {
+                // When only password is provided (no username), create credential with empty username
+                // This allows the password to be treated as a token
+                credentials = new NetworkCredential(string.Empty, feedPassword);
             }
             return credentials;
         }
