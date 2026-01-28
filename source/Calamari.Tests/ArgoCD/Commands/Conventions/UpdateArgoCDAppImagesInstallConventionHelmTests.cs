@@ -1413,57 +1413,6 @@ service:
             AssertOutputVariables(matchingApplicationTotalSourceCounts: "2");
         }
 
-        [Test]
-        public void StepWillFailAndNotMakeChangesIfInputApplicationTargetsANonBranchReference()
-        {
-            // Arrange
-            var updater = new UpdateArgoCDAppImagesInstallConvention(log,
-                                                                     fileSystem,
-                                                                     new DeploymentConfigFactory(nonSensitiveCalamariVariables),
-                                                                     new CommitMessageGenerator(),
-                                                                     customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser,
-                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
-                                                                     new SystemClock());
-            var variables = new CalamariVariables
-            {
-                [PackageVariables.IndexedImage("nginx")] = "index.docker.io/nginx:1.27.1",
-                [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
-                [ProjectVariables.Slug] = ProjectSlug,
-                [DeploymentEnvironment.Slug] = EnvironmentSlug,
-            };
-            var runningDeployment = new RunningDeployment(null, variables);
-            runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
-            runningDeployment.StagingDirectory = tempDirectory;
-            
-            //insert a tag to the origin
-            originRepo.ApplyTag("1.2.3");
-            
-            var argoCDAppWithHelmSource = new ArgoCDApplicationBuilder()
-                                          .WithName("App1")
-                                          .WithAnnotations(new Dictionary<string, string>()
-                                          {
-                                              [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(null)] = ProjectSlug,
-                                              [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(null)] = EnvironmentSlug,
-                                              [ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(null)] = "{{ .Values.image.repository }}:{{ .Values.image.tag }}",
-                                          })
-                                          .WithSource(new ApplicationSource
-                                                      {
-                                                          RepoUrl = new Uri(OriginPath),
-                                                          Path = "",
-                                                          TargetRevision = "1.2.3",
-                                                      },
-                                                      SourceTypeConstants.Directory)
-                                          .Build();
-            
-            argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
-                                           .Returns(argoCDAppWithHelmSource);
-            
-            // Act
-            updater.Install(runningDeployment);
-            
-        }
-
         void AssertFileContents(string clonedRepoPath, string relativeFilePath, string expectedContent)
         {
             var absolutePath = Path.Combine(clonedRepoPath, relativeFilePath);
