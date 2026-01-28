@@ -149,7 +149,7 @@ public partial class Build
                                               .SetSelfContained(OperatingSystem.IsWindows()) // This is here purely to make the local build experience on non-Windows devices workable - Publish breaks on non-Windows platforms with SelfContained = true
                                               .SetOutput(outputDirectory)));
 
-        File.Copy(RootDirectory / "global.json", outputDirectory / "global.json");
+        File.Copy(KnownPaths.RootDirectory / "global.json", outputDirectory / "global.json");
 
         return outputDirectory;
     }

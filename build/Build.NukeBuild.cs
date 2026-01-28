@@ -13,7 +13,7 @@ public partial class Build
                            nukeBuildOutputDirectory.CreateOrCleanDirectory();
 
                            DotNetPublish(p => p
-                                              .SetProject(RootDirectory / "build" / "_build.csproj")
+                                              .SetProject(KnownPaths.RootDirectory / "build" / "_build.csproj")
                                               .SetConfiguration(Configuration)
                                               .SetRuntime(runtime)
                                               .EnableSelfContained());

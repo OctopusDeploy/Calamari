@@ -27,7 +27,7 @@ public partial class Build
              .DependsOn(CopyToLocalPackages)
              .Executes(() =>
                        {
-                           var serverProjectFile = RootDirectory / ".." / "OctopusDeploy" / "source" / "Octopus.Server" / "Octopus.Server.csproj";
+                           var serverProjectFile = KnownPaths.RootDirectory / ".." / "OctopusDeploy" / "source" / "Octopus.Server" / "Octopus.Server.csproj";
                            if (File.Exists(serverProjectFile))
                            {
                                Log.Information("Setting Calamari version in Octopus Server "

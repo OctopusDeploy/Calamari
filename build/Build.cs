@@ -39,7 +39,7 @@ partial class Build : NukeBuild
 
     [Parameter] readonly string? AzureKeyVaultCertificateName;
 
-    [Parameter(Name = "signing_certificate_path")] readonly string SigningCertificatePath = RootDirectory / "certificates" / "OctopusDevelopment.pfx";
+    [Parameter(Name = "signing_certificate_path")] readonly string SigningCertificatePath = KnownPaths.RootDirectory / "certificates" / "OctopusDevelopment.pfx";
 
     [Parameter(Name = "signing_certificate_password")] [Secret] readonly string SigningCertificatePassword = "Password01!";
 

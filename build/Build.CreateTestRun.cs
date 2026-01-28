@@ -2,10 +2,8 @@
 
 partial class Build
 {
-
-    CalamariTestRunBuilder CreateTestRun(string projectFileOrDll)
+    static CalamariTestRunBuilder CreateTestRun(string projectFileOrDll)
     {
-        var outputDir = RootDirectory / "outputs";
-        return new CalamariTestRunBuilder(projectFileOrDll, outputDir);
+        return new CalamariTestRunBuilder(projectFileOrDll, KnownPaths.OutputsDirectory);
     }
 }

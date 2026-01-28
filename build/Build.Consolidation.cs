@@ -106,7 +106,7 @@ public partial class Build
                                                  s.SetConfiguration(Configuration)
                                                   .SetProjectFile(project));
 
-                               File.Copy(RootDirectory / "global.json", buildDirectory / "global.json");
+                               File.Copy(KnownPaths.RootDirectory / "global.json", buildDirectory / "global.json");
 
                                //sign the built directory
                                SignDirectory(buildDirectory);
