@@ -3,7 +3,6 @@ using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Text.Json;
-using System.Threading;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Plumbing;
@@ -20,10 +19,12 @@ namespace Calamari.Integration.Packages.Download
     {
         static readonly IPackageDownloaderUtils PackageDownloaderUtils = new PackageDownloaderUtils();
 
+        readonly ILog log;
         readonly ICalamariFileSystem fileSystem;
 
-        public NpmPackageDownloader(ICalamariFileSystem fileSystem)
+        public NpmPackageDownloader(ILog log, ICalamariFileSystem fileSystem)
         {
+            this.log = log;
             this.fileSystem = fileSystem;
         }
 
@@ -47,7 +48,7 @@ namespace Calamari.Integration.Packages.Download
                 var downloaded = SourceFromCache(packageId, version, cacheDirectory);
                 if (downloaded != null)
                 {
-                    Log.VerboseFormat("Package was found in cache. No need to download. Using file: '{0}'", downloaded.FullFilePath);
+                    log.VerboseFormat("Package was found in cache. No need to download. Using file: '{0}'", downloaded.FullFilePath);
                     return downloaded;
                 }
             }
@@ -71,7 +72,7 @@ namespace Calamari.Integration.Packages.Download
         /// <returns>The path to a cached version of the file, or null if none are found</returns>
         PackagePhysicalFileMetadata? SourceFromCache(string packageId, IVersion version, string cacheDirectory)
         {
-            Log.VerboseFormat("Checking package cache for package {0} v{1}", packageId, version.ToString());
+            log.VerboseFormat("Checking package cache for package {0} v{1}", packageId, version.ToString());
 
             var files = fileSystem.EnumerateFilesRecursively(cacheDirectory, PackageName.ToSearchPatterns(packageId, version, [".tgz"]));
 
@@ -117,8 +118,8 @@ namespace Calamari.Integration.Packages.Download
             Guard.NotNullOrWhiteSpace(cacheDirectory, "cacheDirectory can not be null");
             Guard.NotNull(feedUri, "feedUri can not be null");
 
-            Log.Info("Downloading NPM package {0} v{1} from feed: '{2}'", packageId, version, feedUri);
-            Log.VerboseFormat("Downloaded package will be stored in: '{0}'", cacheDirectory);
+            log.InfoFormat("Downloading NPM package {0} v{1} from feed: '{2}'", packageId, version, feedUri);
+            log.VerboseFormat("Downloaded package will be stored in: '{0}'", cacheDirectory);
 
             var tarballUrl = GetTarballUrl(packageId, version, feedUri, feedCredentials, maxDownloadAttempts, downloadAttemptBackoff);
 
@@ -148,59 +149,54 @@ namespace Calamari.Integration.Packages.Download
             var encodedPackageId = Uri.EscapeDataString(packageId);
             var metadataUrl = $"{feedUri.ToString().TrimEnd('/')}/{encodedPackageId}";
 
-            for (var retry = 0; retry < maxDownloadAttempts; ++retry)
+            string metadataJson = null;
+
+            var retryStrategy = PackageDownloaderRetryUtils.CreateRetryStrategy<HttpRequestException>(maxDownloadAttempts, downloadAttemptBackoff, log);
+            retryStrategy.Execute(() =>
             {
-                try
+                using (var handler = new HttpClientHandler())
                 {
-                    using (var handler = new HttpClientHandler())
-                    {
-                        handler.Credentials = feedCredentials;
+                    handler.Credentials = feedCredentials;
 
-                        using (var client = new HttpClient(handler))
+                    using (var client = new HttpClient(handler))
+                    {
+                        log.VerboseFormat("Fetching NPM package metadata from {0}", metadataUrl);
+                        var response = client.GetAsync(metadataUrl).GetAwaiter().GetResult();
+
+                        if (!response.IsSuccessStatusCode)
                         {
-                            Log.VerboseFormat("Fetching NPM package metadata from {0}", metadataUrl);
-                            var response = client.GetAsync(metadataUrl).GetAwaiter().GetResult();
-                            response.EnsureSuccessStatusCode();
-
-                            var metadataJson = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-
-                            using (var doc = JsonDocument.Parse(metadataJson))
-                            {
-                                var root = doc.RootElement;
-                                var versionString = version.OriginalString ?? version.ToString();
-
-                                if (!root.TryGetProperty("versions", out var versions) ||
-                                    !versions.TryGetProperty(versionString ?? string.Empty, out var versionInfo) ||
-                                    !versionInfo.TryGetProperty("dist", out var dist) ||
-                                    !dist.TryGetProperty("tarball", out var tarball))
-                                {
-                                    throw new CommandException($"Unable to find tarball URL for NPM package {packageId} version {version} in metadata response");
-                                }
-
-                                var tarballUrl = tarball.GetString();
-                                if (string.IsNullOrWhiteSpace(tarballUrl))
-                                {
-                                    throw new CommandException($"Tarball URL is empty for NPM package {packageId} version {version}");
-                                }
-
-                                Log.VerboseFormat("Found tarball URL: {0}", tarballUrl);
-                                return tarballUrl;
-                            }
+                            throw new HttpRequestException($"Failed to fetch NPM package metadata (Status Code {(int)response.StatusCode}). Reason: {response.ReasonPhrase}");
                         }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    if ((retry + 1) == maxDownloadAttempts)
-                    {
-                        throw new CommandException($"Failed to fetch NPM package metadata after {maxDownloadAttempts} attempts.\r\nLast Exception Message: {ex.Message}", ex);
-                    }
-                    Log.VerboseFormat("Attempt {0} failed to fetch metadata, retrying in {1} seconds. Error: {2}", retry + 1, downloadAttemptBackoff.TotalSeconds, ex.Message);
-                    Thread.Sleep(downloadAttemptBackoff);
-                }
-            }
 
-            throw new CommandException("Failed to fetch NPM package metadata");
+                        metadataJson = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+                    }
+                }
+            });
+
+            // Parse and validate the metadata outside the retry block
+            // Validation errors are not transient and should not be retried
+            using (var doc = JsonDocument.Parse(metadataJson))
+            {
+                var root = doc.RootElement;
+                var versionString = version.OriginalString ?? version.ToString();
+
+                if (!root.TryGetProperty("versions", out var versions) ||
+                    !versions.TryGetProperty(versionString ?? string.Empty, out var versionInfo) ||
+                    !versionInfo.TryGetProperty("dist", out var dist) ||
+                    !dist.TryGetProperty("tarball", out var tarball))
+                {
+                    throw new CommandException($"Unable to find tarball URL for NPM package {packageId} version {version} in metadata response");
+                }
+
+                var tarballUrl = tarball.GetString();
+                if (string.IsNullOrWhiteSpace(tarballUrl))
+                {
+                    throw new CommandException($"Tarball URL is empty for NPM package {packageId} version {version}");
+                }
+
+                log.VerboseFormat("Found tarball URL: {0}", tarballUrl);
+                return tarballUrl;
+            }
         }
 
         /// <summary>
@@ -215,44 +211,35 @@ namespace Calamari.Integration.Packages.Download
             int maxDownloadAttempts,
             TimeSpan downloadAttemptBackoff)
         {
-            for (var retry = 0; retry < maxDownloadAttempts; ++retry)
+            log.VerboseFormat("Downloading NPM package from {0} to {1}", tarballUrl, localDownloadName);
+
+            var retryStrategy = PackageDownloaderRetryUtils.CreateRetryStrategy<HttpRequestException>(maxDownloadAttempts, downloadAttemptBackoff, log);
+            retryStrategy.Execute(() =>
             {
-                try
+                using (var handler = new HttpClientHandler())
                 {
-                    Log.VerboseFormat("Downloading NPM package from {0} to {1}", tarballUrl, localDownloadName);
+                    handler.Credentials = feedCredentials;
 
-                    using (var handler = new HttpClientHandler())
+                    using (var client = new HttpClient(handler))
                     {
-                        handler.Credentials = feedCredentials;
+                        var response = client.GetAsync(tarballUrl).GetAwaiter().GetResult();
 
-                        using (var client = new HttpClient(handler))
+                        if (!response.IsSuccessStatusCode)
                         {
-                            var response = client.GetAsync(tarballUrl).GetAwaiter().GetResult();
-                            response.EnsureSuccessStatusCode();
+                            throw new HttpRequestException($"Failed to download NPM package (Status Code {(int)response.StatusCode}). Reason: {response.ReasonPhrase}");
+                        }
 
-                            using (var fileStream = File.Create(localDownloadName))
-                            {
-                                response.Content.CopyToAsync(fileStream).GetAwaiter().GetResult();
-                            }
-
-                            var packagePhysicalFileMetadata = PackagePhysicalFileMetadata.Build(localDownloadName);
-                            return packagePhysicalFileMetadata
-                                ?? throw new CommandException($"Unable to retrieve metadata for package {packageId}, version {version}");
+                        using (var fileStream = File.Create(localDownloadName))
+                        {
+                            response.Content.CopyToAsync(fileStream).GetAwaiter().GetResult();
                         }
                     }
                 }
-                catch (Exception ex)
-                {
-                    if ((retry + 1) == maxDownloadAttempts)
-                    {
-                        throw new CommandException($"Failed to download NPM package after {maxDownloadAttempts} attempts.\r\nLast Exception Message: {ex.Message}", ex);
-                    }
-                    Log.VerboseFormat("Attempt {0} failed to download package, retrying in {1} seconds. Error: {2}", retry + 1, downloadAttemptBackoff.TotalSeconds, ex.Message);
-                    Thread.Sleep(downloadAttemptBackoff);
-                }
-            }
+            });
 
-            throw new CommandException("Failed to download NPM package");
+            var packagePhysicalFileMetadata = PackagePhysicalFileMetadata.Build(localDownloadName);
+            return packagePhysicalFileMetadata
+                ?? throw new CommandException($"Unable to retrieve metadata for package {packageId}, version {version}");
         }
 
         static ICredentials GetFeedCredentials(string? feedUsername, string? feedPassword)

@@ -77,7 +77,7 @@ namespace Calamari.Integration.Packages.Download
                     downloader = new ArtifactoryPackageDownloader(log, fileSystem, variables);
                     break;
                 case FeedType.Npm:
-                    downloader = new NpmPackageDownloader(fileSystem);
+                    downloader = new NpmPackageDownloader(log, fileSystem);
                     break;
                 default:
                     throw new NotImplementedException($"No Calamari downloader exists for feed type `{feedType}`.");
