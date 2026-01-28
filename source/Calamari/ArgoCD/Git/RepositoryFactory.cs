@@ -50,6 +50,7 @@ namespace Calamari.ArgoCD.Git
                 ? new CloneOptions()
                 : new CloneOptions
                 {
+                    //note: when cloning, libgit2sharp prepends "refs/remotes/origin/" to this value (so _must_ be a branch to succeed).
                     BranchName = (gitConnection.GitReference as GitBranchName)?.ToFriendlyName()
                 };
 
@@ -76,7 +77,7 @@ namespace Calamari.ArgoCD.Git
                     timedOp.Abandon(e);
                     log.Error("Cloning repository failed");
                     log.Verbose(e.PrettyPrint());
-                    throw new CommandException($"Failed to clone Git repository at {gitConnection.Url}. Are you sure this is a Git repository? {e.Message}", e);
+                    throw new CommandException($"Failed to clone Git repository at {gitConnection.Url}. Are you sure this is a Git repository, and the targetRevision is a branch?", e);
                 }
             }
 
