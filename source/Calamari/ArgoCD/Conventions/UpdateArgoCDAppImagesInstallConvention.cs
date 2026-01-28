@@ -428,22 +428,16 @@ namespace Calamari.ArgoCD.Conventions
             }
         }
 
-        RepositoryWrapper CreateRepository(Dictionary<string, GitCredentialDto> gitCredentials, ApplicationSource applicationSource, RepositoryFactory repositoryFactory)
+        RepositoryWrapper CreateRepository(Dictionary<string, GitCredentialDto> gitCredentials, ApplicationSource source, RepositoryFactory repositoryFactory)
         {
-            var gitCredential = gitCredentials.GetValueOrDefault(applicationSource.RepoUrl.AbsoluteUri);
+            var gitCredential = gitCredentials.GetValueOrDefault(source.RepoUrl.AbsoluteUri);
             if (gitCredential == null)
             {
-                log.Info($"No Git credentials found for: '{applicationSource.RepoUrl.AbsoluteUri}', will attempt to clone repository anonymously.");
+                log.Info($"No Git credentials found for: '{source.RepoUrl.AbsoluteUri}', will attempt to clone repository anonymously.");
             }
 
-            var gitConnection = new GitConnection(gitCredential?.Username, gitCredential?.Password, new Uri(applicationSource.RepoUrl.AbsoluteUri), GitReference.CreateFromString(applicationSource.TargetRevision));
-            var repository = repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), gitConnection);
-            if (!repository.ValidateReferenceIsBranch(applicationSource.TargetRevision)) //note: we don't _know_ this is a branch yet.
-            {
-                throw new CommandException($"Unable to update repository at {applicationSource.RepoUrl} as the targetRevision ({applicationSource.TargetRevision}) is not an updateable branch, and maybe a tag or commit");
-            }
-            
-            return repository;
+            var gitConnection = new GitConnection(gitCredential?.Username, gitCredential?.Password, new Uri(source.RepoUrl.AbsoluteUri), GitReference.CreateFromString(source.TargetRevision));
+            return repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), gitConnection);
         }
 
         (HelmValuesFileImageUpdateTarget? Target, HelmSourceConfigurationProblem? Problem) AddImplicitValuesFile(Application applicationFromYaml,
