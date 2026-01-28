@@ -181,7 +181,8 @@ namespace Calamari.ArgoCD
                 if (matchedUpdate != null)
                 {
                     // Only do replacement if the tag is different
-                    if (!matchedUpdate.Tag.Equals(currentReference.Tag, StringComparison.OrdinalIgnoreCase))
+                    //NOTE: Tags are case-sensitive, so we should not compare in a case-sensitive manner.
+                    if (!matchedUpdate.Tag.Equals(currentReference.Tag))
                     {
                         var newReference = currentReference.WithTag(matchedUpdate.Tag);
 

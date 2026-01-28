@@ -76,7 +76,8 @@ namespace Calamari.ArgoCD.Models
                 }
             }
 
-            return new ContainerImageReference(registry.ToLowerInvariant(), imageName.ToLowerInvariant(), tag.ToLowerInvariant(), defaultRegistry.ToLowerInvariant());
+            //tag is case sensitive!
+            return new ContainerImageReference(registry.ToLowerInvariant(), imageName.ToLowerInvariant(), tag, defaultRegistry.ToLowerInvariant());
         }
 
         public string Registry { get; }
@@ -99,7 +100,8 @@ namespace Calamari.ArgoCD.Models
         {
             if (IsMatch(other))
             {
-                return !Tag.Equals(other.Tag, StringComparison.OrdinalIgnoreCase);
+                //Tags are case-sensitive
+                return !Tag.Equals(other.Tag);
             }
 
             return false;
