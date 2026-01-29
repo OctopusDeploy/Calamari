@@ -7,7 +7,8 @@ namespace Calamari.Tests.ArgoCD.Models
 {
     public class ContainerImageReferenceTests
     {
-        [Test]
+        
+        [Theory]
         [TestCase("nginx", "nginx")]
         [TestCase("docker.io/nginx", "docker.io/nginx")]
         [TestCase("index.docker.io/nginx", "docker.io/nginx")]
@@ -25,6 +26,14 @@ namespace Calamari.Tests.ArgoCD.Models
             result.Should().BeTrue();
         }
 
+        [Test]
+        public void FromReferenceStringPreservesTagCasing()
+        {
+            var image1 = ContainerImageReference.FromReferenceString("NginX:CaseSensitive");
+            image1.Tag.Should().Be("CaseSensitive");
+            image1.ImageName.Should().Be("NginX".ToLowerInvariant());
+        }
+    
         [Theory]
         [TestCase("nginx", "custom-reg.io/nginx")]
         [TestCase("nginx:latest", "custom-reg.io/nginx:1.27")]
