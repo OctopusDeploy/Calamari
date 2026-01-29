@@ -21,7 +21,7 @@ namespace Calamari.Tests.ArgoCD.Models
             var image1 = ContainerImageReference.FromReferenceString(reference1);
             var image2 = ContainerImageReference.FromReferenceString(reference2);
 
-            var result = image2.IsMatch(image1);
+            var result = image2.CompareWith(image1).IsImageMatch();
 
             result.Should().BeTrue();
         }
@@ -42,7 +42,7 @@ namespace Calamari.Tests.ArgoCD.Models
             var image1 = ContainerImageReference.FromReferenceString(reference1, "custom-reg.io");
             var image2 = ContainerImageReference.FromReferenceString(reference2);
 
-            var result = image2.IsMatch(image1);
+            var result = image2.CompareWith(image1).IsImageMatch();
 
             result.Should().BeTrue();
         }
@@ -55,7 +55,7 @@ namespace Calamari.Tests.ArgoCD.Models
             var image1 = ContainerImageReference.FromReferenceString(reference1, "custom-reg.io");
             var image2 = ContainerImageReference.FromReferenceString(reference2, "custom-reg.io");
 
-            var result = image2.IsMatch(image1);
+            var result = image2.CompareWith(image1).IsImageMatch();
 
             result.Should().BeTrue();
         }
@@ -70,7 +70,7 @@ namespace Calamari.Tests.ArgoCD.Models
             var image1 = ContainerImageReference.FromReferenceString(reference1);
             var image2 = ContainerImageReference.FromReferenceString(reference2, "custom-reg.io");
 
-            var result = image2.IsMatch(image1);
+            var result = image2.CompareWith(image1).IsImageMatch();
 
             result.Should().BeFalse();
         }
@@ -81,9 +81,9 @@ namespace Calamari.Tests.ArgoCD.Models
             var image1 = ContainerImageReference.FromReferenceString("nginx:latest");
             var image2 = ContainerImageReference.FromReferenceString("nginx:1.27");
 
-            var result = image2.IsTagChange(image1);
+            var result = image2.CompareWith(image1).TagMatch;
 
-            result.Should().BeTrue();
+            result.Should().BeFalse();
         }
 
         [Theory]
@@ -94,7 +94,7 @@ namespace Calamari.Tests.ArgoCD.Models
             var image1 = ContainerImageReference.FromReferenceString(reference1)!;
             var image2 = ContainerImageReference.FromReferenceString(reference2)!;
 
-            var result = image2.IsTagChange(image1);
+            var result = image2.CompareWith(image1).TagMatch;
 
             result.Should().BeFalse();
         }
@@ -111,7 +111,7 @@ namespace Calamari.Tests.ArgoCD.Models
             var image1 = ContainerImageReference.FromReferenceString(reference1);
             var image2 = ContainerImageReference.FromReferenceString(reference2);
 
-            var result = image2.IsTagChange(image1);
+            var result = image2.CompareWith(image1).TagMatch;
 
             result.Should().BeFalse();
         }

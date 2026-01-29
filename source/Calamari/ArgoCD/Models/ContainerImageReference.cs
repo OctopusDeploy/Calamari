@@ -88,16 +88,6 @@ namespace Calamari.ArgoCD.Models
 
         string DefaultRegistry { get; }
 
-        public bool IsMatch(ContainerImageReference other)
-        {
-            if (Equals(other))
-            {
-                return true;
-            }
-
-            return ImageName.Equals(other.ImageName, StringComparison.OrdinalIgnoreCase) && RegistriesMatch(this, other);
-        }
-
         public ContainerImageComparison CompareWith(ContainerImageReference other)
         {
             return new ContainerImageComparison(
@@ -105,17 +95,6 @@ namespace Calamari.ArgoCD.Models
                                                 ImageName.Equals(other.ImageName, StringComparison.OrdinalIgnoreCase),
                                                 Tag.Equals(other.Tag)
                                                );
-        }
-
-        public bool IsTagChange(ContainerImageReference other)
-        {
-            if (IsMatch(other))
-            {
-                //Tags are case-sensitive
-                return !Tag.Equals(other.Tag);
-            }
-
-            return false;
         }
 
         string ToOriginalFormatName()
