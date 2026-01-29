@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.Git.GitVendorApiAdapters;
+using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Integration.Time;
 using Calamari.Testing.Helpers;
@@ -199,6 +200,22 @@ namespace Calamari.Tests.ArgoCD.Git
             var files = fileSystem.EnumerateFilesWithGlob(result, "**/*");
             var notGitFiles = files.Where(file => !file.Contains(".git")).ToList();
             notGitFiles.Count.Should().Be(totalFilesRemaining);
+        }
+
+        [Test]
+        public void CloningAReferenceOtherThanABranchFails()
+        {
+            bareOrigin.AddFilesToBranch(branchName, ("file.yaml", ""));
+            bareOrigin.ApplyTag("1.0.0", bareOrigin.Head.Tip.Sha);
+
+            gitConnection = new GitConnection(null, null, new Uri(OriginPath), GitReference.CreateFromString("1.0.0"));
+            
+            var repositoryFactory = new RepositoryFactory(log, fileSystem, tempDirectory, gitVendorAgnosticApiAdapterFactory, new SystemClock());
+            var act = () => repositoryFactory.CloneRepository($"{repositoryPath}/sut", gitConnection);
+
+            act.Should()
+               .Throw<CommandException>()
+               .WithMessage($"Failed to clone Git repository at {gitConnection.Url}. Are you sure this URL is a Git repository, and the reference is a branch?");
         }
 
         string CloneOrigin()

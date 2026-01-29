@@ -1,0 +1,12 @@
+﻿global using System;
+global using System.IO;
+global using System.Linq;
+global using System.Threading.Tasks;
+global using Nuke.Common;
+global using Nuke.Common.IO;
+global using Nuke.Common.Tools.DotNet;
+global using Nuke.Common.CI.TeamCity;
+global using Serilog;
+global using static Nuke.Common.Tools.DotNet.DotNetTasks;
+global using static Nuke.Common.Tools.Git.GitTasks;
+global using static Nuke.Common.Tools.NuGet.NuGetTasks;
