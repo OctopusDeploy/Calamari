@@ -37,9 +37,9 @@
     <PackageReference Include="Octopus.Octodiff" Version="2.0.547" />
     <PackageReference Include="Octopus.Versioning" Version="5.1.883" />
     <PackageReference Include="Octopus.CoreUtilities" Version="2.1.449" />
-    <PackageReference Include="Octostache" Version="3.7.0" />
+    <PackageReference Include="Octostache" Version="3.8.1563" />
     <PackageReference Include="SharpCompress" Version="0.37.2" />
-    <PackageReference Include="Sprache" Version="2.3.0" />
+    <PackageReference Include="Sprache" Version="2.3.1" />
     <PackageReference Include="System.ValueTuple" Version="4.5.0" />
     <PackageReference Include="YamlDotNet" Version="16.3.0" />
     <PackageReference Include="Microsoft.Web.Xdt" Version="3.1.0" />
