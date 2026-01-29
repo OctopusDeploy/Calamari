@@ -47,7 +47,7 @@ class Program
             var rid = "win-x64";
             if (CalamariEnvironment.IsRunningOnMac)
             {
-                rid = "osx-x64";
+                rid = "osx-arm64";
             }
             else if (CalamariEnvironment.IsRunningOnNix)
             {

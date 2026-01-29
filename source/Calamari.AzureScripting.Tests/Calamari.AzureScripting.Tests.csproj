@@ -4,7 +4,7 @@
         <RootNamespace>Calamari.AzureScripting.Tests</RootNamespace>
         <AssemblyName>Calamari.AzureScripting.Tests</AssemblyName>
         <Nullable>enable</Nullable>
-        <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
+        <RuntimeIdentifiers>win-x64;linux-x64;osx-arm64;linux-arm;linux-arm64</RuntimeIdentifiers>
         <IsPackable>false</IsPackable>
         <TargetFramework>net8.0</TargetFramework>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>

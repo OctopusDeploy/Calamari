@@ -3,7 +3,7 @@
     <PropertyGroup>
         <RootNamespace>Calamari.Terraform.Tests</RootNamespace>
         <AssemblyName>Calamari.Terraform.Tests</AssemblyName>
-        <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
+        <RuntimeIdentifiers>win-x64;linux-x64;osx-arm64;linux-arm;linux-arm64</RuntimeIdentifiers>
         <IsPackable>false</IsPackable>
         <TargetFramework>net8.0</TargetFramework>
         <!-- CS8632: The annotation for nullable reference types should only be used in code within a '#nullable' annotations context. -->
