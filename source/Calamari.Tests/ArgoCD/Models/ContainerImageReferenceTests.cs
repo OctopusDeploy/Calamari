@@ -27,7 +27,7 @@ namespace Calamari.Tests.ArgoCD.Models
         }
 
         [Test]
-        public void FromReferenceStringPreservesTagCasing()
+        public void FromReferenceString_PreservesTagCasing()
         {
             var image1 = ContainerImageReference.FromReferenceString("NginX:CaseSensitive");
             image1.Tag.Should().Be("CaseSensitive");

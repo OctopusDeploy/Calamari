@@ -1,7 +1,5 @@
 #nullable enable
 using System;
-using System.Net.Mime;
-using Octopus.TinyTypes;
 
 namespace Calamari.ArgoCD.Models
 {
