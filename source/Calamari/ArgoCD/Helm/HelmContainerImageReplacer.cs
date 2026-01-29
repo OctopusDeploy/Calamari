@@ -44,9 +44,8 @@ namespace Calamari.ArgoCD.Helm
                                                       Comparison = i.CompareWith(existingImageReference.ImageReference) 
                                                       
                                                   })
-                                                  .FirstOrDefault(i => i.Comparison.IsImageMatch());
+                                                  .FirstOrDefault(i => i.Comparison.MatchesImage());
                 
-                //var matchedUpdate = imagesToUpdate.FirstOrDefault(i => i.IsMatch(existingImageReference.ImageReference));
                 if (matchedUpdate != null && !matchedUpdate.Comparison.TagMatch)
                 {
                     if (existingImageReference.TagIsTemplateToken)

@@ -184,11 +184,10 @@ namespace Calamari.ArgoCD
                                                       Comparison = i.CompareWith(currentReference) 
                                                       
                                                   })
-                                                  .FirstOrDefault(i => i.Comparison.IsImageMatch());
+                                                  .FirstOrDefault(i => i.Comparison.MatchesImage());
                 if (matchedUpdate != null)
                 {
                     // Only do replacement if the tag is different
-                    //NOTE: Tags are case-sensitive, so we should not compare in a case-sensitive manner.
                     if (!matchedUpdate.Comparison.TagMatch)
                     {
                         var newReference = currentReference.WithTag(matchedUpdate.Reference.Tag);

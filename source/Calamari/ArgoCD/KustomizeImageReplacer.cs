@@ -90,7 +90,7 @@ namespace Calamari.ArgoCD
                 var newTagNode = imageNode.GetChildNodeIfExists<YamlScalarNode>(NewTagNodeKey);
                 if (newTagNode != null)
                 {
-                    if (newTagNode.Value != matchedUpdate.Reference.Tag)
+                    if (!matchedUpdate.Comparison.TagMatch)
                     {
                         newTagNode.Value = matchedUpdate.Reference.Tag;
                         if (newTagNode.Style != ScalarStyle.SingleQuoted && newTagNode.Style != ScalarStyle.DoubleQuoted)
@@ -142,10 +142,8 @@ namespace Calamari.ArgoCD
 
             var currentReference = ContainerImageReference.FromReferenceString(testName, defaultRegistry);
             
-            var matchedUpdate = imagesToUpdate.Select(i => new ImageReferenceMatch(i, i.CompareWith(currentReference)))
-                                              .FirstOrDefault(i => i.Comparison.IsImageMatch());
-
-            return matchedUpdate;
+            return imagesToUpdate.Select(i => new ImageReferenceMatch(i, i.CompareWith(currentReference)))
+                                              .FirstOrDefault(i => i.Comparison.MatchesImage());
         }
 
         string UpdateYamlWithUpdatedNode(bool isIndentedSequence,

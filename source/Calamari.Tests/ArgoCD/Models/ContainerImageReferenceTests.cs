@@ -21,7 +21,7 @@ namespace Calamari.Tests.ArgoCD.Models
             var image1 = ContainerImageReference.FromReferenceString(reference1);
             var image2 = ContainerImageReference.FromReferenceString(reference2);
 
-            var result = image2.CompareWith(image1).IsImageMatch();
+            var result = image2.CompareWith(image1).MatchesImage();
 
             result.Should().BeTrue();
         }
@@ -42,7 +42,7 @@ namespace Calamari.Tests.ArgoCD.Models
             var image1 = ContainerImageReference.FromReferenceString(reference1, "custom-reg.io");
             var image2 = ContainerImageReference.FromReferenceString(reference2);
 
-            var result = image2.CompareWith(image1).IsImageMatch();
+            var result = image2.CompareWith(image1).MatchesImage();
 
             result.Should().BeTrue();
         }
@@ -55,7 +55,7 @@ namespace Calamari.Tests.ArgoCD.Models
             var image1 = ContainerImageReference.FromReferenceString(reference1, "custom-reg.io");
             var image2 = ContainerImageReference.FromReferenceString(reference2, "custom-reg.io");
 
-            var result = image2.CompareWith(image1).IsImageMatch();
+            var result = image2.CompareWith(image1).MatchesImage();
 
             result.Should().BeTrue();
         }
@@ -70,7 +70,7 @@ namespace Calamari.Tests.ArgoCD.Models
             var image1 = ContainerImageReference.FromReferenceString(reference1);
             var image2 = ContainerImageReference.FromReferenceString(reference2, "custom-reg.io");
 
-            var result = image2.CompareWith(image1).IsImageMatch();
+            var result = image2.CompareWith(image1).MatchesImage();
 
             result.Should().BeFalse();
         }
@@ -97,7 +97,7 @@ namespace Calamari.Tests.ArgoCD.Models
             var result = image2.CompareWith(image1);
 
             result.TagMatch.Should().BeTrue();
-            result.IsMatch().Should().BeFalse();
+            result.MatchesImageAndTag().Should().BeFalse();
         }
 
         [Theory]
@@ -115,7 +115,7 @@ namespace Calamari.Tests.ArgoCD.Models
             var result = image2.CompareWith(image1);
 
             result.TagMatch.Should().BeTrue();
-            result.IsMatch().Should().BeTrue();
+            result.MatchesImageAndTag().Should().BeTrue();
         }
 
         [Test]

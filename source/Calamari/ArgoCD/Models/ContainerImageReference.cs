@@ -128,12 +128,12 @@ namespace Calamari.ArgoCD.Models
 
     public record ContainerImageComparison(bool RegistryMatch, bool ImageNameMatch, bool TagMatch)
     {
-        public bool IsMatch()
+        public bool MatchesImageAndTag()
         {
             return RegistryMatch && ImageNameMatch && TagMatch;
         }
 
-        public bool IsImageMatch()
+        public bool MatchesImage()
         {
             return RegistryMatch && ImageNameMatch;
         }
