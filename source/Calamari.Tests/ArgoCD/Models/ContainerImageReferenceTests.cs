@@ -76,7 +76,7 @@ namespace Calamari.Tests.ArgoCD.Models
         }
 
         [Test]
-        public void IsTagChange_ReturnsTrueWithDifferentTags()
+        public void TagMatch_IsFalseWithDifferentTags()
         {
             var image1 = ContainerImageReference.FromReferenceString("nginx:latest");
             var image2 = ContainerImageReference.FromReferenceString("nginx:1.27");
@@ -89,14 +89,15 @@ namespace Calamari.Tests.ArgoCD.Models
         [Theory]
         [TestCase("nginx", "busybox")]
         [TestCase("nginx", "my-custom.io/nginx")]
-        public void IsTagChange_ReturnsFalseWhenReferencesAreNotEquivalent(string reference1, string reference2)
+        public void TagMatch_IsTrueWhenReferencesAreNotEquivalent_ButComparisonIsFailse(string reference1, string reference2)
         {
             var image1 = ContainerImageReference.FromReferenceString(reference1)!;
             var image2 = ContainerImageReference.FromReferenceString(reference2)!;
 
-            var result = image2.CompareWith(image1).TagMatch;
+            var result = image2.CompareWith(image1);
 
-            result.Should().BeFalse();
+            result.TagMatch.Should().BeTrue();
+            result.IsMatch().Should().BeFalse();
         }
 
         [Theory]
@@ -106,14 +107,15 @@ namespace Calamari.Tests.ArgoCD.Models
         [TestCase("docker.io/nginx", "index.docker.io/nginx")]
         [TestCase("nginx", "index.docker.io/nginx")]
         [TestCase("nginx", "docker.io/nginx")]
-        public void IsTagChange_ReturnsFalseWhenTagsAreTheSame(string reference1, string reference2)
+        public void TagMatch_ReturnsTrueWhenTagsAreTheSame_ComparisonIsTrue(string reference1, string reference2)
         {
             var image1 = ContainerImageReference.FromReferenceString(reference1);
             var image2 = ContainerImageReference.FromReferenceString(reference2);
 
-            var result = image2.CompareWith(image1).TagMatch;
+            var result = image2.CompareWith(image1);
 
-            result.Should().BeFalse();
+            result.TagMatch.Should().BeTrue();
+            result.IsMatch().Should().BeTrue();
         }
 
         [Test]
