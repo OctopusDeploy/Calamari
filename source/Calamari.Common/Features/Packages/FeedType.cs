@@ -16,5 +16,6 @@ namespace Calamari.Common.Features.Packages
         AzureContainerRegistry,
         GoogleContainerRegistry,
         ArtifactoryGeneric,
+        Npm,
     }
 }
