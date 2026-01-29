@@ -1,5 +1,7 @@
 #nullable enable
 using System;
+using System.Net.Mime;
+using Octopus.TinyTypes;
 
 namespace Calamari.ArgoCD.Models
 {
@@ -96,6 +98,15 @@ namespace Calamari.ArgoCD.Models
             return ImageName.Equals(other.ImageName, StringComparison.OrdinalIgnoreCase) && RegistriesMatch(this, other);
         }
 
+        public ContainerImageComparison CompareWith(ContainerImageReference other)
+        {
+            return new ContainerImageComparison(
+                                                RegistriesMatch(this, other),
+                                                ImageName.Equals(other.ImageName, StringComparison.OrdinalIgnoreCase),
+                                                Tag.Equals(other.Tag)
+                                               );
+        }
+
         public bool IsTagChange(ContainerImageReference other)
         {
             if (IsMatch(other))
@@ -133,6 +144,19 @@ namespace Calamari.ArgoCD.Models
         public override string ToString()
         {
             return string.IsNullOrEmpty(Tag) ? ToOriginalFormatName() : $"{ToOriginalFormatName()}:{Tag}";
+        }
+    }
+
+    public record ContainerImageComparison(bool RegistryMatch, bool ImageNameMatch, bool TagMatch)
+    {
+        public bool IsMatch()
+        {
+            return RegistryMatch && ImageNameMatch && TagMatch;
+        }
+
+        public bool IsImageMatch()
+        {
+            return RegistryMatch && ImageNameMatch;
         }
     }
 }
