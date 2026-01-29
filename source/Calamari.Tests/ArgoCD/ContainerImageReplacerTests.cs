@@ -860,6 +860,35 @@ spec:
       result.UpdatedContents.Should().Be(expectedOutput);
       result.UpdatedImageReferences.Should().ContainSingle(r => r == "nginx:CurrentVersion");
     }
+    
+    [Test]
+    public void ReplacerWillMatchImageNameInsensitivelyAndReplaceWithLowerCase()
+    {
+      const string inputYaml = @"
+apiVersion: apps/v1
+kind: Deployment
+spec:
+ template:
+   spec:
+     containers:
+       - image: NGiNX:currentversion";
+
+      var imageReplacer = new ContainerImageReplacer(inputYaml, DefaultContainerRegistry);
+      var upperCaseContainer = ContainerImageReference.FromReferenceString("nginx:CurrentVersion");
+      var result = imageReplacer.UpdateImages(new List<ContainerImageReference>{upperCaseContainer});
+
+      const string expectedOutput = @"
+apiVersion: apps/v1
+kind: Deployment
+spec:
+ template:
+   spec:
+     containers:
+       - image: nginx:CurrentVersion";
+      
+      result.UpdatedContents.Should().Be(expectedOutput);
+      result.UpdatedImageReferences.Should().ContainSingle(r => r == "nginx:CurrentVersion");
+    }
   }
 }
 
