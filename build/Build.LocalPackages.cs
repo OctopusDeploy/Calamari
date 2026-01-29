@@ -10,6 +10,7 @@ public partial class Build
         d =>
             d.Requires(() => IsLocalBuild)
              .DependsOn(PublishCalamariProjects)
+             .DependsOn(PackCalamariConsolidatedNugetPackage)
              .Executes(() =>
                        {
                            Directory.CreateDirectory(LocalPackagesDirectory);

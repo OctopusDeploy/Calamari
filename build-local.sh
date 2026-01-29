@@ -94,7 +94,7 @@ if [ -z "$auto_accept" ]; then
   fi
 fi
 
-branch=$(git branch --show-current)
+branch=$(git rev-parse --abbrev-ref HEAD)
 
 echo "Branch: $branch"
 
@@ -102,6 +102,9 @@ year=$(date '+%Y')
 numericVersion="$year.99.0"
 
 sanitizedBranch=$(echo "$branch" | sed 's|^refs/heads/||; s|[/_]|-|g' | sed 's|\+.*$||g')
+
+echo "Numeric version: $numericVersion"
+echo "Sanitized branch: $sanitizedBranch"
 
 export OCTOVERSION_CurrentBranch="$sanitizedBranch"
 export OCTOVERSION_MajorMinorPatch="$numericVersion"
