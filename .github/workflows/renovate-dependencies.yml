@@ -24,8 +24,4 @@ jobs:
           configurationFile: renovate-config.js
           token: ${{ secrets.RENOVATE_GITHUB_TOKEN }}
         env:
-          # Running Renovate against the backend takes quite a bit of memory. Running it locally consumes ~3.1 GB.
-          # Without this, Node will run out of heap space. GitHub Action runners have about 7 GB available, so this should be okay.
-          # Similar issue: https://github.com/renovatebot/renovate/issues/5784
-          #NODE_OPTIONS: --max-old-space-size=4096
           RENOVATE_DRY_RUN: ${{ inputs.dry-run && 'full' || null }}
