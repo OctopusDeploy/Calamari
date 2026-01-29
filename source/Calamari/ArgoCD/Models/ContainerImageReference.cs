@@ -76,7 +76,7 @@ namespace Calamari.ArgoCD.Models
                 }
             }
 
-            //container tag is case sensitive
+            //image tag is case-sensitive
             return new ContainerImageReference(registry.ToLowerInvariant(), imageName.ToLowerInvariant(), tag, defaultRegistry.ToLowerInvariant());
         }
 
