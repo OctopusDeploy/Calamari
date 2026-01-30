@@ -64,7 +64,7 @@ public partial class Build
     {
         var text = File.ReadAllText(projectFile);
         text = Regex.Replace(text, @"<BundledCalamariVersion>([\S])+</BundledCalamariVersion>",
-                             $"<BundledCalamariVersion>{NugetVersion.Value}</BundledCalamariVersion> <!--DO NOT COMMIT-->");
+                             $"<BundledCalamariVersion>{NugetVersion.Value}</BundledCalamariVersion> <!--DO NOT COMMIT -->");
         File.WriteAllText(projectFile, text);
     }
 
