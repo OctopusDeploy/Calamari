@@ -113,8 +113,7 @@ namespace Calamari.Tests.ArgoCD.Models
             var image2 = ContainerImageReference.FromReferenceString(reference2);
 
             var result = image2.CompareWith(image1);
-
-            result.TagMatch.Should().BeTrue();
+            
             result.MatchesImageAndTag().Should().BeTrue();
         }
 
