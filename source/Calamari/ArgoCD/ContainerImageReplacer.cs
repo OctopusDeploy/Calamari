@@ -177,13 +177,20 @@ namespace Calamari.ArgoCD
             foreach (var container in containers)
             {
                 var currentReference = ContainerImageReference.FromReferenceString(container.Image, defaultRegistry);
-                var matchedUpdate = imagesToUpdate.FirstOrDefault(i => i.IsMatch(currentReference));
+
+                var matchedUpdate = imagesToUpdate.Select(i => new
+                                                  {
+                                                      Reference = i,
+                                                      Comparison = i.CompareWith(currentReference) 
+                                                      
+                                                  })
+                                                  .FirstOrDefault(i => i.Comparison.MatchesImage());
                 if (matchedUpdate != null)
                 {
                     // Only do replacement if the tag is different
-                    if (!matchedUpdate.Tag.Equals(currentReference.Tag, StringComparison.OrdinalIgnoreCase))
+                    if (!matchedUpdate.Comparison.TagMatch)
                     {
-                        var newReference = currentReference.WithTag(matchedUpdate.Tag);
+                        var newReference = currentReference.WithTag(matchedUpdate.Reference.Tag);
 
                         // Pattern ensures we only update lines with  `image: <IMAGENAME>` OR  `- image: <IMAGENANME>`.
                         // Ignores comments and white space, while preserving any quotes around the image name 
@@ -198,7 +205,7 @@ namespace Calamari.ArgoCD
                                                  },
                                                  RegexOptions.Multiline);
 
-                        replacementsMade.Add($"{matchedUpdate.ImageName}:{matchedUpdate.Tag}");
+                        replacementsMade.Add($"{matchedUpdate.Reference.ImageName}:{matchedUpdate.Reference.Tag}");
                     }
                 }
             }

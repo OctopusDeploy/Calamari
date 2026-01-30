@@ -27,13 +27,13 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions.UpdateArgoCdAppImages
     public void UpdateImages_WithNoNewImages_ReturnsSameYaml()
     {
       const string inputYaml = @"
-                                     kind: Deployment
-                                     spec:
-                                       template:
-                                         spec:
-                                           containers:
-                                             - image: nginx:1.19
-                                     ";
+apiVersion: apps/v1
+kind: Deployment
+spec:
+ template:
+   spec:
+     containers:
+       - image: nginx:1.19";
 
       var imageReplacer = new ContainerImageReplacer(inputYaml, DefaultContainerRegistry);
 
@@ -830,6 +830,64 @@ spec:
 
       var result = imageReplacer.UpdateImages(new List<ContainerImageReference> { ContainerImageReference.FromReferenceString("quay.io/argoprojlabs/argocd-e2e-container:0.3") });
       result.UpdatedContents.Should().Be(expectedOutput);
+    }
+    
+    [Test]
+    public void ReplacesTagIfCaseDoesNotMatch()
+    {
+      const string inputYaml = @"
+apiVersion: apps/v1
+kind: Deployment
+spec:
+ template:
+   spec:
+     containers:
+       - image: nginx:currentversion";
+
+      var imageReplacer = new ContainerImageReplacer(inputYaml, DefaultContainerRegistry);
+      var upperCaseContainer = ContainerImageReference.FromReferenceString("nginx:CurrentVersion");
+      var result = imageReplacer.UpdateImages(new List<ContainerImageReference>{upperCaseContainer});
+
+      const string expectedOutput = @"
+apiVersion: apps/v1
+kind: Deployment
+spec:
+ template:
+   spec:
+     containers:
+       - image: nginx:CurrentVersion";
+      
+      result.UpdatedContents.Should().Be(expectedOutput);
+      result.UpdatedImageReferences.Should().ContainSingle(r => r == "nginx:CurrentVersion");
+    }
+    
+    [Test]
+    public void ReplacerWillMatchImageNameInsensitivelyAndReplaceWithLowerCase()
+    {
+      const string inputYaml = @"
+apiVersion: apps/v1
+kind: Deployment
+spec:
+ template:
+   spec:
+     containers:
+       - image: NGiNX:currentversion";
+
+      var imageReplacer = new ContainerImageReplacer(inputYaml, DefaultContainerRegistry);
+      var upperCaseContainer = ContainerImageReference.FromReferenceString("nginx:CurrentVersion");
+      var result = imageReplacer.UpdateImages(new List<ContainerImageReference>{upperCaseContainer});
+
+      const string expectedOutput = @"
+apiVersion: apps/v1
+kind: Deployment
+spec:
+ template:
+   spec:
+     containers:
+       - image: nginx:CurrentVersion";
+      
+      result.UpdatedContents.Should().Be(expectedOutput);
+      result.UpdatedImageReferences.Should().ContainSingle(r => r == "nginx:CurrentVersion");
     }
   }
 }

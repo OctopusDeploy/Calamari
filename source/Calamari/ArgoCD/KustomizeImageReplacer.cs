@@ -90,21 +90,24 @@ namespace Calamari.ArgoCD
                 var newTagNode = imageNode.GetChildNodeIfExists<YamlScalarNode>(NewTagNodeKey);
                 if (newTagNode != null)
                 {
-                    newTagNode.Value = matchedUpdate.Tag;
-                    if (newTagNode.Style != ScalarStyle.SingleQuoted && newTagNode.Style != ScalarStyle.DoubleQuoted)
+                    if (!matchedUpdate.Comparison.TagMatch)
                     {
-                        newTagNode.Style = ScalarStyle.DoubleQuoted;
+                        newTagNode.Value = matchedUpdate.Reference.Tag;
+                        if (newTagNode.Style != ScalarStyle.SingleQuoted && newTagNode.Style != ScalarStyle.DoubleQuoted)
+                        {
+                            newTagNode.Style = ScalarStyle.DoubleQuoted;
+                        }
+                        replacementsMade.Add($"{matchedUpdate.Reference.ImageName}:{matchedUpdate.Reference.Tag}");
                     }
                 }
                 else
                 {
-                    imageNode.Children.Add(new YamlScalarNode(NewTagNodeKey), new YamlScalarNode(matchedUpdate.Tag) { Style = ScalarStyle.DoubleQuoted });
+                    imageNode.Children.Add(new YamlScalarNode(NewTagNodeKey), new YamlScalarNode(matchedUpdate.Reference.Tag) { Style = ScalarStyle.DoubleQuoted });
+                    replacementsMade.Add($"{matchedUpdate.Reference.ImageName}:{matchedUpdate.Reference.Tag}");
                 }
 
                 //remove any digest node (as we want the newTag node to dictate the container version)
                 imageNode.Children.Remove("digest");
-
-                replacementsMade.Add($"{matchedUpdate.ImageName}:{matchedUpdate.Tag}");
             }
 
             //no changes made, return no change result
@@ -123,7 +126,7 @@ namespace Calamari.ArgoCD
             return new ImageReplacementResult(modifiedYaml, replacementsMade);
         }
 
-        ContainerImageReference? GetMatchedContainerToUpdate(List<ContainerImageReference> imagesToUpdate, YamlMappingNode imageNode)
+        ImageReferenceMatch? GetMatchedContainerToUpdate(List<ContainerImageReference> imagesToUpdate, YamlMappingNode imageNode)
         {
             var nameNode = imageNode.GetChildNode<YamlScalarNode>(NameNodeKey);
             var name = nameNode.Value;
@@ -138,8 +141,9 @@ namespace Calamari.ArgoCD
             var testName = newNameNode?.Value ?? name;
 
             var currentReference = ContainerImageReference.FromReferenceString(testName, defaultRegistry);
-
-            return imagesToUpdate.FirstOrDefault(i => i.IsMatch(currentReference));
+            
+            return imagesToUpdate.Select(i => new ImageReferenceMatch(i, i.CompareWith(currentReference)))
+                                              .FirstOrDefault(i => i.Comparison.MatchesImage());
         }
 
         string UpdateYamlWithUpdatedNode(bool isIndentedSequence,
@@ -171,6 +175,8 @@ namespace Calamari.ArgoCD
                    .Remove(originalImagesSequenceStartIndex, lengthToRemove)
                    .Insert(originalImagesSequenceStartIndex, updatedImagesYaml);
         }
+        
+        record ImageReferenceMatch(ContainerImageReference Reference, ContainerImageComparison Comparison);
     }
 }
 
