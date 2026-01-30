@@ -103,7 +103,5 @@ public partial class Build
         clearElement.AddAfterSelf(localPackagesMapping);
     
         doc.Save(nugetConfigFile);
-
-
     }
 }
