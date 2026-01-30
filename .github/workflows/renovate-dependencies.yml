@@ -1,6 +1,6 @@
 name: Renovate update dependencies
 on:
-  schedule:
+  # schedule:
     # UTC 10:00 AM (8PM AEST, Monday - Thursday and on Sundays)
     #- cron: '0 10 * * 0-4'
   workflow_dispatch:
