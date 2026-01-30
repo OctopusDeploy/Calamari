@@ -65,14 +65,16 @@ namespace Calamari.ArgoCD.Git
 
         public void RecursivelyStageFilesForRemoval(string subPath)
         {
-            var cleansedSubPath = subPath.StartsWith($".{Path.DirectorySeparatorChar}") ? subPath.Substring(2) : subPath;
+            var cleansedSubPath = NormalizePath(subPath);
             if (!cleansedSubPath.EndsWith(Path.DirectorySeparatorChar) && !cleansedSubPath.IsNullOrEmpty())
             {
                 cleansedSubPath += Path.DirectorySeparatorChar;
             }
 
             log.Info("Removing files recursively");
-            List<IndexEntry> filesToRemove = repository.Index.Where(i => i.Path.StartsWith(cleansedSubPath)).ToList();
+            List<IndexEntry> filesToRemove = repository.Index
+                .Where(i => NormalizePath(i.Path).StartsWith(cleansedSubPath))
+                .ToList();
             filesToRemove.ForEach(i => repository.Index.Remove(i.Path));
         }
 
@@ -80,9 +82,15 @@ namespace Calamari.ArgoCD.Git
         {
             foreach (var file in filesToStage)
             {
-                var fileToAdd = file.StartsWith($".{Path.DirectorySeparatorChar}") ? file.Substring(2) : file;
-                repository.Index.Add(fileToAdd);
+                repository.Index.Add(NormalizePath(file));
             }
+        }
+
+        static string NormalizePath(string path)
+        {
+            var separatorToReplace = Path.DirectorySeparatorChar == '/' ? '\\' : '/';
+            var normalized = path.Replace(separatorToReplace, Path.DirectorySeparatorChar);
+            return normalized.StartsWith($".{Path.DirectorySeparatorChar}") ? normalized.Substring(2) : normalized;
         }
 
         public async Task PushChanges(bool requiresPullRequest,
