@@ -65,10 +65,10 @@ namespace Calamari.ArgoCD.Git
 
         public void RecursivelyStageFilesForRemoval(string subPath)
         {
-            var cleansedSubPath = subPath.StartsWith("./") ? subPath.Substring(2) : subPath;
-            if (!cleansedSubPath.EndsWith("/") && !cleansedSubPath.IsNullOrEmpty())
+            var cleansedSubPath = subPath.StartsWith($".{Path.DirectorySeparatorChar}") ? subPath.Substring(2) : subPath;
+            if (!cleansedSubPath.EndsWith(Path.DirectorySeparatorChar) && !cleansedSubPath.IsNullOrEmpty())
             {
-                cleansedSubPath += "/";
+                cleansedSubPath += Path.DirectorySeparatorChar;
             }
 
             log.Info("Removing files recursively");
@@ -80,7 +80,7 @@ namespace Calamari.ArgoCD.Git
         {
             foreach (var file in filesToStage)
             {
-                var fileToAdd = file.StartsWith("./") ? file.Substring(2) : file;
+                var fileToAdd = file.StartsWith($".{Path.DirectorySeparatorChar}") ? file.Substring(2) : file;
                 repository.Index.Add(fileToAdd);
             }
         }
