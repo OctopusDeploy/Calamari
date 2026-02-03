@@ -150,7 +150,7 @@ namespace Calamari.ArgoCD.Conventions
                                                      UpdateArgoCDAppDeploymentConfig deploymentConfig,
                                                      string defaultRegistry)
         {
-            var result = new ProcessApplicationSourceResult(sourceWithMetadata.Source.ForceParseRepoUrlAsHttp());
+            var result = new ProcessApplicationSourceResult(sourceWithMetadata.Source.CloneSafeRepoUrl);
 
             var applicationSource = sourceWithMetadata.Source;
             var annotatedScope = ScopingAnnotationReader.GetScopeForApplicationSource(applicationSource.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources);
@@ -210,7 +210,7 @@ namespace Calamari.ArgoCD.Conventions
         {
             var applicationSource = sourceWithMetadata.Source;
 
-            ProcessApplicationSourceResult result = new ProcessApplicationSourceResult(applicationSource.ForceParseRepoUrlAsHttp());
+            ProcessApplicationSourceResult result = new ProcessApplicationSourceResult(applicationSource.CloneSafeRepoUrl);
             if (applicationSource.Path == null)
             {
                 log.WarnFormat("Unable to update source '{0}' as a path has not been specified.", sourceWithMetadata.SourceIdentity);
@@ -249,7 +249,7 @@ namespace Calamari.ArgoCD.Conventions
         {
             var applicationSource = sourceWithMetadata.Source;
 
-            var result = new ProcessApplicationSourceResult(applicationSource.ForceParseRepoUrlAsHttp());
+            var result = new ProcessApplicationSourceResult(applicationSource.CloneSafeRepoUrl);
             if (applicationSource.Path != null)
             {
                 log.WarnFormat("The source '{0}' contains a Ref, only referenced files will be updated. Please create another source with the same URL if you wish to update files under the path.", sourceWithMetadata.SourceIdentity);
@@ -280,7 +280,7 @@ namespace Calamari.ArgoCD.Conventions
                                                         string defaultRegistry)
         {
             var applicationSource = sourceWithMetadata.Source;
-            ProcessApplicationSourceResult result = new ProcessApplicationSourceResult(applicationSource.ForceParseRepoUrlAsHttp());
+            ProcessApplicationSourceResult result = new ProcessApplicationSourceResult(applicationSource.CloneSafeRepoUrl);
 
             if (applicationSource.Path == null)
             {
@@ -321,7 +321,7 @@ namespace Calamari.ArgoCD.Conventions
                                                    string defaultRegistry)
         {
             var applicationSource = sourceWithMetadata.Source;
-            var result = new ProcessApplicationSourceResult(applicationSource.ForceParseRepoUrlAsHttp());
+            var result = new ProcessApplicationSourceResult(applicationSource.CloneSafeRepoUrl);
 
             if (applicationSource.Path == null)
             {
@@ -430,7 +430,7 @@ namespace Calamari.ArgoCD.Conventions
 
         RepositoryWrapper CreateRepository(Dictionary<string, GitCredentialDto> gitCredentials, ApplicationSource source, RepositoryFactory repositoryFactory)
         {
-            var repositorySource = source.ForceParseRepoUrlAsHttp();
+            var repositorySource = source.CloneSafeRepoUrl;
             var gitCredential = gitCredentials.GetValueOrDefault(repositorySource.AbsolutePath);
             if (gitCredential == null)
             {
@@ -460,7 +460,7 @@ namespace Calamari.ArgoCD.Conventions
                                                         applicationSource.Source.Name.ToApplicationSourceName(),
                                                         defaultRegistry,
                                                         applicationSource.Source.Path,
-                                                        applicationSource.Source.ForceParseRepoUrlAsHttp(),
+                                                        applicationSource.Source.CloneSafeRepoUrl,
                                                         applicationSource.Source.TargetRevision,
                                                         valuesFilename,
                                                         imageReplacePaths), null);

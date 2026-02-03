@@ -83,7 +83,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                             })
                                             .WithSource(new ApplicationSource()
                                             {
-                                                RepoUrl = OriginPath,
+                                                OriginalRepoUrl = OriginPath,
                                                 Path = "",
                                                 TargetRevision = ArgoCDBranchFriendlyName,
                                             }, SourceTypeConstants.Directory)
@@ -138,7 +138,7 @@ images:
                                             })
                                             .WithSource(new ApplicationSource()
                                             {
-                                                RepoUrl = OriginPath,
+                                                OriginalRepoUrl = OriginPath,
                                                 Path = "",
                                                 TargetRevision = ArgoCDBranchFriendlyName,
                                             }, SourceTypeConstants.Plugin)
@@ -381,7 +381,7 @@ spec:
                                             })
                                             .WithSource(new ApplicationSource()
                                             {
-                                                RepoUrl = OriginPath,
+                                                OriginalRepoUrl = OriginPath,
                                                 TargetRevision = ArgoCDBranchFriendlyName,
                                             }, SourceTypeConstants.Directory)
                                             .Build();
@@ -446,7 +446,7 @@ images:
                                             })
                                             .WithSource(new ApplicationSource()
                                             {
-                                                RepoUrl = OriginPath,
+                                                OriginalRepoUrl = OriginPath,
                                                 TargetRevision = ArgoCDBranchFriendlyName,
                                             }, SourceTypeConstants.Kustomize)
                                             .Build();
@@ -511,7 +511,7 @@ images:
                                             })
                                             .WithSource(new ApplicationSource()
                                             {
-                                                RepoUrl = OriginPath,
+                                                OriginalRepoUrl = OriginPath,
                                                 Path = "",
                                                 TargetRevision = ArgoCDBranchFriendlyName,
                                             }, SourceTypeConstants.Kustomize)
@@ -599,7 +599,7 @@ spec:
                                             })
                                             .WithSource(new ApplicationSource()
                                             {
-                                                RepoUrl = OriginPath,
+                                                OriginalRepoUrl = OriginPath,
                                                 Path = "",
                                                 TargetRevision = ArgoCDBranchFriendlyName,
                                             }, SourceTypeConstants.Kustomize)

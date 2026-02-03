@@ -160,7 +160,7 @@ namespace Calamari.ArgoCD.Conventions
                                                      string applicationName)
         {
             var applicationSource = sourceWithMetadata.Source;
-            var sourceRepository = sourceWithMetadata.Source.ForceParseRepoUrlAsHttp();
+            var sourceRepository = sourceWithMetadata.Source.CloneSafeRepoUrl;
             ProcessApplicationSourceResult result = new ProcessApplicationSourceResult(sourceRepository);
 
             var annotatedScope = ScopingAnnotationReader.GetScopeForApplicationSource(applicationSource.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources);
@@ -226,7 +226,7 @@ namespace Calamari.ArgoCD.Conventions
         bool TryCalculateOutputPath(ApplicationSource sourceToUpdate, out string outputPath)
         {
             outputPath = "";
-            var sourceIdentity = string.IsNullOrEmpty(sourceToUpdate.Name) ? sourceToUpdate.RepoUrl.ToString() : sourceToUpdate.Name;
+            var sourceIdentity = string.IsNullOrEmpty(sourceToUpdate.Name) ? sourceToUpdate.OriginalRepoUrl.ToString() : sourceToUpdate.Name;
             if (sourceToUpdate.Ref != null)
             {
                 if (sourceToUpdate.Path != null)
