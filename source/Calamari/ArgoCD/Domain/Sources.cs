@@ -22,11 +22,6 @@ namespace Calamari.ArgoCD.Domain
         
         [JsonPropertyName("ref")]
         public string? Ref { get; set; }
-
-        public Uri ToUri()
-        {
-            return new Uri(RepoUrl);
-        }
         
         /// <summary>
         /// If the <see cref="RepoUrl"/> is a ssh connection, the format is typically git@host...

@@ -160,7 +160,8 @@ namespace Calamari.ArgoCD.Conventions
                                                      string applicationName)
         {
             var applicationSource = sourceWithMetadata.Source;
-            ProcessApplicationSourceResult result = new ProcessApplicationSourceResult(applicationSource.ToUri());
+            var sourceRepository = sourceWithMetadata.Source.ForceParseRepoUrlAsHttp();
+            ProcessApplicationSourceResult result = new ProcessApplicationSourceResult(sourceRepository);
 
             var annotatedScope = ScopingAnnotationReader.GetScopeForApplicationSource(applicationSource.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources);
             log.LogApplicationSourceScopeStatus(annotatedScope, applicationSource.Name.ToApplicationSourceName(), deploymentScope);
@@ -168,21 +169,21 @@ namespace Calamari.ArgoCD.Conventions
             if (annotatedScope != deploymentScope)
                 return result;
             
-            log.Info($"Writing files to repository '{applicationSource.RepoUrl}' for '{applicationName}'");
+            log.Info($"Writing files to repository '{sourceRepository}' for '{applicationName}'");
 
             if (!TryCalculateOutputPath(applicationSource, out var outputPath))
             {
                 return result;
             }
 
-            var gitCredential = gitCredentials.GetValueOrDefault(applicationSource.ToUri().AbsoluteUri);
+            var gitCredential = gitCredentials.GetValueOrDefault(sourceRepository.AbsolutePath);
             if (gitCredential == null)
             {
-                log.Info($"No Git credentials found for: '{applicationSource.ToUri().AbsoluteUri}', will attempt to clone repository anonymously.");
+                log.Info($"No Git credentials found for: '{sourceRepository.AbsoluteUri}', will attempt to clone repository anonymously.");
             }
 
             var targetBranch = GitReference.CreateFromString(applicationSource.TargetRevision);
-            var gitConnection = new GitConnection(gitCredential?.Username, gitCredential?.Password, applicationSource.ToUri(), targetBranch);
+            var gitConnection = new GitConnection(gitCredential?.Username, gitCredential?.Password, sourceRepository, targetBranch);
 
             using (var repository = repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), gitConnection))
             {

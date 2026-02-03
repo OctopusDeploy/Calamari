@@ -59,7 +59,7 @@ namespace Calamari.ArgoCD.Helm
                                                         source.Source.Name?.ToApplicationSourceName(),
                                                         defaultRegistry,
                                                         source.Source.Path,
-                                                        source.Source.ToUri(),
+                                                        source.Source.ForceParseRepoUrlAsHttp(),
                                                         source.Source.TargetRevision,
                                                         file,
                                                         definedPathsForSource), null);
@@ -105,7 +105,7 @@ namespace Calamari.ArgoCD.Helm
                                                                 refSource.Source.Name.ToApplicationSourceName(),
                                                                 defaultRegistry,
                                                                 ArgoCDConstants.RefSourcePath,
-                                                                refSource.Source.ToUri(),
+                                                                refSource.Source.ForceParseRepoUrlAsHttp(),
                                                                 refSource.Source.TargetRevision,
                                                                 relativeFile,
                                                                 definedPathsForSource), null);
