@@ -53,7 +53,7 @@ namespace Calamari.Tests.ArgoCD
                        {
                            new ApplicationSource()
                            {
-                               RepoUrl = new Uri("https://github.com/fake/octopus-test.git"),
+                               RepoUrl = "https://github.com/fake/octopus-test.git",
                                TargetRevision = "test-branch",
                                Path = "octopus-app"
                            }
@@ -109,13 +109,13 @@ namespace Calamari.Tests.ArgoCD
                        {
                            new ApplicationSource()
                            {
-                               RepoUrl = new Uri("https://github.com/fake/octopus-test.git"),
+                               RepoUrl = "https://github.com/fake/octopus-test.git",
                                TargetRevision = "test-branch",
                                Path = "octopus-app"
                            },
                            new ApplicationSource()
                            {
-                               RepoUrl = new Uri("https://github.com/fake/octopus-test2.git"),
+                               RepoUrl = "https://github.com/fake/octopus-test2.git",
                                TargetRevision = "test-branch2",
                                Path = "octopus-app2"
                            }
@@ -166,7 +166,7 @@ namespace Calamari.Tests.ArgoCD
                        {
                            new ApplicationSource()
                            {
-                               RepoUrl = new Uri("https://github.com/fake/octopus-test.git"),
+                               RepoUrl = "https://github.com/fake/octopus-test.git",
                                TargetRevision = "test-branch",
                                Path = "octopus-app"
                            }

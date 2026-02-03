@@ -160,7 +160,7 @@ namespace Calamari.ArgoCD.Conventions
                                                      string applicationName)
         {
             var applicationSource = sourceWithMetadata.Source;
-            ProcessApplicationSourceResult result = new ProcessApplicationSourceResult(applicationSource.RepoUrl);
+            ProcessApplicationSourceResult result = new ProcessApplicationSourceResult(applicationSource.ToUri());
 
             var annotatedScope = ScopingAnnotationReader.GetScopeForApplicationSource(applicationSource.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources);
             log.LogApplicationSourceScopeStatus(annotatedScope, applicationSource.Name.ToApplicationSourceName(), deploymentScope);
@@ -175,14 +175,14 @@ namespace Calamari.ArgoCD.Conventions
                 return result;
             }
 
-            var gitCredential = gitCredentials.GetValueOrDefault(applicationSource.RepoUrl.AbsoluteUri);
+            var gitCredential = gitCredentials.GetValueOrDefault(applicationSource.ToUri().AbsoluteUri);
             if (gitCredential == null)
             {
-                log.Info($"No Git credentials found for: '{applicationSource.RepoUrl.AbsoluteUri}', will attempt to clone repository anonymously.");
+                log.Info($"No Git credentials found for: '{applicationSource.ToUri().AbsoluteUri}', will attempt to clone repository anonymously.");
             }
 
             var targetBranch = GitReference.CreateFromString(applicationSource.TargetRevision);
-            var gitConnection = new GitConnection(gitCredential?.Username, gitCredential?.Password, applicationSource.RepoUrl, targetBranch);
+            var gitConnection = new GitConnection(gitCredential?.Username, gitCredential?.Password, applicationSource.ToUri(), targetBranch);
 
             using (var repository = repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), gitConnection))
             {

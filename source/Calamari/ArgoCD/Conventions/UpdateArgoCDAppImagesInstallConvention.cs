@@ -150,7 +150,7 @@ namespace Calamari.ArgoCD.Conventions
                                                      UpdateArgoCDAppDeploymentConfig deploymentConfig,
                                                      string defaultRegistry)
         {
-            var result = new ProcessApplicationSourceResult(sourceWithMetadata.Source.RepoUrl);
+            var result = new ProcessApplicationSourceResult(sourceWithMetadata.Source.ToUri());
 
             var applicationSource = sourceWithMetadata.Source;
             var annotatedScope = ScopingAnnotationReader.GetScopeForApplicationSource(applicationSource.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources);
@@ -210,7 +210,7 @@ namespace Calamari.ArgoCD.Conventions
         {
             var applicationSource = sourceWithMetadata.Source;
 
-            ProcessApplicationSourceResult result = new ProcessApplicationSourceResult(applicationSource.RepoUrl);
+            ProcessApplicationSourceResult result = new ProcessApplicationSourceResult(applicationSource.ToUri());
             if (applicationSource.Path == null)
             {
                 log.WarnFormat("Unable to update source '{0}' as a path has not been specified.", sourceWithMetadata.SourceIdentity);
@@ -249,7 +249,7 @@ namespace Calamari.ArgoCD.Conventions
         {
             var applicationSource = sourceWithMetadata.Source;
 
-            ProcessApplicationSourceResult result = new ProcessApplicationSourceResult(applicationSource.RepoUrl);
+            ProcessApplicationSourceResult result = new ProcessApplicationSourceResult(applicationSource.ToUri());
             if (applicationSource.Path != null)
             {
                 log.WarnFormat("The source '{0}' contains a Ref, only referenced files will be updated. Please create another source with the same URL if you wish to update files under the path.", sourceWithMetadata.SourceIdentity);
@@ -280,7 +280,7 @@ namespace Calamari.ArgoCD.Conventions
                                                         string defaultRegistry)
         {
             var applicationSource = sourceWithMetadata.Source;
-            ProcessApplicationSourceResult result = new ProcessApplicationSourceResult(applicationSource.RepoUrl);
+            ProcessApplicationSourceResult result = new ProcessApplicationSourceResult(applicationSource.ToUri());
 
             if (applicationSource.Path == null)
             {
@@ -321,7 +321,7 @@ namespace Calamari.ArgoCD.Conventions
                                                    string defaultRegistry)
         {
             var applicationSource = sourceWithMetadata.Source;
-            ProcessApplicationSourceResult result = new ProcessApplicationSourceResult(applicationSource.RepoUrl);
+            ProcessApplicationSourceResult result = new ProcessApplicationSourceResult(applicationSource.ToUri());
 
             if (applicationSource.Path == null)
             {
@@ -430,13 +430,13 @@ namespace Calamari.ArgoCD.Conventions
 
         RepositoryWrapper CreateRepository(Dictionary<string, GitCredentialDto> gitCredentials, ApplicationSource source, RepositoryFactory repositoryFactory)
         {
-            var gitCredential = gitCredentials.GetValueOrDefault(source.RepoUrl.AbsoluteUri);
+            var gitCredential = gitCredentials.GetValueOrDefault(source.ToUri().AbsoluteUri);
             if (gitCredential == null)
             {
-                log.Info($"No Git credentials found for: '{source.RepoUrl.AbsoluteUri}', will attempt to clone repository anonymously.");
+                log.Info($"No Git credentials found for: '{source.ToUri().AbsoluteUri}', will attempt to clone repository anonymously.");
             }
 
-            var gitConnection = new GitConnection(gitCredential?.Username, gitCredential?.Password, new Uri(source.RepoUrl.AbsoluteUri), GitReference.CreateFromString(source.TargetRevision));
+            var gitConnection = new GitConnection(gitCredential?.Username, gitCredential?.Password, new Uri(source.ToUri().AbsoluteUri), GitReference.CreateFromString(source.TargetRevision));
             return repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), gitConnection);
         }
 
@@ -459,7 +459,7 @@ namespace Calamari.ArgoCD.Conventions
                                                         applicationSource.Source.Name.ToApplicationSourceName(),
                                                         defaultRegistry,
                                                         applicationSource.Source.Path,
-                                                        applicationSource.Source.RepoUrl,
+                                                        applicationSource.Source.ToUri(),
                                                         applicationSource.Source.TargetRevision,
                                                         valuesFilename,
                                                         imageReplacePaths), null);
