@@ -17,8 +17,7 @@
     <PackageReference Include="nunit" Version="3.14.0" />
     <PackageReference Include="NUnit3TestAdapter" Version="5.2.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.0" />
-    <PackageReference Include="Polly" Version="8.3.1" />
-    <PackageReference Include="System.Text.Json" Version="8.0.6" />
+    <PackageReference Include="Polly" Version="8.6.5" />
     <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.41" />
   </ItemGroup>
 

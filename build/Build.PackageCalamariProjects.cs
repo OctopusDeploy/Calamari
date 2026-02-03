@@ -38,7 +38,7 @@ public partial class Build
                                                           .Select(rid =>
                                                                   {
                                                                       //we are making the bold assumption all projects only have a single target framework
-                                                                      var framework = project.GetTargetFrameworks()?.Single() ?? Frameworks.Net80;
+                                                                      var framework = project.GetTargetFrameworks()?.Single() ?? Frameworks.Net10;
                                                                       return new CalamariPackageMetadata(project, framework, rid);
                                                                   }))
                                           .ToList();

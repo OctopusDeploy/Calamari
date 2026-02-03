@@ -30,7 +30,7 @@ namespace Calamari.Tests.Helpers
             ""rollForward"": ""latestFeature""
         }
     }");
-            var result = clr.Execute(CreateCommandLineInvocation("dotnet", "new console -f net8.0"));
+            var result = clr.Execute(CreateCommandLineInvocation("dotnet", "new console -f net10.0"));
             result.VerifySuccess();
             var programCS = Path.Combine(projectPath.FullName, "Program.cs");
             var newProgram = $@"using System;
