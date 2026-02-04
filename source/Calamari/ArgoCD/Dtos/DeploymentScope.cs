@@ -8,8 +8,8 @@ public record DeploymentScope(ProjectSlug Project, EnvironmentSlug Environment, 
 {
     public bool Matches(AnnotationScope annotationScope)
     {
-        return Project.Equals(annotationScope.Project)
-               && Environment.Equals(annotationScope.Environment)
-               && ((Tenant == null && annotationScope.Tenant == null) || (Tenant != null && Tenant.Equals(annotationScope.Tenant)));
+        return Project == annotationScope.Project
+               && Environment == annotationScope.Environment
+               && Tenant == annotationScope.Tenant;
     }
 }
