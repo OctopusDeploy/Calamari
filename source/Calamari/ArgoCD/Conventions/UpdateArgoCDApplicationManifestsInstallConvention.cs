@@ -118,21 +118,26 @@ namespace Calamari.ArgoCD.Conventions
 
             var sourceResults = applicationFromYaml
                                  .GetSourcesWithMetadata()
-                                 .Select(sourceWithMetadata =>
-                                             ProcessSource(deploymentScope,
-                                                           gitCredentials,
-                                                           repositoryFactory,
-                                                           deploymentConfig,
-                                                           packageFiles,
-                                                           sourceWithMetadata,
-                                                           applicationFromYaml,
-                                                           containsMultipleSources,
-                                                           applicationName))
+                                 .Select(sourceWithMetadata => new
+                                 {
+                                     Updated = ProcessSource(deploymentScope,
+                                                             gitCredentials,
+                                                             repositoryFactory,
+                                                             deploymentConfig,
+                                                             packageFiles,
+                                                             sourceWithMetadata,
+                                                             applicationFromYaml,
+                                                             containsMultipleSources,
+                                                             applicationName),
+                                     sourceWithMetadata
+                                 })
+                                 .Where(u => u.Updated)
+                                 .Select(u => u.sourceWithMetadata.Source.RepoUrl.AbsoluteUri)
                                  .ToList();
             
-            var didUpdateSomething = sourceResults.Any(r => r.Updated);
-            result.UpdatedSourceCount = sourceResults.Count(r => r.Updated);
-            result.GitReposUpdated.AddRange(sourceResults.Where(r => r.Updated).Select(r => r.RepositoryUrl.AbsoluteUri));
+            var didUpdateSomething = sourceResults.Any();
+            result.UpdatedSourceCount = sourceResults.Count();
+            result.GitReposUpdated.AddRange(sourceResults.Select(r => r));
                 
             //if we have links, use that to generate a link, otherwise just put the name there
             var instanceLinks = application.InstanceWebUiUrl != null ? new ArgoCDInstanceLinks(application.InstanceWebUiUrl) : null;
@@ -149,7 +154,7 @@ namespace Calamari.ArgoCD.Conventions
             return result;
         }
 
-        ProcessApplicationSourceResult ProcessSource(DeploymentScope deploymentScope,
+        bool ProcessSource(DeploymentScope deploymentScope,
                                                      Dictionary<string, GitCredentialDto> gitCredentials,
                                                      RepositoryFactory repositoryFactory,
                                                      ArgoCommitToGitConfig deploymentConfig,
@@ -160,20 +165,18 @@ namespace Calamari.ArgoCD.Conventions
                                                      string applicationName)
         {
             var applicationSource = sourceWithMetadata.Source;
-            ProcessApplicationSourceResult result = new ProcessApplicationSourceResult(applicationSource.RepoUrl);
-
             var annotatedScope = ScopingAnnotationReader.GetScopeForApplicationSource(applicationSource.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources);
 
             log.LogApplicationSourceScopeStatus(annotatedScope, applicationSource.Name.ToApplicationSourceName(), deploymentScope);
 
             if (!deploymentScope.Matches(annotatedScope))
-                return result;
+                return false;
             
             log.Info($"Writing files to repository '{applicationSource.RepoUrl}' for '{applicationName}'");
 
             if (!TryCalculateOutputPath(applicationSource, out var outputPath))
             {
-                return result;
+                return false;
             }
 
             var gitCredential = gitCredentials.GetValueOrDefault(applicationSource.RepoUrl.AbsoluteUri);
@@ -185,42 +188,38 @@ namespace Calamari.ArgoCD.Conventions
             var targetBranch = GitReference.CreateFromString(applicationSource.TargetRevision);
             var gitConnection = new GitConnection(gitCredential?.Username, gitCredential?.Password, applicationSource.RepoUrl, targetBranch);
 
-            using (var repository = repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), gitConnection))
+            using var repository = repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), gitConnection);
+            log.VerboseFormat("Copying files into '{0}'", outputPath);
+
+            if (deploymentConfig.PurgeOutputDirectory)
             {
-                log.VerboseFormat("Copying files into '{0}'", outputPath);
-
-                if (deploymentConfig.PurgeOutputDirectory)
-                {
-                    repository.RecursivelyStageFilesForRemoval(outputPath);
-                }
-
-                var filesToCopy = packageFiles.Select(f => new FileCopySpecification(f, repository.WorkingDirectory, outputPath)).ToList();
-                CopyFiles(filesToCopy);
-
-                log.Info("Staging files in repository");
-                repository.StageFiles(filesToCopy.Select(fcs => fcs.DestinationRelativePath).ToArray());
-
-                log.Info("Commiting changes");
-                if (repository.CommitChanges(deploymentConfig.CommitParameters.Summary, deploymentConfig.CommitParameters.Description))
-                {
-                    log.Info("Changes were commited, pushing to remote");
-                    repository.PushChanges(deploymentConfig.CommitParameters.RequiresPr,
-                                           deploymentConfig.CommitParameters.Summary,
-                                           deploymentConfig.CommitParameters.Description,
-                                           targetBranch,
-                                           CancellationToken.None)
-                              .GetAwaiter()
-                              .GetResult();
-
-                    result.Updated = true;
-                }
-                else
-                {
-                    log.Info("No changes were commited");
-                }
+                repository.RecursivelyStageFilesForRemoval(outputPath);
             }
 
-            return result;
+            var filesToCopy = packageFiles.Select(f => new FileCopySpecification(f, repository.WorkingDirectory, outputPath)).ToList();
+            CopyFiles(filesToCopy);
+
+            log.Info("Staging files in repository");
+            repository.StageFiles(filesToCopy.Select(fcs => fcs.DestinationRelativePath).ToArray());
+
+            log.Info("Commiting changes");
+            if (repository.CommitChanges(deploymentConfig.CommitParameters.Summary, deploymentConfig.CommitParameters.Description))
+            {
+                log.Info("Changes were commited, pushing to remote");
+                repository.PushChanges(deploymentConfig.CommitParameters.RequiresPr,
+                                       deploymentConfig.CommitParameters.Summary,
+                                       deploymentConfig.CommitParameters.Description,
+                                       targetBranch,
+                                       CancellationToken.None)
+                          .GetAwaiter()
+                          .GetResult();
+
+                return true;
+            }
+
+            log.Info("No changes were commited");
+
+            return false;
         }
 
         bool TryCalculateOutputPath(ApplicationSource sourceToUpdate, out string outputPath)
@@ -294,18 +293,6 @@ namespace Calamari.ArgoCD.Conventions
 
         IPackageRelativeFile[] SelectFiles(string pathToExtractedPackageFiles, ArgoCommitToGitConfig config)
             => argoCDManifestsFileMatcher.FindMatchingPackageFiles(pathToExtractedPackageFiles, config.InputSubPath);
-
-        class ProcessApplicationSourceResult
-        {
-            public Uri RepositoryUrl { get; }
-
-            public ProcessApplicationSourceResult(Uri repositoryUrl)
-            {
-                RepositoryUrl = repositoryUrl;
-            }
-
-            public bool Updated { get; set; }
-        }
 
         class ProcessApplicationResult
         {
