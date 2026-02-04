@@ -113,25 +113,21 @@ namespace Calamari.ArgoCD.Conventions
                                                 containsMultipleSources,
                                                 deploymentScope);
 
-            var validationResult = ValidationResult.Merge(
-                                                          ApplicationValidator.ValidateSourceNames(applicationFromYaml),
-                                                          ApplicationValidator.ValidateUnnamedAnnotationsInMultiSourceApplication(applicationFromYaml)
-                                                         );
-            validationResult.Action(log);
+            ValidateApplication(applicationFromYaml);
 
             var sourceResults = applicationFromYaml
-                                 .GetSourcesWithMetadata()
-                                 .Select(sourceWithMetadata =>
-                                             ProcessSource(deploymentScope,
-                                                           gitCredentials,
-                                                           repositoryFactory,
-                                                           deploymentConfig,
-                                                           packageFiles,
-                                                           sourceWithMetadata,
-                                                           applicationFromYaml,
-                                                           containsMultipleSources,
-                                                           applicationName))
-                                 .ToList();
+                                .GetSourcesWithMetadata()
+                                .Select(sourceWithMetadata =>
+                                            ProcessSource(deploymentScope,
+                                                          gitCredentials,
+                                                          repositoryFactory,
+                                                          deploymentConfig,
+                                                          packageFiles,
+                                                          sourceWithMetadata,
+                                                          applicationFromYaml,
+                                                          containsMultipleSources,
+                                                          applicationName))
+                                .ToList();
             
             var didUpdateSomething = sourceResults.Any(r => r.Updated);
             result.UpdatedSourceCount = sourceResults.Count(r => r.Updated);
@@ -150,6 +146,15 @@ namespace Calamari.ArgoCD.Conventions
             log.InfoFormat(message, linkifiedAppName);
 
             return result;
+        }
+
+        void ValidateApplication(Application applicationFromYaml)
+        {
+            var validationResult = ValidationResult.Merge(
+                                                          ApplicationValidator.ValidateSourceNames(applicationFromYaml),
+                                                          ApplicationValidator.ValidateUnnamedAnnotationsInMultiSourceApplication(applicationFromYaml)
+                                                         );
+            validationResult.Action(log);
         }
 
         ProcessApplicationSourceResult ProcessSource((ProjectSlug Project, EnvironmentSlug Environment, TenantSlug? Tenant) deploymentScope,

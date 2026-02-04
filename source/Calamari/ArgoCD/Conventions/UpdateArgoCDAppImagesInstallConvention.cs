@@ -101,12 +101,7 @@ namespace Calamari.ArgoCD.Conventions
 
             var applicationFromYaml = argoCdApplicationManifestParser.ParseManifest(application.Manifest);
 
-            var validationResult = ValidationResult.Merge(
-                                                          ApplicationValidator.ValidateSourceNames(applicationFromYaml),
-                                                          ApplicationValidator.ValidateUnnamedAnnotationsInMultiSourceApplication(applicationFromYaml),
-                                                          ApplicationValidator.ValidateSourceTypes(applicationFromYaml)
-                                                         );
-            validationResult.Action(log);
+            ValidateApplication(applicationFromYaml);
 
             var containsMultipleSources = applicationFromYaml.Spec.Sources.Count > 1;
 
@@ -143,6 +138,16 @@ namespace Calamari.ArgoCD.Conventions
             log.InfoFormat(message, linkifiedAppName);
 
             return result;
+        }
+
+        void ValidateApplication(Application applicationFromYaml)
+        {
+            var validationResult = ValidationResult.Merge(
+                                                          ApplicationValidator.ValidateSourceNames(applicationFromYaml),
+                                                          ApplicationValidator.ValidateUnnamedAnnotationsInMultiSourceApplication(applicationFromYaml),
+                                                          ApplicationValidator.ValidateSourceTypes(applicationFromYaml)
+                                                         );
+            validationResult.Action(log);
         }
 
         ProcessApplicationSourceResult ProcessSource(ApplicationSourceWithMetadata sourceWithMetadata,
