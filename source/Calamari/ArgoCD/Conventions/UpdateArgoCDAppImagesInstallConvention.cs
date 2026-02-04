@@ -90,7 +90,7 @@ namespace Calamari.ArgoCD.Conventions
         }
 
         ProcessApplicationResult ProcessApplication(ArgoCDApplicationDto application,
-                                                    (ProjectSlug Project, EnvironmentSlug Environment, TenantSlug? Tenant) deploymentScope,
+                                                    DeploymentScope deploymentScope,
                                                     Dictionary<string, GitCredentialDto> gitCredentials,
                                                     RepositoryFactory repositoryFactory,
                                                     UpdateArgoCDAppDeploymentConfig deploymentConfig)
@@ -107,7 +107,8 @@ namespace Calamari.ArgoCD.Conventions
             var containsMultipleSources = applicationFromYaml.Spec.Sources.Count > 1;
 
             result.TotalSourceCount = applicationFromYaml.Spec.Sources.Count;
-            result.MatchingSourceCount = applicationFromYaml.Spec.Sources.Count(s => ScopingAnnotationReader.GetScopeForApplicationSource(s.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources) == deploymentScope);
+
+            result.MatchingSourceCount = applicationFromYaml.Spec.Sources.Count(s => deploymentScope.Matches(ScopingAnnotationReader.GetScopeForApplicationSource(s.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources)));
 
             var sourceResults = applicationFromYaml.GetSourcesWithMetadata()
                                                    .Select(applicationSource =>
@@ -144,7 +145,7 @@ namespace Calamari.ArgoCD.Conventions
         ProcessApplicationSourceResult ProcessSource(ApplicationSourceWithMetadata sourceWithMetadata,
                                                      Application applicationFromYaml,
                                                      bool containsMultipleSources,
-                                                     (ProjectSlug Project, EnvironmentSlug Environment, TenantSlug? Tenant) deploymentScope,
+                                                     DeploymentScope deploymentScope,
                                                      Dictionary<string, GitCredentialDto> gitCredentials,
                                                      RepositoryFactory repositoryFactory,
                                                      UpdateArgoCDAppDeploymentConfig deploymentConfig,
@@ -154,8 +155,9 @@ namespace Calamari.ArgoCD.Conventions
 
             var applicationSource = sourceWithMetadata.Source;
             var annotatedScope = ScopingAnnotationReader.GetScopeForApplicationSource(applicationSource.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources);
+
             log.LogApplicationSourceScopeStatus(annotatedScope, applicationSource.Name.ToApplicationSourceName(), deploymentScope);
-            if (annotatedScope != deploymentScope)
+            if (!deploymentScope.Matches(annotatedScope))
                 return result;
 
             switch (sourceWithMetadata.SourceType)
