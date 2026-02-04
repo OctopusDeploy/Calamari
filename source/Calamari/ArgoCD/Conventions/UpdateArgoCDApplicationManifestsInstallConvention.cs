@@ -176,7 +176,7 @@ namespace Calamari.ArgoCD.Conventions
                 return result;
             }
 
-            var gitCredential = gitCredentials.GetValueOrDefault(sourceRepository.AbsolutePath);
+            var gitCredential = gitCredentials.GetValueOrDefault(applicationSource.OriginalRepoUrl); // We use the OriginalRepoUrl since this is what is keyed against the credentials over in Server
             if (gitCredential == null)
             {
                 log.Info($"No Git credentials found for: '{sourceRepository.AbsoluteUri}', will attempt to clone repository anonymously.");

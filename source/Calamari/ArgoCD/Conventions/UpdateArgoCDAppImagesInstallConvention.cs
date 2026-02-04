@@ -431,7 +431,7 @@ namespace Calamari.ArgoCD.Conventions
         RepositoryWrapper CreateRepository(Dictionary<string, GitCredentialDto> gitCredentials, ApplicationSource source, RepositoryFactory repositoryFactory)
         {
             var repositorySource = source.CloneSafeRepoUrl;
-            var gitCredential = gitCredentials.GetValueOrDefault(repositorySource.AbsolutePath);
+            var gitCredential = gitCredentials.GetValueOrDefault(source.OriginalRepoUrl); // We use the OriginalRepoUrl since this is what is keyed against the credentials over in Server
             if (gitCredential == null)
             {
                 log.Info($"No Git credentials found for: '{repositorySource.AbsoluteUri}', will attempt to clone repository anonymously.");
