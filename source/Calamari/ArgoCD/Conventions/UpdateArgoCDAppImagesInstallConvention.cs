@@ -101,7 +101,11 @@ namespace Calamari.ArgoCD.Conventions
 
             var applicationFromYaml = argoCdApplicationManifestParser.ParseManifest(application.Manifest);
 
-            var validationResult = ApplicationValidator.Validate(applicationFromYaml);
+            var validationResult = ValidationResult.Merge(
+                                                          ApplicationValidator.ValidateSourceNames(applicationFromYaml),
+                                                          ApplicationValidator.ValidateUnnamedAnnotationsInMultiSourceApplication(applicationFromYaml),
+                                                          ApplicationValidator.ValidateSourceTypes(applicationFromYaml)
+                                                         );
             validationResult.Action(log);
 
             var containsMultipleSources = applicationFromYaml.Spec.Sources.Count > 1;

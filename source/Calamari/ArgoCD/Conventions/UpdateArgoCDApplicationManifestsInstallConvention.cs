@@ -113,7 +113,10 @@ namespace Calamari.ArgoCD.Conventions
                                                 containsMultipleSources,
                                                 deploymentScope);
 
-            var validationResult = ApplicationValidator.Validate(applicationFromYaml);
+            var validationResult = ValidationResult.Merge(
+                                                          ApplicationValidator.ValidateSourceNames(applicationFromYaml),
+                                                          ApplicationValidator.ValidateUnnamedAnnotationsInMultiSourceApplication(applicationFromYaml)
+                                                         );
             validationResult.Action(log);
 
             var sourceResults = applicationFromYaml
