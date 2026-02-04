@@ -34,10 +34,6 @@
     </PackageReference>
     <ProjectReference Include="..\Calamari.Common\Calamari.Common.csproj" />
     <ProjectReference Include="..\Calamari.Shared\Calamari.Shared.csproj" />
-    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies.net462" Version="1.0.3">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
     <PackageReference Include="Microsoft.Web.Administration" Version="11.1.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="Octokit" Version="14.0.0" />
@@ -48,9 +44,7 @@
     <PackageReference Include="SharpCompress" Version="0.37.2" />
     <PackageReference Include="System.Text.Json" Version="8.0.6" />
     <PackageReference Include="YamlDotNet" Version="16.3.0" />
-    <PackageReference Include="System.ValueTuple" Version="4.5.0" />
-    <PackageReference Include="Autofac" Version="4.8.0" />
-    <PackageReference Include="System.ComponentModel.TypeConverter" Version="4.3.0" />
+    <PackageReference Include="Autofac" Version="4.9.4" />
     <PackageReference Include="KubernetesClient" Version="17.0.14" />
     <PackageReference Include="LibGit2Sharp" Version="0.31.0" />
   </ItemGroup>

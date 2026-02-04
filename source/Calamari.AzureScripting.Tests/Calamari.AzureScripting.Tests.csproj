@@ -19,7 +19,6 @@
         <PackageReference Include="Shouldly" Version="2.8.2" />
         <PackageReference Include="Octopus.Dependencies.AzureCLI" Version="2.0.50" GeneratePathProperty="true" />
         <PackageReference Include="Octopus.Dependencies.AzureCmdlets" Version="6.13.1" GeneratePathProperty="true" />
-        <PackageReference Include="Octopus.Server.Extensibility" Version="14.3.2" />
     </ItemGroup>
     <ItemGroup>
       <ProjectReference Include="..\Calamari.AzureScripting\Calamari.AzureScripting.csproj" />
