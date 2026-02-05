@@ -134,6 +134,7 @@ namespace Calamari.ArgoCD.Conventions
 
             return new ProcessApplicationResult(applicationName.ToApplicationName())
             {
+                UpdatedSourceCount = updatedSourcesResults.Count,
                 TotalSourceCount = applicationFromYaml.Spec.Sources.Count,
                 MatchingSourceCount = applicationFromYaml.Spec.Sources.Count(s => deploymentScope.Matches(ScopingAnnotationReader.GetScopeForApplicationSource(s.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources))),
                 GitReposUpdated = updatedSourcesResults.Select(r => r.applicationSource.Source.RepoUrl.AbsoluteUri).ToHashSet(),
@@ -597,7 +598,7 @@ namespace Calamari.ArgoCD.Conventions
             public ApplicationName ApplicationName { get; }
             public HashSet<string> UpdatedImages { get; set; } = new HashSet<string>();
 
-            public int UpdatedSourceCount => GitReposUpdated.Count;
+            public int UpdatedSourceCount { get; set; }
             public bool Updated => UpdatedSourceCount > 0;
         }
     }
