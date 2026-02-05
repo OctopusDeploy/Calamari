@@ -143,6 +143,7 @@ namespace Calamari.ArgoCD.Conventions
             return result;
         }
 
+        /// <returns>Images that were updated</returns>
         HashSet<string> ProcessSource(ApplicationSourceWithMetadata sourceWithMetadata,
                                                      Application applicationFromYaml,
                                                      bool containsMultipleSources,
@@ -204,6 +205,7 @@ namespace Calamari.ArgoCD.Conventions
             }
         }
 
+        /// <returns>Images that were updated</returns>
         HashSet<string> ProcessKustomize(Dictionary<string, GitCredentialDto> gitCredentials,
                                                         RepositoryFactory repositoryFactory,
                                                         UpdateArgoCDAppDeploymentConfig deploymentConfig,
@@ -241,6 +243,7 @@ namespace Calamari.ArgoCD.Conventions
             return new HashSet<string>();
         }
 
+        /// <returns>Images that were updated</returns>
         HashSet<string> ProcessRef(Application applicationFromYaml,
                                                   Dictionary<string, GitCredentialDto> gitCredentials,
                                                   RepositoryFactory repositoryFactory,
@@ -268,7 +271,8 @@ namespace Calamari.ArgoCD.Conventions
 
             return updatedImages;
         }
-
+        
+        /// <returns>Images that were updated</returns>
         HashSet<string> ProcessDirectory(Dictionary<string, GitCredentialDto> gitCredentials,
                                                         RepositoryFactory repositoryFactory,
                                                         UpdateArgoCDAppDeploymentConfig deploymentConfig,
@@ -301,6 +305,7 @@ namespace Calamari.ArgoCD.Conventions
             return new HashSet<string>();
         }
 
+        /// <returns>Images that were updated</returns>
         HashSet<string> ProcessHelm(Application applicationFromYaml,
                                                    ApplicationSourceWithMetadata sourceWithMetadata,
                                                    Dictionary<string, GitCredentialDto> gitCredentials,
@@ -347,6 +352,7 @@ namespace Calamari.ArgoCD.Conventions
                                             valuesFilesToUpdate);
         }
 
+        /// <returns>Images that were updated</returns>
         HashSet<string> ProcessHelmUpdateTargets(RepositoryWrapper repository,
                                                  UpdateArgoCDAppDeploymentConfig deploymentConfig,
                                                  ApplicationSource source,
