@@ -91,7 +91,7 @@ namespace Calamari.ArgoCD.Conventions
         }
 
         ProcessApplicationResult ProcessApplication(ArgoCDApplicationDto application,
-                                                    (ProjectSlug Project, EnvironmentSlug Environment, TenantSlug? Tenant) deploymentScope,
+                                                    DeploymentScope deploymentScope,
                                                     Dictionary<string, GitCredentialDto> gitCredentials,
                                                     RepositoryFactory repositoryFactory,
                                                     ArgoCommitToGitConfig deploymentConfig,
@@ -105,9 +105,9 @@ namespace Calamari.ArgoCD.Conventions
             var containsMultipleSources = applicationFromYaml.Spec.Sources.Count > 1;
             var applicationName = applicationFromYaml.Metadata.Name;
 
+            
             result.TotalSourceCount = applicationFromYaml.Spec.Sources.Count;
-            result.MatchingSourceCount = applicationFromYaml.Spec.Sources.Count(s => ScopingAnnotationReader.GetScopeForApplicationSource(s.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources) == deploymentScope);
-                
+            result.MatchingSourceCount = applicationFromYaml.Spec.Sources.Count(s => deploymentScope.Matches(ScopingAnnotationReader.GetScopeForApplicationSource(s.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources)));
             LogWarningIfUpdatingMultipleSources(applicationFromYaml.Spec.Sources,
                                                 applicationFromYaml.Metadata.Annotations,
                                                 containsMultipleSources,
@@ -149,7 +149,7 @@ namespace Calamari.ArgoCD.Conventions
             return result;
         }
 
-        ProcessApplicationSourceResult ProcessSource((ProjectSlug Project, EnvironmentSlug Environment, TenantSlug? Tenant) deploymentScope,
+        ProcessApplicationSourceResult ProcessSource(DeploymentScope deploymentScope,
                                                      Dictionary<string, GitCredentialDto> gitCredentials,
                                                      RepositoryFactory repositoryFactory,
                                                      ArgoCommitToGitConfig deploymentConfig,
@@ -163,9 +163,10 @@ namespace Calamari.ArgoCD.Conventions
             ProcessApplicationSourceResult result = new ProcessApplicationSourceResult(applicationSource.RepoUrl);
 
             var annotatedScope = ScopingAnnotationReader.GetScopeForApplicationSource(applicationSource.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources);
+
             log.LogApplicationSourceScopeStatus(annotatedScope, applicationSource.Name.ToApplicationSourceName(), deploymentScope);
 
-            if (annotatedScope != deploymentScope)
+            if (!deploymentScope.Matches(annotatedScope))
                 return result;
             
             log.Info($"Writing files to repository '{applicationSource.RepoUrl}' for '{applicationName}'");
@@ -250,12 +251,12 @@ namespace Calamari.ArgoCD.Conventions
         void LogWarningIfUpdatingMultipleSources(List<ApplicationSource> sourcesToInspect,
                                                  Dictionary<string, string> applicationAnnotations,
                                                  bool containsMultipleSources,
-                                                 (ProjectSlug Project, EnvironmentSlug Environment, TenantSlug? Tenant) deploymentScope)
+                                                 DeploymentScope deploymentScope)
         {
             if (sourcesToInspect.Count > 1)
             {
                 var sourcesWithScopes = sourcesToInspect.Select(s => (s, ScopingAnnotationReader.GetScopeForApplicationSource(s.Name.ToApplicationSourceName(), applicationAnnotations, containsMultipleSources))).ToList();
-                var sourcesWithMatchingScopes = sourcesWithScopes.Where(s => s.Item2 == deploymentScope).ToList();
+                var sourcesWithMatchingScopes = sourcesWithScopes.Where(s => deploymentScope.Matches(s.Item2)).ToList();
 
                 if (sourcesWithMatchingScopes.Count > 1)
                 {
