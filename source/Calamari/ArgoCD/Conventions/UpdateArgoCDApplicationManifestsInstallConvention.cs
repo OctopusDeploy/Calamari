@@ -143,7 +143,7 @@ namespace Calamari.ArgoCD.Conventions
             {
                 TotalSourceCount = applicationFromYaml.Spec.Sources.Count,
                 MatchingSourceCount = applicationFromYaml.Spec.Sources.Count(s => deploymentScope.Matches(ScopingAnnotationReader.GetScopeForApplicationSource(s.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources))),
-                GitReposUpdated = updatedSourcesResults.Select(r => r.applicationSource.Source.RepoUrl.AbsoluteUri).ToHashSet(),
+                GitReposUpdated = updatedSourcesResults.Select(r => r.applicationSource.Source.OriginalRepoUrl).ToHashSet(),
                 UpdatedSourceCount  = updatedSourcesResults.Count,
             };
         }
@@ -166,21 +166,21 @@ namespace Calamari.ArgoCD.Conventions
             if (!deploymentScope.Matches(annotatedScope))
                 return false;
             
-            log.Info($"Writing files to repository '{applicationSource.RepoUrl}' for '{applicationName}'");
+            log.Info($"Writing files to repository '{applicationSource.OriginalRepoUrl}' for '{applicationName}'");
 
             if (!TryCalculateOutputPath(applicationSource, out var outputPath))
             {
                 return false;
             }
 
-            var gitCredential = gitCredentials.GetValueOrDefault(applicationSource.RepoUrl.AbsoluteUri);
+            var gitCredential = gitCredentials.GetValueOrDefault(applicationSource.OriginalRepoUrl);
             if (gitCredential == null)
             {
-                log.Info($"No Git credentials found for: '{applicationSource.RepoUrl.AbsoluteUri}', will attempt to clone repository anonymously.");
+                log.Info($"No Git credentials found for: '{applicationSource.OriginalRepoUrl}', will attempt to clone repository anonymously.");
             }
 
             var targetBranch = GitReference.CreateFromString(applicationSource.TargetRevision);
-            var gitConnection = new GitConnection(gitCredential?.Username, gitCredential?.Password, applicationSource.RepoUrl, targetBranch);
+            var gitConnection = new GitConnection(gitCredential?.Username, gitCredential?.Password, applicationSource.CloneSafeRepoUrl, targetBranch);
 
             using var repository = repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), gitConnection);
             log.VerboseFormat("Copying files into '{0}'", outputPath);
@@ -219,7 +219,7 @@ namespace Calamari.ArgoCD.Conventions
         bool TryCalculateOutputPath(ApplicationSource sourceToUpdate, out string outputPath)
         {
             outputPath = "";
-            var sourceIdentity = string.IsNullOrEmpty(sourceToUpdate.Name) ? sourceToUpdate.RepoUrl.ToString() : sourceToUpdate.Name;
+            var sourceIdentity = string.IsNullOrEmpty(sourceToUpdate.Name) ? sourceToUpdate.OriginalRepoUrl : sourceToUpdate.Name;
             if (sourceToUpdate.Ref != null)
             {
                 if (sourceToUpdate.Path != null)

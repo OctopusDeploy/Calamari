@@ -8,14 +8,12 @@ namespace Calamari.ArgoCD.Models
                                        ApplicationSourceName sourceName,
                                        string defaultClusterRegistry,
                                        string path,
-                                       Uri repoUrl,
                                        string targetRevision)
         {
             Name = name;
             SourceName = sourceName;
             DefaultClusterRegistry = defaultClusterRegistry;
-            Path = path;
-            RepoUrl = repoUrl;
+            Path = path; 
             TargetRevision = targetRevision;
         }
 
@@ -24,7 +22,6 @@ namespace Calamari.ArgoCD.Models
         public ApplicationSourceName SourceName { get; }
         public string DefaultClusterRegistry { get; }
         public string Path { get; }
-        public Uri RepoUrl { get; }
         public string TargetRevision { get; }
     }
 }

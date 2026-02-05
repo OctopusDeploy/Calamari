@@ -137,7 +137,7 @@ namespace Calamari.ArgoCD.Conventions
                 UpdatedSourceCount = updatedSourcesResults.Count,
                 TotalSourceCount = applicationFromYaml.Spec.Sources.Count,
                 MatchingSourceCount = applicationFromYaml.Spec.Sources.Count(s => deploymentScope.Matches(ScopingAnnotationReader.GetScopeForApplicationSource(s.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources))),
-                GitReposUpdated = updatedSourcesResults.Select(r => r.applicationSource.Source.RepoUrl.AbsoluteUri).ToHashSet(),
+                GitReposUpdated = updatedSourcesResults.Select(r => r.applicationSource.Source.OriginalRepoUrl).ToHashSet(),
                 UpdatedImages = updatedSourcesResults.SelectMany(r => r.Updated).ToHashSet()
             };
         }
@@ -418,13 +418,13 @@ namespace Calamari.ArgoCD.Conventions
 
         RepositoryWrapper CreateRepository(Dictionary<string, GitCredentialDto> gitCredentials, ApplicationSource source, RepositoryFactory repositoryFactory)
         {
-            var gitCredential = gitCredentials.GetValueOrDefault(source.RepoUrl.AbsoluteUri);
+            var gitCredential = gitCredentials.GetValueOrDefault(source.OriginalRepoUrl);
             if (gitCredential == null)
             {
-                log.Info($"No Git credentials found for: '{source.RepoUrl.AbsoluteUri}', will attempt to clone repository anonymously.");
+                log.Info($"No Git credentials found for: '{source.OriginalRepoUrl}', will attempt to clone repository anonymously.");
             }
 
-            var gitConnection = new GitConnection(gitCredential?.Username, gitCredential?.Password, new Uri(source.RepoUrl.AbsoluteUri), GitReference.CreateFromString(source.TargetRevision));
+            var gitConnection = new GitConnection(gitCredential?.Username, gitCredential?.Password, source.CloneSafeRepoUrl, GitReference.CreateFromString(source.TargetRevision));
             return repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), gitConnection);
         }
 
@@ -442,13 +442,8 @@ namespace Calamari.ArgoCD.Conventions
                 return (null, new HelmSourceIsMissingImagePathAnnotation(applicationSource.SourceIdentity));
             }
 
-            return (new HelmValuesFileImageUpdateTarget(
-                                                        applicationFromYaml.Metadata.Name.ToApplicationName(),
-                                                        applicationSource.Source.Name.ToApplicationSourceName(),
-                                                        defaultRegistry,
+            return (new HelmValuesFileImageUpdateTarget(defaultRegistry,
                                                         applicationSource.Source.Path,
-                                                        applicationSource.Source.RepoUrl,
-                                                        applicationSource.Source.TargetRevision,
                                                         valuesFilename,
                                                         imageReplacePaths), null);
         }

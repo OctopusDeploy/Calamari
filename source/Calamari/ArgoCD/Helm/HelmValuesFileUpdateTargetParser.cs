@@ -55,12 +55,8 @@ namespace Calamari.ArgoCD.Helm
                 return (null, new HelmSourceIsMissingImagePathAnnotation(source.SourceIdentity));
             }
 
-            return (new HelmValuesFileImageUpdateTarget(appName,
-                                                        source.Source.Name?.ToApplicationSourceName(),
-                                                        defaultRegistry,
+            return (new HelmValuesFileImageUpdateTarget(defaultRegistry,
                                                         source.Source.Path,
-                                                        source.Source.RepoUrl,
-                                                        source.Source.TargetRevision,
                                                         file,
                                                         definedPathsForSource), null);
         }
@@ -101,12 +97,8 @@ namespace Calamari.ArgoCD.Helm
 
                 var relativeFile = valueFile[(valueFile.IndexOf('/') + 1)..];
 
-                return (new HelmValuesFileImageUpdateTarget(appName,
-                                                                refSource.Source.Name.ToApplicationSourceName(),
-                                                                defaultRegistry,
+                return (new HelmValuesFileImageUpdateTarget(defaultRegistry,
                                                                 ArgoCDConstants.RefSourcePath,
-                                                                refSource.Source.RepoUrl,
-                                                                refSource.Source.TargetRevision,
                                                                 relativeFile,
                                                                 definedPathsForSource), null);
             }
