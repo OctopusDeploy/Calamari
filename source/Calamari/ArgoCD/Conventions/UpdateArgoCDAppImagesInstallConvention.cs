@@ -110,22 +110,23 @@ namespace Calamari.ArgoCD.Conventions
 
             result.MatchingSourceCount = applicationFromYaml.Spec.Sources.Count(s => deploymentScope.Matches(ScopingAnnotationReader.GetScopeForApplicationSource(s.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources)));
 
-            var sourceResults = applicationFromYaml.GetSourcesWithMetadata()
-                                                   .Select(applicationSource =>
-                                                               ProcessSource(applicationSource,
-                                                                             applicationFromYaml,
-                                                                             containsMultipleSources,
-                                                                             deploymentScope,
-                                                                             gitCredentials,
-                                                                             repositoryFactory,
-                                                                             deploymentConfig,
-                                                                             application.DefaultRegistry))
-                                                   .ToList();
+            var updatedSourcesResults = applicationFromYaml.GetSourcesWithMetadata()
+                                                           .Select(applicationSource => new
+                                                           {
+                                                               Updated = ProcessSource(applicationSource,
+                                                                                       applicationFromYaml,
+                                                                                       containsMultipleSources,
+                                                                                       deploymentScope,
+                                                                                       gitCredentials,
+                                                                                       repositoryFactory,
+                                                                                       deploymentConfig,
+                                                                                       application.DefaultRegistry),
+                                                               applicationSource,
+                                                           }).Where(r => r.Updated.Any()).ToList();
 
-            var updatedSourcesResults = sourceResults.Where(r => r.Updated).ToList();
             result.UpdatedSourceCount = updatedSourcesResults.Count;
-            result.GitReposUpdated.AddRange(updatedSourcesResults.Select(r => r.RepositoryUrl.AbsoluteUri));
-            result.UpdatedImages.AddRange(updatedSourcesResults.SelectMany(r => r.UpdatedImages));
+            result.GitReposUpdated.AddRange(updatedSourcesResults.Select(r => r.applicationSource.Source.RepoUrl.AbsoluteUri));
+            result.UpdatedImages.AddRange(updatedSourcesResults.SelectMany(r => r.Updated));
 
             //if we have links, use that to generate a link, otherwise just put the name there
             var instanceLinks = application.InstanceWebUiUrl != null ? new ArgoCDInstanceLinks(application.InstanceWebUiUrl) : null;
@@ -142,7 +143,8 @@ namespace Calamari.ArgoCD.Conventions
             return result;
         }
 
-        ProcessApplicationSourceResult ProcessSource(ApplicationSourceWithMetadata sourceWithMetadata,
+        /// <returns>Images that were updated</returns>
+        HashSet<string> ProcessSource(ApplicationSourceWithMetadata sourceWithMetadata,
                                                      Application applicationFromYaml,
                                                      bool containsMultipleSources,
                                                      DeploymentScope deploymentScope,
@@ -151,14 +153,13 @@ namespace Calamari.ArgoCD.Conventions
                                                      UpdateArgoCDAppDeploymentConfig deploymentConfig,
                                                      string defaultRegistry)
         {
-            var result = new ProcessApplicationSourceResult(sourceWithMetadata.Source.RepoUrl);
 
             var applicationSource = sourceWithMetadata.Source;
             var annotatedScope = ScopingAnnotationReader.GetScopeForApplicationSource(applicationSource.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources);
 
             log.LogApplicationSourceScopeStatus(annotatedScope, applicationSource.Name.ToApplicationSourceName(), deploymentScope);
             if (!deploymentScope.Matches(annotatedScope))
-                return result;
+                return new HashSet<string>();
 
             switch (sourceWithMetadata.SourceType)
             {
@@ -197,14 +198,15 @@ namespace Calamari.ArgoCD.Conventions
                 case SourceType.Plugin:
                 {
                     log.WarnFormat("Unable to update source '{0}' as Plugin sources aren't currently supported.", sourceWithMetadata.SourceIdentity);
-                    return result;
+                    return new HashSet<string>();
                 }
                 default:
                     throw new ArgumentOutOfRangeException();
             }
         }
 
-        ProcessApplicationSourceResult ProcessKustomize(Dictionary<string, GitCredentialDto> gitCredentials,
+        /// <returns>Images that were updated</returns>
+        HashSet<string> ProcessKustomize(Dictionary<string, GitCredentialDto> gitCredentials,
                                                         RepositoryFactory repositoryFactory,
                                                         UpdateArgoCDAppDeploymentConfig deploymentConfig,
                                                         ApplicationSourceWithMetadata sourceWithMetadata,
@@ -212,11 +214,10 @@ namespace Calamari.ArgoCD.Conventions
         {
             var applicationSource = sourceWithMetadata.Source;
 
-            ProcessApplicationSourceResult result = new ProcessApplicationSourceResult(applicationSource.RepoUrl);
             if (applicationSource.Path == null)
             {
                 log.WarnFormat("Unable to update source '{0}' as a path has not been specified.", sourceWithMetadata.SourceIdentity);
-                return result;
+                return new HashSet<string>();
             }
 
             using (var repository = CreateRepository(gitCredentials, applicationSource, repositoryFactory))
@@ -234,15 +235,16 @@ namespace Calamari.ArgoCD.Conventions
 
                     if (didPush)
                     {
-                        result.UpdatedImages = updatedImages;
+                        return updatedImages;
                     }
                 }
             }
 
-            return result;
+            return new HashSet<string>();
         }
 
-        ProcessApplicationSourceResult ProcessRef(Application applicationFromYaml,
+        /// <returns>Images that were updated</returns>
+        HashSet<string> ProcessRef(Application applicationFromYaml,
                                                   Dictionary<string, GitCredentialDto> gitCredentials,
                                                   RepositoryFactory repositoryFactory,
                                                   UpdateArgoCDAppDeploymentConfig deploymentConfig,
@@ -250,8 +252,7 @@ namespace Calamari.ArgoCD.Conventions
                                                   string defaultRegistry)
         {
             var applicationSource = sourceWithMetadata.Source;
-
-            ProcessApplicationSourceResult result = new ProcessApplicationSourceResult(applicationSource.RepoUrl);
+            
             if (applicationSource.Path != null)
             {
                 log.WarnFormat("The source '{0}' contains a Ref, only referenced files will be updated. Please create another source with the same URL if you wish to update files under the path.", sourceWithMetadata.SourceIdentity);
@@ -262,32 +263,27 @@ namespace Calamari.ArgoCD.Conventions
 
             LogHelmSourceConfigurationProblems(helmTargetsForRefSource.Problems);
 
-            using (var repository = CreateRepository(gitCredentials, applicationSource, repositoryFactory))
-            {
-                var updatedImages = ProcessHelmUpdateTargets(repository,
-                                                             deploymentConfig,
-                                                             applicationSource,
-                                                             helmTargetsForRefSource.Targets);
+            using var repository = CreateRepository(gitCredentials, applicationSource, repositoryFactory);
+            var updatedImages = ProcessHelmUpdateTargets(repository,
+                                                         deploymentConfig,
+                                                         applicationSource,
+                                                         helmTargetsForRefSource.Targets);
 
-                result.UpdatedImages.AddRange(updatedImages);
-            }
-
-            return result;
+            return updatedImages;
         }
-
-        ProcessApplicationSourceResult ProcessDirectory(Dictionary<string, GitCredentialDto> gitCredentials,
+        
+        /// <returns>Images that were updated</returns>
+        HashSet<string> ProcessDirectory(Dictionary<string, GitCredentialDto> gitCredentials,
                                                         RepositoryFactory repositoryFactory,
                                                         UpdateArgoCDAppDeploymentConfig deploymentConfig,
                                                         ApplicationSourceWithMetadata sourceWithMetadata,
                                                         string defaultRegistry)
         {
             var applicationSource = sourceWithMetadata.Source;
-            ProcessApplicationSourceResult result = new ProcessApplicationSourceResult(applicationSource.RepoUrl);
-
             if (applicationSource.Path == null)
             {
                 log.WarnFormat("Unable to update source '{0}' as a path has not been specified.", sourceWithMetadata.SourceIdentity);
-                return result;
+                return new HashSet<string>();
             }
 
             using (var repository = CreateRepository(gitCredentials, applicationSource, repositoryFactory))
@@ -303,19 +299,14 @@ namespace Calamari.ArgoCD.Conventions
                                                updatedFiles,
                                                updatedImages);
 
-                    if (didPush)
-                    {
-                        result.UpdatedImages.AddRange(updatedImages);
-                    }
-
-                    return result;
+                    return didPush ? updatedImages : new HashSet<string>();
                 }
             }
-
-            return result;
+            return new HashSet<string>();
         }
 
-        ProcessApplicationSourceResult ProcessHelm(Application applicationFromYaml,
+        /// <returns>Images that were updated</returns>
+        HashSet<string> ProcessHelm(Application applicationFromYaml,
                                                    ApplicationSourceWithMetadata sourceWithMetadata,
                                                    Dictionary<string, GitCredentialDto> gitCredentials,
                                                    RepositoryFactory repositoryFactory,
@@ -323,12 +314,11 @@ namespace Calamari.ArgoCD.Conventions
                                                    string defaultRegistry)
         {
             var applicationSource = sourceWithMetadata.Source;
-            ProcessApplicationSourceResult result = new ProcessApplicationSourceResult(applicationSource.RepoUrl);
-
+            
             if (applicationSource.Path == null)
             {
                 log.WarnFormat("Unable to update source '{0}' as a path has not been specified.", sourceWithMetadata.SourceIdentity);
-                return result;
+                return new HashSet<string>();
             }
 
             var explicitHelmSources = new HelmValuesFileUpdateTargetParser(applicationFromYaml, defaultRegistry)
@@ -338,34 +328,31 @@ namespace Calamari.ArgoCD.Conventions
             var valueFileProblems = new HashSet<HelmSourceConfigurationProblem>(explicitHelmSources.Problems);
 
             //Add the implicit value file if needed
-            using (var repository = CreateRepository(gitCredentials, applicationSource, repositoryFactory))
+            using var repository = CreateRepository(gitCredentials, applicationSource, repositoryFactory);
+            var repoSubPath = Path.Combine(repository.WorkingDirectory, applicationSource.Path!);
+            var implicitValuesFile = HelmDiscovery.TryFindValuesFile(fileSystem, repoSubPath);
+            if (implicitValuesFile != null && explicitHelmSources.Targets.None(t => t.FileName == implicitValuesFile))
             {
-                var repoSubPath = Path.Combine(repository.WorkingDirectory, applicationSource.Path!);
-                var implicitValuesFile = HelmDiscovery.TryFindValuesFile(fileSystem, repoSubPath);
-                if (implicitValuesFile != null && explicitHelmSources.Targets.None(t => t.FileName == implicitValuesFile))
-                {
-                    var (target, problem) = AddImplicitValuesFile(applicationFromYaml,
-                                                                  sourceWithMetadata,
-                                                                  implicitValuesFile,
-                                                                  defaultRegistry);
-                    if (target != null)
-                        valuesFilesToUpdate.Add(target);
+                var (target, problem) = AddImplicitValuesFile(applicationFromYaml,
+                                                              sourceWithMetadata,
+                                                              implicitValuesFile,
+                                                              defaultRegistry);
+                if (target != null)
+                    valuesFilesToUpdate.Add(target);
 
-                    if (problem != null)
-                        valueFileProblems.Add(problem);
-                }
-
-                LogHelmSourceConfigurationProblems(valueFileProblems);
-
-                result.UpdatedImages.AddRange(ProcessHelmUpdateTargets(repository,
-                                                                       deploymentConfig,
-                                                                       applicationSource,
-                                                                       valuesFilesToUpdate));
+                if (problem != null)
+                    valueFileProblems.Add(problem);
             }
 
-            return result;
+            LogHelmSourceConfigurationProblems(valueFileProblems);
+
+            return ProcessHelmUpdateTargets(repository,
+                                            deploymentConfig,
+                                            applicationSource,
+                                            valuesFilesToUpdate);
         }
 
+        /// <returns>Images that were updated</returns>
         HashSet<string> ProcessHelmUpdateTargets(RepositoryWrapper repository,
                                                  UpdateArgoCDAppDeploymentConfig deploymentConfig,
                                                  ApplicationSource source,
@@ -596,19 +583,6 @@ namespace Calamari.ArgoCD.Conventions
         {
             var yamlFileGlob = "**/*.{yaml,yml}";
             return fileSystem.EnumerateFilesWithGlob(rootPath, yamlFileGlob);
-        }
-
-        class ProcessApplicationSourceResult
-        {
-            public Uri RepositoryUrl { get; }
-
-            public ProcessApplicationSourceResult(Uri repositoryUrl)
-            {
-                RepositoryUrl = repositoryUrl;
-            }
-
-            public bool Updated => UpdatedImages.Any();
-            public HashSet<string> UpdatedImages { get; set; } = new HashSet<string>();
         }
 
         class ProcessApplicationResult
