@@ -10,6 +10,7 @@ using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.Git.GitVendorApiAdapters;
 using Calamari.ArgoCD.Models;
 using Calamari.Common.Commands;
+using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
@@ -75,11 +76,11 @@ namespace Calamari.ArgoCD.Conventions
                                                                                          deploymentConfig,
                                                                                          packageFiles))
                                                .ToList();
-            
+
             var gitReposUpdated = applicationResults.SelectMany(r => r.GitReposUpdated).ToHashSet();
             var totalApplicationsWithSourceCounts = applicationResults.Select(r => (r.ApplicationName, r.TotalSourceCount, r.MatchingSourceCount)).ToList();
             var updatedApplicationsWithSources = applicationResults.Where(r => r.UpdatedSourceCount > 0).Select(r => (r.ApplicationName, r.UpdatedSourceCount)).ToList();
-            
+
             var gatewayIds = argoProperties.Applications.Select(a => a.GatewayId).ToHashSet();
             var outputWriter = new ArgoCDOutputVariablesWriter(log);
             outputWriter.WriteManifestUpdateOutput(gatewayIds,
@@ -105,7 +106,7 @@ namespace Calamari.ArgoCD.Conventions
             var containsMultipleSources = applicationFromYaml.Spec.Sources.Count > 1;
             var applicationName = applicationFromYaml.Metadata.Name;
 
-            
+
             result.TotalSourceCount = applicationFromYaml.Spec.Sources.Count;
             result.MatchingSourceCount = applicationFromYaml.Spec.Sources.Count(s => deploymentScope.Matches(ScopingAnnotationReader.GetScopeForApplicationSource(s.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources)));
             LogWarningIfUpdatingMultipleSources(applicationFromYaml.Spec.Sources,
@@ -134,11 +135,11 @@ namespace Calamari.ArgoCD.Conventions
                                  .Where(u => u.Updated)
                                  .Select(u => u.sourceWithMetadata.Source.RepoUrl.AbsoluteUri)
                                  .ToList();
-            
+
             var didUpdateSomething = sourceResults.Any();
             result.UpdatedSourceCount = sourceResults.Count();
             result.GitReposUpdated.AddRange(sourceResults.Select(r => r));
-                
+
             //if we have links, use that to generate a link, otherwise just put the name there
             var instanceLinks = application.InstanceWebUiUrl != null ? new ArgoCDInstanceLinks(application.InstanceWebUiUrl) : null;
             var linkifiedAppName = instanceLinks != null
@@ -171,7 +172,7 @@ namespace Calamari.ArgoCD.Conventions
 
             if (!deploymentScope.Matches(annotatedScope))
                 return false;
-            
+
             log.Info($"Writing files to repository '{applicationSource.RepoUrl}' for '{applicationName}'");
 
             if (!TryCalculateOutputPath(applicationSource, out var outputPath))
@@ -199,6 +200,8 @@ namespace Calamari.ArgoCD.Conventions
             var filesToCopy = packageFiles.Select(f => new FileCopySpecification(f, repository.WorkingDirectory, outputPath)).ToList();
             CopyFiles(filesToCopy);
 
+            var fileHashes = filesToCopy.Select(f => (f.DestinationRelativePath, HashCalculator.Hash(f.DestinationAbsolutePath))).ToList();
+
             log.Info("Staging files in repository");
             repository.StageFiles(filesToCopy.Select(fcs => fcs.DestinationRelativePath).ToArray());
 
@@ -214,6 +217,7 @@ namespace Calamari.ArgoCD.Conventions
                           .GetAwaiter()
                           .GetResult();
 
+                // return file hashes
                 return true;
             }
 
@@ -236,7 +240,7 @@ namespace Calamari.ArgoCD.Conventions
                 }
                 return true;
             }
-                        
+
             if (sourceToUpdate.Path == null)
             {
                 log.WarnFormat("Unable to update source '{0}' as a path has not been specified.", sourceIdentity);

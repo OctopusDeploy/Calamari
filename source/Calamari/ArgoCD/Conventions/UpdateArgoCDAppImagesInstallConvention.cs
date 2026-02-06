@@ -16,6 +16,7 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.Time;
+using LibGit2Sharp;
 using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.ArgoCD.Conventions
@@ -252,7 +253,7 @@ namespace Calamari.ArgoCD.Conventions
                                                   string defaultRegistry)
         {
             var applicationSource = sourceWithMetadata.Source;
-            
+
             if (applicationSource.Path != null)
             {
                 log.WarnFormat("The source '{0}' contains a Ref, only referenced files will be updated. Please create another source with the same URL if you wish to update files under the path.", sourceWithMetadata.SourceIdentity);
@@ -271,7 +272,7 @@ namespace Calamari.ArgoCD.Conventions
 
             return updatedImages;
         }
-        
+
         /// <returns>Images that were updated</returns>
         HashSet<string> ProcessDirectory(Dictionary<string, GitCredentialDto> gitCredentials,
                                                         RepositoryFactory repositoryFactory,
@@ -314,7 +315,7 @@ namespace Calamari.ArgoCD.Conventions
                                                    string defaultRegistry)
         {
             var applicationSource = sourceWithMetadata.Source;
-            
+
             if (applicationSource.Path == null)
             {
                 log.WarnFormat("Unable to update source '{0}' as a path has not been specified.", sourceWithMetadata.SourceIdentity);
@@ -514,6 +515,8 @@ namespace Calamari.ArgoCD.Conventions
                     {
                         log.Verbose($"Updated image reference: {change}");
                     }
+
+                    // JSON Patch between content and imageReplacementResult.UpdatedContents
                 }
                 else
                 {
@@ -557,6 +560,13 @@ namespace Calamari.ArgoCD.Conventions
                           HashSet<string> updatedFiles,
                           HashSet<string> updatedImages)
         {
+            var gitPatches = new List<(string, string)>();
+            foreach (var c in repository.Diff.Compare<TreeChanges>())
+            {
+                var patch = repository.Diff.Compare<Patch>(new List<string> { c.Path });
+                gitPatches.Add((c.Path, patch));
+            }
+
             log.Info("Staging files in repository");
             repository.StageFiles(updatedFiles.ToArray());
 

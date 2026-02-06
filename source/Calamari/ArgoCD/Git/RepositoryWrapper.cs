@@ -102,7 +102,7 @@ namespace Calamari.ArgoCD.Git
             var currentBranchName = repository.GetBranchName(branchName);
             var commit = repository.Head.Tip; // We should have just pushed to the tip of this branch
 
-            var pushToBranchName = requiresPullRequest ? 
+            var pushToBranchName = requiresPullRequest ?
                 CalculateBranchName() :
                 currentBranchName;
 
@@ -111,15 +111,15 @@ namespace Calamari.ArgoCD.Git
 
             if (vendorApiAdapter != null)
             {
-                
+
                 var url = vendorApiAdapter.GenerateCommitUrl(commit.Sha);
-                log.Info($"Commit {log.FormatLink(url, commit.ShortSha())} pushed");    
+                log.Info($"Commit {log.FormatLink(url, commit.ShortSha())} pushed");
             }
             else
             {
-                log.Info($"Commit {commit.ShortSha()} pushed");    
+                log.Info($"Commit {commit.ShortSha()} pushed");
             }
-            
+
             if (requiresPullRequest)
             {
                 await CreatePullRequest(summary, description, cancellationToken, pushToBranchName, currentBranchName);
@@ -132,13 +132,13 @@ namespace Calamari.ArgoCD.Git
                                      GitBranchName pushToBranchName,
                                      GitBranchName currentBranchName)
         {
-            
-            
+
+
             if (vendorApiAdapter == null)
             {
                 throw new CommandException("No Git provider can be resolved based on the provided repository details");
             }
-            
+
             try
             {
                 log.Verbose($"Attempting to create pull request to {connection.Url}");
@@ -147,7 +147,7 @@ namespace Calamari.ArgoCD.Git
                                                                            pushToBranchName,
                                                                            currentBranchName,
                                                                            cancellationToken);
-                
+
                 log.SetOutputVariableButDoNotAddToVariables("PullRequest.Title", pullRequest.Title);
                 log.SetOutputVariableButDoNotAddToVariables("PullRequest.Number", pullRequest.Number.ToString());
                 log.SetOutputVariableButDoNotAddToVariables("PullRequest.Url", pullRequest.Url);
@@ -179,7 +179,7 @@ namespace Calamari.ArgoCD.Git
                                           new UsernamePasswordCredentials { Username = connection.Username, Password = connection.Password },
                 OnPushStatusError = errors => errorsDetected = errors
             };
-            
+
             repository.Network.Push(repository.Head, pushOptions);
             if (errorsDetected != null)
             {
@@ -218,5 +218,7 @@ namespace Calamari.ArgoCD.Git
                 log.VerboseFormat("Failed to delete local repository.{0}{1}", Environment.NewLine, e);
             }
         }
+
+        public Diff Diff => repository.Diff;
     }
 }
