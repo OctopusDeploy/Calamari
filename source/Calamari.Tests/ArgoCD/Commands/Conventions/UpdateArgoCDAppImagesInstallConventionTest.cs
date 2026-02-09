@@ -83,7 +83,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                             })
                                             .WithSource(new ApplicationSource()
                                             {
-                                                RepoUrl = new Uri(OriginPath),
+                                                OriginalRepoUrl = OriginPath,
                                                 Path = "",
                                                 TargetRevision = ArgoCDBranchFriendlyName,
                                             }, SourceTypeConstants.Directory)
@@ -138,7 +138,7 @@ images:
                                             })
                                             .WithSource(new ApplicationSource()
                                             {
-                                                RepoUrl = new Uri(OriginPath),
+                                                OriginalRepoUrl = OriginPath,
                                                 Path = "",
                                                 TargetRevision = ArgoCDBranchFriendlyName,
                                             }, SourceTypeConstants.Plugin)
@@ -381,7 +381,7 @@ spec:
                                             })
                                             .WithSource(new ApplicationSource()
                                             {
-                                                RepoUrl = new Uri(OriginPath),
+                                                OriginalRepoUrl = OriginPath,
                                                 TargetRevision = ArgoCDBranchFriendlyName,
                                             }, SourceTypeConstants.Directory)
                                             .Build();
@@ -446,7 +446,7 @@ images:
                                             })
                                             .WithSource(new ApplicationSource()
                                             {
-                                                RepoUrl = new Uri(OriginPath),
+                                                OriginalRepoUrl = OriginPath,
                                                 TargetRevision = ArgoCDBranchFriendlyName,
                                             }, SourceTypeConstants.Kustomize)
                                             .Build();
@@ -511,7 +511,7 @@ images:
                                             })
                                             .WithSource(new ApplicationSource()
                                             {
-                                                RepoUrl = new Uri(OriginPath),
+                                                OriginalRepoUrl = OriginPath,
                                                 Path = "",
                                                 TargetRevision = ArgoCDBranchFriendlyName,
                                             }, SourceTypeConstants.Kustomize)
@@ -599,7 +599,7 @@ spec:
                                             })
                                             .WithSource(new ApplicationSource()
                                             {
-                                                RepoUrl = new Uri(OriginPath),
+                                                OriginalRepoUrl = OriginPath,
                                                 Path = "",
                                                 TargetRevision = ArgoCDBranchFriendlyName,
                                             }, SourceTypeConstants.Kustomize)
@@ -634,7 +634,7 @@ spec:
             using var _ = new AssertionScope();
             var serviceMessages = log.Messages.GetServiceMessagesOfType("setVariable");
             serviceMessages.GetPropertyValue("ArgoCD.GatewayIds").Should().Be(GatewayId);
-            serviceMessages.GetPropertyValue("ArgoCD.GitUris").Should().Be(updated ? new Uri(OriginPath).AbsoluteUri : string.Empty);
+            serviceMessages.GetPropertyValue("ArgoCD.GitUris").Should().Be(updated ? OriginPath : string.Empty);
             serviceMessages.GetPropertyValue("ArgoCD.UpdatedImages").Should().Be(updated ? "1" : "0");
             serviceMessages.GetPropertyValue("ArgoCD.MatchingApplications").Should().Be("App1");
             serviceMessages.GetPropertyValue("ArgoCD.MatchingApplicationTotalSourceCounts").Should().Be(matchingApplicationTotalSourceCounts);

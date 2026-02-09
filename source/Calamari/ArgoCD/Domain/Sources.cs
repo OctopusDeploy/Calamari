@@ -1,12 +1,23 @@
 using System;
 using System.Text.Json.Serialization;
+using Calamari.ArgoCD.Git;
 
 namespace Calamari.ArgoCD.Domain
 {
     public class ApplicationSource
     {
+        string originalRepoUrl = string.Empty;
         [JsonPropertyName("repoURL")]
-        public Uri RepoUrl { get; set; } = new Uri("about:blank");
+        public string OriginalRepoUrl {
+            get => originalRepoUrl;
+            set
+            {
+                originalRepoUrl = value;
+                CloneSafeRepoUrl = GitCloneSafeUrl.FromString(value);
+            }
+        }
+
+        public Uri CloneSafeRepoUrl { get; private set; }
     
         [JsonPropertyName("targetRevision")]
         public string TargetRevision { get; set; } = string.Empty;
