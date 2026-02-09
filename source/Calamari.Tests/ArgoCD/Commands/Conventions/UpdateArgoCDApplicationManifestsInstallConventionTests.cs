@@ -133,7 +133,8 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                                                                    argoCdApplicationManifestParser,
                                                                                    new ArgoCDManifestsFileMatcher(fileSystem),
                                                                                    Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
-                                                                                   new SystemClock());
+                                                                                   new SystemClock(),
+                                                                      Substitute.For<IArgoCDDeploymentReporter>());
             convention.Install(runningDeployment);
 
             var resultPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
@@ -185,7 +186,8 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                                                                    argoCdApplicationManifestParser,
                                                                                    new ArgoCDManifestsFileMatcher(fileSystem),
                                                                                    Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
-                                                                                   new SystemClock());
+                                                                                   new SystemClock(),
+                                                                      Substitute.For<IArgoCDDeploymentReporter>());
             convention.Install(runningDeployment);
 
             // Assert
@@ -253,7 +255,8 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                                                                    argoCdApplicationManifestParser,
                                                                                    new ArgoCDManifestsFileMatcher(fileSystem),
                                                                                    Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
-                                                                                   new SystemClock());
+                                                                                   new SystemClock(),
+                                                                      Substitute.For<IArgoCDDeploymentReporter>());
 
             convention.Install(runningDeployment);
 
@@ -328,7 +331,8 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                                                                    argoCdApplicationManifestParser,
                                                                                    new ArgoCDManifestsFileMatcher(fileSystem),
                                                                                    Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
-                                                                                   new SystemClock());
+                                                                                   new SystemClock(),
+                                                                      Substitute.For<IArgoCDDeploymentReporter>());
 
             convention.Install(runningDeployment);
 
@@ -405,7 +409,8 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                                                                    argoCdApplicationManifestParser,
                                                                                    new ArgoCDManifestsFileMatcher(fileSystem),
                                                                                    Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
-                                                                                   new SystemClock());
+                                                                                   new SystemClock(),
+                                                                      Substitute.For<IArgoCDDeploymentReporter>());
 
             convention.Install(runningDeployment);
 

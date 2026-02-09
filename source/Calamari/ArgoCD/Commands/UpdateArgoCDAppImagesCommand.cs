@@ -53,15 +53,16 @@ namespace Calamari.ArgoCD.Commands
             Options.Parse(commandLineArguments);
             var clock = new SystemClock();
             var runningDeployment = new RunningDeployment(null, variables);
+            var reporter = new ArgoCDDeploymentReporter(log);
 
             var conventions = new List<IConvention>
             {
-                new UpdateArgoCDAppImagesInstallConvention(log, fileSystem, configFactory, commitMessageGenerator, new CustomPropertiesLoader(fileSystem, customPropertiesFile, customPropertiesPassword), new ArgoCdApplicationManifestParser(), gitVendorAgnosticApiAdapterFactory, clock),
+                new UpdateArgoCDAppImagesInstallConvention(log, fileSystem, configFactory, commitMessageGenerator, new CustomPropertiesLoader(fileSystem, customPropertiesFile, customPropertiesPassword), new ArgoCdApplicationManifestParser(), gitVendorAgnosticApiAdapterFactory, clock, reporter),
             };
-                
+
             var conventionRunner = new ConventionProcessor(runningDeployment, conventions, log);
             conventionRunner.RunConventions(logExceptions: false);
-            
+
             return 0;
         }
     }
