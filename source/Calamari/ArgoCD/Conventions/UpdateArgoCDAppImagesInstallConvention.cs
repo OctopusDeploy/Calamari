@@ -96,19 +96,12 @@ namespace Calamari.ArgoCD.Conventions
                                                     UpdateArgoCDAppDeploymentConfig deploymentConfig)
         {
             log.InfoFormat("Processing application {0}", application.Name);
-
-            var result = new ProcessApplicationResult(application.Name.ToApplicationName());
-
             var applicationFromYaml = argoCdApplicationManifestParser.ParseManifest(application.Manifest);
-
+            var containsMultipleSources = applicationFromYaml.Spec.Sources.Count > 1;
+            var applicationName = applicationFromYaml.Metadata.Name;
+            
             var validationResult = ApplicationValidator.Validate(applicationFromYaml);
             validationResult.Action(log);
-
-            var containsMultipleSources = applicationFromYaml.Spec.Sources.Count > 1;
-
-            result.TotalSourceCount = applicationFromYaml.Spec.Sources.Count;
-
-            result.MatchingSourceCount = applicationFromYaml.Spec.Sources.Count(s => deploymentScope.Matches(ScopingAnnotationReader.GetScopeForApplicationSource(s.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources)));
 
             var updatedSourcesResults = applicationFromYaml.GetSourcesWithMetadata()
                                                            .Select(applicationSource => new
@@ -122,17 +115,16 @@ namespace Calamari.ArgoCD.Conventions
                                                                                        deploymentConfig,
                                                                                        application.DefaultRegistry),
                                                                applicationSource,
-                                                           }).Where(r => r.Updated.Any()).ToList();
+                                                           })
+                                                           .Where(r => r.Updated.Any())
+                                                           .ToList();
 
-            result.UpdatedSourceCount = updatedSourcesResults.Count;
-            result.GitReposUpdated.AddRange(updatedSourcesResults.Select(r => r.applicationSource.Source.RepoUrl.AbsoluteUri));
-            result.UpdatedImages.AddRange(updatedSourcesResults.SelectMany(r => r.Updated));
 
             //if we have links, use that to generate a link, otherwise just put the name there
             var instanceLinks = application.InstanceWebUiUrl != null ? new ArgoCDInstanceLinks(application.InstanceWebUiUrl) : null;
             var linkifiedAppName = instanceLinks != null
-                ? log.FormatLink(instanceLinks.ApplicationDetails(application.Name, application.KubernetesNamespace), application.Name)
-                : application.Name;
+                ? log.FormatLink(instanceLinks.ApplicationDetails(applicationName, application.KubernetesNamespace), applicationName)
+                : applicationName;
 
             var message = updatedSourcesResults.Any()
                 ? "Updated Application {0}"
@@ -140,7 +132,14 @@ namespace Calamari.ArgoCD.Conventions
 
             log.InfoFormat(message, linkifiedAppName);
 
-            return result;
+            return new ProcessApplicationResult(applicationName.ToApplicationName())
+            {
+                UpdatedSourceCount = updatedSourcesResults.Count,
+                TotalSourceCount = applicationFromYaml.Spec.Sources.Count,
+                MatchingSourceCount = applicationFromYaml.Spec.Sources.Count(s => deploymentScope.Matches(ScopingAnnotationReader.GetScopeForApplicationSource(s.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources))),
+                GitReposUpdated = updatedSourcesResults.Select(r => r.applicationSource.Source.RepoUrl.AbsoluteUri).ToHashSet(),
+                UpdatedImages = updatedSourcesResults.SelectMany(r => r.Updated).ToHashSet()
+            };
         }
 
         /// <returns>Images that were updated</returns>
@@ -468,6 +467,7 @@ namespace Calamari.ArgoCD.Conventions
             return Update(rootPath, imagesToUpdate, filesToUpdate, imageReplacerFactory);
         }
 
+        
         (HashSet<string>, HashSet<string>) UpdateKustomizeYaml(string rootPath,
                                                                string subFolder,
                                                                string defaultRegistry,
@@ -594,11 +594,11 @@ namespace Calamari.ArgoCD.Conventions
 
             public int TotalSourceCount { get; set; }
             public int MatchingSourceCount { get; set; }
-            public int UpdatedSourceCount { get; set; }
-            public HashSet<string> GitReposUpdated { get; } = new HashSet<string>();
+            public HashSet<string> GitReposUpdated { get; set; } = new HashSet<string>();
             public ApplicationName ApplicationName { get; }
-            public HashSet<string> UpdatedImages { get; } = new HashSet<string>();
+            public HashSet<string> UpdatedImages { get; set; } = new HashSet<string>();
 
+            public int UpdatedSourceCount { get; set; }
             public bool Updated => UpdatedSourceCount > 0;
         }
     }
