@@ -47,7 +47,7 @@ namespace Calamari.AzureResourceGroup
             var subscriptionId = context.Variables.GetRequiredVariable(AzureAccountVariables.SubscriptionId);
             var deploymentModeVariable = context.Variables.GetRequiredVariable(SpecialVariables.Action.Azure.ResourceGroupDeploymentMode);
             var deploymentMode = (ArmDeploymentMode)Enum.Parse(typeof(ArmDeploymentMode), deploymentModeVariable);
-            
+
             var resourceGroup = await GetOrCreateResourceGroup(armClient, subscriptionId, resourceGroupName, resourceGroupLocation);
 
             var (template, parameters) = GetArmTemplateAndParameters(context);
@@ -56,7 +56,11 @@ namespace Calamari.AzureResourceGroup
             log.Verbose($"Deployment Name: {armDeploymentName}, set to variable \"AzureRmOutputs[DeploymentName]\"");
             log.SetOutputVariable("AzureRmOutputs[DeploymentName]", armDeploymentName, context.Variables);
 
-            var deploymentOperation = await resourceGroupOperator.CreateDeployment(resourceGroup, armDeploymentName, deploymentMode, template, parameters);
+            var deploymentOperation = await resourceGroupOperator.CreateDeployment(resourceGroup,
+                                                                                   armDeploymentName,
+                                                                                   deploymentMode,
+                                                                                   template,
+                                                                                   parameters);
             await resourceGroupOperator.PollForCompletion(deploymentOperation, context.Variables);
             await resourceGroupOperator.FinalizeDeployment(deploymentOperation, context.Variables);
         }
@@ -84,10 +88,9 @@ namespace Calamari.AzureResourceGroup
             var bicepCli = new BicepCli(log, commandLineRunner, context.CurrentDirectory);
 
             var bicepTemplateFile = context.Variables.Get(SpecialVariables.Action.Azure.BicepTemplateFile, "template.bicep");
-            var templateParametersFile = context.Variables.Get(SpecialVariables.Action.Azure.TemplateParameters, "parameters.json");
             var templateSource = context.Variables.Get(SpecialVariables.Action.Azure.TemplateSource, string.Empty);
 
-            var filesInPackageOrRepository = templateSource == "Package" || templateSource == "GitRepository";
+            var filesInPackageOrRepository = templateSource is "Package" or "GitRepository";
             if (filesInPackageOrRepository)
             {
                 bicepTemplateFile = context.Variables.Get(SpecialVariables.Action.Azure.BicepTemplate);
@@ -98,9 +101,8 @@ namespace Calamari.AzureResourceGroup
             log.Info("Bicep file processed");
 
             var template = templateService.GetSubstitutedTemplateContent(armTemplateFile, filesInPackageOrRepository, context.Variables);
-            var parameters = !string.IsNullOrWhiteSpace(templateParametersFile)
-                ? templateService.GetSubstitutedTemplateContent(templateParametersFile, filesInPackageOrRepository, context.Variables)
-                : null;
+            
+            var parameters = templateService.GetSubstitutedTemplateContent("parameters.json", inPackage: false, context.Variables);
 
             return (template, parameters);
         }
