@@ -58,7 +58,11 @@ namespace Calamari.ArgoCD.Conventions
             log.Verbose("Executing Update Argo CD Application Images");
             var deploymentConfig = deploymentConfigFactory.CreateUpdateImageConfig(deployment);
 
-            var repositoryFactory = new RepositoryFactory(log, fileSystem, deployment.CurrentDirectory, gitVendorAgnosticApiAdapterFactory, clock);
+            var repositoryFactory = new RepositoryFactory(log,
+                                                          fileSystem,
+                                                          deployment.CurrentDirectory,
+                                                          gitVendorAgnosticApiAdapterFactory,
+                                                          clock);
 
             var argoProperties = customPropertiesLoader.Load<ArgoCDCustomPropertiesDto>();
 
@@ -68,12 +72,11 @@ namespace Calamari.ArgoCD.Conventions
             log.LogApplicationCounts(deploymentScope, argoProperties.Applications);
 
             var applicationResults = argoProperties.Applications
-                                                   .Select(application =>
-                                                               ProcessApplication(application,
-                                                                                  deploymentScope,
-                                                                                  gitCredentials,
-                                                                                  repositoryFactory,
-                                                                                  deploymentConfig))
+                                                   .Select(application => ProcessApplication(application,
+                                                                                             deploymentScope,
+                                                                                             gitCredentials,
+                                                                                             repositoryFactory,
+                                                                                             deploymentConfig))
                                                    .ToList();
 
             reporter.ReportDeployments(applicationResults);
@@ -119,11 +122,10 @@ namespace Calamari.ArgoCD.Conventions
                                                                                        repositoryFactory,
                                                                                        deploymentConfig,
                                                                                        application.DefaultRegistry),
-                                                               applicationSource,
+                                                               applicationSource
                                                            })
                                                            .Where(r => r.Updated.ImagesUpdated.Any())
                                                            .ToList();
-
 
             //if we have links, use that to generate a link, otherwise just put the name there
             var instanceLinks = application.InstanceWebUiUrl != null ? new ArgoCDInstanceLinks(application.InstanceWebUiUrl) : null;
@@ -147,10 +149,10 @@ namespace Calamari.ArgoCD.Conventions
             foreach (var updatedSource in updatedSourcesResults)
             {
                 result.UpdatedSourceDetails.Add(new UpdatedSourceDetail(
-                    updatedSource.Updated.CommitSha,
-                    updatedSource.applicationSource.Index,
-                    [],
-                    []));
+                                                                        updatedSource.Updated.CommitSha,
+                                                                        updatedSource.applicationSource.Index,
+                                                                        [],
+                                                                        []));
 
                 foreach (var image in updatedSource.Updated.ImagesUpdated)
                 {
@@ -158,22 +160,25 @@ namespace Calamari.ArgoCD.Conventions
                 }
             }
 
-            return result;
+            return new ProcessApplicationResult(application.GatewayId, applicationName.ToApplicationName())
+            {
+                TotalSourceCount = applicationFromYaml.Spec.Sources.Count,
+                MatchingSourceCount = applicationFromYaml.Spec.Sources.Count(s => deploymentScope.Matches(ScopingAnnotationReader.GetScopeForApplicationSource(s.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources))),
+                GitReposUpdated = updatedSourcesResults.Select(r => r.applicationSource.Source.OriginalRepoUrl).ToHashSet(),
+                UpdatedImages = updatedSourcesResults.SelectMany(r => r.Updated.ImagesUpdated).ToHashSet(),
+                UpdatedSourceDetails = updatedSourcesResults.Select(r => new UpdatedSourceDetail(r.Updated.CommitSha, r.applicationSource.Index, [], [])).ToList()
+            };
         }
 
-        record SourceUpdateResult(HashSet<string> ImagesUpdated, string CommitSha);
-
-        /// <returns>Images that were updated</returns>
         SourceUpdateResult ProcessSource(ApplicationSourceWithMetadata sourceWithMetadata,
-                                                     Application applicationFromYaml,
-                                                     bool containsMultipleSources,
-                                                     DeploymentScope deploymentScope,
-                                                     Dictionary<string, GitCredentialDto> gitCredentials,
-                                                     RepositoryFactory repositoryFactory,
-                                                     UpdateArgoCDAppDeploymentConfig deploymentConfig,
-                                                     string defaultRegistry)
+                                         Application applicationFromYaml,
+                                         bool containsMultipleSources,
+                                         DeploymentScope deploymentScope,
+                                         Dictionary<string, GitCredentialDto> gitCredentials,
+                                         RepositoryFactory repositoryFactory,
+                                         UpdateArgoCDAppDeploymentConfig deploymentConfig,
+                                         string defaultRegistry)
         {
-
             var applicationSource = sourceWithMetadata.Source;
             var annotatedScope = ScopingAnnotationReader.GetScopeForApplicationSource(applicationSource.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources);
 
@@ -291,7 +296,7 @@ namespace Calamari.ArgoCD.Conventions
 
             return result;
         }
-        
+
         /// <returns>Images that were updated</returns>
         SourceUpdateResult ProcessDirectory(Dictionary<string, GitCredentialDto> gitCredentials,
                                             RepositoryFactory repositoryFactory,
@@ -324,6 +329,7 @@ namespace Calamari.ArgoCD.Conventions
                         : new SourceUpdateResult(new HashSet<string>(), string.Empty);
                 }
             }
+
             return new SourceUpdateResult(new HashSet<string>(), string.Empty);
         }
 
@@ -485,7 +491,6 @@ namespace Calamari.ArgoCD.Conventions
             return Update(rootPath, imagesToUpdate, filesToUpdate, imageReplacerFactory);
         }
 
-        
         (HashSet<string>, HashSet<string>) UpdateKustomizeYaml(string rootPath,
                                                                string subFolder,
                                                                string defaultRegistry,
@@ -604,5 +609,7 @@ namespace Calamari.ArgoCD.Conventions
             var yamlFileGlob = "**/*.{yaml,yml}";
             return fileSystem.EnumerateFilesWithGlob(rootPath, yamlFileGlob);
         }
+
+        record SourceUpdateResult(HashSet<string> ImagesUpdated, string CommitSha);
     }
 }

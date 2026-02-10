@@ -61,7 +61,11 @@ namespace Calamari.ArgoCD.Conventions
             var deploymentConfig = deploymentConfigFactory.CreateCommitToGitConfig(deployment);
             var packageFiles = GetReferencedPackageFiles(deploymentConfig);
 
-            var repositoryFactory = new RepositoryFactory(log, fileSystem, deployment.CurrentDirectory, gitVendorAgnosticApiAdapterFactory, clock);
+            var repositoryFactory = new RepositoryFactory(log,
+                                                          fileSystem,
+                                                          deployment.CurrentDirectory,
+                                                          gitVendorAgnosticApiAdapterFactory,
+                                                          clock);
 
             var argoProperties = customPropertiesLoader.Load<ArgoCDCustomPropertiesDto>();
 
@@ -71,13 +75,13 @@ namespace Calamari.ArgoCD.Conventions
             log.LogApplicationCounts(deploymentScope, argoProperties.Applications);
 
             var applicationResults = argoProperties.Applications
-                                               .Select(application => ProcessApplication(application,
-                                                                                         deploymentScope,
-                                                                                         gitCredentials,
-                                                                                         repositoryFactory,
-                                                                                         deploymentConfig,
-                                                                                         packageFiles))
-                                               .ToList();
+                                                   .Select(application => ProcessApplication(application,
+                                                                                             deploymentScope,
+                                                                                             gitCredentials,
+                                                                                             repositoryFactory,
+                                                                                             deploymentConfig,
+                                                                                             packageFiles))
+                                                   .ToList();
 
             reporter.ReportDeployments(applicationResults);
 
@@ -88,11 +92,10 @@ namespace Calamari.ArgoCD.Conventions
             var gatewayIds = argoProperties.Applications.Select(a => a.GatewayId).ToHashSet();
             var outputWriter = new ArgoCDOutputVariablesWriter(log);
             outputWriter.WriteManifestUpdateOutput(gatewayIds,
-                                                gitReposUpdated,
-                                                totalApplicationsWithSourceCounts,
-                                                updatedApplicationsWithSources
-                                               );
-
+                                                   gitReposUpdated,
+                                                   totalApplicationsWithSourceCounts,
+                                                   updatedApplicationsWithSources
+                                                  );
         }
 
         ProcessApplicationResult ProcessApplication(ArgoCDApplicationDto application,
@@ -144,26 +147,14 @@ namespace Calamari.ArgoCD.Conventions
 
             log.InfoFormat(message, linkifiedAppName);
 
-            var result = new ProcessApplicationResult(application.GatewayId, applicationName.ToApplicationName())
+            return new ProcessApplicationResult(application.GatewayId, applicationName.ToApplicationName())
             {
                 TotalSourceCount = applicationFromYaml.Spec.Sources.Count,
                 MatchingSourceCount = applicationFromYaml.Spec.Sources.Count(s => deploymentScope.Matches(ScopingAnnotationReader.GetScopeForApplicationSource(s.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources))),
                 GitReposUpdated = updatedSourcesResults.Select(r => r.applicationSource.Source.OriginalRepoUrl).ToHashSet(),
+                UpdatedSourceDetails = updatedSourcesResults.Select(r => new UpdatedSourceDetail(r.UpdateResult.CommitSha, r.applicationSource.Index, [], [])).ToList()
             };
-
-            foreach (var updatedSource in updatedSourcesResults)
-            {
-                result.UpdatedSourceDetails.Add(new UpdatedSourceDetail(
-                    updatedSource.UpdateResult.CommitSha,
-                    updatedSource.applicationSource.Index,
-                    [],
-                    []));
-            }
-
-            return result;
         }
-
-        record ManifestUpdateResult(bool Updated, string CommitSha);
 
         ManifestUpdateResult ProcessSource(DeploymentScope deploymentScope,
                                            Dictionary<string, GitCredentialDto> gitCredentials,
@@ -247,14 +238,16 @@ namespace Calamari.ArgoCD.Conventions
                     log.Warn("Please split the source into separate sources and update annotations.");
                     return false;
                 }
+
                 return true;
             }
-                        
+
             if (sourceToUpdate.Path == null)
             {
                 log.WarnFormat("Unable to update source '{0}' as a path has not been specified.", sourceIdentity);
                 return false;
             }
+
             outputPath = sourceToUpdate.Path;
             return true;
         }
@@ -306,6 +299,7 @@ namespace Calamari.ArgoCD.Conventions
 
         IPackageRelativeFile[] SelectFiles(string pathToExtractedPackageFiles, ArgoCommitToGitConfig config)
             => argoCDManifestsFileMatcher.FindMatchingPackageFiles(pathToExtractedPackageFiles, config.InputSubPath);
+
+        record ManifestUpdateResult(bool Updated, string CommitSha);
     }
 }
-

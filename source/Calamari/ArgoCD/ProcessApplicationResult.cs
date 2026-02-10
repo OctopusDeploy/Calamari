@@ -21,11 +21,11 @@ namespace Calamari.ArgoCD
 
         public string GatewayId { get; }
         public ApplicationName ApplicationName { get; }
-        public int TotalSourceCount { get; set; }
-        public int MatchingSourceCount { get; set; }
-        public List<UpdatedSourceDetail> UpdatedSourceDetails { get; } = [];
-        public HashSet<string> UpdatedImages { get; } = [];
-        public HashSet<string> GitReposUpdated { get; set; } = [];
+        public int TotalSourceCount { get; init; }
+        public int MatchingSourceCount { get; init; }
+        public List<UpdatedSourceDetail> UpdatedSourceDetails { get; init; } = [];
+        public HashSet<string> UpdatedImages { get; init; } = [];
+        public HashSet<string> GitReposUpdated { get; init; } = [];
         public int UpdatedSourceCount => UpdatedSourceDetails.Count;
         public bool Updated => UpdatedSourceDetails.Count != 0;
     }
