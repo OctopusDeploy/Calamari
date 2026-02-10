@@ -13,14 +13,15 @@ namespace Calamari.ArgoCD
     public class ArgoCDOutputVariablesWriter
     {
         readonly ILog log;
+        readonly IVariables variables;
 
-        public ArgoCDOutputVariablesWriter(ILog log)
+        public ArgoCDOutputVariablesWriter(ILog log, IVariables variables)
         {
             this.log = log;
+            this.variables = variables;
         }
 
         public void WritePushResultOutput(
-            IVariables variables,
             string gatewayName,
             string applicationName,
             int sourceIndex,

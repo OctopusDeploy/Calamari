@@ -98,7 +98,8 @@ namespace Calamari.ArgoCD.Commands
                                                                       new ArgoCdApplicationManifestParser(),
                                                                       argoCDManifestsFileMatcher,
                                                                       gitVendorAgnosticApiAdapterFactory,
-                                                                      clock),
+                                                                      clock,
+                                                                      new ArgoCDOutputVariablesWriter(log, variables)),
             };
 
             var runningDeployment = new RunningDeployment(pathToPackage, variables);

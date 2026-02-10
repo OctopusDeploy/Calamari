@@ -19,7 +19,7 @@ namespace Calamari.ArgoCD.Commands
     public class UpdateArgoCDAppImagesCommand : Command
     {
         public const string Name = "update-argo-cd-app-images";
-        
+
         readonly ILog log;
         readonly IVariables variables;
         readonly ICalamariFileSystem fileSystem;
@@ -29,7 +29,9 @@ namespace Calamari.ArgoCD.Commands
         string customPropertiesFile;
         string customPropertiesPassword;
 
-        public UpdateArgoCDAppImagesCommand(ILog log, IVariables variables, ICalamariFileSystem fileSystem, 
+        public UpdateArgoCDAppImagesCommand(ILog log,
+                                            IVariables variables,
+                                            ICalamariFileSystem fileSystem,
                                             ICommitMessageGenerator commitMessageGenerator,
                                             DeploymentConfigFactory configFactory,
                                             IGitVendorAgnosticApiAdapterFactory gitVendorAgnosticApiAdapterFactory)
@@ -56,14 +58,21 @@ namespace Calamari.ArgoCD.Commands
 
             var conventions = new List<IConvention>
             {
-                new UpdateArgoCDAppImagesInstallConvention(log, fileSystem, configFactory, commitMessageGenerator, new CustomPropertiesLoader(fileSystem, customPropertiesFile, customPropertiesPassword), new ArgoCdApplicationManifestParser(), gitVendorAgnosticApiAdapterFactory, clock),
+                new UpdateArgoCDAppImagesInstallConvention(log,
+                                                           fileSystem,
+                                                           configFactory,
+                                                           commitMessageGenerator,
+                                                           new CustomPropertiesLoader(fileSystem, customPropertiesFile, customPropertiesPassword),
+                                                           new ArgoCdApplicationManifestParser(),
+                                                           gitVendorAgnosticApiAdapterFactory,
+                                                           clock,
+                                                           new ArgoCDOutputVariablesWriter(log, variables)),
             };
-                
+
             var conventionRunner = new ConventionProcessor(runningDeployment, conventions, log);
             conventionRunner.RunConventions(logExceptions: false);
-            
+
             return 0;
         }
     }
 }
-

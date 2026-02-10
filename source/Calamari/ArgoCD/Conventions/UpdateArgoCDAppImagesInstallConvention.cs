@@ -39,7 +39,8 @@ namespace Calamari.ArgoCD.Conventions
                                                       ICustomPropertiesLoader customPropertiesLoader,
                                                       IArgoCDApplicationManifestParser argoCdApplicationManifestParser,
                                                       IGitVendorAgnosticApiAdapterFactory gitVendorAgnosticApiAdapterFactory,
-                                                      IClock clock)
+                                                      IClock clock,
+                                                      ArgoCDOutputVariablesWriter outputVariablesWriter)
         {
             this.log = log;
             this.fileSystem = fileSystem;
@@ -49,7 +50,7 @@ namespace Calamari.ArgoCD.Conventions
             this.argoCdApplicationManifestParser = argoCdApplicationManifestParser;
             this.gitVendorAgnosticApiAdapterFactory = gitVendorAgnosticApiAdapterFactory;
             this.clock = clock;
-            outputVariablesWriter = new ArgoCDOutputVariablesWriter(log);
+            this.outputVariablesWriter = outputVariablesWriter;
         }
 
         public void Install(RunningDeployment deployment)
@@ -69,11 +70,15 @@ namespace Calamari.ArgoCD.Conventions
 
             var applicationResults = argoProperties.Applications
                                                    .Select(application =>
-                                                               ProcessApplication(application,
-                                                                                  deploymentScope,
-                                                                                  gitCredentials,
-                                                                                  repositoryFactory,
-                                                                                  deploymentConfig))
+                                                           {
+                                                               var gateway = argoProperties.Gateways.Single(g => g.Id == application.GatewayId);
+                                                               return ProcessApplication(application,
+                                                                                         gateway,
+                                                                                         deploymentScope,
+                                                                                         gitCredentials,
+                                                                                         repositoryFactory,
+                                                                                         deploymentConfig);
+                                                           })
                                                    .ToList();
 
             var totalApplicationsWithSourceCounts = applicationResults.Select(r => (r.ApplicationName, r.TotalSourceCount, r.MatchingSourceCount)).ToList();
@@ -92,6 +97,7 @@ namespace Calamari.ArgoCD.Conventions
         }
 
         ProcessApplicationResult ProcessApplication(ArgoCDApplicationDto application,
+                                                    ArgoCDGatewayDto gateway,
                                                     DeploymentScope deploymentScope,
                                                     Dictionary<string, GitCredentialDto> gitCredentials,
                                                     RepositoryFactory repositoryFactory,
@@ -115,7 +121,8 @@ namespace Calamari.ArgoCD.Conventions
                                                                                        gitCredentials,
                                                                                        repositoryFactory,
                                                                                        deploymentConfig,
-                                                                                       application.DefaultRegistry),
+                                                                                       application.DefaultRegistry,
+                                                                                       gateway),
                                                                applicationSource,
                                                            })
                                                            .Where(r => r.Updated.Any())
@@ -152,7 +159,8 @@ namespace Calamari.ArgoCD.Conventions
                                                      Dictionary<string, GitCredentialDto> gitCredentials,
                                                      RepositoryFactory repositoryFactory,
                                                      UpdateArgoCDAppDeploymentConfig deploymentConfig,
-                                                     string defaultRegistry)
+                                                     string defaultRegistry,
+                                                     ArgoCDGatewayDto gateway)
         {
 
             var applicationSource = sourceWithMetadata.Source;
@@ -172,13 +180,15 @@ namespace Calamari.ArgoCD.Conventions
                                      repositoryFactory,
                                      deploymentConfig,
                                      sourceWithMetadata,
-                                     defaultRegistry)
+                                     defaultRegistry,
+                                     gateway)
                         : ProcessDirectory(applicationFromYaml,
                                            gitCredentials,
                                            repositoryFactory,
                                            deploymentConfig,
                                            sourceWithMetadata,
-                                           defaultRegistry);
+                                           defaultRegistry,
+                                           gateway);
                 }
                 case SourceType.Helm:
                 {
@@ -187,7 +197,8 @@ namespace Calamari.ArgoCD.Conventions
                                        gitCredentials,
                                        repositoryFactory,
                                        deploymentConfig,
-                                       defaultRegistry);
+                                       defaultRegistry,
+                                       gateway);
                 }
                 case SourceType.Kustomize:
                 {
@@ -196,7 +207,8 @@ namespace Calamari.ArgoCD.Conventions
                                             repositoryFactory,
                                             deploymentConfig,
                                             sourceWithMetadata,
-                                            defaultRegistry);
+                                            defaultRegistry,
+                                            gateway);
                 }
                 case SourceType.Plugin:
                 {
@@ -214,7 +226,8 @@ namespace Calamari.ArgoCD.Conventions
                                          RepositoryFactory repositoryFactory,
                                          UpdateArgoCDAppDeploymentConfig deploymentConfig,
                                          ApplicationSourceWithMetadata sourceWithMetadata,
-                                         string defaultRegistry)
+                                         string defaultRegistry,
+                                         ArgoCDGatewayDto gateway)
         {
             var applicationSource = sourceWithMetadata.Source;
 
@@ -239,7 +252,10 @@ namespace Calamari.ArgoCD.Conventions
 
                     if (pushResult is not null)
                     {
-                        outputVariablesWriter.WritePushResultOutput(applicationFromYaml.Metadata.Name, sourceWithMetadata.Index, pushResult);
+                        outputVariablesWriter.WritePushResultOutput(gateway.Name,
+                                                                    applicationFromYaml.Metadata.Name, 
+                                                                    sourceWithMetadata.Index, 
+                                                                    pushResult);
                         return updatedImages;
                     }
                 }
@@ -250,11 +266,12 @@ namespace Calamari.ArgoCD.Conventions
 
         /// <returns>Images that were updated</returns>
         HashSet<string> ProcessRef(Application applicationFromYaml,
-                                                  Dictionary<string, GitCredentialDto> gitCredentials,
-                                                  RepositoryFactory repositoryFactory,
-                                                  UpdateArgoCDAppDeploymentConfig deploymentConfig,
-                                                  ApplicationSourceWithMetadata sourceWithMetadata,
-                                                  string defaultRegistry)
+                                   Dictionary<string, GitCredentialDto> gitCredentials,
+                                   RepositoryFactory repositoryFactory,
+                                   UpdateArgoCDAppDeploymentConfig deploymentConfig,
+                                   ApplicationSourceWithMetadata sourceWithMetadata,
+                                   string defaultRegistry,
+                                   ArgoCDGatewayDto gateway)
         {
             var applicationSource = sourceWithMetadata.Source;
             
@@ -274,7 +291,8 @@ namespace Calamari.ArgoCD.Conventions
                                                          repository,
                                                          deploymentConfig,
                                                          sourceWithMetadata,
-                                                         helmTargetsForRefSource.Targets);
+                                                         helmTargetsForRefSource.Targets,
+                                                         gateway);
 
             return updatedImages;
         }
@@ -285,7 +303,8 @@ namespace Calamari.ArgoCD.Conventions
                                          RepositoryFactory repositoryFactory,
                                          UpdateArgoCDAppDeploymentConfig deploymentConfig,
                                          ApplicationSourceWithMetadata sourceWithMetadata,
-                                         string defaultRegistry)
+                                         string defaultRegistry,
+                                         ArgoCDGatewayDto gateway)
         {
             var applicationSource = sourceWithMetadata.Source;
             if (applicationSource.Path == null)
@@ -309,7 +328,10 @@ namespace Calamari.ArgoCD.Conventions
 
                     if (pushResult is not null)
                     {
-                        outputVariablesWriter.WritePushResultOutput(applicationFromYaml.Metadata.Name, sourceWithMetadata.Index, pushResult);
+                        outputVariablesWriter.WritePushResultOutput(gateway.Name,
+                                                                    applicationFromYaml.Metadata.Name, 
+                                                                    sourceWithMetadata.Index,
+                                                                    pushResult);
                         return updatedImages;
                     }
 
@@ -321,11 +343,12 @@ namespace Calamari.ArgoCD.Conventions
 
         /// <returns>Images that were updated</returns>
         HashSet<string> ProcessHelm(Application applicationFromYaml,
-                                                   ApplicationSourceWithMetadata sourceWithMetadata,
-                                                   Dictionary<string, GitCredentialDto> gitCredentials,
-                                                   RepositoryFactory repositoryFactory,
-                                                   UpdateArgoCDAppDeploymentConfig deploymentConfig,
-                                                   string defaultRegistry)
+                                    ApplicationSourceWithMetadata sourceWithMetadata,
+                                    Dictionary<string, GitCredentialDto> gitCredentials,
+                                    RepositoryFactory repositoryFactory,
+                                    UpdateArgoCDAppDeploymentConfig deploymentConfig,
+                                    string defaultRegistry,
+                                    ArgoCDGatewayDto gateway)
         {
             var applicationSource = sourceWithMetadata.Source;
             
@@ -364,7 +387,8 @@ namespace Calamari.ArgoCD.Conventions
                                             repository,
                                             deploymentConfig,
                                             sourceWithMetadata,
-                                            valuesFilesToUpdate);
+                                            valuesFilesToUpdate, 
+                                            gateway);
         }
 
         /// <returns>Images that were updated</returns>
@@ -372,7 +396,8 @@ namespace Calamari.ArgoCD.Conventions
                                                  RepositoryWrapper repository,
                                                  UpdateArgoCDAppDeploymentConfig deploymentConfig,
                                                  ApplicationSourceWithMetadata sourceWithMetadata,
-                                                 IReadOnlyCollection<HelmValuesFileImageUpdateTarget> targets)
+                                                 IReadOnlyCollection<HelmValuesFileImageUpdateTarget> targets,
+                                                 ArgoCDGatewayDto gateway)
         {
             var results = targets.Select(t => UpdateHelmImageValues(repository.WorkingDirectory,
                                                                     t,
@@ -391,7 +416,10 @@ namespace Calamari.ArgoCD.Conventions
 
                 if (pushResult is not null)
                 {
-                    outputVariablesWriter.WritePushResultOutput(applicationFromYaml.Metadata.Name, sourceWithMetadata.Index, pushResult);
+                    outputVariablesWriter.WritePushResultOutput(gateway.Name,
+                                                                applicationFromYaml.Metadata.Name,
+                                                                sourceWithMetadata.Index,
+                                                                pushResult);
                     return updatedImages;
                 }
             }

@@ -40,7 +40,8 @@ namespace Calamari.ArgoCD.Conventions
                                                                  IArgoCDApplicationManifestParser argoCdApplicationManifestParser,
                                                                  IArgoCDManifestsFileMatcher argoCDManifestsFileMatcher,
                                                                  IGitVendorAgnosticApiAdapterFactory gitVendorAgnosticApiAdapterFactory,
-                                                                 IClock clock)
+                                                                 IClock clock,
+                                                                 ArgoCDOutputVariablesWriter outputVariablesWriter)
         {
             this.fileSystem = fileSystem;
             this.log = log;
@@ -50,8 +51,8 @@ namespace Calamari.ArgoCD.Conventions
             this.argoCDManifestsFileMatcher = argoCDManifestsFileMatcher;
             this.gitVendorAgnosticApiAdapterFactory = gitVendorAgnosticApiAdapterFactory;
             this.clock = clock;
+            this.outputVariablesWriter = outputVariablesWriter;
             this.packageSubfolder = packageSubfolder;
-            outputVariablesWriter = new ArgoCDOutputVariablesWriter(log);
         }
 
         public void Install(RunningDeployment deployment)
@@ -222,10 +223,10 @@ namespace Calamari.ArgoCD.Conventions
 
                 if (pushResult is not null)
                 {
-                    outputVariablesWriter.WritePushResultOutput(
-                    applicationFromYaml.Metadata.Name,
-                    sourceWithMetadata.Index,
-                    pushResult);
+                    outputVariablesWriter.WritePushResultOutput(gateway.Name,
+                                                                applicationFromYaml.Metadata.Name,
+                                                                sourceWithMetadata.Index,
+                                                                pushResult);
                 }
 
                 return true;
