@@ -51,10 +51,7 @@ image:
 
         const string GatewayId = "Gateway1";
 
-        UpdateArgoCDAppImagesInstallConvention CreateConvention(
-            IArgoCDApplicationManifestParser manifestParser = null,
-            IGitVendorAgnosticApiAdapterFactory gitAdapterFactory = null,
-            IArgoCDDeploymentReporter reporter = null)
+        UpdateArgoCDAppImagesInstallConvention CreateConvention()
         {
             return new UpdateArgoCDAppImagesInstallConvention(
                 log,
@@ -62,10 +59,10 @@ image:
                 new DeploymentConfigFactory(nonSensitiveCalamariVariables),
                 new CommitMessageGenerator(),
                 customPropertiesLoader,
-                manifestParser ?? argoCdApplicationManifestParser,
-                gitAdapterFactory ?? Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
+                argoCdApplicationManifestParser,
+                Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
                 new SystemClock(),
-                reporter ?? Substitute.For<IArgoCDDeploymentReporter>());
+                Substitute.For<IArgoCDDeploymentReporter>());
         }
 
         [SetUp]

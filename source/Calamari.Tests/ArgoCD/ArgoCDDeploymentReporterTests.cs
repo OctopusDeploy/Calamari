@@ -1,10 +1,6 @@
 using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json;
 using Calamari.ArgoCD;
 using Calamari.ArgoCD.Models;
-using Calamari.Common.Plumbing.Logging;
-using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Testing.Helpers;
 using FluentAssertions;
 using NUnit.Framework;
@@ -22,7 +18,7 @@ namespace Calamari.Tests.ArgoCD
 
             var applicationResults = new List<ProcessApplicationResult>
             {
-                new ProcessApplicationResult("gateway1", new ApplicationName("app1"))
+                new("gateway1", new ApplicationName("app1"))
                 {
                     TotalSourceCount = 2,
                     MatchingSourceCount = 2
@@ -43,7 +39,7 @@ namespace Calamari.Tests.ArgoCD
 
             var applicationResults = new List<ProcessApplicationResult>
             {
-                new ProcessApplicationResult("gateway1", new ApplicationName("app1"))
+                new("gateway1", new ApplicationName("app1"))
                 {
                     TotalSourceCount = 2,
                     MatchingSourceCount = 2,
@@ -56,13 +52,16 @@ namespace Calamari.Tests.ArgoCD
 
             reporter.ReportDeployments(applicationResults);
 
-            var messages = log.ServiceMessages;
-            messages.Should().HaveCount(1);
-
-            var message = messages.First();
-            message.Name.Should().Be("argocd-deployment");
-            message.Properties["gatewayId"].Should().Be("gateway1");
-            message.Properties["applicationName"].Should().Be("app1");
+            log.ServiceMessages.Should().ContainSingle().Which.Should().BeEquivalentTo(new
+            {
+                Name = "argocd-deployment",
+                Properties = new Dictionary<string, string>
+                {
+                    ["gatewayId"] = "gateway1",
+                    ["applicationName"] = "app1",
+                    ["sources"] = "[{\"CommitSha\":\"abc123\",\"SourceIndex\":0,\"ReplacedFiles\":[],\"PatchedFiles\":[]}]"
+                }
+            });
         }
 
         [Test]
@@ -73,7 +72,7 @@ namespace Calamari.Tests.ArgoCD
 
             var applicationResults = new List<ProcessApplicationResult>
             {
-                new ProcessApplicationResult("gateway1", new ApplicationName("app1"))
+                new("gateway1", new ApplicationName("app1"))
                 {
                     TotalSourceCount = 2,
                     MatchingSourceCount = 2,
@@ -82,7 +81,7 @@ namespace Calamari.Tests.ArgoCD
                         new UpdatedSourceDetail("abc123", 0, [], [])
                     }
                 },
-                new ProcessApplicationResult("gateway2", new ApplicationName("app2"))
+                new("gateway2", new ApplicationName("app2"))
                 {
                     TotalSourceCount = 1,
                     MatchingSourceCount = 1,
@@ -95,49 +94,28 @@ namespace Calamari.Tests.ArgoCD
 
             reporter.ReportDeployments(applicationResults);
 
-            var messages = log.ServiceMessages;
-            messages.Should().HaveCount(2);
-
-            messages[0].Properties["gatewayId"].Should().Be("gateway1");
-            messages[0].Properties["applicationName"].Should().Be("app1");
-
-            messages[1].Properties["gatewayId"].Should().Be("gateway2");
-            messages[1].Properties["applicationName"].Should().Be("app2");
-        }
-
-        [Test]
-        public void ReportDeployments_SerializesSourcesCorrectly()
-        {
-            var log = new InMemoryLog();
-            var reporter = new ArgoCDDeploymentReporter(log);
-
-            var applicationResults = new List<ProcessApplicationResult>
-            {
-                new ProcessApplicationResult("gateway1", new ApplicationName("app1"))
+            log.ServiceMessages.Should().BeEquivalentTo([
+                new
                 {
-                    TotalSourceCount = 2,
-                    MatchingSourceCount = 2,
-                    UpdatedSourceDetails =
+                    Name = "argocd-deployment",
+                    Properties = new Dictionary<string, string>
                     {
-                        new UpdatedSourceDetail("abc123", 0, [], []),
-                        new UpdatedSourceDetail("def456", 1, [], [])
+                        ["gatewayId"] = "gateway1",
+                        ["applicationName"] = "app1",
+                        ["sources"] = "[{\"CommitSha\":\"abc123\",\"SourceIndex\":0,\"ReplacedFiles\":[],\"PatchedFiles\":[]}]"
+                    }
+                },
+                new
+                {
+                    Name = "argocd-deployment",
+                    Properties = new Dictionary<string, string>
+                    {
+                        ["gatewayId"] = "gateway2",
+                        ["applicationName"] = "app2",
+                        ["sources"] = "[{\"CommitSha\":\"def456\",\"SourceIndex\":0,\"ReplacedFiles\":[],\"PatchedFiles\":[]}]"
                     }
                 }
-            };
-
-            reporter.ReportDeployments(applicationResults);
-
-            var messages = log.ServiceMessages;
-            messages.Should().HaveCount(1);
-
-            var sourcesJson = messages.First().Properties["sources"];
-            var sources = JsonSerializer.Deserialize<List<UpdatedSourceDetail>>(sourcesJson);
-
-            sources.Should().HaveCount(2);
-            sources[0].CommitSha.Should().Be("abc123");
-            sources[0].SourceIndex.Should().Be(0);
-            sources[1].CommitSha.Should().Be("def456");
-            sources[1].SourceIndex.Should().Be(1);
+            ]);
         }
 
         [Test]
@@ -148,12 +126,12 @@ namespace Calamari.Tests.ArgoCD
 
             var applicationResults = new List<ProcessApplicationResult>
             {
-                new ProcessApplicationResult("gateway1", new ApplicationName("app1"))
+                new("gateway1", new ApplicationName("app1"))
                 {
                     TotalSourceCount = 2,
                     MatchingSourceCount = 2
                 },
-                new ProcessApplicationResult("gateway2", new ApplicationName("app2"))
+                new("gateway2", new ApplicationName("app2"))
                 {
                     TotalSourceCount = 1,
                     MatchingSourceCount = 1,
@@ -162,7 +140,7 @@ namespace Calamari.Tests.ArgoCD
                         new UpdatedSourceDetail("abc123", 0, [], [])
                     }
                 },
-                new ProcessApplicationResult("gateway3", new ApplicationName("app3"))
+                new("gateway3", new ApplicationName("app3"))
                 {
                     TotalSourceCount = 1,
                     MatchingSourceCount = 1
@@ -171,10 +149,16 @@ namespace Calamari.Tests.ArgoCD
 
             reporter.ReportDeployments(applicationResults);
 
-            var messages = log.ServiceMessages;
-            messages.Should().HaveCount(1);
-            messages[0].Properties["gatewayId"].Should().Be("gateway2");
-            messages[0].Properties["applicationName"].Should().Be("app2");
+            log.ServiceMessages.Should().ContainSingle().Which.Should().BeEquivalentTo(new
+            {
+                Name = "argocd-deployment",
+                Properties = new Dictionary<string, string>
+                {
+                    ["gatewayId"] = "gateway2",
+                    ["applicationName"] = "app2",
+                    ["sources"] = "[{\"CommitSha\":\"abc123\",\"SourceIndex\":0,\"ReplacedFiles\":[],\"PatchedFiles\":[]}]"
+                }
+            });
         }
     }
 }

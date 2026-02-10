@@ -47,10 +47,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
         readonly IArgoCDApplicationManifestParser argoCdApplicationManifestParser = Substitute.For<IArgoCDApplicationManifestParser>();
         readonly ICustomPropertiesLoader customPropertiesLoader = Substitute.For<ICustomPropertiesLoader>();
 
-        UpdateArgoCDAppImagesInstallConvention CreateConvention(
-            IArgoCDApplicationManifestParser manifestParser = null,
-            IGitVendorAgnosticApiAdapterFactory gitAdapterFactory = null,
-            IArgoCDDeploymentReporter reporter = null)
+        UpdateArgoCDAppImagesInstallConvention CreateConvention()
         {
             return new UpdateArgoCDAppImagesInstallConvention(
                 log,
@@ -58,10 +55,10 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                 new DeploymentConfigFactory(nonSensitiveCalamariVariables),
                 new CommitMessageGenerator(),
                 customPropertiesLoader,
-                manifestParser ?? argoCdApplicationManifestParser,
-                gitAdapterFactory ?? Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
+               argoCdApplicationManifestParser,
+                Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
                 new SystemClock(),
-                reporter ?? Substitute.For<IArgoCDDeploymentReporter>());
+                Substitute.For<IArgoCDDeploymentReporter>());
         }
 
         [SetUp]
@@ -168,7 +165,7 @@ images:
 
             AssertOutputVariables(false);
         }
-        
+
         [Test]
         public void DirectorySource_NoMatchingFiles_DontUpdate()
         {
@@ -193,7 +190,7 @@ images:
             var filesInRepo = fileSystem.EnumerateFilesRecursively(resultRepo, "*");
             var ignoredGitSubfolder = filesInRepo.Where(file => !file.Contains(".git"));
             ignoredGitSubfolder.Should().BeEmpty();
-            
+
             AssertOutputVariables(false);
         }
 
@@ -224,7 +221,7 @@ images:
 
             var resultRepo = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             AssertFileContents(resultRepo, "include/file1.yaml", "No Yaml here");
-            
+
             AssertOutputVariables(false);
         }
 
@@ -303,7 +300,7 @@ spec:
 
             var clonedRepoPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             AssertFileContents(clonedRepoPath, yamlFilename, updatedYamlContent);
-            
+
             AssertOutputVariables();
         }
 
@@ -370,14 +367,14 @@ spec:
 
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
                                            .Returns(argoCdApplicationFromYaml);
-            
+
             // Act
             updater.Install(runningDeployment);
 
             //Assert
             var clonedRepoPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             AssertFileContents(clonedRepoPath, yamlFilename, fileContents);
-            
+
             log.MessagesWarnFormatted.Should().Contain("Unable to update source 'Index: 0, Type: Directory, Name: (None)' as a path has not been specified.");
 
             AssertOutputVariables(false);
@@ -433,7 +430,7 @@ images:
             updater.Install(runningDeployment);
 
             // Assert
-           
+
             var clonedRepoPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             AssertFileContents(clonedRepoPath, kustomizeFile, kustomizeFileContents);
 
@@ -502,7 +499,7 @@ images:
 
             AssertOutputVariables();
         }
-        
+
         [Test]
         public void KustomizeSource_NoKustomizationFile_DontUpdate()
         {
@@ -548,7 +545,7 @@ spec:
                     existingYamlContent
                 )
             };
-            
+
             originRepo.AddFilesToBranch(argoCDBranchName, filesInRepo);
 
             var argoCdApplicationFromYaml = new ArgoCDApplicationBuilder()
@@ -585,7 +582,7 @@ spec:
         {
             var absolutePath = Path.Combine(clonedRepoPath, relativeFilePath);
             fileSystem.FileExists(absolutePath).Should().BeTrue();
-            
+
             var content = fileSystem.ReadFile(absolutePath);
             content.ReplaceLineEndings().Should().Be(expectedContent.ReplaceLineEndings());
         }

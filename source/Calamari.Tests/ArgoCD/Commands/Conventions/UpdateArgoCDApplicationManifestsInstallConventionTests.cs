@@ -97,32 +97,19 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             fileSystem.DeleteDirectory(tempDirectory, FailureOptions.IgnoreFailure);
         }
 
-        UpdateArgoCDApplicationManifestsInstallConvention CreateConvention(
-            IArgoCDApplicationManifestParser manifestParser = null,
-            IGitVendorAgnosticApiAdapterFactory gitAdapterFactory = null,
-            IArgoCDDeploymentReporter reporter = null,
-            NonSensitiveCalamariVariables variables = null)
+        UpdateArgoCDApplicationManifestsInstallConvention CreateConvention(NonSensitiveCalamariVariables variables)
         {
-            var vars = variables ?? new NonSensitiveCalamariVariables()
-            {
-                [KnownVariables.OriginalPackageDirectoryPath] = WorkingDirectory,
-                [SpecialVariables.Git.InputPath] = "",
-                [SpecialVariables.Git.CommitMethod] = "DirectCommit",
-                [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this",
-                [ProjectVariables.Slug] = ProjectSlug,
-                [DeploymentEnvironment.Slug] = EnvironmentSlug,
-            };
             return new UpdateArgoCDApplicationManifestsInstallConvention(
                 fileSystem,
                 UpdateArgoCDAppManifestsCommand.PackageDirectoryName,
                 log,
-                new DeploymentConfigFactory(vars),
+                new DeploymentConfigFactory(variables),
                 customPropertiesLoader,
-                manifestParser ?? argoCdApplicationManifestParser,
+                argoCdApplicationManifestParser,
                 new ArgoCDManifestsFileMatcher(fileSystem),
-                gitAdapterFactory ?? Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
+                Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
                 new SystemClock(),
-                reporter ?? Substitute.For<IArgoCDDeploymentReporter>());
+                Substitute.For<IArgoCDDeploymentReporter>());
         }
 
         [Test]
@@ -153,7 +140,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
             runningDeployment.StagingDirectory = WorkingDirectory;
 
-            var convention = CreateConvention(variables: nonSensitiveCalamariVariables);
+            var convention = CreateConvention(nonSensitiveCalamariVariables);
             convention.Install(runningDeployment);
 
             var resultPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
@@ -197,7 +184,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             runningDeployment.StagingDirectory = WorkingDirectory;
 
             // Act
-            var convention = CreateConvention(variables: nonSensitiveCalamariVariables);
+            var convention = CreateConvention(nonSensitiveCalamariVariables);
             convention.Install(runningDeployment);
 
             // Assert
@@ -257,7 +244,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
                                            .Returns(argoCDAppWithHelmSource);
 
-            var convention = CreateConvention(variables: nonSensitiveCalamariVariables);
+            var convention = CreateConvention(nonSensitiveCalamariVariables);
 
             convention.Install(runningDeployment);
 
@@ -324,7 +311,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
                                            .Returns(argoCDAppWithHelmSource);
 
-            var convention = CreateConvention(variables: nonSensitiveCalamariVariables);
+            var convention = CreateConvention(nonSensitiveCalamariVariables);
 
             convention.Install(runningDeployment);
 
@@ -393,7 +380,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
                                            .Returns(argoCDAppWithHelmSource);
 
-            var convention = CreateConvention(variables: nonSensitiveCalamariVariables);
+            var convention = CreateConvention(nonSensitiveCalamariVariables);
 
             convention.Install(runningDeployment);
 
