@@ -139,27 +139,6 @@ namespace Calamari.ArgoCD.Conventions
 
             log.InfoFormat(message, linkifiedAppName);
 
-            var result = new ProcessApplicationResult(application.GatewayId, applicationName.ToApplicationName())
-            {
-                TotalSourceCount = applicationFromYaml.Spec.Sources.Count,
-                MatchingSourceCount = applicationFromYaml.Spec.Sources.Count(s => deploymentScope.Matches(ScopingAnnotationReader.GetScopeForApplicationSource(s.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources))),
-                GitReposUpdated = updatedSourcesResults.Select(r => r.applicationSource.Source.OriginalRepoUrl).ToHashSet()
-            };
-
-            foreach (var updatedSource in updatedSourcesResults)
-            {
-                result.UpdatedSourceDetails.Add(new UpdatedSourceDetail(
-                                                                        updatedSource.Updated.CommitSha,
-                                                                        updatedSource.applicationSource.Index,
-                                                                        [],
-                                                                        []));
-
-                foreach (var image in updatedSource.Updated.ImagesUpdated)
-                {
-                    result.UpdatedImages.Add(image);
-                }
-            }
-
             return new ProcessApplicationResult(application.GatewayId, applicationName.ToApplicationName())
             {
                 TotalSourceCount = applicationFromYaml.Spec.Sources.Count,
