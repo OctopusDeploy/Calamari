@@ -139,14 +139,14 @@ namespace Calamari.ArgoCD.Conventions
 
             log.InfoFormat(message, linkifiedAppName);
 
-            return new ProcessApplicationResult(application.GatewayId, applicationName.ToApplicationName())
-            {
-                TotalSourceCount = applicationFromYaml.Spec.Sources.Count,
-                MatchingSourceCount = applicationFromYaml.Spec.Sources.Count(s => deploymentScope.Matches(ScopingAnnotationReader.GetScopeForApplicationSource(s.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources))),
-                GitReposUpdated = updatedSourcesResults.Select(r => r.applicationSource.Source.OriginalRepoUrl).ToHashSet(),
-                UpdatedImages = updatedSourcesResults.SelectMany(r => r.Updated.ImagesUpdated).ToHashSet(),
-                UpdatedSourceDetails = updatedSourcesResults.Select(r => new UpdatedSourceDetail(r.Updated.CommitSha, r.applicationSource.Index, [], [])).ToList()
-            };
+            return new ProcessApplicationResult(
+                application.GatewayId,
+                applicationName.ToApplicationName(),
+                applicationFromYaml.Spec.Sources.Count,
+                applicationFromYaml.Spec.Sources.Count(s => deploymentScope.Matches(ScopingAnnotationReader.GetScopeForApplicationSource(s.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources))),
+                updatedSourcesResults.Select(r => new UpdatedSourceDetail(r.Updated.CommitSha, r.applicationSource.Index, [], [])).ToList(),
+                updatedSourcesResults.SelectMany(r => r.Updated.ImagesUpdated).ToHashSet(),
+                updatedSourcesResults.Select(r => r.applicationSource.Source.OriginalRepoUrl).ToHashSet());
         }
 
         SourceUpdateResult ProcessSource(ApplicationSourceWithMetadata sourceWithMetadata,

@@ -18,11 +18,7 @@ namespace Calamari.Tests.ArgoCD
 
             var applicationResults = new List<ProcessApplicationResult>
             {
-                new("gateway1", new ApplicationName("app1"))
-                {
-                    TotalSourceCount = 2,
-                    MatchingSourceCount = 2
-                }
+                new("gateway1", new ApplicationName("app1"), 2, 2, [], [], [])
             };
 
             reporter.ReportDeployments(applicationResults);
@@ -39,15 +35,7 @@ namespace Calamari.Tests.ArgoCD
 
             var applicationResults = new List<ProcessApplicationResult>
             {
-                new("gateway1", new ApplicationName("app1"))
-                {
-                    TotalSourceCount = 2,
-                    MatchingSourceCount = 2,
-                    UpdatedSourceDetails =
-                    {
-                        new UpdatedSourceDetail("abc123", 0, [], [])
-                    }
-                }
+                new("gateway1", new ApplicationName("app1"), 2, 2, [new UpdatedSourceDetail("abc123", 0, [], [])], [], [])
             };
 
             reporter.ReportDeployments(applicationResults);
@@ -72,24 +60,8 @@ namespace Calamari.Tests.ArgoCD
 
             var applicationResults = new List<ProcessApplicationResult>
             {
-                new("gateway1", new ApplicationName("app1"))
-                {
-                    TotalSourceCount = 2,
-                    MatchingSourceCount = 2,
-                    UpdatedSourceDetails =
-                    {
-                        new UpdatedSourceDetail("abc123", 0, [], [])
-                    }
-                },
-                new("gateway2", new ApplicationName("app2"))
-                {
-                    TotalSourceCount = 1,
-                    MatchingSourceCount = 1,
-                    UpdatedSourceDetails =
-                    {
-                        new UpdatedSourceDetail("def456", 0, [], [])
-                    }
-                }
+                new("gateway1", new ApplicationName("app1"), 2, 2, [new UpdatedSourceDetail("abc123", 0, [], [])], [], []),
+                new("gateway2", new ApplicationName("app2"), 1, 1, [new UpdatedSourceDetail("def456", 0, [], [])], [], [])
             };
 
             reporter.ReportDeployments(applicationResults);
@@ -126,25 +98,9 @@ namespace Calamari.Tests.ArgoCD
 
             var applicationResults = new List<ProcessApplicationResult>
             {
-                new("gateway1", new ApplicationName("app1"))
-                {
-                    TotalSourceCount = 2,
-                    MatchingSourceCount = 2
-                },
-                new("gateway2", new ApplicationName("app2"))
-                {
-                    TotalSourceCount = 1,
-                    MatchingSourceCount = 1,
-                    UpdatedSourceDetails =
-                    {
-                        new UpdatedSourceDetail("abc123", 0, [], [])
-                    }
-                },
-                new("gateway3", new ApplicationName("app3"))
-                {
-                    TotalSourceCount = 1,
-                    MatchingSourceCount = 1
-                }
+                new("gateway1", new ApplicationName("app1"), 2, 2, [], [], []),
+                new("gateway2", new ApplicationName("app2"), 1, 1, [new UpdatedSourceDetail("abc123", 0, [], [])], [], []),
+                new("gateway3", new ApplicationName("app3"), 1, 1, [], [], [])
             };
 
             reporter.ReportDeployments(applicationResults);
