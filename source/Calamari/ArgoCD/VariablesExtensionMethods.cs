@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Calamari.ArgoCD.Conventions;
+using Calamari.ArgoCD.Dtos;
 using Calamari.ArgoCD.Models;
 using Calamari.Common.Plumbing.Variables;
 
@@ -21,11 +23,11 @@ namespace Calamari.ArgoCD
             return packageReferences;
         }
 
-        public static (ProjectSlug Project, EnvironmentSlug Environment, TenantSlug? Tenant) GetDeploymentScope(this IVariables variables)
+        public static DeploymentScope GetDeploymentScope(this IVariables variables)
         {
-            return (variables.GetMandatoryVariable(ProjectVariables.Slug).ToProjectSlug(),
-                    variables.GetMandatoryVariable(DeploymentEnvironment.Slug).ToEnvironmentSlug(),
-                    variables.Get(DeploymentVariables.Tenant.Slug)?.ToTenantSlug());
+            return new DeploymentScope(variables.GetMandatoryVariable(ProjectVariables.Slug).ToProjectSlug()!,
+                                       variables.GetMandatoryVariable(DeploymentEnvironment.Slug).ToEnvironmentSlug()!,
+                                       variables.Get(DeploymentVariables.Tenant.Slug)?.ToTenantSlug());
         }
     }
 }
