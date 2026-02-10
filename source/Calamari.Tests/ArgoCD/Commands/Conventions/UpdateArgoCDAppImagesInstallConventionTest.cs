@@ -47,6 +47,23 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
         readonly IArgoCDApplicationManifestParser argoCdApplicationManifestParser = Substitute.For<IArgoCDApplicationManifestParser>();
         readonly ICustomPropertiesLoader customPropertiesLoader = Substitute.For<ICustomPropertiesLoader>();
 
+        UpdateArgoCDAppImagesInstallConvention CreateConvention(
+            IArgoCDApplicationManifestParser manifestParser = null,
+            IGitVendorAgnosticApiAdapterFactory gitAdapterFactory = null,
+            IArgoCDDeploymentReporter reporter = null)
+        {
+            return new UpdateArgoCDAppImagesInstallConvention(
+                log,
+                fileSystem,
+                new DeploymentConfigFactory(nonSensitiveCalamariVariables),
+                new CommitMessageGenerator(),
+                customPropertiesLoader,
+                manifestParser ?? argoCdApplicationManifestParser,
+                gitAdapterFactory ?? Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
+                new SystemClock(),
+                reporter ?? Substitute.For<IArgoCDDeploymentReporter>());
+        }
+
         [SetUp]
         public void Init()
         {
@@ -97,15 +114,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
         public void PluginSourceType_DontUpdate()
         {
             // Arrange
-            var updater = new UpdateArgoCDAppImagesInstallConvention(log,
-                                                                     fileSystem,
-                                                                     new DeploymentConfigFactory(nonSensitiveCalamariVariables),
-                                                                     new CommitMessageGenerator(),
-                                                                     customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser,
-                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
-                                                                     new SystemClock(),
-                                                                     Substitute.For<IArgoCDDeploymentReporter>());
+            var updater = CreateConvention();
             var variables = new CalamariVariables
             {
                 [PackageVariables.IndexedImage("nginx")] = "index.docker.io/nginx:1.27.1",
@@ -164,15 +173,7 @@ images:
         public void DirectorySource_NoMatchingFiles_DontUpdate()
         {
             // Arrange
-            var updater = new UpdateArgoCDAppImagesInstallConvention(log,
-                                                                     fileSystem,
-                                                                     new DeploymentConfigFactory(nonSensitiveCalamariVariables),
-                                                                     new CommitMessageGenerator(),
-                                                                     customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser,
-                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
-                                                                     new SystemClock(),
-                                                                     Substitute.For<IArgoCDDeploymentReporter>());
+            var updater = CreateConvention();
             var variables = new CalamariVariables
             {
                 [PackageVariables.IndexedImage("nginx")] = "index.docker.io/nginx:1.27.1",
@@ -200,15 +201,7 @@ images:
         public void DirectorySource_NoImageMatches_DontUpdate()
         {
             // Arrange
-            var updater = new UpdateArgoCDAppImagesInstallConvention(log,
-                                                                     fileSystem,
-                                                                     new DeploymentConfigFactory(nonSensitiveCalamariVariables),
-                                                                     new CommitMessageGenerator(),
-                                                                     customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser,
-                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
-                                                                     new SystemClock(),
-                                                                     Substitute.For<IArgoCDDeploymentReporter>());
+            var updater = CreateConvention();
             var variables = new CalamariVariables
             {
                 [PackageVariables.IndexedImage("nginx")] = "docker.io/nginx:1.27.1",
@@ -239,15 +232,7 @@ images:
         public void DirectorySource_ImageMatches_Update()
         {
             // Arrange
-            var updater = new UpdateArgoCDAppImagesInstallConvention(log,
-                                                                     fileSystem,
-                                                                     new DeploymentConfigFactory(nonSensitiveCalamariVariables),
-                                                                     new CommitMessageGenerator(),
-                                                                     customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser,
-                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
-                                                                     new SystemClock(),
-                                                                     Substitute.For<IArgoCDDeploymentReporter>());
+            var updater = CreateConvention();
             var variables = new CalamariVariables
             {
                 [PackageVariables.IndexedImage("nginx")] = "index.docker.io/nginx:1.27.1",
@@ -326,15 +311,7 @@ spec:
         public void DirectorySource_NoPath_DontUpdate()
         {
             // Arrange
-            var updater = new UpdateArgoCDAppImagesInstallConvention(log,
-                                                                     fileSystem,
-                                                                     new DeploymentConfigFactory(nonSensitiveCalamariVariables),
-                                                                     new CommitMessageGenerator(),
-                                                                     customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser,
-                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
-                                                                     new SystemClock(),
-                                                                     Substitute.For<IArgoCDDeploymentReporter>());
+            var updater = CreateConvention();
             var variables = new CalamariVariables
             {
                 [PackageVariables.IndexedImage("nginx")] = "index.docker.io/nginx:1.27.1",
@@ -410,15 +387,7 @@ spec:
         public void KustomizeSource_NoPath_DontUpdate()
         {
             // Arrange
-            var updater = new UpdateArgoCDAppImagesInstallConvention(log,
-                                                                     fileSystem,
-                                                                     new DeploymentConfigFactory(nonSensitiveCalamariVariables),
-                                                                     new CommitMessageGenerator(),
-                                                                     customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser,
-                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
-                                                                     new SystemClock(),
-                                                                     Substitute.For<IArgoCDDeploymentReporter>());
+            var updater = CreateConvention();
             var variables = new CalamariVariables
             {
                 [PackageVariables.IndexedImage("nginx")] = "index.docker.io/nginx:1.27.1",
@@ -477,15 +446,7 @@ images:
         public void KustomizeSource_HasKustomizationFile_Update()
         {
             // Arrange
-            var updater = new UpdateArgoCDAppImagesInstallConvention(log,
-                                                                     fileSystem,
-                                                                     new DeploymentConfigFactory(nonSensitiveCalamariVariables),
-                                                                     new CommitMessageGenerator(),
-                                                                     customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser,
-                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
-                                                                     new SystemClock(),
-                                                                     Substitute.For<IArgoCDDeploymentReporter>());
+            var updater = CreateConvention();
             var variables = new CalamariVariables
             {
                 [PackageVariables.IndexedImage("nginx")] = "index.docker.io/nginx:1.27.1",
@@ -546,15 +507,7 @@ images:
         public void KustomizeSource_NoKustomizationFile_DontUpdate()
         {
             // Arrange
-            var updater = new UpdateArgoCDAppImagesInstallConvention(log,
-                                                                     fileSystem,
-                                                                     new DeploymentConfigFactory(nonSensitiveCalamariVariables),
-                                                                     new CommitMessageGenerator(),
-                                                                     customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser,
-                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
-                                                                     new SystemClock(),
-                                                                     Substitute.For<IArgoCDDeploymentReporter>());
+            var updater = CreateConvention();
             var variables = new CalamariVariables
             {
                 [PackageVariables.IndexedImage("nginx")] = "index.docker.io/nginx:1.27.1",
