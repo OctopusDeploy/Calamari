@@ -5,6 +5,7 @@ using System.Linq;
 using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.Models;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes;
 
 namespace Calamari.ArgoCD
@@ -19,17 +20,26 @@ namespace Calamari.ArgoCD
         }
 
         public void WritePushResultOutput(
+            IVariables variables,
+            string gatewayName,
             string applicationName,
             int sourceIndex,
             PushResult pushResult)
         {
-            log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.Applications(applicationName).Sources(sourceIndex).CommitSha, pushResult.ShortSha);
+            var appSourceVariables = SpecialVariables.ArgoCD.Output
+                                                     .Actions(variables[ActionVariables.Name])
+                                                     .ArgoCDGateways(gatewayName)
+                                                     .Applications(applicationName)
+                                                     .Sources(sourceIndex);
+            
+            log.SetOutputVariableButDoNotAddToVariables(appSourceVariables.CommitSha, pushResult.CommitSha);
+            log.SetOutputVariableButDoNotAddToVariables(appSourceVariables.ShortSha, pushResult.ShortSha);
 
             if (pushResult is PullRequestPushResult prResult)
             {
-                log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.Applications(applicationName).Sources(sourceIndex).PullRequestTitle, prResult.PullRequestTitle);
-                log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.Applications(applicationName).Sources(sourceIndex).PullRequestUrl, prResult.PullRequestUri);
-                log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.Applications(applicationName).Sources(sourceIndex).PullRequestNumber, prResult.PullRequestNumber.ToString(CultureInfo.InvariantCulture));
+                log.SetOutputVariableButDoNotAddToVariables(appSourceVariables.PullRequestTitle, prResult.PullRequestTitle);
+                log.SetOutputVariableButDoNotAddToVariables(appSourceVariables.PullRequestUrl, prResult.PullRequestUri);
+                log.SetOutputVariableButDoNotAddToVariables(appSourceVariables.PullRequestNumber, prResult.PullRequestNumber.ToString(CultureInfo.InvariantCulture));
             }
         }
 
