@@ -93,11 +93,11 @@ namespace Calamari.ArgoCD.Git
             return normalized.StartsWith($".{Path.DirectorySeparatorChar}") ? normalized.Substring(2) : normalized;
         }
 
-        public async Task PushChanges(bool requiresPullRequest,
-                                      string summary,
-                                      string description,
-                                      GitReference branchName,
-                                      CancellationToken cancellationToken)
+        public async Task<PushResult> PushChanges(bool requiresPullRequest,
+                                                 string summary,
+                                                 string description,
+                                                 GitReference branchName,
+                                                 CancellationToken cancellationToken)
         {
             var currentBranchName = repository.GetBranchName(branchName);
             var commit = repository.Head.Tip; // We should have just pushed to the tip of this branch
@@ -119,18 +119,22 @@ namespace Calamari.ArgoCD.Git
             {
                 log.Info($"Commit {commit.ShortSha()} pushed");    
             }
-            
+
+            var result = new PushResult(commit.ShortSha());
             if (requiresPullRequest)
             {
-                await CreatePullRequest(summary, description, cancellationToken, pushToBranchName, currentBranchName);
+                var (title, uri, number) = await CreatePullRequest(summary, description, cancellationToken, pushToBranchName, currentBranchName);
+                result = new PullRequestPushResult(result.ShortSha, title, uri, number);
             }
+
+            return result;
         }
 
-        async Task CreatePullRequest(string summary,
-                                     string description,
-                                     CancellationToken cancellationToken,
-                                     GitBranchName pushToBranchName,
-                                     GitBranchName currentBranchName)
+        async Task<(string Title, string Uri, long Number)> CreatePullRequest(string summary,
+                                                              string description,
+                                                              CancellationToken cancellationToken,
+                                                              GitBranchName pushToBranchName,
+                                                              GitBranchName currentBranchName)
         {
             
             
@@ -153,6 +157,8 @@ namespace Calamari.ArgoCD.Git
                 log.SetOutputVariableButDoNotAddToVariables("PullRequest.Url", pullRequest.Url);
 
                 log.Info($"Pull Request [{pullRequest.Title} (#{pullRequest.Number})]({pullRequest.Url}) Created");
+
+                return (pullRequest.Title, pullRequest.Url, pullRequest.Number);
             }
             catch (Exception e)
             {
@@ -219,4 +225,8 @@ namespace Calamari.ArgoCD.Git
             }
         }
     }
+
+    public record PushResult(string ShortSha);
+
+    public record PullRequestPushResult(string ShortSha, string PullRequestTitle, string PullRequestUri, long PullRequestNumber) : PushResult(ShortSha);
 }

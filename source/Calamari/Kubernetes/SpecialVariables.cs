@@ -89,6 +89,29 @@ namespace Calamari.Kubernetes
                 public static readonly string UpdatedApplications = "ArgoCD.UpdatedApplications";
                 public static readonly string UpdatedApplicationSourceCounts = "ArgoCD.UpdatedApplicationSourceCounts";
                 public static readonly string UpdatedImages = "ArgoCD.UpdatedImages";
+
+                public static ApplicationVariables Applications(string name) => new(name);
+                
+                public record ApplicationVariables(string Name)
+                {
+                    public ApplicationSourceVariables Sources(int index) => new (Name, index);
+
+                    public static string Prefix(string name)
+                    {
+                        return $"ArgoCD.Applications[{name}]";
+                    }
+
+                    public record ApplicationSourceVariables(string ApplicationName, int Index)
+                    {
+                        public static string Prefix(int index) => $"Sources[{index}]";
+
+                        public readonly string CommitSha = $"{ApplicationVariables.Prefix(ApplicationName)}.{ApplicationSourceVariables.Prefix(Index)}.CommitSha";
+                        public readonly string PullRequestTitle = $"{ApplicationVariables.Prefix(ApplicationName)}.{ApplicationSourceVariables.Prefix(Index)}.PullRequest.Title";
+                        public readonly string PullRequestNumber = $"{ApplicationVariables.Prefix(ApplicationName)}.{ApplicationSourceVariables.Prefix(Index)}.PullRequest.Number";
+                        public readonly string PullRequestUrl = $"{ApplicationVariables.Prefix(ApplicationName)}.{ApplicationSourceVariables.Prefix(Index)}.PullRequest.Url";
+                    }
+                }
+                
             }
         }
 

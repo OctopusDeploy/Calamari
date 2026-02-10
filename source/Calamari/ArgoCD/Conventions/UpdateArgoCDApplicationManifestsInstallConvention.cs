@@ -30,6 +30,7 @@ namespace Calamari.ArgoCD.Conventions
         readonly IArgoCDManifestsFileMatcher argoCDManifestsFileMatcher;
         readonly IGitVendorAgnosticApiAdapterFactory gitVendorAgnosticApiAdapterFactory;
         readonly IClock clock;
+        readonly ArgoCDOutputVariablesWriter outputVariablesWriter;
 
         public UpdateArgoCDApplicationManifestsInstallConvention(ICalamariFileSystem fileSystem,
                                                                  string packageSubfolder,
@@ -50,6 +51,7 @@ namespace Calamari.ArgoCD.Conventions
             this.gitVendorAgnosticApiAdapterFactory = gitVendorAgnosticApiAdapterFactory;
             this.clock = clock;
             this.packageSubfolder = packageSubfolder;
+            outputVariablesWriter = new ArgoCDOutputVariablesWriter(log);
         }
 
         public void Install(RunningDeployment deployment)
@@ -81,12 +83,11 @@ namespace Calamari.ArgoCD.Conventions
             var updatedApplicationsWithSources = applicationResults.Where(r => r.UpdatedSourceCount > 0).Select(r => (r.ApplicationName, r.UpdatedSourceCount)).ToList();
             
             var gatewayIds = argoProperties.Applications.Select(a => a.GatewayId).ToHashSet();
-            var outputWriter = new ArgoCDOutputVariablesWriter(log);
-            outputWriter.WriteManifestUpdateOutput(gatewayIds,
-                                                gitReposUpdated,
-                                                totalApplicationsWithSourceCounts,
-                                                updatedApplicationsWithSources
-                                               );
+            outputVariablesWriter.WriteManifestUpdateOutput(gatewayIds,
+                                                            gitReposUpdated,
+                                                            totalApplicationsWithSourceCounts,
+                                                            updatedApplicationsWithSources
+                                                           );
 
         }
 
@@ -200,13 +201,18 @@ namespace Calamari.ArgoCD.Conventions
             if (repository.CommitChanges(deploymentConfig.CommitParameters.Summary, deploymentConfig.CommitParameters.Description))
             {
                 log.Info("Changes were commited, pushing to remote");
-                repository.PushChanges(deploymentConfig.CommitParameters.RequiresPr,
+                var pushResult = repository.PushChanges(deploymentConfig.CommitParameters.RequiresPr,
                                        deploymentConfig.CommitParameters.Summary,
                                        deploymentConfig.CommitParameters.Description,
                                        targetBranch,
                                        CancellationToken.None)
                           .GetAwaiter()
                           .GetResult();
+
+                if (pushResult is not null)
+                {
+                    outputVariablesWriter.WritePushResultOutput(applicationFromYaml.Metadata.Name, sourceWithMetadata.Index, pushResult);
+                }
 
                 return true;
             }

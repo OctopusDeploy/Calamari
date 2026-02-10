@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
+using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.Models;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Kubernetes;
@@ -14,6 +16,21 @@ namespace Calamari.ArgoCD
         public ArgoCDOutputVariablesWriter(ILog log)
         {
             this.log = log;
+        }
+
+        public void WritePushResultOutput(
+            string applicationName,
+            int sourceIndex,
+            PushResult pushResult)
+        {
+            log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.Applications(applicationName).Sources(sourceIndex).CommitSha, pushResult.ShortSha);
+
+            if (pushResult is PullRequestPushResult prResult)
+            {
+                log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.Applications(applicationName).Sources(sourceIndex).PullRequestTitle, prResult.PullRequestTitle);
+                log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.Applications(applicationName).Sources(sourceIndex).PullRequestUrl, prResult.PullRequestUri);
+                log.SetOutputVariableButDoNotAddToVariables(SpecialVariables.Git.Output.Applications(applicationName).Sources(sourceIndex).PullRequestNumber, prResult.PullRequestNumber.ToString(CultureInfo.InvariantCulture));
+            }
         }
 
         public void WriteImageUpdateOutput(IEnumerable<string> gateways,
