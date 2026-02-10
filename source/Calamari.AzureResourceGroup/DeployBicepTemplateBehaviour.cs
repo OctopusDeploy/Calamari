@@ -98,19 +98,25 @@ namespace Calamari.AzureResourceGroup
             var bicepTemplateFile = context.Variables.Get(SpecialVariables.Action.Azure.BicepTemplateFile, "template.bicep");
             var templateSource = context.Variables.Get(SpecialVariables.Action.Azure.TemplateSource, string.Empty);
 
-            var filesInPackageOrRepository = templateSource is "Package" or "GitRepository";
-            if (filesInPackageOrRepository)
+            switch (templateSource)
             {
-                var extractionPath = ExtractPackage(context);
+                case "Package":
+                {
+                    var extractionPath = ExtractPackage(context);
 
-                bicepTemplateFile = Path.Combine(extractionPath, context.Variables.Get(SpecialVariables.Action.Azure.BicepTemplate)!);
+                    bicepTemplateFile = Path.Combine(extractionPath, context.Variables.Get(SpecialVariables.Action.Azure.BicepTemplate)!);
+                    break;
+                }
+                case "GitRepository":
+                    bicepTemplateFile = context.Variables.Get(SpecialVariables.Action.Azure.BicepTemplate);
+                    break;
             }
 
             log.Info($"Processing Bicep file: {bicepTemplateFile}");
             var armTemplateFile = bicepCli.BuildArmTemplate(bicepTemplateFile!);
             log.Info("Bicep file processed");
 
-            var template = templateService.GetSubstitutedTemplateContent(armTemplateFile, filesInPackageOrRepository, context.Variables);
+            var template = templateService.GetSubstitutedTemplateContent(armTemplateFile, templateSource is "GitRepository", context.Variables);
             
             var parameters = templateService.GetSubstitutedTemplateContent("parameters.json", inPackage: false, context.Variables);
 
