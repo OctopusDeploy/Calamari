@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Threading.Tasks;
 using Azure;
 using Azure.ResourceManager;
@@ -7,8 +8,11 @@ using Azure.ResourceManager.Resources.Models;
 using Calamari.Azure;
 using Calamari.CloudAccounts;
 using Calamari.Common.Commands;
+using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
+using Calamari.Common.Plumbing.Deployment;
 using Calamari.Common.Plumbing.Extensions;
+using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Variables;
@@ -21,12 +25,16 @@ namespace Calamari.AzureResourceGroup
         readonly TemplateService templateService;
         readonly AzureResourceGroupOperator resourceGroupOperator;
         readonly ILog log;
+        readonly ICalamariFileSystem fileSystem;
+        readonly IExtractPackage extractPackage;
 
-        public DeployBicepTemplateBehaviour(ICommandLineRunner commandLineRunner, TemplateService templateService, AzureResourceGroupOperator resourceGroupOperator, ILog log)
+        public DeployBicepTemplateBehaviour(ICommandLineRunner commandLineRunner, TemplateService templateService, AzureResourceGroupOperator resourceGroupOperator, ICalamariFileSystem fileSystem, IExtractPackage extractPackage, ILog log)
         {
             this.commandLineRunner = commandLineRunner;
             this.templateService = templateService;
             this.resourceGroupOperator = resourceGroupOperator;
+            this.fileSystem = fileSystem;
+            this.extractPackage = extractPackage;
             this.log = log;
         }
 
@@ -93,7 +101,9 @@ namespace Calamari.AzureResourceGroup
             var filesInPackageOrRepository = templateSource is "Package" or "GitRepository";
             if (filesInPackageOrRepository)
             {
-                bicepTemplateFile = context.Variables.Get(SpecialVariables.Action.Azure.BicepTemplate);
+                var extractionPath = ExtractPackage(context);
+
+                bicepTemplateFile = Path.Combine(extractionPath, context.Variables.Get(SpecialVariables.Action.Azure.BicepTemplate)!);
             }
 
             log.Info($"Processing Bicep file: {bicepTemplateFile}");
@@ -105,6 +115,26 @@ namespace Calamari.AzureResourceGroup
             var parameters = templateService.GetSubstitutedTemplateContent("parameters.json", inPackage: false, context.Variables);
 
             return (template, parameters);
+        }
+
+        string ExtractPackage(RunningDeployment context)
+        {
+            var packageId = context.Variables.Get(SpecialVariables.Action.Azure.PackageId)!;
+            var originalFullPath = Path.GetFullPath(context.Variables.Get(PackageVariables.IndexedOriginalPath(packageId))!);
+            var sanitizedReferenceName = fileSystem.RemoveInvalidFileNameChars(packageId);
+            var extractionPath = Path.Combine(context.CurrentDirectory, sanitizedReferenceName);
+            ExtractDependency(originalFullPath, extractionPath);
+            return extractionPath;
+        }
+
+        void ExtractDependency(string file, string extractionPath)
+        {
+            Log.Info($"Extracting dependency '{file}' to '{extractionPath}'");
+
+            if (!File.Exists(file))
+                throw new CommandException("Could not find dependency file: " + file);
+
+            extractPackage.ExtractToCustomDirectory(new PathToPackage(file), extractionPath);
         }
     }
 }
