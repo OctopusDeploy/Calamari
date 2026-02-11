@@ -57,19 +57,21 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             originRepo = RepositoryHelpers.CreateBareRepository(OriginPath);
             RepositoryHelpers.CreateBranchIn(argoCDBranchName, OriginPath);
 
-            var argoCdCustomPropertiesDto = new ArgoCDCustomPropertiesDto(new[]
-                                                                          {
+            var argoCdCustomPropertiesDto = new ArgoCDCustomPropertiesDto(
+                                                                          [
+                                                                              new ArgoCDGatewayDto(GatewayId, "Gateway1")
+                                                                          ],
+                                                                          [
                                                                               new ArgoCDApplicationDto(GatewayId,
                                                                                                        "App1",
                                                                                                        "argocd",
                                                                                                        "yaml",
                                                                                                        "docker.io",
                                                                                                        "http://my-argo.com")
-                                                                          },
-                                                                          new GitCredentialDto[]
-                                                                          {
+                                                                          ],
+                                                                          [
                                                                               new GitCredentialDto(new Uri(RepoUrl).AbsoluteUri, "", "")
-                                                                          });
+                                                                          ]);
             customPropertiesLoader.Load<ArgoCDCustomPropertiesDto>().Returns(argoCdCustomPropertiesDto);
 
             var argoCdApplicationFromYaml = new ArgoCDApplicationBuilder()

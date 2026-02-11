@@ -59,19 +59,21 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             nonSensitiveCalamariVariables.Add(SpecialVariables.Git.CommitMessageSummary, "Commit Summary");
             nonSensitiveCalamariVariables.Add(SpecialVariables.Git.CommitMessageDescription, "Commit Description");
 
-            var argoCdCustomPropertiesDto = new ArgoCDCustomPropertiesDto(new[]
-                                                                          {
+            var argoCdCustomPropertiesDto = new ArgoCDCustomPropertiesDto(
+                                                                          [
+                                                                              new ArgoCDGatewayDto(GatewayId, "Gateway1")
+                                                                          ],
+                                                                          [
                                                                               new ArgoCDApplicationDto(GatewayId,
                                                                                                        "App1",
                                                                                                        "argocd",
                                                                                                        "yaml",
                                                                                                        "docker.io",
                                                                                                        "http://my-argo.com")
-                                                                          },
-                                                                          new GitCredentialDto[]
-                                                                          {
+                                                                          ],
+                                                                          [
                                                                               new GitCredentialDto(new Uri(OriginPath).AbsoluteUri, "", "")
-                                                                          });
+                                                                          ]);
             customPropertiesLoader.Load<ArgoCDCustomPropertiesDto>().Returns(argoCdCustomPropertiesDto);
 
             var argoCdApplicationFromYaml = new ArgoCDApplicationBuilder()
