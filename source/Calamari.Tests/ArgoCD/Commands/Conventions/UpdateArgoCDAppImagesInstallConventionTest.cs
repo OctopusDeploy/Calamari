@@ -46,6 +46,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
 
         readonly IArgoCDApplicationManifestParser argoCdApplicationManifestParser = Substitute.For<IArgoCDApplicationManifestParser>();
         readonly ICustomPropertiesLoader customPropertiesLoader = Substitute.For<ICustomPropertiesLoader>();
+        IArgoCDDeploymentReporter deploymentReporter;
 
         UpdateArgoCDAppImagesInstallConvention CreateConvention()
         {
@@ -58,13 +59,14 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                argoCdApplicationManifestParser,
                 Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
                 new SystemClock(),
-                Substitute.For<IArgoCDDeploymentReporter>());
+                deploymentReporter);
         }
 
         [SetUp]
         public void Init()
         {
             log = new InMemoryLog();
+            deploymentReporter = Substitute.For<IArgoCDDeploymentReporter>();
             tempDirectory = fileSystem.CreateTemporaryDirectory();
 
             originRepo = RepositoryHelpers.CreateBareRepository(OriginPath);
@@ -576,6 +578,60 @@ spec:
             log.MessagesWarnFormatted.Should().Contain("kustomization file not found, no files will be updated");
 
             AssertOutputVariables(updated: false);
+        }
+
+        [Test]
+        public void DirectorySource_ImageMatches_ReportsDeploymentWithNonEmptyCommitSha()
+        {
+            // Arrange
+            var updater = CreateConvention();
+            var variables = new CalamariVariables
+            {
+                [PackageVariables.IndexedImage("nginx")] = "index.docker.io/nginx:1.27.1",
+                [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
+                [ProjectVariables.Slug] = ProjectSlug,
+                [DeploymentEnvironment.Slug] = EnvironmentSlug,
+            };
+            var runningDeployment = new RunningDeployment(null, variables);
+            runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
+            runningDeployment.StagingDirectory = tempDirectory;
+
+            var yamlFilename = "include/file1.yaml";
+            var filesInRepo = new (string, string)[]
+            {
+                (
+                    yamlFilename,
+                    @"
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sample-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sample-deployment
+  template:
+    metadata:
+      labels:
+        app: sample-deployment
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.19
+        - name: alpine
+          image: alpine:3.21
+"
+                )
+            };
+            originRepo.AddFilesToBranch(argoCDBranchName, filesInRepo);
+
+            // Act
+            updater.Install(runningDeployment);
+
+            // Assert
+            deploymentReporter.Received(1).ReportDeployments(Arg.Is<IReadOnlyList<ProcessApplicationResult>>(results =>
+                results.Any(r => r.Updated && r.UpdatedSourceDetails.Any(d => !string.IsNullOrEmpty(d.CommitSha)))));
         }
 
         void AssertFileContents(string clonedRepoPath, string relativeFilePath, string expectedContent)

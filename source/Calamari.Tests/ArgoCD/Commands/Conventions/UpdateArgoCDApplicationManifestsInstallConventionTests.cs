@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Calamari.ArgoCD;
 using Calamari.ArgoCD.Commands;
 using Calamari.ArgoCD.Conventions;
@@ -38,6 +39,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
         string PackageDirectory => Path.Combine(WorkingDirectory, UpdateArgoCDAppManifestsCommand.PackageDirectoryName);
         readonly IArgoCDApplicationManifestParser argoCdApplicationManifestParser = Substitute.For<IArgoCDApplicationManifestParser>();
         readonly ICustomPropertiesLoader customPropertiesLoader = Substitute.For<ICustomPropertiesLoader>();
+        IArgoCDDeploymentReporter deploymentReporter;
 
         string OriginPath => Path.Combine(tempDirectory, "origin");
         string RepoUrl => OriginPath;
@@ -51,6 +53,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
         public void Init()
         {
             log = new InMemoryLog();
+            deploymentReporter = Substitute.For<IArgoCDDeploymentReporter>();
             tempDirectory = fileSystem.CreateTemporaryDirectory();
             Directory.CreateDirectory(PackageDirectory);
 
@@ -109,7 +112,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                 new ArgoCDManifestsFileMatcher(fileSystem),
                 Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
                 new SystemClock(),
-                Substitute.For<IArgoCDDeploymentReporter>());
+                deploymentReporter);
         }
 
         [Test]
@@ -389,6 +392,35 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             File.Exists(Path.Combine(resultPath, firstFilename)).Should().BeFalse();
 
             AssertOutputVariables(false, matchingApplicationTotalSourceCounts: "2");
+        }
+
+        [Test]
+        public void ExecuteCopiesFiles_ReportsDeploymentWithNonEmptyCommitSha()
+        {
+            const string firstFilename = "first.yaml";
+            CreateFileUnderPackageDirectory(firstFilename);
+
+            var nonSensitiveCalamariVariables = new NonSensitiveCalamariVariables()
+            {
+                [KnownVariables.OriginalPackageDirectoryPath] = WorkingDirectory,
+                [SpecialVariables.Git.InputPath] = "",
+                [SpecialVariables.Git.CommitMethod] = "DirectCommit",
+                [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this",
+                [ProjectVariables.Slug] = ProjectSlug,
+                [DeploymentEnvironment.Slug] = EnvironmentSlug,
+            };
+            var allVariables = new CalamariVariables();
+            allVariables.Merge(nonSensitiveCalamariVariables);
+
+            var runningDeployment = new RunningDeployment("./arbitraryFile.txt", allVariables);
+            runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
+            runningDeployment.StagingDirectory = WorkingDirectory;
+
+            var convention = CreateConvention(nonSensitiveCalamariVariables);
+            convention.Install(runningDeployment);
+
+            deploymentReporter.Received(1).ReportDeployments(Arg.Is<IReadOnlyList<ProcessApplicationResult>>(results =>
+                results.Any(r => r.Updated && r.UpdatedSourceDetails.Any(d => !string.IsNullOrEmpty(d.CommitSha)))));
         }
 
         void AssertOutputVariables(bool updated = true, string matchingApplicationTotalSourceCounts = "1")
