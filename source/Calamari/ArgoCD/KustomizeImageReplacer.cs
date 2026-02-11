@@ -38,6 +38,7 @@ namespace Calamari.ArgoCD
         {
             if (string.IsNullOrWhiteSpace(yamlContent))
             {
+                log.Warn("Kustomization file content is empty or whitespace only.");
                 return NoChangeResult;
             }
 
@@ -49,6 +50,7 @@ namespace Calamari.ArgoCD
             //if there are no documents, do nothing
             if (stream.Documents.Count != 1 || !(stream.Documents[0].RootNode is YamlMappingNode rootNode))
             {
+                log.Warn("Kustomization file must contain exactly one YAML document with a mapping root node.");
                 return NoChangeResult;
             }
 
@@ -56,7 +58,7 @@ namespace Calamari.ArgoCD
             var (imageKey, imagesNode) = rootNode.FirstOrDefault(kvp => new YamlScalarNode(ImagesNodeKey).Equals(kvp.Key));
             if (!(imagesNode is YamlSequenceNode imagesSequenceNode) || imageKey is null)
             {
-                log.Verbose("No 'images' sequence found in kustomization file.");
+                log.Warn("No 'images' sequence found in kustomization file.");
                 return NoChangeResult;
             }
 
