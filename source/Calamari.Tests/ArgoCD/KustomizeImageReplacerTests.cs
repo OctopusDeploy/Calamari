@@ -374,6 +374,26 @@ metadata:
         }
 
         [Test]
+        public void UpdateImages_NoImagesKey_LogsAppropriateWarning()
+        {
+            const string noImagesKeyYaml = @"
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- deployment.yaml
+- service.yaml
+";
+            var inMemoryLog = new InMemoryLog();
+            var imageReplacer = new KustomizeImageReplacer(noImagesKeyYaml, ArgoCDConstants.DefaultContainerRegistry, inMemoryLog);
+
+            var result = imageReplacer.UpdateImages(imagesToUpdate);
+
+            result.UpdatedContents.Should().Be(noImagesKeyYaml);
+            result.UpdatedImageReferences.Count.Should().Be(0);
+            inMemoryLog.StandardOut.Should().Contain("No 'images' sequence found in kustomization file.");
+        }
+
+        [Test]
         public void UpdateImages_FullKustomizationFile_ShouldOnlyChangeTheImagesNode()
         {
             const string inputYaml = @"
