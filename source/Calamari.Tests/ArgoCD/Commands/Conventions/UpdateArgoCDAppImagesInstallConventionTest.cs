@@ -46,11 +46,27 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
 
         readonly IArgoCDApplicationManifestParser argoCdApplicationManifestParser = Substitute.For<IArgoCDApplicationManifestParser>();
         readonly ICustomPropertiesLoader customPropertiesLoader = Substitute.For<ICustomPropertiesLoader>();
+        IArgoCDFilesUpdatedReporter deploymentReporter;
+
+        UpdateArgoCDAppImagesInstallConvention CreateConvention()
+        {
+            return new UpdateArgoCDAppImagesInstallConvention(
+                log,
+                fileSystem,
+                new DeploymentConfigFactory(nonSensitiveCalamariVariables),
+                new CommitMessageGenerator(),
+                customPropertiesLoader,
+               argoCdApplicationManifestParser,
+                Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
+                new SystemClock(),
+                deploymentReporter);
+        }
 
         [SetUp]
         public void Init()
         {
             log = new InMemoryLog();
+            deploymentReporter = Substitute.For<IArgoCDFilesUpdatedReporter>();
             tempDirectory = fileSystem.CreateTemporaryDirectory();
 
             originRepo = RepositoryHelpers.CreateBareRepository(OriginPath);
@@ -99,14 +115,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
         public void PluginSourceType_DontUpdate()
         {
             // Arrange
-            var updater = new UpdateArgoCDAppImagesInstallConvention(log,
-                                                                     fileSystem,
-                                                                     new DeploymentConfigFactory(nonSensitiveCalamariVariables),
-                                                                     new CommitMessageGenerator(),
-                                                                     customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser,
-                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
-                                                                     new SystemClock());
+            var updater = CreateConvention();
             var variables = new CalamariVariables
             {
                 [PackageVariables.IndexedImage("nginx")] = "index.docker.io/nginx:1.27.1",
@@ -160,19 +169,12 @@ images:
 
             AssertOutputVariables(false);
         }
-        
+
         [Test]
         public void DirectorySource_NoMatchingFiles_DontUpdate()
         {
             // Arrange
-            var updater = new UpdateArgoCDAppImagesInstallConvention(log,
-                                                                     fileSystem,
-                                                                     new DeploymentConfigFactory(nonSensitiveCalamariVariables),
-                                                                     new CommitMessageGenerator(),
-                                                                     customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser,
-                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
-                                                                     new SystemClock());
+            var updater = CreateConvention();
             var variables = new CalamariVariables
             {
                 [PackageVariables.IndexedImage("nginx")] = "index.docker.io/nginx:1.27.1",
@@ -192,7 +194,7 @@ images:
             var filesInRepo = fileSystem.EnumerateFilesRecursively(resultRepo, "*");
             var ignoredGitSubfolder = filesInRepo.Where(file => !file.Contains(".git"));
             ignoredGitSubfolder.Should().BeEmpty();
-            
+
             AssertOutputVariables(false);
         }
 
@@ -200,14 +202,7 @@ images:
         public void DirectorySource_NoImageMatches_DontUpdate()
         {
             // Arrange
-            var updater = new UpdateArgoCDAppImagesInstallConvention(log,
-                                                                     fileSystem,
-                                                                     new DeploymentConfigFactory(nonSensitiveCalamariVariables),
-                                                                     new CommitMessageGenerator(),
-                                                                     customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser,
-                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
-                                                                     new SystemClock());
+            var updater = CreateConvention();
             var variables = new CalamariVariables
             {
                 [PackageVariables.IndexedImage("nginx")] = "docker.io/nginx:1.27.1",
@@ -230,7 +225,7 @@ images:
 
             var resultRepo = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             AssertFileContents(resultRepo, "include/file1.yaml", "No Yaml here");
-            
+
             AssertOutputVariables(false);
         }
 
@@ -238,14 +233,7 @@ images:
         public void DirectorySource_ImageMatches_Update()
         {
             // Arrange
-            var updater = new UpdateArgoCDAppImagesInstallConvention(log,
-                                                                     fileSystem,
-                                                                     new DeploymentConfigFactory(nonSensitiveCalamariVariables),
-                                                                     new CommitMessageGenerator(),
-                                                                     customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser,
-                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
-                                                                     new SystemClock());
+            var updater = CreateConvention();
             var variables = new CalamariVariables
             {
                 [PackageVariables.IndexedImage("nginx")] = "index.docker.io/nginx:1.27.1",
@@ -316,7 +304,7 @@ spec:
 
             var clonedRepoPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             AssertFileContents(clonedRepoPath, yamlFilename, updatedYamlContent);
-            
+
             AssertOutputVariables();
         }
 
@@ -324,14 +312,7 @@ spec:
         public void DirectorySource_NoPath_DontUpdate()
         {
             // Arrange
-            var updater = new UpdateArgoCDAppImagesInstallConvention(log,
-                                                                     fileSystem,
-                                                                     new DeploymentConfigFactory(nonSensitiveCalamariVariables),
-                                                                     new CommitMessageGenerator(),
-                                                                     customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser,
-                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
-                                                                     new SystemClock());
+            var updater = CreateConvention();
             var variables = new CalamariVariables
             {
                 [PackageVariables.IndexedImage("nginx")] = "index.docker.io/nginx:1.27.1",
@@ -390,14 +371,14 @@ spec:
 
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
                                            .Returns(argoCdApplicationFromYaml);
-            
+
             // Act
             updater.Install(runningDeployment);
 
             //Assert
             var clonedRepoPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             AssertFileContents(clonedRepoPath, yamlFilename, fileContents);
-            
+
             log.MessagesWarnFormatted.Should().Contain("Unable to update source 'Index: 0, Type: Directory, Name: (None)' as a path has not been specified.");
 
             AssertOutputVariables(false);
@@ -407,14 +388,7 @@ spec:
         public void KustomizeSource_NoPath_DontUpdate()
         {
             // Arrange
-            var updater = new UpdateArgoCDAppImagesInstallConvention(log,
-                                                                     fileSystem,
-                                                                     new DeploymentConfigFactory(nonSensitiveCalamariVariables),
-                                                                     new CommitMessageGenerator(),
-                                                                     customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser,
-                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
-                                                                     new SystemClock());
+            var updater = CreateConvention();
             var variables = new CalamariVariables
             {
                 [PackageVariables.IndexedImage("nginx")] = "index.docker.io/nginx:1.27.1",
@@ -460,7 +434,7 @@ images:
             updater.Install(runningDeployment);
 
             // Assert
-           
+
             var clonedRepoPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             AssertFileContents(clonedRepoPath, kustomizeFile, kustomizeFileContents);
 
@@ -473,14 +447,7 @@ images:
         public void KustomizeSource_HasKustomizationFile_Update()
         {
             // Arrange
-            var updater = new UpdateArgoCDAppImagesInstallConvention(log,
-                                                                     fileSystem,
-                                                                     new DeploymentConfigFactory(nonSensitiveCalamariVariables),
-                                                                     new CommitMessageGenerator(),
-                                                                     customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser,
-                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
-                                                                     new SystemClock());
+            var updater = CreateConvention();
             var variables = new CalamariVariables
             {
                 [PackageVariables.IndexedImage("nginx")] = "index.docker.io/nginx:1.27.1",
@@ -536,19 +503,12 @@ images:
 
             AssertOutputVariables();
         }
-        
+
         [Test]
         public void KustomizeSource_NoKustomizationFile_DontUpdate()
         {
             // Arrange
-            var updater = new UpdateArgoCDAppImagesInstallConvention(log,
-                                                                     fileSystem,
-                                                                     new DeploymentConfigFactory(nonSensitiveCalamariVariables),
-                                                                     new CommitMessageGenerator(),
-                                                                     customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser,
-                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
-                                                                     new SystemClock());
+            var updater = CreateConvention();
             var variables = new CalamariVariables
             {
                 [PackageVariables.IndexedImage("nginx")] = "index.docker.io/nginx:1.27.1",
@@ -589,7 +549,7 @@ spec:
                     existingYamlContent
                 )
             };
-            
+
             originRepo.AddFilesToBranch(argoCDBranchName, filesInRepo);
 
             var argoCdApplicationFromYaml = new ArgoCDApplicationBuilder()
@@ -622,11 +582,65 @@ spec:
             AssertOutputVariables(updated: false);
         }
 
+        [Test]
+        public void DirectorySource_ImageMatches_ReportsDeploymentWithNonEmptyCommitSha()
+        {
+            // Arrange
+            var updater = CreateConvention();
+            var variables = new CalamariVariables
+            {
+                [PackageVariables.IndexedImage("nginx")] = "index.docker.io/nginx:1.27.1",
+                [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
+                [ProjectVariables.Slug] = ProjectSlug,
+                [DeploymentEnvironment.Slug] = EnvironmentSlug,
+            };
+            var runningDeployment = new RunningDeployment(null, variables);
+            runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
+            runningDeployment.StagingDirectory = tempDirectory;
+
+            var yamlFilename = "include/file1.yaml";
+            var filesInRepo = new (string, string)[]
+            {
+                (
+                    yamlFilename,
+                    @"
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sample-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sample-deployment
+  template:
+    metadata:
+      labels:
+        app: sample-deployment
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.19
+        - name: alpine
+          image: alpine:3.21
+"
+                )
+            };
+            originRepo.AddFilesToBranch(argoCDBranchName, filesInRepo);
+
+            // Act
+            updater.Install(runningDeployment);
+
+            // Assert
+            deploymentReporter.Received(1).ReportDeployments(Arg.Is<IReadOnlyList<ProcessApplicationResult>>(results =>
+                results.Count == 1));
+        }
+
         void AssertFileContents(string clonedRepoPath, string relativeFilePath, string expectedContent)
         {
             var absolutePath = Path.Combine(clonedRepoPath, relativeFilePath);
             fileSystem.FileExists(absolutePath).Should().BeTrue();
-            
+
             var content = fileSystem.ReadFile(absolutePath);
             content.ReplaceLineEndings().Should().Be(expectedContent.ReplaceLineEndings());
         }
