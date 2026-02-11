@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using System.Threading.Tasks;
 using Azure;
 using Azure.ResourceManager;
@@ -8,7 +7,6 @@ using Azure.ResourceManager.Resources.Models;
 using Calamari.Azure;
 using Calamari.CloudAccounts;
 using Calamari.Common.Commands;
-using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
@@ -28,7 +26,7 @@ namespace Calamari.AzureResourceGroup
         public async Task Execute(RunningDeployment context)
         {
             var accountType = context.Variables.GetRequiredVariable(AzureScripting.SpecialVariables.Account.AccountType);
-            var account = accountType == AccountType.AzureOidc.ToString() ? (IAzureAccount)new AzureOidcAccount(context.Variables) : new AzureServicePrincipalAccount(context.Variables);
+            IAzureAccount account = accountType == nameof(AccountType.AzureOidc) ? new AzureOidcAccount(context.Variables) : new AzureServicePrincipalAccount(context.Variables);
 
             var armClient = account.CreateArmClient();
 
