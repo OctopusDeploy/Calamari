@@ -62,7 +62,7 @@ image:
                 argoCdApplicationManifestParser,
                 Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
                 new SystemClock(),
-                Substitute.For<IArgoCDDeploymentReporter>());
+                Substitute.For<IArgoCDFilesUpdatedReporter>());
         }
 
         [SetUp]

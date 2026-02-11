@@ -127,9 +127,9 @@ namespace Calamari.Kubernetes
                 public const string NamespaceAttribute = "ns";
             }
 
-            public static class ArgoCDDeployment
+            public static class ArgoCDFilesUpdated
             {
-                public const string Name = "argocd-deployment";
+                public const string Name = "argocd-files-updated";
 
                 public static class Attributes
                 {

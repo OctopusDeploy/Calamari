@@ -46,7 +46,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
 
         readonly IArgoCDApplicationManifestParser argoCdApplicationManifestParser = Substitute.For<IArgoCDApplicationManifestParser>();
         readonly ICustomPropertiesLoader customPropertiesLoader = Substitute.For<ICustomPropertiesLoader>();
-        IArgoCDDeploymentReporter deploymentReporter;
+        IArgoCDFilesUpdatedReporter deploymentReporter;
 
         UpdateArgoCDAppImagesInstallConvention CreateConvention()
         {
@@ -66,7 +66,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
         public void Init()
         {
             log = new InMemoryLog();
-            deploymentReporter = Substitute.For<IArgoCDDeploymentReporter>();
+            deploymentReporter = Substitute.For<IArgoCDFilesUpdatedReporter>();
             tempDirectory = fileSystem.CreateTemporaryDirectory();
 
             originRepo = RepositoryHelpers.CreateBareRepository(OriginPath);

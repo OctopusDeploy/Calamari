@@ -53,7 +53,7 @@ namespace Calamari.ArgoCD.Commands
             Options.Parse(commandLineArguments);
             var clock = new SystemClock();
             var runningDeployment = new RunningDeployment(null, variables);
-            var reporter = new ArgoCDDeploymentReporter(log);
+            var reporter = new ArgoCDFilesUpdatedReporter(log);
 
             var conventions = new List<IConvention>
             {

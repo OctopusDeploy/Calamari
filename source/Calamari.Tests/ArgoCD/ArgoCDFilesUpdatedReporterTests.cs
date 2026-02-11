@@ -8,13 +8,13 @@ using NUnit.Framework;
 namespace Calamari.Tests.ArgoCD
 {
     [TestFixture]
-    public class ArgoCDDeploymentReporterTests
+    public class ArgoCDFilesUpdatedReporterTests
     {
         [Test]
         public void ReportDeployments_WithNoUpdatedApplications_WritesNoServiceMessages()
         {
             var log = new InMemoryLog();
-            var reporter = new ArgoCDDeploymentReporter(log);
+            var reporter = new ArgoCDFilesUpdatedReporter(log);
 
             var applicationResults = new List<ProcessApplicationResult>
             {
@@ -31,7 +31,7 @@ namespace Calamari.Tests.ArgoCD
         public void ReportDeployments_WithSingleUpdatedApplication_WritesOneServiceMessage()
         {
             var log = new InMemoryLog();
-            var reporter = new ArgoCDDeploymentReporter(log);
+            var reporter = new ArgoCDFilesUpdatedReporter(log);
 
             var applicationResults = new List<ProcessApplicationResult>
             {
@@ -42,7 +42,7 @@ namespace Calamari.Tests.ArgoCD
 
             log.ServiceMessages.Should().ContainSingle().Which.Should().BeEquivalentTo(new
             {
-                Name = "argocd-deployment",
+                Name = "argocd-files-updated",
                 Properties = new Dictionary<string, string>
                 {
                     ["gatewayId"] = "gateway1",
@@ -56,7 +56,7 @@ namespace Calamari.Tests.ArgoCD
         public void ReportDeployments_WithMultipleUpdatedApplications_WritesMultipleServiceMessages()
         {
             var log = new InMemoryLog();
-            var reporter = new ArgoCDDeploymentReporter(log);
+            var reporter = new ArgoCDFilesUpdatedReporter(log);
 
             var applicationResults = new List<ProcessApplicationResult>
             {
@@ -69,7 +69,7 @@ namespace Calamari.Tests.ArgoCD
             log.ServiceMessages.Should().BeEquivalentTo([
                 new
                 {
-                    Name = "argocd-deployment",
+                    Name = "argocd-files-updated",
                     Properties = new Dictionary<string, string>
                     {
                         ["gatewayId"] = "gateway1",
@@ -79,7 +79,7 @@ namespace Calamari.Tests.ArgoCD
                 },
                 new
                 {
-                    Name = "argocd-deployment",
+                    Name = "argocd-files-updated",
                     Properties = new Dictionary<string, string>
                     {
                         ["gatewayId"] = "gateway2",
@@ -94,7 +94,7 @@ namespace Calamari.Tests.ArgoCD
         public void ReportDeployments_WithMixedUpdatedAndNonUpdatedApplications_WritesOnlyUpdatedMessages()
         {
             var log = new InMemoryLog();
-            var reporter = new ArgoCDDeploymentReporter(log);
+            var reporter = new ArgoCDFilesUpdatedReporter(log);
 
             var applicationResults = new List<ProcessApplicationResult>
             {
@@ -107,7 +107,7 @@ namespace Calamari.Tests.ArgoCD
 
             log.ServiceMessages.Should().ContainSingle().Which.Should().BeEquivalentTo(new
             {
-                Name = "argocd-deployment",
+                Name = "argocd-files-updated",
                 Properties = new Dictionary<string, string>
                 {
                     ["gatewayId"] = "gateway2",

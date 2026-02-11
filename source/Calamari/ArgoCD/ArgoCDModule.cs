@@ -20,7 +20,7 @@ namespace Calamari.ArgoCD
 
             builder.RegisterType<GitVendorAgnosticApiAdapterFactory>().As<IGitVendorAgnosticApiAdapterFactory>().InstancePerLifetimeScope();
             builder.RegisterType<ArgoCDManifestsFileMatcher>().As<IArgoCDManifestsFileMatcher>().InstancePerLifetimeScope();
-            builder.RegisterType<ArgoCDDeploymentReporter>().As<IArgoCDDeploymentReporter>().InstancePerLifetimeScope();
+            builder.RegisterType<ArgoCDFilesUpdatedReporter>().As<IArgoCDFilesUpdatedReporter>().InstancePerLifetimeScope();
         }
     }
 }

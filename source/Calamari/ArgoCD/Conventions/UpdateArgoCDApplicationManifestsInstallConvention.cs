@@ -30,7 +30,7 @@ namespace Calamari.ArgoCD.Conventions
         readonly IArgoCDManifestsFileMatcher argoCDManifestsFileMatcher;
         readonly IGitVendorAgnosticApiAdapterFactory gitVendorAgnosticApiAdapterFactory;
         readonly IClock clock;
-        readonly IArgoCDDeploymentReporter reporter;
+        readonly IArgoCDFilesUpdatedReporter reporter;
 
         public UpdateArgoCDApplicationManifestsInstallConvention(ICalamariFileSystem fileSystem,
                                                                  string packageSubfolder,
@@ -41,7 +41,7 @@ namespace Calamari.ArgoCD.Conventions
                                                                  IArgoCDManifestsFileMatcher argoCDManifestsFileMatcher,
                                                                  IGitVendorAgnosticApiAdapterFactory gitVendorAgnosticApiAdapterFactory,
                                                                  IClock clock,
-                                                                 IArgoCDDeploymentReporter reporter)
+                                                                 IArgoCDFilesUpdatedReporter reporter)
         {
             this.fileSystem = fileSystem;
             this.log = log;

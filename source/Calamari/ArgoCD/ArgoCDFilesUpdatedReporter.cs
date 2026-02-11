@@ -4,20 +4,20 @@ using System.Text.Json;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.ServiceMessages;
 using Calamari.Kubernetes;
-using ArgoCDDeploymentAttributes = Calamari.Kubernetes.SpecialVariables.ServiceMessages.ArgoCDDeployment.Attributes;
+using ArgoCDFilesUpdatedAttributes = Calamari.Kubernetes.SpecialVariables.ServiceMessages.ArgoCDFilesUpdated.Attributes;
 
 namespace Calamari.ArgoCD
 {
-    public interface IArgoCDDeploymentReporter
+    public interface IArgoCDFilesUpdatedReporter
     {
         void ReportDeployments(IReadOnlyList<ProcessApplicationResult> applicationResults);
     }
 
-    public class ArgoCDDeploymentReporter : IArgoCDDeploymentReporter
+    public class ArgoCDFilesUpdatedReporter : IArgoCDFilesUpdatedReporter
     {
         readonly ILog log;
 
-        public ArgoCDDeploymentReporter(ILog log)
+        public ArgoCDFilesUpdatedReporter(ILog log)
         {
             this.log = log;
         }
@@ -28,13 +28,13 @@ namespace Calamari.ArgoCD
             {
                 var parameters = new Dictionary<string, string>
                 {
-                    { ArgoCDDeploymentAttributes.GatewayId, appResult.GatewayId },
-                    { ArgoCDDeploymentAttributes.ApplicationName, appResult.ApplicationName.Value },
-                    { ArgoCDDeploymentAttributes.Sources, JsonSerializer.Serialize(appResult.UpdatedSourceDetails) }
+                    { ArgoCDFilesUpdatedAttributes.GatewayId, appResult.GatewayId },
+                    { ArgoCDFilesUpdatedAttributes.ApplicationName, appResult.ApplicationName.Value },
+                    { ArgoCDFilesUpdatedAttributes.Sources, JsonSerializer.Serialize(appResult.UpdatedSourceDetails) }
                 };
 
                 var message = new ServiceMessage(
-                    SpecialVariables.ServiceMessages.ArgoCDDeployment.Name,
+                    SpecialVariables.ServiceMessages.ArgoCDFilesUpdated.Name,
                     parameters);
 
                 log.WriteServiceMessage(message);
