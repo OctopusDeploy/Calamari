@@ -18,7 +18,6 @@
                 public static readonly string ArmDeploymentTimeout = "Octopus.Action.Azure.ArmDeploymentTimeout";
                 public static readonly string BicepTemplate  = "Octopus.Action.Azure.BicepTemplate";
                 public static readonly string BicepTemplateFile  = "Octopus.Action.Azure.BicepTemplateFile";
-                public static readonly string PackageId = "Octopus.Action.Package.PackageId";
             }
         }
     }

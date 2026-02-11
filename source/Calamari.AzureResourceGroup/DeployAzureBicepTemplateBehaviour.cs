@@ -10,34 +10,16 @@ using Calamari.CloudAccounts;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Packages;
 using Calamari.Common.Features.Processes;
-using Calamari.Common.Plumbing.Deployment;
 using Calamari.Common.Plumbing.Extensions;
-using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.AzureResourceGroup
 {
-    class DeployBicepTemplateBehaviour : IDeployBehaviour
+    class DeployAzureBicepTemplateBehaviour(ICommandLineRunner commandLineRunner, TemplateService templateService, AzureResourceGroupOperator resourceGroupOperator, ILog log)
+        : IDeployBehaviour
     {
-        readonly ICommandLineRunner commandLineRunner;
-        readonly TemplateService templateService;
-        readonly AzureResourceGroupOperator resourceGroupOperator;
-        readonly ILog log;
-        readonly ICalamariFileSystem fileSystem;
-        readonly IExtractPackage extractPackage;
-
-        public DeployBicepTemplateBehaviour(ICommandLineRunner commandLineRunner, TemplateService templateService, AzureResourceGroupOperator resourceGroupOperator, ICalamariFileSystem fileSystem, IExtractPackage extractPackage, ILog log)
-        {
-            this.commandLineRunner = commandLineRunner;
-            this.templateService = templateService;
-            this.resourceGroupOperator = resourceGroupOperator;
-            this.fileSystem = fileSystem;
-            this.extractPackage = extractPackage;
-            this.log = log;
-        }
-
         public bool IsEnabled(RunningDeployment context)
         {
             return true;
@@ -98,49 +80,21 @@ namespace Calamari.AzureResourceGroup
             var bicepTemplateFile = context.Variables.Get(SpecialVariables.Action.Azure.BicepTemplateFile, "template.bicep");
             var templateSource = context.Variables.Get(SpecialVariables.Action.Azure.TemplateSource, string.Empty);
 
-            switch (templateSource)
+            var isPackageOrGitRepoSource = templateSource is "Package" or "GitRepository";
+            if (isPackageOrGitRepoSource)
             {
-                case "Package":
-                {
-                    var extractionPath = ExtractPackage(context);
-
-                    bicepTemplateFile = Path.Combine(extractionPath, context.Variables.Get(SpecialVariables.Action.Azure.BicepTemplate)!);
-                    break;
-                }
-                case "GitRepository":
-                    bicepTemplateFile = context.Variables.Get(SpecialVariables.Action.Azure.BicepTemplate);
-                    break;
+                bicepTemplateFile = context.Variables.Get(SpecialVariables.Action.Azure.BicepTemplate);
             }
 
             log.Info($"Processing Bicep file: {bicepTemplateFile}");
             var armTemplateFile = bicepCli.BuildArmTemplate(bicepTemplateFile!);
             log.Info("Bicep file processed");
 
-            var template = templateService.GetSubstitutedTemplateContent(armTemplateFile, templateSource is "GitRepository", context.Variables);
+            var template = templateService.GetSubstitutedTemplateContent(armTemplateFile, isPackageOrGitRepoSource, context.Variables);
             
             var parameters = templateService.GetSubstitutedTemplateContent("parameters.json", inPackage: false, context.Variables);
 
             return (template, parameters);
-        }
-
-        string ExtractPackage(RunningDeployment context)
-        {
-            var packageId = context.Variables.Get(SpecialVariables.Action.Azure.PackageId)!;
-            var originalFullPath = Path.GetFullPath(context.Variables.Get(PackageVariables.IndexedOriginalPath(packageId))!);
-            var sanitizedReferenceName = fileSystem.RemoveInvalidFileNameChars(packageId);
-            var extractionPath = Path.Combine(context.CurrentDirectory, sanitizedReferenceName);
-            ExtractDependency(originalFullPath, extractionPath);
-            return extractionPath;
-        }
-
-        void ExtractDependency(string file, string extractionPath)
-        {
-            Log.Info($"Extracting dependency '{file}' to '{extractionPath}'");
-
-            if (!File.Exists(file))
-                throw new CommandException("Could not find dependency file: " + file);
-
-            extractPackage.ExtractToCustomDirectory(new PathToPackage(file), extractionPath);
         }
     }
 }
