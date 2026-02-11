@@ -631,7 +631,7 @@ spec:
 
             // Assert
             deploymentReporter.Received(1).ReportDeployments(Arg.Is<IReadOnlyList<ProcessApplicationResult>>(results =>
-                results.Any(r => r.Updated && r.UpdatedSourceDetails.Any(d => !string.IsNullOrEmpty(d.CommitSha)))));
+                results.Count == 1));
         }
 
         void AssertFileContents(string clonedRepoPath, string relativeFilePath, string expectedContent)

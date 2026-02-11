@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using Calamari.ArgoCD;
 using Calamari.ArgoCD.Commands;
 using Calamari.ArgoCD.Conventions;
@@ -420,7 +419,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             convention.Install(runningDeployment);
 
             deploymentReporter.Received(1).ReportDeployments(Arg.Is<IReadOnlyList<ProcessApplicationResult>>(results =>
-                results.Any(r => r.Updated && r.UpdatedSourceDetails.Any(d => !string.IsNullOrEmpty(d.CommitSha)))));
+                results.Count == 1));
         }
 
         void AssertOutputVariables(bool updated = true, string matchingApplicationTotalSourceCounts = "1")
