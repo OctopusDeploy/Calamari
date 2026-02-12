@@ -98,16 +98,15 @@ namespace Calamari.Kubernetes
         {
             public static class Output
             {
-                public static ActionOutputVariables Actions(string name) => new(name);
+                public static ActionOutputVariables Actions() => new();
 
-                public record ActionOutputVariables(string ActionName)
+                public record ActionOutputVariables
                 {
-                    readonly string qualifiedPrefix = $"Octopus.Action[{ActionName}].Output";
-                    public ArgoCDGatewayOutputVariables ArgoCDGateways(string name) => new ArgoCDGatewayOutputVariables(name, this);
+                    public ArgoCDGatewayOutputVariables ArgoCDGateways(string name) => new(name);
 
-                    public record ArgoCDGatewayOutputVariables(string GatewayName, ActionOutputVariables ActionOutputVariables)
+                    public record ArgoCDGatewayOutputVariables(string GatewayName)
                     {
-                        readonly string qualifiedPrefix = $"{ActionOutputVariables.qualifiedPrefix}.ArgoCD.Gateway[{GatewayName}]";
+                        readonly string qualifiedPrefix = $"ArgoCD.Gateway[{GatewayName}]";
 
                         public ApplicationOutputVariables Applications(string name) => new(name, this);
 

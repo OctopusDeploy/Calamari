@@ -28,7 +28,7 @@ namespace Calamari.ArgoCD
             PushResult pushResult)
         {
             var appSourceVariables = SpecialVariables.ArgoCD.Output
-                                                     .Actions(variables[ActionVariables.Name])
+                                                     .Actions()
                                                      .ArgoCDGateways(gatewayName)
                                                      .Applications(applicationName)
                                                      .Sources(sourceIndex);
