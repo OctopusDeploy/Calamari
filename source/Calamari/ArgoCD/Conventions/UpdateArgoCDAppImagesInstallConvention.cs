@@ -105,11 +105,11 @@ namespace Calamari.ArgoCD.Conventions
         {
             log.InfoFormat("Processing application {0}", application.Name);
             var applicationFromYaml = argoCdApplicationManifestParser.ParseManifest(application.Manifest);
+
             var containsMultipleSources = applicationFromYaml.Spec.Sources.Count > 1;
             var applicationName = applicationFromYaml.Metadata.Name;
-
-            var validationResult = ApplicationValidator.Validate(applicationFromYaml);
-            validationResult.Action(log);
+            
+            ValidateApplication(applicationFromYaml);
 
             var updatedSourcesResults = applicationFromYaml.GetSourcesWithMetadata()
                                                            .Select(applicationSource => new
@@ -147,6 +147,16 @@ namespace Calamari.ArgoCD.Conventions
                 updatedSourcesResults.Select(r => new UpdatedSourceDetail(r.Updated.CommitSha, r.applicationSource.Index, [], [])).ToList(),
                 updatedSourcesResults.SelectMany(r => r.Updated.ImagesUpdated).ToHashSet(),
                 updatedSourcesResults.Select(r => r.applicationSource.Source.OriginalRepoUrl).ToHashSet());
+        }
+
+        void ValidateApplication(Application applicationFromYaml)
+        {
+            var validationResult = ValidationResult.Merge(
+                                                          ApplicationValidator.ValidateSourceNames(applicationFromYaml),
+                                                          ApplicationValidator.ValidateUnnamedAnnotationsInMultiSourceApplication(applicationFromYaml),
+                                                          ApplicationValidator.ValidateSourceTypes(applicationFromYaml)
+                                                         );
+            validationResult.Action(log);
         }
 
         SourceUpdateResult ProcessSource(ApplicationSourceWithMetadata sourceWithMetadata,

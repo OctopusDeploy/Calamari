@@ -19,7 +19,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
         {
             var application = CreateApplication(names);
 
-            var result = ApplicationValidator.Validate(application);
+            var result = ApplicationValidator.ValidateSourceNames(application);
             result.Errors.Should().BeEmpty();
         }
 
@@ -30,7 +30,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
         {
             var application = CreateApplication(names);
 
-            var result = ApplicationValidator.Validate(application);
+            var result = ApplicationValidator.ValidateSourceNames(application);
             result.Errors.Should().BeEmpty();
         }
 
@@ -40,7 +40,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
         {
             var application = CreateApplication(names);
 
-            var result = ApplicationValidator.Validate(application);
+            var result = ApplicationValidator.ValidateSourceNames(application);
             result.Errors.Should().BeEquivalentTo($"Application 'FooApp' has multiples sources with the name '{names.First()}'. Please ensure all sources have unique names.");
         }
 
@@ -49,7 +49,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
         {
             var application = CreateApplication(new Dictionary<string, string>(), "", "foo");
 
-            var result = ApplicationValidator.Validate(application);
+            var result = ApplicationValidator.ValidateUnnamedAnnotationsInMultiSourceApplication(application);
             result.Warnings.Should().BeEmpty();
         }
         
@@ -63,7 +63,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                 ["argo.octopus.com/tenant"] = "tenant-a",
             }, "", "foo");
 
-            var result = ApplicationValidator.Validate(application);
+            var result = ApplicationValidator.ValidateUnnamedAnnotationsInMultiSourceApplication(application);
             result.Warnings.Should().BeEquivalentTo("The application 'FooApp' requires all annotations to be qualified by source name since it contains multiple sources. Found these unqualified annotations: 'argo.octopus.com/project', 'argo.octopus.com/environment', 'argo.octopus.com/tenant'.");
         }
         
@@ -77,7 +77,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                 ["argo.octopus.com/tenant.foo"] = "tenant-a",
             }, "", "foo");
 
-            var result = ApplicationValidator.Validate(application);
+            var result = ApplicationValidator.ValidateUnnamedAnnotationsInMultiSourceApplication(application);
             result.Warnings.Should().BeEmpty();
         }
 
@@ -87,7 +87,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             var application = CreateApplication("foo", "bar");
             application.Status.SourceTypes.Clear();
             
-            var result = ApplicationValidator.Validate(application);
+            var result = ApplicationValidator.ValidateSourceTypes(application);
             result.Errors.Should().BeEquivalentTo($"Application 'FooApp' has sources with undetected source types. Please ensure the application is configured correctly in Argo CD.");
         }
         

@@ -7,16 +7,7 @@ namespace Calamari.ArgoCD.Conventions
 {
     static class ApplicationValidator
     {
-        public static ValidationResult Validate(Application application)
-        {
-            return ValidationResult.Merge(
-                                          ValidateSourceNames(application),
-                                          ValidateUnnamedAnnotationsInMultiSourceApplication(application),
-                                          ValidateSourceTypes(application)
-                                         );
-        }
-
-        static ValidationResult ValidateSourceTypes(Application application)
+        public static ValidationResult ValidateSourceTypes(Application application)
         {
             if (application.Spec.Sources.Count == application.Status.SourceTypes.Count)
                 return ValidationResult.Success;
@@ -25,7 +16,7 @@ namespace Calamari.ArgoCD.Conventions
 
         }
 
-        static ValidationResult ValidateSourceNames(Application application)
+        public static ValidationResult ValidateSourceNames(Application application)
         {
             var groupedByName = application.Spec.Sources.GroupBy(s => s.Name.ToApplicationSourceName());
 
@@ -36,7 +27,7 @@ namespace Calamari.ArgoCD.Conventions
                 : ValidationResult.Success;
         }
 
-        static ValidationResult ValidateUnnamedAnnotationsInMultiSourceApplication(Application application)
+        public static ValidationResult ValidateUnnamedAnnotationsInMultiSourceApplication(Application application)
         {
             if (application.Spec.Sources.Count <= 1)
                 return ValidationResult.Success;

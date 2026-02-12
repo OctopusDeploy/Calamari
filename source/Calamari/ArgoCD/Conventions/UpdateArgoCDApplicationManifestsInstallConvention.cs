@@ -114,8 +114,7 @@ namespace Calamari.ArgoCD.Conventions
                                                 applicationFromYaml.Metadata.Annotations,
                                                 containsMultipleSources,
                                                 deploymentScope);
-            var validationResult = ApplicationValidator.Validate(applicationFromYaml);
-            validationResult.Action(log);
+            ValidateApplication(applicationFromYaml);
 
             var updatedSourcesResults = applicationFromYaml
                                         .GetSourcesWithMetadata()
@@ -155,6 +154,15 @@ namespace Calamari.ArgoCD.Conventions
                 updatedSourcesResults.Select(r => new UpdatedSourceDetail(r.UpdateResult.CommitSha, r.applicationSource.Index, [], [])).ToList(),
                 [],
                 updatedSourcesResults.Select(r => r.applicationSource.Source.OriginalRepoUrl).ToHashSet());
+        }
+
+        void ValidateApplication(Application applicationFromYaml)
+        {
+            var validationResult = ValidationResult.Merge(
+                                                          ApplicationValidator.ValidateSourceNames(applicationFromYaml),
+                                                          ApplicationValidator.ValidateUnnamedAnnotationsInMultiSourceApplication(applicationFromYaml)
+                                                         );
+            validationResult.Action(log);
         }
 
         ManifestUpdateResult ProcessSource(DeploymentScope deploymentScope,
