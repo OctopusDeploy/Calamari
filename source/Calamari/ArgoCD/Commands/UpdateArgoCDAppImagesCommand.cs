@@ -19,7 +19,7 @@ namespace Calamari.ArgoCD.Commands
     public class UpdateArgoCDAppImagesCommand : Command
     {
         public const string Name = "update-argo-cd-app-images";
-
+        
         readonly ILog log;
         readonly IVariables variables;
         readonly ICalamariFileSystem fileSystem;
@@ -66,13 +66,15 @@ namespace Calamari.ArgoCD.Commands
                                                            new ArgoCdApplicationManifestParser(),
                                                            gitVendorAgnosticApiAdapterFactory,
                                                            clock,
+                                                           new ArgoCDFilesUpdatedReporter(log),
                                                            new ArgoCDOutputVariablesWriter(log, variables)),
             };
-
+                
             var conventionRunner = new ConventionProcessor(runningDeployment, conventions, log);
             conventionRunner.RunConventions(logExceptions: false);
-
+            
             return 0;
         }
     }
 }
+

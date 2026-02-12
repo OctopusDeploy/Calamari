@@ -63,6 +63,11 @@ namespace Calamari.ArgoCD.Git
             }
         }
 
+        public string GetCommitSha()
+        {
+            return repository.Head.Tip.Sha;
+        }
+
         public void RecursivelyStageFilesForRemoval(string subPath)
         {
             var cleansedSubPath = NormalizePath(subPath);

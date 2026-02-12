@@ -167,6 +167,18 @@ namespace Calamari.Kubernetes
                 public const string ManifestAttribute = "manifest";
                 public const string NamespaceAttribute = "ns";
             }
+
+            public static class ArgoCDFilesUpdated
+            {
+                public const string Name = "argocd-files-updated";
+
+                public static class Attributes
+                {
+                    public const string GatewayId = "gatewayId";
+                    public const string ApplicationName = "applicationName";
+                    public const string Sources = "sources";
+                }
+            }
         }
     }
 }

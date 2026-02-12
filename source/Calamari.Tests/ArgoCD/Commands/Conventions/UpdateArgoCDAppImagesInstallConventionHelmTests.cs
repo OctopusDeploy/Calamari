@@ -51,6 +51,21 @@ image:
 
         const string GatewayId = "Gateway1";
 
+        UpdateArgoCDAppImagesInstallConvention CreateConvention()
+        {
+            return new UpdateArgoCDAppImagesInstallConvention(
+                log,
+                fileSystem,
+                new DeploymentConfigFactory(nonSensitiveCalamariVariables),
+                new CommitMessageGenerator(),
+                customPropertiesLoader,
+                argoCdApplicationManifestParser,
+                Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
+                new SystemClock(),
+                Substitute.For<IArgoCDFilesUpdatedReporter>(),
+                new ArgoCDOutputVariablesWriter(log, nonSensitiveCalamariVariables));
+        }
+
         [SetUp]
         public void Init()
         {
@@ -64,20 +79,20 @@ image:
             nonSensitiveCalamariVariables.Add(SpecialVariables.Git.CommitMessageDescription, "Commit Description");
 
             var argoCdCustomPropertiesDto = new ArgoCDCustomPropertiesDto(
-                                                                          [
-                                                                          new ArgoCDGatewayDto(GatewayId, "Gateway1")
-                                                                          ],
-                                                                          [
-                                                                              new ArgoCDApplicationDto(GatewayId,
-                                                                                                       "App1",
-                                                                                                       "argocd",
-                                                                                                       "yaml",
-                                                                                                       "docker.io",
-                                                                                                       null)
-                                                                          ],
-                                                                          [
-                                                                              new GitCredentialDto(new Uri(OriginPath).AbsoluteUri, "", "")
-                                                                          ]);
+                [
+                    new ArgoCDGatewayDto(GatewayId, "Gateway1")
+                ],
+                [
+                    new ArgoCDApplicationDto(GatewayId,
+                        "App1",
+                        "argocd",
+                        "yaml",
+                        "docker.io",
+                        null)
+                ],
+                [
+                    new GitCredentialDto(new Uri(OriginPath).AbsoluteUri, "", "")
+                ]);
             customPropertiesLoader.Load<ArgoCDCustomPropertiesDto>().Returns(argoCdCustomPropertiesDto);
 
             argoCdApplicationFromYaml = new Application()
@@ -120,14 +135,7 @@ image:
         public void HelmSource_NoPath_DontUpdate()
         {
             // Arrange
-            var updater = new UpdateArgoCDAppImagesInstallConvention(log,
-                                                                     fileSystem,
-                                                                     new DeploymentConfigFactory(nonSensitiveCalamariVariables),
-                                                                     new CommitMessageGenerator(),
-                                                                     customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser,
-                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
-                                                                     new SystemClock());
+            var updater = CreateConvention();
             var variables = new CalamariVariables
             {
                 [PackageVariables.IndexedImage("nginx")] = "index.docker.io/nginx:1.27.1",
@@ -167,11 +175,11 @@ service:
                                               [ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(null)] = "{{ .Values.image.repository }}:{{ .Values.image.tag }}",
                                           })
                                           .WithSource(new ApplicationSource
-                                                      {
-                                                          OriginalRepoUrl = OriginPath,
-                                                          TargetRevision = ArgoCDBranchFriendlyName
-                                                      },
-                                                      SourceTypeConstants.Helm)
+                                              {
+                                                  OriginalRepoUrl = OriginPath,
+                                                  TargetRevision = ArgoCDBranchFriendlyName
+                                              },
+                                              SourceTypeConstants.Helm)
                                           .Build();
 
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
@@ -194,14 +202,7 @@ service:
             // Arrange
             argoCdApplicationFromYaml.Metadata.Annotations[ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(null)] = "{{ .Values.image.name }}";
 
-            var updater = new UpdateArgoCDAppImagesInstallConvention(log,
-                                                                     fileSystem,
-                                                                     new DeploymentConfigFactory(nonSensitiveCalamariVariables),
-                                                                     new CommitMessageGenerator(),
-                                                                     customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser,
-                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
-                                                                     new SystemClock());
+            var updater = CreateConvention();
             var variables = new CalamariVariables
             {
                 [ProjectVariables.Slug] = ProjectSlug,
@@ -232,14 +233,7 @@ service:
         public void NoAnnotations_DontUpdate()
         {
             // Arrange
-            var updater = new UpdateArgoCDAppImagesInstallConvention(log,
-                                                                     fileSystem,
-                                                                     new DeploymentConfigFactory(nonSensitiveCalamariVariables),
-                                                                     new CommitMessageGenerator(),
-                                                                     customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser,
-                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
-                                                                     new SystemClock());
+            var updater = CreateConvention();
             var variables = new CalamariVariables
             {
                 [ProjectVariables.Slug] = ProjectSlug,
@@ -279,14 +273,7 @@ image2:
 
             argoCdApplicationFromYaml.Metadata.Annotations[ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(null)] = "{{ .Values.image1.name }}, {{ .Values.image2.name }}:{{ .Values.image2.tag }}";
 
-            var updater = new UpdateArgoCDAppImagesInstallConvention(log,
-                                                                     fileSystem,
-                                                                     new DeploymentConfigFactory(nonSensitiveCalamariVariables),
-                                                                     new CommitMessageGenerator(),
-                                                                     customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser,
-                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
-                                                                     new SystemClock());
+            var updater = CreateConvention();
             var variables = new CalamariVariables
             {
                 [ProjectVariables.Slug] = ProjectSlug,
@@ -367,14 +354,7 @@ image:
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
                                            .Returns(argoCdApplicationFromYaml);
 
-            var updater = new UpdateArgoCDAppImagesInstallConvention(log,
-                                                                     fileSystem,
-                                                                     new DeploymentConfigFactory(nonSensitiveCalamariVariables),
-                                                                     new CommitMessageGenerator(),
-                                                                     customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser,
-                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
-                                                                     new SystemClock());
+            var updater = CreateConvention();
             var variables = new CalamariVariables
             {
                 [ProjectVariables.Slug] = ProjectSlug,
@@ -457,14 +437,7 @@ image:
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
                                            .Returns(argoCdApplicationFromYaml);
 
-            var updater = new UpdateArgoCDAppImagesInstallConvention(log,
-                                                                     fileSystem,
-                                                                     new DeploymentConfigFactory(nonSensitiveCalamariVariables),
-                                                                     new CommitMessageGenerator(),
-                                                                     customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser,
-                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
-                                                                     new SystemClock());
+            var updater = CreateConvention();
             var variables = new CalamariVariables
             {
                 [ProjectVariables.Slug] = ProjectSlug,
@@ -541,14 +514,7 @@ image:
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
                                            .Returns(argoCdApplicationFromYaml);
 
-            var updater = new UpdateArgoCDAppImagesInstallConvention(log,
-                                                                     fileSystem,
-                                                                     new DeploymentConfigFactory(nonSensitiveCalamariVariables),
-                                                                     new CommitMessageGenerator(),
-                                                                     customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser,
-                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
-                                                                     new SystemClock());
+            var updater = CreateConvention();
             var variables = new CalamariVariables
             {
                 [ProjectVariables.Slug] = ProjectSlug,
@@ -620,14 +586,7 @@ image:
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
                                            .Returns(argoCdApplicationFromYaml);
 
-            var updater = new UpdateArgoCDAppImagesInstallConvention(log,
-                                                                     fileSystem,
-                                                                     new DeploymentConfigFactory(nonSensitiveCalamariVariables),
-                                                                     new CommitMessageGenerator(),
-                                                                     customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser,
-                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
-                                                                     new SystemClock());
+            var updater = CreateConvention();
             var variables = new CalamariVariables
             {
                 [ProjectVariables.Slug] = ProjectSlug,
@@ -711,14 +670,7 @@ image:
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
                                            .Returns(argoCdApplicationFromYaml);
 
-            var updater = new UpdateArgoCDAppImagesInstallConvention(log,
-                                                                     fileSystem,
-                                                                     new DeploymentConfigFactory(nonSensitiveCalamariVariables),
-                                                                     new CommitMessageGenerator(),
-                                                                     customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser,
-                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
-                                                                     new SystemClock());
+            var updater = CreateConvention();
             var variables = new CalamariVariables
             {
                 [ProjectVariables.Slug] = ProjectSlug,
@@ -801,14 +753,7 @@ image:
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
                                            .Returns(argoCdApplicationFromYaml);
 
-            var updater = new UpdateArgoCDAppImagesInstallConvention(log,
-                                                                     fileSystem,
-                                                                     new DeploymentConfigFactory(nonSensitiveCalamariVariables),
-                                                                     new CommitMessageGenerator(),
-                                                                     customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser,
-                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
-                                                                     new SystemClock());
+            var updater = CreateConvention();
             var variables = new CalamariVariables
             {
                 [ProjectVariables.Slug] = ProjectSlug,
@@ -836,14 +781,7 @@ image:
         public void HelmSourceWithHelmConfigurationAndImplicitValuesFile_IncludeValuesFileAndUpdate()
         {
             // Arrange
-            var updater = new UpdateArgoCDAppImagesInstallConvention(log,
-                                                                     fileSystem,
-                                                                     new DeploymentConfigFactory(nonSensitiveCalamariVariables),
-                                                                     new CommitMessageGenerator(),
-                                                                     customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser,
-                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
-                                                                     new SystemClock());
+            var updater = CreateConvention();
             var variables = new CalamariVariables
             {
                 [PackageVariables.IndexedImage("nginx")] = "index.docker.io/nginx:1.27.1",
@@ -891,16 +829,16 @@ containerPort: 8070
                                               [ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(null)] = "{{ .Values.image.repository }}:{{ .Values.image.tag }}",
                                           })
                                           .WithSource(new ApplicationSource
-                                                      {
-                                                          OriginalRepoUrl = OriginPath,
-                                                          Path = "",
-                                                          TargetRevision = ArgoCDBranchFriendlyName,
-                                                          Helm = new HelmConfig()
-                                                          {
-                                                              ValueFiles = new List<string>() { explicitValuesFile }
-                                                          }
-                                                      },
-                                                      SourceTypeConstants.Helm)
+                                              {
+                                                  OriginalRepoUrl = OriginPath,
+                                                  Path = "",
+                                                  TargetRevision = ArgoCDBranchFriendlyName,
+                                                  Helm = new HelmConfig()
+                                                  {
+                                                      ValueFiles = new List<string>() { explicitValuesFile }
+                                                  }
+                                              },
+                                              SourceTypeConstants.Helm)
                                           .Build();
 
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
@@ -938,14 +876,7 @@ containerPort: 8070
         public void HelmSourceWithHelmConfigurationAndNoImplicitValuesFile_ExcludeValuesFileAndUpdate()
         {
             // Arrange
-            var updater = new UpdateArgoCDAppImagesInstallConvention(log,
-                                                                     fileSystem,
-                                                                     new DeploymentConfigFactory(nonSensitiveCalamariVariables),
-                                                                     new CommitMessageGenerator(),
-                                                                     customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser,
-                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
-                                                                     new SystemClock());
+            var updater = CreateConvention();
             var variables = new CalamariVariables
             {
                 [PackageVariables.IndexedImage("nginx")] = "index.docker.io/nginx:1.27.1",
@@ -981,16 +912,16 @@ containerPort: 8070
                                               [ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(null)] = "{{ .Values.image.repository }}:{{ .Values.image.tag }}",
                                           })
                                           .WithSource(new ApplicationSource
-                                                      {
-                                                          OriginalRepoUrl = OriginPath,
-                                                          Path = "",
-                                                          TargetRevision = ArgoCDBranchFriendlyName,
-                                                          Helm = new HelmConfig()
-                                                          {
-                                                              ValueFiles = new List<string>() { explicitValuesFile }
-                                                          }
-                                                      },
-                                                      SourceTypeConstants.Helm)
+                                              {
+                                                  OriginalRepoUrl = OriginPath,
+                                                  Path = "",
+                                                  TargetRevision = ArgoCDBranchFriendlyName,
+                                                  Helm = new HelmConfig()
+                                                  {
+                                                      ValueFiles = new List<string>() { explicitValuesFile }
+                                                  }
+                                              },
+                                              SourceTypeConstants.Helm)
                                           .Build();
 
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
@@ -1017,14 +948,7 @@ containerPort: 8070
         public void HelmSourceWithHelmConfigurationIncludesImplicitValuesFile_IncludeValuesFileAndUpdate()
         {
             // Arrange
-            var updater = new UpdateArgoCDAppImagesInstallConvention(log,
-                                                                     fileSystem,
-                                                                     new DeploymentConfigFactory(nonSensitiveCalamariVariables),
-                                                                     new CommitMessageGenerator(),
-                                                                     customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser,
-                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
-                                                                     new SystemClock());
+            var updater = CreateConvention();
             var variables = new CalamariVariables
             {
                 [PackageVariables.IndexedImage("nginx")] = "index.docker.io/nginx:1.27.1",
@@ -1072,16 +996,16 @@ containerPort: 8070
                                               [ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(null)] = "{{ .Values.image.repository }}:{{ .Values.image.tag }}",
                                           })
                                           .WithSource(new ApplicationSource
-                                                      {
-                                                          OriginalRepoUrl = OriginPath,
-                                                          Path = "",
-                                                          TargetRevision = ArgoCDBranchFriendlyName,
-                                                          Helm = new HelmConfig()
-                                                          {
-                                                              ValueFiles = new List<string>() { explicitValuesFile, implicitValuesFile }
-                                                          }
-                                                      },
-                                                      SourceTypeConstants.Helm)
+                                              {
+                                                  OriginalRepoUrl = OriginPath,
+                                                  Path = "",
+                                                  TargetRevision = ArgoCDBranchFriendlyName,
+                                                  Helm = new HelmConfig()
+                                                  {
+                                                      ValueFiles = new List<string>() { explicitValuesFile, implicitValuesFile }
+                                                  }
+                                              },
+                                              SourceTypeConstants.Helm)
                                           .Build();
 
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
@@ -1119,14 +1043,7 @@ containerPort: 8070
         public void HelmSourceWithImplicitValuesFile_Update()
         {
             // Arrange
-            var updater = new UpdateArgoCDAppImagesInstallConvention(log,
-                                                                     fileSystem,
-                                                                     new DeploymentConfigFactory(nonSensitiveCalamariVariables),
-                                                                     new CommitMessageGenerator(),
-                                                                     customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser,
-                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
-                                                                     new SystemClock());
+            var updater = CreateConvention();
             var variables = new CalamariVariables
             {
                 [PackageVariables.IndexedImage("nginx")] = "index.docker.io/nginx:1.27.1",
@@ -1165,12 +1082,12 @@ service:
                                               [ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(null)] = "{{ .Values.image.repository }}:{{ .Values.image.tag }}",
                                           })
                                           .WithSource(new ApplicationSource
-                                                      {
-                                                          OriginalRepoUrl = OriginPath,
-                                                          Path = "",
-                                                          TargetRevision = ArgoCDBranchFriendlyName
-                                                      },
-                                                      SourceTypeConstants.Helm)
+                                              {
+                                                  OriginalRepoUrl = OriginPath,
+                                                  Path = "",
+                                                  TargetRevision = ArgoCDBranchFriendlyName
+                                              },
+                                              SourceTypeConstants.Helm)
                                           .Build();
 
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
@@ -1199,14 +1116,7 @@ service:
         public void RefSourceWithHelmImageMatches_Update()
         {
             // Arrange
-            var updater = new UpdateArgoCDAppImagesInstallConvention(log,
-                                                                     fileSystem,
-                                                                     new DeploymentConfigFactory(nonSensitiveCalamariVariables),
-                                                                     new CommitMessageGenerator(),
-                                                                     customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser,
-                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
-                                                                     new SystemClock());
+            var updater = CreateConvention();
             var variables = new CalamariVariables
             {
                 [PackageVariables.IndexedImage("nginx")] = "index.docker.io/nginx:1.27.1",
@@ -1244,28 +1154,28 @@ service:
                                               [ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(new ApplicationSourceName("helm-source"))] = "{{ .Values.image.repository }}:{{ .Values.image.tag }}",
                                           })
                                           .WithSource(new ApplicationSource
+                                              {
+                                                  OriginalRepoUrl = "https://github.com/org/repo",
+                                                  Path = "",
+                                                  TargetRevision = ArgoCDBranchFriendlyName,
+                                                  Helm = new HelmConfig
+                                                  {
+                                                      ValueFiles = new List<string>()
                                                       {
-                                                          OriginalRepoUrl = "https://github.com/org/repo",
-                                                          Path = "",
-                                                          TargetRevision = ArgoCDBranchFriendlyName,
-                                                          Helm = new HelmConfig
-                                                          {
-                                                              ValueFiles = new List<string>()
-                                                              {
-                                                                  "$values/otherRepoPath/values.yaml"
-                                                              }
-                                                          },
-                                                          Name = "helm-source",
-                                                      },
-                                                      SourceTypeConstants.Helm)
+                                                          "$values/otherRepoPath/values.yaml"
+                                                      }
+                                                  },
+                                                  Name = "helm-source",
+                                              },
+                                              SourceTypeConstants.Helm)
                                           .WithSource(new ApplicationSource
-                                                      {
-                                                          Name = "ref-source",
-                                                          Ref = "values",
-                                                          TargetRevision = ArgoCDBranchFriendlyName,
-                                                          OriginalRepoUrl = OriginPath,
-                                                      },
-                                                      SourceTypeConstants.Directory)
+                                              {
+                                                  Name = "ref-source",
+                                                  Ref = "values",
+                                                  TargetRevision = ArgoCDBranchFriendlyName,
+                                                  OriginalRepoUrl = OriginPath,
+                                              },
+                                              SourceTypeConstants.Directory)
                                           .Build();
 
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
@@ -1294,14 +1204,7 @@ service:
         public void RefSourceWithHelmImageMatchesAndPath_IgnoresFilesUnderPath()
         {
             // Arrange
-            var updater = new UpdateArgoCDAppImagesInstallConvention(log,
-                                                                     fileSystem,
-                                                                     new DeploymentConfigFactory(nonSensitiveCalamariVariables),
-                                                                     new CommitMessageGenerator(),
-                                                                     customPropertiesLoader,
-                                                                     argoCdApplicationManifestParser,
-                                                                     Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
-                                                                     new SystemClock());
+            var updater = CreateConvention();
             var variables = new CalamariVariables
             {
                 [PackageVariables.IndexedImage("nginx")] = "index.docker.io/nginx:1.27.1",
@@ -1365,29 +1268,29 @@ service:
                                               [ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(new ApplicationSourceName("helm-source"))] = "{{ .Values.image.repository }}:{{ .Values.image.tag }}",
                                           })
                                           .WithSource(new ApplicationSource
+                                              {
+                                                  OriginalRepoUrl = "https://github.com/org/repo",
+                                                  Path = "",
+                                                  TargetRevision = ArgoCDBranchFriendlyName,
+                                                  Helm = new HelmConfig
+                                                  {
+                                                      ValueFiles = new List<string>()
                                                       {
-                                                          OriginalRepoUrl = "https://github.com/org/repo",
-                                                          Path = "",
-                                                          TargetRevision = ArgoCDBranchFriendlyName,
-                                                          Helm = new HelmConfig
-                                                          {
-                                                              ValueFiles = new List<string>()
-                                                              {
-                                                                  "$values/otherRepoPath/values.yaml"
-                                                              }
-                                                          },
-                                                          Name = "helm-source",
-                                                      },
-                                                      SourceTypeConstants.Helm)
+                                                          "$values/otherRepoPath/values.yaml"
+                                                      }
+                                                  },
+                                                  Name = "helm-source",
+                                              },
+                                              SourceTypeConstants.Helm)
                                           .WithSource(new ApplicationSource
-                                                      {
-                                                          Name = "ref-source",
-                                                          Ref = "values",
-                                                          Path = "include/",
-                                                          TargetRevision = ArgoCDBranchFriendlyName,
-                                                          OriginalRepoUrl = OriginPath,
-                                                      },
-                                                      SourceTypeConstants.Directory)
+                                              {
+                                                  Name = "ref-source",
+                                                  Ref = "values",
+                                                  Path = "include/",
+                                                  TargetRevision = ArgoCDBranchFriendlyName,
+                                                  OriginalRepoUrl = OriginPath,
+                                              },
+                                              SourceTypeConstants.Directory)
                                           .Build();
 
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())

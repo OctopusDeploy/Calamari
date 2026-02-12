@@ -73,6 +73,9 @@ namespace Calamari.Integration.Packages.Download
                 case FeedType.S3:
                     downloader = new S3PackageDownloader(variables, log, fileSystem);
                     break;
+                case FeedType.GcsStorage:
+                    downloader = new GcsStoragePackageDownloader(variables, log, fileSystem);
+                    break;
                 case FeedType.ArtifactoryGeneric:
                     downloader = new ArtifactoryPackageDownloader(log, fileSystem, variables);
                     break;

@@ -99,6 +99,7 @@ namespace Calamari.ArgoCD.Commands
                                                                       argoCDManifestsFileMatcher,
                                                                       gitVendorAgnosticApiAdapterFactory,
                                                                       clock,
+                                                                      new ArgoCDFilesUpdatedReporter(log),
                                                                       new ArgoCDOutputVariablesWriter(log, variables)),
             };
 

@@ -17,5 +17,6 @@ namespace Calamari.Common.Features.Packages
         GoogleContainerRegistry,
         ArtifactoryGeneric,
         Npm,
+        GcsStorage,
     }
 }
