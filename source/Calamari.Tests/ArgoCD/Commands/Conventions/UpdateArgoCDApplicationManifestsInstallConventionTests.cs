@@ -431,6 +431,65 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                                                                                      results.Count == 1));
         }
 
+               [Test]
+        public void CanTemplateFilesIntoAnUnknownSource()
+        {
+            const string firstFilename = "first.yaml";
+            CreateFileUnderPackageDirectory(firstFilename);
+
+            var nonSensitiveCalamariVariables = new NonSensitiveCalamariVariables()
+            {
+                [KnownVariables.OriginalPackageDirectoryPath] = WorkingDirectory,
+                [SpecialVariables.Git.InputPath] = "",
+                [SpecialVariables.Git.CommitMethod] = "DirectCommit",
+                [SpecialVariables.Git.CommitMessageSummary] = "Octopus did this",
+                [ProjectVariables.Slug] = ProjectSlug,
+                [DeploymentEnvironment.Slug] = EnvironmentSlug,
+            };
+            var allVariables = new CalamariVariables();
+            allVariables.Merge(nonSensitiveCalamariVariables);
+
+            var runningDeployment = new RunningDeployment("./arbitraryFile.txt", allVariables);
+            runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
+            runningDeployment.StagingDirectory = WorkingDirectory;
+
+            var argoCDAppWithUnknownSource = new ArgoCDApplicationBuilder()
+                                          .WithName("App1")
+                                          .WithAnnotations(new Dictionary<string, string>()
+                                          {
+                                              [ArgoCDConstants.Annotations.OctopusProjectAnnotationKey(null)] = ProjectSlug,
+                                              [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(null)] = EnvironmentSlug,
+                                          })
+                                          .WithSource(new ApplicationSource()
+                                          {
+                                              OriginalRepoUrl = RepoUrl,
+                                              Path = "",
+                                              TargetRevision = ArgoCDBranchFriendlyName,
+                                              Helm = new HelmConfig()
+                                              {
+                                                  ValueFiles = new List<string>()
+                                                  {
+                                                      "subpath/values1.yaml",
+                                                      "otherPath/values2.yaml",
+                                                      "$ref/otherRepoPath/values.yaml"
+                                                  }
+                                              }
+                                          }, null)
+                                          .Build();
+
+            argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
+                                           .Returns(argoCDAppWithUnknownSource);
+
+            var convention = CreateConvention(nonSensitiveCalamariVariables);
+            convention.Install(runningDeployment);
+
+            // Assert
+            var resultPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
+            File.Exists(Path.Combine(resultPath, firstFilename)).Should().BeTrue();
+
+            AssertOutputVariables();
+        }
+
         void AssertOutputVariables(bool updated = true, string matchingApplicationTotalSourceCounts = "1")
         {
             using var _ = new AssertionScope();
