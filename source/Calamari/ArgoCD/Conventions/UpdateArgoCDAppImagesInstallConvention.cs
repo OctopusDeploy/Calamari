@@ -341,7 +341,7 @@ namespace Calamari.ArgoCD.Conventions
                             applicationFromYaml.Metadata.Name,
                             sourceWithMetadata.Index,
                             pushResult);
-                        new SourceUpdateResult(updatedImages, pushResult.CommitSha);
+                        return new SourceUpdateResult(updatedImages, pushResult.CommitSha);
                     }
 
                     return new SourceUpdateResult(new HashSet<string>(), string.Empty);
