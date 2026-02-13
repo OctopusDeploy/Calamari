@@ -1,8 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
+using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.Models;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes;
 
 namespace Calamari.ArgoCD
@@ -10,10 +13,35 @@ namespace Calamari.ArgoCD
     public class ArgoCDOutputVariablesWriter
     {
         readonly ILog log;
+        readonly IVariables variables;
 
-        public ArgoCDOutputVariablesWriter(ILog log)
+        public ArgoCDOutputVariablesWriter(ILog log, IVariables variables)
         {
             this.log = log;
+            this.variables = variables;
+        }
+
+        public void WritePushResultOutput(
+            string gatewayName,
+            string applicationName,
+            int sourceIndex,
+            PushResult pushResult)
+        {
+            var appSourceVariables = SpecialVariables.ArgoCD.Output
+                                                     .Actions()
+                                                     .ArgoCDGateways(gatewayName)
+                                                     .Applications(applicationName)
+                                                     .Sources(sourceIndex);
+            
+            log.SetOutputVariableButDoNotAddToVariables(appSourceVariables.CommitSha, pushResult.CommitSha);
+            log.SetOutputVariableButDoNotAddToVariables(appSourceVariables.ShortSha, pushResult.ShortSha);
+
+            if (pushResult is PullRequestPushResult prResult)
+            {
+                log.SetOutputVariableButDoNotAddToVariables(appSourceVariables.PullRequestTitle, prResult.PullRequestTitle);
+                log.SetOutputVariableButDoNotAddToVariables(appSourceVariables.PullRequestUrl, prResult.PullRequestUri);
+                log.SetOutputVariableButDoNotAddToVariables(appSourceVariables.PullRequestNumber, prResult.PullRequestNumber.ToString(CultureInfo.InvariantCulture));
+            }
         }
 
         public void WriteImageUpdateOutput(IEnumerable<string> gateways,

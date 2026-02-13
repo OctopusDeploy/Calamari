@@ -29,7 +29,9 @@ namespace Calamari.ArgoCD.Commands
         string customPropertiesFile;
         string customPropertiesPassword;
 
-        public UpdateArgoCDAppImagesCommand(ILog log, IVariables variables, ICalamariFileSystem fileSystem, 
+        public UpdateArgoCDAppImagesCommand(ILog log,
+                                            IVariables variables,
+                                            ICalamariFileSystem fileSystem,
                                             ICommitMessageGenerator commitMessageGenerator,
                                             DeploymentConfigFactory configFactory,
                                             IGitVendorAgnosticApiAdapterFactory gitVendorAgnosticApiAdapterFactory)
@@ -53,16 +55,24 @@ namespace Calamari.ArgoCD.Commands
             Options.Parse(commandLineArguments);
             var clock = new SystemClock();
             var runningDeployment = new RunningDeployment(null, variables);
-            var reporter = new ArgoCDFilesUpdatedReporter(log);
 
             var conventions = new List<IConvention>
             {
-                new UpdateArgoCDAppImagesInstallConvention(log, fileSystem, configFactory, commitMessageGenerator, new CustomPropertiesLoader(fileSystem, customPropertiesFile, customPropertiesPassword), new ArgoCdApplicationManifestParser(), gitVendorAgnosticApiAdapterFactory, clock, reporter),
+                new UpdateArgoCDAppImagesInstallConvention(log,
+                                                           fileSystem,
+                                                           configFactory,
+                                                           commitMessageGenerator,
+                                                           new CustomPropertiesLoader(fileSystem, customPropertiesFile, customPropertiesPassword),
+                                                           new ArgoCdApplicationManifestParser(),
+                                                           gitVendorAgnosticApiAdapterFactory,
+                                                           clock,
+                                                           new ArgoCDFilesUpdatedReporter(log),
+                                                           new ArgoCDOutputVariablesWriter(log, variables)),
             };
-
+                
             var conventionRunner = new ConventionProcessor(runningDeployment, conventions, log);
             conventionRunner.RunConventions(logExceptions: false);
-
+            
             return 0;
         }
     }

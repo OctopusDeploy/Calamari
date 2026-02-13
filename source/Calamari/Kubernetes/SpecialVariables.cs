@@ -1,4 +1,5 @@
 ﻿using System;
+using Calamari.ArgoCD.Models;
 
 namespace Calamari.Kubernetes
 {
@@ -22,7 +23,7 @@ namespace Calamari.Kubernetes
         public const string CustomResourceYamlFileName = "Octopus.Action.KubernetesContainers.CustomResourceYamlFileName";
         public const string GroupedYamlDirectories = "Octopus.Action.KubernetesContainers.YamlDirectories";
         public const string KustomizeOverlayPath = "Octopus.Action.Kubernetes.Kustomize.OverlayPath";
-        
+
         public const string Timeout = "Octopus.Action.Kubernetes.DeploymentTimeout";
         public const string WaitForJobs = "Octopus.Action.Kubernetes.WaitForJobs";
         public const string PrintVerboseKubectlOutputOnError = "Octopus.Action.Kubernetes.PrintVerboseKubectlOutputOnError";
@@ -38,7 +39,7 @@ namespace Calamari.Kubernetes
 
         public const string ServerSideApplyEnabled = "Octopus.Action.Kubernetes.ServerSideApply.Enabled";
         public const string ServerSideApplyForceConflicts = "Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts";
-        
+
         public static class Helm
         {
             public const string ReleaseName = "Octopus.Action.Helm.ReleaseName";
@@ -55,6 +56,7 @@ namespace Calamari.Kubernetes
             public static class Packages
             {
                 public const string CustomHelmExePackageKey = "HelmExe";
+
                 public static string ValuesFilePath(string key)
                 {
                     return $"Octopus.Action.Package[{key}].ValuesFilePath";
@@ -65,7 +67,7 @@ namespace Calamari.Kubernetes
         public static class Git
         {
             public static readonly string CommitMessageSummary = "Octopus.Action.ArgoCD.CommitMessageSummary";
-            
+
             public static readonly string CommitMessageDescription = "Octopus.Action.ArgoCD.CommitMessageDescription";
 
             public static readonly string CommitMethod = "Octopus.Action.ArgoCD.CommitMethod";
@@ -73,7 +75,7 @@ namespace Calamari.Kubernetes
             public static readonly string InputPath = "Octopus.Action.ArgoCD.InputPath";
 
             public static readonly string PurgeOutput = "Octopus.Action.ArgoCD.PurgeOutputFolder";
-            
+
             public static class PullRequest
             {
                 public static readonly string Create = "Octopus.Action.ArgoCD.PullRequest.Create";
@@ -92,7 +94,45 @@ namespace Calamari.Kubernetes
             }
         }
 
-        public class ServiceMessages
+        public static class ArgoCD
+        {
+            public static class Output
+            {
+                public static ActionOutputVariables Actions() => new();
+
+                public record ActionOutputVariables
+                {
+                    public ArgoCDGatewayOutputVariables ArgoCDGateways(string name) => new(name);
+
+                    public record ArgoCDGatewayOutputVariables(string GatewayName)
+                    {
+                        readonly string qualifiedPrefix = $"ArgoCD.Gateway[{GatewayName}]";
+
+                        public ApplicationOutputVariables Applications(string name) => new(name, this);
+
+                        public record ApplicationOutputVariables(string Name, ArgoCDGatewayOutputVariables ArgoCDGatewayOutputVariables)
+                        {
+                            readonly string qualifiedPrefix = $"{ArgoCDGatewayOutputVariables.qualifiedPrefix}.Application[{Name}]";
+
+                            public ApplicationSourceOutputVariables Sources(int index) => new(index, this);
+
+                            public record ApplicationSourceOutputVariables(int Index, ApplicationOutputVariables ApplicationVariables)
+                            {
+                                readonly string qualifiedPrefix = $"{ApplicationVariables.qualifiedPrefix}.Source[{Index}]";
+
+                                public string CommitSha => $"{qualifiedPrefix}.CommitSha";
+                                public string ShortSha => $"{qualifiedPrefix}.ShortSha";
+                                public string PullRequestTitle => $"{qualifiedPrefix}.PullRequest.Title";
+                                public string PullRequestNumber => $"{qualifiedPrefix}.PullRequest.Number";
+                                public string PullRequestUrl => $"{qualifiedPrefix}.PullRequest.Url";
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        public static class ServiceMessages
         {
             public static class ResourceStatus
             {

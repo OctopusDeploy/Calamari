@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Calamari.ArgoCD;
 using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Domain;
@@ -62,7 +63,8 @@ image:
                 argoCdApplicationManifestParser,
                 Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
                 new SystemClock(),
-                Substitute.For<IArgoCDFilesUpdatedReporter>());
+                Substitute.For<IArgoCDFilesUpdatedReporter>(),
+                new ArgoCDOutputVariablesWriter(log, nonSensitiveCalamariVariables));
         }
 
         [SetUp]
@@ -78,20 +80,20 @@ image:
             nonSensitiveCalamariVariables.Add(SpecialVariables.Git.CommitMessageDescription, "Commit Description");
 
             var argoCdCustomPropertiesDto = new ArgoCDCustomPropertiesDto(
-                                                                          [
-                                                                          new ArgoCDGatewayDto(GatewayId, "Gateway1")
-                                                                          ],
-                                                                          [
-                                                                              new ArgoCDApplicationDto(GatewayId,
-                                                                                                       "App1",
-                                                                                                       "argocd",
-                                                                                                       "yaml",
-                                                                                                       "docker.io",
-                                                                                                       null)
-                                                                          ],
-                                                                          [
-                                                                              new GitCredentialDto(new Uri(OriginPath).AbsoluteUri, "", "")
-                                                                          ]);
+                [
+                    new ArgoCDGatewayDto(GatewayId, "Gateway1")
+                ],
+                [
+                    new ArgoCDApplicationDto(GatewayId,
+                        "App1",
+                        "argocd",
+                        "yaml",
+                        "docker.io",
+                        null)
+                ],
+                [
+                    new GitCredentialDto(new Uri(OriginPath).AbsoluteUri, "", "")
+                ]);
             customPropertiesLoader.Load<ArgoCDCustomPropertiesDto>().Returns(argoCdCustomPropertiesDto);
 
             argoCdApplicationFromYaml = new Application()
@@ -174,11 +176,11 @@ service:
                                               [ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(null)] = "{{ .Values.image.repository }}:{{ .Values.image.tag }}",
                                           })
                                           .WithSource(new ApplicationSource
-                                                      {
-                                                          OriginalRepoUrl = OriginPath,
-                                                          TargetRevision = ArgoCDBranchFriendlyName
-                                                      },
-                                                      SourceTypeConstants.Helm)
+                                              {
+                                                  OriginalRepoUrl = OriginPath,
+                                                  TargetRevision = ArgoCDBranchFriendlyName
+                                              },
+                                              SourceTypeConstants.Helm)
                                           .Build();
 
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
@@ -828,16 +830,16 @@ containerPort: 8070
                                               [ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(null)] = "{{ .Values.image.repository }}:{{ .Values.image.tag }}",
                                           })
                                           .WithSource(new ApplicationSource
-                                                      {
-                                                          OriginalRepoUrl = OriginPath,
-                                                          Path = "",
-                                                          TargetRevision = ArgoCDBranchFriendlyName,
-                                                          Helm = new HelmConfig()
-                                                          {
-                                                              ValueFiles = new List<string>() { explicitValuesFile }
-                                                          }
-                                                      },
-                                                      SourceTypeConstants.Helm)
+                                              {
+                                                  OriginalRepoUrl = OriginPath,
+                                                  Path = "",
+                                                  TargetRevision = ArgoCDBranchFriendlyName,
+                                                  Helm = new HelmConfig()
+                                                  {
+                                                      ValueFiles = new List<string>() { explicitValuesFile }
+                                                  }
+                                              },
+                                              SourceTypeConstants.Helm)
                                           .Build();
 
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
@@ -911,16 +913,16 @@ containerPort: 8070
                                               [ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(null)] = "{{ .Values.image.repository }}:{{ .Values.image.tag }}",
                                           })
                                           .WithSource(new ApplicationSource
-                                                      {
-                                                          OriginalRepoUrl = OriginPath,
-                                                          Path = "",
-                                                          TargetRevision = ArgoCDBranchFriendlyName,
-                                                          Helm = new HelmConfig()
-                                                          {
-                                                              ValueFiles = new List<string>() { explicitValuesFile }
-                                                          }
-                                                      },
-                                                      SourceTypeConstants.Helm)
+                                              {
+                                                  OriginalRepoUrl = OriginPath,
+                                                  Path = "",
+                                                  TargetRevision = ArgoCDBranchFriendlyName,
+                                                  Helm = new HelmConfig()
+                                                  {
+                                                      ValueFiles = new List<string>() { explicitValuesFile }
+                                                  }
+                                              },
+                                              SourceTypeConstants.Helm)
                                           .Build();
 
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
@@ -995,16 +997,16 @@ containerPort: 8070
                                               [ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(null)] = "{{ .Values.image.repository }}:{{ .Values.image.tag }}",
                                           })
                                           .WithSource(new ApplicationSource
-                                                      {
-                                                          OriginalRepoUrl = OriginPath,
-                                                          Path = "",
-                                                          TargetRevision = ArgoCDBranchFriendlyName,
-                                                          Helm = new HelmConfig()
-                                                          {
-                                                              ValueFiles = new List<string>() { explicitValuesFile, implicitValuesFile }
-                                                          }
-                                                      },
-                                                      SourceTypeConstants.Helm)
+                                              {
+                                                  OriginalRepoUrl = OriginPath,
+                                                  Path = "",
+                                                  TargetRevision = ArgoCDBranchFriendlyName,
+                                                  Helm = new HelmConfig()
+                                                  {
+                                                      ValueFiles = new List<string>() { explicitValuesFile, implicitValuesFile }
+                                                  }
+                                              },
+                                              SourceTypeConstants.Helm)
                                           .Build();
 
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
@@ -1081,12 +1083,12 @@ service:
                                               [ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(null)] = "{{ .Values.image.repository }}:{{ .Values.image.tag }}",
                                           })
                                           .WithSource(new ApplicationSource
-                                                      {
-                                                          OriginalRepoUrl = OriginPath,
-                                                          Path = "",
-                                                          TargetRevision = ArgoCDBranchFriendlyName
-                                                      },
-                                                      SourceTypeConstants.Helm)
+                                              {
+                                                  OriginalRepoUrl = OriginPath,
+                                                  Path = "",
+                                                  TargetRevision = ArgoCDBranchFriendlyName
+                                              },
+                                              SourceTypeConstants.Helm)
                                           .Build();
 
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
@@ -1153,28 +1155,28 @@ service:
                                               [ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(new ApplicationSourceName("helm-source"))] = "{{ .Values.image.repository }}:{{ .Values.image.tag }}",
                                           })
                                           .WithSource(new ApplicationSource
+                                              {
+                                                  OriginalRepoUrl = "https://github.com/org/repo",
+                                                  Path = "",
+                                                  TargetRevision = ArgoCDBranchFriendlyName,
+                                                  Helm = new HelmConfig
+                                                  {
+                                                      ValueFiles = new List<string>()
                                                       {
-                                                          OriginalRepoUrl = "https://github.com/org/repo",
-                                                          Path = "",
-                                                          TargetRevision = ArgoCDBranchFriendlyName,
-                                                          Helm = new HelmConfig
-                                                          {
-                                                              ValueFiles = new List<string>()
-                                                              {
-                                                                  "$values/otherRepoPath/values.yaml"
-                                                              }
-                                                          },
-                                                          Name = "helm-source",
-                                                      },
-                                                      SourceTypeConstants.Helm)
+                                                          "$values/otherRepoPath/values.yaml"
+                                                      }
+                                                  },
+                                                  Name = "helm-source",
+                                              },
+                                              SourceTypeConstants.Helm)
                                           .WithSource(new ApplicationSource
-                                                      {
-                                                          Name = "ref-source",
-                                                          Ref = "values",
-                                                          TargetRevision = ArgoCDBranchFriendlyName,
-                                                          OriginalRepoUrl = OriginPath,
-                                                      },
-                                                      SourceTypeConstants.Directory)
+                                              {
+                                                  Name = "ref-source",
+                                                  Ref = "values",
+                                                  TargetRevision = ArgoCDBranchFriendlyName,
+                                                  OriginalRepoUrl = OriginPath,
+                                              },
+                                              SourceTypeConstants.Directory)
                                           .Build();
 
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
@@ -1267,29 +1269,29 @@ service:
                                               [ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(new ApplicationSourceName("helm-source"))] = "{{ .Values.image.repository }}:{{ .Values.image.tag }}",
                                           })
                                           .WithSource(new ApplicationSource
+                                              {
+                                                  OriginalRepoUrl = "https://github.com/org/repo",
+                                                  Path = "",
+                                                  TargetRevision = ArgoCDBranchFriendlyName,
+                                                  Helm = new HelmConfig
+                                                  {
+                                                      ValueFiles = new List<string>()
                                                       {
-                                                          OriginalRepoUrl = "https://github.com/org/repo",
-                                                          Path = "",
-                                                          TargetRevision = ArgoCDBranchFriendlyName,
-                                                          Helm = new HelmConfig
-                                                          {
-                                                              ValueFiles = new List<string>()
-                                                              {
-                                                                  "$values/otherRepoPath/values.yaml"
-                                                              }
-                                                          },
-                                                          Name = "helm-source",
-                                                      },
-                                                      SourceTypeConstants.Helm)
+                                                          "$values/otherRepoPath/values.yaml"
+                                                      }
+                                                  },
+                                                  Name = "helm-source",
+                                              },
+                                              SourceTypeConstants.Helm)
                                           .WithSource(new ApplicationSource
-                                                      {
-                                                          Name = "ref-source",
-                                                          Ref = "values",
-                                                          Path = "include/",
-                                                          TargetRevision = ArgoCDBranchFriendlyName,
-                                                          OriginalRepoUrl = OriginPath,
-                                                      },
-                                                      SourceTypeConstants.Directory)
+                                              {
+                                                  Name = "ref-source",
+                                                  Ref = "values",
+                                                  Path = "include/",
+                                                  TargetRevision = ArgoCDBranchFriendlyName,
+                                                  OriginalRepoUrl = OriginPath,
+                                              },
+                                              SourceTypeConstants.Directory)
                                           .Build();
 
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
@@ -1338,6 +1340,12 @@ service:
             serviceMessages.GetPropertyValue("ArgoCD.MatchingApplicationMatchingSourceCounts").Should().Be(matchingApplicationMatchingSourceCounts);
             serviceMessages.GetPropertyValue("ArgoCD.UpdatedApplications").Should().Be(updated ? "App1" : string.Empty);
             serviceMessages.GetPropertyValue("ArgoCD.UpdatedApplicationSourceCounts").Should().Be(updated ? "1" : string.Empty);
+
+            if (updated)
+            {
+                var allServiceMessages = serviceMessages.Where(sm => sm.GetValue("name")?.Contains(".CommitSha") == true).ToList();
+                allServiceMessages.Should().NotBeEmpty("At least one CommitSha should be set when files are updated");
+            }
         }
     }
 }

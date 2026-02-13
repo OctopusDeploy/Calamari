@@ -78,8 +78,8 @@ namespace Calamari.ArgoCD.Git
 
             log.Info("Removing files recursively");
             List<IndexEntry> filesToRemove = repository.Index
-                .Where(i => NormalizePath(i.Path).StartsWith(cleansedSubPath))
-                .ToList();
+                                                       .Where(i => NormalizePath(i.Path).StartsWith(cleansedSubPath))
+                                                       .ToList();
             filesToRemove.ForEach(i => repository.Index.Remove(i.Path));
         }
 
@@ -98,66 +98,78 @@ namespace Calamari.ArgoCD.Git
             return normalized.StartsWith($".{Path.DirectorySeparatorChar}") ? normalized.Substring(2) : normalized;
         }
 
-        public async Task PushChanges(bool requiresPullRequest,
-                                      string summary,
-                                      string description,
-                                      GitReference branchName,
-                                      CancellationToken cancellationToken)
+        public async Task<PushResult> PushChanges(bool requiresPullRequest,
+                                                  string summary,
+                                                  string description,
+                                                  GitReference branchName,
+                                                  CancellationToken cancellationToken)
         {
             var currentBranchName = repository.GetBranchName(branchName);
             var commit = repository.Head.Tip; // We should have just pushed to the tip of this branch
 
-            var pushToBranchName = requiresPullRequest ? 
-                CalculateBranchName() :
-                currentBranchName;
+            var pushToBranchName = requiresPullRequest ? CalculateBranchName() : currentBranchName;
 
             log.Info($"Pushing changes to branch '{pushToBranchName.ToFriendlyName()}'");
             PushChanges(pushToBranchName);
 
             if (vendorApiAdapter != null)
             {
-                
                 var url = vendorApiAdapter.GenerateCommitUrl(commit.Sha);
-                log.Info($"Commit {log.FormatLink(url, commit.ShortSha())} pushed");    
+                log.Info($"Commit {log.FormatLink(url, commit.ShortSha())} pushed");
             }
             else
             {
-                log.Info($"Commit {commit.ShortSha()} pushed");    
+                log.Info($"Commit {commit.ShortSha()} pushed");
             }
-            
-            if (requiresPullRequest)
+
+            if (!requiresPullRequest)
             {
-                await CreatePullRequest(summary, description, cancellationToken, pushToBranchName, currentBranchName);
+                return new PushResult(commit.Sha, commit.ShortSha());
             }
+
+            var (title, number, uri) = await CreatePullRequest(
+                summary,
+                description,
+                pushToBranchName,
+                currentBranchName,
+                cancellationToken);
+
+            return new PullRequestPushResult(
+                commit.Sha,
+                commit.ShortSha(),
+                title,
+                uri,
+                number);
         }
 
-        async Task CreatePullRequest(string summary,
-                                     string description,
-                                     CancellationToken cancellationToken,
-                                     GitBranchName pushToBranchName,
-                                     GitBranchName currentBranchName)
+        async Task<PullRequest> CreatePullRequest(
+            string summary,
+            string description,
+            GitBranchName pushToBranchName,
+            GitBranchName currentBranchName,
+            CancellationToken cancellationToken)
         {
-            
-            
             if (vendorApiAdapter == null)
             {
                 throw new CommandException("No Git provider can be resolved based on the provided repository details");
             }
-            
+
             try
             {
                 log.Verbose($"Attempting to create pull request to {connection.Url}");
                 var pullRequest = await vendorApiAdapter.CreatePullRequest(summary,
-                                                                           description,
-                                                                           pushToBranchName,
-                                                                           currentBranchName,
-                                                                           cancellationToken);
-                
+                    description,
+                    pushToBranchName,
+                    currentBranchName,
+                    cancellationToken);
+
                 log.SetOutputVariableButDoNotAddToVariables("PullRequest.Title", pullRequest.Title);
                 log.SetOutputVariableButDoNotAddToVariables("PullRequest.Number", pullRequest.Number.ToString());
                 log.SetOutputVariableButDoNotAddToVariables("PullRequest.Url", pullRequest.Url);
 
                 log.Info($"Pull Request [{pullRequest.Title} (#{pullRequest.Number})]({pullRequest.Url}) Created");
+
+                return pullRequest;
             }
             catch (Exception e)
             {
@@ -184,7 +196,7 @@ namespace Calamari.ArgoCD.Git
                                           new UsernamePasswordCredentials { Username = connection.Username, Password = connection.Password },
                 OnPushStatusError = errors => errorsDetected = errors
             };
-            
+
             repository.Network.Push(repository.Head, pushOptions);
             if (errorsDetected != null)
             {
@@ -224,4 +236,13 @@ namespace Calamari.ArgoCD.Git
             }
         }
     }
+
+    public record PushResult(string CommitSha, string ShortSha);
+
+    public record PullRequestPushResult(
+        string CommitSha,
+        string ShortSha,
+        string PullRequestTitle,
+        string PullRequestUri,
+        long PullRequestNumber) : PushResult(CommitSha, ShortSha);
 }

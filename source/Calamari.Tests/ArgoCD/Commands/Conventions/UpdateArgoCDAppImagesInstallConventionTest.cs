@@ -56,10 +56,11 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                 new DeploymentConfigFactory(nonSensitiveCalamariVariables),
                 new CommitMessageGenerator(),
                 customPropertiesLoader,
-               argoCdApplicationManifestParser,
+                argoCdApplicationManifestParser,
                 Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
                 new SystemClock(),
-                deploymentReporter);
+                deploymentReporter,
+                new ArgoCDOutputVariablesWriter(log, nonSensitiveCalamariVariables));
         }
 
         [SetUp]
@@ -76,20 +77,20 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             nonSensitiveCalamariVariables.Add(SpecialVariables.Git.CommitMessageDescription, "Commit Description");
 
             var argoCdCustomPropertiesDto = new ArgoCDCustomPropertiesDto(
-                                                                          [
-                                                                              new ArgoCDGatewayDto(GatewayId, "Gateway1")
-                                                                          ],
-                                                                          [
-                                                                              new ArgoCDApplicationDto(GatewayId,
-                                                                                                       "App1",
-                                                                                                       "argocd",
-                                                                                                       "yaml",
-                                                                                                       "docker.io",
-                                                                                                       "http://my-argo.com")
-                                                                          ],
-                                                                          [
-                                                                              new GitCredentialDto(new Uri(OriginPath).AbsoluteUri, "", "")
-                                                                          ]);
+                [
+                    new ArgoCDGatewayDto(GatewayId, "Gateway1")
+                ],
+                [
+                    new ArgoCDApplicationDto(GatewayId,
+                        "App1",
+                        "argocd",
+                        "yaml",
+                        "docker.io",
+                        "http://my-argo.com")
+                ],
+                [
+                    new GitCredentialDto(new Uri(OriginPath).AbsoluteUri, "", "")
+                ]);
             customPropertiesLoader.Load<ArgoCDCustomPropertiesDto>().Returns(argoCdCustomPropertiesDto);
 
             var argoCdApplicationFromYaml = new ArgoCDApplicationBuilder()
@@ -100,11 +101,12 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                                 [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(null)] = EnvironmentSlug,
                                             })
                                             .WithSource(new ApplicationSource()
-                                            {
-                                                OriginalRepoUrl = OriginPath,
-                                                Path = "",
-                                                TargetRevision = ArgoCDBranchFriendlyName,
-                                            }, SourceTypeConstants.Directory)
+                                                {
+                                                    OriginalRepoUrl = OriginPath,
+                                                    Path = "",
+                                                    TargetRevision = ArgoCDBranchFriendlyName,
+                                                },
+                                                SourceTypeConstants.Directory)
                                             .Build();
 
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
@@ -148,11 +150,12 @@ images:
                                                 [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(null)] = EnvironmentSlug,
                                             })
                                             .WithSource(new ApplicationSource()
-                                            {
-                                                OriginalRepoUrl = OriginPath,
-                                                Path = "",
-                                                TargetRevision = ArgoCDBranchFriendlyName,
-                                            }, SourceTypeConstants.Plugin)
+                                                {
+                                                    OriginalRepoUrl = OriginPath,
+                                                    Path = "",
+                                                    TargetRevision = ArgoCDBranchFriendlyName,
+                                                },
+                                                SourceTypeConstants.Plugin)
                                             .Build();
 
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
@@ -363,10 +366,11 @@ spec:
                                                 [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(null)] = EnvironmentSlug,
                                             })
                                             .WithSource(new ApplicationSource()
-                                            {
-                                                OriginalRepoUrl = OriginPath,
-                                                TargetRevision = ArgoCDBranchFriendlyName,
-                                            }, SourceTypeConstants.Directory)
+                                                {
+                                                    OriginalRepoUrl = OriginPath,
+                                                    TargetRevision = ArgoCDBranchFriendlyName,
+                                                },
+                                                SourceTypeConstants.Directory)
                                             .Build();
 
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
@@ -421,10 +425,11 @@ images:
                                                 [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(null)] = EnvironmentSlug,
                                             })
                                             .WithSource(new ApplicationSource()
-                                            {
-                                                OriginalRepoUrl = OriginPath,
-                                                TargetRevision = ArgoCDBranchFriendlyName,
-                                            }, SourceTypeConstants.Kustomize)
+                                                {
+                                                    OriginalRepoUrl = OriginPath,
+                                                    TargetRevision = ArgoCDBranchFriendlyName,
+                                                },
+                                                SourceTypeConstants.Kustomize)
                                             .Build();
 
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
@@ -443,7 +448,7 @@ images:
             AssertOutputVariables(false);
         }
 
-         [Test]
+        [Test]
         public void KustomizeSource_HasKustomizationFile_Update()
         {
             // Arrange
@@ -479,11 +484,12 @@ images:
                                                 [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(null)] = EnvironmentSlug,
                                             })
                                             .WithSource(new ApplicationSource()
-                                            {
-                                                OriginalRepoUrl = OriginPath,
-                                                Path = "",
-                                                TargetRevision = ArgoCDBranchFriendlyName,
-                                            }, SourceTypeConstants.Kustomize)
+                                                {
+                                                    OriginalRepoUrl = OriginPath,
+                                                    Path = "",
+                                                    TargetRevision = ArgoCDBranchFriendlyName,
+                                                },
+                                                SourceTypeConstants.Kustomize)
                                             .Build();
 
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
@@ -560,11 +566,12 @@ spec:
                                                 [ArgoCDConstants.Annotations.OctopusEnvironmentAnnotationKey(null)] = EnvironmentSlug,
                                             })
                                             .WithSource(new ApplicationSource()
-                                            {
-                                                OriginalRepoUrl = OriginPath,
-                                                Path = "",
-                                                TargetRevision = ArgoCDBranchFriendlyName,
-                                            }, SourceTypeConstants.Kustomize)
+                                                {
+                                                    OriginalRepoUrl = OriginPath,
+                                                    Path = "",
+                                                    TargetRevision = ArgoCDBranchFriendlyName,
+                                                },
+                                                SourceTypeConstants.Kustomize)
                                             .Build();
 
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
@@ -632,8 +639,9 @@ spec:
             updater.Install(runningDeployment);
 
             // Assert
-            deploymentReporter.Received(1).ReportDeployments(Arg.Is<IReadOnlyList<ProcessApplicationResult>>(results =>
-                results.Count == 1));
+            deploymentReporter.Received(1)
+                              .ReportDeployments(Arg.Is<IReadOnlyList<ProcessApplicationResult>>(results =>
+                                                                                                     results.Count == 1));
         }
 
         void AssertFileContents(string clonedRepoPath, string relativeFilePath, string expectedContent)
@@ -657,7 +665,12 @@ spec:
             serviceMessages.GetPropertyValue("ArgoCD.MatchingApplicationMatchingSourceCounts").Should().Be("1");
             serviceMessages.GetPropertyValue("ArgoCD.UpdatedApplications").Should().Be(updated ? "App1" : string.Empty);
             serviceMessages.GetPropertyValue("ArgoCD.UpdatedApplicationSourceCounts").Should().Be(updated ? "1" : string.Empty);
+
+            if (updated)
+            {
+                var allServiceMessages = serviceMessages.Where(sm => sm.GetValue("name")?.Contains(".CommitSha") == true).ToList();
+                allServiceMessages.Should().NotBeEmpty("At least one CommitSha should be set when files are updated");
+            }
         }
     }
 }
-
