@@ -122,29 +122,32 @@ namespace Calamari.ArgoCD.Git
                 log.Info($"Commit {commit.ShortSha()} pushed");
             }
 
-            var result = new PushResult(commit.Sha, commit.ShortSha());
-            if (requiresPullRequest)
+            if (!requiresPullRequest)
             {
-                var (title, number, uri) = await CreatePullRequest(summary,
-                                                                   description,
-                                                                   cancellationToken,
-                                                                   pushToBranchName,
-                                                                   currentBranchName);
-                result = new PullRequestPushResult(commit.Sha,
-                                                   result.ShortSha,
-                                                   title,
-                                                   uri,
-                                                   number);
+                return new PushResult(commit.Sha, commit.ShortSha());
             }
 
-            return result;
+            var (title, number, uri) = await CreatePullRequest(
+                summary,
+                description,
+                pushToBranchName,
+                currentBranchName,
+                cancellationToken);
+
+            return new PullRequestPushResult(
+                commit.Sha,
+                commit.ShortSha(),
+                title,
+                uri,
+                number);
         }
 
-        async Task<PullRequest> CreatePullRequest(string summary,
-                                                  string description,
-                                                  CancellationToken cancellationToken,
-                                                  GitBranchName pushToBranchName,
-                                                  GitBranchName currentBranchName)
+        async Task<PullRequest> CreatePullRequest(
+            string summary,
+            string description,
+            GitBranchName pushToBranchName,
+            GitBranchName currentBranchName,
+            CancellationToken cancellationToken)
         {
             if (vendorApiAdapter == null)
             {
@@ -155,10 +158,10 @@ namespace Calamari.ArgoCD.Git
             {
                 log.Verbose($"Attempting to create pull request to {connection.Url}");
                 var pullRequest = await vendorApiAdapter.CreatePullRequest(summary,
-                                                                           description,
-                                                                           pushToBranchName,
-                                                                           currentBranchName,
-                                                                           cancellationToken);
+                    description,
+                    pushToBranchName,
+                    currentBranchName,
+                    cancellationToken);
 
                 log.SetOutputVariableButDoNotAddToVariables("PullRequest.Title", pullRequest.Title);
                 log.SetOutputVariableButDoNotAddToVariables("PullRequest.Number", pullRequest.Number.ToString());
