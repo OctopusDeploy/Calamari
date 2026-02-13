@@ -51,6 +51,7 @@ image:
 ";
 
         const string GatewayId = "Gateway1";
+        IArgoCDFilesUpdatedReporter deploymentReporter;
 
         UpdateArgoCDAppImagesInstallConvention CreateConvention()
         {
@@ -63,7 +64,7 @@ image:
                 argoCdApplicationManifestParser,
                 Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
                 new SystemClock(),
-                Substitute.For<IArgoCDFilesUpdatedReporter>(),
+                deploymentReporter,
                 new ArgoCDOutputVariablesWriter(log, nonSensitiveCalamariVariables));
         }
 
@@ -71,6 +72,7 @@ image:
         public void Init()
         {
             log = new InMemoryLog();
+            deploymentReporter = Substitute.For<IArgoCDFilesUpdatedReporter>();
             tempDirectory = fileSystem.CreateTemporaryDirectory();
 
             originRepo = RepositoryHelpers.CreateBareRepository(OriginPath);
@@ -1317,6 +1319,71 @@ service:
             log.MessagesWarnFormatted.Should().Contain($"The source 'Index: 1, Type: Directory, Name: ref-source' contains a Ref, only referenced files will be updated. Please create another source with the same URL if you wish to update files under the path.");
 
             AssertOutputVariables(matchingApplicationTotalSourceCounts: "2");
+        }
+
+        [Test]
+        public void DirectorySource_ImageMatches_ReportsDeploymentWithNonEmptyCommitSha()
+        {
+            //Arrange
+            const string multiImageValuesFile = """
+                                                image1:
+                                                   name: nginx:1.22
+                                                image2:
+                                                   name: alpine
+                                                   tag: latest
+                                                """;
+            originRepo.AddFilesToBranch(argoCDBranchName, ("files/values.yml", multiImageValuesFile));
+
+            argoCdApplicationFromYaml.Metadata.Annotations[ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(null)] = "{{ .Values.image1.name }}, {{ .Values.image2.name }}:{{ .Values.image2.tag }}";
+
+            var updater = CreateConvention();
+            var variables = new CalamariVariables
+            {
+                [ProjectVariables.Slug] = ProjectSlug,
+                [DeploymentEnvironment.Slug] = EnvironmentSlug,
+                [PackageVariables.IndexedImage("nginx")] = "nginx:1.27.1",
+                [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
+                [PackageVariables.IndexedImage("alpine")] = "alpine:2.2",
+                [PackageVariables.IndexedPackagePurpose("alpine")] = "DockerImageReference",
+            };
+
+            //Act
+            var runningDeployment = new RunningDeployment(null, variables);
+            runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
+            runningDeployment.StagingDirectory = tempDirectory;
+
+            IReadOnlyList<ProcessApplicationResult> capturedResults = null;
+            deploymentReporter.ReportFilesUpdated(Arg.Do<IReadOnlyList<ProcessApplicationResult>>(x => capturedResults = x));
+
+            updater.Install(runningDeployment);
+
+            //Assert
+            var updatedValuesFile = """
+                                    image1:
+                                       name: nginx:1.27.1
+                                    image2:
+                                       name: alpine
+                                       tag: 2.2
+                                    """;
+
+            var resultRepo = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
+            AssertFileContents(resultRepo, "files/values.yml", updatedValuesFile);
+
+            AssertOutputVariables(updatedImages: 2);
+
+            // Assert
+            using var scope = new AssertionScope();
+            capturedResults.Should().NotBeNull();
+            var actual = capturedResults.Single();
+            actual.UpdatedImages.Should().BeEquivalentTo(["{ Reference = nginx:1.27.1, Comparison = ContainerImageComparison { RegistryMatch = True, ImageNameMatch = True, TagMatch = False } }", "{ Reference = alpine:2.2, Comparison = ContainerImageComparison { RegistryMatch = True, ImageNameMatch = True, TagMatch = False } }"]);
+            actual.GitReposUpdated.Should().HaveCount(1);
+            actual.UpdatedSourceDetails.Should().HaveCount(1);
+
+            var sourceDetails = actual.UpdatedSourceDetails.First();
+            sourceDetails.CommitSha.Should().HaveLength(40);
+            sourceDetails.ReplacedFiles.Should().BeEmpty();
+            // TODO: fill in with json patch
+            // sourceDetails.PatchedFiles.Should().BeEquivalentTo([new FilePathContent("", "")]);
         }
 
         void AssertFileContents(string clonedRepoPath, string relativeFilePath, string expectedContent)
