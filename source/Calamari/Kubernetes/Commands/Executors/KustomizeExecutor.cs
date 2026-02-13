@@ -45,15 +45,24 @@ namespace Calamari.Kubernetes.Commands.Executors
                 throw new KubectlException("Kustomization directory not specified");
             }
 
+            log.Info("validating kubectl version");
             ValidateKubectlVersion(deployment.CurrentDirectory);
             
+            log.Info("building kustomization");
             BuildKustomization(deployment.CurrentDirectory, overlayPath);
             
+            log.Info("reporting manifest");
             manifestReporter.ReportManifestFileApplied(HydratedManifestFilepath(deployment.CurrentDirectory));
             
-            string[] executeArgs = {"apply", "-f", $@"""{HydratedManifestFilepath(deployment.CurrentDirectory)}""", "-o", "json"};
+            log.Info("applying kustomization");
+            var resourceIdentifiers = await ApplyKustomization(deployment, appliedResourcesCallback, overlayPath);
+            return resourceIdentifiers;
+        }
+
+        async Task<ResourceIdentifier[]> ApplyKustomization(RunningDeployment deployment, Func<ResourceIdentifier[], Task> appliedResourcesCallback, string overlayPath)
+        {
+            string[] executeArgs = ["apply", "-f", $"\"{HydratedManifestFilepath(deployment.CurrentDirectory)}\"", "-o", "json"];
             executeArgs = executeArgs.AddOptionsForServerSideApply(deployment.Variables, log);
-            
             var result = kubectl.ExecuteCommandAndReturnOutput(executeArgs);
             
             var resourceIdentifiers = ProcessKubectlCommandOutput(deployment, result, KustomizationDirectory(deployment.CurrentDirectory, overlayPath)).ToArray();
@@ -68,7 +77,7 @@ namespace Calamari.Kubernetes.Commands.Executors
 
         void BuildKustomization(string currentDirectory, string overlayPath)
         {
-            string[] executeArgs = {"kustomize", $@"""{KustomizationDirectory(currentDirectory, overlayPath)}""", "-o", $@"""{HydratedManifestFilepath(currentDirectory)}"""};
+            string[] executeArgs = ["kustomize", $"\"{KustomizationDirectory(currentDirectory, overlayPath)}\"", "-o", $"\"{HydratedManifestFilepath(currentDirectory)}\""];
             
             var commandResult = kubectl.ExecuteCommandAndReturnOutput(executeArgs);
             commandResult.LogErrorsWithSanitizedDirectory(log, currentDirectory);
@@ -94,6 +103,7 @@ namespace Calamari.Kubernetes.Commands.Executors
 
             if (major < MinimumKubectlVersionMajor || minor < MinimumKubectlVersionMinor)
                 throw new KubectlException($"kubectl is on version v{major}.{minor}, it needs to be v{MinimumKubectlVersionMajor}.{MinimumKubectlVersionMinor} or higher to run Kustomize.");
+            log.Info($"kubectl version: {major}.{minor}");
         }
 
         bool TryParseVersion(string kubectlClientVersionJson, out int major, out int minor)
