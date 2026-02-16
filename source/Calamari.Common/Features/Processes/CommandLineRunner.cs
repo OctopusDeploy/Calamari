@@ -34,7 +34,8 @@ namespace Calamari.Common.Features.Processes
                     invocation.UserName,
                     invocation.Password,
                     commandOutput.WriteInfo,
-                    commandOutput.WriteError);
+                    commandOutput.WriteError,
+                    invocation.UseUTF8);
 
                 return new CommandResult(
                     invocation.ToString(),

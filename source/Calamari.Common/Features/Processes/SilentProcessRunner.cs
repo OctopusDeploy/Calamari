@@ -51,7 +51,8 @@ namespace Calamari.Common.Features.Processes
                 null,
                 null,
                 output,
-                error);
+                error,
+                false);
         }
 
         public static SilentProcessRunnerResult ExecuteCommand(
@@ -69,7 +70,8 @@ namespace Calamari.Common.Features.Processes
                 null,
                 null,
                 output,
-                error);
+                error,
+                false);
         }
 
         public static SilentProcessRunnerResult ExecuteCommand(
@@ -80,7 +82,8 @@ namespace Calamari.Common.Features.Processes
             string? userName,
             SecureString? password,
             Action<string> output,
-            Action<string> error)
+            Action<string> error,
+            bool useUtf8Encoding)
         {
             try
             {
@@ -93,8 +96,8 @@ namespace Calamari.Common.Features.Processes
                     process.StartInfo.CreateNoWindow = true;
                     process.StartInfo.RedirectStandardOutput = true;
                     process.StartInfo.RedirectStandardError = true;
-                    process.StartInfo.StandardOutputEncoding = oemEncoding;
-                    process.StartInfo.StandardErrorEncoding = oemEncoding;
+                    process.StartInfo.StandardOutputEncoding = useUtf8Encoding ? Encoding.UTF8 : oemEncoding;
+                    process.StartInfo.StandardErrorEncoding = useUtf8Encoding ? Encoding.UTF8 : oemEncoding;
 
                     if (environmentVars != null)
                         foreach (var environmentVar in environmentVars.Keys)
