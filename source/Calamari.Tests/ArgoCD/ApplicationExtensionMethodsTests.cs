@@ -1,12 +1,8 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using Calamari.ArgoCD;
 using Calamari.ArgoCD.Domain;
-using Calamari.ArgoCD.Models;
 using Calamari.Tests.ArgoCD.Commands.Conventions;
 using FluentAssertions;
-using Microsoft.AspNetCore.Builder;
 using NUnit.Framework;
 
 namespace Calamari.Tests.ArgoCD

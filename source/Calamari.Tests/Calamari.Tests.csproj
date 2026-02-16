@@ -33,7 +33,6 @@
         <PackageReference Include="NUnit3TestAdapter" Version="5.2.0"/>
         <PackageReference Include="Assent" Version="1.6.1"/>
         <PackageReference Include="Polly" Version="8.3.1"/>
-        <PackageReference Include="System.ComponentModel.TypeConverter" Version="4.3.0"/>
         <ProjectReference Include="..\Calamari.Aws\Calamari.Aws.csproj"/>
         <ProjectReference Include="..\Calamari.Azure\Calamari.Azure.csproj"/>
         <PackageReference Include="Markdown" Version="2.1.0"/>
