@@ -25,7 +25,6 @@ namespace Calamari.Integration.Packages.Download
     {
         readonly IScriptEngine scriptEngine;
         readonly ICalamariFileSystem fileSystem;
-        readonly ICommandLineRunner commandLineRunner;
         readonly IVariables variables;
         readonly ILog log;
         readonly IFeedLoginDetailsProviderFactory feedLoginDetailsProviderFactory;
@@ -59,7 +58,6 @@ namespace Calamari.Integration.Packages.Download
         {
             this.scriptEngine = scriptEngine;
             this.fileSystem = fileSystem;
-            this.commandLineRunner = commandLineRunner;
             this.variables = variables;
             this.log = log;
             this.feedLoginDetailsProviderFactory = feedLoginDetailsProviderFactory;
@@ -164,12 +162,12 @@ namespace Calamari.Integration.Packages.Download
             envVars["DockerPassword"] = password;
             envVars["FeedUri"] = feed;
             
-            var result = ExecuteScript("DockerLogin", envVars);
+            var (result, stdOut) = ExecuteScript("DockerLogin", envVars);
             if (result == null)
                 throw new CommandException("Null result attempting to log in Docker registry");
             if (result.ExitCode != 0)
             {
-                if (useCredentialHelper && result.Errors != null && result.Output.Contains("Error saving credentials"))
+                if (useCredentialHelper && result.Errors != null && stdOut.Contains("Error saving credentials"))
                 {
                     log.Verbose("Docker login failed due to credential helper error, retrying without credential helper");
                     dockerCredentialHelper.CleanupCredentialHelper(environmentVariables);
@@ -199,14 +197,14 @@ namespace Calamari.Integration.Packages.Download
             var envVars = new Dictionary<string, string>(dictionary);
             envVars["Image"] = fullImageName;
             
-            var result = ExecuteScript("DockerPull", envVars);
+            var (result, _) = ExecuteScript("DockerPull", envVars);
             if (result == null)
                 throw new CommandException("Null result attempting to pull Docker image");
             if (result.ExitCode != 0)
                 throw new CommandException("Unable to pull Docker image");
         }
 
-        CommandResult ExecuteScript(string scriptName, Dictionary<string, string?> envVars)
+        (CommandResult CommandResult, string StdOut) ExecuteScript(string scriptName, Dictionary<string, string?> envVars)
         {
             var file = ScriptExtractor.GetScript(fileSystem, scriptName, "Octopus.");
             using (new TemporaryFile(file))
@@ -217,7 +215,9 @@ namespace Calamari.Integration.Packages.Download
                     clone[keyValuePair.Key] = keyValuePair.Value;
                 }
 
-                return scriptEngine.Execute(new Script(file), clone, commandLineRunner, environmentVariables);
+                var inMemorySink = new InMemoryCommandOutputSink();
+                var commandLineRunner = new CommandLineRunner(log, clone, inMemorySink);
+                return (scriptEngine.Execute(new Script(file), clone, commandLineRunner, environmentVariables), inMemorySink.StdOut);
             }
         }
 

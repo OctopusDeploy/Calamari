@@ -19,13 +19,11 @@ namespace Calamari.Common.Features.Processes
             ExitCode = exitCode;
             Errors = additionalErrors;
             this.workingDirectory = workingDirectory;
-            this.Output = output;
         }
 
         public int ExitCode { get; }
 
         public string? Errors { get; }
-        public string? Output { get; }
 
         public bool HasErrors => !string.IsNullOrWhiteSpace(Errors) && ErrorsExcludeServiceMessages(Errors);
 

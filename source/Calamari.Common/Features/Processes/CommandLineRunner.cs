@@ -13,18 +13,25 @@ namespace Calamari.Common.Features.Processes
     {
         readonly ILog log;
         readonly IVariables variables;
+        readonly ICommandInvocationOutputSink? additionalInvocationOutputSink;
 
         public CommandLineRunner(ILog log, IVariables variables)
+            : this(log, variables, null)
+        {
+        }
+
+        public CommandLineRunner(ILog log, IVariables variables, ICommandInvocationOutputSink? additionalInvocationOutputSink = null)
         {
             this.log = log;
             this.variables = variables;
+            this.additionalInvocationOutputSink = additionalInvocationOutputSink;
         }
 
         public CommandResult Execute(CommandLineInvocation invocation)
         {
             var outputSinks = GetCommandOutputs(invocation);
-            var inMemoryOutputLog = new InMemoryCommandOutputSink();
-            outputSinks.Add(inMemoryOutputLog);
+            if (additionalInvocationOutputSink != null)
+                outputSinks.Add(additionalInvocationOutputSink);
             var commandOutput = new SplitCommandInvocationOutputSink(outputSinks);
 
             try
@@ -42,7 +49,6 @@ namespace Calamari.Common.Features.Processes
                 return new CommandResult(
                     invocation.ToString(),
                     exitCode.ExitCode,
-                    inMemoryOutputLog.StdOut,
                     exitCode.ErrorOutput,
                     invocation.WorkingDirectory);
             }
