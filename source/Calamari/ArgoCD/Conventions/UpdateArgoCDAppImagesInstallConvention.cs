@@ -88,7 +88,7 @@ namespace Calamari.ArgoCD.Conventions
                                                            })
                                                    .ToList();
 
-            reporter.ReportDeployments(applicationResults);
+            reporter.ReportFilesUpdated(applicationResults);
 
             var totalApplicationsWithSourceCounts = applicationResults.Select(r => (r.ApplicationName, r.TotalSourceCount, r.MatchingSourceCount)).ToList();
             var updatedApplications = applicationResults.Where(r => r.Updated).ToList();
@@ -154,7 +154,7 @@ namespace Calamari.ArgoCD.Conventions
                 applicationName.ToApplicationName(),
                 applicationFromYaml.Spec.Sources.Count,
                 applicationFromYaml.Spec.Sources.Count(s => deploymentScope.Matches(ScopingAnnotationReader.GetScopeForApplicationSource(s.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources))),
-                updatedSourcesResults.Select(r => new UpdatedSourceDetail(r.Updated.CommitSha, r.applicationSource.Index, [], [])).ToList(),
+                updatedSourcesResults.Select(r => new UpdatedSourceDetail(r.Updated.CommitSha, r.applicationSource.Index, [], r.Updated.PatchedFiles)).ToList(),
                 updatedSourcesResults.SelectMany(r => r.Updated.ImagesUpdated).ToHashSet(),
                 updatedSourcesResults.Select(r => r.applicationSource.Source.OriginalRepoUrl).ToHashSet());
         }
@@ -185,7 +185,9 @@ namespace Calamari.ArgoCD.Conventions
 
             log.LogApplicationSourceScopeStatus(annotatedScope, applicationSource.Name.ToApplicationSourceName(), deploymentScope);
             if (!deploymentScope.Matches(annotatedScope))
-                return new SourceUpdateResult(new HashSet<string>(), string.Empty);
+            {
+                return new SourceUpdateResult(new HashSet<string>(), string.Empty, []);
+            }
 
             switch (sourceWithMetadata.SourceType)
             {
@@ -230,7 +232,7 @@ namespace Calamari.ArgoCD.Conventions
                 case SourceType.Plugin:
                 {
                     log.WarnFormat("Unable to update source '{0}' as Plugin sources aren't currently supported.", sourceWithMetadata.SourceIdentity);
-                    return new SourceUpdateResult(new HashSet<string>(), string.Empty);
+                    return new SourceUpdateResult(new HashSet<string>(), string.Empty, []);
                 }
                 default:
                     throw new ArgumentOutOfRangeException();
@@ -252,14 +254,14 @@ namespace Calamari.ArgoCD.Conventions
             if (applicationSource.Path == null)
             {
                 log.WarnFormat("Unable to update source '{0}' as a path has not been specified.", sourceWithMetadata.SourceIdentity);
-                return new SourceUpdateResult(new HashSet<string>(), string.Empty);
+                return new SourceUpdateResult(new HashSet<string>(), string.Empty, []);
             }
 
             using (var repository = CreateRepository(gitCredentials, applicationSource, repositoryFactory))
             {
                 log.Verbose($"Reading files from {applicationSource.Path}");
 
-                var (updatedFiles, updatedImages) = UpdateKustomizeYaml(repository.WorkingDirectory, applicationSource.Path!, defaultRegistry, deploymentConfig.ImageReferences);
+                var (updatedFiles, updatedImages, patchedFiles) = UpdateKustomizeYaml(repository.WorkingDirectory, applicationSource.Path!, defaultRegistry, deploymentConfig.ImageReferences);
                 if (updatedImages.Count > 0)
                 {
                     var pushResult = PushToRemote(repository,
@@ -274,12 +276,12 @@ namespace Calamari.ArgoCD.Conventions
                             applicationFromYaml.Metadata.Name,
                             sourceWithMetadata.Index,
                             pushResult);
-                        return new SourceUpdateResult(updatedImages, pushResult.CommitSha);
+                        return new SourceUpdateResult(updatedImages, pushResult.CommitSha, patchedFiles);
                     }
                 }
             }
 
-            return new SourceUpdateResult(new HashSet<string>(), string.Empty);
+            return new SourceUpdateResult(new HashSet<string>(), string.Empty, []);
         }
 
         /// <returns>Images that were updated</returns>
@@ -328,14 +330,14 @@ namespace Calamari.ArgoCD.Conventions
             if (applicationSource.Path == null)
             {
                 log.WarnFormat("Unable to update source '{0}' as a path has not been specified.", sourceWithMetadata.SourceIdentity);
-                return new SourceUpdateResult(new HashSet<string>(), string.Empty);
+                return new SourceUpdateResult(new HashSet<string>(), string.Empty, []);
             }
 
             using (var repository = CreateRepository(gitCredentials, applicationSource, repositoryFactory))
             {
                 log.Verbose($"Reading files from {applicationSource.Path}");
 
-                var (updatedFiles, updatedImages) = UpdateKubernetesYaml(repository.WorkingDirectory, applicationSource.Path!, defaultRegistry, deploymentConfig.ImageReferences);
+                var (updatedFiles, updatedImages, patchedFiles) = UpdateKubernetesYaml(repository.WorkingDirectory, applicationSource.Path!, defaultRegistry, deploymentConfig.ImageReferences);
                 if (updatedImages.Count > 0)
                 {
                     var pushResult = PushToRemote(repository,
@@ -350,14 +352,14 @@ namespace Calamari.ArgoCD.Conventions
                             applicationFromYaml.Metadata.Name,
                             sourceWithMetadata.Index,
                             pushResult);
-                        return new SourceUpdateResult(updatedImages, pushResult.CommitSha);
+                        return new SourceUpdateResult(updatedImages, pushResult.CommitSha, patchedFiles);
                     }
 
-                    return new SourceUpdateResult(new HashSet<string>(), string.Empty);
+                    return new SourceUpdateResult(new HashSet<string>(), string.Empty, []);
                 }
             }
 
-            return new SourceUpdateResult(new HashSet<string>(), string.Empty);
+            return new SourceUpdateResult(new HashSet<string>(), string.Empty, []);
         }
 
         /// <returns>Images that were updated</returns>
@@ -375,7 +377,7 @@ namespace Calamari.ArgoCD.Conventions
             if (applicationSource.Path == null)
             {
                 log.WarnFormat("Unable to update source '{0}' as a path has not been specified.", sourceWithMetadata.SourceIdentity);
-                return new SourceUpdateResult(new HashSet<string>(), string.Empty);
+                return new SourceUpdateResult(new HashSet<string>(), string.Empty, []);
             }
 
             var explicitHelmSources = new HelmValuesFileUpdateTargetParser(applicationFromYaml, defaultRegistry)
@@ -429,6 +431,8 @@ namespace Calamari.ArgoCD.Conventions
             var updatedImages = results.SelectMany(r => r.ImagesUpdated).ToHashSet();
             if (updatedImages.Count > 0)
             {
+                var patchedFiles = results.Select(r => new FilePathContent(r.RelativeFilepath, r.JsonPatch)).ToList();
+
                 var pushResult = PushToRemote(repository,
                     GitReference.CreateFromString(sourceWithMetadata.Source.TargetRevision),
                     deploymentConfig.CommitParameters,
@@ -441,11 +445,11 @@ namespace Calamari.ArgoCD.Conventions
                         applicationFromYaml.Metadata.Name,
                         sourceWithMetadata.Index,
                         pushResult);
-                    return new SourceUpdateResult(updatedImages, pushResult.CommitSha);
+                    return new SourceUpdateResult(updatedImages, pushResult.CommitSha, patchedFiles);
                 }
             }
 
-            return new SourceUpdateResult(new HashSet<string>(), string.Empty);
+            return new SourceUpdateResult(new HashSet<string>(), string.Empty, []);
         }
 
         void LogHelmSourceConfigurationProblems(IReadOnlyCollection<HelmSourceConfigurationProblem> helmSourceConfigurationProblems)
@@ -516,7 +520,7 @@ namespace Calamari.ArgoCD.Conventions
                         imageReplacePaths), null);
         }
 
-        (HashSet<string>, HashSet<string>) UpdateKubernetesYaml(
+        (HashSet<string>, HashSet<string>, List<FilePathContent>) UpdateKubernetesYaml(
             string rootPath,
             string subFolder,
             string defaultRegistry,
@@ -531,7 +535,7 @@ namespace Calamari.ArgoCD.Conventions
             return Update(rootPath, imagesToUpdate, filesToUpdate, imageReplacerFactory);
         }
 
-        (HashSet<string>, HashSet<string>) UpdateKustomizeYaml(
+        (HashSet<string>, HashSet<string>, List<FilePathContent>) UpdateKustomizeYaml(
             string rootPath,
             string subFolder,
             string defaultRegistry,
@@ -552,13 +556,14 @@ namespace Calamari.ArgoCD.Conventions
             }
 
             log.Warn("kustomization file not found, no files will be updated");
-            return (new HashSet<string>(), new HashSet<string>());
+            return ([], [], []);
         }
 
-        (HashSet<string>, HashSet<string>) Update(string rootPath, List<ContainerImageReference> imagesToUpdate, HashSet<string> filesToUpdate, Func<string, IContainerImageReplacer> imageReplacerFactory)
+        (HashSet<string>, HashSet<string>, List<FilePathContent>) Update(string rootPath, List<ContainerImageReference> imagesToUpdate, HashSet<string> filesToUpdate, Func<string, IContainerImageReplacer> imageReplacerFactory)
         {
             var updatedFiles = new HashSet<string>();
             var updatedImages = new HashSet<string>();
+            var jsonPatches = new List<FilePathContent>();
             foreach (var file in filesToUpdate)
             {
                 var relativePath = Path.GetRelativePath(rootPath, file);
@@ -567,6 +572,8 @@ namespace Calamari.ArgoCD.Conventions
 
                 var imageReplacer = imageReplacerFactory(content);
                 var imageReplacementResult = imageReplacer.UpdateImages(imagesToUpdate);
+
+                // TODO: Generate JSON patch from changes and add to jsonPatches
 
                 if (imageReplacementResult.UpdatedImageReferences.Count > 0)
                 {
@@ -585,7 +592,7 @@ namespace Calamari.ArgoCD.Conventions
                 }
             }
 
-            return (updatedFiles, updatedImages);
+            return (updatedFiles, updatedImages, jsonPatches);
         }
 
         HelmRefUpdatedResult UpdateHelmImageValues(
@@ -604,7 +611,8 @@ namespace Calamari.ArgoCD.Conventions
                 fileSystem.OverwriteFile(filepath, imageUpdateResult.UpdatedContents);
                 try
                 {
-                    return new HelmRefUpdatedResult(imageUpdateResult.UpdatedImageReferences, Path.Combine(target.Path, target.FileName));
+                    // TODO: Fill in JSON patch
+                    return new HelmRefUpdatedResult(imageUpdateResult.UpdatedImageReferences, Path.Combine(target.Path, target.FileName), "");
                 }
                 catch (Exception ex)
                 {
@@ -613,7 +621,7 @@ namespace Calamari.ArgoCD.Conventions
                 }
             }
 
-            return new HelmRefUpdatedResult(new HashSet<string>(), Path.Combine(target.Path, target.FileName));
+            return new HelmRefUpdatedResult(new HashSet<string>(), Path.Combine(target.Path, target.FileName), string.Empty);
         }
 
         PushResult? PushToRemote(
@@ -649,6 +657,6 @@ namespace Calamari.ArgoCD.Conventions
             return fileSystem.EnumerateFilesWithGlob(rootPath, yamlFileGlob);
         }
 
-        record SourceUpdateResult(HashSet<string> ImagesUpdated, string CommitSha);
+        record SourceUpdateResult(HashSet<string> ImagesUpdated, string CommitSha, List<FilePathContent> PatchedFiles);
     }
 }
