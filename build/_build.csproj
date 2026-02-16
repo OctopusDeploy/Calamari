@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
-        <TargetFramework>net6.0</TargetFramework>
+        <TargetFramework>net8.0</TargetFramework>
         <RuntimeIdentifiers>win-x64;linux-x64</RuntimeIdentifiers>
         <RootNamespace>Calamari.Build</RootNamespace>
         <NoWarn>CS0649;CS0169</NoWarn>
@@ -24,7 +24,7 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0" />
-        <PackageReference Include="NuGet.CommandLine" Version="6.13.2">
+        <PackageReference Include="NuGet.CommandLine" Version="7.0.1">
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>

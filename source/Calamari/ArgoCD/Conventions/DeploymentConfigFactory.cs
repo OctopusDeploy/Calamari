@@ -1,4 +1,3 @@
-#if NET
 using System;
 using System.Linq;
 using Calamari.ArgoCD.Models;
@@ -68,4 +67,4 @@ namespace Calamari.ArgoCD.Conventions
         }
     }
 }
-#endif
+

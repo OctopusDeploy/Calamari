@@ -1,45 +1,37 @@
 using System;
 using System.Text.Json.Serialization;
+using Calamari.ArgoCD.Git;
 
 namespace Calamari.ArgoCD.Domain
 {
-    // Base class for polymorphic source handling
-    [JsonDerivedType(typeof(BasicSource), "basic")]
-    [JsonDerivedType(typeof(HelmSource), "helm")]
-    [JsonDerivedType(typeof(ReferenceSource), "reference")]
-    public class SourceBase
+    public class ApplicationSource
     {
+        string originalRepoUrl = string.Empty;
         [JsonPropertyName("repoURL")]
-        public Uri RepoUrl { get; set; } = new Uri("about:blank");
+        public string OriginalRepoUrl {
+            get => originalRepoUrl;
+            set
+            {
+                originalRepoUrl = value;
+                CloneSafeRepoUrl = GitCloneSafeUrl.FromString(value);
+            }
+        }
+
+        public Uri CloneSafeRepoUrl { get; private set; }
     
         [JsonPropertyName("targetRevision")]
         public string TargetRevision { get; set; } = string.Empty;
         
         [JsonPropertyName("name")]
         public string Name { get; set; } = string.Empty;
-    }
 
-
-    public class BasicSource : SourceBase
-    {
         [JsonPropertyName("path")]
-        public string Path { get; set; } = string.Empty;
-    }
-
-
-    public class HelmSource : SourceBase
-    {
-        [JsonPropertyName("path")]
-        public string Path { get; set; } = string.Empty;
-    
+        public string? Path { get; set; }
+        
         [JsonPropertyName("helm")]
-        public HelmConfig Helm { get; set; } = new HelmConfig();
-    }
-
-
-    public class ReferenceSource : SourceBase
-    {
+        public HelmConfig? Helm { get; set; }
+        
         [JsonPropertyName("ref")]
-        public string Ref { get; set; } = string.Empty;
+        public string? Ref { get; set; }
     }
 }

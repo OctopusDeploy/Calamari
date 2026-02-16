@@ -1,17 +1,10 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 using JetBrains.Annotations;
-using Nuke.Common;
-using Nuke.Common.CI.TeamCity;
 using Nuke.Common.Tools.Docker;
 using Nuke.Common.Tools.OctoVersion;
 using Calamari.Build.Utilities;
-using Nuke.Common.IO;
 using Nuke.Common.Tooling;
-using Serilog;
 
 namespace Calamari.Build;
 
@@ -32,7 +25,7 @@ partial class Build
         .Requires(() => DependencyTrackUrl)
         .Requires(() => DependencyTrackApiKey)
         .Requires(() => InternalDockerRegistry)
-        .DependsOn(Publish)
+        .DependsOn(PublishCalamariProjects)
         .Executes(async () =>
         {
             ArgumentNullException.ThrowIfNull(Solution, nameof(Solution));
@@ -47,13 +40,14 @@ partial class Build
             var results = new List<string>();
             Logging.InBlock("Creating individual SBOMs", () =>
             {
-                ArtifactsDirectory.CreateOrCleanDirectory();
+                KnownPaths.ArtifactsDirectory.CreateOrCleanDirectory();
                 var components = Directory
                     .EnumerateFiles(RootDirectory, "*.deps.json", SearchOption.AllDirectories)
                     .Where(path => !path.Contains("/obj/"))
                     .Where(path => !path.Contains("/TestResults/"))
                     .Where(path => !path.Contains("/.git/"))
                     .Where(path => !path.Contains(".Test"))
+                    .Where(path => !path.Contains(".nuke"))
                     .Where(path => !path.Contains("/_build"))
                     .Select(ResolveCalamariComponent);
 
@@ -126,7 +120,7 @@ partial class Build
                 .SetName(containerName)
                 .SetPlatform("linux/amd64")
                 .SetImage($"{InternalDockerRegistry}/octopusdeploy/tool-containers/tool-sbom-cli:latest")
-                .SetVolume($"{ArtifactsDirectory}:/sboms")
+                .SetVolume($"{KnownPaths.ArtifactsDirectory}:/sboms")
                 .SetCommand($"sbom-uploader")
                 .SetEnv(
                         $"SBOM_UPLOADER_URL={DependencyTrackUrl}",
@@ -159,13 +153,13 @@ partial class Build
                                             .SetName(containerName)
                                             .SetPlatform("linux/amd64")
                                             .SetImage($"{InternalDockerRegistry}/octopusdeploy/tool-containers/tool-sbom-cli:latest")
-                                            .SetVolume($"{directory}:/source", $"{ArtifactsDirectory}:/output")
+                                            .SetVolume($"{directory}:/source", $"{KnownPaths.ArtifactsDirectory}:/output")
                                             .SetCommand($"trivy")
                                             .SetArgs("fs", $"/source", "--format", "cyclonedx",
                                                      "--output", $"/output/{outputFile}")
                                             .SetRm(true));
 
-                 TeamCity.Instance?.PublishArtifacts($"{ArtifactsDirectory / outputFile}=>component-sboms/");
+                 TeamCity.Instance?.PublishArtifacts($"{KnownPaths.ArtifactsDirectory / outputFile}=>component-sboms/");
 
                  return outputFile;
              });
@@ -193,11 +187,11 @@ partial class Build
                 .SetName(containerName)
                 .SetPlatform("linux/amd64")
                 .SetRm(true)
-                .SetVolume($"{ArtifactsDirectory}:/sboms")
+                .SetVolume($"{KnownPaths.ArtifactsDirectory}:/sboms")
                 .SetImage("cyclonedx/cyclonedx-cli")
                 .SetCommand("merge")
                 .SetArgs(args));
-            TeamCity.Instance?.PublishArtifacts(ArtifactsDirectory / outputFileName);
+            TeamCity.Instance?.PublishArtifacts(KnownPaths.ArtifactsDirectory / outputFileName);
         });
 
         Logging.InBlock($"Validating combined SBOM", () =>
@@ -205,10 +199,10 @@ partial class Build
             var containerName = $"calamari-sbom-validator-{octoVersionInfo.FullSemVer}";
             ContainersWeHaveCreated.Add(containerName);
             DockerTasks.DockerRun(x => x
-                .SetName($"octopus-sbom-validator-{octoVersionInfo.FullSemVer}")
+                .SetName(containerName)
                 .SetPlatform("linux/amd64")
                 .SetRm(true)
-                .SetVolume($"{ArtifactsDirectory}:/sboms")
+                .SetVolume($"{KnownPaths.ArtifactsDirectory}:/sboms")
                 .SetImage("cyclonedx/cyclonedx-cli")
                 .SetCommand("validate")
                 .SetArgs("--input-file", $"/sboms/{outputFileName}"));

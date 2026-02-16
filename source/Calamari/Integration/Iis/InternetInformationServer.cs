@@ -1,5 +1,4 @@
 ﻿using System.Linq;
-using Calamari.Common.Plumbing.Logging;
 
 namespace Calamari.Integration.Iis
 {
@@ -25,12 +24,7 @@ namespace Calamari.Integration.Iis
             var remainder = parts.Skip(1).Where(x => !string.IsNullOrWhiteSpace(x)).ToArray();
             var virtualDirectory = remainder.Length > 0 ? string.Join("/", remainder) : null;
             WebServerSupport server = new WebServerSevenSupport();
-
-#if IIS_SUPPORT
-            if(legacySupport) {
-                server = new WebServerSixSupport();
-            }
-#endif
+            
             return server.ChangeHomeDirectory(iisSiteName, virtualDirectory, path);
         }
     }

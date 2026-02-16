@@ -5,7 +5,6 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Testing.Helpers;
-using Calamari.Testing.Requirements;
 using NSubstitute;
 using NUnit.Framework;
 
@@ -15,7 +14,7 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
     public class CSharpScriptEngineFixture : ScriptEngineFixtureBase
     {
         [Category(TestCategory.ScriptingSupport.DotnetScript)]
-        [Test, RequiresDotNetCore]
+        [Test]
         public void DotnetScript_CSharpDecryptsVariables()
         {
             using (var scriptFile = new TemporaryFile(Path.ChangeExtension(Path.GetTempFileName(), "cs")))
@@ -23,7 +22,7 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
                 var variables = GetVariables();
                 File.WriteAllText(scriptFile.FilePath, "System.Console.WriteLine(OctopusParameters[\"mysecrect\"]);");
                 var commandLineRunner = new TestCommandLineRunner(new InMemoryLog(), new CalamariVariables());
-                var result = ExecuteScript(new DotnetScriptExecutor(commandLineRunner, Substitute.For<ILog>(), new DotnetScriptCompilationWarningOutputSink()), scriptFile.FilePath, variables);
+                var result = ExecuteScript(new DotnetScriptExecutor(commandLineRunner, Substitute.For<ILog>()), scriptFile.FilePath, variables);
                 result.AssertOutput("KingKong");
             }
         }

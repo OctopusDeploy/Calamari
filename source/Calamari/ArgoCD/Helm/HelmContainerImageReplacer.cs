@@ -1,4 +1,3 @@
-#if NET
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,10 +10,10 @@ namespace Calamari.ArgoCD.Helm
     {
         readonly string yamlContent;
         readonly string defaultClusterRegistry;
-        readonly List<string> imagePathAnnotations;
+        readonly IReadOnlyCollection<string> imagePathAnnotations;
         readonly ILog log;
 
-        public HelmContainerImageReplacer(string yamlContent, string defaultClusterRegistry, List<string> imagePathAnnotations, ILog log)
+        public HelmContainerImageReplacer(string yamlContent, string defaultClusterRegistry, IReadOnlyCollection<string> imagePathAnnotations, ILog log)
         {
             this.yamlContent = yamlContent;
             this.defaultClusterRegistry = defaultClusterRegistry;
@@ -38,19 +37,27 @@ namespace Calamari.ArgoCD.Helm
                 log.Verbose($"Apply template {existingImageReference.TagPath}, {existingImageReference.ImageReference.ToString()}");
                 var imagesString = imagesToUpdate.Select(i => i.ToString());
                 log.Verbose($"Images to Update = {string.Join(",", imagesString)}");
-                var matchedUpdate = imagesToUpdate.FirstOrDefault(i => i.IsMatch(existingImageReference.ImageReference));
-                if (matchedUpdate != null && !matchedUpdate.Tag.Equals(existingImageReference.ImageReference.Tag, StringComparison.OrdinalIgnoreCase))
+                
+                var matchedUpdate = imagesToUpdate.Select(i => new
+                                                  {
+                                                      Reference = i,
+                                                      Comparison = i.CompareWith(existingImageReference.ImageReference) 
+                                                      
+                                                  })
+                                                  .FirstOrDefault(i => i.Comparison.MatchesImage());
+                
+                if (matchedUpdate != null && !matchedUpdate.Comparison.TagMatch)
                 {
                     if (existingImageReference.TagIsTemplateToken)
                     {
                         // If the tag is specified separately in its own node
-                        fileContent = HelmValuesEditor.UpdateNodeValue(fileContent, existingImageReference.TagPath, matchedUpdate.Tag);
+                        fileContent = HelmValuesEditor.UpdateNodeValue(fileContent, existingImageReference.TagPath, matchedUpdate.Reference.Tag);
                     }
                     else
                     {
                         // We re-read the node value with the image details so we can ensure we only write out the image ref components expected
                         var imageTagNodeValue = originalYamlParser.GetValueAtPath(existingImageReference.TagPath);
-                        var replacementImageRef = ContainerImageReference.FromReferenceString(imageTagNodeValue, defaultClusterRegistry).WithTag(matchedUpdate.Tag);
+                        var replacementImageRef = ContainerImageReference.FromReferenceString(imageTagNodeValue, defaultClusterRegistry).WithTag(matchedUpdate.Reference.Tag);
                         fileContent = HelmValuesEditor.UpdateNodeValue(fileContent, existingImageReference.TagPath, replacementImageRef);
                     }
 
@@ -62,4 +69,4 @@ namespace Calamari.ArgoCD.Helm
         }
     }
 }
-#endif
+

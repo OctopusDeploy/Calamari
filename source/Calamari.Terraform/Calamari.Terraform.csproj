@@ -5,9 +5,8 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <IsPackable>false</IsPackable>
     <OutputType>Exe</OutputType>
-    <LangVersion>9</LangVersion>
     <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
-    <TargetFrameworks>net462;net6.0</TargetFrameworks>
+    <TargetFramework>net8.0</TargetFramework>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
@@ -16,7 +15,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="NuGet.Versioning" Version="5.11.6" />
+    <PackageReference Include="NuGet.Versioning" Version="7.0.1" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Calamari.CloudAccounts\Calamari.CloudAccounts.csproj" />

@@ -4,12 +4,16 @@
     <Description>A sample project containing a Windows service.</Description>
     <NeutralLanguage>en-US</NeutralLanguage>
     <Authors>ACME Corporation</Authors>
-    <TargetFramework>netstandard1.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <AssemblyName>Acme.Service</AssemblyName>
     <PackageId>Acme.Service</PackageId>
     <PackageProjectUrl>https://github.com/OctopusDeploy/Calamari/</PackageProjectUrl>
     <PackageLicenseUrl>https://github.com/OctopusDeploy/Calamari/blob/main/LICENSE.txt</PackageLicenseUrl>
     <NuspecFile>Acme.Service.nuspec</NuspecFile>
     <NuspecProperties>Version=$(Version)</NuspecProperties>
+    <!-- The assembly '{0}' is not inside the 'lib' folder and hence it won't be added as a reference when the 
+         package is installed into a project. Move it into the 'lib' folder if it needs to be referenced. -->
+    <NoWarn>NU5100</NoWarn>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
 </Project>

@@ -1,4 +1,3 @@
-#if NET
 using System;
 using Calamari.ArgoCD.Models;
 using FluentAssertions;
@@ -8,7 +7,8 @@ namespace Calamari.Tests.ArgoCD.Models
 {
     public class ContainerImageReferenceTests
     {
-        [Test]
+        
+        [Theory]
         [TestCase("nginx", "nginx")]
         [TestCase("docker.io/nginx", "docker.io/nginx")]
         [TestCase("index.docker.io/nginx", "docker.io/nginx")]
@@ -21,11 +21,19 @@ namespace Calamari.Tests.ArgoCD.Models
             var image1 = ContainerImageReference.FromReferenceString(reference1);
             var image2 = ContainerImageReference.FromReferenceString(reference2);
 
-            var result = image2.IsMatch(image1);
+            var result = image2.CompareWith(image1).MatchesImage();
 
             result.Should().BeTrue();
         }
 
+        [Test]
+        public void FromReferenceString_PreservesTagCasing()
+        {
+            var image1 = ContainerImageReference.FromReferenceString("NginX:CaseSensitive");
+            image1.Tag.Should().Be("CaseSensitive");
+            image1.ImageName.Should().Be("NginX".ToLowerInvariant());
+        }
+    
         [Theory]
         [TestCase("nginx", "custom-reg.io/nginx")]
         [TestCase("nginx:latest", "custom-reg.io/nginx:1.27")]
@@ -34,7 +42,7 @@ namespace Calamari.Tests.ArgoCD.Models
             var image1 = ContainerImageReference.FromReferenceString(reference1, "custom-reg.io");
             var image2 = ContainerImageReference.FromReferenceString(reference2);
 
-            var result = image2.IsMatch(image1);
+            var result = image2.CompareWith(image1).MatchesImage();
 
             result.Should().BeTrue();
         }
@@ -47,7 +55,7 @@ namespace Calamari.Tests.ArgoCD.Models
             var image1 = ContainerImageReference.FromReferenceString(reference1, "custom-reg.io");
             var image2 = ContainerImageReference.FromReferenceString(reference2, "custom-reg.io");
 
-            var result = image2.IsMatch(image1);
+            var result = image2.CompareWith(image1).MatchesImage();
 
             result.Should().BeTrue();
         }
@@ -62,33 +70,34 @@ namespace Calamari.Tests.ArgoCD.Models
             var image1 = ContainerImageReference.FromReferenceString(reference1);
             var image2 = ContainerImageReference.FromReferenceString(reference2, "custom-reg.io");
 
-            var result = image2.IsMatch(image1);
+            var result = image2.CompareWith(image1).MatchesImage();
 
             result.Should().BeFalse();
         }
 
         [Test]
-        public void IsTagChange_ReturnsTrueWithDifferentTags()
+        public void TagMatch_IsFalseWithDifferentTags()
         {
             var image1 = ContainerImageReference.FromReferenceString("nginx:latest");
             var image2 = ContainerImageReference.FromReferenceString("nginx:1.27");
 
-            var result = image2.IsTagChange(image1);
+            var result = image2.CompareWith(image1).TagMatch;
 
-            result.Should().BeTrue();
+            result.Should().BeFalse();
         }
 
         [Theory]
         [TestCase("nginx", "busybox")]
         [TestCase("nginx", "my-custom.io/nginx")]
-        public void IsTagChange_ReturnsFalseWhenReferencesAreNotEquivalent(string reference1, string reference2)
+        public void TagMatch_IsTrueWhenReferencesAreNotEquivalent_ButComparisonIsFailse(string reference1, string reference2)
         {
             var image1 = ContainerImageReference.FromReferenceString(reference1)!;
             var image2 = ContainerImageReference.FromReferenceString(reference2)!;
 
-            var result = image2.IsTagChange(image1);
+            var result = image2.CompareWith(image1);
 
-            result.Should().BeFalse();
+            result.TagMatch.Should().BeTrue();
+            result.MatchesImageAndTag().Should().BeFalse();
         }
 
         [Theory]
@@ -98,14 +107,14 @@ namespace Calamari.Tests.ArgoCD.Models
         [TestCase("docker.io/nginx", "index.docker.io/nginx")]
         [TestCase("nginx", "index.docker.io/nginx")]
         [TestCase("nginx", "docker.io/nginx")]
-        public void IsTagChange_ReturnsFalseWhenTagsAreTheSame(string reference1, string reference2)
+        public void TagMatch_ReturnsTrueWhenTagsAreTheSame_ComparisonIsTrue(string reference1, string reference2)
         {
             var image1 = ContainerImageReference.FromReferenceString(reference1);
             var image2 = ContainerImageReference.FromReferenceString(reference2);
 
-            var result = image2.IsTagChange(image1);
-
-            result.Should().BeFalse();
+            var result = image2.CompareWith(image1);
+            
+            result.MatchesImageAndTag().Should().BeTrue();
         }
 
         [Test]
@@ -182,4 +191,3 @@ namespace Calamari.Tests.ArgoCD.Models
         }
     }
 }
-#endif

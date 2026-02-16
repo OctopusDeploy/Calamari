@@ -17,7 +17,7 @@ namespace Octopus.Calamari.ConsolidatedPackage
             this.log = log;
         }
 
-        public string AssemblyVersion { get; set; } = (((AssemblyInformationalVersionAttribute) typeof(Consolidate).Assembly.GetCustomAttribute(typeof(AssemblyInformationalVersionAttribute))!)!).InformationalVersion;
+        public string AssemblyVersion { get; set; } = (((AssemblyInformationalVersionAttribute)typeof(Consolidate).Assembly.GetCustomAttribute(typeof(AssemblyInformationalVersionAttribute))!)!).InformationalVersion;
 
         public (bool result, string packageFileName) Execute(string outputDirectory, IEnumerable<BuildPackageReference> packageReferences)
         {
@@ -52,7 +52,7 @@ namespace Octopus.Calamari.ConsolidatedPackage
 
                 log.Information($"Package creation took {sw.ElapsedMilliseconds:n0}ms");
 
-                foreach (var item in indexEntries.Select(i => new {i.PackageId, i.Platform}).Distinct())
+                foreach (var item in indexEntries.Select(i => new { i.PackageId, i.Platform }).Distinct())
                     log.Information($"Packaged {item.PackageId} for {item.Platform}");
 
                 return (true, destination);
@@ -61,20 +61,9 @@ namespace Octopus.Calamari.ConsolidatedPackage
 
         static IReadOnlyList<IPackageReference> GetPackages(Hasher hasher, IEnumerable<BuildPackageReference> packageReferences)
         {
-            var calamariPackages = packageReferences
-                .Where(p => !CalamariPackages.Flavours.Contains(p.Name))
-                .Where(p => p.Name.StartsWith("Calamari"))
-                .Select(p => new CalamariPackageReference(hasher, p));
-            
-            var calamariFlavourPackages = packageReferences
-                .Where(p => CalamariPackages.Flavours.Contains(p.Name))
-                .Select(p => new CalamariFlavourPackageReference(hasher, p));
-
-            var sashimiPackages = packageReferences
-                .Where(p => p.Name.StartsWith("Sashimi."))
-                .Select(p => new SashimiPackageReference(hasher, p));
-
-            return calamariPackages.Concat<IPackageReference>(sashimiPackages).Concat(calamariFlavourPackages).ToArray();
+            return packageReferences
+                   .Select(p => new CalamariFlavourPackageReference(hasher, p))
+                   .ToList();
         }
     }
 }

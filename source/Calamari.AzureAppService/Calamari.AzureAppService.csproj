@@ -7,9 +7,8 @@
     <IsPackable>true</IsPackable>
     <OutputType>Exe</OutputType>
     <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
-    <LangVersion>8.0</LangVersion>
     <NoWarn>NU5104</NoWarn>
-    <TargetFrameworks>net462;net6.0</TargetFrameworks>
+    <TargetFramework>net8.0</TargetFramework>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
@@ -24,12 +23,27 @@
     <PackageReference Include="Polly" Version="8.3.1" />
     <PackageReference Include="SharpCompress" Version="0.37.2" />
     <PackageReference Include="System.Linq.Async" Version="6.0.1" />
-    <PackageReference Include="System.Text.Json" Version="8.0.5" />
+    <PackageReference Include="System.Text.Json" Version="8.0.6" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Calamari.AzureScripting\Calamari.AzureScripting.csproj" />
     <ProjectReference Include="..\Calamari.CloudAccounts\Calamari.CloudAccounts.csproj" />
     <ProjectReference Include="..\Calamari.Azure\Calamari.Azure.csproj" />
     <ProjectReference Include="..\Calamari.Common\Calamari.Common.csproj" />
   </ItemGroup>
 
+  <!-- Extract dotnet-script zip files to support C# script execution -->
+  <Target Name="RunResolvePackageDependencies" Condition="'$(RunResolvePackageDependencies)' != ''" />
+  <Target Name="GetToolFiles" DependsOnTargets="RunResolvePackageDependencies">
+    <ItemGroup>
+      <DotnetScriptFiles Include="$(MSBuildProjectDirectory)/../Calamari.Scripting/DotnetScript/dotnet-script.*.zip"/>
+    </ItemGroup>
+  </Target>
+<Target Name="CopyDotnetScriptFilesAfterBuild" AfterTargets="Build" DependsOnTargets="GetToolFiles">
+  <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(OutputPath)/" />
+</Target>
+
+<Target Name="CopyDotnetScriptFilesAfterPublish" AfterTargets="Publish" DependsOnTargets="GetToolFiles">
+  <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(PublishDir)/" />
+</Target>
 </Project>

@@ -1,197 +1,114 @@
-#if NET
 #nullable enable
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Domain;
 using Calamari.ArgoCD.Models;
 
 namespace Calamari.ArgoCD.Helm
 {
-
     public class HelmValuesFileUpdateTargetParser
     {
-        readonly List<KeyValuePair<string, string>> aliasAnnotations;
-
-        readonly List<KeyValuePair<string, string>> imageReplacePathAnnotations;
-
-        readonly List<HelmSource> helmSources;
-        readonly List<ReferenceSource> refSources;
+        readonly List<ApplicationSourceWithMetadata> helmSources;
 
         readonly ApplicationName appName;
         readonly string defaultRegistry;
+        readonly Dictionary<string, string> annotations;
+        readonly bool containsMultipleSources;
 
         public HelmValuesFileUpdateTargetParser(Application toUpdate, string defaultRegistry)
         {
-            aliasAnnotations = toUpdate.Metadata.Annotations
-                                            .Where(a => a.Key.StartsWith(ArgoCDConstants.Annotations.OctopusImageReplaceAliasKey))
-                                            .ToList();
-            imageReplacePathAnnotations = toUpdate.Metadata.Annotations
-                                                       .Where(a => a.Key.StartsWith(ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey))
-                                                       .ToList();
-            helmSources = toUpdate.Spec.Sources.OfType<HelmSource>().ToList();
-            refSources = toUpdate.Spec.Sources.OfType<ReferenceSource>().ToList();
+            annotations = toUpdate.Metadata.Annotations;
+            containsMultipleSources = toUpdate.Spec.Sources.Count > 1;
+            helmSources = toUpdate.GetSourcesWithMetadata().Where(s => s.SourceType == SourceType.Helm).ToList();
             appName = toUpdate.Metadata.Name.ToApplicationName();
             this.defaultRegistry = defaultRegistry;
         }
 
-        public List<HelmValuesFileImageUpdateTarget> GetValuesFilesToUpdate()
+        public (IReadOnlyCollection<HelmValuesFileImageUpdateTarget> Targets, IReadOnlyCollection<HelmSourceConfigurationProblem> Problems) GetExplicitValuesFilesToUpdate(ApplicationSourceWithMetadata helmSource)
         {
-            return helmSources
-                   .Where(hs => hs.Helm.ValueFiles.Count > 0)
-                   .SelectMany(ExtractValuesFilesForSource)
-                   .ToList();
+            var results = new [] {helmSource}
+                              .Where(hs => hs.Source.Helm?.ValueFiles.Count > 0)
+                              .Select(ExtractInlineValuesFilesForSource).ToArray();
+            
+            return (results.SelectMany(v => v.Targets).ToArray(), results.SelectMany(v => v.Problems).ToHashSet());
         }
 
-        List<HelmValuesFileImageUpdateTarget> ExtractValuesFilesForSource(HelmSource source)
+        (IReadOnlyCollection<HelmValuesFileImageUpdateTarget> Targets, IReadOnlyCollection<HelmSourceConfigurationProblem> Problems) ExtractInlineValuesFilesForSource(ApplicationSourceWithMetadata source)
         {
-            return source.Helm.ValueFiles.Select(file => file.StartsWith('$')
-                                                ? ProcessRefValuesFile(file)
-                                                : ProcessInlineValuesFile(source, file))
-                         .OfType<HelmValuesFileImageUpdateTarget>()
-                         .ToList();
+            var definedPathsForSource = ScopingAnnotationReader.GetImageReplacePathsForApplicationSource(source.Source.Name.ToApplicationSourceName(), annotations, containsMultipleSources);
+            
+            var results = source.Source.Helm?.ValueFiles
+                                .Where(file => !file.StartsWith('$'))
+                                .Select(file => ProcessInlineValuesFile(source, file, definedPathsForSource)).ToArray()
+                                ?? Array.Empty<(HelmValuesFileImageUpdateTarget? Target, HelmSourceConfigurationProblem? Problem)>();
+
+            return (results.Where(t => t.Target != null).Select(v => v.Target!).ToArray(),
+                    results.Where(t => t.Problem != null).Select(v => v.Problem!).Distinct().ToArray());
         }
 
-        HelmValuesFileImageUpdateTarget? ProcessInlineValuesFile(HelmSource source, string file)
+        (HelmValuesFileImageUpdateTarget? Target, HelmSourceConfigurationProblem? Problem) ProcessInlineValuesFile(ApplicationSourceWithMetadata source, string file, IReadOnlyCollection<string> definedPathsForSource)
         {
-            // Check if there is an unaliased annotation
-            var definedPathsForSource = imageReplacePathAnnotations
-                                        .FirstOrDefault(a => a.Key == $"{ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey}")
-                                        .Value;
-            if (definedPathsForSource != null)
+            if (!definedPathsForSource.Any())
             {
-                if (source.Helm.ValueFiles.Count == 1)
+                return (null, new HelmSourceIsMissingImagePathAnnotation(source.SourceIdentity));
+            }
+
+            return (new HelmValuesFileImageUpdateTarget(defaultRegistry,
+                                                        source.Source.Path,
+                                                        file,
+                                                        definedPathsForSource), null);
+        }
+
+        public (IReadOnlyCollection<HelmValuesFileImageUpdateTarget> Targets, IReadOnlyCollection<HelmSourceConfigurationProblem> Problems) GetHelmTargetsForRefSource(ApplicationSourceWithMetadata refSource)
+        {
+            var targetsAndProblems = helmSources.Select(h => GetUpdateTargetsFromHelmSource(refSource, h)).ToList();
+            
+            //Use the hashset to distinct unique problems arising from multiple value files from the same Helm source
+            return (targetsAndProblems.SelectMany(t => t.Targets).ToList(), targetsAndProblems.SelectMany(t => t.Problems).ToHashSet());
+        }
+
+        (IReadOnlyCollection<HelmValuesFileImageUpdateTarget> Targets, IReadOnlyCollection<HelmSourceConfigurationProblem> Problems) GetUpdateTargetsFromHelmSource(ApplicationSourceWithMetadata refSource, ApplicationSourceWithMetadata helmSource)
+        {
+            //If there's no Helm section, then the Helm source won't be referencing other sources
+            if (helmSource.Source.Helm == null)
+                return ([], []);
+                
+            var definedPathsForSource = ScopingAnnotationReader.GetImageReplacePathsForApplicationSource(helmSource.Source.Name.ToApplicationSourceName(), annotations, containsMultipleSources);
+
+            var targetsAndProblems = helmSource.Source.Helm.ValueFiles.Select(v => GetUpdateTargetForValueFile(refSource, v, definedPathsForSource, helmSource)).ToList();
+
+            return (targetsAndProblems.Where(t => t.Target != null).Select(t => t.Target!).ToList(), 
+                    targetsAndProblems.Where(t => t.Problem != null).Select(t => t.Problem!).ToHashSet());
+        }
+
+        (HelmValuesFileImageUpdateTarget? Target, HelmSourceConfigurationProblem? Problem) GetUpdateTargetForValueFile(ApplicationSourceWithMetadata refSource,
+                                                                                                                       string valueFile,
+                                                                                                                       IReadOnlyCollection<string> definedPathsForSource,
+                                                                                                                       ApplicationSourceWithMetadata helmSource)
+        {
+            if (ReferencesRef(valueFile, refSource.Source.Ref!))
+            {
+                if (!definedPathsForSource.Any())
                 {
-                    return new HelmValuesFileImageUpdateTarget(appName,
-                                                               source.Name?.ToApplicationSourceName(),
-                                                               defaultRegistry,
-                                                               source.Path,
-                                                               source.RepoUrl,
-                                                               source.TargetRevision,
-                                                               file,
-                                                               ConvertAnnotationToList(definedPathsForSource));
+                    return (null, new HelmSourceIsMissingImagePathAnnotation(helmSource.SourceIdentity, refSource.SourceIdentity));
                 }
-                var valueFilesPathsString = string.Join(", ", source.GenerateValuesFilePaths());
-                throw new InvalidHelmImageReplaceAnnotationsException($"Cannot use {ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey} without an alias when multiple inline values files are present.\n Values Files: {valueFilesPathsString}");
-            }
 
-            // Check for aliased annotation for file
-            var aliasKeyForFile = aliasAnnotations.FirstOrDefault(a => a.Value == file).Key;
-            string? alias = null;
-            if (aliasKeyForFile != null)
-            {
-                alias = GetSpecifierFromKey(aliasKeyForFile);
-            }
-            else
-            {
-                // Check if there is an alias with an absolute path value
-                var absoluteAliasPath = source.GenerateInlineValuesAbsolutePath(file);
-                var aliasKeyForSource = aliasAnnotations.FirstOrDefault(a => a.Value == absoluteAliasPath).Key;
-                if (aliasKeyForSource != null)
-                {
-                    alias = GetSpecifierFromKey(aliasKeyForSource);
-                }
-            }
+                var relativeFile = valueFile[(valueFile.IndexOf('/') + 1)..];
 
-            if (alias != null)
-            {
-                var definedPathsForAlias = GetKeyedReplacementPathAnnotation(alias);
-                if (definedPathsForAlias != null)
-                {
-                    return new HelmValuesFileImageUpdateTarget(appName,
-                                                               source.Name.ToApplicationSourceName(),
-                                                               defaultRegistry,
-                                                               source.Path,
-                                                               source.RepoUrl,
-                                                               source.TargetRevision,
-                                                               file,
-                                                               ConvertAnnotationToList(definedPathsForAlias));
-                }
-                // Invalid state - alias defined but without corresponding Path annotation 
-                return new InvalidHelmValuesFileImageUpdateTarget(appName,
-                                                                  source.Name.ToApplicationSourceName(),
-                                                                  defaultRegistry,
-                                                                  source.Path,
-                                                                  source.RepoUrl,
-                                                                  source.TargetRevision,
-                                                                  file,
-                                                                  alias);
+                return (new HelmValuesFileImageUpdateTarget(defaultRegistry,
+                                                                ArgoCDConstants.RefSourcePath,
+                                                                relativeFile,
+                                                                definedPathsForSource), null);
             }
-
-            return null;
+            
+            return (null, null);
         }
 
-        HelmValuesFileImageUpdateTarget? ProcessRefValuesFile(string file)
+        static bool ReferencesRef(string filePath, string refName)
         {
-            var refName = GetRefFromFilePath(file);
-            var refForValuesFile = refSources.FirstOrDefault(r => r.Ref == refName);
-            if (refForValuesFile == null)
-            {
-                // Invalid Ref used in Helm Config (which we should get because it never would have deployed properly anyway
-                throw new InvalidHelmImageReplaceAnnotationsException($"File: {file} references a Ref sources that could not be found.");
-            }
-            string? imageReplacementPathsForFile = null;
-            // Check for an alias first as these take precedence
-            var aliasWithRefValueKey = aliasAnnotations.FirstOrDefault(a => a.Value == file).Key;
-            if (aliasWithRefValueKey != null)
-            {
-                // We found an alias, let's try to work with that
-                var alias = GetSpecifierFromKey(aliasWithRefValueKey);
-                imageReplacementPathsForFile = GetKeyedReplacementPathAnnotation(alias);
-
-                if (string.IsNullOrEmpty(imageReplacementPathsForFile))
-                {
-                    // Invalid state - alias defined but without corresponding Path annotation 
-                    return new InvalidHelmValuesFileImageUpdateTarget(appName,
-                                                                      refForValuesFile.Name.ToApplicationSourceName(),
-                                                                      defaultRegistry,
-                                                                      ArgoCDConstants.RefSourcePath,
-                                                                      refForValuesFile.RepoUrl,
-                                                                      refForValuesFile.TargetRevision,
-                                                                      file,
-                                                                      alias);
-                }
-            }
-
-            // No values for Alias, let's see if there are annotations for the Ref directly
-            imageReplacementPathsForFile ??= GetKeyedReplacementPathAnnotation(refName);
-            if (!string.IsNullOrEmpty(imageReplacementPathsForFile))
-            {
-                var relativeFile = file[(file.IndexOf('/') + 1)..];
-                return new HelmValuesFileImageUpdateTarget(appName,
-                                                           refForValuesFile.Name.ToApplicationSourceName(),
-                                                           defaultRegistry,
-                                                           ArgoCDConstants.RefSourcePath,
-                                                           refForValuesFile.RepoUrl,
-                                                           refForValuesFile.TargetRevision,
-                                                           relativeFile,
-                                                           ConvertAnnotationToList(imageReplacementPathsForFile));
-            }
-            // No alias and no ref keyed replacement paths - ignore
-            return null;
-        }
-
-        public static List<string> ConvertAnnotationToList(string annotationValue)
-        {
-            return annotationValue.Split(',').Select(a => a.Trim()).ToList();
-        }
-
-        static string GetSpecifierFromKey(string key)
-        {
-            return key[(key.LastIndexOf('.') + 1)..];
-        }
-
-        static string GetRefFromFilePath(string filePath)
-        {
-            return filePath.TrimStart('$')[..(filePath.IndexOf('/') - 1)];
-        }
-
-        string? GetKeyedReplacementPathAnnotation(string key)
-        {
-            return imageReplacePathAnnotations
-                   .FirstOrDefault(a => a.Key == ArgoCDConstants.Annotations.OctopusImageReplacementPathsKeyWithSpecifier(key))
-                   .Value;
+            return filePath.StartsWith($"${refName}/");
         }
     }
 }
-#endif

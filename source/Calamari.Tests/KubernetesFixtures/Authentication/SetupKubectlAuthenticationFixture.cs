@@ -482,15 +482,4 @@ namespace Calamari.Tests.KubernetesFixtures.Authentication
             return Convert.ToBase64String(Encoding.ASCII.GetBytes(input));
         }
     }
-
-    // This extension method only exists in .net6.0
-    #if NETFX
-    public static class MiscExtensions
-    {
-        public static IEnumerable<T> TakeLast<T>(this IEnumerable<T> source, int N)
-        {
-            return source.Skip(Math.Max(0, source.Count() - N));
-        }
-    }
-    #endif
 }

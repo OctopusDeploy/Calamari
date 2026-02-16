@@ -1,4 +1,3 @@
-#if NET
 #nullable enable
 using System;
 
@@ -77,7 +76,8 @@ namespace Calamari.ArgoCD.Models
                 }
             }
 
-            return new ContainerImageReference(registry.ToLowerInvariant(), imageName.ToLowerInvariant(), tag.ToLowerInvariant(), defaultRegistry.ToLowerInvariant());
+            //image tag is case-sensitive
+            return new ContainerImageReference(registry.ToLowerInvariant(), imageName.ToLowerInvariant(), tag, defaultRegistry.ToLowerInvariant());
         }
 
         public string Registry { get; }
@@ -86,24 +86,13 @@ namespace Calamari.ArgoCD.Models
 
         string DefaultRegistry { get; }
 
-        public bool IsMatch(ContainerImageReference other)
+        public ContainerImageComparison CompareWith(ContainerImageReference other)
         {
-            if (Equals(other))
-            {
-                return true;
-            }
-
-            return ImageName.Equals(other.ImageName, StringComparison.OrdinalIgnoreCase) && RegistriesMatch(this, other);
-        }
-
-        public bool IsTagChange(ContainerImageReference other)
-        {
-            if (IsMatch(other))
-            {
-                return !Tag.Equals(other.Tag, StringComparison.OrdinalIgnoreCase);
-            }
-
-            return false;
+            return new ContainerImageComparison(
+                                                RegistriesMatch(this, other),
+                                                ImageName.Equals(other.ImageName, StringComparison.OrdinalIgnoreCase),
+                                                Tag.Equals(other.Tag)
+                                               );
         }
 
         string ToOriginalFormatName()
@@ -134,5 +123,17 @@ namespace Calamari.ArgoCD.Models
             return string.IsNullOrEmpty(Tag) ? ToOriginalFormatName() : $"{ToOriginalFormatName()}:{Tag}";
         }
     }
+
+    public record ContainerImageComparison(bool RegistryMatch, bool ImageNameMatch, bool TagMatch)
+    {
+        public bool MatchesImageAndTag()
+        {
+            return RegistryMatch && ImageNameMatch && TagMatch;
+        }
+
+        public bool MatchesImage()
+        {
+            return RegistryMatch && ImageNameMatch;
+        }
+    }
 }
-#endif

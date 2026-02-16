@@ -1,5 +1,4 @@
 Param(
-    [string] $Framework,
     [string] $Runtime
 )
 
@@ -23,7 +22,21 @@ Write-Host "
 ##################################################################################################
 " -ForegroundColor Cyan
 
-$branch = & git branch --show-current
+# If -Runtime was provided, Consolidation Verification will be disabled
+if (-not [string]::IsNullOrEmpty($Runtime))
+{
+    $RuntimeSpecifiedWarning = @"
+###################################################################################
+# WARNING:                                                                        #
+# Limiting to a specific Runtime will cause Consolidation Tests to be excluded    #
+# from execution because they expect all Calamari Flavours for the local platform #
+# to have been built and consolidated.                                            #
+###################################################################################
+"@
+    Write-Host $RuntimeSpecifiedWarning -ForegroundColor Yellow
+}
+
+$branch = & git rev-parse --abbrev-ref HEAD
 
 Write-Host "Branch: $branch"
 
@@ -41,7 +54,7 @@ $env:OCTOVERSION_MajorMinorPatch= $numericVersion
 $env:OCTOVERSION_PreReleaseTagWithDash = "-$sanitizedBranch"
 $env:OCTOVERSION_FullSemVer = "$numericVersion-$sanitizedBranch"
 
-./build.ps1 -BuildVerbosity Minimal -Verbosity Normal --Append-Timestamp -SetOctopusServerVersion -TargetFramework "$Framework" -TargetRuntime "$Runtime"
+./build.ps1 -BuildVerbosity Minimal -Verbosity Normal --Append-Timestamp -SetOctopusServerVersion -TargetRuntime "$Runtime"
 
 Write-Host "
 ########################################################################################

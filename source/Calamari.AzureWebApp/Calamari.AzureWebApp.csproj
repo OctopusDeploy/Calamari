@@ -5,11 +5,12 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <IsPackable>false</IsPackable>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>net462;net6.0</TargetFrameworks>
-    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
     <LangVersion>8.0</LangVersion>
+    <TargetFramework>net8.0</TargetFramework>
+    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
+
 
   <ItemGroup>
     <PackageReference Include="Azure.Core" Version="1.44.1"/>
@@ -25,11 +26,7 @@
     <ProjectReference Include="..\Calamari.CloudAccounts\Calamari.CloudAccounts.csproj" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
-    <PackageReference Include="Microsoft.Web.Deployment" Version="4.0.5"/>
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
+  <ItemGroup>
     <Content Include="netcoreshim/*.*">
       <LinkBase>netcoreshim</LinkBase>
       <Pack>true</Pack>
@@ -40,11 +37,11 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
-  
+
   <ItemGroup>
     <Compile Remove="netcoreshim\**" />
   </ItemGroup>
-  
+
   <ItemGroup>
     <EmbeddedResource Remove="netcoreshim\**" />
   </ItemGroup>
@@ -55,7 +52,7 @@
 
   <Target Name="GetNetCoreShimFiles">
     <ItemGroup>
-      <NetCoreShimFiles Include="$(MSBuildProjectDirectory)/netcoreshim/netcoreshim.zip" Condition="'$(TargetFramework)' == 'net6.0'" />
+      <NetCoreShimFiles Include="$(MSBuildProjectDirectory)/netcoreshim/netcoreshim.zip"/>
     </ItemGroup>
   </Target>
   <Target Name="CopyNetCoreShimFilesAfterBuild" AfterTargets="Build" DependsOnTargets="GetNetCoreShimFiles">
@@ -63,5 +60,20 @@
   </Target>
   <Target Name="CopyNetCoreShimFilesAfterPublish" AfterTargets="Publish" DependsOnTargets="GetNetCoreShimFiles">
     <Unzip SourceFiles="@(NetCoreShimFiles)" DestinationFolder="$(PublishDir)/netcoreshim" />
+  </Target>
+
+  <!-- Extract dotnet-script zip files to support C# script execution -->
+  <Target Name="RunResolvePackageDependencies" Condition="'$(RunResolvePackageDependencies)' != ''" />
+  <Target Name="GetToolFiles" DependsOnTargets="RunResolvePackageDependencies">
+    <ItemGroup>
+      <DotnetScriptFiles Include="$(MSBuildProjectDirectory)/../Calamari.Scripting/DotnetScript/dotnet-script.*.zip"/>
+    </ItemGroup>
+  </Target>
+  <Target Name="CopyDotnetScriptFilesAfterBuild" AfterTargets="Build" DependsOnTargets="GetToolFiles">
+    <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(OutputPath)/" />
+  </Target>
+  
+  <Target Name="CopyDotnetScriptFilesAfterPublish" AfterTargets="Publish" DependsOnTargets="GetToolFiles">
+    <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(PublishDir)/" />
   </Target>
 </Project>

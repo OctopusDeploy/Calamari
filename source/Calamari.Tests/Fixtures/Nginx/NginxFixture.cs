@@ -214,14 +214,12 @@ namespace Calamari.Tests.Fixtures.Nginx
             
             var nginxConfigFilePath = Path.Combine(tempDirectory, "conf", $"{virtualServerName}.conf");
             this.Assent(File.ReadAllText(nginxConfigFilePath), AssentConfiguration.Default);
-#if NETCORE
             if (!CalamariEnvironment.IsRunningOnMac)
             {
                 var sslCertFilePath = Path.Combine(tempDirectory, "ssl", subjectName);
                 this.Assent(File.ReadAllText(Path.Combine(sslCertFilePath, $"{subjectName}.crt")),
                     AssentConfiguration.Default, $"{nameof(SetupReverseProxyWithSslUsingCertificateVariableSite)}.crt");
             }
-#endif
         }
 
         [Test]
@@ -304,7 +302,6 @@ namespace Calamari.Tests.Fixtures.Nginx
 
         (string, string, string) GetCertificateDetails()
         {
-#if NETCORE
             if (!CalamariEnvironment.IsRunningOnMac)
             {
                 var chainCertFilePath = TestEnvironment.GetTestPath("Helpers", "Certificates", "SampleCertificateFiles",
@@ -331,9 +328,6 @@ namespace Calamari.Tests.Fixtures.Nginx
             }
 
             return (string.Empty, string.Empty, string.Empty);
-#else
-            return (string.Empty, string.Empty, string.Empty);
-#endif
         }
     }
 }

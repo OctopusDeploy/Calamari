@@ -1,9 +1,8 @@
-#if NET
 using System;
 using System.Collections.Generic;
 using System.IO;
 using Calamari.ArgoCD.Conventions;
-using Calamari.ArgoCD.GitHub;
+using Calamari.ArgoCD.Git.GitVendorApiAdapters;
 using Calamari.Commands;
 using Calamari.Commands.Support;
 using Calamari.Common.Commands;
@@ -16,6 +15,7 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
+using Calamari.Integration.Time;
 
 namespace Calamari.ArgoCD.Commands
 {
@@ -32,9 +32,9 @@ namespace Calamari.ArgoCD.Commands
         readonly ICalamariFileSystem fileSystem;
         readonly IExtractPackage extractPackage;
         readonly INonSensitiveSubstituteInFiles substituteInFiles;
-        readonly IGitHubPullRequestCreator pullRequestCreator;
         readonly DeploymentConfigFactory configFactory;
         readonly IArgoCDManifestsFileMatcher argoCDManifestsFileMatcher;
+        readonly IGitVendorAgnosticApiAdapterFactory gitVendorAgnosticApiAdapterFactory;
         PathToPackage pathToPackage;
         string customPropertiesFile;
         string customPropertiesPassword;
@@ -46,18 +46,18 @@ namespace Calamari.ArgoCD.Commands
             ICalamariFileSystem fileSystem,
             IExtractPackage extractPackage,
             INonSensitiveSubstituteInFiles substituteInFiles,
-            IGitHubPullRequestCreator pullRequestCreator,
             DeploymentConfigFactory configFactory,
-            IArgoCDManifestsFileMatcher argoCDManifestsFileMatcher)
+            IArgoCDManifestsFileMatcher argoCDManifestsFileMatcher,
+            IGitVendorAgnosticApiAdapterFactory gitVendorAgnosticApiAdapterFactory)
         {
             this.log = log;
             this.variables = variables;
             this.fileSystem = fileSystem;
             this.extractPackage = extractPackage;
             this.substituteInFiles = substituteInFiles;
-            this.pullRequestCreator = pullRequestCreator;
             this.configFactory = configFactory;
             this.argoCDManifestsFileMatcher = argoCDManifestsFileMatcher;
+            this.gitVendorAgnosticApiAdapterFactory = gitVendorAgnosticApiAdapterFactory;
             this.nonSensitiveVariables = nonSensitiveVariables;
 
             Options.Add("package=",
@@ -74,7 +74,7 @@ namespace Calamari.ArgoCD.Commands
         public override int Execute(string[] commandLineArguments)
         {
             Options.Parse(commandLineArguments);
-
+            var clock = new SystemClock();
             var conventions = new List<IConvention>
             {
                 new DelegateInstallConvention(d =>
@@ -93,11 +93,14 @@ namespace Calamari.ArgoCD.Commands
                 new UpdateArgoCDApplicationManifestsInstallConvention(fileSystem,
                                                                       PackageDirectoryName,
                                                                       log,
-                                                                      pullRequestCreator,
                                                                       configFactory,
                                                                       new CustomPropertiesLoader(fileSystem, customPropertiesFile, customPropertiesPassword),
                                                                       new ArgoCdApplicationManifestParser(),
-                                                                      argoCDManifestsFileMatcher),
+                                                                      argoCDManifestsFileMatcher,
+                                                                      gitVendorAgnosticApiAdapterFactory,
+                                                                      clock,
+                                                                      new ArgoCDFilesUpdatedReporter(log),
+                                                                      new ArgoCDOutputVariablesWriter(log, variables)),
             };
 
             var runningDeployment = new RunningDeployment(pathToPackage, variables);
@@ -109,4 +112,3 @@ namespace Calamari.ArgoCD.Commands
         }
     }
 }
-#endif
