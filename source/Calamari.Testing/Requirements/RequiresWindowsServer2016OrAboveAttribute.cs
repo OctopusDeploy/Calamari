@@ -10,7 +10,7 @@ public class RequiresWindowsServer2016OrAboveAttribute(string reason) : TestAttr
     {
         if (!OperatingSystem.IsWindowsVersionAtLeast(10, 0, 14393))
         {
-            Assert.Ignore("Requires Windows Server 2016 or above");
+            Assert.Ignore("Requires Windows Server 2016 or above: " + reason);
         }
     }
 
