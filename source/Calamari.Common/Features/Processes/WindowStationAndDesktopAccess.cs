@@ -3,11 +3,13 @@
 
 using System;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using System.Security.AccessControl;
 using System.Security.Principal;
 
 namespace Calamari.Common.Features.Processes
 {
+    [SupportedOSPlatform("windows")]
     public class WindowStationAndDesktopAccess
     {
         public static void GrantAccessToWindowStationAndDesktop(string username, string? domainName = null)
