@@ -1,5 +1,4 @@
 using System.Security.Principal;
-using Calamari.Common.Plumbing;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
 
@@ -24,6 +23,7 @@ namespace Calamari.Testing.Requirements
 
         public ActionTargets Targets { get; set; }
     }
+<<<<<<< HEAD
 
     public class RequiresWindowsServer2012OrAboveAttribute : TestAttribute, ITestAction
     {
@@ -42,3 +42,6 @@ namespace Calamari.Testing.Requirements
         public ActionTargets Targets { get; set; }
     }
 }
+=======
+}
+>>>>>>> release/2025.4
