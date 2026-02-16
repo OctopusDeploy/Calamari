@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.Kubernetes.Integration
 {
@@ -10,6 +11,7 @@ namespace Calamari.Kubernetes.Integration
         protected readonly ILog log;
         protected string workingDirectory;
         protected Dictionary<string, string> environmentVars;
+        protected readonly IVariables variables;
 
         readonly ICommandLineRunner commandLineRunner;
 
@@ -17,15 +19,22 @@ namespace Calamari.Kubernetes.Integration
             ILog log,
             ICommandLineRunner commandLineRunner,
             string workingDirectory,
-            Dictionary<string, string> environmentVars)
+            Dictionary<string, string> environmentVars,
+            IVariables variables)
         {
             this.log = log;
             this.commandLineRunner = commandLineRunner;
             this.workingDirectory = workingDirectory;
             this.environmentVars = environmentVars;
+            this.variables = variables;
         }
 
         public string ExecutableLocation { get; protected set; }
+
+        protected virtual bool ShouldLogSuccessfulOutputAsInfo()
+        {
+            return variables.GetFlag(SpecialVariables.VerboseOutput);
+        }
 
         protected CommandResult ExecuteCommandAndLogOutput(CommandLineInvocation invocation)
             => ExecuteCommandAndLogOutput(invocation, false);
@@ -52,7 +61,8 @@ namespace Calamari.Kubernetes.Integration
 
             var result = commandLineRunner.Execute(invocation);
 
-            LogCapturedOutput(result, captureCommandOutput, logOutputAsVerbose);
+            var logSuccessAsInfo = ShouldLogSuccessfulOutputAsInfo();
+            LogCapturedOutput(result, captureCommandOutput, logOutputAsVerbose, logSuccessAsInfo);
 
             return result;
         }
@@ -62,13 +72,21 @@ namespace Calamari.Kubernetes.Integration
             log.Verbose(invocation.ToString());
         }
 
-        void LogCapturedOutput(CommandResult result, CaptureCommandOutput captureCommandOutput, bool logOutputAsVerbose)
+        void LogCapturedOutput(CommandResult result, CaptureCommandOutput captureCommandOutput, bool logOutputAsVerbose, bool logSuccessAsInfo)
         {
             foreach (var message in captureCommandOutput.Messages)
             {
                 if (result.ExitCode == 0)
                 {
-                    log.Verbose(message.Text);
+                    // When logSuccessAsInfo is true, log successful output at Info level
+                    if (logSuccessAsInfo)
+                    {
+                        log.Info(message.Text);
+                    }
+                    else
+                    {
+                        log.Verbose(message.Text);
+                    }
                     continue;
                 }
 

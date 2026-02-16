@@ -174,8 +174,9 @@ namespace Calamari.Kubernetes
                                        commandLineRunner,
                                        fileSystem,
                                        workingDirectory,
-                                       environmentVars);
-            var gkeGcloudAuthPlugin = new GkeGcloudAuthPlugin(log, commandLineRunner, workingDirectory, environmentVars);
+                                       environmentVars,
+                                       variables);
+            var gkeGcloudAuthPlugin = new GkeGcloudAuthPlugin(log, commandLineRunner, workingDirectory, environmentVars, variables);
             var gcloudAuth = new GoogleKubernetesEngineAuth(gcloudCli,
                                                             gkeGcloudAuthPlugin,
                                                             kubectl,
@@ -186,8 +187,8 @@ namespace Calamari.Kubernetes
 
         void SetupAzureContext(string @namespace, string kubeConfig)
         {
-            var azureCli = new AzureCli(log, commandLineRunner, workingDirectory, environmentVars);
-            var kubeloginCli = new KubeLogin(log, commandLineRunner, workingDirectory, environmentVars);
+            var azureCli = new AzureCli(log, commandLineRunner, workingDirectory, environmentVars, variables);
+            var kubeloginCli = new KubeLogin(log, commandLineRunner, workingDirectory, environmentVars, variables);
             var azureAuth = new AzureKubernetesServicesAuth(azureCli, kubectl, kubeloginCli, variables);
             azureAuth.Configure(@namespace, kubeConfig);
         }
@@ -317,7 +318,7 @@ namespace Calamari.Kubernetes
 
         void SetupAwsContext(string @namespace, string clusterUrl, string user)
         {
-            var awsCli = new AwsCli(log, commandLineRunner, workingDirectory, environmentVars);
+            var awsCli = new AwsCli(log, commandLineRunner, workingDirectory, environmentVars, variables);
             var awsAuth = new AwsCliAuth(awsCli, kubectl, variables, environmentVars, log);
 
             awsAuth.Configure(@namespace, clusterUrl, user);
