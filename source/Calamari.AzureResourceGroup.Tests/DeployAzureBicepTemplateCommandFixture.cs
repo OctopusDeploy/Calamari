@@ -11,6 +11,7 @@ using Calamari.CloudAccounts;
 using Calamari.Testing;
 using Calamari.Testing.Azure;
 using Calamari.Testing.Helpers;
+using Calamari.Testing.Requirements;
 using NUnit.Framework;
 
 namespace Calamari.AzureResourceGroup.Tests

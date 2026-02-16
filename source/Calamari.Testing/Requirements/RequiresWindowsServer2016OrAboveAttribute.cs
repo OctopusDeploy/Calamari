@@ -15,17 +15,10 @@ public class RequiresWindowsServer2016OrAboveAttribute : TestAttribute, ITestAct
 
     public void BeforeTest(ITest testDetails)
     {
-#if NET8
         if (!OperatingSystem.IsWindowsVersionAtLeast(10, 0, 14393))
         {
             Assert.Ignore("Requires Windows Server 2016 or above: " + reason);
         }
-#else
-        if(Environment.OSVersion.Version < new Version(10, 0, 14393))
-        {
-            Assert.Ignore("Requires Windows Server 2012 or above: " + reason);
-        }
-#endif
     }
 
     public void AfterTest(ITest testDetails)
