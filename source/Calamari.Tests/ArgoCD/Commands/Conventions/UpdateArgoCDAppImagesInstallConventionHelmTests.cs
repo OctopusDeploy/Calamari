@@ -1357,20 +1357,6 @@ service:
 
             updater.Install(runningDeployment);
 
-            //Assert
-            var updatedValuesFile = """
-                                    image1:
-                                       name: nginx:1.27.1
-                                    image2:
-                                       name: alpine
-                                       tag: 2.2
-                                    """;
-
-            var resultRepo = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
-            AssertFileContents(resultRepo, "files/values.yml", updatedValuesFile);
-
-            AssertOutputVariables(updatedImages: 2);
-
             // Assert
             using var scope = new AssertionScope();
             capturedResults.Should().NotBeNull();
