@@ -8,6 +8,7 @@ using Calamari.ArgoCD.Domain;
 using Calamari.ArgoCD.Dtos;
 using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.Git.GitVendorApiAdapters;
+using Calamari.ArgoCD.Models;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Deployment;
 using Calamari.Common.Plumbing.FileSystem;
@@ -130,11 +131,11 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             runningDeployment.StagingDirectory = tempDirectory;
 
             var kustomizeFile = "kustomization.yaml";
-            var kustomizeFileContents = @"
-images:
-- name: ""docker.io/nginx""
-  newTag: ""1.25""
-";
+            var kustomizeFileContents = """
+                                        images:
+                                        - name: "docker.io/nginx"
+                                          newTag: "1.25"
+                                        """;
             var filesInRepo = new (string, string)[]
             {
                 (kustomizeFile,
@@ -253,27 +254,27 @@ images:
             {
                 (
                     yamlFilename,
-                    @"
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: sample-deployment
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: sample-deployment
-  template:
-    metadata:
-      labels:
-        app: sample-deployment
-    spec:
-      containers:
-        - name: nginx
-          image: nginx:1.19 
-        - name: alpine
-          image: alpine:3.21 
-"
+                    """
+                    apiVersion: apps/v1
+                    kind: Deployment
+                    metadata:
+                      name: sample-deployment
+                    spec:
+                      replicas: 1
+                      selector:
+                        matchLabels:
+                          app: sample-deployment
+                      template:
+                        metadata:
+                          labels:
+                            app: sample-deployment
+                        spec:
+                          containers:
+                            - name: nginx
+                              image: nginx:1.19 
+                            - name: alpine
+                              image: alpine:3.21 
+                    """
                 )
             };
             originRepo.AddFilesToBranch(argoCDBranchName, filesInRepo);
@@ -283,27 +284,27 @@ spec:
 
             //Assert
             const string updatedYamlContent =
-                @"
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: sample-deployment
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: sample-deployment
-  template:
-    metadata:
-      labels:
-        app: sample-deployment
-    spec:
-      containers:
-        - name: nginx
-          image: nginx:1.27.1 
-        - name: alpine
-          image: alpine:3.21 
-";
+                """
+                apiVersion: apps/v1
+                kind: Deployment
+                metadata:
+                  name: sample-deployment
+                spec:
+                  replicas: 1
+                  selector:
+                    matchLabels:
+                      app: sample-deployment
+                  template:
+                    metadata:
+                      labels:
+                        app: sample-deployment
+                    spec:
+                      containers:
+                        - name: nginx
+                          image: nginx:1.27.1 
+                        - name: alpine
+                          image: alpine:3.21 
+                """;
 
             var clonedRepoPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             AssertFileContents(clonedRepoPath, yamlFilename, updatedYamlContent);
@@ -328,27 +329,27 @@ spec:
             runningDeployment.StagingDirectory = tempDirectory;
 
             var yamlFilename = "include/file1.yaml";
-            var fileContents = @"
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: sample-deployment
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: sample-deployment
-  template:
-    metadata:
-      labels:
-        app: sample-deployment
-    spec:
-      containers:
-        - name: nginx
-          image: nginx:1.19 
-        - name: alpine
-          image: alpine:3.21 
-";
+            var fileContents = """
+                               apiVersion: apps/v1
+                               kind: Deployment
+                               metadata:
+                                 name: sample-deployment
+                               spec:
+                                 replicas: 1
+                                 selector:
+                                   matchLabels:
+                                     app: sample-deployment
+                                 template:
+                                   metadata:
+                                     labels:
+                                       app: sample-deployment
+                                   spec:
+                                     containers:
+                                       - name: nginx
+                                         image: nginx:1.19 
+                                       - name: alpine
+                                         image: alpine:3.21 
+                               """;
             var filesInRepo = new (string, string)[]
             {
                 (
@@ -405,11 +406,11 @@ spec:
             runningDeployment.StagingDirectory = tempDirectory;
 
             var kustomizeFile = "kustomization.yaml";
-            var kustomizeFileContents = @"
-images:
-- name: ""docker.io/nginx""
-  newTag: ""1.25""
-";
+            var kustomizeFileContents = """
+                                        images:
+                                        - name: "docker.io/nginx"
+                                          newTag: "1.25"
+                                        """;
             var filesInRepo = new (string, string)[]
             {
                 (kustomizeFile,
@@ -468,11 +469,11 @@ images:
             var filesInRepo = new (string, string)[]
             {
                 (kustomizeFile,
-                 @"
-images:
-- name: ""docker.io/nginx""
-  newTag: ""1.25""
-")
+                 """
+                 images:
+                 - name: "docker.io/nginx"
+                   newTag: "1.25"
+                 """)
             };
             originRepo.AddFilesToBranch(argoCDBranchName, filesInRepo);
 
@@ -499,11 +500,11 @@ images:
             updater.Install(runningDeployment);
 
             // Assert
-            var updatedYamlContent = @"
-images:
-- name: ""docker.io/nginx""
-  newTag: ""1.27.1""
-";
+            var updatedYamlContent = """
+                                     images:
+                                     - name: "docker.io/nginx"
+                                       newTag: "1.27.1"
+                                     """;
             var clonedRepoPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             AssertFileContents(clonedRepoPath, kustomizeFile, updatedYamlContent);
 
@@ -527,27 +528,27 @@ images:
             runningDeployment.StagingDirectory = tempDirectory;
 
             var existingYamlFile = "include/file1.yaml";
-            var existingYamlContent = @"
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: sample-deployment
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: sample-deployment
-  template:
-    metadata:
-      labels:
-        app: sample-deployment
-    spec:
-      containers:
-        - name: nginx
-          image: nginx:1.19 
-        - name: alpine
-          image: alpine:3.21 
-";
+            var existingYamlContent = """
+                                      apiVersion: apps/v1
+                                      kind: Deployment
+                                      metadata:
+                                        name: sample-deployment
+                                      spec:
+                                        replicas: 1
+                                        selector:
+                                          matchLabels:
+                                            app: sample-deployment
+                                        template:
+                                          metadata:
+                                            labels:
+                                              app: sample-deployment
+                                          spec:
+                                            containers:
+                                              - name: nginx
+                                                image: nginx:1.19 
+                                              - name: alpine
+                                                image: alpine:3.21 
+                                      """;
             var filesInRepo = new (string, string)[]
             {
                 (
@@ -610,38 +611,50 @@ spec:
             {
                 (
                     yamlFilename,
-                    @"
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: sample-deployment
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: sample-deployment
-  template:
-    metadata:
-      labels:
-        app: sample-deployment
-    spec:
-      containers:
-        - name: nginx
-          image: nginx:1.19
-        - name: alpine
-          image: alpine:3.21
-"
+                    """
+                    apiVersion: apps/v1
+                    kind: Deployment
+                    metadata:
+                      name: sample-deployment
+                    spec:
+                      replicas: 1
+                      selector:
+                        matchLabels:
+                          app: sample-deployment
+                      template:
+                        metadata:
+                          labels:
+                            app: sample-deployment
+                        spec:
+                          containers:
+                            - name: nginx
+                              image: nginx:1.19
+                            - name: alpine
+                              image: alpine:3.21
+                    """
                 )
             };
             originRepo.AddFilesToBranch(argoCDBranchName, filesInRepo);
+
+            IReadOnlyList<ProcessApplicationResult> capturedResults = null;
+            deploymentReporter.ReportFilesUpdated(Arg.Do<IReadOnlyList<ProcessApplicationResult>>(x => capturedResults = x));
 
             // Act
             updater.Install(runningDeployment);
 
             // Assert
-            deploymentReporter.Received(1)
-                              .ReportDeployments(Arg.Is<IReadOnlyList<ProcessApplicationResult>>(results =>
-                                                                                                     results.Count == 1));
+            using var scope = new AssertionScope();
+            capturedResults.Should().NotBeNull();
+            var actual = capturedResults.Single();
+            actual.UpdatedImages.Should().BeEquivalentTo(["nginx:1.27.1"]);
+            actual.GitReposUpdated.Should().HaveCount(1);
+            actual.UpdatedSourceDetails.Should().HaveCount(1);
+
+            var sourceDetails = actual.UpdatedSourceDetails.First();
+            sourceDetails.CommitSha.Should().HaveLength(40);
+            sourceDetails.ReplacedFiles.Should().BeEmpty();
+            // TODO: fill in with json patch
+            // sourceDetails.PatchedFiles.Should().BeEquivalentTo([new FilePathContent("", "")]);
         }
 
         void AssertFileContents(string clonedRepoPath, string relativeFilePath, string expectedContent)
