@@ -11,10 +11,6 @@ using Calamari.CloudAccounts;
 using Calamari.Testing;
 using Calamari.Testing.Azure;
 using Calamari.Testing.Helpers;
-<<<<<<< HEAD
-=======
-using Calamari.Testing.Tools;
->>>>>>> release/2025.4
 using Calamari.Testing.Requirements;
 using NUnit.Framework;
 
