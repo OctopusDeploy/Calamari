@@ -8,16 +8,18 @@ using Calamari.Common.Plumbing.Variables;
 
 namespace Calamari.ArgoCD
 {
+    public record PackageAndHelmReference(string PackageName, string? HelmReference);
     public static class VariablesExtensionMethods
     {
-        public static IList<string> GetContainerPackageNames(this IVariables variables)
+        public static IList<PackageAndHelmReference> GetContainerPackages(this IVariables variables)
         {
             var packageIndexes = variables.GetIndexes(PackageVariables.PackageCollection);
             var packageReferences = (from packageIndex in packageIndexes
                                      let image = variables.Get(PackageVariables.IndexedImage(packageIndex), string.Empty)
                                      let purpose = variables.Get(PackageVariables.IndexedPackagePurpose(packageIndex), string.Empty)
+                                     let helmValueYamlPath = variables.Get(PackageVariables.HelmValueYamlPath(packageIndex), null)
                                      where purpose.Equals("DockerImageReference", StringComparison.Ordinal)
-                                     select image)
+                                     select new PackageAndHelmReference(image, helmValueYamlPath))
                 .ToList();
 
             return packageReferences;

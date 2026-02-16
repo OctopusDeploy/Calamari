@@ -6,12 +6,14 @@ namespace Calamari.ArgoCD.Conventions
     public class UpdateArgoCDAppDeploymentConfig
     {
         public GitCommitParameters CommitParameters { get; }
-        public List<ContainerImageReference> ImageReferences { get; }
+        public List<PackageAndHelmReference> packageWithHelmReference { get; }
 
-        public UpdateArgoCDAppDeploymentConfig(GitCommitParameters commitParameters, List<ContainerImageReference> imageReferences)
+        public UpdateArgoCDAppDeploymentConfig(GitCommitParameters commitParameters, List<PackageAndHelmReference> packageWithHelmReference)
         {
             CommitParameters = commitParameters;
-            ImageReferences = imageReferences;
+            this.packageWithHelmReference = packageWithHelmReference;
         }
     }
+    
+    public record PackageAndHelmReference(ContainerImageReference ImageReference, string? HelmReference);
 }

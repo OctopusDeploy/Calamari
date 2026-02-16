@@ -259,7 +259,7 @@ namespace Calamari.ArgoCD.Conventions
             {
                 log.Verbose($"Reading files from {applicationSource.Path}");
 
-                var (updatedFiles, updatedImages) = UpdateKustomizeYaml(repository.WorkingDirectory, applicationSource.Path!, defaultRegistry, deploymentConfig.ImageReferences);
+                var (updatedFiles, updatedImages) = UpdateKustomizeYaml(repository.WorkingDirectory, applicationSource.Path!, defaultRegistry, deploymentConfig.packageWithHelmReference.Select(ph => ph.ImageReference).ToList());
                 if (updatedImages.Count > 0)
                 {
                     var pushResult = PushToRemote(repository,
@@ -335,7 +335,7 @@ namespace Calamari.ArgoCD.Conventions
             {
                 log.Verbose($"Reading files from {applicationSource.Path}");
 
-                var (updatedFiles, updatedImages) = UpdateKubernetesYaml(repository.WorkingDirectory, applicationSource.Path!, defaultRegistry, deploymentConfig.ImageReferences);
+                var (updatedFiles, updatedImages) = UpdateKubernetesYaml(repository.WorkingDirectory, applicationSource.Path!, defaultRegistry, deploymentConfig.packageWithHelmReference.Select(ph => ph.ImageReference).ToList());
                 if (updatedImages.Count > 0)
                 {
                     var pushResult = PushToRemote(repository,
@@ -422,7 +422,7 @@ namespace Calamari.ArgoCD.Conventions
         {
             var results = targets.Select(t => UpdateHelmImageValues(repository.WorkingDirectory,
                                              t,
-                                             deploymentConfig.ImageReferences
+                                             deploymentConfig.packageWithHelmReference.Select(ph => ph.ImageReference).ToList()
                                          ))
                                  .ToList();
 
