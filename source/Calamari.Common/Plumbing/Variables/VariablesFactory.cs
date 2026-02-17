@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Versioning;
 using System.Security.Cryptography;
 using System.Text;
 using Calamari.Common.Commands;
@@ -63,7 +64,8 @@ namespace Calamari.Common.Plumbing.Variables
                 // This should be removed once the first version this is deployed to has rolled out to most cloud customers
                 executionVariables.AddRange(ReadDeprecatedVariablesFormatFromFiles(options));
 
-                executionVariables.AddRange(ReadOutputVariablesFromOfflineDropPreviousSteps(options));
+                if (OperatingSystem.IsWindows())
+                    executionVariables.AddRange(ReadOutputVariablesFromOfflineDropPreviousSteps(options));
             }
         }
 
@@ -92,6 +94,7 @@ namespace Calamari.Common.Plumbing.Variables
             return results;
         }
 
+        [SupportedOSPlatform("windows")]
         IEnumerable<CalamariExecutionVariable> ReadOutputVariablesFromOfflineDropPreviousSteps(CommonOptions options)
         {
             var outputVariablesFilePath = options.InputVariables.OutputVariablesFile;
@@ -195,6 +198,7 @@ namespace Calamari.Common.Plumbing.Variables
             }
         }
 
+        [SupportedOSPlatform("windows")]
         static string DecryptWithMachineKey(string base64EncodedEncryptedVariables, string? password)
         {
             try

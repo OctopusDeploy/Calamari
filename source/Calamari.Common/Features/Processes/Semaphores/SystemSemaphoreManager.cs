@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.Versioning;
 using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Threading;
@@ -40,11 +41,12 @@ namespace Calamari.Common.Features.Processes.Semaphores
 
         public IDisposable Acquire(string name, string waitMessage)
         {
-            return CalamariEnvironment.IsRunningOnWindows
+            return OperatingSystem.IsWindows()
                 ? AcquireSemaphore(name, waitMessage)
                 : AcquireMutex(name, waitMessage);
         }
 
+        [SupportedOSPlatform("windows")]
         IDisposable AcquireSemaphore(string name, string waitMessage)
         {
             var globalName = $"Global\\{name}";
@@ -106,7 +108,7 @@ namespace Calamari.Common.Features.Processes.Semaphores
                                 });
         }
 
-
+        [SupportedOSPlatform("windows")]
         void SetFullAccessControlForAllUsers(Semaphore semaphore, string name)
         {
             var semaphoreSecurity = new SemaphoreSecurity();
