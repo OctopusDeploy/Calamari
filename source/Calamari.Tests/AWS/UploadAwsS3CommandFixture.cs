@@ -290,7 +290,7 @@ namespace Calamari.Tests.AWS
                                        //There's a serialization bug in Json.Net that ends up changing the time to local.
                                        //Fix this assertion once that's done.
                                        var expectedDate = DateTime.Parse(specialHeader.Value.TrimEnd('Z')).ToUniversalTime();
-                                       response.Expires.Should().Be(expectedDate);
+                                       response.Expiration.Should().Be(expectedDate);
                                    }
                                    else if (specialHeader.Key == "x-amz-website-redirect-location")
                                    {
