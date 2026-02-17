@@ -10,7 +10,7 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="AWSSDK.SecurityToken" Version="3.7.401.11" />
+    <PackageReference Include="AWSSDK.SecurityToken" Version="4.0.5.9" />
     <PackageReference Include="NuGet.Versioning" Version="7.0.1" />
   </ItemGroup>
   <ItemGroup>
