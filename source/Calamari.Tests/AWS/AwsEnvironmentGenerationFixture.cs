@@ -22,8 +22,8 @@ namespace Calamari.Tests.AWS
     {
         [Test]
         [TestCase("arn:aws:iam::0123456789AB:role/test-role", "My session name", "900", 900)]
-        [TestCase("arn:aws:iam::0123456789AB:role/test-role", "My session name", null, 0)]
-        [TestCase("arn:aws:iam::0123456789AB:role/test-role", "My session name", "", 0)]
+        [TestCase("arn:aws:iam::0123456789AB:role/test-role", "My session name", null, null)]
+        [TestCase("arn:aws:iam::0123456789AB:role/test-role", "My session name", "", null)]
         public void CreatesAssumeRoleRequestWithExpectedParams(string arn, string sessionName, string duration, int? expectedDuration)
         {
             IVariables variables = new CalamariVariables();
