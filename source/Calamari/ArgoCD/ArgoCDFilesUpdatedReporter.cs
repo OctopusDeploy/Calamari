@@ -10,7 +10,7 @@ namespace Calamari.ArgoCD
 {
     public interface IArgoCDFilesUpdatedReporter
     {
-        void ReportDeployments(IReadOnlyList<ProcessApplicationResult> applicationResults);
+        void ReportFilesUpdated(IReadOnlyList<ProcessApplicationResult> applicationResults);
     }
 
     public class ArgoCDFilesUpdatedReporter : IArgoCDFilesUpdatedReporter
@@ -22,7 +22,7 @@ namespace Calamari.ArgoCD
             this.log = log;
         }
 
-        public void ReportDeployments(IReadOnlyList<ProcessApplicationResult> applicationResults)
+        public void ReportFilesUpdated(IReadOnlyList<ProcessApplicationResult> applicationResults)
         {
             foreach (var appResult in applicationResults.Where(r => r.Updated))
             {
