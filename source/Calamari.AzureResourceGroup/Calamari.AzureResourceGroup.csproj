@@ -15,10 +15,6 @@
         <PackageReference Include="Microsoft.Identity.Client" Version="4.66.2"/>
         <PackageReference Include="Azure.Identity" Version="1.13.1" />
         <PackageReference Include="Azure.ResourceManager.Resources" Version="1.7.0" />
-        <PackageReference Include="Microsoft.DotNet.Analyzers.Compatibility" Version="0.2.12-alpha">
-            <PrivateAssets>all</PrivateAssets>
-            <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
-        </PackageReference>
     </ItemGroup>
 
     <ItemGroup>
