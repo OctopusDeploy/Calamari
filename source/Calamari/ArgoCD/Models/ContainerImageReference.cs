@@ -7,12 +7,6 @@ namespace Calamari.ArgoCD.Models
     {
         ContainerImageReference(string registry, string imageName, string tag, string defaultRegistry)
         {
-            // Trim special case of "index.docker.io" to "docker.io" - simplifies check further down, and we never want to write out the full "index." version anyway.
-            if (registry.Equals($"index.{ArgoCDConstants.DefaultContainerRegistry}", StringComparison.OrdinalIgnoreCase))
-            {
-                registry = ArgoCDConstants.DefaultContainerRegistry;
-            }
-
             ImageName = imageName;
             Tag = tag;
             Registry = registry;
@@ -112,9 +106,17 @@ namespace Calamari.ArgoCD.Models
 
             string NormalizeRegistry(ContainerImageReference imageReference)
             {
-                return !string.IsNullOrWhiteSpace(imageReference.Registry)
+                var registry =  !string.IsNullOrWhiteSpace(imageReference.Registry)
                     ? imageReference.Registry
                     : imageReference.DefaultRegistry;
+                
+                // Trim special case of "index.docker.io" to "docker.io" - simplifies check further down, and we never want to write out the full "index." version anyway.
+                if (registry.Equals($"index.{ArgoCDConstants.DefaultContainerRegistry}", StringComparison.OrdinalIgnoreCase))
+                {
+                    return ArgoCDConstants.DefaultContainerRegistry;
+                }
+
+                return registry;
             }
         }
 

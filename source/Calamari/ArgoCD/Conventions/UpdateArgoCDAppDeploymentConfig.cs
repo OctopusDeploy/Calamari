@@ -6,14 +6,17 @@ namespace Calamari.ArgoCD.Conventions
     public class UpdateArgoCDAppDeploymentConfig
     {
         public GitCommitParameters CommitParameters { get; }
-        public List<PackageAndHelmReference> packageWithHelmReference { get; }
+        public IReadOnlyCollection<PackageAndHelmReference> PackageWithHelmReference { get; }
 
-        public UpdateArgoCDAppDeploymentConfig(GitCommitParameters commitParameters, List<PackageAndHelmReference> packageWithHelmReference)
+        public bool UseHelmValueYamlPathFromStep { get; }
+
+        public UpdateArgoCDAppDeploymentConfig(GitCommitParameters commitParameters, List<PackageAndHelmReference> packageWithHelmReference, bool useHelmValueYamlPathFromStep)
         {
             CommitParameters = commitParameters;
-            this.packageWithHelmReference = packageWithHelmReference;
+            PackageWithHelmReference = packageWithHelmReference;
+            UseHelmValueYamlPathFromStep = useHelmValueYamlPathFromStep;
         }
     }
     
-    public record PackageAndHelmReference(ContainerImageReference ImageReference, string? HelmReference);
+    public record PackageAndHelmReference(ContainerImageReference ContainerReference, string? HelmReference);
 }

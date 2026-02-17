@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Octostache;
 
 namespace Calamari.ArgoCD.Helm
@@ -24,7 +25,7 @@ namespace Calamari.ArgoCD.Helm
         }
 
         /// <summary>
-        /// Updates the value of yaml a node and returns it as a strung (preserving formatting).
+        /// Updates the value of yaml a node and returns it as a string (preserving formatting).
         /// </summary>
         public static string UpdateNodeValue(string yamlContent, string path, string newValue)
         {
@@ -32,6 +33,18 @@ namespace Calamari.ArgoCD.Helm
             var yamlProcessor = new HelmYamlParser(yamlContent);
             return yamlProcessor.UpdateContentForPath(path, newValue);
         }
+
+        public static Dictionary<string, string> CreateDictionary(HelmYamlParser parsedYaml)
+        {
+            var allValuesPaths = parsedYaml.CreateDotPathsForNodes();
+            var result = new Dictionary<string, string>();
+            foreach (var path in allValuesPaths)
+            {
+                var value = parsedYaml.GetValueAtPath(path);
+                result.Add(path, value);
+            }
+
+            return result;
+        }
     }
 }
-
