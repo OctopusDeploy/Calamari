@@ -268,10 +268,7 @@ namespace Calamari.Tests.AWS
                     CannedAcl = "private",
                     BucketKeyBehaviour = BucketKeyBehaviourType.Filename,
                     Metadata = specialHeaders.Concat(userDefinedMetadata).ToList(),
-                    Tags = new List<KeyValuePair<string, string>>()
-                    {
-                        new KeyValuePair<string, string>("Environment", "Test")
-                    }
+                    Tags = [new KeyValuePair<string, string>("Environment", "Test")]
                 }
             };
 
@@ -287,10 +284,7 @@ namespace Calamari.Tests.AWS
                                {
                                    if (specialHeader.Key == "Expires")
                                    {
-                                       //There's a serialization bug in Json.Net that ends up changing the time to local.
-                                       //Fix this assertion once that's done.
-                                       var expectedDate = DateTime.Parse(specialHeader.Value.TrimEnd('Z')).ToUniversalTime();
-                                       response.Expiration.Should().Be(expectedDate);
+                                       response.ExpiresString.Should().Be(specialHeader.Value);
                                    }
                                    else if (specialHeader.Key == "x-amz-website-redirect-location")
                                    {
