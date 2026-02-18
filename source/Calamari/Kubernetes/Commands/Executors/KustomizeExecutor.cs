@@ -45,16 +45,16 @@ namespace Calamari.Kubernetes.Commands.Executors
                 throw new KubectlException("Kustomization directory not specified");
             }
 
-            log.Info("validating kubectl version");
+            log.Info("Validating kubectl version");
             ValidateKubectlVersion(deployment.CurrentDirectory);
             
-            log.Info("building kustomization");
+            log.Info("Building kustomization");
             BuildKustomization(deployment.CurrentDirectory, overlayPath);
             
-            log.Info("reporting manifest");
+            log.Info("Reporting manifest");
             manifestReporter.ReportManifestFileApplied(HydratedManifestFilepath(deployment.CurrentDirectory));
             
-            log.Info("applying kustomization");
+            log.Info("Applying kustomization");
             var resourceIdentifiers = await ApplyKustomization(deployment, appliedResourcesCallback, overlayPath);
             return resourceIdentifiers;
         }
