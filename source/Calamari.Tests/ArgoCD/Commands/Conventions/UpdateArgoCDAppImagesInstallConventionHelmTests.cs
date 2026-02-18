@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
 using Calamari.ArgoCD;
 using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Domain;
@@ -15,6 +16,7 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Integration.Time;
 using Calamari.Kubernetes;
+using Calamari.Kubernetes.Patching.JsonPatch;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.ArgoCD.Git;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
@@ -1324,6 +1326,7 @@ service:
         [Test]
         public void DirectorySource_ImageMatches_ReportsDeploymentWithNonEmptyCommitSha()
         {
+            var valuesFilename = "files/values.yml";
             //Arrange
             const string multiImageValuesFile = """
                                                 image1:
@@ -1332,7 +1335,7 @@ service:
                                                    name: alpine
                                                    tag: latest
                                                 """;
-            originRepo.AddFilesToBranch(argoCDBranchName, ("files/values.yml", multiImageValuesFile));
+            originRepo.AddFilesToBranch(argoCDBranchName, (valuesFilename, multiImageValuesFile));
 
             argoCdApplicationFromYaml.Metadata.Annotations[ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(null)] = "{{ .Values.image1.name }}, {{ .Values.image2.name }}:{{ .Values.image2.tag }}";
 
@@ -1365,11 +1368,18 @@ service:
             actual.GitReposUpdated.Should().HaveCount(1);
             actual.UpdatedSourceDetails.Should().HaveCount(1);
 
+            var expectedPatch = new JsonPatchDocument([
+                JsonPatchOperation.Replace(new JsonPointer("/0/image1/name"), "nginx:1.27.1"),
+                JsonPatchOperation.Replace(new JsonPointer("/0/image2/tag"), 2.2),
+            ]);
+
             var sourceDetails = actual.UpdatedSourceDetails.First();
             sourceDetails.CommitSha.Should().HaveLength(40);
             sourceDetails.ReplacedFiles.Should().BeEmpty();
-            // TODO: fill in with json patch
-            // sourceDetails.PatchedFiles.Should().BeEquivalentTo([new FilePathContent("", "")]);
+            sourceDetails.PatchedFiles.Should()
+                         .BeEquivalentTo([
+                             new FilePathContent(valuesFilename, JsonSerializer.Serialize(expectedPatch)),
+                         ]);
         }
 
         void AssertFileContents(string clonedRepoPath, string relativeFilePath, string expectedContent)

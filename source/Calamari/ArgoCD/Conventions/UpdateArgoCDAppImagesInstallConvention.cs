@@ -3,6 +3,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Threading;
 using Calamari.ArgoCD.Domain;
 using Calamari.ArgoCD.Dtos;
@@ -16,7 +18,10 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.Time;
+using Calamari.Kubernetes.Patching;
+using Calamari.Kubernetes.Patching.JsonPatch;
 using Octopus.CoreUtilities.Extensions;
+using YamlDotNet.RepresentationModel;
 
 namespace Calamari.ArgoCD.Conventions
 {
@@ -431,7 +436,10 @@ namespace Calamari.ArgoCD.Conventions
             var updatedImages = results.SelectMany(r => r.ImagesUpdated).ToHashSet();
             if (updatedImages.Count > 0)
             {
-                var patchedFiles = results.Select(r => new FilePathContent(r.RelativeFilepath, r.JsonPatch)).ToList();
+                var patchedFiles = results.Select(r => new FilePathContent(
+                                                      r.RelativeFilepath,
+                                                      r.JsonPatch is not null ? JsonSerializer.Serialize(r.JsonPatch) : null))
+                                          .ToList();
 
                 var pushResult = PushToRemote(repository,
                     GitReference.CreateFromString(sourceWithMetadata.Source.TargetRevision),
@@ -573,10 +581,9 @@ namespace Calamari.ArgoCD.Conventions
                 var imageReplacer = imageReplacerFactory(content);
                 var imageReplacementResult = imageReplacer.UpdateImages(imagesToUpdate);
 
-                // TODO: Generate JSON patch from changes and add to jsonPatches
-
                 if (imageReplacementResult.UpdatedImageReferences.Count > 0)
                 {
+                    jsonPatches.Add(new(relativePath, Serialize(CreateJsonPatch(content, imageReplacementResult.UpdatedContents))));
                     fileSystem.OverwriteFile(file, imageReplacementResult.UpdatedContents);
                     updatedImages.UnionWith(imageReplacementResult.UpdatedImageReferences);
                     updatedFiles.Add(relativePath);
@@ -609,19 +616,11 @@ namespace Calamari.ArgoCD.Conventions
             if (imageUpdateResult.UpdatedImageReferences.Count > 0)
             {
                 fileSystem.OverwriteFile(filepath, imageUpdateResult.UpdatedContents);
-                try
-                {
-                    // TODO: Fill in JSON patch
-                    return new HelmRefUpdatedResult(imageUpdateResult.UpdatedImageReferences, Path.Combine(target.Path, target.FileName), "");
-                }
-                catch (Exception ex)
-                {
-                    log.Error($"Failed to commit changes to the Git Repository: {ex.Message}");
-                    throw;
-                }
+                var jsonPatch = CreateJsonPatch(fileContent, imageUpdateResult.UpdatedContents);
+                return new HelmRefUpdatedResult(imageUpdateResult.UpdatedImageReferences, Path.Combine(target.Path, target.FileName), jsonPatch);
             }
 
-            return new HelmRefUpdatedResult(new HashSet<string>(), Path.Combine(target.Path, target.FileName), string.Empty);
+            return new HelmRefUpdatedResult(new HashSet<string>(), Path.Combine(target.Path, target.FileName), null);
         }
 
         PushResult? PushToRemote(
@@ -655,6 +654,24 @@ namespace Calamari.ArgoCD.Conventions
         {
             var yamlFileGlob = "**/*.{yaml,yml}";
             return fileSystem.EnumerateFilesWithGlob(rootPath, yamlFileGlob);
+        }
+
+        JsonPatchDocument CreateJsonPatch(string originalContent, string updatedContent)
+        {
+            var originalStream = new YamlStream();
+            originalStream.Load(new StringReader(originalContent));
+            var original = new JsonArray(originalStream.Documents.Select(d => d.ToJsonNode()).ToArray());
+
+            var updatedStream = new YamlStream();
+            updatedStream.Load(new StringReader(updatedContent));
+            var updated = new JsonArray(updatedStream.Documents.Select(d => d.ToJsonNode()).ToArray());
+
+            return JsonPatchGenerator.Generate(original, updated);
+        }
+
+        string Serialize(JsonPatchDocument patchDocument)
+        {
+            return JsonSerializer.Serialize(patchDocument);
         }
 
         record SourceUpdateResult(HashSet<string> ImagesUpdated, string CommitSha, List<FilePathContent> PatchedFiles);

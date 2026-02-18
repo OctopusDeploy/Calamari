@@ -37,7 +37,7 @@ public class JsonPatchDocumentConverter : JsonConverter<JsonPatchDocument>
 
     public override void Write(Utf8JsonWriter writer, JsonPatchDocument value, JsonSerializerOptions options)
     {
-        throw new NotImplementedException("We only need to read patches at this point, not write them");
+        JsonSerializer.Serialize(writer, value.Operations, options);
     }
 }
 
