@@ -5,6 +5,7 @@ using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Dtos;
 using Calamari.ArgoCD.Models;
 using Calamari.Common.Plumbing.Variables;
+using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.ArgoCD
 {
@@ -12,15 +13,10 @@ namespace Calamari.ArgoCD
     {
         public static IList<string> GetContainerPackageNames(this IVariables variables)
         {
-            var packageIndexes = variables.GetIndexes(PackageVariables.PackageCollection);
-            var packageReferences = (from packageIndex in packageIndexes
-                                     let image = variables.Get(PackageVariables.IndexedImage(packageIndex), string.Empty)
-                                     let purpose = variables.Get(PackageVariables.IndexedPackagePurpose(packageIndex), string.Empty)
-                                     where purpose.Equals("DockerImageReference", StringComparison.Ordinal)
-                                     select image)
-                .ToList();
-
-            return packageReferences;
+            return variables.GetIndexes(PackageVariables.PackageCollection)
+                                          .Select(pi => variables.Get(PackageVariables.IndexedImage(pi), string.Empty))
+                                          .Where(name => !name.IsNullOrEmpty())
+                                          .ToList();
         }
 
         public static DeploymentScope GetDeploymentScope(this IVariables variables)
