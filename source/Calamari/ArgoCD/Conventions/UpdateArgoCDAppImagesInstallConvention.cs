@@ -437,7 +437,8 @@ namespace Calamari.ArgoCD.Conventions
             if (updatedImages.Count > 0)
             {
                 var patchedFiles = results.Select(r => new FilePathContent(
-                                                      r.RelativeFilepath,
+                                                      // Replace \ with / so that Calamari running on windows doesn't cause issues when we send back to server
+                                                      r.RelativeFilepath.Replace('\\', '/'),
                                                       r.JsonPatch is not null ? JsonSerializer.Serialize(r.JsonPatch) : null))
                                           .ToList();
 
@@ -583,7 +584,8 @@ namespace Calamari.ArgoCD.Conventions
 
                 if (imageReplacementResult.UpdatedImageReferences.Count > 0)
                 {
-                    jsonPatches.Add(new(relativePath, Serialize(CreateJsonPatch(content, imageReplacementResult.UpdatedContents))));
+                    // Replace \ with / so that Calamari running on windows doesn't cause issues when we send back to server
+                    jsonPatches.Add(new(relativePath.Replace('\\', '/'), Serialize(CreateJsonPatch(content, imageReplacementResult.UpdatedContents))));
                     fileSystem.OverwriteFile(file, imageReplacementResult.UpdatedContents);
                     updatedImages.UnionWith(imageReplacementResult.UpdatedImageReferences);
                     updatedFiles.Add(relativePath);
