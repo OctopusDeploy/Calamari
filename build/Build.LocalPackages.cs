@@ -77,11 +77,16 @@ public partial class Build
         if (packageSources == null)
             throw new InvalidOperationException("Could not find <packageSources> element in NuGet.config");
     
-        packageSources.Add(new XElement("add",
-                                        new XAttribute("key", "LocalPackages"),
-                                        new XAttribute("value", "../LocalPackages")));
+        var existingSource = packageSources.Elements("add")
+                                           .FirstOrDefault(e => e.Attribute("key")?.Value == "LocalPackages");
+        if (existingSource == null)
+        {
+            packageSources.Add(new XElement("add",
+                                            new XAttribute("key", "LocalPackages"),
+                                            new XAttribute("value", "../LocalPackages")));
     
-        packageSources.Add(new XComment("DO NOT COMMIT"));
+            packageSources.Add(new XComment("DO NOT COMMIT"));
+        }
     
         // Add LocalPackages to packageSourceMapping
         var packageSourceMapping = doc.Descendants("packageSourceMapping").FirstOrDefault();
@@ -91,17 +96,22 @@ public partial class Build
         var clearElement = packageSourceMapping.Element("clear");
         if (clearElement == null)
             throw new InvalidOperationException("Could not find <clear /> element in <packageSourceMapping>");
+        
+        var existingMapping = packageSourceMapping.Elements("packageSource")
+                                                  .FirstOrDefault(e => e.Attribute("key")?.Value == "LocalPackages");
+
+        if (existingMapping == null)
+        {
+            var localPackagesMapping = new XElement("packageSource",
+                                                    new XAttribute("key", "LocalPackages"),
+                                                    new[] { 
+                                                        "Octopus.Calamari.Consolidated", 
+                                                        "Octopus.Calamari.ConsolidatedPackage", 
+                                                        "Octopus.Calamari.ConsolidatedPackage.Api" 
+                                                    }.Select(p => new XElement("package", new XAttribute("pattern", p))));
     
-        var localPackagesMapping = new XElement("packageSource",
-                                                new XAttribute("key", "LocalPackages"),
-                                                new[] { 
-                                                    "Octopus.Calamari.Consolidated", 
-                                                    "Octopus.Calamari.ConsolidatedPackage", 
-                                                    "Octopus.Calamari.ConsolidatedPackage.Api" 
-                                                }.Select(p => new XElement("package", new XAttribute("pattern", p))));
-    
-        clearElement.AddAfterSelf(localPackagesMapping);
-    
+            clearElement.AddAfterSelf(localPackagesMapping);
+        }
         doc.Save(nugetConfigFile);
     }
 }
