@@ -261,7 +261,7 @@ namespace Calamari.ArgoCD.Conventions
             {
                 log.Verbose($"Reading files from {applicationSource.Path}");
 
-                var (updatedFiles, updatedImages, patchedFiles) = UpdateKustomizeYaml(repository.WorkingDirectory, applicationSource.Path!, defaultRegistry, deploymentConfig.ImageReferences);
+                var (updatedFiles, updatedImages, patchedFiles) = UpdateKustomizeYaml(repository.WorkingDirectory, applicationSource.Path!, defaultRegistry, deploymentConfig.PackageWithHelmReference.Select(ph => ph.ContainerReference).ToList());
                 if (updatedImages.Count > 0)
                 {
                     var pushResult = PushToRemote(repository,
@@ -348,7 +348,7 @@ namespace Calamari.ArgoCD.Conventions
             {
                 log.Verbose($"Reading files from {applicationSource.Path}");
 
-                var (updatedFiles, updatedImages, patchedFiles) = UpdateKubernetesYaml(repository.WorkingDirectory, applicationSource.Path!, defaultRegistry, deploymentConfig.ImageReferences);
+                var (updatedFiles, updatedImages, patchedFiles) = UpdateKubernetesYaml(repository.WorkingDirectory, applicationSource.Path!, defaultRegistry, deploymentConfig.PackageWithHelmReference.Select(ph => ph.ContainerReference).ToList());
                 if (updatedImages.Count > 0)
                 {
                     var pushResult = PushToRemote(repository,
@@ -459,7 +459,7 @@ namespace Calamari.ArgoCD.Conventions
         {
             var results = targets.Select(t => UpdateHelmImageValues(repository.WorkingDirectory,
                                              t,
-                                             deploymentConfig.ImageReferences
+                                             deploymentConfig.PackageWithHelmReference.Select(ph => ph.ContainerReference).ToList()
                                          ))
                                  .ToList();
 
@@ -484,7 +484,7 @@ namespace Calamari.ArgoCD.Conventions
                 }
             }
 
-            return new SourceUpdateResult(new HashSet<string>(), string.Empty);
+            return new SourceUpdateResult(new HashSet<string>(), string.Empty, []);
         }
 
         SourceUpdateResult ProcessHelmSourceUsingStepVariables(Application applicationFromYaml,
@@ -540,39 +540,34 @@ namespace Calamari.ArgoCD.Conventions
                 var flattenedYamlPathDictionary = HelmValuesEditor.CreateDictionary(originalYamlParser);
                 foreach (var container in stepReferencedContainers.Where(c => c.HelmReference is not null))
                 {
-                    if (flattenedYamlPathDictionary.TryGetValue(container.HelmReference!, out var helmValue))
+                    if (flattenedYamlPathDictionary.TryGetValue(container.HelmReference!, out var valueToUpdate))
                     {
-                        var valueContentType = DetermineTypeOfContent(helmValue);
-                        var cir = ContainerImageReference.FromReferenceString(helmValue, defaultRegistry);
-                        switch (valueContentType)
+                        if (IsUnstructuredText(valueToUpdate))
                         {
-                            case ValueFileContent.PlainText:
-                                HelmValuesEditor.UpdateNodeValue(fileContent, container.HelmReference!, container.ContainerReference.Tag);
-                                filesUpdated.Add(valuesFile);
-                                imagesUpdated.Add(container.ContainerReference.ToString());
-                                break;
-                            case ValueFileContent.ImageNameAndTag:
-                            case ValueFileContent.RegistryAndImageName:
-                            case ValueFileContent.RegistryImageNameAndTag:
-                                var comparison = container.ContainerReference.CompareWith(cir); 
-                                if (comparison.MatchesImage())
-                                {
-                                    if (!comparison.TagMatch)
-                                    {
-                                        var newValue = cir.WithTag(container.ContainerReference.Tag);
-                                        fileContent = HelmValuesEditor.UpdateNodeValue(fileContent, container.HelmReference!, newValue);
-                                        wasUpdated = true;
-                                        filesUpdated.Add(valuesFile);
-                                        imagesUpdated.Add(newValue);
-                                    }
-                                }
-                                else
-                                {
-                                    log.Warn($"Attempted to update value entry '{container.HelmReference}', however it contains a mismatched image name and registry.");
-                                }
-                                break;
+                            HelmValuesEditor.UpdateNodeValue(fileContent, container.HelmReference!, container.ContainerReference.Tag);
+                            filesUpdated.Add(valuesFile);
+                            imagesUpdated.Add(container.ContainerReference.ToString());
                         }
-
+                        else
+                        {
+                            var cir = ContainerImageReference.FromReferenceString(valueToUpdate, defaultRegistry);
+                            var comparison = container.ContainerReference.CompareWith(cir);
+                            if (comparison.MatchesImage())
+                            {
+                                if (!comparison.TagMatch)
+                                {
+                                    var newValue = cir.WithTag(container.ContainerReference.Tag);
+                                    fileContent = HelmValuesEditor.UpdateNodeValue(fileContent, container.HelmReference!, newValue);
+                                    wasUpdated = true;
+                                    filesUpdated.Add(valuesFile);
+                                    imagesUpdated.Add(newValue);
+                                }
+                            }
+                            else
+                            {
+                                log.Warn($"Attempted to update value entry '{container.HelmReference}', however it contains a mismatched image name and registry.");
+                            }
+                        }
                         if (wasUpdated)
                         {
                             fileSystem.WriteAllText(repoRelativePath, fileContent);
@@ -587,7 +582,7 @@ namespace Calamari.ArgoCD.Conventions
                              imagesUpdated);
             }
 
-            return new SourceUpdateResult(new HashSet<string>(), string.Empty);
+            return new SourceUpdateResult(new HashSet<string>(), string.Empty, []);
         }
 
         void LogHelmSourceConfigurationProblems(IReadOnlyCollection<HelmSourceConfigurationProblem> helmSourceConfigurationProblems)
@@ -795,47 +790,14 @@ namespace Calamari.ArgoCD.Conventions
             return fileSystem.EnumerateFilesWithGlob(rootPath, yamlFileGlob);
         }
         
-        static ValueFileContent DetermineTypeOfContent(string content)
+        static bool IsUnstructuredText(string content)
         {
             var lastColonIndex = content.LastIndexOf(':');
             var lastSlashIndex = content.LastIndexOf('/');
 
-            if (lastColonIndex == -1)
-            {
-                if (lastSlashIndex == -1)
-                {
-                    return ValueFileContent.PlainText;
-                }
-
-                return ValueFileContent.RegistryAndImageName;
-            }
-        
-            if (lastColonIndex > lastSlashIndex)
-            {
-                if (lastSlashIndex == -1)
-                {
-                    return ValueFileContent.ImageNameAndTag;
-                }
-                return ValueFileContent.RegistryImageNameAndTag;
-            }
-        
-            //otherwise the string has a colon and a slash, but the slash is after the colon
-            // partA:partb/partc <-- illegal image tag.
-            return ValueFileContent.PlainText;
+            return lastColonIndex == -1 && lastSlashIndex == -1;
         }
 
         record SourceUpdateResult(HashSet<string> ImagesUpdated, string CommitSha, List<FilePathContent> PatchedFiles);
     }
-
-
-   
-
-    enum ValueFileContent
-    {
-        PlainText,
-        ImageNameAndTag,
-        RegistryAndImageName,
-        RegistryImageNameAndTag
-    }
-    
 }
