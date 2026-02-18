@@ -21,60 +21,64 @@ public class UpdateUsingStepVariables
         this.fileSystem = fileSystem;
     }
 
-    SourceUpdateResult UpdateImageTagsInValuesFiles(IReadOnlyCollection<string> valuesFilesToUpdate, IReadOnlyCollection<PackageAndHelmReference> stepReferencedContainers, string defaultRegistry, UpdateArgoCDAppDeploymentConfig deploymentConfig, RepositoryWrapper repository, ApplicationSourceWithMetadata sourceWithMetadata)
+    public SourceUpdateResult UpdateImageTagsInValuesFiles(IReadOnlyCollection<string> valuesFilesToUpdate,
+                                                           IReadOnlyCollection<ContainerImageReferenceAndHelmReference> stepReferencedContainers,
+                                                           string defaultRegistry,
+                                                           string workingDirectory,
+                                                           ApplicationSourceWithMetadata sourceWithMetadata)
+    {
+        var filesUpdated = new HashSet<string>();
+        var imagesUpdated = new HashSet<string>();
+        foreach (var valuesFile in valuesFilesToUpdate)
         {
-            var filesUpdated = new HashSet<string>();
-            var imagesUpdated = new HashSet<string>();
-            foreach (var valuesFile in valuesFilesToUpdate)
+            var wasUpdated = false;
+            var repoRelativePath = Path.Combine(workingDirectory, valuesFile);
+            log.Info($"Processing file at {valuesFile}.");
+            var fileContent = fileSystem.ReadFile(repoRelativePath);
+            var originalYamlParser = new HelmYamlParser(fileContent); // Parse and track the original yaml so that content can be read from it.
+            var flattenedYamlPathDictionary = HelmValuesEditor.CreateFlattenedDictionary(originalYamlParser);
+            foreach (var container in stepReferencedContainers.Where(c => c.HelmReference is not null))
             {
-                var wasUpdated = false;
-                var repoRelativePath = Path.Combine(repository.WorkingDirectory, valuesFile);
-                log.Info($"Processing file at {valuesFile}.");
-                var fileContent = fileSystem.ReadFile(repoRelativePath);
-                var originalYamlParser = new HelmYamlParser(fileContent); // Parse and track the original yaml so that content can be read from it.
-                var flattenedYamlPathDictionary = HelmValuesEditor.CreateFlattenedDictionary(originalYamlParser);
-                foreach (var container in stepReferencedContainers.Where(c => c.HelmReference is not null))
+                if (flattenedYamlPathDictionary.TryGetValue(container.HelmReference!, out var valueToUpdate))
                 {
-                    if (flattenedYamlPathDictionary.TryGetValue(container.HelmReference!, out var valueToUpdate))
+                    if (IsUnstructuredText(valueToUpdate))
                     {
-                        if (IsUnstructuredText(valueToUpdate))
+                        HelmValuesEditor.UpdateNodeValue(fileContent, container.HelmReference!, container.ContainerReference.Tag);
+                        filesUpdated.Add(valuesFile);
+                        imagesUpdated.Add(container.ContainerReference.ToString());
+                    }
+                    else
+                    {
+                        var cir = ContainerImageReference.FromReferenceString(valueToUpdate, defaultRegistry);
+                        var comparison = container.ContainerReference.CompareWith(cir);
+                        if (comparison.MatchesImage())
                         {
-                            HelmValuesEditor.UpdateNodeValue(fileContent, container.HelmReference!, container.ContainerReference.Tag);
-                            filesUpdated.Add(valuesFile);
-                            imagesUpdated.Add(container.ContainerReference.ToString());
+                            if (!comparison.TagMatch)
+                            {
+                                var newValue = cir.WithTag(container.ContainerReference.Tag);
+                                fileContent = HelmValuesEditor.UpdateNodeValue(fileContent, container.HelmReference!, newValue);
+                                wasUpdated = true;
+                                filesUpdated.Add(valuesFile);
+                                imagesUpdated.Add(newValue);
+                            }
                         }
                         else
                         {
-                            var cir = ContainerImageReference.FromReferenceString(valueToUpdate, defaultRegistry);
-                            var comparison = container.ContainerReference.CompareWith(cir);
-                            if (comparison.MatchesImage())
-                            {
-                                if (!comparison.TagMatch)
-                                {
-                                    var newValue = cir.WithTag(container.ContainerReference.Tag);
-                                    fileContent = HelmValuesEditor.UpdateNodeValue(fileContent, container.HelmReference!, newValue);
-                                    wasUpdated = true;
-                                    filesUpdated.Add(valuesFile);
-                                    imagesUpdated.Add(newValue);
-                                }
-                            }
-                            else
-                            {
-                                log.Warn($"Attempted to update value entry '{container.HelmReference}', however it contains a mismatched image name and registry.");
-                            }
+                            log.Warn($"Attempted to update value entry '{container.HelmReference}', however it contains a mismatched image name and registry.");
                         }
-                        if (wasUpdated)
-                        {
-                            fileSystem.WriteAllText(repoRelativePath, fileContent);
-                        }
+                    }
+
+                    if (wasUpdated)
+                    {
+                        fileSystem.WriteAllText(repoRelativePath, fileContent);
                     }
                 }
             }
-
-            return new SourceUpdateResult(new HashSet<string>(), string.Empty, []);
         }
-    
-    
+
+        return new SourceUpdateResult(new HashSet<string>(), string.Empty, []);
+    }
+
     static bool IsUnstructuredText(string content)
     {
         var lastColonIndex = content.LastIndexOf(':');
