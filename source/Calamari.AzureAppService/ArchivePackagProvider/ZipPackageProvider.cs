@@ -8,7 +8,7 @@ namespace Calamari.AzureAppService
 {
     public class ZipPackageProvider : IPackageProvider
     {
-        public string UploadUrlPath => @"/api/zipdeploy";
+        public string UploadUrlPath => @"/api/publish";
         public bool SupportsAsynchronousDeployment => true;
 
         public async Task<FileInfo> PackageArchive(string sourceDirectory, string targetDirectory)
