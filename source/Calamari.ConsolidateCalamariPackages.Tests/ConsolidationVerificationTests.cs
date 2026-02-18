@@ -36,7 +36,7 @@ namespace Calamari.ConsolidateCalamariPackages.Tests
             "linux-arm",
             "linux-arm64",
             "linux-x64",
-            "osx-x64",
+            "osx-arm64",
             WindowsX64Arch
         };
 
