@@ -537,7 +537,7 @@ namespace Calamari.ArgoCD.Conventions
                 log.Info($"Processing file at {valuesFile}.");
                 var fileContent = fileSystem.ReadFile(repoRelativePath);
                 var originalYamlParser = new HelmYamlParser(fileContent); // Parse and track the original yaml so that content can be read from it.
-                var flattenedYamlPathDictionary = HelmValuesEditor.CreateDictionary(originalYamlParser);
+                var flattenedYamlPathDictionary = HelmValuesEditor.CreateFlattenedDictionary(originalYamlParser);
                 foreach (var container in stepReferencedContainers.Where(c => c.HelmReference is not null))
                 {
                     if (flattenedYamlPathDictionary.TryGetValue(container.HelmReference!, out var valueToUpdate))

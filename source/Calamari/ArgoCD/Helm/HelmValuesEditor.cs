@@ -1,11 +1,18 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Octostache;
 
 namespace Calamari.ArgoCD.Helm
 {
     public class HelmValuesEditor
     {
+        public static Dictionary<string, string> CreateFlattenedDictionary(HelmYamlParser parsedYaml)
+        {
+            var allValuesPaths = parsedYaml.CreateDotPathsForNodes();
+            return allValuesPaths.ToDictionary(a => a, parsedYaml.GetValueAtPath);
+        }
+        
         /// <summary>
         /// Converts YAML into a Variable Dictionary that can be used to resolve the value of
         /// a dot-notation path and used with HelmTemplate/Octostache syntax.
@@ -32,19 +39,6 @@ namespace Calamari.ArgoCD.Helm
             // Recreates HelmYamlParser rather than pass in because we maintain state as a string rather than yaml to preserve formatting.
             var yamlProcessor = new HelmYamlParser(yamlContent);
             return yamlProcessor.UpdateContentForPath(path, newValue);
-        }
-
-        public static Dictionary<string, string> CreateDictionary(HelmYamlParser parsedYaml)
-        {
-            var allValuesPaths = parsedYaml.CreateDotPathsForNodes();
-            var result = new Dictionary<string, string>();
-            foreach (var path in allValuesPaths)
-            {
-                var value = parsedYaml.GetValueAtPath(path);
-                result.Add(path, value);
-            }
-
-            return result;
         }
     }
 }
