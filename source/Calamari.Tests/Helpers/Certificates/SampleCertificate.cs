@@ -6,6 +6,7 @@ using System.Security.Principal;
 using Calamari.Integration.Certificates;
 using NUnit.Framework;
 using System.Linq;
+using System.Runtime.Versioning;
 using Calamari.Testing.Helpers;
 using CryptoKeyAccessRule = Calamari.Integration.Certificates.CryptoKeyAccessRule;
 
@@ -75,6 +76,7 @@ namespace Calamari.Tests.Helpers.Certificates
             store.Close();
         }
 
+        [SupportedOSPlatform("windows")]
         public void EnsureCertificateNotInStore(StoreName storeName, StoreLocation storeLocation)
         {
             var store = new X509Store(storeName, storeLocation);
@@ -84,6 +86,7 @@ namespace Calamari.Tests.Helpers.Certificates
             store.Close();
         }
 
+        [SupportedOSPlatform("windows")]
         public void EnsureCertificateNotInStore(string storeName, StoreLocation storeLocation)
         {
             var store = new X509Store(storeName, storeLocation);
@@ -93,6 +96,7 @@ namespace Calamari.Tests.Helpers.Certificates
             store.Close();
         }
 
+        [SupportedOSPlatform("windows")]
         private void EnsureCertificateNotInStore(X509Store store)
         {
             var certificates = store.Certificates.Find(X509FindType.FindByThumbprint, Thumbprint, false);
@@ -120,7 +124,8 @@ namespace Calamari.Tests.Helpers.Certificates
                 ? foundCertificates[0]
                 : null;
         }
-#pragma warning disable CA1416
+        
+        [SupportedOSPlatform("windows")]
         public static void AssertHasPrivateKeyRights(CryptoKeySecurity privateKeySecurity, NTAccount identifier, CryptoKeyRights right)
         {
             var accessRules = privateKeySecurity.GetAccessRules(true, false, typeof(NTAccount));
@@ -131,7 +136,6 @@ namespace Calamari.Tests.Helpers.Certificates
             Assert.True(found, $"Identity '{identifier}' does not have access right '{right}' to private-key");
         }
         
-#pragma warning restore CA1416
 
         X509Certificate2 LoadAsX509Certificate2()
         {

@@ -11,10 +11,6 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="AWSSDK.SecurityToken" Version="3.7.401.11" />
-    <PackageReference Include="Microsoft.DotNet.Analyzers.Compatibility" Version="0.2.12-alpha">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
-    </PackageReference>
     <PackageReference Include="NuGet.Versioning" Version="7.0.1" />
   </ItemGroup>
   <ItemGroup>

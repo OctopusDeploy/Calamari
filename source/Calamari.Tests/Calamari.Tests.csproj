@@ -132,6 +132,9 @@
         <None Include="Helpers\Certificates\SampleCertificateFiles\**">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
+        <None Include="KubernetesFixtures\Patching\**\*.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
         <Compile Remove="Fixtures\Deployment\Packages\Acme.Web\obj\**"/>
         <EmbeddedResource Remove="Fixtures\Deployment\Packages\Acme.Web\obj\**"/>
         <Compile Remove="Fixtures\Deployment\Packages\**\bin\**"/>

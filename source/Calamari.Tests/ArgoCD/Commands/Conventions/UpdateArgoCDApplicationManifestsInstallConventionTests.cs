@@ -424,12 +424,23 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
             runningDeployment.StagingDirectory = WorkingDirectory;
 
+            IReadOnlyList<ProcessApplicationResult> capturedResults = null;
+            deploymentReporter.ReportFilesUpdated(Arg.Do<IReadOnlyList<ProcessApplicationResult>>(x => capturedResults = x));
+
             var convention = CreateConvention(nonSensitiveCalamariVariables);
             convention.Install(runningDeployment);
 
-            deploymentReporter.Received(1)
-                              .ReportDeployments(Arg.Is<IReadOnlyList<ProcessApplicationResult>>(results =>
-                                                                                                     results.Count == 1));
+            using var scope = new AssertionScope();
+            capturedResults.Should().NotBeNull();
+            var actual = capturedResults.Single();
+            actual.UpdatedImages.Should().BeEmpty();
+            actual.GitReposUpdated.Should().HaveCount(1);
+            actual.UpdatedSourceDetails.Should().HaveCount(1);
+
+            var sourceDetails = actual.UpdatedSourceDetails.First();
+            sourceDetails.CommitSha.Should().HaveLength(40);
+            sourceDetails.ReplacedFiles.Should().BeEquivalentTo([new FilePathContent("first.yaml", "22c0df2cceca5273e4dc569dda52805d27df3360")]);
+            sourceDetails.PatchedFiles.Should().BeEmpty();
         }
 
         [Test]
