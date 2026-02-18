@@ -366,10 +366,17 @@ function report_kubernetes_manifest_file
   report_kubernetes_manifest "$MANIFEST" "$NAMESPACE"
 }
 
-if (( ${BASH_VERSINFO[0]:-0} > 4 || (${BASH_VERSINFO[0]:-0} == 4 && ${BASH_VERSINFO[1]:-0} > 2) )); then
-    if command -v xxd > /dev/null; then
-        decrypt_and_parse_variables "#### VARIABLESTRING.ENCRYPTED ####" "#### VARIABLESTRING.IV ####"
+bashParametersArrayFeatureToggle=#### BashParametersArrayFeatureToggle ####
+
+if [ "$bashParametersArrayFeatureToggle" = true ]; then
+    if (( ${BASH_VERSINFO[0]:-0} > 4 || (${BASH_VERSINFO[0]:-0} == 4 && ${BASH_VERSINFO[1]:-0} > 2) )); then
+        if command -v xxd > /dev/null; then
+            decrypt_and_parse_variables "#### VARIABLESTRING.ENCRYPTED ####" "#### VARIABLESTRING.IV ####"
+        else
+            echo "xxd is not installed, this is required to use octopus_parameters"
+        fi
     else
+<<<<<<< HEAD
         write_verbose "Unable to set octopus_parameters variable; xxd is not installed. Please use get_octopusvariable instead."
     fi
 else
@@ -378,3 +385,8 @@ fi
 
 
 
+=======
+        echo "Bash version 4.2 or later is required to use octopus_parameters"
+    fi
+fi
+>>>>>>> release/2025.4
