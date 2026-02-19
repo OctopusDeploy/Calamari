@@ -145,7 +145,10 @@ namespace Calamari.CloudAccounts
         {
             try
             {
-                await new AmazonSecurityTokenServiceClient(AwsCredentials).GetCallerIdentityAsync(new GetCallerIdentityRequest());
+                var client = string.IsNullOrWhiteSpace(region)
+                    ? new AmazonSecurityTokenServiceClient(AwsCredentials)
+                    : new AmazonSecurityTokenServiceClient(AwsCredentials, AwsRegion);
+                await client.GetCallerIdentityAsync(new GetCallerIdentityRequest());
                 return true;
             }
             catch (AmazonServiceException ex)
@@ -205,7 +208,9 @@ namespace Calamari.CloudAccounts
             if(string.IsNullOrEmpty(oidcJwt)) return false;
             try
             {
-                var client = new AmazonSecurityTokenServiceClient(new AnonymousAWSCredentials());
+                var client = string.IsNullOrWhiteSpace(region)
+                    ? new AmazonSecurityTokenServiceClient(new AnonymousAWSCredentials())
+                    : new AmazonSecurityTokenServiceClient(new AnonymousAWSCredentials(), AwsRegion);
                 var assumeRoleWithWebIdentityResponse = await client.AssumeRoleWithWebIdentityAsync(new AssumeRoleWithWebIdentityRequest
                 {
                     RoleArn = roleArn,
