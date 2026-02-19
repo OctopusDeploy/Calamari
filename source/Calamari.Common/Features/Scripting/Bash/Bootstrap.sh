@@ -376,17 +376,6 @@ if [ "$bashParametersArrayFeatureToggle" = true ]; then
             echo "xxd is not installed, this is required to use octopus_parameters"
         fi
     else
-<<<<<<< HEAD
-        write_verbose "Unable to set octopus_parameters variable; xxd is not installed. Please use get_octopusvariable instead."
-    fi
-else
-    write_verbose "Unable to set octopus_parameters variable; Bash version 4.2 or later required. Please use get_octopusvariable instead."
-fi
-
-
-
-=======
         echo "Bash version 4.2 or later is required to use octopus_parameters"
     fi
 fi
->>>>>>> release/2025.4
