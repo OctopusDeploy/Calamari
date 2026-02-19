@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using Calamari.ArgoCD.Models;
 
 namespace Calamari.ArgoCD.Conventions
 {
@@ -17,6 +16,4 @@ namespace Calamari.ArgoCD.Conventions
             UseHelmValueYamlPathFromStep = useHelmValueYamlPathFromStep;
         }
     }
-    
-    public record ContainerImageReferenceAndHelmReference(ContainerImageReference ContainerReference, string? HelmReference);
 }

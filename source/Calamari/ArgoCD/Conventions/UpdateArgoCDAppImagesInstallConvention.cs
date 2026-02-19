@@ -261,7 +261,7 @@ namespace Calamari.ArgoCD.Conventions
             {
                 log.Verbose($"Reading files from {applicationSource.Path}");
 
-                var (updatedFiles, updatedImages, patchedFiles) = UpdateKustomizeYaml(repository.WorkingDirectory, applicationSource.Path!, defaultRegistry, deploymentConfig.PackageWithHelmReference.Select(ph => ph.ContainerReference).ToList());
+                var (updatedFiles, updatedImages, patchedFiles) = UpdateKustomizeYaml(repository.WorkingDirectory, applicationSource.Path!, defaultRegistry, deploymentConfig.PackageWithHelmReference);
                 if (updatedImages.Count > 0)
                 {
                     var pushResult = PushToRemote(repository,
@@ -348,7 +348,7 @@ namespace Calamari.ArgoCD.Conventions
             {
                 log.Verbose($"Reading files from {applicationSource.Path}");
 
-                var (updatedFiles, updatedImages, patchedFiles) = UpdateKubernetesYaml(repository.WorkingDirectory, applicationSource.Path!, defaultRegistry, deploymentConfig.PackageWithHelmReference.Select(ph => ph.ContainerReference).ToList());
+                var (updatedFiles, updatedImages, patchedFiles) = UpdateKubernetesYaml(repository.WorkingDirectory, applicationSource.Path!, defaultRegistry, deploymentConfig.PackageWithHelmReference);
                 if (updatedImages.Count > 0)
                 {
                     var pushResult = PushToRemote(repository,
@@ -403,14 +403,13 @@ namespace Calamari.ArgoCD.Conventions
                                                          applicationSource);
             }
 
-            return ProcessHelmSourceUsingStepVariables(applicationFromYaml,
-                                                       sourceWithMetadata,
-                                                       gitCredentials,
-                                                       repositoryFactory,
-                                                       deploymentConfig,
-                                                       defaultRegistry,
-                                                       gateway,
-                                                       applicationSource);
+            return ProcessHelmUpdateTargetsWithStepVariables(applicationFromYaml,
+                                                             gitCredentials,
+                                                             repositoryFactory,
+                                                             deploymentConfig,
+                                                             sourceWithMetadata,
+                                                             defaultRegistry,
+                                                             gateway);
         }
 
         SourceUpdateResult ProcessHelmSourceUsingAnnotations(Application applicationFromYaml,
@@ -494,35 +493,57 @@ namespace Calamari.ArgoCD.Conventions
             return new SourceUpdateResult(new HashSet<string>(), string.Empty, []);
         }
 
-        public SourceUpdateResult ProcessHelmSourceUsingStepVariables(Application applicationFromYaml,
-                                                               ApplicationSourceWithMetadata sourceWithMetadata,
-                                                               Dictionary<string, GitCredentialDto> gitCredentials,
-                                                               RepositoryFactory repositoryFactory,
-                                                               UpdateArgoCDAppDeploymentConfig deploymentConfig,
-                                                               string defaultRegistry,
-                                                               ArgoCDGatewayDto gateway,
-                                                               ApplicationSource applicationSource)
+
+        public SourceUpdateResult ProcessHelmUpdateTargetsWithStepVariables(
+            Application applicationFromYaml,
+            Dictionary<string, GitCredentialDto> gitCredentials,
+            RepositoryFactory repositoryFactory,
+            UpdateArgoCDAppDeploymentConfig deploymentConfig,
+            ApplicationSourceWithMetadata sourceWithMetadata,
+            string defaultRegistry,
+            ArgoCDGatewayDto gateway)
         {
             var extractor = new HelmValuesFileExtractor(applicationFromYaml, defaultRegistry);
             var valuesFilesInHelmSource = extractor.GetInlineValuesFilesReferencedByHelmSource(sourceWithMetadata);
 
             //Add the implicit value file if needed
-            using var repository = CreateRepository(gitCredentials, applicationSource, repositoryFactory);
+            using var repository = CreateRepository(gitCredentials, sourceWithMetadata.Source, repositoryFactory);
             var implicitValuesFile = HelmDiscovery.TryFindValuesFile(fileSystem, sourceWithMetadata.Source.Path!);
-            var valuesFilesToUpdate = valuesFilesInHelmSource.ToList();
+            var filesToUpdate = valuesFilesInHelmSource.ToList();
             if (implicitValuesFile != null && !valuesFilesInHelmSource.Contains(implicitValuesFile))
             {
-                valuesFilesToUpdate.Add(implicitValuesFile);
+                filesToUpdate.Add(implicitValuesFile);
             }
 
-            var replacer = new UpdateUsingStepVariables(log, fileSystem);
-            var result = replacer.UpdateImageTagsInValuesFiles(valuesFilesInHelmSource,
-                                                               deploymentConfig.PackageWithHelmReference,
-                                                               defaultRegistry,
-                                                               repository.WorkingDirectory,
-                                                               sourceWithMetadata);
+            return UpdateHelmValuesFiles(filesToUpdate.ToHashSet(), defaultRegistry, repository, deploymentConfig, gateway, sourceWithMetadata, applicationFromYaml);
+        }
+        
+        SourceUpdateResult UpdateHelmValuesFiles(HashSet<string> filesToUpdate, string defaultRegistry, RepositoryWrapper repository, UpdateArgoCDAppDeploymentConfig deploymentConfig, ArgoCDGatewayDto gateway, ApplicationSourceWithMetadata sourceWithMetadata, Application applicationFromYaml)
+        {
+            Func<string, IContainerImageReplacer> imageReplacerFactory = yaml => new HelmValuesImageReplaceStepVariables(yaml, defaultRegistry, log);
+            log.Verbose($"Found {filesToUpdate.Count} yaml files to process");
+
+            var (updatedFiles, updatedImages, patchedFiles)  = Update(repository.WorkingDirectory, deploymentConfig.PackageWithHelmReference, filesToUpdate.ToHashSet(), imageReplacerFactory);
+            if (updatedImages.Count > 0)
+            {
+                var pushResult = PushToRemote(repository,
+                                              GitReference.CreateFromString(sourceWithMetadata.Source.TargetRevision),
+                                              deploymentConfig.CommitParameters,
+                                              updatedFiles,
+                                              updatedImages);
+
+                if (pushResult is not null)
+                {
+                    outputVariablesWriter.WritePushResultOutput(gateway.Name,
+                                                                applicationFromYaml.Metadata.Name,
+                                                                sourceWithMetadata.Index,
+                                                                pushResult);
+                    return new SourceUpdateResult(updatedImages, pushResult.CommitSha, patchedFiles);
+                }
+            }
             return new SourceUpdateResult(new HashSet<string>(), string.Empty, []);
         }
+        
 
         SourceUpdateResult ProcessRefSourceUsingStepVariables(Application applicationFromYaml,
                                                               ApplicationSourceWithMetadata sourceWithMetadata,
@@ -536,16 +557,9 @@ namespace Calamari.ArgoCD.Conventions
             var valuesFilesInHelmSource = extractor.GetValueFilesReferencedInRefSource(sourceWithMetadata);
 
             using var repository = CreateRepository(gitCredentials, sourceWithMetadata.Source, repositoryFactory);
-            var replacer = new UpdateUsingStepVariables(log, fileSystem);
-            var result = replacer.UpdateImageTagsInValuesFiles(valuesFilesInHelmSource,
-                                                deploymentConfig.PackageWithHelmReference,
-                                                defaultRegistry,
-                                                repository.WorkingDirectory,
-                                                sourceWithMetadata);
-            
-            return new SourceUpdateResult(new HashSet<string>(), string.Empty, []);
+            return UpdateHelmValuesFiles(valuesFilesInHelmSource.ToHashSet(), defaultRegistry, repository, deploymentConfig, gateway, sourceWithMetadata, applicationFromYaml);
         }
-        
+
         void LogHelmSourceConfigurationProblems(IReadOnlyCollection<HelmSourceConfigurationProblem> helmSourceConfigurationProblems)
         {
             foreach (var helmSourceConfigurationProblem in helmSourceConfigurationProblems)
@@ -618,7 +632,7 @@ namespace Calamari.ArgoCD.Conventions
             string rootPath,
             string subFolder,
             string defaultRegistry,
-            List<ContainerImageReference> imagesToUpdate)
+            IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
         {
             var absSubFolder = Path.Combine(rootPath, subFolder);
 
@@ -633,7 +647,7 @@ namespace Calamari.ArgoCD.Conventions
             string rootPath,
             string subFolder,
             string defaultRegistry,
-            List<ContainerImageReference> imagesToUpdate)
+            IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
         {
             var absSubFolder = Path.Combine(rootPath, subFolder);
 
@@ -653,7 +667,7 @@ namespace Calamari.ArgoCD.Conventions
             return ([], [], []);
         }
 
-        (HashSet<string>, HashSet<string>, List<FilePathContent>) Update(string rootPath, List<ContainerImageReference> imagesToUpdate, HashSet<string> filesToUpdate, Func<string, IContainerImageReplacer> imageReplacerFactory)
+        (HashSet<string>, HashSet<string>, List<FilePathContent>) Update(string rootPath, IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate, HashSet<string> filesToUpdate, Func<string, IContainerImageReplacer> imageReplacerFactory)
         {
             var updatedFiles = new HashSet<string>();
             var updatedImages = new HashSet<string>();
@@ -688,7 +702,6 @@ namespace Calamari.ArgoCD.Conventions
 
             return (updatedFiles, updatedImages, jsonPatches);
         }
-        
 
         HelmRefUpdatedResult UpdateHelmImageValues(
             string rootPath,
