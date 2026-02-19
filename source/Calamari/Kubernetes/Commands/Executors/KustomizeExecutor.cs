@@ -55,8 +55,7 @@ namespace Calamari.Kubernetes.Commands.Executors
             manifestReporter.ReportManifestFileApplied(HydratedManifestFilepath(deployment.CurrentDirectory));
             
             log.Info("Applying kustomization");
-            var resourceIdentifiers = await ApplyKustomization(deployment, appliedResourcesCallback, overlayPath);
-            return resourceIdentifiers;
+            return await ApplyKustomization(deployment, appliedResourcesCallback, overlayPath);
         }
 
         async Task<ResourceIdentifier[]> ApplyKustomization(RunningDeployment deployment, Func<ResourceIdentifier[], Task> appliedResourcesCallback, string overlayPath)
