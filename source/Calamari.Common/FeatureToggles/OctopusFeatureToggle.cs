@@ -6,9 +6,11 @@ namespace Calamari.Common.FeatureToggles
     {
         public static class KnownSlugs
         {
+            public const string UseDockerCredentialHelper = "calamari-use-docker-credential-helper";
             public const string AnsiColorsInTaskLogFeatureToggle = "ansi-colors";
         };
 
+        public static readonly OctopusFeatureToggle UseDockerCredentialHelperFeatureToggle = new OctopusFeatureToggle(KnownSlugs.UseDockerCredentialHelper);
         public static readonly OctopusFeatureToggle AnsiColorsInTaskLogFeatureToggle = new OctopusFeatureToggle(KnownSlugs.AnsiColorsInTaskLogFeatureToggle);
 
         public class OctopusFeatureToggle

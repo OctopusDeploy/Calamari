@@ -13,16 +13,26 @@ namespace Calamari.Common.Features.Processes
     {
         readonly ILog log;
         readonly IVariables variables;
+        readonly ICommandInvocationOutputSink? additionalInvocationOutputSink;
 
         public CommandLineRunner(ILog log, IVariables variables)
+            : this(log, variables, null)
+        {
+        }
+
+        public CommandLineRunner(ILog log, IVariables variables, ICommandInvocationOutputSink? additionalInvocationOutputSink = null)
         {
             this.log = log;
             this.variables = variables;
+            this.additionalInvocationOutputSink = additionalInvocationOutputSink;
         }
 
         public CommandResult Execute(CommandLineInvocation invocation)
         {
-            var commandOutput = new SplitCommandInvocationOutputSink(GetCommandOutputs(invocation));
+            var outputSinks = GetCommandOutputs(invocation);
+            if (additionalInvocationOutputSink != null)
+                outputSinks.Add(additionalInvocationOutputSink);
+            var commandOutput = new SplitCommandInvocationOutputSink(outputSinks);
 
             try
             {

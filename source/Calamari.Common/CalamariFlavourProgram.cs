@@ -28,7 +28,7 @@ namespace Calamari.Common
 {
     public abstract class CalamariFlavourProgram
     {
-        readonly ILog log;
+        protected readonly ILog log;
 
         protected CalamariFlavourProgram(ILog log)
         {
