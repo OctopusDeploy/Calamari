@@ -555,9 +555,11 @@ namespace Calamari.ArgoCD.Conventions
         {
             var extractor = new HelmValuesFileExtractor(applicationFromYaml, defaultRegistry);
             var valuesFilesInHelmSource = extractor.GetValueFilesReferencedInRefSource(sourceWithMetadata);
+            //these files are relative to repo - so need to path them wrt repository once checked out.
 
             using var repository = CreateRepository(gitCredentials, sourceWithMetadata.Source, repositoryFactory);
-            return UpdateHelmValuesFiles(valuesFilesInHelmSource.ToHashSet(), defaultRegistry, repository, deploymentConfig, gateway, sourceWithMetadata, applicationFromYaml);
+            var absFilePaths = valuesFilesInHelmSource.Select(f => Path.Combine(repository.WorkingDirectory, f));
+            return UpdateHelmValuesFiles(absFilePaths.ToHashSet(), defaultRegistry, repository, deploymentConfig, gateway, sourceWithMetadata, applicationFromYaml);
         }
 
         void LogHelmSourceConfigurationProblems(IReadOnlyCollection<HelmSourceConfigurationProblem> helmSourceConfigurationProblems)
