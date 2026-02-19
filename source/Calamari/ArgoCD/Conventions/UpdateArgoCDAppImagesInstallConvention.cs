@@ -515,6 +515,7 @@ namespace Calamari.ArgoCD.Conventions
                 filesToUpdate.Add(implicitValuesFile);
             }
 
+            filesToUpdate = filesToUpdate.Select(file => Path.Combine(repository.WorkingDirectory, file)).ToList();
             return UpdateHelmValuesFiles(filesToUpdate.ToHashSet(), defaultRegistry, repository, deploymentConfig, gateway, sourceWithMetadata, applicationFromYaml);
         }
         
