@@ -45,13 +45,13 @@ namespace Calamari.Kubernetes.Commands.Executors
                 throw new KubectlException("Kustomization directory not specified");
             }
 
-            log.Info("Validating kubectl version");
+            log.Verbose("Validating kubectl version");
             ValidateKubectlVersion(deployment.CurrentDirectory);
             
             log.Info("Building kustomization");
             BuildKustomization(deployment.CurrentDirectory, overlayPath);
             
-            log.Info("Reporting manifest");
+            log.Verbose("Reporting manifest");
             manifestReporter.ReportManifestFileApplied(HydratedManifestFilepath(deployment.CurrentDirectory));
             
             log.Info("Applying kustomization");
@@ -102,7 +102,7 @@ namespace Calamari.Kubernetes.Commands.Executors
 
             if (major < MinimumKubectlVersionMajor || minor < MinimumKubectlVersionMinor)
                 throw new KubectlException($"kubectl is on version v{major}.{minor}, it needs to be v{MinimumKubectlVersionMajor}.{MinimumKubectlVersionMinor} or higher to run Kustomize.");
-            log.Info($"kubectl version: {major}.{minor}");
+            log.Verbose($"kubectl version: {major}.{minor}");
         }
 
         bool TryParseVersion(string kubectlClientVersionJson, out int major, out int minor)
