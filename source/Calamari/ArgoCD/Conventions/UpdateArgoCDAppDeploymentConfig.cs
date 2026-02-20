@@ -1,17 +1,19 @@
 using System.Collections.Generic;
-using Calamari.ArgoCD.Models;
 
 namespace Calamari.ArgoCD.Conventions
 {
     public class UpdateArgoCDAppDeploymentConfig
     {
         public GitCommitParameters CommitParameters { get; }
-        public List<ContainerImageReference> ImageReferences { get; }
+        public IReadOnlyCollection<ContainerImageReferenceAndHelmReference> PackageWithHelmReference { get; }
 
-        public UpdateArgoCDAppDeploymentConfig(GitCommitParameters commitParameters, List<ContainerImageReference> imageReferences)
+        public bool UseHelmValueYamlPathFromStep { get; }
+
+        public UpdateArgoCDAppDeploymentConfig(GitCommitParameters commitParameters, List<ContainerImageReferenceAndHelmReference> packageWithHelmReference, bool useHelmValueYamlPathFromStep)
         {
             CommitParameters = commitParameters;
-            ImageReferences = imageReferences;
+            PackageWithHelmReference = packageWithHelmReference;
+            UseHelmValueYamlPathFromStep = useHelmValueYamlPathFromStep;
         }
     }
 }
