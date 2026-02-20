@@ -149,7 +149,7 @@ namespace Calamari.Tests.ArgoCD.Models
         [Theory]
         [TestCase("nginx", "nginx")]
         [TestCase("docker.io/nginx", "docker.io/nginx")]
-        [TestCase("index.docker.io/nginx:latest", "docker.io/nginx:latest")]
+        [TestCase("index.docker.io/nginx:latest", "index.docker.io/nginx:latest")]
         [TestCase("nginx:latest", "nginx:latest")]
         public void ToString_ReturnsCorrectlyFormattedImageNameBasedOnComponents(string reference, string expected)
         {
