@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Models;
 using Calamari.Common.Plumbing.Logging;
 
@@ -22,7 +23,7 @@ namespace Calamari.ArgoCD.Helm
         }
 
         // TODO: Add testing for multiple instances of the same image
-        public ImageReplacementResult UpdateImages(List<ContainerImageReference> imagesToUpdate)
+        public ImageReplacementResult UpdateImages(IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
         {
             var updatedImages = new HashSet<string>();
 
@@ -41,7 +42,7 @@ namespace Calamari.ArgoCD.Helm
                 var matchedUpdate = imagesToUpdate.Select(i => new
                                                   {
                                                       Reference = i,
-                                                      Comparison = i.CompareWith(existingImageReference.ImageReference) 
+                                                      Comparison = i.ContainerReference.CompareWith(existingImageReference.ImageReference) 
                                                       
                                                   })
                                                   .FirstOrDefault(i => i.Comparison.MatchesImage());
@@ -51,13 +52,13 @@ namespace Calamari.ArgoCD.Helm
                     if (existingImageReference.TagIsTemplateToken)
                     {
                         // If the tag is specified separately in its own node
-                        fileContent = HelmValuesEditor.UpdateNodeValue(fileContent, existingImageReference.TagPath, matchedUpdate.Reference.Tag);
+                        fileContent = HelmValuesEditor.UpdateNodeValue(fileContent, existingImageReference.TagPath, matchedUpdate.Reference.ContainerReference.Tag);
                     }
                     else
                     {
                         // We re-read the node value with the image details so we can ensure we only write out the image ref components expected
                         var imageTagNodeValue = originalYamlParser.GetValueAtPath(existingImageReference.TagPath);
-                        var replacementImageRef = ContainerImageReference.FromReferenceString(imageTagNodeValue, defaultClusterRegistry).WithTag(matchedUpdate.Reference.Tag);
+                        var replacementImageRef = ContainerImageReference.FromReferenceString(imageTagNodeValue, defaultClusterRegistry).WithTag(matchedUpdate.Reference.ContainerReference.Tag);
                         fileContent = HelmValuesEditor.UpdateNodeValue(fileContent, existingImageReference.TagPath, replacementImageRef);
                     }
 
