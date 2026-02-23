@@ -533,7 +533,7 @@ namespace Calamari.ArgoCD.Conventions
             string rootPath,
             string subFolder,
             string defaultRegistry,
-            List<ContainerImageReference> imagesToUpdate)
+            IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
         {
             var absSubFolder = Path.Combine(rootPath, subFolder);
 
@@ -548,7 +548,7 @@ namespace Calamari.ArgoCD.Conventions
             string rootPath,
             string subFolder,
             string defaultRegistry,
-            List<ContainerImageReference> imagesToUpdate)
+            IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
         {
             var absSubFolder = Path.Combine(rootPath, subFolder);
 
@@ -568,7 +568,7 @@ namespace Calamari.ArgoCD.Conventions
             return ([], [], []);
         }
 
-        (HashSet<string>, HashSet<string>, List<FilePathContent>) Update(string rootPath, List<ContainerImageReference> imagesToUpdate, HashSet<string> filesToUpdate, Func<string, IContainerImageReplacer> imageReplacerFactory)
+        (HashSet<string>, HashSet<string>, List<FilePathContent>) Update(string rootPath, IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate, HashSet<string> filesToUpdate, Func<string, IContainerImageReplacer> imageReplacerFactory)
         {
             var updatedFiles = new HashSet<string>();
             var updatedImages = new HashSet<string>();
@@ -607,7 +607,7 @@ namespace Calamari.ArgoCD.Conventions
         HelmRefUpdatedResult UpdateHelmImageValues(
             string rootPath,
             HelmValuesFileImageUpdateTarget target,
-            List<ContainerImageReference> imagesToUpdate)
+            IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
         {
             var filepath = Path.Combine(rootPath, target.Path, target.FileName);
             log.Info($"Processing file at {filepath}.");

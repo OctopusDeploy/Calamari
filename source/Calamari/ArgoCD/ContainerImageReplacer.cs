@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Models;
 using k8s;
 using k8s.Models;
@@ -22,7 +23,7 @@ namespace Calamari.ArgoCD
             this.defaultRegistry = defaultRegistry;
         }
 
-        public ImageReplacementResult UpdateImages(List<ContainerImageReference> imagesToUpdate)
+        public ImageReplacementResult UpdateImages(IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
         {
             if (string.IsNullOrWhiteSpace(yamlContent))
             {
@@ -72,7 +73,7 @@ namespace Calamari.ArgoCD
                     }
 
                     var resource = resources[0];
-                    var (updatedDocument, changes) = UpdateImagesInKubernetesResource(document, resource, imagesToUpdate);
+                    var (updatedDocument, changes) = UpdateImagesInKubernetesResource(document, resource, imagesToUpdate.Select(i => i.ContainerReference).ToList());
                     imageReplacements.UnionWith(changes);
                     // NOTE: We don't need to check if a change has been made or not, if it hasn't, the final document will remain unchanged.
                     updatedDocuments.Add(updatedDocument);

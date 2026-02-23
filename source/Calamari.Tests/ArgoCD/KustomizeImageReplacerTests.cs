@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Calamari.ArgoCD;
+using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Models;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Testing.Helpers;
@@ -12,11 +13,11 @@ namespace Calamari.Tests.ArgoCD
 {
     public class KustomizeImageReplacerTests
     {
-        readonly List<ContainerImageReference> imagesToUpdate = new List<ContainerImageReference>()
+        readonly List<ContainerImageReferenceAndHelmReference> imagesToUpdate = new List<ContainerImageReferenceAndHelmReference>()
         {
             // We know this won't be null after parse
-            ContainerImageReference.FromReferenceString("nginx:1.25", ArgoCDConstants.DefaultContainerRegistry),
-            ContainerImageReference.FromReferenceString("busybox:stable", "my-registry.com"),
+            new (ContainerImageReference.FromReferenceString("nginx:1.25", ArgoCDConstants.DefaultContainerRegistry)),
+            new (ContainerImageReference.FromReferenceString("busybox:stable", "my-registry.com")),
         };
 
         ILog log = new InMemoryLog();
@@ -447,7 +448,7 @@ resources:
 
             var imageReplacer = new KustomizeImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
 
-            var result = imageReplacer.UpdateImages(imagesToUpdate.Append(ContainerImageReference.FromReferenceString("monopole:100")).ToList());
+            var result = imageReplacer.UpdateImages(imagesToUpdate.Append(new(ContainerImageReference.FromReferenceString("monopole:100"))).ToList());
 
             result.UpdatedContents.Should().NotBeNull();
             result.UpdatedContents.Should().Be(expectedYaml);

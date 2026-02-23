@@ -34,7 +34,7 @@ namespace Calamari.ArgoCD
 
         ImageReplacementResult NoChangeResult => new ImageReplacementResult(yamlContent, new HashSet<string>());
 
-        public ImageReplacementResult UpdateImages(List<ContainerImageReference> imagesToUpdate)
+        public ImageReplacementResult UpdateImages(IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
         {
             if (string.IsNullOrWhiteSpace(yamlContent))
             {
@@ -81,7 +81,7 @@ namespace Calamari.ArgoCD
             var replacementsMade = new HashSet<string>();
             foreach (var imageNode in imagesSequenceNode.OfType<YamlMappingNode>())
             {
-                var matchedUpdate = GetMatchedContainerToUpdate(imagesToUpdate, imageNode);
+                var matchedUpdate = GetMatchedContainerToUpdate(imagesToUpdate.Select(i => i.ContainerReference).ToList(), imageNode);
                 //no match, nothing to do
                 if (matchedUpdate is null)
                 {
