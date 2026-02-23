@@ -63,7 +63,7 @@ public partial class Build
     void SetOctopusServerCalamariVersion(string projectFile)
     {
         var text = File.ReadAllText(projectFile);
-        text = Regex.Replace(text, @"<BundledCalamariVersion>([\S])+</BundledCalamariVersion>",
+        text = Regex.Replace(text, @"<BundledCalamariVersion>[\S]+</BundledCalamariVersion>(\s*<!--DO NOT COMMIT -->)?",
                              $"<BundledCalamariVersion>{NugetVersion.Value}</BundledCalamariVersion> <!--DO NOT COMMIT -->");
         File.WriteAllText(projectFile, text);
     }
