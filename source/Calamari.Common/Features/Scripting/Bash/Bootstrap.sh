@@ -264,57 +264,27 @@ function decrypt_and_parse_variables {
     local encrypted="$1"
     local iv="$2"
 
-    local decrypted
-    decrypted=$(decrypt_variable "$encrypted" "$iv")
     declare -gA octopus_parameters=()
 
-    local -a b64_keys=()
-    local -a b64_values=()
-    local -a key_byte_lengths=()
-    local -a value_byte_lengths=()
+    # Decrypt the inline base64-encoded ciphertext and read NUL-delimited
+    # key\0value\0 pairs via mapfile in one shot.
+    local -a _kv
+    mapfile -d "" _kv < <(echo "$encrypted" | openssl enc -aes-256-cbc -d -a -A -nosalt -K "$sensitiveVariableKey" -iv "$iv")
 
-    local b64_key b64_value key_pad val_pad
-    while IFS='$' read -r b64_key b64_value; do
-        b64_value="${b64_value//$'\n'/}"
-        [[ -z "$b64_key" ]] && continue
-
-        if [[ "$b64_key" == *"==" ]]; then key_pad=2
-        elif [[ "$b64_key" == *"=" ]]; then key_pad=1
-        else key_pad=0; fi
-
-        if [[ "$b64_value" == *"==" ]]; then val_pad=2
-        elif [[ "$b64_value" == *"=" ]]; then val_pad=1
-        else val_pad=0; fi
-
-        b64_keys+=("$b64_key")
-        b64_values+=("$b64_value")
-        key_byte_lengths+=($(( ${#b64_key} / 4 * 3 - key_pad )))
-        value_byte_lengths+=($(( ${#b64_value} / 4 * 3 - val_pad )))
-    done <<< "$decrypted"
-
-    [[ ${#b64_keys[@]} -eq 0 ]] && return
-
-    local keys_tmp values_tmp
-    keys_tmp=$(mktemp) || { echo "Failed to create temp file for octopus_parameters" >&2; return 1; }
-    values_tmp=$(mktemp) || { rm -f "$keys_tmp"; echo "Failed to create temp file for octopus_parameters" >&2; return 1; }
-    trap 'rm -f "$keys_tmp" "$values_tmp"' RETURN
-
-    printf '%s\n' "${b64_keys[@]}"   | base64 -d > "$keys_tmp"   || { echo "base64 decode failed for octopus_parameters keys" >&2;   return 1; }
-    printf '%s\n' "${b64_values[@]}" | base64 -d > "$values_tmp" || { echo "base64 decode failed for octopus_parameters values" >&2; return 1; }
-
-    exec 3< "$keys_tmp"
-    exec 4< "$values_tmp"
-
-    local idx decoded_key decoded_value
-    for idx in "${!b64_keys[@]}"; do
-        LC_ALL=C read -r -N "${key_byte_lengths[idx]}"   decoded_key   <&3
-        LC_ALL=C read -r -N "${value_byte_lengths[idx]}" decoded_value <&4
-        [[ "$decoded_value" == "nul" ]] && decoded_value=""
-        [[ -n "$decoded_key" ]] && octopus_parameters["$decoded_key"]="$decoded_value"
+    local i
+    for (( i = 0; i < ${#_kv[@]}; i += 2 )); do
+        [[ -n "${_kv[i]}" ]] && octopus_parameters["${_kv[i]}"]="${_kv[i+1]:-}"
     done
+}
 
-    exec 3<&-
-    exec 4<&-
+function _ensure_octopus_parameters_loaded {
+    # Load octopus_parameters if not already loaded and feature toggle is on
+    if [[ "${_octopus_parameters_loaded:-false}" != "true" ]] && [[ "$bashParametersArrayFeatureToggle" == "true" ]]; then
+        if (( ${BASH_VERSINFO[0]:-0} > 4 || (${BASH_VERSINFO[0]:-0} == 4 && ${BASH_VERSINFO[1]:-0} > 2) )); then
+            decrypt_and_parse_variables "#### VARIABLESTRING.ENCRYPTED ####" "#### VARIABLESTRING.IV ####"
+        fi
+        _octopus_parameters_loaded=true
+    fi
 }
 
 # -----------------------------------------------------------------------------
@@ -382,11 +352,9 @@ function report_kubernetes_manifest_file
 }
 
 bashParametersArrayFeatureToggle=#### BashParametersArrayFeatureToggle ####
+scriptUsesOctopusParameters=#### SCRIPT_USES_OCTOPUS_PARAMETERS ####
 
-if [ "$bashParametersArrayFeatureToggle" = true ]; then
-    if (( ${BASH_VERSINFO[0]:-0} > 4 || (${BASH_VERSINFO[0]:-0} == 4 && ${BASH_VERSINFO[1]:-0} > 2) )); then
-        decrypt_and_parse_variables "#### VARIABLESTRING.ENCRYPTED ####" "#### VARIABLESTRING.IV ####"
-    else
-        echo "Bash version 4.2 or later is required to use octopus_parameters"
-    fi
+# Eagerly load octopus_parameters only if the user script actually uses it
+if [ "$scriptUsesOctopusParameters" = true ]; then
+    _ensure_octopus_parameters_loaded
 fi

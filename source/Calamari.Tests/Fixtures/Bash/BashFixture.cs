@@ -423,7 +423,6 @@ namespace Calamari.Tests.Fixtures.Bash
             output.AssertOutput($"Key: CombiningDiacritical Caf\u0301, Value: Caf\u00e9");
         }
 
-        [Explicit]
         [Category("Performance")]
         [TestCase(  100,  30_000, Description = "100 variables (~small deployment)")]
         [TestCase(  500,  60_000, Description = "500 variables (~medium deployment)")]
@@ -487,6 +486,45 @@ namespace Calamari.Tests.Fixtures.Bash
             elapsedMs.Should().BeLessThan(
                 timeLimitMs,
                 $"Loading {variableCount} variables should complete within {timeLimitMs / 1000.0:F0}s");
+        }
+
+        [Category("Performance")]
+        [TestCase(20_000, Description = "20 000 variables but array not loaded")]
+        [RequiresBashDotExeIfOnWindows]
+        public void ShouldNotLoadOctopusParametersWhenNotUsed(int variableCount)
+        {
+            // This test verifies that when a script doesn't use octopus_parameters,
+            // the array is NOT loaded, avoiding the ~6-7s overhead for large variable sets.
+            var perfVariables = BuildPerformanceTestVariables(variableCount);
+            var variables = new Dictionary<string, string>(perfVariables)
+                                .AddFeatureToggleToDictionary(new List<FeatureToggle?> { FeatureToggle.BashParametersArrayFeatureToggle });
+
+            var stopwatch = Stopwatch.StartNew();
+            var (output, _) = RunScript("no-octopus-parameters.sh", variables);
+            stopwatch.Stop();
+
+            var elapsedMs = stopwatch.ElapsedMilliseconds;
+
+            // Also measure how long it takes WITH the array loaded for comparison
+            var stopwatch2 = Stopwatch.StartNew();
+            var (output2, _) = RunScript("count-octopus-parameters.sh", variables);
+            stopwatch2.Stop();
+            var elapsedWithArrayMs = stopwatch2.ElapsedMilliseconds;
+            var savedMs = elapsedWithArrayMs - elapsedMs;
+
+            TestContext.WriteLine("");
+            TestContext.WriteLine($"Variables:       {variableCount:N0}");
+            TestContext.WriteLine($"Without array:   {elapsedMs} ms");
+            TestContext.WriteLine($"With array:      {elapsedWithArrayMs} ms");
+            TestContext.WriteLine($"Time saved:      {savedMs} ms");
+
+            output.AssertSuccess();
+            output.AssertOutput("ScriptRan=true");
+            output.AssertOutput("SentinelValue=PerfSentinelValue");
+
+            savedMs.Should().BeGreaterThan(
+                5000,
+                $"Not loading octopus_parameters should save more than 5 seconds with {variableCount:N0} variables");
         }
 
         // ---------------------------------------------------------------------------
