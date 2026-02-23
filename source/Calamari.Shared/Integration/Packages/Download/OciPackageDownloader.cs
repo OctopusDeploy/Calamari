@@ -180,7 +180,7 @@ namespace Calamari.Integration.Packages.Download
         static Uri GetApiUri(Uri feedUri)
         {
             var httpScheme = BuildScheme(IsPlainHttp(feedUri));
-            var r = feedUri.ToString().Replace($"oci{Uri.SchemeDelimiter}", $"{httpScheme}{Uri.SchemeDelimiter}").TrimEnd('/');
+            var r = feedUri.ToString().Replace($"oci{Uri.SchemeDelimiter}", $"{httpScheme}{Uri.SchemeDelimiter}");
             var uri = new Uri(r);
             if (!r.EndsWith("/" + VersionPath))
             {
