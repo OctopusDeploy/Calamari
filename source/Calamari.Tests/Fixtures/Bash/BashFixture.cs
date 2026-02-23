@@ -1,6 +1,8 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using Calamari.Common.Features.Processes;
@@ -335,6 +337,8 @@ namespace Calamari.Tests.Fixtures.Bash
 
         static string specialCharacters => "! \" # $ % & ' ( ) * + , - . / : ; < = > ? @ [ \\ ] ^ _ ` { | } ~  \n\u00b1 \u00d7 \u00f7 \u2211 \u220f \u2202 \u221e \u222b \u2248 \u2260 \u2264 \u2265 \u221a \u221b \u2206 \u2207 \u221d  \n$ \u00a2 \u00a3 \u00a5 \u20ac \u20b9 \u20a9 \u20b1 \u20aa \u20bf  \n• ‣ … ′ ″ ‘ ’ “ ” ‽ ¡ ¿ – — ―  \n( ) [ ] { } ⟨ ⟩ « » ‘ ’ “ ”  \n\u2190 \u2191 \u2192 \u2193 \u2194 \u2195 \u2196 \u2197 \u2198 \u2199 \u2b05 \u2b06 \u2b07 \u27a1 \u27f3  \nα β γ δ ε ζ η θ ι κ λ μ ν ξ ο π ρ σ τ υ φ χ ψ ω  \n\u00a9 \u00ae \u2122 § ¶ † ‡ µ #";
 
+        [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
+        [TestCase(null)]
         [RequiresBashDotExeIfOnWindows]
         public void ShouldBeAbleToEnumerateVariableValues(FeatureToggle? featureToggle)
         {
@@ -354,7 +358,29 @@ namespace Calamari.Tests.Fixtures.Bash
                                             ["VariableName \n 11"] = "Value \n 11",
                                             ["VariableName.prop.anotherprop 12"] = "Value.prop.12",
                                             ["VariableName`prop`anotherprop` 13"] = "Value`prop`13",
-                                            [specialCharacters] = specialCharacters
+                                            [specialCharacters] = specialCharacters,
+                                            // Emoji / 4-byte UTF-8 codepoints
+                                            ["EmojiKey 🎉💡🔥"] = "EmojiValue 😀🌍🚀",
+                                            // CJK (Chinese / Japanese / Korean)
+                                            ["CJK 中文 日本語 한국어"] = "中文值 你好世界",
+                                            // Arabic RTL text
+                                            ["Arabic مفتاح"] = "قيمة عربية",
+                                            // Bash command-injection attempts in both key and value
+                                            ["InjectionAttempt $(echo injected)"] = "$(echo injected) `echo injected` ${HOME}",
+                                            // Empty value
+                                            ["EmptyValueKey"] = "",
+                                            // Leading and trailing whitespace in value
+                                            ["LeadingTrailingSpaces"] = "  value padded with spaces  ",
+                                            // Multiple '=' signs in value (parsers that split on '=' can mis-handle this)
+                                            ["MultipleEquals"] = "a=b=c=d",
+                                            // Zero-width space (U+200B) – invisible but load-bearing
+                                            ["ZeroWidth\u200bKey"] = "zero\u200bwidth\u200bvalue",
+                                            // ANSI escape sequence – terminal control injection attempt
+                                            ["AnsiEscapeKey"] = "\x1b[31mRed\x1b[0m",
+                                            // Supplementary-plane Unicode (mathematical script + musical symbols)
+                                            ["SupplementaryPlane 𝒜𝄞"] = "value 𝐀𝁆",
+                                            // Combining diacritical mark (NFD 'é' vs NFC U+00E9)
+                                            ["CombiningDiacritical Caf\u0301"] = "Caf\u00e9",
                                         }.AddFeatureToggleToDictionary(new List<FeatureToggle?> { FeatureToggle.BashParametersArrayFeatureToggle }));
 
             output.AssertSuccess();
@@ -383,6 +409,196 @@ namespace Calamari.Tests.Fixtures.Bash
             output.AssertOutput("Key: VariableName.prop.anotherprop 12, Value: Value.prop.12");
             output.AssertOutput("Key: VariableName`prop`anotherprop` 13, Value: Value`prop`13");
             output.AssertOutput($"Key: {specialCharacters}, Value: {specialCharacters}");
+
+            output.AssertOutput("Key: EmojiKey 🎉💡🔥, Value: EmojiValue 😀🌍🚀");
+            output.AssertOutput("Key: CJK 中文 日本語 한국어, Value: 中文值 你好世界");
+            output.AssertOutput("Key: Arabic مفتاح, Value: قيمة عربية");
+            output.AssertOutput("Key: InjectionAttempt $(echo injected), Value: $(echo injected) `echo injected` ${HOME}");
+            output.AssertOutput("Key: EmptyValueKey, Value: ");
+            output.AssertOutput("Key: LeadingTrailingSpaces, Value:   value padded with spaces  ");
+            output.AssertOutput("Key: MultipleEquals, Value: a=b=c=d");
+            output.AssertOutput($"Key: ZeroWidth\u200bKey, Value: zero\u200bwidth\u200bvalue");
+            output.AssertOutput($"Key: AnsiEscapeKey, Value: \x1b[31mRed\x1b[0m");
+            output.AssertOutput($"Key: SupplementaryPlane 𝒜𝄞, Value: value 𝐀𝁆");
+            output.AssertOutput($"Key: CombiningDiacritical Caf\u0301, Value: Caf\u00e9");
+        }
+
+        [Explicit]
+        [TestCase(10000, 100000, Description = "5 000 variables (~stress test)")]
+        [RequiresBashDotExeIfOnWindows]
+        public void ShouldPopulateOctopusParametersPerformantly(int variableCount, int timeLimitMs)
+        {
+            var variables = BuildPerformanceTestVariables(variableCount)
+                                .AddFeatureToggleToDictionary(new List<FeatureToggle?> { FeatureToggle.BashParametersArrayFeatureToggle });
+
+            var stopwatch = Stopwatch.StartNew();
+            var (output, _) = RunScript("count-octopus-parameters.sh", variables);
+            stopwatch.Stop();
+
+            var elapsedMs = stopwatch.ElapsedMilliseconds;
+            TestContext.WriteLine($"[Perf] {variableCount,5} variables → {elapsedMs,6}ms  (limit {timeLimitMs / 1000}s)");
+
+            output.AssertSuccess();
+
+            var fullOutput = string.Join(Environment.NewLine, output.CapturedOutput.Infos);
+            if (fullOutput.Contains("Bash version 4.2 or later is required to use octopus_parameters"))
+            {
+                Assert.Ignore("Bash 4.2+ required for octopus_parameters; performance assertion skipped.");
+                return;
+            }
+
+            // Verify the variable count reported by the script.
+            var countLine = output.GetOutputForLineContaining("VariableCount=");
+            var loadedCount = int.Parse(Regex.Match(countLine, @"VariableCount=(\d+)").Groups[1].Value);
+            loadedCount.Should().BeGreaterThanOrEqualTo(
+                variableCount,
+                $"octopus_parameters should contain at least the {variableCount} variables we passed in");
+
+            // Spot-check: a sentinel variable injected by BuildPerformanceTestVariables must survive the round-trip.
+            output.AssertOutput("SpotCheck=PerfSentinelValue");
+
+            elapsedMs.Should().BeLessThan(
+                timeLimitMs,
+                $"Loading {variableCount} variables should complete within {timeLimitMs / 1000.0:F0}s");
+        }
+
+        // ---------------------------------------------------------------------------
+        // Realistic variable generator for performance tests.
+        //
+        // Produces a distribution that approximates a real Octopus deployment:
+        //
+        //   Bucket  | Share | Name length  | Value length   | Example
+        //   --------|-------|--------------|----------------|----------------------------
+        //   Small   |  60%  |  15–30 chars |   10–40 chars  | Project.Name, port numbers
+        //   Medium  |  25%  |  40–65 chars | 150–300 chars  | SQL / Redis connection strings
+        //   Large   |  10%  |  70–130 chars|  700–950 chars | JSON config blobs
+        //   Huge    |   5%  | 100–180 chars| 6 000–9 000 chars | PEM certificate + key bundles
+        //
+        // All keys are unique (every template appends the loop index).
+        // A "PerfSentinel" key is added for correctness spot-checks.
+        // ---------------------------------------------------------------------------
+
+        static Dictionary<string, string> BuildPerformanceTestVariables(int count)
+        {
+            var result = new Dictionary<string, string>(count + 1);
+            for (var i = 0; i < count; i++)
+            {
+                var (key, value) = (i % 20) switch
+                {
+                    < 12 => (PerfSmallKey(i),  PerfSmallValue(i)),
+                    < 17 => (PerfMediumKey(i), PerfMediumValue(i)),
+                    < 19 => (PerfLargeKey(i),  PerfLargeValue(i)),
+                    _    => (PerfHugeKey(i),   PerfHugeValue(i)),
+                };
+                result[key] = value;
+            }
+            result["PerfSentinel"] = "PerfSentinelValue";
+            return result;
+        }
+
+        // Small (60%): names ~15–30 chars, values ~10–40 chars
+        static string PerfSmallKey(int i) => (i % 12) switch
+        {
+            0  => $"Project.Name.{i:D4}",
+            1  => $"Environment.Region.{i:D4}",
+            2  => $"Application.Version.{i:D4}",
+            3  => $"Config.Timeout.Seconds.{i:D4}",
+            4  => $"Deploy.Mode.{i:D4}",
+            5  => $"Service.Port.{i:D4}",
+            6  => $"Feature.{i:D4}.Enabled",
+            7  => $"Build.Number.{i:D4}",
+            8  => $"Cluster.Zone.{i:D4}",
+            9  => $"Agent.Pool.{i:D4}",
+            10 => $"Release.Channel.{i:D4}",
+            _  => $"Tag.Value.{i:D4}",
+        };
+
+        static string PerfSmallValue(int i) => (i % 12) switch
+        {
+            0  => $"production-{i % 5}",
+            1  => $"us-{(i % 2 == 0 ? "east" : "west")}-{i % 3 + 1}",
+            2  => $"v{i % 10}.{i % 100 + 1}.{i % 1000}",
+            3  => $"{i % 120 + 10}",
+            4  => i % 2 == 0 ? "blue-green" : "rolling",
+            5  => $"{8080 + i % 100}",
+            6  => i % 2 == 0 ? "true" : "false",
+            7  => $"build-{i:D6}",
+            8  => $"zone-{(char)('a' + i % 3)}",
+            9  => $"pool-{i % 4}",
+            10 => i % 2 == 0 ? "stable" : "beta",
+            _  => $"tag-{i % 20:D3}",
+        };
+
+        // Medium (25%): names ~40–65 chars, values ~150–300 chars
+        static string PerfMediumKey(int i) => (i % 5) switch
+        {
+            0 => $"Application.Database.Primary.ConnectionString.{i:D4}",
+            1 => $"Azure.Storage.Account{i % 3}.AccessKey.{i:D4}",
+            2 => $"Service.Authentication.BearerToken.Endpoint.{i:D4}",
+            3 => $"Infrastructure.Cache.Redis{i % 2}.ConnectionString.{i:D4}",
+            _ => $"Octopus.Action.Package[MyApp.Service{i % 5}].FeedUri.{i:D4}",
+        };
+
+        static string PerfMediumValue(int i) => (i % 5) switch
+        {
+            0 => $"Server=tcp:sql{i % 3}.database.windows.net,1433;Initial Catalog=AppDb{i % 10};User Id=svc_app;Password=P@ssw0rd{i:D4}!;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;",
+            1 => $"DefaultEndpointsProtocol=https;AccountName=storage{i % 5}acct;AccountKey=dGhpcyBpcyBhIGZha2Uga2V5IGZvciBzdG9yYWdlIGFjY291bnQ{i:D4}==;EndpointSuffix=core.windows.net",
+            2 => $"https://login.microsoftonline.com/{i:D8}-aaaa-bbbb-cccc-{i:D12}/oauth2/v2.0/token",
+            3 => $"cache{i % 2}.redis.cache.windows.net:6380,password=cacheSecret{i:D4}==,ssl=true,abortConnect=false,connectTimeout=5000,syncTimeout=3000",
+            _ => $"https://nuget.pkg.github.com/MyOrganisation{i % 3}/index.json?api-version=6.0",
+        };
+
+        // Large (10%): names ~70–130 chars, values ~700–950 chars (JSON config blobs)
+        static string PerfLargeKey(int i) =>
+            $"Octopus.Action[Step {i % 10}: Deploy {(i % 2 == 0 ? "Application" : "Infrastructure")} to {(i % 3 == 0 ? "Production" : "Staging")}].Package[MyCompany.Service{i % 5}].Config.{i:D4}";
+
+        static string PerfLargeValue(int i) => $@"{{
+  ""environment"": ""{(i % 2 == 0 ? "production" : "staging")}"",
+  ""instanceId"": ""{i:D8}"",
+  ""serviceEndpoints"": {{
+    ""auth"":   ""https://auth{i % 3}.internal.company.com/oauth/token"",
+    ""users"":  ""https://users{i % 3}.internal.company.com/api/v2"",
+    ""events"": ""https://events{i % 3}.internal.company.com/stream""
+  }},
+  ""database"": {{
+    ""primary"": ""Server=tcp:primary{i % 2}.db.internal,1433;Initial Catalog=AppDb;User ID=svc_app;Password=P@ssw0rd{i:D6}!;Encrypt=True;Connection Timeout=30;"",
+    ""replica"":  ""Server=tcp:replica{i % 3}.db.internal,1433;Initial Catalog=AppDb;User ID=svc_ro;Password=R3adOnly{i:D6}!;Encrypt=True;Connection Timeout=30;""
+  }},
+  ""cache"": {{
+    ""primary"":   ""cache{i % 2}.redis.cache.windows.net:6380,password=cacheP@ss{i:D4}==,ssl=true"",
+    ""secondary"": ""cache{(i + 1) % 2}.redis.cache.windows.net:6380,password=cacheP@ss{i:D4}==,ssl=true""
+  }},
+  ""storage"": {{
+    ""accountName"":   ""storage{i % 5}acct"",
+    ""containerName"": ""deployments-{i:D4}"",
+    ""sasToken"":      ""sv=2021-12-02&ss=b&srt=co&sp=rwdlacupiytfx&se=2025-12-31T23:59:59Z&st=2024-01-01T00:00:00Z&spr=https&sig=fakeSignature{i:D6}==""
+  }}
+}}";
+
+        // Huge (5%): names ~100–180 chars, values ~6 000–9 000 chars (PEM cert + private key bundle)
+        static string PerfHugeKey(int i) =>
+            $"Octopus.Action[Step {i % 5}: Long Running {(i % 2 == 0 ? "Database Migration" : "Certificate Rotation")} Task For {(i % 3 == 0 ? "Production-AUS" : "Production-US")} Environment].Package[MyCompany.{(i % 2 == 0 ? "Infrastructure" : "Security")}.Tooling.v{i % 10}].Config.{i:D4}";
+
+        static string PerfHugeValue(int i)
+        {
+            // Each cert line is 60 chars of base64 + 8-digit serial + "==" + newline ≈ 72 chars.
+            // 60 + 52 + 42 lines across 3 PEM blocks ≈ 154 lines × 72 chars ≈ 11 KB per variable.
+            const string b64 = "MIIGXTCCBEWgAwIBAgIJAKnmpBuMNbOBMA0GCSqGSIb3DQEBCwUAMIGaMQswCQYD"; // 64 chars
+            var sb = new StringBuilder(9000);
+            sb.AppendLine($"# Certificate bundle — slot {i % 3}, serial {i:D8}");
+            sb.AppendLine("-----BEGIN CERTIFICATE-----");
+            for (var line = 0; line < 60; line++)
+                sb.AppendLine($"{b64.Substring((i + line) % 4, 60)}{i * 31337 + line * 7:D8}==");
+            sb.AppendLine("-----END CERTIFICATE-----");
+            sb.AppendLine("-----BEGIN PRIVATE KEY-----");
+            for (var line = 0; line < 52; line++)
+                sb.AppendLine($"{b64.Substring((i + line + 2) % 4, 60)}{i * 99991 + line * 13:D8}Ag==");
+            sb.AppendLine("-----END PRIVATE KEY-----");
+            sb.AppendLine("-----BEGIN CERTIFICATE-----");
+            for (var line = 0; line < 42; line++)
+                sb.AppendLine($"{b64.Substring((i + line + 1) % 4, 60)}{i * 65537 + line * 11:D8}==");
+            sb.AppendLine("-----END CERTIFICATE-----");
+            return sb.ToString();
         }
     }
 

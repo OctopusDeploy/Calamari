@@ -65,13 +65,7 @@ namespace Calamari.Common.Features.Scripting.Bash
             File.SetAttributes(configurationFile, FileAttributes.Hidden);
             return configurationFile;
         }
-        
-        static string EncodeAsHex(string value)
-        {
-            var bytes = Encoding.UTF8.GetBytes(value);
-            return BitConverter.ToString(bytes).Replace("-", "");
-        }
-        
+
         static (string encrypted, string iv) GetEncryptedVariablesKvp(IVariables variables)
         {
             var sb = new StringBuilder();
@@ -80,7 +74,7 @@ namespace Calamari.Common.Features.Scripting.Bash
                          .Where(v => !ScriptVariables.IsBuildInformationVariable(v.Key)))
             {
                 var value = variable.Value ?? "nul";
-                sb.Append($"{EncodeAsHex(variable.Key)}").Append("$").AppendLine(EncodeAsHex(value));
+                sb.Append(EncodeValue(variable.Key)).Append("$").AppendLine(EncodeValue(value));
             }
 
             var encrypted = VariableEncryptor.Encrypt(sb.ToString());
