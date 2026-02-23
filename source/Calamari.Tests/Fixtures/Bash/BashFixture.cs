@@ -424,19 +424,48 @@ namespace Calamari.Tests.Fixtures.Bash
         }
 
         [Explicit]
-        [TestCase(10000, 100000, Description = "5 000 variables (~stress test)")]
+        [Category("Performance")]
+        [TestCase(  100,  30_000, Description = "100 variables (~small deployment)")]
+        [TestCase(  500,  60_000, Description = "500 variables (~medium deployment)")]
+        [TestCase(1_000, 120_000, Description = "1 000 variables (~large deployment)")]
+        [TestCase(5_000, 300_000, Description = "5 000 variables (~stress test)")]
+        [TestCase(20_000, 300_000, Description = "5 000 variables (~stress test)")]
         [RequiresBashDotExeIfOnWindows]
         public void ShouldPopulateOctopusParametersPerformantly(int variableCount, int timeLimitMs)
         {
-            var variables = BuildPerformanceTestVariables(variableCount)
+            // Build the realistic payload separately so we can measure its size
+            // before it gets encrypted and written into the bootstrap script.
+            var perfVariables = BuildPerformanceTestVariables(variableCount);
+            var variables = new Dictionary<string, string>(perfVariables)
                                 .AddFeatureToggleToDictionary(new List<FeatureToggle?> { FeatureToggle.BashParametersArrayFeatureToggle });
+
+            var keyBytes   = perfVariables.Keys  .Select(k => (long)Encoding.UTF8.GetByteCount(k))      .ToArray();
+            var valueBytes = perfVariables.Values.Select(v => (long)Encoding.UTF8.GetByteCount(v ?? "")).ToArray();
+            var totalKeyBytes   = keyBytes.Sum();
+            var totalValueBytes = valueBytes.Sum();
+            var totalPairBytes  = totalKeyBytes + totalValueBytes;
 
             var stopwatch = Stopwatch.StartNew();
             var (output, _) = RunScript("count-octopus-parameters.sh", variables);
             stopwatch.Stop();
 
             var elapsedMs = stopwatch.ElapsedMilliseconds;
-            TestContext.WriteLine($"[Perf] {variableCount,5} variables → {elapsedMs,6}ms  (limit {timeLimitMs / 1000}s)");
+
+            // ── Structured performance report ────────────────────────────────────
+            static string Kb(long b)    => $"{b / 1024.0,7:F1} KB";
+            static string Fmt(double b) => b >= 1024 ? $"{b / 1024.0:F1} KB" : $"{b:F0} B";
+
+            TestContext.WriteLine("");
+            TestContext.WriteLine("── Payload ─────────────────────────────────────────────────────");
+            TestContext.WriteLine($"  Variables  : {perfVariables.Count,6:N0}");
+            TestContext.WriteLine($"  Keys       :  avg {Fmt(keyBytes.Average()),9}  │  min {keyBytes.Min(),5} B  │  max {keyBytes.Max(),7} B  │  total {Kb(totalKeyBytes)}");
+            TestContext.WriteLine($"  Values     :  avg {Fmt(valueBytes.Average()),9}  │  min {valueBytes.Min(),5} B  │  max {valueBytes.Max(),7} B  │  total {Kb(totalValueBytes)}");
+            TestContext.WriteLine($"  Pairs      :  avg {Fmt(keyBytes.Average() + valueBytes.Average()),9}  │                              │  total {Kb(totalPairBytes)}");
+            TestContext.WriteLine("── Timing ──────────────────────────────────────────────────────");
+            TestContext.WriteLine($"  Total      : {elapsedMs,7} ms  (limit {timeLimitMs / 1000} s)");
+            TestContext.WriteLine($"  Per var    : {elapsedMs / (double)perfVariables.Count,9:F2} ms");
+            TestContext.WriteLine($"  Throughput : {totalPairBytes / 1024.0 / (elapsedMs / 1000.0),7:F1} KB/s");
+            TestContext.WriteLine("────────────────────────────────────────────────────────────────");
 
             output.AssertSuccess();
 
@@ -447,14 +476,12 @@ namespace Calamari.Tests.Fixtures.Bash
                 return;
             }
 
-            // Verify the variable count reported by the script.
             var countLine = output.GetOutputForLineContaining("VariableCount=");
             var loadedCount = int.Parse(Regex.Match(countLine, @"VariableCount=(\d+)").Groups[1].Value);
             loadedCount.Should().BeGreaterThanOrEqualTo(
                 variableCount,
                 $"octopus_parameters should contain at least the {variableCount} variables we passed in");
 
-            // Spot-check: a sentinel variable injected by BuildPerformanceTestVariables must survive the round-trip.
             output.AssertOutput("SpotCheck=PerfSentinelValue");
 
             elapsedMs.Should().BeLessThan(
@@ -542,7 +569,7 @@ namespace Calamari.Tests.Fixtures.Bash
         static string PerfMediumValue(int i) => (i % 5) switch
         {
             0 => $"Server=tcp:sql{i % 3}.database.windows.net,1433;Initial Catalog=AppDb{i % 10};User Id=svc_app;Password=P@ssw0rd{i:D4}!;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;",
-            1 => $"DefaultEndpointsProtocol=https;AccountName=storage{i % 5}acct;AccountKey=dGhpcyBpcyBhIGZha2Uga2V5IGZvciBzdG9yYWdlIGFjY291bnQ{i:D4}==;EndpointSuffix=core.windows.net",
+            1 => $"DefaultEndpointsProtocol=https;AccountName=storage{i % 5}acct;AccountKey=FAKE-KEY-NOT-A-SECRET-{i:D4};EndpointSuffix=core.windows.net",
             2 => $"https://login.microsoftonline.com/{i:D8}-aaaa-bbbb-cccc-{i:D12}/oauth2/v2.0/token",
             3 => $"cache{i % 2}.redis.cache.windows.net:6380,password=cacheSecret{i:D4}==,ssl=true,abortConnect=false,connectTimeout=5000,syncTimeout=3000",
             _ => $"https://nuget.pkg.github.com/MyOrganisation{i % 3}/index.json?api-version=6.0",
@@ -590,10 +617,10 @@ namespace Calamari.Tests.Fixtures.Bash
             for (var line = 0; line < 60; line++)
                 sb.AppendLine($"{b64.Substring((i + line) % 4, 60)}{i * 31337 + line * 7:D8}==");
             sb.AppendLine("-----END CERTIFICATE-----");
-            sb.AppendLine("-----BEGIN PRIVATE KEY-----");
+            sb.AppendLine("-----BEGIN FAKE TEST KEY-----");
             for (var line = 0; line < 52; line++)
                 sb.AppendLine($"{b64.Substring((i + line + 2) % 4, 60)}{i * 99991 + line * 13:D8}Ag==");
-            sb.AppendLine("-----END PRIVATE KEY-----");
+            sb.AppendLine("-----END FAKE TEST KEY-----");
             sb.AppendLine("-----BEGIN CERTIFICATE-----");
             for (var line = 0; line < 42; line++)
                 sb.AppendLine($"{b64.Substring((i + line + 1) % 4, 60)}{i * 65537 + line * 11:D8}==");
