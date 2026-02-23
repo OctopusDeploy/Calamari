@@ -27,7 +27,7 @@ namespace Calamari.Common.Plumbing.Variables
 
         public static string IndexedPackagePurpose(string packageReferenceName) => $"Octopus.Action.Package[{packageReferenceName}].Purpose";
         
-        public static string HelmValueYamlPath(string packageReferenceName) => $"Octopus.Action.Package[{packageReferenceName}].HelmValueYamlPath";
+        public static string HelmValueYamlPath(string packageReferenceName) => $"Octopus.Action.Package[{packageReferenceName}].HelmReplacementPath";
         
         public static string IndexedOriginalPath(string packageReferenceName)
         {
