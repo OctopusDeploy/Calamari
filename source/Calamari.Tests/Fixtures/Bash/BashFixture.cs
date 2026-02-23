@@ -6,6 +6,8 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using Calamari.Common.Features.Processes;
+using Calamari.Common.Features.Scripting;
+using Calamari.Common.Features.Scripting.Bash;
 using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Variables;
@@ -494,37 +496,73 @@ namespace Calamari.Tests.Fixtures.Bash
         public void ShouldNotLoadOctopusParametersWhenNotUsed(int variableCount)
         {
             // This test verifies that when a script doesn't use octopus_parameters,
-            // the array is NOT loaded, avoiding the ~6-7s overhead for large variable sets.
+            // the encrypted variable string markers are still present in the configuration file
+            // (meaning the data is available for get_octopusvariable), but the array
+            // is NOT loaded, avoiding the ~6-7s overhead for large variable sets.
             var perfVariables = BuildPerformanceTestVariables(variableCount);
             var variables = new Dictionary<string, string>(perfVariables)
                                 .AddFeatureToggleToDictionary(new List<FeatureToggle?> { FeatureToggle.BashParametersArrayFeatureToggle });
 
-            var stopwatch = Stopwatch.StartNew();
-            var (output, _) = RunScript("no-octopus-parameters.sh", variables);
-            stopwatch.Stop();
+            var scriptFile = GetFixtureResource("Scripts", "no-octopus-parameters.sh");
+            var workingDirectory = Path.GetDirectoryName(scriptFile);
+            
+            // Create the configuration file to inspect it
+            var script = new Script(scriptFile);
+            var calamariVariables = new CalamariVariables();
+            foreach (var kvp in variables)
+                calamariVariables.Set(kvp.Key, kvp.Value);
+            
+            var configFile = BashScriptBootstrapper.PrepareConfigurationFile(workingDirectory, 
+                calamariVariables, script);
+            
+            try
+            {
+                // Read the configuration file content
+                var configContent = File.ReadAllText(configFile);
+                
+                // Verify the encrypted variable string markers ARE still present
+                // (because script doesn't use octopus_parameters, the KVP data is NOT included,
+                // so the markers should remain unreplaced in the template)
+                configContent.Should().Contain("#### VARIABLESTRING.IV ####",
+                    "The IV marker should remain unreplaced since the script doesn't use octopus_parameters");
+                configContent.Should().Contain("#### VARIABLESTRING.ENCRYPTED ####",
+                    "The encrypted marker should remain unreplaced since the script doesn't use octopus_parameters");
+                configContent.Should().Contain("scriptUsesOctopusParameters=false",
+                    "The script should be marked as NOT using octopus_parameters");
+                
+                // Now run the script and verify timing
+                var stopwatch = Stopwatch.StartNew();
+                var (output, _) = RunScript("no-octopus-parameters.sh", variables);
+                stopwatch.Stop();
+                var elapsedMs = stopwatch.ElapsedMilliseconds;
 
-            var elapsedMs = stopwatch.ElapsedMilliseconds;
+                // Also measure how long it takes WITH the array loaded for comparison
+                var stopwatch2 = Stopwatch.StartNew();
+                var (output2, _) = RunScript("count-octopus-parameters.sh", variables);
+                stopwatch2.Stop();
+                var elapsedWithArrayMs = stopwatch2.ElapsedMilliseconds;
+                var savedMs = elapsedWithArrayMs - elapsedMs;
 
-            // Also measure how long it takes WITH the array loaded for comparison
-            var stopwatch2 = Stopwatch.StartNew();
-            var (output2, _) = RunScript("count-octopus-parameters.sh", variables);
-            stopwatch2.Stop();
-            var elapsedWithArrayMs = stopwatch2.ElapsedMilliseconds;
-            var savedMs = elapsedWithArrayMs - elapsedMs;
+                TestContext.WriteLine("");
+                TestContext.WriteLine($"Variables:       {variableCount:N0}");
+                TestContext.WriteLine($"Config file size: {new FileInfo(configFile).Length / 1024.0:F1} KB");
+                TestContext.WriteLine($"Without array:   {elapsedMs} ms");
+                TestContext.WriteLine($"With array:      {elapsedWithArrayMs} ms");
+                TestContext.WriteLine($"Time saved:      {savedMs} ms");
 
-            TestContext.WriteLine("");
-            TestContext.WriteLine($"Variables:       {variableCount:N0}");
-            TestContext.WriteLine($"Without array:   {elapsedMs} ms");
-            TestContext.WriteLine($"With array:      {elapsedWithArrayMs} ms");
-            TestContext.WriteLine($"Time saved:      {savedMs} ms");
+                output.AssertSuccess();
+                output.AssertOutput("ScriptRan=true");
+                output.AssertOutput("SentinelValue=PerfSentinelValue");
 
-            output.AssertSuccess();
-            output.AssertOutput("ScriptRan=true");
-            output.AssertOutput("SentinelValue=PerfSentinelValue");
-
-            savedMs.Should().BeGreaterThan(
-                5000,
-                $"Not loading octopus_parameters should save more than 5 seconds with {variableCount:N0} variables");
+                savedMs.Should().BeGreaterThan(
+                    5000,
+                    $"Not loading octopus_parameters should save more than 5 seconds with {variableCount:N0} variables");
+            }
+            finally
+            {
+                if (File.Exists(configFile))
+                    File.Delete(configFile);
+            }
         }
 
         // ---------------------------------------------------------------------------

@@ -48,16 +48,21 @@ namespace Calamari.Common.Features.Scripting.Bash
 
             var encryptedVariables = EncryptVariables(variables);
             builder.Replace("#### VariableDeclarations ####", string.Join(LinuxNewLine, GetVariableSwitchConditions(encryptedVariables)));
-
             if (featureEnabled)
             {
-                var variableString = GetEncryptedVariablesKvp(variables);
-                builder.Replace("#### VARIABLESTRING.IV ####", variableString.iv);
-                builder.Replace("#### VARIABLESTRING.ENCRYPTED ####", variableString.encrypted);
-                
-                // Check if the user script or any script modules use octopus_parameters
                 var scriptUsesOctopusParameters = ScriptUsesOctopusParameters(script, variables);
-                builder.Replace("#### SCRIPT_USES_OCTOPUS_PARAMETERS ####", scriptUsesOctopusParameters ? "true" : "false");
+                // If the script doesn't use octopus_parameters at all, we don't want to bloat the bootstrap script with unused values.
+                if (scriptUsesOctopusParameters)
+                {
+                    var variableString = GetEncryptedVariablesKvp(variables);
+                    builder.Replace("#### VARIABLESTRING.IV ####", variableString.iv);
+                    builder.Replace("#### VARIABLESTRING.ENCRYPTED ####", variableString.encrypted);
+                    builder.Replace("#### SCRIPT_USES_OCTOPUS_PARAMETERS ####", "true");
+                }
+                else
+                {
+                    builder.Replace("#### SCRIPT_USES_OCTOPUS_PARAMETERS ####", "false");
+                }
             }
             else
             {
@@ -83,11 +88,9 @@ namespace Calamari.Common.Features.Scripting.Bash
             const string pattern = @"octopus_parameters\[";
             var regex = new System.Text.RegularExpressions.Regex(pattern);
 
-            // Check the main user script
             if (File.Exists(script.File) && regex.IsMatch(File.ReadAllText(script.File)))
                 return true;
 
-            // Check any bash script modules that will be sourced
             foreach (var variableName in variables.GetNames().Where(ScriptVariables.IsLibraryScriptModule))
             {
                 if (ScriptVariables.GetLibraryScriptModuleLanguage(variables, variableName) == ScriptSyntax.Bash)
