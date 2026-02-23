@@ -735,7 +735,7 @@ namespace Calamari.ArgoCD.Conventions
         HelmRefUpdatedResult UpdateHelmImageValues(
             string rootPath,
             HelmValuesFileImageUpdateTarget target,
-            List<ContainerImageReference> imagesToUpdate)
+            IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
         {
             var filepath = Path.Combine(rootPath, target.Path, target.FileName);
             log.Info($"Processing file at {filepath}.");
