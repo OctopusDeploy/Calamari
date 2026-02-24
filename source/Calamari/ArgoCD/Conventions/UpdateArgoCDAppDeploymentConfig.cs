@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System.Linq;
+using System.Net.Mime;
 using Calamari.ArgoCD.Models;
 
 namespace Calamari.ArgoCD.Conventions
@@ -12,6 +14,11 @@ namespace Calamari.ArgoCD.Conventions
         {
             CommitParameters = commitParameters;
             ImageReferences = imageReferences;
+        }
+
+        public bool HasStepBasedHelmValueReferences()
+        {
+            return ImageReferences.Any(ir => ir.HelmReference is not null);
         }
     }
 }

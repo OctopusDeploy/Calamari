@@ -1395,7 +1395,6 @@ service:
                 [PackageVariables.HelmValueYamlPath("nginx")] = "image.nginx", //NOTE: no .Values to start, and no leading .
                 [ProjectVariables.Slug] = ProjectSlug,
                 [DeploymentEnvironment.Slug] = EnvironmentSlug,
-                [SpecialVariables.Git.UseHelmValueYamlPathFromStep] = "true",
             };
             var runningDeployment = new RunningDeployment(null, variables);
             runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
@@ -1482,7 +1481,6 @@ service:
                 [PackageVariables.HelmValueYamlPath("nginx")] = "image.nginx", //NOTE: no .Values to start, and no leading .
                 [ProjectVariables.Slug] = ProjectSlug,
                 [DeploymentEnvironment.Slug] = EnvironmentSlug,
-                [SpecialVariables.Git.UseHelmValueYamlPathFromStep] = "true",
             };
             var runningDeployment = new RunningDeployment(null, variables);
             runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;

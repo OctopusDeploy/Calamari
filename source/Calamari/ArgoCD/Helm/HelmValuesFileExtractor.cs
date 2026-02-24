@@ -12,13 +12,10 @@ namespace Calamari.ArgoCD.Helm
     public class HelmValuesFileExtractor
     {
         readonly List<ApplicationSourceWithMetadata> helmSources;
-        
-        readonly string defaultRegistry;
 
-        public HelmValuesFileExtractor(Application toUpdate, string defaultRegistry)
+        public HelmValuesFileExtractor(Application toUpdate)
         {
             helmSources = toUpdate.GetSourcesWithMetadata().Where(s => s.SourceType == SourceType.Helm).ToList();
-            this.defaultRegistry = defaultRegistry;
         }
 
         public IReadOnlyCollection<string> GetInlineValuesFilesReferencedByHelmSource(ApplicationSourceWithMetadata helmSource)

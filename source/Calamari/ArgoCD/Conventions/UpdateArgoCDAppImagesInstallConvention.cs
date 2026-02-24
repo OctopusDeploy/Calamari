@@ -306,30 +306,34 @@ namespace Calamari.ArgoCD.Conventions
                 log.WarnFormat("The source '{0}' contains a Ref, only referenced files will be updated. Please create another source with the same URL if you wish to update files under the path.", sourceWithMetadata.SourceIdentity);
             }
 
-            if (!deploymentConfig.ImageReferences.All(p => p.HelmReference is null))
+            using var repository = CreateRepository(gitCredentials, applicationSource, repositoryFactory);
+            if (deploymentConfig.HasStepBasedHelmValueReferences())
             {
-                var helmTargetsForRefSource = new HelmValuesFileUpdateTargetParser(applicationFromYaml, defaultRegistry)
-                    .GetHelmTargetsForRefSource(sourceWithMetadata);
+                if (applicationFromYaml.Metadata.Annotations.ContainsKey(ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(new ApplicationSourceName(sourceWithMetadata.Source.Name))))
+                {
+                    log.Warn($"Application {applicationFromYaml.Metadata.Name} specifies helm-value annotations which have been superseded by container-values specified in the step's configuration");
+                }
 
-                LogHelmSourceConfigurationProblems(helmTargetsForRefSource.Problems);
-
-                using var repository = CreateRepository(gitCredentials, applicationSource, repositoryFactory);
-                return ProcessHelmUpdateTargets(
-                                                applicationFromYaml,
-                                                repository,
-                                                deploymentConfig,
-                                                sourceWithMetadata,
-                                                helmTargetsForRefSource.Targets,
-                                                gateway);
+                return ProcessRefSource(applicationFromYaml,
+                                        sourceWithMetadata,
+                                        repository,
+                                        deploymentConfig,
+                                        defaultRegistry,
+                                        gateway);
             }
 
-            return ProcessRefSourceUsingStepVariables(applicationFromYaml,
-                                                      sourceWithMetadata,
-                                                      gitCredentials,
-                                                      repositoryFactory,
-                                                      deploymentConfig,
-                                                      defaultRegistry,
-                                                      gateway);
+            var helmTargetsForRefSource = new HelmValuesFileUpdateTargetParser(applicationFromYaml, defaultRegistry)
+                .GetHelmTargetsForRefSource(sourceWithMetadata);
+            LogHelmSourceConfigurationProblems(helmTargetsForRefSource.Problems);
+
+            
+            return ProcessHelmUpdateTargets(
+                                            applicationFromYaml,
+                                            repository,
+                                            deploymentConfig,
+                                            sourceWithMetadata,
+                                            helmTargetsForRefSource.Targets,
+                                            gateway);
         }
 
         /// <returns>Images that were updated</returns>
@@ -396,30 +400,30 @@ namespace Calamari.ArgoCD.Conventions
                 return new SourceUpdateResult(new HashSet<string>(), string.Empty, []);
             }
 
-            if (!deploymentConfig.ImageReferences.All(p => p.HelmReference is null))
+            if (deploymentConfig.HasStepBasedHelmValueReferences())
             {
-                return ProcessHelmSourceUsingAnnotations(applicationFromYaml,
-                                                         sourceWithMetadata,
-                                                         gitCredentials,
-                                                         repositoryFactory,
-                                                         deploymentConfig,
-                                                         defaultRegistry,
-                                                         gateway,
-                                                         applicationSource);
+                if (applicationFromYaml.Metadata.Annotations.ContainsKey(ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(new ApplicationSourceName(sourceWithMetadata.Source.Name))))
+                {
+                    log.Warn($"Application {applicationFromYaml.Metadata.Name} specifies helm-value annotations which have been superseded by container-values specified in the step's configuration");
+                }
+
+                return ProcessHelmUpdateTargetsWithStepVariables(applicationFromYaml,
+                                                                 gitCredentials,
+                                                                 repositoryFactory,
+                                                                 deploymentConfig,
+                                                                 sourceWithMetadata,
+                                                                 defaultRegistry,
+                                                                 gateway);
             }
 
-            if (applicationFromYaml.Metadata.Annotations.ContainsKey(ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(sourceWithMetadata.Source.Name));
-            {
-                log.Warn($"Application {applicationFromYaml.Metadata.Name} specifies helm-value annotations which have been superseded by container-values specified in the step's configuration");
-            }
-
-            return ProcessHelmUpdateTargetsWithStepVariables(applicationFromYaml,
-                                                             gitCredentials,
-                                                             repositoryFactory,
-                                                             deploymentConfig,
-                                                             sourceWithMetadata,
-                                                             defaultRegistry,
-                                                             gateway);
+            return ProcessHelmSourceUsingAnnotations(applicationFromYaml,
+                                                     sourceWithMetadata,
+                                                     gitCredentials,
+                                                     repositoryFactory,
+                                                     deploymentConfig,
+                                                     defaultRegistry,
+                                                     gateway,
+                                                     applicationSource);
         }
 
         SourceUpdateResult ProcessHelmSourceUsingAnnotations(Application applicationFromYaml,
@@ -516,17 +520,13 @@ namespace Calamari.ArgoCD.Conventions
             string defaultRegistry,
             ArgoCDGatewayDto gateway)
         {
-            var extractor = new HelmValuesFileExtractor(applicationFromYaml, defaultRegistry);
+            var extractor = new HelmValuesFileExtractor(applicationFromYaml);
             var valuesFilesInHelmSource = extractor.GetInlineValuesFilesReferencedByHelmSource(sourceWithMetadata);
 
             //Add the implicit value file if needed
             using var repository = CreateRepository(gitCredentials, sourceWithMetadata.Source, repositoryFactory);
             var implicitValuesFile = HelmDiscovery.TryFindValuesFile(fileSystem, sourceWithMetadata.Source.Path!);
-            var filesToUpdate = valuesFilesInHelmSource.ToList();
-            if (implicitValuesFile != null && !valuesFilesInHelmSource.Contains(implicitValuesFile))
-            {
-                filesToUpdate.Add(implicitValuesFile);
-            }
+            var filesToUpdate = implicitValuesFile == null ? valuesFilesInHelmSource : valuesFilesInHelmSource.Append(implicitValuesFile); 
 
             filesToUpdate = filesToUpdate.Select(file => Path.Combine(repository.WorkingDirectory, file)).ToList();
             return ProcessHelmValuesFiles(filesToUpdate.ToHashSet(),
@@ -571,19 +571,17 @@ namespace Calamari.ArgoCD.Conventions
             return new SourceUpdateResult(new HashSet<string>(), string.Empty, []);
         }
 
-        SourceUpdateResult ProcessRefSourceUsingStepVariables(Application applicationFromYaml,
-                                                              ApplicationSourceWithMetadata sourceWithMetadata,
-                                                              Dictionary<string, GitCredentialDto> gitCredentials,
-                                                              RepositoryFactory repositoryFactory,
-                                                              UpdateArgoCDAppDeploymentConfig deploymentConfig,
-                                                              string defaultRegistry,
-                                                              ArgoCDGatewayDto gateway)
+        SourceUpdateResult ProcessRefSource(Application applicationFromYaml,
+                                            ApplicationSourceWithMetadata sourceWithMetadata,
+                                            RepositoryWrapper repository,
+                                            UpdateArgoCDAppDeploymentConfig deploymentConfig,
+                                            string defaultRegistry,
+                                            ArgoCDGatewayDto gateway)
         {
-            var extractor = new HelmValuesFileExtractor(applicationFromYaml, defaultRegistry);
-            var valuesFilesInHelmSource = extractor.GetValueFilesReferencedInRefSource(sourceWithMetadata);
-            using var repository = CreateRepository(gitCredentials, sourceWithMetadata.Source, repositoryFactory);
-            var absFilePaths = valuesFilesInHelmSource.Select(f => Path.Combine(repository.WorkingDirectory, f));
-            return ProcessHelmValuesFiles(absFilePaths.ToHashSet(),
+            var extractor = new HelmValuesFileExtractor(applicationFromYaml);
+            var valuesFiles = extractor.GetValueFilesReferencedInRefSource(sourceWithMetadata)
+                                                   .Select(file => Path.Combine(repository.WorkingDirectory, file));
+            return ProcessHelmValuesFiles(valuesFiles.ToHashSet(),
                                          defaultRegistry,
                                          repository,
                                          deploymentConfig,
