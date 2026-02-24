@@ -266,7 +266,7 @@ namespace Calamari.ArgoCD.Conventions
             {
                 log.Verbose($"Reading files from {applicationSource.Path}");
 
-                var (updatedFiles, updatedImages, patchedFiles) = UpdateKustomizeYaml(repository.WorkingDirectory, applicationSource.Path!, defaultRegistry, deploymentConfig.PackageWithHelmReference);
+                var (updatedFiles, updatedImages, patchedFiles) = UpdateKustomizeYaml(repository.WorkingDirectory, applicationSource.Path!, defaultRegistry, deploymentConfig.ImageReferences);
                 if (updatedImages.Count > 0)
                 {
                     var pushResult = PushToRemote(repository,
@@ -306,7 +306,7 @@ namespace Calamari.ArgoCD.Conventions
                 log.WarnFormat("The source '{0}' contains a Ref, only referenced files will be updated. Please create another source with the same URL if you wish to update files under the path.", sourceWithMetadata.SourceIdentity);
             }
 
-            if (!deploymentConfig.PackageWithHelmReference.All(p => p.HelmReference is null))
+            if (!deploymentConfig.ImageReferences.All(p => p.HelmReference is null))
             {
                 var helmTargetsForRefSource = new HelmValuesFileUpdateTargetParser(applicationFromYaml, defaultRegistry)
                     .GetHelmTargetsForRefSource(sourceWithMetadata);
@@ -353,7 +353,7 @@ namespace Calamari.ArgoCD.Conventions
             {
                 log.Verbose($"Reading files from {applicationSource.Path}");
 
-                var (updatedFiles, updatedImages, patchedFiles) = UpdateKubernetesYaml(repository.WorkingDirectory, applicationSource.Path!, defaultRegistry, deploymentConfig.PackageWithHelmReference);
+                var (updatedFiles, updatedImages, patchedFiles) = UpdateKubernetesYaml(repository.WorkingDirectory, applicationSource.Path!, defaultRegistry, deploymentConfig.ImageReferences);
                 if (updatedImages.Count > 0)
                 {
                     var pushResult = PushToRemote(repository,
@@ -396,7 +396,7 @@ namespace Calamari.ArgoCD.Conventions
                 return new SourceUpdateResult(new HashSet<string>(), string.Empty, []);
             }
 
-            if (!deploymentConfig.PackageWithHelmReference.All(p => p.HelmReference is null))
+            if (!deploymentConfig.ImageReferences.All(p => p.HelmReference is null))
             {
                 return ProcessHelmSourceUsingAnnotations(applicationFromYaml,
                                                          sourceWithMetadata,
@@ -406,6 +406,11 @@ namespace Calamari.ArgoCD.Conventions
                                                          defaultRegistry,
                                                          gateway,
                                                          applicationSource);
+            }
+
+            if (applicationFromYaml.Metadata.Annotations.ContainsKey(ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(sourceWithMetadata.Source.Name));
+            {
+                log.Warn($"Application {applicationFromYaml.Metadata.Name} specifies helm-value annotations which have been superseded by container-values specified in the step's configuration");
             }
 
             return ProcessHelmUpdateTargetsWithStepVariables(applicationFromYaml,
@@ -470,7 +475,8 @@ namespace Calamari.ArgoCD.Conventions
         {
             var results = targets.Select(t => UpdateHelmImageValues(repository.WorkingDirectory,
                                                                     t,
-                                                                    deploymentConfig.PackageWithHelmReference))
+                                             deploymentConfig.ImageReferences
+                                         ))
                                  .ToList();
 
             var updatedImages = results.SelectMany(r => r.ImagesUpdated).ToHashSet();
@@ -543,7 +549,7 @@ namespace Calamari.ArgoCD.Conventions
             Func<string, IContainerImageReplacer> imageReplacerFactory = yaml => new HelmValuesImageReplaceStepVariables(yaml, defaultRegistry, log);
             log.Verbose($"Found {filesToUpdate.Count} yaml files to process");
 
-            var (updatedFiles, updatedImages, patchedFiles) = Update(repository.WorkingDirectory, deploymentConfig.PackageWithHelmReference, filesToUpdate.ToHashSet(), imageReplacerFactory);
+            var (updatedFiles, updatedImages, patchedFiles) = Update(repository.WorkingDirectory, deploymentConfig.ImageReferences, filesToUpdate.ToHashSet(), imageReplacerFactory);
             if (updatedImages.Count > 0)
             {
                 var pushResult = PushToRemote(repository,
@@ -575,8 +581,6 @@ namespace Calamari.ArgoCD.Conventions
         {
             var extractor = new HelmValuesFileExtractor(applicationFromYaml, defaultRegistry);
             var valuesFilesInHelmSource = extractor.GetValueFilesReferencedInRefSource(sourceWithMetadata);
-            //these files are relative to repo - so need to path them wrt repository once checked out.
-
             using var repository = CreateRepository(gitCredentials, sourceWithMetadata.Source, repositoryFactory);
             var absFilePaths = valuesFilesInHelmSource.Select(f => Path.Combine(repository.WorkingDirectory, f));
             return ProcessHelmValuesFiles(absFilePaths.ToHashSet(),

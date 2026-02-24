@@ -15,7 +15,7 @@ namespace Calamari.ArgoCD.Models
             FileName = fileName;
             ImagePathDefinitions = imagePathDefinitions;
         }
-
+    
         public string Path { get; }
         public string DefaultClusterRegistry { get; }
         
