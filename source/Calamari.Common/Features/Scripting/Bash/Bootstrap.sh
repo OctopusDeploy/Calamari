@@ -278,12 +278,12 @@ function decrypt_and_parse_variables {
 }
 
 function _ensure_octopus_parameters_loaded {
-    # Load octopus_parameters if not already loaded and feature toggle is on
-    if [[ "${_octopus_parameters_loaded:-false}" != "true" ]] && [[ "$bashParametersArrayFeatureToggle" == "true" ]]; then
+    # Load octopus_parameters if feature toggle is enabled and Bash version supports it
+    bashParametersArrayFeatureToggle=#### BashParametersArrayFeatureToggle ####
+    if [[ "$bashParametersArrayFeatureToggle" == "true" ]]; then
         if (( ${BASH_VERSINFO[0]:-0} > 4 || (${BASH_VERSINFO[0]:-0} == 4 && ${BASH_VERSINFO[1]:-0} > 2) )); then
             decrypt_and_parse_variables "#### VARIABLESTRING.ENCRYPTED ####" "#### VARIABLESTRING.IV ####"
         fi
-        _octopus_parameters_loaded=true
     fi
 }
 
@@ -351,7 +351,6 @@ function report_kubernetes_manifest_file
   report_kubernetes_manifest "$MANIFEST" "$NAMESPACE"
 }
 
-bashParametersArrayFeatureToggle=#### BashParametersArrayFeatureToggle ####
 scriptUsesOctopusParameters=#### SCRIPT_USES_OCTOPUS_PARAMETERS ####
 
 # Eagerly load octopus_parameters only if the user script actually uses it
