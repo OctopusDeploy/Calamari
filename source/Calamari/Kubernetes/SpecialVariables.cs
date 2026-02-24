@@ -75,8 +75,6 @@ namespace Calamari.Kubernetes
             public static readonly string InputPath = "Octopus.Action.ArgoCD.InputPath";
 
             public static readonly string PurgeOutput = "Octopus.Action.ArgoCD.PurgeOutputFolder";
-            
-            public static readonly string UseHelmValueYamlPathFromStep = "Octopus.Action.ArgoCD.UseHelmValueYamlPathFromStep";
 
             public static class PullRequest
             {
