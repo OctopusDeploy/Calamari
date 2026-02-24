@@ -11,6 +11,7 @@ using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.Git.GitVendorApiAdapters;
 using Calamari.ArgoCD.Models;
 using Calamari.Common.Commands;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Deployment;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Variables;
@@ -1348,6 +1349,7 @@ service:
                 [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
                 [PackageVariables.IndexedImage("alpine")] = "alpine:2.2",
                 [PackageVariables.IndexedPackagePurpose("alpine")] = "DockerImageReference",
+                [KnownVariables.EnabledFeatureToggles] = OctopusFeatureToggles.KnownSlugs.ArgoCDHelmReplacePathFromContainerReferenceFeatureToggle,
             };
 
             //Act
@@ -1394,6 +1396,7 @@ service:
                 [PackageVariables.HelmReplacementPath("nginx")] = "image.nginx", //NOTE: no .Values to start, and no leading .
                 [ProjectVariables.Slug] = ProjectSlug,
                 [DeploymentEnvironment.Slug] = EnvironmentSlug,
+                [KnownVariables.EnabledFeatureToggles] = OctopusFeatureToggles.KnownSlugs.ArgoCDHelmReplacePathFromContainerReferenceFeatureToggle,
             };
             var runningDeployment = new RunningDeployment(null, variables);
             runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
