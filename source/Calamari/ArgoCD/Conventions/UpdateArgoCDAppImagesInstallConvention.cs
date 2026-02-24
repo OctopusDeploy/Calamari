@@ -470,8 +470,7 @@ namespace Calamari.ArgoCD.Conventions
         {
             var results = targets.Select(t => UpdateHelmImageValues(repository.WorkingDirectory,
                                                                     t,
-                                                                    deploymentConfig.PackageWithHelmReference.Select(ph => ph.ContainerReference).ToList()
-                                                                   ))
+                                                                    deploymentConfig.PackageWithHelmReference))
                                  .ToList();
 
             var updatedImages = results.SelectMany(r => r.ImagesUpdated).ToHashSet();
