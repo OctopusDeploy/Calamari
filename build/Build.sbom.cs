@@ -128,7 +128,7 @@ partial class Build
                         $"SBOM_UPLOADER_TAGS={projectName},{parentName}")
                 .SetArgs(args)
                 .SetRm(true)
-                .SetProcessLogInvocation(false)); // don't log the invocation, as in this version of nuke (8.1.4), it logs the api key
+                .AddProcessRedactedSecrets(DependencyTrackApiKey));
             
             return Task.CompletedTask;
         });
