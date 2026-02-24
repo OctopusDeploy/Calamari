@@ -10,9 +10,9 @@ namespace Calamari.Build;
 
 partial class Build
 {
-    [ParameterFromPasswordStore(Name = "DEPENDENCY_TRACK_URL", SecretReference = "op://Calamari Secrets for Tests/Dependency Track SBOM API/hostname")] 
+    [ParameterFromPasswordStore(Name = "DEPENDENCY_TRACK_URL", SecretReference = "op://Calamari Secrets for Tests/Dependency Track API/hostname")] 
     readonly string? DependencyTrackUrl;
-    [ParameterFromPasswordStore(Name = "DEPENDENCY_TRACK_API_KEY", SecretReference = "op://Calamari Secrets for Tests/Dependency Track SBOM API/credential"), Secret] 
+    [ParameterFromPasswordStore(Name = "DEPENDENCY_TRACK_API_KEY", SecretReference = "op://Calamari Secrets for Tests/Dependency Track API/credential"), Secret] 
     readonly string? DependencyTrackApiKey;
     [Parameter(Name = "OCTOPUS_INTERNAL_DOCKER_REGISTRY")] 
     readonly string? InternalDockerRegistry;
