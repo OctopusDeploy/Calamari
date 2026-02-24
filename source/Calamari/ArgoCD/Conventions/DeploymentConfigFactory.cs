@@ -36,8 +36,7 @@ namespace Calamari.ArgoCD.Conventions
             var commitParameters = CommitParameters(deployment);
             var packageHelmReference = deployment.Variables.GetContainerPackages().Select(p => new ContainerImageReferenceAndHelmReference(ContainerImageReference.FromReferenceString(p.PackageName),
                                                                                                                           p.HelmReference)).ToList();
-            var useHelmValueYamlPathFromStep = deployment.Variables.GetFlag(SpecialVariables.Git.UseHelmValueYamlPathFromStep, false);
-            return new UpdateArgoCDAppDeploymentConfig(commitParameters, packageHelmReference, useHelmValueYamlPathFromStep);
+            return new UpdateArgoCDAppDeploymentConfig(commitParameters, packageHelmReference);
         }
         
         bool RequiresPullRequest(RunningDeployment deployment)

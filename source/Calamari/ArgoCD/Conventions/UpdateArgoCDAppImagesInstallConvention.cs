@@ -306,7 +306,7 @@ namespace Calamari.ArgoCD.Conventions
                 log.WarnFormat("The source '{0}' contains a Ref, only referenced files will be updated. Please create another source with the same URL if you wish to update files under the path.", sourceWithMetadata.SourceIdentity);
             }
 
-            if (!deploymentConfig.UseHelmValueYamlPathFromStep)
+            if (!deploymentConfig.PackageWithHelmReference.All(p => p.HelmReference is null))
             {
                 var helmTargetsForRefSource = new HelmValuesFileUpdateTargetParser(applicationFromYaml, defaultRegistry)
                     .GetHelmTargetsForRefSource(sourceWithMetadata);
@@ -396,7 +396,7 @@ namespace Calamari.ArgoCD.Conventions
                 return new SourceUpdateResult(new HashSet<string>(), string.Empty, []);
             }
 
-            if (!deploymentConfig.UseHelmValueYamlPathFromStep)
+            if (!deploymentConfig.PackageWithHelmReference.All(p => p.HelmReference is null))
             {
                 return ProcessHelmSourceUsingAnnotations(applicationFromYaml,
                                                          sourceWithMetadata,
