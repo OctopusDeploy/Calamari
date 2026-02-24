@@ -24,7 +24,7 @@ namespace Calamari.ArgoCD.Helm
         }
 
         /// <summary>
-        /// Updates the value of yaml a node and returns it as a string (preserving formatting).
+        /// Updates the value of yaml a node and returns it as a strung (preserving formatting).
         /// </summary>
         public static string UpdateNodeValue(string yamlContent, string path, string newValue)
         {
