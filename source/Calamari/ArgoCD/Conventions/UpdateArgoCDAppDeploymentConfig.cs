@@ -1,7 +1,5 @@
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Mime;
-using Calamari.ArgoCD.Models;
 
 namespace Calamari.ArgoCD.Conventions
 {

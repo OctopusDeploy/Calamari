@@ -1382,7 +1382,6 @@ service:
                          ]);
         }
 
-
         [Test]
         public void CanUpdateRefSourceUsingStepBasedVariables()
         {
@@ -1545,8 +1544,6 @@ service:
             var clonedRepoPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             AssertFileContents(clonedRepoPath, existingYamlFile, updatedYamlContent);
         } 
-        
-        
 
         void AssertFileContents(string clonedRepoPath, string relativeFilePath, string expectedContent)
         {
