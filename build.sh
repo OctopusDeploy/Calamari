@@ -73,7 +73,7 @@ else
         "$DOTNET_INSTALL_FILE" --install-dir "$DOTNET_DIRECTORY" --version "$DOTNET_VERSION" --no-path
     fi
     export DOTNET_EXE="$DOTNET_DIRECTORY/dotnet"
-        
+
     # ----- Octopus Deploy Modification -----
     # Update the path with the temporary dotnet exe so it can be found by anything be run out of this shell
     export PATH="$PATH:$DOTNET_DIRECTORY"
