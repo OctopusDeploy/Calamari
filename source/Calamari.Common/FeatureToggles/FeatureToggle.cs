@@ -10,6 +10,7 @@
         OidcAccountsFeatureToggle,
         KubernetesAuthAwsCliWithExecFeatureToggle,
         ForceUtf8ZipFileDecodingFeatureToggle,
-        BashParametersArrayFeatureToggle
+        BashParametersArrayFeatureToggle,
+        argo-cd-helm-replace-path-from-container-reference,
     }
 }

@@ -7,16 +7,18 @@ namespace Calamari.ArgoCD.Conventions
     {
         public GitCommitParameters CommitParameters { get; }
         public List<ContainerImageReferenceAndHelmReference> ImageReferences { get; }
+        public bool UseHelmReferenceFromContainer { get; }
 
-        public UpdateArgoCDAppDeploymentConfig(GitCommitParameters commitParameters, List<ContainerImageReferenceAndHelmReference> imageReferences)
+        public UpdateArgoCDAppDeploymentConfig(GitCommitParameters commitParameters, List<ContainerImageReferenceAndHelmReference> imageReferences, bool useHelmReferenceFromContainer)
         {
             CommitParameters = commitParameters;
             ImageReferences = imageReferences;
+            UseHelmReferenceFromContainer = useHelmReferenceFromContainer;
         }
 
         public bool HasStepBasedHelmValueReferences()
         {
-            return ImageReferences.Any(ir => ir.HelmReference is not null);
+            return ImageReferences.Any(ir => ir.HelmReference is not null) && UseHelmReferenceFromContainer;
         }
     }
 }
