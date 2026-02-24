@@ -1391,7 +1391,7 @@ service:
             {
                 [PackageVariables.IndexedImage("nginx")] = "index.docker.io/nginx:1.27.1",
                 [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
-                [PackageVariables.HelmValueYamlPath("nginx")] = "image.nginx", //NOTE: no .Values to start, and no leading .
+                [PackageVariables.HelmReplacementPath("nginx")] = "image.nginx", //NOTE: no .Values to start, and no leading .
                 [ProjectVariables.Slug] = ProjectSlug,
                 [DeploymentEnvironment.Slug] = EnvironmentSlug,
             };
@@ -1477,7 +1477,7 @@ service:
             {
                 [PackageVariables.IndexedImage("nginx")] = "docker.io/nginx:1.27.1", // NOTE the lack of "index"
                 [PackageVariables.IndexedPackagePurpose("nginx")] = "DockerImageReference",
-                [PackageVariables.HelmValueYamlPath("nginx")] = "image.nginx", //NOTE: no .Values to start, and no leading .
+                [PackageVariables.HelmReplacementPath("nginx")] = "image.nginx", //NOTE: no .Values to start, and no leading .
                 [ProjectVariables.Slug] = ProjectSlug,
                 [DeploymentEnvironment.Slug] = EnvironmentSlug,
             };
