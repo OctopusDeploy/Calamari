@@ -80,10 +80,7 @@ public partial class Build
                            DotNetTest(s => s
                                            .SetProjectFile(ConsolidateCalamariPackagesProject)
                                            .SetConfiguration(Configuration)
-                                           .SetProcessArgumentConfigurator(args =>
-                                                                               args.Add("--logger:\"console;verbosity=detailed\"")
-                                                                                   .Add("--")
-                                                                                   .Add("NUnit.ShowInternalProperties=true")));
+                                           .SetProcessAdditionalArguments("--logger:\"console;verbosity=detailed\"", "--", "NUnit.ShowInternalProperties=true"));
                        });
 
     Target PackConsolidationLibrariesNugetPackages =>
