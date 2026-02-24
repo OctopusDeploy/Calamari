@@ -32,9 +32,6 @@ partial class Build
             var octoVersionInfo = OctoVersionInfo.Value ?? throw new InvalidOperationException("Required OctoVersionInfo was not populated");
             var combinedFileName = $"calamari.{octoVersionInfo.FullSemVer}-sbom.cdx.json";
 
-            // redirect all docker output to stdout, as lots of it goes as stderr when it's just progress messages
-            DockerTasks.DockerLogger = (_, message) => Log.Information("[Docker] {Message}", message);
-            
             EnsureDockerImagesExistLocally();
 
             var results = new List<string>();
@@ -131,7 +128,7 @@ partial class Build
                         $"SBOM_UPLOADER_TAGS={projectName},{parentName}")
                 .SetArgs(args)
                 .SetRm(true)
-                .SetProcessLogInvocation(false)); // don't log the invocation, as in this version of nuke (8.1.4), it logs the api key
+                .AddProcessRedactedSecrets(DependencyTrackApiKey));
             
             return Task.CompletedTask;
         });
