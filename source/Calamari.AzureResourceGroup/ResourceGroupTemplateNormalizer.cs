@@ -14,7 +14,7 @@ namespace Calamari.AzureResourceGroup
             try
             {
                 var envelope = JsonConvert.DeserializeObject<ParameterEnvelope>(json);
-                return JsonConvert.SerializeObject(envelope.Parameters);
+                return JsonConvert.SerializeObject(envelope?.Parameters);
             }
             catch (JsonSerializationException)
             {
@@ -25,7 +25,7 @@ namespace Calamari.AzureResourceGroup
         class ParameterEnvelope
         {
             [JsonProperty("parameters", Required = Required.Always)]
-            public JObject Parameters { get; set; }
+            public required JObject Parameters { get; set; }
         }
     }
 }

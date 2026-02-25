@@ -7,6 +7,7 @@ using Azure.Core;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Resources;
 using Calamari.Azure;
+using Calamari.AzureResourceGroup.Bicep;
 using Calamari.CloudAccounts;
 using Calamari.Testing;
 using Calamari.Testing.Azure;
