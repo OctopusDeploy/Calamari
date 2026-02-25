@@ -66,15 +66,6 @@ namespace Calamari.ArgoCD.Conventions
         {
             log.Verbose("Executing Update Argo CD Application Images");
             var deploymentConfig = deploymentConfigFactory.CreateUpdateImageConfig(deployment);
-
-            var imagesWithNoHelmReference = deploymentConfig.ImageReferences.Where(c => c.HelmReference is null).ToList();
-            if (imagesWithNoHelmReference.Any())
-            {
-                foreach (var image in imagesWithNoHelmReference)
-                {
-                    log.Info($"{image.ContainerReference.ToString()} will not be updated, as no helm yaml path has been specified for it in the step configuration");
-                }
-            }
             
             var repositoryFactory = new RepositoryFactory(log,
                                                           fileSystem,
@@ -134,6 +125,15 @@ namespace Calamari.ArgoCD.Conventions
 
             ValidateApplication(applicationFromYaml);
 
+            var imagesWithNoHelmReference = deploymentConfig.ImageReferences.Where(c => c.HelmReference is null).ToList();
+            if (imagesWithNoHelmReference.Any() && applicationFromYaml.GetSourcesWithMetadata().Any(src => src.SourceType == SourceType.Helm))
+            {
+                foreach (var image in imagesWithNoHelmReference)
+                {
+                    log.Info($"{image.ContainerReference.ToString()} will not be updated in helm sources, as no helm yaml path has been specified for it in the step configuration.");
+                }
+            }
+            
             var updatedSourcesResults = applicationFromYaml.GetSourcesWithMetadata()
                                                            .Select(applicationSource => new
                                                            {
