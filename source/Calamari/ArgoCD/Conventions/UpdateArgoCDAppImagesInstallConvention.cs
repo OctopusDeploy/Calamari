@@ -130,7 +130,7 @@ namespace Calamari.ArgoCD.Conventions
             {
                 foreach (var image in imagesWithNoHelmReference)
                 {
-                    log.Info($"{image.ContainerReference.ToString()} will not be updated in helm sources, as no helm yaml path has been specified for it in the step configuration.");
+                    log.Verbose($"{image.ContainerReference.ToString()} will not be updated in helm sources, as no helm yaml path has been specified for it in the step configuration.");
                 }
             }
             
