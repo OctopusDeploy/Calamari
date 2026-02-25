@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using System;
+using System.Threading.Tasks;
 
 namespace Calamari.ArgoCD.Git.GitVendorApiAdapters
 {
@@ -9,7 +10,11 @@ namespace Calamari.ArgoCD.Git.GitVendorApiAdapters
     /// </summary>
     public interface IGitVendorApiAdapterFactory
     {
-        //bool CanInvokeWith(IRepositoryConnection repositoryConnection);
         IGitVendorApiAdapter? TryCreateGitVendorApiAdaptor(IRepositoryConnection repositoryConnection);
+    }
+    
+    public interface IGitVendorApiAdapterSlowFactory: IGitVendorApiAdapterFactory
+    {
+        
     }
 }

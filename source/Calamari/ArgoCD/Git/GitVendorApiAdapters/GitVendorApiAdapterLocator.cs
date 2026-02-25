@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Calamari.ArgoCD.Git.GitVendorApiAdapters
 {
@@ -19,10 +21,12 @@ namespace Calamari.ArgoCD.Git.GitVendorApiAdapters
         {
             this.gitHubClientFactory = gitHubClientFactory;
         }
- 
-        public IGitVendorApiAdapter? TryCreateGitVendorApiAdaptor(IRepositoryConnection repositoryConnection)
+
+        public IGitVendorApiAdapter TryCreateGitVendorApiAdaptor(IRepositoryConnection repositoryConnection)
         {
-            foreach (var gitClientFactory in gitHubClientFactory)
+            var orderedRequests = gitHubClientFactory
+                .OrderBy(f => typeof(IGitVendorApiAdapterSlowFactory).IsAssignableFrom(f.GetType()));
+            foreach (var gitClientFactory in orderedRequests)
             {
                 var adapter = gitClientFactory.TryCreateGitVendorApiAdaptor(repositoryConnection);
                 if(adapter != null)

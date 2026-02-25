@@ -70,12 +70,8 @@ namespace Calamari.ArgoCD.Git.GitVendorApiAdapters
 			return $"https://{Host}/{organization}/{projectName}/_git/{repositoryId}/commit/{commit}";
 		}
 
-		static readonly string Host = "dev.azure.com";
+		public static readonly string Host = "dev.azure.com";
 
-		public static bool CanInvokeWith(Uri uri)
-		{
-			return uri.Host.Equals(Host);
-		}
 
 		public static (string organization, string projectName, string repositoryId) ExtractUriComponents(Uri uri)
 		{

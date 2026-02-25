@@ -15,6 +15,7 @@ namespace Calamari.ArgoCD.Git.GitVendorApiAdapters
 
         public GitLabApiAdapter(GitLabClient gitLabClient, IRepositoryConnection repositoryConnection, Uri baseUrl)
         {
+            //https://test-gitlab.octopushq.com/api/v4/metadata
             this.gitLabClient = gitLabClient;
             this.baseUrl = baseUrl;
             
@@ -43,8 +44,8 @@ namespace Calamari.ArgoCD.Git.GitVendorApiAdapters
         
         public string GenerateCommitUrl(string commit)
         {
-            //return gitLabProviderApi.GetCommits(projectPath).GetCommit(commit).WebUrl;
-            return $"{baseUrl.AbsoluteUri}/{projectPath}/-/commit/{commit}";
+            return gitLabClient.GetCommits(projectPath).GetCommit(commit).WebUrl;
+            //return $"{baseUrl.AbsoluteUri}/{projectPath}/-/commit/{commit}";
         }
     }
 }

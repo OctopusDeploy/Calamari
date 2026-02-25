@@ -37,6 +37,7 @@ namespace Calamari.Tests.ArgoCD.Git.GitVendorApiAdapters
                                   clonePassword,
                                   (conn) => new BitBucketApiAdapter(conn, new Uri("https://bitbucket.org")));
         }
+
         [Test]
         [Ignore("Test currently used for local development and debugging")]
         public async Task TestGitHubMergeRequest()
@@ -57,6 +58,31 @@ namespace Calamari.Tests.ArgoCD.Git.GitVendorApiAdapters
                                       return new GitHubApiAdapter(client, conn, new Uri("https://github.com/"));
                                   });
         }
+        
+        
+        [Test]
+        [Ignore("Test currently used for local development and debugging")]
+        public async Task TestGitHubEnterpriseMergeRequest()
+        {
+            var defaultBranch = "";
+            var repositoryUrl = "";
+            var cloneUsername = "";
+            var clonePassword = "";
+
+            await TestPullRequest(repositoryUrl,
+                                  defaultBranch,
+                                  cloneUsername,
+                                  clonePassword,
+                                  (conn) =>
+                                  {
+                                      var ghaaf = new GitHubEnterpriseServerApiAdapterFactory();
+                                      var r = ghaaf.TryCreateGitVendorApiAdaptor(new GitConnection(cloneUsername, clonePassword, new Uri(repositoryUrl), new GitBranchName(defaultBranch)));
+                                      return r;
+                                      //var credentials = new Credentials(cloneUsername, clonePassword);
+                                      //var client = new GitHubClient(new Connection(new ProductHeaderValue("octopus-deploy-test"))) { Credentials = credentials };
+                                      //return new GitHubApiAdapter(client, conn, new Uri("https://github.com/"));
+                                  });
+        }
 
         [Test]
         [Ignore("Test currently used for local development and debugging")]
@@ -72,6 +98,31 @@ namespace Calamari.Tests.ArgoCD.Git.GitVendorApiAdapters
                                   cloneUsername,
                                   clonePassword,
                                   (conn) => new AzureDevOpsApiAdapter(conn));
+        }
+
+        
+        
+        [Test]
+        [Ignore("Test currently used for local development and debugging")]
+        public async Task TestGitLabEnterpriseMergeRequest()
+        {
+            var defaultBranch = "";
+            var repositoryUrl = "";
+            var cloneUsername = "";
+            var clonePassword = "";
+
+            await TestPullRequest(repositoryUrl,
+                                  defaultBranch,
+                                  cloneUsername,
+                                  clonePassword,
+                                  (conn) =>
+                                  {
+
+                                      var glaaf = new GitLabSelfManagedApiAdapterFactory();
+                                      var res = glaaf.TryCreateGitVendorApiAdaptor(new GitConnection(cloneUsername, clonePassword, new Uri(repositoryUrl), new GitBranchName(defaultBranch)));
+                                      /*var client = new GitLabClient("https://gitlab.com", clonePassword);*/
+                                      return res;
+                                  });
         }
 
         [Test]
@@ -128,6 +179,7 @@ namespace Calamari.Tests.ArgoCD.Git.GitVendorApiAdapters
                                                                      new GitBranchName(defaultBranch),
                                                                      CancellationToken.None);
                 pullRequest.Number.Should().BeGreaterThan(0);
+                var commitUrl = apiAdapter.GenerateCommitUrl(newBranch.Tip.Sha);
             }finally
             {
                 // Attempt to Delete Branch on Remote

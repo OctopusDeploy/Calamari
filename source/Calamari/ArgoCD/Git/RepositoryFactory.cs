@@ -3,8 +3,6 @@ using System;
 using System.IO;
 using Calamari.ArgoCD.Git.GitVendorApiAdapters;
 using System.Linq;
-using Calamari.ArgoCD.Conventions;
-using Calamari.ArgoCD.GitHub;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;

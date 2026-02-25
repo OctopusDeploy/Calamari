@@ -16,6 +16,7 @@ namespace Calamari.ArgoCD.Git.GitVendorApiAdapters
 
         public GitHubApiAdapter(IGitHubClient client, IRepositoryConnection repositoryConnection, Uri baseUrl)
         {
+            
             this.client = client;
             this.baseUrl = baseUrl;
 

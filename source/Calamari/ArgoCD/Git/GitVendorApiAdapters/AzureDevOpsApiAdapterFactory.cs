@@ -1,12 +1,18 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 namespace Calamari.ArgoCD.Git.GitVendorApiAdapters
 {
     public class AzureDevOpsApiAdapterFactory : IGitVendorAgnosticApiAdapterFactory
     {
-        public IGitVendorApiAdapter? TryCreateGitVendorApiAdaptor(IRepositoryConnection repositoryConnection)
+        public IGitVendorApiAdapter TryCreateGitVendorApiAdaptor(IRepositoryConnection repositoryConnection)
         {
-            return AzureDevOpsApiAdapter.CanInvokeWith(repositoryConnection.Url) ? new AzureDevOpsApiAdapter(repositoryConnection) : null;
+            return CanInvokeWith(repositoryConnection.Url) ? new AzureDevOpsApiAdapter(repositoryConnection) : null;
+        }
+
+        static bool CanInvokeWith(Uri uri)
+        {
+            return uri.Host.Equals(AzureDevOpsApiAdapter.Host);
         }
     }
 }

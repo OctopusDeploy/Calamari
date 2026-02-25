@@ -8,6 +8,67 @@ using Octokit.Internal;
 
 namespace Calamari.ArgoCD.Git.GitVendorApiAdapters
 {
+
+    
+    public class GitHubEnterpriseServerApiAdapterFactory: IGitVendorApiAdapterFactory   {
+        
+        public IGitVendorApiAdapter? TryCreateGitVendorApiAdaptor(IRepositoryConnection repositoryConnection)
+        {
+            try
+            {
+                var uri = repositoryConnection.Url.AbsoluteUri.TrimEnd('/');
+                var expectedUri = uri.Substring(0, uri.LastIndexOf('/', uri.LastIndexOf('/') - 1));
+
+                var baseUrl = new Uri(expectedUri);
+                var apiUrl = new Uri(baseUrl, "/api/v3/");
+                
+                var credentials = new Credentials(repositoryConnection.Username, repositoryConnection.Password);
+                var client = CreateGitHubClient(apiUrl, credentials);
+
+                
+                if (!string.IsNullOrEmpty(client.Meta.GetMetadata().Result.InstalledVersion))
+                {
+                    return new GitHubApiAdapter(client, repositoryConnection, baseUrl);
+                }
+            }
+            catch 
+            {
+                return null;
+            }
+
+            return null;
+        }
+        
+        
+        
+        IGitHubClient CreateGitHubClient(Uri githubApiUrl, Credentials? credentials)
+        {
+            var connection = CreateGitHubConnection(githubApiUrl);
+
+            return new GitHubClient(connection)
+            {
+                Credentials = credentials
+            };
+        }
+        IConnection CreateGitHubConnection(Uri githubApiUrl)
+        {
+            var clientHandler = new HttpClientHandler
+            {
+#pragma warning disable DE0003
+                Proxy = WebRequest.DefaultWebProxy
+#pragma warning restore DE0003
+            };
+
+            return new Connection(
+                                  new ProductHeaderValue("octopus-deploy"),
+                                  githubApiUrl,
+                                  new InMemoryCredentialStore(Credentials.Anonymous), // Default defined in Connection
+                                  new HttpClientAdapter(() => clientHandler),
+                                  new SimpleJsonSerializer() // Default defined in Connection
+                                 );
+        }
+    }
+    
     public class GitHubApiAdapterFactory: IGitVendorApiAdapterFactory
     {
         bool CanInvokeWith(IRepositoryConnection repositoryConnection)
