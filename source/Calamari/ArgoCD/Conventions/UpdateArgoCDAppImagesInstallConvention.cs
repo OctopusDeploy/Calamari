@@ -411,9 +411,10 @@ namespace Calamari.ArgoCD.Conventions
 
             if (deploymentConfig.HasStepBasedHelmValueReferences())
             {
-                if (applicationFromYaml.Metadata.Annotations.ContainsKey(ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(new ApplicationSourceName(sourceWithMetadata.Source.Name))))
+                var appName = sourceWithMetadata.Source.Name.IsNullOrEmpty() ? null : new ApplicationSourceName(sourceWithMetadata.Source.Name);
+                if (applicationFromYaml.Metadata.Annotations.ContainsKey(ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(appName)))
                 {
-                    log.Warn($"Application {applicationFromYaml.Metadata.Name} specifies helm-value annotations which have been superseded by container-values specified in the step's configuration");
+                    log.Warn($"Application '{applicationFromYaml.Metadata.Name}' specifies helm-value annotations which have been superseded by values specified in the step's configuration");
                 }
 
                 return ProcessHelmSourceUsingStepVariables(applicationFromYaml,
@@ -532,19 +533,28 @@ namespace Calamari.ArgoCD.Conventions
             var extractor = new HelmValuesFileExtractor(applicationFromYaml);
             var valuesFilesInHelmSource = extractor.GetInlineValuesFilesReferencedByHelmSource(sourceWithMetadata);
 
-
-            using var repository = CreateRepository(gitCredentials, sourceWithMetadata.Source, repositoryFactory);
-            var implicitValuesFile = HelmDiscovery.TryFindValuesFile(fileSystem, sourceWithMetadata.Source.Path!);
-            var filesToUpdate = implicitValuesFile == null ? valuesFilesInHelmSource : valuesFilesInHelmSource.Append(implicitValuesFile);
-
-            filesToUpdate = filesToUpdate.Select(file => Path.Combine(repository.WorkingDirectory, file)).ToList();
-            return ProcessHelmValuesFiles(filesToUpdate.ToHashSet(),
-                                          defaultRegistry,
-                                          repository,
-                                          deploymentConfig,
-                                          gateway,
-                                          sourceWithMetadata,
-                                          applicationFromYaml);
+            using (var repository = CreateRepository(gitCredentials, sourceWithMetadata.Source, repositoryFactory))
+            {
+                Log.Info("1");
+                var filesToUpdate = valuesFilesInHelmSource.Select(file => Path.Combine(repository.WorkingDirectory, file)).ToList();
+                var implicitValuesFile = HelmDiscovery.TryFindValuesFile(fileSystem, Path.Combine(repository.WorkingDirectory, sourceWithMetadata.Source.Path!));
+                if (implicitValuesFile != null)
+                {
+                    filesToUpdate.Add(implicitValuesFile);
+                }
+                Log.Info("5");
+                filesToUpdate = filesToUpdate.Select(file => Path.Combine(repository.WorkingDirectory, file)).ToList();
+                Log.Info("6");
+                var result = ProcessHelmValuesFiles(filesToUpdate.ToHashSet(),
+                                                    defaultRegistry,
+                                                    repository,
+                                                    deploymentConfig,
+                                                    gateway,
+                                                    sourceWithMetadata,
+                                                    applicationFromYaml);
+                Log.Info("10");
+                return result;
+            }
         }
         
         
@@ -581,6 +591,7 @@ namespace Calamari.ArgoCD.Conventions
             var (updatedFiles, updatedImages, patchedFiles) = Update(repository.WorkingDirectory, deploymentConfig.ImageReferences, filesToUpdate.ToHashSet(), imageReplacerFactory);
             if (updatedImages.Count > 0)
             {
+                Log.Info("Trying to push up changes");
                 var pushResult = PushToRemote(repository,
                                               GitReference.CreateFromString(sourceWithMetadata.Source.TargetRevision),
                                               deploymentConfig.CommitParameters,
