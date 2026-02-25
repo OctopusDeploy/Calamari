@@ -62,7 +62,7 @@ namespace Calamari.ArgoCD.Helm
                         fileContent = HelmValuesEditor.UpdateNodeValue(fileContent, existingImageReference.TagPath, replacementImageRef);
                     }
 
-                    updatedImages.Add(matchedUpdate.Reference.ToString());
+                    updatedImages.Add(matchedUpdate.Reference.FriendlyName());
                 }
             }
 

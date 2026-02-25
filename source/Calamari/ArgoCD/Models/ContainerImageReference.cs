@@ -120,7 +120,7 @@ namespace Calamari.ArgoCD.Models
             }
         }
 
-        public override string ToString()
+        public string FriendlyName()
         {
             return string.IsNullOrEmpty(Tag) ? ToOriginalFormatName() : $"{ToOriginalFormatName()}:{Tag}";
         }
