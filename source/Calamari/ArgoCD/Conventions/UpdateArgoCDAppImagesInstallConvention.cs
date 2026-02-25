@@ -66,12 +66,12 @@ namespace Calamari.ArgoCD.Conventions
         {
             log.Verbose("Executing Update Argo CD Application Images");
             var deploymentConfig = deploymentConfigFactory.CreateUpdateImageConfig(deployment);
-
+            
             var repositoryFactory = new RepositoryFactory(log,
-                fileSystem,
-                deployment.CurrentDirectory,
-                gitVendorAgnosticApiAdapterFactory,
-                clock);
+                                                          fileSystem,
+                                                          deployment.CurrentDirectory,
+                                                          gitVendorAgnosticApiAdapterFactory,
+                                                          clock);
 
             var argoProperties = customPropertiesLoader.Load<ArgoCDCustomPropertiesDto>();
 
@@ -85,11 +85,11 @@ namespace Calamari.ArgoCD.Conventions
                                                            {
                                                                var gateway = argoProperties.Gateways.Single(g => g.Id == application.GatewayId);
                                                                return ProcessApplication(application,
-                                                                   gateway,
-                                                                   deploymentScope,
-                                                                   gitCredentials,
-                                                                   repositoryFactory,
-                                                                   deploymentConfig);
+                                                                                         gateway,
+                                                                                         deploymentScope,
+                                                                                         gitCredentials,
+                                                                                         repositoryFactory,
+                                                                                         deploymentConfig);
                                                            })
                                                    .ToList();
 
@@ -103,11 +103,11 @@ namespace Calamari.ArgoCD.Conventions
 
             var gatewayIds = argoProperties.Applications.Select(a => a.GatewayId).ToHashSet();
             outputVariablesWriter.WriteImageUpdateOutput(gatewayIds,
-                gitReposUpdated,
-                totalApplicationsWithSourceCounts,
-                updatedApplicationsWithSources,
-                newImagesWritten.Count
-            );
+                                                         gitReposUpdated,
+                                                         totalApplicationsWithSourceCounts,
+                                                         updatedApplicationsWithSources,
+                                                         newImagesWritten.Count
+                                                        );
         }
 
         ProcessApplicationResult ProcessApplication(
@@ -125,18 +125,27 @@ namespace Calamari.ArgoCD.Conventions
 
             ValidateApplication(applicationFromYaml);
 
+            var imagesWithNoHelmReference = deploymentConfig.ImageReferences.Where(c => c.HelmReference is null).ToList();
+            if (imagesWithNoHelmReference.Any() && applicationFromYaml.GetSourcesWithMetadata().Any(src => src.SourceType == SourceType.Helm))
+            {
+                foreach (var image in imagesWithNoHelmReference)
+                {
+                    log.Verbose($"{image.ContainerReference.ToString()} will not be updated in helm sources, as no helm yaml path has been specified for it in the step configuration.");
+                }
+            }
+            
             var updatedSourcesResults = applicationFromYaml.GetSourcesWithMetadata()
                                                            .Select(applicationSource => new
                                                            {
                                                                Updated = ProcessSource(applicationSource,
-                                                                   applicationFromYaml,
-                                                                   containsMultipleSources,
-                                                                   deploymentScope,
-                                                                   gitCredentials,
-                                                                   repositoryFactory,
-                                                                   deploymentConfig,
-                                                                   application.DefaultRegistry,
-                                                                   gateway),
+                                                                                       applicationFromYaml,
+                                                                                       containsMultipleSources,
+                                                                                       deploymentScope,
+                                                                                       gitCredentials,
+                                                                                       repositoryFactory,
+                                                                                       deploymentConfig,
+                                                                                       application.DefaultRegistry,
+                                                                                       gateway),
                                                                applicationSource,
                                                            })
                                                            .Where(r => r.Updated.ImagesUpdated.Any())
@@ -155,13 +164,13 @@ namespace Calamari.ArgoCD.Conventions
             log.InfoFormat(message, linkifiedAppName);
 
             return new ProcessApplicationResult(
-                application.GatewayId,
-                applicationName.ToApplicationName(),
-                applicationFromYaml.Spec.Sources.Count,
-                applicationFromYaml.Spec.Sources.Count(s => deploymentScope.Matches(ScopingAnnotationReader.GetScopeForApplicationSource(s.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources))),
-                updatedSourcesResults.Select(r => new UpdatedSourceDetail(r.Updated.CommitSha, r.applicationSource.Index, [], r.Updated.PatchedFiles)).ToList(),
-                updatedSourcesResults.SelectMany(r => r.Updated.ImagesUpdated).ToHashSet(),
-                updatedSourcesResults.Select(r => r.applicationSource.Source.OriginalRepoUrl).ToHashSet());
+                                                application.GatewayId,
+                                                applicationName.ToApplicationName(),
+                                                applicationFromYaml.Spec.Sources.Count,
+                                                applicationFromYaml.Spec.Sources.Count(s => deploymentScope.Matches(ScopingAnnotationReader.GetScopeForApplicationSource(s.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources))),
+                                                updatedSourcesResults.Select(r => new UpdatedSourceDetail(r.Updated.CommitSha, r.applicationSource.Index, [], r.Updated.PatchedFiles)).ToList(),
+                                                updatedSourcesResults.SelectMany(r => r.Updated.ImagesUpdated).ToHashSet(),
+                                                updatedSourcesResults.Select(r => r.applicationSource.Source.OriginalRepoUrl).ToHashSet());
         }
 
         void ValidateApplication(Application applicationFromYaml)
@@ -200,39 +209,39 @@ namespace Calamari.ArgoCD.Conventions
                 {
                     return applicationSource.Ref != null
                         ? ProcessRef(applicationFromYaml,
-                            gitCredentials,
-                            repositoryFactory,
-                            deploymentConfig,
-                            sourceWithMetadata,
-                            defaultRegistry,
-                            gateway)
+                                     gitCredentials,
+                                     repositoryFactory,
+                                     deploymentConfig,
+                                     sourceWithMetadata,
+                                     defaultRegistry,
+                                     gateway)
                         : ProcessDirectory(applicationFromYaml,
-                            gitCredentials,
-                            repositoryFactory,
-                            deploymentConfig,
-                            sourceWithMetadata,
-                            defaultRegistry,
-                            gateway);
+                                           gitCredentials,
+                                           repositoryFactory,
+                                           deploymentConfig,
+                                           sourceWithMetadata,
+                                           defaultRegistry,
+                                           gateway);
                 }
                 case SourceType.Helm:
                 {
                     return ProcessHelm(applicationFromYaml,
-                        sourceWithMetadata,
-                        gitCredentials,
-                        repositoryFactory,
-                        deploymentConfig,
-                        defaultRegistry,
-                        gateway);
+                                       sourceWithMetadata,
+                                       gitCredentials,
+                                       repositoryFactory,
+                                       deploymentConfig,
+                                       defaultRegistry,
+                                       gateway);
                 }
                 case SourceType.Kustomize:
                 {
                     return ProcessKustomize(applicationFromYaml,
-                        gitCredentials,
-                        repositoryFactory,
-                        deploymentConfig,
-                        sourceWithMetadata,
-                        defaultRegistry,
-                        gateway);
+                                            gitCredentials,
+                                            repositoryFactory,
+                                            deploymentConfig,
+                                            sourceWithMetadata,
+                                            defaultRegistry,
+                                            gateway);
                 }
                 case SourceType.Plugin:
                 {
@@ -270,17 +279,17 @@ namespace Calamari.ArgoCD.Conventions
                 if (updatedImages.Count > 0)
                 {
                     var pushResult = PushToRemote(repository,
-                        GitReference.CreateFromString(applicationSource.TargetRevision),
-                        deploymentConfig.CommitParameters,
-                        updatedFiles,
-                        updatedImages);
+                                                  GitReference.CreateFromString(applicationSource.TargetRevision),
+                                                  deploymentConfig.CommitParameters,
+                                                  updatedFiles,
+                                                  updatedImages);
 
                     if (pushResult is not null)
                     {
                         outputVariablesWriter.WritePushResultOutput(gateway.Name,
-                            applicationFromYaml.Metadata.Name,
-                            sourceWithMetadata.Index,
-                            pushResult);
+                                                                    applicationFromYaml.Metadata.Name,
+                                                                    sourceWithMetadata.Index,
+                                                                    pushResult);
                         return new SourceUpdateResult(updatedImages, pushResult.CommitSha, patchedFiles);
                     }
                 }
@@ -306,19 +315,34 @@ namespace Calamari.ArgoCD.Conventions
                 log.WarnFormat("The source '{0}' contains a Ref, only referenced files will be updated. Please create another source with the same URL if you wish to update files under the path.", sourceWithMetadata.SourceIdentity);
             }
 
+            using var repository = CreateRepository(gitCredentials, applicationSource, repositoryFactory);
+            if (deploymentConfig.HasStepBasedHelmValueReferences())
+            {
+                if (applicationFromYaml.Metadata.Annotations.ContainsKey(ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(new ApplicationSourceName(sourceWithMetadata.Source.Name))))
+                {
+                    log.Warn($"Application {applicationFromYaml.Metadata.Name} specifies helm-value annotations which have been superseded by container-values specified in the step's configuration");
+                }
+
+                return ProcessRefSourceUsingStepVariables(applicationFromYaml,
+                                        sourceWithMetadata,
+                                        repository,
+                                        deploymentConfig,
+                                        defaultRegistry,
+                                        gateway);
+            }
+
             var helmTargetsForRefSource = new HelmValuesFileUpdateTargetParser(applicationFromYaml, defaultRegistry)
                 .GetHelmTargetsForRefSource(sourceWithMetadata);
 
             LogHelmSourceConfigurationProblems(helmTargetsForRefSource.Problems);
 
-            using var repository = CreateRepository(gitCredentials, applicationSource, repositoryFactory);
             return ProcessHelmUpdateTargets(
-                applicationFromYaml,
-                repository,
-                deploymentConfig,
-                sourceWithMetadata,
-                helmTargetsForRefSource.Targets,
-                gateway);
+                                            applicationFromYaml,
+                                            repository,
+                                            deploymentConfig,
+                                            sourceWithMetadata,
+                                            helmTargetsForRefSource.Targets,
+                                            gateway);
         }
 
         /// <returns>Images that were updated</returns>
@@ -346,17 +370,17 @@ namespace Calamari.ArgoCD.Conventions
                 if (updatedImages.Count > 0)
                 {
                     var pushResult = PushToRemote(repository,
-                        GitReference.CreateFromString(applicationSource.TargetRevision),
-                        deploymentConfig.CommitParameters,
-                        updatedFiles,
-                        updatedImages);
+                                                  GitReference.CreateFromString(applicationSource.TargetRevision),
+                                                  deploymentConfig.CommitParameters,
+                                                  updatedFiles,
+                                                  updatedImages);
 
                     if (pushResult is not null)
                     {
                         outputVariablesWriter.WritePushResultOutput(gateway.Name,
-                            applicationFromYaml.Metadata.Name,
-                            sourceWithMetadata.Index,
-                            pushResult);
+                                                                    applicationFromYaml.Metadata.Name,
+                                                                    sourceWithMetadata.Index,
+                                                                    pushResult);
                         return new SourceUpdateResult(updatedImages, pushResult.CommitSha, patchedFiles);
                     }
 
@@ -385,6 +409,42 @@ namespace Calamari.ArgoCD.Conventions
                 return new SourceUpdateResult(new HashSet<string>(), string.Empty, []);
             }
 
+            if (deploymentConfig.HasStepBasedHelmValueReferences())
+            {
+                var appName = sourceWithMetadata.Source.Name.IsNullOrEmpty() ? null : new ApplicationSourceName(sourceWithMetadata.Source.Name);
+                if (applicationFromYaml.Metadata.Annotations.ContainsKey(ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(appName)))
+                {
+                    log.Warn($"Application '{applicationFromYaml.Metadata.Name}' specifies helm-value annotations which have been superseded by values specified in the step's configuration");
+                }
+
+                return ProcessHelmSourceUsingStepVariables(applicationFromYaml,
+                                                           gitCredentials,
+                                                           repositoryFactory,
+                                                           deploymentConfig,
+                                                           sourceWithMetadata,
+                                                           defaultRegistry,
+                                                           gateway);
+            }
+
+            return ProcessHelmSourceUsingAnnotations(applicationFromYaml,
+                                                     sourceWithMetadata,
+                                                     gitCredentials,
+                                                     repositoryFactory,
+                                                     deploymentConfig,
+                                                     defaultRegistry,
+                                                     gateway,
+                                                     applicationSource);
+        }
+
+        SourceUpdateResult ProcessHelmSourceUsingAnnotations(Application applicationFromYaml,
+                                                             ApplicationSourceWithMetadata sourceWithMetadata,
+                                                             Dictionary<string, GitCredentialDto> gitCredentials,
+                                                             RepositoryFactory repositoryFactory,
+                                                             UpdateArgoCDAppDeploymentConfig deploymentConfig,
+                                                             string defaultRegistry,
+                                                             ArgoCDGatewayDto gateway,
+                                                             ApplicationSource applicationSource)
+        {
             var explicitHelmSources = new HelmValuesFileUpdateTargetParser(applicationFromYaml, defaultRegistry)
                 .GetExplicitValuesFilesToUpdate(sourceWithMetadata);
 
@@ -398,9 +458,9 @@ namespace Calamari.ArgoCD.Conventions
             if (implicitValuesFile != null && explicitHelmSources.Targets.None(t => t.FileName == implicitValuesFile))
             {
                 var (target, problem) = AddImplicitValuesFile(applicationFromYaml,
-                    sourceWithMetadata,
-                    implicitValuesFile,
-                    defaultRegistry);
+                                                              sourceWithMetadata,
+                                                              implicitValuesFile,
+                                                              defaultRegistry);
                 if (target != null)
                     valuesFilesToUpdate.Add(target);
 
@@ -411,11 +471,11 @@ namespace Calamari.ArgoCD.Conventions
             LogHelmSourceConfigurationProblems(valueFileProblems);
 
             return ProcessHelmUpdateTargets(applicationFromYaml,
-                repository,
-                deploymentConfig,
-                sourceWithMetadata,
-                valuesFilesToUpdate,
-                gateway);
+                                            repository,
+                                            deploymentConfig,
+                                            sourceWithMetadata,
+                                            valuesFilesToUpdate,
+                                            gateway);
         }
 
         /// <returns>Images that were updated</returns>
@@ -428,32 +488,117 @@ namespace Calamari.ArgoCD.Conventions
             ArgoCDGatewayDto gateway)
         {
             var results = targets.Select(t => UpdateHelmImageValues(repository.WorkingDirectory,
-                                             t,
-                                             deploymentConfig.ImageReferences
-                                         ))
+                                                                    t,
+                                                                    deploymentConfig.ImageReferences
+                                                                   ))
                                  .ToList();
 
             var updatedImages = results.SelectMany(r => r.ImagesUpdated).ToHashSet();
             if (updatedImages.Count > 0)
             {
                 var patchedFiles = results.Select(r => new FilePathContent(
-                                                      // Replace \ with / so that Calamari running on windows doesn't cause issues when we send back to server
-                                                      r.RelativeFilepath.Replace('\\', '/'),
-                                                      r.JsonPatch is not null ? JsonSerializer.Serialize(r.JsonPatch) : null))
+                                                                           // Replace \ with / so that Calamari running on windows doesn't cause issues when we send back to server
+                                                                           r.RelativeFilepath.Replace('\\', '/'),
+                                                                           r.JsonPatch is not null ? JsonSerializer.Serialize(r.JsonPatch) : null))
                                           .ToList();
 
                 var pushResult = PushToRemote(repository,
-                    GitReference.CreateFromString(sourceWithMetadata.Source.TargetRevision),
-                    deploymentConfig.CommitParameters,
-                    results.Where(r => r.ImagesUpdated.Any()).Select(r => r.RelativeFilepath).ToHashSet(),
-                    updatedImages);
+                                              GitReference.CreateFromString(sourceWithMetadata.Source.TargetRevision),
+                                              deploymentConfig.CommitParameters,
+                                              results.Where(r => r.ImagesUpdated.Any()).Select(r => r.RelativeFilepath).ToHashSet(),
+                                              updatedImages);
 
                 if (pushResult is not null)
                 {
                     outputVariablesWriter.WritePushResultOutput(gateway.Name,
-                        applicationFromYaml.Metadata.Name,
-                        sourceWithMetadata.Index,
-                        pushResult);
+                                                                applicationFromYaml.Metadata.Name,
+                                                                sourceWithMetadata.Index,
+                                                                pushResult);
+                    return new SourceUpdateResult(updatedImages, pushResult.CommitSha, patchedFiles);
+                }
+            }
+
+            return new SourceUpdateResult(new HashSet<string>(), string.Empty, []);
+        }
+
+        SourceUpdateResult ProcessHelmSourceUsingStepVariables(
+            Application applicationFromYaml,
+            Dictionary<string, GitCredentialDto> gitCredentials,
+            RepositoryFactory repositoryFactory,
+            UpdateArgoCDAppDeploymentConfig deploymentConfig,
+            ApplicationSourceWithMetadata sourceWithMetadata,
+            string defaultRegistry,
+            ArgoCDGatewayDto gateway)
+        {
+            var extractor = new HelmValuesFileExtractor(applicationFromYaml);
+            var valuesFilesInHelmSource = extractor.GetInlineValuesFilesReferencedByHelmSource(sourceWithMetadata);
+
+            using var repository = CreateRepository(gitCredentials, sourceWithMetadata.Source, repositoryFactory);
+            var filesToUpdate = valuesFilesInHelmSource.Select(file => Path.Combine(repository.WorkingDirectory, file)).ToList();
+            var implicitValuesFile = HelmDiscovery.TryFindValuesFile(fileSystem, Path.Combine(repository.WorkingDirectory, sourceWithMetadata.Source.Path!));
+            if (implicitValuesFile != null)
+            {
+                implicitValuesFile = Path.Combine(repository.WorkingDirectory, sourceWithMetadata.Source.Path!, implicitValuesFile);
+                filesToUpdate.Add(implicitValuesFile);
+            }
+            filesToUpdate = filesToUpdate.Select(file => Path.Combine(repository.WorkingDirectory, file)).ToList();
+            var result = ProcessHelmValuesFiles(filesToUpdate.ToHashSet(),
+                                                defaultRegistry,
+                                                repository,
+                                                deploymentConfig,
+                                                gateway,
+                                                sourceWithMetadata,
+                                                applicationFromYaml);
+            return result;
+        }
+        
+        
+        SourceUpdateResult ProcessRefSourceUsingStepVariables(Application applicationFromYaml,
+                                            ApplicationSourceWithMetadata sourceWithMetadata,
+                                            RepositoryWrapper repository,
+                                            UpdateArgoCDAppDeploymentConfig deploymentConfig,
+                                            string defaultRegistry,
+                                            ArgoCDGatewayDto gateway)
+        {
+            var extractor = new HelmValuesFileExtractor(applicationFromYaml);
+            var valuesFiles = extractor.GetValueFilesReferencedInRefSource(sourceWithMetadata)
+                                       .Select(file => Path.Combine(repository.WorkingDirectory, file));
+            return ProcessHelmValuesFiles(valuesFiles.ToHashSet(),
+                                          defaultRegistry,
+                                          repository,
+                                          deploymentConfig,
+                                          gateway,
+                                          sourceWithMetadata,
+                                          applicationFromYaml);
+        }
+
+        SourceUpdateResult ProcessHelmValuesFiles(HashSet<string> filesToUpdate,
+                                                  string defaultRegistry,
+                                                  RepositoryWrapper repository,
+                                                  UpdateArgoCDAppDeploymentConfig deploymentConfig,
+                                                  ArgoCDGatewayDto gateway,
+                                                  ApplicationSourceWithMetadata sourceWithMetadata,
+                                                  Application applicationFromYaml)
+        {
+            Func<string, IContainerImageReplacer> imageReplacerFactory = yaml => new HelmValuesImageReplaceStepVariables(yaml, defaultRegistry, log);
+            log.Verbose($"Found {filesToUpdate.Count} yaml files to process");
+
+            var (updatedFiles, updatedImages, patchedFiles) = Update(repository.WorkingDirectory, deploymentConfig.ImageReferences, filesToUpdate.ToHashSet(), imageReplacerFactory);
+            if (updatedImages.Count > 0)
+            {
+                Log.Info("Trying to push up changes");
+                var pushResult = PushToRemote(repository,
+                                              GitReference.CreateFromString(sourceWithMetadata.Source.TargetRevision),
+                                              deploymentConfig.CommitParameters,
+                                              updatedFiles,
+                                              updatedImages);
+
+                if (pushResult is not null)
+                {
+                    outputVariablesWriter.WritePushResultOutput(gateway.Name,
+                                                                applicationFromYaml.Metadata.Name,
+                                                                sourceWithMetadata.Index,
+                                                                pushResult);
                     return new SourceUpdateResult(updatedImages, pushResult.CommitSha, patchedFiles);
                 }
             }
@@ -477,13 +622,13 @@ namespace Calamari.ArgoCD.Conventions
                         if (helmSourceIsMissingImagePathAnnotation.RefSourceIdentity == null)
                         {
                             log.WarnFormat("The Helm source '{0}' is missing an annotation for the image replace path. It will not be updated.",
-                                helmSourceIsMissingImagePathAnnotation.SourceIdentity);
+                                           helmSourceIsMissingImagePathAnnotation.SourceIdentity);
                         }
                         else
                         {
                             log.WarnFormat("The Helm source '{0}' is missing an annotation for the image replace path. The source '{1}' will not be updated.",
-                                helmSourceIsMissingImagePathAnnotation.SourceIdentity,
-                                helmSourceIsMissingImagePathAnnotation.RefSourceIdentity);
+                                           helmSourceIsMissingImagePathAnnotation.SourceIdentity,
+                                           helmSourceIsMissingImagePathAnnotation.RefSourceIdentity);
                         }
 
                         log.WarnFormat("Annotation creation documentation can be found {0}.", log.FormatShortLink("argo-cd-helm-image-annotations", "here"));
@@ -515,18 +660,18 @@ namespace Calamari.ArgoCD.Conventions
             string defaultRegistry)
         {
             var imageReplacePaths = ScopingAnnotationReader.GetImageReplacePathsForApplicationSource(
-                applicationSource.Source.Name.ToApplicationSourceName(),
-                applicationFromYaml.Metadata.Annotations,
-                applicationFromYaml.Spec.Sources.Count > 1);
+                                                                                                     applicationSource.Source.Name.ToApplicationSourceName(),
+                                                                                                     applicationFromYaml.Metadata.Annotations,
+                                                                                                     applicationFromYaml.Spec.Sources.Count > 1);
             if (!imageReplacePaths.Any())
             {
                 return (null, new HelmSourceIsMissingImagePathAnnotation(applicationSource.SourceIdentity));
             }
 
             return (new HelmValuesFileImageUpdateTarget(defaultRegistry,
-                        applicationSource.Source.Path,
-                        valuesFilename,
-                        imageReplacePaths), null);
+                                                        applicationSource.Source.Path,
+                                                        valuesFilename,
+                                                        imageReplacePaths), null);
         }
 
         (HashSet<string>, HashSet<string>, List<FilePathContent>) UpdateKubernetesYaml(
@@ -643,10 +788,10 @@ namespace Calamari.ArgoCD.Conventions
 
             log.Verbose("Pushing to remote");
             return repository.PushChanges(commitParameters.RequiresPr,
-                                 commitParameters.Summary,
-                                 commitDescription,
-                                 branchName,
-                                 CancellationToken.None)
+                                          commitParameters.Summary,
+                                          commitDescription,
+                                          branchName,
+                                          CancellationToken.None)
                              .GetAwaiter()
                              .GetResult();
         }
