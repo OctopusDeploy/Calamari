@@ -533,28 +533,23 @@ namespace Calamari.ArgoCD.Conventions
             var extractor = new HelmValuesFileExtractor(applicationFromYaml);
             var valuesFilesInHelmSource = extractor.GetInlineValuesFilesReferencedByHelmSource(sourceWithMetadata);
 
-            using (var repository = CreateRepository(gitCredentials, sourceWithMetadata.Source, repositoryFactory))
+            using var repository = CreateRepository(gitCredentials, sourceWithMetadata.Source, repositoryFactory);
+            var filesToUpdate = valuesFilesInHelmSource.Select(file => Path.Combine(repository.WorkingDirectory, file)).ToList();
+            var implicitValuesFile = HelmDiscovery.TryFindValuesFile(fileSystem, Path.Combine(repository.WorkingDirectory, sourceWithMetadata.Source.Path!));
+            if (implicitValuesFile != null)
             {
-                Log.Info("1");
-                var filesToUpdate = valuesFilesInHelmSource.Select(file => Path.Combine(repository.WorkingDirectory, file)).ToList();
-                var implicitValuesFile = HelmDiscovery.TryFindValuesFile(fileSystem, Path.Combine(repository.WorkingDirectory, sourceWithMetadata.Source.Path!));
-                if (implicitValuesFile != null)
-                {
-                    filesToUpdate.Add(implicitValuesFile);
-                }
-                Log.Info("5");
-                filesToUpdate = filesToUpdate.Select(file => Path.Combine(repository.WorkingDirectory, file)).ToList();
-                Log.Info("6");
-                var result = ProcessHelmValuesFiles(filesToUpdate.ToHashSet(),
-                                                    defaultRegistry,
-                                                    repository,
-                                                    deploymentConfig,
-                                                    gateway,
-                                                    sourceWithMetadata,
-                                                    applicationFromYaml);
-                Log.Info("10");
-                return result;
+                implicitValuesFile = Path.Combine(repository.WorkingDirectory, sourceWithMetadata.Source.Path!, implicitValuesFile);
+                filesToUpdate.Add(implicitValuesFile);
             }
+            filesToUpdate = filesToUpdate.Select(file => Path.Combine(repository.WorkingDirectory, file)).ToList();
+            var result = ProcessHelmValuesFiles(filesToUpdate.ToHashSet(),
+                                                defaultRegistry,
+                                                repository,
+                                                deploymentConfig,
+                                                gateway,
+                                                sourceWithMetadata,
+                                                applicationFromYaml);
+            return result;
         }
         
         
