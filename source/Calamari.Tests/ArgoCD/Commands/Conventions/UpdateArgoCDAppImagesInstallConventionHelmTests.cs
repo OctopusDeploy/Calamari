@@ -1362,9 +1362,10 @@ service:
 
             // Assert
             using var scope = new AssertionScope();
+            
             capturedResults.Should().NotBeNull();
             var actual = capturedResults.Single();
-            actual.UpdatedImages.Should().BeEquivalentTo(["{ Reference = nginx:1.27.1, Comparison = ContainerImageComparison { RegistryMatch = True, ImageNameMatch = True, TagMatch = False } }", "{ Reference = alpine:2.2, Comparison = ContainerImageComparison { RegistryMatch = True, ImageNameMatch = True, TagMatch = False } }"]);
+            actual.UpdatedImages.Should().BeEquivalentTo(["nginx:1.27.1", "alpine:2.2"]);
             actual.GitReposUpdated.Should().HaveCount(1);
             actual.UpdatedSourceDetails.Should().HaveCount(1);
 
