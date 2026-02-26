@@ -104,11 +104,11 @@ public class BicepToArmParameterMapperFixture
                                    "value": "[PLACEHOLDER]"
                                  }
                                }
-                               """;
+                               """.ReplaceLineEndings();
       
       
       
-      var result = BicepToArmParameterMapper.Map(SimpleBicepParametersString, SimpleArmTemplate, variables);
+      var result = BicepToArmParameterMapper.Map(SimpleBicepParametersString, SimpleArmTemplate, variables).ReplaceLineEndings();
 
 
       // Convert so we can ignore Platform specific line endings.
@@ -133,12 +133,12 @@ public class BicepToArmParameterMapperFixture
                                         "value": "banana"
                                       }
                                     }
-                                    """;
+                                    """.ReplaceLineEndings();
       
-      var result = BicepToArmParameterMapper.Map(parameterStringInput, SimpleArmTemplate, variables);
+      var result = BicepToArmParameterMapper.Map(parameterStringInput, SimpleArmTemplate, variables).ReplaceLineEndings();
       
       // Convert so we can ignore Platform specific line endings.
-      Assert.That(result.ToJson(), Is.EqualTo(expectedParameterString.ToJson()));
+      Assert.That(result, Is.EqualTo(expectedParameterString));
     }
 
     [Test]
@@ -167,11 +167,11 @@ public class BicepToArmParameterMapperFixture
                                         "value": "{\"SomeKey\":\"WithAValue\",\"AnotherKey\":\"WithADifferentValue\",\"NestedObject\":{\"NestedObjectKey\":\"YetAnotherValue\"}}"
                                       }
                                     }
-                                    """;
+                                    """.ReplaceLineEndings();
       
-      var result = BicepToArmParameterMapper.Map(parameterStringInput, SimpleArmTemplate, variables);
+      var result = BicepToArmParameterMapper.Map(parameterStringInput, SimpleArmTemplate, variables).ReplaceLineEndings();
       
       // Convert so we can ignore Platform specific line endings.
-      Assert.That(result.ToJson(), Is.EqualTo(expectedParameterString.ToJson()));
+      Assert.That(result, Is.EqualTo(expectedParameterString));
     }
 }
