@@ -1,5 +1,6 @@
 using Calamari.AzureResourceGroup.Bicep;
 using Calamari.Common.Plumbing.Variables;
+using NuGet.Protocol;
 using NUnit.Framework;
 
 namespace Calamari.AzureResourceGroup.Tests.Bicep;
@@ -105,9 +106,14 @@ public class BicepToArmParameterMapperFixture
                                }
                                """;
       
-      var result = BicepToArmParameterMapper.Map(SimpleBicepParametersString, SimpleArmTemplate, variables);
       
-      Assert.That(result, Is.EqualTo(expectedParameterString));
+      
+      var result = BicepToArmParameterMapper.Map(SimpleBicepParametersString, SimpleArmTemplate, variables);
+
+
+      // Convert so we can ignore Platform specific line endings.
+      Assert.That(result.ToJson(), Is.EqualTo(expectedParameterString.ToJson()));
+
     }
 
     [Test]
@@ -131,7 +137,8 @@ public class BicepToArmParameterMapperFixture
       
       var result = BicepToArmParameterMapper.Map(parameterStringInput, SimpleArmTemplate, variables);
       
-      Assert.That(result, Is.EqualTo(expectedParameterString));
+      // Convert so we can ignore Platform specific line endings.
+      Assert.That(result.ToJson(), Is.EqualTo(expectedParameterString.ToJson()));
     }
 
     [Test]
@@ -164,6 +171,7 @@ public class BicepToArmParameterMapperFixture
       
       var result = BicepToArmParameterMapper.Map(parameterStringInput, SimpleArmTemplate, variables);
       
-      Assert.That(result, Is.EqualTo(expectedParameterString));
+      // Convert so we can ignore Platform specific line endings.
+      Assert.That(result.ToJson(), Is.EqualTo(expectedParameterString.ToJson()));
     }
 }
