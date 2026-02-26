@@ -18,7 +18,7 @@ using NUnit.Framework;
 namespace Calamari.AzureResourceGroup.Tests
 {
     [TestFixture]
-    [WindowsTest]
+    [WindowsTest] // NOTE: We should look at having the Azure CLI installed on Linux boxes so that these steps can be tested there, particularly if we're moving cloud to a Ubuntu Default Worker.
     class DeployAzureBicepTemplateCommandFixture
     {
         string clientId;
