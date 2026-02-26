@@ -5,7 +5,6 @@ using Azure.ResourceManager;
 using Azure.ResourceManager.Resources;
 using Azure.ResourceManager.Resources.Models;
 using Calamari.Azure;
-using Calamari.AzureResourceGroup.Arm;
 using Calamari.CloudAccounts;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Processes;
@@ -13,7 +12,6 @@ using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
 using Calamari.Common.Plumbing.Variables;
-using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.AzureResourceGroup.Bicep;
 
@@ -96,13 +94,8 @@ class DeployBicepTemplateBehaviour(ICommandLineRunner commandLineRunner, Templat
 
         var parametersValue = context.Variables.GetRaw(SpecialVariables.Action.Azure.BicepTemplateParameters) ?? string.Empty;
         
-        var parameters = ArmParameterMapper.MatchParameters(parametersValue, ArmParameterMapper.GetArmParameters(template), context.Variables);
+        var parameters = BicepToArmParameterMapper.Map(parametersValue, template, context.Variables);
         
-        // ArmParameterMapper.MatchParameters(parametersValue, template);
-        // var evaluated = parametersString.Map(context.Variables.Evaluate) ?? string.Empty;
-        // var parameters = parameterNormalizer.Normalize(parameters);
-        
-
         return (template, parameters);
     }
 }
