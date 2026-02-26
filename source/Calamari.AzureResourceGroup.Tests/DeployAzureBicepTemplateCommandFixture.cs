@@ -18,7 +18,6 @@ using NUnit.Framework;
 namespace Calamari.AzureResourceGroup.Tests
 {
     [TestFixture]
-    [Category(TestCategory.CompatibleOS.OnlyWindows)]
     class DeployAzureBicepTemplateCommandFixture
     {
         string clientId;
@@ -32,6 +31,8 @@ namespace Calamari.AzureResourceGroup.Tests
         readonly CancellationToken cancellationToken = CancellationTokenSource.Token;
         readonly string packagePath = TestEnvironment.GetTestPath("Packages", "Bicep");
         SubscriptionResource subscriptionResource;
+
+        const string ParameterContent = """[{"Key":"storageAccountName","Value":"#{StorageAccountName}"},{"Key":"location","Value":"#{Location}"},{"Key":"sku","Value":"#{SKU}"}]""";
 
         [OneTimeSetUp]
         public async Task Setup()
@@ -129,7 +130,6 @@ namespace Calamari.AzureResourceGroup.Tests
         public async Task DeployAzureBicepTemplate_InlineSource()
         {
             var templateFileContent = File.ReadAllText(Path.Combine(packagePath, "azure_website_template.bicep"));
-            var paramsFileContent = File.ReadAllText(Path.Combine(packagePath, "parameters.json"));
 
             await CommandTestBuilder.CreateAsync<DeployAzureBicepTemplateCommand, Program>()
                                     .WithArrange(context =>
@@ -137,7 +137,7 @@ namespace Calamari.AzureResourceGroup.Tests
                                                      AddDefaults(context);
                                                      context.Variables.Add(SpecialVariables.Action.Azure.ResourceGroupDeploymentMode, "Complete");
                                                      context.Variables.Add(SpecialVariables.Action.Azure.TemplateSource, "Inline");
-                                                     AddTemplateFiles(context, templateFileContent, paramsFileContent);
+                                                     context.WithDataFile(templateFileContent, "template.bicep");
                                                  })
                                     .Execute();
         }
@@ -152,18 +152,12 @@ namespace Calamari.AzureResourceGroup.Tests
             context.Variables.Add(SpecialVariables.Action.Azure.ResourceGroupName, resourceGroupName);
             context.Variables.Add(SpecialVariables.Action.Azure.ResourceGroupLocation, resourceGroupLocation);
             context.Variables.Add(SpecialVariables.Action.Azure.ResourceGroupDeploymentMode, "Complete");
-            context.Variables.Add(SpecialVariables.Action.Azure.TemplateParameters, "parameters.json");
+            context.Variables.Add(SpecialVariables.Action.Azure.BicepTemplateParameters, ParameterContent);
 
             context.Variables.Add("SKU", "Standard_LRS");
             context.Variables.Add("Location", resourceGroupLocation);
             //storage accounts can be 24 chars long
             context.Variables.Add("StorageAccountName", AzureTestResourceHelpers.RandomName(length: 24));
-        }
-
-        static void AddTemplateFiles(CommandTestBuilderContext context, string template, string parameters)
-        {
-            context.WithDataFile(template, "template.bicep");
-            context.WithDataFile(parameters, "parameters.json");
         }
     }
 }

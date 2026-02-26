@@ -27,9 +27,6 @@
     <None Update="Packages\AzureResourceGroup\Default.aspx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Packages\Bicep\parameters.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
     <None Update="Packages\Bicep\azure_website_template.bicep">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
