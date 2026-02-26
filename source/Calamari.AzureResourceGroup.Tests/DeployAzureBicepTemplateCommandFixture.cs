@@ -18,6 +18,7 @@ using NUnit.Framework;
 namespace Calamari.AzureResourceGroup.Tests
 {
     [TestFixture]
+    [WindowsTest]
     class DeployAzureBicepTemplateCommandFixture
     {
         string clientId;
