@@ -15,6 +15,7 @@
         <PackageReference Include="Microsoft.Identity.Client" Version="4.66.2"/>
         <PackageReference Include="Azure.Identity" Version="1.13.1" />
         <PackageReference Include="Azure.ResourceManager.Resources" Version="1.7.0" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     </ItemGroup>
 
     <ItemGroup>
