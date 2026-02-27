@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -37,22 +37,37 @@ namespace Calamari.Common.Features.Scripting.Bash
             return commandArguments.ToString();
         }
 
-        public static string PrepareConfigurationFile(string workingDirectory, IVariables variables)
+        public static string PrepareConfigurationFile(string workingDirectory, IVariables variables, Script script)
         {
             var configurationFile = Path.Combine(workingDirectory, "Configure." + Guid.NewGuid().ToString().Substring(10) + ".sh");
 
             var builder = new StringBuilder(BootstrapScriptTemplate);
+
+            var featureEnabled = FeatureToggle.BashParametersArrayFeatureToggle.IsEnabled(variables);
+            builder.Replace("#### BashParametersArrayFeatureToggle ####", featureEnabled ? "true" : "false");
+
             var encryptedVariables = EncryptVariables(variables);
-
-            var variableString = GetEncryptedVariablesKvp(variables);
-
             builder.Replace("#### VariableDeclarations ####", string.Join(LinuxNewLine, GetVariableSwitchConditions(encryptedVariables)));
-
-            builder.Replace("#### BashParametersArrayFeatureToggle ####", FeatureToggle.BashParametersArrayFeatureToggle.IsEnabled(variables) ? "true" : "false");
-            if (FeatureToggle.BashParametersArrayFeatureToggle.IsEnabled(variables))
+            if (featureEnabled)
             {
-                builder.Replace("#### VARIABLESTRING.IV ####", variableString.iv);
-                builder.Replace("#### VARIABLESTRING.ENCRYPTED ####", variableString.encrypted);
+                var scriptUsesOctopusParameters = ScriptUsesOctopusParameters(script, variables);
+                // If the script doesn't use octopus_parameters at all, we don't want to bloat the bootstrap script with unused values.
+                if (scriptUsesOctopusParameters)
+                {
+                    var variableString = GetEncryptedVariablesKvp(variables);
+                    builder.Replace("#### VARIABLESTRING.IV ####", variableString.iv);
+                    builder.Replace("#### VARIABLESTRING.ENCRYPTED ####", variableString.encrypted);
+                    builder.Replace("#### SCRIPT_USES_OCTOPUS_PARAMETERS ####", "true");
+                }
+                else
+                {
+                    builder.Replace("#### SCRIPT_USES_OCTOPUS_PARAMETERS ####", "false");
+                }
+            }
+            else
+            {
+                // Feature toggle is off, so the placeholder won't be used but still needs to be replaced
+                builder.Replace("#### SCRIPT_USES_OCTOPUS_PARAMETERS ####", "false");
             }
 
             using (var file = new FileStream(configurationFile, FileMode.CreateNew, FileAccess.Write))
@@ -65,13 +80,30 @@ namespace Calamari.Common.Features.Scripting.Bash
             File.SetAttributes(configurationFile, FileAttributes.Hidden);
             return configurationFile;
         }
-        
-        static string EncodeAsHex(string value)
+
+        static bool ScriptUsesOctopusParameters(Script script, IVariables variables)
         {
-            var bytes = Encoding.UTF8.GetBytes(value);
-            return BitConverter.ToString(bytes).Replace("-", "");
+            // Check if script actually uses octopus_parameters array access
+            // Pattern matches: octopus_parameters[key], octopus_parameters[@], etc.
+            const string pattern = @"octopus_parameters\[";
+            var regex = new System.Text.RegularExpressions.Regex(pattern);
+
+            if (File.Exists(script.File) && regex.IsMatch(File.ReadAllText(script.File)))
+                return true;
+
+            foreach (var variableName in variables.GetNames().Where(ScriptVariables.IsLibraryScriptModule))
+            {
+                if (ScriptVariables.GetLibraryScriptModuleLanguage(variables, variableName) == ScriptSyntax.Bash)
+                {
+                    var contents = variables.Get(variableName);
+                    if (contents != null && regex.IsMatch(contents))
+                        return true;
+                }
+            }
+
+            return false;
         }
-        
+
         static (string encrypted, string iv) GetEncryptedVariablesKvp(IVariables variables)
         {
             var sb = new StringBuilder();
@@ -79,8 +111,8 @@ namespace Calamari.Common.Features.Scripting.Bash
                          .Where(v => !ScriptVariables.IsLibraryScriptModule(v.Key))
                          .Where(v => !ScriptVariables.IsBuildInformationVariable(v.Key)))
             {
-                var value = variable.Value ?? "nul";
-                sb.Append($"{EncodeAsHex(variable.Key)}").Append("$").AppendLine(EncodeAsHex(value));
+                sb.Append(variable.Key).Append('\0');
+                sb.Append(variable.Value ?? "").Append('\0');
             }
 
             var encrypted = VariableEncryptor.Encrypt(sb.ToString());
