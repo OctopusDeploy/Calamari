@@ -18,7 +18,7 @@ using NUnit.Framework;
 namespace Calamari.AzureResourceGroup.Tests
 {
     [TestFixture]
-    [WindowsTest] // NOTE: We should look at having the Azure CLI installed on Linux boxes so that these steps can be tested there, particularly if we're moving cloud to a Ubuntu Default Worker.
+     // NOTE: We should look at having the Azure CLI installed on Linux boxes so that these steps can be tested there, particularly if we're moving cloud to a Ubuntu Default Worker.
     class DeployAzureBicepTemplateCommandFixture
     {
         string clientId;
@@ -93,6 +93,7 @@ namespace Calamari.AzureResourceGroup.Tests
         }
 
         [Test]
+        [WindowsTest]
         [RequiresWindowsServer2016OrAbove("This test requires the az cli, which relies on python 3.10, which doesn't run on windows 2012/2012R2")]
         public async Task DeployAzureBicepTemplate_PackageSource()
         {
@@ -108,6 +109,7 @@ namespace Calamari.AzureResourceGroup.Tests
         }
 
         [Test]
+        [WindowsTest]
         [RequiresWindowsServer2016OrAbove("This test requires the az cli, which relies on python 3.10, which doesn't run on windows 2012/2012R2")]
         public async Task DeployAzureBicepTemplate_GitSource()
         {
