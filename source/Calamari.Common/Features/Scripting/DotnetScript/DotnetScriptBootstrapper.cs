@@ -20,7 +20,6 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
     public static class DotnetScriptBootstrapper
     {
         static readonly string BootstrapScriptTemplate;
-        static readonly string ClassBasedBootstrapScriptTemplate;
         static readonly string SensitiveVariablePassword = AesEncryption.RandomString(16);
         static readonly AesEncryption VariableEncryptor = AesEncryption.ForScripts(SensitiveVariablePassword);
         static readonly ICalamariFileSystem CalamariFileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
@@ -28,7 +27,6 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
         static DotnetScriptBootstrapper()
         {
             BootstrapScriptTemplate = EmbeddedResource.ReadEmbeddedText(typeof(DotnetScriptBootstrapper).Namespace + ".Bootstrap.csx");
-            ClassBasedBootstrapScriptTemplate = EmbeddedResource.ReadEmbeddedText(typeof(DotnetScriptBootstrapper).Namespace + ".ClassBootstrap.csx");
         }
 
         public static string? DotnetScriptPath(ICommandLineRunner commandLineRunner, Dictionary<string, string>? environmentVars)
@@ -162,10 +160,7 @@ namespace Calamari.Common.Features.Scripting.DotnetScript
         public static string PrepareConfigurationFile(string workingDirectory, IVariables variables)
         {
             var configurationFile = Path.Combine(workingDirectory, "Configure." + Guid.NewGuid().ToString().Substring(10) + ".csx");
-            bool.TryParse(variables.Get("Octopus.Action.Script.CSharp.UseOctopusClassBootstrapper", "false"), out var useClassBootstrapped);
-            var builder = useClassBootstrapped
-                ? new StringBuilder(ClassBasedBootstrapScriptTemplate)
-                : new StringBuilder(BootstrapScriptTemplate);
+            var builder = new StringBuilder(BootstrapScriptTemplate);
             builder.Replace("/*{{VariableDeclarations}}*/", WriteVariableDictionary(variables));
 
             using (var file = new FileStream(configurationFile, FileMode.CreateNew, FileAccess.Write))
