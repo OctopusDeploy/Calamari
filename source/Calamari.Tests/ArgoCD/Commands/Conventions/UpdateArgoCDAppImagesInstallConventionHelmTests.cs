@@ -1135,6 +1135,7 @@ service:
             runningDeployment.StagingDirectory = tempDirectory;
 
             var existingYamlFile = "otherRepoPath/values.yaml";
+            var extraValuesFile = "otherRepoPath/values-extra.yaml";
             var filesInRepo = new (string, string)[]
             {
                 (
@@ -1146,6 +1147,14 @@ image:
 containerPort: 8080
 service:
   type: LoadBalancer
+"
+                ),
+                (
+                    extraValuesFile,
+                    @"
+replicaCount: 1
+autoscaling:
+  enabled: false
 "
                 )
             };
@@ -1168,7 +1177,8 @@ service:
                                                   {
                                                       ValueFiles = new List<string>()
                                                       {
-                                                          "$values/otherRepoPath/values.yaml"
+                                                          "$values/otherRepoPath/values.yaml",
+                                                          "$values/otherRepoPath/values-extra.yaml"
                                                       }
                                                   },
                                                   Name = "helm-source",
@@ -1186,6 +1196,10 @@ service:
 
             argoCdApplicationManifestParser.ParseManifest(Arg.Any<string>())
                                            .Returns(argoCDAppWithHelmSource);
+
+            IReadOnlyList<ProcessApplicationResult> capturedResults = null;
+            deploymentReporter.ReportFilesUpdated(Arg.Do<IReadOnlyList<ProcessApplicationResult>>(x => capturedResults = x));
+
             // Act
             updater.Install(runningDeployment);
 
@@ -1204,6 +1218,18 @@ service:
             AssertFileContents(clonedRepoPath, existingYamlFile, updatedYamlContent);
 
             AssertOutputVariables(matchingApplicationTotalSourceCounts: "2");
+
+            // Only values.yaml should be in PatchedFiles — values-extra.yaml had no image match and must not produce a patch entry
+            using var scope = new AssertionScope();
+            capturedResults.Should().NotBeNull();
+            var sourceDetails = capturedResults.Single().UpdatedSourceDetails.First();
+            var expectedPatch = new JsonPatchDocument([
+                JsonPatchOperation.Replace(new JsonPointer("/0/image/tag"), "1.27.1"),
+            ]);
+            sourceDetails.PatchedFiles.Should()
+                         .BeEquivalentTo([
+                             new FilePathContent("./otherRepoPath/values.yaml", JsonSerializer.Serialize(expectedPatch)),
+                         ]);
         }
 
         [Test]
@@ -1364,7 +1390,7 @@ service:
 
             // Assert
             using var scope = new AssertionScope();
-            
+
             capturedResults.Should().NotBeNull();
             var actual = capturedResults.Single();
             actual.UpdatedImages.Should().BeEquivalentTo(["nginx:1.27.1", "alpine:2.2"]);
@@ -1402,8 +1428,8 @@ service:
             var runningDeployment = new RunningDeployment(null, variables);
             runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
             runningDeployment.StagingDirectory = tempDirectory;
-            
-            
+
+
             var existingYamlFile = "otherRepoPath/values.yaml";
             var filesInRepo = new (string, string)[]
             {
@@ -1469,9 +1495,9 @@ service:
 
             var clonedRepoPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             AssertFileContents(clonedRepoPath, existingYamlFile, updatedYamlContent);
-        } 
+        }
 
-        
+
         [Test]
         public void CanUpdateHelmSourceUsingStepBasedVariables()
         {
@@ -1489,8 +1515,8 @@ service:
             var runningDeployment = new RunningDeployment(null, variables);
             runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
             runningDeployment.StagingDirectory = tempDirectory;
-            
-            
+
+
             var existingYamlFile = "subFolder/values.yaml";
             var filesInRepo = new (string, string)[]
             {
@@ -1548,7 +1574,7 @@ service:
 
             var clonedRepoPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             AssertFileContents(clonedRepoPath, existingYamlFile, updatedYamlContent);
-        } 
+        }
 
         void AssertFileContents(string clonedRepoPath, string relativeFilePath, string expectedContent)
         {
