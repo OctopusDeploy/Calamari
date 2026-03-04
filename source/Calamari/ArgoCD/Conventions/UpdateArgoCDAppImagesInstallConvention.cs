@@ -499,14 +499,14 @@ namespace Calamari.ArgoCD.Conventions
                 var patchedFiles = results.Select(r => new FilePathContent(
                                                                            // Replace \ with / so that Calamari running on windows doesn't cause issues when we send back to server
                                                                            r.RelativeFilepath.Replace('\\', '/'),
-                                                                           r.JsonPatch is not null ? JsonSerializer.Serialize(r.JsonPatch) : null))
+                                                                           JsonSerializer.Serialize(r.JsonPatch)))
                                           .ToList();
                 var updatedImages = results.SelectMany(r => r.ImagesUpdated).ToHashSet();
 
                 var pushResult = PushToRemote(repository,
                                               GitReference.CreateFromString(sourceWithMetadata.Source.TargetRevision),
                                               deploymentConfig.CommitParameters,
-                                              results.Where(r => r.ImagesUpdated.Any()).Select(r => r.RelativeFilepath).ToHashSet(),
+                                              results.Select(r => r.RelativeFilepath).ToHashSet(),
                                               updatedImages);
 
                 if (pushResult is not null)
