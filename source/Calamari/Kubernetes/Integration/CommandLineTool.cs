@@ -33,7 +33,7 @@ namespace Calamari.Kubernetes.Integration
 
         protected virtual bool ShouldLogSuccessfulOutputAsInfo()
         {
-            return variables.GetFlag(SpecialVariables.VerboseOutput);
+            return variables.GetFlag(SpecialVariables.LogCliOutputAsInfo);
         }
 
         protected CommandResult ExecuteCommandAndLogOutput(CommandLineInvocation invocation)
