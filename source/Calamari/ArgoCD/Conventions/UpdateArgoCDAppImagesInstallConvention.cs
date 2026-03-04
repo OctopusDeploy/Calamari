@@ -66,7 +66,7 @@ namespace Calamari.ArgoCD.Conventions
         {
             log.Verbose("Executing Update Argo CD Application Images");
             var deploymentConfig = deploymentConfigFactory.CreateUpdateImageConfig(deployment);
-            
+
             var repositoryFactory = new RepositoryFactory(log,
                                                           fileSystem,
                                                           deployment.CurrentDirectory,
@@ -133,7 +133,7 @@ namespace Calamari.ArgoCD.Conventions
                     log.Verbose($"{image.ContainerReference.ToString()} will not be updated in helm sources, as no helm yaml path has been specified for it in the step configuration.");
                 }
             }
-            
+
             var updatedSourcesResults = applicationFromYaml.GetSourcesWithMetadata()
                                                            .Select(applicationSource => new
                                                            {
@@ -324,11 +324,11 @@ namespace Calamari.ArgoCD.Conventions
                 }
 
                 return ProcessRefSourceUsingStepVariables(applicationFromYaml,
-                                        sourceWithMetadata,
-                                        repository,
-                                        deploymentConfig,
-                                        defaultRegistry,
-                                        gateway);
+                                                          sourceWithMetadata,
+                                                          repository,
+                                                          deploymentConfig,
+                                                          defaultRegistry,
+                                                          gateway);
             }
 
             var helmTargetsForRefSource = new HelmValuesFileUpdateTargetParser(applicationFromYaml, defaultRegistry)
@@ -491,21 +491,22 @@ namespace Calamari.ArgoCD.Conventions
                                                                     t,
                                                                     deploymentConfig.ImageReferences
                                                                    ))
+                                 .Where(r => r.ImagesUpdated.Any())
                                  .ToList();
 
-            var updatedImages = results.SelectMany(r => r.ImagesUpdated).ToHashSet();
-            if (updatedImages.Count > 0)
+            if (results.Any())
             {
                 var patchedFiles = results.Select(r => new FilePathContent(
                                                                            // Replace \ with / so that Calamari running on windows doesn't cause issues when we send back to server
                                                                            r.RelativeFilepath.Replace('\\', '/'),
-                                                                           r.JsonPatch is not null ? JsonSerializer.Serialize(r.JsonPatch) : null))
+                                                                           JsonSerializer.Serialize(r.JsonPatch)))
                                           .ToList();
+                var updatedImages = results.SelectMany(r => r.ImagesUpdated).ToHashSet();
 
                 var pushResult = PushToRemote(repository,
                                               GitReference.CreateFromString(sourceWithMetadata.Source.TargetRevision),
                                               deploymentConfig.CommitParameters,
-                                              results.Where(r => r.ImagesUpdated.Any()).Select(r => r.RelativeFilepath).ToHashSet(),
+                                              results.Select(r => r.RelativeFilepath).ToHashSet(),
                                               updatedImages);
 
                 if (pushResult is not null)
@@ -518,7 +519,7 @@ namespace Calamari.ArgoCD.Conventions
                 }
             }
 
-            return new SourceUpdateResult(new HashSet<string>(), string.Empty, []);
+            return new SourceUpdateResult([], string.Empty, []);
         }
 
         SourceUpdateResult ProcessHelmSourceUsingStepVariables(
@@ -541,6 +542,7 @@ namespace Calamari.ArgoCD.Conventions
                 implicitValuesFile = Path.Combine(repository.WorkingDirectory, sourceWithMetadata.Source.Path!, implicitValuesFile);
                 filesToUpdate.Add(implicitValuesFile);
             }
+
             filesToUpdate = filesToUpdate.Select(file => Path.Combine(repository.WorkingDirectory, file)).ToList();
             var result = ProcessHelmValuesFiles(filesToUpdate.ToHashSet(),
                                                 defaultRegistry,
@@ -551,14 +553,13 @@ namespace Calamari.ArgoCD.Conventions
                                                 applicationFromYaml);
             return result;
         }
-        
-        
+
         SourceUpdateResult ProcessRefSourceUsingStepVariables(Application applicationFromYaml,
-                                            ApplicationSourceWithMetadata sourceWithMetadata,
-                                            RepositoryWrapper repository,
-                                            UpdateArgoCDAppDeploymentConfig deploymentConfig,
-                                            string defaultRegistry,
-                                            ArgoCDGatewayDto gateway)
+                                                              ApplicationSourceWithMetadata sourceWithMetadata,
+                                                              RepositoryWrapper repository,
+                                                              UpdateArgoCDAppDeploymentConfig deploymentConfig,
+                                                              string defaultRegistry,
+                                                              ArgoCDGatewayDto gateway)
         {
             var extractor = new HelmValuesFileExtractor(applicationFromYaml);
             var valuesFiles = extractor.GetValueFilesReferencedInRefSource(sourceWithMetadata)
