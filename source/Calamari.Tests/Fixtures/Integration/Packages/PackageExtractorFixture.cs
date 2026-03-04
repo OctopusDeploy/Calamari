@@ -182,6 +182,25 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
             }
         }
 
+        // Ensure package extraction maintains support for:
+        // - leading zeros
+        // - build metadata
+        // see: https://docs.octopushq.com/docs/features-and-subsystems/NugetFork
+        [Test]
+        [TestCase("1.0.01")]
+        [TestCase("1.0.1+ace8cda")]
+        public void ExtractTakesIntoAccountForOctopusVersions(string version)
+        {
+            var fileName = GetFixtureResource("Samples", $"{PackageId}.{version}.nupkg");
+            var extractor = new NupkgExtractor(ConsoleLog.Instance);
+            var targetDir = GetTargetDir(typeof(NupkgExtractor), fileName);
+
+            extractor.Extract(fileName, targetDir);
+
+            var metadata = PackageName.FromFile(fileName);
+            Assert.That(metadata.Version.ToString(), Is.EqualTo(version));
+        }
+
         [Test]
         //Latest version of SharpCompress throws an exception if a symbolic link is encountered and we haven't provided a handler for it.
         public void ExtractIgnoresSymbolicLinks()
