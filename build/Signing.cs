@@ -1,12 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using Nuke.Common.Tools.AzureSignTool;
 using Nuke.Common.Tools.SignTool;
 using Nuke.Common.Utilities.Collections;
-using Serilog;
 
 namespace Calamari.Build
 {

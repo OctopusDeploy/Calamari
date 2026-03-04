@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Runtime.Versioning;
 using System.Security.AccessControl;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
@@ -15,18 +16,14 @@ using Microsoft.Web.Administration;
 using NUnit.Framework;
 using Polly;
 using FluentAssertions;
-
-#if  NETFX
-using CryptoKeyRights = System.Security.AccessControl.CryptoKeyRights;
-#else
 using CryptoKeyRights = Calamari.Integration.Certificates.CryptoKeyRights;
-#endif
 
 
 namespace Calamari.Tests.Fixtures.Deployment
 {
     [TestFixture]
     [Category(TestCategory.CompatibleOS.OnlyWindows)]
+    [SupportedOSPlatform("windows")]
     public class DeployWebPackageToIISFixture : DeployPackageFixture
     {
         TemporaryFile packageV1;
@@ -429,10 +426,8 @@ namespace Calamari.Tests.Fixtures.Deployment
 
             // Assert the application-pool account was granted access to the certificate private-key
             var certificate = SampleCertificate.CapiWithPrivateKey.GetCertificateFromStore("MY", StoreLocation.LocalMachine);
-#pragma warning disable CA1416
             var keysec = CryptoKeySecurityAccessRules.GetPrivateKeySecurity(certificate.Thumbprint, StoreLocation.LocalMachine, "My");
             SampleCertificate.AssertHasPrivateKeyRights(keysec, new NTAccount("IIS APPPOOL\\" + uniqueValue), CryptoKeyRights.GenericAll);
-#pragma warning restore CA1416
 
             Assert.AreEqual(ObjectState.Started, website.State);
         }

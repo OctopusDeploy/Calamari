@@ -1,4 +1,3 @@
-#if NET
 using System;
 using Calamari.ArgoCD.Helm;
 using FluentAssertions;
@@ -125,4 +124,3 @@ service:
         }
     }
 }
-#endif

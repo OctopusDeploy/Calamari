@@ -67,34 +67,15 @@ namespace Calamari.Tests.Fixtures.ApplyDelta
             using (var basisFile = new TemporaryFile(PackageBuilder.BuildSamplePackage("Acme.Web", "1.0.0")))
             using (var signatureFile = new TemporaryFile(basisFile.FilePath + ".octosig"))
             {
-#if USE_OCTODIFF_EXE
-                var signatureResult = Invoke(OctoDiff()
-                    .Action("signature")
-                    .PositionalArgument(basisFile.FilePath)
-                    .PositionalArgument(signatureFile.FilePath));
-
-                signatureResult.AssertSuccess();
-#else
                 var exitCode = Octodiff.Program.Main(new[] {"signature", basisFile.FilePath, signatureFile.FilePath});
                 Assert.That(exitCode, Is.EqualTo(0), string.Format("Expected command to return exit code 0, received {0}", exitCode));
-#endif
                 Assert.That(File.Exists(signatureFile.FilePath));
 
                 using (var newFile = new TemporaryFile(PackageBuilder.BuildSamplePackage("Acme.Web", "1.0.1", true)))
                 using (var deltaFile = new TemporaryFile(basisFile.FilePath + "_to_" + NewFileName + ".octodelta"))
                 {
-#if USE_OCTODIFF_EXE
-                    var deltaResult = Invoke(OctoDiff()
-                        .Action("delta")
-                        .PositionalArgument(signatureFile.FilePath)
-                        .PositionalArgument(newFile.FilePath)
-                        .PositionalArgument(deltaFile.FilePath));
-
-                    deltaResult.AssertSuccess();
-#else
                     var deltaExitCode = Octodiff.Program.Main(new[] { "delta", signatureFile.FilePath, newFile.FilePath, deltaFile.FilePath });
                     Assert.That(deltaExitCode, Is.EqualTo(0), string.Format("Expected command to return exit code 0, received {0}", exitCode));
-#endif
                     Assert.That(File.Exists(deltaFile.FilePath));
 
                     var patchResult = ApplyDelta(basisFile.FilePath, basisFile.Hash, deltaFile.FilePath, NewFileName);

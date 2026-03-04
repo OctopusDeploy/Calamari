@@ -13,6 +13,6 @@ namespace Calamari.ArgoCD.Domain
         public string Project { get; set; } = string.Empty;
 
         // Always a list - handles both single source and multiple sources
-        public List<SourceBase> Sources { get; set; } = new List<SourceBase>();
+        public List<ApplicationSource> Sources { get; set; } = new List<ApplicationSource>();
     }
 }

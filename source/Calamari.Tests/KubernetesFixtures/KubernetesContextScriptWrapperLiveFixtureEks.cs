@@ -1,4 +1,3 @@
-#if NETCORE
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -744,4 +743,3 @@ namespace Calamari.Tests.KubernetesFixtures
         }
     }
 }
-#endif

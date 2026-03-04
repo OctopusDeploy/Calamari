@@ -1,13 +1,12 @@
-﻿#if NET
-using System;
+﻿using System;
 using System.Collections.Generic;
+using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Models;
 
 namespace Calamari.ArgoCD
 {
     public interface IContainerImageReplacer
     {
-        ImageReplacementResult UpdateImages(List<ContainerImageReference> imagesToUpdate);
+        ImageReplacementResult UpdateImages(IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate);
     }
 }
-#endif

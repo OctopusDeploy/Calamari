@@ -1,20 +1,9 @@
-#if NET
 using System;
 using System.Collections.Generic;
+using Calamari.Kubernetes.Patching.JsonPatch;
 
 namespace Calamari.ArgoCD.Helm
 {
-    public class HelmRefUpdatedResult
-    {
-        public HelmRefUpdatedResult(Uri repoUrl, HashSet<string> imagesUpdated)
-        {
-            RepoUrl = repoUrl;
-            ImagesUpdated = imagesUpdated;
-        }
-
-        public Uri RepoUrl { get; }
-        public HashSet<string> ImagesUpdated { get; }
-    }
+    public record HelmRefUpdatedResult(HashSet<string> ImagesUpdated, string RelativeFilepath, JsonPatchDocument JsonPatch);
 }
 
-#endif

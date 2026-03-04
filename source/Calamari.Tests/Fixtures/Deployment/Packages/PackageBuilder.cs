@@ -19,17 +19,10 @@ namespace Calamari.Tests.Fixtures.Deployment.Packages
         {
             var packageDirectory = TestEnvironment.GetTestPath("Fixtures", "Deployment", "Packages", name);
             Assert.That(Directory.Exists(packageDirectory), string.Format("Package {0} is not available (expected at {1}).", name, packageDirectory));
-
-#if NETFX
-            var nugetCommandLine = TestEnvironment.GetTestPath("NuGet", "NuGet.exe");
-            Assert.That(File.Exists(nugetCommandLine), string.Format("NuGet.exe is not available (expected at {0}).", nugetCommandLine));
-
-            var target = GetNixFileOrDefault(packageDirectory, name, ".nuspec");
-#else
+            
             var nugetCommandLine = "dotnet";
-
+            
             var target = GetNixFileOrDefault(packageDirectory, name, ".csproj");
-#endif
 
             var output = Path.Combine(Path.GetTempPath(), "CalamariTestPackages");
             Directory.CreateDirectory(output);
@@ -39,26 +32,17 @@ namespace Calamari.Tests.Fixtures.Deployment.Packages
 
 
             var runner = new CommandLineRunner(ConsoleLog.Instance, new CalamariVariables());
-#if NETCORE
             var restoreResult = runner.Execute(new CommandLine(nugetCommandLine)
                 .Action("restore")
                 .Argument(target)
                 .Build());
             restoreResult.VerifySuccess();
 
-#endif
-
             var result = runner.Execute(new CommandLine(nugetCommandLine)
                 .Action("pack")
                 .Argument(target)
-#if NETFX
-                .Argument("Version", version)
-                .Flag("NoPackageAnalysis")
-                .Argument("OutputDirectory", output)
-#else
                 .Argument("-output", output)
                 .PositionalArgument("/p:Version=" + version)
-#endif
                 .Build());
             result.VerifySuccess();
 

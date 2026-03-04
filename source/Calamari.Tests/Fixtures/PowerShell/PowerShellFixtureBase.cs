@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.Versioning;
 using System.Security.Cryptography;
 using System.Text;
 using Calamari.Common.Features.Processes;
@@ -25,7 +26,6 @@ namespace Calamari.Tests.Fixtures.PowerShell
         Core
     }
 
-#pragma warning disable CA1416 // API not supported on all platforms
     public abstract class PowerShellFixtureBase : CalamariFixture
     {
         protected abstract PowerShellEdition PowerShellEdition { get; }
@@ -133,6 +133,7 @@ namespace Calamari.Tests.Fixtures.PowerShell
         }
 
         [Test]
+        [SupportedOSPlatform("Windows")]
         public void ShouldCallHelloWithAdditionalOutputVariablesFileVariable()
         {
             if (IsRunningOnUnixLikeEnvironment)
@@ -707,5 +708,4 @@ namespace Calamari.Tests.Fixtures.PowerShell
             }
         }
     }
-#pragma warning restore CA1416 // API not supported on all platforms
 }

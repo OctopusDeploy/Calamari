@@ -1,4 +1,3 @@
-#if NET
 using System;
 using System.IO;
 using System.Linq;
@@ -6,7 +5,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.Git.GitVendorApiAdapters;
+using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Integration.Time;
 using Calamari.Testing.Helpers;
 using Calamari.Tests.Fixtures.Integration.FileSystem;
 using FluentAssertions;
@@ -51,7 +52,7 @@ namespace Calamari.Tests.ArgoCD.Git
                                .Returns(new PullRequest("title", 1, "url"));
             gitVendorAgnosticApiAdapterFactory.TryCreateGitVendorApiAdaptor(Arg.Any<IRepositoryConnection>()).Returns(gitVendorApiAdapter);
             
-            var repositoryFactory = new RepositoryFactory(log, fileSystem, tempDirectory, gitVendorAgnosticApiAdapterFactory);
+            var repositoryFactory = new RepositoryFactory(log, fileSystem, tempDirectory, gitVendorAgnosticApiAdapterFactory, new SystemClock());
             gitConnection = new GitConnection(null, null, new Uri(OriginPath), branchName);
             repository = repositoryFactory.CloneRepository(repositoryPath, gitConnection);
         }
@@ -185,7 +186,7 @@ namespace Calamari.Tests.ArgoCD.Git
                                         ("nested_1/file.yaml", ""),
                                         ("nested_1/nested_2/file.yaml", ""));
 
-            var repositoryFactory = new RepositoryFactory(log, fileSystem, tempDirectory, gitVendorAgnosticApiAdapterFactory);
+            var repositoryFactory = new RepositoryFactory(log, fileSystem, tempDirectory, gitVendorAgnosticApiAdapterFactory, new SystemClock());
             gitConnection = new GitConnection(null, null, new Uri(OriginPath), branchName);
 
             // Act
@@ -201,6 +202,22 @@ namespace Calamari.Tests.ArgoCD.Git
             notGitFiles.Count.Should().Be(totalFilesRemaining);
         }
 
+        [Test]
+        public void CloningAReferenceOtherThanABranchFails()
+        {
+            bareOrigin.AddFilesToBranch(branchName, ("file.yaml", ""));
+            bareOrigin.ApplyTag("1.0.0", bareOrigin.Head.Tip.Sha);
+
+            gitConnection = new GitConnection(null, null, new Uri(OriginPath), GitReference.CreateFromString("1.0.0"));
+            
+            var repositoryFactory = new RepositoryFactory(log, fileSystem, tempDirectory, gitVendorAgnosticApiAdapterFactory, new SystemClock());
+            var act = () => repositoryFactory.CloneRepository($"{repositoryPath}/sut", gitConnection);
+
+            act.Should()
+               .Throw<CommandException>()
+               .WithMessage($"Failed to clone Git repository at {gitConnection.Url}. Are you sure this URL is a Git repository, and the reference is a branch?");
+        }
+
         string CloneOrigin()
         {
             var subPath = Guid.NewGuid().ToString();
@@ -213,4 +230,3 @@ namespace Calamari.Tests.ArgoCD.Git
         }
     }
 }
-#endif

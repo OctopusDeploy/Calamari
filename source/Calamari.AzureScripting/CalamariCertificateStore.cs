@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using System.Security.AccessControl;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
@@ -87,17 +88,20 @@ namespace Calamari.AzureScripting
                             message.AppendLine("However, the current user does not appear to be able to access the private key file, or it does not exist.");
                         }
 
-                        message.AppendLine($"Attempting to grant the user {Environment.UserDomainName}\\{Environment.UserName} access to the certificate private key directory.");
-
-                        try
+                        if (OperatingSystem.IsWindows())
                         {
-                            GrantCurrentUserAccessToPrivateKeyDirectory(privateKeyPath);
+                            message.AppendLine($"Attempting to grant the user {Environment.UserDomainName}\\{Environment.UserName} access to the certificate private key directory.");
 
-                            message.AppendLine("The user should now have read access to the private key. The certificate will be reloaded.");
-                        }
-                        catch (Exception ex)
-                        {
-                            message.AppendLine($"Unable to grant the current user read access to the private key: {ex.Message}");
+                            try
+                            {
+                                GrantCurrentUserAccessToPrivateKeyDirectory(privateKeyPath);
+
+                                message.AppendLine("The user should now have read access to the private key. The certificate will be reloaded.");
+                            }
+                            catch (Exception ex)
+                            {
+                                message.AppendLine($"Unable to grant the current user read access to the private key: {ex.Message}");
+                            }
                         }
                     }
                     catch (Exception ex)
@@ -159,12 +163,12 @@ namespace Calamari.AzureScripting
             }
         }
 
+        [SupportedOSPlatform("Windows")]
         static void GrantCurrentUserAccessToPrivateKeyDirectory(string privateKeyPath)
         {
             var folderPath = Path.GetDirectoryName(privateKeyPath);
             if (folderPath == null)
                 throw new Exception("There was no directory specified in the private key path.");
-#pragma warning disable CA1416
             var current = WindowsIdentity.GetCurrent();
             if (current == null || current.User == null)
                 throw new Exception("There is no current windows identity.");
@@ -173,7 +177,6 @@ namespace Calamari.AzureScripting
             var security = directoryInfo.GetAccessControl();
             security.AddAccessRule(new FileSystemAccessRule(current.User, FileSystemRights.FullControl, InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit, PropagationFlags.None, AccessControlType.Allow));
             directoryInfo.SetAccessControl(security);
-#pragma warning restore CA1416
         }
 
         #region Nested type: CryptUtils

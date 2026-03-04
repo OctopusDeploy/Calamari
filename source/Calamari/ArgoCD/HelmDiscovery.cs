@@ -1,4 +1,3 @@
-#if NET
 #nullable enable
 using System.IO;
 using Calamari.Common.Plumbing.FileSystem;
@@ -40,4 +39,3 @@ namespace Calamari.ArgoCD
         }
     }
 }
-#endif

@@ -270,9 +270,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
             result.AssertSuccess();
             result.AssertOutput("Downloading NuGet package {0} v{1} from feed: '{2}'", FeedzPackage.PackageId, FeedzPackage.Version, AuthFeedUri);
             result.AssertOutput("Downloaded package will be stored in: '{0}'", FeedzPackage.DownloadFolder);
-#if USE_NUGET_V2_LIBS
-            result.AssertOutput("Found package {0} v{1}", FeedzPackage.PackageId, FeedzPackage.Version);
-#endif
+            
             AssertPackageHashMatchesExpected(result, ExpectedPackageHash);
             AssertPackageSizeMatchesExpected(result, ExpectedPackageSize);
             AssertStagePackageOutputVariableSet(result, FeedzPackage);
@@ -309,9 +307,7 @@ namespace Calamari.Tests.Fixtures.PackageDownload
 
             result.AssertOutput("Downloading NuGet package {0} v{1} from feed: '{2}'", FeedzPackage.PackageId, FeedzPackage.Version, AuthFeedUri);
             result.AssertOutput("Downloaded package will be stored in: '{0}'", FeedzPackage.DownloadFolder);
-#if USE_NUGET_V2_LIBS
-            result.AssertOutput("Found package {0} v{1}", FeedzPackage.PackageId, FeedzPackage.Version);
-#endif
+
             AssertPackageHashMatchesExpected(result, ExpectedPackageHash);
             AssertPackageSizeMatchesExpected(result, ExpectedPackageSize);
             AssertStagePackageOutputVariableSet(result, FeedzPackage);

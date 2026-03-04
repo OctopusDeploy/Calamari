@@ -1,14 +1,12 @@
-#if NET
 using System;
 using System.IO;
 using Calamari.ArgoCD.Git.GitVendorApiAdapters;
 using System.Linq;
-using Calamari.ArgoCD.Conventions;
-using Calamari.ArgoCD.GitHub;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Integration.Time;
 using LibGit2Sharp;
 
 namespace Calamari.ArgoCD.Git
@@ -24,13 +22,16 @@ namespace Calamari.ArgoCD.Git
         readonly ICalamariFileSystem fileSystem;
         readonly string repositoryParentDirectory;
         readonly IGitVendorAgnosticApiAdapterFactory vendorAgnosticApiAdapterFactory;
+        readonly IClock clock;
 
-        public RepositoryFactory(ILog log, ICalamariFileSystem fileSystem, string repositoryParentDirectory, IGitVendorAgnosticApiAdapterFactory vendorAgnosticApiAdapterFactory)
+        public RepositoryFactory(ILog log, ICalamariFileSystem fileSystem, string repositoryParentDirectory, IGitVendorAgnosticApiAdapterFactory vendorAgnosticApiAdapterFactory,
+                                 IClock clock)
         {
             this.log = log;
             this.fileSystem = fileSystem;
             this.repositoryParentDirectory = repositoryParentDirectory;
             this.vendorAgnosticApiAdapterFactory = vendorAgnosticApiAdapterFactory;
+            this.clock = clock;
         }
 
         public RepositoryWrapper CloneRepository(string repositoryName, IGitConnection gitConnection)
@@ -49,6 +50,7 @@ namespace Calamari.ArgoCD.Git
                 ? new CloneOptions()
                 : new CloneOptions
                 {
+                    //note: when cloning, libgit2sharp prepends "refs/remotes/origin/" to this value (so _must_ be a branch to succeed).
                     BranchName = (gitConnection.GitReference as GitBranchName)?.ToFriendlyName()
                 };
 
@@ -73,7 +75,9 @@ namespace Calamari.ArgoCD.Git
                 catch (Exception e)
                 {
                     timedOp.Abandon(e);
-                    throw new CommandException($"Failed to clone Git repository at {gitConnection.Url}. Are you sure this is a Git repository?");
+                    log.Error("Cloning repository failed");
+                    log.Verbose(e.PrettyPrint());
+                    throw new CommandException($"Failed to clone Git repository at {gitConnection.Url}. Are you sure this URL is a Git repository, and the reference is a branch?", e);
                 }
             }
 
@@ -100,8 +104,8 @@ namespace Calamari.ArgoCD.Git
                                          checkoutPath,
                                          log,
                                          gitConnection,
-                                         gitVendorApiAdapter);
+                                         gitVendorApiAdapter,
+                                         clock);
         }
     }
 }
-#endif

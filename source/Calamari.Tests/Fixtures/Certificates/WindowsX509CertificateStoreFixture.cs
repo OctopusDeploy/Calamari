@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.Versioning;
 using System.Security.AccessControl;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
@@ -16,7 +17,7 @@ namespace Calamari.Tests.Fixtures.Certificates
 {
     [TestFixture]
     [Category(TestCategory.CompatibleOS.OnlyWindows)]
-#pragma warning disable CA1416
+    [SupportedOSPlatform("windows")]
     public class WindowsX509CertificateStoreFixture
     {
         [Test]
@@ -281,5 +282,4 @@ namespace Calamari.Tests.Fixtures.Certificates
 
 
     }
-#pragma warning restore CA1416
 }

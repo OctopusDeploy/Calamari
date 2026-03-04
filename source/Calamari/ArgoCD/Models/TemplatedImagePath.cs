@@ -1,4 +1,3 @@
-#if NET
 using System;
 using Calamari.ArgoCD.Mapping;
 using Octostache;
@@ -66,4 +65,4 @@ namespace Calamari.ArgoCD.Models
         }
     }
 }
-#endif
+

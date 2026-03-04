@@ -1,4 +1,3 @@
-#if NET
 using System;
 using LibGit2Sharp;
 
@@ -17,4 +16,3 @@ namespace Calamari.ArgoCD.Git
         }
     }
 }
-#endif

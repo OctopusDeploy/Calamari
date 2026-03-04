@@ -1,5 +1,4 @@
-﻿#if JAVA_SUPPORT
-using System;
+﻿using System;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -132,7 +131,7 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
             var commandLineRunner = new CommandLineRunner(log, variables);
             var command = new DeployJavaArchiveCommand(
                 log,
-                new ScriptEngine(Enumerable.Empty<IScriptWrapper>(), log, new DotnetScriptCompilationWarningOutputSink()),
+                new ScriptEngine(Enumerable.Empty<IScriptWrapper>(), log),
                 variables,
                 fileSystem,
                 commandLineRunner,
@@ -158,4 +157,3 @@ namespace Calamari.Tests.Java.Fixtures.Deployment
         }
     }
 }
-#endif

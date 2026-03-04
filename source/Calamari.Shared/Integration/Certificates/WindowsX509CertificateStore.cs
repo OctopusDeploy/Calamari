@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using System.Security;
 using System.Security.AccessControl;
 using System.Security.Cryptography;
@@ -19,6 +20,7 @@ using Native = Calamari.Integration.Certificates.WindowsNative.WindowsX509Native
 
 namespace Calamari.Integration.Certificates
 {
+    [SupportedOSPlatform("windows")]
     public class WindowsX509CertificateStore : IWindowsX509CertificateStore
     {
         readonly ILog log;

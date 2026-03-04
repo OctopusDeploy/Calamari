@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Runtime.Versioning;
 using System.Security.Cryptography.X509Certificates;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
@@ -16,6 +17,7 @@ using Octostache;
 namespace Calamari.Tests.Fixtures.Certificates
 {
     [Category(TestCategory.CompatibleOS.OnlyWindows)]
+    [SupportedOSPlatform("windows")]
     public class ImportCertificateCommandFixture : CalamariFixture
     {
         readonly string certificateVariable = "FooCert";
@@ -61,9 +63,7 @@ namespace Calamari.Tests.Fixtures.Certificates
         {
             var storeName = StoreName.My.ToString();
             var storeLocation = StoreLocation.CurrentUser;
-#pragma warning disable CA1416
             var userName = System.Security.Principal.WindowsIdentity.GetCurrent().Name;
-#pragma warning restore CA1416
             var variables = CreateInitialVariables();
             variables.Add(SpecialVariables.Action.Certificate.StoreName, storeName);
             variables.Add(SpecialVariables.Action.Certificate.StoreUser, userName);

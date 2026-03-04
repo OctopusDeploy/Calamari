@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using System.Runtime.Versioning;
 using Calamari.Commands;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
@@ -8,6 +9,7 @@ using NUnit.Framework;
 namespace Calamari.Tests.Fixtures.Certificates
 {
     [TestFixture]
+    [SupportedOSPlatform("windows")]
     public class PrivateKeyAccessRuleSerializationTestFixture
     {
         [Test]

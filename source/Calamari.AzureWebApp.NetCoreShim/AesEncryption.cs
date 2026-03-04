@@ -96,7 +96,7 @@ namespace Calamari.AzureWebApp.NetCoreShim
             }
         }
 
-        Aes GetCryptoProvider(byte[]? iv = null)
+        Aes GetCryptoProvider(byte[] iv = null)
         {
             var provider = new AesCryptoServiceProvider
             {

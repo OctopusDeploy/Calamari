@@ -19,7 +19,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
         {
             var application = CreateApplication(names);
 
-            var result = ApplicationValidator.Validate(application);
+            var result = ApplicationValidator.ValidateSourceNames(application);
             result.Errors.Should().BeEmpty();
         }
 
@@ -30,18 +30,18 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
         {
             var application = CreateApplication(names);
 
-            var result = ApplicationValidator.Validate(application);
+            var result = ApplicationValidator.ValidateSourceNames(application);
             result.Errors.Should().BeEmpty();
         }
 
         [TestCase("foo", "foo")]
         [TestCase("bar", "foo", "bar", "")]
-        public void MultipleSources_DuplicateNames_Throws(params string[] names)
+        public void MultipleSources_DuplicateNames_HasError(params string[] names)
         {
             var application = CreateApplication(names);
 
-            var result = ApplicationValidator.Validate(application);
-            result.Errors.Should().BeEquivalentTo($"Application FooApp has multiples sources with the name '{names.First()}'. Please ensure all sources have unique names.");
+            var result = ApplicationValidator.ValidateSourceNames(application);
+            result.Errors.Should().BeEquivalentTo($"Application 'FooApp' has multiples sources with the name '{names.First()}'. Please ensure all sources have unique names.");
         }
 
          [Test]
@@ -49,7 +49,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
         {
             var application = CreateApplication(new Dictionary<string, string>(), "", "foo");
 
-            var result = ApplicationValidator.Validate(application);
+            var result = ApplicationValidator.ValidateUnnamedAnnotationsInMultiSourceApplication(application);
             result.Warnings.Should().BeEmpty();
         }
         
@@ -63,7 +63,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                 ["argo.octopus.com/tenant"] = "tenant-a",
             }, "", "foo");
 
-            var result = ApplicationValidator.Validate(application);
+            var result = ApplicationValidator.ValidateUnnamedAnnotationsInMultiSourceApplication(application);
             result.Warnings.Should().BeEquivalentTo("The application 'FooApp' requires all annotations to be qualified by source name since it contains multiple sources. Found these unqualified annotations: 'argo.octopus.com/project', 'argo.octopus.com/environment', 'argo.octopus.com/tenant'.");
         }
         
@@ -77,10 +77,20 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                 ["argo.octopus.com/tenant.foo"] = "tenant-a",
             }, "", "foo");
 
-            var result = ApplicationValidator.Validate(application);
+            var result = ApplicationValidator.ValidateUnnamedAnnotationsInMultiSourceApplication(application);
             result.Warnings.Should().BeEmpty();
         }
 
+        [Test]
+        public void SourceTypeDoesntMatch_HasError()
+        {
+            var application = CreateApplication("foo", "bar");
+            application.Status.SourceTypes.Clear();
+            
+            var result = ApplicationValidator.ValidateSourceTypes(application);
+            result.Errors.Should().BeEquivalentTo($"Application 'FooApp' has sources with undetected source types. Please ensure the application is configured correctly in Argo CD.");
+        }
+        
         static Application CreateApplication(params string[] names)
         {
             return CreateApplication(new Dictionary<string, string>(), names);
@@ -91,7 +101,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             return new ArgoCDApplicationBuilder()
                    .WithName("FooApp")
                    .WithAnnotations(annotations)
-                   .WithSources(names.Select(n => new BasicSource { Name = n }).ToList<SourceBase>())
+                   .WithSources(names.Select(n => new ApplicationSource { Name = n}), names.Select(_ => SourceTypeConstants.Directory))
                    .Build();
         }
     }

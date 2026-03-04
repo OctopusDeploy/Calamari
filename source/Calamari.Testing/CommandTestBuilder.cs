@@ -1,8 +1,5 @@
-﻿#if NETSTANDARD
-using NuGet.Packaging;
+﻿using NuGet.Packaging;
 using NuGet.Versioning;
-#else
-#endif
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -20,7 +17,6 @@ using Calamari.Common.Plumbing.Variables;
 using Calamari.Testing.Helpers;
 using Calamari.Testing.LogParser;
 using FluentAssertions;
-using NuGet;
 using Octopus.CoreUtilities;
 using KnownVariables = Calamari.Common.Plumbing.Variables.KnownVariables;
 using OSPlatform = System.Runtime.InteropServices.OSPlatform;
@@ -39,7 +35,7 @@ namespace Calamari.Testing
             where TCalamari : CalamariFlavourProgramAsync
             where TCommand : PipelineCommand
         {
-            return new CommandTestBuilder<TCalamari>(typeof(TCommand).GetCustomAttribute<CommandAttribute>().Name);
+            return new CommandTestBuilder<TCalamari>(typeof(TCommand).GetCustomAttribute<CommandAttribute>()!.Name);
         }
 
         public static CommandTestBuilder<TCalamari> Create<TCalamari>(string command)
@@ -52,7 +48,7 @@ namespace Calamari.Testing
             where TCalamari : CalamariFlavourProgram
             where TCommand : ICommand
         {
-            return new CommandTestBuilder<TCalamari>(typeof(TCommand).GetCustomAttribute<CommandAttribute>().Name);
+            return new CommandTestBuilder<TCalamari>(typeof(TCommand).GetCustomAttribute<CommandAttribute>()!.Name);
         }
 
         public static CommandTestBuilderContext WithFilesToCopy(this CommandTestBuilderContext context, string path)
@@ -94,13 +90,8 @@ namespace Calamari.Testing
         {
             var metadata = new ManifestMetadata
             {
-#if NETSTANDARD
                 Authors = new [] {"octopus@e2eTests"},
                 Version = new NuGetVersion(packageVersion),
-#else
-                Authors = "octopus@e2eTests",
-                Version = packageVersion,
-#endif
                 Id = packageId,
                 Description = nameof(CommandTestBuilder)
             };
@@ -159,49 +150,6 @@ namespace Calamari.Testing
                 return args;
             }
             
-            List<string> InstallTools(string toolsPath)
-            {
-                var extractor = new NupkgExtractor(new InMemoryLog());
-
-                var modulePaths = new List<string>();
-                var addToPath = new List<string>();
-                var platform = "win-x64";
-
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-                    platform = "linux-x64";
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-                    platform = "osx-x64";
-
-                foreach (var tool in context.Tools)
-                {
-                    var toolPath = Path.Combine(toolsPath, tool.Id);
-                    modulePaths.AddRange(tool.GetCompatiblePackage(platform)
-                                             .SelectValueOr(package => package.BootstrapperModulePaths, Enumerable.Empty<string>())
-                                             .Select(s => Path.Combine(toolPath, s)));
-
-                    var toolPackagePath = Path.Combine(Path.GetDirectoryName(AssemblyExtensions.FullLocalPath(Assembly.GetExecutingAssembly())) ?? string.Empty, $"{tool.Id}.nupkg");
-                    if (!File.Exists(toolPackagePath))
-                        throw new Exception($"{tool.Id}.nupkg missing.");
-
-                    extractor.Extract(toolPackagePath, toolPath);
-                    var fullPathToTool = tool.SubFolder.None()
-                        ? toolPath
-                        : Path.Combine(toolPath, tool.SubFolder.Value);
-                    if (tool.ToolPathVariableToSet.Some())
-                        context.Variables[tool.ToolPathVariableToSet.Value] = fullPathToTool
-                                                                      .Replace("$HOME", "#{env:HOME}")
-                                                                      .Replace("$TentacleHome", "#{env:TentacleHome}");
-
-                    if (tool.AddToPath)
-                        addToPath.Add(fullPathToTool);
-                }
-
-                var modules = string.Join(";", modulePaths);
-                context.Variables["Octopus.Calamari.Bootstrapper.ModulePaths"] = modules;
-
-                return addToPath;
-            }
-
             void Copy(string sourcePath, string destinationPath)
             {
                 foreach (var dirPath in Directory.EnumerateDirectories(sourcePath, "*", SearchOption.AllDirectories))
@@ -243,7 +191,7 @@ namespace Calamari.Testing
                 }
             }
 
-            async Task<TestCalamariCommandResult> ExecuteActionHandler(List<string> args, string workingFolder, List<string> paths)
+            async Task<TestCalamariCommandResult> ExecuteActionHandler(List<string> args, string workingFolder)
             {
                 var inMemoryLog = new InMemoryLog();
                 var constructor = typeof(TCalamariProgram).GetConstructor(
@@ -267,8 +215,7 @@ namespace Calamari.Testing
                     throw new Exception($"{typeof(TCalamariProgram).Name}.Run method was not found.");
                 }
                 
-                var exitCode = await ExecuteWrapped(paths,
-                                                    async () =>
+                var exitCode = await ExecuteWrapped(async () =>
                                                     {
                                                         if (methodInfo.ReturnType.IsGenericType)
                                                             return await (Task<int>)methodInfo.Invoke(instance, new object?[] { args.ToArray() })!;
@@ -312,13 +259,12 @@ namespace Calamari.Testing
                     Environment.CurrentDirectory = workingPath;
                     
                     using var toolsBasePath = TemporaryDirectory.Create();
-                    var paths = InstallTools(toolsBasePath.DirectoryPath);
 
                     var args = GetArgs(workingPath);
 
                     CopyFilesToWorkingFolder(workingPath);
 
-                    result = await ExecuteActionHandler(args, workingPath, paths);
+                    result = await ExecuteActionHandler(args, workingPath);
 
                     if (assertWasSuccess)
                     {
@@ -335,23 +281,8 @@ namespace Calamari.Testing
             return result;
         }
         
-        async Task<int> ExecuteWrapped(IReadOnlyCollection<string> paths, Func<Task<int>> func)
+        async Task<int> ExecuteWrapped( Func<Task<int>> func)
         {
-            if (paths.Count > 0)
-            {
-                var originalPath = Environment.GetEnvironmentVariable("PATH");
-                try
-                {
-                    Environment.SetEnvironmentVariable("PATH", $"{originalPath}{Path.PathSeparator}{string.Join(Path.PathSeparator.ToString(), paths)}", EnvironmentVariableTarget.Process);
-
-                    return await func();
-                }
-                finally
-                {
-                    Environment.SetEnvironmentVariable("PATH", originalPath, EnvironmentVariableTarget.Process);
-                }
-            }
-
             return await func();
         }
     }

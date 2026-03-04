@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Processes;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.Extensions;
@@ -210,8 +211,10 @@ namespace Calamari.Terraform
         {
             var initParams = variables.Get(TerraformSpecialVariables.Action.Terraform.AdditionalInitParams);
             var allowPluginDownloads = variables.GetFlag(TerraformSpecialVariables.Action.Terraform.AllowPluginDownloads, true);
-            string initCommand = $"init -no-color";
 
+            var initCommand = "init";
+            if (!OctopusFeatureToggles.AnsiColorsInTaskLogFeatureToggle.IsEnabled(deployment.Variables))
+                initCommand += " -no-color";
             if (Version?.IsLessThan("0.15.0") == true)
                 initCommand += $" -get-plugins={allowPluginDownloads.ToString().ToLower()}";
 

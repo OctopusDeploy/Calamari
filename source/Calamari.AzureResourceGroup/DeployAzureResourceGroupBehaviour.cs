@@ -5,7 +5,6 @@ using Azure.ResourceManager.Resources.Models;
 using Calamari.Azure;
 using Calamari.CloudAccounts;
 using Calamari.Common.Commands;
-using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;

@@ -20,6 +20,7 @@ namespace Calamari.Terraform.Tests
         public void Setup()
         {
             variables = Substitute.For<IVariables>();
+            variables.GetStrings(KnownVariables.EnabledFeatureToggles).Returns(new List<string>());
             var commandLineRunner = Substitute.For<ICommandLineRunner>();
             commandLineRunner.Execute(Arg.Do<CommandLineInvocation>(invocation => invocation.AdditionalInvocationOutputSink.WriteInfo("Terraform v0.15.0")))
                              .Returns(new CommandResult("foo", 0));

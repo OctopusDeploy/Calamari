@@ -1,8 +1,5 @@
 using System;
 using System.Diagnostics;
-using System.Threading.Tasks;
-using Nuke.Common.CI.TeamCity;
-using Serilog;
 
 namespace Calamari.Build.Utilities;
 

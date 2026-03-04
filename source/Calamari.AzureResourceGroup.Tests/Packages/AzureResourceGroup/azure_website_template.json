@@ -86,14 +86,15 @@
     {
       "name": "[concat(parameters('storageAccountPrefix'), parameters('storageAccountList')[copyIndex()].name)]",
       "type": "Microsoft.Storage/storageAccounts",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2025-06-01",
       "location": "[parameters('storageAccountList')[copyIndex()].location]",
+      "kind": "StorageV2",
       "copy": {
           "name": "storageAccountLoop",
           "count": "[length(parameters('storageAccountList'))]"
       },
-      "properties": {
-          "accountType": "[parameters('storageAccountList')[copyIndex()].storageAccountType]"
+      "sku" : {
+        "name": "[parameters('storageAccountList')[copyIndex()].storageAccountType]"
       }
     }    
   ],

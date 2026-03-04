@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using System.Security.AccessControl;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
@@ -115,17 +116,20 @@ namespace Calamari.Integration.Certificates
                             message.AppendLine("However, the current user does not appear to be able to access the private key file, or it does not exist.");
                         }
 
-                        message.AppendLine($"Attempting to grant the user {Environment.UserDomainName}\\{Environment.UserName} access to the certificate private key directory.");
-
-                        try
+                        if (OperatingSystem.IsWindows())
                         {
-                            GrantCurrentUserAccessToPrivateKeyDirectory(privateKeyPath);
+                            message.AppendLine($"Attempting to grant the user {Environment.UserDomainName}\\{Environment.UserName} access to the certificate private key directory.");
 
-                            message.AppendLine("The user should now have read access to the private key. The certificate will be reloaded.");
-                        }
-                        catch (Exception ex)
-                        {
-                            message.AppendLine($"Unable to grant the current user read access to the private key: {ex.Message}");
+                            try
+                            {
+                                GrantCurrentUserAccessToPrivateKeyDirectory(privateKeyPath);
+
+                                message.AppendLine("The user should now have read access to the private key. The certificate will be reloaded.");
+                            }
+                            catch (Exception ex)
+                            {
+                                message.AppendLine($"Unable to grant the current user read access to the private key: {ex.Message}");
+                            }
                         }
                     }
                     catch (Exception ex)
@@ -185,6 +189,7 @@ namespace Calamari.Integration.Certificates
             }
         }
 
+        [SupportedOSPlatform("windows")]
         static void GrantCurrentUserAccessToPrivateKeyDirectory(string privateKeyPath)
         {
             var folderPath = Path.GetDirectoryName(privateKeyPath);

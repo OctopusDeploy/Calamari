@@ -1,4 +1,3 @@
-#if NET
 using System;
 using System.IO;
 using Calamari.ArgoCD.Git;
@@ -66,4 +65,3 @@ namespace Calamari.Tests.ArgoCD.Git
     
     
 }
-#endif

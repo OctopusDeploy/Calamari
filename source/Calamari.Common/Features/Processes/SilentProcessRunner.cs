@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using System.Security;
 using System.Text;
 using System.Threading;
@@ -100,7 +101,8 @@ namespace Calamari.Common.Features.Processes
                         foreach (var environmentVar in environmentVars.Keys)
                             process.StartInfo.EnvironmentVariables[environmentVar] = environmentVars[environmentVar];
 
-                    RunProcessWithCredentials(process.StartInfo, userName, password);
+                    if (OperatingSystem.IsWindows())
+                        RunProcessWithCredentials(process.StartInfo, userName, password);
 
                     using (var outputWaitHandle = new AutoResetEvent(false))
                     using (var errorWaitHandle = new AutoResetEvent(false))
@@ -174,6 +176,7 @@ namespace Calamari.Common.Features.Processes
             }
         }
 
+        [SupportedOSPlatform("windows")]
         static void RunProcessWithCredentials(ProcessStartInfo processStartInfo, string? userName, SecureString? password)
         {
             if (string.IsNullOrEmpty(userName) || password == null)

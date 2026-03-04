@@ -6,12 +6,12 @@ namespace Calamari.Common.FeatureToggles
     {
         public static class KnownSlugs
         {
-            public const string ArgoCDCreatePullRequestFeatureToggle = "argocd-create-pull-request";
-            public const string DotNetScriptCompilationWarningFeatureToggle = "dotnet-script-compile-warning";
+            public const string AnsiColorsInTaskLogFeatureToggle = "ansi-colors";
+            public const string ArgoCDHelmReplacePathFromContainerReferenceFeatureToggle = "argo-cd-helm-replace-path-from-container-reference";
         };
 
-        public static readonly OctopusFeatureToggle ArgoCDCreatePullRequestFeatureToggle = new OctopusFeatureToggle(KnownSlugs.ArgoCDCreatePullRequestFeatureToggle);
-        public static readonly OctopusFeatureToggle DotNetScriptCompilationWarningFeatureToggle = new OctopusFeatureToggle(KnownSlugs.DotNetScriptCompilationWarningFeatureToggle);
+        public static readonly OctopusFeatureToggle AnsiColorsInTaskLogFeatureToggle = new(KnownSlugs.AnsiColorsInTaskLogFeatureToggle);
+        public static readonly OctopusFeatureToggle ArgoCDHelmReplacePathFromContainerReferenceFeatureToggle = new(KnownSlugs.ArgoCDHelmReplacePathFromContainerReferenceFeatureToggle);
 
         public class OctopusFeatureToggle
         {

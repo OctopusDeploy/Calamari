@@ -1,4 +1,3 @@
-#if NET
 using System.Collections.Generic;
 using System.IO;
 using Calamari.ArgoCD.Conventions;
@@ -12,6 +11,7 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment;
 using Calamari.Deployment.Conventions;
+using Calamari.Integration.Time;
 
 namespace Calamari.ArgoCD.Commands
 {
@@ -29,7 +29,9 @@ namespace Calamari.ArgoCD.Commands
         string customPropertiesFile;
         string customPropertiesPassword;
 
-        public UpdateArgoCDAppImagesCommand(ILog log, IVariables variables, ICalamariFileSystem fileSystem, 
+        public UpdateArgoCDAppImagesCommand(ILog log,
+                                            IVariables variables,
+                                            ICalamariFileSystem fileSystem,
                                             ICommitMessageGenerator commitMessageGenerator,
                                             DeploymentConfigFactory configFactory,
                                             IGitVendorAgnosticApiAdapterFactory gitVendorAgnosticApiAdapterFactory)
@@ -51,11 +53,21 @@ namespace Calamari.ArgoCD.Commands
         public override int Execute(string[] commandLineArguments)
         {
             Options.Parse(commandLineArguments);
+            var clock = new SystemClock();
             var runningDeployment = new RunningDeployment(null, variables);
 
             var conventions = new List<IConvention>
             {
-                new UpdateArgoCDAppImagesInstallConvention(log, fileSystem, configFactory, commitMessageGenerator, new CustomPropertiesLoader(fileSystem, customPropertiesFile, customPropertiesPassword), new ArgoCdApplicationManifestParser(), gitVendorAgnosticApiAdapterFactory),
+                new UpdateArgoCDAppImagesInstallConvention(log,
+                                                           fileSystem,
+                                                           configFactory,
+                                                           commitMessageGenerator,
+                                                           new CustomPropertiesLoader(fileSystem, customPropertiesFile, customPropertiesPassword),
+                                                           new ArgoCdApplicationManifestParser(),
+                                                           gitVendorAgnosticApiAdapterFactory,
+                                                           clock,
+                                                           new ArgoCDFilesUpdatedReporter(log),
+                                                           new ArgoCDOutputVariablesWriter(log, variables)),
             };
                 
             var conventionRunner = new ConventionProcessor(runningDeployment, conventions, log);
@@ -66,4 +78,3 @@ namespace Calamari.ArgoCD.Commands
     }
 }
 
-#endif

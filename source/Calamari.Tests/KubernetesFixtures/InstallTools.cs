@@ -24,15 +24,11 @@ namespace Calamari.Tests.KubernetesFixtures
     {
         readonly Action<string> log;
 
-#if NETCORE
         readonly IHttpClientFactory httpClientFactory;
-#endif
         public InstallTools(Action<string> log)
         {
             this.log = log;
-#if NETCORE
             httpClientFactory = new TestHttpClientFactory();
-#endif
         }
 
         public string TerraformExecutable { get; private set; }
@@ -585,13 +581,8 @@ namespace Calamari.Tests.KubernetesFixtures
         {
             //we are _totally_ Chrome :joy:
             const string userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36";
-#if NETCORE
             var httpClient = httpClientFactory.CreateClient();
             httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(userAgent);
-#else
-            var httpClient = new HttpClient();
-            httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(userAgent);
-#endif
             return httpClient;
         }
     }

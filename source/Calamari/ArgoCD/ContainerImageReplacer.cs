@@ -1,10 +1,10 @@
-#if NET
 #nullable enable
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Models;
 using k8s;
 using k8s.Models;
@@ -23,7 +23,7 @@ namespace Calamari.ArgoCD
             this.defaultRegistry = defaultRegistry;
         }
 
-        public ImageReplacementResult UpdateImages(List<ContainerImageReference> imagesToUpdate)
+        public ImageReplacementResult UpdateImages(IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
         {
             if (string.IsNullOrWhiteSpace(yamlContent))
             {
@@ -73,7 +73,7 @@ namespace Calamari.ArgoCD
                     }
 
                     var resource = resources[0];
-                    var (updatedDocument, changes) = UpdateImagesInKubernetesResource(document, resource, imagesToUpdate);
+                    var (updatedDocument, changes) = UpdateImagesInKubernetesResource(document, resource, imagesToUpdate.Select(i => i.ContainerReference).ToList());
                     imageReplacements.UnionWith(changes);
                     // NOTE: We don't need to check if a change has been made or not, if it hasn't, the final document will remain unchanged.
                     updatedDocuments.Add(updatedDocument);
@@ -178,13 +178,20 @@ namespace Calamari.ArgoCD
             foreach (var container in containers)
             {
                 var currentReference = ContainerImageReference.FromReferenceString(container.Image, defaultRegistry);
-                var matchedUpdate = imagesToUpdate.FirstOrDefault(i => i.IsMatch(currentReference));
+
+                var matchedUpdate = imagesToUpdate.Select(i => new
+                                                  {
+                                                      Reference = i,
+                                                      Comparison = i.CompareWith(currentReference) 
+                                                      
+                                                  })
+                                                  .FirstOrDefault(i => i.Comparison.MatchesImage());
                 if (matchedUpdate != null)
                 {
                     // Only do replacement if the tag is different
-                    if (!matchedUpdate.Tag.Equals(currentReference.Tag, StringComparison.OrdinalIgnoreCase))
+                    if (!matchedUpdate.Comparison.TagMatch)
                     {
-                        var newReference = currentReference.WithTag(matchedUpdate.Tag);
+                        var newReference = currentReference.WithTag(matchedUpdate.Reference.Tag);
 
                         // Pattern ensures we only update lines with  `image: <IMAGENAME>` OR  `- image: <IMAGENANME>`.
                         // Ignores comments and white space, while preserving any quotes around the image name 
@@ -199,7 +206,7 @@ namespace Calamari.ArgoCD
                                                  },
                                                  RegexOptions.Multiline);
 
-                        replacementsMade.Add($"{matchedUpdate.ImageName}:{matchedUpdate.Tag}");
+                        replacementsMade.Add($"{matchedUpdate.Reference.ImageName}:{matchedUpdate.Reference.Tag}");
                     }
                 }
             }
@@ -214,4 +221,4 @@ namespace Calamari.ArgoCD
         }
     }
 }
-#endif
+

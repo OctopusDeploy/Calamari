@@ -49,21 +49,13 @@ namespace Calamari.ArgoCD.Domain.Converters
                 // Multiple sourceTypes case
                 foreach (var typeElement in sourceTypesElement.EnumerateArray())
                 {
-                    var typeString = typeElement.GetString();
-                    if (typeString is { } && Enum.TryParse<SourceType>(typeString, true, out var sourceType))
-                    {
-                        status.SourceTypes.Add(sourceType);
-                    }
+                    status.SourceTypes.Add(typeElement.GetString());
                 }
             }
             else if (root.TryGetProperty("sourceType", out var sourceTypeElement))
             {
                 // Single sourceType case
-                var typeString = sourceTypeElement.GetString();
-                if (typeString is { } && Enum.TryParse<SourceType>(typeString, true, out var sourceType))
-                {
-                    status.SourceTypes.Add(sourceType);
-                }
+                status.SourceTypes.Add(sourceTypeElement.GetString());
             }
 
             // // Handle reconciledAt

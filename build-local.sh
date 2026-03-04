@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
 auto_accept=""
-target_framework=""
 target_runtime=""
 
 while test $# -gt 0; do
@@ -95,7 +94,7 @@ if [ -z "$auto_accept" ]; then
   fi
 fi
 
-branch=$(git branch --show-current)
+branch=$(git rev-parse --abbrev-ref HEAD)
 
 echo "Branch: $branch"
 
@@ -104,11 +103,14 @@ numericVersion="$year.99.0"
 
 sanitizedBranch=$(echo "$branch" | sed 's|^refs/heads/||; s|[/_]|-|g' | sed 's|\+.*$||g')
 
+echo "Numeric version: $numericVersion"
+echo "Sanitized branch: $sanitizedBranch"
+
 export OCTOVERSION_CurrentBranch="$sanitizedBranch"
 export OCTOVERSION_MajorMinorPatch="$numericVersion"
 export OCTOVERSION_PreReleaseTagWithDash="-$sanitizedBranch"
 export OCTOVERSION_FullSemVer="$numericVersion-$sanitizedBranch"
 
-./build.sh -BuildVerbosity Minimal -Verbosity Minimal -AppendTimestamp -SetOctopusServerVersion -TargetFramework "$target_framework" -TargetRuntime "$target_runtime"
+./build.sh -BuildVerbosity Minimal -Verbosity Minimal -AppendTimestamp -SetOctopusServerVersion -TargetRuntime "$target_runtime"
 
 echo -e "$FinishMessage"

@@ -12,6 +12,7 @@ using Calamari.Common.Plumbing.Variables;
 using Calamari.Kubernetes.Commands.Executors;
 using Calamari.Kubernetes.Integration;
 using Calamari.Kubernetes.ResourceStatus;
+using Calamari.Kubernetes.ResourceStatus.Resources;
 
 namespace Calamari.Kubernetes.Commands
 {
@@ -22,6 +23,7 @@ namespace Calamari.Kubernetes.Commands
         readonly IVariables variables;
         readonly IKubernetesApplyExecutor kubernetesApplyExecutor;
         readonly IResourceStatusReportExecutor statusReporter;
+        readonly ILog log;
 
         public KubernetesKustomizeCommand(
             ILog log,
@@ -42,6 +44,7 @@ namespace Calamari.Kubernetes.Commands
                                     structuredConfigVariablesService,
                                     kubectl)
         {
+            this.log = log;
             this.variables = variables;
             this.kubernetesApplyExecutor = kubernetesApplyExecutor;
             this.statusReporter = statusReporter;
@@ -59,7 +62,14 @@ namespace Calamari.Kubernetes.Commands
 
             var statusCheck = statusReporter.Start(timeoutSeconds, waitForJobs);
 
-            return await kubernetesApplyExecutor.Execute(runningDeployment, (newResources) => statusCheck.AddResources(newResources)) && await statusCheck.WaitForCompletionOrTimeout(CancellationToken.None);
+            return await kubernetesApplyExecutor.Execute(runningDeployment, AddNewResources) 
+                   && await statusCheck.WaitForCompletionOrTimeout(CancellationToken.None);
+
+            Task AddNewResources(ResourceIdentifier[] newResources)
+            {
+                log.Info($"Performing resource status check for {newResources.Length} resources");
+                return statusCheck.AddResources(newResources);
+            }
         }
     }
 }

@@ -1,5 +1,4 @@
 Param(
-    [string] $Framework,
     [string] $Runtime
 )
 
@@ -24,7 +23,8 @@ Write-Host "
 " -ForegroundColor Cyan
 
 # If -Runtime was provided, Consolidation Verification will be disabled
-if (-not [string]::IsNullOrEmpty($Runtime)) {
+if (-not [string]::IsNullOrEmpty($Runtime))
+{
     $RuntimeSpecifiedWarning = @"
 ###################################################################################
 # WARNING:                                                                        #
@@ -34,8 +34,9 @@ if (-not [string]::IsNullOrEmpty($Runtime)) {
 ###################################################################################
 "@
     Write-Host $RuntimeSpecifiedWarning -ForegroundColor Yellow
+}
 
-$branch = & git branch --show-current
+$branch = & git rev-parse --abbrev-ref HEAD
 
 Write-Host "Branch: $branch"
 
@@ -53,7 +54,7 @@ $env:OCTOVERSION_MajorMinorPatch= $numericVersion
 $env:OCTOVERSION_PreReleaseTagWithDash = "-$sanitizedBranch"
 $env:OCTOVERSION_FullSemVer = "$numericVersion-$sanitizedBranch"
 
-./build.ps1 -BuildVerbosity Minimal -Verbosity Normal --Append-Timestamp -SetOctopusServerVersion -TargetFramework "$Framework" -TargetRuntime "$Runtime"
+./build.ps1 -BuildVerbosity Minimal -Verbosity Normal --Append-Timestamp -SetOctopusServerVersion -TargetRuntime "$Runtime"
 
 Write-Host "
 ########################################################################################

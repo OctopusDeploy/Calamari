@@ -10,18 +10,17 @@ namespace Calamari.ArgoCD
     {
         protected override void Load(ContainerBuilder builder)
         {
-#if NET
             builder.RegisterType<DeploymentConfigFactory>().AsSelf().InstancePerLifetimeScope();
             builder.RegisterType<CommitMessageGenerator>().As<ICommitMessageGenerator>().InstancePerLifetimeScope();
-            
+
             builder.RegisterAssemblyTypes(GetType().Assembly)
                    .AssignableTo<IGitVendorApiAdapterFactory>()
                    .Except<GitVendorAgnosticApiAdapterFactory>()
                    .As<IGitVendorApiAdapterFactory>();
-            
+
             builder.RegisterType<GitVendorAgnosticApiAdapterFactory>().As<IGitVendorAgnosticApiAdapterFactory>().InstancePerLifetimeScope();
             builder.RegisterType<ArgoCDManifestsFileMatcher>().As<IArgoCDManifestsFileMatcher>().InstancePerLifetimeScope();
-#endif
+            builder.RegisterType<ArgoCDFilesUpdatedReporter>().As<IArgoCDFilesUpdatedReporter>().InstancePerLifetimeScope();
         }
     }
 }

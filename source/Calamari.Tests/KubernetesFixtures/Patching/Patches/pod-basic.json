@@ -1,0 +1,4 @@
+[
+  {"op":"replace","path":"/metadata/annotations/app","value":"expected"},
+  {"op":"replace","path":"/metadata/labels/app","value":"expected"}
+]

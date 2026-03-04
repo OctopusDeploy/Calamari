@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Runtime.Versioning;
 using System.Security.Principal;
 
 namespace Calamari.Integration.Certificates
 {
+    [SupportedOSPlatform("windows")]
     public static class PrivateKeyAccessRuleExtensionMethods {
     
         public static IdentityReference GetIdentityReference(this PrivateKeyAccessRule privateKeyAccessRule)

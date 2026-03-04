@@ -4,6 +4,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Calamari.Common.Commands;
 using Calamari.Common.Features.Processes;
+using Calamari.Common.FeatureToggles;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Pipeline;
@@ -55,14 +56,16 @@ namespace Calamari.Terraform.Behaviours
                     log.Warn($"JSON output is not supported in versions of Terraform prior to {TerraformPlanJsonMinVersion}. The version of Terraform being used is {cli.Version}");
                 }
 
-                var commandResult = cli.ExecuteCommand(out results,
-                                                       "plan",
-                                                       "-no-color",
-                                                       "-detailed-exitcode",
-                                                       GetOutputParameter(deployment, cli.Version),
-                                                       ExtraParameter,
-                                                       cli.TerraformVariableFiles,
-                                                       cli.ActionParams);
+                var args = new List<string>();
+                args.Add("plan");
+                if (!OctopusFeatureToggles.AnsiColorsInTaskLogFeatureToggle.IsEnabled(deployment.Variables))
+                    args.Add("-no-color");
+                args.Add("-detailed-exitcode");
+                args.Add(GetOutputParameter(deployment, cli.Version));
+                args.Add(ExtraParameter);
+                args.Add(cli.TerraformVariableFiles);
+                args.Add(cli.ActionParams);
+                var commandResult = cli.ExecuteCommand(out results, args.ToArray());
                 var resultCode = commandResult.ExitCode;
 
                 cli.VerifySuccess(commandResult, r => r.ExitCode == 0 || r.ExitCode == 2);

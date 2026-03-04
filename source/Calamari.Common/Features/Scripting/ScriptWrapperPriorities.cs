@@ -33,12 +33,6 @@ namespace Calamari.Common.Features.Scripting
         public const int ToolConfigPriority = 100;
 
         /// <summary>
-        /// The priority for the script wrapper to handle dotnet-script compilation warnings.
-        /// Used while ScriptCS is being deprecated.
-        /// </summary>
-        public const int DotnetScriptCompileWarning = 10;
-
-        /// <summary>
         /// The priority for tools the terminal script wrapper, which should always
         /// be run last
         /// </summary>

@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using Nuke.Common.IO;
 using Nuke.Common.Tooling;
-using Nuke.Common.Tools.DotNet;
 
 namespace Calamari.Build
 {

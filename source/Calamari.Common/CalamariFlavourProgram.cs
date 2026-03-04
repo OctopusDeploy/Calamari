@@ -124,8 +124,6 @@ namespace Calamari.Common
 
             builder.RegisterAssemblyTypes(assemblies).AssignableTo<ICodeGenFunctions>().As<ICodeGenFunctions>().SingleInstance();
 
-            builder.RegisterType<DotnetScriptCompilationWarningOutputSink>().AsSelf().SingleInstance();
-
             builder.RegisterAssemblyTypes(assemblies)
                 .AssignableTo<IScriptWrapper>()
                 .Except<TerminalScriptWrapper>()

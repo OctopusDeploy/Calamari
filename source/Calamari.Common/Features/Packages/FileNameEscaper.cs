@@ -14,7 +14,7 @@ namespace Calamari.Common.Features.Packages
     {
         static readonly HashSet<char> InvalidCharacterSet = new HashSet<char>
         {
-            '%', '<', '>', ':', '"', '/', '\\', '|', '?'
+            '%', '<', '>', ':', '"', '/', '\\', '|', '?', '@'
         };
 
         public static char[] EscapedCharacters => InvalidCharacterSet.ToArray();

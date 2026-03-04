@@ -29,13 +29,11 @@ namespace Calamari.Common.Features.Scripting
     {
         readonly IEnumerable<IScriptWrapper> scriptWrapperHooks;
         readonly ILog log;
-        readonly DotnetScriptCompilationWarningOutputSink dotnetScriptCompilationWarningOutputSink;
 
-        public ScriptEngine(IEnumerable<IScriptWrapper> scriptWrapperHooks, ILog log, DotnetScriptCompilationWarningOutputSink dotnetScriptCompilationWarningOutputSink)
+        public ScriptEngine(IEnumerable<IScriptWrapper> scriptWrapperHooks, ILog log)
         {
             this.scriptWrapperHooks = scriptWrapperHooks;
             this.log = log;
-            this.dotnetScriptCompilationWarningOutputSink = dotnetScriptCompilationWarningOutputSink;
         }
 
         public ScriptSyntax[] GetSupportedTypes()
@@ -103,16 +101,7 @@ namespace Calamari.Common.Features.Scripting
                 case ScriptSyntax.PowerShell:
                     return new PowerShellScriptExecutor(log);
                 case ScriptSyntax.CSharp:
-                    var isDotNetScriptCompileWarningFeatureToggleEnabled = OctopusFeatureToggles.DotNetScriptCompilationWarningFeatureToggle.IsEnabled(variables);
-
-                    //if this feature toggle is NOT enabled, then we want to suppress this warning
-                    //We will be targeting specific customers with this warning (specifically those we are force migrating from ScriptCS to dotnet-script
-                    if (!isDotNetScriptCompileWarningFeatureToggleEnabled)
-                    {
-                        dotnetScriptCompilationWarningOutputSink.AssumeSuccessfullyCompiled();
-                    }
-
-                    return new DotnetScriptExecutor(commandLineRunner, log, dotnetScriptCompilationWarningOutputSink);
+                    return new DotnetScriptExecutor(commandLineRunner, log);
                 case ScriptSyntax.Bash:
                     return new BashScriptExecutor(log);
                 case ScriptSyntax.Python:

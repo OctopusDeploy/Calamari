@@ -1,7 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <Version>1.0.0.0</Version>
-    <OutputType>Exe</OutputType>
     <PlatformTarget>anycpu</PlatformTarget>
     <AssemblyName>Calamari.Aws</AssemblyName>
     <OutputType>Library</OutputType>
@@ -19,7 +18,7 @@
     <ApplicationManifest>Calamari.Aws.exe.manifest</ApplicationManifest>
     <ApplicationIcon />
     <StartupObject />
-    <TargetFrameworks>net462;netstandard2.1</TargetFrameworks>
+    <TargetFramework>net8.0</TargetFramework>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
@@ -29,10 +28,6 @@
     <PackageReference Include="AWSSDK.IdentityManagement" Version="3.7.2.116" />
     <PackageReference Include="AWSSDK.S3" Version="3.7.8.8" />
     <PackageReference Include="AWSSDK.SecurityToken" Version="3.7.401.11" />
-    <PackageReference Include="Microsoft.DotNet.Analyzers.Compatibility" Version="0.2.12-alpha">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
-    </PackageReference>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Calamari.CloudAccounts\Calamari.CloudAccounts.csproj" />

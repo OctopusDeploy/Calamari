@@ -1,4 +1,3 @@
-#if NET
 #nullable enable
 using System;
 
@@ -8,12 +7,6 @@ namespace Calamari.ArgoCD.Models
     {
         ContainerImageReference(string registry, string imageName, string tag, string defaultRegistry)
         {
-            // Trim special case of "index.docker.io" to "docker.io" - simplifies check further down, and we never want to write out the full "index." version anyway.
-            if (registry.Equals($"index.{ArgoCDConstants.DefaultContainerRegistry}", StringComparison.OrdinalIgnoreCase))
-            {
-                registry = ArgoCDConstants.DefaultContainerRegistry;
-            }
-
             ImageName = imageName;
             Tag = tag;
             Registry = registry;
@@ -77,7 +70,8 @@ namespace Calamari.ArgoCD.Models
                 }
             }
 
-            return new ContainerImageReference(registry.ToLowerInvariant(), imageName.ToLowerInvariant(), tag.ToLowerInvariant(), defaultRegistry.ToLowerInvariant());
+            //image tag is case-sensitive
+            return new ContainerImageReference(registry.ToLowerInvariant(), imageName.ToLowerInvariant(), tag, defaultRegistry.ToLowerInvariant());
         }
 
         public string Registry { get; }
@@ -86,24 +80,13 @@ namespace Calamari.ArgoCD.Models
 
         string DefaultRegistry { get; }
 
-        public bool IsMatch(ContainerImageReference other)
+        public ContainerImageComparison CompareWith(ContainerImageReference other)
         {
-            if (Equals(other))
-            {
-                return true;
-            }
-
-            return ImageName.Equals(other.ImageName, StringComparison.OrdinalIgnoreCase) && RegistriesMatch(this, other);
-        }
-
-        public bool IsTagChange(ContainerImageReference other)
-        {
-            if (IsMatch(other))
-            {
-                return !Tag.Equals(other.Tag, StringComparison.OrdinalIgnoreCase);
-            }
-
-            return false;
+            return new ContainerImageComparison(
+                                                RegistriesMatch(this, other),
+                                                ImageName.Equals(other.ImageName, StringComparison.OrdinalIgnoreCase),
+                                                Tag.Equals(other.Tag)
+                                               );
         }
 
         string ToOriginalFormatName()
@@ -123,16 +106,36 @@ namespace Calamari.ArgoCD.Models
 
             string NormalizeRegistry(ContainerImageReference imageReference)
             {
-                return !string.IsNullOrWhiteSpace(imageReference.Registry)
+                var registry =  !string.IsNullOrWhiteSpace(imageReference.Registry)
                     ? imageReference.Registry
                     : imageReference.DefaultRegistry;
+                
+                // Trim special case of "index.docker.io" to "docker.io" - simplifies check further down, and we never want to write out the full "index." version anyway.
+                if (registry.Equals($"index.{ArgoCDConstants.DefaultContainerRegistry}", StringComparison.OrdinalIgnoreCase))
+                {
+                    return ArgoCDConstants.DefaultContainerRegistry;
+                }
+
+                return registry;
             }
         }
 
-        public override string ToString()
+        public string FriendlyName()
         {
             return string.IsNullOrEmpty(Tag) ? ToOriginalFormatName() : $"{ToOriginalFormatName()}:{Tag}";
         }
     }
+
+    public record ContainerImageComparison(bool RegistryMatch, bool ImageNameMatch, bool TagMatch)
+    {
+        public bool MatchesImageAndTag()
+        {
+            return RegistryMatch && ImageNameMatch && TagMatch;
+        }
+
+        public bool MatchesImage()
+        {
+            return RegistryMatch && ImageNameMatch;
+        }
+    }
 }
-#endif

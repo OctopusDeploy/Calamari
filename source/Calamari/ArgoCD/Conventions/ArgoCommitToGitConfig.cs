@@ -1,4 +1,3 @@
-#if NET
 using System.Collections.Generic;
 
 namespace Calamari.ArgoCD.Conventions
@@ -20,4 +19,4 @@ namespace Calamari.ArgoCD.Conventions
         public GitCommitParameters CommitParameters { get; }
     }
 }
-#endif
+

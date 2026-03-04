@@ -7,26 +7,27 @@ namespace Calamari.ArgoCD.Conventions
 {
     static class ApplicationValidator
     {
-        public static ValidationResult Validate(Application application)
+        public static ValidationResult ValidateSourceTypes(Application application)
         {
-            return ValidationResult.Merge(
-                                          ValidateSourceNames(application),
-                                          ValidateUnnamedAnnotationsInMultiSourceApplication(application)
-                                         );
+            if (application.Spec.Sources.Count == application.Status.SourceTypes.Count)
+                return ValidationResult.Success;
+            
+            return ValidationResult.Error($"Application '{application.Metadata.Name}' has sources with undetected source types. Please ensure the application is configured correctly in Argo CD.");
+
         }
 
-        static ValidationResult ValidateSourceNames(Application application)
+        public static ValidationResult ValidateSourceNames(Application application)
         {
             var groupedByName = application.Spec.Sources.GroupBy(s => s.Name.ToApplicationSourceName());
 
             var groupsWithDuplicates = groupedByName.Where(g => g.Key != null && g.Count() > 1).ToArray();
 
             return groupsWithDuplicates.Any() 
-                ? ValidationResult.Error(groupsWithDuplicates.Select(g => $"Application {application.Metadata.Name} has multiples sources with the name '{g.Key}'. Please ensure all sources have unique names.").ToArray()) 
+                ? ValidationResult.Error(groupsWithDuplicates.Select(g => $"Application '{application.Metadata.Name}' has multiples sources with the name '{g.Key}'. Please ensure all sources have unique names.").ToArray()) 
                 : ValidationResult.Success;
         }
 
-        static ValidationResult ValidateUnnamedAnnotationsInMultiSourceApplication(Application application)
+        public static ValidationResult ValidateUnnamedAnnotationsInMultiSourceApplication(Application application)
         {
             if (application.Spec.Sources.Count <= 1)
                 return ValidationResult.Success;

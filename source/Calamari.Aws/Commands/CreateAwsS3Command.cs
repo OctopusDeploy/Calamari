@@ -42,7 +42,12 @@ namespace Calamari.Aws.Commands
             var objectWriterOwnership = variables.GetFlag(AwsSpecialVariables.S3.ObjectWriterOwnership);
             
             Guard.NotNullOrWhiteSpace(bucketName, "Bucket name is required");
-            Guard.NotNullOrWhiteSpace(stackName, "Stack name is required");
+            
+            // The user may not specify a StackName and allow Octopus to generate it for them.
+            if (string.IsNullOrEmpty(stackName))
+            {
+                stackName = CloudFormationStackNameGenerator.GetStackName(variables, bucketName);
+            }
 
             var tags = JsonConvert.DeserializeObject<List<KeyValuePair<string, string>>>(variables.Get(AwsSpecialVariables.CloudFormation.Tags) ?? "[]");
             ValidateTags(tags);

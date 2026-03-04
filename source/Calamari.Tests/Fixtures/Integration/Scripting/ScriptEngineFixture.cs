@@ -46,7 +46,7 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
 
         void DeterminesCorrectScriptTypePreferenceOrder(IEnumerable<ScriptSyntax> expected)
         {
-            var engine = new ScriptEngine(new List<IScriptWrapper>(), Substitute.For<ILog>(), new DotnetScriptCompilationWarningOutputSink());
+            var engine = new ScriptEngine(new List<IScriptWrapper>(), Substitute.For<ILog>());
             var supportedTypes = engine.GetSupportedTypes();
 
             supportedTypes.Should().Equal(expected);

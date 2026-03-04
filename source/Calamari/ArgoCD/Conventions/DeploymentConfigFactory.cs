@@ -1,4 +1,3 @@
-#if NET
 using System;
 using System.Linq;
 using Calamari.ArgoCD.Models;
@@ -35,8 +34,10 @@ namespace Calamari.ArgoCD.Conventions
         public UpdateArgoCDAppDeploymentConfig CreateUpdateImageConfig(RunningDeployment deployment)
         {
             var commitParameters = CommitParameters(deployment);
-            var packageReferences = deployment.Variables.GetContainerPackageNames().Select(p => ContainerImageReference.FromReferenceString(p)).ToList();
-            return new UpdateArgoCDAppDeploymentConfig(commitParameters, packageReferences);
+            var packageHelmReference = deployment.Variables.GetContainerPackages().Select(p => new ContainerImageReferenceAndHelmReference(ContainerImageReference.FromReferenceString(p.PackageName),
+                                                                                                                          p.HelmReference)).ToList();
+            var useHelmReferenceFromContainer = OctopusFeatureToggles.ArgoCDHelmReplacePathFromContainerReferenceFeatureToggle.IsEnabled(deployment.Variables);
+            return new UpdateArgoCDAppDeploymentConfig(commitParameters, packageHelmReference, useHelmReferenceFromContainer);
         }
         
         bool RequiresPullRequest(RunningDeployment deployment)
@@ -68,4 +69,4 @@ namespace Calamari.ArgoCD.Conventions
         }
     }
 }
-#endif
+
