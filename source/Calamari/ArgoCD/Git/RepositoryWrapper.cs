@@ -11,12 +11,14 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Integration.Time;
 using LibGit2Sharp;
 using Octopus.CoreUtilities.Extensions;
+using Polly;
+using Polly.Retry;
 
 namespace Calamari.ArgoCD.Git
 {
     public class RepositoryWrapper : IDisposable
     {
-        readonly IRepository repository;
+        readonly Repository repository;
         readonly ICalamariFileSystem calamariFileSystem;
         readonly string repoCheckoutDirectoryPath;
         readonly ILog log;
@@ -26,7 +28,7 @@ namespace Calamari.ArgoCD.Git
 
         public string WorkingDirectory => repository.Info.WorkingDirectory;
 
-        public RepositoryWrapper(IRepository repository,
+        public RepositoryWrapper(Repository repository,
                                  ICalamariFileSystem calamariFileSystem,
                                  string repoCheckoutDirectoryPath,
                                  ILog log,
@@ -105,12 +107,28 @@ namespace Calamari.ArgoCD.Git
                                                   CancellationToken cancellationToken)
         {
             var currentBranchName = repository.GetBranchName(branchName);
-            var commit = repository.Head.Tip; // We should have just pushed to the tip of this branch
-
             var pushToBranchName = requiresPullRequest ? CalculateBranchName() : currentBranchName;
 
             log.Info($"Pushing changes to branch '{pushToBranchName.ToFriendlyName()}'");
-            PushChanges(pushToBranchName);
+
+            var retryPipeline = new ResiliencePipelineBuilder()
+                                .AddRetry(new RetryStrategyOptions
+                                {
+                                    ShouldHandle = new PredicateBuilder().Handle<CommandException>(),
+                                    MaxRetryAttempts = 2,
+                                    Delay = TimeSpan.Zero,
+                                    OnRetry = args =>
+                                    {
+                                        log.Verbose($"Push to '{pushToBranchName.ToFriendlyName()}' failed (attempt {args.AttemptNumber}), fetching and merging before retrying");
+                                        FetchAndMerge(currentBranchName);
+                                        return default;
+                                    }
+                                })
+                                .Build();
+
+            retryPipeline.Execute(() => PushChanges(pushToBranchName));
+
+            var commit = repository.Head.Tip;
 
             if (vendorApiAdapter != null)
             {
@@ -202,6 +220,41 @@ namespace Calamari.ArgoCD.Git
             {
                 throw new CommandException($"Failed to push to branch {branchName.ToFriendlyName()} - {errorsDetected.Message}");
             }
+        }
+
+        void FetchAndMerge(GitBranchName branchName)
+        {
+            var remote = repository.Network.Remotes.Single();
+            var refSpecs = remote.FetchRefSpecs.Select(x => x.Specification).ToList();
+            var fetchOptions = new FetchOptions
+            {
+                CredentialsProvider = (url, usernameFromUrl, types) =>
+                    new UsernamePasswordCredentials { Username = connection.Username, Password = connection.Password }
+            };
+
+            log.Verbose($"Fetching from remote '{remote.Name}'");
+            LibGit2Sharp.Commands.Fetch(repository, remote.Name, refSpecs, fetchOptions, null);
+
+            var trackingBranchName = $"{remote.Name}/{branchName.ToFriendlyName()}";
+            var trackingBranch = repository.Branches[trackingBranchName];
+            if (trackingBranch == null)
+            {
+                log.Verbose($"No tracking branch found for '{branchName.ToFriendlyName()}', skipping merge");
+                return;
+            }
+
+            log.Verbose($"Merging '{trackingBranch.FriendlyName}' into HEAD");
+            var commitTime = clock.GetUtcTime();
+            var mergeResult = repository.Merge(trackingBranch,
+                                               new Signature("Octopus", "octopus@octopus.com", commitTime),
+                                               new MergeOptions { FastForwardStrategy = FastForwardStrategy.Default });
+
+            if (mergeResult.Status == MergeStatus.Conflicts)
+            {
+                throw new CommandException($"Merge conflict detected when merging '{trackingBranch.FriendlyName}' - cannot automatically resolve conflicts");
+            }
+
+            log.Verbose($"Merge result: {mergeResult.Status}");
         }
 
         static string GenerateCommitMessage(string summary, string description)
