@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -251,10 +251,14 @@ namespace Calamari.CloudAccounts
                     string payload;
                     using (var client = new HttpClient())
                     {
+                        log.Verbose("Fetching IMDSv2 token from instance metadata service");    
                         client.DefaultRequestHeaders.Add(MetadataHeaderToken, await GetIMDSv2Token());
+                        log.Verbose("Fetching instance role from instance metadata service");
                         var instanceRole = await client.GetStringAsync(RoleUri);
+                        log.Verbose("Fetching instance role credentials from instance metadata service");
 
                         payload = await client.GetStringAsync($"{RoleUri}{instanceRole}");
+                        log.Verbose("Successfully fetched instance role credentials from instance metadata service");
                     }
 
                     var instanceRoleKeys = JsonConvert.DeserializeObject<InstanceRoleKeys>(payload);
@@ -264,9 +268,10 @@ namespace Calamari.CloudAccounts
 
                     return true;
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // catch the exception and fallback to returning false
+                    log.Error("Failed to inherit AWS credentials from instance metadata service");
+                    log.Error(ex.Message);
                 }
             }
 
