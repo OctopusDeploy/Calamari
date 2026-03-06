@@ -114,7 +114,7 @@ namespace Calamari.ArgoCD.Git
             var retryPipeline = new ResiliencePipelineBuilder()
                                 .AddRetry(new RetryStrategyOptions
                                 {
-                                    ShouldHandle = new PredicateBuilder().Handle<CommandException>(),
+                                    ShouldHandle = new PredicateBuilder().Handle<CommandException>().Handle<NonFastForwardException>(),
                                     MaxRetryAttempts = 2,
                                     Delay = TimeSpan.Zero,
                                     OnRetry = args =>

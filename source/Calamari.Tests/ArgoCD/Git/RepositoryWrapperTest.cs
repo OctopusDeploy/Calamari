@@ -224,8 +224,8 @@ namespace Calamari.Tests.ArgoCD.Git
             // Arrange: commit a file in our clone
             const string filename = "ourFile.txt";
             const string fileContents = "our content";
-            File.WriteAllText(Path.Combine(RepositoryRootPath, filename), fileContents);
-            repository.StageFiles(new[] { filename });
+            await File.WriteAllTextAsync(Path.Combine(RepositoryRootPath, filename), fileContents);
+            repository.StageFiles([filename]);
             repository.CommitChanges("Our commit", "").Should().BeTrue();
 
             // Simulate a concurrent push to origin on a different file (causes non-fast-forward failure)
