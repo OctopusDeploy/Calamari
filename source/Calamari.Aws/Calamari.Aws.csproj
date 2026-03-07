@@ -22,7 +22,7 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="AWSSDK.EKS" Version="3.7.13.24" />
+    <PackageReference Include="AWSSDK.EKS" Version="3.7.508.7" />
     <PackageReference Include="AWSSDK.CloudFormation" Version="3.7.9.14" />
     <PackageReference Include="AWSSDK.Core" Version="3.7.400.62" />
     <PackageReference Include="AWSSDK.IdentityManagement" Version="3.7.2.116" />
