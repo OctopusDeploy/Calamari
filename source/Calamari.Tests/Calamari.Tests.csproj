@@ -9,7 +9,7 @@
         <NoWarn>NU1603</NoWarn>
         <ApplicationIcon/>
         <StartupObject/>
-        <RuntimeIdentifiers>win-x64;linux-x64;osx-x64;linux-arm;linux-arm64</RuntimeIdentifiers>
+        <RuntimeIdentifiers>win-x64;linux-x64;osx-arm64;linux-arm;linux-arm64</RuntimeIdentifiers>
         <TargetFramework>net8.0</TargetFramework>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <EmitLegacyAssetsFileItems>true</EmitLegacyAssetsFileItems>
