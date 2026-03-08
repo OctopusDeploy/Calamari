@@ -59,15 +59,16 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             acquireSecond.Should().NotThrow();
         }
 
-        [Test]
-        public void Acquire_ThrowsLockRejectedException_WhenExclusiveLockHeld()
+        [TestCase(LockType.Exclusive)]
+        [TestCase(LockType.Shared)]
+        public void Acquire_ThrowsLockRejectedException_WhenExclusiveLockHeld(LockType secondLockType)
         {
             using var exclusiveHandle = FileLock.Acquire(MakeLockOptions(LockType.Exclusive));
 
             // Any second acquisition (shared or exclusive) should fail while the exclusive lock is held
             Action acquireSecond = () =>
             {
-                using var secondHandle = FileLock.Acquire(MakeLockOptions(LockType.Exclusive));
+                using var secondHandle = FileLock.Acquire(MakeLockOptions(secondLockType));
             };
 
             acquireSecond.Should().Throw<LockRejectedException>();
