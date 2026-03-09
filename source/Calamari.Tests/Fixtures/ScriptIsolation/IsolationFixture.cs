@@ -162,5 +162,33 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
 
             await secondEnforce.Should().ThrowAsync<LockRejectedException>();
         }
+
+        [Test]
+        public async Task Enforce_WillWaitForLockToBeReleased()
+        {
+            var firstHandle = Isolation.Enforce(FullIsolationOptions(timeout: "00:00:00.010"));
+            var t = Task.Run(() =>
+                             {
+                                 using var secondHandle = Isolation.Enforce(FullIsolationOptions(timeout: "00:00:00.500"));
+                             }
+                            );
+            await Task.Delay(TimeSpan.FromMilliseconds(20));
+            firstHandle.Dispose();
+            await t;
+        }
+
+        [Test]
+        public async Task EnforceAsync_WillWaitForLockToBeReleased()
+        {
+            var firstHandle = await Isolation.EnforceAsync(FullIsolationOptions(timeout: "00:00:00.500"), CancellationToken.None);
+            var t = Task.Run(async () =>
+                             {
+                                 await using var secondHandle = await Isolation.EnforceAsync(FullIsolationOptions(timeout: "00:00:00.500"), CancellationToken.None);
+                             }
+                            );
+            await Task.Delay(TimeSpan.FromMilliseconds(20));
+            await firstHandle.DisposeAsync();
+            await t;
+        }
     }
 }
