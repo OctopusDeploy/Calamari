@@ -29,7 +29,13 @@ public sealed record LockOptions(
             return null;
         }
 
-        if (!TimeSpan.TryParse(options.Timeout, out var timeout))
+        TimeSpan timeout;
+
+        if (string.IsNullOrWhiteSpace(options.Timeout))
+        {
+            timeout = TimeSpan.MaxValue;
+        }
+        else if (!TimeSpan.TryParse(options.Timeout, out timeout))
         {
             Log.Verbose($"Failed to parse mutex timeout value '{options.Timeout}' as TimeSpan. Defaulting to TimeSpan.MaxValue.");
             timeout = TimeSpan.MaxValue;
