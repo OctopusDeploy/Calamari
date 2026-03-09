@@ -31,6 +31,7 @@ namespace Calamari.ArgoCD
                     { ArgoCDFilesUpdatedAttributes.GatewayId, appResult.GatewayId },
                     { ArgoCDFilesUpdatedAttributes.ApplicationName, appResult.ApplicationName.Value },
                     { ArgoCDFilesUpdatedAttributes.Sources, JsonSerializer.Serialize(appResult.UpdatedSourceDetails) }
+                    // noamg: add some timestamp here
                 };
 
                 var message = new ServiceMessage(

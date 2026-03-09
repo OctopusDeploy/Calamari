@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Calamari.ArgoCD;
 using Calamari.ArgoCD.Models;
@@ -32,10 +33,11 @@ namespace Calamari.Tests.ArgoCD
         {
             var log = new InMemoryLog();
             var reporter = new ArgoCDFilesUpdatedReporter(log);
+            var timestamp = DateTimeOffset.UtcNow;
 
             var applicationResults = new List<ProcessApplicationResult>
             {
-                new("gateway1", new ApplicationName("app1"), 2, 2, [new UpdatedSourceDetail("abc123", 0, [], [])], [], [])
+                new("gateway1", new ApplicationName("app1"), 2, 2, [new UpdatedSourceDetail("abc123", timestamp, 0, [], [])], [], [])
             };
 
             reporter.ReportFilesUpdated(applicationResults);
@@ -47,7 +49,7 @@ namespace Calamari.Tests.ArgoCD
                 {
                     ["gatewayId"] = "gateway1",
                     ["applicationName"] = "app1",
-                    ["sources"] = "[{\"CommitSha\":\"abc123\",\"SourceIndex\":0,\"ReplacedFiles\":[],\"PatchedFiles\":[]}]"
+                    ["sources"] = $"[{{\"CommitSha\":\"abc123\",\"Timestamp\":\"{timestamp:o}\",\"SourceIndex\":0,\"ReplacedFiles\":[],\"PatchedFiles\":[]}}]"
                 }
             });
         }
@@ -57,11 +59,12 @@ namespace Calamari.Tests.ArgoCD
         {
             var log = new InMemoryLog();
             var reporter = new ArgoCDFilesUpdatedReporter(log);
+            var timestamp = DateTimeOffset.UtcNow;
 
             var applicationResults = new List<ProcessApplicationResult>
             {
-                new("gateway1", new ApplicationName("app1"), 2, 2, [new UpdatedSourceDetail("abc123", 0, [], [])], [], []),
-                new("gateway2", new ApplicationName("app2"), 1, 1, [new UpdatedSourceDetail("def456", 0, [], [])], [], [])
+                new("gateway1", new ApplicationName("app1"), 2, 2, [new UpdatedSourceDetail("abc123", timestamp, 0, [], [])], [], []),
+                new("gateway2", new ApplicationName("app2"), 1, 1, [new UpdatedSourceDetail("def456", timestamp, 0, [], [])], [], [])
             };
 
             reporter.ReportFilesUpdated(applicationResults);
@@ -74,7 +77,7 @@ namespace Calamari.Tests.ArgoCD
                     {
                         ["gatewayId"] = "gateway1",
                         ["applicationName"] = "app1",
-                        ["sources"] = "[{\"CommitSha\":\"abc123\",\"SourceIndex\":0,\"ReplacedFiles\":[],\"PatchedFiles\":[]}]"
+                        ["sources"] = $"[{{\"CommitSha\":\"abc123\",\"Timestamp\":\"{timestamp:o}\",\"SourceIndex\":0,\"ReplacedFiles\":[],\"PatchedFiles\":[]}}]"
                     }
                 },
                 new
@@ -84,7 +87,7 @@ namespace Calamari.Tests.ArgoCD
                     {
                         ["gatewayId"] = "gateway2",
                         ["applicationName"] = "app2",
-                        ["sources"] = "[{\"CommitSha\":\"def456\",\"SourceIndex\":0,\"ReplacedFiles\":[],\"PatchedFiles\":[]}]"
+                        ["sources"] = $"[{{\"CommitSha\":\"def456\",\"Timestamp\":\"{timestamp:o}\",\"SourceIndex\":0,\"ReplacedFiles\":[],\"PatchedFiles\":[]}}]"
                     }
                 }
             ]);
@@ -95,11 +98,12 @@ namespace Calamari.Tests.ArgoCD
         {
             var log = new InMemoryLog();
             var reporter = new ArgoCDFilesUpdatedReporter(log);
+            var timestamp = DateTimeOffset.UtcNow;
 
             var applicationResults = new List<ProcessApplicationResult>
             {
                 new("gateway1", new ApplicationName("app1"), 2, 2,
-                    [new UpdatedSourceDetail("abc123", 0, [new FilePathContent("values.yaml", "image: nginx:latest")], [])],
+                    [new UpdatedSourceDetail("abc123", timestamp, 0, [new FilePathContent("values.yaml", "image: nginx:latest")], [])],
                     [], [])
             };
 
@@ -112,7 +116,7 @@ namespace Calamari.Tests.ArgoCD
                 {
                     ["gatewayId"] = "gateway1",
                     ["applicationName"] = "app1",
-                    ["sources"] = "[{\"CommitSha\":\"abc123\",\"SourceIndex\":0,\"ReplacedFiles\":[{\"FilePath\":\"values.yaml\",\"Content\":\"image: nginx:latest\"}],\"PatchedFiles\":[]}]"
+                    ["sources"] = $"[{{\"CommitSha\":\"abc123\",\"Timestamp\":\"{timestamp:o}\",\"SourceIndex\":0,\"ReplacedFiles\":[{{\"FilePath\":\"values.yaml\",\"Content\":\"image: nginx:latest\"}}],\"PatchedFiles\":[]}}]"
                 }
             });
         }
@@ -122,11 +126,12 @@ namespace Calamari.Tests.ArgoCD
         {
             var log = new InMemoryLog();
             var reporter = new ArgoCDFilesUpdatedReporter(log);
+            var timestamp = DateTimeOffset.UtcNow;
 
             var applicationResults = new List<ProcessApplicationResult>
             {
                 new("gateway1", new ApplicationName("app1"), 1, 1,
-                    [new UpdatedSourceDetail("def456", 0, [], [new FilePathContent("kustomization.yaml", "images:\n- name: nginx")])],
+                    [new UpdatedSourceDetail("def456", timestamp, 0, [], [new FilePathContent("kustomization.yaml", "images:\n- name: nginx")])],
                     [], [])
             };
 
@@ -139,7 +144,7 @@ namespace Calamari.Tests.ArgoCD
                 {
                     ["gatewayId"] = "gateway1",
                     ["applicationName"] = "app1",
-                    ["sources"] = "[{\"CommitSha\":\"def456\",\"SourceIndex\":0,\"ReplacedFiles\":[],\"PatchedFiles\":[{\"FilePath\":\"kustomization.yaml\",\"Content\":\"images:\\n- name: nginx\"}]}]"
+                    ["sources"] = $"[{{\"CommitSha\":\"def456\",\"Timestamp\":\"{timestamp:o}\",\"SourceIndex\":0,\"ReplacedFiles\":[],\"PatchedFiles\":[{{\"FilePath\":\"kustomization.yaml\",\"Content\":\"images:\\n- name: nginx\"}}]}}]"
                 }
             });
         }
@@ -149,11 +154,12 @@ namespace Calamari.Tests.ArgoCD
         {
             var log = new InMemoryLog();
             var reporter = new ArgoCDFilesUpdatedReporter(log);
+            var timestamp = DateTimeOffset.UtcNow;
 
             var applicationResults = new List<ProcessApplicationResult>
             {
                 new("gateway1", new ApplicationName("app1"), 2, 2,
-                    [new UpdatedSourceDetail("abc123", 0,
+                    [new UpdatedSourceDetail("abc123", timestamp, 0,
                         [new FilePathContent("values.yaml", "image: nginx:latest")],
                         [new FilePathContent("kustomization.yaml", "images:\n- name: nginx")])],
                     [], [])
@@ -168,7 +174,7 @@ namespace Calamari.Tests.ArgoCD
                 {
                     ["gatewayId"] = "gateway1",
                     ["applicationName"] = "app1",
-                    ["sources"] = "[{\"CommitSha\":\"abc123\",\"SourceIndex\":0,\"ReplacedFiles\":[{\"FilePath\":\"values.yaml\",\"Content\":\"image: nginx:latest\"}],\"PatchedFiles\":[{\"FilePath\":\"kustomization.yaml\",\"Content\":\"images:\\n- name: nginx\"}]}]"
+                    ["sources"] = $"[{{\"CommitSha\":\"abc123\",\"Timestamp\":\"{timestamp:o}\",\"SourceIndex\":0,\"ReplacedFiles\":[{{\"FilePath\":\"values.yaml\",\"Content\":\"image: nginx:latest\"}}],\"PatchedFiles\":[{{\"FilePath\":\"kustomization.yaml\",\"Content\":\"images:\\n- name: nginx\"}}]}}]"
                 }
             });
         }
@@ -178,11 +184,12 @@ namespace Calamari.Tests.ArgoCD
         {
             var log = new InMemoryLog();
             var reporter = new ArgoCDFilesUpdatedReporter(log);
+            var timestamp = DateTimeOffset.UtcNow;
 
             var applicationResults = new List<ProcessApplicationResult>
             {
                 new("gateway1", new ApplicationName("app1"), 2, 2,
-                    [new UpdatedSourceDetail("abc123", 0,
+                    [new UpdatedSourceDetail("abc123", timestamp, 0,
                         [
                             new FilePathContent("values.yaml", "image: nginx:latest"),
                             new FilePathContent("values-prod.yaml", "replicas: 3")
@@ -203,7 +210,7 @@ namespace Calamari.Tests.ArgoCD
                 {
                     ["gatewayId"] = "gateway1",
                     ["applicationName"] = "app1",
-                    ["sources"] = "[{\"CommitSha\":\"abc123\",\"SourceIndex\":0,\"ReplacedFiles\":[{\"FilePath\":\"values.yaml\",\"Content\":\"image: nginx:latest\"},{\"FilePath\":\"values-prod.yaml\",\"Content\":\"replicas: 3\"}],\"PatchedFiles\":[{\"FilePath\":\"kustomization.yaml\",\"Content\":\"images:\\n- name: nginx\"},{\"FilePath\":\"patch.yaml\",\"Content\":\"spec:\\n  replicas: 3\"}]}]"
+                    ["sources"] = $"[{{\"CommitSha\":\"abc123\",\"Timestamp\":\"{timestamp:o}\",\"SourceIndex\":0,\"ReplacedFiles\":[{{\"FilePath\":\"values.yaml\",\"Content\":\"image: nginx:latest\"}},{{\"FilePath\":\"values-prod.yaml\",\"Content\":\"replicas: 3\"}}],\"PatchedFiles\":[{{\"FilePath\":\"kustomization.yaml\",\"Content\":\"images:\\n- name: nginx\"}},{{\"FilePath\":\"patch.yaml\",\"Content\":\"spec:\\n  replicas: 3\"}}]}}]"
                 }
             });
         }
@@ -213,13 +220,14 @@ namespace Calamari.Tests.ArgoCD
         {
             var log = new InMemoryLog();
             var reporter = new ArgoCDFilesUpdatedReporter(log);
+            var timestamp = DateTimeOffset.UtcNow;
 
             var applicationResults = new List<ProcessApplicationResult>
             {
                 new("gateway1", new ApplicationName("app1"), 2, 2,
                     [
-                        new UpdatedSourceDetail("abc123", 0, [new FilePathContent("values.yaml", "image: nginx:latest")], []),
-                        new UpdatedSourceDetail("abc123", 1, [], [new FilePathContent("kustomization.yaml", "images:\n- name: redis")])
+                        new UpdatedSourceDetail("abc123", timestamp, 0, [new FilePathContent("values.yaml", "image: nginx:latest")], []),
+                        new UpdatedSourceDetail("abc123", timestamp, 1, [], [new FilePathContent("kustomization.yaml", "images:\n- name: redis")])
                     ],
                     [], [])
             };
@@ -233,7 +241,7 @@ namespace Calamari.Tests.ArgoCD
                 {
                     ["gatewayId"] = "gateway1",
                     ["applicationName"] = "app1",
-                    ["sources"] = "[{\"CommitSha\":\"abc123\",\"SourceIndex\":0,\"ReplacedFiles\":[{\"FilePath\":\"values.yaml\",\"Content\":\"image: nginx:latest\"}],\"PatchedFiles\":[]},{\"CommitSha\":\"abc123\",\"SourceIndex\":1,\"ReplacedFiles\":[],\"PatchedFiles\":[{\"FilePath\":\"kustomization.yaml\",\"Content\":\"images:\\n- name: redis\"}]}]"
+                    ["sources"] = $"[{{\"CommitSha\":\"abc123\",\"Timestamp\":\"{timestamp:o}\",\"SourceIndex\":0,\"ReplacedFiles\":[{{\"FilePath\":\"values.yaml\",\"Content\":\"image: nginx:latest\"}}],\"PatchedFiles\":[]}},{{\"CommitSha\":\"abc123\",\"Timestamp\":\"{timestamp:o}\",\"SourceIndex\":1,\"ReplacedFiles\":[],\"PatchedFiles\":[{{\"FilePath\":\"kustomization.yaml\",\"Content\":\"images:\\n- name: redis\"}}]}}]"
                 }
             });
         }
@@ -243,11 +251,12 @@ namespace Calamari.Tests.ArgoCD
         {
             var log = new InMemoryLog();
             var reporter = new ArgoCDFilesUpdatedReporter(log);
+            var timestamp = DateTimeOffset.UtcNow;
 
             var applicationResults = new List<ProcessApplicationResult>
             {
                 new("gateway1", new ApplicationName("app1"), 2, 2, [], [], []),
-                new("gateway2", new ApplicationName("app2"), 1, 1, [new UpdatedSourceDetail("abc123", 0, [], [])], [], []),
+                new("gateway2", new ApplicationName("app2"), 1, 1, [new UpdatedSourceDetail("abc123", timestamp, 0, [], [])], [], []),
                 new("gateway3", new ApplicationName("app3"), 1, 1, [], [], [])
             };
 
@@ -260,7 +269,7 @@ namespace Calamari.Tests.ArgoCD
                 {
                     ["gatewayId"] = "gateway2",
                     ["applicationName"] = "app2",
-                    ["sources"] = "[{\"CommitSha\":\"abc123\",\"SourceIndex\":0,\"ReplacedFiles\":[],\"PatchedFiles\":[]}]"
+                    ["sources"] = $"[{{\"CommitSha\":\"abc123\",\"Timestamp\":\"{timestamp:o}\",\"SourceIndex\":0,\"ReplacedFiles\":[],\"PatchedFiles\":[]}}]"
                 }
             });
         }

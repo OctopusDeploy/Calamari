@@ -1,3 +1,4 @@
+using System;
 using Calamari.ArgoCD;
 using Calamari.ArgoCD.Git;
 using Calamari.Common.Plumbing.ServiceMessages;
@@ -20,6 +21,7 @@ namespace Calamari.Tests.ArgoCD
         const string ApplicationName = "TestApp";
         const string CommitSha = "1234567890abcdef1234567890abcdef12345678";
         const string ShortSha = "1234567";
+        static readonly DateTimeOffset Timestamp = DateTimeOffset.UtcNow;
 
         const string PrTitle = "Update ArgoCD manifests";
         const string PrUrl = "https://github.com/org/repo/pull/123";
@@ -38,7 +40,7 @@ namespace Calamari.Tests.ArgoCD
         {
             // Arrange
             const int sourceIndex = 0;
-            var pushResult = new PushResult(CommitSha, ShortSha);
+            var pushResult = new PushResult(CommitSha, ShortSha, Timestamp);
 
             // Act
             writer.WritePushResultOutput(GatewayName, ApplicationName, sourceIndex, pushResult);
@@ -56,7 +58,7 @@ namespace Calamari.Tests.ArgoCD
         {
             // Arrange
             const int sourceIndex = 1;
-            var pullRequestPushResult = new PullRequestPushResult(CommitSha, ShortSha, PrTitle, PrUrl, PrNumber);
+            var pullRequestPushResult = new PullRequestPushResult(CommitSha, ShortSha, Timestamp, PrTitle, PrUrl, PrNumber);
 
             // Act
             writer.WritePushResultOutput(GatewayName, ApplicationName, sourceIndex, pullRequestPushResult);
@@ -76,8 +78,8 @@ namespace Calamari.Tests.ArgoCD
             const string commitSha2 = "abcdef1234567890abcdef1234567890abcdef12";
             const string shortSha2 = "abcdef1";
 
-            var pushResult1 = new PushResult(CommitSha, ShortSha);
-            var pushResult2 = new PullRequestPushResult(commitSha2, shortSha2, PrTitle, PrUrl, PrNumber);
+            var pushResult1 = new PushResult(CommitSha, ShortSha, Timestamp);
+            var pushResult2 = new PullRequestPushResult(commitSha2, shortSha2, Timestamp, PrTitle, PrUrl, PrNumber);
 
             // Act
             writer.WritePushResultOutput(GatewayName, ApplicationName, 0, pushResult1);
@@ -100,6 +102,7 @@ namespace Calamari.Tests.ArgoCD
         {
             serviceMessages.GetPropertyValue($"ArgoCD.Gateway[{GatewayName}].Application[{ApplicationName}].Source[{sourceIndex}].CommitSha").Should().Be(commitSha);
             serviceMessages.GetPropertyValue($"ArgoCD.Gateway[{GatewayName}].Application[{ApplicationName}].Source[{sourceIndex}].ShortSha").Should().Be(shortSha);
+            serviceMessages.GetPropertyValue($"ArgoCD.Gateway[{GatewayName}].Application[{ApplicationName}].Source[{sourceIndex}].Timestamp").Should().Be(Timestamp.ToString("o"));
         }
 
         static void AssertNoPullRequestVariables(ServiceMessage[] serviceMessages, int sourceIndex)

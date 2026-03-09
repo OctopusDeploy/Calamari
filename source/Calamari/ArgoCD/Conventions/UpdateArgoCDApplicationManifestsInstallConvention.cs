@@ -163,7 +163,12 @@ namespace Calamari.ArgoCD.Conventions
                 applicationName.ToApplicationName(),
                 applicationFromYaml.Spec.Sources.Count,
                 applicationFromYaml.Spec.Sources.Count(s => deploymentScope.Matches(ScopingAnnotationReader.GetScopeForApplicationSource(s.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources))),
-                updatedSourcesResults.Select(r => new UpdatedSourceDetail(r.UpdateResult.CommitSha, r.applicationSource.Index, r.UpdateResult.ReplacedFiles, [])).ToList(),
+                updatedSourcesResults.Select(r => new UpdatedSourceDetail(
+                    r.UpdateResult.CommitSha,
+                    r.UpdateResult.Timestamp,
+                    r.applicationSource.Index,
+                    r.UpdateResult.ReplacedFiles,
+                    [])).ToList(),
                 [],
                 updatedSourcesResults.Select(r => r.applicationSource.Source.OriginalRepoUrl).ToHashSet());
         }
@@ -195,13 +200,13 @@ namespace Calamari.ArgoCD.Conventions
             log.LogApplicationSourceScopeStatus(annotatedScope, applicationSource.Name.ToApplicationSourceName(), deploymentScope);
 
             if (!deploymentScope.Matches(annotatedScope))
-                return new ManifestUpdateResult(false, string.Empty, []);
+                return new ManifestUpdateResult(false, string.Empty, DateTimeOffset.MinValue, []);
 
             log.Info($"Writing files to repository '{applicationSource.OriginalRepoUrl}' for '{applicationName}'");
 
             if (!TryCalculateOutputPath(applicationSource, out var outputPath))
             {
-                return new ManifestUpdateResult(false, string.Empty, []);
+                return new ManifestUpdateResult(false, string.Empty, DateTimeOffset.MinValue, []);
             }
 
             var gitCredential = gitCredentials.GetValueOrDefault(applicationSource.OriginalRepoUrl);
@@ -252,15 +257,15 @@ namespace Calamari.ArgoCD.Conventions
                         sourceWithMetadata.Index,
                         pushResult);
 
-                    return new ManifestUpdateResult(true, pushResult.CommitSha, fileHashes);
+                    return new ManifestUpdateResult(true, pushResult.CommitSha, pushResult.CommitTimestamp, fileHashes);
                 }
 
-                return new ManifestUpdateResult(false, string.Empty, []);
+                return new ManifestUpdateResult(false, string.Empty, DateTimeOffset.MinValue, []);
             }
 
             log.Info("No changes were commited");
 
-            return new ManifestUpdateResult(false, string.Empty, []);
+            return new ManifestUpdateResult(false, string.Empty, DateTimeOffset.MinValue, []);
         }
 
         bool TryCalculateOutputPath(ApplicationSource sourceToUpdate, out string outputPath)
@@ -338,6 +343,6 @@ namespace Calamari.ArgoCD.Conventions
         IPackageRelativeFile[] SelectFiles(string pathToExtractedPackageFiles, ArgoCommitToGitConfig config)
             => argoCDManifestsFileMatcher.FindMatchingPackageFiles(pathToExtractedPackageFiles, config.InputSubPath);
 
-        record ManifestUpdateResult(bool Updated, string CommitSha, List<FilePathContent> ReplacedFiles);
+        record ManifestUpdateResult(bool Updated, string CommitSha, DateTimeOffset Timestamp, List<FilePathContent> ReplacedFiles);
     }
 }

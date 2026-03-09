@@ -122,6 +122,7 @@ namespace Calamari.Kubernetes
 
                                 public string CommitSha => $"{qualifiedPrefix}.CommitSha";
                                 public string ShortSha => $"{qualifiedPrefix}.ShortSha";
+                                public string Timestamp => $"{qualifiedPrefix}.CommitTimestamp";
                                 public string PullRequestTitle => $"{qualifiedPrefix}.PullRequest.Title";
                                 public string PullRequestNumber => $"{qualifiedPrefix}.PullRequest.Number";
                                 public string PullRequestUrl => $"{qualifiedPrefix}.PullRequest.Url";

@@ -168,7 +168,7 @@ namespace Calamari.ArgoCD.Conventions
                                                 applicationName.ToApplicationName(),
                                                 applicationFromYaml.Spec.Sources.Count,
                                                 applicationFromYaml.Spec.Sources.Count(s => deploymentScope.Matches(ScopingAnnotationReader.GetScopeForApplicationSource(s.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources))),
-                                                updatedSourcesResults.Select(r => new UpdatedSourceDetail(r.Updated.CommitSha, r.applicationSource.Index, [], r.Updated.PatchedFiles)).ToList(),
+                                                updatedSourcesResults.Select(r => new UpdatedSourceDetail(r.Updated.CommitSha, r.Updated.CommitTimestamp, r.applicationSource.Index, [], r.Updated.PatchedFiles)).ToList(),
                                                 updatedSourcesResults.SelectMany(r => r.Updated.ImagesUpdated).ToHashSet(),
                                                 updatedSourcesResults.Select(r => r.applicationSource.Source.OriginalRepoUrl).ToHashSet());
         }
@@ -200,7 +200,7 @@ namespace Calamari.ArgoCD.Conventions
             log.LogApplicationSourceScopeStatus(annotatedScope, applicationSource.Name.ToApplicationSourceName(), deploymentScope);
             if (!deploymentScope.Matches(annotatedScope))
             {
-                return new SourceUpdateResult(new HashSet<string>(), string.Empty, []);
+                return new SourceUpdateResult(new HashSet<string>(), string.Empty, DateTimeOffset.MinValue, []);
             }
 
             switch (sourceWithMetadata.SourceType)
@@ -246,7 +246,7 @@ namespace Calamari.ArgoCD.Conventions
                 case SourceType.Plugin:
                 {
                     log.WarnFormat("Unable to update source '{0}' as Plugin sources aren't currently supported.", sourceWithMetadata.SourceIdentity);
-                    return new SourceUpdateResult(new HashSet<string>(), string.Empty, []);
+                    return new SourceUpdateResult(new HashSet<string>(), string.Empty, DateTimeOffset.MinValue, []);
                 }
                 default:
                     throw new ArgumentOutOfRangeException();
@@ -268,7 +268,7 @@ namespace Calamari.ArgoCD.Conventions
             if (applicationSource.Path == null)
             {
                 log.WarnFormat("Unable to update source '{0}' as a path has not been specified.", sourceWithMetadata.SourceIdentity);
-                return new SourceUpdateResult(new HashSet<string>(), string.Empty, []);
+                return new SourceUpdateResult(new HashSet<string>(), string.Empty, DateTimeOffset.MinValue, []);
             }
 
             using (var repository = CreateRepository(gitCredentials, applicationSource, repositoryFactory))
@@ -290,12 +290,12 @@ namespace Calamari.ArgoCD.Conventions
                                                                     applicationFromYaml.Metadata.Name,
                                                                     sourceWithMetadata.Index,
                                                                     pushResult);
-                        return new SourceUpdateResult(updatedImages, pushResult.CommitSha, patchedFiles);
+                        return new SourceUpdateResult(updatedImages, pushResult.CommitSha, pushResult.CommitTimestamp, patchedFiles);
                     }
                 }
             }
 
-            return new SourceUpdateResult(new HashSet<string>(), string.Empty, []);
+            return new SourceUpdateResult(new HashSet<string>(), string.Empty, DateTimeOffset.MinValue, []);
         }
 
         /// <returns>Images that were updated</returns>
@@ -359,7 +359,7 @@ namespace Calamari.ArgoCD.Conventions
             if (applicationSource.Path == null)
             {
                 log.WarnFormat("Unable to update source '{0}' as a path has not been specified.", sourceWithMetadata.SourceIdentity);
-                return new SourceUpdateResult(new HashSet<string>(), string.Empty, []);
+                return new SourceUpdateResult(new HashSet<string>(), string.Empty, DateTimeOffset.MinValue, []);
             }
 
             using (var repository = CreateRepository(gitCredentials, applicationSource, repositoryFactory))
@@ -381,14 +381,14 @@ namespace Calamari.ArgoCD.Conventions
                                                                     applicationFromYaml.Metadata.Name,
                                                                     sourceWithMetadata.Index,
                                                                     pushResult);
-                        return new SourceUpdateResult(updatedImages, pushResult.CommitSha, patchedFiles);
+                        return new SourceUpdateResult(updatedImages, pushResult.CommitSha, pushResult.CommitTimestamp, patchedFiles);
                     }
 
-                    return new SourceUpdateResult(new HashSet<string>(), string.Empty, []);
+                    return new SourceUpdateResult(new HashSet<string>(), string.Empty, DateTimeOffset.MinValue, []);
                 }
             }
 
-            return new SourceUpdateResult(new HashSet<string>(), string.Empty, []);
+            return new SourceUpdateResult(new HashSet<string>(), string.Empty, DateTimeOffset.MinValue, []);
         }
 
         /// <returns>Images that were updated</returns>
@@ -406,7 +406,7 @@ namespace Calamari.ArgoCD.Conventions
             if (applicationSource.Path == null)
             {
                 log.WarnFormat("Unable to update source '{0}' as a path has not been specified.", sourceWithMetadata.SourceIdentity);
-                return new SourceUpdateResult(new HashSet<string>(), string.Empty, []);
+                return new SourceUpdateResult(new HashSet<string>(), string.Empty, DateTimeOffset.MinValue, []);
             }
 
             if (deploymentConfig.HasStepBasedHelmValueReferences())
@@ -514,11 +514,11 @@ namespace Calamari.ArgoCD.Conventions
                                                                 applicationFromYaml.Metadata.Name,
                                                                 sourceWithMetadata.Index,
                                                                 pushResult);
-                    return new SourceUpdateResult(updatedImages, pushResult.CommitSha, patchedFiles);
+                    return new SourceUpdateResult(updatedImages, pushResult.CommitSha, pushResult.CommitTimestamp, patchedFiles);
                 }
             }
 
-            return new SourceUpdateResult(new HashSet<string>(), string.Empty, []);
+            return new SourceUpdateResult(new HashSet<string>(), string.Empty, DateTimeOffset.MinValue, []);
         }
 
         SourceUpdateResult ProcessHelmSourceUsingStepVariables(
@@ -599,11 +599,11 @@ namespace Calamari.ArgoCD.Conventions
                                                                 applicationFromYaml.Metadata.Name,
                                                                 sourceWithMetadata.Index,
                                                                 pushResult);
-                    return new SourceUpdateResult(updatedImages, pushResult.CommitSha, patchedFiles);
+                    return new SourceUpdateResult(updatedImages, pushResult.CommitSha, pushResult.CommitTimestamp, patchedFiles);
                 }
             }
 
-            return new SourceUpdateResult(new HashSet<string>(), string.Empty, []);
+            return new SourceUpdateResult(new HashSet<string>(), string.Empty, DateTimeOffset.MinValue, []);
         }
 
         void LogHelmSourceConfigurationProblems(IReadOnlyCollection<HelmSourceConfigurationProblem> helmSourceConfigurationProblems)
@@ -821,6 +821,6 @@ namespace Calamari.ArgoCD.Conventions
             return JsonSerializer.Serialize(patchDocument);
         }
 
-        record SourceUpdateResult(HashSet<string> ImagesUpdated, string CommitSha, List<FilePathContent> PatchedFiles);
+        record SourceUpdateResult(HashSet<string> ImagesUpdated, string CommitSha, DateTimeOffset CommitTimestamp, List<FilePathContent> PatchedFiles);
     }
 }

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Calamari.ArgoCD.Models;
 
@@ -7,6 +8,7 @@ namespace Calamari.ArgoCD
 
     public record UpdatedSourceDetail(
         string CommitSha,
+        DateTimeOffset CommitTimestamp,
         int SourceIndex,
         List<FilePathContent> ReplacedFiles,
         List<FilePathContent> PatchedFiles);
