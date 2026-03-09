@@ -141,7 +141,18 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             result.Should().NotBeNull();
             var expectedLockFile = Path.Join(scriptIsolationOptions.TentacleHome, "ScriptIsolation.MyMutex.lock");
 
-            result.LockFile.Should().Be(expectedLockFile);
+            result.LockFile.FullName.Should().Be(expectedLockFile);
+        }
+
+        [Test]
+        public void FromScriptIsolationOptionsOrNull_Throws_WhenMutexNameContainsInvalidFileNameChar()
+        {
+            var invalidChar = Path.GetInvalidFileNameChars()[0];
+            var badName = $"My{invalidChar}Mutex";
+
+            Action act = () => LockOptions.FromScriptIsolationOptionsOrNull(MakeOptions(mutexName: badName));
+
+            act.Should().Throw<ArgumentException>();
         }
 
         [Test]

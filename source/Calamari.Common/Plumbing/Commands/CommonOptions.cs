@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.Commands.Options;
@@ -65,6 +66,13 @@ namespace Calamari.Common.Plumbing.Commands
             public string? MutexName { get; internal set; }
             public string? Timeout { get; internal set; }
             public string? TentacleHome { get; internal set; } = Environment.GetEnvironmentVariable("TentacleHome");
+
+            [MemberNotNullWhen(true, nameof(Level))]
+            [MemberNotNullWhen(true, nameof(MutexName))]
+            [MemberNotNullWhen(true, nameof(TentacleHome))]
+            public bool FullyConfigured => !string.IsNullOrWhiteSpace(Level) && !string.IsNullOrWhiteSpace(MutexName) && !string.IsNullOrWhiteSpace(TentacleHome);
+
+            public bool PartiallyConfigured => !string.IsNullOrWhiteSpace(Level) || !string.IsNullOrWhiteSpace(MutexName) || !string.IsNullOrWhiteSpace(TentacleHome);
         }
     }
 }

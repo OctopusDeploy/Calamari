@@ -10,19 +10,21 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
     [TestFixture]
     public class FileLockFixture
     {
-        string lockFilePath = null!;
+        FileInfo lockFilePath = null!;
 
         [SetUp]
         public void SetUp()
         {
-            lockFilePath = Path.Combine(Path.GetTempPath(), $"ScriptIsolation.FileLockFixture.{Guid.NewGuid()}.lock");
+            lockFilePath = new(Path.Combine(Path.GetTempPath(), $"ScriptIsolation.FileLockFixture.{Guid.NewGuid()}.lock"));
         }
 
         [TearDown]
         public void TearDown()
         {
-            if (File.Exists(lockFilePath))
-                File.Delete(lockFilePath);
+            if (lockFilePath.Exists)
+            {
+                lockFilePath.Delete();
+            }
         }
 
         LockOptions MakeLockOptions(LockType lockType) => new(lockType, "TestMutex", lockFilePath, TimeSpan.FromSeconds(5));
@@ -33,7 +35,7 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             using var handle = FileLock.Acquire(MakeLockOptions(LockType.Shared));
 
             handle.Should().NotBeNull();
-            File.Exists(lockFilePath).Should().BeTrue();
+            lockFilePath.Exists.Should().BeTrue();
         }
 
         [Test]
@@ -42,7 +44,7 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             using var handle = FileLock.Acquire(MakeLockOptions(LockType.Exclusive));
 
             handle.Should().NotBeNull();
-            File.Exists(lockFilePath).Should().BeTrue();
+            lockFilePath.Exists.Should().BeTrue();
         }
 
         [Test]

@@ -11,7 +11,7 @@ public static class FileLock
         var fileShareMode = GetFileShareMode(lockOptions.Type);
         try
         {
-            var fileStream = File.Open(lockOptions.LockFile, FileMode.OpenOrCreate, FileAccess.ReadWrite, fileShareMode);
+            var fileStream = lockOptions.LockFile.Open(FileMode.OpenOrCreate, FileAccess.ReadWrite, fileShareMode);
             return new LockHandle(fileStream);
         }
         catch (IOException e)
