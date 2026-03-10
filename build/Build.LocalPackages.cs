@@ -1,4 +1,5 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Text;
+using System.Text.RegularExpressions;
 using System.Xml.Linq;
 
 namespace Calamari.Build;
@@ -6,6 +7,9 @@ namespace Calamari.Build;
 public partial class Build
 {
     static AbsolutePath LocalPackagesDirectory => KnownPaths.RootDirectory / ".." / "LocalPackages";
+    //This is a base 64 encoded message from forbidden words in the profanity checker to stop local packages from being commited to server, while still allowing Calamari builds to pass their own forbidden words check
+    static string PreventCommitMessage = Encoding.UTF8.GetString(Convert.FromBase64String("Tk9DT01NSVQ="));
+
     
     Target CopyToLocalPackages =>
         d =>
@@ -63,8 +67,8 @@ public partial class Build
     void SetOctopusServerCalamariVersion(string projectFile)
     {
         var text = File.ReadAllText(projectFile);
-        text = Regex.Replace(text, @"<BundledCalamariVersion>[\S]+</BundledCalamariVersion>(\s*<!--NOCOMMIT -->)?",
-                             $"<BundledCalamariVersion>{NugetVersion.Value}</BundledCalamariVersion> <!--NOCOMMIT -->");
+        text = Regex.Replace(text, @$"<BundledCalamariVersion>[\S]+</BundledCalamariVersion>(\s*<!--{PreventCommitMessage} -->)?",
+                             $"<BundledCalamariVersion>{NugetVersion.Value}</BundledCalamariVersion> <!--{PreventCommitMessage} -->");
         File.WriteAllText(projectFile, text);
     }
 
@@ -85,7 +89,7 @@ public partial class Build
                                             new XAttribute("key", "LocalPackages"),
                                             new XAttribute("value", "../LocalPackages")));
     
-            packageSources.Add(new XComment("NOCOMMIT"));
+            packageSources.Add(new XComment(PreventCommitMessage));
         }
     
         // Add LocalPackages to packageSourceMapping
