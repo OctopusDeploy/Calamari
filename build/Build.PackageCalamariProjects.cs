@@ -79,6 +79,9 @@ public partial class Build
                                                                                                                    .SetConfiguration(Configuration)
                                                                                                                    .SetFramework(calamariPackageMetadata.Framework)
                                                                                                                    .SetRuntime(calamariPackageMetadata.Architecture)
+                                                                                                                   .SetVersion(NugetVersion.Value)
+                                                                                                                   .SetInformationalVersion(OctoVersionInfo.Value?.InformationalVersion)
+                                                                                                                   .SetVerbosity(BuildVerbosity)
                                                                                                                    .EnableSelfContained()));
                                                                          }
                                                                          finally
@@ -144,6 +147,9 @@ public partial class Build
                                               .SetProject(project)
                                               .SetFramework(calamariPackageMetadata.Framework)
                                               .SetRuntime(calamariPackageMetadata.Architecture)
+                                              .SetVersion(NugetVersion.Value)
+                                              .SetInformationalVersion(OctoVersionInfo.Value?.InformationalVersion)
+                                              .SetVerbosity(BuildVerbosity)
                                               .EnableNoBuild()
                                               .EnableNoRestore()
                                               .EnableSelfContained()

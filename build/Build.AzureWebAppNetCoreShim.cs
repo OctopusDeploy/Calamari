@@ -31,6 +31,7 @@ public partial class Build
                                                .SetFramework("net462")
                                                .SetVersion(NugetVersion.Value)
                                                .SetInformationalVersion(OctoVersionInfo.Value?.InformationalVersion)
+                                               .SetVerbosity(BuildVerbosity)
                                                .SetOutput(outputPath));
 
                             var archivePath = KnownPaths.SourceDirectory / "Calamari.AzureWebApp" / "netcoreshim" / "netcoreshim.zip";
