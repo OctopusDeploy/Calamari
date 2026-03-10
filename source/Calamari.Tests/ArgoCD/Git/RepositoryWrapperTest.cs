@@ -219,7 +219,7 @@ namespace Calamari.Tests.ArgoCD.Git
         }
 
         [Test]
-        public async Task WhenRemoteHasNewCommitBeforePush_RetrySucceedsAfterFetchAndMerge()
+        public async Task WhenRemoteHasNewCommitBeforePush_RetrySucceedsAfterFetchAndRebase()
         {
             // Arrange: commit a file in our clone
             const string filename = "ourFile.txt";
@@ -240,11 +240,11 @@ namespace Calamari.Tests.ArgoCD.Git
             // Assert: retry message was logged
             log.MessagesVerboseFormatted
                .Should()
-               .Contain(m => m.Contains("fetching and merging before retrying"));
+               .Contain(m => m.Contains("fetching and rebasing before retrying"));
         }
 
         [Test]
-        public async Task WhenRemoteHasNewCommitBeforePush_FetchAndMergeIsLoggedBeforeRetry()
+        public async Task WhenRemoteHasNewCommitBeforePush_FetchAndRebaseIsLoggedBeforeRetry()
         {
             // Arrange
             const string filename = "ourFile.txt";
@@ -259,11 +259,11 @@ namespace Calamari.Tests.ArgoCD.Git
 
             // Assert: fetch and merge log messages appear
             log.MessagesVerboseFormatted.Should().Contain(m => m.Contains($"Fetching from remote"));
-            log.MessagesVerboseFormatted.Should().Contain(m => m.Contains("Merging"));
+            log.MessagesVerboseFormatted.Should().Contain(m => m.Contains("Rebasing"));
         }
 
         [Test]
-        public async Task WhenMergeConflictDuringRetry_ThrowsCommandException()
+        public async Task WhenRebaseConflictDuringRetry_ThrowsCommandException()
         {
             // Arrange: commit a change to a file in our clone
             const string conflictFile = "conflict.txt";
@@ -278,7 +278,7 @@ namespace Calamari.Tests.ArgoCD.Git
             Func<Task> act = () => repository.PushChanges(false, "Our commit", "", branchName, CancellationToken.None);
             await act.Should()
                      .ThrowAsync<CommandException>()
-                     .WithMessage("*Merge conflict*");
+                     .WithMessage("*Rebase conflict*");
         }
 
         string CloneOrigin()

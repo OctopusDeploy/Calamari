@@ -119,8 +119,8 @@ namespace Calamari.ArgoCD.Git
                                     Delay = TimeSpan.Zero,
                                     OnRetry = args =>
                                     {
-                                        log.Verbose($"Push to '{pushToBranchName.ToFriendlyName()}' failed (attempt {args.AttemptNumber}), fetching and merging before retrying");
-                                        FetchAndMerge(currentBranchName);
+                                        log.Verbose($"Push to '{pushToBranchName.ToFriendlyName()}' failed (attempt {args.AttemptNumber + 1}), fetching and rebasing before retrying");
+                                        FetchAndRebase(currentBranchName);
                                         return default;
                                     }
                                 })
@@ -222,7 +222,7 @@ namespace Calamari.ArgoCD.Git
             }
         }
 
-        void FetchAndMerge(GitBranchName branchName)
+        void FetchAndRebase(GitBranchName branchName)
         {
             var remote = repository.Network.Remotes.Single();
             var refSpecs = remote.FetchRefSpecs.Select(x => x.Specification).ToList();
@@ -239,22 +239,23 @@ namespace Calamari.ArgoCD.Git
             var trackingBranch = repository.Branches[trackingBranchName];
             if (trackingBranch == null)
             {
-                log.Verbose($"No tracking branch found for '{branchName.ToFriendlyName()}', skipping merge");
+                log.Verbose($"No tracking branch found for '{branchName.ToFriendlyName()}', skipping rebase");
                 return;
             }
 
-            log.Verbose($"Merging '{trackingBranch.FriendlyName}' into HEAD");
-            var commitTime = clock.GetUtcTime();
-            var mergeResult = repository.Merge(trackingBranch,
-                                               new Signature("Octopus", "octopus@octopus.com", commitTime),
-                                               new MergeOptions { FastForwardStrategy = FastForwardStrategy.Default });
+            log.Verbose($"Rebasing onto '{trackingBranch.FriendlyName}'");
+            var rebaseResult = repository.Rebase.Start(null,
+                                                       trackingBranch,
+                                                       null,
+                                                       new Identity("Octopus", "octopus@octopus.com"),
+                                                       new RebaseOptions());
 
-            if (mergeResult.Status == MergeStatus.Conflicts)
+            if (rebaseResult.Status == RebaseStatus.Conflicts)
             {
-                throw new CommandException($"Merge conflict detected when merging '{trackingBranch.FriendlyName}' - cannot automatically resolve conflicts");
+                throw new CommandException($"Rebase conflict detected when rebasing onto '{trackingBranch.FriendlyName}' - cannot automatically resolve conflicts");
             }
 
-            log.Verbose($"Merge result: {mergeResult.Status}");
+            log.Verbose($"Rebase result: {rebaseResult.Status}");
         }
 
         static string GenerateCommitMessage(string summary, string description)
