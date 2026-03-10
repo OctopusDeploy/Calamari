@@ -159,7 +159,7 @@ namespace Calamari.AzureResourceGroup.Tests
         }
 
         [Test]
-        [WindowsTest]
+        [TestPlatforms(TestPlatforms.Windows)]
         [RequiresPowerShell5OrAbove]
         public async Task Deploy_Ensure_Tools_Are_Configured()
         {

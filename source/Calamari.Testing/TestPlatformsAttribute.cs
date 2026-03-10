@@ -1,14 +1,13 @@
 ﻿using System;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
+using NUnit.Framework.Internal;
 
 namespace Calamari.Testing;
 
 [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class)]
-public class TestPlatformsAttribute(TestPlatforms supportedPlatforms) : TestAttribute, ITestAction
+public class TestPlatformsAttribute(TestPlatforms supportedPlatforms) : NUnitAttribute, ITestAction, IApplyToTest
 {
-    readonly TestPlatforms supportedPlatforms = supportedPlatforms;
-
     string GetSkipReason() =>
         $"This test only runs on: {string.Join(", ", TestPlatformsHelpers.GetSpecificPlatforms(supportedPlatforms))}";
 
@@ -26,5 +25,15 @@ public class TestPlatformsAttribute(TestPlatforms supportedPlatforms) : TestAttr
     {
     }
 
-    ActionTargets ITestAction.Targets { get; }
+    public ActionTargets Targets { get; set; }
+    
+    public void ApplyToTest(Test test)
+    {
+        //for each specific platform, add the category
+        //if you specify Unix as your TestPlatforms, you will get Linux and MacOs as the specific platforms
+        foreach (var testPlatform in TestPlatformsHelpers.GetSpecificPlatforms(supportedPlatforms)) 
+        {
+            test.Properties.Add(PropertyNames.Category, testPlatform.ToString());
+        }
+    }
 }

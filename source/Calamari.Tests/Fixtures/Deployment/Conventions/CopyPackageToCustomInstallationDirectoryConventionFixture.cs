@@ -115,7 +115,7 @@ namespace Calamari.Tests.Fixtures.Deployment.Conventions
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
+        [TestPlatforms(TestPlatforms.Unix)]
         [ExpectedException(ExpectedMessage = "Access to the path /var/tmp/myCustomInstallDir was denied. Ensure that the application that uses this directory is not running.")]
         public void ShouldNotIncludeIISRelatedInfoInErrorMessageWhenAccessDeniedException()
         {
@@ -128,7 +128,7 @@ namespace Calamari.Tests.Fixtures.Deployment.Conventions
 
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyWindows)]
+        [TestPlatforms(TestPlatforms.Windows)]
         [ExpectedException(ExpectedMessage = "Access to the path C:\\myCustomInstallDir was denied. Ensure that the application that uses this directory is not running. If this is an IIS website, stop the application pool or use an app_offline.htm file (see https://g.octopushq.com/TakingWebsiteOffline).")]
         public void ShouldIncludeIISRelatedInfoInErrorMessageWhenAccessDeniedException()
         {

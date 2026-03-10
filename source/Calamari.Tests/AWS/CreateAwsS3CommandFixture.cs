@@ -25,7 +25,6 @@ using Tag = Amazon.S3.Model.Tag;
 namespace Calamari.Tests.AWS
 {
     [TestFixture]
-    [Category(TestCategory.RunOnceOnWindowsAndLinux)]
     public class CreateAwsS3CommandFixture
     {
         const string Region = "ap-southeast-2";

@@ -88,7 +88,6 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         }
 
         [Test]
-        [RequiresNonFreeBSDPlatform]
         public void ShouldDownloadMavenPackage()
         {
             var result = DownloadPackage(
@@ -151,7 +150,6 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         }
 
         [Test]
-        [RequiresNonFreeBSDPlatform]
         public void ShouldUseMavenPackageFromCache()
         {
             DownloadPackage(MavenPublicFeed.PackageId,
@@ -179,7 +177,6 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         }
 
         [Test]
-        [RequiresNonFreeBSDPlatform]
         public void ShouldUseMavenSnapshotPackageFromCache()
         {
             DownloadPackage(MavenPublicFeed.PackageId,
@@ -228,7 +225,6 @@ namespace Calamari.Tests.Fixtures.PackageDownload
         }
 
         [Test]
-        [RequiresNonFreeBSDPlatform]
         public void ShouldByPassCacheAndDownloadMavenPackage()
         {
             var firstDownload = DownloadPackage(

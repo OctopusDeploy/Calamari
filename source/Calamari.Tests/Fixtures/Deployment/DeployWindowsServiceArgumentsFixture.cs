@@ -11,7 +11,7 @@ using Calamari.Testing.Helpers;
 namespace Calamari.Tests.Fixtures.Deployment
 {
     [TestFixture]
-    [Category(TestCategory.CompatibleOS.OnlyWindows)]
+    [TestPlatforms(TestPlatforms.Windows)]
     public class DeployWindowsServiceArgumentsFixture : DeployWindowsServiceAbstractFixture
     {
         protected override string ServiceName => "DumpArgs";

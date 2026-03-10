@@ -13,7 +13,7 @@ using Octopus.Versioning;
 namespace Calamari.Tests.Fixtures.PackageDownload
 {
     [TestFixture]
-    [Category(TestCategory.CompatibleOS.OnlyWindows)]
+    [TestPlatforms(TestPlatforms.Windows)]
     
     public class NuGetFeedVersionSupportFixture : CalamariFixture
     {        

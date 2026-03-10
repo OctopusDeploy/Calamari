@@ -200,7 +200,7 @@ namespace Calamari.Tests.Fixtures.Deployment.Conventions
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyWindows)]
+        [TestPlatforms(TestPlatforms.Windows)]
         [TestCase("bar.blah => *.Bar.Blah", "xyz.bar.blah", "bar.blah")]
         [TestCase("*.Bar.Blah => bar.blah", "bar.blah", "xyz.bar.blah")]
         [TestCase("foo.bar.config => Foo.Config", "foo.config", "foo.bar.config")]
@@ -214,7 +214,7 @@ namespace Calamari.Tests.Fixtures.Deployment.Conventions
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyNix)]
+        [TestPlatforms(TestPlatforms.Windows)]
         [TestCase("bar.blah => *.Bar.Blah", "xyz.bar.blah", "bar.blah")]
         [TestCase("*.Bar.Blah => bar.blah", "bar.blah", "xyz.bar.blah")]
         [TestCase("foo.bar.config => Foo.Config", "foo.config", "foo.bar.config")]
@@ -231,7 +231,7 @@ namespace Calamari.Tests.Fixtures.Deployment.Conventions
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyWindows)]
+        [TestPlatforms(TestPlatforms.Windows)]
         public void ShouldOutputDiagnosticsLoggingIfEnabled()
         {
             var calamariFileSystem = Substitute.For<ICalamariFileSystem>();

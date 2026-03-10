@@ -4,7 +4,7 @@ using NUnit.Framework;
 namespace Calamari.Tests.Fixtures.Integration.Process.Semaphores
 {
     [TestFixture]
-    [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
+    [TestPlatforms(TestPlatforms.Unix)]
     public class NixSystemSemaphoreFixture : SemaphoreFixtureBase
     {
     }

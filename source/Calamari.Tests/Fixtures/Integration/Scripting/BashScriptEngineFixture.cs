@@ -14,7 +14,7 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
     public class BashScriptEngineFixture : ScriptEngineFixtureBase
     {
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
+        [TestPlatforms(TestPlatforms.Unix)]
         public void BashDecryptsVariables()
         {
             using (var scriptFile = new TemporaryFile(Path.ChangeExtension(Path.GetTempFileName(), "sh")))

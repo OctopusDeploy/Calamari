@@ -6,7 +6,7 @@ using NUnit.Framework;
 namespace Calamari.Tests.Fixtures.ConfigurationTransforms
 {
     [TestFixture]
-    [Category(TestCategory.CompatibleOS.OnlyWindows)]
+    [TestPlatforms(TestPlatforms.Windows)]
     public class TransformFileLocatorFixture
     {
         [Test]

@@ -23,7 +23,7 @@ using Octopus.CoreUtilities.Extensions;
 namespace Calamari.Tests.Fixtures.Nginx
 {
     [TestFixture]
-    [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
+    [TestPlatforms(TestPlatforms.Unix)]
     public class NginxFixture : CalamariFixture
     {
         readonly ICalamariFileSystem fileSystem = CalamariPhysicalFileSystem.GetPhysicalFileSystem();
@@ -164,7 +164,7 @@ namespace Calamari.Tests.Fixtures.Nginx
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
+        [TestPlatforms(TestPlatforms.Unix)]
         public void SetupReverseProxyWithSslSite()
         {
             var locations =
