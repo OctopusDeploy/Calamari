@@ -25,6 +25,7 @@ namespace Calamari.ArgoCD.Git
         readonly IGitConnection connection;
         readonly IGitVendorApiAdapter? vendorApiAdapter;
         readonly IClock clock;
+        readonly Identity repositoryIdentity = new("Octopus", "octopus@octopus.com");
 
         public string WorkingDirectory => repository.Info.WorkingDirectory;
 
@@ -53,8 +54,8 @@ namespace Calamari.ArgoCD.Git
                 var commitTime = clock.GetUtcTime();
                 var commitMessage = GenerateCommitMessage(summary, description);
                 var commit = repository.Commit(commitMessage,
-                                               new Signature("Octopus", "octopus@octopus.com", commitTime),
-                                               new Signature("Octopus", "octopus@octopus.com", commitTime));
+                                               new Signature(repositoryIdentity, commitTime),
+                                               new Signature(repositoryIdentity, commitTime));
                 log.Verbose($"Committed changes to {commit.ShortSha()}");
                 return true;
             }
@@ -116,7 +117,8 @@ namespace Calamari.ArgoCD.Git
                                 {
                                     ShouldHandle = new PredicateBuilder().Handle<CommandException>().Handle<NonFastForwardException>(),
                                     MaxRetryAttempts = 2,
-                                    Delay = TimeSpan.Zero,
+                                    UseJitter =  true,
+                                    Delay = TimeSpan.FromSeconds(2),
                                     OnRetry = args =>
                                     {
                                         log.Verbose($"Push to '{pushToBranchName.ToFriendlyName()}' failed (attempt {args.AttemptNumber + 1}), fetching and rebasing before retrying");
@@ -210,8 +212,7 @@ namespace Calamari.ArgoCD.Git
             PushStatusError? errorsDetected = null;
             var pushOptions = new PushOptions
             {
-                CredentialsProvider = (url, usernameFromUrl, types) =>
-                                          new UsernamePasswordCredentials { Username = connection.Username, Password = connection.Password },
+                CredentialsProvider = (url, usernameFromUrl, types) => RepositoryCredentials,
                 OnPushStatusError = errors => errorsDetected = errors
             };
 
@@ -228,8 +229,7 @@ namespace Calamari.ArgoCD.Git
             var refSpecs = remote.FetchRefSpecs.Select(x => x.Specification).ToList();
             var fetchOptions = new FetchOptions
             {
-                CredentialsProvider = (url, usernameFromUrl, types) =>
-                    new UsernamePasswordCredentials { Username = connection.Username, Password = connection.Password }
+                CredentialsProvider = (url, usernameFromUrl, types) => RepositoryCredentials
             };
 
             log.Verbose($"Fetching from remote '{remote.Name}'");
@@ -247,7 +247,7 @@ namespace Calamari.ArgoCD.Git
             var rebaseResult = repository.Rebase.Start(null,
                                                        trackingBranch,
                                                        null,
-                                                       new Identity("Octopus", "octopus@octopus.com"),
+                                                       repositoryIdentity,
                                                        new RebaseOptions());
 
             if (rebaseResult.Status == RebaseStatus.Conflicts)
@@ -257,6 +257,8 @@ namespace Calamari.ArgoCD.Git
 
             log.Verbose($"Rebase result: {rebaseResult.Status}");
         }
+
+        Credentials RepositoryCredentials => new UsernamePasswordCredentials() { Username = connection.Username, Password = connection.Password };
 
         static string GenerateCommitMessage(string summary, string description)
         {

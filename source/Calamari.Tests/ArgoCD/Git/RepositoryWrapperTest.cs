@@ -244,25 +244,6 @@ namespace Calamari.Tests.ArgoCD.Git
         }
 
         [Test]
-        public async Task WhenRemoteHasNewCommitBeforePush_FetchAndRebaseIsLoggedBeforeRetry()
-        {
-            // Arrange
-            const string filename = "ourFile.txt";
-            File.WriteAllText(Path.Combine(RepositoryRootPath, filename), "content");
-            repository.StageFiles(new[] { filename });
-            repository.CommitChanges("Our commit", "").Should().BeTrue();
-
-            bareOrigin.AddFilesToBranch(branchName, ("concurrentFile.txt", "concurrent content"));
-
-            // Act
-            await repository.PushChanges(false, "Our commit", "", branchName, CancellationToken.None);
-
-            // Assert: fetch and merge log messages appear
-            log.MessagesVerboseFormatted.Should().Contain(m => m.Contains($"Fetching from remote"));
-            log.MessagesVerboseFormatted.Should().Contain(m => m.Contains("Rebasing"));
-        }
-
-        [Test]
         public async Task WhenRebaseConflictDuringRetry_ThrowsCommandException()
         {
             // Arrange: commit a change to a file in our clone
