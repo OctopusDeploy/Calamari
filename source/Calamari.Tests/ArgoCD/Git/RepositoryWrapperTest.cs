@@ -218,6 +218,50 @@ namespace Calamari.Tests.ArgoCD.Git
                .WithMessage($"Failed to clone Git repository at {gitConnection.Url}. Are you sure this URL is a Git repository, and the reference is a branch?");
         }
 
+        [Test]
+        public async Task WhenRemoteHasNewCommitBeforePush_RetrySucceedsAfterFetchAndRebase()
+        {
+            // Arrange: commit a file in our clone
+            const string filename = "ourFile.txt";
+            const string fileContents = "our content";
+            await File.WriteAllTextAsync(Path.Combine(RepositoryRootPath, filename), fileContents);
+            repository.StageFiles([filename]);
+            repository.CommitChanges("Our commit", "").Should().BeTrue();
+
+            // Simulate a concurrent push to origin on a different file (causes non-fast-forward failure)
+            bareOrigin.AddFilesToBranch(branchName, ("concurrentFile.txt", "concurrent content"));
+
+            // Act: first push attempt will fail, retry should fetch+merge and succeed
+            await repository.PushChanges(false, "Our commit", "", branchName, CancellationToken.None);
+
+            // Assert: origin has our file
+            bareOrigin.ReadFileFromBranch(branchName, filename).Should().Be(fileContents);
+
+            // Assert: retry message was logged
+            log.MessagesVerboseFormatted
+               .Should()
+               .Contain(m => m.Contains("fetching and rebasing before retrying"));
+        }
+
+        [Test]
+        public async Task WhenRebaseConflictDuringRetry_ThrowsCommandException()
+        {
+            // Arrange: commit a change to a file in our clone
+            const string conflictFile = "conflict.txt";
+            File.WriteAllText(Path.Combine(RepositoryRootPath, conflictFile), "our content");
+            repository.StageFiles(new[] { conflictFile });
+            repository.CommitChanges("Our commit", "").Should().BeTrue();
+
+            // Simulate a concurrent conflicting change to the same file in origin
+            bareOrigin.AddFilesToBranch(branchName, (conflictFile, "their content"));
+
+            // Act & Assert: push fails, FetchAndMerge detects conflict and throws
+            Func<Task> act = () => repository.PushChanges(false, "Our commit", "", branchName, CancellationToken.None);
+            await act.Should()
+                     .ThrowAsync<CommandException>()
+                     .WithMessage("*Rebase conflict*");
+        }
+
         string CloneOrigin()
         {
             var subPath = Guid.NewGuid().ToString();

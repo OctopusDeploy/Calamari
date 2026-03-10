@@ -11,22 +11,25 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Integration.Time;
 using LibGit2Sharp;
 using Octopus.CoreUtilities.Extensions;
+using Polly;
+using Polly.Retry;
 
 namespace Calamari.ArgoCD.Git
 {
     public class RepositoryWrapper : IDisposable
     {
-        readonly IRepository repository;
+        readonly Repository repository;
         readonly ICalamariFileSystem calamariFileSystem;
         readonly string repoCheckoutDirectoryPath;
         readonly ILog log;
         readonly IGitConnection connection;
         readonly IGitVendorApiAdapter? vendorApiAdapter;
         readonly IClock clock;
+        readonly Identity repositoryIdentity = new("Octopus", "octopus@octopus.com");
 
         public string WorkingDirectory => repository.Info.WorkingDirectory;
 
-        public RepositoryWrapper(IRepository repository,
+        public RepositoryWrapper(Repository repository,
                                  ICalamariFileSystem calamariFileSystem,
                                  string repoCheckoutDirectoryPath,
                                  ILog log,
@@ -43,6 +46,8 @@ namespace Calamari.ArgoCD.Git
             this.clock = clock;
         }
 
+        Credentials RepositoryCredentials => new UsernamePasswordCredentials() { Username = connection.Username, Password = connection.Password };
+
         // returns true if changes were made to the repository
         public bool CommitChanges(string summary, string description)
         {
@@ -51,8 +56,8 @@ namespace Calamari.ArgoCD.Git
                 var commitTime = clock.GetUtcTime();
                 var commitMessage = GenerateCommitMessage(summary, description);
                 var commit = repository.Commit(commitMessage,
-                                               new Signature("Octopus", "octopus@octopus.com", commitTime),
-                                               new Signature("Octopus", "octopus@octopus.com", commitTime));
+                                               new Signature(repositoryIdentity, commitTime),
+                                               new Signature(repositoryIdentity, commitTime));
                 log.Verbose($"Committed changes to {commit.ShortSha()}");
                 return true;
             }
@@ -105,12 +110,29 @@ namespace Calamari.ArgoCD.Git
                                                   CancellationToken cancellationToken)
         {
             var currentBranchName = repository.GetBranchName(branchName);
-            var commit = repository.Head.Tip; // We should have just pushed to the tip of this branch
-
             var pushToBranchName = requiresPullRequest ? CalculateBranchName() : currentBranchName;
 
             log.Info($"Pushing changes to branch '{pushToBranchName.ToFriendlyName()}'");
-            PushChanges(pushToBranchName);
+
+            var retryPipeline = new ResiliencePipelineBuilder()
+                                .AddRetry(new RetryStrategyOptions
+                                {
+                                    ShouldHandle = new PredicateBuilder().Handle<CommandException>().Handle<NonFastForwardException>(),
+                                    MaxRetryAttempts = 2,
+                                    UseJitter =  true,
+                                    Delay = TimeSpan.FromSeconds(2),
+                                    OnRetry = args =>
+                                    {
+                                        log.Verbose($"Push to '{pushToBranchName.ToFriendlyName()}' failed (attempt {args.AttemptNumber + 1}), fetching and rebasing before retrying");
+                                        FetchAndRebase(currentBranchName);
+                                        return default;
+                                    }
+                                })
+                                .Build();
+
+            retryPipeline.Execute(() => PushChanges(pushToBranchName));
+
+            var commit = repository.Head.Tip;
 
             if (vendorApiAdapter != null)
             {
@@ -192,8 +214,7 @@ namespace Calamari.ArgoCD.Git
             PushStatusError? errorsDetected = null;
             var pushOptions = new PushOptions
             {
-                CredentialsProvider = (url, usernameFromUrl, types) =>
-                                          new UsernamePasswordCredentials { Username = connection.Username, Password = connection.Password },
+                CredentialsProvider = (url, usernameFromUrl, types) => RepositoryCredentials,
                 OnPushStatusError = errors => errorsDetected = errors
             };
 
@@ -202,6 +223,41 @@ namespace Calamari.ArgoCD.Git
             {
                 throw new CommandException($"Failed to push to branch {branchName.ToFriendlyName()} - {errorsDetected.Message}");
             }
+        }
+
+        void FetchAndRebase(GitBranchName branchName)
+        {
+            var remote = repository.Network.Remotes.Single();
+            var refSpecs = remote.FetchRefSpecs.Select(x => x.Specification).ToList();
+            var fetchOptions = new FetchOptions
+            {
+                CredentialsProvider = (url, usernameFromUrl, types) => RepositoryCredentials
+            };
+
+            log.Verbose($"Fetching from remote '{remote.Name}'");
+            LibGit2Sharp.Commands.Fetch(repository, remote.Name, refSpecs, fetchOptions, null);
+
+            var trackingBranchName = $"{remote.Name}/{branchName.ToFriendlyName()}";
+            var trackingBranch = repository.Branches[trackingBranchName];
+            if (trackingBranch == null)
+            {
+                log.Verbose($"No tracking branch found for '{branchName.ToFriendlyName()}', skipping rebase");
+                return;
+            }
+
+            log.Verbose($"Rebasing onto '{trackingBranch.FriendlyName}'");
+            var rebaseResult = repository.Rebase.Start(null,
+                                                       trackingBranch,
+                                                       null,
+                                                       repositoryIdentity,
+                                                       new RebaseOptions());
+
+            if (rebaseResult.Status == RebaseStatus.Conflicts)
+            {
+                throw new CommandException($"Rebase conflict detected when rebasing onto '{trackingBranch.FriendlyName}' - cannot automatically resolve conflicts");
+            }
+
+            log.Verbose($"Rebase result: {rebaseResult.Status}");
         }
 
         static string GenerateCommitMessage(string summary, string description)
