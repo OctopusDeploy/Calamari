@@ -4,7 +4,7 @@ using NUnit.Framework.Interfaces;
 
 namespace Calamari.Testing.Requirements;
 
-public class RequiresWindowsServer2016OrAboveAttribute(string reason) : TestAttribute, ITestAction
+public class RequiresWindowsServer2016OrAboveAttribute(string reason) : NUnitAttribute, ITestAction
 {
     public void BeforeTest(ITest testDetails)
     {
