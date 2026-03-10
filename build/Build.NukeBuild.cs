@@ -16,6 +16,9 @@ public partial class Build
                                               .SetProject(KnownPaths.RootDirectory / "build" / "_build.csproj")
                                               .SetConfiguration(Configuration)
                                               .SetRuntime(runtime)
+                                              .SetVersion(NugetVersion.Value)
+                                              .SetInformationalVersion(OctoVersionInfo.Value?.InformationalVersion)
+                                              .SetVerbosity(BuildVerbosity)
                                               .EnableSelfContained());
 
                            Ci.ZipFolderAndUploadArtifact(nukeBuildOutputDirectory, KnownPaths.ArtifactsDirectory / $"nukebuild.{runtime}.zip");
