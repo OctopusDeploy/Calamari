@@ -42,6 +42,7 @@ public sealed record LockOptions(
         }
 
         var lockFileInfo = GetLockFileInfo(options.TentacleHome, options.MutexName);
+        _ = lockFileInfo.Exists;
         return new LockOptions(lockType.Value, options.MutexName, lockFileInfo, timeout);
     }
 
@@ -78,8 +79,18 @@ public sealed record LockOptions(
         Log.Verbose("Script isolation will not be enforced.");
     }
 
-    static FileInfo GetLockFileInfo(string tentacleHome, string mutexName) =>
-        new(Path.Combine(tentacleHome, $"ScriptIsolation.{mutexName}.lock"));
+    static FileInfo GetLockFileInfo(string tentacleHome, string mutexName)
+    {
+        foreach (var invalidChar in Path.GetInvalidFileNameChars())
+        {
+            if (mutexName.Contains(invalidChar))
+            {
+                throw new ArgumentException($"Invalid mutex name '{mutexName}'.");
+            }
+        }
+
+        return new FileInfo(Path.Combine(tentacleHome, $"ScriptIsolation.{mutexName}.lock"));
+    }
 
     static LockType? MapScriptIsolationLevelToLockTypeOrNull(string isolationLevel) =>
         isolationLevel.ToLowerInvariant() switch
