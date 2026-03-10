@@ -46,6 +46,8 @@ namespace Calamari.ArgoCD.Git
             this.clock = clock;
         }
 
+        Credentials RepositoryCredentials => new UsernamePasswordCredentials() { Username = connection.Username, Password = connection.Password };
+
         // returns true if changes were made to the repository
         public bool CommitChanges(string summary, string description)
         {
@@ -257,8 +259,6 @@ namespace Calamari.ArgoCD.Git
 
             log.Verbose($"Rebase result: {rebaseResult.Status}");
         }
-
-        Credentials RepositoryCredentials => new UsernamePasswordCredentials() { Username = connection.Username, Password = connection.Password };
 
         static string GenerateCommitMessage(string summary, string description)
         {
