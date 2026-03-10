@@ -63,8 +63,8 @@ public partial class Build
     void SetOctopusServerCalamariVersion(string projectFile)
     {
         var text = File.ReadAllText(projectFile);
-        text = Regex.Replace(text, @"<BundledCalamariVersion>[\S]+</BundledCalamariVersion>(\s*<!--DO NOT COMMIT -->)?",
-                             $"<BundledCalamariVersion>{NugetVersion.Value}</BundledCalamariVersion> <!--DO NOT COMMIT -->");
+        text = Regex.Replace(text, @"<BundledCalamariVersion>[\S]+</BundledCalamariVersion>(\s*<!--NOCOMMIT -->)?",
+                             $"<BundledCalamariVersion>{NugetVersion.Value}</BundledCalamariVersion> <!--NOCOMMIT -->");
         File.WriteAllText(projectFile, text);
     }
 
@@ -85,7 +85,7 @@ public partial class Build
                                             new XAttribute("key", "LocalPackages"),
                                             new XAttribute("value", "../LocalPackages")));
     
-            packageSources.Add(new XComment("DO NOT COMMIT"));
+            packageSources.Add(new XComment("NOCOMMIT"));
         }
     
         // Add LocalPackages to packageSourceMapping
