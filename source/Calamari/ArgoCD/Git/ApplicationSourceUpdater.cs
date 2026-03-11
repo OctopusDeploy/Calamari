@@ -4,6 +4,7 @@ using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Domain;
 using Calamari.ArgoCD.Dtos;
 using Calamari.ArgoCD.Models;
+using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 
 namespace Calamari.ArgoCD.Git;
@@ -21,6 +22,7 @@ public class ApplicationSourceUpdater
     string defaultRegistry;
     readonly ICommitMessageGenerator commitMessageGenerator;
     readonly ArgoCDOutputVariablesWriter outputVariablesWriter;
+    readonly ICalamariFileSystem fileSystem;
 
     public ApplicationSourceUpdater(Application applicationFromYaml, RepositoryFactory repositoryFactory, ArgoCDCustomPropertiesDto argoCDCustomPropertiesDto, Dictionary<string, GitCredentialDto> gitCredentials,
                                     DeploymentScope deploymentScope,
@@ -29,7 +31,8 @@ public class ApplicationSourceUpdater
                                     ArgoCDGatewayDto gateway,
                                     string defaultRegistry,
                                     ICommitMessageGenerator commitMessageGenerator,
-                                    ArgoCDOutputVariablesWriter outputVariablesWriter)
+                                    ArgoCDOutputVariablesWriter outputVariablesWriter,
+                                    ICalamariFileSystem fileSystem)
     {
         this.applicationFromYaml = applicationFromYaml;
         this.repositoryFactory = repositoryFactory;
@@ -42,6 +45,7 @@ public class ApplicationSourceUpdater
         this.defaultRegistry = defaultRegistry;
         this.commitMessageGenerator = commitMessageGenerator;
         this.outputVariablesWriter = outputVariablesWriter;
+        this.fileSystem = fileSystem;
     }
 
     public SourceUpdateResult ProcessSource(ApplicationSourceWithMetadata sourceWithMetadata)
@@ -57,6 +61,31 @@ public class ApplicationSourceUpdater
                 return new SourceUpdateResult(new HashSet<string>(), string.Empty, []);
             }
 
+            if (sourceWithMetadata.SourceType == SourceType.Directory)
+            {
+                var updater = new DirectoryUpdater(applicationFromYaml,
+                                                   gitCredentials,
+                                                   repositoryFactory,
+                                                   deploymentConfig,
+                                                   defaultRegistry,
+                                                   gateway,
+                                                   log,
+                                                   commitMessageGenerator,
+                                                   fileSystem,
+                                                   outputVariablesWriter);
+                updater.Process(sourceWithMetadata);
+            }
+            else if (sourceWithMetadata.SourceType == SourceType.Helm)
+            {
+                
+            }
+            else if (sourceWithMetadata.SourceType == SourceType.Kustomize)
+            {
+                
+            }
+
+            updater.Process(sourceWithMetadata);
+            
             switch (sourceWithMetadata.SourceType)
             {
                 case SourceType.Directory:
@@ -69,21 +98,15 @@ public class ApplicationSourceUpdater
                                      sourceWithMetadata,
                                      defaultRegistry,
                                      gateway)
-                        : ProcessDirectory(applicationFromYaml,
-                                           gitCredentials,
-                                           repositoryFactory,
-                                           deploymentConfig,
-                                           sourceWithMetadata,
-                                           defaultRegistry,
-                                           gateway);
+                        : 
                 }
                 case SourceType.Helm:
                 {
                     return ProcessHelm(applicationFromYaml,
-                                       sourceWithMetadata,
                                        gitCredentials,
                                        repositoryFactory,
                                        deploymentConfig,
+                                       sourceWithMetadata,
                                        defaultRegistry,
                                        gateway);
                 }

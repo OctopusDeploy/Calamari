@@ -36,7 +36,7 @@ public abstract class BaseUpdater
         return repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), gitConnection);
     }
     
-    PushResult? PushToRemote(
+    protected PushResult? PushToRemote(
         RepositoryWrapper repository,
         GitReference branchName,
         GitCommitParameters commitParameters,
