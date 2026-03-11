@@ -36,7 +36,7 @@ partial class Build
 
                           CreateTestRun(dll)
                               .WithDotNetPath(dotnetPath)
-                              .WithFilter("TestCategory != Linux && TestCategory != MacOs") // Windows is all tests that are non-Linux or MacOS specific
+                              .WithFilter("TestCategory != Linux & TestCategory != MacOs") // Windows is all tests that are non-Linux or MacOS specific
                               .Execute();
                       });
     
@@ -53,7 +53,7 @@ partial class Build
 
                           CreateTestRun(dll)
                               .WithDotNetPath(dotnetPath)
-                              .WithFilter("TestCategory == Windows2016OrLater")  // Windows 2016 or later specific tests
+                              .WithFilter("TestCategory = Windows2016OrLater")  // Windows 2016 or later specific tests
                               .Execute();
                       });
 }
