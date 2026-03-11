@@ -230,6 +230,7 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
+        [TestPlatforms(TestPlatforms.Windows)]  // This test requires the aws cli tools. Currently only configured to install on Windows
         public async Task ExecutionWithEKS_IAMAuthenticator()
         {
             await InstallTools(InstallAwsCli);
@@ -248,6 +249,7 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
+        [TestPlatforms(TestPlatforms.Windows)]  // This test requires the aws cli tools. Currently only configured to install on Windows
         public async Task ExecutionWithEKS_AwsCLIAuthenticator()
         {
             await InstallTools(InstallAwsCli);
@@ -268,6 +270,7 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
+        [TestPlatforms(TestPlatforms.Windows)]  // This test requires the aws cli tools. Currently only configured to install on Windows
         public async Task ExecutionWithEKS_AwsCLIAuthenticator_WithExecFeatureToggleEnabled()
         {
             await InstallTools(InstallAwsCli);
@@ -298,6 +301,7 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
+        [TestPlatforms(TestPlatforms.Windows)]  // This test requires the GKE GCloud Auth plugin. Currently only configured to install on Windows
         public async Task ExecutionWithGoogleCloudAccount_WhenZoneIsProvided()
         {
             await InstallTools(InstallGCloud);
@@ -315,6 +319,7 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
+        [TestPlatforms(TestPlatforms.Windows)]
         public async Task ExecutionWithGoogleCloudAccount_WhenRegionIsProvided()
         {
             await InstallTools(InstallGCloud);
@@ -332,6 +337,7 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
+        [TestPlatforms(TestPlatforms.Windows)]
         public async Task ExecutionWithGoogleCloudAccount_WhenBothZoneAndRegionAreProvided()
         {
             await InstallTools(InstallGCloud);
@@ -350,6 +356,7 @@ namespace Calamari.Tests.KubernetesFixtures
         }
 
         [Test]
+        [TestPlatforms(TestPlatforms.Windows)]
         public async Task ExecutionWithGoogleCloudAccount_WhenNeitherZoneOrRegionAreProvided()
         {
             variables.Set(Deployment.SpecialVariables.Account.AccountType, "GoogleCloudAccount");

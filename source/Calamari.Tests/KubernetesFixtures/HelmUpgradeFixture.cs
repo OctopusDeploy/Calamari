@@ -259,7 +259,7 @@ namespace Calamari.Tests.KubernetesFixtures
 
                 var result = DeployPackage();
                 result.AssertSuccess();
-                result.AssertOutput($"Using custom helm executable at {HelmOsPlatform}\\helm from inside package. Full path at");
+                result.AssertOutput($"Using custom helm executable at {HelmOsPlatform}{Path.DirectorySeparatorChar}helm from inside package. Full path at");
             }
         }
 
