@@ -63,7 +63,52 @@ public class ApplicationSourceUpdater
 
             if (sourceWithMetadata.SourceType == SourceType.Directory)
             {
-                var updater = new DirectoryUpdater(applicationFromYaml,
+                if (applicationSource.Ref == null)
+                {
+                    var updater = new DirectoryUpdater(applicationFromYaml,
+                                                       gitCredentials,
+                                                       repositoryFactory,
+                                                       deploymentConfig,
+                                                       defaultRegistry,
+                                                       gateway,
+                                                       log,
+                                                       commitMessageGenerator,
+                                                       fileSystem,
+                                                       outputVariablesWriter);
+                    updater.Process(sourceWithMetadata);   
+                }
+                else
+                {
+                    var updater = new RefUpdater(applicationFromYaml,
+                                                 gitCredentials,
+                                                 repositoryFactory,
+                                                 deploymentConfig,
+                                                 defaultRegistry,
+                                                 gateway,
+                                                 log,
+                                                 commitMessageGenerator,
+                                                 fileSystem,
+                                                 outputVariablesWriter);
+                    updater.Process(sourceWithMetadata);
+                }
+            }
+            else if (sourceWithMetadata.SourceType == SourceType.Helm)
+            {
+                var updater = new HelmUpdater(applicationFromYaml,
+                                             gitCredentials,
+                                             repositoryFactory,
+                                             deploymentConfig,
+                                             defaultRegistry,
+                                             gateway,
+                                             log,
+                                             commitMessageGenerator,
+                                             fileSystem,
+                                             outputVariablesWriter);
+                updater.Process(sourceWithMetadata);
+            }
+            else if (sourceWithMetadata.SourceType == SourceType.Kustomize)
+            {
+                var updater = new KustomizeUpdater(applicationFromYaml,
                                                    gitCredentials,
                                                    repositoryFactory,
                                                    deploymentConfig,
@@ -75,58 +120,14 @@ public class ApplicationSourceUpdater
                                                    outputVariablesWriter);
                 updater.Process(sourceWithMetadata);
             }
-            else if (sourceWithMetadata.SourceType == SourceType.Helm)
+            else if (sourceWithMetadata.SourceType == SourceType.Plugin)
             {
-                
+                log.WarnFormat("Unable to update source '{0}' as Plugin sources aren't currently supported.", sourceWithMetadata.SourceIdentity);
+                return new SourceUpdateResult(new HashSet<string>(), string.Empty, []);
             }
-            else if (sourceWithMetadata.SourceType == SourceType.Kustomize)
+            else
             {
-                
-            }
-
-            updater.Process(sourceWithMetadata);
-            
-            switch (sourceWithMetadata.SourceType)
-            {
-                case SourceType.Directory:
-                {
-                    return applicationSource.Ref != null
-                        ? ProcessRef(applicationFromYaml,
-                                     gitCredentials,
-                                     repositoryFactory,
-                                     deploymentConfig,
-                                     sourceWithMetadata,
-                                     defaultRegistry,
-                                     gateway)
-                        : 
-                }
-                case SourceType.Helm:
-                {
-                    return ProcessHelm(applicationFromYaml,
-                                       gitCredentials,
-                                       repositoryFactory,
-                                       deploymentConfig,
-                                       sourceWithMetadata,
-                                       defaultRegistry,
-                                       gateway);
-                }
-                case SourceType.Kustomize:
-                {
-                    return ProcessKustomize(applicationFromYaml,
-                                            gitCredentials,
-                                            repositoryFactory,
-                                            deploymentConfig,
-                                            sourceWithMetadata,
-                                            defaultRegistry,
-                                            gateway);
-                }
-                case SourceType.Plugin:
-                {
-                    log.WarnFormat("Unable to update source '{0}' as Plugin sources aren't currently supported.", sourceWithMetadata.SourceIdentity);
-                    return new SourceUpdateResult(new HashSet<string>(), string.Empty, []);
-                }
-                default:
-                    throw new ArgumentOutOfRangeException();
+                throw new ArgumentOutOfRangeException();
             }
     }
 }

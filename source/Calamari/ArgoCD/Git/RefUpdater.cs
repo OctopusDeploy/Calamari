@@ -9,9 +9,14 @@ namespace Calamari.ArgoCD.Git;
 
 public class RefUpdater : BaseUpdater
 {
-    public RefUpdater(RepositoryFactory repositoryFactory, Dictionary<string, GitCredentialDto> gitCredentials, ILog log, ICommitMessageGenerator commitMessageGenerator,
-             ICalamariFileSystem fileSystem) : base(repositoryFactory, gitCredentials, log, commitMessageGenerator,
-                                                    fileSystem)
+    public RefUpdater(Application applicationFromYaml, Dictionary<string, GitCredentialDto> gitCredentials, RepositoryFactory repositoryFactory, UpdateArgoCDAppDeploymentConfig deploymentConfig,
+                      string defaultRegistry,
+                      ArgoCDGatewayDto gateway,
+                      ILog log,
+                      ICommitMessageGenerator commitMessageGenerator,
+                      ICalamariFileSystem fileSystem,
+                      ArgoCDOutputVariablesWriter outputVariablesWriter) : base(repositoryFactory, gitCredentials, log, commitMessageGenerator,
+                                                                                fileSystem)
     {
     }
 
