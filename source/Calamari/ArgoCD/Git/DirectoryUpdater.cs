@@ -1,0 +1,66 @@
+using System.Collections.Generic;
+using Calamari.ArgoCD.Conventions;
+using Calamari.ArgoCD.Domain;
+using Calamari.ArgoCD.Dtos;
+using Calamari.Common.Plumbing.Logging;
+
+namespace Calamari.ArgoCD.Git;
+
+public class DirectoryUpdater : BaseUpdater
+{
+    readonly Application applicationFromYaml;
+    readonly UpdateArgoCDAppDeploymentConfig deploymentConfig;
+    readonly string defaultRegistry;
+    readonly ArgoCDGatewayDto gateway;
+
+    public DirectoryUpdater(Application applicationFromYaml, Dictionary<string, GitCredentialDto> gitCredentials, RepositoryFactory repositoryFactory, UpdateArgoCDAppDeploymentConfig deploymentConfig,
+                            string defaultRegistry,
+                            ArgoCDGatewayDto gateway,
+                            ILog log,
+                            ICommitMessageGenerator commitMessageGenerator;) : base(repositoryFactory, gitCredentials, log, commitMessageGenerator)
+    {
+        this.applicationFromYaml = applicationFromYaml;
+        this.gitCredentials = gitCredentials;
+        this.deploymentConfig = deploymentConfig;
+        this.defaultRegistry = defaultRegistry;
+        this.gateway = gateway;
+    }
+
+    SourceUpdateResult Process(ApplicationSourceWithMetadata sourceWithMetadata)
+        {
+            var applicationSource = sourceWithMetadata.Source;
+            if (applicationSource.Path == null)
+            {
+                log.WarnFormat("Unable to update source '{0}' as a path has not been specified.", sourceWithMetadata.SourceIdentity);
+                return new SourceUpdateResult(new HashSet<string>(), string.Empty, []);
+            }
+
+            using (var repository = CreateRepository(sourceWithMetadata))
+            {
+                log.Verbose($"Reading files from {applicationSource.Path}");
+
+                var (updatedFiles, updatedImages, patchedFiles) = UpdateKubernetesYaml(repository.WorkingDirectory, applicationSource.Path!, defaultRegistry, deploymentConfig.ImageReferences);
+                if (updatedImages.Count > 0)
+                {
+                    var pushResult = PushToRemote(repository,
+                                                  GitReference.CreateFromString(applicationSource.TargetRevision),
+                                                  deploymentConfig.CommitParameters,
+                                                  updatedFiles,
+                                                  updatedImages);
+
+                    if (pushResult is not null)
+                    {
+                        outputVariablesWriter.WritePushResultOutput(gateway.Name,
+                                                                    applicationFromYaml.Metadata.Name,
+                                                                    sourceWithMetadata.Index,
+                                                                    pushResult);
+                        return new SourceUpdateResult(updatedImages, pushResult.CommitSha, patchedFiles);
+                    }
+
+                    return new SourceUpdateResult(new HashSet<string>(), string.Empty, []);
+                }
+            }
+
+            return new SourceUpdateResult(new HashSet<string>(), string.Empty, []);
+        }
+}

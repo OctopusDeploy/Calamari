@@ -80,10 +80,21 @@ namespace Calamari.ArgoCD.Conventions
 
             log.LogApplicationCounts(deploymentScope, argoProperties.Applications);
 
+            var appUpdater = new ApplicationUpdater(argoProperties,
+                                                    gitCredentials,
+                                                    deploymentScope,
+                                                    deploymentConfig,
+                                                    repositoryFactory,
+                                                    log,
+                                                    fileSystem,
+                                                    argoCdApplicationManifestParser);
+
             var applicationResults = argoProperties.Applications
                                                    .Select(application =>
                                                            {
                                                                var gateway = argoProperties.Gateways.Single(g => g.Id == application.GatewayId);
+                                                               appUpdater.ProcessApplication(application, gateway);
+                                                               
                                                                return ProcessApplication(application,
                                                                                          gateway,
                                                                                          deploymentScope,
