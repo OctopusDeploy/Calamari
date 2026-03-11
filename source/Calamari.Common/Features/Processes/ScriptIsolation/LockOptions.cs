@@ -42,7 +42,6 @@ public sealed record LockOptions(
         }
 
         var lockFileInfo = GetLockFileInfo(options.TentacleHome, options.MutexName);
-        _ = lockFileInfo.Exists;
         return new LockOptions(lockType.Value, options.MutexName, lockFileInfo, timeout);
     }
 
