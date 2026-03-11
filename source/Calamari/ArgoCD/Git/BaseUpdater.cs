@@ -16,12 +16,12 @@ using YamlDotNet.RepresentationModel;
 
 namespace Calamari.ArgoCD.Git;
 
-public interface SourceUpdater
+public interface ISourceUpdater
 {
-    SourceUpdateResult Process(ApplicationSourceWithMetadata sourceWithMetadata);
+    FileUpdateResult Process(ApplicationSourceWithMetadata sourceWithMetadata);
 }
 
-public abstract class BaseUpdater : SourceUpdater
+public abstract class BaseUpdater : ISourceUpdater
 {
     protected RepositoryFactory repositoryFactory;
     protected Dictionary<string, GitCredentialDto> gitCredentials;
@@ -55,7 +55,7 @@ public abstract class BaseUpdater : SourceUpdater
         return repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), gitConnection);
     }
 
-    protected (HashSet<string>, HashSet<string>, List<FilePathContent>) Update(string rootPath, IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate, HashSet<string> filesToUpdate, Func<string, IContainerImageReplacer> imageReplacerFactory)
+    protected FileUpdateResult Update(string rootPath, IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate, HashSet<string> filesToUpdate, Func<string, IContainerImageReplacer> imageReplacerFactory)
     {
         var updatedFiles = new HashSet<string>();
         var updatedImages = new HashSet<string>();
@@ -88,7 +88,7 @@ public abstract class BaseUpdater : SourceUpdater
             }
         }
 
-        return (updatedFiles, updatedImages, jsonPatches);
+        return new FileUpdateResult(updatedFiles, updatedImages, jsonPatches);
     }
 
     protected PushResult? PushToRemote(
@@ -117,5 +117,5 @@ public abstract class BaseUpdater : SourceUpdater
                          .GetResult();
     }
 
-    public abstract SourceUpdateResult Process(ApplicationSourceWithMetadata sourceWithMetadata);
+    public abstract FileUpdateResult Process(ApplicationSourceWithMetadata sourceWithMetadata);
 }
