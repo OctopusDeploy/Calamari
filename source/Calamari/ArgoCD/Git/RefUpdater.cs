@@ -57,34 +57,22 @@ public class RefUpdater : BaseUpdater
                 log.Warn($"Application {applicationFromYaml.Metadata.Name} specifies helm-value annotations which have been superseded by container-values specified in the step's configuration");
             }
 
-            return ProcessRefSourceUsingStepVariables(applicationFromYaml,
-                                                      sourceWithMetadata,
-                                                      repository,
-                                                      deploymentConfig,
-                                                      defaultRegistry,
-                                                      gateway);
+            return ProcessRefSourceUsingStepVariables(sourceWithMetadata,
+                                                      repository);
         }
 
         var helmTargetsForRefSource = new HelmValuesFileUpdateTargetParser(applicationFromYaml, defaultRegistry)
             .GetHelmTargetsForRefSource(sourceWithMetadata);
 
-        HelmHelpers.LogHelmSourceConfigurationProblems(helmTargetsForRefSource.Problems);
+        HelmHelpers.LogHelmSourceConfigurationProblems(log, helmTargetsForRefSource.Problems);
 
-        return ProcessHelmUpdateTargets(
-                                        applicationFromYaml,
-                                        repository,
-                                        deploymentConfig,
+        return ProcessHelmUpdateTargets(repository,
                                         sourceWithMetadata,
-                                        helmTargetsForRefSource.Targets,
-                                        gateway);
+                                        helmTargetsForRefSource.Targets);
     }
 
-    SourceUpdateResult ProcessRefSourceUsingStepVariables(Application applicationFromYaml,
-                                                          ApplicationSourceWithMetadata sourceWithMetadata,
-                                                          RepositoryWrapper repository,
-                                                          UpdateArgoCDAppDeploymentConfig deploymentConfig,
-                                                          string defaultRegistry,
-                                                          ArgoCDGatewayDto gateway)
+    SourceUpdateResult ProcessRefSourceUsingStepVariables(ApplicationSourceWithMetadata sourceWithMetadata,
+                                                          RepositoryWrapper repository)
     {
         var extractor = new HelmValuesFileExtractor(applicationFromYaml);
         var valuesFiles = extractor.GetValueFilesReferencedInRefSource(sourceWithMetadata)
@@ -181,7 +169,7 @@ public class RefUpdater : BaseUpdater
         if (imageUpdateResult.UpdatedImageReferences.Count > 0)
         {
             fileSystem.OverwriteFile(filepath, imageUpdateResult.UpdatedContents);
-            var jsonPatch = CreateJsonPatch(fileContent, imageUpdateResult.UpdatedContents);
+            var jsonPatch = UpdaterHelpers.CreateJsonPatch(fileContent, imageUpdateResult.UpdatedContents);
             return new HelmRefUpdatedResult(imageUpdateResult.UpdatedImageReferences, Path.Combine(target.Path, target.FileName), jsonPatch);
         }
 
