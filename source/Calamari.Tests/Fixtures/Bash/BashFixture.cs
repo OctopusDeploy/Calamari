@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -335,6 +335,7 @@ namespace Calamari.Tests.Fixtures.Bash
 
         static string specialCharacters => "! \" # $ % & ' ( ) * + , - . / : ; < = > ? @ [ \\ ] ^ _ ` { | } ~  \n\u00b1 \u00d7 \u00f7 \u2211 \u220f \u2202 \u221e \u222b \u2248 \u2260 \u2264 \u2265 \u221a \u221b \u2206 \u2207 \u221d  \n$ \u00a2 \u00a3 \u00a5 \u20ac \u20b9 \u20a9 \u20b1 \u20aa \u20bf  \n• ‣ … ′ ″ ‘ ’ “ ” ‽ ¡ ¿ – — ―  \n( ) [ ] { } ⟨ ⟩ « » ‘ ’ “ ”  \n\u2190 \u2191 \u2192 \u2193 \u2194 \u2195 \u2196 \u2197 \u2198 \u2199 \u2b05 \u2b06 \u2b07 \u27a1 \u27f3  \nα β γ δ ε ζ η θ ι κ λ μ ν ξ ο π ρ σ τ υ φ χ ψ ω  \n\u00a9 \u00ae \u2122 § ¶ † ‡ µ #";
 
+        [TestCase(FeatureToggle.BashParametersArrayFeatureToggle)]
         [RequiresBashDotExeIfOnWindows]
         public void ShouldBeAbleToEnumerateVariableValues(FeatureToggle? featureToggle)
         {
@@ -354,7 +355,29 @@ namespace Calamari.Tests.Fixtures.Bash
                                             ["VariableName \n 11"] = "Value \n 11",
                                             ["VariableName.prop.anotherprop 12"] = "Value.prop.12",
                                             ["VariableName`prop`anotherprop` 13"] = "Value`prop`13",
-                                            [specialCharacters] = specialCharacters
+                                            [specialCharacters] = specialCharacters,
+                                            // Emoji / 4-byte UTF-8 codepoints
+                                            ["EmojiKey 🎉💡🔥"] = "EmojiValue 😀🌍🚀",
+                                            // CJK (Chinese / Japanese / Korean)
+                                            ["CJK 中文 日本語 한국어"] = "中文值 你好世界",
+                                            // Arabic RTL text
+                                            ["Arabic مفتاح"] = "قيمة عربية",
+                                            // Bash command-injection attempts in both key and value
+                                            ["InjectionAttempt $(echo injected)"] = "$(echo injected) `echo injected` ${HOME}",
+                                            // Empty value
+                                            ["EmptyValueKey"] = "",
+                                            // Leading and trailing whitespace in value
+                                            ["LeadingTrailingSpaces"] = "  value padded with spaces  ",
+                                            // Multiple '=' signs in value (parsers that split on '=' can mis-handle this)
+                                            ["MultipleEquals"] = "a=b=c=d",
+                                            // Zero-width space (U+200B) – invisible but load-bearing
+                                            ["ZeroWidth\u200bKey"] = "zero\u200bwidth\u200bvalue",
+                                            // ANSI escape sequence – terminal control injection attempt
+                                            ["AnsiEscapeKey"] = "\x1b[31mRed\x1b[0m",
+                                            // Supplementary-plane Unicode (mathematical script + musical symbols)
+                                            ["SupplementaryPlane 𝒜𝄞"] = "value 𝐀𝁆",
+                                            // Combining diacritical mark (NFD 'é' vs NFC U+00E9)
+                                            ["CombiningDiacritical Caf\u0301"] = "Caf\u00e9",
                                         }.AddFeatureToggleToDictionary(new List<FeatureToggle?> { FeatureToggle.BashParametersArrayFeatureToggle }));
 
             output.AssertSuccess();
@@ -383,6 +406,18 @@ namespace Calamari.Tests.Fixtures.Bash
             output.AssertOutput("Key: VariableName.prop.anotherprop 12, Value: Value.prop.12");
             output.AssertOutput("Key: VariableName`prop`anotherprop` 13, Value: Value`prop`13");
             output.AssertOutput($"Key: {specialCharacters}, Value: {specialCharacters}");
+
+            output.AssertOutput("Key: EmojiKey 🎉💡🔥, Value: EmojiValue 😀🌍🚀");
+            output.AssertOutput("Key: CJK 中文 日本語 한국어, Value: 中文值 你好世界");
+            output.AssertOutput("Key: Arabic مفتاح, Value: قيمة عربية");
+            output.AssertOutput("Key: InjectionAttempt $(echo injected), Value: $(echo injected) `echo injected` ${HOME}");
+            output.AssertOutput("Key: EmptyValueKey, Value: ");
+            output.AssertOutput("Key: LeadingTrailingSpaces, Value:   value padded with spaces  ");
+            output.AssertOutput("Key: MultipleEquals, Value: a=b=c=d");
+            output.AssertOutput($"Key: ZeroWidth\u200bKey, Value: zero\u200bwidth\u200bvalue");
+            output.AssertOutput($"Key: AnsiEscapeKey, Value: \x1b[31mRed\x1b[0m");
+            output.AssertOutput($"Key: SupplementaryPlane 𝒜𝄞, Value: value 𝐀𝁆");
+            output.AssertOutput($"Key: CombiningDiacritical Caf\u0301, Value: Caf\u00e9");
         }
     }
 
