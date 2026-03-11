@@ -226,10 +226,10 @@ namespace Calamari.ArgoCD.Conventions
                 case SourceType.Helm:
                 {
                     return ProcessHelm(applicationFromYaml,
-                                       sourceWithMetadata,
                                        gitCredentials,
                                        repositoryFactory,
                                        deploymentConfig,
+                                       sourceWithMetadata,
                                        defaultRegistry,
                                        gateway);
                 }
@@ -394,10 +394,10 @@ namespace Calamari.ArgoCD.Conventions
         /// <returns>Images that were updated</returns>
         SourceUpdateResult ProcessHelm(
             Application applicationFromYaml,
-            ApplicationSourceWithMetadata sourceWithMetadata,
             Dictionary<string, GitCredentialDto> gitCredentials,
             RepositoryFactory repositoryFactory,
             UpdateArgoCDAppDeploymentConfig deploymentConfig,
+            ApplicationSourceWithMetadata sourceWithMetadata,
             string defaultRegistry,
             ArgoCDGatewayDto gateway)
         {
