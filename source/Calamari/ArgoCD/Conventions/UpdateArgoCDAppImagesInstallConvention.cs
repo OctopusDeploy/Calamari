@@ -835,6 +835,6 @@ namespace Calamari.ArgoCD.Conventions
             return JsonSerializer.Serialize(patchDocument);
         }
 
-        record SourceUpdateResult(HashSet<string> ImagesUpdated, string CommitSha, List<FilePathContent> PatchedFiles);
+        public record SourceUpdateResult(HashSet<string> ImagesUpdated, string CommitSha, List<FilePathContent> PatchedFiles);
     }
 }
