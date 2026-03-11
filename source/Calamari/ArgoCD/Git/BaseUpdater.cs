@@ -16,7 +16,12 @@ using YamlDotNet.RepresentationModel;
 
 namespace Calamari.ArgoCD.Git;
 
-public abstract class BaseUpdater
+public interface SourceUpdater
+{
+    SourceUpdateResult Process(ApplicationSourceWithMetadata sourceWithMetadata);
+}
+
+public abstract class BaseUpdater : SourceUpdater
 {
     protected RepositoryFactory repositoryFactory;
     protected Dictionary<string, GitCredentialDto> gitCredentials;
@@ -129,4 +134,6 @@ public abstract class BaseUpdater
                          .GetAwaiter()
                          .GetResult();
     }
+
+    public abstract SourceUpdateResult Process(ApplicationSourceWithMetadata sourceWithMetadata);
 }

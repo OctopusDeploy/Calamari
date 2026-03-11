@@ -87,7 +87,9 @@ namespace Calamari.ArgoCD.Conventions
                                                     repositoryFactory,
                                                     log,
                                                     fileSystem,
-                                                    argoCdApplicationManifestParser);
+                                                    argoCdApplicationManifestParser,
+                                                    commitMessageGenerator,
+                                                    outputVariablesWriter);
 
             var applicationResults = argoProperties.Applications
                                                    .Select(application =>
