@@ -62,10 +62,12 @@ public class ApplicationUpdater
                 }
             }
 
+            var sourceUpdater = new ApplicationSourceUpdater(applicationFromYaml, repositoryFactory, argoCDCustomPropertiesDto, gitCredentials, deploymentScope, deploymentConfig, log, gateway, application.DefaultRegistry, commitMessageGenerator, outputVariablesWriter, fileSystem);
+
             var updatedSourcesResults = applicationFromYaml.GetSourcesWithMetadata()
                                                            .Select(applicationSource => new
                                                            {
-                                                               Updated = ProcessSource(applicationSource),
+                                                               Updated = sourceUpdater.ProcessSource(applicationSource),
                                                                applicationSource,
                                                            })
                                                            .Where(r => r.Updated.ImagesUpdated.Any())

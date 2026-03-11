@@ -75,7 +75,7 @@ public class ApplicationSourceUpdater
                                                        commitMessageGenerator,
                                                        fileSystem,
                                                        outputVariablesWriter);
-                    updater.Process(sourceWithMetadata);   
+                    return updater.Process(sourceWithMetadata);   
                 }
                 else
                 {
@@ -89,7 +89,7 @@ public class ApplicationSourceUpdater
                                                  commitMessageGenerator,
                                                  fileSystem,
                                                  outputVariablesWriter);
-                    updater.Process(sourceWithMetadata);
+                    return updater.Process(sourceWithMetadata);
                 }
             }
             else if (sourceWithMetadata.SourceType == SourceType.Helm)
@@ -104,7 +104,7 @@ public class ApplicationSourceUpdater
                                              commitMessageGenerator,
                                              fileSystem,
                                              outputVariablesWriter);
-                updater.Process(sourceWithMetadata);
+                return updater.Process(sourceWithMetadata);
             }
             else if (sourceWithMetadata.SourceType == SourceType.Kustomize)
             {
@@ -118,7 +118,7 @@ public class ApplicationSourceUpdater
                                                    commitMessageGenerator,
                                                    fileSystem,
                                                    outputVariablesWriter);
-                updater.Process(sourceWithMetadata);
+                return updater.Process(sourceWithMetadata);
             }
             else if (sourceWithMetadata.SourceType == SourceType.Plugin)
             {

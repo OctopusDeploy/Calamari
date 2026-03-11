@@ -41,7 +41,7 @@ public class DirectoryUpdater : BaseUpdater
         this.outputVariablesWriter = outputVariablesWriter;
     }
 
-    public SourceUpdateResult Process(ApplicationSourceWithMetadata sourceWithMetadata)
+    public override SourceUpdateResult Process(ApplicationSourceWithMetadata sourceWithMetadata)
     {
         var applicationSource = sourceWithMetadata.Source;
         if (applicationSource.Path == null)

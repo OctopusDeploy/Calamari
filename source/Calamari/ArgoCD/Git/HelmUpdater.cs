@@ -8,17 +8,18 @@ using Calamari.ArgoCD.Helm;
 using Calamari.ArgoCD.Models;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
+using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.ArgoCD.Git;
 
-public class HelmUpdater : BaseUpdater
+public class HelmUpdater : AbstractHelmUpdater
 {
     readonly Application applicationFromYaml;
     readonly UpdateArgoCDAppDeploymentConfig deploymentConfig;
     readonly string defaultRegistry;
     readonly ArgoCDGatewayDto gateway;
     readonly ArgoCDOutputVariablesWriter outputVariablesWriter;
-    
+
     public HelmUpdater(Application applicationFromYaml,
                        Dictionary<string, GitCredentialDto> gitCredentials,
                        RepositoryFactory repositoryFactory,
@@ -32,7 +33,12 @@ public class HelmUpdater : BaseUpdater
                                                                                  gitCredentials,
                                                                                  log,
                                                                                  commitMessageGenerator,
-                                                                                 fileSystem)
+                                                                                 fileSystem,
+                                                                                 deploymentConfig,
+                                                                                 defaultRegistry,
+                                                                                 gateway,
+                                                                                 outputVariablesWriter,
+                                                                                 applicationFromYaml)
     {
         this.applicationFromYaml = applicationFromYaml;
         this.deploymentConfig = deploymentConfig;
@@ -59,33 +65,66 @@ public class HelmUpdater : BaseUpdater
                 log.Warn($"Application '{applicationFromYaml.Metadata.Name}' specifies helm-value annotations which have been superseded by values specified in the step's configuration");
             }
 
-            return ProcessHelmSourceUsingStepVariables(applicationFromYaml,
-                                                       gitCredentials,
-                                                       repositoryFactory,
-                                                       deploymentConfig,
-                                                       sourceWithMetadata,
-                                                       defaultRegistry,
-                                                       gateway);
+            return ProcessHelmSourceUsingStepVariables(sourceWithMetadata);
         }
 
-        return ProcessHelmSourceUsingAnnotations(applicationFromYaml,
-                                                 sourceWithMetadata,
-                                                 gitCredentials,
-                                                 repositoryFactory,
-                                                 deploymentConfig,
-                                                 defaultRegistry,
-                                                 gateway,
-                                                 applicationSource);
+        return ProcessHelmSourceUsingAnnotations(sourceWithMetadata);
     }
-    
-    SourceUpdateResult ProcessHelmSourceUsingStepVariables(
+
+    SourceUpdateResult ProcessHelmSourceUsingAnnotations(ApplicationSourceWithMetadata sourceWithMetadata)
+    {
+        var explicitHelmSources = new HelmValuesFileUpdateTargetParser(applicationFromYaml, defaultRegistry)
+            .GetExplicitValuesFilesToUpdate(sourceWithMetadata);
+
+        var valuesFilesToUpdate = new List<HelmValuesFileImageUpdateTarget>(explicitHelmSources.Targets);
+        var valueFileProblems = new HashSet<HelmSourceConfigurationProblem>(explicitHelmSources.Problems);
+
+        //Add the implicit value file if needed
+        using var repository = CreateRepository(sourceWithMetadata);
+        var repoSubPath = Path.Combine(repository.WorkingDirectory, sourceWithMetadata.Source.Path!);
+        var implicitValuesFile = HelmDiscovery.TryFindValuesFile(fileSystem, repoSubPath);
+        if (implicitValuesFile != null && explicitHelmSources.Targets.None(t => t.FileName == implicitValuesFile))
+        {
+            var (target, problem) = AddImplicitValuesFile(applicationFromYaml,
+                                                          sourceWithMetadata,
+                                                          implicitValuesFile,
+                                                          defaultRegistry);
+            if (target != null)
+                valuesFilesToUpdate.Add(target);
+
+            if (problem != null)
+                valueFileProblems.Add(problem);
+        }
+
+        HelmHelpers.LogHelmSourceConfigurationProblems(log, valueFileProblems);
+
+        return ProcessHelmUpdateTargets(repository,
+                                        sourceWithMetadata,
+                                        valuesFilesToUpdate);
+    }
+
+    (HelmValuesFileImageUpdateTarget? Target, HelmSourceConfigurationProblem? Problem) AddImplicitValuesFile(
         Application applicationFromYaml,
-        Dictionary<string, GitCredentialDto> gitCredentials,
-        RepositoryFactory repositoryFactory,
-        UpdateArgoCDAppDeploymentConfig deploymentConfig,
-        ApplicationSourceWithMetadata sourceWithMetadata,
-        string defaultRegistry,
-        ArgoCDGatewayDto gateway)
+        ApplicationSourceWithMetadata applicationSource,
+        string valuesFilename,
+        string defaultRegistry)
+    {
+        var imageReplacePaths = ScopingAnnotationReader.GetImageReplacePathsForApplicationSource(
+                                                                                                 applicationSource.Source.Name.ToApplicationSourceName(),
+                                                                                                 applicationFromYaml.Metadata.Annotations,
+                                                                                                 applicationFromYaml.Spec.Sources.Count > 1);
+        if (!imageReplacePaths.Any())
+        {
+            return (null, new HelmSourceIsMissingImagePathAnnotation(applicationSource.SourceIdentity));
+        }
+
+        return (new HelmValuesFileImageUpdateTarget(defaultRegistry,
+                                                    applicationSource.Source.Path,
+                                                    valuesFilename,
+                                                    imageReplacePaths), null);
+    }
+
+    SourceUpdateResult ProcessHelmSourceUsingStepVariables(ApplicationSourceWithMetadata sourceWithMetadata)
     {
         var extractor = new HelmValuesFileExtractor(applicationFromYaml);
         var valuesFilesInHelmSource = extractor.GetInlineValuesFilesReferencedByHelmSource(sourceWithMetadata);
@@ -101,12 +140,8 @@ public class HelmUpdater : BaseUpdater
 
         filesToUpdate = filesToUpdate.Select(file => Path.Combine(repository.WorkingDirectory, file)).ToList();
         var result = ProcessHelmValuesFiles(filesToUpdate.ToHashSet(),
-                                            defaultRegistry,
                                             repository,
-                                            deploymentConfig,
-                                            gateway,
-                                            sourceWithMetadata,
-                                            applicationFromYaml);
+                                            sourceWithMetadata);
         return result;
     }
 }
