@@ -72,7 +72,7 @@ public abstract class BaseUpdater : SourceUpdater
             if (imageReplacementResult.UpdatedImageReferences.Count > 0)
             {
                 // Replace \ with / so that Calamari running on windows doesn't cause issues when we send back to server
-                jsonPatches.Add(new(relativePath.Replace('\\', '/'), Serialize(CreateJsonPatch(content, imageReplacementResult.UpdatedContents))));
+                jsonPatches.Add(new(relativePath.Replace('\\', '/'), UpdaterHelpers.Serialize(UpdaterHelpers.CreateJsonPatch(content, imageReplacementResult.UpdatedContents))));
                 fileSystem.OverwriteFile(file, imageReplacementResult.UpdatedContents);
                 updatedImages.UnionWith(imageReplacementResult.UpdatedImageReferences);
                 updatedFiles.Add(relativePath);
@@ -89,24 +89,6 @@ public abstract class BaseUpdater : SourceUpdater
         }
 
         return (updatedFiles, updatedImages, jsonPatches);
-    }
-    
-    static JsonPatchDocument CreateJsonPatch(string originalContent, string updatedContent)
-    {
-        var originalStream = new YamlStream();
-        originalStream.Load(new StringReader(originalContent));
-        var original = new JsonArray(originalStream.Documents.Select(d => d.ToJsonNode()).ToArray());
-
-        var updatedStream = new YamlStream();
-        updatedStream.Load(new StringReader(updatedContent));
-        var updated = new JsonArray(updatedStream.Documents.Select(d => d.ToJsonNode()).ToArray());
-
-        return JsonPatchGenerator.Generate(original, updated);
-    }
-
-    static string Serialize(JsonPatchDocument patchDocument)
-    {
-        return JsonSerializer.Serialize(patchDocument);
     }
 
     protected PushResult? PushToRemote(
