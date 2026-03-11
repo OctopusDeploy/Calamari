@@ -16,7 +16,6 @@ public class DirectoryUpdater : BaseUpdater
     readonly UpdateArgoCDAppDeploymentConfig deploymentConfig;
     readonly string defaultRegistry;
     readonly ArgoCDGatewayDto gateway;
-    readonly ICalamariFileSystem fileSystem;
     readonly ArgoCDOutputVariablesWriter outputVariablesWriter;
 
     public DirectoryUpdater(Application applicationFromYaml, Dictionary<string, GitCredentialDto> gitCredentials, RepositoryFactory repositoryFactory, UpdateArgoCDAppDeploymentConfig deploymentConfig,
@@ -25,14 +24,13 @@ public class DirectoryUpdater : BaseUpdater
                             ILog log,
                             ICommitMessageGenerator commitMessageGenerator,
                             ICalamariFileSystem fileSystem,
-                            ArgoCDOutputVariablesWriter outputVariablesWriter) : base(repositoryFactory, gitCredentials, log, commitMessageGenerator)
+                            ArgoCDOutputVariablesWriter outputVariablesWriter) : base(repositoryFactory, gitCredentials, log, commitMessageGenerator, fileSystem)
     {
         this.applicationFromYaml = applicationFromYaml;
         this.gitCredentials = gitCredentials;
         this.deploymentConfig = deploymentConfig;
         this.defaultRegistry = defaultRegistry;
         this.gateway = gateway;
-        this.fileSystem = fileSystem;
         this.outputVariablesWriter = outputVariablesWriter;
     }
 
