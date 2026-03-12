@@ -22,14 +22,13 @@ public class RepositoryAdapter
                              RepositoryFactory repositoryFactory,
                              GitCommitParameters commitParameters,
                              ILog log,
-                             ICommitMessageGenerator commitMessageGenerator,    
+                             ICommitMessageGenerator commitMessageGenerator,
                              ISourceUpdater updater)
     {
         this.repositoryFactory = repositoryFactory;
         this.gitCredentials = gitCredentials;
         this.log = log;
         this.commitMessageGenerator = commitMessageGenerator;
-        this.updater = updater;
         this.commitParameters = commitParameters;
     }
 
@@ -42,9 +41,8 @@ public class RepositoryAdapter
         }
     }
     
-    protected RepositoryWrapper CreateRepository(ApplicationSourceWithMetadata sourceWithMetadata)
+    protected RepositoryWrapper CreateRepository(ApplicationSource source)
     {
-        var source = sourceWithMetadata.Source;
         var gitCredential = gitCredentials.GetValueOrDefault(source.OriginalRepoUrl);
         if (gitCredential == null)
         {
