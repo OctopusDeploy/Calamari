@@ -90,7 +90,7 @@ public class ApplicationUpdater
                                                 applicationName.ToApplicationName(),
                                                 applicationFromYaml.Spec.Sources.Count,
                                                 applicationFromYaml.Spec.Sources.Count(s => deploymentScope.Matches(ScopingAnnotationReader.GetScopeForApplicationSource(s.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources))),
-                                                updatedSourcesResults.Select(r => new UpdatedSourceDetail(r.Updated.CommitSha, r.applicationSource.Index, [], r.Updated.PatchedFiles)).ToList(),
+                                                updatedSourcesResults.Select(r => new UpdatedSourceDetail(r.Updated.PushResult!.CommitSha, r.applicationSource.Index, [], r.Updated.PatchedFiles)).ToList(),
                                                 updatedSourcesResults.SelectMany(r => r.Updated.ImagesUpdated).ToHashSet(),
                                                 updatedSourcesResults.Select(r => r.applicationSource.Source.OriginalRepoUrl).ToHashSet());
         }

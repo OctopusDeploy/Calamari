@@ -86,15 +86,10 @@ public class ApplicationSourceUpdater
         else if (sourceWithMetadata.SourceType == SourceType.Helm)
         {
             sourceUpdater = new HelmUpdater(applicationFromYaml,
-                                            gitCredentials,
-                                            repositoryFactory,
                                             deploymentConfig,
                                             defaultRegistry,
-                                            gateway,
                                             log,
-                                            commitMessageGenerator,
-                                            fileSystem,
-                                            outputVariablesWriter);
+                                            fileSystem);
         }
         else if (sourceWithMetadata.SourceType == SourceType.Kustomize)
         {
