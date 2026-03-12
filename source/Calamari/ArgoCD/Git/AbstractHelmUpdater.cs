@@ -60,10 +60,10 @@ public abstract class AbstractHelmUpdater : BaseUpdater
                                       .ToList();
             var updatedImages = results.SelectMany(r => r.ImagesUpdated).ToHashSet();
 
-            return new FileUpdateResult(patchedFiles.Select(pf => pf.FilePath).ToHashSet(), updatedImages, patchedFiles);
+            return new FileUpdateResult(updatedImages, patchedFiles);
         }
 
-        return new FileUpdateResult([], [], []);
+        return new FileUpdateResult([], []);
     }
 
     HelmRefUpdatedResult UpdateHelmImageValues(
@@ -80,7 +80,7 @@ public abstract class AbstractHelmUpdater : BaseUpdater
         if (imageUpdateResult.UpdatedImageReferences.Count > 0)
         {
             fileSystem.OverwriteFile(filepath, imageUpdateResult.UpdatedContents);
-            var jsonPatch = UpdaterHelpers.CreateJsonPatch(fileContent, imageUpdateResult.UpdatedContents);
+            var jsonPatch = CreateJsonPatch(fileContent, imageUpdateResult.UpdatedContents);
             return new HelmRefUpdatedResult(imageUpdateResult.UpdatedImageReferences, Path.Combine(target.Path, target.FileName), jsonPatch);
         }
 

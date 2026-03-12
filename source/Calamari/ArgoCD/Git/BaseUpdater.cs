@@ -21,7 +21,7 @@ public interface ISourceUpdater
 
 public class NoOpSourceUpdater : ISourceUpdater
 {
-    public FileUpdateResult Process(ApplicationSourceWithMetadata sourceWithMetadata, string workingDirectory) => new([], [], []);
+    public FileUpdateResult Process(ApplicationSourceWithMetadata sourceWithMetadata, string workingDirectory) => new([], []);
 }
 
 public abstract class BaseUpdater : ISourceUpdater
@@ -38,7 +38,6 @@ public abstract class BaseUpdater : ISourceUpdater
 
     protected FileUpdateResult Update(string rootPath, IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate, HashSet<string> filesToUpdate, Func<string, IContainerImageReplacer> imageReplacerFactory)
     {
-        var updatedFiles = new HashSet<string>();
         var updatedImages = new HashSet<string>();
         var jsonPatches = new List<FilePathContent>();
         foreach (var file in filesToUpdate)
@@ -56,7 +55,6 @@ public abstract class BaseUpdater : ISourceUpdater
                 jsonPatches.Add(new(relativePath.Replace('\\', '/'), Serialize(CreateJsonPatch(content, imageReplacementResult.UpdatedContents))));
                 fileSystem.OverwriteFile(file, imageReplacementResult.UpdatedContents);
                 updatedImages.UnionWith(imageReplacementResult.UpdatedImageReferences);
-                updatedFiles.Add(relativePath);
                 log.Verbose($"Updating file {relativePath} with new image references.");
                 foreach (var change in imageReplacementResult.UpdatedImageReferences)
                 {
@@ -69,10 +67,10 @@ public abstract class BaseUpdater : ISourceUpdater
             }
         }
 
-        return new FileUpdateResult(updatedFiles, updatedImages, jsonPatches);
+        return new FileUpdateResult(updatedImages, jsonPatches);
     }
     
-    static JsonPatchDocument CreateJsonPatch(string originalContent, string updatedContent)
+    protected static JsonPatchDocument CreateJsonPatch(string originalContent, string updatedContent)
     {
         var originalStream = new YamlStream();
         originalStream.Load(new StringReader(originalContent));

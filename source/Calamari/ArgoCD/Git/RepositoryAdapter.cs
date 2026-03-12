@@ -30,11 +30,12 @@ public class RepositoryAdapter
         this.log = log;
         this.commitMessageGenerator = commitMessageGenerator;
         this.commitParameters = commitParameters;
+        this.updater = updater;
     }
 
     public SourceUpdateResult Process(ApplicationSourceWithMetadata sourceWithMetadata)
     {
-        using (var repository = CreateRepository(sourceWithMetadata))
+        using (var repository = CreateRepository(sourceWithMetadata.Source))
         {
             var filesUpdated = updater.Process(sourceWithMetadata, repository.WorkingDirectory);
             return PersistChangesToRepository(repository, sourceWithMetadata, filesUpdated);
@@ -77,7 +78,7 @@ public class RepositoryAdapter
         FileUpdateResult result)
     {
         log.Info("Staging files in repository");
-        repository.StageFiles(result.UpdatedFiles.ToArray());
+        repository.StageFiles(result.PatchedFileContent.Select(pf => pf.FilePath).ToArray());
 
         var commitDescription = commitMessageGenerator.GenerateDescription(result.UpdatedImages, commitParameters.Description);
 
