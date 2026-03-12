@@ -61,7 +61,7 @@ public class ApplicationSourceUpdater
         log.LogApplicationSourceScopeStatus(annotatedScope, applicationSource.Name.ToApplicationSourceName(), deploymentScope);
         if (!deploymentScope.Matches(annotatedScope))
         {
-            return new SourceUpdateResult(new HashSet<string>(), string.Empty, []);
+            return new SourceUpdateResult(new HashSet<string>(), null, []);
         }
 
         ISourceUpdater sourceUpdater;
@@ -69,62 +69,44 @@ public class ApplicationSourceUpdater
         {
             if (applicationSource.Ref == null)
             {
-                sourceUpdater = new DirectoryUpdater(applicationFromYaml,
-                                                     gitCredentials,
-                                                     repositoryFactory,
-                                                     deploymentConfig,
+                sourceUpdater = new DirectoryUpdater(deploymentConfig,
                                                      defaultRegistry,
-                                                     gateway,
                                                      log,
-                                                     commitMessageGenerator,
-                                                     fileSystem,
-                                                     outputVariablesWriter);
+                                                     fileSystem);
             }
             else
             {
                 sourceUpdater = new RefUpdater(applicationFromYaml,
-                                               gitCredentials,
-                                               repositoryFactory,
                                                deploymentConfig,
                                                defaultRegistry,
-                                               gateway,
                                                log,
-                                               commitMessageGenerator,
-                                               fileSystem,
-                                               outputVariablesWriter);
-                
+                                               fileSystem);
             }
         }
         else if (sourceWithMetadata.SourceType == SourceType.Helm)
         {
             sourceUpdater = new HelmUpdater(applicationFromYaml,
-                                          gitCredentials,
-                                          repositoryFactory,
-                                          deploymentConfig,
-                                          defaultRegistry,
-                                          gateway,
-                                          log,
-                                          commitMessageGenerator,
-                                          fileSystem,
-                                          outputVariablesWriter);
+                                            gitCredentials,
+                                            repositoryFactory,
+                                            deploymentConfig,
+                                            defaultRegistry,
+                                            gateway,
+                                            log,
+                                            commitMessageGenerator,
+                                            fileSystem,
+                                            outputVariablesWriter);
         }
         else if (sourceWithMetadata.SourceType == SourceType.Kustomize)
         {
-            sourceUpdater = new KustomizeUpdater(applicationFromYaml,
-                                               gitCredentials,
-                                               repositoryFactory,
-                                               deploymentConfig,
-                                               defaultRegistry,
-                                               gateway,
-                                               log,
-                                               commitMessageGenerator,
-                                               fileSystem,
-                                               outputVariablesWriter);
+            sourceUpdater = new KustomizeUpdater(deploymentConfig,
+                                                 defaultRegistry,
+                                                 log,
+                                                 fileSystem);
         }
         else if (sourceWithMetadata.SourceType == SourceType.Plugin)
         {
             log.WarnFormat("Unable to update source '{0}' as Plugin sources aren't currently supported.", sourceWithMetadata.SourceIdentity);
-            return new SourceUpdateResult(new HashSet<string>(), string.Empty, []);
+            return new SourceUpdateResult(new HashSet<string>(), null, []);
         }
         else
         {
@@ -137,7 +119,7 @@ public class ApplicationSourceUpdater
                                                 log,
                                                 commitMessageGenerator,
                                                 sourceUpdater);
-        
+
         var sourceUpdateResult = repoAdapter.Process(sourceWithMetadata);
 
         if (sourceUpdateResult.PushResult is not null)
@@ -145,7 +127,7 @@ public class ApplicationSourceUpdater
             outputVariablesWriter.WritePushResultOutput(gateway.Name,
                                                         applicationFromYaml.Metadata.Name,
                                                         sourceWithMetadata.Index,
-                                                        sourceUpdateResult.PushResult);   
+                                                        sourceUpdateResult.PushResult);
         }
 
         return sourceUpdateResult;

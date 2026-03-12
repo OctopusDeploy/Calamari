@@ -18,37 +18,22 @@ public class RefUpdater : AbstractHelmUpdater
     readonly Application applicationFromYaml;
     readonly UpdateArgoCDAppDeploymentConfig deploymentConfig;
     readonly string defaultRegistry;
-    readonly ArgoCDGatewayDto gateway;
-    readonly ArgoCDOutputVariablesWriter outputVariablesWriter;
 
     public RefUpdater(Application applicationFromYaml,
-                      Dictionary<string, GitCredentialDto> gitCredentials,
-                      RepositoryFactory repositoryFactory,
                       UpdateArgoCDAppDeploymentConfig deploymentConfig,
                       string defaultRegistry,
-                      ArgoCDGatewayDto gateway,
                       ILog log,
-                      ICommitMessageGenerator commitMessageGenerator,
-                      ICalamariFileSystem fileSystem,
-                      ArgoCDOutputVariablesWriter outputVariablesWriter) : base(repositoryFactory,
-                                                                                gitCredentials,
-                                                                                log,
-                                                                                commitMessageGenerator,
-                                                                                fileSystem,
-                                                                                deploymentConfig,
-                                                                                defaultRegistry,
-                                                                                gateway,
-                                                                                outputVariablesWriter,
-                                                                                applicationFromYaml)
+                      ICalamariFileSystem fileSystem) : base(log,
+                                                             fileSystem,
+                                                             deploymentConfig,
+                                                             defaultRegistry)
     {
         this.applicationFromYaml = applicationFromYaml;
         this.deploymentConfig = deploymentConfig;
         this.defaultRegistry = defaultRegistry;
-        this.gateway = gateway;
-        this.outputVariablesWriter = outputVariablesWriter;
     }
 
-    public override SourceUpdateResult Process(ApplicationSourceWithMetadata sourceWithMetadata)
+    public override FileUpdateResult Process(ApplicationSourceWithMetadata sourceWithMetadata, string workingDirectory)
     {
         var applicationSource = sourceWithMetadata.Source;
 
@@ -57,7 +42,6 @@ public class RefUpdater : AbstractHelmUpdater
             log.WarnFormat("The source '{0}' contains a Ref, only referenced files will be updated. Please create another source with the same URL if you wish to update files under the path.", sourceWithMetadata.SourceIdentity);
         }
 
-        using var repository = CreateRepository(sourceWithMetadata);
         if (deploymentConfig.HasStepBasedHelmValueReferences())
         {
             if (applicationFromYaml.Metadata.Annotations.ContainsKey(ArgoCDConstants.Annotations.OctopusImageReplacementPathsKey(new ApplicationSourceName(sourceWithMetadata.Source.Name))))
@@ -65,8 +49,7 @@ public class RefUpdater : AbstractHelmUpdater
                 log.Warn($"Application {applicationFromYaml.Metadata.Name} specifies helm-value annotations which have been superseded by container-values specified in the step's configuration");
             }
 
-            return ProcessRefSourceUsingStepVariables(sourceWithMetadata,
-                                                      repository);
+            return ProcessRefSourceUsingStepVariables(sourceWithMetadata, workingDirectory);
         }
 
         var helmTargetsForRefSource = new HelmValuesFileUpdateTargetParser(applicationFromYaml, defaultRegistry)
@@ -74,19 +57,20 @@ public class RefUpdater : AbstractHelmUpdater
 
         HelmHelpers.LogHelmSourceConfigurationProblems(log, helmTargetsForRefSource.Problems);
 
-        return ProcessHelmUpdateTargets(repository,
+        return ProcessHelmUpdateTargets(workingDirectory,
                                         sourceWithMetadata,
                                         helmTargetsForRefSource.Targets);
     }
 
-    SourceUpdateResult ProcessRefSourceUsingStepVariables(ApplicationSourceWithMetadata sourceWithMetadata,
-                                                          RepositoryWrapper repository)
+    FileUpdateResult ProcessRefSourceUsingStepVariables(ApplicationSourceWithMetadata sourceWithMetadata,
+                                                        string workingDirectory)
     {
         var extractor = new HelmValuesFileExtractor(applicationFromYaml);
         var valuesFiles = extractor.GetValueFilesReferencedInRefSource(sourceWithMetadata)
-                                   .Select(file => Path.Combine(repository.WorkingDirectory, file));
+                                   .Select(file => Path.Combine(workingDirectory, file));
+
         return ProcessHelmValuesFiles(valuesFiles.ToHashSet(),
-                                      repository,
+                                      workingDirectory,
                                       sourceWithMetadata);
     }
 }

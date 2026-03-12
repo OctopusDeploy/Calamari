@@ -1,27 +1,15 @@
 #nullable enable
 using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text.Json;
-using System.Text.Json.Nodes;
-using System.Threading;
-using Calamari.ArgoCD.Domain;
 using Calamari.ArgoCD.Dtos;
 using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.Git.GitVendorApiAdapters;
-using Calamari.ArgoCD.Helm;
-using Calamari.ArgoCD.Models;
 using Calamari.Common.Commands;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.Time;
-using Calamari.Kubernetes.Patching;
-using Calamari.Kubernetes.Patching.JsonPatch;
-using Octopus.CoreUtilities.Extensions;
-using YamlDotNet.RepresentationModel;
 
 namespace Calamari.ArgoCD.Conventions
 {

@@ -4,41 +4,24 @@ using System.IO;
 using System.Linq;
 using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Domain;
-using Calamari.ArgoCD.Dtos;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 
 namespace Calamari.ArgoCD.Git;
 
-public class DirectoryUpdater : BaseUpdater
+public class DirectoryUpdater: BaseUpdater
 {
-    readonly Application applicationFromYaml;
     readonly UpdateArgoCDAppDeploymentConfig deploymentConfig;
     readonly string defaultRegistry;
-    readonly ArgoCDGatewayDto gateway;
-    readonly ArgoCDOutputVariablesWriter outputVariablesWriter;
 
-    public DirectoryUpdater(Application applicationFromYaml,
-                            Dictionary<string, GitCredentialDto> gitCredentials,
-                            RepositoryFactory repositoryFactory,
-                            UpdateArgoCDAppDeploymentConfig deploymentConfig,
+    public DirectoryUpdater(UpdateArgoCDAppDeploymentConfig deploymentConfig,
                             string defaultRegistry,
-                            ArgoCDGatewayDto gateway,
                             ILog log,
-                            ICommitMessageGenerator commitMessageGenerator,
-                            ICalamariFileSystem fileSystem,
-                            ArgoCDOutputVariablesWriter outputVariablesWriter) : base(repositoryFactory,
-                                                                                      gitCredentials,
-                                                                                      log,
-                                                                                      commitMessageGenerator,
-                                                                                      fileSystem)
+                            ICalamariFileSystem fileSystem) : base(log,
+                                                                   fileSystem)
     {
-        this.applicationFromYaml = applicationFromYaml;
-        this.gitCredentials = gitCredentials;
         this.deploymentConfig = deploymentConfig;
         this.defaultRegistry = defaultRegistry;
-        this.gateway = gateway;
-        this.outputVariablesWriter = outputVariablesWriter;
     }
 
     public override FileUpdateResult Process(ApplicationSourceWithMetadata sourceWithMetadata, string workingDirectory)
@@ -52,14 +35,12 @@ public class DirectoryUpdater : BaseUpdater
 
         log.Verbose($"Reading files from {applicationSource.Path}");
 
-        return UpdateKubernetesYaml(workingDirectory, applicationSource.Path!, defaultRegistry, deploymentConfig.ImageReferences);
+        return UpdateKubernetesYaml(workingDirectory, applicationSource.Path!);
     }
 
     FileUpdateResult UpdateKubernetesYaml(
         string rootPath,
-        string subFolder,
-        string defaultRegistry,
-        IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
+        string subFolder)
     {
         var absSubFolder = Path.Combine(rootPath, subFolder);
 
@@ -67,7 +48,7 @@ public class DirectoryUpdater : BaseUpdater
         Func<string, IContainerImageReplacer> imageReplacerFactory = yaml => new ContainerImageReplacer(yaml, defaultRegistry);
         log.Verbose($"Found {filesToUpdate.Count} yaml files to process");
 
-        return Update(rootPath, imagesToUpdate, filesToUpdate, imageReplacerFactory);
+        return Update(rootPath, deploymentConfig.ImageReferences, filesToUpdate, imageReplacerFactory);
     }
 
     //NOTE: rootPath needs to include the subfolder

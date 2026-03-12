@@ -4,7 +4,6 @@ using System.Threading;
 using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Domain;
 using Calamari.ArgoCD.Dtos;
-using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 
 namespace Calamari.ArgoCD.Git;
@@ -38,7 +37,7 @@ public class RepositoryAdapter
     {
         using (var repository = CreateRepository(sourceWithMetadata))
         {
-            var filesUpdated = updater.Process(sourceWithMetadata);
+            var filesUpdated = updater.Process(sourceWithMetadata, repository.WorkingDirectory);
             return PersistChangesToRepository(repository, sourceWithMetadata, filesUpdated);
         }
     }

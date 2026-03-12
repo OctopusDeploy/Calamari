@@ -17,44 +17,29 @@ public class HelmUpdater : AbstractHelmUpdater
     readonly Application applicationFromYaml;
     readonly UpdateArgoCDAppDeploymentConfig deploymentConfig;
     readonly string defaultRegistry;
-    readonly ArgoCDGatewayDto gateway;
-    readonly ArgoCDOutputVariablesWriter outputVariablesWriter;
 
     public HelmUpdater(Application applicationFromYaml,
-                       Dictionary<string, GitCredentialDto> gitCredentials,
-                       RepositoryFactory repositoryFactory,
                        UpdateArgoCDAppDeploymentConfig deploymentConfig,
                        string defaultRegistry,
-                       ArgoCDGatewayDto gateway,
                        ILog log,
-                       ICommitMessageGenerator commitMessageGenerator,
-                       ICalamariFileSystem fileSystem,
-                       ArgoCDOutputVariablesWriter outputVariablesWriter) : base(repositoryFactory,
-                                                                                 gitCredentials,
-                                                                                 log,
-                                                                                 commitMessageGenerator,
-                                                                                 fileSystem,
-                                                                                 deploymentConfig,
-                                                                                 defaultRegistry,
-                                                                                 gateway,
-                                                                                 outputVariablesWriter,
-                                                                                 applicationFromYaml)
+                       ICalamariFileSystem fileSystem) : base(log,
+                                                              fileSystem,
+                                                              deploymentConfig,
+                                                              defaultRegistry)
     {
         this.applicationFromYaml = applicationFromYaml;
         this.deploymentConfig = deploymentConfig;
         this.defaultRegistry = defaultRegistry;
-        this.gateway = gateway;
-        this.outputVariablesWriter = outputVariablesWriter;
     }
 
-    public override SourceUpdateResult Process(ApplicationSourceWithMetadata sourceWithMetadata)
+    public override FileUpdateResult Process(ApplicationSourceWithMetadata sourceWithMetadata, string workingDirectory)
     {
         var applicationSource = sourceWithMetadata.Source;
 
         if (applicationSource.Path == null)
         {
             log.WarnFormat("Unable to update source '{0}' as a path has not been specified.", sourceWithMetadata.SourceIdentity);
-            return new SourceUpdateResult(new HashSet<string>(), string.Empty, []);
+            return new FileUpdateResult(new HashSet<string>(), null, []);
         }
 
         if (deploymentConfig.HasStepBasedHelmValueReferences())
@@ -65,13 +50,13 @@ public class HelmUpdater : AbstractHelmUpdater
                 log.Warn($"Application '{applicationFromYaml.Metadata.Name}' specifies helm-value annotations which have been superseded by values specified in the step's configuration");
             }
 
-            return ProcessHelmSourceUsingStepVariables(sourceWithMetadata);
+            return ProcessHelmSourceUsingStepVariables(sourceWithMetadata, workingDirectory);
         }
 
-        return ProcessHelmSourceUsingAnnotations(sourceWithMetadata);
+        return ProcessHelmSourceUsingAnnotations(sourceWithMetadata, workingDirectory);
     }
 
-    SourceUpdateResult ProcessHelmSourceUsingAnnotations(ApplicationSourceWithMetadata sourceWithMetadata)
+    FileUpdateResult ProcessHelmSourceUsingAnnotations(ApplicationSourceWithMetadata sourceWithMetadata, string workingDirectory)
     {
         var explicitHelmSources = new HelmValuesFileUpdateTargetParser(applicationFromYaml, defaultRegistry)
             .GetExplicitValuesFilesToUpdate(sourceWithMetadata);
@@ -80,15 +65,12 @@ public class HelmUpdater : AbstractHelmUpdater
         var valueFileProblems = new HashSet<HelmSourceConfigurationProblem>(explicitHelmSources.Problems);
 
         //Add the implicit value file if needed
-        using var repository = CreateRepository(sourceWithMetadata);
-        var repoSubPath = Path.Combine(repository.WorkingDirectory, sourceWithMetadata.Source.Path!);
+        var repoSubPath = Path.Combine(workingDirectory, sourceWithMetadata.Source.Path!);
         var implicitValuesFile = HelmDiscovery.TryFindValuesFile(fileSystem, repoSubPath);
         if (implicitValuesFile != null && explicitHelmSources.Targets.None(t => t.FileName == implicitValuesFile))
         {
-            var (target, problem) = AddImplicitValuesFile(applicationFromYaml,
-                                                          sourceWithMetadata,
-                                                          implicitValuesFile,
-                                                          defaultRegistry);
+            var (target, problem) = AddImplicitValuesFile(sourceWithMetadata,
+                                                          implicitValuesFile);
             if (target != null)
                 valuesFilesToUpdate.Add(target);
 
@@ -98,16 +80,14 @@ public class HelmUpdater : AbstractHelmUpdater
 
         HelmHelpers.LogHelmSourceConfigurationProblems(log, valueFileProblems);
 
-        return ProcessHelmUpdateTargets(repository,
+        return ProcessHelmUpdateTargets(workingDirectory,
                                         sourceWithMetadata,
                                         valuesFilesToUpdate);
     }
 
     (HelmValuesFileImageUpdateTarget? Target, HelmSourceConfigurationProblem? Problem) AddImplicitValuesFile(
-        Application applicationFromYaml,
         ApplicationSourceWithMetadata applicationSource,
-        string valuesFilename,
-        string defaultRegistry)
+        string valuesFilename)
     {
         var imageReplacePaths = ScopingAnnotationReader.GetImageReplacePathsForApplicationSource(
                                                                                                  applicationSource.Source.Name.ToApplicationSourceName(),
@@ -124,23 +104,22 @@ public class HelmUpdater : AbstractHelmUpdater
                                                     imageReplacePaths), null);
     }
 
-    SourceUpdateResult ProcessHelmSourceUsingStepVariables(ApplicationSourceWithMetadata sourceWithMetadata)
+    FileUpdateResult ProcessHelmSourceUsingStepVariables(ApplicationSourceWithMetadata sourceWithMetadata, string workingDirectory)
     {
         var extractor = new HelmValuesFileExtractor(applicationFromYaml);
         var valuesFilesInHelmSource = extractor.GetInlineValuesFilesReferencedByHelmSource(sourceWithMetadata);
 
-        using var repository = CreateRepository(sourceWithMetadata);
-        var filesToUpdate = valuesFilesInHelmSource.Select(file => Path.Combine(repository.WorkingDirectory, file)).ToList();
-        var implicitValuesFile = HelmDiscovery.TryFindValuesFile(fileSystem, Path.Combine(repository.WorkingDirectory, sourceWithMetadata.Source.Path!));
+        var filesToUpdate = valuesFilesInHelmSource.Select(file => Path.Combine(workingDirectory, file)).ToList();
+        var implicitValuesFile = HelmDiscovery.TryFindValuesFile(fileSystem, Path.Combine(workingDirectory, sourceWithMetadata.Source.Path!));
         if (implicitValuesFile != null)
         {
-            implicitValuesFile = Path.Combine(repository.WorkingDirectory, sourceWithMetadata.Source.Path!, implicitValuesFile);
+            implicitValuesFile = Path.Combine(workingDirectory, sourceWithMetadata.Source.Path!, implicitValuesFile);
             filesToUpdate.Add(implicitValuesFile);
         }
 
-        filesToUpdate = filesToUpdate.Select(file => Path.Combine(repository.WorkingDirectory, file)).ToList();
+        filesToUpdate = filesToUpdate.Select(file => Path.Combine(workingDirectory, file)).ToList();
         var result = ProcessHelmValuesFiles(filesToUpdate.ToHashSet(),
-                                            repository,
+                                            workingDirectory,
                                             sourceWithMetadata);
         return result;
     }

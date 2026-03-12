@@ -15,72 +15,37 @@ namespace Calamari.ArgoCD.Git;
 
 public abstract class AbstractHelmUpdater : BaseUpdater
 {
-    readonly Application applicationFromYaml;
     readonly UpdateArgoCDAppDeploymentConfig deploymentConfig;
     readonly string defaultRegistry;
-    readonly ArgoCDGatewayDto gateway;
-    readonly ArgoCDOutputVariablesWriter outputVariablesWriter;
 
-    protected AbstractHelmUpdater(RepositoryFactory repositoryFactory,
-                                  Dictionary<string, GitCredentialDto> gitCredentials,
-                                  ILog log,
-                                  ICommitMessageGenerator commitMessageGenerator,
+    protected AbstractHelmUpdater(ILog log,
                                   ICalamariFileSystem fileSystem,
                                   UpdateArgoCDAppDeploymentConfig deploymentConfig,
-                                  string defaultRegistry,
-                                  ArgoCDGatewayDto gateway,
-                                  ArgoCDOutputVariablesWriter outputVariablesWriter,
-                                  Application applicationFromYaml) : base(repositoryFactory,
-                                                                          gitCredentials,
-                                                                          log,
-                                                                          commitMessageGenerator,
-                                                                          fileSystem)
+                                  string defaultRegistry) : base(log,
+                                                                 fileSystem)
     {
         this.deploymentConfig = deploymentConfig;
         this.defaultRegistry = defaultRegistry;
-        this.gateway = gateway;
-        this.outputVariablesWriter = outputVariablesWriter;
-        this.applicationFromYaml = applicationFromYaml;
     }
 
     //NOTE: this is common with Helm Sources
-    protected SourceUpdateResult ProcessHelmValuesFiles(HashSet<string> filesToUpdate,
-                                                        RepositoryWrapper repository,
-                                                        ApplicationSourceWithMetadata sourceWithMetadata)
+    protected FileUpdateResult ProcessHelmValuesFiles(HashSet<string> filesToUpdate,
+                                                      string workingDirectory,
+                                                      ApplicationSourceWithMetadata sourceWithMetadata)
     {
         Func<string, IContainerImageReplacer> imageReplacerFactory = yaml => new HelmValuesImageReplaceStepVariables(yaml, defaultRegistry, log);
         log.Verbose($"Found {filesToUpdate.Count} yaml files to process");
 
-        var (updatedFiles, updatedImages, patchedFiles) = Update(repository.WorkingDirectory, deploymentConfig.ImageReferences, filesToUpdate.ToHashSet(), imageReplacerFactory);
-        if (updatedImages.Count > 0)
-        {
-            Log.Info("Trying to push up changes");
-            var pushResult = PushToRemote(repository,
-                                          GitReference.CreateFromString(sourceWithMetadata.Source.TargetRevision),
-                                          deploymentConfig.CommitParameters,
-                                          updatedFiles,
-                                          updatedImages);
-
-            if (pushResult is not null)
-            {
-                outputVariablesWriter.WritePushResultOutput(gateway.Name,
-                                                            applicationFromYaml.Metadata.Name,
-                                                            sourceWithMetadata.Index,
-                                                            pushResult);
-                return new SourceUpdateResult(updatedImages, pushResult.CommitSha, patchedFiles);
-            }
-        }
-
-        return new SourceUpdateResult(new HashSet<string>(), string.Empty, []);
+        return Update(workingDirectory, deploymentConfig.ImageReferences, filesToUpdate.ToHashSet(), imageReplacerFactory);
     }
 
     /// <returns>Images that were updated</returns>
-    protected SourceUpdateResult ProcessHelmUpdateTargets(
-        RepositoryWrapper repository,
+    protected FileUpdateResult ProcessHelmUpdateTargets(
+        string workingDirectory,
         ApplicationSourceWithMetadata sourceWithMetadata,
         IReadOnlyCollection<HelmValuesFileImageUpdateTarget> targets)
     {
-        var results = targets.Select(t => UpdateHelmImageValues(repository.WorkingDirectory,
+        var results = targets.Select(t => UpdateHelmImageValues(workingDirectory,
                                                                 t,
                                                                 deploymentConfig.ImageReferences
                                                                ))
@@ -96,23 +61,10 @@ public abstract class AbstractHelmUpdater : BaseUpdater
                                       .ToList();
             var updatedImages = results.SelectMany(r => r.ImagesUpdated).ToHashSet();
 
-            var pushResult = PushToRemote(repository,
-                                          GitReference.CreateFromString(sourceWithMetadata.Source.TargetRevision),
-                                          deploymentConfig.CommitParameters,
-                                          results.Select(r => r.RelativeFilepath).ToHashSet(),
-                                          updatedImages);
-
-            if (pushResult is not null)
-            {
-                outputVariablesWriter.WritePushResultOutput(gateway.Name,
-                                                            applicationFromYaml.Metadata.Name,
-                                                            sourceWithMetadata.Index,
-                                                            pushResult);
-                return new SourceUpdateResult(updatedImages, pushResult.CommitSha, patchedFiles);
-            }
+            return new FileUpdateResult(patchedFiles.Select(pf => pf.FilePath).ToHashSet(), updatedImages, patchedFiles);
         }
 
-        return new SourceUpdateResult([], string.Empty, []);
+        return new FileUpdateResult([], [], []);
     }
 
     HelmRefUpdatedResult UpdateHelmImageValues(
