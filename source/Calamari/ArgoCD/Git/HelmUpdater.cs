@@ -39,7 +39,7 @@ public class HelmUpdater : AbstractHelmUpdater
         if (applicationSource.Path == null)
         {
             log.WarnFormat("Unable to update source '{0}' as a path has not been specified.", sourceWithMetadata.SourceIdentity);
-            return new FileUpdateResult(new HashSet<string>(), null, []);
+            return new FileUpdateResult(new HashSet<string>(), [], []);
         }
 
         if (deploymentConfig.HasStepBasedHelmValueReferences())
