@@ -10,7 +10,6 @@ namespace Calamari.ArgoCD.Git;
 
 public class RepositoryAdapter
 {
-    //This might work better if you pass in the repository rather than the factory (so create this above).
     readonly RepositoryFactory repositoryFactory;
     readonly Dictionary<string, GitCredentialDto> gitCredentials;
     readonly ILog log;
@@ -68,7 +67,7 @@ public class RepositoryAdapter
             }
         }
 
-        return new SourceUpdateResult(new HashSet<string>(), null, []);
+        return new SourceUpdateResult([], null, []);
     }
     
     
@@ -78,7 +77,7 @@ public class RepositoryAdapter
         FileUpdateResult result)
     {
         log.Info("Staging files in repository");
-        repository.StageFiles(result.PatchedFileContent.Select(pf => pf.FilePath).ToArray());
+        repository.StageFiles(result.PatchedFileContent.Select(pf => pf.FilePath).Distinct().ToArray());
 
         var commitDescription = commitMessageGenerator.GenerateDescription(result.UpdatedImages, commitParameters.Description);
 
