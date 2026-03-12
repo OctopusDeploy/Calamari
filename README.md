@@ -49,7 +49,28 @@ Option 1 is recommended if you can use the default worker.
 #### Drawbacks:
 - You must run the step on your machine (default worker) - basically the executable has to be at the path on whatever machine is executing the step. This is a problem when working with Kubernetes Tentacle for example.
 
-### Option 2: Package Calamari into your server build
+### Option 2: Dev package provider
+
+1. In terminal, run `./build-local.sh` (build-local.ps1 is available for Windows)
+
+2. Add the following to your OctopusDeploy `.env` file:
+   ```
+   OCTOPUS__Dev__CalamariPackagePath=<path-to-Calamari>/artifacts/consolidated
+   ```
+3. Restart the server so it picks up the new environment variable.
+4. Run a deployment and the server will use the latest build
+5. Use a trimmed runtime specific to the target you will be testing to improve build time
+   - e.g `./build-local.sh -y --runtime "linux-x64"`
+   - Consolidation tests will not run when targeting a specific runtime
+
+#### Benefits:
+- Works with remote workers.
+- No server restart needed.
+
+#### Drawbacks:
+- Slower than option 1, only use this if you need to support remote targets
+
+### Option 3: Package Calamari into your server build
 1. In terminal, run `./build-local.sh` (build-local.ps1 is available for Windows)
 2. Nuke will build and package up Calamari then it will update the `Calamari.Consolidated` version in your `Octopus.Server.csproj`
 3. Restart Server to force a rebuild with the new version of Calamari.
@@ -60,7 +81,7 @@ Option 1 is recommended if you can use the default worker.
 
 #### Benefits:
 - It uses the “proper” mechanism to deploy Calamari.
-- You can use it when you’re using a remote worker.
+- Works with remote workers.
 
 #### Drawbacks:
 - It takes ~10 minutes to build and pack Calamari, however you can reduce this significantly by targeting a specific runtime/framework if you don't need the rest
