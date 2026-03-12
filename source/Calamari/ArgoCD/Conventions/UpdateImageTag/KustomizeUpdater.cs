@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using Calamari.ArgoCD.Domain;
 using Calamari.ArgoCD.Git;
+using Calamari.ArgoCD.Models;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 
@@ -21,6 +22,12 @@ public class KustomizeUpdater : BaseUpdater
     {
         this.imagesToUpdate = imagesToUpdate;
         this.defaultRegistry = defaultRegistry;
+    }
+
+    public override ImageReplacementResult ReplaceImages(string input)
+    {
+        var imageReplacer = new KustomizeImageReplacer(input, defaultRegistry, log);
+        return imageReplacer.UpdateImages(imagesToUpdate);
     }
 
     public override FileUpdateResult Process(ApplicationSourceWithMetadata sourceWithMetadata, string workingDirectory)

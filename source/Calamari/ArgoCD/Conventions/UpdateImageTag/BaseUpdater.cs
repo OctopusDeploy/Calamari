@@ -4,16 +4,15 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using Calamari.ArgoCD.Conventions;
-using Calamari.ArgoCD.Conventions.UpdateImageTag;
 using Calamari.ArgoCD.Domain;
+using Calamari.ArgoCD.Models;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Kubernetes.Patching;
 using Calamari.Kubernetes.Patching.JsonPatch;
 using YamlDotNet.RepresentationModel;
 
-namespace Calamari.ArgoCD.Git;
+namespace Calamari.ArgoCD.Conventions.UpdateImageTag;
 
 public interface ISourceUpdater
 {
@@ -37,7 +36,9 @@ public abstract class BaseUpdater : ISourceUpdater
         this.fileSystem = fileSystem;
     }
 
-    protected FileUpdateResult Update(string rootPath, IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate, HashSet<string> filesToUpdate, Func<string, IContainerImageReplacer> imageReplacerFactory)
+    public abstract ImageReplacementResult ReplaceImages(string input);
+
+    protected FileUpdateResult Update(string rootPath, HashSet<string> filesToUpdate)
     {
         var updatedImages = new HashSet<string>();
         var jsonPatches = new List<FilePathContent>();
@@ -46,9 +47,8 @@ public abstract class BaseUpdater : ISourceUpdater
             var relativePath = Path.GetRelativePath(rootPath, file);
             log.Verbose($"Processing file {relativePath}.");
             var content = fileSystem.ReadFile(file);
-
-            var imageReplacer = imageReplacerFactory(content);
-            var imageReplacementResult = imageReplacer.UpdateImages(imagesToUpdate);
+            
+            var imageReplacementResult = ReplaceImages(content);
 
             if (imageReplacementResult.UpdatedImageReferences.Count > 0)
             {
