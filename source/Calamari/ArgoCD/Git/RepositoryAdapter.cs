@@ -10,22 +10,19 @@ namespace Calamari.ArgoCD.Git;
 
 public class RepositoryAdapter
 {
-    readonly RepositoryFactory repositoryFactory;
-    readonly Dictionary<string, GitCredentialDto> gitCredentials;
+    readonly AuthenticatingRepositoryFactory repositoryFactory;
     readonly ILog log;
     readonly ICommitMessageGenerator commitMessageGenerator;
     readonly ISourceUpdater updater;
     readonly GitCommitParameters commitParameters; 
 
-    public RepositoryAdapter(Dictionary<string, GitCredentialDto> gitCredentials,
-                             RepositoryFactory repositoryFactory,
+    public RepositoryAdapter(AuthenticatingRepositoryFactory repositoryFactory,
                              GitCommitParameters commitParameters,
                              ILog log,
                              ICommitMessageGenerator commitMessageGenerator,
                              ISourceUpdater updater)
     {
         this.repositoryFactory = repositoryFactory;
-        this.gitCredentials = gitCredentials;
         this.log = log;
         this.commitMessageGenerator = commitMessageGenerator;
         this.commitParameters = commitParameters;
@@ -34,31 +31,19 @@ public class RepositoryAdapter
 
     public SourceUpdateResult Process(ApplicationSourceWithMetadata sourceWithMetadata)
     {
-        using (var repository = CreateRepository(sourceWithMetadata.Source))
+        using (var repository = repositoryFactory.CloneRepository(sourceWithMetadata.Source.OriginalRepoUrl, sourceWithMetadata.Source.TargetRevision))
         {
             var filesUpdated = updater.Process(sourceWithMetadata, repository.WorkingDirectory);
-            return PersistChangesToRepository(repository, sourceWithMetadata, filesUpdated);
+            return PersistChangesToRepository(repository, sourceWithMetadata.Source.TargetRevision, filesUpdated);
         }
     }
     
-    protected RepositoryWrapper CreateRepository(ApplicationSource source)
-    {
-        var gitCredential = gitCredentials.GetValueOrDefault(source.OriginalRepoUrl);
-        if (gitCredential == null)
-        {
-            log.Info($"No Git credentials found for: '{source.OriginalRepoUrl}', will attempt to clone repository anonymously.");
-        }
-
-        var gitConnection = new GitConnection(gitCredential?.Username, gitCredential?.Password, source.CloneSafeRepoUrl, GitReference.CreateFromString(source.TargetRevision));
-        return repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), gitConnection);
-    }
-    
-    SourceUpdateResult PersistChangesToRepository(RepositoryWrapper repository, ApplicationSourceWithMetadata sourceWithMetadata, FileUpdateResult result)
+    SourceUpdateResult PersistChangesToRepository(RepositoryWrapper repository, string targetRevision, FileUpdateResult result)
     {
         if (result.UpdatedImages.Count > 0)
         {
             var pushResult = PushToRemote(repository,
-                                          GitReference.CreateFromString(sourceWithMetadata.Source.TargetRevision),
+                                          GitReference.CreateFromString(targetRevision),
                                           result);
 
             if (pushResult is not null)

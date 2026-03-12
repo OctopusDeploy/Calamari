@@ -13,8 +13,7 @@ public class ApplicationSourceUpdater
 {
     readonly Application applicationFromYaml;
     readonly ArgoCDGatewayDto gateway;
-    readonly RepositoryFactory repositoryFactory;
-    readonly Dictionary<string, GitCredentialDto> gitCredentials;
+    readonly AuthenticatingRepositoryFactory repositoryFactory;
     readonly DeploymentScope deploymentScope;
     readonly UpdateArgoCDAppDeploymentConfig deploymentConfig;
     readonly ILog log;
@@ -24,8 +23,7 @@ public class ApplicationSourceUpdater
     readonly ICalamariFileSystem fileSystem;
 
     public ApplicationSourceUpdater(Application applicationFromYaml,
-                                    RepositoryFactory repositoryFactory,
-                                    Dictionary<string, GitCredentialDto> gitCredentials,
+                                    AuthenticatingRepositoryFactory repositoryFactory,
                                     DeploymentScope deploymentScope,
                                     UpdateArgoCDAppDeploymentConfig deploymentConfig,
                                     ILog log,
@@ -37,7 +35,6 @@ public class ApplicationSourceUpdater
     {
         this.applicationFromYaml = applicationFromYaml;
         this.repositoryFactory = repositoryFactory;
-        this.gitCredentials = gitCredentials;
         this.deploymentScope = deploymentScope;
         this.deploymentConfig = deploymentConfig;
         this.log = log;
@@ -63,8 +60,7 @@ public class ApplicationSourceUpdater
         
         var sourceUpdater = CreateSpecificUpdater(sourceWithMetadata);
 
-        var repoAdapter = new RepositoryAdapter(gitCredentials,
-                                                repositoryFactory,
+        var repoAdapter = new RepositoryAdapter(repositoryFactory,
                                                 deploymentConfig.CommitParameters,
                                                 log,
                                                 commitMessageGenerator,

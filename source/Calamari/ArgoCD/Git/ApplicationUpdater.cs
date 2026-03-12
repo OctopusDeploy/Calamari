@@ -11,8 +11,7 @@ namespace Calamari.ArgoCD.Git;
 
 public class ApplicationUpdater
 {
-    readonly RepositoryFactory repositoryFactory;
-    readonly Dictionary<string, GitCredentialDto> gitCredentials;
+    readonly AuthenticatingRepositoryFactory repositoryFactory;
     readonly DeploymentScope deploymentScope;
     readonly UpdateArgoCDAppDeploymentConfig deploymentConfig;
     readonly ILog log;
@@ -21,15 +20,13 @@ public class ApplicationUpdater
     readonly ICommitMessageGenerator commitMessageGenerator;
     readonly ArgoCDOutputVariablesWriter outputVariablesWriter;
 
-    public ApplicationUpdater(Dictionary<string, GitCredentialDto> gitCredentials, DeploymentScope deploymentScope, UpdateArgoCDAppDeploymentConfig deploymentConfig,
-                              RepositoryFactory repositoryFactory,
+    public ApplicationUpdater(AuthenticatingRepositoryFactory repositoryFactory,
                               ILog log,
                               ICalamariFileSystem fileSystem,
                               IArgoCDApplicationManifestParser argoCdApplicationManifestParser,
                               ICommitMessageGenerator commitMessageGenerator,
                               ArgoCDOutputVariablesWriter outputVariablesWriter)
     {
-        this.gitCredentials = gitCredentials;
         this.deploymentScope = deploymentScope;
         this.deploymentConfig = deploymentConfig;
         this.repositoryFactory = repositoryFactory;
@@ -60,7 +57,7 @@ public class ApplicationUpdater
                 }
             }
 
-            var sourceUpdater = new ApplicationSourceUpdater(applicationFromYaml, repositoryFactory, gitCredentials, deploymentScope, deploymentConfig, log, gateway, application.DefaultRegistry, commitMessageGenerator, outputVariablesWriter, fileSystem);
+            var sourceUpdater = new ApplicationSourceUpdater(applicationFromYaml, repositoryFactory, deploymentScope, deploymentConfig, log, gateway, application.DefaultRegistry, commitMessageGenerator, outputVariablesWriter, fileSystem);
 
             var updatedSourcesResults = applicationFromYaml.GetSourcesWithMetadata()
                                                            .Select(applicationSource => new
