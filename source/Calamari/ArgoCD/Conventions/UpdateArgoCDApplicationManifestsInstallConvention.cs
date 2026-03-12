@@ -1,22 +1,17 @@
 #nullable enable
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading;
-using Calamari.ArgoCD.Domain;
+using Calamari.ArgoCD.Conventions.ManifestTemplating;
 using Calamari.ArgoCD.Dtos;
 using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.Git.GitVendorApiAdapters;
-using Calamari.ArgoCD.Models;
 using Calamari.Common.Commands;
-using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Common.Plumbing.Variables;
 using Calamari.Deployment.Conventions;
 using Calamari.Integration.Time;
-using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.ArgoCD.Conventions
 {
@@ -93,13 +88,7 @@ namespace Calamari.ArgoCD.Conventions
                                                    .Select(application =>
                                                            {
                                                                var gateway = argoProperties.Gateways.Single(g => g.Id == application.GatewayId);
-                                                               return ProcessApplication(gateway,
-                                                                   application,
-                                                                   deploymentScope,
-                                                                   gitCredentials,
-                                                                   repositoryFactory,
-                                                                   deploymentConfig,
-                                                                   packageFiles);
+                                                               return applicationUpdater.ProcessApplication(application, gateway);
                                                            })
                                                    .ToList();
 
@@ -117,226 +106,6 @@ namespace Calamari.ArgoCD.Conventions
             );
         }
 
-        ProcessApplicationResult ProcessApplication(
-            ArgoCDGatewayDto gateway,
-            ArgoCDApplicationDto application,
-            DeploymentScope deploymentScope,
-            Dictionary<string, GitCredentialDto> gitCredentials,
-            RepositoryFactory repositoryFactory,
-            ArgoCommitToGitConfig deploymentConfig,
-            IPackageRelativeFile[] packageFiles)
-        {
-            log.InfoFormat("Processing application {0}", application.Name);
-            var applicationFromYaml = argoCdApplicationManifestParser.ParseManifest(application.Manifest);
-            var containsMultipleSources = applicationFromYaml.Spec.Sources.Count > 1;
-            var applicationName = applicationFromYaml.Metadata.Name;
-
-            LogWarningIfUpdatingMultipleSources(applicationFromYaml.Spec.Sources,
-                applicationFromYaml.Metadata.Annotations,
-                containsMultipleSources,
-                deploymentScope);
-            ValidateApplication(applicationFromYaml);
-
-            var updatedSourcesResults = applicationFromYaml
-                                        .GetSourcesWithMetadata()
-                                        .Select(applicationSource => new
-                                        {
-                                            UpdateResult = ProcessSource(deploymentScope,
-                                                gitCredentials,
-                                                repositoryFactory,
-                                                deploymentConfig,
-                                                packageFiles,
-                                                applicationSource,
-                                                applicationFromYaml,
-                                                containsMultipleSources,
-                                                applicationName,
-                                                gateway),
-                                            applicationSource
-                                        })
-                                        .Where(u => u.UpdateResult.Updated)
-                                        .ToList();
-
-            //if we have links, use that to generate a link, otherwise just put the name there
-            var instanceLinks = application.InstanceWebUiUrl != null ? new ArgoCDInstanceLinks(application.InstanceWebUiUrl) : null;
-            var linkifiedAppName = instanceLinks != null
-                ? log.FormatLink(instanceLinks.ApplicationDetails(applicationName, applicationFromYaml.Metadata.Namespace), applicationName)
-                : applicationName;
-
-            var message = updatedSourcesResults.Any()
-                ? "Updated Application {0}"
-                : "Nothing to update for Application {0}";
-
-            log.InfoFormat(message, linkifiedAppName);
-
-            return new ProcessApplicationResult(
-                application.GatewayId,
-                applicationName.ToApplicationName(),
-                applicationFromYaml.Spec.Sources.Count,
-                applicationFromYaml.Spec.Sources.Count(s => deploymentScope.Matches(ScopingAnnotationReader.GetScopeForApplicationSource(s.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources))),
-                updatedSourcesResults.Select(r => new UpdatedSourceDetail(r.UpdateResult.CommitSha, r.applicationSource.Index, r.UpdateResult.ReplacedFiles, [])).ToList(),
-                [],
-                updatedSourcesResults.Select(r => r.applicationSource.Source.OriginalRepoUrl).ToHashSet());
-        }
-
-        void ValidateApplication(Application applicationFromYaml)
-        {
-            var validationResult = ValidationResult.Merge(
-                                                          ApplicationValidator.ValidateSourceNames(applicationFromYaml),
-                                                          ApplicationValidator.ValidateUnnamedAnnotationsInMultiSourceApplication(applicationFromYaml)
-                                                         );
-            validationResult.Action(log);
-        }
-
-        ManifestUpdateResult ProcessSource(
-            DeploymentScope deploymentScope,
-            Dictionary<string, GitCredentialDto> gitCredentials,
-            RepositoryFactory repositoryFactory,
-            ArgoCommitToGitConfig deploymentConfig,
-            IPackageRelativeFile[] packageFiles,
-            ApplicationSourceWithMetadata sourceWithMetadata,
-            Application applicationFromYaml,
-            bool containsMultipleSources,
-            string applicationName,
-            ArgoCDGatewayDto gateway)
-        {
-            var applicationSource = sourceWithMetadata.Source;
-            var annotatedScope = ScopingAnnotationReader.GetScopeForApplicationSource(applicationSource.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources);
-
-            log.LogApplicationSourceScopeStatus(annotatedScope, applicationSource.Name.ToApplicationSourceName(), deploymentScope);
-
-            if (!deploymentScope.Matches(annotatedScope))
-                return new ManifestUpdateResult(false, string.Empty, []);
-
-            log.Info($"Writing files to repository '{applicationSource.OriginalRepoUrl}' for '{applicationName}'");
-
-            if (!TryCalculateOutputPath(applicationSource, out var outputPath))
-            {
-                return new ManifestUpdateResult(false, string.Empty, []);
-            }
-
-            var gitCredential = gitCredentials.GetValueOrDefault(applicationSource.OriginalRepoUrl);
-            if (gitCredential == null)
-            {
-                log.Info($"No Git credentials found for: '{applicationSource.OriginalRepoUrl}', will attempt to clone repository anonymously.");
-            }
-
-            var targetBranch = GitReference.CreateFromString(applicationSource.TargetRevision);
-            var gitConnection = new GitConnection(gitCredential?.Username, gitCredential?.Password, applicationSource.CloneSafeRepoUrl, targetBranch);
-
-            using var repository = repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), gitConnection);
-            log.VerboseFormat("Copying files into '{0}'", outputPath);
-
-            if (deploymentConfig.PurgeOutputDirectory)
-            {
-                repository.RecursivelyStageFilesForRemoval(outputPath);
-            }
-
-            var filesToCopy = packageFiles.Select(f => new FileCopySpecification(f, repository.WorkingDirectory, outputPath)).ToList();
-            CopyFiles(filesToCopy);
-
-            var fileHashes = filesToCopy.Select(f => new FilePathContent(
-                                                    // Replace \ with / so that Calamari running on windows doesn't cause issues when we send back to server
-                                                    f.DestinationRelativePath.Replace('\\', '/'),
-                                                    HashCalculator.Hash(f.DestinationAbsolutePath)))
-                                        .ToList();
-
-            log.Info("Staging files in repository");
-            repository.StageFiles(filesToCopy.Select(fcs => fcs.DestinationRelativePath).ToArray());
-
-            log.Info("Commiting changes");
-            if (repository.CommitChanges(deploymentConfig.CommitParameters.Summary, deploymentConfig.CommitParameters.Description))
-            {
-                log.Info("Changes were commited, pushing to remote");
-                var pushResult = repository.PushChanges(deploymentConfig.CommitParameters.RequiresPr,
-                                               deploymentConfig.CommitParameters.Summary,
-                                               deploymentConfig.CommitParameters.Description,
-                                               targetBranch,
-                                               CancellationToken.None)
-                                           .GetAwaiter()
-                                           .GetResult();
-
-                if (pushResult is not null)
-                {
-                    outputVariablesWriter.WritePushResultOutput(gateway.Name,
-                        applicationFromYaml.Metadata.Name,
-                        sourceWithMetadata.Index,
-                        pushResult);
-
-                    return new ManifestUpdateResult(true, pushResult.CommitSha, fileHashes);
-                }
-
-                return new ManifestUpdateResult(false, string.Empty, []);
-            }
-
-            log.Info("No changes were commited");
-
-            return new ManifestUpdateResult(false, string.Empty, []);
-        }
-
-        bool TryCalculateOutputPath(ApplicationSource sourceToUpdate, out string outputPath)
-        {
-            outputPath = "";
-            var sourceIdentity = string.IsNullOrEmpty(sourceToUpdate.Name) ? sourceToUpdate.OriginalRepoUrl : sourceToUpdate.Name;
-            if (sourceToUpdate.Ref != null)
-            {
-                if (sourceToUpdate.Path != null)
-                {
-                    log.WarnFormat("Unable to update ref source '{0}' as a path has been explicitly specified.", sourceIdentity);
-                    log.Warn("Please split the source into separate sources and update annotations.");
-                    return false;
-                }
-
-                return true;
-            }
-
-            if (sourceToUpdate.Path == null)
-            {
-                log.WarnFormat("Unable to update source '{0}' as a path has not been specified.", sourceIdentity);
-                return false;
-            }
-
-            outputPath = sourceToUpdate.Path;
-            return true;
-        }
-
-        //TODO(tmm): should we be removing this warning now
-        void LogWarningIfUpdatingMultipleSources(
-            List<ApplicationSource> sourcesToInspect,
-            Dictionary<string, string> applicationAnnotations,
-            bool containsMultipleSources,
-            DeploymentScope deploymentScope)
-        {
-            if (sourcesToInspect.Count > 1)
-            {
-                var sourcesWithScopes = sourcesToInspect.Select(s => (s, ScopingAnnotationReader.GetScopeForApplicationSource(s.Name.ToApplicationSourceName(), applicationAnnotations, containsMultipleSources))).ToList();
-                var sourcesWithMatchingScopes = sourcesWithScopes.Where(s => deploymentScope.Matches(s.Item2)).ToList();
-
-                if (sourcesWithMatchingScopes.Count > 1)
-                {
-                    log.Warn($"Multiple sources are associated with this deployment, they will all be updated with the same contents: {string.Join(", ", sourcesWithMatchingScopes.Select(s => s.s.Name))}");
-                }
-            }
-        }
-
-        void CopyFiles(IEnumerable<IFileCopySpecification> repositoryFiles)
-        {
-            foreach (var file in repositoryFiles)
-            {
-                log.VerboseFormat($"Copying '{file.SourceAbsolutePath}' to '{file.DestinationAbsolutePath}'");
-                EnsureParentDirectoryExists(file.DestinationAbsolutePath);
-                fileSystem.CopyFile(file.SourceAbsolutePath, file.DestinationAbsolutePath);
-            }
-        }
-
-        void EnsureParentDirectoryExists(string filePath)
-        {
-            var destinationDirectory = Path.GetDirectoryName(filePath);
-            if (destinationDirectory != null)
-            {
-                fileSystem.CreateDirectory(destinationDirectory);
-            }
-        }
-
         IPackageRelativeFile[] GetReferencedPackageFiles(ArgoCommitToGitConfig config)
         {
             log.Info($"Selecting files from package using '{config.InputSubPath}'");
@@ -347,7 +116,5 @@ namespace Calamari.ArgoCD.Conventions
 
         IPackageRelativeFile[] SelectFiles(string pathToExtractedPackageFiles, ArgoCommitToGitConfig config)
             => argoCDManifestsFileMatcher.FindMatchingPackageFiles(pathToExtractedPackageFiles, config.InputSubPath);
-
-        record ManifestUpdateResult(bool Updated, string CommitSha, List<FilePathContent> ReplacedFiles);
     }
 }
