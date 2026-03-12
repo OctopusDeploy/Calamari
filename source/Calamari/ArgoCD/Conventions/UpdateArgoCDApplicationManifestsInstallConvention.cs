@@ -75,9 +75,19 @@ namespace Calamari.ArgoCD.Conventions
             var argoProperties = customPropertiesLoader.Load<ArgoCDCustomPropertiesDto>();
 
             var gitCredentials = argoProperties.Credentials.ToDictionary(c => c.Url);
+            var authenticatingRepositoryFactory = new AuthenticatingRepositoryFactory(gitCredentials, repositoryFactory, log);
             var deploymentScope = deployment.Variables.GetDeploymentScope();
 
             log.LogApplicationCounts(deploymentScope, argoProperties.Applications);
+
+            var applicationUpdater = new ApplicationUpdater(authenticatingRepositoryFactory,
+                                                            deploymentScope,
+                                                            deploymentConfig,
+                                                            log,
+                                                            fileSystem,
+                                                            argoCdApplicationManifestParser,
+                                                            outputVariablesWriter,
+                                                            packageFiles);
 
             var applicationResults = argoProperties.Applications
                                                    .Select(application =>

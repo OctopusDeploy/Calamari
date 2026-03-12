@@ -1,0 +1,125 @@
+using System.Collections.Generic;
+using System.Linq;
+using Calamari.ArgoCD.Domain;
+using Calamari.ArgoCD.Dtos;
+using Calamari.ArgoCD.Git;
+using Calamari.ArgoCD.Models;
+using Calamari.Common.Plumbing.FileSystem;
+using Calamari.Common.Plumbing.Logging;
+
+namespace Calamari.ArgoCD.Conventions.ManifestTemplating;
+
+public class ApplicationUpdater
+{
+    readonly AuthenticatingRepositoryFactory repositoryFactory;
+    readonly DeploymentScope deploymentScope;
+    readonly ArgoCommitToGitConfig deploymentConfig;
+    readonly ILog log;
+    readonly ICalamariFileSystem fileSystem;
+    readonly IArgoCDApplicationManifestParser argoCdApplicationManifestParser;
+    readonly ArgoCDOutputVariablesWriter outputVariablesWriter;
+    readonly IPackageRelativeFile[] packageFiles;
+    
+
+    public ApplicationUpdater(AuthenticatingRepositoryFactory repositoryFactory, DeploymentScope deploymentScope, ArgoCommitToGitConfig deploymentConfig, ILog log,
+                              ICalamariFileSystem fileSystem,
+                              IArgoCDApplicationManifestParser argoCdApplicationManifestParser,
+                              ArgoCDOutputVariablesWriter outputVariablesWriter,
+                              IPackageRelativeFile[] packageFiles)
+    {
+        this.repositoryFactory = repositoryFactory;
+        this.deploymentScope = deploymentScope;
+        this.deploymentConfig = deploymentConfig;
+        this.log = log;
+        this.fileSystem = fileSystem;
+        this.argoCdApplicationManifestParser = argoCdApplicationManifestParser;
+        this.outputVariablesWriter = outputVariablesWriter;
+        this.packageFiles = packageFiles;
+    }
+    
+    public ProcessApplicationResult ProcessApplication(
+        ArgoCDApplicationDto application,
+        ArgoCDGatewayDto gateway)
+    {
+        log.InfoFormat("Processing application {0}", application.Name);
+        var applicationFromYaml = argoCdApplicationManifestParser.ParseManifest(application.Manifest);
+        var containsMultipleSources = applicationFromYaml.Spec.Sources.Count > 1;
+        var applicationName = applicationFromYaml.Metadata.Name;
+
+        LogWarningIfUpdatingMultipleSources(applicationFromYaml.Spec.Sources,
+                                            applicationFromYaml.Metadata.Annotations,
+                                            containsMultipleSources,
+                                            deploymentScope);
+        
+        ValidateApplication(applicationFromYaml);
+
+        var sourceUpdater = new ApplicationSourceUpdater(applicationFromYaml,
+                                                         gateway,
+                                                         deploymentScope,
+                                                         repositoryFactory,
+                                                         deploymentConfig,
+                                                         packageFiles,
+                                                         log,
+                                                         fileSystem,
+                                                         outputVariablesWriter);
+        
+        var updatedSourcesResults = applicationFromYaml
+                                    .GetSourcesWithMetadata()
+                                    .Select(applicationSource => new
+                                    {
+                                        UpdateResult = sourceUpdater.ProcessSource(applicationSource),
+                                        applicationSource
+                                    })
+                                    .Where(u => u.UpdateResult.Updated)
+                                    .ToList();
+        
+        //if we have links, use that to generate a link, otherwise just put the name there
+        var instanceLinks = application.InstanceWebUiUrl != null ? new ArgoCDInstanceLinks(application.InstanceWebUiUrl) : null;
+        var linkifiedAppName = instanceLinks != null
+            ? log.FormatLink(instanceLinks.ApplicationDetails(applicationName, applicationFromYaml.Metadata.Namespace), applicationName)
+            : applicationName;
+
+        var message = updatedSourcesResults.Any()
+            ? "Updated Application {0}" 
+            : "Nothing to update for Application {0}";
+
+        log.InfoFormat(message, linkifiedAppName);
+
+        return new ProcessApplicationResult(
+                                            application.GatewayId,
+                                            applicationName.ToApplicationName(),
+                                            applicationFromYaml.Spec.Sources.Count,
+                                            applicationFromYaml.Spec.Sources.Count(s => deploymentScope.Matches(ScopingAnnotationReader.GetScopeForApplicationSource(s.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources))),
+                                            updatedSourcesResults.Select(r => new UpdatedSourceDetail(r.UpdateResult.CommitSha, r.applicationSource.Index, r.UpdateResult.ReplacedFiles, [])).ToList(),
+                                            [],
+                                            updatedSourcesResults.Select(r => r.applicationSource.Source.OriginalRepoUrl).ToHashSet());
+    }
+    
+    void LogWarningIfUpdatingMultipleSources(
+        List<ApplicationSource> sourcesToInspect,
+        Dictionary<string, string> applicationAnnotations,
+        bool containsMultipleSources,
+        DeploymentScope deploymentScope)
+    {
+        if (sourcesToInspect.Count > 1)
+        {
+            var sourcesWithScopes = sourcesToInspect.Select(s => (s, ScopingAnnotationReader.GetScopeForApplicationSource(s.Name.ToApplicationSourceName(), applicationAnnotations, containsMultipleSources))).ToList();
+            var sourcesWithMatchingScopes = sourcesWithScopes.Where(s => deploymentScope.Matches(s.Item2)).ToList();
+
+            if (sourcesWithMatchingScopes.Count > 1)
+            {
+                log.Warn($"Multiple sources are associated with this deployment, they will all be updated with the same contents: {string.Join(", ", sourcesWithMatchingScopes.Select(s => s.s.Name))}");
+            }
+        }
+    }
+    
+    //NOTE: This is common to both ApplicationUpdaters  
+    void ValidateApplication(Application applicationFromYaml)
+    {
+        var validationResult = ValidationResult.Merge(
+                                                      ApplicationValidator.ValidateSourceNames(applicationFromYaml),
+                                                      ApplicationValidator.ValidateUnnamedAnnotationsInMultiSourceApplication(applicationFromYaml)
+                                                     );
+        validationResult.Action(log);
+    }
+}
