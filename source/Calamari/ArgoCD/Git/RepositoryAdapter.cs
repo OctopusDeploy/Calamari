@@ -16,11 +16,11 @@ public class RepositoryAdapter
     readonly ILog log;
     readonly ICommitMessageGenerator commitMessageGenerator;
     readonly ISourceUpdater updater;
-    readonly UpdateArgoCDAppDeploymentConfig deploymentConfig; //only needed for the CommitParameters
+    readonly GitCommitParameters commitParameters; 
 
     public RepositoryAdapter(Dictionary<string, GitCredentialDto> gitCredentials,
                              RepositoryFactory repositoryFactory,
-                             UpdateArgoCDAppDeploymentConfig deploymentConfig,
+                             GitCommitParameters commitParameters,
                              ILog log,
                              ICommitMessageGenerator commitMessageGenerator,    
                              ISourceUpdater updater)
@@ -30,7 +30,7 @@ public class RepositoryAdapter
         this.log = log;
         this.commitMessageGenerator = commitMessageGenerator;
         this.updater = updater;
-        this.deploymentConfig = deploymentConfig;
+        this.commitParameters = commitParameters;
     }
 
     public SourceUpdateResult Process(ApplicationSourceWithMetadata sourceWithMetadata)
@@ -81,15 +81,15 @@ public class RepositoryAdapter
         log.Info("Staging files in repository");
         repository.StageFiles(result.UpdatedFiles.ToArray());
 
-        var commitDescription = commitMessageGenerator.GenerateDescription(result.UpdatedImages, deploymentConfig.CommitParameters.Description);
+        var commitDescription = commitMessageGenerator.GenerateDescription(result.UpdatedImages, commitParameters.Description);
 
         log.Info("Commiting changes");
-        if (!repository.CommitChanges(deploymentConfig.CommitParameters.Summary, commitDescription))
+        if (!repository.CommitChanges(commitParameters.Summary, commitDescription))
             return null;
 
         log.Verbose("Pushing to remote");
-        return repository.PushChanges(deploymentConfig.CommitParameters.RequiresPr,
-                                      deploymentConfig.CommitParameters.Summary,
+        return repository.PushChanges(commitParameters.RequiresPr,
+                                      commitParameters.Summary,
                                       commitDescription,
                                       branchName,
                                       CancellationToken.None)

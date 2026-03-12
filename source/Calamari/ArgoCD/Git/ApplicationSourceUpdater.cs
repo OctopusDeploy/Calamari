@@ -11,14 +11,14 @@ namespace Calamari.ArgoCD.Git;
 
 public class ApplicationSourceUpdater
 {
-    Application applicationFromYaml;
-    ArgoCDGatewayDto gateway;
-    RepositoryFactory repositoryFactory;
-    Dictionary<string, GitCredentialDto> gitCredentials;
-    DeploymentScope deploymentScope;
-    UpdateArgoCDAppDeploymentConfig deploymentConfig;
+    readonly Application applicationFromYaml;
+    readonly ArgoCDGatewayDto gateway;
+    readonly RepositoryFactory repositoryFactory;
+    readonly Dictionary<string, GitCredentialDto> gitCredentials;
+    readonly DeploymentScope deploymentScope;
+    readonly UpdateArgoCDAppDeploymentConfig deploymentConfig;
     readonly ILog log;
-    string defaultRegistry;
+    readonly string defaultRegistry;
     readonly ICommitMessageGenerator commitMessageGenerator;
     readonly ArgoCDOutputVariablesWriter outputVariablesWriter;
     readonly ICalamariFileSystem fileSystem;
@@ -65,7 +65,7 @@ public class ApplicationSourceUpdater
 
         var repoAdapter = new RepositoryAdapter(gitCredentials,
                                                 repositoryFactory,
-                                                deploymentConfig,
+                                                deploymentConfig.CommitParameters,
                                                 log,
                                                 commitMessageGenerator,
                                                 sourceUpdater);
@@ -114,7 +114,7 @@ public class ApplicationSourceUpdater
         }
         else if (sourceWithMetadata.SourceType == SourceType.Kustomize)
         {
-            sourceUpdater = new KustomizeUpdater(deploymentConfig,
+            sourceUpdater = new KustomizeUpdater(deploymentConfig.ImageReferences,
                                                  defaultRegistry,
                                                  log,
                                                  fileSystem);
