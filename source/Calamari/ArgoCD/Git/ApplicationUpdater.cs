@@ -12,7 +12,6 @@ namespace Calamari.ArgoCD.Git;
 public class ApplicationUpdater
 {
     readonly RepositoryFactory repositoryFactory;
-    readonly ArgoCDCustomPropertiesDto argoCDCustomPropertiesDto;
     readonly Dictionary<string, GitCredentialDto> gitCredentials;
     readonly DeploymentScope deploymentScope;
     readonly UpdateArgoCDAppDeploymentConfig deploymentConfig;
@@ -22,7 +21,7 @@ public class ApplicationUpdater
     readonly ICommitMessageGenerator commitMessageGenerator;
     readonly ArgoCDOutputVariablesWriter outputVariablesWriter;
 
-    public ApplicationUpdater(ArgoCDCustomPropertiesDto argoCDCustomPropertiesDto, Dictionary<string, GitCredentialDto> gitCredentials, DeploymentScope deploymentScope, UpdateArgoCDAppDeploymentConfig deploymentConfig,
+    public ApplicationUpdater(Dictionary<string, GitCredentialDto> gitCredentials, DeploymentScope deploymentScope, UpdateArgoCDAppDeploymentConfig deploymentConfig,
                               RepositoryFactory repositoryFactory,
                               ILog log,
                               ICalamariFileSystem fileSystem,
@@ -30,7 +29,6 @@ public class ApplicationUpdater
                               ICommitMessageGenerator commitMessageGenerator,
                               ArgoCDOutputVariablesWriter outputVariablesWriter)
     {
-        this.argoCDCustomPropertiesDto = argoCDCustomPropertiesDto;
         this.gitCredentials = gitCredentials;
         this.deploymentScope = deploymentScope;
         this.deploymentConfig = deploymentConfig;
@@ -62,7 +60,7 @@ public class ApplicationUpdater
                 }
             }
 
-            var sourceUpdater = new ApplicationSourceUpdater(applicationFromYaml, repositoryFactory, argoCDCustomPropertiesDto, gitCredentials, deploymentScope, deploymentConfig, log, gateway, application.DefaultRegistry, commitMessageGenerator, outputVariablesWriter, fileSystem);
+            var sourceUpdater = new ApplicationSourceUpdater(applicationFromYaml, repositoryFactory, gitCredentials, deploymentScope, deploymentConfig, log, gateway, application.DefaultRegistry, commitMessageGenerator, outputVariablesWriter, fileSystem);
 
             var updatedSourcesResults = applicationFromYaml.GetSourcesWithMetadata()
                                                            .Select(applicationSource => new

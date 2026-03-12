@@ -68,8 +68,7 @@ namespace Calamari.ArgoCD.Conventions
 
             log.LogApplicationCounts(deploymentScope, argoProperties.Applications);
 
-            var appUpdater = new ApplicationUpdater(argoProperties,
-                                                    gitCredentials,
+            var appUpdater = new ApplicationUpdater(gitCredentials,
                                                     deploymentScope,
                                                     deploymentConfig,
                                                     repositoryFactory,

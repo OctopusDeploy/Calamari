@@ -13,6 +13,11 @@ public interface ISourceUpdater
     public FileUpdateResult Process(ApplicationSourceWithMetadata sourceWithMetadata, string workingDirectory);
 }
 
+public class NoOpSourceUpdater : ISourceUpdater
+{
+    public FileUpdateResult Process(ApplicationSourceWithMetadata sourceWithMetadata, string workingDirectory) => new([], [], []);
+}
+
 public abstract class BaseUpdater : ISourceUpdater
 {
     protected readonly ILog log;

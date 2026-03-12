@@ -14,7 +14,6 @@ public class ApplicationSourceUpdater
     Application applicationFromYaml;
     ArgoCDGatewayDto gateway;
     RepositoryFactory repositoryFactory;
-    ArgoCDCustomPropertiesDto argoCDCustomPropertiesDto;
     Dictionary<string, GitCredentialDto> gitCredentials;
     DeploymentScope deploymentScope;
     UpdateArgoCDAppDeploymentConfig deploymentConfig;
@@ -26,7 +25,6 @@ public class ApplicationSourceUpdater
 
     public ApplicationSourceUpdater(Application applicationFromYaml,
                                     RepositoryFactory repositoryFactory,
-                                    ArgoCDCustomPropertiesDto argoCDCustomPropertiesDto,
                                     Dictionary<string, GitCredentialDto> gitCredentials,
                                     DeploymentScope deploymentScope,
                                     UpdateArgoCDAppDeploymentConfig deploymentConfig,
@@ -39,7 +37,6 @@ public class ApplicationSourceUpdater
     {
         this.applicationFromYaml = applicationFromYaml;
         this.repositoryFactory = repositoryFactory;
-        this.argoCDCustomPropertiesDto = argoCDCustomPropertiesDto;
         this.gitCredentials = gitCredentials;
         this.deploymentScope = deploymentScope;
         this.deploymentConfig = deploymentConfig;
@@ -63,7 +60,31 @@ public class ApplicationSourceUpdater
         {
             return new SourceUpdateResult(new HashSet<string>(), null, []);
         }
+        
+        var sourceUpdater = CreateSpecificUpdater(sourceWithMetadata, applicationSource);
 
+        var repoAdapter = new RepositoryAdapter(gitCredentials,
+                                                repositoryFactory,
+                                                deploymentConfig,
+                                                log,
+                                                commitMessageGenerator,
+                                                sourceUpdater);
+
+        var sourceUpdateResult = repoAdapter.Process(sourceWithMetadata);
+
+        if (sourceUpdateResult.PushResult is not null)
+        {
+            outputVariablesWriter.WritePushResultOutput(gateway.Name,
+                                                        applicationFromYaml.Metadata.Name,
+                                                        sourceWithMetadata.Index,
+                                                        sourceUpdateResult.PushResult);
+        }
+
+        return sourceUpdateResult;
+    }
+
+    ISourceUpdater CreateSpecificUpdater(ApplicationSourceWithMetadata sourceWithMetadata, ApplicationSource applicationSource)
+    {
         ISourceUpdater sourceUpdater;
         if (sourceWithMetadata.SourceType == SourceType.Directory)
         {
@@ -101,30 +122,13 @@ public class ApplicationSourceUpdater
         else if (sourceWithMetadata.SourceType == SourceType.Plugin)
         {
             log.WarnFormat("Unable to update source '{0}' as Plugin sources aren't currently supported.", sourceWithMetadata.SourceIdentity);
-            return new SourceUpdateResult(new HashSet<string>(), null, []);
+            sourceUpdater = new NoOpSourceUpdater();
         }
         else
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        var repoAdapter = new RepositoryAdapter(gitCredentials,
-                                                repositoryFactory,
-                                                deploymentConfig,
-                                                log,
-                                                commitMessageGenerator,
-                                                sourceUpdater);
-
-        var sourceUpdateResult = repoAdapter.Process(sourceWithMetadata);
-
-        if (sourceUpdateResult.PushResult is not null)
-        {
-            outputVariablesWriter.WritePushResultOutput(gateway.Name,
-                                                        applicationFromYaml.Metadata.Name,
-                                                        sourceWithMetadata.Index,
-                                                        sourceUpdateResult.PushResult);
-        }
-
-        return sourceUpdateResult;
+        return sourceUpdater;
     }
 }
