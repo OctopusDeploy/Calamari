@@ -13,23 +13,20 @@ public class RepositoryAdapter
     readonly AuthenticatingRepositoryFactory repositoryFactory;
     readonly ILog log;
     readonly ICommitMessageGenerator commitMessageGenerator;
-    readonly ISourceUpdater updater;
-    readonly GitCommitParameters commitParameters; 
+    readonly GitCommitParameters commitParameters;
 
     public RepositoryAdapter(AuthenticatingRepositoryFactory repositoryFactory,
                              GitCommitParameters commitParameters,
                              ILog log,
-                             ICommitMessageGenerator commitMessageGenerator,
-                             ISourceUpdater updater)
+                             ICommitMessageGenerator commitMessageGenerator)
     {
         this.repositoryFactory = repositoryFactory;
         this.log = log;
         this.commitMessageGenerator = commitMessageGenerator;
         this.commitParameters = commitParameters;
-        this.updater = updater;
     }
 
-    public SourceUpdateResult Process(ApplicationSourceWithMetadata sourceWithMetadata)
+    public SourceUpdateResult Process(ApplicationSourceWithMetadata sourceWithMetadata, ISourceUpdater updater)
     {
         using (var repository = repositoryFactory.CloneRepository(sourceWithMetadata.Source.OriginalRepoUrl, sourceWithMetadata.Source.TargetRevision))
         {

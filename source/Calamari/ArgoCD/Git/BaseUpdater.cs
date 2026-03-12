@@ -21,7 +21,7 @@ public interface ISourceUpdater
 
 public class NoOpSourceUpdater : ISourceUpdater
 {
-    public FileUpdateResult Process(ApplicationSourceWithMetadata sourceWithMetadata, string workingDirectory) => new([], []);
+    public FileUpdateResult Process(ApplicationSourceWithMetadata sourceWithMetadata, string workingDirectory) => new( [], []);
 }
 
 public abstract class BaseUpdater : ISourceUpdater
@@ -29,7 +29,7 @@ public abstract class BaseUpdater : ISourceUpdater
     protected readonly ILog log;
     protected readonly ICalamariFileSystem fileSystem;
 
-    protected BaseUpdater( ILog log,
+    protected BaseUpdater(ILog log,
                           ICalamariFileSystem fileSystem)
     {
         this.log = log;

@@ -27,7 +27,7 @@ public class AuthenticatingRepositoryFactory
             log.Info($"No Git credentials found for: '{requestedUrl}', will attempt to clone repository anonymously.");
         }
 
-        var gitConnection = new GitConnection(gitCredential?.Username, gitCredential?.Password, GitCloneSafeUrl.FromString(targetRevision), GitReference.CreateFromString(targetRevision));
+        var gitConnection = new GitConnection(gitCredential?.Username, gitCredential?.Password, GitCloneSafeUrl.FromString(requestedUrl), GitReference.CreateFromString(targetRevision));
         return repositoryFactory.CloneRepository(UniqueRepoNameGenerator.Generate(), gitConnection);
     }
 }

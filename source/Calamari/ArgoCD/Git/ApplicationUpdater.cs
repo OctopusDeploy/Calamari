@@ -20,7 +20,9 @@ public class ApplicationUpdater
     readonly ICommitMessageGenerator commitMessageGenerator;
     readonly ArgoCDOutputVariablesWriter outputVariablesWriter;
 
-    public ApplicationUpdater(AuthenticatingRepositoryFactory repositoryFactory,
+    public ApplicationUpdater(DeploymentScope deploymentScope,
+                              UpdateArgoCDAppDeploymentConfig deploymentConfig,
+                              AuthenticatingRepositoryFactory repositoryFactory,
                               ILog log,
                               ICalamariFileSystem fileSystem,
                               IArgoCDApplicationManifestParser argoCdApplicationManifestParser,
@@ -57,7 +59,8 @@ public class ApplicationUpdater
                 }
             }
 
-            var sourceUpdater = new ApplicationSourceUpdater(applicationFromYaml, repositoryFactory, deploymentScope, deploymentConfig, log, gateway, application.DefaultRegistry, commitMessageGenerator, outputVariablesWriter, fileSystem);
+            var repositoryAdapter = new RepositoryAdapter(repositoryFactory, deploymentConfig.CommitParameters, log, commitMessageGenerator);
+            var sourceUpdater = new ApplicationSourceUpdater(applicationFromYaml, repositoryAdapter, deploymentScope, deploymentConfig, log, gateway, application.DefaultRegistry, outputVariablesWriter, fileSystem);
 
             var updatedSourcesResults = applicationFromYaml.GetSourcesWithMetadata()
                                                            .Select(applicationSource => new

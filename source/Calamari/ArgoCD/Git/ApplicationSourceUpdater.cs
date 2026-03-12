@@ -13,34 +13,31 @@ public class ApplicationSourceUpdater
 {
     readonly Application applicationFromYaml;
     readonly ArgoCDGatewayDto gateway;
-    readonly AuthenticatingRepositoryFactory repositoryFactory;
+    readonly RepositoryAdapter repositoryAdapter;
     readonly DeploymentScope deploymentScope;
     readonly UpdateArgoCDAppDeploymentConfig deploymentConfig;
     readonly ILog log;
     readonly string defaultRegistry;
-    readonly ICommitMessageGenerator commitMessageGenerator;
     readonly ArgoCDOutputVariablesWriter outputVariablesWriter;
     readonly ICalamariFileSystem fileSystem;
 
     public ApplicationSourceUpdater(Application applicationFromYaml,
-                                    AuthenticatingRepositoryFactory repositoryFactory,
+                                    RepositoryAdapter repositoryAdapter,
                                     DeploymentScope deploymentScope,
                                     UpdateArgoCDAppDeploymentConfig deploymentConfig,
                                     ILog log,
                                     ArgoCDGatewayDto gateway,
                                     string defaultRegistry,
-                                    ICommitMessageGenerator commitMessageGenerator,
                                     ArgoCDOutputVariablesWriter outputVariablesWriter,
                                     ICalamariFileSystem fileSystem)
     {
         this.applicationFromYaml = applicationFromYaml;
-        this.repositoryFactory = repositoryFactory;
+        this.repositoryAdapter = repositoryAdapter;
         this.deploymentScope = deploymentScope;
         this.deploymentConfig = deploymentConfig;
         this.log = log;
         this.gateway = gateway;
         this.defaultRegistry = defaultRegistry;
-        this.commitMessageGenerator = commitMessageGenerator;
         this.outputVariablesWriter = outputVariablesWriter;
         this.fileSystem = fileSystem;
     }
@@ -60,13 +57,7 @@ public class ApplicationSourceUpdater
         
         var sourceUpdater = CreateSpecificUpdater(sourceWithMetadata);
 
-        var repoAdapter = new RepositoryAdapter(repositoryFactory,
-                                                deploymentConfig.CommitParameters,
-                                                log,
-                                                commitMessageGenerator,
-                                                sourceUpdater);
-
-        var sourceUpdateResult = repoAdapter.Process(sourceWithMetadata);
+        var sourceUpdateResult = repositoryAdapter.Process(sourceWithMetadata, sourceUpdater);
 
         if (sourceUpdateResult.PushResult is not null)
         {
