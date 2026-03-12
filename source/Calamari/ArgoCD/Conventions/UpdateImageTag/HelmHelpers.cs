@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Calamari.ArgoCD.Models;
 using Calamari.Common.Plumbing.Logging;
 
-namespace Calamari.ArgoCD.Git;
+namespace Calamari.ArgoCD.Conventions.UpdateImageTag;
 
 public static class HelmHelpers
 {

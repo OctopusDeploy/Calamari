@@ -1,6 +1,7 @@
 using System.Linq;
 using System.Threading;
 using Calamari.ArgoCD.Conventions;
+using Calamari.ArgoCD.Conventions.UpdateImageTag;
 using Calamari.ArgoCD.Domain;
 using Calamari.Common.Plumbing.Logging;
 

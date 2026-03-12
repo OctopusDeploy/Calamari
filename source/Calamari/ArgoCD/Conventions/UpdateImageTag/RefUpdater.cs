@@ -1,14 +1,13 @@
 using System;
 using System.IO;
 using System.Linq;
-using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Domain;
 using Calamari.ArgoCD.Helm;
 using Calamari.ArgoCD.Models;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 
-namespace Calamari.ArgoCD.Git;
+namespace Calamari.ArgoCD.Conventions.UpdateImageTag;
 
 public class RefUpdater : AbstractHelmUpdater
 {

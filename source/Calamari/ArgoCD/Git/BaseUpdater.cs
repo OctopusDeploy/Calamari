@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Calamari.ArgoCD.Conventions;
+using Calamari.ArgoCD.Conventions.UpdateImageTag;
 using Calamari.ArgoCD.Domain;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;

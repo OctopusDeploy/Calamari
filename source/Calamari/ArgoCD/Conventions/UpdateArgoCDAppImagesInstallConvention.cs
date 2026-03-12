@@ -1,6 +1,7 @@
 #nullable enable
 using System;
 using System.Linq;
+using Calamari.ArgoCD.Conventions.UpdateImageTag;
 using Calamari.ArgoCD.Dtos;
 using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.Git.GitVendorApiAdapters;
