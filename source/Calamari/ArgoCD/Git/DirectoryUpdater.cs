@@ -11,16 +11,16 @@ namespace Calamari.ArgoCD.Git;
 
 public class DirectoryUpdater: BaseUpdater
 {
-    readonly UpdateArgoCDAppDeploymentConfig deploymentConfig;
+    readonly IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate;
     readonly string defaultRegistry;
 
-    public DirectoryUpdater(UpdateArgoCDAppDeploymentConfig deploymentConfig,
+    public DirectoryUpdater(IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate,
                             string defaultRegistry,
                             ILog log,
                             ICalamariFileSystem fileSystem) : base(log,
                                                                    fileSystem)
     {
-        this.deploymentConfig = deploymentConfig;
+        this.imagesToUpdate = imagesToUpdate;
         this.defaultRegistry = defaultRegistry;
     }
 
@@ -48,7 +48,7 @@ public class DirectoryUpdater: BaseUpdater
         Func<string, IContainerImageReplacer> imageReplacerFactory = yaml => new ContainerImageReplacer(yaml, defaultRegistry);
         log.Verbose($"Found {filesToUpdate.Count} yaml files to process");
 
-        return Update(rootPath, deploymentConfig.ImageReferences, filesToUpdate, imageReplacerFactory);
+        return Update(rootPath, imagesToUpdate, filesToUpdate, imageReplacerFactory);
     }
 
     //NOTE: rootPath needs to include the subfolder

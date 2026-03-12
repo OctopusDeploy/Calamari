@@ -90,7 +90,7 @@ public class ApplicationSourceUpdater
         {
             if (sourceWithMetadata.Source.Ref == null)
             {
-                sourceUpdater = new DirectoryUpdater(deploymentConfig,
+                sourceUpdater = new DirectoryUpdater(deploymentConfig.ImageReferences,
                                                      defaultRegistry,
                                                      log,
                                                      fileSystem);
