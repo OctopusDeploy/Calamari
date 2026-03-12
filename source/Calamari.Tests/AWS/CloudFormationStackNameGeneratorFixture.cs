@@ -7,7 +7,6 @@ using NUnit.Framework;
 namespace Calamari.Tests.AWS
 {
     [TestFixture]
-    [Category(TestCategory.RunOnceOnWindowsAndLinux)]
     public class CloudFormationStackNameGeneratorTests
     {
         [TestCase("Environments-1", "Tenants-1", "cf-environments1-tenants1")]

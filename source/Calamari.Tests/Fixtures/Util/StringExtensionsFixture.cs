@@ -38,7 +38,7 @@ namespace Calamari.Tests.Fixtures.Util
         [TestCase(@"C:/Path/To/File4.txt", @"C:/Path", @"To/File4.txt")]
         [TestCase(@"C:/Path/To/File5 With Spaces.txt", @"C:/Path", @"To/File5 With Spaces.txt")]
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyWindows)]
+        [TestPlatforms(TestPlatforms.Windows)]
         public void AsRelativePathFrom(string source, string baseDirectory, string expected)
         {
             Assert.AreEqual(expected, source.AsRelativePathFrom(baseDirectory));

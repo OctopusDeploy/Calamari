@@ -17,7 +17,6 @@ using NUnit.Framework;
 namespace Calamari.Tests.KubernetesFixtures
 {
     [TestFixture]
-    [Category(TestCategory.RunOnceOnWindowsAndLinux)]
     public class KubernetesContextScriptWrapperLiveFixtureAksLocalAccessDisabled : KubernetesContextScriptWrapperLiveFixture
     {
         string aksClusterName;

@@ -15,7 +15,7 @@ using NUnit.Framework;
 namespace Calamari.Tests.Fixtures.PowerShell
 {
     [TestFixture]
-    [Category(TestCategory.CompatibleOS.OnlyWindows)]
+    [TestPlatforms(TestPlatforms.Windows)]
     public class PowerShellCoreOnWindowsFixture : PowerShellFixtureBase
     {
         protected override PowerShellEdition PowerShellEdition => PowerShellEdition.Core;

@@ -36,7 +36,6 @@ using SharpCompress.Archives.Zip;
 namespace Calamari.Tests.AWS
 {
     [TestFixture]
-    [Category(TestCategory.RunOnceOnWindowsAndLinux)]
     public class UploadAwsS3FixtureForExistingBucket : UploadAwsS3CommandFixture
     {
         // S3 Bucket operations are only eventually consistent (https://docs.aws.amazon.com/AmazonS3/latest/userguide/Welcome.html#ConsistencyModel),
@@ -519,7 +518,6 @@ namespace Calamari.Tests.AWS
     }
 
     [TestFixture]
-    [Category(TestCategory.RunOnceOnWindowsAndLinux)]
     public class UploadAwsS3FixtureForNewBucket : UploadAwsS3CommandFixture
     {
         [Test]

@@ -51,7 +51,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyWindows)]
+        [TestPlatforms(TestPlatforms.Windows)]
         public void ShouldDeployPackageOnWindows()
         {
             var result = DeployPackage();
@@ -64,12 +64,9 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
+        [TestPlatforms(TestPlatforms.Unix)]
         public void ShouldDeployPackageOnMacOrNix()
         {
-            if (!CalamariEnvironment.IsRunningOnMac && !CalamariEnvironment.IsRunningOnNix)
-                Assert.Inconclusive("This test is designed to run on *Nix or Mac.");
-
             var result = DeployPackage();
             result.AssertSuccess();
 
@@ -141,7 +138,6 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        [Category(TestCategory.ScriptingSupport.DotnetScript)]
         public void ShouldInvokeDeployFailedOnError()
         {
             Variables.Set("ShouldFail", "yes");
@@ -191,7 +187,7 @@ namespace Calamari.Tests.Fixtures.Deployment
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyWindows)]
+        [TestPlatforms(TestPlatforms.Windows)]
         public void ShouldModifyIisWebsiteRoot()
         {
             // If the 'UpdateIisWebsite' variable is set, the website root will be updated

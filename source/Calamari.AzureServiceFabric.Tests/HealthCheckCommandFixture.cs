@@ -14,7 +14,7 @@ using NUnit.Framework;
 namespace Calamari.AzureServiceFabric.Tests
 {
     [TestFixture]
-    [WindowsTest]
+    [TestPlatforms(TestPlatforms.Windows)]
     public class HealthCheckCommandFixture
     {       
         string clientCertThumbprint;

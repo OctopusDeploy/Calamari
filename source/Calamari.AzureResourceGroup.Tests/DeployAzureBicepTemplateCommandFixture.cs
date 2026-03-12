@@ -18,7 +18,9 @@ using NUnit.Framework;
 namespace Calamari.AzureResourceGroup.Tests
 {
     [TestFixture]
-    [WindowsTest] // NOTE: We should look at having the Azure CLI installed on Linux boxes so that these steps can be tested there, particularly if we're moving cloud to a Ubuntu Default Worker.
+    [Category(TestCategories.Windows2016OrLater)]
+    [RequiresWindowsServer2016OrAbove("This test requires the az cli, which relies on python 3.10, which doesn't run on windows 2012/2012R2")]
+    [TestPlatforms(TestPlatforms.Windows)] // NOTE: We should look at having the Azure CLI installed on Linux boxes so that these steps can be tested there, particularly if we're moving cloud to a Ubuntu Default Worker.
     class DeployAzureBicepTemplateCommandFixture
     {
         string clientId;
@@ -93,7 +95,6 @@ namespace Calamari.AzureResourceGroup.Tests
         }
 
         [Test]
-        [RequiresWindowsServer2016OrAbove("This test requires the az cli, which relies on python 3.10, which doesn't run on windows 2012/2012R2")]
         public async Task DeployAzureBicepTemplate_PackageSource()
         {
             await CommandTestBuilder.CreateAsync<DeployAzureBicepTemplateCommand, Program>()
@@ -108,7 +109,6 @@ namespace Calamari.AzureResourceGroup.Tests
         }
 
         [Test]
-        [RequiresWindowsServer2016OrAbove("This test requires the az cli, which relies on python 3.10, which doesn't run on windows 2012/2012R2")]
         public async Task DeployAzureBicepTemplate_GitSource()
         {
             // For the purposes of Bicep templates in Calamari, a template in a Git Repository
@@ -127,7 +127,6 @@ namespace Calamari.AzureResourceGroup.Tests
         }
 
         [Test]
-        [RequiresWindowsServer2016OrAbove("This test requires the az cli, which relies on python 3.10, which doesn't run on windows 2012/2012R2")]
         public async Task DeployAzureBicepTemplate_InlineSource()
         {
             var templateFileContent = File.ReadAllText(Path.Combine(packagePath, "azure_website_template.bicep"));

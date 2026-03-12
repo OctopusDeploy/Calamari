@@ -16,7 +16,8 @@ using Octostache;
 
 namespace Calamari.Tests.Fixtures.Certificates
 {
-    [Category(TestCategory.CompatibleOS.OnlyWindows)]
+    [TestFixture]
+    [TestPlatforms(TestPlatforms.Windows)]
     [SupportedOSPlatform("windows")]
     public class ImportCertificateCommandFixture : CalamariFixture
     {

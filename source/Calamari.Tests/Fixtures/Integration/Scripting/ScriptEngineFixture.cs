@@ -31,14 +31,14 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
         };
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyWindows)]
+        [TestPlatforms(TestPlatforms.Windows)]
         public void DeterminesCorrectScriptTypePreferenceOrderWindows()
         {
             DeterminesCorrectScriptTypePreferenceOrder(ScriptPreferencesWindows);
         }
 
         [Test]
-        [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
+        [TestPlatforms(TestPlatforms.Unix)]
         public void DeterminesCorrectScriptTypePreferencesOrderNonWindows()
         {
             DeterminesCorrectScriptTypePreferenceOrder(ScriptPreferencesNonWindows);

@@ -57,7 +57,7 @@ namespace Calamari.Tests.KubernetesFixtures.Integration
         }
         
         [Test]
-        [NonWindowsTest]
+        [TestPlatforms(TestPlatforms.Unix)]
         public void ChmodsCustomHelmExecutableWhenNotOnWindows()
         {
             const string expectedExecutable = "my-custom-exe";

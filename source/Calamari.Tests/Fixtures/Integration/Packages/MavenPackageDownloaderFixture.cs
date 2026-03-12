@@ -27,7 +27,6 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         }
 
         [Test]
-        [RequiresNonFreeBSDPlatform]
         public void DownloadMavenPackage()
         {
             var downloader = GetDownloader();
@@ -38,7 +37,6 @@ namespace Calamari.Tests.Fixtures.Integration.Packages
         }
         
         [Test]
-        [RequiresNonFreeBSDPlatform]
         public void DownloadMavenSourcePackage()
         {
             var downloader = GetDownloader();

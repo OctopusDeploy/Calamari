@@ -31,7 +31,7 @@ namespace Calamari.AzureScripting.Tests
         }
 
         [Test]
-        [WindowsTest]
+        [TestPlatforms(TestPlatforms.Windows)]
         [RequiresPowerShell5OrAbove]
         public async Task ExecuteAnInlineWindowsPowerShellScript()
         {

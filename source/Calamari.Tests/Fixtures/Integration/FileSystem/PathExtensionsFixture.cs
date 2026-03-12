@@ -25,7 +25,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
         [TestCase(@"c:\foo\..\bar\baz", @"c:\foo", false)]
         [TestCase(@"c:\foo\..\bar\baz", @"c:\bar", true)]
         [TestCase(@"c:\foo\..\bar\baz", @"c:\barr", false)]
-        [Category(TestCategory.CompatibleOS.OnlyWindows)]
+        [TestPlatforms(TestPlatforms.Windows)]
         public void IsChildOfTest(string child, string parent, bool result)
         {
             child.IsChildOf(parent).Should().Be(result);
@@ -35,7 +35,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
         [TestCase(@"c:\foo\a.txt", @"c:\FOO", true)]
         [TestCase(@"c:\foo", @"c:", true)]
         [TestCase(@"c:\foo", @"c:\", true)]
-        [Category(TestCategory.CompatibleOS.OnlyWindows)]
+        [TestPlatforms(TestPlatforms.Windows)]
         public void IsChildOfTestWindows(string child, string parent, bool result)
         {
             child.IsChildOf(parent).Should().Be(result);
@@ -46,7 +46,7 @@ namespace Calamari.Tests.Fixtures.Integration.FileSystem
         [TestCase(@"/", @"/", true)]
         [TestCase(@"/foo", @"/", true)]
         [TestCase(@"/", @"/foo", false)]
-        [Category(TestCategory.CompatibleOS.OnlyNixOrMac)]
+        [TestPlatforms(TestPlatforms.Unix)]
         public void IsChildOfTestUnix(string child, string parent, bool result)
         {
             child.IsChildOf(parent).Should().Be(result);

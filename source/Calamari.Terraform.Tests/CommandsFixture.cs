@@ -29,6 +29,7 @@ namespace Calamari.Terraform.Tests
 {
     [TestFixture("0.13.7")]
     [TestFixture("1.8.5")]
+    [Category(TestCategories.Windows2016OrLater)]
     public class CommandsFixture
     {
         string? customTerraformExecutable;

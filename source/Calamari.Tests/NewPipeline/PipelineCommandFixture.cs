@@ -22,8 +22,6 @@ using NUnit.Framework;
 namespace Calamari.Tests.NewPipeline
 {
     [TestFixture]
-    [RequiresNonFreeBSDPlatform]
-    [Category(TestCategory.PlatformAgnostic)]
     public class PipelineCommandFixture
     {
         readonly string[] defaultScriptStages = { DeploymentStages.PreDeploy, DeploymentStages.Deploy, DeploymentStages.PostDeploy };

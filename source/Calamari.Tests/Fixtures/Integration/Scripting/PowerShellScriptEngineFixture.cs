@@ -14,7 +14,6 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
     public class PowerShellScriptEngineFixture : ScriptEngineFixtureBase
     {
         [Test]
-        [RequiresNonFreeBSDPlatform]
         public void PowerShellDecryptsVariables()
         {
             using (var scriptFile = new TemporaryFile(Path.ChangeExtension(Path.GetTempFileName(), "ps1")))
@@ -30,7 +29,6 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
         [TestCase("True")]
         [TestCase("1")]
         [TestCase("2")]
-        [RequiresNonFreeBSDPlatform]
         [RequiresPowerShell5OrAbove]
         public void PowerShellCanSetTraceMode(string variableValue)
         {
@@ -63,7 +61,6 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
         [TestCase("True")]
         [TestCase("1")]
         [TestCase("2")]
-        [RequiresNonFreeBSDPlatform]
         [RequiresPowerShell4]
         public void PowerShell4DoesntSupport(string variableValue)
         {
@@ -90,7 +87,6 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
         [TestCase("False")]
         [TestCase("false")]
         [TestCase("")]
-        [RequiresNonFreeBSDPlatform]
         public void PowerShellDoesntForceTraceMode(string variableValue)
         {
             using (var scriptFile = new TemporaryFile(Path.ChangeExtension(Path.GetTempFileName(), "ps1")))
@@ -109,7 +105,6 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
         }
 
         [Test]
-        [RequiresNonFreeBSDPlatform]
         public void PowerShellWorksWithStrictMode()
         {
             using (var scriptFile = new TemporaryFile(Path.ChangeExtension(Path.GetTempFileName(), "ps1")))
@@ -130,7 +125,6 @@ namespace Calamari.Tests.Fixtures.Integration.Scripting
         [Test]
         [TestCase("false")]
         [TestCase("")]
-        [RequiresNonFreeBSDPlatform]
         public void PowerShellDoesntForceStrictMode(string variableValue)
         {
             using (var scriptFile = new TemporaryFile(Path.ChangeExtension(Path.GetTempFileName(), "ps1")))

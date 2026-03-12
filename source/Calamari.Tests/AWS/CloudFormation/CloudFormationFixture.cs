@@ -9,7 +9,6 @@ using static Calamari.Aws.Deployment.AwsSpecialVariables.CloudFormation;
 namespace Calamari.Tests.AWS.CloudFormation
 {
     [TestFixture]
-    [Category(TestCategory.RunOnceOnWindowsAndLinux)]
     public class CloudFormationFixture
     {
         string GenerateStackName() => $"calamaricloudformation{Guid.NewGuid():N}";
