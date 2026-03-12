@@ -61,7 +61,7 @@ public class ApplicationSourceUpdater
             return new SourceUpdateResult(new HashSet<string>(), null, []);
         }
         
-        var sourceUpdater = CreateSpecificUpdater(sourceWithMetadata, applicationSource);
+        var sourceUpdater = CreateSpecificUpdater(sourceWithMetadata);
 
         var repoAdapter = new RepositoryAdapter(gitCredentials,
                                                 repositoryFactory,
@@ -83,12 +83,12 @@ public class ApplicationSourceUpdater
         return sourceUpdateResult;
     }
 
-    ISourceUpdater CreateSpecificUpdater(ApplicationSourceWithMetadata sourceWithMetadata, ApplicationSource applicationSource)
+    ISourceUpdater CreateSpecificUpdater(ApplicationSourceWithMetadata sourceWithMetadata)
     {
         ISourceUpdater sourceUpdater;
         if (sourceWithMetadata.SourceType == SourceType.Directory)
         {
-            if (applicationSource.Ref == null)
+            if (sourceWithMetadata.Source.Ref == null)
             {
                 sourceUpdater = new DirectoryUpdater(deploymentConfig,
                                                      defaultRegistry,
