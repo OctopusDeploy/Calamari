@@ -41,7 +41,7 @@ partial class Build
                       });
     
     [PublicAPI]
-    Target Windows2026OrLaterHostTests =>
+    Target Windows2016OrLaterHostTests =>
         target => target
             .Executes(async () =>
                       {
