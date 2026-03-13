@@ -89,6 +89,7 @@ public class CopyTemplatesSourceUpdater : ISourceUpdater
         }
         log.Info("Removing files recursively");
 
+        //TODO(tmm): Knowing we're in a git repository is a bit of a smell :(
         var gitDir = Path.Combine(cleansedSubPath, ".git");
 
         var filesToRemove = fileSystem.EnumerateFilesRecursively(cleansedSubPath)
