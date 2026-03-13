@@ -17,7 +17,7 @@ public class ApplicationSourceUpdater
     readonly Application applicationFromYaml;
     readonly DeploymentScope deploymentScope;
     readonly AuthenticatingRepositoryFactory repositoryFactory;
-    readonly ArgoCommitToGitConfig deploymentConfig;
+        readonly ArgoCommitToGitConfig deploymentConfig;
     readonly IPackageRelativeFile[] packageFiles;
     readonly ArgoCDGatewayDto gateway;
     readonly ILog log;
@@ -161,6 +161,4 @@ public class ApplicationSourceUpdater
                          .GetAwaiter()
                          .GetResult();
     }
-
-    public record ManifestUpdateResult(bool Updated, string CommitSha, List<FilePathContent> ReplacedFiles);
 }

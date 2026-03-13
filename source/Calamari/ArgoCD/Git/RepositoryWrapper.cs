@@ -95,6 +95,14 @@ namespace Calamari.ArgoCD.Git
                 repository.Index.Add(NormalizePath(file));
             }
         }
+        
+        public void UnStageFiles(string[] filesToRemove)
+        {
+            foreach (var file in filesToRemove)
+            {
+                repository.Index.Remove(file);
+            }
+        }
 
         static string NormalizePath(string path)
         {

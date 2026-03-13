@@ -59,6 +59,7 @@ public class RepositoryAdapter
     {
         log.Info("Staging files in repository");
         repository.StageFiles(result.PatchedFileContent.Select(pf => pf.FilePath).Distinct().ToArray());
+        repository.UnStageFiles(result.FilesRemoved);
 
         var commitDescription = commitMessageGenerator.GenerateDescription(result.UpdatedImages, commitParameters.Description);
 
