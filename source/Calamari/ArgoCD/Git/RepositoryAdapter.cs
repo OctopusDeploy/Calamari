@@ -36,7 +36,7 @@ public class RepositoryAdapter
     
     SourceUpdateResult PersistChangesToRepository(RepositoryWrapper repository, string targetRevision, FileUpdateResult result)
     {
-        if (result.UpdatedImages.Count > 0)
+        if (result.hasChanges)
         {
             var pushResult = PushToRemote(repository,
                                           GitReference.CreateFromString(targetRevision),

@@ -14,16 +14,13 @@ public class CopyTemplatesSourceUpdater : ISourceUpdater
 {
     readonly ILog log;
     readonly IPackageRelativeFile[] packageFiles;
-    readonly ArgoCommitToGitConfig deploymentConfig;
     readonly ICalamariFileSystem fileSystem;
     readonly bool purgeOutputDirectory;
 
-    public CopyTemplatesSourceUpdater(IPackageRelativeFile[] packageFiles, ILog log, ArgoCommitToGitConfig deploymentConfig, ICalamariFileSystem fileSystem,
-                                      bool purgeOutputDirectory)
+    public CopyTemplatesSourceUpdater(IPackageRelativeFile[] packageFiles, ILog log, ICalamariFileSystem fileSystem, bool purgeOutputDirectory)
     {
         this.packageFiles = packageFiles;
         this.log = log;
-        this.deploymentConfig = deploymentConfig;
         this.fileSystem = fileSystem;
         this.purgeOutputDirectory = purgeOutputDirectory;
     }
@@ -32,17 +29,19 @@ public class CopyTemplatesSourceUpdater : ISourceUpdater
     {
         if (!TryCalculateOutputPath(sourceWithMetadata.Source, out var outputPath))
         {
-            return new FileUpdateResult([], []);
+            return new FileUpdateResult(false, [], []);
         }
         log.VerboseFormat("Copying files into '{0}'", outputPath);
 
         var workingDirectoryPath = Path.Combine(workingDirectory, outputPath);
 
         var deletedFiles = new List<string>();
-        if (deploymentConfig.PurgeOutputDirectory)
+        if (purgeOutputDirectory)
         {
             deletedFiles.AddRange(PurgeFilesIn(workingDirectoryPath));
         }
+        //deleted files must be relative to workingDirectory
+        deletedFiles = deletedFiles.Select(f => Path.GetRelativePath(workingDirectoryPath, f)).ToList();
         
         var filesToCopy = packageFiles.Select(f => new FileCopySpecification(f, workingDirectory, outputPath)).ToList();
         CopyFiles(filesToCopy);
@@ -52,7 +51,7 @@ public class CopyTemplatesSourceUpdater : ISourceUpdater
                                                                      f.DestinationRelativePath.Replace('\\', '/'),
                                                                      HashCalculator.Hash(f.DestinationAbsolutePath)))
                                     .ToList();
-        return new FileUpdateResult([], fileHashes, deletedFiles.ToArray());
+        return new FileUpdateResult(deletedFiles.Count > 0 || fileHashes.Count > 0, [], fileHashes, deletedFiles.ToArray());
     }
     
     bool TryCalculateOutputPath(ApplicationSource sourceToUpdate, out string outputPath)
@@ -89,13 +88,27 @@ public class CopyTemplatesSourceUpdater : ISourceUpdater
             cleansedSubPath += Path.DirectorySeparatorChar;
         }
         log.Info("Removing files recursively");
-        
-        var filesInSpace = fileSystem.EnumerateFilesRecursively(cleansedSubPath);
-        
-        fileSystem.DeleteDirectory(cleansedSubPath);
 
-        return filesInSpace.ToArray();
+        var gitDir = Path.Combine(cleansedSubPath, ".git");
 
+        var filesToRemove = fileSystem.EnumerateFilesRecursively(cleansedSubPath)
+                                     .Where(f => !f.StartsWith(gitDir))
+                                     .ToArray();
+
+        foreach (var file in filesToRemove)
+        {
+            fileSystem.DeleteFile(file);
+        }
+
+        foreach (var dir in fileSystem.EnumerateDirectories(cleansedSubPath)
+                                      .Where(d => !string.Equals(d, gitDir, System.StringComparison.OrdinalIgnoreCase)))
+        {
+            fileSystem.DeleteDirectory(dir);
+        }
+
+        //do we need to add the directories to the files to remove?!
+        
+        return filesToRemove;
     }
     
     static string NormalizePath(string path)

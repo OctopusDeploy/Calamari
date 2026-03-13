@@ -53,15 +53,16 @@ public class ApplicationUpdater
         
         ValidateApplication(applicationFromYaml);
 
+        var repositoryAdapter = new RepositoryAdapter(repositoryFactory, deploymentConfig.CommitParameters, log, new CommitMessageGenerator());
         var sourceUpdater = new ApplicationSourceUpdater(applicationFromYaml,
                                                          gateway,
                                                          deploymentScope,
-                                                         repositoryFactory,
                                                          deploymentConfig,
                                                          packageFiles,
                                                          log,
                                                          fileSystem,
-                                                         outputVariablesWriter);
+                                                         outputVariablesWriter,
+                                                         repositoryAdapter);
         
         var updatedSourcesResults = applicationFromYaml
                                     .GetSourcesWithMetadata()

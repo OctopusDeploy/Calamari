@@ -1,12 +1,7 @@
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading;
 using Calamari.ArgoCD.Domain;
 using Calamari.ArgoCD.Dtos;
 using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.Models;
-using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 
@@ -16,8 +11,8 @@ public class ApplicationSourceUpdater
 {
     readonly Application applicationFromYaml;
     readonly DeploymentScope deploymentScope;
-    readonly AuthenticatingRepositoryFactory repositoryFactory;
-        readonly ArgoCommitToGitConfig deploymentConfig;
+    readonly RepositoryAdapter repositoryAdapter;
+    readonly ArgoCommitToGitConfig deploymentConfig;
     readonly IPackageRelativeFile[] packageFiles;
     readonly ArgoCDGatewayDto gateway;
     readonly ILog log;
@@ -27,22 +22,22 @@ public class ApplicationSourceUpdater
     public ApplicationSourceUpdater(Application applicationFromYaml,
                                     ArgoCDGatewayDto gateway,
                                     DeploymentScope deploymentScope,
-                                    AuthenticatingRepositoryFactory repositoryFactory,
                                     ArgoCommitToGitConfig deploymentConfig,
                                     IPackageRelativeFile[] packageFiles,
                                     ILog log,
                                     ICalamariFileSystem fileSystem,
-                                    ArgoCDOutputVariablesWriter outputVariablesWriter)
+                                    ArgoCDOutputVariablesWriter outputVariablesWriter,
+                                    RepositoryAdapter repositoryAdapter)
     {
         this.applicationFromYaml = applicationFromYaml;
         this.deploymentScope = deploymentScope;
-        this.repositoryFactory = repositoryFactory;
         this.deploymentConfig = deploymentConfig;
         this.packageFiles = packageFiles;
         this.gateway = gateway;
         this.log = log;
         this.fileSystem = fileSystem;
         this.outputVariablesWriter = outputVariablesWriter;
+        this.repositoryAdapter = repositoryAdapter;
     }
 
     public ManifestUpdateResult ProcessSource(ApplicationSourceWithMetadata sourceWithMetadata)
@@ -57,108 +52,21 @@ public class ApplicationSourceUpdater
 
         log.Info($"Writing files to repository '{applicationSource.OriginalRepoUrl}' for '{applicationFromYaml.Metadata.Name}'");
 
-        if (!TryCalculateOutputPath(applicationSource, out var outputPath))
-        {
-            return new ManifestUpdateResult(false, string.Empty, []);
-        }
-
-        using var repository = repositoryFactory.CloneRepository(applicationSource.OriginalRepoUrl, applicationSource.TargetRevision);
-        log.VerboseFormat("Copying files into '{0}'", outputPath);
-
-        if (deploymentConfig.PurgeOutputDirectory)
-        {
-            repository.RecursivelyStageFilesForRemoval(outputPath);
-        }
-
-        var filesToCopy = packageFiles.Select(f => new FileCopySpecification(f, repository.WorkingDirectory, outputPath)).ToList();
-        CopyFiles(filesToCopy);
-
-        var fileHashes = filesToCopy.Select(f => new FilePathContent(
-                                                                     // Replace \ with / so that Calamari running on windows doesn't cause issues when we send back to server
-                                                                     f.DestinationRelativePath.Replace('\\', '/'),
-                                                                     HashCalculator.Hash(f.DestinationAbsolutePath)))
-                                    .ToList();
-
-        var pushResult = PushToRemote(repository, GitReference.CreateFromString(applicationSource.TargetRevision), filesToCopy.Select(ftc => ftc.DestinationRelativePath).ToArray());
-        if (pushResult is not null)
+        var sourceUpdater = new CopyTemplatesSourceUpdater(packageFiles, log, fileSystem, deploymentConfig.PurgeOutputDirectory);
+            
+        var sourceUpdateResult = repositoryAdapter.Process(sourceWithMetadata, sourceUpdater);
+        
+        if (sourceUpdateResult.PushResult is not null)
         {
             outputVariablesWriter.WritePushResultOutput(gateway.Name,
                                                         applicationFromYaml.Metadata.Name,
                                                         sourceWithMetadata.Index,
-                                                        pushResult);
-
-            return new ManifestUpdateResult(true, pushResult.CommitSha, fileHashes);
+                                                        sourceUpdateResult.PushResult);
+            
+            return new ManifestUpdateResult(true, sourceUpdateResult.PushResult.CommitSha, sourceUpdateResult.PatchedFiles);
         }
         
         log.Info("No changes were commited");
         return new ManifestUpdateResult(false, string.Empty, []);
-    }
-
-    bool TryCalculateOutputPath(ApplicationSource sourceToUpdate, out string outputPath)
-    {
-        outputPath = "";
-        var sourceIdentity = string.IsNullOrEmpty(sourceToUpdate.Name) ? sourceToUpdate.OriginalRepoUrl : sourceToUpdate.Name;
-        if (sourceToUpdate.Ref != null)
-        {
-            if (sourceToUpdate.Path != null)
-            {
-                log.WarnFormat("Unable to update ref source '{0}' as a path has been explicitly specified.", sourceIdentity);
-                log.Warn("Please split the source into separate sources and update annotations.");
-                return false;
-            }
-
-            return true;
-        }
-
-        if (sourceToUpdate.Path == null)
-        {
-            log.WarnFormat("Unable to update source '{0}' as a path has not been specified.", sourceIdentity);
-            return false;
-        }
-
-        outputPath = sourceToUpdate.Path;
-        return true;
-    }
-
-    void CopyFiles(IEnumerable<IFileCopySpecification> repositoryFiles)
-    {
-        foreach (var file in repositoryFiles)
-        {
-            log.VerboseFormat($"Copying '{file.SourceAbsolutePath}' to '{file.DestinationAbsolutePath}'");
-            EnsureParentDirectoryExists(file.DestinationAbsolutePath);
-            fileSystem.CopyFile(file.SourceAbsolutePath, file.DestinationAbsolutePath);
-        }
-    }
-    
-    void EnsureParentDirectoryExists(string filePath)
-    {
-        var destinationDirectory = Path.GetDirectoryName(filePath);
-        if (destinationDirectory != null)
-        {
-            fileSystem.CreateDirectory(destinationDirectory);
-        }
-    }
-
-    //this _nearly_ duplicated from RepositoryAdapter
-    PushResult? PushToRemote(
-        RepositoryWrapper repository,
-        GitReference branchName,
-        string[] filesToPersist)
-    {
-        log.Info("Staging files in repository");
-        repository.StageFiles(filesToPersist.ToArray());
-
-        log.Info("Commiting changes");
-        if (!repository.CommitChanges(deploymentConfig.CommitParameters.Summary, deploymentConfig.CommitParameters.Description))
-            return null;
-
-        log.Verbose("Pushing to remote");
-        return repository.PushChanges(deploymentConfig.CommitParameters.RequiresPr,
-                                      deploymentConfig.CommitParameters.Summary,
-                                      deploymentConfig.CommitParameters.Description,
-                                      branchName,
-                                      CancellationToken.None)
-                         .GetAwaiter()
-                         .GetResult();
     }
 }
