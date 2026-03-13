@@ -36,7 +36,7 @@ public class RepositoryAdapter
     
     SourceUpdateResult PersistChangesToRepository(RepositoryWrapper repository, string targetRevision, FileUpdateResult result)
     {
-        if (result.UpdatedImages.Count > 0)
+        if (result.hasChanges)
         {
             var pushResult = PushToRemote(repository,
                                           GitReference.CreateFromString(targetRevision),
@@ -59,6 +59,7 @@ public class RepositoryAdapter
     {
         log.Info("Staging files in repository");
         repository.StageFiles(result.PatchedFileContent.Select(pf => pf.FilePath).Distinct().ToArray());
+        repository.UnstageFiles(result.FilesRemoved ?? []);
 
         var commitDescription = commitMessageGenerator.GenerateDescription(result.UpdatedImages, commitParameters.Description);
 

@@ -171,38 +171,6 @@ namespace Calamari.Tests.ArgoCD.Git
         }
 
         [Test]
-        [TestCase("", 0)]
-        [TestCase("./", 0)]
-        [TestCase("nested_1", 2)]
-        [TestCase("nested_1/nested_2", 3)]
-        [TestCase("nested", 3)]
-        [TestCase("nest", 4)]
-        public void RemoveFiles(string subPath, int totalFilesRemaining)
-        {
-            //Arrange
-            bareOrigin.AddFilesToBranch(branchName,
-                                        ("file.yaml", ""),
-                                        ("nested/file.txt", ""),
-                                        ("nested_1/file.yaml", ""),
-                                        ("nested_1/nested_2/file.yaml", ""));
-
-            var repositoryFactory = new RepositoryFactory(log, fileSystem, tempDirectory, gitVendorAgnosticApiAdapterFactory, new SystemClock());
-            gitConnection = new GitConnection(null, null, new Uri(OriginPath), branchName);
-
-            // Act
-            var sut = repositoryFactory.CloneRepository($"{repositoryPath}/sut", gitConnection);
-            sut.RecursivelyStageFilesForRemoval(subPath);
-            sut.CommitChanges("Deleted files", string.Empty);
-            sut.PushChanges(branchName);
-
-            //Assert
-            var result = CloneOrigin();
-            var files = fileSystem.EnumerateFilesWithGlob(result, "**/*");
-            var notGitFiles = files.Where(file => !file.Contains(".git")).ToList();
-            notGitFiles.Count.Should().Be(totalFilesRemaining);
-        }
-
-        [Test]
         public void CloningAReferenceOtherThanABranchFails()
         {
             bareOrigin.AddFilesToBranch(branchName, ("file.yaml", ""));

@@ -21,7 +21,7 @@ public interface ISourceUpdater
 
 public class NoOpSourceUpdater : ISourceUpdater
 {
-    public FileUpdateResult Process(ApplicationSourceWithMetadata sourceWithMetadata, string workingDirectory) => new( [], []);
+    public FileUpdateResult Process(ApplicationSourceWithMetadata sourceWithMetadata, string workingDirectory) => new( false, [], []);
 }
 
 public abstract class BaseUpdater : ISourceUpdater
@@ -68,7 +68,7 @@ public abstract class BaseUpdater : ISourceUpdater
             }
         }
 
-        return new FileUpdateResult(updatedImages, jsonPatches);
+        return new FileUpdateResult(updatedImages.Count > 0, updatedImages, jsonPatches);
     }
     
     protected static JsonPatchDocument CreateJsonPatch(string originalContent, string updatedContent)
