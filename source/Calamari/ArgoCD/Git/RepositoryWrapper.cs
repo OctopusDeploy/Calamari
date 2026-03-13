@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -10,7 +9,6 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Integration.Time;
 using LibGit2Sharp;
-using Octopus.CoreUtilities.Extensions;
 using Polly;
 using Polly.Retry;
 
@@ -68,26 +66,6 @@ namespace Calamari.ArgoCD.Git
             }
         }
 
-        public string GetCommitSha()
-        {
-            return repository.Head.Tip.Sha;
-        }
-
-        public void RecursivelyStageFilesForRemoval(string subPath)
-        {
-            var cleansedSubPath = NormalizePath(subPath);
-            if (!cleansedSubPath.EndsWith(Path.DirectorySeparatorChar) && !cleansedSubPath.IsNullOrEmpty())
-            {
-                cleansedSubPath += Path.DirectorySeparatorChar;
-            }
-
-            log.Info("Removing files recursively");
-            List<IndexEntry> filesToRemove = repository.Index
-                                                       .Where(i => NormalizePath(i.Path).StartsWith(cleansedSubPath))
-                                                       .ToList();
-            filesToRemove.ForEach(i => repository.Index.Remove(i.Path));
-        }
-
         public void StageFiles(string[] filesToStage)
         {
             foreach (var file in filesToStage)
@@ -96,11 +74,11 @@ namespace Calamari.ArgoCD.Git
             }
         }
         
-        public void UnStageFiles(string[] filesToRemove)
+        public void UnstageFiles(string[] filesToRemove)
         {
             foreach (var file in filesToRemove)
             {
-                repository.Index.Remove(file);
+                repository.Index.Remove(NormalizePath(file));
             }
         }
 

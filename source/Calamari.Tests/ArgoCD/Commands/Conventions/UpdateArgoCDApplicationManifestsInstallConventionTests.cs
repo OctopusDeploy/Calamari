@@ -180,7 +180,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             };
 
             //add arbitrary file to the origin repo
-            var fileToPurge = "subDirectory/removeThis.yaml";
+            var fileToPurge = "subDirectory1/subdirectory2/removeThis.yaml";
             originRepo.AddFilesToBranch(argoCDBranchName, (fileToPurge, "This file to be removed"));
 
             var allVariables = new CalamariVariables();
@@ -198,6 +198,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             var resultPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
             File.Exists(Path.Combine(resultPath, firstFilename)).Should().BeTrue();
             File.Exists(Path.Combine(resultPath, fileToPurge)).Should().BeFalse();
+            Directory.Exists(Path.Combine(resultPath, "subDirectory1")).Should().BeFalse();
 
             AssertOutputVariables();
         }
