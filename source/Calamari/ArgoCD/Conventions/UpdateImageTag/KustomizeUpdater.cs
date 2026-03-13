@@ -56,7 +56,7 @@ public class KustomizeUpdater : BaseUpdater
             var filesToUpdate = new HashSet<string> { kustomizationFile };
             Func<string, IContainerImageReplacer> imageReplacerFactory = yaml => new KustomizeImageReplacer(yaml, defaultRegistry, log);
             log.Verbose("kustomization file found, will only update images transformer in the kustomization file");
-            return Update(rootPath, imagesToUpdate, filesToUpdate, imageReplacerFactory);
+            return Update(rootPath, filesToUpdate);
         }
 
         log.Warn("kustomization file not found, no files will be updated");
