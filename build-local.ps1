@@ -1,5 +1,6 @@
 Param(
-    [string] $Runtime
+    [string] $Runtime,
+    [switch] $Debug
 )
 
 Write-Host "
@@ -54,7 +55,9 @@ $env:OCTOVERSION_MajorMinorPatch= $numericVersion
 $env:OCTOVERSION_PreReleaseTagWithDash = "-$sanitizedBranch"
 $env:OCTOVERSION_FullSemVer = "$numericVersion-$sanitizedBranch"
 
-./build.ps1 -BuildVerbosity Minimal -Verbosity Normal --Append-Timestamp -SetOctopusServerVersion -TargetRuntime "$Runtime"
+$buildConfig = if ($Debug) { "-c Debug" } else { "" }
+
+./build.ps1 -BuildVerbosity Minimal -Verbosity Normal --Append-Timestamp -SetOctopusServerVersion -TargetRuntime "$Runtime" $buildConfig
 
 Write-Host "
 ########################################################################################

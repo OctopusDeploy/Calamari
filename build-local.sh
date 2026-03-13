@@ -2,6 +2,7 @@
 
 auto_accept=""
 target_runtime=""
+build_config=""
 
 while test $# -gt 0; do
   case "$1" in
@@ -15,6 +16,9 @@ while test $# -gt 0; do
   --runtime)
     target_runtime=$2
     shift
+    ;;
+  --debug)
+    build_config='-c Debug'
     ;;
   esac
   shift
@@ -111,6 +115,6 @@ export OCTOVERSION_MajorMinorPatch="$numericVersion"
 export OCTOVERSION_PreReleaseTagWithDash="-$sanitizedBranch"
 export OCTOVERSION_FullSemVer="$numericVersion-$sanitizedBranch"
 
-./build.sh -BuildVerbosity Minimal -Verbosity Minimal -AppendTimestamp -SetOctopusServerVersion -TargetRuntime "$target_runtime"
+./build.sh -BuildVerbosity Minimal -Verbosity Minimal -AppendTimestamp -SetOctopusServerVersion -TargetRuntime "$target_runtime" $build_config
 
 echo -e "$FinishMessage"

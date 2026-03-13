@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using Calamari.ArgoCD.Domain;
 using Calamari.ArgoCD.Git;
+using Calamari.ArgoCD.Models;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 
@@ -21,6 +22,12 @@ public class KustomizeUpdater : BaseUpdater
     {
         this.imagesToUpdate = imagesToUpdate;
         this.defaultRegistry = defaultRegistry;
+    }
+
+    public override ImageReplacementResult ReplaceImages(string input)
+    {
+        var imageReplacer = new KustomizeImageReplacer(input, defaultRegistry, log);
+        return imageReplacer.UpdateImages(imagesToUpdate);
     }
 
     public override FileUpdateResult Process(ApplicationSourceWithMetadata sourceWithMetadata, string workingDirectory)
@@ -47,9 +54,8 @@ public class KustomizeUpdater : BaseUpdater
         if (kustomizationFile != null)
         {
             var filesToUpdate = new HashSet<string> { kustomizationFile };
-            Func<string, IContainerImageReplacer> imageReplacerFactory = yaml => new KustomizeImageReplacer(yaml, defaultRegistry, log);
             log.Verbose("kustomization file found, will only update images transformer in the kustomization file");
-            return Update(rootPath, imagesToUpdate, filesToUpdate, imageReplacerFactory);
+            return Update(rootPath, filesToUpdate);
         }
 
         log.Warn("kustomization file not found, no files will be updated");

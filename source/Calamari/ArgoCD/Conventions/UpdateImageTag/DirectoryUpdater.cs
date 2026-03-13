@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using Calamari.ArgoCD.Domain;
 using Calamari.ArgoCD.Git;
+using Calamari.ArgoCD.Models;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 
@@ -22,6 +23,12 @@ public class DirectoryUpdater: BaseUpdater
     {
         this.imagesToUpdate = imagesToUpdate;
         this.defaultRegistry = defaultRegistry;
+    }
+
+    public override ImageReplacementResult ReplaceImages(string input)
+    {
+        var replacer = new ContainerImageReplacer(input, defaultRegistry);
+        return replacer.UpdateImages(imagesToUpdate);
     }
 
     public override FileUpdateResult Process(ApplicationSourceWithMetadata sourceWithMetadata, string workingDirectory)
@@ -43,12 +50,10 @@ public class DirectoryUpdater: BaseUpdater
         string subFolder)
     {
         var absSubFolder = Path.Combine(rootPath, subFolder);
-
         var filesToUpdate = FindYamlFiles(absSubFolder).ToHashSet();
-        Func<string, IContainerImageReplacer> imageReplacerFactory = yaml => new ContainerImageReplacer(yaml, defaultRegistry);
         log.Verbose($"Found {filesToUpdate.Count} yaml files to process");
 
-        return Update(rootPath, imagesToUpdate, filesToUpdate, imageReplacerFactory);
+        return Update(rootPath, filesToUpdate);
     }
 
     //NOTE: rootPath needs to include the subfolder

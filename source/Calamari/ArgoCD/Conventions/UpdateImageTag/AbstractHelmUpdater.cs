@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using Calamari.ArgoCD.Domain;
-using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.Helm;
 using Calamari.ArgoCD.Models;
 using Calamari.Common.Plumbing.FileSystem;
@@ -26,16 +25,20 @@ public abstract class AbstractHelmUpdater : BaseUpdater
         this.deploymentConfig = deploymentConfig;
         this.defaultRegistry = defaultRegistry;
     }
+    
+    public override ImageReplacementResult ReplaceImages(string input)
+    {
+        var imageReplacer = new HelmValuesImageReplaceStepVariables(input, defaultRegistry, log);
+        return imageReplacer.UpdateImages(deploymentConfig.ImageReferences);
+    }
 
     //NOTE: this is common with Helm Sources
     protected FileUpdateResult ProcessHelmValuesFiles(HashSet<string> filesToUpdate,
                                                       string workingDirectory,
                                                       ApplicationSourceWithMetadata sourceWithMetadata)
     {
-        Func<string, IContainerImageReplacer> imageReplacerFactory = yaml => new HelmValuesImageReplaceStepVariables(yaml, defaultRegistry, log);
         log.Verbose($"Found {filesToUpdate.Count} yaml files to process");
-
-        return Update(workingDirectory, deploymentConfig.ImageReferences, filesToUpdate.ToHashSet(), imageReplacerFactory);
+        return Update(workingDirectory, filesToUpdate.ToHashSet());
     }
 
     /// <returns>Images that were updated</returns>
