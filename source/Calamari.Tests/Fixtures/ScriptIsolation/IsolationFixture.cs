@@ -190,5 +190,67 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             await firstHandle.DisposeAsync();
             await t;
         }
+
+        /// <summary>
+        /// Verifies that <see cref="Isolation.Enforce"/> honours its timeout when the lock is held
+        /// by another thread for the duration.  A timeout in the range (10ms, 1 day) should trigger
+        /// the Polly timeout strategy; without it the call would retry forever and this test would hang.
+        /// </summary>
+        [Test, Timeout(5000)]
+        public void Enforce_ThrowsLockRejectedException_AfterTimeoutExpires_WhenLockIsHeld()
+        {
+            // Use a timeout that is:
+            //   • > 10 ms  →  the infinite-retry / no-timeout branch is NOT taken; the Polly timeout
+            //                 strategy must fire to stop retrying
+            //   • Short enough that the test completes quickly
+            const string lockTimeout = "00:00:00.200";
+
+            // Acquire the exclusive lock on the current thread and hold it indefinitely.
+            using var firstHandle = Isolation.Enforce(FullIsolationOptions(timeout: lockTimeout));
+
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
+            Action secondEnforce = () =>
+            {
+                using var secondHandle = Isolation.Enforce(FullIsolationOptions(timeout: lockTimeout));
+            };
+
+            // The second acquire must fail because the first lock is never released.
+            secondEnforce.Should().Throw<LockRejectedException>();
+
+            stopwatch.Stop();
+
+            // The call should have given up at approximately the timeout (200 ms).
+            // We allow generous headroom for slow CI machines, but cap it well below
+            // the "retry forever" scenario — if the timeout is not enforced the test
+            // would simply never return.
+            stopwatch.Elapsed.Should().BeLessThan(TimeSpan.FromSeconds(10),
+                because: "Enforce should stop retrying once the timeout elapses");
+        }
+
+        /// <summary>
+        /// Async counterpart of <see cref="Enforce_ThrowsLockRejectedException_AfterTimeoutExpires_WhenLockIsHeld"/>.
+        /// </summary>
+        [Test, Timeout(5000)]
+        public async Task EnforceAsync_ThrowsLockRejectedException_AfterTimeoutExpires_WhenLockIsHeld()
+        {
+            const string lockTimeout = "00:00:00.200";
+
+            await using var firstHandle = await Isolation.EnforceAsync(FullIsolationOptions(timeout: lockTimeout), CancellationToken.None);
+
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
+            Func<Task> secondEnforce = async () =>
+            {
+                await using var secondHandle = await Isolation.EnforceAsync(FullIsolationOptions(timeout: lockTimeout), CancellationToken.None);
+            };
+
+            await secondEnforce.Should().ThrowAsync<LockRejectedException>();
+
+            stopwatch.Stop();
+
+            stopwatch.Elapsed.Should().BeLessThan(TimeSpan.FromSeconds(10),
+                because: "EnforceAsync should stop retrying once the timeout elapses");
+        }
     }
 }
