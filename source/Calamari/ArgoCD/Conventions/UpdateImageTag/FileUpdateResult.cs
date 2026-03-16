@@ -7,6 +7,6 @@ public record FileUpdateResult(HashSet<string> UpdatedImages, List<FilePathConte
 {
     public bool HasChanges() 
     {
-        return PatchedFileContent.Count != 0 || FilesRemoved == null ? false : FilesRemoved.Length != 0;
+        return PatchedFileContent.Count > 0 || (FilesRemoved != null && FilesRemoved.Length > 0);
     }
 }
