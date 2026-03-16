@@ -180,7 +180,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             };
 
             //add arbitrary file to the origin repo
-            var fileToPurge = "subDirectory1/subdirectory2/removeThis.yaml";
+            var fileToPurge = Path.Combine("subDirectory1", "subdirectory2", "removeThis.yaml");
             originRepo.AddFilesToBranch(argoCDBranchName, (fileToPurge, "This file to be removed"));
 
             var allVariables = new CalamariVariables();

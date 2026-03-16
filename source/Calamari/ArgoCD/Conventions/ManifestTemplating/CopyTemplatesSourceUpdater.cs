@@ -17,7 +17,7 @@ public class CopyTemplatesSourceUpdater : ISourceUpdater
     readonly ICalamariFileSystem fileSystem;
     readonly bool purgeOutputDirectory;
 
-    readonly string[] excludePatters = [".git"];
+    readonly string[] excludePatterns = [".git"];
 
     public CopyTemplatesSourceUpdater(IPackageRelativeFile[] packageFiles, ILog log, ICalamariFileSystem fileSystem, bool purgeOutputDirectory)
     {
@@ -84,6 +84,7 @@ public class CopyTemplatesSourceUpdater : ISourceUpdater
 
     string[] PurgeFilesIn(string outputDirectory)
     {
+        log.Info($"Removing files recursively from {outputDirectory}");
         var cleansedSubPath = NormalizePath(outputDirectory);
         if (!cleansedSubPath.EndsWith(Path.DirectorySeparatorChar) && !cleansedSubPath.IsNullOrEmpty())
         {
@@ -91,7 +92,13 @@ public class CopyTemplatesSourceUpdater : ISourceUpdater
         }
         log.Info("Removing files recursively");
         
-        var excludedPaths = excludePatters.Select(ep => Path.Combine(cleansedSubPath, ep)).ToList();
+        var excludedPaths = excludePatterns.Select(ep =>
+                                                   {
+                                                       var result = Path.Combine(cleansedSubPath, ep)
+                                                       log.Info($"Deleting '{result}'");
+                                                       return result;
+
+                                                   }).ToList();
 
         var filesToRemove = fileSystem.EnumerateFilesRecursively(cleansedSubPath)
                                      .Where(f => !excludedPaths.Any(f.StartsWith))
