@@ -59,6 +59,6 @@ public class KustomizeUpdater : BaseUpdater
         }
 
         log.Warn("kustomization file not found, no files will be updated");
-        return new FileUpdateResult([], []);
+        return new FileUpdateResult( [], []);
     }
 }

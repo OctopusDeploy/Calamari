@@ -21,7 +21,7 @@ public interface ISourceUpdater
 
 public class NoOpSourceUpdater : ISourceUpdater
 {
-    public FileUpdateResult Process(ApplicationSourceWithMetadata sourceWithMetadata, string workingDirectory) => new([], []);
+    public FileUpdateResult Process(ApplicationSourceWithMetadata sourceWithMetadata, string workingDirectory) => new( [], []);
 }
 
 public abstract class BaseUpdater : ISourceUpdater
