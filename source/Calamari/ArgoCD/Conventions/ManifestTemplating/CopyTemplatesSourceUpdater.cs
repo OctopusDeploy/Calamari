@@ -85,22 +85,22 @@ public class CopyTemplatesSourceUpdater : ISourceUpdater
     string[] PurgeFilesIn(string outputDirectory)
     {
         log.Info($"Removing files recursively from {outputDirectory}");
-        var cleansedSubPath = NormalizePath(outputDirectory);
-        if (!cleansedSubPath.EndsWith(Path.DirectorySeparatorChar) && !cleansedSubPath.IsNullOrEmpty())
-        {
-            cleansedSubPath += Path.DirectorySeparatorChar;
-        }
-        log.Info("Removing files recursively");
+        //TODO(tmm): Knowing we're in a git repository is a bit of a smell :(
+        // var gitDir = Path.Combine(cleansedSubPath, ".git");
+        //
+        // var filesToRemove = fileSystem.EnumerateFilesRecursively(cleansedSubPath)
+        //                               .Where(f => !f.StartsWith(gitDir))
+        //                               .ToArray();
+        
         
         var excludedPaths = excludePatterns.Select(ep =>
                                                    {
-                                                       var result = Path.Combine(cleansedSubPath, ep);
+                                                       var result = Path.Combine(outputDirectory, ep);
                                                        log.Info($"Deleting '{result}'");
                                                        return result;
-
                                                    }).ToList();
 
-        var filesToRemove = fileSystem.EnumerateFilesRecursively(cleansedSubPath)
+        var filesToRemove = fileSystem.EnumerateFilesRecursively(outputDirectory)
                                      .Where(f => !excludedPaths.Any(f.StartsWith))
                                      .ToArray();
 
@@ -110,13 +110,6 @@ public class CopyTemplatesSourceUpdater : ISourceUpdater
         }
         
         return filesToRemove;
-    }
-    
-    static string NormalizePath(string path)
-    {
-        var separatorToReplace = Path.DirectorySeparatorChar == '/' ? '\\' : '/';
-        var normalized = path.Replace(separatorToReplace, Path.DirectorySeparatorChar);
-        return normalized.StartsWith($".{Path.DirectorySeparatorChar}") ? normalized.Substring(2) : normalized;
     }
     
     void CopyFiles(IEnumerable<IFileCopySpecification> repositoryFiles)
