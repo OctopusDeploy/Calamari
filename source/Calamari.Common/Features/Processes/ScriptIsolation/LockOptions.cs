@@ -1,8 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.Logging;
+using Polly;
+using Polly.Timeout;
 
 namespace Calamari.Common.Features.Processes.ScriptIsolation;
 
@@ -13,6 +16,47 @@ public sealed record LockOptions(
     TimeSpan Timeout
 )
 {
+    static readonly TimeSpan RetryInitialDelay = TimeSpan.FromMilliseconds(10);
+    static readonly TimeSpan RetryMaxDelay = TimeSpan.FromMilliseconds(500);
+
+    public ResiliencePipeline<ILockHandle> BuildLockAcquisitionPipeline()
+    {
+        var builder = new ResiliencePipelineBuilder<ILockHandle>();
+        return AddLockOptions(builder).Build();
+    }
+
+    public ResiliencePipelineBuilder<ILockHandle> AddLockOptions(ResiliencePipelineBuilder<ILockHandle> builder)
+    {
+        // If it's 10ms or less, we'll skip timeout and limit retries
+        var retryAttempts = Timeout <= TimeSpan.FromMilliseconds(10) && Timeout != System.Threading.Timeout.InfiniteTimeSpan
+            ? 1
+            : int.MaxValue;
+        if (Timeout > TimeSpan.FromMilliseconds(10))
+        {
+            builder.AddTimeout(
+                               new TimeoutStrategyOptions
+                               {
+                                   // Using a timeout generator does not constrain the timeout to
+                                   // a maximum of 1 day
+                                   TimeoutGenerator = _ => ValueTask.FromResult(Timeout)
+                               }
+                              );
+        }
+
+        builder.AddRetry(
+                         new()
+                         {
+                             BackoffType = DelayBackoffType.Exponential,
+                             Delay = RetryInitialDelay,
+                             MaxDelay = RetryMaxDelay,
+                             MaxRetryAttempts = retryAttempts,
+                             ShouldHandle = new PredicateBuilder<ILockHandle>().Handle<LockRejectedException>(),
+                             UseJitter = true
+                         }
+                        );
+        return builder;
+    }
+
     public static LockOptions? FromScriptIsolationOptionsOrNull(CommonOptions.ScriptIsolationOptions options)
     {
         if (!options.FullyConfigured)
@@ -33,12 +77,12 @@ public sealed record LockOptions(
 
         if (string.IsNullOrWhiteSpace(options.Timeout))
         {
-            timeout = TimeSpan.MaxValue;
+            timeout = System.Threading.Timeout.InfiniteTimeSpan;
         }
         else if (!TimeSpan.TryParse(options.Timeout, out timeout))
         {
-            Log.Verbose($"Failed to parse mutex timeout value '{options.Timeout}' as TimeSpan. Defaulting to TimeSpan.MaxValue.");
-            timeout = TimeSpan.MaxValue;
+            Log.Verbose($"Failed to parse mutex timeout value '{options.Timeout}' as TimeSpan. Defaulting to Infinite.");
+            timeout = System.Threading.Timeout.InfiniteTimeSpan;
         }
 
         var lockFileInfo = GetLockFileInfo(options.TentacleHome, options.MutexName);

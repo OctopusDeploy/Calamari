@@ -4,7 +4,7 @@ using Polly.Timeout;
 
 namespace Calamari.Common.Features.Processes.ScriptIsolation;
 
-public sealed class LockRejectedException(string message, Exception? innerException)
+public sealed class LockRejectedException(string message, Exception? innerException = null)
     : Exception(message, innerException)
 {
     public LockRejectedException(Exception innerException) : this("Lock acquisition failed", innerException)
