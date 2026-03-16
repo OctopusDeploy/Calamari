@@ -94,7 +94,7 @@ public class CopyTemplatesSourceUpdater : ISourceUpdater
         
         var excludedPaths = excludePatterns.Select(ep =>
                                                    {
-                                                       var result = Path.Combine(cleansedSubPath, ep)
+                                                       var result = Path.Combine(cleansedSubPath, ep);
                                                        log.Info($"Deleting '{result}'");
                                                        return result;
 
