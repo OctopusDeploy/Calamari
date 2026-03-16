@@ -99,8 +99,7 @@ public class ApplicationUpdater
     void LogWarningIfUpdatingMultipleSources(
         List<ApplicationSource> sourcesToInspect,
         Dictionary<string, string> applicationAnnotations,
-        bool containsMultipleSources,
-        DeploymentScope deploymentScope)
+        bool containsMultipleSources)
     {
         if (sourcesToInspect.Count > 1)
         {
@@ -113,8 +112,7 @@ public class ApplicationUpdater
             }
         }
     }
-    
-    //NOTE: This is common to both ApplicationUpdaters  
+
     void ValidateApplication(Application applicationFromYaml)
     {
         var validationResult = ValidationResult.Merge(
