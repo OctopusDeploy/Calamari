@@ -48,8 +48,7 @@ public class ApplicationUpdater
 
         LogWarningIfUpdatingMultipleSources(applicationFromYaml.Spec.Sources,
                                             applicationFromYaml.Metadata.Annotations,
-                                            containsMultipleSources,
-                                            deploymentScope);
+                                            containsMultipleSources);
         
         ValidateApplication(applicationFromYaml);
 
