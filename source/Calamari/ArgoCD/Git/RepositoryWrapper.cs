@@ -159,6 +159,7 @@ namespace Calamari.ArgoCD.Git
             return new PullRequestPushResult(
                 commit.Sha,
                 commit.ShortSha(),
+                connection.Url.AbsoluteUri,
                 title,
                 uri,
                 number);
@@ -298,6 +299,7 @@ namespace Calamari.ArgoCD.Git
     public record PullRequestPushResult(
         string CommitSha,
         string ShortSha,
+        string RepositoryUri,
         string PullRequestTitle,
         string PullRequestUri,
         long PullRequestNumber) : PushResult(CommitSha, ShortSha);
