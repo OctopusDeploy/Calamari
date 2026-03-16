@@ -17,7 +17,7 @@ public class CopyTemplatesSourceUpdater : ISourceUpdater
     readonly ICalamariFileSystem fileSystem;
     readonly bool purgeOutputDirectory;
 
-    readonly string[] excludePatters = [".git/"];
+    readonly string[] excludePatters = [".git"];
 
     public CopyTemplatesSourceUpdater(IPackageRelativeFile[] packageFiles, ILog log, ICalamariFileSystem fileSystem, bool purgeOutputDirectory)
     {
