@@ -66,7 +66,7 @@ namespace Calamari.ArgoCD.Git
             }
         }
 
-        public void StageFiles(string[] filesToStage)
+        public void AddFiles(string[] filesToStage)
         {
             foreach (var file in filesToStage)
             {
@@ -74,7 +74,7 @@ namespace Calamari.ArgoCD.Git
             }
         }
         
-        public void UnstageFiles(string[] filesToRemove)
+        public void RemoveFiles(string[] filesToRemove)
         {
             foreach (var file in filesToRemove)
             {

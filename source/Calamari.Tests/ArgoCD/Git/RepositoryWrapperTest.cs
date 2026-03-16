@@ -68,7 +68,7 @@ namespace Calamari.Tests.ArgoCD.Git
         [Test]
         public void StagingANonExistentFileThrowsException()
         {
-            Action act = () => repository.StageFiles(new[] { "nonexistent.txt" });
+            Action act = () => repository.AddFiles(new[] { "nonexistent.txt" });
             act.Should().Throw<LibGit2SharpException>().And.Message.Should().Contain("could not find ");
         }
 
@@ -85,7 +85,7 @@ namespace Calamari.Tests.ArgoCD.Git
             //This is to highlight a behaviour of libGit2Sharp which we may run into
             string filename = "newFile.txt";
             File.WriteAllText(Path.Combine(RepositoryRootPath, filename), "");
-            repository.StageFiles(new[] { $"./{filename}" });
+            repository.AddFiles(new[] { $"./{filename}" });
         }
 
         [Test]
@@ -94,7 +94,7 @@ namespace Calamari.Tests.ArgoCD.Git
             string filename = "newFile.txt";
             string fileContents = "Lorem ipsum dolor sit amet";
             File.WriteAllText(Path.Combine(RepositoryRootPath, filename), fileContents);
-            repository.StageFiles(new[] { filename });
+            repository.AddFiles(new[] { filename });
             repository.CommitChanges("Summary Message", "A file has changed").Should().BeTrue();
             await repository.PushChanges(false,
                                          "Summary Message",
@@ -112,7 +112,7 @@ namespace Calamari.Tests.ArgoCD.Git
         {
             string filename = "newFile.txt";
             File.WriteAllText(Path.Combine(RepositoryRootPath, filename), "");
-            repository.StageFiles(new[] { filename });
+            repository.AddFiles(new[] { filename });
             repository.CommitChanges("Summary Message", "There is no data to comm it").Should().BeTrue();
             await repository.PushChanges(false,
                                          "Summary Message",
@@ -131,7 +131,7 @@ namespace Calamari.Tests.ArgoCD.Git
         {
             string filename = "newFile.txt";
             await File.WriteAllTextAsync(Path.Combine(RepositoryRootPath, filename), "");
-            repository.StageFiles(new[] { filename });
+            repository.AddFiles(new[] { filename });
             var commitSummary = "Summary Message";
             var commitDescription = "A commit description";
             repository.CommitChanges(commitSummary, commitDescription).Should().BeTrue();
@@ -158,7 +158,7 @@ namespace Calamari.Tests.ArgoCD.Git
             const string fileContents = "Lorem ipsum dolor sit amet";
             await File.WriteAllTextAsync(Path.Combine(RepositoryRootPath, filename), fileContents);
             
-            repository.StageFiles(new[] { filename });
+            repository.AddFiles(new[] { filename });
             repository.CommitChanges("Summary Message", "A file has changed").Should().BeTrue();
             
             // Act
@@ -193,7 +193,7 @@ namespace Calamari.Tests.ArgoCD.Git
             const string filename = "ourFile.txt";
             const string fileContents = "our content";
             await File.WriteAllTextAsync(Path.Combine(RepositoryRootPath, filename), fileContents);
-            repository.StageFiles([filename]);
+            repository.AddFiles([filename]);
             repository.CommitChanges("Our commit", "").Should().BeTrue();
 
             // Simulate a concurrent push to origin on a different file (causes non-fast-forward failure)
@@ -217,7 +217,7 @@ namespace Calamari.Tests.ArgoCD.Git
             // Arrange: commit a change to a file in our clone
             const string conflictFile = "conflict.txt";
             File.WriteAllText(Path.Combine(RepositoryRootPath, conflictFile), "our content");
-            repository.StageFiles(new[] { conflictFile });
+            repository.AddFiles(new[] { conflictFile });
             repository.CommitChanges("Our commit", "").Should().BeTrue();
 
             // Simulate a concurrent conflicting change to the same file in origin

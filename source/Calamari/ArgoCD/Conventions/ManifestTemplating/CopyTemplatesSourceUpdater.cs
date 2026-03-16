@@ -17,6 +17,8 @@ public class CopyTemplatesSourceUpdater : ISourceUpdater
     readonly ICalamariFileSystem fileSystem;
     readonly bool purgeOutputDirectory;
 
+    readonly string[] excludePatters = [".git/"];
+
     public CopyTemplatesSourceUpdater(IPackageRelativeFile[] packageFiles, ILog log, ICalamariFileSystem fileSystem, bool purgeOutputDirectory)
     {
         this.packageFiles = packageFiles;
@@ -29,7 +31,7 @@ public class CopyTemplatesSourceUpdater : ISourceUpdater
     {
         if (!TryCalculateOutputPath(sourceWithMetadata.Source, out var outputPath))
         {
-            return new FileUpdateResult(false, [], []);
+            return new FileUpdateResult([], []);
         }
         log.VerboseFormat("Copying files into '{0}'", outputPath);
 
@@ -51,7 +53,7 @@ public class CopyTemplatesSourceUpdater : ISourceUpdater
                                                                      f.DestinationRelativePath.Replace('\\', '/'),
                                                                      HashCalculator.Hash(f.DestinationAbsolutePath)))
                                     .ToList();
-        return new FileUpdateResult(deletedFiles.Count > 0 || fileHashes.Count > 0, [], fileHashes, deletedFiles.ToArray());
+        return new FileUpdateResult([], fileHashes, deletedFiles.ToArray());
     }
     
     bool TryCalculateOutputPath(ApplicationSource sourceToUpdate, out string outputPath)
@@ -88,26 +90,17 @@ public class CopyTemplatesSourceUpdater : ISourceUpdater
             cleansedSubPath += Path.DirectorySeparatorChar;
         }
         log.Info("Removing files recursively");
-
-        //TODO(tmm): Knowing we're in a git repository is a bit of a smell :(
-        var gitDir = Path.Combine(cleansedSubPath, ".git");
+        
+        var excludedPaths = excludePatters.Select(ep => Path.Combine(cleansedSubPath, ep)).ToList();
 
         var filesToRemove = fileSystem.EnumerateFilesRecursively(cleansedSubPath)
-                                     .Where(f => !f.StartsWith(gitDir))
+                                     .Where(f => !excludedPaths.Any(f.StartsWith))
                                      .ToArray();
 
         foreach (var file in filesToRemove)
         {
             fileSystem.DeleteFile(file);
         }
-
-        foreach (var dir in fileSystem.EnumerateDirectories(cleansedSubPath)
-                                      .Where(d => !string.Equals(d, gitDir, System.StringComparison.OrdinalIgnoreCase)))
-        {
-            fileSystem.DeleteDirectory(dir);
-        }
-
-        //do we need to add the directories to the files to remove?!
         
         return filesToRemove;
     }
