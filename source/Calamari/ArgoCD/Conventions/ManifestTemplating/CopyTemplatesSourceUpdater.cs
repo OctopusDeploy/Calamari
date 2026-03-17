@@ -30,19 +30,13 @@ public class CopyTemplatesSourceUpdater : ISourceUpdater
     {
         if (!TryCalculateOutputPath(sourceWithMetadata.Source, out var outputPath))
         {
-            return new FileUpdateResult([], []);
+            return new FileUpdateResult([], [], []);
         }
         log.VerboseFormat("Copying files into '{0}'", outputPath);
 
         var workingDirectoryPath = Path.Combine(workingDirectory, outputPath);
 
-        var purgedFiles = new List<string>();
-        if (purgeOutputDirectory)
-        {
-            //deleted files must be relative to workingDirectory
-            var relativePathPurgedFiles = PurgeFilesIn(workingDirectoryPath).Select(f => Path.GetRelativePath(workingDirectoryPath, f)).ToList();
-            purgedFiles.AddRange(relativePathPurgedFiles);
-        }
+        var purgedFiles = purgeOutputDirectory ? PurgeFilesIn(workingDirectoryPath) : []; 
         
         var filesToCopy = packageFiles.Select(f => new FileCopySpecification(f, workingDirectory, outputPath)).ToList();
         CopyFiles(filesToCopy);
@@ -52,7 +46,7 @@ public class CopyTemplatesSourceUpdater : ISourceUpdater
                                                                      f.DestinationRelativePath.Replace('\\', '/'),
                                                                      HashCalculator.Hash(f.DestinationAbsolutePath)))
                                     .ToList();
-        return new FileUpdateResult([], fileHashes, purgedFiles.ToArray());
+        return new FileUpdateResult([], fileHashes, purgedFiles.Select(pf => Path.GetRelativePath(pf, outputPath)).ToArray());
     }
     
     bool TryCalculateOutputPath(ApplicationSource sourceToUpdate, out string outputPath)
@@ -86,7 +80,6 @@ public class CopyTemplatesSourceUpdater : ISourceUpdater
         log.Info($"Removing files recursively from {outputDirectory}");
         
         var excludedPaths = foldersExcludedFromPurge.Select(excludedFolder => Path.Combine(outputDirectory, excludedFolder)).ToList();
-
         var filesToRemove = fileSystem.EnumerateFilesRecursively(outputDirectory)
                                      .Where(f => !excludedPaths.Any(f.StartsWith))
                                      .ToArray();

@@ -37,7 +37,7 @@ public class DirectoryUpdater: BaseUpdater
         if (applicationSource.Path == null)
         {
             log.WarnFormat("Unable to update source '{0}' as a path has not been specified.", sourceWithMetadata.SourceIdentity);
-            return new FileUpdateResult( [], []);
+            return new FileUpdateResult( [], [], []);
         }
 
         log.Verbose($"Reading files from {applicationSource.Path}");
