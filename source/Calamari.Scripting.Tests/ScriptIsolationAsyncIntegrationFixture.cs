@@ -19,6 +19,7 @@ namespace Calamari.Scripting.Tests
     /// <c>Isolation.EnforceAsync()</c>.
     /// </summary>
     [TestFixture]
+    [Category(TestCategory.RunOnceOnWindowsAndLinux)]
     public class ScriptIsolationAsyncIntegrationFixture
     {
         ScriptIsolationTestContext context = null!;
