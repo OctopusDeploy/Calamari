@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Calamari.ArgoCD;
 using Calamari.ArgoCD.Conventions;
@@ -15,7 +16,7 @@ namespace Calamari.Tests.ArgoCD
         readonly List<ContainerImageReferenceAndHelmReference> imagesToUpdate = new()
         {
             new(ContainerImageReference.FromReferenceString("nginx:1.25", ArgoCDConstants.DefaultContainerRegistry)),
-            new(ContainerImageReference.FromReferenceString("busybox:stable", "my-registry.com")),
+            new(ContainerImageReference.FromReferenceString("my-registry.com/busybox:stable", ArgoCDConstants.DefaultContainerRegistry)),
         };
 
         ILog log = new InMemoryLog();
