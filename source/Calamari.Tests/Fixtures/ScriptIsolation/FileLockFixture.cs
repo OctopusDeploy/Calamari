@@ -2,12 +2,14 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using Calamari.Common.Features.Processes.ScriptIsolation;
+using Calamari.Testing.Helpers;
 using FluentAssertions;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.ScriptIsolation
 {
     [TestFixture]
+    [Category(TestCategory.RunOnceOnWindowsAndLinux)]
     public class FileLockFixture
     {
         FileInfo lockFilePath = null!;

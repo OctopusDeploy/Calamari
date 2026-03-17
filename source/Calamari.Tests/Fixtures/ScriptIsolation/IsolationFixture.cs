@@ -5,12 +5,14 @@ using System.Threading;
 using System.Threading.Tasks;
 using Calamari.Common.Features.Processes.ScriptIsolation;
 using Calamari.Common.Plumbing.Commands;
+using Calamari.Testing.Helpers;
 using FluentAssertions;
 using NUnit.Framework;
 
 namespace Calamari.Tests.Fixtures.ScriptIsolation
 {
     [TestFixture]
+    [Category(TestCategory.RunOnceOnWindowsAndLinux)]
     public class IsolationFixture
     {
         string tempDir = null!;

@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Calamari.Common.Features.Processes.ScriptIsolation;
 using Calamari.Common.Plumbing.Commands;
+using Calamari.Testing.Helpers;
 using FluentAssertions;
 using Microsoft.Extensions.Time.Testing;
 using NUnit.Framework;
@@ -14,6 +15,7 @@ using Polly.Timeout;
 namespace Calamari.Tests.Fixtures.ScriptIsolation
 {
     [TestFixture]
+    [Category(TestCategory.RunOnceOnWindowsAndLinux)]
     public class LockOptionsFixture
     {
         static string DefaultTentacleHome => OperatingSystem.IsWindows()
