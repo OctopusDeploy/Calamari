@@ -50,13 +50,26 @@ namespace Calamari.ArgoCD
                 return NoChangeResult;
             }
 
-            using var reader = new StringReader(yamlContent);
-            var stream = new YamlStream();
-            stream.Load(reader);
+            YamlStream stream = new YamlStream();
+            YamlMappingNode rootNode;
 
-            if (stream.Documents.Count != 1 || !(stream.Documents[0].RootNode is YamlMappingNode rootNode))
+            try
             {
-                log.Warn("Kustomization file must contain exactly one YAML document with a mapping root node.");
+                using var reader = new StringReader(yamlContent);
+                stream = new YamlStream();
+                stream.Load(reader);
+
+                if (stream.Documents.Count != 1 || !(stream.Documents[0].RootNode is YamlMappingNode mappingNode))
+                {
+                    log.Warn("Kustomization file must contain exactly one YAML document with a mapping root node.");
+                    return NoChangeResult;
+                }
+
+                rootNode = mappingNode;
+            }
+            catch (Exception ex)
+            {
+                log.WarnFormat("Error parsing YAML content: {0}", ex.Message);
                 return NoChangeResult;
             }
 
