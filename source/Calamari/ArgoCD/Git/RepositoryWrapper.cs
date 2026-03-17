@@ -78,16 +78,14 @@ namespace Calamari.ArgoCD.Git
         {
             foreach (var file in filesToRemove)
             {
-                var indexSpecificPath = file.Replace(Path.DirectorySeparatorChar, '/'); //index REQUIRES forward slashes.
-                repository.Index.Remove(indexSpecificPath);
+                repository.Index.Remove(NormalizePath(file));
             }
         }
 
         static string NormalizePath(string path)
         {
-            var separatorToReplace = Path.DirectorySeparatorChar == '/' ? '\\' : '/';
-            var normalized = path.Replace(separatorToReplace, Path.DirectorySeparatorChar);
-            return normalized.StartsWith($".{Path.DirectorySeparatorChar}") ? normalized.Substring(2) : normalized;
+            var posixPath = path.Replace(Path.DirectorySeparatorChar, '/');
+            return posixPath.StartsWith($".{Path.DirectorySeparatorChar}") ? posixPath.Substring(2) : posixPath;
         }
 
         public async Task<PushResult> PushChanges(bool requiresPullRequest,
