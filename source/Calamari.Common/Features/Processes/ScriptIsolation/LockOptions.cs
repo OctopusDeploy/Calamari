@@ -12,12 +12,23 @@ namespace Calamari.Common.Features.Processes.ScriptIsolation;
 public sealed record LockOptions(
     LockType Type,
     string Name,
-    FileInfo LockFile,
+    LockFile LockFile,
     TimeSpan Timeout
 )
 {
     static readonly TimeSpan RetryInitialDelay = TimeSpan.FromMilliseconds(10);
     static readonly TimeSpan RetryMaxDelay = TimeSpan.FromMilliseconds(500);
+
+    /// <summary>
+    /// Indicates whether file locking is supported for the configured location. This requires
+    /// that both Exclusive and Shared locks are supported on the underlying filesystem.
+    /// </summary>
+    public bool IsFullySupported => LockFile.IsFullySupported;
+
+    /// <summary>
+    /// Indicates whether the specific type of lock is supported on the underlying file system.
+    /// </summary>
+    public bool IsSupported => LockFile.Supports(Type);
 
     public ResiliencePipeline<ILockHandle> BuildLockAcquisitionPipeline()
     {
@@ -85,7 +96,7 @@ public sealed record LockOptions(
             timeout = System.Threading.Timeout.InfiniteTimeSpan;
         }
 
-        var lockFileInfo = GetLockFileInfo(options.TentacleHome, options.MutexName);
+        var lockFileInfo = GetLockFile(options.TentacleHome, options.MutexName);
         return new LockOptions(lockType.Value, options.MutexName, lockFileInfo, timeout);
     }
 
@@ -122,7 +133,7 @@ public sealed record LockOptions(
         Log.Verbose("Script isolation will not be enforced.");
     }
 
-    static FileInfo GetLockFileInfo(string tentacleHome, string mutexName)
+    static LockFile GetLockFile(string tentacleHome, string mutexName)
     {
         foreach (var invalidChar in Path.GetInvalidFileNameChars())
         {
@@ -132,7 +143,8 @@ public sealed record LockOptions(
             }
         }
 
-        return new FileInfo(Path.Combine(tentacleHome, $"ScriptIsolation.{mutexName}.lock"));
+        var lockDirectory = LockDirectory.GetLockDirectory(tentacleHome);
+        return lockDirectory.GetLockFile($"ScriptIsolation.{mutexName}.lock");
     }
 
     static LockType? MapScriptIsolationLevelToLockTypeOrNull(string isolationLevel) =>

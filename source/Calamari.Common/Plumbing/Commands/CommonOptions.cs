@@ -37,7 +37,8 @@ namespace Calamari.Common.Plumbing.Commands
                       .Add("outputVariablesPassword=", "Password used to decrypt output variables", v => options.InputVariables.OutputVariablesPassword = v)
                       .Add("scriptIsolationLevel=", "The level of isolation to run scripts at. Valid values are: NoIsolation or FullIsolation.", v => options.ScriptIsolation.Level = v)
                       .Add("scriptIsolationMutexName=", "The name of the mutex to use when running scripts with Calamari isolation.", v => options.ScriptIsolation.MutexName = v)
-                      .Add("scriptIsolationTimeout=", "The timeout to use when running scripts with Calamari isolation. In .NET TimeSpan format.", v => options.ScriptIsolation.Timeout = v);
+                      .Add("scriptIsolationTimeout=", "The timeout to use when running scripts with Calamari isolation. In .NET TimeSpan format.", v => options.ScriptIsolation.Timeout = v)
+                      .Add("scriptIsolationSharedFallback=", "How to handle when calamari is unable to enforce shared/no isolation. Valid values are: Exclusive (default) or Skip.", v => options.ScriptIsolation.SharedFallback = v);
 
             //these are legacy options to support the V2 pipeline
             set.Add("sensitiveVariables=", "(DEPRECATED) Path to a encrypted JSON file containing sensitive variables. This file format is deprecated.", v => options.InputVariables.DeprecatedFormatVariableFiles.Add(v))
@@ -66,6 +67,7 @@ namespace Calamari.Common.Plumbing.Commands
             public string? MutexName { get; internal set; }
             public string? Timeout { get; internal set; }
             public string? TentacleHome { get; internal set; } = Environment.GetEnvironmentVariable("TentacleHome");
+            public string? SharedFallback { get; internal set; }
 
             [MemberNotNullWhen(true, nameof(Level))]
             [MemberNotNullWhen(true, nameof(MutexName))]
@@ -73,6 +75,8 @@ namespace Calamari.Common.Plumbing.Commands
             public bool FullyConfigured => !string.IsNullOrWhiteSpace(Level) && !string.IsNullOrWhiteSpace(MutexName) && !string.IsNullOrWhiteSpace(TentacleHome);
 
             public bool PartiallyConfigured => !string.IsNullOrWhiteSpace(Level) || !string.IsNullOrWhiteSpace(MutexName) || !string.IsNullOrWhiteSpace(TentacleHome);
+
+            public bool PromoteToExclusiveLockWhenSharedLockUnavailable => !string.Equals(SharedFallback, "skip", StringComparison.OrdinalIgnoreCase);
         }
     }
 }

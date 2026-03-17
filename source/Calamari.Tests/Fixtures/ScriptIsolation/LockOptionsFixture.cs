@@ -154,7 +154,7 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             result.Should().NotBeNull();
             var expectedLockFile = Path.Join(scriptIsolationOptions.TentacleHome, "ScriptIsolation.MyMutex.lock");
 
-            result.LockFile.FullName.Should().Be(expectedLockFile);
+            result.LockFile.File.FullName.Should().Be(expectedLockFile);
         }
 
         [Test]

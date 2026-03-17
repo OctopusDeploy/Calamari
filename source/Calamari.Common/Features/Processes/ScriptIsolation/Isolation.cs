@@ -10,14 +10,13 @@ public static class Isolation
 {
     public static ILockHandle Enforce(CommonOptions.ScriptIsolationOptions scriptIsolationOptions)
     {
-        var lockOptions = LockOptions.FromScriptIsolationOptionsOrNull(scriptIsolationOptions);
+        var lockOptions = PrepareLockOptions(scriptIsolationOptions);
         if (lockOptions is null)
         {
             return new NoLock();
         }
 
         var pipeline = lockOptions.BuildLockAcquisitionPipeline();
-        LogIsolation(lockOptions);
         try
         {
             return pipeline.Execute(FileLock.Acquire, lockOptions);
@@ -34,14 +33,13 @@ public static class Isolation
         CancellationToken cancellationToken
     )
     {
-        var lockOptions = LockOptions.FromScriptIsolationOptionsOrNull(scriptIsolationOptions);
+        var lockOptions = PrepareLockOptions(scriptIsolationOptions);
         if (lockOptions is null)
         {
             return new NoLock();
         }
 
         var pipeline = lockOptions.BuildLockAcquisitionPipeline();
-        LogIsolation(lockOptions);
         try
         {
             return await pipeline.ExecuteAsync(static (o, _) => ValueTask.FromResult(FileLock.Acquire(o)), lockOptions, cancellationToken);
@@ -51,6 +49,57 @@ public static class Isolation
             LockRejectedException.Throw(exception);
             throw; // Satisfy the compiler
         }
+    }
+
+    static LockOptions? PrepareLockOptions(CommonOptions.ScriptIsolationOptions scriptIsolationOptions)
+    {
+        var lockOptions = LockOptions.FromScriptIsolationOptionsOrNull(scriptIsolationOptions);
+
+        if (lockOptions is null)
+        {
+            return null;
+        }
+
+        LogIsolation(lockOptions);
+
+        if (lockOptions.IsFullySupported)
+        {
+            return lockOptions;
+        }
+
+        var promoteToExclusiveLock = scriptIsolationOptions.PromoteToExclusiveLockWhenSharedLockUnavailable;
+
+        if (lockOptions.IsSupported)
+        {
+            // Requested Exclusive Lock
+            if (!promoteToExclusiveLock)
+            {
+                // Warn that other scripts might be running concurrently
+                Log.Warn($"Will acquire {lockOptions.Type} lock, but may run concurrently with other scripts requesting a shared lock");
+            }
+
+            return lockOptions;
+        }
+
+        if (lockOptions.LockFile.Supports(LockType.Exclusive))
+        {
+            if (promoteToExclusiveLock)
+            {
+                lockOptions = lockOptions with
+                {
+                    Type = LockType.Exclusive
+                };
+                Log.Warn($"Requested {LockType.Shared} lock is unavailable. Will acquire {lockOptions.Type} lock");
+                return lockOptions;
+            }
+
+            Log.Warn($"Requested {lockOptions.Type} lock is unavailable. No lock will be acquired. Running without any isolation.");
+            return null;
+        }
+
+        Log.Warn("Unable to support any script isolation. Running without any isolation.");
+
+        return null;
     }
 
     static void LogIsolation(LockOptions lockOptions)
