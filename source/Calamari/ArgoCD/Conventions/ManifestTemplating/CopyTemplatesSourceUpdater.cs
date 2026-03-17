@@ -6,7 +6,6 @@ using Calamari.ArgoCD.Domain;
 using Calamari.Common.Plumbing.Extensions;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
-using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.ArgoCD.Conventions.ManifestTemplating;
 
@@ -17,7 +16,7 @@ public class CopyTemplatesSourceUpdater : ISourceUpdater
     readonly ICalamariFileSystem fileSystem;
     readonly bool purgeOutputDirectory;
 
-    readonly string[] excludePatterns = [".git"];
+    readonly string[] foldersExcludedFromPurge = [".git"];
 
     public CopyTemplatesSourceUpdater(IPackageRelativeFile[] packageFiles, ILog log, ICalamariFileSystem fileSystem, bool purgeOutputDirectory)
     {
@@ -37,13 +36,13 @@ public class CopyTemplatesSourceUpdater : ISourceUpdater
 
         var workingDirectoryPath = Path.Combine(workingDirectory, outputPath);
 
-        var deletedFiles = new List<string>();
+        var purgedFiles = new List<string>();
         if (purgeOutputDirectory)
         {
-            deletedFiles.AddRange(PurgeFilesIn(workingDirectoryPath));
+            //deleted files must be relative to workingDirectory
+            var relativePathPurgedFiles = PurgeFilesIn(workingDirectoryPath).Select(f => Path.GetRelativePath(workingDirectoryPath, f)).ToList();
+            purgedFiles.AddRange(relativePathPurgedFiles);
         }
-        //deleted files must be relative to workingDirectory
-        deletedFiles = deletedFiles.Select(f => Path.GetRelativePath(workingDirectoryPath, f)).ToList();
         
         var filesToCopy = packageFiles.Select(f => new FileCopySpecification(f, workingDirectory, outputPath)).ToList();
         CopyFiles(filesToCopy);
@@ -53,7 +52,7 @@ public class CopyTemplatesSourceUpdater : ISourceUpdater
                                                                      f.DestinationRelativePath.Replace('\\', '/'),
                                                                      HashCalculator.Hash(f.DestinationAbsolutePath)))
                                     .ToList();
-        return new FileUpdateResult([], fileHashes, deletedFiles.ToArray());
+        return new FileUpdateResult([], fileHashes, purgedFiles.ToArray());
     }
     
     bool TryCalculateOutputPath(ApplicationSource sourceToUpdate, out string outputPath)
@@ -85,20 +84,8 @@ public class CopyTemplatesSourceUpdater : ISourceUpdater
     string[] PurgeFilesIn(string outputDirectory)
     {
         log.Info($"Removing files recursively from {outputDirectory}");
-        //TODO(tmm): Knowing we're in a git repository is a bit of a smell :(
-        // var gitDir = Path.Combine(cleansedSubPath, ".git");
-        //
-        // var filesToRemove = fileSystem.EnumerateFilesRecursively(cleansedSubPath)
-        //                               .Where(f => !f.StartsWith(gitDir))
-        //                               .ToArray();
         
-        
-        var excludedPaths = excludePatterns.Select(ep =>
-                                                   {
-                                                       var result = Path.Combine(outputDirectory, ep);
-                                                       log.Info($"Deleting '{result}'");
-                                                       return result;
-                                                   }).ToList();
+        var excludedPaths = foldersExcludedFromPurge.Select(excludedFolder => Path.Combine(outputDirectory, excludedFolder)).ToList();
 
         var filesToRemove = fileSystem.EnumerateFilesRecursively(outputDirectory)
                                      .Where(f => !excludedPaths.Any(f.StartsWith))

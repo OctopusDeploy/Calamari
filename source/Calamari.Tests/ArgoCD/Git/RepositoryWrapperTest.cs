@@ -230,6 +230,29 @@ namespace Calamari.Tests.ArgoCD.Git
                      .WithMessage("*Rebase conflict*");
         }
 
+        [Test]
+        public async Task CanPushWithPathSeparators()
+        {
+            var subDirName = "subDir";
+            string filename = Path.Combine(subDirName, "newFile.txt");
+            string fileContents = "Lorem ipsum dolor sit amet";
+            var subDirPath = Path.Combine(RepositoryRootPath, subDirName); 
+            Directory.CreateDirectory(subDirPath);
+            File.WriteAllText(Path.Combine(RepositoryRootPath, filename), fileContents);
+            
+            repository.AddFiles(new[] { filename });
+            repository.CommitChanges("Summary Message", "A file has changed").Should().BeTrue();
+            await repository.PushChanges(false,
+                                         "Summary Message",
+                                         "A file has changed",
+                                         branchName,
+                                         CancellationToken.None);
+
+            //ensure the remote contains the file
+            var originFileContent = bareOrigin.ReadFileFromBranch(branchName, filename);
+            originFileContent.Should().Be(fileContents);
+        }
+
         string CloneOrigin()
         {
             var subPath = Guid.NewGuid().ToString();
