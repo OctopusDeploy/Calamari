@@ -46,7 +46,7 @@ public class CopyTemplatesSourceUpdater : ISourceUpdater
                                                                      f.DestinationRelativePath.Replace('\\', '/'),
                                                                      HashCalculator.Hash(f.DestinationAbsolutePath)))
                                     .ToList();
-        return new FileUpdateResult([], fileHashes, purgedFiles.Select(pf => Path.GetRelativePath(pf, outputPath)).ToArray());
+        return new FileUpdateResult([], fileHashes, purgedFiles.Select(pf => Path.GetRelativePath(workingDirectory, pf)).ToArray());
     }
     
     bool TryCalculateOutputPath(ApplicationSource sourceToUpdate, out string outputPath)
