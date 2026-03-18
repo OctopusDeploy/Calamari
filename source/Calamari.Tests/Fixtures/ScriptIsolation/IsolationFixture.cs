@@ -252,5 +252,107 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             stopwatch.Elapsed.Should().BeLessThan(TimeSpan.FromSeconds(10),
                 because: "EnforceAsync should stop retrying once the timeout elapses");
         }
+
+        // -------------------------------------------------------------------------
+        // ResolveLockOptions tests
+        // -------------------------------------------------------------------------
+
+        // Builds a LockOptions with a LockDirectory that has the given capability.
+        // Uses tempDir as the directory path so the path exists on disk.
+        static LockOptions MakeLockOptions(LockType type, LockCapability capability, string dirPath)
+        {
+            var dir = new LockDirectory(new DirectoryInfo(dirPath), capability);
+            var lockFile = dir.GetLockFile("ScriptIsolation.TestMutex.lock");
+            return new LockOptions(
+                Type: type,
+                Name: "TestMutex",
+                LockFile: lockFile,
+                Timeout: TimeSpan.FromMinutes(1));
+        }
+
+        [Test]
+        public void ResolveLockOptions_ReturnsOriginal_WhenFullySupported()
+        {
+            // Supported capability + Exclusive → IsFullySupported = true → returned unchanged
+            var opts = MakeLockOptions(LockType.Exclusive, LockCapability.Supported, tempDir);
+
+            var result = Isolation.ResolveLockOptions(opts, promoteToExclusiveLock: false);
+
+            result.Should().BeSameAs(opts);
+        }
+
+        [Test]
+        public void ResolveLockOptions_ReturnsOriginal_WhenExclusiveOnlyAndExclusiveRequested_WithPromoteFalse()
+        {
+            // ExclusiveOnly + Exclusive → IsSupported = true (Exclusive is supported) → returned unchanged
+            var opts = MakeLockOptions(LockType.Exclusive, LockCapability.ExclusiveOnly, tempDir);
+
+            var result = Isolation.ResolveLockOptions(opts, promoteToExclusiveLock: false);
+
+            result.Should().BeSameAs(opts);
+        }
+
+        [Test]
+        public void ResolveLockOptions_ReturnsOriginal_WhenExclusiveOnlyAndExclusiveRequested_WithPromoteTrue()
+        {
+            // ExclusiveOnly + Exclusive → IsSupported = true → returned unchanged regardless of promote flag
+            var opts = MakeLockOptions(LockType.Exclusive, LockCapability.ExclusiveOnly, tempDir);
+
+            var result = Isolation.ResolveLockOptions(opts, promoteToExclusiveLock: true);
+
+            result.Should().BeSameAs(opts);
+        }
+
+        [Test]
+        public void ResolveLockOptions_PromotesToExclusive_WhenExclusiveOnlyAndSharedRequested_AndPromoteTrue()
+        {
+            // ExclusiveOnly + Shared → IsSupported = false; Supports(Exclusive) = true; promote = true
+            // → returns lock options with Type promoted to Exclusive
+            var opts = MakeLockOptions(LockType.Shared, LockCapability.ExclusiveOnly, tempDir);
+
+            var result = Isolation.ResolveLockOptions(opts, promoteToExclusiveLock: true);
+
+            result.Should().NotBeNull();
+            result!.Type.Should().Be(LockType.Exclusive,
+                because: "shared lock should be promoted to exclusive when promoteToExclusiveLock is true");
+        }
+
+        [Test]
+        public void ResolveLockOptions_ReturnsNull_WhenExclusiveOnlyAndSharedRequested_AndPromoteFalse()
+        {
+            // ExclusiveOnly + Shared → IsSupported = false; Supports(Exclusive) = true; promote = false
+            // → returns null (no lock acquired)
+            var opts = MakeLockOptions(LockType.Shared, LockCapability.ExclusiveOnly, tempDir);
+
+            var result = Isolation.ResolveLockOptions(opts, promoteToExclusiveLock: false);
+
+            result.Should().BeNull(
+                because: "shared lock is unavailable and promotion is disabled, so no lock should be acquired");
+        }
+
+        [Test]
+        public void ResolveLockOptions_ReturnsNull_WhenUnsupportedAndExclusiveRequested()
+        {
+            // Unsupported + Exclusive → IsFullySupported = false, IsSupported = false,
+            // Supports(Exclusive) = false → returns null
+            var opts = MakeLockOptions(LockType.Exclusive, LockCapability.Unsupported, tempDir);
+
+            var result = Isolation.ResolveLockOptions(opts, promoteToExclusiveLock: false);
+
+            result.Should().BeNull(
+                because: "no locking is supported at all so no lock should be acquired");
+        }
+
+        [Test]
+        public void ResolveLockOptions_ReturnsNull_WhenUnsupportedAndSharedRequested()
+        {
+            // Unsupported + Shared → same as above
+            var opts = MakeLockOptions(LockType.Shared, LockCapability.Unsupported, tempDir);
+
+            var result = Isolation.ResolveLockOptions(opts, promoteToExclusiveLock: true);
+
+            result.Should().BeNull(
+                because: "no locking is supported at all so no lock should be acquired even with promote=true");
+        }
     }
 }
