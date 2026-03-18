@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using Calamari.ArgoCD;
 using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Models;
@@ -7,23 +9,23 @@ using Calamari.Testing.Helpers;
 using FluentAssertions;
 using NUnit.Framework;
 
-namespace Calamari.Tests.ArgoCD
+namespace Calamari.Tests.ArgoCD;
+
+[TestFixture]
+public class StrategicMergePatchImageReplacerTests
 {
-    [TestFixture]
-    public class StrategicMergePatchImageReplacerTests
+    readonly List<ContainerImageReferenceAndHelmReference> imagesToUpdate = new()
     {
-        readonly List<ContainerImageReferenceAndHelmReference> imagesToUpdate = new()
-        {
-            new(ContainerImageReference.FromReferenceString("nginx:1.25", ArgoCDConstants.DefaultContainerRegistry)),
-            new(ContainerImageReference.FromReferenceString("busybox:stable", "my-registry.com")),
-        };
+        new ContainerImageReferenceAndHelmReference(ContainerImageReference.FromReferenceString("nginx:1.25", ArgoCDConstants.DefaultContainerRegistry)),
+        new ContainerImageReferenceAndHelmReference(ContainerImageReference.FromReferenceString("my-registry.com/busybox:stable", ArgoCDConstants.DefaultContainerRegistry))
+    };
 
-        ILog log = new InMemoryLog();
+    readonly ILog log = new InMemoryLog();
 
-        [Test]
-        public void UpdateImages_WithSimpleDeploymentPatch_UpdatesContainerImage()
-        {
-            const string inputYaml = @"
+    [Test]
+    public void UpdateImages_WithSimpleDeploymentPatch_UpdatesContainerImage()
+    {
+        const string inputYaml = @"
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -38,7 +40,7 @@ spec:
         - containerPort: 80
 ";
 
-            const string expectedYaml = @"
+        const string expectedYaml = @"
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -53,20 +55,20 @@ spec:
         - containerPort: 80
 ";
 
-            var imageReplacer = new StrategicMergePatchImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
+        var imageReplacer = new StrategicMergePatchImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
 
-            var result = imageReplacer.UpdateImages(imagesToUpdate);
+        var result = imageReplacer.UpdateImages(imagesToUpdate);
 
-            result.UpdatedContents.Should().NotBeNull();
-            result.UpdatedContents.Trim().Should().Be(expectedYaml.Trim());
-            result.UpdatedImageReferences.Count.Should().Be(1);
-            result.UpdatedImageReferences.Should().ContainSingle(r => r == "nginx:1.25");
-        }
+        result.UpdatedContents.Should().NotBeNull();
+        result.UpdatedContents.Trim().Should().Be(expectedYaml.Trim());
+        result.UpdatedImageReferences.Count.Should().Be(1);
+        result.UpdatedImageReferences.Should().ContainSingle(r => r == "nginx:1.25");
+    }
 
-        [Test]
-        public void UpdateImages_WithInitContainers_UpdatesInitContainerImage()
-        {
-            const string inputYaml = @"
+    [Test]
+    public void UpdateImages_WithInitContainers_UpdatesInitContainerImage()
+    {
+        const string inputYaml = @"
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -82,8 +84,7 @@ spec:
         image: app:latest
 ";
 
-            const string expectedYaml = @"
-apiVersion: apps/v1
+        const string expectedYaml = @"apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: app-deployment
@@ -98,20 +99,20 @@ spec:
         image: app:latest
 ";
 
-            var imageReplacer = new StrategicMergePatchImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
+        var imageReplacer = new StrategicMergePatchImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
 
-            var result = imageReplacer.UpdateImages(imagesToUpdate);
+        var result = imageReplacer.UpdateImages(imagesToUpdate);
 
-            result.UpdatedContents.Should().NotBeNull();
-            result.UpdatedContents.Trim().Should().Be(expectedYaml.Trim());
-            result.UpdatedImageReferences.Count.Should().Be(1);
-            result.UpdatedImageReferences.Should().ContainSingle(r => r == "busybox:stable");
-        }
+        result.UpdatedContents.Should().NotBeNull();
+        result.UpdatedContents.Trim().Should().Be(expectedYaml.Trim());
+        result.UpdatedImageReferences.Count.Should().Be(1);
+        result.UpdatedImageReferences.Should().ContainSingle(r => r == "busybox:stable");
+    }
 
-        [Test]
-        public void UpdateImages_WithMultipleContainers_UpdatesMatchingImages()
-        {
-            const string inputYaml = @"
+    [Test]
+    public void UpdateImages_WithMultipleContainers_UpdatesMatchingImages()
+    {
+        const string inputYaml = @"
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -128,7 +129,7 @@ spec:
         image: redis:6.0
 ";
 
-            const string expectedYaml = @"
+        const string expectedYaml = @"
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -145,21 +146,21 @@ spec:
         image: redis:6.0
 ";
 
-            var imageReplacer = new StrategicMergePatchImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
+        var imageReplacer = new StrategicMergePatchImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
 
-            var result = imageReplacer.UpdateImages(imagesToUpdate);
+        var result = imageReplacer.UpdateImages(imagesToUpdate);
 
-            result.UpdatedContents.Should().NotBeNull();
-            result.UpdatedContents.Trim().Should().Be(expectedYaml.Trim());
-            result.UpdatedImageReferences.Count.Should().Be(2);
-            result.UpdatedImageReferences.Should().Contain("nginx:1.25");
-            result.UpdatedImageReferences.Should().Contain("busybox:stable");
-        }
+        result.UpdatedContents.Should().NotBeNull();
+        result.UpdatedContents.Trim().Should().Be(expectedYaml.Trim());
+        result.UpdatedImageReferences.Count.Should().Be(2);
+        result.UpdatedImageReferences.Should().Contain("nginx:1.25");
+        result.UpdatedImageReferences.Should().Contain("busybox:stable");
+    }
 
-        [Test]
-        public void UpdateImages_WithNestedContainerSpecs_UpdatesNestedImages()
-        {
-            const string inputYaml = @"
+    [Test]
+    public void UpdateImages_WithNestedContainerSpecs_UpdatesNestedImages()
+    {
+        const string inputYaml = @"
 apiVersion: v1
 kind: Pod
 metadata:
@@ -177,20 +178,20 @@ spec:
               image: my-registry.com/busybox:1.0
 ";
 
-            var imageReplacer = new StrategicMergePatchImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
+        var imageReplacer = new StrategicMergePatchImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
 
-            var result = imageReplacer.UpdateImages(imagesToUpdate);
+        var result = imageReplacer.UpdateImages(imagesToUpdate);
 
-            result.UpdatedContents.Should().NotBeNull();
-            result.UpdatedImageReferences.Count.Should().Be(2);
-            result.UpdatedImageReferences.Should().Contain("nginx:1.25");
-            result.UpdatedImageReferences.Should().Contain("busybox:stable");
-        }
+        result.UpdatedContents.Should().NotBeNull();
+        result.UpdatedImageReferences.Count.Should().Be(2);
+        result.UpdatedImageReferences.Should().Contain("nginx:1.25");
+        result.UpdatedImageReferences.Should().Contain("busybox:stable");
+    }
 
-        [Test]
-        public void UpdateImages_WithMultipleDocuments_UpdatesAllDocuments()
-        {
-            const string inputYaml = @"
+    [Test]
+    public void UpdateImages_WithMultipleDocuments_UpdatesAllDocuments()
+    {
+        const string inputYaml = @"
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -212,20 +213,20 @@ spec:
     image: my-registry.com/busybox:1.0
 ";
 
-            var imageReplacer = new StrategicMergePatchImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
+        var imageReplacer = new StrategicMergePatchImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
 
-            var result = imageReplacer.UpdateImages(imagesToUpdate);
+        var result = imageReplacer.UpdateImages(imagesToUpdate);
 
-            result.UpdatedContents.Should().NotBeNull();
-            result.UpdatedImageReferences.Count.Should().Be(2);
-            result.UpdatedImageReferences.Should().Contain("nginx:1.25");
-            result.UpdatedImageReferences.Should().Contain("busybox:stable");
-        }
+        result.UpdatedContents.Should().NotBeNull();
+        result.UpdatedImageReferences.Count.Should().Be(2);
+        result.UpdatedImageReferences.Should().Contain("nginx:1.25");
+        result.UpdatedImageReferences.Should().Contain("busybox:stable");
+    }
 
-        [Test]
-        public void UpdateImages_WithNoMatchingImages_ReturnsNoChanges()
-        {
-            const string inputYaml = @"
+    [Test]
+    public void UpdateImages_WithNoMatchingImages_ReturnsNoChanges()
+    {
+        const string inputYaml = @"
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -238,44 +239,44 @@ spec:
         image: redis:6.0
 ";
 
-            var imageReplacer = new StrategicMergePatchImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
+        var imageReplacer = new StrategicMergePatchImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
 
-            var result = imageReplacer.UpdateImages(imagesToUpdate);
+        var result = imageReplacer.UpdateImages(imagesToUpdate);
 
-            result.UpdatedContents.Should().Be(inputYaml);
-            result.UpdatedImageReferences.Should().BeEmpty();
-        }
+        result.UpdatedContents.Should().Be(inputYaml);
+        result.UpdatedImageReferences.Should().BeEmpty();
+    }
 
-        [Test]
-        public void UpdateImages_WithEmptyContent_ReturnsNoChanges()
-        {
-            const string inputYaml = "";
+    [Test]
+    public void UpdateImages_WithEmptyContent_ReturnsNoChanges()
+    {
+        const string inputYaml = "";
 
-            var imageReplacer = new StrategicMergePatchImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
+        var imageReplacer = new StrategicMergePatchImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
 
-            var result = imageReplacer.UpdateImages(imagesToUpdate);
+        var result = imageReplacer.UpdateImages(imagesToUpdate);
 
-            result.UpdatedContents.Should().Be(inputYaml);
-            result.UpdatedImageReferences.Should().BeEmpty();
-        }
+        result.UpdatedContents.Should().Be(inputYaml);
+        result.UpdatedImageReferences.Should().BeEmpty();
+    }
 
-        [Test]
-        public void UpdateImages_WithInvalidYaml_ReturnsNoChanges()
-        {
-            const string inputYaml = @"invalid: yaml: content: [unclosed";
+    [Test]
+    public void UpdateImages_WithInvalidYaml_ReturnsNoChanges()
+    {
+        const string inputYaml = @"invalid: yaml: content: [unclosed";
 
-            var imageReplacer = new StrategicMergePatchImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
+        var imageReplacer = new StrategicMergePatchImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
 
-            var result = imageReplacer.UpdateImages(imagesToUpdate);
+        var result = imageReplacer.UpdateImages(imagesToUpdate);
 
-            result.UpdatedContents.Should().Be(inputYaml);
-            result.UpdatedImageReferences.Should().BeEmpty();
-        }
+        result.UpdatedContents.Should().Be(inputYaml);
+        result.UpdatedImageReferences.Should().BeEmpty();
+    }
 
-        [Test]
-        public void UpdateImages_WithImageAlreadyUpToDate_ReturnsNoChanges()
-        {
-            const string inputYaml = @"
+    [Test]
+    public void UpdateImages_WithImageAlreadyUpToDate_ReturnsNoChanges()
+    {
+        const string inputYaml = @"
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -288,12 +289,11 @@ spec:
         image: nginx:1.25
 ";
 
-            var imageReplacer = new StrategicMergePatchImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
+        var imageReplacer = new StrategicMergePatchImageReplacer(inputYaml, ArgoCDConstants.DefaultContainerRegistry, log);
 
-            var result = imageReplacer.UpdateImages(imagesToUpdate);
+        var result = imageReplacer.UpdateImages(imagesToUpdate);
 
-            result.UpdatedContents.Should().Be(inputYaml);
-            result.UpdatedImageReferences.Should().BeEmpty();
-        }
+        result.UpdatedContents.Should().Be(inputYaml);
+        result.UpdatedImageReferences.Should().BeEmpty();
     }
 }

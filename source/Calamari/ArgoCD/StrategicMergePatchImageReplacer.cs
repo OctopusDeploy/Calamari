@@ -224,11 +224,22 @@ namespace Calamari.ArgoCD
                 using var writer = new StringWriter();
                 var tempStream = new YamlStream(doc);
                 tempStream.Save(writer, false);
-                var serialized = writer.ToString().TrimEnd();
+                var serialized = writer.ToString();
+
+                // Remove any trailing whitespace and document separators
+                serialized = serialized.TrimEnd();
+                if (serialized.EndsWith("..."))
+                {
+                    serialized = serialized.Substring(0, serialized.Length - 3).TrimEnd();
+                }
+
                 serializedDocs.Add(serialized);
             }
 
-            return string.Join($"{newLine}---{newLine}", serializedDocs);
+            // For single document, return as-is. For multiple documents, join with separators.
+            return documents.Count == 1
+                ? serializedDocs[0]
+                : string.Join($"{newLine}---{newLine}", serializedDocs);
         }
 
         record ImageReferenceMatch(ContainerImageReference Reference, ContainerImageComparison Comparison);
