@@ -25,12 +25,22 @@ public sealed record LockDirectory(
     }
 
     public static LockDirectory GetLockDirectory(string candidatePath)
+        => GetLockDirectory(candidatePath, MountedDrives.Get());
+
+    internal static LockDirectory GetLockDirectory(
+        string candidatePath,
+        MountedDrives mountedDrives,
+        Func<LockOptions, ILockHandle>? acquireDelegate = null)
     {
-        var mountedDrives = MountedDrives.Get();
+        CachedDriveInfo? TryGetDrive(string path)
+        {
+            try { return mountedDrives.GetAssociatedDrive(path); }
+            catch (DirectoryNotFoundException) { return null; }
+        }
 
-        var candidateDrive = mountedDrives.GetAssociatedDrive(candidatePath);
+        var candidateDrive = TryGetDrive(candidatePath);
 
-        if (candidateDrive.LockSupport == LockCapability.Supported)
+        if (candidateDrive?.LockSupport == LockCapability.Supported)
         {
             return Supported(candidatePath);
         }
@@ -41,14 +51,14 @@ public sealed record LockDirectory(
         var tempCandidates = GetTemporaryCandidates(candidatePath);
         foreach (var tempPath in tempCandidates)
         {
-            var tempDrive = mountedDrives.GetAssociatedDrive(tempPath)
-                                          .DetectLockSupport(tempPath);
-            if (tempDrive.LockSupport == LockCapability.Supported)
+            var tempDrive = TryGetDrive(tempPath)
+                                ?.DetectLockSupport(tempPath, acquireDelegate ?? FileLock.Acquire);
+            if (tempDrive?.LockSupport == LockCapability.Supported)
             {
                 return Supported(tempPath);
             }
 
-            if (tempDrive.LockSupport == LockCapability.ExclusiveOnly)
+            if (tempDrive?.LockSupport == LockCapability.ExclusiveOnly)
             {
                 // Catch the first temp path that supports exclusive locking
                 tempPathExclusiveOnly ??= tempPath;
@@ -56,8 +66,9 @@ public sealed record LockDirectory(
         }
 
         // Go back to the original drive and check its support
-        candidateDrive = candidateDrive.DetectLockSupport(candidatePath);
-        if (candidateDrive.LockSupport == LockCapability.Supported)
+        var detectedCandidateDrive = candidateDrive
+            ?.DetectLockSupport(candidatePath, acquireDelegate ?? FileLock.Acquire);
+        if (detectedCandidateDrive?.LockSupport == LockCapability.Supported)
         {
             return Supported(candidatePath);
         }
