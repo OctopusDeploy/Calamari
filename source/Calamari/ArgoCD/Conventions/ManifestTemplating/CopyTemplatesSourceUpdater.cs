@@ -41,11 +41,9 @@ public class CopyTemplatesSourceUpdater : ISourceUpdater
         var filesToCopy = packageFiles.Select(f => new FileCopySpecification(f, workingDirectory, outputPath)).ToList();
         CopyFiles(filesToCopy);
         
-        var fileHashes = filesToCopy.Select(f => new FilePathContent(
-                                                                     // Replace \ with / so that Calamari running on windows doesn't cause issues when we send back to server
-                                                                     f.DestinationRelativePath.Replace('\\', '/'),
-                                                                     HashCalculator.Hash(f.DestinationAbsolutePath)))
+        var fileHashes = filesToCopy.Select(f => new FilePathContent(f.DestinationRelativePath, HashCalculator.Hash(f.DestinationAbsolutePath)))
                                     .ToList();
+        
         return new FileUpdateResult([], fileHashes, purgedFiles.Select(pf => Path.GetRelativePath(workingDirectory, pf)).ToArray());
     }
     

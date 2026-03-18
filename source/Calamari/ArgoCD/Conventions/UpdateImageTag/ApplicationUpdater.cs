@@ -82,13 +82,14 @@ public class ApplicationUpdater
                 : "Nothing to update for Application {0}";
 
             log.InfoFormat(message, linkifiedAppName);
-
+            
             return new ProcessApplicationResult(
                                                 application.GatewayId,
                                                 applicationName.ToApplicationName(),
                                                 applicationFromYaml.Spec.Sources.Count,
                                                 applicationFromYaml.Spec.Sources.Count(s => deploymentScope.Matches(ScopingAnnotationReader.GetScopeForApplicationSource(s.Name.ToApplicationSourceName(), applicationFromYaml.Metadata.Annotations, containsMultipleSources))),
-                                                updatedSourcesResults.Select(r => new UpdatedSourceDetail(r.Updated.PushResult!.CommitSha, r.applicationSource.Index, [], r.Updated.PatchedFiles)).ToList(),
+                                                //OctopusServer requires the patched file paths to have "/", not "\" - this ensures windows-based workers report posix-style paths. Note these are relative paths, so do not need to handle drive letter.
+                                                updatedSourcesResults.Select(r => new UpdatedSourceDetail(r.Updated.PushResult!.CommitSha, r.applicationSource.Index, [], r.Updated.PatchedFiles.Select(pf => new FilePathContent(pf.FilePath.Replace("\\", "/"), pf.Content)).ToList())).ToList(),
                                                 updatedSourcesResults.SelectMany(r => r.Updated.ImagesUpdated).ToHashSet(),
                                                 updatedSourcesResults.Select(r => r.applicationSource.Source.OriginalRepoUrl).ToHashSet());
         }
