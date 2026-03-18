@@ -2,6 +2,7 @@
 using System.IO;
 using System.Reflection;
 using Calamari.Common.Commands;
+using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing.Extensions;
 using Octostache.Templates;
 
@@ -15,6 +16,12 @@ namespace Calamari.Common.Plumbing.Logging
             {
                 log.Error(ex.Message);
                 return ExitStatus.CommandExceptionError;
+            }
+
+            if (ex is CommandLineException)
+            {
+                log.Error(ex.Message);
+                return ExitStatus.OtherError;
             }
 
             if (ex is RecursiveDefinitionException)

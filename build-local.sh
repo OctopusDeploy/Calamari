@@ -2,6 +2,7 @@
 
 auto_accept=""
 target_runtime=""
+build_config=""
 
 while test $# -gt 0; do
   case "$1" in
@@ -15,6 +16,9 @@ while test $# -gt 0; do
   --runtime)
     target_runtime=$2
     shift
+    ;;
+  --debug)
+    build_config='-c Debug'
     ;;
   esac
   shift
@@ -34,11 +38,11 @@ StartMessage="${Green}\
 ║    * Create NuGet packages for the various runtimes in parallel                                ║
 ║    * Skip creating .Tests NuGet packages                                                       ║
 ║    * Set the CalamariVersion property in Octopus.Server.csproj                                 ║
-║                                                                                                ║ 
+║                                                                                                ║
 ║  This script is intended to only be run locally and not in CI.                                 ║
 ║                                                                                                ║
 ║  If something unexpected is happening in your build or Calamari changes you may want to run    ║
-║  the full build by running ./build.sh and check again as something in the optimizations here  ║
+║  the full build by running ./build.sh and check again as something in the optimizations here   ║
 ║                                                                                                ║
 ║  might have caused an issue.                                                                   ║
 ╬════════════════════════════════════════════════════════════════════════════════════════════════╬\
@@ -49,7 +53,7 @@ WarningMessage="${Yellow}\
 ╬════════════════════════════════════════════════════════╬
 ║ WARNING:                                               ║
 ║ Building Calamari on a non-windows machine will result ║
-║ in Calmari and Calamari.Cloud nuget packages being     ║
+║ in Calamari and Calamari.Cloud nuget packages being    ║
 ║ built against net8.0. This means that some             ║
 ║ steps may not work as expected because they require a  ║
 ║ .Net Framework compatible Calamari Nuget Package.      ║
@@ -63,7 +67,7 @@ RuntimeSpecifiedWarning="${Yellow}\
 ║ Limiting to a specific Runtime will cause              ║
 ║ Consolidation Tests to be excluded from execution      ║
 ║ because they expect all Calamari Flavours              ║
-║ for the local platoform to have been built and         ║
+║ for the local platform to have been built and          ║
 ║ consolidated.                                          ║
 ╬════════════════════════════════════════════════════════╬\
 ${NoColour}"
@@ -86,7 +90,7 @@ fi
 
 if [ -z "$auto_accept" ]; then
   read -p "Are you sure you want to continue? (Y,n): " option
-  
+
   if ! [[ -z "$option" ]] && ! [[ "$option" == 'Y' ]] && ! [[ "$option" == 'y' ]]
   then
       echo "Build Cancelled."
@@ -111,6 +115,6 @@ export OCTOVERSION_MajorMinorPatch="$numericVersion"
 export OCTOVERSION_PreReleaseTagWithDash="-$sanitizedBranch"
 export OCTOVERSION_FullSemVer="$numericVersion-$sanitizedBranch"
 
-./build.sh -BuildVerbosity Minimal -Verbosity Minimal -AppendTimestamp -SetOctopusServerVersion -TargetRuntime "$target_runtime"
+./build.sh -BuildVerbosity Minimal -Verbosity Minimal -AppendTimestamp -SetOctopusServerVersion -TargetRuntime "$target_runtime" $build_config
 
 echo -e "$FinishMessage"

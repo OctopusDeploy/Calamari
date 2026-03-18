@@ -4,6 +4,7 @@ using System.Linq;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Common.Plumbing.Variables;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Octopus.Versioning.Semver;
@@ -16,8 +17,9 @@ namespace Calamari.Kubernetes.Integration
             ILog log,
             ICommandLineRunner commandLineRunner,
             string workingDirectory,
-            Dictionary<string, string> environmentVars)
-            : base(log, commandLineRunner, workingDirectory, environmentVars)
+            Dictionary<string, string> environmentVars,
+            IVariables variables)
+            : base(log, commandLineRunner, workingDirectory, environmentVars, variables)
         {
         }
 

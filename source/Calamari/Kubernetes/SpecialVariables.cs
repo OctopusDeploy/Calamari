@@ -18,6 +18,7 @@ namespace Calamari.Kubernetes
         public const string OutputKubeConfig = "Octopus.Action.Kubernetes.OutputKubeConfig";
         public const string CustomKubectlExecutable = "Octopus.Action.Kubernetes.CustomKubectlExecutable";
         public const string ResourceStatusCheck = "Octopus.Action.Kubernetes.ResourceStatusCheck";
+        public const string LogCliOutputAsInfo = "Octopus.Action.Kubernetes.LogCliOutputAsInfo";
         public const string DeploymentStyle = "Octopus.Action.KubernetesContainers.DeploymentStyle";
         public const string DeploymentWait = "Octopus.Action.KubernetesContainers.DeploymentWait";
         public const string CustomResourceYamlFileName = "Octopus.Action.KubernetesContainers.CustomResourceYamlFileName";
@@ -122,6 +123,7 @@ namespace Calamari.Kubernetes
 
                                 public string CommitSha => $"{qualifiedPrefix}.CommitSha";
                                 public string ShortSha => $"{qualifiedPrefix}.ShortSha";
+                                public string RepositoryUrl => $"{qualifiedPrefix}.RepositoryUrl";
                                 public string PullRequestTitle => $"{qualifiedPrefix}.PullRequest.Title";
                                 public string PullRequestNumber => $"{qualifiedPrefix}.PullRequest.Number";
                                 public string PullRequestUrl => $"{qualifiedPrefix}.PullRequest.Url";
