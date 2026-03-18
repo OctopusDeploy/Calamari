@@ -401,11 +401,10 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         }
 
         [Test]
-        public void GetLockDirectory_ReturnsFirstTempPathWithExclusiveOnly_WhenAllDetectToExclusiveOnly()
+        public void GetLockDirectory_ReturnsCandidatePath_WhenBothCandidateAndTempAreExclusiveOnly()
         {
-            // All drives (candidate and temp paths) are already-detected as ExclusiveOnly,
-            // so DetectLockSupport is a no-op throughout. The first temp path found should be
-            // returned, not the original candidate.
+            // When both the candidate and all temp paths offer the same ExclusiveOnly support,
+            // the temp directory gives no advantage. The candidate path should be returned.
             if (OperatingSystem.IsWindows())
             {
                 const string candidateRoot = @"C:\";
@@ -420,13 +419,13 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
                 var result = LockDirectory.GetLockDirectory(candidate, drives);
 
                 result.LockSupport.Should().Be(LockCapability.ExclusiveOnly);
-                result.DirectoryInfo.FullName.Should().StartWith(tempRoot,
-                    because: "the first ExclusiveOnly temp path should be preferred over the candidate");
+                result.DirectoryInfo.FullName.Should().Be(candidate,
+                    because: "the candidate path should be used when temp offers no better support");
             }
             else
             {
                 // On non-Windows there is a single drive root ("/") covering both the candidate
-                // and all temp paths. All are ExclusiveOnly — no detection is triggered.
+                // and all temp paths — all are ExclusiveOnly, no detection is triggered.
                 var drives = new MountedDrives([
                     DriveWithCapability("/", LockCapability.ExclusiveOnly)
                 ]);
@@ -434,9 +433,40 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
                 var result = LockDirectory.GetLockDirectory(CandidatePath, drives);
 
                 result.LockSupport.Should().Be(LockCapability.ExclusiveOnly);
-                result.DirectoryInfo.FullName.Should().NotBe(CandidatePath,
-                    because: "a temp path should be preferred over the original candidate");
+                result.DirectoryInfo.FullName.Should().Be(CandidatePath,
+                    because: "the candidate path should be used when temp offers no better support");
             }
+        }
+
+        [Test]
+        public void GetLockDirectory_ReturnsTempPath_WhenTempIsExclusiveOnlyAndCandidateIsUnsupported()
+        {
+            // The temp directory offers ExclusiveOnly support while the candidate drive is
+            // completely Unsupported. Here the temp path genuinely gives better support, so
+            // it should be preferred over the candidate.
+            if (!OperatingSystem.IsWindows())
+            {
+                // Non-Windows systems have a single root ("/") for all paths, making it
+                // impossible to assign different capabilities to the candidate vs temp paths
+                // in a pure unit test. The behaviour is verified by the Windows branch.
+                Assert.Pass("Covered by the Windows branch of this test.");
+                return;
+            }
+
+            const string candidateRoot = @"C:\";
+            const string tempRoot = @"D:\";
+            const string candidate = @"C:\Octopus\Tentacle";
+
+            var drives = new MountedDrives([
+                DriveWithCapability(candidateRoot, LockCapability.Unsupported),
+                DriveWithCapability(tempRoot,      LockCapability.ExclusiveOnly)
+            ]);
+
+            var result = LockDirectory.GetLockDirectory(candidate, drives);
+
+            result.LockSupport.Should().Be(LockCapability.ExclusiveOnly);
+            result.DirectoryInfo.FullName.Should().StartWith(tempRoot,
+                because: "the temp path should be used when it offers better support than the candidate");
         }
 
         [Test]

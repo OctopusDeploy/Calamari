@@ -73,6 +73,18 @@ public sealed record LockDirectory(
             return Supported(candidatePath);
         }
 
+        if (detectedCandidateDrive?.LockSupport == LockCapability.ExclusiveOnly)
+        {
+            // The candidate itself supports exclusive locking — the temp path offers no
+            // advantage, so stay on the candidate.
+            return new(
+                       DirectoryInfo: new DirectoryInfo(candidatePath),
+                       LockSupport: LockCapability.ExclusiveOnly
+                      );
+        }
+
+        // The candidate is Unsupported (or unknown). Only fall back to the temp path if
+        // it genuinely gives better support (ExclusiveOnly > Unsupported).
         if (tempPathExclusiveOnly is not null)
         {
             return new(
