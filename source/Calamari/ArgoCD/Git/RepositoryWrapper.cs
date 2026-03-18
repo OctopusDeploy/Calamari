@@ -84,8 +84,7 @@ namespace Calamari.ArgoCD.Git
 
         static string NormalizePath(string path)
         {
-            var separatorToReplace = Path.DirectorySeparatorChar == '/' ? '\\' : '/';
-            var normalized = path.Replace(separatorToReplace, Path.DirectorySeparatorChar);
+            var normalized = path.Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
             return normalized.StartsWith($".{Path.DirectorySeparatorChar}") ? normalized.Substring(2) : normalized;
         }
 
