@@ -62,12 +62,15 @@ public static class Isolation
 
         LogIsolation(lockOptions);
 
+        return ResolveLockOptions(lockOptions, scriptIsolationOptions.PromoteToExclusiveLockWhenSharedLockUnavailable);
+    }
+
+    internal static LockOptions? ResolveLockOptions(LockOptions lockOptions, bool promoteToExclusiveLock)
+    {
         if (lockOptions.IsFullySupported)
         {
             return lockOptions;
         }
-
-        var promoteToExclusiveLock = scriptIsolationOptions.PromoteToExclusiveLockWhenSharedLockUnavailable;
 
         if (lockOptions.IsSupported)
         {
