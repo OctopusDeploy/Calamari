@@ -84,9 +84,8 @@ namespace Calamari.ArgoCD.Git
 
         static string NormalizePath(string path)
         {
-            var separatorToReplace = Path.DirectorySeparatorChar == '/' ? '\\' : '/';
-            var normalized = path.Replace(separatorToReplace, Path.DirectorySeparatorChar);
-            return normalized.StartsWith($".{Path.DirectorySeparatorChar}") ? normalized.Substring(2) : normalized;
+            var normalized = path.Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            return normalized.StartsWith($".{Path.AltDirectorySeparatorChar}") ? normalized.Substring(2) : normalized;
         }
 
         public async Task<PushResult> PushChanges(bool requiresPullRequest,
@@ -145,6 +144,7 @@ namespace Calamari.ArgoCD.Git
             return new PullRequestPushResult(
                 commit.Sha,
                 commit.ShortSha(),
+                connection.Url.AbsoluteUri,
                 title,
                 uri,
                 number);
@@ -284,6 +284,7 @@ namespace Calamari.ArgoCD.Git
     public record PullRequestPushResult(
         string CommitSha,
         string ShortSha,
+        string RepositoryUri,
         string PullRequestTitle,
         string PullRequestUri,
         long PullRequestNumber) : PushResult(CommitSha, ShortSha);

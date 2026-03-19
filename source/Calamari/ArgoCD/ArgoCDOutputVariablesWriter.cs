@@ -38,6 +38,7 @@ namespace Calamari.ArgoCD
 
             if (pushResult is PullRequestPushResult prResult)
             {
+                log.SetOutputVariableButDoNotAddToVariables(appSourceVariables.RepositoryUrl, prResult.RepositoryUri);
                 log.SetOutputVariableButDoNotAddToVariables(appSourceVariables.PullRequestTitle, prResult.PullRequestTitle);
                 log.SetOutputVariableButDoNotAddToVariables(appSourceVariables.PullRequestUrl, prResult.PullRequestUri);
                 log.SetOutputVariableButDoNotAddToVariables(appSourceVariables.PullRequestNumber, prResult.PullRequestNumber.ToString(CultureInfo.InvariantCulture));

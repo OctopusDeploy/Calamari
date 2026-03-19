@@ -21,6 +21,7 @@ namespace Calamari.Tests.ArgoCD
         const string CommitSha = "1234567890abcdef1234567890abcdef12345678";
         const string ShortSha = "1234567";
 
+        const string RepositoryUrl = "https://github.com/org/repo";
         const string PrTitle = "Update ArgoCD manifests";
         const string PrUrl = "https://github.com/org/repo/pull/123";
         const long PrNumber = 123;
@@ -56,7 +57,12 @@ namespace Calamari.Tests.ArgoCD
         {
             // Arrange
             const int sourceIndex = 1;
-            var pullRequestPushResult = new PullRequestPushResult(CommitSha, ShortSha, PrTitle, PrUrl, PrNumber);
+            var pullRequestPushResult = new PullRequestPushResult(CommitSha,
+                                                                  ShortSha,
+                                                                  RepositoryUrl,
+                                                                  PrTitle,
+                                                                  PrUrl,
+                                                                  PrNumber);
 
             // Act
             writer.WritePushResultOutput(GatewayName, ApplicationName, sourceIndex, pullRequestPushResult);
@@ -77,7 +83,12 @@ namespace Calamari.Tests.ArgoCD
             const string shortSha2 = "abcdef1";
 
             var pushResult1 = new PushResult(CommitSha, ShortSha);
-            var pushResult2 = new PullRequestPushResult(commitSha2, shortSha2, PrTitle, PrUrl, PrNumber);
+            var pushResult2 = new PullRequestPushResult(commitSha2,
+                                                        shortSha2,
+                                                        RepositoryUrl,
+                                                        PrTitle,
+                                                        PrUrl,
+                                                        PrNumber);
 
             // Act
             writer.WritePushResultOutput(GatewayName, ApplicationName, 0, pushResult1);

@@ -43,7 +43,6 @@ public class CopyTemplatesSourceUpdater : ISourceUpdater
         
         var fileHashes = filesToCopy.Select(f => new FilePathContent(f.DestinationRelativePath, HashCalculator.Hash(f.DestinationAbsolutePath)))
                                     .ToList();
-        
         return new FileUpdateResult([], fileHashes, purgedFiles.Select(pf => Path.GetRelativePath(workingDirectory, pf)).ToArray());
     }
     
