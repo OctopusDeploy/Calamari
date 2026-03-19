@@ -6,6 +6,7 @@ using Calamari.Common.Features.Processes.ScriptIsolation;
 using Calamari.Testing.Helpers;
 using FluentAssertions;
 using NUnit.Framework;
+using StringComparison = System.StringComparison;
 
 namespace Calamari.Tests.Fixtures.ScriptIsolation
 {
@@ -537,6 +538,154 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             result.LockSupport.Should().Be(LockCapability.Supported);
             result.DirectoryInfo.FullName.Should().StartWith(secondTempRoot,
                                                              because: "the second temp candidate is on a Supported drive and should be chosen");
+        }
+
+        // -------------------------------------------------------------------------
+        // Group E: MountedDrives.GetAssociatedDrive with injected IPathResolutionService
+        //
+        // These tests exercise the three robustness improvements in isolation:
+        //   1. Symlink resolution — input path is resolved before prefix-matching.
+        //   2. Platform-aware case comparison — Ordinal vs OrdinalIgnoreCase.
+        //   3. Path normalisation — relative paths / ".." components are resolved.
+        // All tests are fully hermetic; no real symlinks or filesystem state needed.
+        // -------------------------------------------------------------------------
+
+        /// <summary>
+        /// A test-double implementation of <see cref="IPathResolutionService"/> that
+        /// uses an explicit dictionary for symlink resolution and accepts a caller-
+        /// supplied <see cref="StringComparison"/> for path matching.
+        /// </summary>
+        sealed class FakePathResolutionService(
+            StringComparison pathComparison,
+            Dictionary<string, string>? symlinkMap = null) : IPathResolutionService
+        {
+            readonly Dictionary<string, string> symlinkMap =
+                symlinkMap ?? new Dictionary<string, string>();
+
+            public string ResolvePath(string path)
+                => symlinkMap.TryGetValue(path, out var resolved) ? resolved : path;
+
+            public StringComparison PathComparison => pathComparison;
+        }
+
+        // Builds a CachedDriveInfo whose root is rootPath with a known LockCapability.
+        static CachedDriveInfo DriveAt(string rootPath)
+            => new(
+                   RootDirectory: new DirectoryInfo(rootPath),
+                   Format: "apfs",
+                   DriveType: DriveType.Fixed,
+                   DetectedLockSupport: LockCapability.Supported
+                  );
+
+        [Test]
+        public void GetAssociatedDrive_ResolvesSymlink_BeforeMatching()
+        {
+            // Simulate macOS: /tmp is a symlink to /private/tmp.
+            // DriveInfo returns /private/tmp as the mount root.
+            // The caller passes /tmp/foo — without resolution this would not match.
+            var privateRoot = OperatingSystem.IsWindows() ? @"C:\real\" : "/private/tmp";
+            var symlinkInput = OperatingSystem.IsWindows() ? @"C:\link\foo" : "/tmp/foo";
+            var resolvedInput = OperatingSystem.IsWindows() ? @"C:\real\foo" : "/private/tmp/foo";
+
+            var drives = new MountedDrives([DriveAt(privateRoot)]);
+            var resolver = new FakePathResolutionService(
+                StringComparison.OrdinalIgnoreCase,
+                new Dictionary<string, string> { [symlinkInput] = resolvedInput }
+            );
+
+            var result = drives.GetAssociatedDrive(symlinkInput, resolver);
+
+            result.RootDirectory.FullName.Should().Be(privateRoot);
+        }
+
+        [Test]
+        public void GetAssociatedDrive_CaseSensitive_RejectsWrongCase()
+        {
+            // On a case-sensitive filesystem (Linux), /Home/foo should NOT match /home.
+            var root = OperatingSystem.IsWindows() ? @"C:\home\" : "/home";
+            var wrongCasePath = OperatingSystem.IsWindows() ? @"C:\Home\foo" : "/Home/foo";
+
+            var drives = new MountedDrives([DriveAt(root)]);
+            var resolver = new FakePathResolutionService(StringComparison.Ordinal);
+
+            var act = () => drives.GetAssociatedDrive(wrongCasePath, resolver);
+
+            act.Should().Throw<DirectoryNotFoundException>();
+        }
+
+        [Test]
+        public void GetAssociatedDrive_CaseInsensitive_MatchesWrongCase()
+        {
+            // On a case-insensitive filesystem (Windows/macOS), C:\foo should match C:\.
+            var root = OperatingSystem.IsWindows() ? @"C:\" : "/home";
+            var wrongCasePath = OperatingSystem.IsWindows() ? @"c:\foo" : "/Home/foo";
+
+            var drives = new MountedDrives([DriveAt(root)]);
+            var resolver = new FakePathResolutionService(StringComparison.OrdinalIgnoreCase);
+
+            var result = drives.GetAssociatedDrive(wrongCasePath, resolver);
+
+            result.RootDirectory.FullName.Should().Be(root);
+        }
+
+        [Test]
+        public void GetAssociatedDrive_NormalisesPath_ViaResolver()
+        {
+            // The resolver is responsible for expanding ".." / relative paths.
+            // Here we simulate a resolver that converts "../work/foo" to an absolute path.
+            var root = OperatingSystem.IsWindows() ? @"C:\work\" : "/work";
+            var rawInput = OperatingSystem.IsWindows() ? @"C:\other\..\work\foo" : "/other/../work/foo";
+            var normalisedInput = OperatingSystem.IsWindows() ? @"C:\work\foo" : "/work/foo";
+
+            var drives = new MountedDrives([DriveAt(root)]);
+            var resolver = new FakePathResolutionService(
+                StringComparison.OrdinalIgnoreCase,
+                new Dictionary<string, string> { [rawInput] = normalisedInput }
+            );
+
+            var result = drives.GetAssociatedDrive(rawInput, resolver);
+
+            result.RootDirectory.FullName.Should().Be(root);
+        }
+
+        [Test]
+        public void GetAssociatedDrive_SelectsLongestMatchingMount()
+        {
+            // Both "/" and "/home" are mounts.  "/home/octopus/foo" should match "/home",
+            // not "/", because longest prefix wins.
+            if (OperatingSystem.IsWindows())
+            {
+                Assert.Ignore("POSIX-only test: Windows uses drive letters, not nested mounts.");
+                return;
+            }
+
+            var rootMount = DriveAt("/");
+            var homeMount = DriveAt("/home");
+            var inputPath = "/home/octopus/foo";
+
+            var drives = new MountedDrives([rootMount, homeMount]);
+            var resolver = new FakePathResolutionService(StringComparison.Ordinal);
+
+            var result = drives.GetAssociatedDrive(inputPath, resolver);
+
+            result.RootDirectory.FullName.Should().Be("/home",
+                                                      because: "longest matching mount point should win");
+        }
+
+        [Test]
+        public void GetAssociatedDrive_ThrowsDirectoryNotFoundException_WhenNoMatchAfterResolution()
+        {
+            // Even after symlink resolution, no drive covers the path.
+            var root = OperatingSystem.IsWindows() ? @"C:\" : "/home";
+            var unrelatedPath = OperatingSystem.IsWindows() ? @"D:\foo" : "/mnt/data/foo";
+
+            var drives = new MountedDrives([DriveAt(root)]);
+            var resolver = new FakePathResolutionService(StringComparison.OrdinalIgnoreCase);
+
+            var act = () => drives.GetAssociatedDrive(unrelatedPath, resolver);
+
+            act.Should().Throw<DirectoryNotFoundException>()
+               .WithMessage($"*{unrelatedPath}*");
         }
     }
 }
