@@ -84,7 +84,7 @@ static class PathResolutionServiceExtensions
 
                 // Re-attach any non-existent tail segments we peeled off.
                 foreach (var segment in tailSegments)
-                    resolvedBase = Path.Combine(resolvedBase, segment);
+                    resolvedBase = Path.Join(resolvedBase, segment);
 
                 return resolvedBase;
             }
