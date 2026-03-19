@@ -390,33 +390,56 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         }
 
         [Test]
-        public void GetLockDirectory_ReturnsTempPath_WhenCandidateIsUnknownAndTempDriveIsSupported()
+        public void GetLockDirectory_ReturnsCandidatePath_WhenCandidateDetectsSupportedAndTempDriveIsAlsoSupported()
         {
-            // Candidate root is Unknown; the injected temp path lives on a Supported drive.
-            // GetLockDirectory should return the first temp path it finds, not the candidate.
+            // Candidate root is Unknown (detection required); the injected temp path lives on
+            // a pre-detected Supported drive. Detection on the candidate drive is performed
+            // first: because the lock service is FullySupported, the candidate detects as
+            // Supported before the temp directories are even inspected. The candidate path
+            // should therefore be returned, not the temp path.
             var drives = new MountedDrives([
                 DriveWithCapability(CandidateRoot, LockCapability.Unknown),
                 DriveWithCapability(TempRoot, LockCapability.Supported)
             ]);
             var fs = FakeLockService.FullySupported(TempPath);
 
-            // Temp drive is already-detected as Supported so DetectLockSupport is a no-op;
-            // no lock service is needed.
+            var result = LockDirectory.GetLockDirectory(CandidatePath, drives,
+                                                        lockService: fs,
+                                                        pathResolver: FakePathResolutionService.PassThrough);
+
+            result.LockSupport.Should().Be(LockCapability.Supported);
+            result.DirectoryInfo.FullName.Should().Be(CandidatePath,
+                                                      because: "the candidate is detected as Supported first and should be preferred over a temp path");
+        }
+
+        [Test]
+        public void GetLockDirectory_ReturnsTempPath_WhenCandidateIsUnsupportedAndTempDriveIsSupported()
+        {
+            // Candidate root is pre-detected as Unsupported (no detection call fires).
+            // The injected temp path lives on a pre-detected Supported drive.
+            // Because the candidate cannot support locking, the temp path should be chosen.
+            var drives = new MountedDrives([
+                DriveWithCapability(CandidateRoot, LockCapability.Unsupported),
+                DriveWithCapability(TempRoot, LockCapability.Supported)
+            ]);
+            var fs = FakeLockService.FullySupported(TempPath);
+
             var result = LockDirectory.GetLockDirectory(CandidatePath, drives,
                                                         lockService: fs,
                                                         pathResolver: FakePathResolutionService.PassThrough);
 
             result.LockSupport.Should().Be(LockCapability.Supported);
             result.DirectoryInfo.FullName.Should().NotStartWith(CandidateRoot,
-                                                                because: "a temp path on the supported drive should be preferred");
+                                                                because: "a temp path on the Supported drive should be preferred when the candidate is Unsupported");
         }
 
         [Test]
-        public void GetLockDirectory_ReturnsCandidatePath_WhenAllTempsAreExclusiveOnlyAndCandidateDetectsSupported()
+        public void GetLockDirectory_ReturnsCandidatePath_WhenCandidateDetectsSupportedAndTempsAreExclusiveOnly()
         {
             // Temp drive is pre-detected as ExclusiveOnly; candidate root is Unknown.
-            // Detection on the candidate drive returns Supported, so the candidate path
-            // should be returned rather than the ExclusiveOnly temp path.
+            // Detection on the candidate drive is performed first: with a FullySupported
+            // lock service the candidate detects as Supported, so it is returned
+            // immediately without inspecting any temp directories.
             var drives = new MountedDrives([
                 DriveWithCapability(CandidateRoot, LockCapability.Unknown),
                 DriveWithCapability(TempRoot, LockCapability.ExclusiveOnly)
@@ -428,7 +451,7 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
 
             result.LockSupport.Should().Be(LockCapability.Supported);
             result.DirectoryInfo.FullName.Should().Be(CandidatePath,
-                                                      because: "the candidate detects as Supported which is better than any temp ExclusiveOnly path");
+                                                      because: "the candidate detects as Supported and should be returned before temp directories are considered");
         }
 
         [Test]
@@ -528,14 +551,16 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         public void GetLockDirectory_UsesFirstSupportedTempPath_WhenMultipleTempCandidatesExist()
         {
             // Two temp candidates: the first maps to an ExclusiveOnly drive, the second to
-            // a Supported drive.  The method should return the first Supported path it finds.
+            // a Supported drive. The candidate is pre-detected as Unsupported so detection
+            // short-circuits there. The method should then return the first Supported temp
+            // path it finds.
             var secondTempRoot = OperatingSystem.IsWindows() ? @"E:\" : "/dev/shm";
             var secondTempPath = OperatingSystem.IsWindows()
                 ? @"E:\tentacle"
                 : "/dev/shm/tentacle";
 
             var drives = new MountedDrives([
-                DriveWithCapability(CandidateRoot, LockCapability.Unknown),
+                DriveWithCapability(CandidateRoot, LockCapability.Unsupported),
                 DriveWithCapability(TempRoot, LockCapability.ExclusiveOnly),
                 DriveWithCapability(secondTempRoot, LockCapability.Supported)
             ]);

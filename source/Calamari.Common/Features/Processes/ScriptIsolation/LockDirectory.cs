@@ -47,9 +47,17 @@ public sealed record LockDirectory(
             return Supported(candidatePath);
         }
 
+        // Detect lock support on the candidate drive first. If it is fully supported,
+        // return immediately — no need to inspect temp directories at all.
+        var detectedCandidateDrive = candidateDrive?.DetectLockSupport(candidatePath, service);
+        if (detectedCandidateDrive?.LockSupport == LockCapability.Supported)
+        {
+            return Supported(candidatePath);
+        }
+
         string? tempPathExclusiveOnly = null;
 
-        // Fall back immediately to somewhere under the temp directory
+        // Candidate is not fully supported; check temp directories for something better.
         foreach (var tempPath in service.GetFallbackTemporaryDirectories(candidatePath))
         {
             var tempDrive = TryGetDrive(tempPath)
@@ -64,14 +72,6 @@ public sealed record LockDirectory(
                 // Catch the first temp path that supports exclusive locking
                 tempPathExclusiveOnly ??= tempPath;
             }
-        }
-
-        // Go back to the original drive and check its support
-        var detectedCandidateDrive = candidateDrive
-            ?.DetectLockSupport(candidatePath, service);
-        if (detectedCandidateDrive?.LockSupport == LockCapability.Supported)
-        {
-            return Supported(candidatePath);
         }
 
         if (detectedCandidateDrive?.LockSupport == LockCapability.ExclusiveOnly)
