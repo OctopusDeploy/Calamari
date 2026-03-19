@@ -137,6 +137,12 @@ public sealed record LockDirectory(
             tempDirs.Add(Path.Combine(tmp, pathNamespace));
         }
 
+        const string devShm = "/dev/shm";
+        if (Directory.Exists(devShm))
+        {
+            tempDirs.Add(Path.Combine(tmp, pathNamespace));
+        }
+
         return tempDirs.ToArray();
     }
 }
