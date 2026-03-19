@@ -80,7 +80,7 @@ namespace Calamari.Tests.ArgoCD.Git
         }
 
         [Test]
-        public void AttemptingToAddFilestartingWithDotSlashSucceeds()
+        public void AttemptingToAddFileStartingWithDotSlashSucceeds()
         {
             //This is to highlight a behaviour of libGit2Sharp which we may run into
             string filename = "newFile.txt";
