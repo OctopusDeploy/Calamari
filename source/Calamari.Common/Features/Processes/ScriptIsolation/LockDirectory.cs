@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using System.IO;
 
 namespace Calamari.Common.Features.Processes.ScriptIsolation;
@@ -30,9 +28,11 @@ public sealed record LockDirectory(
     internal static LockDirectory GetLockDirectory(
         string candidatePath,
         MountedDrives mountedDrives,
-        IFileLockService? lockService = null)
+        IFileLockService? lockService = null,
+        ITemporaryDirectoryFallback? temporaryDirectoryFallback = null)
     {
         var service = lockService ?? FileLockService.Instance;
+        var fallback = temporaryDirectoryFallback ?? TemporaryDirectoryFallback.Instance;
 
         CachedDriveInfo? TryGetDrive(string path)
         {
@@ -50,8 +50,7 @@ public sealed record LockDirectory(
         string? tempPathExclusiveOnly = null;
 
         // Fall back immediately to somewhere under the temp directory
-        var tempCandidates = GetTemporaryCandidates(candidatePath);
-        foreach (var tempPath in tempCandidates)
+        foreach (var tempPath in fallback.GetCandidates(candidatePath))
         {
             var tempDrive = TryGetDrive(tempPath)
                                 ?.DetectLockSupport(tempPath, service);
@@ -107,42 +106,5 @@ public sealed record LockDirectory(
                    DirectoryInfo: new DirectoryInfo(path),
                    LockSupport: LockCapability.Supported
                   );
-    }
-
-    static string[] GetTemporaryCandidates(string candidatePath)
-    {
-        var pathNamespace = Path.GetFileName(candidatePath);
-        if (OperatingSystem.IsWindows())
-        {
-            var localAppData = Path.Combine(
-                                            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                                            "Calamari",
-                                            pathNamespace
-                                           );
-            var windowsTempPath = Path.GetTempPath();
-            return [localAppData, windowsTempPath];
-        }
-
-        var tempDirs = new List<string>();
-        var tmpDir = Environment.GetEnvironmentVariable("TMPDIR");
-        if (!string.IsNullOrWhiteSpace(tmpDir))
-        {
-            tempDirs.Add(Path.Combine(tmpDir,  pathNamespace));
-        }
-
-        const string tmp = "/tmp";
-
-        if (Directory.Exists(tmp))
-        {
-            tempDirs.Add(Path.Combine(tmp, pathNamespace));
-        }
-
-        const string devShm = "/dev/shm";
-        if (Directory.Exists(devShm))
-        {
-            tempDirs.Add(Path.Combine(tmp, pathNamespace));
-        }
-
-        return tempDirs.ToArray();
     }
 }
