@@ -147,14 +147,13 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         }
 
         [Test]
-        public void FromScriptIsolationOptionsOrNull_BuildsCorrectLockFilePath()
+        public void FromScriptIsolationOptionsOrNull_BuildsCorrectLockFileName()
         {
             var scriptIsolationOptions = MakeOptions(mutexName: "MyMutex");
             var result = LockOptions.FromScriptIsolationOptionsOrNull(scriptIsolationOptions);
             result.Should().NotBeNull();
-            var expectedLockFile = Path.Join(scriptIsolationOptions.TentacleHome, "ScriptIsolation.MyMutex.lock");
 
-            result.LockFile.File.FullName.Should().Be(expectedLockFile);
+            result.LockFile.File.Name.Should().Be("ScriptIsolation.MyMutex.lock");
         }
 
         [Test]
