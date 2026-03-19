@@ -57,7 +57,7 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
 
         /// <summary>
         /// Simulates the lock-acquisition behaviour of a filesystem.  Each call to
-        /// <see cref="Acquire"/> checks compatibility rules against currently-held
+        /// <see cref="AcquireLock"/> checks compatibility rules against currently-held
         /// locks and either returns a handle (which releases the lock on Dispose) or
         /// throws <see cref="LockRejectedException"/>.
         ///
@@ -83,7 +83,7 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         /// </list>
         ///
         /// Preset factory methods cover the most common filesystem profiles:
-        /// <see cref="FullySupported"/>, <see cref="ExclusiveOnly"/>,
+        /// <see cref="FullySupported"/>,
         /// <see cref="ExclusiveOnlyBecauseSharedUnsupported"/>,
         /// <see cref="ExclusiveOnlyBecauseExclusiveDoesNotBlockShared"/>,
         /// <see cref="ExclusiveOnlyBecauseSharedDoesNotBlockExclusive"/>,
@@ -91,14 +91,14 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         /// </summary>
         sealed class FakeLockService : IFileLockService
         {
-            readonly bool _exclusiveBlocksExclusive;
-            readonly bool _sharedAllowed;
-            readonly bool _exclusiveBlocksShared;
-            readonly bool _sharedBlocksExclusive;
+            readonly bool exclusiveBlocksExclusive;
+            readonly bool sharedAllowed;
+            readonly bool exclusiveBlocksShared;
+            readonly bool sharedBlocksExclusive;
 
             // Tracks counts of currently-held locks (released on handle Dispose).
-            int _heldExclusive;
-            int _heldShared;
+            int heldExclusive;
+            int heldShared;
 
             FakeLockService(
                 bool exclusiveBlocksExclusive,
@@ -106,10 +106,10 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
                 bool exclusiveBlocksShared,
                 bool sharedBlocksExclusive)
             {
-                _exclusiveBlocksExclusive = exclusiveBlocksExclusive;
-                _sharedAllowed            = sharedAllowed;
-                _exclusiveBlocksShared    = exclusiveBlocksShared;
-                _sharedBlocksExclusive    = sharedBlocksExclusive;
+                this.exclusiveBlocksExclusive = exclusiveBlocksExclusive;
+                this.sharedAllowed            = sharedAllowed;
+                this.exclusiveBlocksShared    = exclusiveBlocksShared;
+                this.sharedBlocksExclusive    = sharedBlocksExclusive;
             }
 
             // ---- Preset factory methods ----------------------------------------
@@ -175,23 +175,23 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
                 switch (opts.Type)
                 {
                     case LockType.Exclusive:
-                        if (_exclusiveBlocksExclusive && _heldExclusive > 0)
+                        if (exclusiveBlocksExclusive && heldExclusive > 0)
                             throw new LockRejectedException("exclusive lock is already held");
-                        if (_sharedBlocksExclusive && _heldShared > 0)
+                        if (sharedBlocksExclusive && heldShared > 0)
                             throw new LockRejectedException("shared lock blocks exclusive acquisition");
-                        if (!_exclusiveBlocksExclusive && _heldExclusive == 0)
+                        if (!exclusiveBlocksExclusive && heldExclusive == 0)
                             // The very first exclusive open failing means the fs doesn't support it.
                             throw new IOException("exclusive locking not supported on this filesystem");
-                        _heldExclusive++;
-                        return new Handle(() => _heldExclusive--);
+                        heldExclusive++;
+                        return new Handle(() => heldExclusive--);
 
                     case LockType.Shared:
-                        if (!_sharedAllowed)
+                        if (!sharedAllowed)
                             throw new LockRejectedException("shared locking is not supported on this filesystem");
-                        if (_exclusiveBlocksShared && _heldExclusive > 0)
+                        if (exclusiveBlocksShared && heldExclusive > 0)
                             throw new LockRejectedException("exclusive lock blocks shared acquisition");
-                        _heldShared++;
-                        return new Handle(() => _heldShared--);
+                        heldShared++;
+                        return new Handle(() => heldShared--);
 
                     default:
                         throw new ArgumentOutOfRangeException(nameof(opts));
@@ -200,12 +200,12 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
 
             sealed class Handle(Action release) : ILockHandle
             {
-                bool _disposed;
+                bool disposed;
 
                 public void Dispose()
                 {
-                    if (_disposed) return;
-                    _disposed = true;
+                    if (disposed) return;
+                    disposed = true;
                     release();
                 }
 

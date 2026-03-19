@@ -3,7 +3,7 @@ using System.IO;
 
 namespace Calamari.Common.Features.Processes.ScriptIsolation;
 
-internal sealed record CachedDriveInfo(
+sealed record CachedDriveInfo(
     DirectoryInfo RootDirectory,
     string Format,
     DriveType DriveType,

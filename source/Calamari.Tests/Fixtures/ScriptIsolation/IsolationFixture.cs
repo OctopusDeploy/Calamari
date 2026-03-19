@@ -313,7 +313,7 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             var result = Isolation.ResolveLockOptions(opts, promoteToExclusiveLock: true);
 
             result.Should().NotBeNull();
-            result!.Type.Should().Be(LockType.Exclusive,
+            result.Type.Should().Be(LockType.Exclusive,
                 because: "shared lock should be promoted to exclusive when promoteToExclusiveLock is true");
         }
 

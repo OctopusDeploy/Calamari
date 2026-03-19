@@ -7,7 +7,7 @@ namespace Calamari.Common.Features.Processes.ScriptIsolation;
 /// Uses <see cref="FileLock.Acquire"/> for lock acquisition and
 /// <see cref="Directory.CreateDirectory(string)"/> for directory creation.
 /// </summary>
-internal sealed class FileLockService : IFileLockService
+sealed class FileLockService : IFileLockService
 {
     FileLockService() { }
 

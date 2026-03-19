@@ -1,6 +1,3 @@
-#nullable enable
-using System.IO;
-
 namespace Calamari.Common.Features.Processes.ScriptIsolation;
 
 /// <summary>
@@ -8,7 +5,7 @@ namespace Calamari.Common.Features.Processes.ScriptIsolation;
 /// Separating these from the static implementations allows hermetic unit testing
 /// without touching the real filesystem.
 /// </summary>
-internal interface IFileLockService
+interface IFileLockService
 {
     /// <summary>Ensures the given directory path exists.</summary>
     void CreateDirectory(string path);

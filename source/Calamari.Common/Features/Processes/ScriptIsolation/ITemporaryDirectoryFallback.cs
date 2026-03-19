@@ -1,4 +1,3 @@
-#nullable enable
 using System.Collections.Generic;
 
 namespace Calamari.Common.Features.Processes.ScriptIsolation;
@@ -10,7 +9,7 @@ namespace Calamari.Common.Features.Processes.ScriptIsolation;
 /// hermetic unit tests that are independent of environment variables and the real
 /// filesystem layout.
 /// </summary>
-internal interface ITemporaryDirectoryFallback
+interface ITemporaryDirectoryFallback
 {
     /// <summary>
     /// Returns an ordered sequence of absolute directory paths to try as fallback

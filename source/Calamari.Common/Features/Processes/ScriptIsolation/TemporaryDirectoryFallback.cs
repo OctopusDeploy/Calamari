@@ -1,4 +1,3 @@
-#nullable enable
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -10,7 +9,7 @@ namespace Calamari.Common.Features.Processes.ScriptIsolation;
 /// queries environment variables and the actual filesystem to build the list of
 /// candidate temporary directories.
 /// </summary>
-internal sealed class TemporaryDirectoryFallback : ITemporaryDirectoryFallback
+sealed class TemporaryDirectoryFallback : ITemporaryDirectoryFallback
 {
     TemporaryDirectoryFallback() { }
 

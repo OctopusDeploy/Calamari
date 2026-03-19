@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace Calamari.Common.Features.Processes.ScriptIsolation;
 
-internal sealed record MountedDrives(CachedDriveInfo[] Drives)
+sealed record MountedDrives(CachedDriveInfo[] Drives)
 {
     public static MountedDrives Get()
     {
