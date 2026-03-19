@@ -26,10 +26,10 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         // Non-Windows uses POSIX-style mount points (/home, /tmp) to simulate a
         // realistic multi-filesystem hierarchy.
         //
-        // With ITemporaryDirectoryFallback injected, the Group D tests no longer
+        // With temp directories now carried by FakeLockService, the Group D tests no longer
         // need TempRoots to match what the real TemporaryDirectoryFallback would
         // return — we supply both the fake drives and the fake temp candidates
-        // together, so they are always consistent.
+        // together via the injected FakeLockService, so they are always consistent.
         // -------------------------------------------------------------------------
 
         // Root and path for the primary candidate.
@@ -95,6 +95,7 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             readonly bool sharedAllowed;
             readonly bool exclusiveBlocksShared;
             readonly bool sharedBlocksExclusive;
+            readonly string[] temporaryDirectories;
 
             // Tracks counts of currently-held locks (released on handle Dispose).
             int heldExclusive;
@@ -104,12 +105,14 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
                 bool exclusiveBlocksExclusive,
                 bool sharedAllowed,
                 bool exclusiveBlocksShared,
-                bool sharedBlocksExclusive)
+                bool sharedBlocksExclusive,
+                string[] temporaryDirectories)
             {
                 this.exclusiveBlocksExclusive = exclusiveBlocksExclusive;
-                this.sharedAllowed            = sharedAllowed;
-                this.exclusiveBlocksShared    = exclusiveBlocksShared;
-                this.sharedBlocksExclusive    = sharedBlocksExclusive;
+                this.sharedAllowed = sharedAllowed;
+                this.exclusiveBlocksShared = exclusiveBlocksShared;
+                this.sharedBlocksExclusive = sharedBlocksExclusive;
+                this.temporaryDirectories = temporaryDirectories;
             }
 
             // ---- Preset factory methods ----------------------------------------
@@ -118,51 +121,56 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             /// A filesystem that supports both exclusive and shared locks with full
             /// mutual-exclusion semantics (NTFS, ext4, apfs, …).
             /// </summary>
-            public static FakeLockService FullySupported() =>
+            public static FakeLockService FullySupported(params string[] temporaryDirectories) =>
                 new(exclusiveBlocksExclusive: true,
                     sharedAllowed: true,
                     exclusiveBlocksShared: true,
-                    sharedBlocksExclusive: true);
+                    sharedBlocksExclusive: true,
+                    temporaryDirectories: temporaryDirectories);
 
             /// <summary>
             /// A filesystem where shared locks are completely unsupported — every
             /// shared-lock attempt fails immediately.
             /// </summary>
-            public static FakeLockService ExclusiveOnlyBecauseSharedUnsupported() =>
+            public static FakeLockService ExclusiveOnlyBecauseSharedUnsupported(params string[] temporaryDirectories) =>
                 new(exclusiveBlocksExclusive: true,
                     sharedAllowed: false,
                     exclusiveBlocksShared: true,
-                    sharedBlocksExclusive: true);
+                    sharedBlocksExclusive: true,
+                    temporaryDirectories: temporaryDirectories);
 
             /// <summary>
             /// A filesystem where shared locks can be acquired, but an exclusive lock
             /// does <em>not</em> block a concurrent shared lock (broken mutual-exclusion).
             /// </summary>
-            public static FakeLockService ExclusiveOnlyBecauseExclusiveDoesNotBlockShared() =>
+            public static FakeLockService ExclusiveOnlyBecauseExclusiveDoesNotBlockShared(params string[] temporaryDirectories) =>
                 new(exclusiveBlocksExclusive: true,
                     sharedAllowed: true,
                     exclusiveBlocksShared: false,
-                    sharedBlocksExclusive: true);
+                    sharedBlocksExclusive: true,
+                    temporaryDirectories: temporaryDirectories);
 
             /// <summary>
             /// A filesystem where shared locks can be acquired, but a shared lock does
             /// <em>not</em> block a concurrent exclusive lock (broken mutual-exclusion).
             /// </summary>
-            public static FakeLockService ExclusiveOnlyBecauseSharedDoesNotBlockExclusive() =>
+            public static FakeLockService ExclusiveOnlyBecauseSharedDoesNotBlockExclusive(params string[] temporaryDirectories) =>
                 new(exclusiveBlocksExclusive: true,
                     sharedAllowed: true,
                     exclusiveBlocksShared: true,
-                    sharedBlocksExclusive: false);
+                    sharedBlocksExclusive: false,
+                    temporaryDirectories: temporaryDirectories);
 
             /// <summary>
             /// A filesystem where even exclusive locking is unsupported (e.g. some
             /// network file systems or read-only mounts).
             /// </summary>
-            public static FakeLockService Unsupported() =>
+            public static FakeLockService Unsupported(params string[] temporaryDirectories) =>
                 new(exclusiveBlocksExclusive: false,
                     sharedAllowed: false,
                     exclusiveBlocksShared: false,
-                    sharedBlocksExclusive: false);
+                    sharedBlocksExclusive: false,
+                    temporaryDirectories: temporaryDirectories);
 
             // ---- IFileLockService implementation --------------------------------
 
@@ -198,6 +206,11 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
                 }
             }
 
+            public IEnumerable<string> GetFallbackTemporaryDirectories(string candidatePath)
+            {
+                return temporaryDirectories;
+            }
+
             sealed class Handle(Action release) : ILockHandle
             {
                 bool disposed;
@@ -215,22 +228,6 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
                     return System.Threading.Tasks.ValueTask.CompletedTask;
                 }
             }
-        }
-
-        // -------------------------------------------------------------------------
-        // FakeTemporaryDirectoryFallback — returns a fixed list of temp candidates
-        // without consulting environment variables or the real filesystem.
-        // -------------------------------------------------------------------------
-
-        /// <summary>
-        /// Returns a caller-supplied list of candidate paths, ignoring the real
-        /// environment.  This makes Group D tests independent of $TMPDIR, /tmp
-        /// existence, and /dev/shm existence.
-        /// </summary>
-        sealed class FakeTemporaryDirectoryFallback(params string[] candidates)
-            : ITemporaryDirectoryFallback
-        {
-            public IEnumerable<string> GetCandidates(string candidatePath) => candidates;
         }
 
         // -------------------------------------------------------------------------
@@ -274,11 +271,11 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             LockCapability expected)
         {
             var info = new CachedDriveInfo(
-                           RootDirectory: new DirectoryInfo(FakeRoot),
-                           Format: format,
-                           DriveType: driveType,
-                           DetectedLockSupport: detectedOverride
-                          );
+                                           RootDirectory: new DirectoryInfo(FakeRoot),
+                                           Format: format,
+                                           DriveType: driveType,
+                                           DetectedLockSupport: detectedOverride
+                                          );
             info.LockSupport.Should().Be(expected);
         }
 
@@ -357,7 +354,7 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
 
         // -------------------------------------------------------------------------
         // Group D: GetLockDirectory path-selection with injected MountedDrives
-        //          and ITemporaryDirectoryFallback
+        //          and FakeLockService carrying temp directory candidates
         //
         // FakeTemporaryDirectoryFallback supplies a fixed list of temp candidates,
         // removing any dependency on $TMPDIR, /tmp existence, or /dev/shm existence.
@@ -380,10 +377,10 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             var drives = new MountedDrives([
                 DriveWithCapability(FakeRoot, LockCapability.Supported)
             ]);
-            var fallback = new FakeTemporaryDirectoryFallback(TempPath);
+            var fs = FakeLockService.FullySupported(TempPath);
 
             var result = LockDirectory.GetLockDirectory(CandidatePath, drives,
-                temporaryDirectoryFallback: fallback);
+                                                        lockService: fs);
 
             result.DirectoryInfo.FullName.Should().Be(CandidatePath);
             result.LockSupport.Should().Be(LockCapability.Supported);
@@ -398,16 +395,16 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
                 DriveWithCapability(CandidateRoot, LockCapability.Unknown),
                 DriveWithCapability(TempRoot, LockCapability.Supported)
             ]);
-            var fallback = new FakeTemporaryDirectoryFallback(TempPath);
+            var fs = FakeLockService.FullySupported(TempPath);
 
             // Temp drive is already-detected as Supported so DetectLockSupport is a no-op;
             // no lock service is needed.
             var result = LockDirectory.GetLockDirectory(CandidatePath, drives,
-                temporaryDirectoryFallback: fallback);
+                                                        lockService: fs);
 
             result.LockSupport.Should().Be(LockCapability.Supported);
             result.DirectoryInfo.FullName.Should().NotStartWith(CandidateRoot,
-                because: "a temp path on the supported drive should be preferred");
+                                                                because: "a temp path on the supported drive should be preferred");
         }
 
         [Test]
@@ -420,14 +417,13 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
                 DriveWithCapability(CandidateRoot, LockCapability.Unknown),
                 DriveWithCapability(TempRoot, LockCapability.ExclusiveOnly)
             ]);
-            var fallback = new FakeTemporaryDirectoryFallback(TempPath);
-            var fs = FakeLockService.FullySupported();
+            var fs = FakeLockService.FullySupported(TempPath);
 
-            var result = LockDirectory.GetLockDirectory(CandidatePath, drives, fs, fallback);
+            var result = LockDirectory.GetLockDirectory(CandidatePath, drives, fs);
 
             result.LockSupport.Should().Be(LockCapability.Supported);
             result.DirectoryInfo.FullName.Should().Be(CandidatePath,
-                because: "the candidate detects as Supported which is better than any temp ExclusiveOnly path");
+                                                      because: "the candidate detects as Supported which is better than any temp ExclusiveOnly path");
         }
 
         [Test]
@@ -440,14 +436,14 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
                 DriveWithCapability(CandidateRoot, LockCapability.ExclusiveOnly),
                 DriveWithCapability(TempRoot, LockCapability.ExclusiveOnly)
             ]);
-            var fallback = new FakeTemporaryDirectoryFallback(TempPath);
+            var fs = FakeLockService.FullySupported(TempPath);
 
             var result = LockDirectory.GetLockDirectory(CandidatePath, drives,
-                temporaryDirectoryFallback: fallback);
+                                                        lockService: fs);
 
             result.LockSupport.Should().Be(LockCapability.ExclusiveOnly);
             result.DirectoryInfo.FullName.Should().Be(CandidatePath,
-                because: "the candidate path should be used when temp offers no better support");
+                                                      because: "the candidate path should be used when temp offers no better support");
         }
 
         [Test]
@@ -460,14 +456,14 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
                 DriveWithCapability(CandidateRoot, LockCapability.Unsupported),
                 DriveWithCapability(TempRoot, LockCapability.ExclusiveOnly)
             ]);
-            var fallback = new FakeTemporaryDirectoryFallback(TempPath);
+            var fs = FakeLockService.FullySupported(TempPath);
 
             var result = LockDirectory.GetLockDirectory(CandidatePath, drives,
-                temporaryDirectoryFallback: fallback);
+                                                        lockService: fs);
 
             result.LockSupport.Should().Be(LockCapability.ExclusiveOnly);
             result.DirectoryInfo.FullName.Should().NotStartWith(CandidateRoot,
-                because: "the temp path should be used when it offers better support than the candidate");
+                                                                because: "the temp path should be used when it offers better support than the candidate");
         }
 
         [Test]
@@ -476,10 +472,9 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             var drives = new MountedDrives([
                 DriveWithCapability(FakeRoot, LockCapability.Unknown)
             ]);
-            var fallback = new FakeTemporaryDirectoryFallback(TempPath);
-            var fs = FakeLockService.Unsupported();
+            var fs = FakeLockService.Unsupported(TempPath);
 
-            var result = LockDirectory.GetLockDirectory(CandidatePath, drives, fs, fallback);
+            var result = LockDirectory.GetLockDirectory(CandidatePath, drives, fs);
 
             result.LockSupport.Should().Be(LockCapability.Unsupported);
             result.DirectoryInfo.FullName.Should().Be(CandidatePath);
@@ -491,10 +486,10 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             // No drives at all — GetAssociatedDrive throws DirectoryNotFoundException.
             // GetLockDirectory should catch it and return Unsupported rather than propagating.
             var drives = new MountedDrives([]);
-            var fallback = new FakeTemporaryDirectoryFallback(TempPath);
+            var fs = FakeLockService.FullySupported(TempPath);
 
             var result = LockDirectory.GetLockDirectory(CandidatePath, drives,
-                temporaryDirectoryFallback: fallback);
+                                                        lockService: fs);
 
             result.LockSupport.Should().Be(LockCapability.Unsupported);
             result.DirectoryInfo.FullName.Should().Be(CandidatePath);
@@ -510,14 +505,13 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
                 DriveWithCapability(CandidateRoot, LockCapability.Unknown)
             ]);
             // TempPath is under TempRoot, which has no entry in drives.
-            var fallback = new FakeTemporaryDirectoryFallback(TempPath);
-            var fs = FakeLockService.Unsupported();
+            var fs = FakeLockService.Unsupported(TempPath);
 
-            var result = LockDirectory.GetLockDirectory(CandidatePath, drives, fs, fallback);
+            var result = LockDirectory.GetLockDirectory(CandidatePath, drives, fs);
 
             result.LockSupport.Should().Be(LockCapability.Unsupported);
             result.DirectoryInfo.FullName.Should().Be(CandidatePath,
-                because: "temp paths with no associated drive should be ignored");
+                                                      because: "temp paths with no associated drive should be ignored");
         }
 
         [Test]
@@ -535,14 +529,14 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
                 DriveWithCapability(TempRoot, LockCapability.ExclusiveOnly),
                 DriveWithCapability(secondTempRoot, LockCapability.Supported)
             ]);
-            var fallback = new FakeTemporaryDirectoryFallback(TempPath, secondTempPath);
+            var fs = FakeLockService.FullySupported(TempPath, secondTempPath);
 
             var result = LockDirectory.GetLockDirectory(CandidatePath, drives,
-                temporaryDirectoryFallback: fallback);
+                                                        lockService: fs);
 
             result.LockSupport.Should().Be(LockCapability.Supported);
             result.DirectoryInfo.FullName.Should().StartWith(secondTempRoot,
-                because: "the second temp candidate is on a Supported drive and should be chosen");
+                                                             because: "the second temp candidate is on a Supported drive and should be chosen");
         }
     }
 }

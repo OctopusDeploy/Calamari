@@ -5,17 +5,13 @@ using System.IO;
 namespace Calamari.Common.Features.Processes.ScriptIsolation;
 
 /// <summary>
-/// The real implementation of <see cref="ITemporaryDirectoryFallback"/> that
+/// Provides the real implementation of temporary directory candidate enumeration that
 /// queries environment variables and the actual filesystem to build the list of
 /// candidate temporary directories.
 /// </summary>
-sealed class TemporaryDirectoryFallback : ITemporaryDirectoryFallback
+static class TemporaryDirectoryFallback
 {
-    TemporaryDirectoryFallback() { }
-
-    public static readonly ITemporaryDirectoryFallback Instance = new TemporaryDirectoryFallback();
-
-    public IEnumerable<string> GetCandidates(string candidatePath)
+    public static IEnumerable<string> GetCandidates(string candidatePath)
     {
         var pathNamespace = Path.GetFileName(candidatePath);
 

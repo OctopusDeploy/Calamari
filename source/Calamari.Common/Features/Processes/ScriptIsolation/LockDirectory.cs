@@ -28,11 +28,9 @@ public sealed record LockDirectory(
     internal static LockDirectory GetLockDirectory(
         string candidatePath,
         MountedDrives mountedDrives,
-        IFileLockService? lockService = null,
-        ITemporaryDirectoryFallback? temporaryDirectoryFallback = null)
+        IFileLockService? lockService = null)
     {
         var service = lockService ?? FileLockService.Instance;
-        var fallback = temporaryDirectoryFallback ?? TemporaryDirectoryFallback.Instance;
 
         CachedDriveInfo? TryGetDrive(string path)
         {
@@ -50,7 +48,7 @@ public sealed record LockDirectory(
         string? tempPathExclusiveOnly = null;
 
         // Fall back immediately to somewhere under the temp directory
-        foreach (var tempPath in fallback.GetCandidates(candidatePath))
+        foreach (var tempPath in service.GetFallbackTemporaryDirectories(candidatePath))
         {
             var tempDrive = TryGetDrive(tempPath)
                                 ?.DetectLockSupport(tempPath, service);

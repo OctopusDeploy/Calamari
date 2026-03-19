@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.IO;
 
 namespace Calamari.Common.Features.Processes.ScriptIsolation;
@@ -16,4 +17,6 @@ sealed class FileLockService : IFileLockService
     public void CreateDirectory(string path) => Directory.CreateDirectory(path);
 
     public ILockHandle AcquireLock(LockOptions options) => FileLock.Acquire(options);
+    public IEnumerable<string> GetFallbackTemporaryDirectories(string candidatePath) =>
+        TemporaryDirectoryFallback.GetCandidates(candidatePath);
 }

@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace Calamari.Common.Features.Processes.ScriptIsolation;
 
 /// <summary>
@@ -18,4 +20,6 @@ interface IFileLockService
     ///   Thrown when the filesystem does not support the requested lock type.
     /// </exception>
     ILockHandle AcquireLock(LockOptions options);
+
+    IEnumerable<string> GetFallbackTemporaryDirectories(string candidatePath);
 }
