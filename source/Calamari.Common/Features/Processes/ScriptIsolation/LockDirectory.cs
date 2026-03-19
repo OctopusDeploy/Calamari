@@ -28,13 +28,15 @@ public sealed record LockDirectory(
     internal static LockDirectory GetLockDirectory(
         string candidatePath,
         MountedDrives mountedDrives,
-        IFileLockService? lockService = null)
+        IFileLockService? lockService = null,
+        IPathResolutionService? pathResolver = null)
     {
         var service = lockService ?? FileLockService.Instance;
+        var resolver = pathResolver ?? DefaultPathResolutionService.Instance;
 
         CachedDriveInfo? TryGetDrive(string path)
         {
-            try { return mountedDrives.GetAssociatedDrive(path); }
+            try { return mountedDrives.GetAssociatedDrive(path, resolver); }
             catch (DirectoryNotFoundException) { return null; }
         }
 

@@ -381,7 +381,8 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             var fs = FakeLockService.FullySupported(TempPath);
 
             var result = LockDirectory.GetLockDirectory(CandidatePath, drives,
-                                                        lockService: fs);
+                                                        lockService: fs,
+                                                        pathResolver: FakePathResolutionService.PassThrough);
 
             result.DirectoryInfo.FullName.Should().Be(CandidatePath);
             result.LockSupport.Should().Be(LockCapability.Supported);
@@ -401,7 +402,8 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             // Temp drive is already-detected as Supported so DetectLockSupport is a no-op;
             // no lock service is needed.
             var result = LockDirectory.GetLockDirectory(CandidatePath, drives,
-                                                        lockService: fs);
+                                                        lockService: fs,
+                                                        pathResolver: FakePathResolutionService.PassThrough);
 
             result.LockSupport.Should().Be(LockCapability.Supported);
             result.DirectoryInfo.FullName.Should().NotStartWith(CandidateRoot,
@@ -420,7 +422,8 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             ]);
             var fs = FakeLockService.FullySupported(TempPath);
 
-            var result = LockDirectory.GetLockDirectory(CandidatePath, drives, fs);
+            var result = LockDirectory.GetLockDirectory(CandidatePath, drives, fs,
+                                                        pathResolver: FakePathResolutionService.PassThrough);
 
             result.LockSupport.Should().Be(LockCapability.Supported);
             result.DirectoryInfo.FullName.Should().Be(CandidatePath,
@@ -440,11 +443,12 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             var fs = FakeLockService.FullySupported(TempPath);
 
             var result = LockDirectory.GetLockDirectory(CandidatePath, drives,
-                                                        lockService: fs);
+                                                         lockService: fs,
+                                                         pathResolver: FakePathResolutionService.PassThrough);
 
             result.LockSupport.Should().Be(LockCapability.ExclusiveOnly);
             result.DirectoryInfo.FullName.Should().Be(CandidatePath,
-                                                      because: "the candidate path should be used when temp offers no better support");
+                                                       because: "the candidate path should be used when temp offers no better support");
         }
 
         [Test]
@@ -460,7 +464,8 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             var fs = FakeLockService.FullySupported(TempPath);
 
             var result = LockDirectory.GetLockDirectory(CandidatePath, drives,
-                                                        lockService: fs);
+                                                         lockService: fs,
+                                                         pathResolver: FakePathResolutionService.PassThrough);
 
             result.LockSupport.Should().Be(LockCapability.ExclusiveOnly);
             result.DirectoryInfo.FullName.Should().NotStartWith(CandidateRoot,
@@ -475,7 +480,8 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             ]);
             var fs = FakeLockService.Unsupported(TempPath);
 
-            var result = LockDirectory.GetLockDirectory(CandidatePath, drives, fs);
+            var result = LockDirectory.GetLockDirectory(CandidatePath, drives, fs,
+                                                        pathResolver: FakePathResolutionService.PassThrough);
 
             result.LockSupport.Should().Be(LockCapability.Unsupported);
             result.DirectoryInfo.FullName.Should().Be(CandidatePath);
@@ -490,7 +496,8 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             var fs = FakeLockService.FullySupported(TempPath);
 
             var result = LockDirectory.GetLockDirectory(CandidatePath, drives,
-                                                        lockService: fs);
+                                                         lockService: fs,
+                                                         pathResolver: FakePathResolutionService.PassThrough);
 
             result.LockSupport.Should().Be(LockCapability.Unsupported);
             result.DirectoryInfo.FullName.Should().Be(CandidatePath);
@@ -508,7 +515,8 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             // TempPath is under TempRoot, which has no entry in drives.
             var fs = FakeLockService.Unsupported(TempPath);
 
-            var result = LockDirectory.GetLockDirectory(CandidatePath, drives, fs);
+            var result = LockDirectory.GetLockDirectory(CandidatePath, drives, fs,
+                                                        pathResolver: FakePathResolutionService.PassThrough);
 
             result.LockSupport.Should().Be(LockCapability.Unsupported);
             result.DirectoryInfo.FullName.Should().Be(CandidatePath,
@@ -533,7 +541,8 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             var fs = FakeLockService.FullySupported(TempPath, secondTempPath);
 
             var result = LockDirectory.GetLockDirectory(CandidatePath, drives,
-                                                        lockService: fs);
+                                                         lockService: fs,
+                                                         pathResolver: FakePathResolutionService.PassThrough);
 
             result.LockSupport.Should().Be(LockCapability.Supported);
             result.DirectoryInfo.FullName.Should().StartWith(secondTempRoot,
@@ -561,6 +570,16 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         {
             readonly Dictionary<string, string> symlinkMap =
                 symlinkMap ?? new Dictionary<string, string>();
+
+            /// <summary>
+            /// A pass-through resolver that performs no symlink resolution and uses
+            /// OrdinalIgnoreCase comparison.  Used by Group D tests so that fake
+            /// paths (e.g. /home/octopus/tentacle) are matched against fake drive
+            /// roots without the real DefaultPathResolutionService touching the
+            /// actual filesystem.
+            /// </summary>
+            public static readonly FakePathResolutionService PassThrough =
+                new(StringComparison.OrdinalIgnoreCase);
 
             public string ResolvePath(string path)
                 => symlinkMap.TryGetValue(path, out var resolved) ? resolved : path;
@@ -686,6 +705,103 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
 
             act.Should().Throw<DirectoryNotFoundException>()
                .WithMessage($"*{unrelatedPath}*");
+        }
+
+        [Test]
+        public void GetAssociatedDrive_ResolvesSymlinkInAncestor_WhenChildDoesNotExist()
+        {
+            // Simulates the critical macOS scenario: the lock directory path does not yet
+            // exist, but its ancestor (/tmp) is a symlink.  The resolver must walk up to
+            // the existing ancestor, resolve it, and re-attach the non-existent tail so
+            // that the path matches the /private/tmp drive root.
+            var privateRoot = OperatingSystem.IsWindows() ? @"C:\real\" : "/private/tmp";
+            var symlinkInput = OperatingSystem.IsWindows()
+                ? @"C:\link\subdir\lockfile"
+                : "/tmp/subdir/lockfile";
+            var resolvedInput = OperatingSystem.IsWindows()
+                ? @"C:\real\subdir\lockfile"
+                : "/private/tmp/subdir/lockfile";
+
+            var drives = new MountedDrives([DriveAt(privateRoot)]);
+            var resolver = new FakePathResolutionService(
+                StringComparison.OrdinalIgnoreCase,
+                new Dictionary<string, string> { [symlinkInput] = resolvedInput }
+            );
+
+            var result = drives.GetAssociatedDrive(symlinkInput, resolver);
+
+            result.RootDirectory.FullName.Should().Be(privateRoot,
+                                                      because: "symlink in ancestor should be resolved even when the full path does not yet exist");
+        }
+
+        // -------------------------------------------------------------------------
+        // Group F: DefaultPathResolutionService — real filesystem integration tests
+        //
+        // These tests use the actual DefaultPathResolutionService against the real
+        // filesystem.  They are necessarily platform-specific and touch real paths,
+        // but require no filesystem writes.
+        // -------------------------------------------------------------------------
+
+        [Test]
+        [Platform("Unix")]
+        public void DefaultPathResolutionService_ResolvesExistingSymlink()
+        {
+            // /tmp is a symlink to /private/tmp on macOS; on other Unix systems it may
+            // not be a symlink, in which case ResolvePath should return the path unchanged.
+            var result = DefaultPathResolutionService.Instance.ResolvePath("/tmp");
+
+            // The result must be an absolute path and must not contain /tmp as a prefix
+            // if /tmp is a symlink (i.e. it should point at the real location).
+            result.Should().StartWith("/",
+                                      because: "result must always be an absolute path");
+
+            // If /tmp really is a symlink, the result should differ from /tmp.
+            var tmpInfo = new FileInfo("/tmp");
+            if (tmpInfo.LinkTarget is not null)
+            {
+                result.Should().NotBe("/tmp",
+                                      because: "/tmp is a symlink and should resolve to its real target");
+            }
+        }
+
+        [Test]
+        [Platform("Unix")]
+        public void DefaultPathResolutionService_ResolvesSymlinkInAncestor_WhenChildDoesNotExist()
+        {
+            // The child path does not exist, but /tmp (if a symlink) should still be
+            // resolved so that the returned path starts with the real mount root.
+            const string nonExistentUnderTmp = "/tmp/calamari-test-nonexistent-path-xyz";
+
+            var result = DefaultPathResolutionService.Instance.ResolvePath(nonExistentUnderTmp);
+
+            result.Should().StartWith("/",
+                                      because: "result must always be an absolute path");
+            result.Should().EndWith("/calamari-test-nonexistent-path-xyz",
+                                    because: "the non-existent tail segment must be preserved");
+
+            var tmpInfo = new FileInfo("/tmp");
+            if (tmpInfo.LinkTarget is not null)
+            {
+                // The prefix should have been resolved away from the symlink
+                result.Should().NotStartWith("/tmp/",
+                                             because: "/tmp is a symlink; the resolved path should start with the real target");
+            }
+        }
+
+        [Test]
+        public void DefaultPathResolutionService_ReturnsNormalisedPath_WhenPathDoesNotExistAtAll()
+        {
+            // A path with no existing ancestor (other than the filesystem root) should
+            // still return a normalised, absolute path without throwing.
+            var nonExistent = OperatingSystem.IsWindows()
+                ? @"C:\calamari-nonexistent-root-xyz\foo\bar"
+                : "/calamari-nonexistent-root-xyz/foo/bar";
+
+            var act = () => DefaultPathResolutionService.Instance.ResolvePath(nonExistent);
+
+            act.Should().NotThrow();
+            var result = act();
+            result.Should().Contain("calamari-nonexistent-root-xyz");
         }
     }
 }
