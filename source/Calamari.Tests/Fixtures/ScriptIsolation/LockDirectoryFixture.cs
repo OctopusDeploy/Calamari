@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Security;
 using Calamari.Common.Features.Processes.ScriptIsolation;
 using Calamari.Testing.Helpers;
 using FluentAssertions;
@@ -581,10 +582,19 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         ///   driving the ancestor-walk in
         ///   <see cref="PathResolutionServiceExtensions.ResolvePath"/>.
         /// </param>
+        /// <param name="getFullPathException">
+        ///   When non-<c>null</c>, <see cref="GetFullPath"/> throws this exception
+        ///   instead of performing a map lookup.  Use this to simulate the documented
+        ///   failure modes of <see cref="Path.GetFullPath(string)"/> such as
+        ///   <see cref="ArgumentException"/>, <see cref="SecurityException"/>,
+        ///   <see cref="NotSupportedException"/>, or
+        ///   <see cref="PathTooLongException"/>.
+        /// </param>
         sealed class FakePathResolutionService(
             StringComparison pathComparison,
             Dictionary<string, string>? fullPathMap = null,
-            Dictionary<string, string>? symlinkMap = null) : IPathResolutionService
+            Dictionary<string, string>? symlinkMap = null,
+            Exception? getFullPathException = null) : IPathResolutionService
         {
             readonly Dictionary<string, string> fullPathMap =
                 fullPathMap ?? new Dictionary<string, string>();
@@ -606,8 +616,19 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
                 new(StringComparison.OrdinalIgnoreCase);
 
             /// <inheritdoc/>
+            /// <remarks>
+            /// Throws <see cref="getFullPathException"/> when one was supplied to the
+            /// constructor, simulating the documented failure modes of
+            /// <see cref="Path.GetFullPath(string)"/>.  Otherwise performs a map
+            /// lookup, returning the mapped value or the original path unchanged.
+            /// </remarks>
             public string GetFullPath(string path)
-                => fullPathMap.TryGetValue(path, out var normalised) ? normalised : path;
+            {
+                if (getFullPathException is not null)
+                    throw getFullPathException;
+
+                return fullPathMap.TryGetValue(path, out var normalised) ? normalised : path;
+            }
 
             /// <inheritdoc/>
             /// <remarks>
@@ -926,6 +947,47 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
 
             result.Should().Be(expectedResult,
                                because: "all non-existent tail segments must be re-attached in the correct order");
+        }
+
+        // -------------------------------------------------------------------------
+        // These tests cover the GetFullPath exception-handling path: all five
+        // documented exception types must cause ResolvePath to return the original
+        // raw path unchanged so that a single malformed path does not abort the
+        // drive-selection loop.
+        // -------------------------------------------------------------------------
+
+        static IEnumerable<TestCaseData> GetFullPathExceptionCases()
+        {
+            yield return new TestCaseData(new ArgumentException("invalid path"))
+                .SetName("ResolvePath_ReturnsRawPath_WhenGetFullPathThrows_ArgumentException");
+            yield return new TestCaseData(new ArgumentNullException("path"))
+                .SetName("ResolvePath_ReturnsRawPath_WhenGetFullPathThrows_ArgumentNullException");
+            yield return new TestCaseData(new SecurityException("access denied"))
+                .SetName("ResolvePath_ReturnsRawPath_WhenGetFullPathThrows_SecurityException");
+            yield return new TestCaseData(new NotSupportedException("not supported"))
+                .SetName("ResolvePath_ReturnsRawPath_WhenGetFullPathThrows_NotSupportedException");
+            yield return new TestCaseData(new PathTooLongException("path too long"))
+                .SetName("ResolvePath_ReturnsRawPath_WhenGetFullPathThrows_PathTooLongException");
+        }
+
+        [TestCaseSource(nameof(GetFullPathExceptionCases))]
+        public void ResolvePath_ReturnsRawPath_WhenGetFullPathThrows(Exception exception)
+        {
+            // Arrange: GetFullPath throws the given exception.
+            // ResolvePath must return the original raw path unchanged rather than
+            // propagating the exception, so that one bad path cannot prevent other
+            // drive candidates from being evaluated.
+            var rawPath = OperatingSystem.IsWindows() ? @"C:\bad\path" : "/bad/path";
+            var resolver = new FakePathResolutionService(
+                StringComparison.Ordinal,
+                getFullPathException: exception
+            );
+
+            var result = resolver.ResolvePath(rawPath);
+
+            result.Should().Be(rawPath,
+                               because: $"a {exception.GetType().Name} from GetFullPath must not propagate; " +
+                                        "the raw path must be returned as a safe fallback");
         }
 
         // -------------------------------------------------------------------------

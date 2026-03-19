@@ -18,6 +18,22 @@ interface IPathResolutionService
     /// This operation is purely lexical: no filesystem access, no symlink
     /// resolution.
     /// </summary>
+    /// <exception cref="ArgumentNullException"><paramref name="path"/> is <c>null</c>.</exception>
+    /// <exception cref="ArgumentException">
+    ///   <paramref name="path"/> is zero-length, contains only white space (Windows),
+    ///   contains invalid path characters, or the system could not retrieve the
+    ///   absolute path.
+    /// </exception>
+    /// <exception cref="System.Security.SecurityException">
+    ///   The caller does not have the required permissions.
+    /// </exception>
+    /// <exception cref="NotSupportedException">
+    ///   .NET Framework only: <paramref name="path"/> contains a colon that is not
+    ///   part of a volume identifier.
+    /// </exception>
+    /// <exception cref="PathTooLongException">
+    ///   The specified path exceeds the system-defined maximum length.
+    /// </exception>
     string GetFullPath(string path);
 
     /// <summary>

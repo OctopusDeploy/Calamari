@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Security;
 
 namespace Calamari.Common.Features.Processes.ScriptIsolation;
 
@@ -10,13 +11,27 @@ static class PathResolutionServiceExtensions
     /// Returns the canonical, fully-qualified form of <paramref name="path"/>,
     /// resolving symlinks and any <c>..</c> / <c>.</c> components.
     /// </summary>
+    /// <returns>
+    /// The resolved, absolute path.  If <see cref="IPathResolutionService.GetFullPath"/>
+    /// throws (e.g. due to an invalid path, insufficient permissions, or a path that
+    /// exceeds the system maximum length), <paramref name="path"/> is returned
+    /// unchanged so that a single malformed path cannot prevent other candidates from
+    /// being evaluated.
+    /// </returns>
     /// <remarks>
     /// <para>
     /// The method first calls <see cref="IPathResolutionService.GetFullPath"/> to
-    /// produce an absolute, lexically-normalised path.  It then attempts to resolve
-    /// symlinks via <see cref="IPathResolutionService.ResolveLinkTarget"/>.
+    /// produce an absolute, lexically-normalised path.
+    /// <see cref="IPathResolutionService.GetFullPath"/> may throw
+    /// <see cref="ArgumentException"/>, <see cref="ArgumentNullException"/>,
+    /// <see cref="SecurityException"/>, <see cref="NotSupportedException"/>, or
+    /// <see cref="PathTooLongException"/> for invalid or inaccessible inputs.  All of
+    /// these are caught here and cause the method to return <paramref name="path"/>
+    /// unmodified.
     /// </para>
     /// <para>
+    /// The method then attempts to resolve symlinks via
+    /// <see cref="IPathResolutionService.ResolveLinkTarget"/>.
     /// Because <see cref="IPathResolutionService.ResolveLinkTarget"/> throws when the
     /// target path does not exist on disk, the method walks <em>up</em> the path
     /// component by component until it locates an ancestor that does exist, resolves
@@ -34,7 +49,23 @@ static class PathResolutionServiceExtensions
     public static string ResolvePath(this IPathResolutionService resolver, string path)
     {
         // Start with a fully-qualified, normalised path (handles .., ., relative paths).
-        var fullPath = resolver.GetFullPath(path);
+        // GetFullPath may throw for invalid inputs (ArgumentException, SecurityException,
+        // ArgumentNullException, NotSupportedException, PathTooLongException).
+        // Catch all of these so that a single bad path does not prevent other candidates
+        // from being evaluated.
+        string fullPath;
+        try
+        {
+            fullPath = resolver.GetFullPath(path);
+        }
+        catch (Exception ex) when (ex is ArgumentException
+                                       or ArgumentNullException
+                                       or SecurityException
+                                       or NotSupportedException
+                                       or PathTooLongException)
+        {
+            return path;
+        }
 
         // Walk up the path collecting non-existent tail segments until we find an
         // ancestor that exists on disk, then resolve that ancestor's symlinks and
