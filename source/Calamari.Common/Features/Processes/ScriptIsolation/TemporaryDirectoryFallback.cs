@@ -15,6 +15,8 @@ static class TemporaryDirectoryFallback
     {
         var pathNamespace = Path.GetFileName(candidatePath);
 
+        string ApplyNamespace(string rawPath) => Path.Combine(rawPath, pathNamespace);
+
         if (OperatingSystem.IsWindows())
         {
             var localAppData = Path.Combine(
@@ -22,7 +24,7 @@ static class TemporaryDirectoryFallback
                                             "Calamari",
                                             pathNamespace
                                            );
-            var windowsTempPath = Path.GetTempPath();
+            var windowsTempPath = ApplyNamespace(Path.GetTempPath());
             yield return localAppData;
             yield return windowsTempPath;
             yield break;
@@ -31,19 +33,19 @@ static class TemporaryDirectoryFallback
         var tmpDir = Environment.GetEnvironmentVariable("TMPDIR");
         if (!string.IsNullOrWhiteSpace(tmpDir))
         {
-            yield return Path.Combine(tmpDir, pathNamespace);
+            yield return ApplyNamespace(tmpDir);
         }
 
         const string tmp = "/tmp";
         if (Directory.Exists(tmp))
         {
-            yield return Path.Combine(tmp, pathNamespace);
+            yield return ApplyNamespace(tmp);
         }
 
         const string devShm = "/dev/shm";
         if (Directory.Exists(devShm))
         {
-            yield return Path.Combine(devShm, pathNamespace);
+            yield return ApplyNamespace(devShm);
         }
     }
 }
