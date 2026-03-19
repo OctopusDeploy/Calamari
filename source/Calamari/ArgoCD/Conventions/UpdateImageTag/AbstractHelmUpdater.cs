@@ -56,10 +56,7 @@ public abstract class AbstractHelmUpdater : BaseUpdater
 
         if (results.Any())
         {
-            var patchedFiles = results.Select(r => new FilePathContent(
-                                                                       // Replace \ with / so that Calamari running on windows doesn't cause issues when we send back to server
-                                                                       r.RelativeFilepath.Replace('\\', '/'),
-                                                                       JsonSerializer.Serialize(r.JsonPatch)))
+            var patchedFiles = results.Select(r => new FilePathContent(r.RelativeFilepath, JsonSerializer.Serialize(r.JsonPatch)))
                                       .ToList();
             var updatedImages = results.SelectMany(r => r.ImagesUpdated).ToHashSet();
 

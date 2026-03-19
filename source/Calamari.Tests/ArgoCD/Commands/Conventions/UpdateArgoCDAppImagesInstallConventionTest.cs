@@ -607,7 +607,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
             runningDeployment.StagingDirectory = tempDirectory;
 
-            var yamlFilename = "include/file1.yaml";
+            var yamlFilename = Path.Combine("include", "file1.yaml");
             var filesInRepo = new (string, string)[]
             {
                 (
@@ -658,6 +658,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             var sourceDetails = actual.UpdatedSourceDetails.First();
             sourceDetails.CommitSha.Should().HaveLength(40);
             sourceDetails.ReplacedFiles.Should().BeEmpty();
+            
             sourceDetails.PatchedFiles.Should()
                          .BeEquivalentTo([
                              new FilePathContent(yamlFilename, JsonSerializer.Serialize(expectedPatch)),
