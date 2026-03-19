@@ -24,8 +24,8 @@ static class TemporaryDirectoryFallback
                                             "Calamari",
                                             pathNamespace
                                            );
-            var windowsTempPath = ApplyNamespace(Path.GetTempPath());
             yield return localAppData;
+            var windowsTempPath = ApplyNamespace(Path.GetTempPath());
             yield return windowsTempPath;
             yield break;
         }
