@@ -30,8 +30,12 @@ public sealed record LockDirectory(
     internal static LockDirectory GetLockDirectory(
         string candidatePath,
         MountedDrives mountedDrives,
-        Func<LockOptions, ILockHandle>? acquireDelegate = null)
+        Func<LockOptions, ILockHandle>? acquireDelegate = null,
+        Action<string>? createDirectory = null)
     {
+        var acquire = acquireDelegate ?? FileLock.Acquire;
+        var mkdir   = createDirectory ?? (path => Directory.CreateDirectory(path));
+
         CachedDriveInfo? TryGetDrive(string path)
         {
             try { return mountedDrives.GetAssociatedDrive(path); }
@@ -52,7 +56,7 @@ public sealed record LockDirectory(
         foreach (var tempPath in tempCandidates)
         {
             var tempDrive = TryGetDrive(tempPath)
-                                ?.DetectLockSupport(tempPath, acquireDelegate ?? FileLock.Acquire);
+                                ?.DetectLockSupport(tempPath, acquire, mkdir);
             if (tempDrive?.LockSupport == LockCapability.Supported)
             {
                 return Supported(tempPath);
@@ -67,7 +71,7 @@ public sealed record LockDirectory(
 
         // Go back to the original drive and check its support
         var detectedCandidateDrive = candidateDrive
-            ?.DetectLockSupport(candidatePath, acquireDelegate ?? FileLock.Acquire);
+            ?.DetectLockSupport(candidatePath, acquire, mkdir);
         if (detectedCandidateDrive?.LockSupport == LockCapability.Supported)
         {
             return Supported(candidatePath);

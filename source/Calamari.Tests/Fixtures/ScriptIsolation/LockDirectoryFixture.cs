@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Calamari.Common.Features.Processes.ScriptIsolation;
 using Calamari.Testing.Helpers;
 using FluentAssertions;
@@ -13,12 +14,39 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
     [Category(TestCategory.RunOnceOnWindowsAndLinux)]
     public class LockDirectoryFixture
     {
-        // A stable path prefix that exists on all platforms, used as a fake root for
-        // constructing CachedDriveInfo entries without touching real DriveInfo.
-        static readonly string FakeRoot = OperatingSystem.IsWindows() ? @"C:\" : "/";
+        // -------------------------------------------------------------------------
+        // Platform-appropriate path constants
+        //
+        // CachedDriveInfo is just a record — its RootDirectory is matched by longest
+        // string prefix, not by querying the real OS mount table. This means we can
+        // construct a MountedDrives with any set of roots (e.g. "/home", "/tmp",
+        // "/var") and the prefix-matching logic in GetAssociatedDrive will route
+        // paths to the correct fake drive, on any platform.
+        //
+        // Windows uses drive letters (C:\, D:\) as naturally distinct roots.
+        // Non-Windows uses POSIX-style mount points (/home, /tmp, /var) to simulate
+        // a realistic multi-filesystem hierarchy covering the candidate path and all
+        // temp candidates produced by GetTemporaryCandidates.
+        // -------------------------------------------------------------------------
+
+        // Root that contains the candidate path.
+        static readonly string CandidateRoot = OperatingSystem.IsWindows() ? @"C:\" : "/home";
+
+        // Candidate path used across Group D tests.
         static readonly string CandidatePath = OperatingSystem.IsWindows()
             ? @"C:\Octopus\Tentacle"
             : "/home/octopus/tentacle";
+
+        // Roots that cover the temp candidates produced by GetTemporaryCandidates.
+        // On Windows, all temp paths sit under a single separate drive letter.
+        // On non-Windows: $TMPDIR lives under /var/…, and /tmp is its own mount.
+        static readonly string[] TempRoots = OperatingSystem.IsWindows()
+            ? [@"D:\"]
+            : ["/var", "/tmp"];
+
+        // A single stable fake root used by Group A/B/C tests that don't exercise
+        // path routing (any root that is an ancestor of CandidatePath works).
+        static readonly string FakeRoot = CandidateRoot;
 
         // -------------------------------------------------------------------------
         // FakeLockService — simulates filesystem lock semantics without relying on
@@ -338,134 +366,74 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         [Test]
         public void GetLockDirectory_ReturnsTempPath_WhenCandidateIsUnknownAndTempDriveIsSupported()
         {
-            // The temp path sits under FakeRoot so it matches the same drive.
-            // We use two separate roots: one for the candidate (Unknown) and one for the
-            // temp path (Supported) to exercise the temp-candidate branch.
-            if (OperatingSystem.IsWindows())
-            {
-                const string candidateRoot = @"C:\";
-                const string tempRoot = @"D:\";
-                const string candidate = @"C:\Octopus\Tentacle";
+            // Candidate root is Unknown; temp roots are pre-detected as Supported.
+            // GetLockDirectory should return the first temp path it finds, not the candidate.
+            var drives = new MountedDrives([
+                DriveWithCapability(CandidateRoot, LockCapability.Unknown),
+                ..TempRoots.Select(r => DriveWithCapability(r, LockCapability.Supported))
+            ]);
 
-                var drives = new MountedDrives([
-                    DriveWithCapability(candidateRoot, LockCapability.Unknown),
-                    DriveWithCapability(tempRoot, LockCapability.Supported)
-                ]);
+            // Temp drives are already-detected as Supported so DetectLockSupport is a no-op;
+            // no acquire delegate is needed.
+            var result = LockDirectory.GetLockDirectory(CandidatePath, drives);
 
-                // The temp drive is already-detected as Supported, so DetectLockSupport is a
-                // no-op. No acquire delegate is needed.
-                var result = LockDirectory.GetLockDirectory(candidate, drives);
-
-                result.LockSupport.Should().Be(LockCapability.Supported);
-                result.DirectoryInfo.FullName.Should().StartWith(tempRoot,
-                    because: "the result should be located under the supported temp drive");
-            }
-            else
-            {
-                // On non-Windows there is only one root ("/"). Set the candidate drive to Unknown
-                // and use a fully-supported fake filesystem so that detection probing succeeds.
-                var drives = new MountedDrives([
-                    DriveWithCapability("/", LockCapability.Unknown)
-                ]);
-                var fs = FakeLockService.FullySupported();
-
-                var result = LockDirectory.GetLockDirectory(CandidatePath, drives, fs.Acquire);
-
-                result.LockSupport.Should().Be(LockCapability.Supported);
-            }
+            result.LockSupport.Should().Be(LockCapability.Supported);
+            result.DirectoryInfo.FullName.Should().NotStartWith(CandidateRoot,
+                because: "a temp path on the supported drive should be preferred");
         }
 
         [Test]
         public void GetLockDirectory_ReturnsCandidatePath_WhenAllTempsAreExclusiveOnlyAndCandidateDetectsSupported()
         {
-            // Candidate drive is Unknown. All temp candidates share the same drive which is
-            // also Unknown, but the filesystem is fully supported. After the temp candidates
-            // are probed and each comes back as Supported, the first Supported temp path is
-            // returned immediately — but because the candidate and all temps are on the same
-            // single drive and detection succeeds on the first temp, we simply verify that the
-            // result is Supported (the exact path depends on the temp enumeration order).
-            //
-            // To specifically test the "fall back to candidate after all temps are ExclusiveOnly"
-            // path we need the temp drives to come back ExclusiveOnly but the candidate drive to
-            // come back Supported. On a single-root system this is impossible with a stateless
-            // fake, so we use two distinct roots on Windows and accept the single-root limitation
-            // on non-Windows by verifying Supported is returned.
+            // Temp roots are pre-detected as ExclusiveOnly; candidate root is Unknown.
+            // Detection on the candidate drive returns Supported, so the candidate path
+            // should be returned rather than any of the ExclusiveOnly temp paths.
             var drives = new MountedDrives([
-                DriveWithCapability(FakeRoot, LockCapability.Unknown)
+                DriveWithCapability(CandidateRoot, LockCapability.Unknown),
+                ..TempRoots.Select(r => DriveWithCapability(r, LockCapability.ExclusiveOnly))
             ]);
             var fs = FakeLockService.FullySupported();
 
-            var result = LockDirectory.GetLockDirectory(CandidatePath, drives, fs.Acquire);
+            var result = LockDirectory.GetLockDirectory(CandidatePath, drives, fs.Acquire, _ => { });
 
             result.LockSupport.Should().Be(LockCapability.Supported);
+            result.DirectoryInfo.FullName.Should().Be(CandidatePath,
+                because: "the candidate detects as Supported which is better than any temp ExclusiveOnly path");
         }
 
         [Test]
         public void GetLockDirectory_ReturnsCandidatePath_WhenBothCandidateAndTempAreExclusiveOnly()
         {
-            // When both the candidate and all temp paths offer the same ExclusiveOnly support,
-            // the temp directory gives no advantage. The candidate path should be returned.
-            if (OperatingSystem.IsWindows())
-            {
-                const string candidateRoot = @"C:\";
-                const string tempRoot = @"D:\";
-                const string candidate = @"C:\Octopus\Tentacle";
+            // All roots (candidate and temp) are pre-detected as ExclusiveOnly.
+            // The temp path offers no better support than the candidate, so the candidate
+            // should be returned.
+            var drives = new MountedDrives([
+                DriveWithCapability(CandidateRoot, LockCapability.ExclusiveOnly),
+                ..TempRoots.Select(r => DriveWithCapability(r, LockCapability.ExclusiveOnly))
+            ]);
 
-                var drives = new MountedDrives([
-                    DriveWithCapability(candidateRoot, LockCapability.ExclusiveOnly),
-                    DriveWithCapability(tempRoot,      LockCapability.ExclusiveOnly)
-                ]);
+            var result = LockDirectory.GetLockDirectory(CandidatePath, drives);
 
-                var result = LockDirectory.GetLockDirectory(candidate, drives);
-
-                result.LockSupport.Should().Be(LockCapability.ExclusiveOnly);
-                result.DirectoryInfo.FullName.Should().Be(candidate,
-                    because: "the candidate path should be used when temp offers no better support");
-            }
-            else
-            {
-                // On non-Windows there is a single drive root ("/") covering both the candidate
-                // and all temp paths — all are ExclusiveOnly, no detection is triggered.
-                var drives = new MountedDrives([
-                    DriveWithCapability("/", LockCapability.ExclusiveOnly)
-                ]);
-
-                var result = LockDirectory.GetLockDirectory(CandidatePath, drives);
-
-                result.LockSupport.Should().Be(LockCapability.ExclusiveOnly);
-                result.DirectoryInfo.FullName.Should().Be(CandidatePath,
-                    because: "the candidate path should be used when temp offers no better support");
-            }
+            result.LockSupport.Should().Be(LockCapability.ExclusiveOnly);
+            result.DirectoryInfo.FullName.Should().Be(CandidatePath,
+                because: "the candidate path should be used when temp offers no better support");
         }
 
         [Test]
         public void GetLockDirectory_ReturnsTempPath_WhenTempIsExclusiveOnlyAndCandidateIsUnsupported()
         {
-            // The temp directory offers ExclusiveOnly support while the candidate drive is
-            // completely Unsupported. Here the temp path genuinely gives better support, so
-            // it should be preferred over the candidate.
-            if (!OperatingSystem.IsWindows())
-            {
-                // Non-Windows systems have a single root ("/") for all paths, making it
-                // impossible to assign different capabilities to the candidate vs temp paths
-                // in a pure unit test. The behaviour is verified by the Windows branch.
-                Assert.Pass("Covered by the Windows branch of this test.");
-                return;
-            }
-
-            const string candidateRoot = @"C:\";
-            const string tempRoot = @"D:\";
-            const string candidate = @"C:\Octopus\Tentacle";
-
+            // Candidate root is pre-detected as Unsupported; temp roots are pre-detected as
+            // ExclusiveOnly. The temp path genuinely offers better support, so it should be
+            // preferred over the candidate.
             var drives = new MountedDrives([
-                DriveWithCapability(candidateRoot, LockCapability.Unsupported),
-                DriveWithCapability(tempRoot,      LockCapability.ExclusiveOnly)
+                DriveWithCapability(CandidateRoot, LockCapability.Unsupported),
+                ..TempRoots.Select(r => DriveWithCapability(r, LockCapability.ExclusiveOnly))
             ]);
 
-            var result = LockDirectory.GetLockDirectory(candidate, drives);
+            var result = LockDirectory.GetLockDirectory(CandidatePath, drives);
 
             result.LockSupport.Should().Be(LockCapability.ExclusiveOnly);
-            result.DirectoryInfo.FullName.Should().StartWith(tempRoot,
+            result.DirectoryInfo.FullName.Should().NotStartWith(CandidateRoot,
                 because: "the temp path should be used when it offers better support than the candidate");
         }
 
@@ -477,7 +445,7 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             ]);
             var fs = FakeLockService.Unsupported();
 
-            var result = LockDirectory.GetLockDirectory(CandidatePath, drives, fs.Acquire);
+            var result = LockDirectory.GetLockDirectory(CandidatePath, drives, fs.Acquire, _ => { });
 
             result.LockSupport.Should().Be(LockCapability.Unsupported);
             result.DirectoryInfo.FullName.Should().Be(CandidatePath);

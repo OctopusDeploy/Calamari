@@ -69,9 +69,15 @@ internal sealed record CachedDriveInfo(
     }
 
     public CachedDriveInfo DetectLockSupport(string lockDirectory)
-        => DetectLockSupport(lockDirectory, FileLock.Acquire);
+        => DetectLockSupport(lockDirectory, FileLock.Acquire, path => Directory.CreateDirectory(path));
 
     internal CachedDriveInfo DetectLockSupport(string lockDirectory, Func<LockOptions, ILockHandle> acquireDelegate)
+        => DetectLockSupport(lockDirectory, acquireDelegate, path => Directory.CreateDirectory(path));
+
+    internal CachedDriveInfo DetectLockSupport(
+        string lockDirectory,
+        Func<LockOptions, ILockHandle> acquireDelegate,
+        Action<string> createDirectory)
     {
         if (LockSupport != LockCapability.Unknown)
         {
@@ -87,7 +93,7 @@ internal sealed record CachedDriveInfo(
                                           );
         try
         {
-            Directory.CreateDirectory(lockDirectory);
+            createDirectory(lockDirectory);
             var supportsExclusiveLock = TestExclusiveLock(testFile, acquireDelegate);
             if (!supportsExclusiveLock)
             {
