@@ -55,7 +55,7 @@ namespace Calamari.Tests.ArgoCD.Git
                 {
                     var bytes = Encoding.UTF8.GetBytes(file.Content);
                     var blobId = repository.ObjectDatabase.Write<Blob>(bytes);
-                    treeDefinition.Add(file.Name, blobId, Mode.NonExecutableFile);
+                    treeDefinition.Add(file.Name.Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar), blobId, Mode.NonExecutableFile);
                 }
             }
 
