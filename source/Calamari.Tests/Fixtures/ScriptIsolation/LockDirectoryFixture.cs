@@ -561,29 +561,70 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
 
         /// <summary>
         /// A test-double implementation of <see cref="IPathResolutionService"/> that
-        /// uses an explicit dictionary for symlink resolution and accepts a caller-
-        /// supplied <see cref="StringComparison"/> for path matching.
+        /// maps individual BCL primitives to controllable fakes so that the
+        /// ancestor-walk logic in <see cref="PathResolutionServiceExtensions.ResolvePath"/>
+        /// can be exercised without touching the real filesystem.
         /// </summary>
+        /// <param name="pathComparison">Controls <see cref="PathComparison"/>.</param>
+        /// <param name="fullPathMap">
+        ///   Overrides for <see cref="GetFullPath"/>: maps raw input paths to their
+        ///   normalised forms (simulates <c>..</c> / relative-path expansion).
+        ///   Paths absent from the map are returned unchanged.
+        /// </param>
+        /// <param name="symlinkMap">
+        ///   Simulated symlinks for <see cref="ResolveLinkTarget"/>: maps a path to
+        ///   its symlink target.  A path present in this map causes
+        ///   <see cref="ResolveLinkTarget"/> to return a <see cref="FileSystemInfo"/>
+        ///   whose <c>FullName</c> is the mapped target.  A path absent from this map
+        ///   causes <see cref="ResolveLinkTarget"/> to throw
+        ///   <see cref="FileNotFoundException"/>, simulating a non-existent path and
+        ///   driving the ancestor-walk in
+        ///   <see cref="PathResolutionServiceExtensions.ResolvePath"/>.
+        /// </param>
         sealed class FakePathResolutionService(
             StringComparison pathComparison,
+            Dictionary<string, string>? fullPathMap = null,
             Dictionary<string, string>? symlinkMap = null) : IPathResolutionService
         {
+            readonly Dictionary<string, string> fullPathMap =
+                fullPathMap ?? new Dictionary<string, string>();
+
             readonly Dictionary<string, string> symlinkMap =
                 symlinkMap ?? new Dictionary<string, string>();
 
             /// <summary>
-            /// A pass-through resolver that performs no symlink resolution and uses
-            /// OrdinalIgnoreCase comparison.  Used by Group D tests so that fake
-            /// paths (e.g. /home/octopus/tentacle) are matched against fake drive
-            /// roots without the real DefaultPathResolutionService touching the
-            /// actual filesystem.
+            /// A pass-through resolver: <see cref="GetFullPath"/> returns the path
+            /// unchanged, and <see cref="ResolveLinkTarget"/> always throws
+            /// <see cref="FileNotFoundException"/> so that
+            /// <see cref="PathResolutionServiceExtensions.ResolvePath"/> falls back to
+            /// returning the normalised path as-is.  Used by Group D tests so that
+            /// fake paths (e.g. /home/octopus/tentacle) are matched against fake drive
+            /// roots without the real <see cref="DefaultPathResolutionService"/>
+            /// touching the actual filesystem.
             /// </summary>
             public static readonly FakePathResolutionService PassThrough =
                 new(StringComparison.OrdinalIgnoreCase);
 
-            public string ResolvePath(string path)
-                => symlinkMap.TryGetValue(path, out var resolved) ? resolved : path;
+            /// <inheritdoc/>
+            public string GetFullPath(string path)
+                => fullPathMap.TryGetValue(path, out var normalised) ? normalised : path;
 
+            /// <inheritdoc/>
+            /// <remarks>
+            /// Returns a <see cref="FileSystemInfo"/> pointing at the mapped target
+            /// when <paramref name="path"/> is present in the symlink map.  Throws
+            /// <see cref="FileNotFoundException"/> otherwise, driving the ancestor-walk
+            /// in <see cref="PathResolutionServiceExtensions.ResolvePath"/>.
+            /// </remarks>
+            public FileSystemInfo? ResolveLinkTarget(string path)
+            {
+                if (symlinkMap.TryGetValue(path, out var target))
+                    return new FileInfo(target);
+
+                throw new FileNotFoundException($"Simulated non-existent path: {path}", path);
+            }
+
+            /// <inheritdoc/>
             public StringComparison PathComparison => pathComparison;
         }
 
@@ -609,7 +650,7 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             var drives = new MountedDrives([DriveAt(privateRoot)]);
             var resolver = new FakePathResolutionService(
                 StringComparison.OrdinalIgnoreCase,
-                new Dictionary<string, string> { [symlinkInput] = resolvedInput }
+                symlinkMap: new Dictionary<string, string> { [symlinkInput] = resolvedInput }
             );
 
             var result = drives.GetAssociatedDrive(symlinkInput, resolver);
@@ -659,7 +700,7 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             var drives = new MountedDrives([DriveAt(root)]);
             var resolver = new FakePathResolutionService(
                 StringComparison.OrdinalIgnoreCase,
-                new Dictionary<string, string> { [rawInput] = normalisedInput }
+                fullPathMap: new Dictionary<string, string> { [rawInput] = normalisedInput }
             );
 
             var result = drives.GetAssociatedDrive(rawInput, resolver);
@@ -711,27 +752,180 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         public void GetAssociatedDrive_ResolvesSymlinkInAncestor_WhenChildDoesNotExist()
         {
             // Simulates the critical macOS scenario: the lock directory path does not yet
-            // exist, but its ancestor (/tmp) is a symlink.  The resolver must walk up to
-            // the existing ancestor, resolve it, and re-attach the non-existent tail so
-            // that the path matches the /private/tmp drive root.
+            // exist, but its ancestor (/tmp) is a symlink to /private/tmp.
+            // The extension method must walk up from the non-existent child path,
+            // resolve the symlink on the ancestor, and re-attach the tail so that the
+            // path matches the /private/tmp drive root.
+            //
+            // symlinkMap contains only the ancestor symlink entry (/tmp → /private/tmp).
+            // The full input path and intermediate paths are absent from the map, which
+            // causes ResolveLinkTarget to throw FileNotFoundException for them — driving
+            // the ancestor-walk in PathResolutionServiceExtensions.ResolvePath.
             var privateRoot = OperatingSystem.IsWindows() ? @"C:\real\" : "/private/tmp";
-            var symlinkInput = OperatingSystem.IsWindows()
+            var symlinkAncestor = OperatingSystem.IsWindows() ? @"C:\link" : "/tmp";
+            var symlinkTarget = OperatingSystem.IsWindows() ? @"C:\real" : "/private/tmp";
+            var inputPath = OperatingSystem.IsWindows()
                 ? @"C:\link\subdir\lockfile"
                 : "/tmp/subdir/lockfile";
-            var resolvedInput = OperatingSystem.IsWindows()
-                ? @"C:\real\subdir\lockfile"
-                : "/private/tmp/subdir/lockfile";
 
             var drives = new MountedDrives([DriveAt(privateRoot)]);
             var resolver = new FakePathResolutionService(
                 StringComparison.OrdinalIgnoreCase,
-                new Dictionary<string, string> { [symlinkInput] = resolvedInput }
+                symlinkMap: new Dictionary<string, string> { [symlinkAncestor] = symlinkTarget }
             );
 
-            var result = drives.GetAssociatedDrive(symlinkInput, resolver);
+            var result = drives.GetAssociatedDrive(inputPath, resolver);
 
             result.RootDirectory.FullName.Should().Be(privateRoot,
                                                       because: "symlink in ancestor should be resolved even when the full path does not yet exist");
+        }
+
+        // -------------------------------------------------------------------------
+        // Group G: PathResolutionServiceExtensions.ResolvePath — unit tests
+        //
+        // These tests exercise the ancestor-walk logic in the extension method
+        // directly, using FakePathResolutionService so no real filesystem access
+        // is needed.  They cover:
+        //   1. Non-existent path — fallback returns GetFullPath result.
+        //   2. Existing path that is not a symlink — returned unchanged.
+        //   3. Existing symlink — resolved to target.
+        //   4. Non-existent path whose existing ancestor is a symlink — ancestor
+        //      is resolved and tail is re-attached.
+        //   5. Path normalisation — GetFullPath expansion is applied first.
+        // -------------------------------------------------------------------------
+
+        [Test]
+        public void ResolvePath_ReturnsFullPath_WhenPathDoesNotExist()
+        {
+            // Arrange: no symlink entries — every ResolveLinkTarget call throws.
+            // The root itself ("/nonexistent") also throws, so we walk all the way
+            // up to a path whose GetDirectoryName is null or itself, then fall back
+            // to returning the GetFullPath result.
+            var nonExistent = OperatingSystem.IsWindows()
+                ? @"C:\nonexistent\foo\bar"
+                : "/nonexistent/foo/bar";
+            var resolver = new FakePathResolutionService(StringComparison.Ordinal);
+
+            var result = resolver.ResolvePath(nonExistent);
+
+            result.Should().Be(nonExistent,
+                               because: "GetFullPath returns the path unchanged when it is already absolute; " +
+                                        "the fallback must return that value");
+        }
+
+        [Test]
+        public void ResolvePath_ReturnsPath_WhenExistingPathIsNotASymlink()
+        {
+            // Arrange: the path is "present but not a symlink" — ResolveLinkTarget
+            // returns null.  ResolvePath should return the path as-is (no tail to
+            // re-attach).
+            var existing = OperatingSystem.IsWindows() ? @"C:\home\foo" : "/home/foo";
+
+            // symlinkMap entry with null-equivalent: map the path to itself so that
+            // ResolveLinkTarget returns a FileInfo with the same FullName.
+            var resolver = new FakePathResolutionService(
+                StringComparison.Ordinal,
+                symlinkMap: new Dictionary<string, string> { [existing] = existing }
+            );
+
+            var result = resolver.ResolvePath(existing);
+
+            result.Should().Be(existing,
+                               because: "a non-symlink existing path should be returned unchanged");
+        }
+
+        [Test]
+        public void ResolvePath_FollowsSymlink_WhenPathIsASymlink()
+        {
+            // Arrange: the full path is a symlink pointing at a different location.
+            var symlink = OperatingSystem.IsWindows() ? @"C:\link\foo" : "/link/foo";
+            var target = OperatingSystem.IsWindows() ? @"C:\real\foo" : "/real/foo";
+
+            var resolver = new FakePathResolutionService(
+                StringComparison.Ordinal,
+                symlinkMap: new Dictionary<string, string> { [symlink] = target }
+            );
+
+            var result = resolver.ResolvePath(symlink);
+
+            result.Should().Be(target,
+                               because: "a symlink should be resolved to its final target");
+        }
+
+        [Test]
+        public void ResolvePath_ResolvesAncestorSymlink_AndReattachesTail()
+        {
+            // Arrange: the full input path does not exist, but its parent is a symlink.
+            // Only the parent entry is in the symlinkMap; the child path is absent
+            // (causing ResolveLinkTarget to throw for it), so the ancestor-walk kicks in.
+            var symlinkParent = OperatingSystem.IsWindows() ? @"C:\link" : "/link";
+            var realParent = OperatingSystem.IsWindows() ? @"C:\real" : "/real";
+            var inputPath = OperatingSystem.IsWindows()
+                ? @"C:\link\child\file"
+                : "/link/child/file";
+            var expectedResult = OperatingSystem.IsWindows()
+                ? @"C:\real\child\file"
+                : "/real/child/file";
+
+            var resolver = new FakePathResolutionService(
+                StringComparison.Ordinal,
+                symlinkMap: new Dictionary<string, string> { [symlinkParent] = realParent }
+            );
+
+            var result = resolver.ResolvePath(inputPath);
+
+            result.Should().Be(expectedResult,
+                               because: "the ancestor symlink should be resolved and the non-existent " +
+                                        "tail segments re-attached in order");
+        }
+
+        [Test]
+        public void ResolvePath_AppliesGetFullPath_BeforeWalking()
+        {
+            // Arrange: the raw input contains ".." components.  GetFullPath must be
+            // applied first so the walk operates on a normalised path.
+            var rawInput = OperatingSystem.IsWindows()
+                ? @"C:\other\..\work\foo"
+                : "/other/../work/foo";
+            var normalised = OperatingSystem.IsWindows() ? @"C:\work\foo" : "/work/foo";
+
+            // fullPathMap handles the normalisation; the normalised path maps to itself
+            // via symlinkMap (exists, not a symlink).
+            var resolver = new FakePathResolutionService(
+                StringComparison.Ordinal,
+                fullPathMap: new Dictionary<string, string> { [rawInput] = normalised },
+                symlinkMap: new Dictionary<string, string> { [normalised] = normalised }
+            );
+
+            var result = resolver.ResolvePath(rawInput);
+
+            result.Should().Be(normalised,
+                               because: "GetFullPath normalisation must be applied before symlink resolution");
+        }
+
+        [Test]
+        public void ResolvePath_ReattachesMultipleTailSegments_WhenDeepAncestorIsSymlink()
+        {
+            // Arrange: input has two non-existent tail segments; only a grandparent
+            // is in the symlinkMap.
+            var symlinkGrandparent = OperatingSystem.IsWindows() ? @"C:\link" : "/link";
+            var realGrandparent = OperatingSystem.IsWindows() ? @"C:\real" : "/real";
+            var inputPath = OperatingSystem.IsWindows()
+                ? @"C:\link\a\b"
+                : "/link/a/b";
+            var expectedResult = OperatingSystem.IsWindows()
+                ? @"C:\real\a\b"
+                : "/real/a/b";
+
+            var resolver = new FakePathResolutionService(
+                StringComparison.Ordinal,
+                symlinkMap: new Dictionary<string, string> { [symlinkGrandparent] = realGrandparent }
+            );
+
+            var result = resolver.ResolvePath(inputPath);
+
+            result.Should().Be(expectedResult,
+                               because: "all non-existent tail segments must be re-attached in the correct order");
         }
 
         // -------------------------------------------------------------------------

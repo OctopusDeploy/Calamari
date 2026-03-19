@@ -1,26 +1,47 @@
 using System;
+using System.IO;
 
 namespace Calamari.Common.Features.Processes.ScriptIsolation;
 
 /// <summary>
-/// Abstracts path canonicalisation and case-sensitivity detection so that
-/// <see cref="MountedDrives.GetAssociatedDrive"/> can be tested without real
-/// filesystem symlinks or platform-specific case behaviour.
+/// Minimal abstraction over the BCL path and symlink primitives used when
+/// resolving a path to its canonical form for drive-root matching.
+/// Keeping the interface thin allows the resolution <em>logic</em> — housed
+/// in <see cref="PathResolutionServiceExtensions.ResolvePath"/> — to be
+/// exercised independently of real filesystem state.
 /// </summary>
 interface IPathResolutionService
 {
     /// <summary>
-    /// Returns the canonical, fully-qualified form of <paramref name="path"/>,
-    /// resolving symlinks and any <c>..</c> / <c>.</c> components.
-    /// If the path does not yet exist (cannot resolve a link target), an
-    /// absolute, normalised path is still returned via
-    /// <see cref="System.IO.Path.GetFullPath"/>.
+    /// Returns the absolute, normalised form of <paramref name="path"/>
+    /// (equivalent to <see cref="Path.GetFullPath(string)"/>).
+    /// This operation is purely lexical: no filesystem access, no symlink
+    /// resolution.
     /// </summary>
-    string ResolvePath(string path);
+    string GetFullPath(string path);
 
     /// <summary>
-    /// The <see cref="StringComparison"/> that matches the case-sensitivity of
-    /// the host filesystem.  Typically <see cref="StringComparison.OrdinalIgnoreCase"/>
+    /// Resolves the final symlink target of <paramref name="path"/>.
+    /// <list type="bullet">
+    ///   <item><description>
+    ///     Returns <c>null</c> if the path exists but is <em>not</em> a symlink.
+    ///   </description></item>
+    ///   <item><description>
+    ///     Returns a <see cref="FileSystemInfo"/> pointing at the real target
+    ///     when the path is a symlink (following chains to the final target).
+    ///   </description></item>
+    ///   <item><description>
+    ///     Throws <see cref="FileNotFoundException"/>,
+    ///     <see cref="DirectoryNotFoundException"/>, or <see cref="IOException"/>
+    ///     when the path does not exist on disk.
+    ///   </description></item>
+    /// </list>
+    /// </summary>
+    FileSystemInfo? ResolveLinkTarget(string path);
+
+    /// <summary>
+    /// The <see cref="StringComparison"/> appropriate for comparing paths on the
+    /// host filesystem.  Typically <see cref="StringComparison.OrdinalIgnoreCase"/>
     /// on Windows and macOS, and <see cref="StringComparison.Ordinal"/> on Linux.
     /// </summary>
     StringComparison PathComparison { get; }
