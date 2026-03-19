@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using NGitLab;
 using NGitLab.Models;
 
-namespace Calamari.ArgoCD.Git.GitVendorApiAdapters
+namespace Calamari.ArgoCD.Git.GitVendorApiAdapters.GitLab
 {
     public class GitLabApiAdapter : IGitVendorApiAdapter
     {
@@ -28,17 +28,34 @@ namespace Calamari.ArgoCD.Git.GitVendorApiAdapters
                                                    GitBranchName destinationBranch,
                                                    CancellationToken cancellationToken)
         {
-            await Task.CompletedTask;
             
+            await Task.CompletedTask;
+
+            var gitlabSrcBranch = StripBranchPrefix(sourceBranch.Value);
+            var gitlabDestBranch = StripBranchPrefix(destinationBranch.Value);
+
+
             var mergeRequest = gitLabClient.GetMergeRequest(projectPath).Create(new MergeRequestCreate()
             {
                 Title = pullRequestTitle,
-                SourceBranch = sourceBranch.Value,
-                TargetBranch = destinationBranch.Value,
+                SourceBranch = gitlabSrcBranch,
+                TargetBranch = gitlabDestBranch,
                 Description = body
             });
             return new PullRequest(mergeRequest.Title, mergeRequest.Id, mergeRequest.WebUrl);
         }
+
+        static string StripBranchPrefix(string input)
+        {
+            const string branchPrefix = "refs/heads/";
+            if (input.StartsWith(branchPrefix))
+            {
+                return input.Substring(branchPrefix.Length);
+            }
+
+            return input;
+        }
+            
 
         
         public string GenerateCommitUrl(string commit)

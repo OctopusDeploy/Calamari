@@ -50,7 +50,7 @@ namespace Calamari.Tests.ArgoCD.Git
                                                   Arg.Any<GitBranchName>(),
                                                   Arg.Any<CancellationToken>())
                                .Returns(new PullRequest("title", 1, "url"));
-            gitVendorAgnosticApiAdapterFactory.TryCreateGitVendorApiAdaptor(Arg.Any<IRepositoryConnection>()).Returns(gitVendorApiAdapter);
+            gitVendorAgnosticApiAdapterFactory.Create(Arg.Any<IRepositoryConnection>()).Returns(gitVendorApiAdapter);
             
             var repositoryFactory = new RepositoryFactory(log, fileSystem, tempDirectory, gitVendorAgnosticApiAdapterFactory, new SystemClock());
             gitConnection = new GitConnection(null, null, new Uri(OriginPath), branchName);

@@ -6,22 +6,22 @@ using Calamari.ArgoCD.GitHub;
 using Octokit;
 using Octokit.Internal;
 
-namespace Calamari.ArgoCD.Git.GitVendorApiAdapters
+namespace Calamari.ArgoCD.Git.GitVendorApiAdapters.GitHub
 {
-    public class GitHubApiAdapterFactory: IGitVendorApiAdapterFactory
+    public class GitHubApiAdapterFactory: IResolvingGitVendorApiAdapterFactory
     {
         bool CanInvokeWith(IRepositoryConnection repositoryConnection)
         {
             return GitHubRepositoryOwnerParser.IsGitHub(repositoryConnection.Url);
         }
 
-        public IGitVendorApiAdapter? TryCreateGitVendorApiAdaptor(IRepositoryConnection repositoryConnection)
+        public bool CanHandleAsCloudHosted(IRepositoryConnection repositoryConnection)
         {
-            if (!CanInvokeWith(repositoryConnection))
-            {
-                return null;
-            }
-            
+            return CanInvokeWith(repositoryConnection); 
+        }
+        
+        public IGitVendorApiAdapter Create(IRepositoryConnection repositoryConnection)
+        {
             var credentials = new Credentials(repositoryConnection.Username, repositoryConnection.Password);
             var client = CreateGitHubClient(credentials);
             return new GitHubApiAdapter(client, repositoryConnection, new Uri("https://github.com/"));

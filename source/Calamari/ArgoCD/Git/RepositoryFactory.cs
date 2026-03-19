@@ -98,7 +98,7 @@ namespace Calamari.ArgoCD.Git
             
             LibGit2Sharp.Commands.Checkout(repo, branchToCheckout.ToFriendlyName());
             
-            var gitVendorApiAdapter = vendorAgnosticApiAdapterFactory.TryCreateGitVendorApiAdaptor(gitConnection);
+            var gitVendorApiAdapter = vendorAgnosticApiAdapterFactory.Create(gitConnection);
             return new RepositoryWrapper(repo,
                                          fileSystem,
                                          checkoutPath,

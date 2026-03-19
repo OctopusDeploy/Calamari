@@ -2,7 +2,8 @@
 using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.Git.GitVendorApiAdapters;
-using Calamari.ArgoCD.GitHub;
+using Calamari.ArgoCD.Git.GitVendorApiAdapters.GitLab;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Calamari.ArgoCD
 {
@@ -14,13 +15,14 @@ namespace Calamari.ArgoCD
             builder.RegisterType<CommitMessageGenerator>().As<ICommitMessageGenerator>().InstancePerLifetimeScope();
 
             builder.RegisterAssemblyTypes(GetType().Assembly)
-                   .AssignableTo<IGitVendorApiAdapterFactory>()
-                   .Except<GitVendorAgnosticApiAdapterFactory>()
-                   .As<IGitVendorApiAdapterFactory>();
+                   .AssignableTo<IResolvingGitVendorApiAdapterFactory>()
+                   .As<IResolvingGitVendorApiAdapterFactory>();
 
             builder.RegisterType<GitVendorAgnosticApiAdapterFactory>().As<IGitVendorAgnosticApiAdapterFactory>().InstancePerLifetimeScope();
             builder.RegisterType<ArgoCDManifestsFileMatcher>().As<IArgoCDManifestsFileMatcher>().InstancePerLifetimeScope();
             builder.RegisterType<ArgoCDFilesUpdatedReporter>().As<IArgoCDFilesUpdatedReporter>().InstancePerLifetimeScope();
+            
+            builder.RegisterType<SelfHostedGitLabInspector>().AsSelf().InstancePerLifetimeScope();
         }
     }
 }
