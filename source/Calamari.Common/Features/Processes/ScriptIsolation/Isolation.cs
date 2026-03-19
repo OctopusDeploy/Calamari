@@ -62,14 +62,21 @@ public static class Isolation
 
         LogIsolation(lockOptions);
 
-        return ResolveLockOptions(lockOptions, scriptIsolationOptions.PromoteToExclusiveLockWhenSharedLockUnavailable);
+        var resolved = ResolveLockOptions(lockOptions, scriptIsolationOptions.PromoteToExclusiveLockWhenSharedLockUnavailable);
+
+        if (resolved.Warning is not null)
+        {
+            Log.Warn(resolved.Warning);
+        }
+
+        return resolved.Options;
     }
 
-    internal static LockOptions? ResolveLockOptions(LockOptions lockOptions, bool promoteToExclusiveLock)
+    internal static ResolvedLockOptions ResolveLockOptions(LockOptions lockOptions, bool promoteToExclusiveLock)
     {
         if (lockOptions.IsFullySupported)
         {
-            return lockOptions;
+            return new ResolvedLockOptions(lockOptions);
         }
 
         if (lockOptions.IsSupported)
@@ -78,31 +85,24 @@ public static class Isolation
             if (!promoteToExclusiveLock)
             {
                 // Warn that other scripts might be running concurrently
-                Log.Warn($"Will acquire {lockOptions.Type} lock, but may run concurrently with other scripts requesting a shared lock");
+                return new ResolvedLockOptions(lockOptions, $"Will acquire {lockOptions.Type} lock, but may run concurrently with other scripts requesting a shared lock");
             }
 
-            return lockOptions;
+            return new ResolvedLockOptions(lockOptions);
         }
 
         if (lockOptions.LockFile.Supports(LockType.Exclusive))
         {
             if (promoteToExclusiveLock)
             {
-                lockOptions = lockOptions with
-                {
-                    Type = LockType.Exclusive
-                };
-                Log.Warn($"Requested {LockType.Shared} lock is unavailable. Will acquire {lockOptions.Type} lock");
-                return lockOptions;
+                var promoted = lockOptions with { Type = LockType.Exclusive };
+                return new ResolvedLockOptions(promoted, $"Requested {LockType.Shared} lock is unavailable. Will acquire {promoted.Type} lock");
             }
 
-            Log.Warn($"Requested {lockOptions.Type} lock is unavailable. No lock will be acquired. Running without any isolation.");
-            return null;
+            return ResolvedLockOptions.NoLockWithWarning($"Requested {lockOptions.Type} lock is unavailable. No lock will be acquired. Running without any isolation.");
         }
 
-        Log.Warn("Unable to support any script isolation. Running without any isolation.");
-
-        return null;
+        return ResolvedLockOptions.NoLockWithWarning("Unable to support any script isolation. Running without any isolation.");
     }
 
     static void LogIsolation(LockOptions lockOptions)
@@ -117,5 +117,13 @@ public static class Isolation
         public void Dispose()
         {
         }
+    }
+
+    internal record ResolvedLockOptions(
+        LockOptions? Options,
+        string? Warning = null
+    )
+    {
+        public static ResolvedLockOptions NoLockWithWarning(string warning) => new(null, warning);
     }
 }
