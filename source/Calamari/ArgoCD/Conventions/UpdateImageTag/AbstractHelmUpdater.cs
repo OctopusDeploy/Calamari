@@ -63,10 +63,10 @@ public abstract class AbstractHelmUpdater : BaseUpdater
                                       .ToList();
             var updatedImages = results.SelectMany(r => r.ImagesUpdated).ToHashSet();
 
-            return new FileUpdateResult(updatedImages, patchedFiles);
+            return new FileUpdateResult(updatedImages, patchedFiles, []);
         }
 
-        return new FileUpdateResult([], []);
+        return new FileUpdateResult([], [], []);
     }
 
     HelmRefUpdatedResult UpdateHelmImageValues(

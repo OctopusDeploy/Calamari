@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -10,7 +9,6 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Integration.Time;
 using LibGit2Sharp;
-using Octopus.CoreUtilities.Extensions;
 using Polly;
 using Polly.Retry;
 
@@ -68,39 +66,26 @@ namespace Calamari.ArgoCD.Git
             }
         }
 
-        public string GetCommitSha()
-        {
-            return repository.Head.Tip.Sha;
-        }
-
-        public void RecursivelyStageFilesForRemoval(string subPath)
-        {
-            var cleansedSubPath = NormalizePath(subPath);
-            if (!cleansedSubPath.EndsWith(Path.DirectorySeparatorChar) && !cleansedSubPath.IsNullOrEmpty())
-            {
-                cleansedSubPath += Path.DirectorySeparatorChar;
-            }
-
-            log.Info("Removing files recursively");
-            List<IndexEntry> filesToRemove = repository.Index
-                                                       .Where(i => NormalizePath(i.Path).StartsWith(cleansedSubPath))
-                                                       .ToList();
-            filesToRemove.ForEach(i => repository.Index.Remove(i.Path));
-        }
-
-        public void StageFiles(string[] filesToStage)
+        public void AddFiles(string[] filesToStage)
         {
             foreach (var file in filesToStage)
             {
                 repository.Index.Add(NormalizePath(file));
             }
         }
+        
+        public void RemoveFiles(string[] filesToRemove)
+        {
+            foreach (var file in filesToRemove)
+            {
+                repository.Index.Remove(NormalizePath(file));
+            }
+        }
 
         static string NormalizePath(string path)
         {
-            var separatorToReplace = Path.DirectorySeparatorChar == '/' ? '\\' : '/';
-            var normalized = path.Replace(separatorToReplace, Path.DirectorySeparatorChar);
-            return normalized.StartsWith($".{Path.DirectorySeparatorChar}") ? normalized.Substring(2) : normalized;
+            var normalized = path.Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            return normalized.StartsWith($".{Path.AltDirectorySeparatorChar}") ? normalized.Substring(2) : normalized;
         }
 
         public async Task<PushResult> PushChanges(bool requiresPullRequest,
