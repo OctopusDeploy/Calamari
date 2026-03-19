@@ -69,15 +69,9 @@ internal sealed record CachedDriveInfo(
     }
 
     public CachedDriveInfo DetectLockSupport(string lockDirectory)
-        => DetectLockSupport(lockDirectory, FileLock.Acquire, path => Directory.CreateDirectory(path));
+        => DetectLockSupport(lockDirectory, FileLockService.Instance);
 
-    internal CachedDriveInfo DetectLockSupport(string lockDirectory, Func<LockOptions, ILockHandle> acquireDelegate)
-        => DetectLockSupport(lockDirectory, acquireDelegate, path => Directory.CreateDirectory(path));
-
-    internal CachedDriveInfo DetectLockSupport(
-        string lockDirectory,
-        Func<LockOptions, ILockHandle> acquireDelegate,
-        Action<string> createDirectory)
+    internal CachedDriveInfo DetectLockSupport(string lockDirectory, IFileLockService lockService)
     {
         if (LockSupport != LockCapability.Unknown)
         {
@@ -93,8 +87,8 @@ internal sealed record CachedDriveInfo(
                                           );
         try
         {
-            createDirectory(lockDirectory);
-            var supportsExclusiveLock = TestExclusiveLock(testFile, acquireDelegate);
+            lockService.CreateDirectory(lockDirectory);
+            var supportsExclusiveLock = TestExclusiveLock(testFile, lockService);
             if (!supportsExclusiveLock)
             {
                 return this with
@@ -109,19 +103,19 @@ internal sealed record CachedDriveInfo(
                 DetectedLockSupport = LockCapability.ExclusiveOnly
             };
 
-            var supportsSharedLock = TestSharedLock(testFile, acquireDelegate);
+            var supportsSharedLock = TestSharedLock(testFile, lockService);
             if (!supportsSharedLock)
             {
                 return exclusiveOnly;
             }
 
-            var supportsExclusiveBlocksShared = TestExclusiveBlocksShared(testFile, acquireDelegate);
+            var supportsExclusiveBlocksShared = TestExclusiveBlocksShared(testFile, lockService);
             if (!supportsExclusiveBlocksShared)
             {
                 return exclusiveOnly;
             }
 
-            var supportsSharedBlocksExclusive = TestSharedBlocksExclusive(testFile, acquireDelegate);
+            var supportsSharedBlocksExclusive = TestSharedBlocksExclusive(testFile, lockService);
             if (!supportsSharedBlocksExclusive)
             {
                 return exclusiveOnly;
@@ -149,7 +143,7 @@ internal sealed record CachedDriveInfo(
         }
     }
 
-    static bool TestExclusiveLock(LockFile testFile, Func<LockOptions, ILockHandle> acquireDelegate)
+    static bool TestExclusiveLock(LockFile testFile, IFileLockService lockService)
     {
         var lockOptions = new LockOptions(
                                           Type: LockType.Exclusive,
@@ -159,10 +153,10 @@ internal sealed record CachedDriveInfo(
                                          );
         try
         {
-            using var initialAcquire = acquireDelegate(lockOptions);
+            using var initialAcquire = lockService.AcquireLock(lockOptions);
             try
             {
-                using var secondAcquire = acquireDelegate(lockOptions);
+                using var secondAcquire = lockService.AcquireLock(lockOptions);
                 return false;
             }
             catch (LockRejectedException)
@@ -177,7 +171,7 @@ internal sealed record CachedDriveInfo(
         }
     }
 
-    static bool TestSharedLock(LockFile testFile, Func<LockOptions, ILockHandle> acquireDelegate)
+    static bool TestSharedLock(LockFile testFile, IFileLockService lockService)
     {
         var lockOptions = new LockOptions(
                                           Type: LockType.Shared,
@@ -187,8 +181,8 @@ internal sealed record CachedDriveInfo(
                                          );
         try
         {
-            using var initialAcquire = acquireDelegate(lockOptions);
-            using var secondAcquire = acquireDelegate(lockOptions);
+            using var initialAcquire = lockService.AcquireLock(lockOptions);
+            using var secondAcquire = lockService.AcquireLock(lockOptions);
             return true;
         }
         catch
@@ -198,7 +192,7 @@ internal sealed record CachedDriveInfo(
         }
     }
 
-    static bool TestExclusiveBlocksShared(LockFile testFile, Func<LockOptions, ILockHandle> acquireDelegate)
+    static bool TestExclusiveBlocksShared(LockFile testFile, IFileLockService lockService)
     {
         var exclusiveLockOptions = new LockOptions(
                                                    Type: LockType.Exclusive,
@@ -210,10 +204,10 @@ internal sealed record CachedDriveInfo(
 
         try
         {
-            using var exclusiveAcquire = acquireDelegate(exclusiveLockOptions);
+            using var exclusiveAcquire = lockService.AcquireLock(exclusiveLockOptions);
             try
             {
-                using var sharedAcquire = acquireDelegate(sharedLockOptions);
+                using var sharedAcquire = lockService.AcquireLock(sharedLockOptions);
                 return false;  // Should not have been able to acquire the lock
             }
             catch (LockRejectedException)
@@ -227,7 +221,7 @@ internal sealed record CachedDriveInfo(
         }
     }
 
-    static bool TestSharedBlocksExclusive(LockFile testFile, Func<LockOptions, ILockHandle> acquireDelegate)
+    static bool TestSharedBlocksExclusive(LockFile testFile, IFileLockService lockService)
     {
         var exclusiveLockOptions = new LockOptions(
                                                    Type: LockType.Exclusive,
@@ -239,10 +233,10 @@ internal sealed record CachedDriveInfo(
 
         try
         {
-            using var sharedAcquire = acquireDelegate(sharedLockOptions);
+            using var sharedAcquire = lockService.AcquireLock(sharedLockOptions);
             try
             {
-                using var exclusiveAcquire = acquireDelegate(exclusiveLockOptions);
+                using var exclusiveAcquire = lockService.AcquireLock(exclusiveLockOptions);
                 return false;  // Should not have been able to acquire the lock
             }
             catch (LockRejectedException)

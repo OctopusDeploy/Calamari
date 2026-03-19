@@ -90,7 +90,7 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         /// <see cref="ExclusiveOnlyBecauseSharedDoesNotBlockExclusive"/>,
         /// <see cref="Unsupported"/>.
         /// </summary>
-        sealed class FakeLockService
+        sealed class FakeLockService : IFileLockService
         {
             readonly bool _exclusiveBlocksExclusive;
             readonly bool _sharedAllowed;
@@ -165,9 +165,13 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
                     exclusiveBlocksShared: false,
                     sharedBlocksExclusive: false);
 
-            // ---- Acquire delegate ----------------------------------------------
+            // ---- IFileLockService implementation --------------------------------
 
-            public ILockHandle Acquire(LockOptions opts)
+            // Directory creation is a no-op in the fake: the FakeLockService does not
+            // touch the real filesystem, so there is nothing to create.
+            public void CreateDirectory(string path) { }
+
+            public ILockHandle AcquireLock(LockOptions opts)
             {
                 switch (opts.Type)
                 {
@@ -282,7 +286,7 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             var drive = UnknownDrive();
             var fs = FakeLockService.Unsupported();
 
-            var result = drive.DetectLockSupport(Path.GetTempPath(), fs.Acquire);
+            var result = drive.DetectLockSupport(Path.GetTempPath(), fs);
 
             result.LockSupport.Should().Be(LockCapability.Unsupported);
         }
@@ -293,7 +297,7 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             var drive = UnknownDrive();
             var fs = FakeLockService.ExclusiveOnlyBecauseSharedUnsupported();
 
-            var result = drive.DetectLockSupport(Path.GetTempPath(), fs.Acquire);
+            var result = drive.DetectLockSupport(Path.GetTempPath(), fs);
 
             result.LockSupport.Should().Be(LockCapability.ExclusiveOnly);
         }
@@ -306,7 +310,7 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             var drive = UnknownDrive();
             var fs = FakeLockService.ExclusiveOnlyBecauseExclusiveDoesNotBlockShared();
 
-            var result = drive.DetectLockSupport(Path.GetTempPath(), fs.Acquire);
+            var result = drive.DetectLockSupport(Path.GetTempPath(), fs);
 
             result.LockSupport.Should().Be(LockCapability.ExclusiveOnly);
         }
@@ -319,7 +323,7 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             var drive = UnknownDrive();
             var fs = FakeLockService.ExclusiveOnlyBecauseSharedDoesNotBlockExclusive();
 
-            var result = drive.DetectLockSupport(Path.GetTempPath(), fs.Acquire);
+            var result = drive.DetectLockSupport(Path.GetTempPath(), fs);
 
             result.LockSupport.Should().Be(LockCapability.ExclusiveOnly);
         }
@@ -331,7 +335,7 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             var drive = UnknownDrive();
             var fs = FakeLockService.FullySupported();
 
-            var result = drive.DetectLockSupport(Path.GetTempPath(), fs.Acquire);
+            var result = drive.DetectLockSupport(Path.GetTempPath(), fs);
 
             result.LockSupport.Should().Be(LockCapability.Supported);
         }
@@ -394,7 +398,7 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             ]);
             var fs = FakeLockService.FullySupported();
 
-            var result = LockDirectory.GetLockDirectory(CandidatePath, drives, fs.Acquire, _ => { });
+            var result = LockDirectory.GetLockDirectory(CandidatePath, drives, fs);
 
             result.LockSupport.Should().Be(LockCapability.Supported);
             result.DirectoryInfo.FullName.Should().Be(CandidatePath,
@@ -445,7 +449,7 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             ]);
             var fs = FakeLockService.Unsupported();
 
-            var result = LockDirectory.GetLockDirectory(CandidatePath, drives, fs.Acquire, _ => { });
+            var result = LockDirectory.GetLockDirectory(CandidatePath, drives, fs);
 
             result.LockSupport.Should().Be(LockCapability.Unsupported);
             result.DirectoryInfo.FullName.Should().Be(CandidatePath);
