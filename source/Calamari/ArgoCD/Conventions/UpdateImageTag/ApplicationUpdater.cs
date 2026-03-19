@@ -82,7 +82,7 @@ public class ApplicationUpdater
                 : "Nothing to update for Application {0}";
 
             log.InfoFormat(message, linkifiedAppName);
-            
+
             return new ProcessApplicationResult(
                                                 application.GatewayId,
                                                 applicationName.ToApplicationName(),
