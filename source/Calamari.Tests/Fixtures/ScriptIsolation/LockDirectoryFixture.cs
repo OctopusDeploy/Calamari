@@ -802,6 +802,76 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         }
 
         // -------------------------------------------------------------------------
+        // Group F: DefaultPathResolutionService — real filesystem integration tests
+        //
+        // These tests use the actual DefaultPathResolutionService against the real
+        // filesystem.  They are necessarily platform-specific and touch real paths,
+        // but require no filesystem writes.
+        // -------------------------------------------------------------------------
+
+        [Test]
+        [Platform("Unix")]
+        public void DefaultPathResolutionService_ResolvesExistingSymlink()
+        {
+            // /tmp is a symlink to /private/tmp on macOS; on other Unix systems it may
+            // not be a symlink, in which case ResolvePath should return the path unchanged.
+            var result = DefaultPathResolutionService.Instance.ResolvePath("/tmp");
+
+            // The result must be an absolute path and must not contain /tmp as a prefix
+            // if /tmp is a symlink (i.e. it should point at the real location).
+            result.Should().StartWith("/",
+                                      because: "result must always be an absolute path");
+
+            // If /tmp really is a symlink, the result should differ from /tmp.
+            var tmpInfo = new FileInfo("/tmp");
+            if (tmpInfo.LinkTarget is not null)
+            {
+                result.Should().NotBe("/tmp",
+                                      because: "/tmp is a symlink and should resolve to its real target");
+            }
+        }
+
+        [Test]
+        [Platform("Unix")]
+        public void DefaultPathResolutionService_ResolvesSymlinkInAncestor_WhenChildDoesNotExist()
+        {
+            // The child path does not exist, but /tmp (if a symlink) should still be
+            // resolved so that the returned path starts with the real mount root.
+            const string nonExistentUnderTmp = "/tmp/calamari-test-nonexistent-path-xyz";
+
+            var result = DefaultPathResolutionService.Instance.ResolvePath(nonExistentUnderTmp);
+
+            result.Should().StartWith("/",
+                                      because: "result must always be an absolute path");
+            result.Should().EndWith("/calamari-test-nonexistent-path-xyz",
+                                    because: "the non-existent tail segment must be preserved");
+
+            var tmpInfo = new FileInfo("/tmp");
+            if (tmpInfo.LinkTarget is not null)
+            {
+                // The prefix should have been resolved away from the symlink
+                result.Should().NotStartWith("/tmp/",
+                                             because: "/tmp is a symlink; the resolved path should start with the real target");
+            }
+        }
+
+        [Test]
+        public void DefaultPathResolutionService_ReturnsNormalisedPath_WhenPathDoesNotExistAtAll()
+        {
+            // A path with no existing ancestor (other than the filesystem root) should
+            // still return a normalised, absolute path without throwing.
+            var nonExistent = OperatingSystem.IsWindows()
+                ? @"C:\calamari-nonexistent-root-xyz\foo\bar"
+                : "/calamari-nonexistent-root-xyz/foo/bar";
+
+            var act = () => DefaultPathResolutionService.Instance.ResolvePath(nonExistent);
+
+            act.Should().NotThrow();
+            var result = act();
+            result.Should().Contain("calamari-nonexistent-root-xyz");
+        }
+
+        // -------------------------------------------------------------------------
         // Group G: PathResolutionServiceExtensions.ResolvePath — unit tests
         //
         // These tests exercise the ancestor-walk logic in the extension method
@@ -988,76 +1058,6 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             result.Should().Be(rawPath,
                                because: $"a {exception.GetType().Name} from GetFullPath must not propagate; " +
                                         "the raw path must be returned as a safe fallback");
-        }
-
-        // -------------------------------------------------------------------------
-        // Group F: DefaultPathResolutionService — real filesystem integration tests
-        //
-        // These tests use the actual DefaultPathResolutionService against the real
-        // filesystem.  They are necessarily platform-specific and touch real paths,
-        // but require no filesystem writes.
-        // -------------------------------------------------------------------------
-
-        [Test]
-        [Platform("Unix")]
-        public void DefaultPathResolutionService_ResolvesExistingSymlink()
-        {
-            // /tmp is a symlink to /private/tmp on macOS; on other Unix systems it may
-            // not be a symlink, in which case ResolvePath should return the path unchanged.
-            var result = DefaultPathResolutionService.Instance.ResolvePath("/tmp");
-
-            // The result must be an absolute path and must not contain /tmp as a prefix
-            // if /tmp is a symlink (i.e. it should point at the real location).
-            result.Should().StartWith("/",
-                                      because: "result must always be an absolute path");
-
-            // If /tmp really is a symlink, the result should differ from /tmp.
-            var tmpInfo = new FileInfo("/tmp");
-            if (tmpInfo.LinkTarget is not null)
-            {
-                result.Should().NotBe("/tmp",
-                                      because: "/tmp is a symlink and should resolve to its real target");
-            }
-        }
-
-        [Test]
-        [Platform("Unix")]
-        public void DefaultPathResolutionService_ResolvesSymlinkInAncestor_WhenChildDoesNotExist()
-        {
-            // The child path does not exist, but /tmp (if a symlink) should still be
-            // resolved so that the returned path starts with the real mount root.
-            const string nonExistentUnderTmp = "/tmp/calamari-test-nonexistent-path-xyz";
-
-            var result = DefaultPathResolutionService.Instance.ResolvePath(nonExistentUnderTmp);
-
-            result.Should().StartWith("/",
-                                      because: "result must always be an absolute path");
-            result.Should().EndWith("/calamari-test-nonexistent-path-xyz",
-                                    because: "the non-existent tail segment must be preserved");
-
-            var tmpInfo = new FileInfo("/tmp");
-            if (tmpInfo.LinkTarget is not null)
-            {
-                // The prefix should have been resolved away from the symlink
-                result.Should().NotStartWith("/tmp/",
-                                             because: "/tmp is a symlink; the resolved path should start with the real target");
-            }
-        }
-
-        [Test]
-        public void DefaultPathResolutionService_ReturnsNormalisedPath_WhenPathDoesNotExistAtAll()
-        {
-            // A path with no existing ancestor (other than the filesystem root) should
-            // still return a normalised, absolute path without throwing.
-            var nonExistent = OperatingSystem.IsWindows()
-                ? @"C:\calamari-nonexistent-root-xyz\foo\bar"
-                : "/calamari-nonexistent-root-xyz/foo/bar";
-
-            var act = () => DefaultPathResolutionService.Instance.ResolvePath(nonExistent);
-
-            act.Should().NotThrow();
-            var result = act();
-            result.Should().Contain("calamari-nonexistent-root-xyz");
         }
     }
 }
