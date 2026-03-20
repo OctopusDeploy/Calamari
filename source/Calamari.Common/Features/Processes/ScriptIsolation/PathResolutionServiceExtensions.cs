@@ -33,7 +33,7 @@ static class PathResolutionServiceExtensions
     /// The method then attempts to resolve symlinks via
     /// <see cref="IPathResolutionService.ResolveLinkTarget"/>.
     /// Because <see cref="IPathResolutionService.ResolveLinkTarget"/> throws when the
-    /// target path does not exist on disk, the method walks <em>up</em> the path
+    /// target path does not exist on disk or is inaccessible, the method walks <em>up</em> the path
     /// component by component until it locates an ancestor that does exist, resolves
     /// that ancestor's symlinks, then re-attaches the non-existent tail segments.
     /// This correctly handles cases such as <c>/tmp/new-dir</c> on macOS (where
@@ -90,9 +90,10 @@ static class PathResolutionServiceExtensions
             }
             catch (Exception ex) when (ex is FileNotFoundException
                                            or DirectoryNotFoundException
-                                           or IOException)
+                                           or IOException
+                                           or UnauthorizedAccessException)
             {
-                // current doesn't exist — peel off the last path segment and try its parent.
+                // current doesn't exist or is inaccessible — peel off the last path segment and try its parent.
                 var parent = Path.GetDirectoryName(current);
                 if (parent is null || parent == current)
                 {
