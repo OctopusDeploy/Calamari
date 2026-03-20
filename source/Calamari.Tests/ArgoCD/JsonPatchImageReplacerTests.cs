@@ -45,7 +45,7 @@ namespace Calamari.Tests.ArgoCD
             var result = imageReplacer.UpdateImages(imagesToUpdate);
 
             result.UpdatedContents.Should().NotBeNull();
-            result.UpdatedContents.Should().Be(expectedJson);
+            result.UpdatedContents.Replace("\r\n", "\n").Should().Be(expectedJson.Replace("\r\n", "\n"));
             result.UpdatedImageReferences.Count.Should().Be(1);
             result.UpdatedImageReferences.Should().ContainSingle(r => r == "nginx:1.25");
         }

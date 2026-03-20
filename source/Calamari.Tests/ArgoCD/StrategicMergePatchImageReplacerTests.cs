@@ -60,7 +60,7 @@ spec:
         var result = imageReplacer.UpdateImages(imagesToUpdate);
 
         result.UpdatedContents.Should().NotBeNull();
-        result.UpdatedContents.Trim().Should().Be(expectedYaml.Trim());
+        result.UpdatedContents.Trim().Replace("\r\n", "\n").Should().Be(expectedYaml.Trim().Replace("\r\n", "\n"));
         result.UpdatedImageReferences.Count.Should().Be(1);
         result.UpdatedImageReferences.Should().ContainSingle(r => r == "nginx:1.25");
     }
@@ -104,7 +104,7 @@ spec:
         var result = imageReplacer.UpdateImages(imagesToUpdate);
 
         result.UpdatedContents.Should().NotBeNull();
-        result.UpdatedContents.Trim().Should().Be(expectedYaml.Trim());
+        result.UpdatedContents.Trim().Replace("\r\n", "\n").Should().Be(expectedYaml.Trim().Replace("\r\n", "\n"));
         result.UpdatedImageReferences.Count.Should().Be(1);
         result.UpdatedImageReferences.Should().ContainSingle(r => r == "busybox:stable");
     }
@@ -151,7 +151,7 @@ spec:
         var result = imageReplacer.UpdateImages(imagesToUpdate);
 
         result.UpdatedContents.Should().NotBeNull();
-        result.UpdatedContents.Trim().Should().Be(expectedYaml.Trim());
+        result.UpdatedContents.Trim().Replace("\r\n", "\n").Should().Be(expectedYaml.Trim().Replace("\r\n", "\n"));
         result.UpdatedImageReferences.Count.Should().Be(2);
         result.UpdatedImageReferences.Should().Contain("nginx:1.25");
         result.UpdatedImageReferences.Should().Contain("busybox:stable");
