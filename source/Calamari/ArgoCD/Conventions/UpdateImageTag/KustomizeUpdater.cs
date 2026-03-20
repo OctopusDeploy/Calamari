@@ -89,13 +89,25 @@ public class KustomizeUpdater : BaseUpdater
 
     internal static PatchType? DeterminePatchTypeFromFile(string content, string filePath)
     {
+        // Kustomization files are not patch files
+        if (IsKustomizationFile(filePath))
+            return null;
+
+        // Check if it's a YAML/JSON file first (only these can be patch files)
+        var extension = Path.GetExtension(filePath).ToLowerInvariant();
+        if (extension != ".yaml" && extension != ".yml" && extension != ".json")
+            return null;
+
+        // Check for JSON 6902 patch pattern first (more specific)
         if (IsJson6902PatchContent(content))
             return PatchType.Json6902;
-        
+
+        // Check for strategic merge patch pattern
         if (IsStrategicMergePatchContent(content))
             return PatchType.StrategicMerge;
 
-        return null;
+        // Default to StrategicMerge for YAML/JSON files that don't match specific patterns
+        return PatchType.StrategicMerge;
     }
 
     internal static bool IsJson6902PatchContent(string content)
