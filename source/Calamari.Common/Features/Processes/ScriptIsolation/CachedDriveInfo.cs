@@ -81,7 +81,7 @@ sealed record CachedDriveInfo(
         var testFile =
             new LockDirectory(
                               DirectoryInfo: new DirectoryInfo(lockDirectory),
-                              LockCapability.Unknown
+                              LockSupport: LockCapability.Supported  // Ensures that lock will be attempted
                              ).GetLockFile(
                                            $"locktest-{Guid.NewGuid():N}.tmp"
                                           );
