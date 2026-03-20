@@ -25,6 +25,17 @@
         <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.41"/>
         <PackageReference Include="WireMock.Net" Version="1.6.9"/>
         <PackageReference Include="XPath2" Version="1.1.5"/>
+        <ProjectReference Include="..\Calamari.Scripting\Calamari.Scripting.csproj">
+            <!-- Don't merge Calamari.Scripting's outputs into the flat test output directory.
+                 Private=false prevents MSBuild's automatic ProjectReference output copy (including
+                 the native apphost binary). ReferenceOutputAssembly=false removes it from the
+                 compiler's reference path. The full dep closure is copied to a
+                 tools/Calamari.Scripting/ subdirectory instead by CopyScriptingOutputForTests,
+                 so integration tests can run it out-of-process with a correctly isolated set of
+                 dependencies. -->
+            <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+            <Private>false</Private>
+        </ProjectReference>
         <ProjectReference Include="..\Calamari.Testing\Calamari.Testing.csproj"/>
         <ProjectReference Include="..\Calamari\Calamari.csproj"/>
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.0"/>
@@ -278,5 +289,25 @@
 
         <Unzip SourceFiles="@(DotnetScriptFiles)" DestinationFolder="$(PublishDir)/" SkipUnchangedFiles="true"/>
         <Exec Command="chmod +x %(DotnetScriptFilesExe.Identity)" IgnoreExitCode="true"/>
+    </Target>
+
+    <!--
+      Copy Calamari.Scripting's full build output into a tools/Calamari.Scripting/ subdirectory of
+      the test output. This keeps Calamari.Scripting's dependency closure isolated from
+      Calamari.Tests' merged output directory (which omits several Microsoft.Extensions.* assemblies
+      because WireMock.Net pulls in Microsoft.AspNetCore.App as a shared framework, causing those
+      assemblies to be treated as framework-provided and not copied).
+
+      Integration tests that launch Calamari.Scripting as a child process find the DLL at the known
+      relative path $(OutputPath)/tools/Calamari.Scripting/Calamari.Scripting.dll, which is stable
+      relative to the test binary and safe to use in CI.
+    -->
+    <Target Name="CopyScriptingOutputForTests" AfterTargets="Build">
+        <ItemGroup>
+            <ScriptingOutputFiles Include="$(MSBuildProjectDirectory)/../Calamari.Scripting/bin/$(Configuration)/$(TargetFramework)/**/*"/>
+        </ItemGroup>
+        <Copy SourceFiles="@(ScriptingOutputFiles)"
+              DestinationFolder="$(OutputPath)tools/Calamari.Scripting/%(RecursiveDir)"
+              SkipUnchangedFiles="true"/>
     </Target>
 </Project>
