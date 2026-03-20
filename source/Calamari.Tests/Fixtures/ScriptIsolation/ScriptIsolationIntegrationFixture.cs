@@ -16,7 +16,6 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
     /// <c>Isolation.Enforce()</c>.
     /// </summary>
     [TestFixture]
-    [Category(TestCategory.RunOnceOnWindowsAndLinux)]
     public class ScriptIsolationIntegrationFixture : CalamariFixture
     {
         ScriptIsolationTestContext context = null!;

@@ -3,7 +3,6 @@ using System.Linq;
 using System.Reflection;
 using Calamari.Common;
 using Calamari.Common.Features.Processes.ScriptIsolation;
-using Calamari.Testing.Helpers;
 using FluentAssertions;
 using NUnit.Framework;
 
@@ -24,7 +23,6 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
     /// helper tool, not a Calamari step runner, and has no need for script isolation.
     /// </summary>
     [TestFixture]
-    [Category(TestCategory.PlatformAgnostic)]
     public class ScriptIsolationBinaryFixture
     {
         /// <summary>
