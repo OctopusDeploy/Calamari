@@ -33,19 +33,13 @@ public class KustomizeUpdater : BaseUpdater
         this.defaultRegistry = defaultRegistry;
     }
 
-    // 1. Determine what file type it is
-    // 1a. If it is a Kustomize file, run KustomizeImageReplace(which will handle the normal update of image tags + inline patches)
-    // 1b. If it not a Kustomize file, run UpdatePatchWithImages(input, imagesToUpdate, defaultRegistry, log)
-    // UpdatePatchWithImages will be responsible for determining the patch type of the input and then call type specific update
     public override ImageReplacementResult ReplaceImages(string input)
     {
         var updatedContent = input;
         var allUpdatedImages = new HashSet<string>();
 
-        // For kustomization files, we may need to chain replacers (images + inline patches)
         if (IsKustomizationFile(currentFilePath))
         {
-            // Always process images field first
             var kustomizeReplacer = new KustomizeImageReplacer(updatedContent, defaultRegistry, log);
             var result = kustomizeReplacer.UpdateImages(imagesToUpdate);
 
@@ -55,7 +49,6 @@ public class KustomizeUpdater : BaseUpdater
                 allUpdatedImages.UnionWith(result.UpdatedImageReferences);
             }
 
-            // Then process inline patches if present
             if (HasInlinePatches(input))
             {
                 var inlinePatchReplacer = new InlineJsonPatchImageReplacer(updatedContent, defaultRegistry, log);
@@ -70,7 +63,6 @@ public class KustomizeUpdater : BaseUpdater
         }
         else
         {
-            // For external patch files, determine patch type and use appropriate replacer
             var patchType = DeterminePatchTypeFromFile(input, currentFilePath);
 
             IContainerImageReplacer replacer = patchType switch
@@ -97,22 +89,11 @@ public class KustomizeUpdater : BaseUpdater
 
     internal static PatchType? DeterminePatchTypeFromFile(string content, string filePath)
     {
-        // For kustomization files, return null (handled separately)
-        if (IsKustomizationFile(filePath))
-            return null;
-
-        // Try to determine patch type based on content structure first (more accurate than file extension)
         if (IsJson6902PatchContent(content))
             return PatchType.Json6902;
-
-        // If not JSON 6902, check if it looks like a Kubernetes resource (strategic merge)
+        
         if (IsStrategicMergePatchContent(content))
             return PatchType.StrategicMerge;
-
-        // Fallback to extension-based detection for edge cases
-        var extension = Path.GetExtension(filePath).ToLowerInvariant();
-        if (extension == ".json" || extension == ".yaml" || extension == ".yml")
-            return PatchType.StrategicMerge; // Default to strategic merge as it's more common
 
         return null;
     }
@@ -189,12 +170,10 @@ public class KustomizeUpdater : BaseUpdater
             if (rootNode is not YamlMappingNode mappingNode)
                 return false;
 
-            // Check for 'patches' field in the kustomization file
             return mappingNode.Children.ContainsKey(new YamlScalarNode("patches"));
         }
         catch
         {
-            // If we can't parse the YAML, assume no inline patches
             return false;
         }
     }
@@ -265,32 +244,15 @@ public class KustomizeUpdater : BaseUpdater
 
         log.Verbose($"Reading files from {applicationSource.Path}");
 
-        // rename to KustomizeSource 
-        return ProcessKustomizeApplication(workingDirectory, applicationSource.Path!);
+        return ProcessKustomizeSource(workingDirectory, applicationSource.Path!);
     }
-    
-    // 1. Finds the Kustomize file (existing)
-    // 2. Finds all referenced external patched files. For example, if the kustomization file has the following patch field:
-    // patches:
-    // - path: increase_replicas.yaml
-    // - path: set_memory.yaml
-    // another example
-    // target:
-    //    group: apps
-    //    version: v1
-    //    kind: Deployment
-    //    name: my-nginx
-    //  path: patch.yaml
-    // we want to collate the external files.
-    // 2a. filter out the patch files not relevant to updating image tags (e.g config maps won't have any image tags to update)
-    // 3. Call the Update() function with a list of the files to update
-    FileUpdateResult ProcessKustomizeApplication(
+
+    FileUpdateResult ProcessKustomizeSource(
         string rootPath,
         string subFolder)
     {
         var absSubFolder = Path.Combine(rootPath, subFolder);
 
-        // 1. Find the Kustomize file
         var kustomizationFile = KustomizeDiscovery.TryFindKustomizationFile(fileSystem, absSubFolder);
         if (kustomizationFile == null)
         {
@@ -300,13 +262,11 @@ public class KustomizeUpdater : BaseUpdater
 
         log.Verbose("kustomization file found, processing images and discovering patch files");
 
-        // 2. Find all referenced external patch files
         var allFilesToUpdate = new HashSet<string> { kustomizationFile };
         var patchFiles = KustomizePatchDiscovery.DiscoverPatchFiles(fileSystem, kustomizationFile, log);
 
-        // 2a. Filter out patch files not relevant to updating image tags and add external patch files
         var externalPatchFiles = patchFiles
-            .Where(p => p.Type != PatchType.InlineJsonPatch) // Exclude inline patches (they're in kustomization.yaml)
+            .Where(p => p.Type != PatchType.InlineJsonPatch)
             .Select(p => p.FilePath)
             .Where(fileSystem.FileExists);
 
@@ -315,7 +275,6 @@ public class KustomizeUpdater : BaseUpdater
         log.VerboseFormat("Processing {0} files total (kustomization + {1} external patch files)",
             allFilesToUpdate.Count, externalPatchFiles.Count());
 
-        // 3. Call the Update() function with a list of all files to update
         return Update(rootPath, allFilesToUpdate);
     }
 
