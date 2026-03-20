@@ -223,7 +223,7 @@ public class KustomizeUpdater : BaseUpdater
         }
 
         currentFilePath = ""; // Reset after processing
-        return new FileUpdateResult(updatedImages, jsonPatches);
+        return new FileUpdateResult(updatedImages, jsonPatches, []);
     }
 
     private static new JsonPatchDocument CreateJsonPatch(string originalContent, string updatedContent)
@@ -269,7 +269,7 @@ public class KustomizeUpdater : BaseUpdater
         if (kustomizationFile == null)
         {
             log.Warn("kustomization file not found, no files will be updated");
-            return new FileUpdateResult([], []);
+            return new FileUpdateResult([], [], []);
         }
 
         log.Verbose("kustomization file found, processing images and discovering patch files");
