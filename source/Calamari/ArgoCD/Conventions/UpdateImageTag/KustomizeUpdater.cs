@@ -272,8 +272,22 @@ public class KustomizeUpdater : BaseUpdater
             return new FileUpdateResult([], []);
         }
 
-        log.Warn("kustomization file not found, no files will be updated");
-        return new FileUpdateResult( [], [], []);
+        log.Verbose("kustomization file found, processing images and discovering patch files");
+
+        var allFilesToUpdate = new HashSet<string> { kustomizationFile };
+        var patchFiles = KustomizePatchDiscovery.DiscoverPatchFiles(fileSystem, kustomizationFile, log);
+
+        var externalPatchFiles = patchFiles
+                                 .Where(p => p.Type != PatchType.InlineJsonPatch)
+                                 .Select(p => p.FilePath)
+                                 .Where(fileSystem.FileExists);
+
+        allFilesToUpdate.UnionWith(externalPatchFiles);
+
+        log.VerboseFormat("Processing {0} files total (kustomization + {1} external patch files)",
+                          allFilesToUpdate.Count, externalPatchFiles.Count());
+
+        return Update(rootPath, allFilesToUpdate);
     }
 
 }
