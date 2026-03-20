@@ -16,9 +16,7 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
     [TestFixture]
     public class LockOptionsFixture
     {
-        static string DefaultTentacleHome => OperatingSystem.IsWindows()
-            ? @"C:\Octopus\Tentacle"
-            : "/home/octopus/tentacle";
+        static string DefaultTentacleHome => Path.GetTempPath();
 
         static CommonOptions.ScriptIsolationOptions MakeOptions(
             string? level = "FullIsolation",
