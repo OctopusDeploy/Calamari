@@ -1134,8 +1134,8 @@ service:
             runningDeployment.CurrentDirectoryProvider = DeploymentWorkingDirectory.StagingDirectory;
             runningDeployment.StagingDirectory = tempDirectory;
 
-            var existingYamlFile = "otherRepoPath/values.yaml";
-            var extraValuesFile = "otherRepoPath/values-extra.yaml";
+            var existingYamlFile = Path.Combine("otherRepoPath", "values.yaml");
+            var extraValuesFile = Path.Combine("otherRepoPath", "values-extra.yaml");
             var filesInRepo = new (string, string)[]
             {
                 (
@@ -1353,7 +1353,7 @@ service:
         [Test]
         public void DirectorySource_ImageMatches_ReportsDeploymentWithNonEmptyCommitSha()
         {
-            var valuesFilename = "files/values.yml";
+            var valuesFilename = Path.Combine("files", "values.yml");
             //Arrange
             const string multiImageValuesFile = """
                                                 image1:

@@ -21,7 +21,7 @@ public interface ISourceUpdater
 
 public class NoOpSourceUpdater : ISourceUpdater
 {
-    public FileUpdateResult Process(ApplicationSourceWithMetadata sourceWithMetadata, string workingDirectory) => new( [], []);
+    public FileUpdateResult Process(ApplicationSourceWithMetadata sourceWithMetadata, string workingDirectory) => new( [], [], []);
 }
 
 public abstract class BaseUpdater : ISourceUpdater
@@ -52,8 +52,7 @@ public abstract class BaseUpdater : ISourceUpdater
 
             if (imageReplacementResult.UpdatedImageReferences.Count > 0)
             {
-                // Replace \ with / so that Calamari running on windows doesn't cause issues when we send back to server
-                jsonPatches.Add(new(relativePath.Replace('\\', '/'), Serialize(CreateJsonPatch(content, imageReplacementResult.UpdatedContents))));
+                jsonPatches.Add(new(relativePath, Serialize(CreateJsonPatch(content, imageReplacementResult.UpdatedContents))));
                 fileSystem.OverwriteFile(file, imageReplacementResult.UpdatedContents);
                 updatedImages.UnionWith(imageReplacementResult.UpdatedImageReferences);
                 log.Verbose($"Updating file {relativePath} with new image references.");
@@ -68,7 +67,7 @@ public abstract class BaseUpdater : ISourceUpdater
             }
         }
 
-        return new FileUpdateResult(updatedImages, jsonPatches);
+        return new FileUpdateResult(updatedImages, jsonPatches, []);
     }
     
     protected static JsonPatchDocument CreateJsonPatch(string originalContent, string updatedContent)

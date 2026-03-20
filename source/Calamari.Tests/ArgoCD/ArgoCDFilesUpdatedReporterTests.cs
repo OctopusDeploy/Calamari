@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.IO;
 using Calamari.ArgoCD;
 using Calamari.ArgoCD.Models;
 using Calamari.Testing.Helpers;
@@ -234,6 +235,35 @@ namespace Calamari.Tests.ArgoCD
                     ["gatewayId"] = "gateway1",
                     ["applicationName"] = "app1",
                     ["sources"] = "[{\"CommitSha\":\"abc123\",\"SourceIndex\":0,\"ReplacedFiles\":[{\"FilePath\":\"values.yaml\",\"Content\":\"image: nginx:latest\"}],\"PatchedFiles\":[]},{\"CommitSha\":\"abc123\",\"SourceIndex\":1,\"ReplacedFiles\":[],\"PatchedFiles\":[{\"FilePath\":\"kustomization.yaml\",\"Content\":\"images:\\n- name: redis\"}]}]"
+                }
+            });
+        }
+
+        [Test]
+        public void ReportDeployments_WithOsSpecificReplacedFilePaths_ReportsPosixPaths()
+        {
+            var log = new InMemoryLog();
+            var reporter = new ArgoCDFilesUpdatedReporter(log);
+
+            var applicationResults = new List<ProcessApplicationResult>
+            {
+                new("gateway1", new ApplicationName("app1"), 1, 1,
+                    [new UpdatedSourceDetail("abc123", 0,
+                        [new FilePathContent(Path.Combine("some", "nested", "values.yaml"), "image: nginx:latest")],
+                        [])],
+                    [], [])
+            };
+
+            reporter.ReportFilesUpdated(applicationResults);
+
+            log.ServiceMessages.Should().ContainSingle().Which.Should().BeEquivalentTo(new
+            {
+                Name = "argocd-files-updated",
+                Properties = new Dictionary<string, string>
+                {
+                    ["gatewayId"] = "gateway1",
+                    ["applicationName"] = "app1",
+                    ["sources"] = "[{\"CommitSha\":\"abc123\",\"SourceIndex\":0,\"ReplacedFiles\":[{\"FilePath\":\"some/nested/values.yaml\",\"Content\":\"image: nginx:latest\"}],\"PatchedFiles\":[]}]"
                 }
             });
         }

@@ -10,8 +10,8 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="AWSSDK.SecurityToken" Version="3.7.401.11" />
     <PackageReference Include="NuGet.Versioning" Version="7.4.0-octopus-release.17001" />
+    <PackageReference Include="AWSSDK.SecurityToken" Version="4.0.5.12" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Calamari.CloudAccounts\Calamari.CloudAccounts.csproj" />

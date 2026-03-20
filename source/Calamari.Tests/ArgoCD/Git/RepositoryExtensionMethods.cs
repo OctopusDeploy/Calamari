@@ -1,5 +1,6 @@
 #nullable enable
 using System;
+using System.IO;
 using System.Text;
 using Calamari.ArgoCD.Git;
 using LibGit2Sharp;
@@ -14,7 +15,8 @@ namespace Calamari.Tests.ArgoCD.Git
     {
         public static string ReadFileFromBranch(this Repository repo, GitBranchName branchName, string filename)
         {
-            var fileTreeEntry = repo.Branches[branchName.Value].Tip[filename];
+            //filename will always be posix-compliant
+            var fileTreeEntry = repo.Branches[branchName.Value].Tip[filename.Replace(Path.DirectorySeparatorChar, '/')];
             
             var fileBlob = (Blob)fileTreeEntry.Target;  
             return fileBlob.GetContentText();
@@ -53,7 +55,7 @@ namespace Calamari.Tests.ArgoCD.Git
                 {
                     var bytes = Encoding.UTF8.GetBytes(file.Content);
                     var blobId = repository.ObjectDatabase.Write<Blob>(bytes);
-                    treeDefinition.Add(file.Name, blobId, Mode.NonExecutableFile);
+                    treeDefinition.Add(file.Name.Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar), blobId, Mode.NonExecutableFile);
                 }
             }
 
