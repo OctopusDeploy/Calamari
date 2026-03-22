@@ -40,10 +40,9 @@ namespace Calamari.ArgoCD
         readonly ILog log;
         readonly Regex imageReferencePattern;
 
-        // Regex pattern to find container image references in JSON patch values
         static readonly Regex DefaultImageReferencePattern = new Regex(
-            @"""(?<image>[a-zA-Z0-9\.\-_/]+(?::[a-zA-Z0-9\.\-_]+)?(?:@sha256:[a-fA-F0-9]{64})?)""",
-            RegexOptions.Compiled | RegexOptions.ExplicitCapture,
+            @"""([a-zA-Z0-9._/-]+(?::[a-zA-Z0-9._-]+)?(?:@sha256:[a-fA-F0-9]{64})?)""",
+            RegexOptions.Compiled,
             TimeSpan.FromMilliseconds(JsonProcessingConstants.RegexTimeoutMs));
 
         public JsonPatchImageReplacer(string jsonContent, string defaultRegistry, ILog log)
@@ -51,7 +50,6 @@ namespace Calamari.ArgoCD
         {
         }
 
-        // Internal constructor for testing with custom regex
         internal JsonPatchImageReplacer(string jsonContent, string defaultRegistry, ILog log, Regex imagePattern)
         {
             this.jsonContent = jsonContent ?? throw new ArgumentNullException(nameof(jsonContent));
@@ -92,7 +90,6 @@ namespace Calamari.ArgoCD
                 var replacementsMade = new HashSet<string>();
                 var hasChanges = false;
 
-                // Process each patch operation
                 foreach (var patchOp in patchArray)
                 {
                     if (patchOp is JsonObject patchObject)
@@ -111,7 +108,6 @@ namespace Calamari.ArgoCD
                     return NoChangeResult;
                 }
 
-                // Serialize back to JSON with formatting similar to the original
                 var options = jsonContent.Contains('\n')
                     ? JsonProcessingConstants.DefaultSerializerOptions
                     : JsonProcessingConstants.CompactSerializerOptions;
@@ -130,7 +126,6 @@ namespace Calamari.ArgoCD
         {
             var changes = new HashSet<string>();
 
-            // Look for 'value' field in the patch operation
             if (patchOperation.TryGetPropertyValue(JsonProcessingConstants.ValueFieldName, out var valueNode))
             {
                 ProcessValueNode(valueNode, imagesToUpdate, changes);
@@ -157,13 +152,11 @@ namespace Calamari.ArgoCD
 
         void ProcessJsonObject(JsonObject obj, IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate, HashSet<string> changes)
         {
-            // Look for container image fields
             if (obj.TryGetPropertyValue(JsonProcessingConstants.ImageFieldName, out var imageNode) && imageNode is JsonValue imageValue)
             {
                 ProcessImageValue(imageValue, imagesToUpdate, changes);
             }
 
-            // Look for containers arrays
             if (obj.TryGetPropertyValue(JsonProcessingConstants.ContainersFieldName, out var containersNode) && containersNode is JsonArray containersArray)
             {
                 ProcessJsonArray(containersArray, imagesToUpdate, changes);
@@ -174,7 +167,6 @@ namespace Calamari.ArgoCD
                 ProcessJsonArray(initContainersArray, imagesToUpdate, changes);
             }
 
-            // Recursively process all other properties
             foreach (var kvp in obj.ToList())
             {
                 ProcessValueNode(kvp.Value, imagesToUpdate, changes);
@@ -193,8 +185,7 @@ namespace Calamari.ArgoCD
         {
             if (value.TryGetValue<string>(out var stringValue) && !string.IsNullOrEmpty(stringValue))
             {
-                // Check if this string value looks like a container image reference
-                if (IsLikelyImageReference(stringValue))
+                if (IsImageReference(stringValue))
                 {
                     ProcessImageValue(value, imagesToUpdate, changes);
                 }
@@ -214,7 +205,6 @@ namespace Calamari.ArgoCD
                 {
                     var newImageRef = matchedUpdate.Reference.WithTag(matchedUpdate.Reference.Tag);
 
-                    // Update the JSON value in place
                     var parentArray = imageValue.Parent as JsonArray;
                     var parentObject = imageValue.Parent as JsonObject;
 
@@ -241,9 +231,8 @@ namespace Calamari.ArgoCD
             }
         }
 
-        static bool IsLikelyImageReference(string value)
+        static bool IsImageReference(string value)
         {
-            // Simple heuristic: contains a colon (for tag) or looks like a registry path
             return value.Contains(':') || value.Contains('/') || value.Contains('.');
         }
 
