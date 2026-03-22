@@ -73,6 +73,7 @@ namespace Calamari.ArgoCD
                 return NoChangeResult;
             }
 
+            // Look for the patches field
             var patchesSequence = rootNode.GetSequenceNode(FieldNames.Patches);
             if (patchesSequence == null)
             {
@@ -83,6 +84,7 @@ namespace Calamari.ArgoCD
             var replacementsMade = new HashSet<string>();
             var hasChanges = false;
 
+            // Process each patch in the sequence
             foreach (var patchNode in patchesSequence.OfType<YamlMappingNode>())
             {
                 var changes = ProcessPatchNode(patchNode, imagesToUpdate);
@@ -98,6 +100,7 @@ namespace Calamari.ArgoCD
                 return NoChangeResult;
             }
 
+            // Serialize the modified YAML
             var newLine = yamlContent.DetectLineEnding() ?? "\n";
             var serializer = new SerializerBuilder()
                 .WithNewLine(newLine)
@@ -114,9 +117,11 @@ namespace Calamari.ArgoCD
         {
             var changes = new HashSet<string>();
 
+            // Look for patch operations - inline patches can have 'patch' field with YAML content
             var patchContentValue = patchNode.GetStringValue(FieldNames.Patch);
             if (!string.IsNullOrEmpty(patchContentValue))
             {
+                // Find the actual scalar node for modification
                 foreach (var kvp in patchNode.Children)
                 {
                     if (kvp.Key is YamlScalarNode scalar && scalar.Value == FieldNames.Patch && kvp.Value is YamlScalarNode patchContentScalar)
@@ -137,7 +142,8 @@ namespace Calamari.ArgoCD
 
             try
             {
-                    var patchContent = patchContentNode.Value;
+                // Parse the patch content as YAML
+                var patchContent = patchContentNode.Value;
                 if (string.IsNullOrEmpty(patchContent))
                     return changes;
 
@@ -152,7 +158,8 @@ namespace Calamari.ArgoCD
 
                     if (patchChanges.Count > 0)
                     {
-                            var serializer = new SerializerBuilder().Build();
+                        // Serialize the modified patch content back to the scalar node
+                        var serializer = new SerializerBuilder().Build();
                         using var writer = new StringWriter();
                         patchStream.Save(writer, false);
                         var modifiedPatchContent = writer.ToString().TrimEnd();
@@ -172,9 +179,11 @@ namespace Calamari.ArgoCD
         {
             var changes = new HashSet<string>();
 
+            // Process container arrays
             ProcessContainersInNode(node, FieldNames.Containers, imagesToUpdate, changes);
             ProcessContainersInNode(node, FieldNames.InitContainers, imagesToUpdate, changes);
 
+            // Look for direct image field
             foreach (var kvp in node.Children)
             {
                 if (kvp.Key is YamlScalarNode scalar && scalar.Value == FieldNames.Image && kvp.Value is YamlScalarNode imageScalar && !string.IsNullOrEmpty(imageScalar.Value))
@@ -184,6 +193,7 @@ namespace Calamari.ArgoCD
                 }
             }
 
+            // Recursively process nested mapping nodes
             foreach (var kvp in node.Children)
             {
                 switch (kvp.Value)
@@ -239,6 +249,7 @@ namespace Calamari.ArgoCD
                 var newImageRef = matchedUpdate.Reference.WithTag(matchedUpdate.Reference.Tag);
                 imageScalar.Value = newImageRef;
 
+                // Ensure the scalar has appropriate quoting if needed
                 if (imageScalar.Style != ScalarStyle.SingleQuoted && imageScalar.Style != ScalarStyle.DoubleQuoted)
                 {
                     imageScalar.Style = ScalarStyle.DoubleQuoted;

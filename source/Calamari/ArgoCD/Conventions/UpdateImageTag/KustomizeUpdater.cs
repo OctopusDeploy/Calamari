@@ -21,6 +21,7 @@ public class KustomizeUpdater : BaseUpdater
     readonly IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate;
     readonly string defaultRegistry;
 
+    private string currentFilePath = "";
 
     public KustomizeUpdater(IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate,
                             string defaultRegistry,
@@ -34,17 +35,10 @@ public class KustomizeUpdater : BaseUpdater
 
     public override ImageReplacementResult ReplaceImages(string input)
     {
-        // This method is called from base class without file context
-        // For proper file-specific processing, use ReplaceImagesWithContext
-        return ReplaceImagesWithContext(input, "");
-    }
-
-    private ImageReplacementResult ReplaceImagesWithContext(string input, string filePath)
-    {
         var updatedContent = input;
         var allUpdatedImages = new HashSet<string>();
 
-        if (IsKustomizationFile(filePath))
+        if (IsKustomizationFile(currentFilePath))
         {
             var kustomizeReplacer = new KustomizeImageReplacer(updatedContent, defaultRegistry, log);
             var result = kustomizeReplacer.UpdateImages(imagesToUpdate);
@@ -69,7 +63,7 @@ public class KustomizeUpdater : BaseUpdater
         }
         else
         {
-            var patchType = DeterminePatchTypeFromFile(input, filePath);
+            var patchType = DeterminePatchTypeFromFile(input, currentFilePath);
 
             IContainerImageReplacer replacer = patchType switch
             {
@@ -203,11 +197,12 @@ public class KustomizeUpdater : BaseUpdater
 
         foreach (var file in filesToUpdate)
         {
+            currentFilePath = file; // Track current file being processed
             var relativePath = Path.GetRelativePath(rootPath, file);
             log.Verbose($"Processing file {relativePath}.");
             var content = fileSystem.ReadFile(file);
 
-            var imageReplacementResult = ReplaceImagesWithContext(content, file);
+            var imageReplacementResult = ReplaceImages(content);
 
             if (imageReplacementResult.UpdatedImageReferences.Count > 0)
             {
@@ -227,6 +222,7 @@ public class KustomizeUpdater : BaseUpdater
             }
         }
 
+        currentFilePath = ""; // Reset after processing
         return new FileUpdateResult(updatedImages, jsonPatches, []);
     }
 

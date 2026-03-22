@@ -101,7 +101,7 @@ namespace Calamari.ArgoCD
                 catch (Exception ex)
                 {
                     log.WarnFormat("Skipping corrupted YAML document: {0}", ex.Message);
-                    modifiedDocuments.Add(document);
+                    modifiedDocuments.Add(document); // Keep original document
                 }
             }
 
@@ -117,9 +117,11 @@ namespace Calamari.ArgoCD
                 return (document, changes);
             }
 
+            // Create a deep copy of the document to modify
             var modifiedRootNode = DeepCopyMappingNode(rootNode);
             var modifiedDocument = new YamlDocument(modifiedRootNode);
 
+            // Look for container specs in various locations within the strategic merge patch
             ProcessContainerSpecs(modifiedRootNode, imagesToUpdate, changes);
 
             return (modifiedDocument, changes);
@@ -127,9 +129,11 @@ namespace Calamari.ArgoCD
 
         void ProcessContainerSpecs(YamlMappingNode node, IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate, HashSet<string> changes)
         {
+            // Process current level containers
             ProcessContainersArray(node, FieldNames.Containers, imagesToUpdate, changes);
             ProcessContainersArray(node, FieldNames.InitContainers, imagesToUpdate, changes);
 
+            // Recursively process nested mapping nodes
             foreach (var kvp in node.Children.ToList())
             {
                 if (kvp.Value is YamlMappingNode childMapping)
@@ -222,6 +226,7 @@ namespace Calamari.ArgoCD
                 tempStream.Save(writer, false);
                 var serialized = writer.ToString();
 
+                // Remove any trailing whitespace and document separators
                 serialized = serialized.TrimEnd();
                 if (serialized.EndsWith("..."))
                 {
@@ -231,6 +236,7 @@ namespace Calamari.ArgoCD
                 serializedDocs.Add(serialized);
             }
 
+            // For single document, return as-is. For multiple documents, join with separators.
             return documents.Count == 1
                 ? serializedDocs[0]
                 : string.Join($"{newLine}---{newLine}", serializedDocs);
