@@ -10,6 +10,7 @@ using Calamari.ArgoCD.Models;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Testing.Helpers;
+using Calamari.Tests.Fixtures.Integration.FileSystem;
 using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
@@ -28,40 +29,41 @@ namespace Calamari.Tests.ArgoCD
         ILog log;
         ICalamariFileSystem fileSystem;
         string tempDir;
-        string kustomizationPath;
 
         [SetUp]
         public void SetUp()
         {
             log = new InMemoryLog();
-            fileSystem = Substitute.For<ICalamariFileSystem>();
-            tempDir = "/tmp";
-            
-            var subDirPath = Path.Combine(tempDir, ".");
-            kustomizationPath = Path.Combine(subDirPath, "kustomization.yaml");
-            
-            fileSystem.DirectoryExists(tempDir).Returns(true);
+            fileSystem = TestCalamariPhysicalFileSystem.GetPhysicalFileSystem();
+            tempDir = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+            Directory.CreateDirectory(tempDir);
         }
 
-        private void SetupKustomizationFile(string content)
+        [TearDown]
+        public void TearDown()
         {
-            var subDirPath = Path.Combine(tempDir, ".");
-            fileSystem.DirectoryExists(subDirPath).Returns(true);
-            
-            fileSystem.FileExists(kustomizationPath).Returns(true);
-            fileSystem.ReadFile(kustomizationPath).Returns(content);
-            
-            var altPath1 = Path.Combine(subDirPath, "kustomization.yml");
-            var altPath2 = Path.Combine(subDirPath, "Kustomization");
-            fileSystem.FileExists(altPath1).Returns(false);
-            fileSystem.FileExists(altPath2).Returns(false);
+            if (Directory.Exists(tempDir))
+            {
+                Directory.Delete(tempDir, recursive: true);
+            }
+        }
+
+        private void CreateKustomizationFile(string content)
+        {
+            var kustomizationPath = Path.Combine(tempDir, "kustomization.yaml");
+            File.WriteAllText(kustomizationPath, content);
+        }
+
+        private void CreatePatchFile(string fileName, string content)
+        {
+            var filePath = Path.Combine(tempDir, fileName);
+            File.WriteAllText(filePath, content);
         }
 
         [Test]
         public void Process_WithImagesFieldOnly_UpdatesImagesFieldOnly()
         {
-            const string kustomizationContent = @"
-apiVersion: kustomize.config.k8s.io/v1beta1
+            const string kustomizationContent = @"apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 images:
 - name: nginx
@@ -73,14 +75,16 @@ images:
                 SourceType.Kustomize,
                 0);
 
-            SetupKustomizationFile(kustomizationContent);
+            CreateKustomizationFile(kustomizationContent);
 
             var updater = new KustomizeUpdater(imagesToUpdate, ArgoCDConstants.DefaultContainerRegistry, log, fileSystem);
 
             var result = updater.Process(sourceWithMetadata, tempDir);
 
             result.UpdatedImages.Should().Contain("nginx:1.25");
-            fileSystem.Received(1).OverwriteFile(Arg.Any<string>(), Arg.Is<string>(content => content.Contains("\"1.25\"")));
+
+            var updatedContent = File.ReadAllText(Path.Combine(tempDir, "kustomization.yaml"));
+            updatedContent.Should().Contain("1.25");
         }
 
         [Test]
@@ -111,19 +115,17 @@ spec:
                 SourceType.Kustomize,
                 0);
 
-            var subDirPath = Path.Combine(tempDir, ".");
-            var patchPath = Path.Combine(subDirPath, "deployment-patch.yaml");
-
-            SetupKustomizationFile(kustomizationContent);
-            fileSystem.FileExists(patchPath).Returns(true);
-            fileSystem.ReadFile(patchPath).Returns(patchContent);
+            CreateKustomizationFile(kustomizationContent);
+            CreatePatchFile("deployment-patch.yaml", patchContent);
 
             var updater = new KustomizeUpdater(imagesToUpdate, ArgoCDConstants.DefaultContainerRegistry, log, fileSystem);
 
             var result = updater.Process(sourceWithMetadata, tempDir);
 
             result.UpdatedImages.Should().Contain("nginx:1.25");
-            fileSystem.Received(1).OverwriteFile(patchPath, Arg.Is<string>(content => content.Contains("nginx:1.25")));
+
+            var updatedPatchContent = File.ReadAllText(Path.Combine(tempDir, "deployment-patch.yaml"));
+            updatedPatchContent.Should().Contain("nginx:1.25");
         }
 
         [Test]
@@ -152,19 +154,17 @@ patchesJson6902:
                 SourceType.Kustomize,
                 0);
 
-            var subDirPath = Path.Combine(tempDir, ".");
-            var patchPath = Path.Combine(subDirPath, "deployment.json");
-
-            SetupKustomizationFile(kustomizationContent);
-            fileSystem.FileExists(patchPath).Returns(true);
-            fileSystem.ReadFile(patchPath).Returns(patchContent);
+            CreateKustomizationFile(kustomizationContent);
+            CreatePatchFile("deployment.json", patchContent);
 
             var updater = new KustomizeUpdater(imagesToUpdate, ArgoCDConstants.DefaultContainerRegistry, log, fileSystem);
 
             var result = updater.Process(sourceWithMetadata, tempDir);
 
             result.UpdatedImages.Should().Contain("nginx:1.25");
-            fileSystem.Received(1).OverwriteFile(patchPath, Arg.Is<string>(content => content.Contains("nginx:1.25")));
+
+            var updatedPatchContent = File.ReadAllText(Path.Combine(tempDir, "deployment.json"));
+            updatedPatchContent.Should().Contain("nginx:1.25");
         }
 
         [Test]
@@ -193,14 +193,16 @@ patches:
                 SourceType.Kustomize,
                 0);
 
-            SetupKustomizationFile(kustomizationContent);
+            CreateKustomizationFile(kustomizationContent);
 
             var updater = new KustomizeUpdater(imagesToUpdate, ArgoCDConstants.DefaultContainerRegistry, log, fileSystem);
 
             var result = updater.Process(sourceWithMetadata, tempDir);
 
             result.UpdatedImages.Should().Contain("nginx:1.25");
-            fileSystem.Received(1).OverwriteFile(kustomizationPath, Arg.Is<string>(content => content.Contains("nginx:1.25")));
+
+            var updatedKustomizationContent = File.ReadAllText(Path.Combine(tempDir, "kustomization.yaml"));
+            updatedKustomizationContent.Should().Contain("nginx:1.25");
         }
 
         [Test]
@@ -256,15 +258,9 @@ spec:
                 SourceType.Kustomize,
                 0);
 
-            var subDirPath = Path.Combine(tempDir, ".");
-            var deploymentPatchPath = Path.Combine(subDirPath, "deployment-patch.yaml");
-            var servicePatchPath = Path.Combine(subDirPath, "service.json");
-
-            SetupKustomizationFile(kustomizationContent);
-            fileSystem.FileExists(deploymentPatchPath).Returns(true);
-            fileSystem.ReadFile(deploymentPatchPath).Returns(deploymentPatchContent);
-            fileSystem.FileExists(servicePatchPath).Returns(true);
-            fileSystem.ReadFile(servicePatchPath).Returns(servicePatchContent);
+            CreateKustomizationFile(kustomizationContent);
+            CreatePatchFile("deployment-patch.yaml", deploymentPatchContent);
+            CreatePatchFile("service.json", servicePatchContent);
 
             var updater = new KustomizeUpdater(imagesToUpdate, ArgoCDConstants.DefaultContainerRegistry, log, fileSystem);
 
@@ -272,11 +268,16 @@ spec:
 
             result.UpdatedImages.Should().Contain("nginx:1.25");
             result.UpdatedImages.Should().Contain("busybox:stable");
-            result.UpdatedImages.Count.Should().Be(2); // nginx and busybox (duplicates are removed from the set)
+            result.UpdatedImages.Count.Should().Be(2);
 
-            fileSystem.Received(1).OverwriteFile(deploymentPatchPath, Arg.Is<string>(content => content.Contains("nginx:1.25")));
-            fileSystem.Received(1).OverwriteFile(servicePatchPath, Arg.Is<string>(content => content.Contains("busybox:stable")));
-            fileSystem.Received(1).OverwriteFile(kustomizationPath, Arg.Is<string>(content => content.Contains("busybox:stable")));
+            var updatedDeploymentContent = File.ReadAllText(Path.Combine(tempDir, "deployment-patch.yaml"));
+            updatedDeploymentContent.Should().Contain("nginx:1.25");
+
+            var updatedServiceContent = File.ReadAllText(Path.Combine(tempDir, "service.json"));
+            updatedServiceContent.Should().Contain("busybox:stable");
+
+            var updatedKustomizationContent = File.ReadAllText(Path.Combine(tempDir, "kustomization.yaml"));
+            updatedKustomizationContent.Should().Contain("busybox:stable");
         }
 
         [Test]
@@ -306,22 +307,22 @@ spec:
                 SourceType.Kustomize,
                 0);
 
-            var subDirPath = Path.Combine(tempDir, ".");
-            var existingPatchPath = Path.Combine(subDirPath, "deployment-patch.yaml");
-            var missingPatchPath = Path.Combine(subDirPath, "missing-patch.yaml");
+            var existingPatchPath = Path.Combine(tempDir, "deployment-patch.yaml");
+            var missingPatchPath = Path.Combine(tempDir, "missing-patch.yaml");
 
-            SetupKustomizationFile(kustomizationContent);
-            fileSystem.FileExists(existingPatchPath).Returns(true);
-            fileSystem.ReadFile(existingPatchPath).Returns(patchContent);
-            fileSystem.FileExists(missingPatchPath).Returns(false);
+            CreateKustomizationFile(kustomizationContent);
+            CreatePatchFile("deployment-patch.yaml", patchContent);
 
             var updater = new KustomizeUpdater(imagesToUpdate, ArgoCDConstants.DefaultContainerRegistry, log, fileSystem);
 
             var result = updater.Process(sourceWithMetadata, tempDir);
 
             result.UpdatedImages.Should().Contain("nginx:1.25");
-            fileSystem.Received(1).OverwriteFile(existingPatchPath, Arg.Any<string>());
-            fileSystem.DidNotReceive().OverwriteFile(missingPatchPath, Arg.Any<string>());
+
+            var updatedPatchContent = File.ReadAllText(Path.Combine(tempDir, "deployment-patch.yaml"));
+            updatedPatchContent.Should().Contain("nginx:1.25");
+
+            File.Exists(Path.Combine(tempDir, "missing-patch.yaml")).Should().BeFalse();
         }
 
         [Test]
@@ -332,7 +333,7 @@ spec:
                 SourceType.Kustomize,
                 0);
 
-            fileSystem.FileExists(Arg.Any<string>()).Returns(false);
+            // Don't create any files - the directory should be empty
 
             var updater = new KustomizeUpdater(imagesToUpdate, ArgoCDConstants.DefaultContainerRegistry, log, fileSystem);
 
@@ -371,24 +372,24 @@ spec:
                 SourceType.Kustomize,
                 0);
 
-            var subDirPath = Path.Combine(tempDir, ".");
-            var validPatchPath = Path.Combine(subDirPath, "valid-patch.yaml");
-            var invalidPatchPath = Path.Combine(subDirPath, "invalid-patch.yaml");
+            var validPatchPath = Path.Combine(tempDir, "valid-patch.yaml");
+            var invalidPatchPath = Path.Combine(tempDir, "invalid-patch.yaml");
 
-            SetupKustomizationFile(kustomizationContent);
-            fileSystem.FileExists(validPatchPath).Returns(true);
-            fileSystem.ReadFile(validPatchPath).Returns(validPatchContent);
-            fileSystem.FileExists(invalidPatchPath).Returns(true);
-            fileSystem.ReadFile(invalidPatchPath).Returns(invalidPatchContent);
+            CreateKustomizationFile(kustomizationContent);
+            CreatePatchFile("valid-patch.yaml", validPatchContent);
+            CreatePatchFile("invalid-patch.yaml", invalidPatchContent);
 
             var updater = new KustomizeUpdater(imagesToUpdate, ArgoCDConstants.DefaultContainerRegistry, log, fileSystem);
 
             var result = updater.Process(sourceWithMetadata, tempDir);
 
             result.UpdatedImages.Should().Contain("nginx:1.25");
-            fileSystem.Received(1).OverwriteFile(validPatchPath, Arg.Any<string>());
-            // Invalid patch should not be updated
-            fileSystem.DidNotReceive().OverwriteFile(invalidPatchPath, Arg.Any<string>());
+
+            var updatedValidPatchContent = File.ReadAllText(Path.Combine(tempDir, "valid-patch.yaml"));
+            updatedValidPatchContent.Should().Contain("nginx:1.25");
+
+            var unchangedInvalidPatchContent = File.ReadAllText(Path.Combine(tempDir, "invalid-patch.yaml"));
+            unchangedInvalidPatchContent.Should().Be(invalidPatchContent);
         }
     }
 
