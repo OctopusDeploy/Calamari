@@ -1,6 +1,4 @@
 #nullable enable
-using System;
-using System.IO;
 using System.Threading.Tasks;
 using Calamari.Common.Features.Processes;
 using Calamari.Common.Plumbing.Logging;
@@ -9,7 +7,7 @@ using Calamari.Testing.Helpers;
 using FluentAssertions;
 using NUnit.Framework;
 
-namespace Calamari.Tests.Fixtures.ScriptIsolation
+namespace Calamari.Scripting.Tests
 {
     /// <summary>
     /// Integration tests that validate script isolation by launching real Calamari.Scripting
@@ -110,12 +108,7 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
 
         static CommandLine CreateBaseCommand()
         {
-            var testBinDir = Path.GetDirectoryName(typeof(ScriptIsolationAsyncIntegrationFixture).Assembly.Location)!;
-            var scriptingDllPath = Path.Combine(testBinDir, "tools", "Calamari.Scripting", "Calamari.Scripting.dll");
-
-            if (!File.Exists(scriptingDllPath))
-                throw new Exception($"Could not find Calamari.Scripting at {scriptingDllPath}");
-
+            var scriptingDllPath = typeof(Program).Assembly.Location;
             return new CommandLine(scriptingDllPath)
                 .UseDotnet()
                 .OutputToLog(false);
