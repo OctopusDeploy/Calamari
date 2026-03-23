@@ -281,25 +281,15 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         }
 
         // -------------------------------------------------------------------------
-        // Group C: CachedDriveInfo.DetectLockSupport with injected FakeLockService
+        // Group C: LockDirectory.DetectLockSupport with injected FakeLockService
         // -------------------------------------------------------------------------
-
-        // Builds a CachedDriveInfo with LockSupport == Unknown so detection is triggered.
-        static CachedDriveInfo UnknownDrive()
-            => new(
-                   RootDirectory: new DirectoryInfo(FakeRoot),
-                   Format: "unknown-fs",
-                   DriveType: DriveType.Fixed,
-                   DetectedLockSupport: null   // Format is unrecognised → LockSupport == Unknown
-                  );
 
         [Test]
         public void DetectLockSupport_ReturnsUnsupported_WhenExclusiveLockingIsNotSupported()
         {
-            var drive = UnknownDrive();
             var fs = FakeLockService.Unsupported();
 
-            var result = drive.DetectLockSupport(Path.GetTempPath(), fs);
+            var result = LockDirectory.DetectLockSupport(Path.GetTempPath(), fs);
 
             result.Should().Be(LockCapability.Unsupported);
         }
@@ -307,10 +297,9 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         [Test]
         public void DetectLockSupport_ReturnsExclusiveOnly_WhenSharedLockingIsNotSupported()
         {
-            var drive = UnknownDrive();
             var fs = FakeLockService.ExclusiveOnlyBecauseSharedUnsupported();
 
-            var result = drive.DetectLockSupport(Path.GetTempPath(), fs);
+            var result = LockDirectory.DetectLockSupport(Path.GetTempPath(), fs);
 
             result.Should().Be(LockCapability.ExclusiveOnly);
         }
@@ -320,10 +309,9 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         {
             // A shared lock can be acquired even while an exclusive lock is held —
             // the filesystem does not enforce mutual exclusion between the two types.
-            var drive = UnknownDrive();
             var fs = FakeLockService.ExclusiveOnlyBecauseExclusiveDoesNotBlockShared();
 
-            var result = drive.DetectLockSupport(Path.GetTempPath(), fs);
+            var result = LockDirectory.DetectLockSupport(Path.GetTempPath(), fs);
 
             result.Should().Be(LockCapability.ExclusiveOnly);
         }
@@ -333,10 +321,9 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         {
             // An exclusive lock can be acquired even while a shared lock is held —
             // the filesystem does not enforce mutual exclusion between the two types.
-            var drive = UnknownDrive();
             var fs = FakeLockService.ExclusiveOnlyBecauseSharedDoesNotBlockExclusive();
 
-            var result = drive.DetectLockSupport(Path.GetTempPath(), fs);
+            var result = LockDirectory.DetectLockSupport(Path.GetTempPath(), fs);
 
             result.Should().Be(LockCapability.ExclusiveOnly);
         }
@@ -345,10 +332,9 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         public void DetectLockSupport_ReturnsSupported_WhenFullMutualExclusionIsEnforced()
         {
             // The filesystem correctly blocks all conflicting lock combinations.
-            var drive = UnknownDrive();
             var fs = FakeLockService.FullySupported();
 
-            var result = drive.DetectLockSupport(Path.GetTempPath(), fs);
+            var result = LockDirectory.DetectLockSupport(Path.GetTempPath(), fs);
 
             result.Should().Be(LockCapability.Supported);
         }
@@ -363,12 +349,13 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         // -------------------------------------------------------------------------
 
         // Builds a CachedDriveInfo with a known LockSupport (via DetectedLockSupport) so
-        // DetectLockSupport is a no-op (it returns early when DetectedLockSupport is not null).
-        // Pass null to leave DetectedLockSupport unset, which triggers live detection.
+        // GetLockDirectory short-circuits to that capability without running detection.
+        // Pass null to leave DetectedLockSupport unset and use an unrecognised format so
+        // that LockSupport returns null, which triggers live detection.
         static CachedDriveInfo DriveWithCapability(string rootPath, LockCapability? capability)
             => new(
                    RootDirectory: new DirectoryInfo(rootPath),
-                   Format: "ntfs",
+                   Format: capability is null ? "unknown-fs" : "ntfs",
                    DriveType: DriveType.Fixed,
                    DetectedLockSupport: capability
                   );
@@ -512,10 +499,11 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         }
 
         [Test]
-        public void GetLockDirectory_ReturnsUnsupported_WhenMountedDrivesIsEmpty()
+        public void GetLockDirectory_RunsDetection_WhenMountedDrivesIsEmpty()
         {
             // No drives at all — GetAssociatedDrive throws DirectoryNotFoundException.
-            // GetLockDirectory should catch it and return Unsupported rather than propagating.
+            // With no drive heuristic available, GetLockDirectory falls back to live
+            // detection. A FullySupported lock service means detection succeeds.
             var drives = new MountedDrives([]);
             var fs = FakeLockService.FullySupported(TempPath);
 
@@ -523,7 +511,7 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
                                                          lockService: fs,
                                                          pathResolver: FakePathResolutionService.PassThrough);
 
-            result.LockSupport.Should().Be(LockCapability.Unsupported);
+            result.LockSupport.Should().Be(LockCapability.Supported);
             result.DirectoryInfo.FullName.Should().Be(CandidatePath);
         }
 
@@ -835,7 +823,7 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         // -------------------------------------------------------------------------
 
         [Test]
-        [Platform("Unix")]
+        [Platform("Unix,Linux,MacOsX")]
         public void DefaultPathResolutionService_ResolvesExistingSymlink()
         {
             // /tmp is a symlink to /private/tmp on macOS; on other Unix systems it may
@@ -857,7 +845,7 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         }
 
         [Test]
-        [Platform("Unix")]
+        [Platform("Unix,Linux,MacOsX")]
         public void DefaultPathResolutionService_ResolvesSymlinkInAncestor_WhenChildDoesNotExist()
         {
             // The child path does not exist, but /tmp (if a symlink) should still be
