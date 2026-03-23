@@ -479,14 +479,14 @@ images:
             }
 
             [Test]
-            public void DeterminePatchTypeFromFile_UnknownFormat_ReturnsStrategicMergeDefault()
+            public void DeterminePatchTypeFromFile_UnknownFormat_ReturnsNull()
             {
                 const string content = @"some: unknown
 format: that
 doesnt: match
 patterns: true";
                 var result = KustomizeUpdater.DeterminePatchTypeFromFile(content, "unknown.yaml");
-                result.Should().Be(PatchType.StrategicMerge);
+                result.Should().BeNull();
             }
 
             [Test]

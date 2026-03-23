@@ -106,8 +106,7 @@ public class KustomizeUpdater : BaseUpdater
         if (IsStrategicMergePatchContent(content))
             return PatchType.StrategicMerge;
 
-        // Default to StrategicMerge for YAML/JSON files that don't match specific patterns
-        return PatchType.StrategicMerge;
+        return null;
     }
 
     internal static bool IsJson6902PatchContent(string content)
