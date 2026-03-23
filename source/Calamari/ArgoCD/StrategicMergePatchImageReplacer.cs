@@ -10,7 +10,6 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Kubernetes;
 using YamlDotNet.Core;
 using YamlDotNet.RepresentationModel;
-using YamlDotNet.Serialization;
 
 namespace Calamari.ArgoCD
 {
@@ -210,10 +209,6 @@ namespace Calamari.ArgoCD
         string SerializeDocuments(List<YamlDocument> documents)
         {
             var newLine = yamlContent.DetectLineEnding() ?? "\n";
-            var serializer = new SerializerBuilder()
-                .WithNewLine(newLine)
-                .Build();
-
             var serializedDocs = new List<string>();
             foreach (var doc in documents)
             {

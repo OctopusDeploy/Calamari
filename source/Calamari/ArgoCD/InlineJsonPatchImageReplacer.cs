@@ -10,7 +10,6 @@ using Calamari.Common.Plumbing.Logging;
 using Calamari.Kubernetes;
 using YamlDotNet.Core;
 using YamlDotNet.RepresentationModel;
-using YamlDotNet.Serialization;
 
 namespace Calamari.ArgoCD
 {
@@ -98,11 +97,6 @@ namespace Calamari.ArgoCD
                 return NoChangeResult;
             }
 
-            var newLine = yamlContent.DetectLineEnding() ?? "\n";
-            var serializer = new SerializerBuilder()
-                .WithNewLine(newLine)
-                .Build();
-
             using var writer = new StringWriter();
             stream.Save(writer, false);
             var modifiedYaml = writer.ToString().TrimEnd();
@@ -152,7 +146,6 @@ namespace Calamari.ArgoCD
 
                     if (patchChanges.Count > 0)
                     {
-                        var serializer = new SerializerBuilder().Build();
                         using var writer = new StringWriter();
                         patchStream.Save(writer, false);
                         var modifiedPatchContent = writer.ToString().TrimEnd();
