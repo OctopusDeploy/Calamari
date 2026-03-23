@@ -241,7 +241,6 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         [TestCase(LockCapability.ExclusiveOnly, LockType.Exclusive, true)]
         [TestCase(LockCapability.ExclusiveOnly, LockType.Shared,    false)]
         [TestCase(LockCapability.Unsupported,  LockType.Exclusive, false)]
-        [TestCase(LockCapability.Unknown,      LockType.Exclusive, false)]
         public void Supports_ReturnsExpectedResult(
             LockCapability capability, LockType lockType, bool expected)
         {
@@ -261,16 +260,16 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         [TestCase("xfs",     DriveType.Fixed,   null,                         LockCapability.Supported)]
         [TestCase("zfs",     DriveType.Fixed,   null,                         LockCapability.Supported)]
         [TestCase("hfs+",    DriveType.Fixed,   null,                         LockCapability.Supported)]
-        [TestCase("nfs",     DriveType.Fixed,   null,                         LockCapability.Unknown)]
-        [TestCase("nfs",     DriveType.Network, null,                         LockCapability.Unknown)]
-        [TestCase("ntfs",    DriveType.Network, null,                         LockCapability.Unknown)]
+        [TestCase("nfs",     DriveType.Fixed,   null,                         null)]
+        [TestCase("nfs",     DriveType.Network, null,                         null)]
+        [TestCase("ntfs",    DriveType.Network, null,                         null)]
         [TestCase("unknown", DriveType.Fixed,   LockCapability.Unsupported,   LockCapability.Unsupported)]
         [TestCase("ntfs",    DriveType.Fixed,   LockCapability.ExclusiveOnly, LockCapability.ExclusiveOnly)]
         public void CachedDriveInfo_LockSupport_ReturnsExpectedCapability(
             string format,
             DriveType driveType,
             LockCapability? detectedOverride,
-            LockCapability expected)
+            LockCapability? expected)
         {
             var info = new CachedDriveInfo(
                                            RootDirectory: new DirectoryInfo(FakeRoot),
@@ -302,7 +301,7 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
 
             var result = drive.DetectLockSupport(Path.GetTempPath(), fs);
 
-            result.LockSupport.Should().Be(LockCapability.Unsupported);
+            result.Should().Be(LockCapability.Unsupported);
         }
 
         [Test]
@@ -313,7 +312,7 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
 
             var result = drive.DetectLockSupport(Path.GetTempPath(), fs);
 
-            result.LockSupport.Should().Be(LockCapability.ExclusiveOnly);
+            result.Should().Be(LockCapability.ExclusiveOnly);
         }
 
         [Test]
@@ -326,7 +325,7 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
 
             var result = drive.DetectLockSupport(Path.GetTempPath(), fs);
 
-            result.LockSupport.Should().Be(LockCapability.ExclusiveOnly);
+            result.Should().Be(LockCapability.ExclusiveOnly);
         }
 
         [Test]
@@ -339,7 +338,7 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
 
             var result = drive.DetectLockSupport(Path.GetTempPath(), fs);
 
-            result.LockSupport.Should().Be(LockCapability.ExclusiveOnly);
+            result.Should().Be(LockCapability.ExclusiveOnly);
         }
 
         [Test]
@@ -351,7 +350,7 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
 
             var result = drive.DetectLockSupport(Path.GetTempPath(), fs);
 
-            result.LockSupport.Should().Be(LockCapability.Supported);
+            result.Should().Be(LockCapability.Supported);
         }
 
         // -------------------------------------------------------------------------
@@ -364,8 +363,9 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         // -------------------------------------------------------------------------
 
         // Builds a CachedDriveInfo with a known LockSupport (via DetectedLockSupport) so
-        // DetectLockSupport is a no-op (it returns early when LockSupport != Unknown).
-        static CachedDriveInfo DriveWithCapability(string rootPath, LockCapability capability)
+        // DetectLockSupport is a no-op (it returns early when DetectedLockSupport is not null).
+        // Pass null to leave DetectedLockSupport unset, which triggers live detection.
+        static CachedDriveInfo DriveWithCapability(string rootPath, LockCapability? capability)
             => new(
                    RootDirectory: new DirectoryInfo(rootPath),
                    Format: "ntfs",
@@ -392,13 +392,13 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         [Test]
         public void GetLockDirectory_ReturnsCandidatePath_WhenCandidateDetectsSupportedAndTempDriveIsAlsoSupported()
         {
-            // Candidate root is Unknown (detection required); the injected temp path lives on
+            // Candidate root has no pre-detected support (detection required); the injected temp path lives on
             // a pre-detected Supported drive. Detection on the candidate drive is performed
             // first: because the lock service is FullySupported, the candidate detects as
             // Supported before the temp directories are even inspected. The candidate path
             // should therefore be returned, not the temp path.
             var drives = new MountedDrives([
-                DriveWithCapability(CandidateRoot, LockCapability.Unknown),
+                DriveWithCapability(CandidateRoot, null),
                 DriveWithCapability(TempRoot, LockCapability.Supported)
             ]);
             var fs = FakeLockService.FullySupported(TempPath);
@@ -436,12 +436,12 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         [Test]
         public void GetLockDirectory_ReturnsCandidatePath_WhenCandidateDetectsSupportedAndTempsAreExclusiveOnly()
         {
-            // Temp drive is pre-detected as ExclusiveOnly; candidate root is Unknown.
+            // Temp drive is pre-detected as ExclusiveOnly; candidate root has no pre-detected support.
             // Detection on the candidate drive is performed first: with a FullySupported
             // lock service the candidate detects as Supported, so it is returned
             // immediately without inspecting any temp directories.
             var drives = new MountedDrives([
-                DriveWithCapability(CandidateRoot, LockCapability.Unknown),
+                DriveWithCapability(CandidateRoot, null),
                 DriveWithCapability(TempRoot, LockCapability.ExclusiveOnly)
             ]);
             var fs = FakeLockService.FullySupported(TempPath);
@@ -500,7 +500,7 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         public void GetLockDirectory_ReturnsUnsupported_WhenNothingWorks()
         {
             var drives = new MountedDrives([
-                DriveWithCapability(FakeRoot, LockCapability.Unknown)
+                DriveWithCapability(FakeRoot, null)
             ]);
             var fs = FakeLockService.Unsupported(TempPath);
 
@@ -532,9 +532,9 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         {
             // The fallback returns a path whose drive is not in MountedDrives at all.
             // TryGetDrive returns null for that temp path, so it is skipped entirely.
-            // The candidate root is Unknown → Unsupported after detection.
+            // The candidate root has no pre-detected support → Unsupported after detection.
             var drives = new MountedDrives([
-                DriveWithCapability(CandidateRoot, LockCapability.Unknown)
+                DriveWithCapability(CandidateRoot, null)
             ]);
             // TempPath is under TempRoot, which has no entry in drives.
             var fs = FakeLockService.Unsupported(TempPath);

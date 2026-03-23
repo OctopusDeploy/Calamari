@@ -34,7 +34,7 @@ sealed record CachedDriveInfo(
         }
     }
 
-    public LockCapability LockSupport
+    public LockCapability? LockSupport
     {
         get
         {
@@ -46,7 +46,7 @@ sealed record CachedDriveInfo(
             switch (DriveType)
             {
                 case DriveType.Network:
-                    return LockCapability.Unknown; // Default to assuming network is unsupported
+                    return null; // Default to assuming network is unknown
                 default:  // Explicitly falling through to format inspection
                     break;
             }
@@ -61,21 +61,23 @@ sealed record CachedDriveInfo(
                 case "tmpfs":
                 case "xfs":
                 case "zfs":
+                    // We trust that these filesystems fully support file locking and will skip
+                    // testing these filesystems for compatibility.
                     return LockCapability.Supported;
                 default:
-                    return LockCapability.Unknown;
+                    return null;
             }
         }
     }
 
-    public CachedDriveInfo DetectLockSupport(string lockDirectory)
+    public LockCapability DetectLockSupport(string lockDirectory)
         => DetectLockSupport(lockDirectory, FileLockService.Instance);
 
-    internal CachedDriveInfo DetectLockSupport(string lockDirectory, IFileLockService lockService)
+    internal LockCapability DetectLockSupport(string lockDirectory, IFileLockService lockService)
     {
-        if (LockSupport != LockCapability.Unknown)
+        if (DetectedLockSupport is not null)
         {
-            return this;
+            return DetectedLockSupport.Value;
         }
 
         var testFile =
@@ -91,44 +93,33 @@ sealed record CachedDriveInfo(
             var supportsExclusiveLock = TestExclusiveLock(testFile, lockService);
             if (!supportsExclusiveLock)
             {
-                return this with
-                {
-                    DetectedLockSupport = LockCapability.Unsupported
-                };
+                return LockCapability.Unsupported;
             }
 
             // From here on we know we at least support exclusive locks
-            var exclusiveOnly = this with
-            {
-                DetectedLockSupport = LockCapability.ExclusiveOnly
-            };
-
             var supportsSharedLock = TestSharedLock(testFile, lockService);
             if (!supportsSharedLock)
             {
-                return exclusiveOnly;
+                return LockCapability.ExclusiveOnly;
             }
 
             var supportsExclusiveBlocksShared = TestExclusiveBlocksShared(testFile, lockService);
             if (!supportsExclusiveBlocksShared)
             {
-                return exclusiveOnly;
+                return LockCapability.ExclusiveOnly;
             }
 
             var supportsSharedBlocksExclusive = TestSharedBlocksExclusive(testFile, lockService);
             if (!supportsSharedBlocksExclusive)
             {
-                return exclusiveOnly;
+                return LockCapability.ExclusiveOnly;
             }
 
-            return this with { DetectedLockSupport = LockCapability.Supported };
+            return LockCapability.Supported;
         }
         catch
         {
-            return this with
-            {
-                DetectedLockSupport = LockCapability.Unsupported
-            };
+            return LockCapability.Unsupported;
         }
         finally
         {
