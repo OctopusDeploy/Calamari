@@ -103,7 +103,7 @@ namespace Calamari.Tests.ArgoCD
         {
             serviceMessages.GetPropertyValue($"ArgoCD.Gateway[{GatewayName}].Application[{ApplicationName}].Source[{sourceIndex}].CommitSha").Should().Be(commitSha);
             serviceMessages.GetPropertyValue($"ArgoCD.Gateway[{GatewayName}].Application[{ApplicationName}].Source[{sourceIndex}].ShortSha").Should().Be(shortSha);
-            serviceMessages.GetPropertyValue($"ArgoCD.Gateway[{GatewayName}].Application[{ApplicationName}].Source[{sourceIndex}].Timestamp").Should().Be(Timestamp.ToString("o"));
+            serviceMessages.GetPropertyValue($"ArgoCD.Gateway[{GatewayName}].Application[{ApplicationName}].Source[{sourceIndex}].CommitTimestamp").Should().Be(Timestamp.ToString("o"));
         }
 
         static void AssertNoPullRequestVariables(ServiceMessage[] serviceMessages, int sourceIndex)

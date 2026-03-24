@@ -35,7 +35,7 @@ namespace Calamari.ArgoCD
             
             log.SetOutputVariableButDoNotAddToVariables(appSourceVariables.CommitSha, pushResult.CommitSha);
             log.SetOutputVariableButDoNotAddToVariables(appSourceVariables.ShortSha, pushResult.ShortSha);
-            log.SetOutputVariableButDoNotAddToVariables(appSourceVariables.Timestamp, pushResult.CommitTimestamp.ToString("O"));
+            log.SetOutputVariableButDoNotAddToVariables(appSourceVariables.CommitTimestamp, pushResult.CommitTimestamp.ToString("O"));
 
             if (pushResult is PullRequestPushResult prResult)
             {
