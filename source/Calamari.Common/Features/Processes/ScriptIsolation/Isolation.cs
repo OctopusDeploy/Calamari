@@ -62,7 +62,7 @@ public static class Isolation
 
         LogIsolation(lockOptions);
 
-        var resolved = ResolveLockOptions(lockOptions, scriptIsolationOptions.PromoteToExclusiveLockWhenSharedLockUnavailable);
+        var resolved = ResolveLockOptions(lockOptions);
 
         if (resolved.Warning is not null)
         {
@@ -72,7 +72,7 @@ public static class Isolation
         return resolved.Options;
     }
 
-    internal static ResolvedLockOptions ResolveLockOptions(LockOptions lockOptions, bool promoteToExclusiveLock)
+    internal static ResolvedLockOptions ResolveLockOptions(LockOptions lockOptions)
     {
         if (lockOptions.IsFullySupported)
         {
@@ -82,24 +82,13 @@ public static class Isolation
         if (lockOptions.IsSupported)
         {
             // Requested Exclusive Lock
-            if (!promoteToExclusiveLock)
-            {
-                // Warn that other scripts might be running concurrently
-                return new ResolvedLockOptions(lockOptions, $"Will acquire {lockOptions.Type} lock, but may run concurrently with other scripts requesting a shared lock");
-            }
-
             return new ResolvedLockOptions(lockOptions);
         }
 
         if (lockOptions.LockFile.Supports(LockType.Exclusive))
         {
-            if (promoteToExclusiveLock)
-            {
-                var promoted = lockOptions with { Type = LockType.Exclusive };
-                return new ResolvedLockOptions(promoted, $"Requested {LockType.Shared} lock is unavailable. Will acquire {promoted.Type} lock");
-            }
-
-            return ResolvedLockOptions.NoLockWithWarning($"Requested {lockOptions.Type} lock is unavailable. No lock will be acquired. Running without any isolation.");
+            var promoted = lockOptions with { Type = LockType.Exclusive };
+            return new ResolvedLockOptions(promoted, $"Requested {LockType.Shared} lock is unavailable. Will acquire {promoted.Type} lock");
         }
 
         return ResolvedLockOptions.NoLockWithWarning("Unable to support any script isolation. Running without any isolation.");

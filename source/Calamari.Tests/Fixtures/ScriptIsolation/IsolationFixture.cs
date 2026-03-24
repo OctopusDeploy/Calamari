@@ -276,67 +276,38 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             // Supported capability + Exclusive → IsFullySupported = true → returned unchanged, no warning
             var opts = MakeLockOptions(LockType.Exclusive, LockCapability.Supported, tempDir);
 
-            var result = Isolation.ResolveLockOptions(opts, promoteToExclusiveLock: false);
+            var result = Isolation.ResolveLockOptions(opts);
 
             result.Options.Should().BeSameAs(opts);
             result.Warning.Should().BeNull();
         }
 
         [Test]
-        public void ResolveLockOptions_ReturnsOriginal_WhenExclusiveOnlyAndExclusiveRequested_WithPromoteFalse()
+        public void ResolveLockOptions_ReturnsOriginal_WhenExclusiveOnlyAndExclusiveRequested()
         {
-            // ExclusiveOnly + Exclusive → IsSupported = true (Exclusive is supported) → returned unchanged
-            // promote=false has no effect because the requested type is already Exclusive
+            // ExclusiveOnly + Exclusive → IsSupported = true (Exclusive is supported) → returned unchanged, no warning
             var opts = MakeLockOptions(LockType.Exclusive, LockCapability.ExclusiveOnly, tempDir);
 
-            var result = Isolation.ResolveLockOptions(opts, promoteToExclusiveLock: false);
-
-            result.Options.Should().BeSameAs(opts);
-            result.Warning.Should().NotBeNull(
-                because: "running an exclusive lock on a directory that only supports exclusive locks warns that shared-lock scripts may run concurrently");
-        }
-
-        [Test]
-        public void ResolveLockOptions_ReturnsOriginal_WhenExclusiveOnlyAndExclusiveRequested_WithPromoteTrue()
-        {
-            // ExclusiveOnly + Exclusive → IsSupported = true → returned unchanged regardless of promote flag
-            var opts = MakeLockOptions(LockType.Exclusive, LockCapability.ExclusiveOnly, tempDir);
-
-            var result = Isolation.ResolveLockOptions(opts, promoteToExclusiveLock: true);
+            var result = Isolation.ResolveLockOptions(opts);
 
             result.Options.Should().BeSameAs(opts);
             result.Warning.Should().BeNull();
         }
 
         [Test]
-        public void ResolveLockOptions_PromotesToExclusive_WhenExclusiveOnlyAndSharedRequested_AndPromoteTrue()
+        public void ResolveLockOptions_PromotesToExclusive_WhenExclusiveOnlyAndSharedRequested()
         {
-            // ExclusiveOnly + Shared → IsSupported = false; Supports(Exclusive) = true; promote = true
-            // → returns lock options with Type promoted to Exclusive and a warning
+            // ExclusiveOnly + Shared → IsSupported = false; Supports(Exclusive) = true
+            // → always promotes to Exclusive with a warning
             var opts = MakeLockOptions(LockType.Shared, LockCapability.ExclusiveOnly, tempDir);
 
-            var result = Isolation.ResolveLockOptions(opts, promoteToExclusiveLock: true);
+            var result = Isolation.ResolveLockOptions(opts);
 
             result.Options.Should().NotBeNull();
             result.Options!.Type.Should().Be(LockType.Exclusive,
-                because: "shared lock should be promoted to exclusive when promoteToExclusiveLock is true");
+                because: "shared lock should always be promoted to exclusive when shared locking is unavailable");
             result.Warning.Should().NotBeNull(
                 because: "a warning should be issued when the lock type is promoted");
-        }
-
-        [Test]
-        public void ResolveLockOptions_ReturnsNull_WhenExclusiveOnlyAndSharedRequested_AndPromoteFalse()
-        {
-            // ExclusiveOnly + Shared → IsSupported = false; Supports(Exclusive) = true; promote = false
-            // → returns null options and a warning (no lock acquired)
-            var opts = MakeLockOptions(LockType.Shared, LockCapability.ExclusiveOnly, tempDir);
-
-            var result = Isolation.ResolveLockOptions(opts, promoteToExclusiveLock: false);
-
-            result.Options.Should().BeNull(
-                because: "shared lock is unavailable and promotion is disabled, so no lock should be acquired");
-            result.Warning.Should().NotBeNull(
-                because: "a warning should be issued when no lock is acquired due to unavailability");
         }
 
         [Test]
@@ -346,7 +317,7 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             // Supports(Exclusive) = false → returns null options and a warning
             var opts = MakeLockOptions(LockType.Exclusive, LockCapability.Unsupported, tempDir);
 
-            var result = Isolation.ResolveLockOptions(opts, promoteToExclusiveLock: false);
+            var result = Isolation.ResolveLockOptions(opts);
 
             result.Options.Should().BeNull(
                 because: "no locking is supported at all so no lock should be acquired");
@@ -360,10 +331,10 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             // Unsupported + Shared → same as above
             var opts = MakeLockOptions(LockType.Shared, LockCapability.Unsupported, tempDir);
 
-            var result = Isolation.ResolveLockOptions(opts, promoteToExclusiveLock: true);
+            var result = Isolation.ResolveLockOptions(opts);
 
             result.Options.Should().BeNull(
-                because: "no locking is supported at all so no lock should be acquired even with promote=true");
+                because: "no locking is supported at all so no lock should be acquired");
             result.Warning.Should().NotBeNull(
                 because: "a warning should be issued when no isolation is available");
         }
