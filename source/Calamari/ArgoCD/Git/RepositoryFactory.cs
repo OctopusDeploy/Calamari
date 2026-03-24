@@ -62,8 +62,10 @@ namespace Calamari.ArgoCD.Git
             options.FetchOptions.CredentialsProvider = CreateCredentialsProvider(gitConnection);
 
             string repoPath;
-            // TODO(eddy): breaks for ssh
-            log.InfoFormat("Cloning repository {0}", log.FormatLink(gitConnection.Url));
+            var repoDisplayUrl = gitConnection.Url.Scheme.StartsWith("http", StringComparison.OrdinalIgnoreCase)
+                ? log.FormatLink(gitConnection.Url)
+                : gitConnection.Url.ToString();
+            log.InfoFormat("Cloning repository {0}", repoDisplayUrl);
             using (var timedOp = log.BeginTimedOperation("cloning repository"))
             {
                 try
@@ -110,24 +112,10 @@ namespace Calamari.ArgoCD.Git
         internal static CredentialsHandler? CreateCredentialsProvider(IGitConnection gitConnection)
         {
             if (gitConnection.IsSsh && gitConnection.PrivateKey != null)
-            {
-                return (url, usernameFromUrl, types) => new SshUserKeyMemoryCredentials
-                {
-                    Username = gitConnection.Username ?? "git",
-                    PrivateKey = gitConnection.PrivateKey!,
-                    PublicKey = gitConnection.PublicKey ?? "",
-                    Passphrase = gitConnection.Passphrase ?? ""
-                };
-            }
+                return (url, usernameFromUrl, types) => gitConnection.CreateCredentials();
 
             if (gitConnection.Username != null && gitConnection.Password != null)
-            {
-                return (url, usernameFromUrl, types) => new UsernamePasswordCredentials
-                {
-                    Username = gitConnection.Username!,
-                    Password = gitConnection.Password!
-                };
-            }
+                return (url, usernameFromUrl, types) => gitConnection.CreateCredentials();
 
             return null;
         }

@@ -16,4 +16,7 @@ public record ArgoCDApplicationDto(
 
 public record GitCredentialDto(string Url, string Username, string Password);
 
-public record SshGitCredentialDto(string Url, string Username, string PrivateKey, string PublicKey, string Passphrase);
+public record SshGitCredentialDto(string Url, string Username, string PrivateKey, string PublicKey, string Passphrase)
+{
+    public override string ToString() => $"SshGitCredentialDto {{ Url = {Url}, Username = {Username} }}";
+}

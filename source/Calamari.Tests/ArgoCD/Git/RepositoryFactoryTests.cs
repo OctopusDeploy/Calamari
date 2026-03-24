@@ -93,6 +93,42 @@ namespace Calamari.Tests.ArgoCD.Git
             fileContent.Should().Be(originalContent);
         }
 
+        [Test]
+        public void CreateCredentialsProvider_SshConnection_ReturnsSshCredentials()
+        {
+            var connection = new SshGitConnection("git", "private-key", "public-key", "passphrase", new Uri("ssh://github.com/Foo/Bar"), branchName);
+            var provider = RepositoryFactory.CreateCredentialsProvider(connection);
+
+            provider.Should().NotBeNull();
+            var credentials = provider!("", "", SupportedCredentialTypes.Default);
+            credentials.Should().BeOfType<SshUserKeyMemoryCredentials>();
+            var sshCreds = (SshUserKeyMemoryCredentials)credentials;
+            sshCreds.Username.Should().Be("git");
+            sshCreds.PrivateKey.Should().Be("private-key");
+            sshCreds.PublicKey.Should().Be("public-key");
+            sshCreds.Passphrase.Should().Be("passphrase");
+        }
+
+        [Test]
+        public void CreateCredentialsProvider_UsernamePasswordConnection_ReturnsUsernamePasswordCredentials()
+        {
+            var connection = new GitConnection("user", "pass", new Uri("https://github.com/Foo/Bar"), branchName);
+            var provider = RepositoryFactory.CreateCredentialsProvider(connection);
+
+            provider.Should().NotBeNull();
+            var credentials = provider!("", "", SupportedCredentialTypes.Default);
+            credentials.Should().BeOfType<UsernamePasswordCredentials>();
+        }
+
+        [Test]
+        public void CreateCredentialsProvider_AnonymousConnection_ReturnsNull()
+        {
+            var connection = new GitConnection(null, null, new Uri("https://github.com/Foo/Bar"), branchName);
+            var provider = RepositoryFactory.CreateCredentialsProvider(connection);
+
+            provider.Should().BeNull();
+        }
+
         void CreateCommitOnOrigin(GitBranchName branchName, string fileName, string content)
         {
             var message = $"Commit: Message";

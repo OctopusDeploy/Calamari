@@ -1,5 +1,6 @@
 #nullable enable
 using System;
+using LibGit2Sharp;
 
 namespace Calamari.ArgoCD.Git
 {
@@ -19,6 +20,26 @@ namespace Calamari.ArgoCD.Git
         public string? PrivateKey => null;
         public string? PublicKey => null;
         public string? Passphrase => null;
+
+        public Credentials CreateCredentials()
+        {
+            if (IsSsh && PrivateKey != null)
+            {
+                return new SshUserKeyMemoryCredentials
+                {
+                    Username = Username ?? "git",
+                    PrivateKey = PrivateKey!,
+                    PublicKey = PublicKey ?? "",
+                    Passphrase = Passphrase ?? ""
+                };
+            }
+
+            return new UsernamePasswordCredentials
+            {
+                Username = Username,
+                Password = Password
+            };
+        }
     }
 
     public class GitConnection : IGitConnection
@@ -49,13 +70,13 @@ namespace Calamari.ArgoCD.Git
             GitReference = gitReference;
         }
 
-        public string? Username { get; }
+        public string Username { get; }
         public string? Password => null;
         public Uri Url { get; }
         public GitReference GitReference { get; }
         public bool IsSsh => true;
-        public string? PrivateKey { get; }
-        public string? PublicKey { get; }
-        public string? Passphrase { get; }
+        public string PrivateKey { get; }
+        public string PublicKey { get; }
+        public string Passphrase { get; }
     }
 }

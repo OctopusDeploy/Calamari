@@ -44,15 +44,7 @@ namespace Calamari.ArgoCD.Git
             this.clock = clock;
         }
 
-        Credentials RepositoryCredentials => connection.IsSsh && connection.PrivateKey != null
-            ? new SshUserKeyMemoryCredentials
-            {
-                Username = connection.Username ?? "git",
-                PrivateKey = connection.PrivateKey!,
-                PublicKey = connection.PublicKey ?? "",
-                Passphrase = connection.Passphrase ?? ""
-            }
-            : new UsernamePasswordCredentials { Username = connection.Username, Password = connection.Password };
+        Credentials RepositoryCredentials => connection.CreateCredentials();
 
         // returns true if changes were made to the repository
         public bool CommitChanges(string summary, string description)

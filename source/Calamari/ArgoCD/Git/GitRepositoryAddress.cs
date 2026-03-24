@@ -2,7 +2,7 @@ using System;
 
 namespace Calamari.ArgoCD.Git;
 
-public class GitRepositoryAddress : IGitRepositoryAddressOrVariable, IEquatable<GitRepositoryAddress>
+public class GitRepositoryAddress : IEquatable<GitRepositoryAddress>
 {
     const string StandardSshScpPrefix = "git@";
 
