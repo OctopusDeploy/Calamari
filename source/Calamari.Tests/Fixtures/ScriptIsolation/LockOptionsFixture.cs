@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Calamari.Common.Features.Processes.ScriptIsolation;
 using Calamari.Common.Plumbing.Commands;
+using Calamari.Common.Plumbing.Logging;
 using FluentAssertions;
 using Microsoft.Extensions.Time.Testing;
 using NUnit.Framework;
@@ -43,60 +44,71 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
                 TentacleHome = null
             };
 
-        [Test]
-        public void FromScriptIsolationOptionsOrNull_ReturnsNull_WhenLevelIsNull()
+        static RequestedLockOptions? CreateRequestedOrNull(CommonOptions.ScriptIsolationOptions options)
+            => new RequestedLockOptionsFactory(ConsoleLog.Instance).CreateOrNull(options);
+
+        static LockOptions? CreateLockOptionsOrNull(CommonOptions.ScriptIsolationOptions options)
         {
-            var result = LockOptions.FromScriptIsolationOptionsOrNull(MakeOptions(level: null));
+            var requested = CreateRequestedOrNull(options);
+            if (requested is null)
+                return null;
+            return new LockOptionsFactory(ConsoleLog.Instance).Create(requested);
+        }
+
+        [Test]
+        public void CreateRequestedOrNull_ReturnsNull_WhenLevelIsNull()
+        {
+            var result = CreateRequestedOrNull(MakeOptions(level: null));
             result.Should().BeNull();
         }
 
         [Test]
-        public void FromScriptIsolationOptionsOrNull_ReturnsNull_WhenLevelIsWhiteSpace()
+        public void CreateRequestedOrNull_ReturnsNull_WhenLevelIsWhiteSpace()
         {
-            var result = LockOptions.FromScriptIsolationOptionsOrNull(MakeOptions(level: "   "));
+            var result = CreateRequestedOrNull(MakeOptions(level: "   "));
             result.Should().BeNull();
         }
 
         [Test]
-        public void FromScriptIsolationOptionsOrNull_ReturnsNull_WhenMutexNameIsNull()
+        public void CreateRequestedOrNull_ReturnsNull_WhenMutexNameIsNull()
         {
-            var result = LockOptions.FromScriptIsolationOptionsOrNull(MakeOptions(mutexName: null));
+            var result = CreateRequestedOrNull(MakeOptions(mutexName: null));
             result.Should().BeNull();
         }
 
         [Test]
-        public void FromScriptIsolationOptionsOrNull_ReturnsNull_WhenMutexNameIsWhiteSpace()
+        public void CreateRequestedOrNull_ReturnsNull_WhenMutexNameIsWhiteSpace()
         {
-            var result = LockOptions.FromScriptIsolationOptionsOrNull(MakeOptions(mutexName: "   "));
+            var result = CreateRequestedOrNull(MakeOptions(mutexName: "   "));
             result.Should().BeNull();
         }
 
         [Test]
-        public void FromScriptIsolationOptionsOrNull_ReturnsNull_WhenTentacleHomeIsMissing()
+        public void CreateRequestedOrNull_ReturnsNull_WhenTentacleHomeIsMissing()
         {
-            var result = LockOptions.FromScriptIsolationOptionsOrNull(MakeOptionsNoTentacleHome());
+            var result = CreateRequestedOrNull(MakeOptionsNoTentacleHome());
             result.Should().BeNull();
         }
 
         [Test]
-        public void FromScriptIsolationOptionsOrNull_ReturnsNull_WhenTentacleHomeIsWhiteSpace()
+        public void CreateRequestedOrNull_ReturnsNull_WhenTentacleHomeIsWhiteSpace()
         {
-            var result = LockOptions.FromScriptIsolationOptionsOrNull(MakeOptions(tentacleHome: "   "));
+            var result = CreateRequestedOrNull(MakeOptions(tentacleHome: "   "));
             result.Should().BeNull();
         }
 
         [Test]
-        public void FromScriptIsolationOptionsOrNull_MapsFullIsolationToExclusive()
+        public void CreateRequestedOrNull_MapsFullIsolationToExclusive()
         {
-            var result = LockOptions.FromScriptIsolationOptionsOrNull(MakeOptions(level: "FullIsolation"));
+            var result = CreateRequestedOrNull(MakeOptions(level: "FullIsolation"));
             result.Should().NotBeNull();
             result.Type.Should().Be(LockType.Exclusive);
         }
 
         [Test]
-        public void FromScriptIsolationOptionsOrNull_MapsNoIsolationToShared()
+        public void CreateRequestedOrNull_MapsNoIsolationToShared()
         {
-            var result = LockOptions.FromScriptIsolationOptionsOrNull(MakeOptions(level: "NoIsolation"));
+            var result = CreateRequestedOrNull(MakeOptions(level: "NoIsolation"));
             result.Should().NotBeNull();
             result.Type.Should().Be(LockType.Shared);
         }
@@ -107,68 +119,68 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         [TestCase("noisolation")]
         [TestCase("NOISOLATION")]
         [TestCase("NoIsolation")]
-        public void FromScriptIsolationOptionsOrNull_IsCaseInsensitive(string isolationLevelValue)
+        public void CreateRequestedOrNull_IsCaseInsensitive(string isolationLevelValue)
         {
-            var result = LockOptions.FromScriptIsolationOptionsOrNull(MakeOptions(level: isolationLevelValue));
+            var result = CreateRequestedOrNull(MakeOptions(level: isolationLevelValue));
             result.Should().NotBeNull();
         }
 
         [Test]
-        public void FromScriptIsolationOptionsOrNull_ReturnsNull_ForUnknownIsolationLevel()
+        public void CreateRequestedOrNull_ReturnsNull_ForUnknownIsolationLevel()
         {
-            var result = LockOptions.FromScriptIsolationOptionsOrNull(MakeOptions(level: "SomeUnknownLevel"));
+            var result = CreateRequestedOrNull(MakeOptions(level: "SomeUnknownLevel"));
             result.Should().BeNull();
         }
 
         [Test]
-        public void FromScriptIsolationOptionsOrNull_ParsesTimeout()
+        public void CreateRequestedOrNull_ParsesTimeout()
         {
-            var result = LockOptions.FromScriptIsolationOptionsOrNull(MakeOptions(timeout: "00:05:00"));
+            var result = CreateRequestedOrNull(MakeOptions(timeout: "00:05:00"));
             result.Should().NotBeNull();
             result.Timeout.Should().Be(TimeSpan.FromMinutes(5));
         }
 
         [Test]
-        public void FromScriptIsolationOptionsOrNull_DefaultsToInfinite_WhenTimeoutIsInvalid()
+        public void CreateRequestedOrNull_DefaultsToInfinite_WhenTimeoutIsInvalid()
         {
-            var result = LockOptions.FromScriptIsolationOptionsOrNull(MakeOptions(timeout: "not-a-timespan"));
+            var result = CreateRequestedOrNull(MakeOptions(timeout: "not-a-timespan"));
             result.Should().NotBeNull();
             result.Timeout.Should().Be(Timeout.InfiniteTimeSpan);
         }
 
         [Test]
-        public void FromScriptIsolationOptionsOrNull_DefaultsToInfinite_WhenNoTimeoutIsSupplied()
+        public void CreateRequestedOrNull_DefaultsToInfinite_WhenNoTimeoutIsSupplied()
         {
-            var result = LockOptions.FromScriptIsolationOptionsOrNull(MakeOptions(timeout: string.Empty));
+            var result = CreateRequestedOrNull(MakeOptions(timeout: string.Empty));
             result.Should().NotBeNull();
             result.Timeout.Should().Be(Timeout.InfiniteTimeSpan);
         }
 
         [Test]
-        public void FromScriptIsolationOptionsOrNull_BuildsCorrectLockFileName()
+        public void CreateLockOptionsOrNull_BuildsCorrectLockFileName()
         {
             var scriptIsolationOptions = MakeOptions(mutexName: "MyMutex");
-            var result = LockOptions.FromScriptIsolationOptionsOrNull(scriptIsolationOptions);
+            var result = CreateLockOptionsOrNull(scriptIsolationOptions);
             result.Should().NotBeNull();
 
             result.LockFile.File.Name.Should().Be("ScriptIsolation.MyMutex.lock");
         }
 
         [Test]
-        public void FromScriptIsolationOptionsOrNull_Throws_WhenMutexNameContainsInvalidFileNameChar()
+        public void CreateRequestedOrNull_Throws_WhenMutexNameContainsInvalidFileNameChar()
         {
             var invalidChar = Path.GetInvalidFileNameChars()[0];
             var badName = $"My{invalidChar}Mutex";
 
-            Action act = () => LockOptions.FromScriptIsolationOptionsOrNull(MakeOptions(mutexName: badName));
+            Action act = () => CreateRequestedOrNull(MakeOptions(mutexName: badName));
 
             act.Should().Throw<ArgumentException>();
         }
 
         [Test]
-        public void FromScriptIsolationOptionsOrNull_PreservesName()
+        public void CreateLockOptionsOrNull_PreservesName()
         {
-            var result = LockOptions.FromScriptIsolationOptionsOrNull(MakeOptions(mutexName: "MyMutex"));
+            var result = CreateLockOptionsOrNull(MakeOptions(mutexName: "MyMutex"));
             result.Should().NotBeNull();
             result.Name.Should().Be("MyMutex");
         }
@@ -178,7 +190,7 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         {
             var timeProvider = new FakeTimeProvider();
             var testCts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-            var lockOptions = LockOptions.FromScriptIsolationOptionsOrNull(MakeOptions(timeout: "1.12:00:00"));
+            var lockOptions = CreateLockOptionsOrNull(MakeOptions(timeout: "1.12:00:00"));
             lockOptions.Should().NotBeNull();
             var testPipelineBuilder = new ResiliencePipelineBuilder<ILockHandle>
             {

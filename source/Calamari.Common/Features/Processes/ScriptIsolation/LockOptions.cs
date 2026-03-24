@@ -1,7 +1,5 @@
 using System;
 using System.Threading.Tasks;
-using Calamari.Common.Plumbing.Commands;
-using Calamari.Common.Plumbing.Logging;
 using Polly;
 using Polly.Timeout;
 
@@ -64,17 +62,5 @@ public sealed record LockOptions(
                          }
                         );
         return builder;
-    }
-
-    public static LockOptions? FromScriptIsolationOptionsOrNull(CommonOptions.ScriptIsolationOptions options)
-    {
-        var requestedOptions = new RequestedLockOptionsFactory(ConsoleLog.Instance).CreateOrNull(options);
-        if (requestedOptions is null)
-        {
-            return null;
-        }
-
-        var lockOptions = new LockOptionsFactory(ConsoleLog.Instance).Create(requestedOptions);
-        return lockOptions;
     }
 }
