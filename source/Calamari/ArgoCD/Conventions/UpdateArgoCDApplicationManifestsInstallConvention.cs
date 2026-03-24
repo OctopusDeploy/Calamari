@@ -24,7 +24,7 @@ namespace Calamari.ArgoCD.Conventions
         readonly ICustomPropertiesLoader customPropertiesLoader;
         readonly IArgoCDApplicationManifestParser argoCdApplicationManifestParser;
         readonly IArgoCDManifestsFileMatcher argoCDManifestsFileMatcher;
-        readonly IGitVendorAgnosticPullRequestClientFactory gitVendorAgnosticPullRequestClientFactory;
+        readonly IGitVendorPullRequestClientResolver gitVendorPullRequestClientResolver;
         readonly IClock clock;
         readonly IArgoCDFilesUpdatedReporter reporter;
         readonly ArgoCDOutputVariablesWriter outputVariablesWriter;
@@ -37,7 +37,7 @@ namespace Calamari.ArgoCD.Conventions
             ICustomPropertiesLoader customPropertiesLoader,
             IArgoCDApplicationManifestParser argoCdApplicationManifestParser,
             IArgoCDManifestsFileMatcher argoCDManifestsFileMatcher,
-            IGitVendorAgnosticPullRequestClientFactory gitVendorAgnosticPullRequestClientFactory,
+            IGitVendorPullRequestClientResolver gitVendorPullRequestClientResolver,
             IClock clock,
             IArgoCDFilesUpdatedReporter reporter,
             ArgoCDOutputVariablesWriter outputVariablesWriter)
@@ -48,7 +48,7 @@ namespace Calamari.ArgoCD.Conventions
             this.customPropertiesLoader = customPropertiesLoader;
             this.argoCdApplicationManifestParser = argoCdApplicationManifestParser;
             this.argoCDManifestsFileMatcher = argoCDManifestsFileMatcher;
-            this.gitVendorAgnosticPullRequestClientFactory = gitVendorAgnosticPullRequestClientFactory;
+            this.gitVendorPullRequestClientResolver = gitVendorPullRequestClientResolver;
             this.clock = clock;
             this.outputVariablesWriter = outputVariablesWriter;
             this.packageSubfolder = packageSubfolder;
@@ -64,7 +64,7 @@ namespace Calamari.ArgoCD.Conventions
             var repositoryFactory = new RepositoryFactory(log,
                 fileSystem,
                 deployment.CurrentDirectory,
-                gitVendorAgnosticPullRequestClientFactory,
+                gitVendorPullRequestClientResolver,
                 clock);
 
             var argoProperties = customPropertiesLoader.Load<ArgoCDCustomPropertiesDto>();

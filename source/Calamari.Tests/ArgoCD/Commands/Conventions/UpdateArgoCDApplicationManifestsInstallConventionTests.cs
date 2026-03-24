@@ -113,7 +113,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                 customPropertiesLoader,
                 argoCdApplicationManifestParser,
                 new ArgoCDManifestsFileMatcher(fileSystem),
-                Substitute.For<IGitVendorAgnosticPullRequestClientFactory>(),
+                Substitute.For<IGitVendorPullRequestClientResolver>(),
                 new SystemClock(),
                 deploymentReporter,
                 new ArgoCDOutputVariablesWriter(log, variables));

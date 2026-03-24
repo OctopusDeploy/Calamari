@@ -65,7 +65,7 @@ image:
                 new CommitMessageGenerator(),
                 customPropertiesLoader,
                 argoCdApplicationManifestParser,
-                Substitute.For<IGitVendorAgnosticPullRequestClientFactory>(),
+                Substitute.For<IGitVendorPullRequestClientResolver>(),
                 new SystemClock(),
                 deploymentReporter,
                 new ArgoCDOutputVariablesWriter(log, nonSensitiveCalamariVariables));

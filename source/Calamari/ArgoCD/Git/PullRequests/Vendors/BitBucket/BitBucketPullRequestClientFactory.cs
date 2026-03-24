@@ -1,19 +1,24 @@
 ﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
+using Calamari.Common.Plumbing.Logging;
 
 namespace Calamari.ArgoCD.Git.PullRequests.Vendors.BitBucket
 {
     public class BitBucketPullRequestClientFactory: IGitVendorPullRequestClientFactory
     {
-        public IGitVendorPullRequestClient? TryCreateGitVendorApiAdaptor(IRepositoryConnection repositoryConnection)
+        public string Name => "BitBucket";
+        static Uri baseUrl = new Uri("https://bitbucket.org");
+        
+        public bool CanHandleAsCloudHosted(Uri repositoryUri)
         {
-            if (repositoryConnection.Url.Host.Equals(baseUrl.Host, StringComparison.OrdinalIgnoreCase))
-            {
-                return new BitBucketPullRequestClient(repositoryConnection, baseUrl);
-            }
-
-            return null;
+            return repositoryUri.Host.Equals(baseUrl.Host, StringComparison.OrdinalIgnoreCase);
         }
 
-        static Uri baseUrl = new Uri("https://bitbucket.org");
+        public async Task<IGitVendorPullRequestClient> Create(IRepositoryConnection repositoryConnection, ILog log, CancellationToken cancellationToken)
+        {
+            await Task.CompletedTask;
+            return new BitBucketPullRequestClient(repositoryConnection, baseUrl);
+        }
     }
 }

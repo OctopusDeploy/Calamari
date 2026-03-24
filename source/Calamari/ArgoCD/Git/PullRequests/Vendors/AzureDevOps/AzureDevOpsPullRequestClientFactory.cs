@@ -5,7 +5,7 @@ using Calamari.Common.Plumbing.Logging;
 
 namespace Calamari.ArgoCD.Git.PullRequests.Vendors.AzureDevOps
 {
-    public class AzureDevOpsPullRequestClientFactory : IGitVendorAgnosticPullRequestClientFactory
+    public class AzureDevOpsPullRequestClientFactory : IGitVendorPullRequestClientFactory
     {
         public string Name => "Azure DevOps";
         
