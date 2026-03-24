@@ -879,56 +879,56 @@ fields: true";
             [Test]
             public void IsKustomizationFile_KustomizationYaml_ReturnsTrue()
             {
-                var result = KustomizeUpdater.IsKustomizationFile("/path/to/kustomization.yaml");
+                var result = KustomizeUpdater.IsKustomizationResource("/path/to/kustomization.yaml");
                 result.Should().BeTrue();
             }
 
             [Test]
             public void IsKustomizationFile_KustomizationYml_ReturnsTrue()
             {
-                var result = KustomizeUpdater.IsKustomizationFile("/path/to/kustomization.yml");
+                var result = KustomizeUpdater.IsKustomizationResource("/path/to/kustomization.yml");
                 result.Should().BeTrue();
             }
 
             [Test]
             public void IsKustomizationFile_CaseInsensitive_ReturnsTrue()
             {
-                var result = KustomizeUpdater.IsKustomizationFile("/path/to/KUSTOMIZATION.YAML");
+                var result = KustomizeUpdater.IsKustomizationResource("/path/to/KUSTOMIZATION.YAML");
                 result.Should().BeTrue();
             }
 
             [Test]
             public void IsKustomizationFile_MixedCase_ReturnsTrue()
             {
-                var result = KustomizeUpdater.IsKustomizationFile("/path/to/Kustomization.Yml");
+                var result = KustomizeUpdater.IsKustomizationResource("/path/to/Kustomization.Yml");
                 result.Should().BeTrue();
             }
 
             [Test]
             public void IsKustomizationFile_OtherYamlFile_ReturnsFalse()
             {
-                var result = KustomizeUpdater.IsKustomizationFile("/path/to/deployment.yaml");
+                var result = KustomizeUpdater.IsKustomizationResource("/path/to/deployment.yaml");
                 result.Should().BeFalse();
             }
 
             [Test]
             public void IsKustomizationFile_JsonFile_ReturnsFalse()
             {
-                var result = KustomizeUpdater.IsKustomizationFile("/path/to/kustomization.json");
+                var result = KustomizeUpdater.IsKustomizationResource("/path/to/kustomization.json");
                 result.Should().BeFalse();
             }
 
             [Test]
             public void IsKustomizationFile_NoExtension_ReturnsFalse()
             {
-                var result = KustomizeUpdater.IsKustomizationFile("/path/to/kustomization");
+                var result = KustomizeUpdater.IsKustomizationResource("/path/to/kustomization");
                 result.Should().BeFalse();
             }
 
             [Test]
             public void IsKustomizationFile_EmptyPath_ReturnsFalse()
             {
-                var result = KustomizeUpdater.IsKustomizationFile("");
+                var result = KustomizeUpdater.IsKustomizationResource("");
                 result.Should().BeFalse();
             }
         }
