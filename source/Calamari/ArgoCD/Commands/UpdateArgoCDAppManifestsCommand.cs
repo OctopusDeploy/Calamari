@@ -34,7 +34,7 @@ namespace Calamari.ArgoCD.Commands
         readonly INonSensitiveSubstituteInFiles substituteInFiles;
         readonly DeploymentConfigFactory configFactory;
         readonly IArgoCDManifestsFileMatcher argoCDManifestsFileMatcher;
-        readonly GitVendorPullRequestClientResolver gitVendorPullRequestClientResolver;
+        readonly IGitVendorPullRequestClientResolver gitVendorPullRequestClientResolver;
         PathToPackage pathToPackage;
         string customPropertiesFile;
         string customPropertiesPassword;
@@ -48,7 +48,7 @@ namespace Calamari.ArgoCD.Commands
             INonSensitiveSubstituteInFiles substituteInFiles,
             DeploymentConfigFactory configFactory,
             IArgoCDManifestsFileMatcher argoCDManifestsFileMatcher,
-            GitVendorPullRequestClientResolver gitVendorPullRequestClientResolver)
+            IGitVendorPullRequestClientResolver gitVendorPullRequestClientResolver)
         {
             this.log = log;
             this.variables = variables;

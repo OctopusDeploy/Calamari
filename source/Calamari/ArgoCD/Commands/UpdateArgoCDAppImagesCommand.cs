@@ -24,7 +24,7 @@ namespace Calamari.ArgoCD.Commands
         readonly IVariables variables;
         readonly ICalamariFileSystem fileSystem;
         readonly DeploymentConfigFactory configFactory;
-        readonly GitVendorPullRequestClientResolver gitVendorPullRequestClientResolver;
+        readonly IGitVendorPullRequestClientResolver gitVendorPullRequestClientResolver;
         readonly ICommitMessageGenerator commitMessageGenerator;
         string customPropertiesFile;
         string customPropertiesPassword;
@@ -34,7 +34,7 @@ namespace Calamari.ArgoCD.Commands
                                             ICalamariFileSystem fileSystem,
                                             ICommitMessageGenerator commitMessageGenerator,
                                             DeploymentConfigFactory configFactory,
-                                            GitVendorPullRequestClientResolver gitVendorPullRequestClientResolver)
+                                            IGitVendorPullRequestClientResolver gitVendorPullRequestClientResolver)
         {
             this.log = log;
             this.variables = variables;
