@@ -1,14 +1,14 @@
-﻿using System.Net.Http;
+﻿using System;
+using System.Net.Http;
 using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Memory;
-using Octopus.Server.Extensibility.Extensions.Infrastructure.Web.Api;
 
-namespace Octopus.Core.Features.Git.PullRequests.Vendors.GitLab;
+namespace Calamari.ArgoCD.Git.PullRequests.Vendors.GitLab;
 
-public class SelfHostedGitLabInspector(IMemoryCache cache, IOctopusHttpClientFactory httpClientFactory)
+public class SelfHostedGitLabInspector(IMemoryCache cache)
 {
     readonly IMemoryCache cache = cache;
-    readonly IOctopusHttpClientFactory httpClientFactory = httpClientFactory;
     readonly SemaphoreSlim semaphoreSlim = new(1, 1);
 
     public static string GetSelfHostedBaseRepositoryUrl(Uri repositoryUri) => repositoryUri.GetLeftPart(UriPartial.Authority);//this elides the path & query
@@ -27,7 +27,7 @@ public class SelfHostedGitLabInspector(IMemoryCache cache, IOctopusHttpClientFac
                 return isSelfHosted;
             }
 
-            var httpClient = httpClientFactory.CreateClient();
+            var httpClient = new HttpClient();
 
             //we can make an anonymous HTTP call to `/api/v4` and inspect the headers for `X-GitLab-Meta`
             var apiUrl = new UriBuilder(selfHostedUri)
