@@ -22,7 +22,7 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         [TearDown]
         public void TearDown()
         {
-            lockFilePath.Delete();
+            lockFilePath?.Delete();
         }
 
         LockOptions MakeLockOptions(LockType lockType) => new(lockType, "TestMutex", lockFilePath, TimeSpan.FromSeconds(5));
