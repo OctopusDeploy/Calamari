@@ -96,7 +96,13 @@ namespace Calamari.ArgoCD
             }
 
             using var writer = new StringWriter();
-            stream.Save(writer, false);
+            // JSON 6902 patches are always single documents by design (RFC 6902 defines patches as single JSON arrays).
+            // Create a new stream with just the first document to avoid unwanted document separators.
+            if (stream.Documents.Count > 0)
+            {
+                var singleDocStream = new YamlStream(stream.Documents[0]);
+                singleDocStream.Save(writer, false);
+            }
             var modifiedContent = writer.ToString().TrimEnd();
 
             return new ImageReplacementResult(modifiedContent, replacementsMade);
