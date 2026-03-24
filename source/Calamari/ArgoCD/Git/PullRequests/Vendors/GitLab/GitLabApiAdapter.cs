@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using NGitLab;
 using NGitLab.Models;
 
-namespace Calamari.ArgoCD.Git.GitVendorApiAdapters
+namespace Calamari.ArgoCD.Git.PullRequests.Vendors.GitLab
 {
     public class GitLabApiAdapter : IGitVendorApiAdapter
     {

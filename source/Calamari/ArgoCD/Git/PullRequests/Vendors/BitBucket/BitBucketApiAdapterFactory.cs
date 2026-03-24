@@ -1,7 +1,6 @@
 ﻿using System;
-using Org.BouncyCastle.Tls;
 
-namespace Calamari.ArgoCD.Git.GitVendorApiAdapters
+namespace Calamari.ArgoCD.Git.PullRequests.Vendors.BitBucket
 {
     public class BitBucketApiAdapterFactory: IGitVendorApiAdapterFactory
     {

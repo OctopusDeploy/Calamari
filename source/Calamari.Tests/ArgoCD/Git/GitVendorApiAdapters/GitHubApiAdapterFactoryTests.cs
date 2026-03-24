@@ -1,6 +1,6 @@
 ﻿using System;
 using Calamari.ArgoCD.Git;
-using Calamari.ArgoCD.Git.GitVendorApiAdapters;
+using Calamari.ArgoCD.Git.PullRequests.Vendors.GitHub;
 using FluentAssertions;
 using NUnit.Framework;
 

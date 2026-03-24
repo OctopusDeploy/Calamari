@@ -1,7 +1,7 @@
 ﻿using Autofac;
 using Calamari.ArgoCD.Conventions;
 using Calamari.ArgoCD.Git;
-using Calamari.ArgoCD.Git.GitVendorApiAdapters;
+using Calamari.ArgoCD.Git.PullRequests;
 using Calamari.ArgoCD.GitHub;
 
 namespace Calamari.ArgoCD

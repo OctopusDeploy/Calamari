@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Calamari.ArgoCD.Git.GitVendorApiAdapters
+namespace Calamari.ArgoCD.Git.PullRequests
 {
     /// <summary>
     /// Using all registered <see cref="IGitVendorApiAdapterFactory"/> instances, resolves the correct adapter based on which self-reports as being able to utilize the provided connection details.

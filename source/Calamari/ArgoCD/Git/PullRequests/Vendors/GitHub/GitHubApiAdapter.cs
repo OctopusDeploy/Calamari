@@ -2,10 +2,10 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Calamari.ArgoCD.GitHub;
 using Octokit;
+using PullRequest = Calamari.ArgoCD.Git.PullRequests.PullRequest;
 
-namespace Calamari.ArgoCD.Git.GitVendorApiAdapters
+namespace Calamari.ArgoCD.Git.PullRequests.Vendors.GitHub
 {
     public class GitHubApiAdapter: IGitVendorApiAdapter
     {

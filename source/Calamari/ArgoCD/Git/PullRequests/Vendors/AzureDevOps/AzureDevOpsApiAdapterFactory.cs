@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Calamari.ArgoCD.Git.GitVendorApiAdapters
+namespace Calamari.ArgoCD.Git.PullRequests.Vendors.AzureDevOps
 {
     public class AzureDevOpsApiAdapterFactory : IGitVendorAgnosticApiAdapterFactory
     {

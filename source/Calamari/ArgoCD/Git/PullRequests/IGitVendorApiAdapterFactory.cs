@@ -1,7 +1,7 @@
 ﻿#nullable enable
 using System;
 
-namespace Calamari.ArgoCD.Git.GitVendorApiAdapters
+namespace Calamari.ArgoCD.Git.PullRequests
 {
     /// <summary>
     /// The interface which each vendor specific api adapter reports its applicability given the connection details provided.

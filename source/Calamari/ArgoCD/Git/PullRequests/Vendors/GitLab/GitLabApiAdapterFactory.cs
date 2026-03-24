@@ -2,7 +2,7 @@
 using System;
 using NGitLab;
 
-namespace Calamari.ArgoCD.Git.GitVendorApiAdapters
+namespace Calamari.ArgoCD.Git.PullRequests.Vendors.GitLab
 {
     public class GitLabApiAdapterFactory : IGitVendorApiAdapterFactory
     {
