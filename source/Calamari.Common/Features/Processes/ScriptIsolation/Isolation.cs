@@ -53,7 +53,12 @@ public static class Isolation
 
     static LockOptions? PrepareLockOptions(CommonOptions.ScriptIsolationOptions scriptIsolationOptions)
     {
-        var lockOptions = LockOptions.FromScriptIsolationOptionsOrNull(scriptIsolationOptions);
+        var requestedOptions = new RequestedLockOptionsFactory(ConsoleLog.Instance).CreateOrNull(scriptIsolationOptions);
+        if (requestedOptions is null)
+        {
+            return null;
+        }
+        var lockOptions = new LockOptionsFactory(ConsoleLog.Instance).Create(requestedOptions);
 
         if (lockOptions is null)
         {
@@ -61,15 +66,7 @@ public static class Isolation
         }
 
         LogIsolation(lockOptions);
-
-        var resolved = ResolveLockOptions(lockOptions);
-
-        if (resolved.Warning is not null)
-        {
-            Log.Warn(resolved.Warning);
-        }
-
-        return resolved.Options;
+        return lockOptions;
     }
 
     internal static ResolvedLockOptions ResolveLockOptions(LockOptions lockOptions)

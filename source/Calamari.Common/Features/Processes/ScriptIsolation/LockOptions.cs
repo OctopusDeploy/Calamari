@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Threading.Tasks;
 using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.Logging;
@@ -70,88 +68,13 @@ public sealed record LockOptions(
 
     public static LockOptions? FromScriptIsolationOptionsOrNull(CommonOptions.ScriptIsolationOptions options)
     {
-        if (!options.FullyConfigured)
+        var requestedOptions = new RequestedLockOptionsFactory(ConsoleLog.Instance).CreateOrNull(options);
+        if (requestedOptions is null)
         {
-            LogIfPartiallyConfigured(options);
             return null;
         }
 
-        var lockType = MapScriptIsolationLevelToLockTypeOrNull(options.Level);
-        if (lockType == null)
-        {
-            Log.Verbose($"Failed to map script isolation level '{options.Level}' to a valid LockType. Expected 'FullIsolation' or 'NoIsolation' (case-insensitive).");
-            LogIsolationWillNotBeEnforced();
-            return null;
-        }
-
-        TimeSpan timeout;
-
-        if (string.IsNullOrWhiteSpace(options.Timeout))
-        {
-            timeout = System.Threading.Timeout.InfiniteTimeSpan;
-        }
-        else if (!TimeSpan.TryParse(options.Timeout, out timeout))
-        {
-            Log.Verbose($"Failed to parse mutex timeout value '{options.Timeout}' as TimeSpan. Defaulting to Infinite.");
-            timeout = System.Threading.Timeout.InfiniteTimeSpan;
-        }
-
-        var lockFileInfo = GetLockFile(options.TentacleHome, options.MutexName);
-        return new LockOptions(lockType.Value, options.MutexName, lockFileInfo, timeout);
+        var lockOptions = new LockOptionsFactory(ConsoleLog.Instance).Create(requestedOptions);
+        return lockOptions;
     }
-
-    static void LogIfPartiallyConfigured(CommonOptions.ScriptIsolationOptions options)
-    {
-        if (!options.PartiallyConfigured)
-        {
-            return;
-        }
-
-        var missingOptions = new List<string>();
-        if (string.IsNullOrWhiteSpace(options.Level))
-        {
-            missingOptions.Add("scriptIsolationLevel");
-        }
-
-        if (string.IsNullOrWhiteSpace(options.MutexName))
-        {
-            missingOptions.Add("scriptIsolationMutexName");
-        }
-
-        if (string.IsNullOrWhiteSpace(options.TentacleHome))
-        {
-            missingOptions.Add("TentacleHome (Environment Variable)");
-        }
-
-        var optionIsOrAre = missingOptions.Count > 1 ? "options are" : "option is";
-        Log.Verbose($"Some script isolation options were provided, but the following required {optionIsOrAre} missing: {string.Join(", ", missingOptions)}");
-        LogIsolationWillNotBeEnforced();
-    }
-
-    static void LogIsolationWillNotBeEnforced()
-    {
-        Log.Verbose("Script isolation will not be enforced.");
-    }
-
-    static LockFile GetLockFile(string tentacleHome, string mutexName)
-    {
-        foreach (var invalidChar in Path.GetInvalidFileNameChars())
-        {
-            if (mutexName.Contains(invalidChar))
-            {
-                throw new ArgumentException($"Invalid mutex name '{mutexName}'.");
-            }
-        }
-
-        var lockDirectory = LockDirectory.GetLockDirectory(tentacleHome);
-        return lockDirectory.GetLockFile($"ScriptIsolation.{mutexName}.lock");
-    }
-
-    static LockType? MapScriptIsolationLevelToLockTypeOrNull(string isolationLevel) =>
-        isolationLevel.ToLowerInvariant() switch
-        {
-            "fullisolation" => LockType.Exclusive,
-            "noisolation" => LockType.Shared,
-            _ => null
-        };
 }
