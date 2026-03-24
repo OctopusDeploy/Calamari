@@ -4,23 +4,23 @@ using System.Collections.Generic;
 namespace Calamari.ArgoCD.Git.PullRequests
 {
     /// <summary>
-    /// Using all registered <see cref="IGitVendorApiAdapterFactory"/> instances, resolves the correct adapter based on which self-reports as being able to utilize the provided connection details.
+    /// Using all registered <see cref="IGitVendorPullRequestClientFactory"/> instances, resolves the correct adapter based on which self-reports as being able to utilize the provided connection details.
     /// Returns the first matching adapter in the order provided in the constructor.
     /// </summary>
-    public interface IGitVendorAgnosticApiAdapterFactory: IGitVendorApiAdapterFactory
+    public interface IGitVendorAgnosticPullRequestClientFactory: IGitVendorPullRequestClientFactory
     {
     }
     
-    public class GitVendorAgnosticApiAdapterFactory: IGitVendorAgnosticApiAdapterFactory
+    public class GitVendorPullRequestClientResolver: IGitVendorAgnosticPullRequestClientFactory
     {
-        readonly IEnumerable<IGitVendorApiAdapterFactory> gitHubClientFactory;
+        readonly IEnumerable<IGitVendorPullRequestClientFactory> gitHubClientFactory;
 
-        public GitVendorAgnosticApiAdapterFactory(IEnumerable<IGitVendorApiAdapterFactory> gitHubClientFactory)
+        public GitVendorPullRequestClientResolver(IEnumerable<IGitVendorPullRequestClientFactory> gitHubClientFactory)
         {
             this.gitHubClientFactory = gitHubClientFactory;
         }
  
-        public IGitVendorApiAdapter? TryCreateGitVendorApiAdaptor(IRepositoryConnection repositoryConnection)
+        public IGitVendorPullRequestClient? TryCreateGitVendorApiAdaptor(IRepositoryConnection repositoryConnection)
         {
             foreach (var gitClientFactory in gitHubClientFactory)
             {

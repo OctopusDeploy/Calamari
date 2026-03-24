@@ -21,16 +21,16 @@ namespace Calamari.ArgoCD.Git
         readonly ILog log;
         readonly ICalamariFileSystem fileSystem;
         readonly string repositoryParentDirectory;
-        readonly IGitVendorAgnosticApiAdapterFactory vendorAgnosticApiAdapterFactory;
+        readonly IGitVendorAgnosticPullRequestClientFactory vendorAgnosticPullRequestClientFactory;
         readonly IClock clock;
 
-        public RepositoryFactory(ILog log, ICalamariFileSystem fileSystem, string repositoryParentDirectory, IGitVendorAgnosticApiAdapterFactory vendorAgnosticApiAdapterFactory,
+        public RepositoryFactory(ILog log, ICalamariFileSystem fileSystem, string repositoryParentDirectory, IGitVendorAgnosticPullRequestClientFactory vendorAgnosticPullRequestClientFactory,
                                  IClock clock)
         {
             this.log = log;
             this.fileSystem = fileSystem;
             this.repositoryParentDirectory = repositoryParentDirectory;
-            this.vendorAgnosticApiAdapterFactory = vendorAgnosticApiAdapterFactory;
+            this.vendorAgnosticPullRequestClientFactory = vendorAgnosticPullRequestClientFactory;
             this.clock = clock;
         }
 
@@ -98,7 +98,7 @@ namespace Calamari.ArgoCD.Git
             
             LibGit2Sharp.Commands.Checkout(repo, branchToCheckout.ToFriendlyName());
             
-            var gitVendorApiAdapter = vendorAgnosticApiAdapterFactory.TryCreateGitVendorApiAdaptor(gitConnection);
+            var gitVendorApiAdapter = vendorAgnosticPullRequestClientFactory.TryCreateGitVendorApiAdaptor(gitConnection);
             return new RepositoryWrapper(repo,
                                          fileSystem,
                                          checkoutPath,

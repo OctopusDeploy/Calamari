@@ -14,11 +14,11 @@ namespace Calamari.ArgoCD
             builder.RegisterType<CommitMessageGenerator>().As<ICommitMessageGenerator>().InstancePerLifetimeScope();
 
             builder.RegisterAssemblyTypes(GetType().Assembly)
-                   .AssignableTo<IGitVendorApiAdapterFactory>()
-                   .Except<GitVendorAgnosticApiAdapterFactory>()
-                   .As<IGitVendorApiAdapterFactory>();
+                   .AssignableTo<IGitVendorPullRequestClientFactory>()
+                   .Except<GitVendorPullRequestClientResolver>()
+                   .As<IGitVendorPullRequestClientFactory>();
 
-            builder.RegisterType<GitVendorAgnosticApiAdapterFactory>().As<IGitVendorAgnosticApiAdapterFactory>().InstancePerLifetimeScope();
+            builder.RegisterType<GitVendorPullRequestClientResolver>().As<IGitVendorAgnosticPullRequestClientFactory>().InstancePerLifetimeScope();
             builder.RegisterType<ArgoCDManifestsFileMatcher>().As<IArgoCDManifestsFileMatcher>().InstancePerLifetimeScope();
             builder.RegisterType<ArgoCDFilesUpdatedReporter>().As<IArgoCDFilesUpdatedReporter>().InstancePerLifetimeScope();
         }

@@ -2,9 +2,9 @@
 
 namespace Calamari.ArgoCD.Git.PullRequests.Vendors.AzureDevOps
 {
-    public class AzureDevOpsPullRequestClientFactory : IGitVendorAgnosticApiAdapterFactory
+    public class AzureDevOpsPullRequestClientFactory : IGitVendorAgnosticPullRequestClientFactory
     {
-        public IGitVendorApiAdapter? TryCreateGitVendorApiAdaptor(IRepositoryConnection repositoryConnection)
+        public IGitVendorPullRequestClient? TryCreateGitVendorApiAdaptor(IRepositoryConnection repositoryConnection)
         {
             return AzureDevOpsPullRequestClient.CanInvokeWith(repositoryConnection.Url) ? new AzureDevOpsPullRequestClient(repositoryConnection) : null;
         }

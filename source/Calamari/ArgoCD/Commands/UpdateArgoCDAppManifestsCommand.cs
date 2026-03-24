@@ -34,7 +34,7 @@ namespace Calamari.ArgoCD.Commands
         readonly INonSensitiveSubstituteInFiles substituteInFiles;
         readonly DeploymentConfigFactory configFactory;
         readonly IArgoCDManifestsFileMatcher argoCDManifestsFileMatcher;
-        readonly IGitVendorAgnosticApiAdapterFactory gitVendorAgnosticApiAdapterFactory;
+        readonly IGitVendorAgnosticPullRequestClientFactory gitVendorAgnosticPullRequestClientFactory;
         PathToPackage pathToPackage;
         string customPropertiesFile;
         string customPropertiesPassword;
@@ -48,7 +48,7 @@ namespace Calamari.ArgoCD.Commands
             INonSensitiveSubstituteInFiles substituteInFiles,
             DeploymentConfigFactory configFactory,
             IArgoCDManifestsFileMatcher argoCDManifestsFileMatcher,
-            IGitVendorAgnosticApiAdapterFactory gitVendorAgnosticApiAdapterFactory)
+            IGitVendorAgnosticPullRequestClientFactory gitVendorAgnosticPullRequestClientFactory)
         {
             this.log = log;
             this.variables = variables;
@@ -57,7 +57,7 @@ namespace Calamari.ArgoCD.Commands
             this.substituteInFiles = substituteInFiles;
             this.configFactory = configFactory;
             this.argoCDManifestsFileMatcher = argoCDManifestsFileMatcher;
-            this.gitVendorAgnosticApiAdapterFactory = gitVendorAgnosticApiAdapterFactory;
+            this.gitVendorAgnosticPullRequestClientFactory = gitVendorAgnosticPullRequestClientFactory;
             this.nonSensitiveVariables = nonSensitiveVariables;
 
             Options.Add("package=",
@@ -97,7 +97,7 @@ namespace Calamari.ArgoCD.Commands
                                                                       new CustomPropertiesLoader(fileSystem, customPropertiesFile, customPropertiesPassword),
                                                                       new ArgoCdApplicationManifestParser(),
                                                                       argoCDManifestsFileMatcher,
-                                                                      gitVendorAgnosticApiAdapterFactory,
+                                                                      gitVendorAgnosticPullRequestClientFactory,
                                                                       clock,
                                                                       new ArgoCDFilesUpdatedReporter(log),
                                                                       new ArgoCDOutputVariablesWriter(log, variables)),

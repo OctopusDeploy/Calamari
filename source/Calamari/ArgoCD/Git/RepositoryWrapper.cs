@@ -21,7 +21,7 @@ namespace Calamari.ArgoCD.Git
         readonly string repoCheckoutDirectoryPath;
         readonly ILog log;
         readonly IGitConnection connection;
-        readonly IGitVendorApiAdapter? vendorApiAdapter;
+        readonly IGitVendorPullRequestClient? vendorApiAdapter;
         readonly IClock clock;
         readonly Identity repositoryIdentity = new("Octopus", "octopus@octopus.com");
 
@@ -32,7 +32,7 @@ namespace Calamari.ArgoCD.Git
                                  string repoCheckoutDirectoryPath,
                                  ILog log,
                                  IGitConnection connection,
-                                 IGitVendorApiAdapter? vendorApiAdapter,
+                                 IGitVendorPullRequestClient? vendorApiAdapter,
                                  IClock clock)
         {
             this.repository = repository;

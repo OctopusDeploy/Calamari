@@ -2,9 +2,9 @@
 
 namespace Calamari.ArgoCD.Git.PullRequests.Vendors.BitBucket
 {
-    public class BitBucketPullRequestClientFactory: IGitVendorApiAdapterFactory
+    public class BitBucketPullRequestClientFactory: IGitVendorPullRequestClientFactory
     {
-        public IGitVendorApiAdapter? TryCreateGitVendorApiAdaptor(IRepositoryConnection repositoryConnection)
+        public IGitVendorPullRequestClient? TryCreateGitVendorApiAdaptor(IRepositoryConnection repositoryConnection)
         {
             if (repositoryConnection.Url.Host.Equals(baseUrl.Host, StringComparison.OrdinalIgnoreCase))
             {

@@ -97,7 +97,7 @@ namespace Calamari.Tests.ArgoCD.Git.GitVendorApiAdapters
                                   });
         }
 
-        async Task TestPullRequest(string repositoryUrl, string defaultBranch, string cloneUsername, string clonePassword, Func<IRepositoryConnection, IGitVendorApiAdapter> createVendorApiAdapter)
+        async Task TestPullRequest(string repositoryUrl, string defaultBranch, string cloneUsername, string clonePassword, Func<IRepositoryConnection, IGitVendorPullRequestClient> createVendorApiAdapter)
         {
             
             using var temporaryFolder = TemporaryDirectory.Create();

@@ -59,7 +59,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                 new CommitMessageGenerator(),
                 customPropertiesLoader,
                 argoCdApplicationManifestParser,
-                Substitute.For<IGitVendorAgnosticApiAdapterFactory>(),
+                Substitute.For<IGitVendorAgnosticPullRequestClientFactory>(),
                 new SystemClock(),
                 deploymentReporter,
                 new ArgoCDOutputVariablesWriter(log, nonSensitiveCalamariVariables));

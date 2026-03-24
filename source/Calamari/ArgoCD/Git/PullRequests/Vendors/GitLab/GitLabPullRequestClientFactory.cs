@@ -4,7 +4,7 @@ using NGitLab;
 
 namespace Calamari.ArgoCD.Git.PullRequests.Vendors.GitLab
 {
-    public class GitLabPullRequestClientFactory : IGitVendorApiAdapterFactory
+    public class GitLabPullRequestClientFactory : IGitVendorPullRequestClientFactory
     {
         public bool CanInvokeWith(IRepositoryConnection repositoryConnection)
         {
@@ -13,7 +13,7 @@ namespace Calamari.ArgoCD.Git.PullRequests.Vendors.GitLab
                    || repositoryConnection.Url.Host.EndsWith(".gitlab.com", StringComparison.OrdinalIgnoreCase);
         }
 
-        public IGitVendorApiAdapter? TryCreateGitVendorApiAdaptor(IRepositoryConnection repositoryConnection)
+        public IGitVendorPullRequestClient? TryCreateGitVendorApiAdaptor(IRepositoryConnection repositoryConnection)
         {
             if (!CanInvokeWith(repositoryConnection))
             {

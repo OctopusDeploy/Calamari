@@ -7,7 +7,7 @@ using PullRequest = Calamari.ArgoCD.Git.PullRequests.PullRequest;
 
 namespace Calamari.ArgoCD.Git.PullRequests.Vendors.GitHub
 {
-    public class GitHubPullRequestClient: IGitVendorApiAdapter
+    public class GitHubPullRequestClient: IGitVendorPullRequestClient
     {
         readonly IGitHubClient client;
         readonly Uri baseUrl;
