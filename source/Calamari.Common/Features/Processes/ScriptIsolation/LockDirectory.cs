@@ -23,8 +23,10 @@ public sealed record LockDirectory(
                };
     }
 
+    static readonly Lazy<MountedDrives> MountedDrivesCache = new(MountedDrives.Get);
+
     public static LockDirectory GetLockDirectory(string candidatePath)
-        => GetLockDirectory(candidatePath, MountedDrives.Get());
+        => GetLockDirectory(candidatePath, MountedDrivesCache.Value);
 
     internal static LockDirectory GetLockDirectory(
         string candidatePath,
