@@ -8,7 +8,7 @@ using NUnit.Framework;
 namespace Calamari.Tests.Fixtures.ScriptIsolation
 {
     [TestFixture]
-    public abstract class FileLockFixture
+    public class FileLockFixture
     {
         LockFile lockFilePath = null!;
 

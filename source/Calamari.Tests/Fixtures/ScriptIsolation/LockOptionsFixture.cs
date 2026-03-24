@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Calamari.Common.Features.Processes.ScriptIsolation;
 using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.Logging;
+using Calamari.Testing.Helpers;
 using FluentAssertions;
 using Microsoft.Extensions.Time.Testing;
 using NUnit.Framework;
@@ -17,6 +18,24 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
     [TestFixture]
     public class LockOptionsFixture
     {
+        string tempDir = null!;
+
+        [SetUp]
+        public void SetUp()
+        {
+            tempDir = Path.Join(Path.GetTempPath(), $"LockOptionsFixture.{Guid.NewGuid()}");
+            Directory.CreateDirectory(tempDir);
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            if (Directory.Exists(tempDir))
+            {
+                Directory.Delete(tempDir, recursive: true);
+            }
+        }
+
         static string DefaultTentacleHome => Path.GetTempPath();
 
         static CommonOptions.ScriptIsolationOptions MakeOptions(
@@ -265,6 +284,99 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             }
 
             Assert.Fail("Exception should have been thrown");
+        }
+
+        // -------------------------------------------------------------------------
+        // LockOptionsFactory.UseExclusiveIfSharedIsNotSupported tests
+        // -------------------------------------------------------------------------
+
+        // Builds a LockOptions with a LockDirectory that has the given capability.
+        // Uses tempDir as the directory path so the path exists on disk.
+        LockOptions MakeLockOptionsWithCapability(LockType type, LockCapability capability)
+        {
+            var dir = new LockDirectory(new DirectoryInfo(tempDir), capability);
+            var lockFile = dir.GetLockFile("ScriptIsolation.TestMutex.lock");
+            return new LockOptions(
+                Type: type,
+                Name: "TestMutex",
+                LockFile: lockFile,
+                Timeout: TimeSpan.FromMinutes(1));
+        }
+
+        [Test]
+        public void LockOptionsFactory_ReturnsOriginal_WhenFullySupported()
+        {
+            // Supported capability + Exclusive → IsFullySupported = true → returned unchanged, no warning
+            var opts = MakeLockOptionsWithCapability(LockType.Exclusive, LockCapability.Supported);
+            var log = new InMemoryLog();
+
+            var result = new LockOptionsFactory(log).UseExclusiveIfSharedIsNotSupported(opts);
+
+            result.Should().NotBeNull();
+            result.Type.Should().Be(LockType.Exclusive);
+            log.MessagesWarnFormatted.Should().BeEmpty();
+        }
+
+        [Test]
+        public void LockOptionsFactory_ReturnsOriginal_WhenExclusiveOnlyAndExclusiveRequested()
+        {
+            // ExclusiveOnly + Exclusive → IsSupported = true (Exclusive is supported) → returned unchanged, no warning
+            var opts = MakeLockOptionsWithCapability(LockType.Exclusive, LockCapability.ExclusiveOnly);
+            var log = new InMemoryLog();
+
+            var result = new LockOptionsFactory(log).UseExclusiveIfSharedIsNotSupported(opts);
+
+            result.Should().NotBeNull();
+            result.Type.Should().Be(LockType.Exclusive);
+            log.MessagesWarnFormatted.Should().BeEmpty();
+        }
+
+        [Test]
+        public void LockOptionsFactory_PromotesToExclusive_WhenExclusiveOnlyAndSharedRequested()
+        {
+            // ExclusiveOnly + Shared → IsSupported = false; Supports(Exclusive) = true
+            // → always promotes to Exclusive with a warning
+            var opts = MakeLockOptionsWithCapability(LockType.Shared, LockCapability.ExclusiveOnly);
+            var log = new InMemoryLog();
+
+            var result = new LockOptionsFactory(log).UseExclusiveIfSharedIsNotSupported(opts);
+
+            result.Should().NotBeNull();
+            result.Type.Should().Be(LockType.Exclusive,
+                                    because: "shared lock should always be promoted to exclusive when shared locking is unavailable");
+            log.MessagesWarnFormatted.Should().NotBeEmpty(
+                because: "a warning should be issued when the lock type is promoted");
+        }
+
+        [Test]
+        public void LockOptionsFactory_ReturnsNull_WhenUnsupportedAndExclusiveRequested()
+        {
+            // Unsupported + Exclusive → IsFullySupported = false, IsSupported = false,
+            // Supports(Exclusive) = false → returns null and a warning
+            var opts = MakeLockOptionsWithCapability(LockType.Exclusive, LockCapability.Unsupported);
+            var log = new InMemoryLog();
+
+            var result = new LockOptionsFactory(log).UseExclusiveIfSharedIsNotSupported(opts);
+
+            result.Should().BeNull(
+                because: "no locking is supported at all so no lock should be acquired");
+            log.MessagesWarnFormatted.Should().NotBeEmpty(
+                because: "a warning should be issued when no isolation is available");
+        }
+
+        [Test]
+        public void LockOptionsFactory_ReturnsNull_WhenUnsupportedAndSharedRequested()
+        {
+            // Unsupported + Shared → same as above
+            var opts = MakeLockOptionsWithCapability(LockType.Shared, LockCapability.Unsupported);
+            var log = new InMemoryLog();
+
+            var result = new LockOptionsFactory(log).UseExclusiveIfSharedIsNotSupported(opts);
+
+            result.Should().BeNull(
+                because: "no locking is supported at all so no lock should be acquired");
+            log.MessagesWarnFormatted.Should().NotBeEmpty(
+                because: "a warning should be issued when no isolation is available");
         }
     }
 }
