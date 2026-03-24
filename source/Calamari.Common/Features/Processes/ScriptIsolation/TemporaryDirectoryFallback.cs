@@ -13,7 +13,7 @@ static class TemporaryDirectoryFallback
 {
     public static IEnumerable<string> GetCandidates(string candidatePath)
     {
-        var pathNamespace = Path.GetFileName(candidatePath);
+        var pathNamespace = GetNamespace(candidatePath);
 
         string ApplyNamespace(string rawPath) => Path.Combine(rawPath, pathNamespace);
 
@@ -47,5 +47,17 @@ static class TemporaryDirectoryFallback
         {
             yield return ApplyNamespace(devShm);
         }
+    }
+
+    /// <summary>
+    /// Gets the "namespace" portion from the candidate path.
+    /// </summary>
+    /// <param name="candidatePath">The directory where the lock files will be placed</param>
+    static string GetNamespace(string candidatePath)
+    {
+        var directoryName = candidatePath.EndsWith(Path.DirectorySeparatorChar)
+            ? Path.GetDirectoryName(candidatePath) // The name before the trailing separator
+            : Path.GetFileName(candidatePath); // No trailing separator
+        return $"octopus.{directoryName}";
     }
 }
