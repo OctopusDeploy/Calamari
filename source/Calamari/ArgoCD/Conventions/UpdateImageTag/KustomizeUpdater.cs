@@ -12,6 +12,7 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Kubernetes.Patching;
 using Calamari.Kubernetes.Patching.JsonPatch;
+using YamlDotNet.Core;
 using YamlDotNet.RepresentationModel;
 
 namespace Calamari.ArgoCD.Conventions.UpdateImageTag;
@@ -58,6 +59,28 @@ public class KustomizeUpdater : BaseUpdater
                 {
                     updatedContent = patchResult.UpdatedContents;
                     allUpdatedImages.UnionWith(patchResult.UpdatedImageReferences);
+                }
+            }
+
+            if (HasInlineStrategicMergePatches(input))
+            {
+                var strategicMergeResult = ProcessInlineStrategicMergePatches(updatedContent, imagesToUpdate);
+
+                if (strategicMergeResult.UpdatedImageReferences.Count > 0)
+                {
+                    updatedContent = strategicMergeResult.UpdatedContents;
+                    allUpdatedImages.UnionWith(strategicMergeResult.UpdatedImageReferences);
+                }
+            }
+
+            if (HasInlineJson6902Patches(input))
+            {
+                var json6902Result = ProcessInlineJson6902Patches(updatedContent, imagesToUpdate);
+
+                if (json6902Result.UpdatedImageReferences.Count > 0)
+                {
+                    updatedContent = json6902Result.UpdatedContents;
+                    allUpdatedImages.UnionWith(json6902Result.UpdatedImageReferences);
                 }
             }
         }
@@ -113,14 +136,12 @@ public class KustomizeUpdater : BaseUpdater
     {
         try
         {
-            // JSON 6902 patches are arrays of operation objects
-            // Look for the characteristic structure: array with objects containing "op" field
+
             var trimmedContent = content.Trim();
 
-            // Must start with array bracket (could be JSON or YAML array)
             if (trimmedContent.StartsWith("[") || trimmedContent.StartsWith("-"))
             {
-                // Look for JSON 6902 operation patterns with more precise matching
+
                 var hasOpField = System.Text.RegularExpressions.Regex.IsMatch(content,
                     @"[""']?op[""']?\s*:\s*[""']?(add|remove|replace|move|copy|test)[""']?",
                     System.Text.RegularExpressions.RegexOptions.IgnoreCase);
@@ -142,13 +163,11 @@ public class KustomizeUpdater : BaseUpdater
     {
         try
         {
-            // Strategic merge patches typically have Kubernetes resource structure
-            // Look for common Kubernetes fields - handle both YAML and JSON formats
+
             var hasKubernetesFields = System.Text.RegularExpressions.Regex.IsMatch(content,
                 @"[""']?(apiVersion|kind|metadata|spec|data)[""']?\s*:",
                 System.Text.RegularExpressions.RegexOptions.IgnoreCase);
 
-            // Or contains image references (common in patches for image updates)
             var hasImageReferences = System.Text.RegularExpressions.Regex.IsMatch(content,
                 @"[""']?(image|containers)[""']?\s*:",
                 System.Text.RegularExpressions.RegexOptions.IgnoreCase);
@@ -188,7 +207,175 @@ public class KustomizeUpdater : BaseUpdater
             return false;
         }
     }
-    
+
+    internal static bool HasInlineStrategicMergePatches(string content)
+    {
+        try
+        {
+            var yamlStream = new YamlStream();
+            yamlStream.Load(new StringReader(content));
+
+            if (yamlStream.Documents.Count == 0)
+                return false;
+
+            var rootNode = yamlStream.Documents[0].RootNode;
+            if (rootNode is not YamlMappingNode mappingNode)
+                return false;
+
+            if (mappingNode.Children.TryGetValue(new YamlScalarNode("patchesStrategicMerge"), out var patchesNode))
+            {
+                if (patchesNode is YamlSequenceNode sequence)
+                {
+                    // Look for inline YAML patches (multi-line strings starting with |)
+                    return sequence.Children.Any(node => node is YamlScalarNode scalar &&
+                                                         scalar.Style == ScalarStyle.Literal);
+                }
+            }
+
+            return false;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    internal static bool HasInlineJson6902Patches(string content)
+    {
+        try
+        {
+            var yamlStream = new YamlStream();
+            yamlStream.Load(new StringReader(content));
+
+            if (yamlStream.Documents.Count == 0)
+                return false;
+
+            var rootNode = yamlStream.Documents[0].RootNode;
+            if (rootNode is not YamlMappingNode mappingNode)
+                return false;
+
+            if (mappingNode.Children.TryGetValue(new YamlScalarNode("patchesJson6902"), out var patchesNode))
+            {
+                if (patchesNode is YamlSequenceNode sequence)
+                {
+                    return sequence.Children.OfType<YamlMappingNode>().Any(patchEntry =>
+                        patchEntry.Children.TryGetValue(new YamlScalarNode("patch"), out var patchContent) &&
+                        patchContent is YamlScalarNode patchScalar &&
+                        patchScalar.Style == ScalarStyle.Literal);
+                }
+            }
+
+            return false;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    internal ImageReplacementResult ProcessInlineStrategicMergePatches(string content, IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
+    {
+        try
+        {
+            var yamlStream = new YamlStream();
+            yamlStream.Load(new StringReader(content));
+
+            if (yamlStream.Documents.Count != 1 || !(yamlStream.Documents[0].RootNode is YamlMappingNode rootNode))
+                return new ImageReplacementResult(content, new HashSet<string>());
+
+            if (!rootNode.Children.TryGetValue(new YamlScalarNode("patchesStrategicMerge"), out var patchesNode) ||
+                !(patchesNode is YamlSequenceNode patchSequence))
+                return new ImageReplacementResult(content, new HashSet<string>());
+
+            var allUpdatedImages = new HashSet<string>();
+            var hasChanges = false;
+
+            // Process each inline patch in the sequence
+            foreach (var patchNode in patchSequence.Children)
+            {
+                if (patchNode is YamlScalarNode patchScalar && patchScalar.Style == ScalarStyle.Literal)
+                {
+                    var patchContent = patchScalar.Value ?? "";
+                    var replacer = new StrategicMergePatchImageReplacer(patchContent, defaultRegistry, log);
+                    var result = replacer.UpdateImages(imagesToUpdate);
+
+                    if (result.UpdatedImageReferences.Count > 0)
+                    {
+                        patchScalar.Value = result.UpdatedContents;
+                        allUpdatedImages.UnionWith(result.UpdatedImageReferences);
+                        hasChanges = true;
+                    }
+                }
+            }
+
+            if (!hasChanges)
+                return new ImageReplacementResult(content, new HashSet<string>());
+
+            using var writer = new StringWriter();
+            yamlStream.Save(writer, false);
+            var modifiedContent = writer.ToString().TrimEnd();
+
+            return new ImageReplacementResult(modifiedContent, allUpdatedImages);
+        }
+        catch (Exception ex)
+        {
+            log.WarnFormat("Error processing inline strategic merge patches: {0}", ex.Message);
+            return new ImageReplacementResult(content, new HashSet<string>());
+        }
+    }
+
+    internal ImageReplacementResult ProcessInlineJson6902Patches(string content, IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
+    {
+        try
+        {
+            var yamlStream = new YamlStream();
+            yamlStream.Load(new StringReader(content));
+
+            if (yamlStream.Documents.Count != 1 || !(yamlStream.Documents[0].RootNode is YamlMappingNode rootNode))
+                return new ImageReplacementResult(content, new HashSet<string>());
+
+            if (!rootNode.Children.TryGetValue(new YamlScalarNode("patchesJson6902"), out var patchesNode) ||
+                !(patchesNode is YamlSequenceNode patchSequence))
+                return new ImageReplacementResult(content, new HashSet<string>());
+
+            var allUpdatedImages = new HashSet<string>();
+            var hasChanges = false;
+
+            foreach (var patchEntryNode in patchSequence.Children.OfType<YamlMappingNode>())
+            {
+                if (patchEntryNode.Children.TryGetValue(new YamlScalarNode("patch"), out var patchContentNode) &&
+                    patchContentNode is YamlScalarNode patchScalar &&
+                    patchScalar.Style == ScalarStyle.Literal)
+                {
+                    var patchContent = patchScalar.Value ?? "";
+                    var replacer = new YamlJson6902PatchImageReplacer(patchContent, defaultRegistry, log);
+                    var result = replacer.UpdateImages(imagesToUpdate);
+
+                    if (result.UpdatedImageReferences.Count > 0)
+                    {
+                        patchScalar.Value = result.UpdatedContents;
+                        allUpdatedImages.UnionWith(result.UpdatedImageReferences);
+                        hasChanges = true;
+                    }
+                }
+            }
+
+            if (!hasChanges)
+                return new ImageReplacementResult(content, new HashSet<string>());
+
+            using var writer = new StringWriter();
+            yamlStream.Save(writer, false);
+            var modifiedContent = writer.ToString().TrimEnd();
+
+            return new ImageReplacementResult(modifiedContent, allUpdatedImages);
+        }
+        catch (Exception ex)
+        {
+            log.WarnFormat("Error processing inline JSON 6902 patches: {0}", ex.Message);
+            return new ImageReplacementResult(content, new HashSet<string>());
+        }
+    }
+
     protected new FileUpdateResult Update(string rootPath, HashSet<string> filesToUpdate)
     {
         var updatedImages = new HashSet<string>();
@@ -196,7 +383,7 @@ public class KustomizeUpdater : BaseUpdater
 
         foreach (var file in filesToUpdate)
         {
-            currentFilePath = file; // Track current file being processed
+            currentFilePath = file;
             var relativePath = Path.GetRelativePath(rootPath, file);
             log.Verbose($"Processing file {relativePath}.");
             var content = fileSystem.ReadFile(file);

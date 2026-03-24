@@ -391,6 +391,153 @@ spec:
             var unchangedInvalidPatchContent = File.ReadAllText(Path.Combine(tempDir, "invalid-patch.yaml"));
             unchangedInvalidPatchContent.Should().Be(invalidPatchContent);
         }
+
+        [Test]
+        public void Process_WithInlineStrategicMergePatches_UpdatesKustomizationFile()
+        {
+            const string kustomizationContent = @"
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+patchesStrategicMerge:
+- |
+  apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name: nginx-deployment
+  spec:
+    template:
+      spec:
+        initContainers:
+        - name: init-setup
+          image: nginx:1.21
+        containers:
+        - name: nginx
+          image: nginx:1.21
+";
+
+            var sourceWithMetadata = new ApplicationSourceWithMetadata(
+                new ApplicationSource { Path = "." },
+                SourceType.Kustomize,
+                0);
+
+            CreateKustomizationFile(kustomizationContent);
+
+            var updater = new KustomizeUpdater(imagesToUpdate, ArgoCDConstants.DefaultContainerRegistry, log, fileSystem);
+
+            var result = updater.Process(sourceWithMetadata, tempDir);
+
+            result.UpdatedImages.Should().Contain("nginx:1.25");
+
+            var updatedKustomizationContent = File.ReadAllText(Path.Combine(tempDir, "kustomization.yaml"));
+            updatedKustomizationContent.Should().Contain("nginx:1.25");
+            // Should update both init containers and regular containers
+            updatedKustomizationContent.Should().NotContain("nginx:1.21");
+        }
+
+        [Test]
+        public void Process_WithInlineJson6902Patches_UpdatesKustomizationFile()
+        {
+            const string kustomizationContent = @"
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+patchesJson6902:
+- target:
+    kind: Deployment
+    name: nginx-deployment
+  patch: |-
+    - op: replace
+      path: /spec/template/spec/containers/0/image
+      value: nginx:1.21
+    - op: add
+      path: /spec/template/spec/initContainers
+      value:
+      - name: init-container
+        image: nginx:1.21
+";
+
+            var sourceWithMetadata = new ApplicationSourceWithMetadata(
+                new ApplicationSource { Path = "." },
+                SourceType.Kustomize,
+                0);
+
+            CreateKustomizationFile(kustomizationContent);
+
+            var updater = new KustomizeUpdater(imagesToUpdate, ArgoCDConstants.DefaultContainerRegistry, log, fileSystem);
+
+            var result = updater.Process(sourceWithMetadata, tempDir);
+
+            result.UpdatedImages.Should().Contain("nginx:1.25");
+
+            var updatedKustomizationContent = File.ReadAllText(Path.Combine(tempDir, "kustomization.yaml"));
+            updatedKustomizationContent.Should().Contain("nginx:1.25");
+            // Should update both replace and add operations
+            updatedKustomizationContent.Should().NotContain("nginx:1.21");
+        }
+
+        [Test]
+        public void Process_WithMixedInlineAndExternalPatches_UpdatesAllPatchTypes()
+        {
+            const string kustomizationContent = @"
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+images:
+- name: nginx
+  newTag: ""1.21""
+patchesStrategicMerge:
+- |
+  apiVersion: apps/v1
+  kind: Deployment
+  spec:
+    template:
+      spec:
+        containers:
+        - name: nginx
+          image: nginx:1.21
+- external-patch.yaml
+patchesJson6902:
+- target:
+    kind: Deployment
+    name: nginx-deployment
+  patch: |-
+    - op: replace
+      path: /spec/template/spec/containers/1/image
+      value: nginx:1.21
+";
+
+            const string externalPatchContent = @"
+apiVersion: apps/v1
+kind: Deployment
+spec:
+  template:
+    spec:
+      containers:
+      - name: external-container
+        image: nginx:1.21
+";
+
+            var sourceWithMetadata = new ApplicationSourceWithMetadata(
+                new ApplicationSource { Path = "." },
+                SourceType.Kustomize,
+                0);
+
+            CreateKustomizationFile(kustomizationContent);
+            CreatePatchFile("external-patch.yaml", externalPatchContent);
+
+            var updater = new KustomizeUpdater(imagesToUpdate, ArgoCDConstants.DefaultContainerRegistry, log, fileSystem);
+
+            var result = updater.Process(sourceWithMetadata, tempDir);
+
+            result.UpdatedImages.Should().Contain("nginx:1.25");
+
+            // Check kustomization file was updated for images section and inline patches
+            var updatedKustomizationContent = File.ReadAllText(Path.Combine(tempDir, "kustomization.yaml"));
+            updatedKustomizationContent.Should().Contain("nginx:1.25");
+            updatedKustomizationContent.Should().NotContain("nginx:1.21");
+
+            // Check external patch file was also updated
+            var updatedExternalPatchContent = File.ReadAllText(Path.Combine(tempDir, "external-patch.yaml"));
+            updatedExternalPatchContent.Should().Contain("nginx:1.25");
+        }
     }
 
     [TestFixture]
@@ -853,6 +1000,116 @@ patches: []";
 - item2
 - item3";
                 var result = KustomizeUpdater.HasInlinePatches(content);
+                result.Should().BeFalse();
+            }
+        }
+
+        [TestFixture]
+        public class HasInlineStrategicMergePatchesTests
+        {
+            [Test]
+            public void HasInlineStrategicMergePatches_WithInlinePatches_ReturnsTrue()
+            {
+                const string content = @"apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+patchesStrategicMerge:
+- |
+  apiVersion: apps/v1
+  kind: Deployment
+  spec:
+    template:
+      spec:
+        containers:
+        - name: nginx
+          image: nginx:1.25";
+                var result = KustomizeUpdater.HasInlineStrategicMergePatches(content);
+                result.Should().BeTrue();
+            }
+
+            [Test]
+            public void HasInlineStrategicMergePatches_WithExternalFileReferences_ReturnsFalse()
+            {
+                const string content = @"apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+patchesStrategicMerge:
+- deployment-patch.yaml
+- service-patch.yaml";
+                var result = KustomizeUpdater.HasInlineStrategicMergePatches(content);
+                result.Should().BeFalse();
+            }
+
+            [Test]
+            public void HasInlineStrategicMergePatches_WithoutPatchesField_ReturnsFalse()
+            {
+                const string content = @"apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+images:
+- name: nginx
+  newTag: 1.25";
+                var result = KustomizeUpdater.HasInlineStrategicMergePatches(content);
+                result.Should().BeFalse();
+            }
+
+            [Test]
+            public void HasInlineStrategicMergePatches_InvalidYaml_ReturnsFalse()
+            {
+                const string content = @"invalid: yaml: [unclosed";
+                var result = KustomizeUpdater.HasInlineStrategicMergePatches(content);
+                result.Should().BeFalse();
+            }
+        }
+
+        [TestFixture]
+        public class HasInlineJson6902PatchesTests
+        {
+            [Test]
+            public void HasInlineJson6902Patches_WithInlinePatches_ReturnsTrue()
+            {
+                const string content = @"apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+patchesJson6902:
+- target:
+    kind: Deployment
+    name: nginx-deployment
+  patch: |-
+    - op: replace
+      path: /spec/template/spec/containers/0/image
+      value: nginx:1.25";
+                var result = KustomizeUpdater.HasInlineJson6902Patches(content);
+                result.Should().BeTrue();
+            }
+
+            [Test]
+            public void HasInlineJson6902Patches_WithExternalFileReferences_ReturnsFalse()
+            {
+                const string content = @"apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+patchesJson6902:
+- target:
+    kind: Deployment
+    name: nginx-deployment
+  path: deployment.json";
+                var result = KustomizeUpdater.HasInlineJson6902Patches(content);
+                result.Should().BeFalse();
+            }
+
+            [Test]
+            public void HasInlineJson6902Patches_WithoutPatchesField_ReturnsFalse()
+            {
+                const string content = @"apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+images:
+- name: nginx
+  newTag: 1.25";
+                var result = KustomizeUpdater.HasInlineJson6902Patches(content);
+                result.Should().BeFalse();
+            }
+
+            [Test]
+            public void HasInlineJson6902Patches_InvalidYaml_ReturnsFalse()
+            {
+                const string content = @"invalid: yaml: [unclosed";
+                var result = KustomizeUpdater.HasInlineJson6902Patches(content);
                 result.Should().BeFalse();
             }
         }
