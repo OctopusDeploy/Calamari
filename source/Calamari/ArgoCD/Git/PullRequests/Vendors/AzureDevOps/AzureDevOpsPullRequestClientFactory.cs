@@ -1,12 +1,21 @@
 ﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
+using Calamari.Common.Plumbing.Logging;
 
 namespace Calamari.ArgoCD.Git.PullRequests.Vendors.AzureDevOps
 {
     public class AzureDevOpsPullRequestClientFactory : IGitVendorAgnosticPullRequestClientFactory
     {
-        public IGitVendorPullRequestClient? TryCreateGitVendorApiAdaptor(IRepositoryConnection repositoryConnection)
+        public string Name => "Azure DevOps";
+        
+        public bool CanHandleAsCloudHosted(Uri repositoryUri) =>
+            repositoryUri.Host.Equals(AzureDevOpsPullRequestClient.CloudHost, StringComparison.OrdinalIgnoreCase);
+        
+        public async Task<IGitVendorPullRequestClient> Create(IRepositoryConnection repositoryConnection, ILog log, CancellationToken cancellationToken)
         {
-            return AzureDevOpsPullRequestClient.CanInvokeWith(repositoryConnection.Url) ? new AzureDevOpsPullRequestClient(repositoryConnection) : null;
+            await Task.CompletedTask;
+            return new AzureDevOpsPullRequestClient(repositoryConnection);
         }
     }
 }

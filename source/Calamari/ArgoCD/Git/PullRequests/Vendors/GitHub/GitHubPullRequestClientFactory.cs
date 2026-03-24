@@ -2,7 +2,9 @@
 using System;
 using System.Net;
 using System.Net.Http;
-using Calamari.ArgoCD.GitHub;
+using System.Threading;
+using System.Threading.Tasks;
+using Calamari.Common.Plumbing.Logging;
 using Octokit;
 using Octokit.Internal;
 
@@ -10,17 +12,13 @@ namespace Calamari.ArgoCD.Git.PullRequests.Vendors.GitHub
 {
     public class GitHubPullRequestClientFactory: IGitVendorPullRequestClientFactory
     {
-        bool CanInvokeWith(IRepositoryConnection repositoryConnection)
-        {
-            return GitHubRepositoryOwnerParser.IsGitHub(repositoryConnection.Url);
-        }
+        public string Name => "GitHub";
+        
+        public bool CanHandleAsCloudHosted(Uri repositoryUri) => GitHubRepositoryUriParser.IsGitHub(repositoryUri);
 
-        public IGitVendorPullRequestClient? TryCreateGitVendorApiAdaptor(IRepositoryConnection repositoryConnection)
+        public async Task<IGitVendorPullRequestClient> Create(IRepositoryConnection repositoryConnection, ILog log, CancellationToken cancellationToken)
         {
-            if (!CanInvokeWith(repositoryConnection))
-            {
-                return null;
-            }
+            await Task.CompletedTask;
             
             var credentials = new Credentials(repositoryConnection.Username, repositoryConnection.Password);
             var client = CreateGitHubClient(credentials);

@@ -74,7 +74,7 @@ namespace Calamari.Tests.ArgoCD.Git.GitVendorApiAdapters
                                   defaultBranch,
                                   cloneUsername,
                                   clonePassword,
-                                  (conn) => new AzureDevOpsPullRequestClient(conn));
+                                  (conn) => new AzureDevOpsPullRequestClient(TODO));
         }
 
         [Test]

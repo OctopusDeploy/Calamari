@@ -11,6 +11,8 @@ namespace Calamari.ArgoCD.Git.PullRequests.Vendors.AzureDevOps
 {
 	public class AzureDevOpsPullRequestClient : IGitVendorPullRequestClient
 	{
+		public const string CloudHost = "dev.azure.com";
+		
 		readonly IRepositoryConnection repositoryConnection;
 
 		readonly string organization;
