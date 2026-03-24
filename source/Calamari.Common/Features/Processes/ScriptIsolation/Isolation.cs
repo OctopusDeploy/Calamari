@@ -69,28 +69,6 @@ public static class Isolation
         return lockOptions;
     }
 
-    internal static ResolvedLockOptions ResolveLockOptions(LockOptions lockOptions)
-    {
-        if (lockOptions.IsFullySupported)
-        {
-            return new ResolvedLockOptions(lockOptions);
-        }
-
-        if (lockOptions.IsSupported)
-        {
-            // Requested Exclusive Lock
-            return new ResolvedLockOptions(lockOptions);
-        }
-
-        if (lockOptions.LockFile.Supports(LockType.Exclusive))
-        {
-            var promoted = lockOptions with { Type = LockType.Exclusive };
-            return new ResolvedLockOptions(promoted, $"Requested {LockType.Shared} lock is unavailable. Will acquire {promoted.Type} lock");
-        }
-
-        return ResolvedLockOptions.NoLockWithWarning("Unable to support any script isolation. Running without any isolation.");
-    }
-
     static void LogIsolation(LockOptions lockOptions)
     {
         Log.Verbose($"Acquiring script isolation mutex {lockOptions.Name} with {lockOptions.Type} lock");
@@ -103,13 +81,5 @@ public static class Isolation
         public void Dispose()
         {
         }
-    }
-
-    internal record ResolvedLockOptions(
-        LockOptions? Options,
-        string? Warning = null
-    )
-    {
-        public static ResolvedLockOptions NoLockWithWarning(string warning) => new(null, warning);
     }
 }

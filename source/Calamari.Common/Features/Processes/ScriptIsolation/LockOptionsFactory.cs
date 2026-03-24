@@ -12,6 +12,11 @@ public sealed class LockOptionsFactory(ILog log)
 
         var lockOptions = new LockOptions(requestedOptions.Type, requestedOptions.MutexName, lockFile, requestedOptions.Timeout);
 
+        return UseExclusiveIfSharedIsNotSupported(lockOptions);
+    }
+
+    internal LockOptions? UseExclusiveIfSharedIsNotSupported(LockOptions lockOptions)
+    {
         if (lockOptions.IsFullySupported)
         {
             return lockOptions;
