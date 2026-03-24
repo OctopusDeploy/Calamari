@@ -4,6 +4,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Memory;
 
+// This is duplicated from the OctopusDeploy server repo 
+// source/Octopus.Core/Features/Git/PullRequests/Vendors/GitLab/SelfHostedGitLabInspector.cs
+
 namespace Calamari.ArgoCD.Git.PullRequests.Vendors.GitLab;
 
 public class SelfHostedGitLabInspector(IMemoryCache cache)
