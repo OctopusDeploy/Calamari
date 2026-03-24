@@ -8,7 +8,7 @@ using Octokit.Internal;
 
 namespace Calamari.ArgoCD.Git.PullRequests.Vendors.GitHub
 {
-    public class GitHubApiAdapterFactory: IGitVendorApiAdapterFactory
+    public class GitHubPullRequestClientFactory: IGitVendorApiAdapterFactory
     {
         bool CanInvokeWith(IRepositoryConnection repositoryConnection)
         {
@@ -24,7 +24,7 @@ namespace Calamari.ArgoCD.Git.PullRequests.Vendors.GitHub
             
             var credentials = new Credentials(repositoryConnection.Username, repositoryConnection.Password);
             var client = CreateGitHubClient(credentials);
-            return new GitHubApiAdapter(client, repositoryConnection, new Uri("https://github.com/"));
+            return new GitHubPullRequestClient(client, repositoryConnection, new Uri("https://github.com/"));
         }
         
         IGitHubClient CreateGitHubClient(Credentials? credentials)

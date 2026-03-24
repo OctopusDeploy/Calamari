@@ -7,13 +7,13 @@ using NGitLab.Models;
 
 namespace Calamari.ArgoCD.Git.PullRequests.Vendors.GitLab
 {
-    public class GitLabApiAdapter : IGitVendorApiAdapter
+    public class GitLabPullRequestClient : IGitVendorApiAdapter
     {
         readonly GitLabClient gitLabClient;
         readonly Uri baseUrl;
         readonly string projectPath;
 
-        public GitLabApiAdapter(GitLabClient gitLabClient, IRepositoryConnection repositoryConnection, Uri baseUrl)
+        public GitLabPullRequestClient(GitLabClient gitLabClient, IRepositoryConnection repositoryConnection, Uri baseUrl)
         {
             this.gitLabClient = gitLabClient;
             this.baseUrl = baseUrl;

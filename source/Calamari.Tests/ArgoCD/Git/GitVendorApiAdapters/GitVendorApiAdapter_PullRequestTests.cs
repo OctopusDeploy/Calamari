@@ -22,7 +22,7 @@ using Repository = LibGit2Sharp.Repository;
 namespace Calamari.Tests.ArgoCD.Git.GitVendorApiAdapters
 {
     [TestFixture]
-    public class GitHubApiAdapterTests
+    public class GitHubPullRequestClientTests
     {
         [Test]
         [Ignore("Test currently used for local development and debugging")]
@@ -38,7 +38,7 @@ namespace Calamari.Tests.ArgoCD.Git.GitVendorApiAdapters
                                   defaultBranch,
                                   cloneUsername,
                                   clonePassword,
-                                  (conn) => new BitBucketApiAdapter(conn, new Uri("https://bitbucket.org")));
+                                  (conn) => new BitBucketPullRequestClient(conn, new Uri("https://bitbucket.org")));
         }
         [Test]
         [Ignore("Test currently used for local development and debugging")]
@@ -57,7 +57,7 @@ namespace Calamari.Tests.ArgoCD.Git.GitVendorApiAdapters
                                   {
                                       var credentials = new Credentials(cloneUsername, clonePassword);
                                       var client = new GitHubClient(new Connection(new ProductHeaderValue("octopus-deploy-test"))) { Credentials = credentials };
-                                      return new GitHubApiAdapter(client, conn, new Uri("https://github.com/"));
+                                      return new GitHubPullRequestClient(client, conn, new Uri("https://github.com/"));
                                   });
         }
 
@@ -74,7 +74,7 @@ namespace Calamari.Tests.ArgoCD.Git.GitVendorApiAdapters
                                   defaultBranch,
                                   cloneUsername,
                                   clonePassword,
-                                  (conn) => new AzureDevOpsApiAdapter(conn));
+                                  (conn) => new AzureDevOpsPullRequestClient(conn));
         }
 
         [Test]
@@ -93,7 +93,7 @@ namespace Calamari.Tests.ArgoCD.Git.GitVendorApiAdapters
                                   (conn) =>
                                   {
                                       var client = new GitLabClient("https://gitlab.com", clonePassword);
-                                      return new GitLabApiAdapter(client, conn, new Uri("https://gitlab.com"));
+                                      return new GitLabPullRequestClient(client, conn, new Uri("https://gitlab.com"));
                                   });
         }
 

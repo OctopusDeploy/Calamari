@@ -4,7 +4,7 @@ using NGitLab;
 
 namespace Calamari.ArgoCD.Git.PullRequests.Vendors.GitLab
 {
-    public class GitLabApiAdapterFactory : IGitVendorApiAdapterFactory
+    public class GitLabPullRequestClientFactory : IGitVendorApiAdapterFactory
     {
         public bool CanInvokeWith(IRepositoryConnection repositoryConnection)
         {
@@ -21,7 +21,7 @@ namespace Calamari.ArgoCD.Git.PullRequests.Vendors.GitLab
             }
 
             var client = new GitLabClient(CloudPortalHost.AbsoluteUri, repositoryConnection.Password);
-            return new GitLabApiAdapter(client, repositoryConnection, CloudPortalHost);
+            return new GitLabPullRequestClient(client, repositoryConnection, CloudPortalHost);
         }
 
         readonly Uri CloudPortalHost = new Uri("https://gitlab.com");
