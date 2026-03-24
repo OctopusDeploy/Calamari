@@ -104,7 +104,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                             })
                                             .WithSource(new ApplicationSource()
                                                 {
-                                                    OriginalRepoUrl = OriginPath,
+                                                    RepoUrl = OriginPath,
                                                     Path = "",
                                                     TargetRevision = ArgoCDBranchFriendlyName,
                                                 },
@@ -153,7 +153,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                             })
                                             .WithSource(new ApplicationSource()
                                                 {
-                                                    OriginalRepoUrl = OriginPath,
+                                                    RepoUrl = OriginPath,
                                                     Path = "",
                                                     TargetRevision = ArgoCDBranchFriendlyName,
                                                 },
@@ -272,9 +272,9 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                         spec:
                           containers:
                             - name: nginx
-                              image: nginx:1.19 
+                              image: nginx:1.19
                             - name: alpine
-                              image: alpine:3.21 
+                              image: alpine:3.21
                     """
                 )
             };
@@ -302,9 +302,9 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                     spec:
                       containers:
                         - name: nginx
-                          image: nginx:1.27.1 
+                          image: nginx:1.27.1
                         - name: alpine
-                          image: alpine:3.21 
+                          image: alpine:3.21
                 """;
 
             var clonedRepoPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
@@ -347,9 +347,9 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                    spec:
                                      containers:
                                        - name: nginx
-                                         image: nginx:1.19 
+                                         image: nginx:1.19
                                        - name: alpine
-                                         image: alpine:3.21 
+                                         image: alpine:3.21
                                """;
             var filesInRepo = new (string, string)[]
             {
@@ -369,7 +369,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                             })
                                             .WithSource(new ApplicationSource()
                                                 {
-                                                    OriginalRepoUrl = OriginPath,
+                                                    RepoUrl = OriginPath,
                                                     TargetRevision = ArgoCDBranchFriendlyName,
                                                 },
                                                 SourceTypeConstants.Directory)
@@ -428,7 +428,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                             })
                                             .WithSource(new ApplicationSource()
                                                 {
-                                                    OriginalRepoUrl = OriginPath,
+                                                    RepoUrl = OriginPath,
                                                     TargetRevision = ArgoCDBranchFriendlyName,
                                                 },
                                                 SourceTypeConstants.Kustomize)
@@ -487,7 +487,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                             })
                                             .WithSource(new ApplicationSource()
                                                 {
-                                                    OriginalRepoUrl = OriginPath,
+                                                    RepoUrl = OriginPath,
                                                     Path = "",
                                                     TargetRevision = ArgoCDBranchFriendlyName,
                                                 },
@@ -546,9 +546,9 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                           spec:
                                             containers:
                                               - name: nginx
-                                                image: nginx:1.19 
+                                                image: nginx:1.19
                                               - name: alpine
-                                                image: alpine:3.21 
+                                                image: alpine:3.21
                                       """;
             var filesInRepo = new (string, string)[]
             {
@@ -569,7 +569,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                             })
                                             .WithSource(new ApplicationSource()
                                                 {
-                                                    OriginalRepoUrl = OriginPath,
+                                                    RepoUrl = OriginPath,
                                                     Path = "",
                                                     TargetRevision = ArgoCDBranchFriendlyName,
                                                 },
@@ -658,7 +658,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             var sourceDetails = actual.UpdatedSourceDetails.First();
             sourceDetails.CommitSha.Should().HaveLength(40);
             sourceDetails.ReplacedFiles.Should().BeEmpty();
-            
+
             sourceDetails.PatchedFiles.Should()
                          .BeEquivalentTo([
                              new FilePathContent(yamlFilename, JsonSerializer.Serialize(expectedPatch)),

@@ -6,19 +6,9 @@ namespace Calamari.ArgoCD.Domain
 {
     public class ApplicationSource
     {
-        string originalRepoUrl = string.Empty;
         [JsonPropertyName("repoURL")]
-        public string OriginalRepoUrl {
-            get => originalRepoUrl;
-            set
-            {
-                originalRepoUrl = value;
-                CloneSafeRepoUrl = GitCloneSafeUrl.FromString(value);
-            }
-        }
+        public string RepoUrl { get; set; } = string.Empty;
 
-        public Uri CloneSafeRepoUrl { get; private set; }
-    
         [JsonPropertyName("targetRevision")]
         public string TargetRevision { get; set; } = string.Empty;
         
@@ -33,5 +23,8 @@ namespace Calamari.ArgoCD.Domain
         
         [JsonPropertyName("ref")]
         public string? Ref { get; set; }
+
+        [JsonIgnore]
+        public GitRepositoryAddress Address => new(RepoUrl);
     }
 }

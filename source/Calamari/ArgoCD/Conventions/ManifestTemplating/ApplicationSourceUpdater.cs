@@ -50,7 +50,7 @@ public class ApplicationSourceUpdater
         if (!deploymentScope.Matches(annotatedScope))
             return new ManifestUpdateResult(false, string.Empty, []);
 
-        log.Info($"Writing files to repository '{applicationSource.OriginalRepoUrl}' for '{applicationFromYaml.Metadata.Name}'");
+        log.Info($"Writing files to repository '{applicationSource.Address.Normalized}' for '{applicationFromYaml.Metadata.Name}'");
 
         var sourceUpdater = new CopyTemplatesSourceUpdater(packageFiles, log, fileSystem, deploymentConfig.PurgeOutputDirectory);
             

@@ -86,7 +86,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                             })
                                             .WithSource(new ApplicationSource()
                                                 {
-                                                    OriginalRepoUrl = RepoUrl,
+                                                    RepoUrl = RepoUrl,
                                                     Path = "",
                                                     TargetRevision = ArgoCDBranchFriendlyName,
                                                 },
@@ -235,7 +235,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                           })
                                           .WithSource(new ApplicationSource()
                                               {
-                                                  OriginalRepoUrl = RepoUrl,
+                                                  RepoUrl = RepoUrl,
                                                   Path = "",
                                                   TargetRevision = ArgoCDBranchFriendlyName,
                                                   Helm = new HelmConfig()
@@ -296,7 +296,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                           })
                                           .WithSource(new ApplicationSource
                                               {
-                                                  OriginalRepoUrl = "https://github.com/org/repo",
+                                                  RepoUrl = "https://github.com/org/repo",
                                                   Path = "",
                                                   TargetRevision = ArgoCDBranchFriendlyName,
                                                   Helm = new HelmConfig
@@ -315,7 +315,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                                   Name = "refSourceName",
                                                   Ref = "values",
                                                   TargetRevision = ArgoCDBranchFriendlyName,
-                                                  OriginalRepoUrl = RepoUrl,
+                                                  RepoUrl = RepoUrl,
                                               },
                                               SourceTypeConstants.Directory)
                                           .Build();
@@ -365,7 +365,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                           })
                                           .WithSource(new ApplicationSource
                                               {
-                                                  OriginalRepoUrl = "https://github.com/org/repo",
+                                                  RepoUrl = "https://github.com/org/repo",
                                                   Path = "",
                                                   TargetRevision = ArgoCDBranchFriendlyName,
                                                   Helm = new HelmConfig
@@ -385,7 +385,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                                   Ref = "valuesFiles",
                                                   Path = "otherPath/values1.yaml", //this should cause an error
                                                   TargetRevision = ArgoCDBranchFriendlyName,
-                                                  OriginalRepoUrl = RepoUrl,
+                                                  RepoUrl = RepoUrl,
                                               },
                                               SourceTypeConstants.Directory)
                                           .Build();
@@ -476,7 +476,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                                           })
                                           .WithSource(new ApplicationSource()
                                           {
-                                              OriginalRepoUrl = RepoUrl,
+                                              RepoUrl = RepoUrl,
                                               Path = "",
                                               TargetRevision = ArgoCDBranchFriendlyName,
                                               Helm = new HelmConfig()

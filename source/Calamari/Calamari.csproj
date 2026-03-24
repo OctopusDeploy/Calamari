@@ -48,7 +48,7 @@
     <PackageReference Include="Autofac" Version="4.8.0" />
     <PackageReference Include="System.ComponentModel.TypeConverter" Version="4.3.0" />
     <PackageReference Include="KubernetesClient" Version="17.0.14" />
-    <PackageReference Include="LibGit2Sharp" Version="0.31.0" />
+    <PackageReference Include="Octopus.LibGit2Sharp" Version="0.31.2-octopus.0.4" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Kubernetes\Scripts\AzurePowershellContext.ps1" />
@@ -62,7 +62,7 @@
     (see https://github.com/dotnet/sdk/issues/2342)
     So, we need to add a dependency onto `GetToolFiles` to calculate them first.
     Unfortunately, RunResolvePackageDependencies doesn't exist for the full fat framework, so we
-    define a new empty target if it's not already defined to keep it happy.
+    define a new empty target if it's not already defined to keep it happy
   -->
   <Target Name="RunResolvePackageDependencies" Condition="'$(RunResolvePackageDependencies)' != ''" />
   <Target Name="GetToolFiles" DependsOnTargets="RunResolvePackageDependencies">

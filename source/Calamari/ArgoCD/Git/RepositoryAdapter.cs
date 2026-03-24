@@ -27,7 +27,7 @@ public class RepositoryAdapter
 
     public SourceUpdateResult Process(ApplicationSourceWithMetadata sourceWithMetadata, ISourceUpdater updater)
     {
-        using (var repository = repositoryFactory.CloneRepository(sourceWithMetadata.Source.OriginalRepoUrl, sourceWithMetadata.Source.TargetRevision))
+        using (var repository = repositoryFactory.CloneRepository(sourceWithMetadata.Source.Address, sourceWithMetadata.Source.TargetRevision))
         {
             var filesUpdated = updater.Process(sourceWithMetadata, repository.WorkingDirectory);
             return PersistChangesToRepository(repository, sourceWithMetadata.Source.TargetRevision, filesUpdated);
@@ -50,8 +50,7 @@ public class RepositoryAdapter
 
         return new SourceUpdateResult([], null, []);
     }
-    
-    
+
     protected PushResult? PushToRemote(
         RepositoryWrapper repository,
         GitReference branchName, 

@@ -49,7 +49,7 @@ public class CopyTemplatesSourceUpdater : ISourceUpdater
     bool TryCalculateOutputPath(ApplicationSource sourceToUpdate, out string outputPath)
     {
         outputPath = "";
-        var sourceIdentity = string.IsNullOrEmpty(sourceToUpdate.Name) ? sourceToUpdate.OriginalRepoUrl : sourceToUpdate.Name;
+        var sourceIdentity = string.IsNullOrEmpty(sourceToUpdate.Name) ? sourceToUpdate.Address.Raw : sourceToUpdate.Name;
         if (sourceToUpdate.Ref != null)
         {
             if (sourceToUpdate.Path != null)

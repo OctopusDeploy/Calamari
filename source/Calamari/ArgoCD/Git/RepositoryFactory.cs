@@ -8,6 +8,7 @@ using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
 using Calamari.Integration.Time;
 using LibGit2Sharp;
+using LibGit2Sharp.Handlers;
 
 namespace Calamari.ArgoCD.Git
 {
@@ -24,8 +25,12 @@ namespace Calamari.ArgoCD.Git
         readonly IGitVendorAgnosticApiAdapterFactory vendorAgnosticApiAdapterFactory;
         readonly IClock clock;
 
-        public RepositoryFactory(ILog log, ICalamariFileSystem fileSystem, string repositoryParentDirectory, IGitVendorAgnosticApiAdapterFactory vendorAgnosticApiAdapterFactory,
-                                 IClock clock)
+        public RepositoryFactory(
+            ILog log,
+            ICalamariFileSystem fileSystem,
+            string repositoryParentDirectory,
+            IGitVendorAgnosticApiAdapterFactory vendorAgnosticApiAdapterFactory,
+            IClock clock)
         {
             this.log = log;
             this.fileSystem = fileSystem;
@@ -54,16 +59,10 @@ namespace Calamari.ArgoCD.Git
                     BranchName = (gitConnection.GitReference as GitBranchName)?.ToFriendlyName()
                 };
 
-            if (gitConnection.Username != null && gitConnection.Password != null)
-            {
-                options.FetchOptions.CredentialsProvider = (url, usernameFromUrl, types) => new UsernamePasswordCredentials
-                {
-                    Username = gitConnection.Username!,
-                    Password = gitConnection.Password!
-                };
-            }
+            options.FetchOptions.CredentialsProvider = CreateCredentialsProvider(gitConnection);
 
             string repoPath;
+            // TODO(eddy): breaks for ssh
             log.InfoFormat("Cloning repository {0}", log.FormatLink(gitConnection.Url));
             using (var timedOp = log.BeginTimedOperation("cloning repository"))
             {
@@ -86,26 +85,51 @@ namespace Calamari.ArgoCD.Git
             //this is required to handle the issue around "HEAD"
             var branchToCheckout = repo.GetBranchName(gitConnection.GitReference);
             var remoteBranch = repo.Branches.First(f => f.IsRemote && f.UpstreamBranchCanonicalName == branchToCheckout.Value);
-            
+
             log.VerboseFormat("Checking out '{0}' @ {1}", branchToCheckout, remoteBranch.Tip.Sha.Substring(0, 10));
-            
+
             //A local branch is required such that libgit2sharp can create "tracking" data
             // libgit2sharp does not support pushing from a detached head
             if (repo.Branches[branchToCheckout.Value] == null)
             {
                 repo.CreateBranch(branchToCheckout.Value, remoteBranch.Tip);
             }
-            
+
             LibGit2Sharp.Commands.Checkout(repo, branchToCheckout.ToFriendlyName());
-            
-            var gitVendorApiAdapter = vendorAgnosticApiAdapterFactory.TryCreateGitVendorApiAdaptor(gitConnection);
+
+            var gitVendorApiAdapter = !gitConnection.IsSsh ? vendorAgnosticApiAdapterFactory.TryCreateGitVendorApiAdaptor(gitConnection) : null;
             return new RepositoryWrapper(repo,
-                                         fileSystem,
-                                         checkoutPath,
-                                         log,
-                                         gitConnection,
-                                         gitVendorApiAdapter,
-                                         clock);
+                fileSystem,
+                checkoutPath,
+                log,
+                gitConnection,
+                gitVendorApiAdapter,
+                clock);
+        }
+
+        internal static CredentialsHandler? CreateCredentialsProvider(IGitConnection gitConnection)
+        {
+            if (gitConnection.IsSsh && gitConnection.PrivateKey != null)
+            {
+                return (url, usernameFromUrl, types) => new SshUserKeyMemoryCredentials
+                {
+                    Username = gitConnection.Username ?? "git",
+                    PrivateKey = gitConnection.PrivateKey!,
+                    PublicKey = gitConnection.PublicKey ?? "",
+                    Passphrase = gitConnection.Passphrase ?? ""
+                };
+            }
+
+            if (gitConnection.Username != null && gitConnection.Password != null)
+            {
+                return (url, usernameFromUrl, types) => new UsernamePasswordCredentials
+                {
+                    Username = gitConnection.Username!,
+                    Password = gitConnection.Password!
+                };
+            }
+
+            return null;
         }
     }
 }

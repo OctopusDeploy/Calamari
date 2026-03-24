@@ -118,7 +118,7 @@ image:
                     {
                         new ApplicationSource()
                         {
-                            OriginalRepoUrl = OriginPath,
+                            RepoUrl = OriginPath,
                             Path = "files",
                             TargetRevision = argoCDBranchName.Value,
                             Helm = new HelmConfig()
@@ -182,7 +182,7 @@ service:
                                           })
                                           .WithSource(new ApplicationSource
                                               {
-                                                  OriginalRepoUrl = OriginPath,
+                                                  RepoUrl = OriginPath,
                                                   TargetRevision = ArgoCDBranchFriendlyName
                                               },
                                               SourceTypeConstants.Helm)
@@ -345,7 +345,7 @@ image:
                     {
                         new ApplicationSource()
                         {
-                            OriginalRepoUrl = OriginPath,
+                            RepoUrl = OriginPath,
                             Path = "files",
                             TargetRevision = argoCDBranchName.Value,
                             Name = "wrong-scoping",
@@ -416,7 +416,7 @@ image:
                     {
                         new ApplicationSource()
                         {
-                            OriginalRepoUrl = "https://github.com/doesnt/exist.git",
+                            RepoUrl = "https://github.com/doesnt/exist.git",
                             Path = "files",
                             Helm = new HelmConfig()
                             {
@@ -429,7 +429,7 @@ image:
                         },
                         new ApplicationSource()
                         {
-                            OriginalRepoUrl = OriginPath,
+                            RepoUrl = OriginPath,
                             TargetRevision = argoCDBranchName.Value,
                             Ref = "values",
                         }
@@ -498,7 +498,7 @@ image:
                     {
                         new ApplicationSource()
                         {
-                            OriginalRepoUrl = OriginPath,
+                            RepoUrl = OriginPath,
                             TargetRevision = argoCDBranchName.Value,
                             Path = "files",
                             Helm = new HelmConfig()
@@ -577,7 +577,7 @@ image:
                     {
                         new ApplicationSource()
                         {
-                            OriginalRepoUrl = OriginPath,
+                            RepoUrl = OriginPath,
                             TargetRevision = argoCDBranchName.Value,
                             Path = "files",
                             Name = "helm-source",
@@ -649,7 +649,7 @@ image:
                     {
                         new ApplicationSource()
                         {
-                            OriginalRepoUrl = "https://github.com/doesnt/exist.git",
+                            RepoUrl = "https://github.com/doesnt/exist.git",
                             Path = "files",
                             Helm = new HelmConfig()
                             {
@@ -661,7 +661,7 @@ image:
                         },
                         new ApplicationSource()
                         {
-                            OriginalRepoUrl = OriginPath,
+                            RepoUrl = OriginPath,
                             TargetRevision = argoCDBranchName.Value,
                             Ref = "values",
                             Name = "ref-source",
@@ -733,7 +733,7 @@ image:
                     {
                         new ApplicationSource()
                         {
-                            OriginalRepoUrl = "https://github.com/doesnt/exist.git",
+                            RepoUrl = "https://github.com/doesnt/exist.git",
                             Path = "files",
                             Helm = new HelmConfig()
                             {
@@ -745,7 +745,7 @@ image:
                         },
                         new ApplicationSource()
                         {
-                            OriginalRepoUrl = OriginPath,
+                            RepoUrl = OriginPath,
                             TargetRevision = argoCDBranchName.Value,
                             Ref = "values",
                         }
@@ -836,7 +836,7 @@ containerPort: 8070
                                           })
                                           .WithSource(new ApplicationSource
                                               {
-                                                  OriginalRepoUrl = OriginPath,
+                                                  RepoUrl = OriginPath,
                                                   Path = "",
                                                   TargetRevision = ArgoCDBranchFriendlyName,
                                                   Helm = new HelmConfig()
@@ -919,7 +919,7 @@ containerPort: 8070
                                           })
                                           .WithSource(new ApplicationSource
                                               {
-                                                  OriginalRepoUrl = OriginPath,
+                                                  RepoUrl = OriginPath,
                                                   Path = "",
                                                   TargetRevision = ArgoCDBranchFriendlyName,
                                                   Helm = new HelmConfig()
@@ -1003,7 +1003,7 @@ containerPort: 8070
                                           })
                                           .WithSource(new ApplicationSource
                                               {
-                                                  OriginalRepoUrl = OriginPath,
+                                                  RepoUrl = OriginPath,
                                                   Path = "",
                                                   TargetRevision = ArgoCDBranchFriendlyName,
                                                   Helm = new HelmConfig()
@@ -1089,7 +1089,7 @@ service:
                                           })
                                           .WithSource(new ApplicationSource
                                               {
-                                                  OriginalRepoUrl = OriginPath,
+                                                  RepoUrl = OriginPath,
                                                   Path = "",
                                                   TargetRevision = ArgoCDBranchFriendlyName
                                               },
@@ -1170,7 +1170,7 @@ autoscaling:
                                           })
                                           .WithSource(new ApplicationSource
                                               {
-                                                  OriginalRepoUrl = "https://github.com/org/repo",
+                                                  RepoUrl = "https://github.com/org/repo",
                                                   Path = "",
                                                   TargetRevision = ArgoCDBranchFriendlyName,
                                                   Helm = new HelmConfig
@@ -1189,7 +1189,7 @@ autoscaling:
                                                   Name = "ref-source",
                                                   Ref = "values",
                                                   TargetRevision = ArgoCDBranchFriendlyName,
-                                                  OriginalRepoUrl = OriginPath,
+                                                  RepoUrl = OriginPath,
                                               },
                                               SourceTypeConstants.Directory)
                                           .Build();
@@ -1267,9 +1267,9 @@ spec:
     spec:
       containers:
         - name: nginx
-          image: nginx:1.19 
+          image: nginx:1.19
         - name: alpine
-          image: alpine:3.21 
+          image: alpine:3.21
 ";
             var filesInRepo = new[]
             {
@@ -1301,7 +1301,7 @@ service:
                                           })
                                           .WithSource(new ApplicationSource
                                               {
-                                                  OriginalRepoUrl = "https://github.com/org/repo",
+                                                  RepoUrl = "https://github.com/org/repo",
                                                   Path = "",
                                                   TargetRevision = ArgoCDBranchFriendlyName,
                                                   Helm = new HelmConfig
@@ -1320,7 +1320,7 @@ service:
                                                   Ref = "values",
                                                   Path = "include/",
                                                   TargetRevision = ArgoCDBranchFriendlyName,
-                                                  OriginalRepoUrl = OriginPath,
+                                                  RepoUrl = OriginPath,
                                               },
                                               SourceTypeConstants.Directory)
                                           .Build();
@@ -1455,7 +1455,7 @@ service:
                                           })
                                           .WithSource(new ApplicationSource
                                               {
-                                                  OriginalRepoUrl = "https://github.com/org/repo",
+                                                  RepoUrl = "https://github.com/org/repo",
                                                   Path = "",
                                                   TargetRevision = ArgoCDBranchFriendlyName,
                                                   Helm = new HelmConfig
@@ -1473,7 +1473,7 @@ service:
                                                   Name = "ref-source",
                                                   Ref = "values",
                                                   TargetRevision = ArgoCDBranchFriendlyName,
-                                                  OriginalRepoUrl = OriginPath,
+                                                  RepoUrl = OriginPath,
                                               },
                                               SourceTypeConstants.Directory)
                                           .Build();
@@ -1543,7 +1543,7 @@ service:
                                           .WithSource(new ApplicationSource
                                               {
                                                   TargetRevision = ArgoCDBranchFriendlyName,
-                                                  OriginalRepoUrl = OriginPath,
+                                                  RepoUrl = OriginPath,
                                                   Path = "",
                                                   Helm = new HelmConfig
                                                   {
