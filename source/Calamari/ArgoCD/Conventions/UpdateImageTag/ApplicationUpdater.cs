@@ -1,4 +1,3 @@
-using System;
 using System.Linq;
 using Calamari.ArgoCD.Domain;
 using Calamari.ArgoCD.Dtos;
@@ -6,6 +5,7 @@ using Calamari.ArgoCD.Git;
 using Calamari.ArgoCD.Models;
 using Calamari.Common.Plumbing.FileSystem;
 using Calamari.Common.Plumbing.Logging;
+using Octopus.CoreUtilities.Extensions;
 
 namespace Calamari.ArgoCD.Conventions.UpdateImageTag;
 
@@ -49,15 +49,8 @@ public class ApplicationUpdater
             var applicationName = applicationFromYaml.Metadata.Name;
 
             ValidateApplication(applicationFromYaml);
-
-            var imagesWithNoHelmReference = deploymentConfig.ImageReferences.Where(c => c.HelmReference is null).ToList();
-            if (imagesWithNoHelmReference.Any() && applicationFromYaml.GetSourcesWithMetadata().Any(src => src.SourceType == SourceType.Helm))
-            {
-                foreach (var image in imagesWithNoHelmReference)
-                {
-                    log.Verbose($"{image.ContainerReference.ToString()} will not be updated in helm sources, as no helm yaml path has been specified for it in the step configuration.");
-                }
-            }
+            
+            LogHelmAnnotationWarning(applicationFromYaml);
 
             var repositoryAdapter = new RepositoryAdapter(repositoryFactory, deploymentConfig.CommitParameters, log, commitMessageGenerator);
             var sourceUpdater = new ApplicationSourceUpdater(applicationFromYaml, repositoryAdapter, deploymentScope, deploymentConfig, log, gateway, application.DefaultRegistry, outputVariablesWriter, fileSystem);
@@ -92,7 +85,22 @@ public class ApplicationUpdater
                                                 updatedSourcesResults.SelectMany(r => r.Updated.ImagesUpdated).ToHashSet(),
                                                 updatedSourcesResults.Select(r => r.applicationSource.Source.OriginalRepoUrl).ToHashSet());
         }
-     
+
+        void LogHelmAnnotationWarning(Application applicationFromYaml)
+        {
+            var imagesWithoutHelmValuePath = deploymentConfig.ImageReferences.Where(ir => ir.HelmReference.IsNullOrEmpty()).ToList();
+
+            var someButNotAllHaveHelmValuePath = (imagesWithoutHelmValuePath.Count > 0) && (imagesWithoutHelmValuePath.Count < deploymentConfig.ImageReferences.Count);  
+            
+            if (someButNotAllHaveHelmValuePath && applicationFromYaml.GetSourcesWithMetadata().Any(src => src.SourceType == SourceType.Helm))
+            {
+                foreach (var image in imagesWithoutHelmValuePath)
+                {
+                    log.Verbose($"{image.ContainerReference.FriendlyName()} will not be updated in helm sources, as no helm yaml path has been specified for it in the step configuration.");
+                }
+            }
+        }
+
         void ValidateApplication(Application applicationFromYaml)
         {
             var validationResult = ValidationResult.Merge(
