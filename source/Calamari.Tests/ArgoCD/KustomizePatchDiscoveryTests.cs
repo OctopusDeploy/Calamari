@@ -44,7 +44,8 @@ patchesStrategicMerge:
             fileSystem.FileExists(deploymentPatchPath).Returns(true);
             fileSystem.FileExists(servicePatchPath).Returns(true);
 
-            var result = KustomizePatchDiscovery.DiscoverPatchFiles(fileSystem, kustomizationPath, new InMemoryLog());
+            var patchDiscovery = new KustomizePatchDiscovery(fileSystem, new InMemoryLog());
+            var result = patchDiscovery.DiscoverPatchFiles(kustomizationPath);
 
             result.Should().HaveCount(2);
             result.Should().Contain(p => p.FilePath == deploymentPatchPath && p.Type == PatchType.StrategicMerge);
@@ -76,7 +77,8 @@ patchesJson6902:
             fileSystem.FileExists(deploymentPatchPath).Returns(true);
             fileSystem.FileExists(servicePatchPath).Returns(true);
 
-            var result = KustomizePatchDiscovery.DiscoverPatchFiles(fileSystem, kustomizationPath, new InMemoryLog());
+            var patchDiscovery = new KustomizePatchDiscovery(fileSystem, new InMemoryLog());
+            var result = patchDiscovery.DiscoverPatchFiles(kustomizationPath);
 
             result.Should().HaveCount(2);
             result.Should().Contain(p => p.FilePath == deploymentPatchPath && p.Type == PatchType.Json6902);
@@ -102,7 +104,8 @@ patches:
             fileSystem.FileExists(kustomizationPath).Returns(true);
             fileSystem.ReadFile(kustomizationPath).Returns(kustomizationContent);
 
-            var result = KustomizePatchDiscovery.DiscoverPatchFiles(fileSystem, kustomizationPath, new InMemoryLog());
+            var patchDiscovery = new KustomizePatchDiscovery(fileSystem, new InMemoryLog());
+            var result = patchDiscovery.DiscoverPatchFiles(kustomizationPath);
 
             result.Should().HaveCount(1);
             result.First().FilePath.Should().Be(kustomizationPath);
@@ -140,7 +143,8 @@ patches:
             fileSystem.FileExists(deploymentPatchPath).Returns(true);
             fileSystem.FileExists(servicePatchPath).Returns(true);
 
-            var result = KustomizePatchDiscovery.DiscoverPatchFiles(fileSystem, kustomizationPath, new InMemoryLog());
+            var patchDiscovery = new KustomizePatchDiscovery(fileSystem, new InMemoryLog());
+            var result = patchDiscovery.DiscoverPatchFiles(kustomizationPath);
 
             result.Should().HaveCount(3);
             result.Should().Contain(p => p.FilePath == deploymentPatchPath && p.Type == PatchType.StrategicMerge);
@@ -167,7 +171,8 @@ patchesStrategicMerge:
             fileSystem.FileExists(deploymentPatchPath).Returns(true);
             fileSystem.FileExists(missingPatchPath).Returns(false);
 
-            var result = KustomizePatchDiscovery.DiscoverPatchFiles(fileSystem, kustomizationPath, new InMemoryLog());
+            var patchDiscovery = new KustomizePatchDiscovery(fileSystem, new InMemoryLog());
+            var result = patchDiscovery.DiscoverPatchFiles(kustomizationPath);
 
             result.Should().HaveCount(1);
             result.Should().Contain(p => p.FilePath == deploymentPatchPath && p.Type == PatchType.StrategicMerge);
@@ -187,7 +192,8 @@ images:
             fileSystem.FileExists(kustomizationPath).Returns(true);
             fileSystem.ReadFile(kustomizationPath).Returns(kustomizationContent);
 
-            var result = KustomizePatchDiscovery.DiscoverPatchFiles(fileSystem, kustomizationPath, new InMemoryLog());
+            var patchDiscovery = new KustomizePatchDiscovery(fileSystem, new InMemoryLog());
+            var result = patchDiscovery.DiscoverPatchFiles(kustomizationPath);
 
             result.Should().BeEmpty();
         }
@@ -197,7 +203,8 @@ images:
         {
             fileSystem.FileExists(kustomizationPath).Returns(false);
 
-            var result = KustomizePatchDiscovery.DiscoverPatchFiles(fileSystem, kustomizationPath, new InMemoryLog());
+            var patchDiscovery = new KustomizePatchDiscovery(fileSystem, new InMemoryLog());
+            var result = patchDiscovery.DiscoverPatchFiles(kustomizationPath);
 
             result.Should().BeEmpty();
         }
@@ -210,7 +217,8 @@ images:
             fileSystem.FileExists(kustomizationPath).Returns(true);
             fileSystem.ReadFile(kustomizationPath).Returns(invalidYamlContent);
 
-            var result = KustomizePatchDiscovery.DiscoverPatchFiles(fileSystem, kustomizationPath, new InMemoryLog());
+            var patchDiscovery = new KustomizePatchDiscovery(fileSystem, new InMemoryLog());
+            var result = patchDiscovery.DiscoverPatchFiles(kustomizationPath);
 
             result.Should().BeEmpty();
         }

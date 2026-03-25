@@ -19,7 +19,7 @@ namespace Calamari.ArgoCD
 
     public record PatchFileInfo(string FilePath, PatchType Type);
 
-    public static class KustomizePatchDiscovery
+    public class KustomizePatchDiscovery
     {
         private static class FieldNames
         {
@@ -29,7 +29,16 @@ namespace Calamari.ArgoCD
             public const string Path = "path";
         }
 
-        public static List<PatchFileInfo> DiscoverPatchFiles(ICalamariFileSystem fileSystem, string kustomizationFilePath, ILog log)
+        private readonly ICalamariFileSystem fileSystem;
+        private readonly ILog log;
+
+        public KustomizePatchDiscovery(ICalamariFileSystem fileSystem, ILog log)
+        {
+            this.fileSystem = fileSystem;
+            this.log = log;
+        }
+
+        public List<PatchFileInfo> DiscoverPatchFiles(string kustomizationFilePath)
         {
             if (string.IsNullOrWhiteSpace(kustomizationFilePath))
                 throw new ArgumentException("Kustomization file path cannot be null or empty", nameof(kustomizationFilePath));
@@ -52,8 +61,8 @@ namespace Calamari.ArgoCD
                 if (rootNode == null)
                     return patchFiles;
 
-                ProcessStrategicMergePatches(rootNode, kustomizationDir, fileSystem, patchFiles, log);
-                ProcessJson6902Patches(rootNode, kustomizationDir, fileSystem, patchFiles, log);
+                ProcessStrategicMergePatches(rootNode, kustomizationDir, patchFiles);
+                ProcessJson6902Patches(rootNode, kustomizationDir, patchFiles);
                 ProcessInlinePatches(rootNode, kustomizationFilePath, patchFiles);
             }
             catch (YamlException ex)
@@ -93,8 +102,7 @@ namespace Calamari.ArgoCD
                 : null;
         }
 
-        private static void ProcessStrategicMergePatches(YamlMappingNode rootNode, string kustomizationDir,
-            ICalamariFileSystem fileSystem, List<PatchFileInfo> patchFiles, ILog log)
+        private void ProcessStrategicMergePatches(YamlMappingNode rootNode, string kustomizationDir, List<PatchFileInfo> patchFiles)
         {
             var strategicMergeSequence = rootNode.GetSequenceNode(FieldNames.PatchesStrategicMerge);
             if (strategicMergeSequence != null)
@@ -117,8 +125,7 @@ namespace Calamari.ArgoCD
             }
         }
 
-        private static void ProcessJson6902Patches(YamlMappingNode rootNode, string kustomizationDir,
-            ICalamariFileSystem fileSystem, List<PatchFileInfo> patchFiles, ILog log)
+        private void ProcessJson6902Patches(YamlMappingNode rootNode, string kustomizationDir, List<PatchFileInfo> patchFiles)
         {
             var json6902Sequence = rootNode.GetSequenceNode(FieldNames.PatchesJson6902);
             if (json6902Sequence != null)

@@ -65,7 +65,8 @@ public class KustomizeUpdater : BaseUpdater
         log.Verbose("kustomization file found, processing images and discovering patch files");
 
         var allFilesToUpdate = new HashSet<string> { kustomizationFile };
-        var patchFiles = KustomizePatchDiscovery.DiscoverPatchFiles(fileSystem, kustomizationFile, log);
+        var patchDiscovery = new KustomizePatchDiscovery(fileSystem, log);
+        var patchFiles = patchDiscovery.DiscoverPatchFiles(kustomizationFile);
 
         var externalPatchFiles = patchFiles
                                  .Where(p => p.Type != PatchType.InlineJsonPatch)
