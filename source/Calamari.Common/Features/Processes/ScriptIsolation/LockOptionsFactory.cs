@@ -19,12 +19,12 @@ public sealed class LockOptionsFactory(
 
     internal LockOptions? UseExclusiveIfSharedIsNotSupported(LockOptions lockOptions)
     {
-        if (lockOptions.IsFullySupported)
+        if (lockOptions.BothSharedAndExclusiveAreSupported)
         {
             return lockOptions;
         }
 
-        if (lockOptions.IsSupported)
+        if (lockOptions.RequestedLockTypeIsSupported)
         {
             // Requested Exclusive lock
             return lockOptions;

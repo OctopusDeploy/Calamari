@@ -13,10 +13,10 @@ public sealed record LockOptions(
     /// Indicates whether file locking is supported for the configured location. This requires
     /// that both Exclusive and Shared locks are supported on the underlying filesystem.
     /// </summary>
-    public bool IsFullySupported => LockFile.IsFullySupported;
+    public bool BothSharedAndExclusiveAreSupported => LockFile.IsFullySupported;
 
     /// <summary>
     /// Indicates whether the specific type of lock is supported on the underlying file system.
     /// </summary>
-    public bool IsSupported => LockFile.Supports(Type);
+    public bool RequestedLockTypeIsSupported => LockFile.Supports(Type);
 }

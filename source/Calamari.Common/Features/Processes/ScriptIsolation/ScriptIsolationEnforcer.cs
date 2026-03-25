@@ -9,7 +9,8 @@ namespace Calamari.Common.Features.Processes.ScriptIsolation;
 
 public sealed class ScriptIsolationEnforcer(
     RequestedLockOptionsFactory requestedLockOptionsFactory,
-    LockOptionsFactory lockOptionsFactory)
+    LockOptionsFactory lockOptionsFactory,
+    ILog log)
     : IScriptIsolationEnforcer
 {
     public ILockHandle Enforce(CommonOptions.ScriptIsolationOptions scriptIsolationOptions)
@@ -64,12 +65,14 @@ public sealed class ScriptIsolationEnforcer(
 
     LockOptions? PrepareLockOptions(CommonOptions.ScriptIsolationOptions scriptIsolationOptions)
     {
+        // Validate the options from the command line
         var requestedOptions = requestedLockOptionsFactory.CreateOrNull(scriptIsolationOptions);
         if (requestedOptions is null)
         {
             return null;
         }
 
+        // Create the actual options, adjusting based on underlying system support
         var lockOptions = lockOptionsFactory.Create(requestedOptions);
 
         if (lockOptions is null)
@@ -77,13 +80,8 @@ public sealed class ScriptIsolationEnforcer(
             return null;
         }
 
-        LogIsolation(lockOptions);
+        log.Verbose($"Acquiring script isolation mutex {lockOptions.Name} with {lockOptions.Type} lock");
         return lockOptions;
-    }
-
-    static void LogIsolation(LockOptions lockOptions)
-    {
-        Log.Verbose($"Acquiring script isolation mutex {lockOptions.Name} with {lockOptions.Type} lock");
     }
 
     class NoLock : ILockHandle
