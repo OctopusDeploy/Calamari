@@ -64,21 +64,35 @@ namespace Calamari.ArgoCD.Git
                 log.Verbose("No changes required committing.");
                 return false;
             }
+            catch (Exception e)
+            {
+                throw new CommandException("Failed to commit changes to git repository", e);
+            }
         }
 
         public void AddFiles(string[] filesToStage)
         {
-            foreach (var file in filesToStage)
+            try
             {
-                repository.Index.Add(NormalizePath(file));
+                foreach (var file in filesToStage)
+                    repository.Index.Add(NormalizePath(file));
+            }
+            catch (Exception e)
+            {
+                throw new CommandException("Failed to stage files in git repository", e);
             }
         }
-        
+
         public void RemoveFiles(string[] filesToRemove)
         {
-            foreach (var file in filesToRemove)
+            try
             {
-                repository.Index.Remove(NormalizePath(file));
+                foreach (var file in filesToRemove)
+                    repository.Index.Remove(NormalizePath(file));
+            }
+            catch (Exception e)
+            {
+                throw new CommandException("Failed to remove files from git repository", e);
             }
         }
 
@@ -115,7 +129,18 @@ namespace Calamari.ArgoCD.Git
                                 })
                                 .Build();
 
-            retryPipeline.Execute(() => PushChanges(pushToBranchName));
+            try
+            {
+                retryPipeline.Execute(() => PushChanges(pushToBranchName));
+            }
+            catch (CommandException)
+            {
+                throw;
+            }
+            catch (Exception e)
+            {
+                throw new CommandException($"Failed to push to branch '{pushToBranchName.ToFriendlyName()}'", e);
+            }
 
             var commit = repository.Head.Tip;
 
@@ -220,8 +245,15 @@ namespace Calamari.ArgoCD.Git
                 CredentialsProvider = (url, usernameFromUrl, types) => RepositoryCredentials
             };
 
-            log.Verbose($"Fetching from remote '{remote.Name}'");
-            LibGit2Sharp.Commands.Fetch(repository, remote.Name, refSpecs, fetchOptions, null);
+            try
+            {
+                log.Verbose($"Fetching from remote '{remote.Name}'");
+                LibGit2Sharp.Commands.Fetch(repository, remote.Name, refSpecs, fetchOptions, null);
+            }
+            catch (Exception e)
+            {
+                throw new CommandException($"Failed to fetch from remote '{remote.Name}'", e);
+            }
 
             var trackingBranchName = $"{remote.Name}/{branchName.ToFriendlyName()}";
             var trackingBranch = repository.Branches[trackingBranchName];
@@ -232,18 +264,28 @@ namespace Calamari.ArgoCD.Git
             }
 
             log.Verbose($"Rebasing onto '{trackingBranch.FriendlyName}'");
-            var rebaseResult = repository.Rebase.Start(null,
-                                                       trackingBranch,
-                                                       null,
-                                                       repositoryIdentity,
-                                                       new RebaseOptions());
-
-            if (rebaseResult.Status == RebaseStatus.Conflicts)
+            try
             {
-                throw new CommandException($"Rebase conflict detected when rebasing onto '{trackingBranch.FriendlyName}' - cannot automatically resolve conflicts");
-            }
+                var rebaseResult = repository.Rebase.Start(null,
+                                                           trackingBranch,
+                                                           null,
+                                                           repositoryIdentity,
+                                                           new RebaseOptions());
+                if (rebaseResult.Status == RebaseStatus.Conflicts)
+                {
+                    throw new CommandException($"Rebase conflict detected when rebasing onto '{trackingBranch.FriendlyName}' - cannot automatically resolve conflicts");
+                }
 
-            log.Verbose($"Rebase result: {rebaseResult.Status}");
+                log.Verbose($"Rebase result: {rebaseResult.Status}");
+            }
+            catch (CommandException)
+            {
+                throw;
+            }
+            catch (Exception e)
+            {
+                throw new CommandException($"Failed to rebase onto '{trackingBranch.FriendlyName}'", e);
+            }
         }
 
         static string GenerateCommitMessage(string summary, string description)
