@@ -5,7 +5,8 @@ namespace Calamari.Common.Features.Processes.ScriptIsolation;
 
 sealed class LockDirectoryFactory(
     IMountedDrivesProvider mountedDrivesProvider,
-    IFileLockService fileLockService
+    IFileLockService fileLockService,
+    ITemporaryDirectoryFallbackProvider temporaryDirectoryFallbackProvider
 ) : ILockDirectoryFactory
 {
     public LockDirectory Create(DirectoryInfo preferredLockDirectory)
@@ -24,9 +25,8 @@ sealed class LockDirectoryFactory(
         DirectoryInfo? tempPathExclusiveOnly = null;
 
         // Preferred directory is not fully supported; check temp directories for something better.
-        foreach (var tempPath in fileLockService.GetFallbackTemporaryDirectories(preferredLockDirectory.FullName)) // TODO: DirectoryInfo
+        foreach (var tempDir in temporaryDirectoryFallbackProvider.GetFallbackCandidates(preferredLockDirectory))
         {
-            var tempDir = new DirectoryInfo(tempPath); // TODO: Should already be a DirectoryInfo
             var tempDrive = GetDriveOrNull(tempDir);
             var tempSupport = tempDrive?.LockSupport ?? DetectLockSupport(tempDir);
             if (tempSupport is LockCapability.Supported)

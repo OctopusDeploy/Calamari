@@ -97,7 +97,6 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             readonly bool sharedAllowed;
             readonly bool exclusiveBlocksShared;
             readonly bool sharedBlocksExclusive;
-            readonly string[] temporaryDirectories;
 
             // Tracks counts of currently-held locks (released on handle Dispose).
             int heldExclusive;
@@ -107,14 +106,12 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
                 bool exclusiveBlocksExclusive,
                 bool sharedAllowed,
                 bool exclusiveBlocksShared,
-                bool sharedBlocksExclusive,
-                string[] temporaryDirectories)
+                bool sharedBlocksExclusive)
             {
                 this.exclusiveBlocksExclusive = exclusiveBlocksExclusive;
                 this.sharedAllowed = sharedAllowed;
                 this.exclusiveBlocksShared = exclusiveBlocksShared;
                 this.sharedBlocksExclusive = sharedBlocksExclusive;
-                this.temporaryDirectories = temporaryDirectories;
             }
 
             // ---- Preset factory methods ----------------------------------------
@@ -123,56 +120,51 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             /// A filesystem that supports both exclusive and shared locks with full
             /// mutual-exclusion semantics (NTFS, ext4, apfs, …).
             /// </summary>
-            public static FakeLockService FullySupported(params string[] temporaryDirectories) =>
+            public static FakeLockService FullySupported() =>
                 new(exclusiveBlocksExclusive: true,
                     sharedAllowed: true,
                     exclusiveBlocksShared: true,
-                    sharedBlocksExclusive: true,
-                    temporaryDirectories: temporaryDirectories);
+                    sharedBlocksExclusive: true);
 
             /// <summary>
             /// A filesystem where shared locks are completely unsupported — every
             /// shared-lock attempt fails immediately.
             /// </summary>
-            public static FakeLockService ExclusiveOnlyBecauseSharedUnsupported(params string[] temporaryDirectories) =>
+            public static FakeLockService ExclusiveOnlyBecauseSharedUnsupported() =>
                 new(exclusiveBlocksExclusive: true,
                     sharedAllowed: false,
                     exclusiveBlocksShared: true,
-                    sharedBlocksExclusive: true,
-                    temporaryDirectories: temporaryDirectories);
+                    sharedBlocksExclusive: true);
 
             /// <summary>
             /// A filesystem where shared locks can be acquired, but an exclusive lock
             /// does <em>not</em> block a concurrent shared lock (broken mutual-exclusion).
             /// </summary>
-            public static FakeLockService ExclusiveOnlyBecauseExclusiveDoesNotBlockShared(params string[] temporaryDirectories) =>
+            public static FakeLockService ExclusiveOnlyBecauseExclusiveDoesNotBlockShared() =>
                 new(exclusiveBlocksExclusive: true,
                     sharedAllowed: true,
                     exclusiveBlocksShared: false,
-                    sharedBlocksExclusive: true,
-                    temporaryDirectories: temporaryDirectories);
+                    sharedBlocksExclusive: true);
 
             /// <summary>
             /// A filesystem where shared locks can be acquired, but a shared lock does
             /// <em>not</em> block a concurrent exclusive lock (broken mutual-exclusion).
             /// </summary>
-            public static FakeLockService ExclusiveOnlyBecauseSharedDoesNotBlockExclusive(params string[] temporaryDirectories) =>
+            public static FakeLockService ExclusiveOnlyBecauseSharedDoesNotBlockExclusive() =>
                 new(exclusiveBlocksExclusive: true,
                     sharedAllowed: true,
                     exclusiveBlocksShared: true,
-                    sharedBlocksExclusive: false,
-                    temporaryDirectories: temporaryDirectories);
+                    sharedBlocksExclusive: false);
 
             /// <summary>
             /// A filesystem where even exclusive locking is unsupported (e.g. some
             /// network file systems or read-only mounts).
             /// </summary>
-            public static FakeLockService Unsupported(params string[] temporaryDirectories) =>
+            public static FakeLockService Unsupported() =>
                 new(exclusiveBlocksExclusive: false,
                     sharedAllowed: false,
                     exclusiveBlocksShared: false,
-                    sharedBlocksExclusive: false,
-                    temporaryDirectories: temporaryDirectories);
+                    sharedBlocksExclusive: false);
 
             // ---- IFileLockService implementation --------------------------------
 
@@ -208,11 +200,6 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
                 }
             }
 
-            public IEnumerable<string> GetFallbackTemporaryDirectories(string candidatePath)
-            {
-                return temporaryDirectories;
-            }
-
             sealed class Handle(Action release) : ILockHandle
             {
                 bool disposed;
@@ -232,6 +219,17 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             }
         }
 
+        /// <summary>
+        /// Supplies a fixed list of fallback temporary directory candidates, removing
+        /// any dependency on environment variables or the real filesystem layout.
+        /// </summary>
+        sealed class FakeTemporaryDirectoryFallbackProvider(params string[] temporaryDirectories)
+            : ITemporaryDirectoryFallbackProvider
+        {
+            public IEnumerable<DirectoryInfo> GetFallbackCandidates(DirectoryInfo preferredDirectory)
+                => Array.ConvertAll(temporaryDirectories, p => new DirectoryInfo(p));
+        }
+
         sealed class FakeMountedDrivesProvider(
             CachedDriveInfo[] cachedDrives,
             IPathResolutionService pathResolutionService
@@ -242,6 +240,17 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
 
         static FakeMountedDrivesProvider PassThroughDrives(params CachedDriveInfo[] drives)
             => new(drives, FakePathResolutionService.PassThrough);
+
+        /// <summary>
+        /// Builds a <see cref="LockDirectoryFactory"/> wired with the given fake drives and lock
+        /// service.  An optional set of <paramref name="tempPaths"/> is supplied to the injected
+        /// <see cref="FakeTemporaryDirectoryFallbackProvider"/>.
+        /// </summary>
+        static LockDirectoryFactory CreateFactory(
+            FakeMountedDrivesProvider drives,
+            FakeLockService lockService,
+            params string[] tempPaths)
+            => new(drives, lockService, new FakeTemporaryDirectoryFallbackProvider(tempPaths));
 
         // -------------------------------------------------------------------------
         // Group A: LockDirectory.Supports(LockType)
@@ -300,7 +309,7 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         {
             var fs = FakeLockService.Unsupported();
 
-            var result = new LockDirectoryFactory(PassThroughDrives(), fs)
+            var result = CreateFactory(PassThroughDrives(), fs)
                 .DetectLockSupport(new DirectoryInfo(Path.GetTempPath()));
 
             result.Should().Be(LockCapability.Unsupported);
@@ -311,7 +320,7 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         {
             var fs = FakeLockService.ExclusiveOnlyBecauseSharedUnsupported();
 
-            var result = new LockDirectoryFactory(PassThroughDrives(), fs)
+            var result = CreateFactory(PassThroughDrives(), fs)
                 .DetectLockSupport(new DirectoryInfo(Path.GetTempPath()));
 
             result.Should().Be(LockCapability.ExclusiveOnly);
@@ -324,7 +333,7 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             // the filesystem does not enforce mutual exclusion between the two types.
             var fs = FakeLockService.ExclusiveOnlyBecauseExclusiveDoesNotBlockShared();
 
-            var result = new LockDirectoryFactory(PassThroughDrives(), fs)
+            var result = CreateFactory(PassThroughDrives(), fs)
                 .DetectLockSupport(new DirectoryInfo(Path.GetTempPath()));
 
             result.Should().Be(LockCapability.ExclusiveOnly);
@@ -337,7 +346,7 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             // the filesystem does not enforce mutual exclusion between the two types.
             var fs = FakeLockService.ExclusiveOnlyBecauseSharedDoesNotBlockExclusive();
 
-            var result = new LockDirectoryFactory(PassThroughDrives(), fs)
+            var result = CreateFactory(PassThroughDrives(), fs)
                 .DetectLockSupport(new DirectoryInfo(Path.GetTempPath()));
 
             result.Should().Be(LockCapability.ExclusiveOnly);
@@ -349,7 +358,7 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             // The filesystem correctly blocks all conflicting lock combinations.
             var fs = FakeLockService.FullySupported();
 
-            var result = new LockDirectoryFactory(PassThroughDrives(), fs)
+            var result = CreateFactory(PassThroughDrives(), fs)
                 .DetectLockSupport(new DirectoryInfo(Path.GetTempPath()));
 
             result.Should().Be(LockCapability.Supported);
@@ -380,9 +389,9 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         public void GetLockDirectory_ReturnsCandidatePath_WhenCandidateDriveIsSupported()
         {
             var drives = PassThroughDrives(DriveWithCapability(FakeRoot, LockCapability.Supported));
-            var fs = FakeLockService.FullySupported(TempPath);
+            var fs = FakeLockService.FullySupported();
 
-            var result = new LockDirectoryFactory(drives, fs)
+            var result = CreateFactory(drives, fs, TempPath)
                 .Create(new DirectoryInfo(CandidatePath));
 
             result.DirectoryInfo.FullName.Should().Be(CandidatePath);
@@ -400,9 +409,9 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             var drives = PassThroughDrives(
                                            DriveWithCapability(CandidateRoot, null),
                                            DriveWithCapability(TempRoot, LockCapability.Supported));
-            var fs = FakeLockService.FullySupported(TempPath);
+            var fs = FakeLockService.FullySupported();
 
-            var result = new LockDirectoryFactory(drives, fs)
+            var result = CreateFactory(drives, fs, TempPath)
                 .Create(new DirectoryInfo(CandidatePath));
 
             result.LockSupport.Should().Be(LockCapability.Supported);
@@ -419,9 +428,9 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             var drives = PassThroughDrives(
                                            DriveWithCapability(CandidateRoot, LockCapability.Unsupported),
                                            DriveWithCapability(TempRoot, LockCapability.Supported));
-            var fs = FakeLockService.FullySupported(TempPath);
+            var fs = FakeLockService.FullySupported();
 
-            var result = new LockDirectoryFactory(drives, fs)
+            var result = CreateFactory(drives, fs, TempPath)
                 .Create(new DirectoryInfo(CandidatePath));
 
             result.LockSupport.Should().Be(LockCapability.Supported);
@@ -439,9 +448,9 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             var drives = PassThroughDrives(
                                            DriveWithCapability(CandidateRoot, null),
                                            DriveWithCapability(TempRoot, LockCapability.ExclusiveOnly));
-            var fs = FakeLockService.FullySupported(TempPath);
+            var fs = FakeLockService.FullySupported();
 
-            var result = new LockDirectoryFactory(drives, fs)
+            var result = CreateFactory(drives, fs, TempPath)
                 .Create(new DirectoryInfo(CandidatePath));
 
             result.LockSupport.Should().Be(LockCapability.Supported);
@@ -458,9 +467,9 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             var drives = PassThroughDrives(
                                            DriveWithCapability(CandidateRoot, LockCapability.ExclusiveOnly),
                                            DriveWithCapability(TempRoot, LockCapability.ExclusiveOnly));
-            var fs = FakeLockService.FullySupported(TempPath);
+            var fs = FakeLockService.FullySupported();
 
-            var result = new LockDirectoryFactory(drives, fs)
+            var result = CreateFactory(drives, fs, TempPath)
                 .Create(new DirectoryInfo(CandidatePath));
 
             result.LockSupport.Should().Be(LockCapability.ExclusiveOnly);
@@ -477,9 +486,9 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             var drives = PassThroughDrives(
                                            DriveWithCapability(CandidateRoot, LockCapability.Unsupported),
                                            DriveWithCapability(TempRoot, LockCapability.ExclusiveOnly));
-            var fs = FakeLockService.FullySupported(TempPath);
+            var fs = FakeLockService.FullySupported();
 
-            var result = new LockDirectoryFactory(drives, fs)
+            var result = CreateFactory(drives, fs, TempPath)
                 .Create(new DirectoryInfo(CandidatePath));
 
             result.LockSupport.Should().Be(LockCapability.ExclusiveOnly);
@@ -491,9 +500,9 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         public void GetLockDirectory_ReturnsUnsupported_WhenNothingWorks()
         {
             var drives = PassThroughDrives(DriveWithCapability(FakeRoot, null));
-            var fs = FakeLockService.Unsupported(TempPath);
+            var fs = FakeLockService.Unsupported();
 
-            var result = new LockDirectoryFactory(drives, fs)
+            var result = CreateFactory(drives, fs, TempPath)
                 .Create(new DirectoryInfo(CandidatePath));
 
             result.LockSupport.Should().Be(LockCapability.Unsupported);
@@ -507,9 +516,9 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             // With no drive heuristic available, GetLockDirectory falls back to live
             // detection. A FullySupported lock service means detection succeeds.
             var drives = PassThroughDrives();
-            var fs = FakeLockService.FullySupported(TempPath);
+            var fs = FakeLockService.FullySupported();
 
-            var result = new LockDirectoryFactory(drives, fs)
+            var result = CreateFactory(drives, fs, TempPath)
                 .Create(new DirectoryInfo(CandidatePath));
 
             result.LockSupport.Should().Be(LockCapability.Supported);
@@ -524,9 +533,9 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             // The candidate root has no pre-detected support → Unsupported after detection.
             var drives = PassThroughDrives(DriveWithCapability(CandidateRoot, null));
             // TempPath is under TempRoot, which has no entry in drives.
-            var fs = FakeLockService.Unsupported(TempPath);
+            var fs = FakeLockService.Unsupported();
 
-            var result = new LockDirectoryFactory(drives, fs)
+            var result = CreateFactory(drives, fs, TempPath)
                 .Create(new DirectoryInfo(CandidatePath));
 
             result.LockSupport.Should().Be(LockCapability.Unsupported);
@@ -550,9 +559,9 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
                                            DriveWithCapability(CandidateRoot, LockCapability.Unsupported),
                                            DriveWithCapability(TempRoot, LockCapability.ExclusiveOnly),
                                            DriveWithCapability(secondTempRoot, LockCapability.Supported));
-            var fs = FakeLockService.FullySupported(TempPath, secondTempPath);
+            var fs = FakeLockService.FullySupported();
 
-            var result = new LockDirectoryFactory(drives, fs)
+            var result = CreateFactory(drives, fs, TempPath, secondTempPath)
                 .Create(new DirectoryInfo(CandidatePath));
 
             result.LockSupport.Should().Be(LockCapability.Supported);

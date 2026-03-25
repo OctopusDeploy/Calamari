@@ -27,5 +27,8 @@ public class ScriptIsolationModule : Module
         builder.RegisterType<LockOptionsFactory>()
                .AsSelf()
                .InstancePerLifetimeScope();
+        builder.RegisterType<TemporaryDirectoryFallbackProvider>()
+               .As<ITemporaryDirectoryFallbackProvider>()
+               .SingleInstance();
     }
 }

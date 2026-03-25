@@ -9,24 +9,21 @@ namespace Calamari.Common.Features.Processes.ScriptIsolation;
 /// queries environment variables and the actual filesystem to build the list of
 /// candidate temporary directories.
 /// </summary>
-static class TemporaryDirectoryFallback
+class TemporaryDirectoryFallbackProvider
+    : ITemporaryDirectoryFallbackProvider
 {
-    public static IEnumerable<string> GetCandidates(string candidatePath)
+    public IEnumerable<DirectoryInfo> GetFallbackCandidates(DirectoryInfo preferredDirectory)
     {
-        var pathNamespace = GetNamespace(candidatePath);
-
-        string ApplyNamespace(string rawPath) => Path.Combine(rawPath, pathNamespace);
+        var pathNamespace = $"octopus.{preferredDirectory.Name}";
 
         if (OperatingSystem.IsWindows())
         {
             var localAppData = Path.Combine(
                                             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                                            "Calamari",
-                                            pathNamespace
+                                            "Calamari"
                                            );
-            yield return localAppData;
-            var windowsTempPath = ApplyNamespace(Path.GetTempPath());
-            yield return windowsTempPath;
+            yield return ApplyNamespace(localAppData);
+            yield return ApplyNamespace(Path.GetTempPath());
             yield break;
         }
 
@@ -47,17 +44,9 @@ static class TemporaryDirectoryFallback
         {
             yield return ApplyNamespace(devShm);
         }
-    }
 
-    /// <summary>
-    /// Gets the "namespace" portion from the candidate path.
-    /// </summary>
-    /// <param name="candidatePath">The directory where the lock files will be placed</param>
-    static string GetNamespace(string candidatePath)
-    {
-        var directoryName = candidatePath.EndsWith(Path.DirectorySeparatorChar)
-            ? Path.GetDirectoryName(candidatePath) // The name before the trailing separator
-            : Path.GetFileName(candidatePath); // No trailing separator
-        return $"octopus.{directoryName}";
+        yield break;
+
+        DirectoryInfo ApplyNamespace(string rawPath) => new(Path.Combine(rawPath, pathNamespace));
     }
 }
