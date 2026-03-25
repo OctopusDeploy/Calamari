@@ -70,7 +70,7 @@ sealed class LockDirectoryFactory(
         }
     }
 
-    LockCapability DetectLockSupport(DirectoryInfo path)
+    internal LockCapability DetectLockSupport(DirectoryInfo path)
     {
         var testFile =
             new LockDirectory(

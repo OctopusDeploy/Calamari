@@ -281,7 +281,7 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         }
 
         // -------------------------------------------------------------------------
-        // Group C: LockDirectory.DetectLockSupport with injected FakeLockService
+        // Group C: LockDirectoryFactory.DetectLockSupport with injected FakeLockService
         // -------------------------------------------------------------------------
 
         [Test]
@@ -289,7 +289,8 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         {
             var fs = FakeLockService.Unsupported();
 
-            var result = LockDirectory.DetectLockSupport(Path.GetTempPath(), fs);
+            var result = new LockDirectoryFactory(new MountedDrives([]), fs, FakePathResolutionService.PassThrough)
+                .DetectLockSupport(new DirectoryInfo(Path.GetTempPath()));
 
             result.Should().Be(LockCapability.Unsupported);
         }
@@ -299,7 +300,8 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         {
             var fs = FakeLockService.ExclusiveOnlyBecauseSharedUnsupported();
 
-            var result = LockDirectory.DetectLockSupport(Path.GetTempPath(), fs);
+            var result = new LockDirectoryFactory(new MountedDrives([]), fs, FakePathResolutionService.PassThrough)
+                .DetectLockSupport(new DirectoryInfo(Path.GetTempPath()));
 
             result.Should().Be(LockCapability.ExclusiveOnly);
         }
@@ -311,7 +313,8 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             // the filesystem does not enforce mutual exclusion between the two types.
             var fs = FakeLockService.ExclusiveOnlyBecauseExclusiveDoesNotBlockShared();
 
-            var result = LockDirectory.DetectLockSupport(Path.GetTempPath(), fs);
+            var result = new LockDirectoryFactory(new MountedDrives([]), fs, FakePathResolutionService.PassThrough)
+                .DetectLockSupport(new DirectoryInfo(Path.GetTempPath()));
 
             result.Should().Be(LockCapability.ExclusiveOnly);
         }
@@ -323,7 +326,8 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             // the filesystem does not enforce mutual exclusion between the two types.
             var fs = FakeLockService.ExclusiveOnlyBecauseSharedDoesNotBlockExclusive();
 
-            var result = LockDirectory.DetectLockSupport(Path.GetTempPath(), fs);
+            var result = new LockDirectoryFactory(new MountedDrives([]), fs, FakePathResolutionService.PassThrough)
+                .DetectLockSupport(new DirectoryInfo(Path.GetTempPath()));
 
             result.Should().Be(LockCapability.ExclusiveOnly);
         }
@@ -334,7 +338,8 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             // The filesystem correctly blocks all conflicting lock combinations.
             var fs = FakeLockService.FullySupported();
 
-            var result = LockDirectory.DetectLockSupport(Path.GetTempPath(), fs);
+            var result = new LockDirectoryFactory(new MountedDrives([]), fs, FakePathResolutionService.PassThrough)
+                .DetectLockSupport(new DirectoryInfo(Path.GetTempPath()));
 
             result.Should().Be(LockCapability.Supported);
         }
