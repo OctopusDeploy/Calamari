@@ -25,7 +25,7 @@ sealed class MountedDrives(
         var resolvedPath = pathResolutionService.ResolvePath(path);
 
         var result = drives
-                         .Where(d => IsAncestor(d.RootDirectory, resolvedPath))
+                         .Where(d => IsEqualOrAncestor(d.RootDirectory, resolvedPath))
                          .OrderByDescending(d => d.RootDirectory.FullName.Length)
                          .FirstOrDefault();
         if (result is not null)
@@ -36,13 +36,23 @@ sealed class MountedDrives(
         throw new DirectoryNotFoundException($"Unable to find the drive for '{path}'.");
     }
 
-    public bool IsAncestor(DirectoryInfo ancestor, string resolvedPath)
+    bool IsEqualOrAncestor(DirectoryInfo ancestor, string resolvedPath)
     {
         var ancestorPath = ancestor.FullName;
+
+        // Exact match: the resolved path IS the mount point itself.
+        if (resolvedPath.Equals(ancestorPath, pathResolutionService.PathComparison))
+        {
+            return true;
+        }
+
+        // Prefix match: the resolved path is a child of the mount point.
+        // Ensure the separator is present so that "/home" does not match "/homestead".
         if (!ancestorPath.EndsWith(Path.DirectorySeparatorChar))
         {
             ancestorPath += Path.DirectorySeparatorChar;
         }
+
         return resolvedPath.StartsWith(ancestorPath, pathResolutionService.PathComparison);
     }
 }

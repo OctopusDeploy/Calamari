@@ -775,6 +775,29 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         }
 
         [Test]
+        public void GetAssociatedDrive_MatchesMountPoint_WhenPathIsExactlyTheMountPoint()
+        {
+            // Both "/" and "/home" are mounts.  When the input path is exactly "/home"
+            // (i.e. the directory that is itself the mount point), it should still match
+            // "/home" — not fall through to "/" due to the trailing-separator logic in
+            // IsAncestor rejecting an exact-equality match.
+            if (OperatingSystem.IsWindows())
+            {
+                Assert.Ignore("POSIX-only test: Windows uses drive letters, not nested mounts.");
+                return;
+            }
+
+            var inputPath = "/home";
+            var resolver = new FakePathResolutionService(StringComparison.Ordinal);
+            var drives = DrivesWithResolver(resolver, DriveAt("/"), DriveAt("/home"));
+
+            var result = drives.GetAssociatedDrive(inputPath);
+
+            result.RootDirectory.FullName.Should().Be("/home",
+                                                      because: "a path that is exactly the mount point should match that mount, not a shorter ancestor");
+        }
+
+        [Test]
         public void GetAssociatedDrive_ThrowsDirectoryNotFoundException_WhenNoMatchAfterResolution()
         {
             // Even after symlink resolution, no drive covers the path.
