@@ -71,7 +71,17 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             var requested = CreateRequestedOrNull(options);
             if (requested is null)
                 return null;
-            return new LockOptionsFactory(ConsoleLog.Instance).Create(requested);
+            return new LockOptionsFactory(new StubLockDirectoryFactory(), ConsoleLog.Instance).Create(requested);
+        }
+
+        /// <summary>
+        /// Minimal stub that returns a fully-supported <see cref="LockDirectory"/> rooted at
+        /// the supplied preferred directory, without performing any filesystem probing.
+        /// </summary>
+        sealed class StubLockDirectoryFactory : ILockDirectoryFactory
+        {
+            public LockDirectory Create(DirectoryInfo preferredLockDirectory)
+                => new(preferredLockDirectory, LockCapability.Supported);
         }
 
         [Test]
@@ -303,14 +313,20 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
                 Timeout: TimeSpan.FromMinutes(1));
         }
 
+        static (LockOptions? result, InMemoryLog log) UseExclusiveIfSharedIsNotSupported(LockOptions opts)
+        {
+            var log = new InMemoryLog();
+            var result = new LockOptionsFactory(new StubLockDirectoryFactory(), log).UseExclusiveIfSharedIsNotSupported(opts);
+            return (result, log);
+        }
+
         [Test]
         public void LockOptionsFactory_ReturnsOriginal_WhenFullySupported()
         {
             // Supported capability + Exclusive → IsFullySupported = true → returned unchanged, no warning
             var opts = MakeLockOptionsWithCapability(LockType.Exclusive, LockCapability.Supported);
-            var log = new InMemoryLog();
 
-            var result = new LockOptionsFactory(log).UseExclusiveIfSharedIsNotSupported(opts);
+            var (result, log) = UseExclusiveIfSharedIsNotSupported(opts);
 
             result.Should().NotBeNull();
             result.Type.Should().Be(LockType.Exclusive);
@@ -322,9 +338,8 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         {
             // ExclusiveOnly + Exclusive → IsSupported = true (Exclusive is supported) → returned unchanged, no warning
             var opts = MakeLockOptionsWithCapability(LockType.Exclusive, LockCapability.ExclusiveOnly);
-            var log = new InMemoryLog();
 
-            var result = new LockOptionsFactory(log).UseExclusiveIfSharedIsNotSupported(opts);
+            var (result, log) = UseExclusiveIfSharedIsNotSupported(opts);
 
             result.Should().NotBeNull();
             result.Type.Should().Be(LockType.Exclusive);
@@ -337,9 +352,8 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             // ExclusiveOnly + Shared → IsSupported = false; Supports(Exclusive) = true
             // → always promotes to Exclusive with a warning
             var opts = MakeLockOptionsWithCapability(LockType.Shared, LockCapability.ExclusiveOnly);
-            var log = new InMemoryLog();
 
-            var result = new LockOptionsFactory(log).UseExclusiveIfSharedIsNotSupported(opts);
+            var (result, log) = UseExclusiveIfSharedIsNotSupported(opts);
 
             result.Should().NotBeNull();
             result.Type.Should().Be(LockType.Exclusive,
@@ -354,9 +368,8 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             // Unsupported + Exclusive → IsFullySupported = false, IsSupported = false,
             // Supports(Exclusive) = false → returns null and a warning
             var opts = MakeLockOptionsWithCapability(LockType.Exclusive, LockCapability.Unsupported);
-            var log = new InMemoryLog();
 
-            var result = new LockOptionsFactory(log).UseExclusiveIfSharedIsNotSupported(opts);
+            var (result, log) = UseExclusiveIfSharedIsNotSupported(opts);
 
             result.Should().BeNull(
                 because: "no locking is supported at all so no lock should be acquired");
@@ -369,9 +382,8 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         {
             // Unsupported + Shared → same as above
             var opts = MakeLockOptionsWithCapability(LockType.Shared, LockCapability.Unsupported);
-            var log = new InMemoryLog();
 
-            var result = new LockOptionsFactory(log).UseExclusiveIfSharedIsNotSupported(opts);
+            var (result, log) = UseExclusiveIfSharedIsNotSupported(opts);
 
             result.Should().BeNull(
                 because: "no locking is supported at all so no lock should be acquired");

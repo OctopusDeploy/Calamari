@@ -2,11 +2,13 @@ using Calamari.Common.Plumbing.Logging;
 
 namespace Calamari.Common.Features.Processes.ScriptIsolation;
 
-public sealed class LockOptionsFactory(ILog log)
+sealed class LockOptionsFactory(
+    ILockDirectoryFactory lockDirectoryFactory,
+    ILog log)
 {
     public LockOptions? Create(RequestedLockOptions requestedOptions)
     {
-        var lockDirectory = LockDirectory.GetLockDirectory(requestedOptions.PreferredLockDirectory.FullName);
+        var lockDirectory = lockDirectoryFactory.Create(requestedOptions.PreferredLockDirectory);
 
         var lockFile = lockDirectory.GetLockFile($"ScriptIsolation.{requestedOptions.MutexName}.lock");
 
