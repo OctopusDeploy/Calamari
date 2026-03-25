@@ -52,10 +52,10 @@ namespace Calamari.ArgoCD
 
         internal JsonPatchImageReplacer(string jsonContent, string defaultRegistry, ILog log, Regex imagePattern)
         {
-            this.jsonContent = jsonContent ?? throw new ArgumentNullException(nameof(jsonContent));
-            this.defaultRegistry = defaultRegistry ?? throw new ArgumentNullException(nameof(defaultRegistry));
-            this.log = log ?? throw new ArgumentNullException(nameof(log));
-            this.imageReferencePattern = imagePattern ?? throw new ArgumentNullException(nameof(imagePattern));
+            this.jsonContent = jsonContent;
+            this.defaultRegistry = defaultRegistry;
+            this.log = log;
+            this.imageReferencePattern = imagePattern;
         }
 
         ImageReplacementResult NoChangeResult => new ImageReplacementResult(jsonContent, new HashSet<string>());
