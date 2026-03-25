@@ -232,6 +232,17 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             }
         }
 
+        sealed class FakeMountedDrivesProvider(
+            CachedDriveInfo[] cachedDrives,
+            IPathResolutionService pathResolutionService
+        ) : IMountedDrivesProvider
+        {
+            public MountedDrives GetMountedDrives() => new(cachedDrives, pathResolutionService);
+        }
+
+        static FakeMountedDrivesProvider PassThroughDrives(params CachedDriveInfo[] drives)
+            => new(drives, FakePathResolutionService.PassThrough);
+
         // -------------------------------------------------------------------------
         // Group A: LockDirectory.Supports(LockType)
         // -------------------------------------------------------------------------
@@ -289,7 +300,7 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         {
             var fs = FakeLockService.Unsupported();
 
-            var result = new LockDirectoryFactory(new MountedDrives([], FakePathResolutionService.PassThrough), fs)
+            var result = new LockDirectoryFactory(PassThroughDrives(), fs)
                 .DetectLockSupport(new DirectoryInfo(Path.GetTempPath()));
 
             result.Should().Be(LockCapability.Unsupported);
@@ -300,7 +311,7 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
         {
             var fs = FakeLockService.ExclusiveOnlyBecauseSharedUnsupported();
 
-            var result = new LockDirectoryFactory(new MountedDrives([], FakePathResolutionService.PassThrough), fs)
+            var result = new LockDirectoryFactory(PassThroughDrives(), fs)
                 .DetectLockSupport(new DirectoryInfo(Path.GetTempPath()));
 
             result.Should().Be(LockCapability.ExclusiveOnly);
@@ -313,7 +324,7 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             // the filesystem does not enforce mutual exclusion between the two types.
             var fs = FakeLockService.ExclusiveOnlyBecauseExclusiveDoesNotBlockShared();
 
-            var result = new LockDirectoryFactory(new MountedDrives([], FakePathResolutionService.PassThrough), fs)
+            var result = new LockDirectoryFactory(PassThroughDrives(), fs)
                 .DetectLockSupport(new DirectoryInfo(Path.GetTempPath()));
 
             result.Should().Be(LockCapability.ExclusiveOnly);
@@ -326,7 +337,7 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             // the filesystem does not enforce mutual exclusion between the two types.
             var fs = FakeLockService.ExclusiveOnlyBecauseSharedDoesNotBlockExclusive();
 
-            var result = new LockDirectoryFactory(new MountedDrives([], FakePathResolutionService.PassThrough), fs)
+            var result = new LockDirectoryFactory(PassThroughDrives(), fs)
                 .DetectLockSupport(new DirectoryInfo(Path.GetTempPath()));
 
             result.Should().Be(LockCapability.ExclusiveOnly);
@@ -338,7 +349,7 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             // The filesystem correctly blocks all conflicting lock combinations.
             var fs = FakeLockService.FullySupported();
 
-            var result = new LockDirectoryFactory(new MountedDrives([], FakePathResolutionService.PassThrough), fs)
+            var result = new LockDirectoryFactory(PassThroughDrives(), fs)
                 .DetectLockSupport(new DirectoryInfo(Path.GetTempPath()));
 
             result.Should().Be(LockCapability.Supported);
@@ -365,11 +376,6 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
                    DetectedLockSupport: capability
                   );
 
-        // Constructs a MountedDrives with a pass-through path resolver for use in Group D tests,
-        // where fake drive roots are matched by prefix without any symlink resolution.
-        static MountedDrives PassThroughDrives(params CachedDriveInfo[] drives)
-            => new(drives, FakePathResolutionService.PassThrough);
-
         [Test]
         public void GetLockDirectory_ReturnsCandidatePath_WhenCandidateDriveIsSupported()
         {
@@ -392,8 +398,8 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             // Supported before the temp directories are even inspected. The candidate path
             // should therefore be returned, not the temp path.
             var drives = PassThroughDrives(
-                DriveWithCapability(CandidateRoot, null),
-                DriveWithCapability(TempRoot, LockCapability.Supported));
+                                           DriveWithCapability(CandidateRoot, null),
+                                           DriveWithCapability(TempRoot, LockCapability.Supported));
             var fs = FakeLockService.FullySupported(TempPath);
 
             var result = new LockDirectoryFactory(drives, fs)
@@ -411,8 +417,8 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             // The injected temp path lives on a pre-detected Supported drive.
             // Because the candidate cannot support locking, the temp path should be chosen.
             var drives = PassThroughDrives(
-                DriveWithCapability(CandidateRoot, LockCapability.Unsupported),
-                DriveWithCapability(TempRoot, LockCapability.Supported));
+                                           DriveWithCapability(CandidateRoot, LockCapability.Unsupported),
+                                           DriveWithCapability(TempRoot, LockCapability.Supported));
             var fs = FakeLockService.FullySupported(TempPath);
 
             var result = new LockDirectoryFactory(drives, fs)
@@ -431,8 +437,8 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             // lock service the candidate detects as Supported, so it is returned
             // immediately without inspecting any temp directories.
             var drives = PassThroughDrives(
-                DriveWithCapability(CandidateRoot, null),
-                DriveWithCapability(TempRoot, LockCapability.ExclusiveOnly));
+                                           DriveWithCapability(CandidateRoot, null),
+                                           DriveWithCapability(TempRoot, LockCapability.ExclusiveOnly));
             var fs = FakeLockService.FullySupported(TempPath);
 
             var result = new LockDirectoryFactory(drives, fs)
@@ -450,8 +456,8 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             // The temp path offers no better support than the candidate, so the candidate
             // should be returned.
             var drives = PassThroughDrives(
-                DriveWithCapability(CandidateRoot, LockCapability.ExclusiveOnly),
-                DriveWithCapability(TempRoot, LockCapability.ExclusiveOnly));
+                                           DriveWithCapability(CandidateRoot, LockCapability.ExclusiveOnly),
+                                           DriveWithCapability(TempRoot, LockCapability.ExclusiveOnly));
             var fs = FakeLockService.FullySupported(TempPath);
 
             var result = new LockDirectoryFactory(drives, fs)
@@ -459,7 +465,7 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
 
             result.LockSupport.Should().Be(LockCapability.ExclusiveOnly);
             result.DirectoryInfo.FullName.Should().Be(CandidatePath,
-                                                       because: "the candidate path should be used when temp offers no better support");
+                                                      because: "the candidate path should be used when temp offers no better support");
         }
 
         [Test]
@@ -469,8 +475,8 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             // ExclusiveOnly. The temp path genuinely offers better support, so it should be
             // preferred over the candidate.
             var drives = PassThroughDrives(
-                DriveWithCapability(CandidateRoot, LockCapability.Unsupported),
-                DriveWithCapability(TempRoot, LockCapability.ExclusiveOnly));
+                                           DriveWithCapability(CandidateRoot, LockCapability.Unsupported),
+                                           DriveWithCapability(TempRoot, LockCapability.ExclusiveOnly));
             var fs = FakeLockService.FullySupported(TempPath);
 
             var result = new LockDirectoryFactory(drives, fs)
@@ -541,9 +547,9 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
                 : "/dev/shm/tentacle";
 
             var drives = PassThroughDrives(
-                DriveWithCapability(CandidateRoot, LockCapability.Unsupported),
-                DriveWithCapability(TempRoot, LockCapability.ExclusiveOnly),
-                DriveWithCapability(secondTempRoot, LockCapability.Supported));
+                                           DriveWithCapability(CandidateRoot, LockCapability.Unsupported),
+                                           DriveWithCapability(TempRoot, LockCapability.ExclusiveOnly),
+                                           DriveWithCapability(secondTempRoot, LockCapability.Supported));
             var fs = FakeLockService.FullySupported(TempPath, secondTempPath);
 
             var result = new LockDirectoryFactory(drives, fs)
@@ -678,9 +684,9 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             var resolvedInput = OperatingSystem.IsWindows() ? @"C:\real\foo" : "/private/tmp/foo";
 
             var resolver = new FakePathResolutionService(
-                StringComparison.OrdinalIgnoreCase,
-                symlinkMap: new Dictionary<string, string> { [symlinkInput] = resolvedInput }
-            );
+                                                         StringComparison.OrdinalIgnoreCase,
+                                                         symlinkMap: new Dictionary<string, string> { [symlinkInput] = resolvedInput }
+                                                        );
             var drives = DrivesWithResolver(resolver, DriveAt(privateRoot));
 
             var result = drives.GetAssociatedDrive(symlinkInput);
@@ -728,9 +734,9 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             var normalisedInput = OperatingSystem.IsWindows() ? @"C:\work\foo" : "/work/foo";
 
             var resolver = new FakePathResolutionService(
-                StringComparison.OrdinalIgnoreCase,
-                fullPathMap: new Dictionary<string, string> { [rawInput] = normalisedInput }
-            );
+                                                         StringComparison.OrdinalIgnoreCase,
+                                                         fullPathMap: new Dictionary<string, string> { [rawInput] = normalisedInput }
+                                                        );
             var drives = DrivesWithResolver(resolver, DriveAt(root));
 
             var result = drives.GetAssociatedDrive(rawInput);
@@ -796,9 +802,9 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
                 : "/tmp/subdir/lockfile";
 
             var resolver = new FakePathResolutionService(
-                StringComparison.OrdinalIgnoreCase,
-                symlinkMap: new Dictionary<string, string> { [symlinkAncestor] = symlinkTarget }
-            );
+                                                         StringComparison.OrdinalIgnoreCase,
+                                                         symlinkMap: new Dictionary<string, string> { [symlinkAncestor] = symlinkTarget }
+                                                        );
             var drives = DrivesWithResolver(resolver, DriveAt(privateRoot));
 
             var result = drives.GetAssociatedDrive(inputPath);
@@ -921,9 +927,9 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             // symlinkMap entry with null-equivalent: map the path to itself so that
             // ResolveLinkTarget returns a FileInfo with the same FullName.
             var resolver = new FakePathResolutionService(
-                StringComparison.Ordinal,
-                symlinkMap: new Dictionary<string, string> { [existing] = existing }
-            );
+                                                         StringComparison.Ordinal,
+                                                         symlinkMap: new Dictionary<string, string> { [existing] = existing }
+                                                        );
 
             var result = resolver.ResolvePath(existing);
 
@@ -939,9 +945,9 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             var target = OperatingSystem.IsWindows() ? @"C:\real\foo" : "/real/foo";
 
             var resolver = new FakePathResolutionService(
-                StringComparison.Ordinal,
-                symlinkMap: new Dictionary<string, string> { [symlink] = target }
-            );
+                                                         StringComparison.Ordinal,
+                                                         symlinkMap: new Dictionary<string, string> { [symlink] = target }
+                                                        );
 
             var result = resolver.ResolvePath(symlink);
 
@@ -965,9 +971,9 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
                 : "/real/child/file";
 
             var resolver = new FakePathResolutionService(
-                StringComparison.Ordinal,
-                symlinkMap: new Dictionary<string, string> { [symlinkParent] = realParent }
-            );
+                                                         StringComparison.Ordinal,
+                                                         symlinkMap: new Dictionary<string, string> { [symlinkParent] = realParent }
+                                                        );
 
             var result = resolver.ResolvePath(inputPath);
 
@@ -989,10 +995,10 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             // fullPathMap handles the normalisation; the normalised path maps to itself
             // via symlinkMap (exists, not a symlink).
             var resolver = new FakePathResolutionService(
-                StringComparison.Ordinal,
-                fullPathMap: new Dictionary<string, string> { [rawInput] = normalised },
-                symlinkMap: new Dictionary<string, string> { [normalised] = normalised }
-            );
+                                                         StringComparison.Ordinal,
+                                                         fullPathMap: new Dictionary<string, string> { [rawInput] = normalised },
+                                                         symlinkMap: new Dictionary<string, string> { [normalised] = normalised }
+                                                        );
 
             var result = resolver.ResolvePath(rawInput);
 
@@ -1015,9 +1021,9 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
                 : "/real/a/b";
 
             var resolver = new FakePathResolutionService(
-                StringComparison.Ordinal,
-                symlinkMap: new Dictionary<string, string> { [symlinkGrandparent] = realGrandparent }
-            );
+                                                         StringComparison.Ordinal,
+                                                         symlinkMap: new Dictionary<string, string> { [symlinkGrandparent] = realGrandparent }
+                                                        );
 
             var result = resolver.ResolvePath(inputPath);
 
@@ -1055,9 +1061,9 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             // drive candidates from being evaluated.
             var rawPath = OperatingSystem.IsWindows() ? @"C:\bad\path" : "/bad/path";
             var resolver = new FakePathResolutionService(
-                StringComparison.Ordinal,
-                getFullPathException: exception
-            );
+                                                         StringComparison.Ordinal,
+                                                         getFullPathException: exception
+                                                        );
 
             var result = resolver.ResolvePath(rawPath);
 

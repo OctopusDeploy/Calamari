@@ -7,9 +7,12 @@ using Polly;
 
 namespace Calamari.Common.Features.Processes.ScriptIsolation;
 
-public static class Isolation
+public sealed class ScriptIsolationEnforcer(
+    RequestedLockOptionsFactory requestedLockOptionsFactory,
+    LockOptionsFactory lockOptionsFactory)
+    : IScriptIsolationEnforcer
 {
-    public static ILockHandle Enforce(CommonOptions.ScriptIsolationOptions scriptIsolationOptions)
+    public ILockHandle Enforce(CommonOptions.ScriptIsolationOptions scriptIsolationOptions)
     {
         var lockOptions = PrepareLockOptions(scriptIsolationOptions);
         if (lockOptions is null)
@@ -29,7 +32,7 @@ public static class Isolation
         }
     }
 
-    public static async Task<ILockHandle> EnforceAsync(
+    public async Task<ILockHandle> EnforceAsync(
         CommonOptions.ScriptIsolationOptions scriptIsolationOptions,
         CancellationToken cancellationToken
     )
@@ -59,19 +62,15 @@ public static class Isolation
             .Build();
     }
 
-    static LockOptions? PrepareLockOptions(CommonOptions.ScriptIsolationOptions scriptIsolationOptions)
+    LockOptions? PrepareLockOptions(CommonOptions.ScriptIsolationOptions scriptIsolationOptions)
     {
-        var requestedOptions = new RequestedLockOptionsFactory(ConsoleLog.Instance).CreateOrNull(scriptIsolationOptions);
+        var requestedOptions = requestedLockOptionsFactory.CreateOrNull(scriptIsolationOptions);
         if (requestedOptions is null)
         {
             return null;
         }
 
-        var pathResolutionService = DefaultPathResolutionService.Instance;
-        var mountedDrives = new SystemMountedDrivesProvider(pathResolutionService).GetMountedDrives();
-        var fileLockService = FileLockService.Instance;
-        var lockDirectoryFactory = new LockDirectoryFactory(mountedDrives, fileLockService);
-        var lockOptions = new LockOptionsFactory(lockDirectoryFactory, ConsoleLog.Instance).Create(requestedOptions);
+        var lockOptions = lockOptionsFactory.Create(requestedOptions);
 
         if (lockOptions is null)
         {

@@ -2,7 +2,7 @@ using Calamari.Common.Plumbing.Logging;
 
 namespace Calamari.Common.Features.Processes.ScriptIsolation;
 
-sealed class LockOptionsFactory(
+public sealed class LockOptionsFactory(
     ILockDirectoryFactory lockDirectoryFactory,
     ILog log)
 {

@@ -4,12 +4,13 @@ using System.IO;
 namespace Calamari.Common.Features.Processes.ScriptIsolation;
 
 sealed class LockDirectoryFactory(
-    ICachedDriveInfoProvider mountedDrives,
+    IMountedDrivesProvider mountedDrivesProvider,
     IFileLockService fileLockService
 ) : ILockDirectoryFactory
 {
     public LockDirectory Create(DirectoryInfo preferredLockDirectory)
     {
+        var mountedDrives =  mountedDrivesProvider.GetMountedDrives();
         var preferredDrive = GetDriveOrNull(preferredLockDirectory);
 
         // Detect lock support on the preferred drive first. If it is fully supported,
@@ -56,17 +57,17 @@ sealed class LockDirectoryFactory(
         // We don't appear to support locking
         // TODO: Investigate returning null instead
         return new LockDirectory(preferredLockDirectory, LockCapability.Unsupported);
-    }
 
-    CachedDriveInfo? GetDriveOrNull(DirectoryInfo path)
-    {
-        try
+        CachedDriveInfo? GetDriveOrNull(DirectoryInfo path)
         {
-            return mountedDrives.GetAssociatedDrive(path.FullName);
-        }
-        catch (DirectoryNotFoundException)
-        {
-            return null;
+            try
+            {
+                return mountedDrives.GetAssociatedDrive(path.FullName);
+            }
+            catch (DirectoryNotFoundException)
+            {
+                return null;
+            }
         }
     }
 
