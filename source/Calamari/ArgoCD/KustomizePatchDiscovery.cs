@@ -52,6 +52,12 @@ namespace Calamari.ArgoCD
             {
                 var content = fileSystem.ReadFile(kustomizationFilePath);
 
+                if (!KustomizationValidator.IsKustomizationResource(content))
+                {
+                    log.WarnFormat("File {0} is not a properly formatted kustomization file", kustomizationFilePath);
+                    return patchFiles;
+                }
+
                 if (!ContainsPatchFields(content))
                     return patchFiles;
 

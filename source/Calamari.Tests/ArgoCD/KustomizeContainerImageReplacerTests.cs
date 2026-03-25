@@ -376,8 +376,7 @@ kind: Kustomization
 images:
 - name: nginx
   newTag: 1.25";
-                var replacer = CreateReplacer();
-                var result = replacer.IsKustomizationResource(content);
+                var result = KustomizationValidator.IsKustomizationResource(content);
                 result.Should().BeTrue();
             }
 
@@ -388,8 +387,7 @@ images:
 kind: Component
 resources:
 - deployment.yaml";
-                var replacer = CreateReplacer();
-                var result = replacer.IsKustomizationResource(content);
+                var result = KustomizationValidator.IsKustomizationResource(content);
                 result.Should().BeTrue();
             }
 
@@ -400,8 +398,7 @@ resources:
 kind: Deployment
 metadata:
   name: nginx";
-                var replacer = CreateReplacer();
-                var result = replacer.IsKustomizationResource(content);
+                var result = KustomizationValidator.IsKustomizationResource(content);
                 result.Should().BeFalse();
             }
 
@@ -412,8 +409,7 @@ metadata:
 kind: CustomResource
 metadata:
   name: test";
-                var replacer = CreateReplacer();
-                var result = replacer.IsKustomizationResource(content);
+                var result = KustomizationValidator.IsKustomizationResource(content);
                 result.Should().BeFalse();
             }
 
@@ -421,16 +417,14 @@ metadata:
             public void IsKustomizationResource_InvalidYaml_ReturnsFalse()
             {
                 const string content = @"invalid: yaml: [unclosed";
-                var replacer = CreateReplacer();
-                var result = replacer.IsKustomizationResource(content);
+                var result = KustomizationValidator.IsKustomizationResource(content);
                 result.Should().BeFalse();
             }
 
             [Test]
             public void IsKustomizationResource_EmptyContent_ReturnsFalse()
             {
-                var replacer = CreateReplacer();
-                var result = replacer.IsKustomizationResource("");
+                var result = KustomizationValidator.IsKustomizationResource("");
                 result.Should().BeFalse();
             }
         }

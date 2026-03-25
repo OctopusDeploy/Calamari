@@ -222,5 +222,29 @@ images:
 
             result.Should().BeEmpty();
         }
+
+        [Test]
+        public void DiscoverPatchFiles_WithNonKustomizationFile_ReturnsEmptyList()
+        {
+            var fileSystem = Substitute.For<ICalamariFileSystem>();
+            var kustomizationPath = "/path/to/kustomization.yaml";
+
+            // Valid YAML but not a kustomization file
+            const string nonKustomizationContent = @"
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-deployment
+patches:
+- deployment-patch.yaml";
+
+            fileSystem.FileExists(kustomizationPath).Returns(true);
+            fileSystem.ReadFile(kustomizationPath).Returns(nonKustomizationContent);
+
+            var patchDiscovery = new KustomizePatchDiscovery(fileSystem, new InMemoryLog());
+            var result = patchDiscovery.DiscoverPatchFiles(kustomizationPath);
+
+            result.Should().BeEmpty();
+        }
     }
 }
