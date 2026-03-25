@@ -133,8 +133,10 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
 
             var kustomizeFile = "kustomization.yaml";
             var kustomizeFileContents = """
+                                        apiVersion: kustomize.config.k8s.io/v1beta1
+                                        kind: Kustomization
                                         images:
-                                        - name: "docker.io/nginx"
+                                        - name: "index.docker.io/nginx"
                                           newTag: "1.25"
                                         """;
             var filesInRepo = new (string, string)[]
@@ -408,8 +410,10 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
 
             var kustomizeFile = "kustomization.yaml";
             var kustomizeFileContents = """
+                                        apiVersion: kustomize.config.k8s.io/v1beta1
+                                        kind: Kustomization
                                         images:
-                                        - name: "docker.io/nginx"
+                                        - name: "index.docker.io/nginx"
                                           newTag: "1.25"
                                         """;
             var filesInRepo = new (string, string)[]
@@ -471,8 +475,10 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
             {
                 (kustomizeFile,
                  """
+                 apiVersion: kustomize.config.k8s.io/v1beta1
+                 kind: Kustomization
                  images:
-                 - name: "docker.io/nginx"
+                 - name: "index.docker.io/nginx"
                    newTag: "1.25"
                  """)
             };
@@ -502,8 +508,10 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
 
             // Assert
             var updatedYamlContent = """
+                                     apiVersion: kustomize.config.k8s.io/v1beta1
+                                     kind: Kustomization
                                      images:
-                                     - name: "docker.io/nginx"
+                                     - name: "index.docker.io/nginx"
                                        newTag: "1.27.1"
                                      """;
             var clonedRepoPath = RepositoryHelpers.CloneOrigin(tempDirectory, OriginPath, argoCDBranchName);
