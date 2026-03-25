@@ -24,86 +24,93 @@ public class KustomizeContainerImageReplacer : IContainerImageReplacer
 
     public ImageReplacementResult UpdateImages(IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
     {
-
-        var updatedContent = input;
-        var allUpdatedImages = new HashSet<string>();
-
         if (IsKustomizationResource(input))
         {
-            var kustomizeReplacer = new KustomizeImageReplacer(updatedContent, defaultRegistry, log);
-            var result = kustomizeReplacer.UpdateImages(imagesToUpdate);
-
-            if (result.UpdatedImageReferences.Count > 0)
-            {
-                updatedContent = result.UpdatedContents;
-                allUpdatedImages.UnionWith(result.UpdatedImageReferences);
-            }
-
-            if (HasInlinePatches(input))
-            {
-                var inlinePatchReplacer = new InlineJsonPatchImageReplacer(updatedContent, defaultRegistry, log);
-                var patchResult = inlinePatchReplacer.UpdateImages(imagesToUpdate);
-
-                if (patchResult.UpdatedImageReferences.Count > 0)
-                {
-                    updatedContent = patchResult.UpdatedContents;
-                    allUpdatedImages.UnionWith(patchResult.UpdatedImageReferences);
-                }
-            }
-
-            if (HasInlineStrategicMergePatches(input))
-            {
-                var strategicMergeResult = ProcessInlineStrategicMergePatches(updatedContent, imagesToUpdate);
-
-                if (strategicMergeResult.UpdatedImageReferences.Count > 0)
-                {
-                    updatedContent = strategicMergeResult.UpdatedContents;
-                    allUpdatedImages.UnionWith(strategicMergeResult.UpdatedImageReferences);
-                }
-            }
-
-            if (HasInlineJson6902Patches(input))
-            {
-                var json6902Result = ProcessInlineJson6902Patches(updatedContent, imagesToUpdate);
-
-                if (json6902Result.UpdatedImageReferences.Count > 0)
-                {
-                    updatedContent = json6902Result.UpdatedContents;
-                    allUpdatedImages.UnionWith(json6902Result.UpdatedImageReferences);
-                }
-            }
+            return UpdateImageTags(imagesToUpdate);
         }
         else
         {
-            var patchType = DeterminePatchTypeFromFile(input);
+            return UpdatePatchFields(imagesToUpdate);
+        }
+    }
 
-            IContainerImageReplacer replacer = patchType switch
-            {
-                PatchType.StrategicMerge => new StrategicMergePatchImageReplacer(input, defaultRegistry, log),
-                PatchType.Json6902 => new JsonPatchImageReplacer(input, defaultRegistry, log),
-                _ => null
-            };
+    private ImageReplacementResult UpdateImageTags(IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
+    {
+        var updatedContent = input;
+        var allUpdatedImages = new HashSet<string>();
 
-            if (replacer != null)
+
+        var kustomizeReplacer = new KustomizeImageReplacer(updatedContent, defaultRegistry, log);
+        var result = kustomizeReplacer.UpdateImages(imagesToUpdate);
+
+        if (result.UpdatedImageReferences.Count > 0)
+        {
+            updatedContent = result.UpdatedContents;
+            allUpdatedImages.UnionWith(result.UpdatedImageReferences);
+        }
+
+
+        if (HasInlinePatches(input))
+        {
+            var inlinePatchReplacer = new InlineJsonPatchImageReplacer(updatedContent, defaultRegistry, log);
+            var patchResult = inlinePatchReplacer.UpdateImages(imagesToUpdate);
+
+            if (patchResult.UpdatedImageReferences.Count > 0)
             {
-                var result = replacer.UpdateImages(imagesToUpdate);
-                if (result.UpdatedImageReferences.Count > 0)
-                {
-                    updatedContent = result.UpdatedContents;
-                    allUpdatedImages.UnionWith(result.UpdatedImageReferences);
-                }
+                updatedContent = patchResult.UpdatedContents;
+                allUpdatedImages.UnionWith(patchResult.UpdatedImageReferences);
             }
-            else
+        }
+
+        if (HasInlineStrategicMergePatches(input))
+        {
+            var strategicMergeResult = ProcessInlineStrategicMergePatches(updatedContent, imagesToUpdate);
+
+            if (strategicMergeResult.UpdatedImageReferences.Count > 0)
             {
-                log.Verbose($"Unable to determine patch type for content, no image updates will be performed");
+                updatedContent = strategicMergeResult.UpdatedContents;
+                allUpdatedImages.UnionWith(strategicMergeResult.UpdatedImageReferences);
+            }
+        }
+
+        if (HasInlineJson6902Patches(input))
+        {
+            var json6902Result = ProcessInlineJson6902Patches(updatedContent, imagesToUpdate);
+
+            if (json6902Result.UpdatedImageReferences.Count > 0)
+            {
+                updatedContent = json6902Result.UpdatedContents;
+                allUpdatedImages.UnionWith(json6902Result.UpdatedImageReferences);
             }
         }
 
         return new ImageReplacementResult(updatedContent, allUpdatedImages);
     }
+
+    private ImageReplacementResult UpdatePatchFields(IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
+    {
+        var patchType = DeterminePatchTypeFromFile(input);
+
+        IContainerImageReplacer replacer = patchType switch
+        {
+            PatchType.StrategicMerge => new StrategicMergePatchImageReplacer(input, defaultRegistry, log),
+            PatchType.Json6902 => new JsonPatchImageReplacer(input, defaultRegistry, log),
+            _ => null
+        };
+
+        if (replacer != null)
+        {
+            return replacer.UpdateImages(imagesToUpdate);
+        }
+        else
+        {
+            log.Verbose($"Unable to determine patch type for content, no image updates will be performed");
+            return new ImageReplacementResult(input, new HashSet<string>());
+        }
+    }
     
 
-    private PatchType? DeterminePatchTypeFromFile(string content)
+    internal PatchType? DeterminePatchTypeFromFile(string content)
     {
         if (IsKustomizationResource(content))
             return null;
@@ -113,11 +120,11 @@ public class KustomizeContainerImageReplacer : IContainerImageReplacer
 
         if (IsStrategicMergePatchContent(content))
             return PatchType.StrategicMerge;
-        
+
         return null;
     }
 
-    private bool IsJson6902PatchContent(string content)
+    internal bool IsJson6902PatchContent(string content)
     {
         try
         {
@@ -145,7 +152,7 @@ public class KustomizeContainerImageReplacer : IContainerImageReplacer
         }
     }
 
-    private bool IsStrategicMergePatchContent(string content)
+    internal bool IsStrategicMergePatchContent(string content)
     {
         try
         {
@@ -167,7 +174,7 @@ public class KustomizeContainerImageReplacer : IContainerImageReplacer
         }
     }
 
-    private bool IsKustomizationResource(string input)
+    internal bool IsKustomizationResource(string input)
     {
         try
         {
@@ -207,7 +214,7 @@ public class KustomizeContainerImageReplacer : IContainerImageReplacer
         }
     }
 
-    private bool HasInlinePatches(string content)
+    internal bool HasInlinePatches(string content)
     {
         try
         {
@@ -234,7 +241,7 @@ public class KustomizeContainerImageReplacer : IContainerImageReplacer
         }
     }
 
-    private bool HasInlineStrategicMergePatches(string content)
+    internal bool HasInlineStrategicMergePatches(string content)
     {
         try
         {
@@ -271,7 +278,7 @@ public class KustomizeContainerImageReplacer : IContainerImageReplacer
         }
     }
 
-    private bool HasInlineJson6902Patches(string content)
+    internal bool HasInlineJson6902Patches(string content)
     {
         try
         {

@@ -2,7 +2,9 @@ using System;
 using Calamari.ArgoCD;
 using Calamari.ArgoCD.Conventions.UpdateImageTag;
 using Calamari.ArgoCD.Domain;
+using Calamari.Common.Plumbing.Logging;
 using FluentAssertions;
+using NSubstitute;
 using NUnit.Framework;
 
 namespace Calamari.Tests.ArgoCD
@@ -10,6 +12,11 @@ namespace Calamari.Tests.ArgoCD
     [TestFixture]
     public class KustomizeContainerImageReplacerTests
     {
+        static KustomizeContainerImageReplacer CreateReplacer(string content = "")
+        {
+            var log = Substitute.For<ILog>();
+            return new KustomizeContainerImageReplacer(content, "default-registry", log);
+        }
         [TestFixture]
         public class DeterminePatchTypeFromFileTests
         {
@@ -23,7 +30,8 @@ namespace Calamari.Tests.ArgoCD
     ""value"": ""nginx:1.25""
   }
 ]";
-                var result = KustomizeContainerImageReplacer.DeterminePatchTypeFromFile(content);
+                var replacer = CreateReplacer();
+                var result = replacer.DeterminePatchTypeFromFile(content);
                 result.Should().Be(PatchType.Json6902);
             }
 
@@ -36,7 +44,8 @@ namespace Calamari.Tests.ArgoCD
 - op: add
   path: /metadata/annotations/updated
   value: true";
-                var result = KustomizeContainerImageReplacer.DeterminePatchTypeFromFile(content);
+                var replacer = CreateReplacer();
+                var result = replacer.DeterminePatchTypeFromFile(content);
                 result.Should().Be(PatchType.Json6902);
             }
 
@@ -53,7 +62,8 @@ spec:
       containers:
       - name: nginx
         image: nginx:1.25";
-                var result = KustomizeContainerImageReplacer.DeterminePatchTypeFromFile(content);
+                var replacer = CreateReplacer();
+                var result = replacer.DeterminePatchTypeFromFile(content);
                 result.Should().Be(PatchType.StrategicMerge);
             }
 
@@ -76,7 +86,8 @@ spec:
     }
   }
 }";
-                var result = KustomizeContainerImageReplacer.DeterminePatchTypeFromFile(content);
+                var replacer = CreateReplacer();
+                var result = replacer.DeterminePatchTypeFromFile(content);
                 result.Should().Be(PatchType.StrategicMerge);
             }
 
@@ -88,7 +99,8 @@ kind: Kustomization
 images:
 - name: nginx
   newTag: 1.25";
-                var result = KustomizeContainerImageReplacer.DeterminePatchTypeFromFile(content);
+                var replacer = CreateReplacer();
+                var result = replacer.DeterminePatchTypeFromFile(content);
                 result.Should().BeNull();
             }
 
@@ -99,7 +111,8 @@ images:
 format: that
 doesnt: match
 patterns: true";
-                var result = KustomizeContainerImageReplacer.DeterminePatchTypeFromFile(content);
+                var replacer = CreateReplacer();
+                var result = replacer.DeterminePatchTypeFromFile(content);
                 result.Should().BeNull();
             }
         }
@@ -117,7 +130,8 @@ patterns: true";
     ""value"": ""nginx:1.25""
   }
 ]";
-                var result = KustomizeContainerImageReplacer.IsJson6902PatchContent(content);
+                var replacer = CreateReplacer();
+                var result = replacer.IsJson6902PatchContent(content);
                 result.Should().BeTrue();
             }
 
@@ -127,7 +141,8 @@ patterns: true";
                 const string content = @"- op: replace
   path: /spec/template/spec/containers/0/image
   value: nginx:1.25";
-                var result = KustomizeContainerImageReplacer.IsJson6902PatchContent(content);
+                var replacer = CreateReplacer();
+                var result = replacer.IsJson6902PatchContent(content);
                 result.Should().BeTrue();
             }
 
@@ -142,7 +157,8 @@ patterns: true";
 - op: copy
   from: /spec/template
   path: /spec/backup";
-                var result = KustomizeContainerImageReplacer.IsJson6902PatchContent(content);
+                var replacer = CreateReplacer();
+                var result = replacer.IsJson6902PatchContent(content);
                 result.Should().BeTrue();
             }
 
@@ -156,7 +172,8 @@ patterns: true";
     'value': 3
   }
 ]";
-                var result = KustomizeContainerImageReplacer.IsJson6902PatchContent(content);
+                var replacer = CreateReplacer();
+                var result = replacer.IsJson6902PatchContent(content);
                 result.Should().BeTrue();
             }
 
@@ -165,7 +182,8 @@ patterns: true";
             {
                 const string content = @"- op: replace
   value: nginx:1.25";
-                var result = KustomizeContainerImageReplacer.IsJson6902PatchContent(content);
+                var replacer = CreateReplacer();
+                var result = replacer.IsJson6902PatchContent(content);
                 result.Should().BeFalse();
             }
 
@@ -174,7 +192,8 @@ patterns: true";
             {
                 const string content = @"- path: /spec/template/spec/containers/0/image
   value: nginx:1.25";
-                var result = KustomizeContainerImageReplacer.IsJson6902PatchContent(content);
+                var replacer = CreateReplacer();
+                var result = replacer.IsJson6902PatchContent(content);
                 result.Should().BeFalse();
             }
 
@@ -184,7 +203,8 @@ patterns: true";
                 const string content = @"- op: invalid_operation
   path: /spec/template/spec/containers/0/image
   value: nginx:1.25";
-                var result = KustomizeContainerImageReplacer.IsJson6902PatchContent(content);
+                var replacer = CreateReplacer();
+                var result = replacer.IsJson6902PatchContent(content);
                 result.Should().BeFalse();
             }
 
@@ -194,14 +214,16 @@ patterns: true";
                 const string content = @"op: replace
 path: /spec/template/spec/containers/0/image
 value: nginx:1.25";
-                var result = KustomizeContainerImageReplacer.IsJson6902PatchContent(content);
+                var replacer = CreateReplacer();
+                var result = replacer.IsJson6902PatchContent(content);
                 result.Should().BeFalse();
             }
 
             [Test]
             public void IsJson6902PatchContent_EmptyContent_ReturnsFalse()
             {
-                var result = KustomizeContainerImageReplacer.IsJson6902PatchContent("");
+                var replacer = CreateReplacer();
+                var result = replacer.IsJson6902PatchContent("");
                 result.Should().BeFalse();
             }
         }
@@ -220,7 +242,8 @@ spec:
       containers:
       - name: nginx
         image: nginx:1.25";
-                var result = KustomizeContainerImageReplacer.IsStrategicMergePatchContent(content);
+                var replacer = CreateReplacer();
+                var result = replacer.IsStrategicMergePatchContent(content);
                 result.Should().BeTrue();
             }
 
@@ -230,7 +253,8 @@ spec:
                 const string content = @"kind: Service
 metadata:
   name: my-service";
-                var result = KustomizeContainerImageReplacer.IsStrategicMergePatchContent(content);
+                var replacer = CreateReplacer();
+                var result = replacer.IsStrategicMergePatchContent(content);
                 result.Should().BeTrue();
             }
 
@@ -241,7 +265,8 @@ metadata:
   name: nginx-deployment
   labels:
     app: nginx";
-                var result = KustomizeContainerImageReplacer.IsStrategicMergePatchContent(content);
+                var replacer = CreateReplacer();
+                var result = replacer.IsStrategicMergePatchContent(content);
                 result.Should().BeTrue();
             }
 
@@ -254,7 +279,8 @@ metadata:
     spec:
       containers:
       - name: nginx";
-                var result = KustomizeContainerImageReplacer.IsStrategicMergePatchContent(content);
+                var replacer = CreateReplacer();
+                var result = replacer.IsStrategicMergePatchContent(content);
                 result.Should().BeTrue();
             }
 
@@ -264,7 +290,8 @@ metadata:
                 const string content = @"data:
   config.yaml: |
     setting: value";
-                var result = KustomizeContainerImageReplacer.IsStrategicMergePatchContent(content);
+                var replacer = CreateReplacer();
+                var result = replacer.IsStrategicMergePatchContent(content);
                 result.Should().BeTrue();
             }
 
@@ -276,7 +303,8 @@ metadata:
     spec:
       containers:
       - image: nginx:1.25";
-                var result = KustomizeContainerImageReplacer.IsStrategicMergePatchContent(content);
+                var replacer = CreateReplacer();
+                var result = replacer.IsStrategicMergePatchContent(content);
                 result.Should().BeTrue();
             }
 
@@ -289,7 +317,8 @@ metadata:
       containers:
       - name: nginx
         image: nginx:1.25";
-                var result = KustomizeContainerImageReplacer.IsStrategicMergePatchContent(content);
+                var replacer = CreateReplacer();
+                var result = replacer.IsStrategicMergePatchContent(content);
                 result.Should().BeTrue();
             }
 
@@ -298,7 +327,8 @@ metadata:
             {
                 const string content = @"APIVERSION: apps/v1
 KIND: Deployment";
-                var result = KustomizeContainerImageReplacer.IsStrategicMergePatchContent(content);
+                var replacer = CreateReplacer();
+                var result = replacer.IsStrategicMergePatchContent(content);
                 result.Should().BeTrue();
             }
 
@@ -309,7 +339,8 @@ KIND: Deployment";
   ""apiVersion"": ""apps/v1"",
   ""kind"": ""Deployment""
 }";
-                var result = KustomizeContainerImageReplacer.IsStrategicMergePatchContent(content);
+                var replacer = CreateReplacer();
+                var result = replacer.IsStrategicMergePatchContent(content);
                 result.Should().BeTrue();
             }
 
@@ -320,14 +351,16 @@ KIND: Deployment";
 yaml: content
 without: kubernetes
 fields: true";
-                var result = KustomizeContainerImageReplacer.IsStrategicMergePatchContent(content);
+                var replacer = CreateReplacer();
+                var result = replacer.IsStrategicMergePatchContent(content);
                 result.Should().BeFalse();
             }
 
             [Test]
             public void IsStrategicMergePatchContent_EmptyContent_ReturnsFalse()
             {
-                var result = KustomizeContainerImageReplacer.IsStrategicMergePatchContent("");
+                var replacer = CreateReplacer();
+                var result = replacer.IsStrategicMergePatchContent("");
                 result.Should().BeFalse();
             }
         }
@@ -343,7 +376,8 @@ kind: Kustomization
 images:
 - name: nginx
   newTag: 1.25";
-                var result = KustomizeContainerImageReplacer.IsKustomizationResource(content);
+                var replacer = CreateReplacer();
+                var result = replacer.IsKustomizationResource(content);
                 result.Should().BeTrue();
             }
 
@@ -354,7 +388,8 @@ images:
 kind: Component
 resources:
 - deployment.yaml";
-                var result = KustomizeContainerImageReplacer.IsKustomizationResource(content);
+                var replacer = CreateReplacer();
+                var result = replacer.IsKustomizationResource(content);
                 result.Should().BeTrue();
             }
 
@@ -365,7 +400,8 @@ resources:
 kind: Deployment
 metadata:
   name: nginx";
-                var result = KustomizeContainerImageReplacer.IsKustomizationResource(content);
+                var replacer = CreateReplacer();
+                var result = replacer.IsKustomizationResource(content);
                 result.Should().BeFalse();
             }
 
@@ -376,7 +412,8 @@ metadata:
 kind: CustomResource
 metadata:
   name: test";
-                var result = KustomizeContainerImageReplacer.IsKustomizationResource(content);
+                var replacer = CreateReplacer();
+                var result = replacer.IsKustomizationResource(content);
                 result.Should().BeFalse();
             }
 
@@ -384,14 +421,16 @@ metadata:
             public void IsKustomizationResource_InvalidYaml_ReturnsFalse()
             {
                 const string content = @"invalid: yaml: [unclosed";
-                var result = KustomizeContainerImageReplacer.IsKustomizationResource(content);
+                var replacer = CreateReplacer();
+                var result = replacer.IsKustomizationResource(content);
                 result.Should().BeFalse();
             }
 
             [Test]
             public void IsKustomizationResource_EmptyContent_ReturnsFalse()
             {
-                var result = KustomizeContainerImageReplacer.IsKustomizationResource("");
+                var replacer = CreateReplacer();
+                var result = replacer.IsKustomizationResource("");
                 result.Should().BeFalse();
             }
         }
@@ -415,7 +454,8 @@ patches:
           containers:
           - name: nginx
             image: nginx:1.25";
-                var result = KustomizeContainerImageReplacer.HasInlinePatches(content);
+                var replacer = CreateReplacer();
+                var result = replacer.HasInlinePatches(content);
                 result.Should().BeTrue();
             }
 
@@ -427,7 +467,8 @@ kind: Kustomization
 images:
 - name: nginx
   newTag: 1.25";
-                var result = KustomizeContainerImageReplacer.HasInlinePatches(content);
+                var replacer = CreateReplacer();
+                var result = replacer.HasInlinePatches(content);
                 result.Should().BeFalse();
             }
 
@@ -437,7 +478,8 @@ images:
                 const string content = @"apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 patches: []";
-                var result = KustomizeContainerImageReplacer.HasInlinePatches(content);
+                var replacer = CreateReplacer();
+                var result = replacer.HasInlinePatches(content);
                 result.Should().BeTrue();
             }
 
@@ -445,14 +487,16 @@ patches: []";
             public void HasInlinePatches_InvalidYaml_ReturnsFalse()
             {
                 const string content = @"invalid: yaml: [unclosed";
-                var result = KustomizeContainerImageReplacer.HasInlinePatches(content);
+                var replacer = CreateReplacer();
+                var result = replacer.HasInlinePatches(content);
                 result.Should().BeFalse();
             }
 
             [Test]
             public void HasInlinePatches_EmptyContent_ReturnsFalse()
             {
-                var result = KustomizeContainerImageReplacer.HasInlinePatches("");
+                var replacer = CreateReplacer();
+                var result = replacer.HasInlinePatches("");
                 result.Should().BeFalse();
             }
 
@@ -462,7 +506,8 @@ patches: []";
                 const string content = @"- item1
 - item2
 - item3";
-                var result = KustomizeContainerImageReplacer.HasInlinePatches(content);
+                var replacer = CreateReplacer();
+                var result = replacer.HasInlinePatches(content);
                 result.Should().BeFalse();
             }
         }
@@ -485,7 +530,8 @@ patchesStrategicMerge:
         containers:
         - name: nginx
           image: nginx:1.25";
-                var result = KustomizeContainerImageReplacer.HasInlineStrategicMergePatches(content);
+                var replacer = CreateReplacer();
+                var result = replacer.HasInlineStrategicMergePatches(content);
                 result.Should().BeTrue();
             }
 
@@ -497,7 +543,8 @@ kind: Kustomization
 patchesStrategicMerge:
 - deployment-patch.yaml
 - service-patch.yaml";
-                var result = KustomizeContainerImageReplacer.HasInlineStrategicMergePatches(content);
+                var replacer = CreateReplacer();
+                var result = replacer.HasInlineStrategicMergePatches(content);
                 result.Should().BeFalse();
             }
 
@@ -509,7 +556,8 @@ kind: Kustomization
 images:
 - name: nginx
   newTag: 1.25";
-                var result = KustomizeContainerImageReplacer.HasInlineStrategicMergePatches(content);
+                var replacer = CreateReplacer();
+                var result = replacer.HasInlineStrategicMergePatches(content);
                 result.Should().BeFalse();
             }
 
@@ -517,7 +565,8 @@ images:
             public void HasInlineStrategicMergePatches_InvalidYaml_ReturnsFalse()
             {
                 const string content = @"invalid: yaml: [unclosed";
-                var result = KustomizeContainerImageReplacer.HasInlineStrategicMergePatches(content);
+                var replacer = CreateReplacer();
+                var result = replacer.HasInlineStrategicMergePatches(content);
                 result.Should().BeFalse();
             }
         }
@@ -538,7 +587,8 @@ patchesJson6902:
     - op: replace
       path: /spec/template/spec/containers/0/image
       value: nginx:1.25";
-                var result = KustomizeContainerImageReplacer.HasInlineJson6902Patches(content);
+                var replacer = CreateReplacer();
+                var result = replacer.HasInlineJson6902Patches(content);
                 result.Should().BeTrue();
             }
 
@@ -552,7 +602,8 @@ patchesJson6902:
     kind: Deployment
     name: nginx-deployment
   path: deployment.json";
-                var result = KustomizeContainerImageReplacer.HasInlineJson6902Patches(content);
+                var replacer = CreateReplacer();
+                var result = replacer.HasInlineJson6902Patches(content);
                 result.Should().BeFalse();
             }
 
@@ -564,7 +615,8 @@ kind: Kustomization
 images:
 - name: nginx
   newTag: 1.25";
-                var result = KustomizeContainerImageReplacer.HasInlineJson6902Patches(content);
+                var replacer = CreateReplacer();
+                var result = replacer.HasInlineJson6902Patches(content);
                 result.Should().BeFalse();
             }
 
@@ -572,7 +624,8 @@ images:
             public void HasInlineJson6902Patches_InvalidYaml_ReturnsFalse()
             {
                 const string content = @"invalid: yaml: [unclosed";
-                var result = KustomizeContainerImageReplacer.HasInlineJson6902Patches(content);
+                var replacer = CreateReplacer();
+                var result = replacer.HasInlineJson6902Patches(content);
                 result.Should().BeFalse();
             }
         }
