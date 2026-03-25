@@ -59,10 +59,10 @@ public static class Isolation
             return null;
         }
 
-        var mountedDrives = MountedDrives.Get();
-        var fileLockService = FileLockService.Instance;
         var pathResolutionService = DefaultPathResolutionService.Instance;
-        var lockDirectoryFactory = new LockDirectoryFactory(mountedDrives, fileLockService, pathResolutionService);
+        var mountedDrives = new SystemMountedDrivesProvider(pathResolutionService).GetMountedDrives();
+        var fileLockService = FileLockService.Instance;
+        var lockDirectoryFactory = new LockDirectoryFactory(mountedDrives, fileLockService);
         var lockOptions = new LockOptionsFactory(lockDirectoryFactory, ConsoleLog.Instance).Create(requestedOptions);
 
         if (lockOptions is null)

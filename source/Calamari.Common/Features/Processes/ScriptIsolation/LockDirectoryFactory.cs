@@ -4,9 +4,9 @@ using System.IO;
 namespace Calamari.Common.Features.Processes.ScriptIsolation;
 
 sealed class LockDirectoryFactory(
-    MountedDrives mountedDrives,
-    IFileLockService fileLockService,
-    IPathResolutionService pathResolutionService) : ILockDirectoryFactory
+    ICachedDriveInfoProvider mountedDrives,
+    IFileLockService fileLockService
+) : ILockDirectoryFactory
 {
     public LockDirectory Create(DirectoryInfo preferredLockDirectory)
     {
@@ -62,7 +62,7 @@ sealed class LockDirectoryFactory(
     {
         try
         {
-            return mountedDrives.GetAssociatedDrive(path.FullName, pathResolutionService);
+            return mountedDrives.GetAssociatedDrive(path.FullName);
         }
         catch (DirectoryNotFoundException)
         {
@@ -74,11 +74,11 @@ sealed class LockDirectoryFactory(
     {
         var testFile =
             new LockDirectory(
-                               DirectoryInfo: path,
-                               LockSupport: LockCapability.Supported  // Ensures that lock will be attempted
-                              ).GetLockFile(
-                                            $"locktest-{Guid.NewGuid():N}.tmp"
-                                           );
+                              DirectoryInfo: path,
+                              LockSupport: LockCapability.Supported  // Ensures that lock will be attempted
+                             ).GetLockFile(
+                                           $"locktest-{Guid.NewGuid():N}.tmp"
+                                          );
         try
         {
             fileLockService.CreateDirectory(path.FullName); // TODO: Update for DirectoryInfo
@@ -175,7 +175,7 @@ sealed class LockDirectoryFactory(
         }
     }
 
-   bool TestExclusiveBlocksShared(LockFile testFile)
+    bool TestExclusiveBlocksShared(LockFile testFile)
     {
         var exclusiveLockOptions = new LockOptions(
                                                    Type: LockType.Exclusive,
