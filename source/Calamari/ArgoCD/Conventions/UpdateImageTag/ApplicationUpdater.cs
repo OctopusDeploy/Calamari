@@ -50,11 +50,11 @@ public class ApplicationUpdater
 
             ValidateApplication(applicationFromYaml);
             
-            var imagesWithNoHelmReference = deploymentConfig.ImageReferences.Where(c => c.HelmReference is not null).ToList();
-            var countImagesWithHelmReference = imagesWithNoHelmReference.Count;
+            var imagesWithHelmReference = deploymentConfig.ImageReferences.Where(c => c.HelmReference is not null).ToList();
+            var countImagesWithHelmReference = imagesWithHelmReference.Count;
             if (countImagesWithHelmReference > 0 && countImagesWithHelmReference != deploymentConfig.ImageReferences.Count && applicationFromYaml.GetSourcesWithMetadata().Any(src => src.SourceType == SourceType.Helm))
             {
-                foreach (var image in imagesWithNoHelmReference)
+                foreach (var image in imagesWithHelmReference)
                 {
                     log.Verbose($"{image.ContainerReference.FriendlyName()} will not be updated in helm sources, as no helm yaml path has been specified for it in the step configuration.");
                 }
