@@ -368,9 +368,8 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             ]);
             var fs = FakeLockService.FullySupported(TempPath);
 
-            var result = LockDirectory.GetLockDirectory(CandidatePath, drives,
-                                                        lockService: fs,
-                                                        pathResolver: FakePathResolutionService.PassThrough);
+            var result = new LockDirectoryFactory(drives, fs, FakePathResolutionService.PassThrough)
+                .Create(new DirectoryInfo(CandidatePath));
 
             result.DirectoryInfo.FullName.Should().Be(CandidatePath);
             result.LockSupport.Should().Be(LockCapability.Supported);
@@ -390,9 +389,8 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             ]);
             var fs = FakeLockService.FullySupported(TempPath);
 
-            var result = LockDirectory.GetLockDirectory(CandidatePath, drives,
-                                                        lockService: fs,
-                                                        pathResolver: FakePathResolutionService.PassThrough);
+            var result = new LockDirectoryFactory(drives, fs, FakePathResolutionService.PassThrough)
+                .Create(new DirectoryInfo(CandidatePath));
 
             result.LockSupport.Should().Be(LockCapability.Supported);
             result.DirectoryInfo.FullName.Should().Be(CandidatePath,
@@ -411,9 +409,8 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             ]);
             var fs = FakeLockService.FullySupported(TempPath);
 
-            var result = LockDirectory.GetLockDirectory(CandidatePath, drives,
-                                                        lockService: fs,
-                                                        pathResolver: FakePathResolutionService.PassThrough);
+            var result = new LockDirectoryFactory(drives, fs, FakePathResolutionService.PassThrough)
+                .Create(new DirectoryInfo(CandidatePath));
 
             result.LockSupport.Should().Be(LockCapability.Supported);
             result.DirectoryInfo.FullName.Should().NotStartWith(CandidateRoot,
@@ -433,8 +430,8 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             ]);
             var fs = FakeLockService.FullySupported(TempPath);
 
-            var result = LockDirectory.GetLockDirectory(CandidatePath, drives, fs,
-                                                        pathResolver: FakePathResolutionService.PassThrough);
+            var result = new LockDirectoryFactory(drives, fs, FakePathResolutionService.PassThrough)
+                .Create(new DirectoryInfo(CandidatePath));
 
             result.LockSupport.Should().Be(LockCapability.Supported);
             result.DirectoryInfo.FullName.Should().Be(CandidatePath,
@@ -453,9 +450,8 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             ]);
             var fs = FakeLockService.FullySupported(TempPath);
 
-            var result = LockDirectory.GetLockDirectory(CandidatePath, drives,
-                                                         lockService: fs,
-                                                         pathResolver: FakePathResolutionService.PassThrough);
+            var result = new LockDirectoryFactory(drives, fs, FakePathResolutionService.PassThrough)
+                .Create(new DirectoryInfo(CandidatePath));
 
             result.LockSupport.Should().Be(LockCapability.ExclusiveOnly);
             result.DirectoryInfo.FullName.Should().Be(CandidatePath,
@@ -474,9 +470,8 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             ]);
             var fs = FakeLockService.FullySupported(TempPath);
 
-            var result = LockDirectory.GetLockDirectory(CandidatePath, drives,
-                                                         lockService: fs,
-                                                         pathResolver: FakePathResolutionService.PassThrough);
+            var result = new LockDirectoryFactory(drives, fs, FakePathResolutionService.PassThrough)
+                .Create(new DirectoryInfo(CandidatePath));
 
             result.LockSupport.Should().Be(LockCapability.ExclusiveOnly);
             result.DirectoryInfo.FullName.Should().NotStartWith(CandidateRoot,
@@ -491,8 +486,8 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             ]);
             var fs = FakeLockService.Unsupported(TempPath);
 
-            var result = LockDirectory.GetLockDirectory(CandidatePath, drives, fs,
-                                                        pathResolver: FakePathResolutionService.PassThrough);
+            var result = new LockDirectoryFactory(drives, fs, FakePathResolutionService.PassThrough)
+                .Create(new DirectoryInfo(CandidatePath));
 
             result.LockSupport.Should().Be(LockCapability.Unsupported);
             result.DirectoryInfo.FullName.Should().Be(CandidatePath);
@@ -507,9 +502,8 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             var drives = new MountedDrives([]);
             var fs = FakeLockService.FullySupported(TempPath);
 
-            var result = LockDirectory.GetLockDirectory(CandidatePath, drives,
-                                                         lockService: fs,
-                                                         pathResolver: FakePathResolutionService.PassThrough);
+            var result = new LockDirectoryFactory(drives, fs, FakePathResolutionService.PassThrough)
+                .Create(new DirectoryInfo(CandidatePath));
 
             result.LockSupport.Should().Be(LockCapability.Supported);
             result.DirectoryInfo.FullName.Should().Be(CandidatePath);
@@ -527,8 +521,8 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             // TempPath is under TempRoot, which has no entry in drives.
             var fs = FakeLockService.Unsupported(TempPath);
 
-            var result = LockDirectory.GetLockDirectory(CandidatePath, drives, fs,
-                                                        pathResolver: FakePathResolutionService.PassThrough);
+            var result = new LockDirectoryFactory(drives, fs, FakePathResolutionService.PassThrough)
+                .Create(new DirectoryInfo(CandidatePath));
 
             result.LockSupport.Should().Be(LockCapability.Unsupported);
             result.DirectoryInfo.FullName.Should().Be(CandidatePath,
@@ -554,9 +548,8 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             ]);
             var fs = FakeLockService.FullySupported(TempPath, secondTempPath);
 
-            var result = LockDirectory.GetLockDirectory(CandidatePath, drives,
-                                                         lockService: fs,
-                                                         pathResolver: FakePathResolutionService.PassThrough);
+            var result = new LockDirectoryFactory(drives, fs, FakePathResolutionService.PassThrough)
+                .Create(new DirectoryInfo(CandidatePath));
 
             result.LockSupport.Should().Be(LockCapability.Supported);
             result.DirectoryInfo.FullName.Should().StartWith(secondTempRoot,
