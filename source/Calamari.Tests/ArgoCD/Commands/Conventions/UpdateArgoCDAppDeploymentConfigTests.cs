@@ -9,9 +9,9 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
     [TestFixture]
     public class UpdateArgoCDAppDeploymentConfigTests
     {
-        static GitCommitParameters DefaultCommitParameters => new GitCommitParameters("Summary", "Description", false);
+        static GitCommitParameters DefaultCommitParameters => new("Summary", "Description", false);
 
-        static ContainerImageReferenceAndHelmReference ImageRefWithHelmRef(string helmRef = "image.tag") => new(ContainerImageReference.FromReferenceString("nginx:latest"), helmRef);
+        static ContainerImageReferenceAndHelmReference ImageRefWithHelmRef(string helmRef) => new(ContainerImageReference.FromReferenceString("nginx:latest"), helmRef);
 
         static ContainerImageReferenceAndHelmReference ImageRefWithoutHelmRef() => new(ContainerImageReference.FromReferenceString("nginx:latest"));
 
@@ -20,7 +20,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
         {
             var config = new UpdateArgoCDAppDeploymentConfig(
                 DefaultCommitParameters,
-                new List<ContainerImageReferenceAndHelmReference> { ImageRefWithHelmRef() },
+                new List<ContainerImageReferenceAndHelmReference> { ImageRefWithHelmRef("image.tag") },
                 useHelmReferenceFromContainer: true);
 
             config.HasStepBasedHelmValueReferences().Should().BeTrue();
@@ -31,7 +31,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
         {
             var config = new UpdateArgoCDAppDeploymentConfig(
                 DefaultCommitParameters,
-                new List<ContainerImageReferenceAndHelmReference> { ImageRefWithHelmRef() },
+                new List<ContainerImageReferenceAndHelmReference> { ImageRefWithHelmRef("image.tag") },
                 useHelmReferenceFromContainer: false);
 
             config.HasStepBasedHelmValueReferences().Should().BeFalse();
@@ -67,7 +67,7 @@ namespace Calamari.Tests.ArgoCD.Commands.Conventions
                 new List<ContainerImageReferenceAndHelmReference>
                 {
                     ImageRefWithoutHelmRef(),
-                    ImageRefWithHelmRef()
+                    ImageRefWithHelmRef("image.tag")
                 },
                 useHelmReferenceFromContainer: true);
 
