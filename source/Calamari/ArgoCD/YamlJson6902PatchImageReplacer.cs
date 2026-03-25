@@ -72,7 +72,6 @@ namespace Calamari.ArgoCD
             }
 
             var replacementsMade = new HashSet<string>();
-            var hasChanges = false;
 
             // Process each document in the YAML stream
             foreach (var document in stream.Documents)
@@ -82,15 +81,16 @@ namespace Calamari.ArgoCD
                     // JSON 6902 patches are arrays of operation objects
                     foreach (var operationNode in patchSequence.Children.OfType<YamlMappingNode>())
                     {
-                        if (ProcessPatchOperation(operationNode, imagesToUpdate, replacementsMade))
+                        var operationReplacements = ProcessPatchOperation(operationNode, imagesToUpdate);
+                        foreach (var replacement in operationReplacements)
                         {
-                            hasChanges = true;
+                            replacementsMade.Add(replacement);
                         }
                     }
                 }
             }
 
-            if (!hasChanges)
+            if (replacementsMade.Count == 0)
             {
                 return NoChangeResult;
             }
@@ -108,96 +108,88 @@ namespace Calamari.ArgoCD
             return new ImageReplacementResult(modifiedContent, replacementsMade);
         }
 
-        bool ProcessPatchOperation(YamlMappingNode operationNode,
-            IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate,
-            HashSet<string> replacementsMade)
+        List<string> ProcessPatchOperation(YamlMappingNode operationNode,
+            IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
         {
             var opValue = operationNode.GetStringValue(FieldNames.Op);
             var pathValue = operationNode.GetStringValue(FieldNames.Path);
 
             if (string.IsNullOrEmpty(opValue) || string.IsNullOrEmpty(pathValue))
             {
-                return false;
+                return new List<string>();
             }
 
             return opValue switch
             {
-                OpValues.Replace => ProcessReplaceOperation(operationNode, pathValue, imagesToUpdate, replacementsMade),
-                OpValues.Add => ProcessAddOperation(operationNode, pathValue, imagesToUpdate, replacementsMade),
-                _ => false
+                OpValues.Replace => ProcessReplaceOperation(operationNode, pathValue, imagesToUpdate),
+                OpValues.Add => ProcessAddOperation(operationNode, pathValue, imagesToUpdate),
+                _ => new List<string>()
             };
         }
 
-        bool ProcessReplaceOperation(YamlMappingNode operationNode, string path,
-            IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate,
-            HashSet<string> replacementsMade)
+        List<string> ProcessReplaceOperation(YamlMappingNode operationNode, string path,
+            IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
         {
             if (IsImagePath(path) && operationNode.Children.TryGetValue(new YamlScalarNode(FieldNames.Value), out var valueNode))
             {
                 if (valueNode is YamlScalarNode imageScalar && !string.IsNullOrEmpty(imageScalar.Value))
                 {
-                    return ProcessImageReference(imageScalar, imagesToUpdate, replacementsMade);
+                    return ProcessImageReference(imageScalar, imagesToUpdate);
                 }
             }
 
-            return false;
+            return new List<string>();
         }
 
-        bool ProcessAddOperation(YamlMappingNode operationNode, string path,
-            IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate,
-            HashSet<string> replacementsMade)
+        List<string> ProcessAddOperation(YamlMappingNode operationNode, string path,
+            IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
         {
             if (IsContainersPath(path) && operationNode.Children.TryGetValue(new YamlScalarNode(FieldNames.Value), out var valueNode))
             {
                 if (valueNode is YamlSequenceNode containersSequence)
                 {
-                    return ProcessContainersSequence(containersSequence, imagesToUpdate, replacementsMade);
+                    return ProcessContainersSequence(containersSequence, imagesToUpdate);
                 }
                 else if (valueNode is YamlMappingNode singleContainer)
                 {
-                    return ProcessContainerMapping(singleContainer, imagesToUpdate, replacementsMade);
+                    return ProcessContainerMapping(singleContainer, imagesToUpdate);
                 }
             }
 
-            return false;
+            return new List<string>();
         }
 
-        bool ProcessContainersSequence(YamlSequenceNode containersSequence,
-            IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate,
-            HashSet<string> replacementsMade)
+        List<string> ProcessContainersSequence(YamlSequenceNode containersSequence,
+            IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
         {
-            var hasChanges = false;
+            var allReplacements = new List<string>();
 
             foreach (var containerNode in containersSequence.Children.OfType<YamlMappingNode>())
             {
-                if (ProcessContainerMapping(containerNode, imagesToUpdate, replacementsMade))
-                {
-                    hasChanges = true;
-                }
+                var replacements = ProcessContainerMapping(containerNode, imagesToUpdate);
+                allReplacements.AddRange(replacements);
             }
 
-            return hasChanges;
+            return allReplacements;
         }
 
-        bool ProcessContainerMapping(YamlMappingNode containerNode,
-            IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate,
-            HashSet<string> replacementsMade)
+        List<string> ProcessContainerMapping(YamlMappingNode containerNode,
+            IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
         {
             if (containerNode.Children.TryGetValue(new YamlScalarNode(FieldNames.Image), out var imageNode) &&
                 imageNode is YamlScalarNode imageScalar)
             {
-                return ProcessImageReference(imageScalar, imagesToUpdate, replacementsMade);
+                return ProcessImageReference(imageScalar, imagesToUpdate);
             }
 
-            return false;
+            return new List<string>();
         }
 
-        bool ProcessImageReference(YamlScalarNode imageScalar,
-            IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate,
-            HashSet<string> replacementsMade)
+        List<string> ProcessImageReference(YamlScalarNode imageScalar,
+            IReadOnlyCollection<ContainerImageReferenceAndHelmReference> imagesToUpdate)
         {
             if (string.IsNullOrEmpty(imageScalar.Value))
-                return false;
+                return new List<string>();
 
             var currentImageRef = ContainerImageReference.FromReferenceString(imageScalar.Value, defaultRegistry);
             var matchedUpdate = imagesToUpdate
@@ -214,12 +206,12 @@ namespace Calamari.ArgoCD
                     imageScalar.Style = ScalarStyle.DoubleQuoted;
                 }
 
-                replacementsMade.Add($"{matchedUpdate.Reference.ImageName}:{matchedUpdate.Reference.Tag}");
+                var replacement = $"{matchedUpdate.Reference.ImageName}:{matchedUpdate.Reference.Tag}";
                 log.Verbose($"Updated container image in YAML JSON 6902 patch: {newImageRef}");
-                return true;
+                return new List<string> { replacement };
             }
 
-            return false;
+            return new List<string>();
         }
 
         static bool IsImagePath(string path)
