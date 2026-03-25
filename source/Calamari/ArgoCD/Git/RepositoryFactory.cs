@@ -32,6 +32,14 @@ namespace Calamari.ArgoCD.Git
             this.repositoryParentDirectory = repositoryParentDirectory;
             this.vendorAgnosticApiAdapterFactory = vendorAgnosticApiAdapterFactory;
             this.clock = clock;
+
+            // Calamari runs as a single-purpose process per deployment step and always receives
+            // explicit credentials. Clear the search paths for all global config levels so libgit2
+            // cannot load ~/.gitconfig or /etc/gitconfig and pick up a credential helper (e.g.
+            // osxkeychain) that would silently override or bypass the credentials we provide.
+            GlobalSettings.SetConfigSearchPaths(ConfigurationLevel.Global, Array.Empty<string>());
+            GlobalSettings.SetConfigSearchPaths(ConfigurationLevel.System, Array.Empty<string>());
+            GlobalSettings.SetConfigSearchPaths(ConfigurationLevel.Xdg, Array.Empty<string>());
         }
 
         public RepositoryWrapper CloneRepository(string repositoryName, IGitConnection gitConnection)
