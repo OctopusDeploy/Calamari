@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Calamari.Common.Plumbing.Commands;
 using Calamari.Common.Plumbing.Logging;
+using Polly;
 
 namespace Calamari.Common.Features.Processes.ScriptIsolation;
 
@@ -16,7 +17,7 @@ public static class Isolation
             return new NoLock();
         }
 
-        var pipeline = lockOptions.BuildLockAcquisitionPipeline();
+        var pipeline = BuildLockAcquisitionPipeline(lockOptions);
         try
         {
             return pipeline.Execute(FileLock.Acquire, lockOptions);
@@ -39,7 +40,7 @@ public static class Isolation
             return new NoLock();
         }
 
-        var pipeline = lockOptions.BuildLockAcquisitionPipeline();
+        var pipeline = BuildLockAcquisitionPipeline(lockOptions);
         try
         {
             return await pipeline.ExecuteAsync(static (o, _) => ValueTask.FromResult(FileLock.Acquire(o)), lockOptions, cancellationToken);
@@ -49,6 +50,13 @@ public static class Isolation
             LockRejectedException.Throw(exception);
             throw; // Satisfy the compiler
         }
+    }
+
+    static ResiliencePipeline<ILockHandle> BuildLockAcquisitionPipeline(LockOptions lockOptions)
+    {
+        return new LockAcquisitionResiliencePipelineBuilder()
+            .AddLockOptions(lockOptions)
+            .Build();
     }
 
     static LockOptions? PrepareLockOptions(CommonOptions.ScriptIsolationOptions scriptIsolationOptions)

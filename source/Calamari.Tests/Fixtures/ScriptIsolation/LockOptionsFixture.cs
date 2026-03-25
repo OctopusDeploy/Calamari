@@ -225,8 +225,8 @@ namespace Calamari.Tests.Fixtures.ScriptIsolation
             {
                 TimeProvider = timeProvider
             };
-            lockOptions.AddLockOptions(testPipelineBuilder);
-            var testPipeline = testPipelineBuilder.Build();
+            var lockAcquisitionPipelineBuilder = new LockAcquisitionResiliencePipelineBuilder(testPipelineBuilder);
+            var testPipeline = lockAcquisitionPipelineBuilder.AddLockOptions(lockOptions).Build();
 
             // Use a gate so we know when the pipeline has been entered at least once and
             // is about to wait on a fake-time delay (i.e., timers are registered).
